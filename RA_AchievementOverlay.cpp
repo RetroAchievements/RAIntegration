@@ -154,12 +154,11 @@ void AchievementOverlay::Initialize( HINSTANCE hInst )
 	}
 
 	m_hOverlayBackground = LoadLocalPNG( RA_DIR_OVERLAY "overlayBG.png", g_nBGWidth, g_nBGHeight );
-
-	if( m_hOverlayBackground == NULL )
-	{
-		//	Backup
-		m_hOverlayBackground = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_RA_BACKGROUND) );
-	}
+	//if( m_hOverlayBackground == NULL )
+	//{
+	//	//	Backup
+	//	m_hOverlayBackground = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_RA_BACKGROUND) );
+	//}
 }
 
 void AchievementOverlay::Activate()

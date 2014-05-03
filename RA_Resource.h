@@ -93,8 +93,6 @@
 #define IDC_RA_GLIB_NAME                1594
 #define IDC_RA_PICKROMDIR               1595
 #define IDC_RA_RESCAN2                  1595
-#define IDB_RA_IMG_LOCKED               1698
-#define IDB_RA_BACKGROUND               1699
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701

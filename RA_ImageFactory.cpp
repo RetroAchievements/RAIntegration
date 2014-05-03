@@ -387,11 +387,11 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 
 void DrawImage( HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH )
 {
-	int nLockedResource = IDB_RA_IMG_LOCKED;
+	//int nLockedResource = IDB_RA_IMG_LOCKED;
 	HDC hdcMem = CreateCompatibleDC(hDC);
 
 	assert( hBitmap != NULL );
-	if (hdcMem)
+	if( hdcMem )
 	{
 		//	Select new bitmap and backup old bitmap
 		HBITMAP hbmOld = SelectBitmap( hdcMem, hBitmap );
@@ -414,7 +414,7 @@ void DrawImage( HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH )
 
 void DrawImageStretched( HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest )
 {
-	int nLockedResource = IDB_RA_IMG_LOCKED;
+	//int nLockedResource = IDB_RA_IMG_LOCKED;
 	HDC hdcMem = CreateCompatibleDC(hDC);
 
 	assert( hBitmap != NULL );
@@ -445,7 +445,7 @@ void DrawImageStretched( HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest 
 
 void DrawImageTiled( HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest )
 {
-	int nLockedResource = IDB_RA_IMG_LOCKED;
+	//int nLockedResource = IDB_RA_IMG_LOCKED;
 	HDC hdcMem = CreateCompatibleDC(hDC);
 
 	assert( hBitmap != NULL );

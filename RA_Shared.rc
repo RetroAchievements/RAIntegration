@@ -450,7 +450,6 @@ END
 // Bitmap
 //
 
-IDB_RA_BACKGROUND       BITMAP                  "overlay_background.bmp"
 #endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
 

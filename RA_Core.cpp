@@ -31,6 +31,7 @@
 #include "RA_PopupWindows.h"
 #include "RA_md5factory.h"
 #include "RA_User.h"
+#include "RA_RichPresence.h"
 
 
 char g_sKnownRAVersion[50];
@@ -681,7 +682,21 @@ API int CCONV _RA_HandleHTTPResults()
 						g_AchievementOverlay.InstallNewsArticlesFromFile();
 					}
 				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestrichpresence.php" ) == 0 )
+				{
+					if( pObj->m_bResponse && ( pObj->m_nBytesRead > 0 ) )
+					{
+						char sRichPresenceFile[1024];
+						sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, pObj->m_nUserRef );
 
+						//	Read to file:
+						SetCurrentDirectory( g_sHomeDir );
+						_WriteBufferToFile( sRichPresenceFile, pObj->m_sResponse, pObj->m_nBytesRead );
+						
+						//	Then install it
+						g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
+					}
+				}
 				break;
 			}
 		}
@@ -716,6 +731,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector") );
+		AppendMenu( hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("&Parse Rich Presence script") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum") );
@@ -1208,6 +1224,28 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 					Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}
 
+			}
+			break;
+
+		case IDM_RA_PARSERICHPRESENCE:
+			{
+				if( g_pActiveAchievements->GameID() != 0 )
+				{
+					char sRichPresenceFile[1024];
+					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GameID() );
+
+					//	Then install it
+					g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
+
+					//	Then fetch immediately
+					std::string sRP = g_RichPresenceInterpretter.GetRichPresenceString();
+
+					MessageBox( NULL, sRP.c_str(), "Rich Presence script result", MB_OK );
+				}
+				else
+				{
+					MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
+				}
 			}
 			break;
 

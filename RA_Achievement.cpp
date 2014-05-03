@@ -1187,10 +1187,13 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 
 		fclose( pFile );
 		
+		
+		if( m_nType == AT_CORE )
 		{
-			char sRichPresenceFile[1024];
-			sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, nGameID );
-			g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
+			//	Fire off a request to get the latest rich presence info
+			char bufferPost[256];
+			sprintf_s( bufferPost, 256, "g=%d", m_nGameID );
+			CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID, NULL );
 		}
 
 		if( nNumAchievementsLoaded > 0 )

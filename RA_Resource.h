@@ -112,6 +112,7 @@
 #define IDM_RA_OPENUSERPAGE             1713
 #define IDM_RA_OPENGAMEPAGE             1714
 #define IDM_RA_SCANFORGAMES             1715
+#define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_MENUEND                  1739
 
 // Next default values for new objects

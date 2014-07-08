@@ -135,7 +135,7 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 
 	HeapSetInformation( NULL, HeapEnableTerminationOnCorruption, NULL, 0 );
 
-	hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE );
+	hr = CoInitializeEx( NULL, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE );
 
 	// Create WIC factory
 	//#define IID_PPV_ARGS(ppType) ((LPVOID*)(ppType))

@@ -94,7 +94,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		g_ConsoleID				= 1;
 		g_sGetLatestClientPage	= "LatestRAGensVersion.html";
 		g_sClientVersion		= sClientVer;
-		g_sClientName			= "RAGens REWiND";
+		g_sClientName			= "RAGens_REWiND";
 		g_sClientDownloadURL	= "RAGens.zip";
 		g_sClientEXEName		= "RAGens.exe";
 		break;

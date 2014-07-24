@@ -281,6 +281,12 @@ API int CCONV _RA_Shutdown()
 		g_MemoryDialog.InstallHWND( NULL );
 	}
 	
+	if( g_GameLibrary.GetHWND() != NULL )
+	{
+		DestroyWindow( g_GameLibrary.GetHWND() );
+		g_GameLibrary.InstallHWND( NULL );
+	}
+	
 	return 0;
 }
 
@@ -937,6 +943,8 @@ API void CCONV _RA_LoadPreferences()
 
 		fclose( pConfigFile );
 	}
+
+	g_GameLibrary.LoadAll();
 }
 
 //	Save preferences to ra_prefs.cfg
@@ -970,13 +978,9 @@ API void CCONV _RA_SavePreferences()
 
 		fwrite( "\n", sizeof(char), 1, pConfigFile );
 
-
-
 		fwrite( "--HardcoreModeActive:\n", sizeof(char), strlen( "--HardcoreModeActive:\n" ), pConfigFile );
 		fwrite( g_hardcoreModeActive ? "1" : "0", sizeof(char), 1, pConfigFile ); 
 		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
-
-
 
 		fwrite( "--NumberHTTPThreads:\n", sizeof(char), strlen( "--NumberHTTPThreads:\n" ), pConfigFile );
 		char sNumThreads[256];
@@ -988,15 +992,14 @@ API void CCONV _RA_SavePreferences()
 		fwrite( g_sROMDirLocation, sizeof(char), strlen( g_sROMDirLocation ), pConfigFile ); 
 		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
 
-		
-
-
 		//	Add more parameters here:
 		//fwrite( g_LocalUser.Username(), sizeof(char), strlen( g_LocalUser.Username() ), pConfigFile );
 		//fwrite( "\n", sizeof(char), strlen( "\n" ), pConfigFile );
 
 		fclose( pConfigFile );
 	}
+	
+	g_GameLibrary.SaveAll();
 }
 
 void _FetchGameHashLibraryFromWeb()
@@ -1221,7 +1224,13 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 					_FetchGameTitlesFromWeb();
 					_FetchMyProgressFromWeb();
 
-					Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
+							
+					if( g_GameLibrary.GetHWND() == NULL )
+						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
+					if( g_GameLibrary.GetHWND() != NULL )
+						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
+
+					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}
 
 			}
@@ -1368,7 +1377,7 @@ bool _InstallKeys()
 	return nKeysVer >= nMINKEYSVER;
 }
 
-BOOL _ReadTil( char nChar, char buffer[], unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile )
+BOOL _ReadTil( const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile )
 {
 	char pNextChar = '\0';
 	memset( buffer, '\0', nSize );

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "RA_Defs.h"
-#include <wtypes.h>
+//#include <wtypes.h>
+//#include <windef.h>
+#include <Windows.h>
 
 struct ControllerInput
 {

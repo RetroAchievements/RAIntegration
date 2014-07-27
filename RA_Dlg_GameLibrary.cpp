@@ -489,9 +489,9 @@ void Dlg_GameLibrary::RefreshList()
 
 		if( VisibleResults.find( filepath ) == VisibleResults.end() )
 		{
-			if( m_GameHashLibrary.find( std::string( md5 ) ) != m_GameHashLibrary.end() )
+			if( m_GameHashLibrary.find( md5 ) != m_GameHashLibrary.end() )
 			{
-				const unsigned int nGameID = m_GameHashLibrary[ std::string( md5 ) ];
+				const unsigned int nGameID = m_GameHashLibrary[ md5 ];
 				RA_LOG( "Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[ nGameID ].c_str() );
 															
 				//std::map<unsigned int, std::string>::iterator iter = m_ProgressLibrary.begin();
@@ -545,21 +545,29 @@ void Dlg_GameLibrary::LoadAll()
 	fopen_s( &pLoadIn, RA_DIR_DATA "gamelibraryfound.txt", "r" );
 	if( pLoadIn != NULL )
 	{
-		DWORD nCharsRead = 0;
 		//while( nCharsRead > 2 )
+		DWORD nCharsRead1 = 0;
+		DWORD nCharsRead2 = 0;	
 		do
 		{
+			nCharsRead1 = 0;
+			nCharsRead2 = 0;	
 			char fileBuf[2048];
 			char md5Buf[64];
 			ZeroMemory(fileBuf, 2048);
 			ZeroMemory(md5Buf, 64);
-			_ReadTil( '\n', fileBuf, 2048, &nCharsRead, pLoadIn );
+			_ReadTil( '\n', fileBuf, 2048, &nCharsRead1, pLoadIn );
 
-			if( nCharsRead > 0 )
-				_ReadTil( '\n', md5Buf, 64, &nCharsRead, pLoadIn );
-
-			if( fileBuf[0] != '\0' && md5Buf[0] != '\0' )
+			if( nCharsRead1 > 0 )
 			{
+				_ReadTil( '\n', md5Buf, 64, &nCharsRead2, pLoadIn );
+			}
+
+			if( fileBuf[0] != '\0' && md5Buf[0] != '\0' && nCharsRead1 > 0 && nCharsRead2 > 0 )
+			{
+				fileBuf[nCharsRead1-1] = '\0';
+				md5Buf[nCharsRead2-1] = '\0';
+
 				//	Add
 				std::string file = fileBuf;
 				std::string md5 = md5Buf;
@@ -568,7 +576,7 @@ void Dlg_GameLibrary::LoadAll()
 			}
 
 		}
-		while( nCharsRead > 0 );
+		while( nCharsRead1 > 0 && nCharsRead2 > 0 );
 		fclose( pLoadIn );
 	}
 	mtx.unlock();
@@ -638,6 +646,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 		int msBetweenRefresh = 1000;	//	auto?
 
 		//SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
+		RefreshList();
 
 		//ReloadGameListData();
 

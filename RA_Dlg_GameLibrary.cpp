@@ -551,6 +551,8 @@ void Dlg_GameLibrary::LoadAll()
 		{
 			char fileBuf[2048];
 			char md5Buf[64];
+			ZeroMemory(fileBuf, 2048);
+			ZeroMemory(md5Buf, 64);
 			_ReadTil( '\n', fileBuf, 2048, &nCharsRead, pLoadIn );
 
 			if( nCharsRead > 0 )
@@ -586,9 +588,9 @@ void Dlg_GameLibrary::SaveAll()
 			const std::string& sMD5 = iter->second;
 			
 			fwrite( sFilepath.c_str(), sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
-			fwrite( "\n", sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
+			fwrite( "\n", sizeof(char), 1, pSaveOut );
 			fwrite( sMD5.c_str(), sizeof(char), strlen(sMD5.c_str()), pSaveOut );
-			fwrite( "\n", sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
+			fwrite( "\n", sizeof(char), 1, pSaveOut );
 
 			iter++;
 		}

@@ -41,6 +41,8 @@ public:
 	
 	void LoadAll();
 	void SaveAll();
+
+	void KillThread();
 	
 private:
 	void SetupColumns( HWND hList );
@@ -56,6 +58,8 @@ private:
 	static size_t nNumParsed;
 
 	static void ThreadedScanProc();
+	static bool ThreadProcessingAllowed;
+	static bool ThreadProcessingActive;
 	
 private:
 	HWND m_hDialogBox;

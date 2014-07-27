@@ -40,6 +40,8 @@ std::deque<std::string> Dlg_GameLibrary::FilesToScan;
 std::map<std::string, std::string> Dlg_GameLibrary::Results;	//	filepath,md5
 std::map<std::string, std::string> Dlg_GameLibrary::VisibleResults;	//	filepath,md5
 size_t Dlg_GameLibrary::nNumParsed = 0;
+bool Dlg_GameLibrary::ThreadProcessingAllowed = true;
+bool Dlg_GameLibrary::ThreadProcessingActive = false;
 
 Dlg_GameLibrary g_GameLibrary;
 
@@ -294,8 +296,18 @@ void Dlg_GameLibrary::ClearTitles()
 //static
 void Dlg_GameLibrary::ThreadedScanProc()
 {
+	Dlg_GameLibrary::ThreadProcessingActive = true;
+
 	while( FilesToScan.size() > 0 )
 	{
+		mtx.lock();
+		if( !Dlg_GameLibrary::ThreadProcessingAllowed )
+		{
+			mtx.unlock();
+			break;
+		}
+		mtx.unlock();
+
 		FILE* pFile = NULL;
 		if( fopen_s( &pFile, FilesToScan.front().c_str(), "rb" ) == 0 )
 		{
@@ -324,6 +336,8 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
 				Results[FilesToScan.front()] = md5Buffer;
 				
+				SendMessage( g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL );
+
 				free( fileBuf );
 			}
 
@@ -334,7 +348,8 @@ void Dlg_GameLibrary::ThreadedScanProc()
 		FilesToScan.pop_front();
 		mtx.unlock();
 	}
-
+	
+	Dlg_GameLibrary::ThreadProcessingActive = false;
 	ExitThread( 0 );
 }
 
@@ -487,8 +502,12 @@ void Dlg_GameLibrary::RefreshList()
 					//const std::string& sGameProgress = m_ProgressLibrary[ nGameID ];
 								
 					AddTitle( sGameTitle, filepath, nGameID );
-								
-					SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, sGameTitle.c_str() );
+					
+
+					//SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, sGameTitle.c_str() );
+					SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, sGameTitle.c_str() );
+
+
 					//InvalidateRect( m_hDialogBox, NULL, true );
 
 				//	iter++;
@@ -570,6 +589,8 @@ void Dlg_GameLibrary::SaveAll()
 			fwrite( "\n", sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
 			fwrite( sMD5.c_str(), sizeof(char), strlen(sMD5.c_str()), pSaveOut );
 			fwrite( "\n", sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
+
+			iter++;
 		}
 
 		fclose( pSaveOut );
@@ -612,9 +633,9 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 		ParseGameTitlesFromFile( m_GameTitlesLibrary );
 		ParseMyProgressFromFile( m_ProgressLibrary );
 		
-		int msBetweenRefresh = 2000;	//	auto?
+		int msBetweenRefresh = 1000;	//	auto?
 
-		SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
+		//SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
 
 		//ReloadGameListData();
 
@@ -773,6 +794,15 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 	//return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
+void Dlg_GameLibrary::KillThread()
+{
+	Dlg_GameLibrary::ThreadProcessingAllowed = false;
+	while( Dlg_GameLibrary::ThreadProcessingActive )
+	{
+		RA_LOG("Waiting for background scanner..." );
+		Sleep(200);
+	}
+}
 ////static
 //void Dlg_GameLibrary::DoModalDialog( HINSTANCE hInst, HWND hParent )
 //{

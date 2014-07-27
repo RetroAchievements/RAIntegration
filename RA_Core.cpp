@@ -286,6 +286,8 @@ API int CCONV _RA_Shutdown()
 		DestroyWindow( g_GameLibrary.GetHWND() );
 		g_GameLibrary.InstallHWND( NULL );
 	}
+
+	g_GameLibrary.KillThread();
 	
 	return 0;
 }

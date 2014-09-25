@@ -1,5 +1,8 @@
 #pragma once
 
+//	NULL, etc
+#include <stddef.h>
+
 #ifndef RA_EXPORTS
 
 //NB. These must ONLY accessible from the emulator!
@@ -12,7 +15,7 @@
 #else
 
 //NB. These must NOT be accessible from the emulator!
-#define RA_INTEGRATION_VERSION	"0.046"
+#define RA_INTEGRATION_VERSION	"0.047"
 
 #endif	//RA_EXPORTS
 

@@ -50,6 +50,7 @@ const char* g_sClientDownloadURL = NULL;
 const char* g_sClientEXEName = NULL;
 bool g_bRAMTamperedWith = false;
 bool g_hardcoreModeActive = false;
+bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
 const char* (*g_fnKeysVersion)(void) = NULL;
@@ -735,7 +736,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum") );
-		AppendMenu( hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("&Scan for games") );
+		AppendMenu( hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games") );
+		AppendMenu( hRA, MF_STRING, IDM_RA_TOGGLELEADERBOARDS, TEXT("Toggle &Leaderboards") );
 	}
 	else
 	{
@@ -1246,6 +1248,19 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 				{
 					MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
 				}
+			}
+			break;
+
+		case IDM_RA_TOGGLELEADERBOARDS:
+			if( g_bLeaderboardsActive )
+			{
+				g_bLeaderboardsActive = false;
+				MessageBox( NULL, "Leaderboards are now disabled", "Warning", MB_OK );
+			}
+			else
+			{
+				g_bLeaderboardsActive = true;
+				MessageBox( NULL, "Leaderboards are now enabled", "Warning", MB_OK );
 			}
 			break;
 

@@ -185,6 +185,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		}
 
 	} while( nMBReply == IDYES );
+	
 
 	//	DO NOT CONTINUE if they have opted NOT to get the latest keys!
 	if( !bInstalled )
@@ -841,44 +842,44 @@ API void CCONV _RA_LoadPreferences()
 	//	Test for first-time use:
 	if( pConfigFile == NULL )
 	{
-		RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
-		
-		char sWelcomeMessage[4096];
+		//RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
+		//
+		//char sWelcomeMessage[4096];
 
-		sprintf_s( sWelcomeMessage, 4096, 
-			"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
-			"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
+		//sprintf_s( sWelcomeMessage, 4096, 
+		//	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
+		//	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
 
-		switch( g_EmulatorID )
-		{
-		case RA_Gens:
-			strcat_s( sWelcomeMessage, 4096,
-				"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
-			break;
-		case RA_VisualboyAdvance:
-			strcat_s( sWelcomeMessage, 4096,
-				"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
-			break;
-		case RA_Snes9x:
-			strcat_s( sWelcomeMessage, 4096,
-				"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
-			break;
-		case RA_FCEUX:
-			strcat_s( sWelcomeMessage, 4096,
-				"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
-			break;
-		case RA_PCE:
-			strcat_s( sWelcomeMessage, 4096,
-				"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
-			break;
-		}
+		//switch( g_EmulatorID )
+		//{
+		//case RA_Gens:
+		//	strcat_s( sWelcomeMessage, 4096,
+		//		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
+		//	break;
+		//case RA_VisualboyAdvance:
+		//	strcat_s( sWelcomeMessage, 4096,
+		//		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
+		//	break;
+		//case RA_Snes9x:
+		//	strcat_s( sWelcomeMessage, 4096,
+		//		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
+		//	break;
+		//case RA_FCEUX:
+		//	strcat_s( sWelcomeMessage, 4096,
+		//		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
+		//	break;
+		//case RA_PCE:
+		//	strcat_s( sWelcomeMessage, 4096,
+		//		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
+		//	break;
+		//}
 
-		strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
-			"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
+		//strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
+		//	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
 
-		MessageBox( g_RAMainWnd, 
-			sWelcomeMessage,
-			"Welcome to RetroAchievements!", MB_OK );
+		//MessageBox( g_RAMainWnd, 
+		//	sWelcomeMessage,
+		//	"Welcome to RetroAchievements!", MB_OK );
 
 		//	TBD: setup some decent default variables:
 		_RA_SavePreferences();

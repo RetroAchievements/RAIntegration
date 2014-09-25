@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RA_Defs.h"
-//#include <wtypes.h>
 
 struct ControllerInput
 {
@@ -44,6 +43,8 @@ extern void RA_ResetEmulation();
 extern void RA_LoadROM( char* sFullPath );
 
 #ifndef RA_EXPORTS
+
+#include <wtypes.h>
 
 //
 //	Note: any changes in these files will require a full binary release of the emulator!

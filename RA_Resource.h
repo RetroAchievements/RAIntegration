@@ -92,7 +92,8 @@
 #define IDC_RA_ROMDIR                   1593
 #define IDC_RA_GLIB_NAME                1594
 #define IDC_RA_PICKROMDIR               1595
-#define IDC_RA_RESCAN2                  1595
+#define IDC_RA_REFRESH					1596
+#define IDC_RA_SCANNERFOUNDINFO			1597
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701

@@ -7,7 +7,8 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "WinResrc.h"
+#define IDC_STATIC  -1
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -224,7 +225,8 @@ BEGIN
     LTEXT           "Selected Game:",IDC_STATIC,7,143,51,8
     EDITTEXT        IDC_RA_GLIB_NAME,7,154,320,14,ES_AUTOHSCROLL | ES_READONLY
     DEFPUSHBUTTON   "...",IDC_RA_PICKROMDIR,315,7,14,14
-    LTEXT           "Hold ESC to stop searching",IDC_STATIC,286,25,87,8
+    LTEXT           "Ready",IDC_RA_SCANNERFOUNDINFO,222,25,107,8
+    DEFPUSHBUTTON   "Refresh",IDC_RA_REFRESH,335,22,38,12
 END
 
 

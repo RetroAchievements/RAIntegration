@@ -5,6 +5,12 @@
 #include <commctrl.h>
 #include <string>
 #include <sstream>
+#include <mutex>
+#include <vector>
+#include <queue>
+#include <deque>
+#include <stack>
+#include <thread>
 #include <shlobj.h>
 
 #include "RA_Defs.h"
@@ -25,14 +31,80 @@ namespace
 	const size_t NUM_COLS = sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
 
 	const bool bCancelScan = false;
+
+	std::mutex mtx;
 }
 
 //static 
-HWND Dlg_GameLibrary::m_hDialogBox = NULL;
-std::vector<GameEntry> Dlg_GameLibrary::m_vGameEntries;
-std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
-std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
-std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
+std::deque<std::string> Dlg_GameLibrary::FilesToScan;
+std::map<std::string, std::string> Dlg_GameLibrary::Results;	//	filepath,md5
+std::map<std::string, std::string> Dlg_GameLibrary::VisibleResults;	//	filepath,md5
+size_t Dlg_GameLibrary::nNumParsed = 0;
+bool Dlg_GameLibrary::ThreadProcessingAllowed = true;
+bool Dlg_GameLibrary::ThreadProcessingActive = false;
+
+Dlg_GameLibrary g_GameLibrary;
+
+bool ListFiles( std::string path, std::string mask, std::deque<std::string>& rFileListOut )
+{
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATA ffd;
+    std::string spec;
+    std::stack<std::string> directories;
+
+    directories.push(path);
+
+    while (!directories.empty()) {
+        path = directories.top();
+        spec = path + "\\" + mask;
+        directories.pop();
+
+        hFind = FindFirstFile(spec.c_str(), &ffd);
+        if( hFind == INVALID_HANDLE_VALUE )
+            return false;
+
+        do {
+			if( ( strcmp( ffd.cFileName, "." ) == 0 ) ||
+				( strcmp( ffd.cFileName, ".." ) == 0 ) )
+				continue;
+
+			if( ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+			{
+				directories.push( path + "\\" + ffd.cFileName );
+			}
+			else
+			{
+				rFileListOut.push_front( path + "\\" + ffd.cFileName );
+			}
+
+		} while (FindNextFile(hFind, &ffd) != 0);
+
+        if (GetLastError() != ERROR_NO_MORE_FILES)
+		{
+            FindClose(hFind);
+            return false;
+        }
+
+        FindClose(hFind);
+        hFind = INVALID_HANDLE_VALUE;
+    }
+	
+    return true;
+}
+
+//HWND Dlg_GameLibrary::m_hDialogBox = NULL;
+//std::vector<GameEntry> Dlg_GameLibrary::m_vGameEntries;
+//std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
+//std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
+//std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
+Dlg_GameLibrary::Dlg_GameLibrary()
+ :	m_hDialogBox( NULL )
+{
+}
+
+Dlg_GameLibrary::~Dlg_GameLibrary()
+{
+}
 
 void ParseGameHashLibraryFromFile( std::map<std::string, unsigned int>& GameHashLibraryOut )
 {
@@ -212,12 +284,73 @@ void Dlg_GameLibrary::AddTitle( const std::string& sTitle, const std::string& sF
 	m_vGameEntries.push_back( nNewGame );
 }
 
-//static
 void Dlg_GameLibrary::ClearTitles()
 {
+	nNumParsed = 0;
+
 	m_vGameEntries.clear();
 
 	ListView_DeleteAllItems( GetDlgItem( m_hDialogBox, IDC_RA_LBX_GAMELIST ) );
+}
+
+//static
+void Dlg_GameLibrary::ThreadedScanProc()
+{
+	Dlg_GameLibrary::ThreadProcessingActive = true;
+
+	while( FilesToScan.size() > 0 )
+	{
+		mtx.lock();
+		if( !Dlg_GameLibrary::ThreadProcessingAllowed )
+		{
+			mtx.unlock();
+			break;
+		}
+		mtx.unlock();
+
+		FILE* pFile = NULL;
+		if( fopen_s( &pFile, FilesToScan.front().c_str(), "rb" ) == 0 )
+		{
+			// obtain file size:
+			fseek( pFile, 0, SEEK_END );
+			DWORD nSize = ftell( pFile );
+			rewind( pFile );
+
+			//	No point.. ffs
+			//unsigned char* fileBuf = (unsigned char*)malloc(sizeof(unsigned char)*nSize);
+			
+			unsigned char* fileBuf = (unsigned char*)malloc(6 * 1024 * 1024);
+			memset( fileBuf, 0, 6 * 1024 * 1024);
+			//memset(Rom_Data, 0, 6 * 1024 * 1024);
+
+			if( fileBuf != NULL )
+			{
+				fread( fileBuf, 1, nSize, pFile );
+
+				//std::string sResult = FilesToScan.front().c_str();
+				//sResult.append( " -> \t" );
+				//sResult.append( md5( buffer, nSize ) );
+				
+				char md5Buffer[33];
+				md5_GenerateMD5Raw( fileBuf, 6 * 1024 * 1024, md5Buffer );
+
+				Results[FilesToScan.front()] = md5Buffer;
+				
+				SendMessage( g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL );
+
+				free( fileBuf );
+			}
+
+			fclose( pFile );
+		}
+		
+		mtx.lock();
+		FilesToScan.pop_front();
+		mtx.unlock();
+	}
+	
+	Dlg_GameLibrary::ThreadProcessingActive = false;
+	ExitThread( 0 );
 }
 
 void Dlg_GameLibrary::ScanAndAddRomsRecursive( std::string sBaseDir )
@@ -319,6 +452,8 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( std::string sBaseDir )
 
 		FindClose( hFind );
 	}
+
+	SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, "Scanning complete" );
 }
 
 void Dlg_GameLibrary::ReloadGameListData()
@@ -327,8 +462,62 @@ void Dlg_GameLibrary::ReloadGameListData()
 
 	char sROMDir[1024];
 	GetDlgItemText( m_hDialogBox, IDC_RA_ROMDIR, sROMDir, 1024 );
+	
+	mtx.lock();
+	while( FilesToScan.size() > 0 )
+		FilesToScan.pop_front();
+	mtx.unlock();
 
-	ScanAndAddRomsRecursive( sROMDir );
+	if( ListFiles( sROMDir, "*", FilesToScan ) )
+	{
+		//ScanAndAddRomsRecursive( sROMDir );
+		std::thread scanner( &Dlg_GameLibrary::ThreadedScanProc );
+		scanner.detach();
+	}
+}
+
+void Dlg_GameLibrary::RefreshList()
+{
+	//ClearTitles();
+
+	//for( int i = 0; i > Results.size(); ++i )
+	std::map<std::string,std::string>::iterator iter = Results.begin();
+	while( iter != Results.end() )
+	{
+		const std::string& filepath = (*iter).first;
+		const std::string& md5 = (*iter).second;
+
+		if( VisibleResults.find( filepath ) == VisibleResults.end() )
+		{
+			if( m_GameHashLibrary.find( md5 ) != m_GameHashLibrary.end() )
+			{
+				const unsigned int nGameID = m_GameHashLibrary[ md5 ];
+				RA_LOG( "Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[ nGameID ].c_str() );
+															
+				//std::map<unsigned int, std::string>::iterator iter = m_ProgressLibrary.begin();
+				//while( iter != m_ProgressLibrary.end() )
+				//{
+				//	const unsigned int nGameID2 = (*iter).first;
+					const std::string& sGameTitle = m_GameTitlesLibrary[ nGameID ];
+					//const std::string& sGameProgress = m_ProgressLibrary[ nGameID ];
+								
+					AddTitle( sGameTitle, filepath, nGameID );
+					
+
+					//SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, sGameTitle.c_str() );
+					SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, sGameTitle.c_str() );
+
+
+					//InvalidateRect( m_hDialogBox, NULL, true );
+
+				//	iter++;
+				//}
+				VisibleResults[filepath] = md5;	//	Copy to VisibleResults
+			}
+		}
+
+		iter++;
+	}					
 }
 
 BOOL Dlg_GameLibrary::LaunchSelected()
@@ -349,13 +538,89 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 	return FALSE;
 }
 
+void Dlg_GameLibrary::LoadAll()
+{
+	mtx.lock();
+	FILE* pLoadIn = NULL;
+	fopen_s( &pLoadIn, RA_DIR_DATA "gamelibraryfound.txt", "r" );
+	if( pLoadIn != NULL )
+	{
+		//while( nCharsRead > 2 )
+		DWORD nCharsRead1 = 0;
+		DWORD nCharsRead2 = 0;	
+		do
+		{
+			nCharsRead1 = 0;
+			nCharsRead2 = 0;	
+			char fileBuf[2048];
+			char md5Buf[64];
+			ZeroMemory(fileBuf, 2048);
+			ZeroMemory(md5Buf, 64);
+			_ReadTil( '\n', fileBuf, 2048, &nCharsRead1, pLoadIn );
+
+			if( nCharsRead1 > 0 )
+			{
+				_ReadTil( '\n', md5Buf, 64, &nCharsRead2, pLoadIn );
+			}
+
+			if( fileBuf[0] != '\0' && md5Buf[0] != '\0' && nCharsRead1 > 0 && nCharsRead2 > 0 )
+			{
+				fileBuf[nCharsRead1-1] = '\0';
+				md5Buf[nCharsRead2-1] = '\0';
+
+				//	Add
+				std::string file = fileBuf;
+				std::string md5 = md5Buf;
+
+				Results[file] = md5;
+			}
+
+		}
+		while( nCharsRead1 > 0 && nCharsRead2 > 0 );
+		fclose( pLoadIn );
+	}
+	mtx.unlock();
+}
+
+void Dlg_GameLibrary::SaveAll()
+{
+	mtx.lock();
+	FILE* pSaveOut = NULL;
+	fopen_s( &pSaveOut, RA_DIR_DATA "gamelibraryfound.txt", "w" );
+	if( pSaveOut != NULL )
+	{
+		std::map<std::string,std::string>::iterator iter = Results.begin();
+		while( iter != Results.end() )
+		{
+			const std::string& sFilepath = iter->first;
+			const std::string& sMD5 = iter->second;
+			
+			fwrite( sFilepath.c_str(), sizeof(char), strlen(sFilepath.c_str()), pSaveOut );
+			fwrite( "\n", sizeof(char), 1, pSaveOut );
+			fwrite( sMD5.c_str(), sizeof(char), strlen(sMD5.c_str()), pSaveOut );
+			fwrite( "\n", sizeof(char), 1, pSaveOut );
+
+			iter++;
+		}
+
+		fclose( pSaveOut );
+	}
+	mtx.unlock();
+}
+
+//static 
 INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+	return g_GameLibrary.GameLibraryProc( hDlg, uMsg, wParam, lParam );
+}
+
+INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
  	switch( uMsg )
  	{
  	case WM_INITDIALOG:
 	{
-		m_hDialogBox = hDlg;
+		//	m_hDialogBox = hDlg;//	?
 
 		HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_GAMELIST );	
 		SetupColumns( hList );
@@ -377,12 +642,23 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARA
 		ParseGameHashLibraryFromFile( m_GameHashLibrary );
 		ParseGameTitlesFromFile( m_GameTitlesLibrary );
 		ParseMyProgressFromFile( m_ProgressLibrary );
+		
+		int msBetweenRefresh = 1000;	//	auto?
+
+		//SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
+		RefreshList();
 
 		//ReloadGameListData();
 
 		return FALSE;
 	}
 	break;
+
+	case WM_TIMER:
+		if( ( g_GameLibrary.GetHWND() != NULL ) && ( IsWindowVisible( g_GameLibrary.GetHWND() ) ) )
+			RefreshList();
+		//ReloadGameListData();
+		break;
  
 	case WM_NOTIFY:
  		switch( LOWORD(wParam) )
@@ -444,6 +720,10 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARA
 		case IDC_RA_RESCAN:
 			{
 				ReloadGameListData();
+				
+				mtx.lock();	//?
+				SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, "Scanning..." );
+				mtx.unlock();
 			}
 			break;
 
@@ -459,7 +739,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARA
 					{
 						RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation );
 						SetDlgItemText( hDlg, IDC_RA_ROMDIR, g_sROMDirLocation );
-						ReloadGameListData();
+						//ReloadGameListData();
 					}
 					CoTaskMemFree( pidl );
 				}
@@ -482,12 +762,29 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARA
 			}
 			break;
 
+		case IDC_RA_REFRESH:
+			{
+				RefreshList();
+			}
+			break;
+
  		//case IDCANCEL:
  		//	EndDialog( hDlg, TRUE );
  		//	return TRUE;
  		//	break;
 		}
  		break;
+
+	case WM_PAINT:
+		if( nNumParsed != Results.size() )
+		{
+			nNumParsed = Results.size();
+			//	Repopulate
+
+			//RefreshList();
+		}
+ 		return DefWindowProc( hDlg, uMsg, wParam, lParam );
+
  	case WM_CLOSE:
  		// 		if (Full_Screen)
  		// 		{
@@ -498,14 +795,27 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc( HWND hDlg, UINT uMsg, WPARA
  		EndDialog( hDlg, FALSE );
  		return TRUE;
  		break;
+
+	case WM_USER:
+
+		break;
  	}
 
 	return FALSE;
 	//return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
-//static
-void Dlg_GameLibrary::DoModalDialog( HINSTANCE hInst, HWND hParent )
+void Dlg_GameLibrary::KillThread()
 {
-	DialogBox( hInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), hParent, Dlg_GameLibrary::s_GameLibraryProc );
+	Dlg_GameLibrary::ThreadProcessingAllowed = false;
+	while( Dlg_GameLibrary::ThreadProcessingActive )
+	{
+		RA_LOG("Waiting for background scanner..." );
+		Sleep(200);
+	}
 }
+////static
+//void Dlg_GameLibrary::DoModalDialog( HINSTANCE hInst, HWND hParent )
+//{
+//	DialogBox( hInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), hParent, Dlg_GameLibrary::s_GameLibraryProc );
+//}

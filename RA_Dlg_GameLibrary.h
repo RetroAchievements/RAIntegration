@@ -2,6 +2,8 @@
 
 #include <wtypes.h>
 #include <vector>
+#include <deque>
+#include <string>
 #include <map>
 
 class GameEntry
@@ -22,24 +24,49 @@ public:
 class Dlg_GameLibrary
 {
 public:
-	static void DoModalDialog( HINSTANCE hInst, HWND hParent );
-	static INT_PTR CALLBACK s_GameLibraryProc( HWND, UINT, WPARAM, LPARAM );
+	Dlg_GameLibrary();
+	~Dlg_GameLibrary();
 
 public:
-	static void AddTitle( const std::string& sTitle, const std::string& sFilename, unsigned int nGameID );
-	static void ClearTitles();
-	
-private:
-	static void SetupColumns( HWND hList );
-	static void ReloadGameListData();
-	static void ScanAndAddRomsRecursive( std::string sBaseDir );
-	static BOOL LaunchSelected();
-	
-private:
-	static HWND m_hDialogBox;
+	//void DoModalDialog( HINSTANCE hInst, HWND hParent );
+	static INT_PTR CALLBACK s_GameLibraryProc( HWND, UINT, WPARAM, LPARAM );
+	INT_PTR CALLBACK GameLibraryProc( HWND, UINT, WPARAM, LPARAM );
 
-	static std::map<std::string, unsigned int> m_GameHashLibrary;
-	static std::map<unsigned int, std::string> m_GameTitlesLibrary;
-	static std::map<unsigned int, std::string> m_ProgressLibrary;
-	static std::vector<GameEntry> m_vGameEntries;
+public:
+	void InstallHWND( HWND hWnd )		{ m_hDialogBox = hWnd; }
+	HWND GetHWND() const				{ return m_hDialogBox; }
+
+	void AddTitle( const std::string& sTitle, const std::string& sFilename, unsigned int nGameID );
+	void ClearTitles();
+	
+	void LoadAll();
+	void SaveAll();
+
+	void KillThread();
+	
+private:
+	void SetupColumns( HWND hList );
+	void ReloadGameListData();
+	void ScanAndAddRomsRecursive( std::string sBaseDir );
+	BOOL LaunchSelected();
+	void RefreshList();
+
+private:
+	static std::deque<std::string> FilesToScan;
+	static std::map<std::string, std::string> Results;			//	filepath,md5 (parsed/persisted)
+	static std::map<std::string, std::string> VisibleResults;	//	filepath,md5 (added to renderable)
+	static size_t nNumParsed;
+
+	static void ThreadedScanProc();
+	static bool ThreadProcessingAllowed;
+	static bool ThreadProcessingActive;
+	
+private:
+	HWND m_hDialogBox;
+
+	std::map<std::string, unsigned int> m_GameHashLibrary;
+	std::map<unsigned int, std::string> m_GameTitlesLibrary;
+	std::map<unsigned int, std::string> m_ProgressLibrary;
+	std::vector<GameEntry> m_vGameEntries;
 };
+extern Dlg_GameLibrary g_GameLibrary;

@@ -75,13 +75,13 @@ int Dlg_AchievementsReporter::AddAchievementToListBox( HWND hList, const Achieve
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%d", pAch->ID() );
 				break;*/
 			case COL_TITLE:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%s", pAch->Title() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Title() );
 				break;
 			case COL_DESC:
-                sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%s", pAch->Description() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Description() );
 				break;
 			case COL_AUTHOR:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%s", pAch->Author() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Author() );
 				break;
 			case COL_ACHIEVED:
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, !pAch->Active() ? "Yes" : "No" );

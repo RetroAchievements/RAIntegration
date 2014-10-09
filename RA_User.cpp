@@ -273,7 +273,8 @@ void LocalRAUser::RequestFriendList()
 {
  	char sPost[512];
 	sprintf_s( sPost, 512, "u=%s&t=%s", m_sUsername, m_sToken );
- 	CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, &s_OnFriendListCB );
+ 	//CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, &s_OnFriendListCB );
+ 	CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, NULL );
 }
 
 RAUser& LocalRAUser::AddFriend( const char* sFriend, unsigned int nScore )

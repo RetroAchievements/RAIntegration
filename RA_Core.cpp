@@ -532,7 +532,7 @@ API int CCONV _RA_HandleHTTPResults()
 		if( pObj->m_pfCallbackOnReceive != NULL )
 		{
 			//	Do a mainthread cb
-			pObj->m_pfCallbackOnReceive( pObj );
+			//pObj->m_pfCallbackOnReceive( pObj );
 		}
 		else
 		{

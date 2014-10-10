@@ -293,7 +293,8 @@ RAUser& LocalRAUser::AddFriend( const char* sFriend, unsigned int nScore )
 	strcpy_s( NewFriend.m_sUsername, 64, sFriend );
 	NewFriend.m_nLatestScore = nScore;
  	m_Friends.push_back( NewFriend );
- 	return m_Friends.at( m_Friends.size()-1 );
+ 	//return m_Friends.at( m_Friends.size()-1 );
+ 	return m_Friends.back();
 }
  
 void LocalRAUser::PostActivity( enum ActivityType nActivityType )

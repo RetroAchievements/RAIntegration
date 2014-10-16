@@ -6,7 +6,7 @@
 #include <wtypes.h>
 #include <assert.h>
 
-const int g_nMaxAchievements = 100;
+const int g_nMaxAchievements = 200;
 const int g_nMaxTextItemSize = 80;
 
 //extern const char* g_sColTitles[];

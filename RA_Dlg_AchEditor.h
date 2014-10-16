@@ -9,7 +9,7 @@
 
 namespace
 {
-	const int g_nMaxConditions = 100;
+	const int g_nMaxConditions = 200;
 	const int g_nMaxMemStringTextItemSize = 80;
 }
 

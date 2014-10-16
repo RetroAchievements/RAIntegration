@@ -4,7 +4,7 @@
 
 INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, LPARAM);
 
-const int MAX_ACHIEVEMENTS = 100;
+const int MAX_ACHIEVEMENTS = 200;
 const int MAX_TEXT_SIZE = 250;
 
 class Achievement;

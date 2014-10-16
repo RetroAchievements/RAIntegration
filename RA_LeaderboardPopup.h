@@ -1,5 +1,4 @@
-#ifndef _LEADERBOARDPOPUP_H_
-#define _LEADERBOARDPOPUP_H_
+#pragma once
 
 #include <wtypes.h>
 #include "RA_AchievementOverlay.h"
@@ -39,5 +38,3 @@ private:
 	std::vector<unsigned int> m_vActiveLBIDs;
 	std::queue<unsigned int> m_vScoreboardQueue;
 };
-
-#endif // _LEADERBOARDPOPUP_H_

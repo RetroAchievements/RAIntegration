@@ -110,6 +110,7 @@ extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 extern bool g_hardcoreModeActive;
+extern bool g_bLeaderboardsActive;
 extern unsigned int g_nNumHTTPThreads;
 
 extern const char* (*g_fnKeysVersion)(void);

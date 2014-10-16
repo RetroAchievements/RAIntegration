@@ -1,17 +1,11 @@
 #include "RA_httpthread.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <memory.h>
-#include <direct.h>
-#include <assert.h>
-#include <windows.h>
+#include <vector>
+#include <Windows.h>	//	GetFileAttributes
 #include <winhttp.h>
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 #include <time.h>
-#include <deque>
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -20,8 +14,6 @@
 #include "RA_Dlg_Memory.h"
 #include "RA_RichPresence.h"
 
-#include <strsafe.h>
-
 //	No game-specific code here please!
 
 HANDLE g_hHTTPMutex;
@@ -29,12 +21,11 @@ std::vector<HANDLE> g_vhHTTPThread;
 HttpResults HttpRequestQueue;
 HttpResults LastHttpResults;
 
-BOOL DirectoryExists(LPCTSTR szPath)
+BOOL DirectoryExists( const char* sPath )
 {
-	DWORD dwAttrib = GetFileAttributes(szPath);
+	DWORD dwAttrib = GetFileAttributes( sPath );
 
-	return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
-		(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+	return( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 }
 
 BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsigned int nBufferOutSize, DWORD* pBytesRead )

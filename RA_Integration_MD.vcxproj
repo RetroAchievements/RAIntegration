@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseWithDebug|Win32">
+      <Configuration>ReleaseWithDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}</ProjectGuid>
+    <RootNamespace>RA_Integration</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.60610.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <IncludePath>C:\SDK\DX90CSDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\SDK\DX90CSDK\Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:/SDK/DX90CSDK/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(ProjectDir)\$(ProjectName)_d.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(ProjectDir)RA_Integration_d.dll</OutputFile>
+      <AdditionalLibraryDirectories>C:/SDK/DX90CSDK/lib/x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>C:/SDK/DX90CSDK/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(ProjectDir)RA_Integration.dll</OutputFile>
+      <AdditionalLibraryDirectories>C:/SDK/DX90CSDK/lib/x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>C:/SDK/DX90CSDK/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(ProjectDir)\$(ProjectName).pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(ProjectDir)RA_Integration.dll</OutputFile>
+      <AdditionalLibraryDirectories>C:/SDK/DX90CSDK/lib/x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="md5.c" />
+    <ClCompile Include="RA_Achievement.cpp" />
+    <ClCompile Include="RA_AchievementOverlay.cpp" />
+    <ClCompile Include="RA_AchievementPopup.cpp" />
+    <ClCompile Include="RA_CodeNotes.cpp" />
+    <ClCompile Include="RA_Condition.cpp" />
+    <ClCompile Include="RA_Core.cpp" />
+    <ClCompile Include="RA_Defs.cpp" />
+    <ClCompile Include="RA_Dlg_AchEditor.cpp" />
+    <ClCompile Include="RA_Dlg_Achievement.cpp" />
+    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp" />
+    <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
+    <ClCompile Include="RA_Dlg_GameTitle.cpp" />
+    <ClCompile Include="RA_Dlg_Login.cpp" />
+    <ClCompile Include="RA_Dlg_Memory.cpp" />
+    <ClCompile Include="RA_httpthread.cpp" />
+    <ClCompile Include="RA_ImageFactory.cpp" />
+    <ClCompile Include="RA_Leaderboard.cpp" />
+    <ClCompile Include="RA_LeaderboardPopup.cpp" />
+    <ClCompile Include="RA_md5factory.cpp" />
+    <ClCompile Include="RA_MemManager.cpp" />
+    <ClCompile Include="RA_PopupWindows.cpp" />
+    <ClCompile Include="RA_ProgressPopup.cpp" />
+    <ClCompile Include="RA_RichPresence.cpp" />
+    <ClCompile Include="RA_User.cpp" />
+    <ClCompile Include="RA_Interface.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="md5.h" />
+    <ClInclude Include="RA_Achievement.h" />
+    <ClInclude Include="RA_AchievementOverlay.h" />
+    <ClInclude Include="RA_AchievementPopup.h" />
+    <ClInclude Include="RA_CodeNotes.h" />
+    <ClInclude Include="RA_Condition.h" />
+    <ClInclude Include="RA_Core.h" />
+    <ClInclude Include="RA_Defs.h" />
+    <ClInclude Include="RA_Dlg_AchEditor.h" />
+    <ClInclude Include="RA_Dlg_Achievement.h" />
+    <ClInclude Include="RA_Dlg_AchievementsReporter.h" />
+    <ClInclude Include="RA_Dlg_GameLibrary.h" />
+    <ClInclude Include="RA_Dlg_GameTitle.h" />
+    <ClInclude Include="RA_Dlg_Login.h" />
+    <ClInclude Include="RA_Dlg_Memory.h" />
+    <ClInclude Include="RA_httpthread.h" />
+    <ClInclude Include="RA_ImageFactory.h" />
+    <ClInclude Include="RA_Leaderboard.h" />
+    <ClInclude Include="RA_LeaderboardPopup.h" />
+    <ClInclude Include="RA_md5factory.h" />
+    <ClInclude Include="RA_MemManager.h" />
+    <ClInclude Include="RA_PopupWindows.h" />
+    <ClInclude Include="RA_ProgressPopup.h" />
+    <ClInclude Include="RA_RichPresence.h" />
+    <ClInclude Include="RA_User.h" />
+    <ClInclude Include="RA_Resource.h" />
+    <ClInclude Include="RA_Interface.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RA_Shared.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

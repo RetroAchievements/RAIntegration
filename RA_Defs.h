@@ -1,5 +1,8 @@
 #pragma once
 
+//	NULL, etc
+#include <stddef.h>
+
 #ifndef RA_EXPORTS
 
 //NB. These must ONLY accessible from the emulator!

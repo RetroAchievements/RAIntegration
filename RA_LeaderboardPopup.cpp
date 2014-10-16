@@ -54,6 +54,9 @@ void LeaderboardPopup::Reset()
 
 void LeaderboardPopup::Update( ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused )
 {
+	if( !g_bLeaderboardsActive )	//	If not, simply ignore them.
+		return;
+
 	if( bPaused )
 		fDelta = 0.0f;
 
@@ -157,6 +160,9 @@ float LeaderboardPopup::GetOffsetPct() const
 
 void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 {
+	if( !g_bLeaderboardsActive )	//	If not, simply ignore them.
+		return;
+
 	const int nFontSize1 = 28;
 	const int nFontSize2 = 22;
 	const int nFontSize3 = 16;

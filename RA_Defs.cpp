@@ -1,8 +1,6 @@
 #include "RA_Defs.h"
 
 #include <stdio.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <Windows.h>
 
 #define DEBUG_LOGFILE "RALog.txt"
@@ -32,7 +30,6 @@ void DebugLog( const char* format, ... )
 	if( fopen_s( &pFile, RA_DIR_DATA DEBUG_LOGFILE, "a" ) == 0 )
 	{
 		fwrite( buf, sizeof(char), strlen( buf ), pFile );
-		//fwrite( "\n", sizeof(char), 1, pFile );
 		fclose( pFile );
 	}
 }

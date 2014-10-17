@@ -68,9 +68,15 @@ void ResetEmulation()
 	//FCEUI_ResetNES();
 }
 
+void LoadROM( char* sFullPath )
+{
+	//Pre_Load_Rom( HWnd, sFullPath );
+	
+}
+
 //	Installs these shared functions into the DLL
 void RA_InitShared()
 {
-	RA_InstallSharedFunctions( &GameIsActive, &CauseUnpause, &RebuildMenu, &GetEstimatedGameTitle, &ResetEmulation );
+	RA_InstallSharedFunctions( &GameIsActive, &CauseUnpause, &RebuildMenu, &GetEstimatedGameTitle, &ResetEmulation, &LoadROM );
 }
 

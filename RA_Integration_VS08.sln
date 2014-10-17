@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration_MD", "RA_Integration_MD.vcproj", "{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration", "RA_Integration_VS08.vcproj", "{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,18 +1,21 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration_MD", "RA_Integration_MD.vcproj", "{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RAGens", "..\RAGens\win32\RAGens.vcxproj", "{9FFB7437-AB3B-4B33-9647-2B60D1E93411}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
+		ReleaseWithDebug|Win32 = ReleaseWithDebug|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}.Debug|Win32.Build.0 = Debug|Win32
-		{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}.Release|Win32.ActiveCfg = Release|Win32
-		{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}.Release|Win32.Build.0 = Release|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.Debug|Win32.Build.0 = Debug|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.Release|Win32.ActiveCfg = Release|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.Release|Win32.Build.0 = Release|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.ReleaseWithDebug|Win32.ActiveCfg = ReleaseWithDebug|Win32
+		{9FFB7437-AB3B-4B33-9647-2B60D1E93411}.ReleaseWithDebug|Win32.Build.0 = ReleaseWithDebug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

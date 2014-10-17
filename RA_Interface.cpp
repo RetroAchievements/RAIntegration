@@ -348,12 +348,12 @@ void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 
 void FetchIntegrationFromWeb()
 {
-	char* buffer = new char[1*1024*1024];
+	char* buffer = new char[2*1024*1024];
 	if( buffer != NULL )
 	{
 		DWORD nBytesRead = 0;
 
-		if( DoBlockingHttpGet( "RA_Integration.dll", buffer, 1*1024*1024, &nBytesRead ) )
+		if( DoBlockingHttpGet( "RA_Integration.dll", buffer, 2*1024*1024, &nBytesRead ) )
 			WriteBufferToFile( "RA_Integration.dll", buffer, nBytesRead );
  
 		delete[] ( buffer );
@@ -365,12 +365,17 @@ const char* CCONV _RA_InstallIntegration()
 {
 	
 #ifndef NDEBUG
-	g_hRADLL = LoadLibraryA( "RA_Integration_d.dll" );
+	g_hRADLL = LoadLibrary( TEXT( "RA_Integration_d.dll" ) );
 #else
-	g_hRADLL = LoadLibraryA( "RA_Integration.dll" );
+	g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
 #endif
 	if( g_hRADLL == NULL )
-		return  "0.000";
+	{
+		char buffer[1024];
+		sprintf_s( buffer, 1024, "LoadLibrary failed: %d\n", GetLastError() );
+		MessageBox( NULL, buffer, "Sorry!", MB_OK );
+		return "0.000";
+	}
 
 	//	Install function pointers one by one
  

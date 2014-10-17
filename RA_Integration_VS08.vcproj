@@ -288,10 +288,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\RA_Dlg_GameLibrary.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\RA_Dlg_GameTitle.cpp"
 				>
 			</File>
@@ -391,10 +387,6 @@
 			</File>
 			<File
 				RelativePath=".\RA_Dlg_AchievementsReporter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RA_Dlg_GameLibrary.h"
 				>
 			</File>
 			<File

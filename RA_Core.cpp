@@ -23,7 +23,7 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_AchievementsReporter.h"
-#include "RA_Dlg_GameLibrary.h"
+//#include "RA_Dlg_GameLibrary.h"
 
 #include "RA_AchievementOverlay.h"
 #include "RA_httpthread.h"
@@ -283,13 +283,13 @@ API int CCONV _RA_Shutdown()
 		g_MemoryDialog.InstallHWND( NULL );
 	}
 	
-	if( g_GameLibrary.GetHWND() != NULL )
-	{
-		DestroyWindow( g_GameLibrary.GetHWND() );
-		g_GameLibrary.InstallHWND( NULL );
-	}
+	//if( g_GameLibrary.GetHWND() != NULL )
+	//{
+	//	DestroyWindow( g_GameLibrary.GetHWND() );
+	//	g_GameLibrary.InstallHWND( NULL );
+	//}
 
-	g_GameLibrary.KillThread();
+	//g_GameLibrary.KillThread();
 	
 	return 0;
 }
@@ -949,7 +949,7 @@ API void CCONV _RA_LoadPreferences()
 		fclose( pConfigFile );
 	}
 
-	g_GameLibrary.LoadAll();
+	//g_GameLibrary.LoadAll();
 }
 
 //	Save preferences to ra_prefs.cfg
@@ -1004,7 +1004,7 @@ API void CCONV _RA_SavePreferences()
 		fclose( pConfigFile );
 	}
 	
-	g_GameLibrary.SaveAll();
+	//g_GameLibrary.SaveAll();
 }
 
 void _FetchGameHashLibraryFromWeb()
@@ -1230,10 +1230,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 					_FetchMyProgressFromWeb();
 
 							
-					if( g_GameLibrary.GetHWND() == NULL )
-						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
-					if( g_GameLibrary.GetHWND() != NULL )
-						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
+					//if( g_GameLibrary.GetHWND() == NULL )
+					//	g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
+					//if( g_GameLibrary.GetHWND() != NULL )
+					//	ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
 
 					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}

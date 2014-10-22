@@ -1753,7 +1753,7 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 
 void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 {
-	RequestObject* pObj = (RequestObject*)pRequestObject;
+	RequestObject* pObj = static_cast<RequestObject*>( pRequestObject );
 	unsigned int nIDRequested = 0;
 	char* sResponseIter = NULL;
 	char* pNextWinnerStr = NULL;

@@ -9,6 +9,9 @@
 #include <string>
 #include <map>
 
+#include "rapidjson/include/rapidjson/document.h"
+using namespace rapidjson;
+
 #include "RA_Interface.h"
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -238,7 +241,11 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	//////////////////////////////////////////////////////////////////////////
 	//	Attempt to fetch latest client version:
 	CreateHTTPRequestThread( g_sGetLatestClientPage, "", HTTPRequest_Get, 0 );
-
+	
+	//	TBD:	
+	sprintf_s( sPostVars, 256, "r=%s&u=%s&t=%s", "score", g_LocalUser.Username(), g_LocalUser.Token() );
+	CreateHTTPRequestThread( "dorequest.php", sPostVars, HTTPRequest_Post, 0 );
+	
 	return TRUE;
 }
 
@@ -527,9 +534,9 @@ API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer )
 
 API int CCONV _RA_HandleHTTPResults()
 {
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 
-	RequestObject* pObj = LastHttpResults.PopNextItem();
+	RequestObject* pObj = RAWeb::LastHttpResults.PopNextItem();
 	while( pObj	!= NULL )
 	{
 		//if( pObj->m_pfCallbackOnReceive != NULL )
@@ -735,15 +742,30 @@ API int CCONV _RA_HandleHTTPResults()
 				{
 					RA_LeaderboardManager::s_OnSubmitEntry( pObj );
 				}
+				else if( strcmp( pObj->m_sRequestPageName, "dorequest.php" ) == 0 )
+				{
+					Document doc;
+					doc.ParseInsitu( pObj->m_sResponse );
+					if( !doc.HasParseError() && doc["Success"].GetBool() )
+					{
+						if( pObj->m_sRequestPageName
+						int nScore = doc["Score"].GetInt();
+						RA_LOG( "Score: %d", doc["Score"].GetInt() );
+					}
+					else
+					{
+						RA_LOG( "JSON parse error: %d\n", doc.GetParseError() );
+					}
+				}
 				break;
 			}
 		}
 
 		free( pObj );
-		pObj = LastHttpResults.PopNextItem();
+		pObj = RAWeb::LastHttpResults.PopNextItem();
 	}
 
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return 0;
 }

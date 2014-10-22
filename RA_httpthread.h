@@ -2,6 +2,8 @@
 
 #include "RA_Defs.h"
 #include <deque>
+#include <map>
+#include <string>
 #include <assert.h>
 
 typedef void* HANDLE;
@@ -15,22 +17,64 @@ enum HTTPRequestType
 	HTTPRequest__Max
 };
 
-typedef void (*cb_OnReceive)(void* pObj);
+enum RequestType
+{
+	//	Login
+	RequestLogin,
+	
+	//	Fetch
+	RequestNews,
+	RequestPatch,
+	RequestLatestClientPage,
+	RequestRichPresence,
+	RequestAchievementInfo,
+	RequestLeaderboardInfo,
+	RequestCodeNotes,
+	RequestFriendList,
+	RequestUserPic,
+	RequestBadgeImage,
+
+	//	Submit
+	RequestPing,
+	RequestPostActivity,
+	RequestSubmitAwardAchievement,
+	RequestSubmitCodeNote,
+	RequestSubmitLeaderboardEntry,
+	RequestSubmitAchievementData,
+	
+	NumRequestTypes
+};
+
+extern const char* RequestTypeToString[];
+
+typedef std::map<char, std::string> PostArgs;
 
 class RequestObject
 {
 public:
-	void Clean();
+	RequestObject( RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sPage = "", const int nUserRef = 0 ) :
+		m_nType( nType ), m_PostArgs( PostArgs ), m_sPageURL( sPage ), m_nUserRef( nUserRef )
+		{}
 
 public:
-	char m_sRequestPageName[256];
-	char m_sRequestPost[256];
-	char m_sResponse[32768];
-	enum HTTPRequestType m_nReqType;
-	BOOL m_bResponse;
-	int m_nBytesRead;
-	int m_nUserRef;
-	//cb_OnReceive m_pfCallbackOnReceive;
+	const RequestType GetRequestType() const	{ return m_nType; }
+	const PostArgs& GetPostArgs() const			{ return m_PostArgs; }
+	const std::string& GetPageURL() const		{ return m_sPageURL; }
+	const int GetUserRef() const				{ return m_nUserRef; }
+	
+	BOOL GetSuccess() const						{ return m_bSuccess; }
+	const std::string& GetResponse() const		{ return m_sResponse; }
+	size_t GetNumBytesRead() const				{ return m_nBytesRead; }
+
+private:
+	const RequestType m_nType;
+	const PostArgs m_PostArgs;
+	const std::string m_sPageURL;
+	const int m_nUserRef;
+
+	BOOL m_bSuccess;
+	std::string m_sResponse;
+	size_t m_nBytesRead;
 };
 
 class HttpResults
@@ -47,19 +91,21 @@ private:
 	std::deque<RequestObject*> m_aRequests;
 };
 
+class RAWeb
+{
+public:
+	static HANDLE g_hHTTPMutex;
+	static HttpResults LastHttpResults;
 
-extern HANDLE g_hHTTPMutex;
-extern HttpResults LastHttpResults;
+	static void RA_InitializeHTTPThreads();
+	static void RA_KillHTTPThreads();
 
-void RA_InitializeHTTPThreads();
-void RA_KillHTTPThreads();
-BOOL DirectoryExists( const char* sPath );
+	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sCustomPageURL = "", int nUserRef = 0 );
+	static BOOL HTTPRequestExists( const char* sRequestPageName );
 
-BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostString, enum HTTPRequestType nType, int nUserRef /*, cb_OnReceive pfOnReceive*/ );	//	No CB!
-BOOL HTTPRequestExists( const char* sRequestPageName );
+	static BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, DWORD& nBytesRead );
+	static BOOL DoBlockingHttpPost( const char* sRequestedPage, const char* sPostString, char* pBufferOut, const unsigned nBufferOutSize, DWORD& nBytesRead );
+	static BOOL DoBlockingImageUpload( const char* sRequestedPage, const char* sFilename, char* pBufferOut, DWORD& nBytesRead );
 
-BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsigned int nBufferOutSize, unsigned long* rBytesRead );
-BOOL DoBlockingHttpPost( const char* sRequestedPage, const char* sPostString, char* pBufferOut, const unsigned nBufferOutSize, DWORD* rCharsRead );
-BOOL DoBlockingImageUpload( const char* sRequestedPage, const char* sFilename, char* pBufferOut, const unsigned int nBufferOutSize, DWORD* rCharsRead );
-
-
+	static DWORD HTTPWorkerThread( LPVOID lpParameter );
+};

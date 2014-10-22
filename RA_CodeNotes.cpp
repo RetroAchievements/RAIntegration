@@ -65,6 +65,7 @@ BOOL CodeNotes::Update( unsigned int nID )
 	char buffer[256];
 	sprintf_s( buffer, 256, "g=%d", nID );
 
+	
 	CreateHTTPRequestThread( "requestcodenotes.php", buffer, HTTPRequest_Post, 0 );
 	
 	return TRUE;

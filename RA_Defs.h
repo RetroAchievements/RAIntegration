@@ -42,12 +42,15 @@
 #define RA_IMG_HOST "retroachievements.org"
 #define RA_IMG_HOST_W MAKEWIDE( RA_IMG_HOST )
 
+#define SIZEOF_ARRAY(ar) (sizeof(ar)/sizeof(ar[0]))
+
 typedef unsigned char       BYTE;
 typedef unsigned long       DWORD;
 typedef int                 BOOL;
 typedef DWORD				ARGB;
 
-void DebugLog( const char* sFormat, ... );
+extern void DebugLog( const char* sFormat, ... );
+extern BOOL DirectoryExists( const char* sPath );
 
 #ifdef _DEBUG
 #define RA_LOG DebugLog

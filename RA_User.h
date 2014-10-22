@@ -80,6 +80,8 @@ public:
 	RAUser& AddFriend( const char* sFriend, unsigned int nScore );
 	RAUser* GetFriend( unsigned int nOffs );
 	const size_t NumFriends() const		{ return m_Friends.size(); }
+
+	const char* Token() const		{ return m_sToken; }
 	
 	void PostActivity( enum ActivityType nActivityType );
 

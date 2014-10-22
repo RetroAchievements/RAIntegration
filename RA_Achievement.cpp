@@ -970,7 +970,7 @@ void AchievementSet::Test()
 	char sTitle[1024];
 	char sSubtitle[1024];
 	char sValidation[50];
-	char sUserDetails[512];
+	//char sUserDetails[512];
 
 	if( !m_bProcessingActive )
 		return;
@@ -1034,14 +1034,21 @@ void AchievementSet::Test()
 				{
 					g_fnDoValidation( sValidation, g_LocalUser.m_sUsername, g_LocalUser.m_sToken, pAch->ID() );
 
-					sprintf_s( sUserDetails, 512, "u=%s&t=%s&a=%d&v=%s&h=%d",
-						g_LocalUser.m_sUsername, 
-						g_LocalUser.m_sToken, 
-						pAch->ID(),
-						sValidation,
-						g_hardcoreModeActive );
+					//sprintf_s( sUserDetails, 512, "u=%s&t=%s&a=%d&v=%s&h=%d",
+					//	g_LocalUser.m_sUsername, 
+					//	g_LocalUser.m_sToken, 
+					//	pAch->ID(),
+					//	sValidation,
+					//	g_hardcoreModeActive );
+
+					PostArgs args;
+					args['u'] = g_LocalUser.m_sUsername;
+					args['t'] = g_LocalUser.m_sToken;
+					args['a'] = pAch->ID();
+					args['v'] = sValidation;
+					args['h'] = g_hardcoreModeActive;
 					
-					CreateHTTPRequestThread( "requestachievement.php", sUserDetails, HTTPRequest_Post, i );
+					RAWeb::CreateThreadedHTTPRequest( RequestSubmitAwardAchievement, args );
 				}
 			}
 		}
@@ -1191,9 +1198,13 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 		if( m_nType == AT_CORE )
 		{
 			//	Fire off a request to get the latest rich presence info
-			char bufferPost[256];
-			sprintf_s( bufferPost, 256, "g=%d", m_nGameID );
-			CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID );
+			//char bufferPost[256];
+			//sprintf_s( bufferPost, 256, "g=%d", m_nGameID );
+			//CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID );
+
+			PostArgs args;
+			args['g'] = m_nGameID;
+			RAWeb::CreateThreadedHTTPRequest( RequestRichPresence, args );
 		}
 
 		if( nNumAchievementsLoaded > 0 )
@@ -1216,7 +1227,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 				sprintf_s( sPostData, 512, "u=%s&t=%s&g=%d&h=%d", g_LocalUser.m_sUsername, g_LocalUser.m_sToken, nGameID, g_hardcoreModeActive );
 
 				ZeroMemory( bufferOut, 32768 );
-				if( DoBlockingHttpPost( "requestunlocks.php", sPostData, bufferOut, 4096, &nCharsRead ) )
+				if( RAWeb::DoBlockingHttpPost( "requestunlocks.php", sPostData, bufferOut, 4096, &nCharsRead ) )
 				{
 					pBufferOut = &bufferOut[0];
 					if( strncmp( pBufferOut, "OK:", 3 ) == 0 )

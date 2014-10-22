@@ -33,3 +33,9 @@ void DebugLog( const char* format, ... )
 		fclose( pFile );
 	}
 }
+
+BOOL DirectoryExists( const char* sPath )
+{
+	DWORD dwAttrib = GetFileAttributes( sPath );
+	return( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+}

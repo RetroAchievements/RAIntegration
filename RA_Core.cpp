@@ -16,6 +16,7 @@
 #include "RA_Achievement.h"
 #include "RA_Leaderboard.h"
 #include "RA_MemManager.h"
+#include "RA_CodeNotes.h"
 
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
@@ -23,7 +24,7 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_AchievementsReporter.h"
-//#include "RA_Dlg_GameLibrary.h"
+#include "RA_Dlg_GameLibrary.h"
 
 #include "RA_AchievementOverlay.h"
 #include "RA_httpthread.h"
@@ -232,11 +233,11 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	//	Update news:
 	char sPostVars[256];
 	sprintf_s( sPostVars, 256, "n=%d&a=1", AchievementOverlay::m_nMaxNews );
-	CreateHTTPRequestThread( "requestnews.php", sPostVars, HTTPRequest_Post, 0, NULL );
+	CreateHTTPRequestThread( "requestnews.php", sPostVars, HTTPRequest_Post, 0 );
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Attempt to fetch latest client version:
-	CreateHTTPRequestThread( g_sGetLatestClientPage, "", HTTPRequest_Get, 0, NULL );
+	CreateHTTPRequestThread( g_sGetLatestClientPage, "", HTTPRequest_Get, 0 );
 
 	return TRUE;
 }
@@ -283,13 +284,13 @@ API int CCONV _RA_Shutdown()
 		g_MemoryDialog.InstallHWND( NULL );
 	}
 	
-	//if( g_GameLibrary.GetHWND() != NULL )
-	//{
-	//	DestroyWindow( g_GameLibrary.GetHWND() );
-	//	g_GameLibrary.InstallHWND( NULL );
-	//}
+	if( g_GameLibrary.GetHWND() != NULL )
+	{
+		DestroyWindow( g_GameLibrary.GetHWND() );
+		g_GameLibrary.InstallHWND( NULL );
+	}
 
-	//g_GameLibrary.KillThread();
+	g_GameLibrary.KillThread();
 	
 	return 0;
 }
@@ -531,12 +532,13 @@ API int CCONV _RA_HandleHTTPResults()
 	RequestObject* pObj = LastHttpResults.PopNextItem();
 	while( pObj	!= NULL )
 	{
-		if( pObj->m_pfCallbackOnReceive != NULL )
+		//if( pObj->m_pfCallbackOnReceive != NULL )
 		{
+			//	Banish this shizzle!
 			//	Do a mainthread cb
-			pObj->m_pfCallbackOnReceive( pObj );
+			//pObj->m_pfCallbackOnReceive( pObj );
 		}
-		else
+		//else
 		{
 			switch( pObj->m_nReqType )
 			{
@@ -569,6 +571,12 @@ API int CCONV _RA_HandleHTTPResults()
 
 					g_AchievementEditorDialog.UpdateSelectedBadgeImage();
 				}
+				else if( strncmp( pObj->m_sRequestPageName, "UserPic", 7 ) == 0 )
+				{
+					//	Dodge!
+					extern void OnUserPicDownloaded( void* );
+					OnUserPicDownloaded( pObj );
+				}
 				else if( strcmp( pObj->m_sRequestPageName, g_sGetLatestClientPage ) == 0 )
 				{
 					if( strlen( pObj->m_sResponse ) > 2 && pObj->m_sResponse[0] == '0' && pObj->m_sResponse[1] == '.' )
@@ -590,6 +598,10 @@ API int CCONV _RA_HandleHTTPResults()
 					{
 						//	Ignore: nonsense response from server
 					}
+				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestbadgenames.php" ) == 0 )
+				{
+					g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
 				}
 
 
@@ -706,6 +718,22 @@ API int CCONV _RA_HandleHTTPResults()
 						//	Then install it
 						g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
 					}
+				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestcodenotes.php" ) == 0 )
+				{
+					CodeNotes::s_OnUpdateCB( pObj );
+				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestachievementinfo.php" ) == 0 )
+				{
+					AchievementExamine::CB_OnReceiveData( pObj );
+				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestlbinfo.php" ) == 0 )
+				{
+					LeaderboardExamine::CB_OnReceiveData( pObj );
+				}
+				else if( strcmp( pObj->m_sRequestPageName, "requestsubmitlbentry.php" ) == 0 )
+				{
+					RA_LeaderboardManager::s_OnSubmitEntry( pObj );
 				}
 				break;
 			}
@@ -1228,12 +1256,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 					_FetchGameHashLibraryFromWeb();
 					_FetchGameTitlesFromWeb();
 					_FetchMyProgressFromWeb();
-
 							
-					//if( g_GameLibrary.GetHWND() == NULL )
-					//	g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
-					//if( g_GameLibrary.GetHWND() != NULL )
-					//	ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
+					if( g_GameLibrary.GetHWND() == NULL )
+						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
+					if( g_GameLibrary.GetHWND() != NULL )
+						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
 
 					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}

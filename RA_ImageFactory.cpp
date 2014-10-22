@@ -277,7 +277,7 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 				sReqBadgeName[i] = '/';
 
 		if( !HTTPRequestExists( sReqBadgeName ) )
-			CreateHTTPRequestThread( sReqBadgeName, "", HTTPRequest_Get, 0, NULL );
+			CreateHTTPRequestThread( sReqBadgeName, "", HTTPRequest_Get, 0 );
 		return hRetVal;
 	}
 

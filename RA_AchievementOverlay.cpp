@@ -1744,8 +1744,7 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 	CreateHTTPRequestThread( "requestachievementinfo.php", 
 		buffer, 
 		HTTPRequest_Post, 
-		0, 
-		&AchievementExamine::CB_OnReceiveData );
+		0 );
 }
 
 void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
@@ -1832,8 +1831,7 @@ void LeaderboardExamine::Initialize( const unsigned int nLBIDIn )
 	CreateHTTPRequestThread( "requestlbinfo.php",
 		buffer, 
 		HTTPRequest_Post, 
-		0, 
-		&LeaderboardExamine::CB_OnReceiveData );
+		0 );
 }
 
 void LeaderboardExamine::CB_OnReceiveData( void* pRequestObject )

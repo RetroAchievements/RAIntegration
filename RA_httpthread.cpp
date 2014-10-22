@@ -385,7 +385,7 @@ BOOL HTTPRequestExists( const char* sRequestPageName )
 }
 
 //	Adds items to the httprequest queue
-BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostString, enum HTTPRequestType nType, int nUserRef, cb_OnReceive pfOnReceive )
+BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostString, enum HTTPRequestType nType, int nUserRef/*, cb_OnReceive pfOnReceive*/ )
 {
 	RA_LOG( __FUNCTION__ " %s\n", sRequestedPage );
 
@@ -401,7 +401,7 @@ BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostStrin
 	ZeroMemory( pObj->m_sResponse, 32768 );	//	Just to be sure
 	pObj->m_nUserRef = nUserRef;
 	pObj->m_nReqType = nType;
-	pObj->m_pfCallbackOnReceive = pfOnReceive;
+	//pObj->m_pfCallbackOnReceive = pfOnReceive;
 	
 	HttpRequestQueue.PushItem( pObj );
 
@@ -512,7 +512,7 @@ DWORD WINAPI HTTPWorkerThread( LPVOID lpParameter )
 						strcat_s( sPostString, 4096, sActivityStr );
 					}
 					
-					CreateHTTPRequestThread( "ping.php", sPostString, HTTPRequest_Post, 0, NULL );
+					CreateHTTPRequestThread( "ping.php", sPostString, HTTPRequest_Post, 0 );
 				}
 			}
 		}
@@ -555,7 +555,7 @@ void RA_KillHTTPThreads()
 	for( size_t i = 0; i < g_vhHTTPThread.size(); ++i )
 	{
 		//	Create 5 of these:
-		CreateHTTPRequestThread( "", "", HTTPRequest_StopThread, 0, NULL );
+		CreateHTTPRequestThread( "", "", HTTPRequest_StopThread, 0 );
 	}
 	
 	for( size_t i = 0; i < g_vhHTTPThread.size(); ++i )
@@ -575,7 +575,7 @@ void RequestObject::Clean()
 	m_bResponse = FALSE;
 	m_nBytesRead = 0;
 	m_nUserRef = 0;
-	m_pfCallbackOnReceive = NULL;
+	//m_pfCallbackOnReceive = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////

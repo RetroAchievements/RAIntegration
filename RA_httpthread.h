@@ -30,7 +30,7 @@ public:
 	BOOL m_bResponse;
 	int m_nBytesRead;
 	int m_nUserRef;
-	cb_OnReceive m_pfCallbackOnReceive;
+	//cb_OnReceive m_pfCallbackOnReceive;
 };
 
 class HttpResults
@@ -55,7 +55,7 @@ void RA_InitializeHTTPThreads();
 void RA_KillHTTPThreads();
 BOOL DirectoryExists( const char* sPath );
 
-BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostString, enum HTTPRequestType nType, int nUserRef, cb_OnReceive pfOnReceive );
+BOOL CreateHTTPRequestThread( const char* sRequestedPage, const char* sPostString, enum HTTPRequestType nType, int nUserRef /*, cb_OnReceive pfOnReceive*/ );	//	No CB!
 BOOL HTTPRequestExists( const char* sRequestPageName );
 
 BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsigned int nBufferOutSize, unsigned long* rBytesRead );

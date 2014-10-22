@@ -126,7 +126,7 @@ void RAUser::RequestAndStoreUserImage()
 		sprintf_s( buffer, 256, "UserPic/%s.png", m_sUsername );
 
 		if( !HTTPRequestExists( buffer ) )
-			CreateHTTPRequestThread( buffer, "", HTTPRequest_Get, (this==&g_LocalUser), OnUserPicDownloaded );
+			CreateHTTPRequestThread( buffer, "", HTTPRequest_Get, (this==&g_LocalUser) );
 		
 		m_bFetchingUserImage = TRUE;
 	}
@@ -171,7 +171,7 @@ void LocalRAUser::AttemptSilentLogin()
 	sprintf_s( sRequest, 512, "u=%s&t=%s", m_sUsername, m_sToken );
 
 	//	Attempt a sign in as well, in order to fetch score and latest messages etc
-	CreateHTTPRequestThread( "requestlogin.php", sRequest, HTTPRequest_Post, 1, NULL );
+	CreateHTTPRequestThread( "requestlogin.php", sRequest, HTTPRequest_Post, 1 );
 
 	m_bStoreToken = TRUE;	//	Store it! We just fetched it!
 }
@@ -274,7 +274,7 @@ void LocalRAUser::RequestFriendList()
  	char sPost[512];
 	sprintf_s( sPost, 512, "u=%s&t=%s", m_sUsername, m_sToken );
  	//CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, &s_OnFriendListCB );
- 	CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, NULL );
+ 	CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0 );
 }
 
 RAUser& LocalRAUser::AddFriend( const char* sFriend, unsigned int nScore )
@@ -311,7 +311,7 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 				(int)nActivityType,
 				g_pActiveAchievements->m_nGameID );
 			
-			CreateHTTPRequestThread( "requestpostactivity.php", sPostString, HTTPRequest_Post, 0, NULL );
+			CreateHTTPRequestThread( "requestpostactivity.php", sPostString, HTTPRequest_Post, 0 );
 			break;
 		}
 		default:

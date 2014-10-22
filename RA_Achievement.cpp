@@ -1041,7 +1041,7 @@ void AchievementSet::Test()
 						sValidation,
 						g_hardcoreModeActive );
 					
-					CreateHTTPRequestThread( "requestachievement.php", sUserDetails, HTTPRequest_Post, i, NULL );
+					CreateHTTPRequestThread( "requestachievement.php", sUserDetails, HTTPRequest_Post, i );
 				}
 			}
 		}
@@ -1193,7 +1193,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 			//	Fire off a request to get the latest rich presence info
 			char bufferPost[256];
 			sprintf_s( bufferPost, 256, "g=%d", m_nGameID );
-			CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID, NULL );
+			CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID );
 		}
 
 		if( nNumAchievementsLoaded > 0 )

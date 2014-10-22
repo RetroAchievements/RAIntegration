@@ -413,7 +413,7 @@ void RA_Leaderboard::Test()
 					sValidation,
 					nVal );
 				
-				CreateHTTPRequestThread( "requestsubmitlbentry.php", sPost, HTTPRequest_Post, 0, &RA_LeaderboardManager::s_OnSubmitEntry );
+				CreateHTTPRequestThread( "requestsubmitlbentry.php", sPost, HTTPRequest_Post, 0 );
 			}
 		}
 	}

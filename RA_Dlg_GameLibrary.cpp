@@ -814,6 +814,7 @@ void Dlg_GameLibrary::KillThread()
 		Sleep(200);
 	}
 }
+
 ////static
 //void Dlg_GameLibrary::DoModalDialog( HINSTANCE hInst, HWND hParent )
 //{

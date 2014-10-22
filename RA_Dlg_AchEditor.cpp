@@ -2021,7 +2021,7 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup( int nGrp ) const
 
 void BadgeNames::FetchNewBadgeNamesThreaded()
 {
-	CreateHTTPRequestThread( "requestbadgenames.php", "", HTTPRequest_Get, 0, CB_OnNewBadgeNames );
+	CreateHTTPRequestThread( "requestbadgenames.php", "", HTTPRequest_Get, 0 );
 }
 
 //static

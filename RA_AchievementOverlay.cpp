@@ -1759,7 +1759,7 @@ void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 	char* pNextWinnerStr = NULL;
 	char* pWonAt = NULL;
 
-	if( pObj->m_bResponse == TRUE )
+	if( pObj->GetSuccess() )
 	{
 		AchievementExamine* pThis = &g_AchExamine;
 

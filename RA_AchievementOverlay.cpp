@@ -1741,10 +1741,14 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 
 	sprintf_s( buffer, 256, "a=%d", m_nID );
 
-	CreateHTTPRequestThread( "requestachievementinfo.php", 
-		buffer, 
-		HTTPRequest_Post, 
-		0 );
+	PostArgs args;
+	args['a'] = std::to_string( m_nID );
+	RAWeb::CreateThreadedHTTPRequest( RequestAchievementInfo, args );
+
+	//CreateHTTPRequestThread( "requestachievementinfo.php", 
+	//	buffer, 
+	//	HTTPRequest_Post, 
+	//	0 );
 }
 
 void AchievementExamine::CB_OnReceiveData( void* pRequestObject )

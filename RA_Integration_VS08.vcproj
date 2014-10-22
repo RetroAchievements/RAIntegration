@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="RA_Integration_MD"
-	ProjectGUID="{2C1B0023-8EF1-4C4B-99F3-E86BFF8B7300}"
+	Name="RA_Integration"
+	ProjectGUID="{5B661DA9-F2F6-4FE7-B488-5C5FC69D749E}"
 	RootNamespace="RA_Integration"
 	TargetFrameworkVersion="196613"
 	>

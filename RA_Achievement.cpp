@@ -1044,9 +1044,9 @@ void AchievementSet::Test()
 					PostArgs args;
 					args['u'] = g_LocalUser.m_sUsername;
 					args['t'] = g_LocalUser.m_sToken;
-					args['a'] = pAch->ID();
+					args['a'] = std::to_string( pAch->ID() );
 					args['v'] = sValidation;
-					args['h'] = g_hardcoreModeActive;
+					args['h'] = std::to_string( static_cast<int>( g_hardcoreModeActive ) );
 					
 					RAWeb::CreateThreadedHTTPRequest( RequestSubmitAwardAchievement, args );
 				}
@@ -1122,7 +1122,6 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 	char sPostData[512];
 	char bufferOut[32768];
 	char* pBufferOut = NULL;
-	DWORD nCharsRead = 0;
 	int nNumUnlocked = 0;
 	unsigned int nID = 0;
 	char sMessage[512];
@@ -1203,7 +1202,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 			//CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID );
 
 			PostArgs args;
-			args['g'] = m_nGameID;
+			args['g'] = std::to_string( m_nGameID );
 			RAWeb::CreateThreadedHTTPRequest( RequestRichPresence, args );
 		}
 
@@ -1227,7 +1226,8 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 				sprintf_s( sPostData, 512, "u=%s&t=%s&g=%d&h=%d", g_LocalUser.m_sUsername, g_LocalUser.m_sToken, nGameID, g_hardcoreModeActive );
 
 				ZeroMemory( bufferOut, 32768 );
-				if( RAWeb::DoBlockingHttpPost( "requestunlocks.php", sPostData, bufferOut, 4096, &nCharsRead ) )
+				DWORD nCharsRead = 0;
+				if( RAWeb::DoBlockingHttpPost( "requestunlocks.php", sPostData, bufferOut, 4096, nCharsRead ) )
 				{
 					pBufferOut = &bufferOut[0];
 					if( strncmp( pBufferOut, "OK:", 3 ) == 0 )

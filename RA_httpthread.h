@@ -89,7 +89,7 @@ public:
 	const int GetUserRef() const					{ return m_nUserRef; }
 	
 	BOOL GetSuccess() const							{ return m_bSuccess; }
-	const DataStream& GetResponse() const	{ return m_sResponse; }
+	DataStream& GetResponse()						{ return m_sResponse; }
 
 	void SetResult( BOOL bSuccess, const DataStream& sResponse );
 

@@ -176,10 +176,9 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 			
 			if( nMBReply == IDYES )
 			{
-				char buffer[65536];
-				DWORD nBytesRead = 0;
-				if( DoBlockingHttpGet( "RA_Keys.dll", buffer, 65536, &nBytesRead ) )
-					_WriteBufferToFile( "RA_Keys.dll", buffer, nBytesRead );
+				DataStream Response;
+				if( RAWeb::DoBlockingHttpGet( "RA_Keys.dll", Response ) )
+					_WriteBufferToFile( "RA_Keys.dll", Response.data(), Response.size() );
 			}
 		}
 		else
@@ -234,17 +233,20 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	
 	//////////////////////////////////////////////////////////////////////////
 	//	Update news:
-	char sPostVars[256];
-	sprintf_s( sPostVars, 256, "n=%d&a=1", AchievementOverlay::m_nMaxNews );
-	CreateHTTPRequestThread( "requestnews.php", sPostVars, HTTPRequest_Post, 0 );
+	PostArgs args;
+	args['n'] = std::to_string( AchievementOverlay::m_nMaxNews );
+	args['a'] = "1";
+	RAWeb::CreateThreadedHTTPRequest( RequestNews, args );
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Attempt to fetch latest client version:
-	CreateHTTPRequestThread( g_sGetLatestClientPage, "", HTTPRequest_Get, 0 );
+	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage );	//	g_sGetLatestClientPage
 	
-	//	TBD:	
-	sprintf_s( sPostVars, 256, "r=%s&u=%s&t=%s", "score", g_LocalUser.Username(), g_LocalUser.Token() );
-	CreateHTTPRequestThread( "dorequest.php", sPostVars, HTTPRequest_Post, 0 );
+	//	TBD:
+	PostArgs args2;
+	args2['u'] = g_LocalUser.Username();
+	args2['t'] = g_LocalUser.Token();
+	RAWeb::CreateThreadedHTTPRequest( RequestType::RequestScore, args2 );
 	
 	return TRUE;
 }
@@ -748,7 +750,7 @@ API int CCONV _RA_HandleHTTPResults()
 					doc.ParseInsitu( pObj->m_sResponse );
 					if( !doc.HasParseError() && doc["Success"].GetBool() )
 					{
-						if( pObj->m_sRequestPageName
+						//if( pObj->m_sRequestPageName
 						int nScore = doc["Score"].GetInt();
 						RA_LOG( "Score: %d", doc["Score"].GetInt() );
 					}
@@ -1479,7 +1481,19 @@ char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate )
 	return (pStartString);
 }
 
-int _WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
+int _WriteBufferToFile( const std::string& sFileName, const DataStream& raw )
+{
+	FILE* pf;
+	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
+	{
+		fwrite( raw.data(), 1, raw.size(), pf );
+		fclose( pf );
+	}
+
+	return 0;
+}
+
+int _WriteBufferToFile( const char* sFile, const BYTE* sBuffer, int nBytes )
 {
 	FILE* pf;
 	if( fopen_s( &pf, sFile, "wb" ) == 0 )

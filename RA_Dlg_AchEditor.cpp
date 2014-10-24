@@ -17,12 +17,7 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 
-#if defined (RA_GENS)
-//#include "g_main.h"
-//#include "G_dsound.h"
-//#include "Rom.h"
-#elif defined (RA_VBA)
-#endif
+#include "rapidjson/include/rapidjson/document.h"
 
 
 #pragma comment(lib, "comctl32.lib")
@@ -1264,14 +1259,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						if( ofn.lpstrFile != NULL )
 						{
-							DWORD nCharsRead = 0;
-							char buffer[1024];
-							char* pBuffer = &buffer[0];
-							//DoBlockingHttpPost( "requestuploadbadge.php", "Test=true", pBuffer, 1024, nCharsRead );
-							BOOL bOK = DoBlockingImageUpload( "requestuploadbadge.php", ofn.lpstrFile, pBuffer, 1024, &nCharsRead );
+							DataStream Response;
+							BOOL bOK = RAWeb::DoBlockingImageUpload( "requestuploadbadge.php", ofn.lpstrFile, Response );
 							if( bOK )
 							{
-								if( strncmp( pBuffer, "OK:", 3 ) == 0 )
+								using namespace rapidjson;
+								Document doc;
+								doc.ParseInsitu( Response.data()
+								Response
+								//if( strncmp( pBuffer, "OK:", 3 ) == 0 )
 								{
 									//TBD: ensure that:
 									//	The image is copied to the cache/badge dir

@@ -58,7 +58,11 @@ INT_PTR CALLBACK LoginProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 
 				char bufferFeedback[4096];
 
-				bValid = DoBlockingHttpPost( "requestlogin.php", sRequest, psResponse, 4096, &nBytesRead );
+				DataStream Response;
+				bValid = RAWeb::DoBlockingHttpPost( "requestlogin.php", sRequest, Response );
+				
+				using namespace rapidjson;
+				Document doc;
 
 				if( bValid &&
 					strncmp( sResponse, "OK:", 3 ) == 0 )

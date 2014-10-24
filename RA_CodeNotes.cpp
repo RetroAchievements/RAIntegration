@@ -12,6 +12,8 @@
 #include "RA_MemManager.h"
 #include "RA_User.h"
 
+#include "rapidjson/include/rapidjson/document.h"
+
 namespace
 {
 	const char Divider = ':';
@@ -62,40 +64,61 @@ BOOL CodeNotes::Update( unsigned int nID )
 	if( nID == 0 )
 		return FALSE;
 	
-	char buffer[256];
-	sprintf_s( buffer, 256, "g=%d", nID );
-
-	
-	CreateHTTPRequestThread( "requestcodenotes.php", buffer, HTTPRequest_Post, 0 );
-	
+	PostArgs Args;
+	Args['g'] = std::to_string( nID );
+	RAWeb::CreateThreadedHTTPRequest( RequestCodeNotes, Args );
 	return TRUE;
 }
 
 //	static
-void CodeNotes::s_OnUpdateCB(void* pObj)
+void CodeNotes::s_OnUpdateCB( void* pReqObj )
 {
-	if( pObj == NULL )
+	if( pReqObj == NULL )
 		return;
 
-	RequestObject* pRObj = (RequestObject*)(pObj);
-	RequestObject& rObj = *pRObj;
+	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
 
-	if( strncmp( rObj.m_sResponse, "OK:", 3 ) )
+	if( !pObj->GetSuccess() )
 	{
 		assert(!"Bad response from requestcodenotes!");
 		return;
 	}
 	
-	char* pIter = &rObj.m_sResponse[3];
-	char* pGameID = strtok_s( pIter, ":", &pIter );
+	DataStream Response = pObj->GetResponse();
+	//const std::vector<char> Response = static_cast< const std::vector<char> >( pObj->GetResponse() );	//	Copy by val
+	
+	//BYTE* pIter = &rObj.[3];
+	//	JSON TBD:
 
-	char buffer[256];
-	sprintf_s( buffer, 256, "%s%s-Notes2.txt", RA_DIR_DATA, pGameID );
+	Document doc;
+	doc.ParseInsitu( DataStreamAsString( Response ) );
 
-	const unsigned int nBytesToSkip = (pIter-rObj.m_sResponse);
+	//Response
+	//{"Success":true,"CodeNotes":[{"User":"Retromancer","Address":"0x00d008","Note":"''"},{"User":"jadersonic","Address":"0x00d01c","Note":""}]}
 
+	if( !doc.HasParseError() && doc["Success"].GetBool() )
+	{
+		assert( doc["CodeNotes"].IsArray() );
+		const Value& Notes = doc["CodeNotes"];
+		for( SizeType i = 0; i < Notes.Size(); ++i )
+		{
+			const Value& Note = Notes[i];
+			const std::string& sUser = Note["User"].GetString();
+			const std::string& sAddress = Note["Address"].GetString();
+			const std::string& sNote = Note["Note"].GetString();
+			RA_LOG( "CodeNote: %s, %s (%s)\n", sAddress.c_str(), sNote.c_str(), sUser.c_str() );
+			//	TBD: store?
+		}
+	}
+
+	std::string sGameID = pObj->GetPostArgs().at('g');
+	
 	SetCurrentDirectory( g_sHomeDir );
-	_WriteBufferToFile( buffer, pIter, rObj.m_nBytesRead-nBytesToSkip );
+
+	char sFilename[256];
+	sprintf_s( sFilename, 256, "%s%s-Notes2.txt", RA_DIR_DATA, sGameID.c_str() );
+	//_WriteBufferToFile( buffer, pIter, rObj.m_nBytesRead-nBytesToSkip );
+	_WriteBufferToFile( sFilename, Response.data(), Response.size() );
 
 	g_MemoryDialog.RepopulateMemNotesFromFile();
 }
@@ -244,25 +267,21 @@ void CodeNotes::Add( const char* sAuthor, const char* sAddress, const char* sDes
 
 	if( g_LocalUser.m_bIsLoggedIn && ( strlen( sAddress ) > 2 ) )
 	{ 
-		char buffer[1024];
-		sprintf_s( buffer, 1024, "u=%s&t=%s&g=%d&a=%s&n=%s", 
-			g_LocalUser.Username(),
-			g_LocalUser.m_sToken,
-			g_pActiveAchievements->GameID(),
-			sAddress,
-			sDescription );
+		PostArgs args;
+		args['u'] = g_LocalUser.Username();
+		args['t'] = g_LocalUser.Token();
+		args['g'] = std::to_string( g_pActiveAchievements->GameID() );
+		args['a'] = sAddress;
+		args['d'] = sDescription;
 
 		//	faf
 		//CreateHTTPRequestThread( "requestsubmitcodenote.php", buffer, HTTPRequest_Post, 0, NULL );
 		
-		char bufferResponse[1024];
-		DWORD nResponseSize = 0;
-
-		if( DoBlockingHttpPost( "requestsubmitcodenote.php", buffer, bufferResponse, 1024, &nResponseSize ) )
+		DataStream Response;
+		if( RAWeb::DoBlockingHttpPost( "requestsubmitcodenote.php", PostArgsToString( args ), Response ) )
 		{
 			//	OK!
 			MessageBeep( 0xFFFFFFFF );
-			//MessageBox( g_RAMainWnd, "Saved OK!", "OK!", MB_OK );
 		}
 		else
 		{
@@ -285,15 +304,15 @@ BOOL CodeNotes::Remove( const char* sAddress )
 
 			if( g_LocalUser.m_bIsLoggedIn )
 			{
-				char buffer[1024];
-				sprintf_s( buffer, 1024, "u=%s&t=%s&g=%d&a=%s&n=''", 
-					g_LocalUser.Username(),
-					g_LocalUser.m_sToken,
-					g_pActiveAchievements->GameID(),
-					sAddress );
+				PostArgs args;
+				args['u'] = g_LocalUser.Username();
+				args['t'] = g_LocalUser.Token();
+				args['g'] = std::to_string( g_pActiveAchievements->GameID() );
+				args['a'] = sAddress;
+				args['n'] = "";
 
 				//	faf
-				CreateHTTPRequestThread( "requestsubmitcodenote.php", buffer, HTTPRequest_Post, 0 );
+				RAWeb::CreateThreadedHTTPRequest( RequestSubmitCodeNote, args );
 			}
 
 			return TRUE;

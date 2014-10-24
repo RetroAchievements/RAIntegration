@@ -2,6 +2,7 @@
 
 //	NULL, etc
 #include <stddef.h>
+#include <vector>
 
 #ifndef RA_EXPORTS
 
@@ -16,6 +17,10 @@
 
 //NB. These must NOT be accessible from the emulator!
 #define RA_INTEGRATION_VERSION	"0.051"
+
+//	RA-Only
+#include "rapidjson/include/rapidjson/document.h"
+using namespace rapidjson;
 
 #endif	//RA_EXPORTS
 
@@ -48,6 +53,10 @@ typedef unsigned char       BYTE;
 typedef unsigned long       DWORD;
 typedef int                 BOOL;
 typedef DWORD				ARGB;
+
+typedef std::vector<BYTE> DataStream;
+
+char* DataStreamAsString( DataStream& stream );
 
 extern void DebugLog( const char* sFormat, ... );
 extern BOOL DirectoryExists( const char* sPath );

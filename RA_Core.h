@@ -129,7 +129,8 @@ extern BOOL _ReadTil( const char nChar, char buffer[], unsigned int nSize, DWORD
 extern char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate );
 
 //	Write out the buffer to a file
-extern int _WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes );
+extern int _WriteBufferToFile( const std::string& sFileName, const DataStream& rawData );
+extern int _WriteBufferToFile( const char* sFile, const BYTE* sBuffer, int nBytes );
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

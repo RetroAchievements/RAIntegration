@@ -1437,3 +1437,8 @@ void Dlg_Memory::SetWatchingAddress( unsigned int nAddr )
 
 	OnWatchingMemChange();
 }
+
+BOOL Dlg_Memory::IsActive() const
+{
+	return( g_MemoryDialog.GetHWND() != NULL ) && ( IsWindowVisible( g_MemoryDialog.GetHWND() ) );
+}

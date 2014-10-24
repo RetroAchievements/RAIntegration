@@ -72,6 +72,8 @@ public:
 	
 	void SetWatchingAddress( unsigned int nAddr );
 
+	BOOL IsActive() const;
+
 public:
 	CodeNotes* m_pCodeNotes;
 	HWND m_hWnd;

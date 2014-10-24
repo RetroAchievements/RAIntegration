@@ -4,9 +4,11 @@
 #include <deque>
 #include <map>
 #include <string>
+#include <vector>
 #include <assert.h>
 
 typedef void* HANDLE;
+typedef void* LPVOID;
 
 enum HTTPRequestType
 {
@@ -23,6 +25,7 @@ enum RequestType
 	RequestLogin,
 	
 	//	Fetch
+	RequestScore,
 	RequestNews,
 	RequestPatch,
 	RequestLatestClientPage,
@@ -41,6 +44,9 @@ enum RequestType
 	RequestSubmitCodeNote,
 	RequestSubmitLeaderboardEntry,
 	RequestSubmitAchievementData,
+
+	//	Special:
+	StopThread,
 	
 	NumRequestTypes
 };
@@ -48,6 +54,26 @@ enum RequestType
 extern const char* RequestTypeToString[];
 
 typedef std::map<char, std::string> PostArgs;
+
+std::string PostArgsToString( const PostArgs& args )
+{
+	std::string str = "";
+	PostArgs::const_iterator iter = args.begin();
+	while( iter != args.end() )
+	{
+		if( iter == args.begin() )
+			str += "?";
+		else
+			str += "&";
+
+		str += (*iter).first;
+		str += "=";
+		str += (*iter).second;
+
+		iter++;
+	}
+	return str;
+}
 
 class RequestObject
 {
@@ -57,14 +83,15 @@ public:
 		{}
 
 public:
-	const RequestType GetRequestType() const	{ return m_nType; }
-	const PostArgs& GetPostArgs() const			{ return m_PostArgs; }
-	const std::string& GetPageURL() const		{ return m_sPageURL; }
-	const int GetUserRef() const				{ return m_nUserRef; }
+	const RequestType GetRequestType() const		{ return m_nType; }
+	const PostArgs& GetPostArgs() const				{ return m_PostArgs; }
+	const std::string& GetPageURL() const			{ return m_sPageURL; }
+	const int GetUserRef() const					{ return m_nUserRef; }
 	
-	BOOL GetSuccess() const						{ return m_bSuccess; }
-	const std::string& GetResponse() const		{ return m_sResponse; }
-	size_t GetNumBytesRead() const				{ return m_nBytesRead; }
+	BOOL GetSuccess() const							{ return m_bSuccess; }
+	const DataStream& GetResponse() const	{ return m_sResponse; }
+
+	void SetResult( BOOL bSuccess, const DataStream& sResponse );
 
 private:
 	const RequestType m_nType;
@@ -73,8 +100,7 @@ private:
 	const int m_nUserRef;
 
 	BOOL m_bSuccess;
-	std::string m_sResponse;
-	size_t m_nBytesRead;
+	DataStream m_sResponse;
 };
 
 class HttpResults
@@ -103,9 +129,9 @@ public:
 	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sCustomPageURL = "", int nUserRef = 0 );
 	static BOOL HTTPRequestExists( const char* sRequestPageName );
 
-	static BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, DWORD& nBytesRead );
-	static BOOL DoBlockingHttpPost( const char* sRequestedPage, const char* sPostString, char* pBufferOut, const unsigned nBufferOutSize, DWORD& nBytesRead );
-	static BOOL DoBlockingImageUpload( const char* sRequestedPage, const char* sFilename, char* pBufferOut, DWORD& nBytesRead );
+	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
+	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
+	static BOOL DoBlockingImageUpload( const std::string& sRequestedPage, const std::string& sFilename, DataStream& ResponseOut );
 
-	static DWORD HTTPWorkerThread( LPVOID lpParameter );
+	static DWORD __stdcall HTTPWorkerThread( LPVOID lpParameter );
 };

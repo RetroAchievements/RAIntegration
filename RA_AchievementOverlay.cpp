@@ -1762,10 +1762,14 @@ void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 	if( pObj->GetSuccess() )
 	{
 		AchievementExamine* pThis = &g_AchExamine;
+		
+		Document doc;
+		doc.ParseInsitu( DataStreamAsString( pObj->GetResponse() ) );
 
-		if( strlen( pObj->m_sRequestPost ) < 3 )
+		if( doc.HasParseError() )
 			return;
 
+		//?
 		if( g_AchievementOverlay.CurrentPage() != OP_ACHIEVEMENT_EXAMINE )
 			return;
 

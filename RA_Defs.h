@@ -8,8 +8,8 @@
 
 //NB. These must ONLY accessible from the emulator!
 #define RAGENS_VERSION			"0.050"
-#define RASNES9X_VERSION		"0.014"
-#define RAVBA_VERSION			"0.017"
+#define RASNES9X_VERSION		"0.015"
+#define RAVBA_VERSION			"0.018"
 #define RANES_VERSION			"0.008"
 #define RAPCE_VERSION			"0.002"
 

@@ -72,6 +72,19 @@ HttpResults HttpRequestQueue;
 HANDLE RAWeb::g_hHTTPMutex = NULL;
 HttpResults RAWeb::LastHttpResults;
 
+
+BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
+{
+	rDocOut.ParseInsitu( DataStreamAsString( GetResponse() ) );
+
+	if( rDocOut.HasParseError() )
+	{
+		RA_LOG( "Parse issue on response, %s (%s)\n", rDocOut.GetParseError(), RequestTypeToString[m_nType] );
+	}
+
+	return rDocOut.HasParseError();
+}
+
 //BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut )
 //{
 //	RA_LOG( __FUNCTION__ ": (%08x) GET from %s...\n", GetCurrentThreadId(), sRequestedPage );

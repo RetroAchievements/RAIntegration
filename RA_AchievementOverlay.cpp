@@ -1754,6 +1754,10 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 {
 	RequestObject* pObj = static_cast<RequestObject*>( pRequestObject );
+	Document doc;
+	if( !pObj->ParseResponseToJSON( doc ) )
+		return;
+
 	unsigned int nIDRequested = 0;
 	char* sResponseIter = NULL;
 	char* pNextWinnerStr = NULL;
@@ -1762,11 +1766,8 @@ void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 	if( pObj->GetSuccess() )
 	{
 		AchievementExamine* pThis = &g_AchExamine;
-		
 		Document doc;
-		doc.ParseInsitu( DataStreamAsString( pObj->GetResponse() ) );
-
-		if( doc.HasParseError() )
+		if( !pObj->ParseResponseToJSON( doc ) )
 			return;
 
 		//?
@@ -1776,24 +1777,17 @@ void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 		if( pThis->m_pSelectedAchievement == NULL )
 			return;
 
-		//	Check we still require this, then push data
-		nIDRequested = strtol( pObj->m_sRequestPost+2, NULL, 10 );// = //"a=9"
-		if( nIDRequested != pThis->m_pSelectedAchievement->ID() )
-		{
-			//	Unwanted: we didn't want this data!
-			return;
-		}
+		unsigned int nAchievementID = doc["AchievementID"].GetUint();
+		if( nAchievementID != pThis->m_pSelectedAchievement->ID() )
+			return;	//	Unwanted
 
-		sResponseIter = &pObj->m_sResponse[0];
-		if( strncmp( sResponseIter, "OK:", 3 ) != 0 )
-			return;
+		assert( doc["Response"].IsArray() );
+		const Value& DataReturned = doc["Response"];
+		
+		pThis->m_nTotalWinners		= DataReturned["NumEarned"].GetInt();
+		pThis->m_nPossibleWinners	= DataReturned["TotalPlayers"].GetInt();
 
-		sResponseIter += 3;
-
-		pThis->m_nTotalWinners		= atoi( strtok_s( sResponseIter, "*", &sResponseIter ) );
-		pThis->m_nPossibleWinners	= atoi( strtok_s( sResponseIter, "*", &sResponseIter ) );
-
-
+		
 		for( size_t i = 0; i < 5; ++i )
 		{
 			sprintf_s( pThis->m_RecentWinnerName[i], 128, "" );
@@ -1801,15 +1795,18 @@ void AchievementExamine::CB_OnReceiveData( void* pRequestObject )
 			pThis->m_nNumRecentWinners = 0;
 		}
 
-
-		while( sResponseIter != NULL && *sResponseIter != '\0' )
+		assert( doc["RecentWinner"].IsArray() );
+		const Value& Entries = DataReturned["RecentWinner"];
+		for( SizeType i = 0; i < Entries.Size(); ++i )
 		{
-			pNextWinnerStr	= strtok_s( sResponseIter, "*", &sResponseIter );
-			pWonAt			= strtok_s( sResponseIter, "*", &sResponseIter );
+			const Value& NextEntry = Entries[i];
+			const std::string& sUser = NextEntry["User"].GetString();
+			int nPoints = NextEntry["RAPoints"].GetInt();
+			int nTimestamp = NextEntry["DateAwarded"].GetInt();
+			RA_LOG( "Entry: %s (%d) won this achievement at %d\n", sUser.c_str(), nPoints, nTimestamp );
 			
-			sprintf_s( pThis->m_RecentWinnerName[pThis->m_nNumRecentWinners], 128, "%s", pNextWinnerStr );
-			sprintf_s( pThis->m_RecentWinAt[pThis->m_nNumRecentWinners], 128, "%s", pWonAt );
-
+			sprintf_s( pThis->m_RecentWinnerName[pThis->m_nNumRecentWinners], "%s", sUser.c_str() );
+			sprintf_s( pThis->m_RecentWinnerName[pThis->m_nNumRecentWinners], "%s", sUser.c_str() );
 			pThis->m_nNumRecentWinners++;
 		}
 

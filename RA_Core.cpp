@@ -199,7 +199,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		return FALSE;
 	}
 
-	RA_InitializeHTTPThreads();
+	RAWeb::RA_InitializeHTTPThreads();
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Memory Manager
@@ -273,7 +273,7 @@ API int CCONV _RA_Shutdown()
 		LocalAchievements = NULL;
 	}
 
-	RA_KillHTTPThreads();
+	RAWeb::RA_KillHTTPThreads();
 
 	if( g_AchievementsDialog.GetHWND() != NULL )
 	{
@@ -358,7 +358,7 @@ API int _RA_HardcoreModeIsActive()
 
 API int _RA_HTTPGetRequestExists( const char* sPageName )
 {
-	return HTTPRequestExists( sPageName );
+	return RAWeb::HTTPRequestExists( sPageName );
 }
 
 API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, unsigned int nRAMSize, BYTE* pRAMExtra, unsigned int nRAMExtraSize )
@@ -379,15 +379,15 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 	if( strcmp( g_sCurrentROMMD5, "" ) != 0 )
 	{
 		//	Fetch the gameID from the DB here:
-		char sPostString[1024];
-		sprintf_s( sPostString, 1024, "u=%s&m=%s", g_LocalUser.m_sUsername, g_sCurrentROMMD5 );
+		PostArgs args;
+		args['u'] = g_LocalUser.Username();
+		args['m'] = g_sCurrentROMMD5;
 
-		char sBufferOut[1024];
-		ZeroMemory( sBufferOut, 1024 );
-
-		DWORD nBytesRead = 0;
-		if( DoBlockingHttpPost( "requestgameid.php", sPostString, sBufferOut, 1024, &nBytesRead ) )
+		DataStream DataOut;
+		if( RAWeb::DoBlockingHttpPost( "requestgameid.php", PostArgsToString( args ), DataOut ) )
 		{
+			//DataOut['//tbd
+
 			if( strncmp( sBufferOut, "OK:", 3 ) == 0 )
 			{
 				nGameID = strtol( sBufferOut+3, NULL, 10 );
@@ -452,26 +452,26 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 }
 
 
-void FetchBinaryFromWeb( const char* sFilename )
-{
-	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
-
-	char* buffer = new char[nBufferSize];	
-	if( buffer != NULL )
-	{
-		char sAddr[1024];
-		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
-		char sOutput[1024];
-		sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
-
-		DWORD nBytesRead = 0;
-		if( DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
-			_WriteBufferToFile( sOutput, buffer, nBytesRead );
-
-		delete[] ( buffer );
-		buffer = NULL;
-	}
-}
+//void FetchBinaryFromWeb( const char* sFilename )
+//{
+//	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
+//
+//	char* buffer = new char[nBufferSize];	
+//	if( buffer != NULL )
+//	{
+//		char sAddr[1024];
+//		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
+//		char sOutput[1024];
+//		sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
+//
+//		DWORD nBytesRead = 0;
+//		if( RAWeb::DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
+//			_WriteBufferToFile( sOutput, buffer, nBytesRead );
+//
+//		delete[] ( buffer );
+//		buffer = NULL;
+//	}
+//}
 
 API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer )
 {

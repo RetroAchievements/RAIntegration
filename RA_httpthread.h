@@ -93,6 +93,8 @@ public:
 
 	void SetResult( BOOL bSuccess, const DataStream& sResponse );
 
+	BOOL ParseResponseToJSON( Document& rDocOut );
+
 private:
 	const RequestType m_nType;
 	const PostArgs m_PostArgs;

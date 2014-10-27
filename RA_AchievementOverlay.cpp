@@ -205,7 +205,7 @@ BOOL AchievementOverlay::GoBack()
 BOOL AchievementOverlay::Update( ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused )
 {
 	const int nAchCount = (const int)( g_pActiveAchievements->m_nNumAchievements );
-	const int nNumFriends = (const int)( g_LocalUser.NumFriends() );
+	const int nNumFriends = (const int)( RAUsers::LocalUser.NumFriends() );
 	const int nNumLBs = (const int)( g_LeaderboardManager.Count() );
 	//const int nMsgCount = (const int)( g_LocalUser.MessageCount() );
 	const int nMsgCount = 0;
@@ -684,7 +684,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 	unsigned int nOffset = m_nFriendsScrollOffset;
 
-	const unsigned int nNumFriends = g_LocalUser.NumFriends();
+	const unsigned int nNumFriends = RAUsers::LocalUser.NumFriends();
 
 	for( unsigned int i = 0; i < nFriendsToDraw; ++i )
 	{
@@ -696,7 +696,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 		if( (i+nOffset) < nNumFriends )
 		{
-			RAUser* pFriend = g_LocalUser.GetFriend( (i+nOffset) );
+			RAUser* pFriend = RAUsers::LocalUser.GetFriendByIter( (i+nOffset) );
 			if( pFriend == NULL )
 				continue;
 
@@ -717,7 +717,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 			HANDLE hOldObj = SelectObject( hDC, g_hFontDesc );
 
-			sprintf_s( buffer, 256, " %s (%d) ", pFriend->Username(), pFriend->Score() );
+			sprintf_s( buffer, 256, " %s (%d) ", pFriend->Username(), pFriend->GetScore() );
 			TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs, buffer, strlen( buffer ) );
 
 			SelectObject( hDC, g_hFontTiny );
@@ -728,7 +728,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 				nYOffs+nFriendSubtitleYOffs, 
 				nDX + rcTarget.right - 40,
 				nYOffs+nFriendSubtitleYOffs + 46 );
-			DrawText( hDC, pFriend->Activity(), -1, &rcDest, DT_LEFT|DT_WORDBREAK );
+			DrawText( hDC, pFriend->Activity().c_str(), -1, &rcDest, DT_LEFT|DT_WORDBREAK );
 
 			//	Restore
 			SelectObject( hDC, hOldObj );
@@ -1164,7 +1164,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 {
 	//	Rendering:
-	if( !g_LocalUser.m_bIsLoggedIn )
+	if( !RAUsers::LocalUser.m_bIsLoggedIn )
 		return;	//	Not available!
 
 	const COLORREF nPrevTextColor = GetTextColor( hDC );
@@ -1241,7 +1241,7 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	if( rcTarget.right > 360 )
 	{
 		DrawUserFrame( 
-			hDC, &g_LocalUser, 
+			hDC, &RAUsers::LocalUser,
 			( nDX+(rcTarget.right - nMinUserFrameWidth) )-4,
 			4+nBorder, 
 			nMinUserFrameWidth, 
@@ -1829,76 +1829,55 @@ void LeaderboardExamine::Initialize( const unsigned int nLBIDIn )
 
 	unsigned int nOffset = 0;		//	TBD
 	unsigned int nCount = 10;
-	//RA_Leaderboard& rLB = g_LeaderboardManager.FindLB( m_nID );
 
-	char buffer[256];
-	sprintf_s( buffer, 256, "i=%d&o=%d&c=%d", m_nLBID, nOffset, nCount );
-	CreateHTTPRequestThread( "requestlbinfo.php",
-		buffer, 
-		HTTPRequest_Post, 
-		0 );
+	PostArgs args;
+	args['i'] = std::to_string( m_nLBID );
+	args['o'] = std::to_string( nOffset );
+	args['c'] = std::to_string( nCount );
+
+	RAWeb::CreateThreadedHTTPRequest( RequestLeaderboardInfo, args );
 }
 
-void LeaderboardExamine::CB_OnReceiveData( void* pRequestObject )
+//static 
+void LeaderboardExamine::OnReceiveData( const Document& doc )
 {
-	RequestObject* pObj = (RequestObject*)pRequestObject;
-	if( pObj && pObj->m_bResponse == TRUE )
+	ASSERT( doc["Response"].IsArray() );
+	const Value& DataReturned = doc["Response"];
+
+	const Value& LBData = DataReturned["LeaderboardData"];
+	ASSERT( LBData.IsArray() );
+	
+	unsigned int nLBID = LBData["LBID"].GetUint();
+	unsigned int nGameID = LBData["GameID"].GetUint();
+	const std::string& sGameTitle = LBData["GameTitle"].GetString();
+	const std::string& sConsoleID = LBData["ConsoleID"].GetString();
+	const std::string& sConsoleName = LBData["ConsoleName"].GetString();
+	const std::string& sGameIcon = LBData["GameIcon"].GetString();
+	//const std::string& sForumTopicID = LBData["ForumTopicID"].GetString();
+	
+	unsigned int nLowerIsBetter = LBData["LowerIsBetter"].GetUint();
+	const std::string& sLBTitle = LBData["LBTitle"].GetString();
+	const std::string& sLBDesc = LBData["LBDesc"].GetString();
+	const std::string& sLBFormat = LBData["LBFormat"].GetString();
+	const std::string& sLBMem = LBData["LBMem"].GetString();
+
+	const Value& Entries = LBData["Entries"];
+	
+	RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( nLBID );
+	if( !pLB )
+		return;
+
+	for( SizeType i = 0; i < Entries.Size(); ++i )
 	{
-		LeaderboardExamine* pThis = &g_LBExamine;
-
-		if( strlen( pObj->m_sRequestPost ) < 3 )
-			return;
-
-		if( g_AchievementOverlay.CurrentPage() != OP_LEADERBOARD_EXAMINE )
-			return;
-
-		if( pThis->m_nLBID == 0 )
-			return;
+		const Value& NextLBData = Entries[i];
+		const unsigned int nRank = NextLBData["Rank"].GetUint();
+		const std::string& sUser = NextLBData["User"].GetString();
+		const unsigned int nScore = NextLBData["Score"].GetUint();
+		const unsigned int nDate = NextLBData["DateSubmitted"].GetUint();
 		
-		char* pCharIter = &pObj->m_sResponse[0];
-		if( strncmp( pCharIter, "OK:", 3 ) != 0 )
-			return;
-
-
-		//	Start parsing!
-		pCharIter += 3;
-
-		unsigned int nLBID		= atoi( strtok_s( pCharIter, ":", &pCharIter ) );
-		if( nLBID != pThis->m_nLBID )
-		{
-			//	Returned wrong lb data for what we're expecting?!
-			return;
-		}
-
-		RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( nLBID );
-		if( !pLB )
-		{
-			return;
-		}
-
-		unsigned int nNumEntries	= atoi( strtok_s( pCharIter, ":", &pCharIter ) );	//	Responded with
-		unsigned int nOffset		= atoi( strtok_s( pCharIter, ":", &pCharIter ) );	//	Same as Requested
-		unsigned int nCount			= atoi( strtok_s( pCharIter, "\n", &pCharIter ) );	//	Same as Requested
-
-		unsigned int nEntriesFound = 0;
-
-		while( pCharIter != NULL && *pCharIter != '\0' )
-		{
-			char* pNextUser		= strtok_s( pCharIter, ":", &pCharIter );
-			char* pScore		= strtok_s( pCharIter, ":", &pCharIter );
-			unsigned int nScore = strtol( pScore, NULL, 10 );
-
-			char* pDateSub		= strtok_s( pCharIter, "\n", &pCharIter );
-			time_t nDate		= (time_t)strtol( pDateSub, NULL, 10 );
-
-			pLB->SubmitRankInfo( nEntriesFound+nOffset+1, pNextUser, nScore, nDate );
-
-			nEntriesFound++;
-		}
-
-		assert( nNumEntries == nEntriesFound );	//	otherwise we've lost something en route
-
-		pThis->m_bHasData = TRUE;
+		RA_LOG( "LB Entry: %d: %s earned %d at %d\n", nRank, sUser.c_str(), nScore, nDate );
+		
+		pLB->SubmitRankInfo( nRank, sUser.c_str(), nScore, nDate );
 	}
 }
 

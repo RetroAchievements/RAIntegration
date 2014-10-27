@@ -192,7 +192,6 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 				char sBugReportComment[4096];
 				GetDlgItemText( hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportComment, 4096 );
 
-				
 				char sBugReportInFull[8192];
 				sprintf_s( sBugReportInFull, 8192, 
 					"--New Bug Report--\n"
@@ -214,46 +213,53 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 				if( MessageBox( NULL, sBugReportInFull, "Summary", MB_YESNO ) == IDNO )
 					return FALSE;
 								
-				//	Pack query string:
-				char sRequest[512];
- 				sprintf_s( sRequest, 512, "u=%s&t=%s&i=%s&p=%s&n=%s", 
-					g_LocalUser.m_sUsername, g_LocalUser.m_sToken, sBuggedIDs, sProblemStr, sBugReportComment );
+				PostArgs args;
+				args['u'] = g_LocalUser.Username();
+				args['t'] = g_LocalUser.Token();
+				args['i'] = sBuggedIDs;
+				args['p'] = sProblemType;
+				args['n'] = sBugReportComment;
 
-				//	Send request:
-				char sResponse[4096];
-				ZeroMemory( sResponse, 4096 );
+				Document doc;
+				if( RAWeb::DoBlockingRequest( RequestSubmitTicket, args, doc ) )
+				{
+					if( doc["Success"].GetBool() )
+					{
+						sprintf_s( buffer, 1024, "Submitted OK!\n"
+							"\n"
+							"Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+							"\n"
+							"The development team will investigate this bug as soon as possible\n"
+							"and we will send you a message on RetroAchievements.org\n"
+							"as soon as we have a solution.\n"
+							"\n"
+							"Thanks again!" );
 
- 				DWORD nBytesRead = 0;
- 				if( DoBlockingHttpPost( "requestsubmitticket.php", sRequest, sResponse, 4096, &nBytesRead ) &&
-					strncmp( sResponse, "OK:", 3 ) == 0 )
- 				{
- 					//g_pActiveAchievements->SetGameTitle( sSelectedTitle );
-					//CoreAchievements->SetGameTitle( sSelectedTitle );
-					//UnofficialAchievements->SetGameTitle( sSelectedTitle );
-					//LocalAchievements->SetGameTitle( sSelectedTitle );
- 
-					//g_GameTitleDialog.m_nReturnedGameID = strtol( sResponse+3, NULL, 10 );
-
-					sprintf_s( buffer, 1024, "Submitted OK! %s\n"
-						"\n"
-						"Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-						"\n"
-						"The development team will investigate this bug as soon as possible\n"
-						"and we will send you a message on RetroAchievements.org\n"
-						"as soon as we have a solution.\n"
-						"\n"
-						"Thanks again!",
-						( nBytesRead == 3 ) ? "" : sResponse+3 );	//	Pack in custom server msg
-
-					MessageBox( hDlg, buffer, "Success!", MB_OK );
-		 			EndDialog( hDlg, TRUE );
- 					return TRUE;
+						MessageBox( hDlg, buffer, "Success!", MB_OK );
+		 				EndDialog( hDlg, TRUE );
+ 						return TRUE;
+					}
+					else
+					{
+						char bufferFeedback[2048];
+ 						sprintf_s( bufferFeedback, 2048, 
+							"Failed!\n"
+							"\n"
+							"Response From Server:\n"
+							"\n"
+							"Error code: %d", doc.GetParseError() );
+ 						MessageBox( hDlg, bufferFeedback, "Error from server!", MB_OK );
+						return FALSE;
+					}
  				}
  				else
  				{
-					char bufferFeedback[2048];
- 					sprintf_s( bufferFeedback, 2048, "Failed!\n\nResponse From Server:\n\n%s", sResponse );
- 					MessageBox( hDlg, bufferFeedback, "Error from server!", MB_OK );
+ 					MessageBox( hDlg, 
+						"Failed!\n"
+						"\n"
+						"Cannot reach server... are you online?\n"
+						"\n",
+						"Error!", MB_OK );
 					return FALSE;
  				}
  			}

@@ -79,7 +79,7 @@ public:
 	const char* Title() const								{ return m_sTitle; }
 	const char* Description() const							{ return m_sDescription; }
 
-	void SubmitRankInfo( unsigned int nRank, char* sUsername, unsigned int nScore, time_t nAchieved );
+	void SubmitRankInfo( unsigned int nRank, const char* sUsername, unsigned int nScore, time_t nAchieved );
 	void ClearRankInfo()									{ m_RankInfo.clear(); }
 	const LB_Entry& GetRankInfo( unsigned int nAt ) const	{ return m_RankInfo.at( nAt ); }
 	size_t GetRankInfoCount() const							{ return m_RankInfo.size(); }

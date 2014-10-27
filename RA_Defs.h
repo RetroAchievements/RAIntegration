@@ -63,6 +63,8 @@ extern BOOL DirectoryExists( const char* sPath );
 
 #ifdef _DEBUG
 #define RA_LOG DebugLog
+#define ASSERT(x) assert(x)
 #else
 #define RA_LOG DebugLog
+#define ASSERT(x) {}
 #endif

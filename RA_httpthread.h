@@ -35,15 +35,17 @@ enum RequestType
 	RequestCodeNotes,
 	RequestFriendList,
 	RequestUserPic,
-	RequestBadgeImage,
+	RequestBadgeIter,
 
 	//	Submit
 	RequestPing,
 	RequestPostActivity,
+	RequestUploadBadgeImage,
 	RequestSubmitAwardAchievement,
 	RequestSubmitCodeNote,
 	RequestSubmitLeaderboardEntry,
 	RequestSubmitAchievementData,
+	RequestSubmitTicket,
 
 	//	Special:
 	StopThread,
@@ -130,6 +132,9 @@ public:
 
 	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sCustomPageURL = "", int nUserRef = 0 );
 	static BOOL HTTPRequestExists( const char* sRequestPageName );
+	
+	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
+	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );
 
 	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );

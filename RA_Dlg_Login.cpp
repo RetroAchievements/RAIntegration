@@ -80,7 +80,7 @@ INT_PTR CALLBACK LoginProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 					sprintf_s( bufferFeedback, "Logged in as %s.", user );
 					MessageBox( hDlg, bufferFeedback, "Logged in Successfully!", MB_OK );
 
-					g_LocalUser.Login( user, pTok, bRememberLogin, nPoints, nMessages );
+					RAUsers::AttemptLogin( user, pTok, bRememberLogin, nPoints, nMessages );
 					
 					g_PopupWindows.AchievementPopups().SuppressNextDeltaUpdate();
 

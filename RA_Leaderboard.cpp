@@ -398,28 +398,27 @@ void RA_Leaderboard::Test()
 			}
 			else if( g_hRAKeysDLL != NULL && g_fnDoValidation != NULL )
 			{
-				//	TBD: move to keys!s
+				//	TBD: move to keys!
 				char sValidationSig[50];
 				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, g_LocalUser.m_sUsername, m_nID );
 
 				char sValidation[50];
 				md5_GenerateMD5( sValidationSig, strlen(sValidationSig), sValidation );
 
-				char sPost[1024];
-				sprintf_s( sPost, 1024, "u=%s&t=%s&i=%d&v=%s&s=%d",
-					g_LocalUser.m_sUsername, 
-					g_LocalUser.m_sToken, 
-					m_nID,
-					sValidation,
-					nVal );
-				
-				CreateHTTPRequestThread( "requestsubmitlbentry.php", sPost, HTTPRequest_Post, 0 );
+				PostArgs args;
+				args['u'] = g_LocalUser.Username();
+				args['t'] = g_LocalUser.Token();
+				args['i'] = std::to_string( m_nID );
+				args['v'] = sValidation;
+				args['s'] = std::to_string( nVal );
+
+				RAWeb::CreateThreadedHTTPRequest( RequestSubmitLeaderboardEntry, args );
 			}
 		}
 	}
 }
 
-void RA_Leaderboard::SubmitRankInfo( unsigned int nRank, char* sUsername, unsigned int nScore, time_t nAchieved )
+void RA_Leaderboard::SubmitRankInfo( unsigned int nRank, const char* sUsername, unsigned int nScore, time_t nAchieved )
 {
 	LB_Entry newEntry;
 	newEntry.m_nRank = nRank;

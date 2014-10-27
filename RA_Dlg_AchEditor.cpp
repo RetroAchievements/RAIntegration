@@ -1263,11 +1263,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 							BOOL bOK = RAWeb::DoBlockingImageUpload( "requestuploadbadge.php", ofn.lpstrFile, Response );
 							if( bOK )
 							{
-								using namespace rapidjson;
 								Document doc;
-								doc.ParseInsitu( Response.data()
-								Response
+								doc.ParseInsitu( DataStreamAsString( Response ) );
 								//if( strncmp( pBuffer, "OK:", 3 ) == 0 )
+								if( !doc.HasParseError() )
 								{
 									//TBD: ensure that:
 									//	The image is copied to the cache/badge dir
@@ -2017,49 +2016,31 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup( int nGrp ) const
 
 void BadgeNames::FetchNewBadgeNamesThreaded()
 {
-	CreateHTTPRequestThread( "requestbadgenames.php", "", HTTPRequest_Get, 0 );
+	RAWeb::CreateThreadedHTTPRequest( RequestBadgeIter );
 }
 
 //static
-void BadgeNames::CB_OnNewBadgeNames(void* pObj)
+void BadgeNames::CB_OnNewBadgeNames( void* pReqObj )
 {
-	RequestObject* pRObj = (RequestObject*)(pObj);
-	RequestObject& rObj = *pRObj;
-
-	if( strncmp( rObj.m_sResponse, "OK:", 3 ) )
+	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
+	Document doc;
+	if( !pObj->ParseResponseToJSON( doc ) )
 		return;
+	
+	const unsigned int nLowerLimit = doc["FirstBadge"].GetUint();
+	const unsigned int nUpperLimit = doc["NextBadge"].GetUint();
 
 	//	Clean out cbo
 	while( ComboBox_DeleteString( m_hDestComboBox, 0 ) > 0 )
 	{
 	}
 
-	char* pIter = &rObj.m_sResponse[3];
-
-	const size_t nLowerLimit = 80;
-	const size_t nUpperLimit = atoi( pIter );
-
 	char buffer[256];
-	for( size_t i = nLowerLimit; i < nUpperLimit; ++i )
+	for( unsigned int i = nLowerLimit; i < nUpperLimit; ++i )
 	{
 		sprintf_s( buffer, 256, "%05d", i );
 		ComboBox_AddString( m_hDestComboBox, buffer );
 	}
-
-	////	Assume we are in mainthread, as the thread request was made from main thread
-	//char* pNextBadgeName = NULL;
-	//while( ( pNextBadgeName = strtok_s( pIter, ",", &pIter ) ) != NULL )
-	//{
-	//	//	Only want properly formatted names
-	//	if( strlen( pNextBadgeName ) != 5 )
-	//		continue;
-
-	//	for( size_t i = 0; i < 5; ++i )
-	//		if( !isdigit( pNextBadgeName[i] ) )
-	//			continue;
-
-	//	ComboBox_AddString( m_hDestComboBox, pNextBadgeName );
-	//}
 }
 
 void BadgeNames::AddNewBadgeName( const char* pStr, BOOL bAndSelect )

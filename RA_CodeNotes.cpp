@@ -265,11 +265,11 @@ void CodeNotes::Add( const char* sAuthor, const char* sAddress, const char* sDes
 		m_sCodeNotes.push_back( CodeNoteObj( sAuthor, sAddress, sDescription ) );
 	}
 
-	if( g_LocalUser.m_bIsLoggedIn && ( strlen( sAddress ) > 2 ) )
+	if( RAUsers::LocalUser.m_bIsLoggedIn && ( strlen( sAddress ) > 2 ) )
 	{ 
 		PostArgs args;
-		args['u'] = g_LocalUser.Username();
-		args['t'] = g_LocalUser.Token();
+		args['u'] = RAUsers::LocalUser.Username();
+		args['t'] = RAUsers::LocalUser.Token();
 		args['g'] = std::to_string( g_pActiveAchievements->GameID() );
 		args['a'] = sAddress;
 		args['d'] = sDescription;
@@ -302,11 +302,11 @@ BOOL CodeNotes::Remove( const char* sAddress )
 		{
 			m_sCodeNotes.erase( (iter) );
 
-			if( g_LocalUser.m_bIsLoggedIn )
+			if( RAUsers::LocalUser.m_bIsLoggedIn )
 			{
 				PostArgs args;
-				args['u'] = g_LocalUser.Username();
-				args['t'] = g_LocalUser.Token();
+				args['u'] = RAUsers::LocalUser.Username();
+				args['t'] = RAUsers::LocalUser.Token();
 				args['g'] = std::to_string( g_pActiveAchievements->GameID() );
 				args['a'] = sAddress;
 				args['n'] = "";

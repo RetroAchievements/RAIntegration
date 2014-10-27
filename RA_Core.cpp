@@ -380,37 +380,35 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 	{
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
+		args['r'] = "gameid";
 		args['u'] = g_LocalUser.Username();
 		args['m'] = g_sCurrentROMMD5;
 
-		DataStream DataOut;
-		if( RAWeb::DoBlockingHttpPost( "requestgameid.php", PostArgsToString( args ), DataOut ) )
+		DataStream Response;
+		if( RAWeb::DoBlockingHttpPost( "request.php", PostArgsToString( args ), Response ) )
 		{
-			//DataOut['//tbd
-
-			if( strncmp( sBufferOut, "OK:", 3 ) == 0 )
+			Document doc; 
+			doc.ParseInsitu( DataStreamAsString( Response ) );
+			if( !doc.HasParseError() )
 			{
-				nGameID = strtol( sBufferOut+3, NULL, 10 );
+				nGameID = doc["GameID"].GetUint();
 			}
-			else if( strncmp( sBufferOut, "UNRECOGNISED", strlen( "UNRECOGNISED" ) ) == 0 )
+			else
 			{
-				//	Unknown game: harass user to select/submit details, then reload!
-
 				char sEstimatedGameTitle[64];
 				ZeroMemory( sEstimatedGameTitle, 64 );
 				RA_GetEstimatedGameTitle( sEstimatedGameTitle );
 				nGameID = Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle );
 			}
-			else
-			{
-				//	Some other fatal error... panic?
-				assert( !"Unknown error from requestgameid.php" );
+		}
+		else
+		{
+			//	Some other fatal error... panic?
+			assert( !"Unknown error from requestgameid.php" );
 
-				char msgboxText[8192];
-				sprintf_s( msgboxText, 8192, "Error from " RA_HOST "!\n%s", sBufferOut );
-
-				MessageBox( g_RAMainWnd, msgboxText, "Error returned!", MB_OK );
-			}
+			char buffer[8192];
+			sprintf_s( buffer, 8192, "Error from " RA_HOST "!\n" );
+			MessageBox( g_RAMainWnd, buffer, "Error returned!", MB_OK );
 		}
 	}
 
@@ -541,6 +539,39 @@ API int CCONV _RA_HandleHTTPResults()
 	RequestObject* pObj = RAWeb::LastHttpResults.PopNextItem();
 	while( pObj	!= NULL )
 	{
+		Document doc;
+
+		switch( pObj->GetRequestType() )
+		{
+		case RequestScore:
+			if( pObj->ParseResponseToJSON( doc ) )
+			{
+				ASSERT( doc["Success"].GetBool() );
+				const std::string& sUser = doc["User"].GetString();
+				unsigned int nScore = doc["Score"].GetUint();
+				RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
+				if( sUser.compare( g_LocalUser.Username() ) == 0 )
+				{
+					g_LocalUser.SetScore( nScore );
+				}
+				else
+				{
+					//	Find friend? Update this information?
+
+				}
+				//g_LocalUser.SetScore(
+			}
+			break;
+		case RequestLeaderboardInfo:
+			if( pObj->ParseResponseToJSON( doc ) )
+				g_LBExamine.OnReceiveData( doc );
+			break;
+		}
+		
+				else if( strcmp( pObj->m_sRequestPageName, "requestlbinfo.php" ) == 0 )
+				{
+				}
+
 		//if( pObj->m_pfCallbackOnReceive != NULL )
 		{
 			//	Banish this shizzle!
@@ -686,8 +717,8 @@ API int CCONV _RA_HandleHTTPResults()
 							pBuf++;
 							unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
 							//pBuf++;
-
-							g_LocalUser.Login( sUser, pToken, g_LocalUser.m_bStoreToken, nPoints, nMessages );
+							
+							RAUsers::ProcessSuccessfulLogin( sUser, pToken, g_LocalUser.m_bStoreToken, nPoints, nMessages );
 						}
 						else
 						{
@@ -735,10 +766,6 @@ API int CCONV _RA_HandleHTTPResults()
 				else if( strcmp( pObj->m_sRequestPageName, "requestachievementinfo.php" ) == 0 )
 				{
 					AchievementExamine::CB_OnReceiveData( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestlbinfo.php" ) == 0 )
-				{
-					LeaderboardExamine::CB_OnReceiveData( pObj );
 				}
 				else if( strcmp( pObj->m_sRequestPageName, "requestsubmitlbentry.php" ) == 0 )
 				{

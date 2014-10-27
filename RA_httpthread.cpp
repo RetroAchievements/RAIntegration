@@ -26,16 +26,19 @@ const char* RequestTypeToString[] =
 	"RequestAchievementInfo",
 	"RequestLeaderboardInfo",
 	"RequestCodeNotes",
-	"RequestFriendList",
+	"RequestFriendList"
 	"RequestUserPic",
-	"RequestBadgeImage",
+	"RequestBadgeIter",
 	"RequestPing",
 	"RequestPostActivity",
+	"RequestUploadBadgeImage",
 	"RequestSubmitAwardAchievement",
 	"RequestSubmitCodeNote",
 	"RequestSubmitLeaderboardEntry",
 	"RequestSubmitAchievementData",
+	"RequestSubmitTicket",
 	"STOP_THREAD",
+	"",
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToString ) == NumRequestTypes, "Must match up!" );
 
@@ -52,13 +55,15 @@ const char* RequestTypeToPost[] =
 	"codenotes2",
 	"getfriendlist",
 	"",						//	TBD RequestUserPic
-	"",						//	TBD RequestBadgeImage
+	"badgeiter",
 	"",						//	TBD RequestPing (ping.php)
 	"postactivity",
+	"",						//	TBD RequestBadgeImage
 	"awardachievement",
 	"submitcodenote",
 	"",						//	TBD: Complex!!! See requestsubmitlbentry.php
 	"uploadachievement",
+	"submitticket",
 	"",						//	STOP_THREAD
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
@@ -192,6 +197,37 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 //
 //	return bSuccess;
 //}
+
+BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut )
+{
+	PostArgs args = PostData;	//	Take a copy
+	args['r'] = RequestTypeToPost[nType];
+	return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
+}
+
+BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut )
+{
+	PostArgs args = PostData;	//	Take a copy
+	args['r'] = RequestTypeToPost[nType];
+	DataStream response;
+	if( DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), response ) )
+	{
+		JSONResponseOut.ParseInsitu( DataStreamAsString( response ) );
+		if( !JSONResponseOut.HasParseError() )
+		{
+			return TRUE;
+		}
+		else
+		{
+			//	Cannot parse json?
+			return FALSE;
+		}
+	}
+	else
+	{
+		return FALSE;
+	}
+}
 
 BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut )
 {
@@ -572,7 +608,7 @@ void RA_KillHTTPThreads()
 RequestObject* HttpResults::PopNextItem()
 {
 	RequestObject* pRetVal = NULL;
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		if( m_aRequests.size() > 0 )
 		{
@@ -580,7 +616,7 @@ RequestObject* HttpResults::PopNextItem()
 			m_aRequests.pop_front();
 		}
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return pRetVal;
 }
@@ -588,27 +624,27 @@ RequestObject* HttpResults::PopNextItem()
 const RequestObject* HttpResults::PeekNextItem() const
 {
 	RequestObject* pRetVal = NULL;
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		pRetVal = m_aRequests.front();
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 		
 	return pRetVal; 
 }
 
 void HttpResults::PushItem( RequestObject* pObj )
 { 
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		m_aRequests.push_front( pObj ); 
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 }
 
 void HttpResults::Clear()
 { 
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		while( !m_aRequests.empty() )
 		{
@@ -618,17 +654,17 @@ void HttpResults::Clear()
 			pObj = NULL;
 		}
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 }
 
 size_t HttpResults::Count() const
 { 
 	size_t nCount = 0;
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		nCount = m_aRequests.size();
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return nCount;
 }
@@ -636,13 +672,18 @@ size_t HttpResults::Count() const
 BOOL HttpResults::PageRequestExists( const char* sPageName ) const
 {
 	BOOL bRetVal = FALSE;
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 	{
 		std::deque<RequestObject*>::const_iterator iter = m_aRequests.begin();
 		while( iter != m_aRequests.end() )
 		{
 			const RequestObject* pObj = (*iter);
-			if( _stricmp( pObj->m_sRequestPageName, sPageName ) == 0 )
+			if( _stricmp( pObj->GetPageURL().c_str(), sPageName ) == 0 )
+			{
+				bRetVal = TRUE;
+				break;
+			}
+			else if( _stricmp( RequestTypeToString[ pObj->GetRequestType() ], sPageName ) == 0 )
 			{
 				bRetVal = TRUE;
 				break;
@@ -651,7 +692,7 @@ BOOL HttpResults::PageRequestExists( const char* sPageName ) const
 			iter++;
 		}
 	}
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return bRetVal;
 }

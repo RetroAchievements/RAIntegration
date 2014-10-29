@@ -49,13 +49,15 @@ public:
 	void UpdateActivity( const std::string& sAct )	{ m_sActivity = sAct; }
 	const std::string& Activity() const				{ return m_sActivity; }
 
-	HBITMAP Image() const							{ return m_hUserImage; }
+	HBITMAP GetUserImage() const					{ return m_hUserImage; }
+	void InstallUserImage( HBITMAP hImg )			{ m_hUserImage = hImg; }
+
 	BOOL IsFetchingUserImage() const				{ return m_bFetchingUserImage; }
 	
 	static void s_OnUserPicCB( void* pvObj );
 	void OnUserPicCB( RequestObject* pObj );
 
-public:
+private:
 	const std::string	m_sUsername;
 	std::string			m_sActivity;
 	unsigned int		m_nLatestScore;
@@ -84,15 +86,17 @@ public:
 	RAUser* FindFriend( const std::string& sName );
 
 	RAUser* GetFriendByIter( size_t nOffs )				{ return nOffs < m_aFriends.size() ? m_aFriends[ nOffs ] : NULL; }
-
 	const size_t NumFriends() const						{ return m_aFriends.size(); }
+
 	const std::string& Token() const					{ return m_sToken; }
 	
-	void PostActivity( enum ActivityType nActivityType );
+	BOOL IsLoggedIn() const		{ return m_bIsLoggedIn; }
 
+	void PostActivity( enum ActivityType nActivityType );
+	
 	void Clear();
 
-public:
+private:
 	std::string				m_sToken;		//	AppToken Issued by server
 	BOOL					m_bIsLoggedIn;
 	BOOL					m_bStoreToken;	//	Preference: Store the token/'password' for next time

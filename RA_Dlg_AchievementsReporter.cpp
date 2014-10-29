@@ -125,7 +125,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		HWND hList = GetDlgItem( hDlg, IDC_RA_REPORTBROKENACHIEVEMENTSLIST );	
 		Dlg_AchievementsReporter::SetupColumns( hList );
 
-		for( size_t i = 0; i < g_pActiveAchievements->Count(); ++i )
+		for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
 		{
 			Dlg_AchievementsReporter::AddAchievementToListBox( hList, &g_pActiveAchievements->GetAchievement( i ) );
 		}
@@ -133,7 +133,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP );
 		//ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
 
-		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, g_LocalUser.Username() );
+		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser.Username() );
 
 		return FALSE;
 		//return DefWindowProc( hDlg, uMsg, wParam, lParam );
@@ -207,15 +207,15 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					CoreAchievements->GameTitle(),
 					sBuggedIDs,
 					sProblemTypeNice,
-					g_LocalUser.Username(),
+					RAUsers::LocalUser.Username(),
 					sBugReportComment );
 
 				if( MessageBox( NULL, sBugReportInFull, "Summary", MB_YESNO ) == IDNO )
 					return FALSE;
 								
 				PostArgs args;
-				args['u'] = g_LocalUser.Username();
-				args['t'] = g_LocalUser.Token();
+				args['u'] = RAUsers::LocalUser.Username();
+				args['t'] = RAUsers::LocalUser.Token();
 				args['i'] = sBuggedIDs;
 				args['p'] = sProblemType;
 				args['n'] = sBugReportComment;

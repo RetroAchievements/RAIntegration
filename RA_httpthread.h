@@ -35,6 +35,7 @@ enum RequestType
 	RequestCodeNotes,
 	RequestFriendList,
 	RequestUserPic,
+	RequestBadge,
 	RequestBadgeIter,
 
 	//	Submit
@@ -136,9 +137,10 @@ public:
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );
 
-	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
+	//static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
-	static BOOL DoBlockingImageUpload( const std::string& sRequestedPage, const std::string& sFilename, DataStream& ResponseOut );
+	static BOOL DoBlockingImageUpload( RequestType nType, const std::string& sFilename, Document& ResponseOut );
+	static BOOL DoBlockingImageUpload( RequestType nType, const std::string& sFilename, DataStream& ResponseOut );
 
 	static DWORD __stdcall HTTPWorkerThread( LPVOID lpParameter );
 };

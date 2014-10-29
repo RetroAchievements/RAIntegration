@@ -137,4 +137,6 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
+extern std::string _TimeStampToString( unsigned long nTime );
+
 #endif //__RA_CORE__

@@ -28,6 +28,7 @@ const char* RequestTypeToString[] =
 	"RequestCodeNotes",
 	"RequestFriendList"
 	"RequestUserPic",
+	"RequestBadge",
 	"RequestBadgeIter",
 	"RequestPing",
 	"RequestPostActivity",
@@ -55,10 +56,11 @@ const char* RequestTypeToPost[] =
 	"codenotes2",
 	"getfriendlist",
 	"",						//	TBD RequestUserPic
+	"",						//	TBD RequestBadge
 	"badgeiter",
 	"",						//	TBD RequestPing (ping.php)
 	"postactivity",
-	"",						//	TBD RequestBadgeImage
+	"uploadbadgeimage",
 	"awardachievement",
 	"submitcodenote",
 	"",						//	TBD: Complex!!! See requestsubmitlbentry.php
@@ -87,7 +89,7 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 		RA_LOG( "Parse issue on response, %s (%s)\n", rDocOut.GetParseError(), RequestTypeToString[m_nType] );
 	}
 
-	return rDocOut.HasParseError();
+	return !rDocOut.HasParseError();
 }
 
 //BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut )
@@ -234,11 +236,11 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	if( strcmp( sRequestedPage.c_str(), "requestlogin.php" ) == 0 )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
-		RA_LOG( __FUNCTION__ ": (%08x) POST to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
+		RA_LOG( __FUNCTION__ ": (%04x) POST to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
 	}
 	else
 	{
-		RA_LOG( __FUNCTION__ ": (%08x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
+		RA_LOG( __FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
 	}
 	
 	ResponseOut.clear();
@@ -341,38 +343,58 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload( const std::string& sRequestedPage, const std::string& sFilename, DataStream& ResponseOut )
+BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilename, Document& ResponseOut )
 {
-	RA_LOG( __FUNCTION__ ": (%08x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage );
+	DataStream response;
+	if( DoBlockingImageUpload( nType, sFilename, response ) )
+	{
+		ResponseOut.ParseInsitu( DataStreamAsString( response ) );
+		if( !ResponseOut.HasParseError() )
+		{
+			return TRUE;
+		}
+		else
+		{
+			RA_LOG( __FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), ResponseOut.GetParseError() );
+			return FALSE;
+		}
+	}
+	else
+	{
+		RA_LOG( __FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str() );
+		return FALSE;
+	}
+}
+
+BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilename, DataStream& ResponseOut )
+{
+	const std::string sTarget = RequestTypeToPost[nType] //"uploadbadgeimage";
+
+	RA_LOG( __FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage );
 
 	BOOL bSuccess = FALSE;
-	BOOL  bResults = FALSE;
-	HINTERNET hSession = NULL,
-		hConnect = NULL,
-		hRequest = NULL;
-
-	WCHAR wBuffer[1024];
-	size_t nTemp;
+	HINTERNET hConnect = NULL, hRequest = NULL;
 
 	char sClientName[1024];
 	sprintf_s( sClientName, 1024, "Retro Achievements Client %s %s", g_sClientName, g_sClientVersion );
+
+	size_t nTemp;
 	WCHAR wClientNameBuffer[1024];
 	mbstowcs_s( &nTemp, wClientNameBuffer, 1024, sClientName, strlen(sClientName)+1 );
 
 	// Use WinHttpOpen to obtain a session handle.
-	hSession = WinHttpOpen( wClientNameBuffer, 
+	HINTERNET hSession = WinHttpOpen( wClientNameBuffer, 
 		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 		WINHTTP_NO_PROXY_NAME, 
 		WINHTTP_NO_PROXY_BYPASS, 0);
 
 	// Specify an HTTP server.
 	if( hSession != NULL )
-	{
-		hConnect = WinHttpConnect( hSession, RA_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0);
-	}
+		hConnect = WinHttpConnect( hSession, RA_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0 );
 
 	if( hConnect != NULL )
 	{
+		WCHAR wBuffer[1024];
 		mbstowcs_s( &nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen( sRequestedPage.c_str() )+1 );
 
 		hRequest = WinHttpOpenRequest( hConnect, 
@@ -390,7 +412,7 @@ BOOL RAWeb::DoBlockingImageUpload( const std::string& sRequestedPage, const std:
 		const char* mimeBoundary = "---------------------------41184676334";
 		const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 		
-		int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+		int nResult = WinHttpAddRequestHeaders( hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
 		if( nResult != 0 )
 		{
 			// Add the photo to the stream
@@ -399,9 +421,16 @@ BOOL RAWeb::DoBlockingImageUpload( const std::string& sRequestedPage, const std:
 			std::ostringstream sb_ascii;
 			//sb_ascii << str;									
 			sb_ascii << "--" << mimeBoundary << "\r\n";															//	--Boundary
-			sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sFilename << "\"\r\n";	//	Item header
+			sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sFilename << "\"\r\n";	//	Item header    'file'
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << f.rdbuf();																				//	Binary content
+			sb_ascii << "\r\n";																					//	Spacing
+			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
+
+			//	## EXPERIMENTAL ##
+			sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";										//	Item header    'r'
+			sb_ascii << "\r\n";																					//	Spacing
+			sb_ascii << rTarget << "\r\n";																	//	Binary content
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
 
@@ -547,10 +576,10 @@ DWORD HTTPWorkerThread( LPVOID lpParameter )
 				nSendNextKeepAliveAt += RA_SERVER_POLL_DURATION;
 
 				//	Post a keepalive packet:
-				if( g_LocalUser.m_bIsLoggedIn )
+				if( RAUsers::LocalUser.IsLoggedIn() )
 				{
 					PostArgs args;
-					args['u'] = g_LocalUser.Username();
+					args['u'] = RAUsers::LocalUser.Username();
 
 					if( RA_GameIsActive() )
 					{

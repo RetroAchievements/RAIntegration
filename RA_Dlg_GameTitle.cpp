@@ -116,7 +116,7 @@ INT_PTR CALLBACK GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				
 				//	Pack query string:
  				sprintf_s( sRequest, 512, "u=%s&t=%s&m=%s&g=%s&c=%d", 
-					g_LocalUser.m_sUsername, g_LocalUser.m_sToken, g_GameTitleDialog.m_sMD5, sSelectedTitle, g_ConsoleID );
+					RAUsers::LocalUser.m_sUsername, RAUsers::LocalUser.m_sToken, g_GameTitleDialog.m_sMD5, sSelectedTitle, g_ConsoleID );
 
 				//	Send request:
 				ZeroMemory( sResponse, 4096 );
@@ -206,7 +206,7 @@ unsigned int Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, const 
 	if( sMD5 == NULL )
 		return 0;
 
-	if( !g_LocalUser.m_bIsLoggedIn )
+	if( !RAUsers::LocalUserIsLoggedIn() )
 		return 0;
 
 	g_GameTitleDialog.m_sMD5 = sMD5;

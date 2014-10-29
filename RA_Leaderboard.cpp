@@ -400,14 +400,14 @@ void RA_Leaderboard::Test()
 			{
 				//	TBD: move to keys!
 				char sValidationSig[50];
-				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, g_LocalUser.m_sUsername, m_nID );
+				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.m_sUsername, m_nID );
 
 				char sValidation[50];
 				md5_GenerateMD5( sValidationSig, strlen(sValidationSig), sValidation );
 
 				PostArgs args;
-				args['u'] = g_LocalUser.Username();
-				args['t'] = g_LocalUser.Token();
+				args['u'] = RAUsers::LocalUser.Username();
+				args['t'] = RAUsers::LocalUser.Token();
 				args['i'] = std::to_string( m_nID );
 				args['v'] = sValidation;
 				args['s'] = std::to_string( nVal );

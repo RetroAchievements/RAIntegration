@@ -47,7 +47,7 @@ using namespace rapidjson;
 #define RA_IMG_HOST "retroachievements.org"
 #define RA_IMG_HOST_W MAKEWIDE( RA_IMG_HOST )
 
-#define SIZEOF_ARRAY(ar) (sizeof(ar)/sizeof(ar[0]))
+#define SIZEOF_ARRAY( ar ) ( sizeof( ar )/sizeof( ar[0] ) )
 
 typedef unsigned char       BYTE;
 typedef unsigned long       DWORD;
@@ -55,6 +55,9 @@ typedef int                 BOOL;
 typedef DWORD				ARGB;
 
 typedef std::vector<BYTE> DataStream;
+
+typedef unsigned int AchievementID;
+typedef unsigned int GameID;
 
 char* DataStreamAsString( DataStream& stream );
 

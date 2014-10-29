@@ -244,51 +244,44 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 }
 
 
-HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeight )
+HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned int nHeight )
 {
-	HRESULT hr = S_OK;
-	WCHAR szFileName[MAX_PATH];
-	char sReqBadgeName[1024];
-	unsigned int i = 0;
-	DWORD nBytesRead = 0;
-	size_t requiredSize = 255;
-	IWICBitmapDecoder* pDecoder = NULL;
-	IWICBitmapFrameDecode* pFrame = NULL;
-	IWICBitmapSource* pToRenderBitmapSource = NULL;
-	RECT rc;
-	HBITMAP hRetVal = NULL;
-
 	SetCurrentDirectory( g_sHomeDir );
 
 	FILE* fTemp = NULL;
-	fopen_s( &fTemp, sPath, "r" );
+	fopen_s( &fTemp, sPath.c_str(), "r" );
 	if( fTemp == NULL )
 	{
 		//	This is a badge I'm not aware of...
 		//	Request this missing badge from the server
 		
-		const char* pCh = strchr( sPath, '\\' );
+		const char* pCh = strchr( sPath.c_str(), '\\' );
 		while( pCh != NULL && strchr( pCh+1, '\\' ) != NULL )
 			pCh = strchr( pCh+1, '\\' );
 		
+		char sReqBadgeName[1024];
 		sprintf_s( sReqBadgeName, 1024, "Badge/%s", pCh+1 );	//	NB: skip the ".\\Cache\\" part as input
-		for( i = 0; i < strlen( sReqBadgeName ); ++i )		//	Replace backslashes with forwardslashes
+		for( size_t i = 0; i < strlen( sReqBadgeName ); ++i )		//	Replace backslashes with forwardslashes
 			if( sReqBadgeName[i] == '\\' )
 				sReqBadgeName[i] = '/';
 
-		if( !HTTPRequestExists( sReqBadgeName ) )
-			CreateHTTPRequestThread( sReqBadgeName, "", HTTPRequest_Get, 0 );
-		return hRetVal;
+		if( !RAWeb::HTTPRequestExists( sReqBadgeName ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestBadge, PostArgs(), sReqBadgeName );
+		return NULL;
 	}
-
-	if( mbstowcs_s( &requiredSize, szFileName, requiredSize+1, sPath, requiredSize ) != (size_t)(-1) )
+	
+	HBITMAP hRetVal = NULL;
+	WCHAR szFileName[MAX_PATH];
+	size_t requiredSize = 255;
+	if( mbstowcs_s( &requiredSize, szFileName, requiredSize+1, sPath.c_str(), requiredSize ) != (size_t)(-1) )
 	// Step 1: Create the open dialog box and locate the image file
 	//if (LocateImageFile(hWnd, szFileName, ARRAYSIZE(szFileName)))
 	{
 		// Step 2: Decode the source image to IWICBitmapSource
-
+		
+		IWICBitmapDecoder* pDecoder = NULL;
 		// Create a decoder
-		hr = IWICImagingFactory_CreateDecoderFromFilename( 
+		HRESULT hr = IWICImagingFactory_CreateDecoderFromFilename( 
 			g_UserImageFactoryInst.m_pIWICFactory, 
 			szFileName,                      // Image to be decoded
 			NULL,                            // Do not prefer a particular vendor
@@ -298,7 +291,8 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 			);
 
 		// Retrieve the first frame of the image from the decoder
-		if (SUCCEEDED(hr))
+		IWICBitmapFrameDecode* pFrame = NULL;
+		if( SUCCEEDED(hr) )
 		{
 			hr = IWICBitmapDecoder_GetFrame( pDecoder, 0, &pFrame );
 		}
@@ -310,7 +304,7 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 // 		DWORD nErr = GetLastError();
 
 		// Retrieve IWICBitmapSource from the frame
-		if (SUCCEEDED(hr))
+		if( SUCCEEDED(hr) )
 		{
 #if defined (__cplusplus)
 			const IID& nIID = IID_IWICBitmapSource;
@@ -337,14 +331,16 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 
 		// Step 3: Scale the original IWICBitmapSource to the client rect size
 		// and convert the pixel format
-		if (SUCCEEDED(hr))
+		IWICBitmapSource* pToRenderBitmapSource = NULL;
+		if( SUCCEEDED(hr) )
 		{
+			RECT rc;
 			SetRect( &rc, 0, 0, nWidth, nHeight );
 			hr = ConvertBitmapSource( rc, &pToRenderBitmapSource );
 		}
 
 		// Step 4: Create a DIB from the converted IWICBitmapSource
-		if (SUCCEEDED(hr))
+		if( SUCCEEDED(hr) )
 		{
 			hr = UserImageFactory_CreateDIBSectionFromBitmapSource( pToRenderBitmapSource, hRetVal );
 		}

@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <assert.h>
 #include <io.h>
+#include <sstream>
 
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_GameTitle.h"
@@ -38,6 +39,21 @@ namespace
 {
 	const char* LockedBadge = "00000";
 	const char* LockedBadgeFile = "00000.png";
+
+	unsigned int GetFlagsFromType( AchievementType nType )
+	{
+		unsigned int nFlags = 0;
+		nFlags = 1<<0;						//	Active achievements! : 1
+		if( nType == AT_CORE )
+			nFlags |= 1<<1;					//	Core: 3
+		else if( nType == AT_UNOFFICIAL )
+			nFlags |= 1<<2;					//	Unofficial: 5
+		else
+			nFlags |= 1<<3;					//	Local and custom... (9)
+
+		return nFlags;
+	}
+
 }
 
 void SetAchievementCollection( AchievementType Type )
@@ -54,14 +70,7 @@ void SetAchievementCollection( AchievementType Type )
 	case AT_USER:
 		g_pActiveAchievements = LocalAchievements;
 		break;
-	default:
-		assert(0);
-		break;
 	}
-
-	//	Update TONS of dialogs :S
-	//g_AchievementsDialog.OnLoad_NewRom();
-	//AchievementEditorDialog.OnLoad_NewRom();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -162,17 +171,11 @@ char* Achievement::ParseLine( char* pBuffer )
 	SetProgressIndicator( pProgress );
 	SetProgressIndicatorMax( pProgressMax );
 	SetProgressIndicatorFormat( pProgressFmt );
-	SetUpvotes( nUpvotes );
-	SetDownvotes( nDownvotes );
+	//SetUpvotes( nUpvotes );
+	//SetDownvotes( nDownvotes );
 	SetBadgeImage( pBadgeFilename );
 	
 	return pBuffer;
-}
-
-void Achievement::SetID( unsigned int nID )
-{ 
-	m_nAchievementID = nID;
-	SetDirtyFlag( Dirty_ID );
 }
 
 BOOL Achievement::Test()
@@ -211,11 +214,11 @@ void Achievement::Clear()
 	//m_vConditions.clear();
 
 	m_nAchievementID = 0;
-
-	m_sTitle[0] = '\0';
-	m_sDescription[0] = '\0';
-	m_sAuthor[0] = '\0';
-	strcpy_s( m_sBadgeImageFilename, 16, LockedBadge );
+	
+	m_sTitle.clear();
+	m_sDescription.clear();
+	m_sAuthor.clear();
+	m_sBadgeImageFilename.clear();
 
 	m_nPointValue = 0;
 	m_bActive = FALSE;
@@ -223,8 +226,6 @@ void Achievement::Clear()
 	ClearDirtyFlag();
 	ClearBadgeImage();
 
-	m_nInternalArrayOffset = 0;
-	m_nNumDynamicVars = 0;
 	m_bProgressEnabled = FALSE;
 	m_sProgress[0] = '\0';
 	m_sProgressMax[0] = '\0';
@@ -233,8 +234,8 @@ void Achievement::Clear()
 
 	m_nTimestampCreated = 0;
 	m_nTimestampModified = 0;
-	m_nUpvotes = 0;
-	m_nDownvotes = 0;
+	//m_nUpvotes = 0;
+	//m_nDownvotes = 0;
 }
 
 
@@ -248,6 +249,12 @@ void Achievement::RemoveConditionGroup()
 	m_vConditions.pop_back();
 }
 
+void Achievement::SetID( unsigned int nID )
+{ 
+	m_nAchievementID = nID;
+	SetDirtyFlag( Dirty_ID );
+}
+
 void Achievement::SetActive( BOOL bActive )
 {
 	if( m_bActive != bActive )
@@ -257,105 +264,17 @@ void Achievement::SetActive( BOOL bActive )
 	}
 }
 
-void Achievement::SetAuthor( const char* sAuthor )
-{
-	strcpy_s( m_sAuthor, 255, sAuthor );
-	//SetDirtyFlag();
-}
-
-void Achievement::SetTitle( const char* sTitle )
-{
-	strcpy_s( m_sTitle, 255, sTitle );
-	//SetDirtyFlag();
-}
-
-void Achievement::SetDescription( const char* sDescription )
-{
-	strcpy_s( m_sDescription, 255, sDescription );
-	//SetDirtyFlag();
-}
-
-void Achievement::SetPoints( unsigned int nPoints )
-{
-	m_nPointValue = nPoints;
-}
-
-void Achievement::SetProgressIndicator( const char* sProgress )
-{
-	strcpy_s( m_sProgress, 256, sProgress );
-}
-
-void Achievement::SetProgressIndicatorMax( const char* sProgressMax )
-{
-	strcpy_s( m_sProgressMax, 256, sProgressMax );
-}
-
-void Achievement::SetProgressIndicatorFormat( const char* sProgressFmt )
-{
-	strcpy_s( m_sProgressFmt, 50, sProgressFmt );
-}
-
-void Achievement::SetUpvotes( unsigned short nVal )
-{
-	m_nUpvotes = nVal;
-	SetDirtyFlag( Dirty_Votes );
-
-// 	if( bUpdateDlg )
-// 	{
-// 		//	Reverse find where I am in the list:
-// 		int nOffset = 0;
-// 		for( ; nOffset < pActiveAchievements->Count(); ++nOffset )
-// 		{
-// 			if( this == &pActiveAchievements->GetRef( nOffset ) )
-// 				break;
-// 		}
-// 
-// 		assert( nOffset < pActiveAchievements->Count() );
-// 		if( nOffset < pActiveAchievements->Count() )
-// 		{
-// 			char buffer[256];
-// 			sprintf_s( buffer, 256, "%d/%d", m_nUpvotes, m_nDownvotes );
-// 
-// 			g_AchievementsDialog.OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
-// 		}
-// 	}
-}
-
-void Achievement::SetDownvotes( unsigned short nVal )
-{
-	m_nDownvotes = nVal;
-	SetDirtyFlag( Dirty_Votes );
-
-// 	if( bUpdateDlg )
-// 	{
-// 		//	Reverse find where I am in the list:
-// 		int nOffset = 0;
-// 		for( ; nOffset < pActiveAchievements->Count(); ++nOffset )
-// 		{
-// 			if( this == &pActiveAchievements->GetRef( nOffset ) )
-// 				break;
-// 		}
-// 
-// 		assert( nOffset < pActiveAchievements->Count() );
-// 		if( nOffset < pActiveAchievements->Count() )
-// 		{
-// 			char buffer[256];
-// 			sprintf_s( buffer, 256, "%d/%d", m_nUpvotes, m_nDownvotes );
-// 
-// 			g_AchievementsDialog.OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
-// 		}
-// 	}
-}
-
-void Achievement::SetCreatedDate( time_t nTimeCreated )
-{
-	m_nTimestampCreated = nTimeCreated;
-}
-
-void Achievement::SetModifiedDate( time_t nTimeModified )
-{
-	m_nTimestampModified = nTimeModified;
-}
+//void Achievement::SetUpvotes( unsigned short nVal )
+//{
+//	m_nUpvotes = nVal;
+//	SetDirtyFlag( Dirty_Votes );
+//}
+//
+//void Achievement::SetDownvotes( unsigned short nVal )
+//{
+//	m_nDownvotes = nVal;
+//	SetDirtyFlag( Dirty_Votes );
+//}
 
 void Achievement::SetModified( BOOL bModified )
 {
@@ -366,22 +285,17 @@ void Achievement::SetModified( BOOL bModified )
 	}
 }
 
-void Achievement::SetBadgeImage( const char* sFilename )
+void Achievement::SetBadgeImage( const std::string& sFilename )
 {
-	char buffer[256];
 	SetDirtyFlag( Dirty_Badge );
 	ClearBadgeImage();
 
-	strcpy_s( m_sBadgeImageFilename, 16, sFilename );
+	m_sBadgeImageFilename = sFilename;
 
-	sprintf_s( buffer, 256, RA_DIR_BADGE "%s.png", sFilename );
-	
 	//	Blocking :S
-	m_hBadgeImage = LoadLocalPNG( buffer, 64, 64 );
-
-	sprintf_s( buffer, 256, RA_DIR_BADGE "%s_lock.png", sFilename );
+	m_hBadgeImage = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sFilename + ".png", 64, 64 );
 	//	Blocking :S
-	m_hBadgeImageLocked = LoadLocalPNG( buffer, 64, 64 );
+	m_hBadgeImageLocked = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sFilename + "_lock.png", 64, 64 );
 }
 
 void Achievement::Reset()
@@ -420,6 +334,156 @@ void Achievement::RemoveAllConditions( size_t nConditionGroup )
 	m_vConditions[nConditionGroup].Clear();
 
 	SetDirtyFlag( Dirty__All );	//	All - not just conditions!
+}
+
+std::string Achievement::CreateMemString() const
+{
+	std::stringstream sstr;
+	
+	unsigned int i = 0;
+	char* sDelta = "";
+	char* sSize = "";
+
+	for( size_t nGrp = 0; nGrp < NumConditionGroups(); ++nGrp )
+	{
+		if( m_vConditions[nGrp].Count() == 0 )	//Ignore empty groups when saving
+			continue;
+		
+		if( nGrp > 0 )	//	Subcondition start found
+			sstr << "S";
+
+		for( i = 0; i < m_vConditions[nGrp].Count(); ++i )
+		{
+			const Condition* pNextCond = &m_vConditions[nGrp].GetAt(i);
+
+			char sNextCondition[256];
+			memset( sNextCondition, 0, 256 );
+
+			//	Source:
+			sDelta = (pNextCond->CompSource().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
+			sSize = "";
+
+			if( pNextCond->IsResetCondition() )
+				strcat_s( sNextCondition, 256, "R:" );
+			else if( pNextCond->IsPauseCondition() )
+				strcat_s( sNextCondition, 256, "P:" );
+
+			if( pNextCond->CompSource().m_nVarType != CMPTYPE_VALUE )
+			{
+				if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
+					sSize = "L";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
+					sSize = "U";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_8BIT )		//	H=half
+					sSize = "H";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
+					sSize = "M";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_1 )
+					sSize = "N";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_2 )
+					sSize = "O";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_3 )
+					sSize = "P";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_4 )
+					sSize = "Q";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_5 )
+					sSize = "R";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_6 )
+					sSize = "S";
+				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_7 )
+					sSize = "T";
+				else //if( pNextCond->CompSource().m_nVarSize == CMP_SZ_16BIT )
+					sSize = "";
+
+				if( g_MemManager.RAMTotalSize() > 65536 )
+					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
+				else
+					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
+			}
+			else
+			{
+				//	Value: use direct!
+				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompSource().m_nVal );
+			}
+			
+			//	Comparison type:
+			char* sCmpType = "=";
+			switch( pNextCond->ComparisonType() )
+			{
+			case CMP_EQ:
+				sCmpType = "="; break;
+			case CMP_GT:
+				sCmpType = ">"; break;
+			case CMP_GTE:
+				sCmpType = ">="; break;
+			case CMP_LT:
+				sCmpType = "<"; break;
+			case CMP_LTE:
+				sCmpType = "<="; break;
+			case CMP_NEQ:
+				sCmpType = "!="; break;
+			default:
+				assert(0); break;
+			}
+			strcat_s( sNextCondition, 256, sCmpType );
+
+			//	Target:
+			sDelta = (pNextCond->CompTarget().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
+			sSize = "";
+
+			if( pNextCond->CompTarget().m_nVarType != CMPTYPE_VALUE )
+			{
+				if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
+					sSize = "L";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
+					sSize = "U";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_8BIT )		//	H=half		
+					sSize = "H";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
+					sSize = "M";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_1 )
+					sSize = "N";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_2 )
+					sSize = "O";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_3 )
+					sSize = "P";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_4 )
+					sSize = "Q";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_5 )
+					sSize = "R";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_6 )
+					sSize = "S";
+				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_7 )
+					sSize = "T";
+				else //if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_16BIT )
+					sSize = "";
+
+				if( g_MemManager.RAMTotalSize() > 65536 )
+					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
+				else
+					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
+			}
+			else
+			{
+				//	Value: use direct!
+				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompTarget().m_nVal );
+			}
+
+			//	Hit count:
+			
+			if( pNextCond->RequiredHits() > 0 )
+				sprintf_s( sNextCondition, 256, "%s.%d.", sNextCondition, pNextCond->RequiredHits() );
+			
+			//	Are we on the last condition? THIS IS IMPORTANT: check the parsing code!
+			if( (i+1) < m_vConditions[nGrp].Count() )
+				strcat_s( sNextCondition, 256, "_" );
+
+			//	Copy in the next condition:
+			sstr << sNextCondition;
+		}
+	}
+
+	return sstr.str();
 }
 
 int Achievement::CreateMemString( char* pStrOut, const int nNumChars )
@@ -596,8 +660,8 @@ void Achievement::Set( const Achievement& rRHS )
 	SetPoints( rRHS.m_nPointValue );
 	SetTitle( rRHS.m_sTitle );
 	SetModified( rRHS.m_bModified );
-	SetUpvotes( rRHS.m_nUpvotes );
-	SetDownvotes( rRHS.m_nDownvotes );
+	//SetUpvotes( rRHS.m_nUpvotes );
+	//SetDownvotes( rRHS.m_nDownvotes );
 	SetBadgeImage( rRHS.m_sBadgeImageFilename );
 	
 	//	TBD: move to 'now'?
@@ -892,71 +956,60 @@ BOOL AchievementSet::DeletePatchFile( unsigned int nAchievementSet, unsigned int
 
 Achievement& AchievementSet::AddAchievement()
 {
-	Achievement& retVal = m_Achievements[m_nNumAchievements];
-	m_nNumAchievements++; 
-
-	//	Clean before returning it
-	retVal.Clear();
-	return retVal;
+	m_Achievements.push_back( Achievement() );
+	return m_Achievements.back();
 }
 
-BOOL AchievementSet::RemoveAchievement( unsigned int nIter )
+BOOL AchievementSet::RemoveAchievement( size_t nIter )
 {
-	unsigned int i = 0;
-	//	Note: need to remember this will have drastic effects on all that
-	//	 rely on the linear order of this object!
-	//MessageBox( NULL, "NOTIMPL", "ERROR", MB_OK );
-	//	Reverse shuffle, like condition removal
-
-	if( nIter >= m_nNumAchievements )
+	if( nIter < m_Achievements.size() )
+	{
+		m_Achievements.erase( m_Achievements.begin()+nIter );
+		return TRUE;
+	}
+	else
 	{
 		assert( 0 );
 		return FALSE;
 	}
-
-	m_Achievements[nIter].ClearBadgeImage();
-
-	for( i = nIter; i < m_nNumAchievements-1; ++i )
-		m_Achievements[ i ] = m_Achievements[ i+1 ];
-
-	m_nNumAchievements--;
-
-	return TRUE;
 }
 
-Achievement* AchievementSet::Find( unsigned int nID )
+Achievement* AchievementSet::Find( AchievementID nAchievementID )
 {
-	unsigned int i = 0;
-
-	for( i = 0; i < m_nNumAchievements; ++i )
+	std::vector<Achievement>::iterator iter = m_Achievements.begin();
+	while( iter != m_Achievements.end() )
 	{
-		if( m_Achievements[i].ID() == nID )
-			return &m_Achievements[i];
+		if( (*iter).ID() == nAchievementID )
+			return &(*iter);
+		iter++;
 	}
 
 	return NULL;
 }
 
-unsigned int AchievementSet::NumActive()
+unsigned int AchievementSet::NumActive() const
 {
 	unsigned int nNumActive = 0;
-	unsigned int i = 0;
-	for( i = 0; i < m_nNumAchievements; ++i )
+	std::vector<Achievement>::const_iterator iter = m_Achievements.begin();
+	while( iter != m_Achievements.end() )
 	{
-		if( m_Achievements[i].Active() )
+		if( (*iter).Active() )
 			nNumActive++;
+		iter++;
 	}
 	return nNumActive;
 }
 
 void AchievementSet::Clear()
 {
-	const unsigned int nNumAchievements = ( sizeof(m_Achievements) / sizeof(m_Achievements[0]) );
-	unsigned int i = 0;
-	for( i = 0; i < nNumAchievements; ++i )
-		m_Achievements[i].Clear();
+	std::vector<Achievement>::iterator iter = m_Achievements.begin();
+	while( iter != m_Achievements.end() )
+	{
+		iter->Clear();
+		iter++;
+	}
 
-	m_nNumAchievements = 0;
+	m_Achievements.clear();
 	m_nGameID = 0;
 	m_bProcessingActive = TRUE;
 	m_sPreferredGameTitle[0] = '\0';
@@ -964,87 +1017,77 @@ void AchievementSet::Clear()
 
 void AchievementSet::Test()
 {
-	unsigned int i = 0;
-	unsigned int nOffset = 0;
-	unsigned long nCharsRead = 0;
-	char sTitle[1024];
-	char sSubtitle[1024];
-	char sValidation[50];
-	//char sUserDetails[512];
-
 	if( !m_bProcessingActive )
 		return;
-
-	for( i = 0; i < m_nNumAchievements; ++i )
+	
+	std::vector<Achievement>::iterator iter = m_Achievements.begin();
+	while( iter != m_Achievements.end() )
 	{
-		Achievement* pAch = &m_Achievements[i];
-		if( !pAch->Active() )
+		Achievement& ach = (*iter);
+		if( !ach.Active() )
 			continue;
 
-		//Cheevo.UpdateProgress();
-
-		if( pAch->Test() == TRUE )
+		if( ach.Test() == TRUE )
 		{
 			//	Award. If can award or have already awarded, set inactive:
-			pAch->SetActive( FALSE );
+			ach.SetActive( FALSE );
 
 			//	Reverse find where I am in the list:
- 			for( nOffset = 0; nOffset < g_pActiveAchievements->Count(); ++nOffset )
+			unsigned int nOffset = 0;
+			for( nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset )
  			{
- 				if( pAch == &g_pActiveAchievements->GetAchievement( nOffset ) )
+ 				if( &ach == &g_pActiveAchievements->GetAchievement( nOffset ) )
  					break;
  			}
- 			assert( nOffset < Count() );
- 			if( nOffset < Count() )
+
+ 			ASSERT( nOffset < NumAchievements() );
+ 			if( nOffset < NumAchievements() )
 				g_AchievementsDialog.ReloadLBXData( nOffset );
 
-			if( g_LocalUser.m_bIsLoggedIn )
+			if( RAUsers::LocalUser.IsLoggedIn() )
 			{
-				if( pAch->ID() == 0 )
+				char sTitle[1024];
+				char sSubtitle[1024];
+
+				if( ach.ID() == 0 )
 				{
 					//g_AchievementsDialog.OnGet_Achievement( i );
 
 					sprintf_s( sTitle, 1024, " Test: Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", pAch->Title(), pAch->Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, pAch->BadgeImage() );
+					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
+					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, ach.BadgeImage() );
 				}
-				else if( pAch->Modified() )
+				else if( ach.Modified() )
 				{
 					//g_AchievementsDialog.OnGet_Achievement( i );
 					
 					sprintf_s( sTitle, 1024, " Modified: Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", pAch->Title(), pAch->Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, pAch->BadgeImage() );
+					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
+					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, ach.BadgeImage() );
 				}
 				else if( g_fnDoValidation == NULL )
 				{
 					//g_AchievementsDialog.OnGet_Achievement( i );
 					
 					sprintf_s( sTitle, 1024, " (Missing RA_Keys.DLL): Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", pAch->Title(), pAch->Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, pAch->BadgeImage() );
+					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
+					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, ach.BadgeImage() );
 				}
 				else if( g_bRAMTamperedWith )
 				{
 					sprintf_s( sTitle, 1024, " (RAM tampered with!): Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", pAch->Title(), pAch->Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, pAch->BadgeImage() );
+					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
+					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, ach.BadgeImage() );
 				}
 				else
 				{
-					g_fnDoValidation( sValidation, g_LocalUser.m_sUsername, g_LocalUser.m_sToken, pAch->ID() );
-
-					//sprintf_s( sUserDetails, 512, "u=%s&t=%s&a=%d&v=%s&h=%d",
-					//	g_LocalUser.m_sUsername, 
-					//	g_LocalUser.m_sToken, 
-					//	pAch->ID(),
-					//	sValidation,
-					//	g_hardcoreModeActive );
+					char sValidation[50];
+					g_fnDoValidation( sValidation, RAUsers::LocalUser.Username().c_str(), RAUsers::LocalUser.Token().c_str(), ach.ID() );
 
 					PostArgs args;
-					args['u'] = g_LocalUser.m_sUsername;
-					args['t'] = g_LocalUser.m_sToken;
-					args['a'] = std::to_string( pAch->ID() );
+					args['u'] = RAUsers::LocalUser.Username();
+					args['t'] = RAUsers::LocalUser.Token();
+					args['a'] = std::to_string( ach.ID() );
 					args['v'] = sValidation;
 					args['h'] = std::to_string( static_cast<int>( g_hardcoreModeActive ) );
 					
@@ -1059,13 +1102,12 @@ BOOL AchievementSet::Save()
 {
 	//	Takes all achievements in this group and dumps them in the filename provided.
 	FILE* pFile = NULL;
-	char sNextLine[2048];
 	char sMem[2048];
 
 	char sFilename[1024];
 	unsigned int i = 0;
 
-	GetAchievementsFilename( m_nType, m_nGameID, sFilename, 1024 );
+	GetAchievementsFilename( m_nSetType, m_nGameID, sFilename, 1024 );
 
 	fopen_s( &pFile, sFilename, "w" );
 	if( pFile != NULL )
@@ -1076,31 +1118,34 @@ BOOL AchievementSet::Save()
 		sprintf_s( sNextLine, 2048, "%s\n", m_sPreferredGameTitle );
 		fwrite( sNextLine, sizeof(char), strlen(sNextLine), pFile );
 
-		for( i = 0; i < m_nNumAchievements; ++i )
+		std::vector<Achievement>::const_iterator iter = m_Achievements.begin();
+		while( iter != m_Achievements.end() )
 		{
-			Achievement* pAch = &m_Achievements[i];
+			const Achievement& ach = (*iter);
 
-			ZeroMemory( sMem, 2048 );
-			pAch->CreateMemString( sMem, 2048 );
-
+			std::string sMemStr = ach.CreateMemString();
+			
+			char sNextLine[2048];
 			ZeroMemory( sNextLine, 2048 );
 			sprintf_s( sNextLine, 2048, "%d:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
-				pAch->ID(),
-				sMem,
-				pAch->Title(),
-				pAch->Description(),
+				ach.ID(),
+				sMemStr.c_str(),
+				ach.Title(),
+				ach.Description(),
 				" ", //Ach.ProgressIndicator()=="" ? " " : Ach.ProgressIndicator(),
 				" ", //Ach.ProgressIndicatorMax()=="" ? " " : Ach.ProgressIndicatorMax(),
 				" ", //Ach.ProgressIndicatorFormat()=="" ? " " : Ach.ProgressIndicatorFormat(),
-				pAch->Author(),
-				(unsigned short)pAch->Points(),
-				(unsigned long)pAch->CreatedDate(),
-				(unsigned long)pAch->ModifiedDate(),
-				(unsigned short)pAch->Upvotes(),
-				(unsigned short)pAch->Downvotes(),
-				pAch->BadgeImageFilename() );
+				ach.Author(),
+				(unsigned short)ach.Points(),
+				(unsigned long)ach.CreatedDate(),
+				(unsigned long)ach.ModifiedDate(),
+				(unsigned short)ach.Upvotes(),
+				(unsigned short)ach.Downvotes(),
+				ach.BadgeImageFilename() );
 
 			fwrite( sNextLine, sizeof(char), strlen(sNextLine), pFile );
+
+			iter++;
 		}
 
 		fclose( pFile );
@@ -1110,8 +1155,78 @@ BOOL AchievementSet::Save()
 	return FALSE;
 }
 
-BOOL AchievementSet::Load( const unsigned int nGameID )
+BOOL AchievementSet::FetchFromWebBlocking()
 {
+	//	Can't open file: attempt to find it on SQL server!
+	ZeroMemory( bufferOut, 32768 );
+	nCharsRead = 0;
+
+	const unsigned int nFlags = GetFlagsFromType( m_nSetType );
+
+	sprintf_s( sPostData, 256, "u=%s&g=%d&f=%d&l=%d", RAUsers::LocalUser.m_sUsername, nGameID, nFlags, (nFlags==3)?1:0 );	//	NB only load LB on Core Set
+
+	if( DoBlockingHttpPost( "requestpatch.php", sPostData, bufferOut, 32768, &nCharsRead ) )
+	{
+		if( strncmp( bufferOut, "0.", 2 ) == 0 )
+		{				
+			nMinVer = strtol( bufferOut+2, NULL, 10 );
+			if( nCurrentVer < nMinVer )
+			{
+				//	Client version too old!
+
+				sprintf_s( buffer, 4096, "Client version of 0.%03d is too old for the latest patch format. "
+					"Version 0.%03d or greater required.\nVisit " RA_HOST " for a more recent version? ",
+						nCurrentVer, nMinVer );
+
+				if( MessageBox( NULL, buffer, "Client out of date!", MB_YESNO ) == IDYES )
+				{
+					sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
+
+					ShellExecute( NULL,
+						"open",
+						buffer,
+						NULL,
+						NULL,
+						SW_SHOWNORMAL );
+				}
+				else
+				{
+					//MessageBox( NULL, "Cannot load achievements for this game.", "Error", MB_OK );
+				}
+
+				return FALSE;
+			}
+		}
+
+		//	Reopen said file as writable:
+		fopen_s( &pFile, sFilename, "w" );
+		if( pFile != NULL )
+		{
+			if( m_nType == AT_CORE )
+			{
+				//	Only display for core achievements (otherwise receive this message three times)
+				//g_PopupWindows.AchievementPopups().AddMessage( " Fetched fresh achievements file from server... ", "", MSG_INFO );	//	TBD
+			}
+
+			//	Write the lot out!
+			fwrite( bufferOut, sizeof(char), nCharsRead, pFile );
+			fclose( pFile );
+		}
+	}
+	else
+	{
+		//	Could not connect...
+		sprintf_s( buffer, 4096, " Could not connect to " RA_HOST "... " );
+		g_PopupWindows.AchievementPopups().AddMessage( buffer, " Working offline... ", MSG_INFO ); //?
+
+		return FALSE;
+	}
+}
+
+BOOL AchievementSet::Load( const GameID nGameID )
+{
+	//	Load from file
+
 	char sFilename[1024];
 	FILE* pFile = NULL;
 	const char EndLine = '\n';
@@ -1135,7 +1250,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 	if( nGameID == 0 )
 		return TRUE;
 
-	GetAchievementsFilename( m_nType, nGameID, sFilename, 1024 );
+	GetAchievementsFilename( m_nSetType, nGameID, sFilename, 1024 );
 
 	SetCurrentDirectory( g_sHomeDir );
 	fopen_s( &pFile, sFilename, "r" );
@@ -1221,9 +1336,9 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 
 		if( m_nType == AT_CORE )
 		{
-			if( g_LocalUser.m_bIsLoggedIn )
+			if( RAUsers::LocalUserIsLoggedIn() )
 			{
-				sprintf_s( sPostData, 512, "u=%s&t=%s&g=%d&h=%d", g_LocalUser.m_sUsername, g_LocalUser.m_sToken, nGameID, g_hardcoreModeActive );
+				sprintf_s( sPostData, 512, "u=%s&t=%s&g=%d&h=%d", RAUsers::LocalUser.m_sUsername, RAUsers::LocalUser.m_sToken, nGameID, g_hardcoreModeActive );
 
 				ZeroMemory( bufferOut, 32768 );
 				DWORD nCharsRead = 0;
@@ -1251,7 +1366,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 					{
 						assert(!"Could not parse request unlocks return value?");
 						MessageBox( NULL, "Could not log you in. Please login again.", "Error logging in!", MB_OK );
-						g_LocalUser.Clear();
+						RAUsers::LocalUser.Clear();
 						//Build_Main_Menu();
 					}
 				}
@@ -1266,78 +1381,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 	}
 	else
 	{
-		//	Can't open file: attempt to find it on SQL server!
-
-		ZeroMemory( bufferOut, 32768 );
-		nCharsRead = 0;
-
-		nFlags = 1<<0;						//	Active achievements! : 1
-		if( m_nType == AT_CORE )
-			nFlags |= 1<<1;					//	Core: 3
-		else if( m_nType == AT_UNOFFICIAL )
-			nFlags |= 1<<2;					//	Unofficial: 5
-		else
-			nFlags |= 1<<3;					//	Local and custom... (9)
-
-		sprintf_s( sPostData, 256, "u=%s&g=%d&f=%d&l=%d", g_LocalUser.m_sUsername, nGameID, nFlags, (nFlags==3)?1:0 );	//	NB only load LB on Core Set
-
-		if( DoBlockingHttpPost( "requestpatch.php", sPostData, bufferOut, 32768, &nCharsRead ) )
-		{
-			if( strncmp( bufferOut, "0.", 2 ) == 0 )
-			{				
-				nMinVer = strtol( bufferOut+2, NULL, 10 );
-				if( nCurrentVer < nMinVer )
-				{
-					//	Client version too old!
-
-					sprintf_s( buffer, 4096, "Client version of 0.%03d is too old for the latest patch format. "
-						"Version 0.%03d or greater required.\nVisit " RA_HOST " for a more recent version? ",
-							nCurrentVer, nMinVer );
-
-					if( MessageBox( NULL, buffer, "Client out of date!", MB_YESNO ) == IDYES )
-					{
-						sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
-
-						ShellExecute( NULL,
-							"open",
-							buffer,
-							NULL,
-							NULL,
-							SW_SHOWNORMAL );
-					}
-					else
-					{
-						//MessageBox( NULL, "Cannot load achievements for this game.", "Error", MB_OK );
-					}
-
-					return FALSE;
-				}
-			}
-
-			//	Reopen said file as writable:
-			fopen_s( &pFile, sFilename, "w" );
-			if( pFile != NULL )
-			{
-				if( m_nType == AT_CORE )
-				{
-					//	Only display for core achievements (otherwise receive this message three times)
-					//g_PopupWindows.AchievementPopups().AddMessage( " Fetched fresh achievements file from server... ", "", MSG_INFO );	//	TBD
-				}
-
-				//	Write the lot out!
-				fwrite( bufferOut, sizeof(char), nCharsRead, pFile );
-				fclose( pFile );
-			}
-		}
-		else
-		{
-			//	Could not connect...
-			sprintf_s( buffer, 4096, " Could not connect to " RA_HOST "... " );
-			g_PopupWindows.AchievementPopups().AddMessage( buffer, " Working offline... ", MSG_INFO ); //?
-
-			return FALSE;
-		}
-
+		FetchFromWebBlocking();
 		//	One more attempt at loading from our new file
 		return Load( nGameID );
 	}
@@ -1347,7 +1391,7 @@ BOOL AchievementSet::Load( const unsigned int nGameID )
 
 void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 {
-	if( !g_LocalUser.m_bIsLoggedIn )
+	if( !RAUsers::LocalUserIsLoggedIn() )
 		return;
 
 	if( sSaveStateFilename == NULL )
@@ -1395,7 +1439,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 		//	Generate a slightly different key to md5ificateorise:
 		char cheevoProgressMangled[4096];
 		sprintf_s( cheevoProgressMangled, 4096, "%s%s%s%d", 
-			g_LocalUser.m_sUsername, cheevoProgressString, g_LocalUser.m_sUsername, pAch->ID() );
+			RAUsers::LocalUser.m_sUsername, cheevoProgressString, RAUsers::LocalUser.m_sUsername, pAch->ID() );
 
 		char md5Progress[33];
 		md5_GenerateMD5( cheevoProgressMangled, strlen( cheevoProgressMangled ), md5Progress );
@@ -1438,7 +1482,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 	int nMemStringLen = 0;
 	char pRecalculatedAchievementMD5[33];
 
-	if( !g_LocalUser.m_bIsLoggedIn )
+	if( !RAUsers::LocalUserIsLoggedIn() )
 		return;
 
 	if( sLoadStateFilename == NULL )
@@ -1494,7 +1538,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 		
 			//	Regenerate the md5 and see if it sticks:
 			sprintf_s( cheevoMD5TestMangled, 4096, "%s%s%s%d", 
-				g_LocalUser.m_sUsername, cheevoProgressString, g_LocalUser.m_sUsername, nID );
+				RAUsers::LocalUser.m_sUsername, cheevoProgressString, RAUsers::LocalUser.m_sUsername, nID );
 			md5_GenerateMD5( cheevoMD5TestMangled, strlen(cheevoMD5TestMangled), pRecalculatedProgressMD5 );
 
 			if( strncmp( pGivenProgressMD5, pRecalculatedProgressMD5, 32 ) == 0 )
@@ -1579,9 +1623,9 @@ BOOL AchievementSet::Unlock( unsigned int nAchievementID )
 	return FALSE;//??
 }
 
-void AchievementSet::SetPaused( BOOL bPauseState )
+BOOL AchievementSet::IsCurrentAchievementSetSelected() const
 {
-	m_bProcessingActive = !bPauseState;
+	return( this == g_pActiveAchievements );
 }
 
 BOOL AchievementSet::HasUnsavedChanges()
@@ -1594,19 +1638,5 @@ BOOL AchievementSet::HasUnsavedChanges()
 	}
 
 	return FALSE;
-}
-BOOL AchievementSet::IsCurrentAchievementSetSelected()
-{
-	return( this == g_pActiveAchievements );
-}
-
-const char* AchievementSet::GameTitle()				
-{ 
-	return m_sPreferredGameTitle;
-}
-
-void AchievementSet::SetGameTitle( const char* pStrIn )
-{ 
-	strcpy_s( m_sPreferredGameTitle, 64, pStrIn );
 }
 

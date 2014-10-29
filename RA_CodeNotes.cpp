@@ -265,7 +265,7 @@ void CodeNotes::Add( const char* sAuthor, const char* sAddress, const char* sDes
 		m_sCodeNotes.push_back( CodeNoteObj( sAuthor, sAddress, sDescription ) );
 	}
 
-	if( RAUsers::LocalUser.m_bIsLoggedIn && ( strlen( sAddress ) > 2 ) )
+	if( RAUsers::LocalUser.IsLoggedIn() && ( strlen( sAddress ) > 2 ) )
 	{ 
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser.Username();
@@ -302,7 +302,7 @@ BOOL CodeNotes::Remove( const char* sAddress )
 		{
 			m_sCodeNotes.erase( (iter) );
 
-			if( RAUsers::LocalUser.m_bIsLoggedIn )
+			if( RAUsers::LocalUser.IsLoggedIn() )
 			{
 				PostArgs args;
 				args['u'] = RAUsers::LocalUser.Username();

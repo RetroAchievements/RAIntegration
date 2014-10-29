@@ -20,7 +20,7 @@
 #include "RA_httpthread.h"
 
 //static 
-LocalRAUser RAUsers::LocalUser;
+LocalRAUser RAUsers::LocalUser("");
 std::map<std::string, RAUser*> RAUsers::UserDatabase;
 
 //static 
@@ -97,7 +97,7 @@ void RAUser::RequestAndStoreUserImage()
 		sprintf_s( buffer, 256, "UserPic/%s.png", m_sUsername );
 
 		if( !HTTPRequestExists( buffer ) )
-			CreateHTTPRequestThread( buffer, "", HTTPRequest_Get, (this==&g_LocalUser) );
+			CreateHTTPRequestThread( buffer, "", HTTPRequest_Get, (this==&RAUsers::LocalUser) );
 		
 		m_bFetchingUserImage = TRUE;
 	}
@@ -128,12 +128,12 @@ LocalRAUser::~LocalRAUser()
 
 void LocalRAUser::AttemptLogin()
 {
-	g_LocalUser.m_bIsLoggedIn = FALSE;
+	RAUsers::LocalUserIsLoggedIn() = FALSE;
 
-	if( g_LocalUser.m_sUsername != NULL && g_LocalUser.m_sUsername[0] != '\0' )
+	if( RAUsers::LocalUser.m_sUsername != NULL && RAUsers::LocalUser.m_sUsername[0] != '\0' )
 	{
 		AttemptSilentLogin();
-		//g_LocalUser.m_bIsLoggedIn = TRUE;
+		//RAUsers::LocalUserIsLoggedIn() = TRUE;
 	}
 	else
 	{
@@ -146,7 +146,7 @@ void LocalRAUser::AttemptLogin()
 void LocalRAUser::AttemptSilentLogin()
 {
 	//	Don't login here: cause a login when requestlogin.php returns!
-	//g_LocalUser.Login( bufferUser, bufferToken, true );
+	//RAUsers::LocalUser.Login( bufferUser, bufferToken, true );
 
 	char sRequest[512];
 	sprintf_s( sRequest, 512, "u=%s&t=%s", m_sUsername, m_sToken );
@@ -161,7 +161,7 @@ void LocalRAUser::AttemptSilentLogin()
 void LocalRAUser::Login( const std::string& sUser, const std::string& sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages )
 {
 	m_bIsLoggedIn = TRUE;
-	sprintf_s( g_LocalUser.m_sUsername, 50, sUser );
+	sprintf_s( RAUsers::LocalUser.m_sUsername, 50, sUser );
 	SetToken( sToken );
 
 	//	Used only for persistence: always store in memory (we need it!)
@@ -171,11 +171,11 @@ void LocalRAUser::Login( const std::string& sUser, const std::string& sToken, BO
 	RequestAndStoreUserImage();
 	RequestFriendList();
 	
-	g_LocalUser.m_nLatestScore = nPoints;
+	RAUsers::LocalUser.m_nLatestScore = nPoints;
 	
 	char sTitle[256];
 	char sSubtitle[256];
-	sprintf_s( sTitle, 256,		" Welcome back %s (%d) ", g_LocalUser.m_sUsername, nPoints );
+	sprintf_s( sTitle, 256,		" Welcome back %s (%d) ", RAUsers::LocalUser.m_sUsername, nPoints );
 	sprintf_s( sSubtitle, 256,	" You have %d new %s. ", nMessages, (nMessages==1) ? "message" : "messages" );
 
 	g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_LOGIN );
@@ -202,7 +202,7 @@ void LocalRAUser::s_OnFriendListCB( void* pData )
 {
 	RequestObject* pObj = (RequestObject*)pData;
 
-	g_LocalUser.OnFriendListCB( pObj );
+	RAUsers::LocalUser.OnFriendListCB( pObj );
 }
 
 void LocalRAUser::OnFriendListCB( RequestObject* pObj )
@@ -246,10 +246,11 @@ void LocalRAUser::OnFriendListCB( RequestObject* pObj )
 
 void LocalRAUser::RequestFriendList()
 {
- 	char sPost[512];
-	sprintf_s( sPost, 512, "u=%s&t=%s", m_sUsername, m_sToken );
- 	//CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0, &s_OnFriendListCB );
- 	CreateHTTPRequestThread( "requestfriendlist.php", sPost, HTTPRequest_Post, 0 );
+	PostArgs args;
+	args['u'] = Username();
+	args['t'] = Token();
+
+	RAWeb::CreateThreadedHTTPRequest( RequestType::RequestFriendList, args );
 }
 
 RAUser* LocalRAUser::AddFriend( const std::string& sFriend, unsigned int nScore )
@@ -257,9 +258,9 @@ RAUser* LocalRAUser::AddFriend( const std::string& sFriend, unsigned int nScore 
 	if( !RAUsers::DatabaseContainsUser( sFriend ) )
 		RAUsers::UserDatabase[ sFriend ] = new RAUser( sFriend );
 
- 	for( size_t i = 0; i < m_Friends.size(); ++i )
+ 	for( size_t i = 0; i < m_aFriends.size(); ++i )
  	{
-		if( strcmp( m_Friends[i].m_sUsername, sFriend ) == 0 )
+		if( sFriend.compare( m_aFriends.at( i ).Username() ) == 0 )
  		{
  			//	Friend already added = just update score
 			m_Friends[i].m_nLatestScore = nScore;
@@ -304,8 +305,8 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 void LocalRAUser::Clear()
 {
 	RAUser::Clear();
-	g_LocalUser.m_sToken[0] = '\0';
-	g_LocalUser.m_bIsLoggedIn = FALSE;
+	RAUsers::LocalUser.m_sToken[0] = '\0';
+	RAUsers::LocalUserIsLoggedIn() = FALSE;
 }
 
 RAUser* LocalRAUser::GetFriendByIter( size_t nOffs )
@@ -329,5 +330,5 @@ RAUser* LocalRAUser::FindFriend( const std::string& sName )
 
 API bool _RA_UserLoggedIn()
 {
-	return (g_LocalUser.m_bIsLoggedIn == TRUE);
+	return (RAUsers::LocalUserIsLoggedIn() == TRUE);
 }

@@ -23,7 +23,7 @@ public:
 
 
 BOOL InitializeUserImageFactory( HINSTANCE hInst );
-HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeight );
+HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned int nHeight );
 
 extern UserImageFactoryVars g_UserImageFactoryInst;
 

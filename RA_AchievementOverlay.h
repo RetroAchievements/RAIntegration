@@ -1,5 +1,4 @@
-#ifndef _ACHIEVEMENTOVERLAY_H_
-#define _ACHIEVEMENTOVERLAY_H_
+#pragma once
 
 #include <wtypes.h>
 #include "RA_Achievement.h"
@@ -56,25 +55,50 @@ extern LeaderboardExamine g_LBExamine;
 class AchievementExamine
 {
 public:
-	void Initialize( const Achievement* AchIn );
-	void Clear();
-	static void CB_OnReceiveData( void* pRequestObject );
+	class RecentWinnerData
+	{
+	public:
+		RecentWinnerData( const std::string& sUser, const std::string& sWonAt ) :
+			m_sUser( sUser ), m_sWonAt( sWonAt )
+		{}
+		const std::string& User() const		{ return m_sUser; }
+		const std::string& WonAt() const	{ return m_sWonAt; }
+
+	private:
+		const std::string m_sUser;
+		const std::string m_sWonAt;
+	};
 
 public:
-	char m_Author[32];
-	char m_CreatedOn[32];
-	char m_LastModified[32];
-	int m_nID;
+	AchievementExamine();
 
+public:
+	void Initialize( const Achievement* pAchIn );
+	void Clear();
+	static void CB_OnReceiveData( void* pRequestObject );
+	void OnReceiveData( Document& doc );
+	
+	BOOL HasData() const											{ return m_bHasData; }
+	const std::string& CreatedDate() const							{ return m_CreatedDate; }
+	const std::string& ModifiedDate() const							{ return m_LastModifiedDate; }
+	size_t NumRecentWinners() const									{ return RecentWinners.size(); }
+	const RecentWinnerData& GetRecentWinner( size_t nOffs ) const	{ return RecentWinners.at( nOffs ); }
+	
+	int TotalWinners() const										{ return m_nTotalWinners; }
+	int PossibleWinners() const										{ return m_nPossibleWinners; }
+
+private:
+	const Achievement* m_pSelectedAchievement;
+	std::string m_CreatedDate;
+	std::string m_LastModifiedDate;
+	
+	BOOL m_bHasData;
+
+	//	Data found:
 	int	m_nTotalWinners;
 	int m_nPossibleWinners;
 
-	unsigned int m_nNumRecentWinners;
-	char m_RecentWinnerName[5][128];
-	char m_RecentWinAt[5][128];
-
-	BOOL m_bHasData;
-	const Achievement* m_pSelectedAchievement;
+	std::vector<RecentWinnerData> RecentWinners;
 };
 extern AchievementExamine g_AchExamine;
 
@@ -172,13 +196,11 @@ extern AchievementOverlay g_AchievementOverlay;
 //	Exposed to DLL
 extern "C"
 {
+	API extern int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused );
+	API extern void _RA_RenderOverlay( HDC hDC, RECT* rcSize );
 
-API extern int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused );
-API extern void _RA_RenderOverlay( HDC hDC, RECT* rcSize );
-
-API extern void _RA_InitDirectX();
-API extern void _RA_OnPaint( HWND hWnd );
-
+	API extern void _RA_InitDirectX();
+	API extern void _RA_OnPaint( HWND hWnd );
 }
 
 extern const COLORREF g_ColText;
@@ -189,5 +211,3 @@ extern const COLORREF g_ColBlack;
 extern const COLORREF g_ColPopupBG;
 extern const COLORREF g_ColPopupText;
 extern const COLORREF g_ColPopupShadow;
-
-#endif // _ACHIEVEMENTOVERLAY_H_

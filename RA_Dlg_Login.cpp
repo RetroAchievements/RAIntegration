@@ -14,9 +14,9 @@ INT_PTR CALLBACK LoginProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 	switch(uMsg)
 	{
 	case WM_INITDIALOG:
-		SetDlgItemText( hDlg, IDC_RA_USERNAME, g_LocalUser.m_sUsername );
+		SetDlgItemText( hDlg, IDC_RA_USERNAME, RAUsers::LocalUser.m_sUsername );
 
-		if( strlen( g_LocalUser.m_sUsername ) > 2 )
+		if( strlen( RAUsers::LocalUser.m_sUsername ) > 2 )
 		{
 			//set focus	IDC_RA_PASSWORD
 			HWND hPass = GetDlgItem( hDlg, IDC_RA_PASSWORD );

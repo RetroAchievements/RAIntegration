@@ -62,10 +62,10 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 		Achievement* pAch = g_AchievementEditorDialog.ActiveAchievement();
 		if( pAch == NULL )
 			return FALSE;
-
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), pAch->Progress() );
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), pAch->ProgressMax() );
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), pAch->ProgressFmt() );
+		 
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), pAch->Progress() );
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), pAch->ProgressMax() );
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), pAch->ProgressFmt() );
 
 		bHandled = TRUE;
 	}
@@ -78,10 +78,10 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 		case IDC_RA_ACHPROGRESSENABLE:
 		{
 			BOOL bEnabled = IsDlgButtonChecked(hDlg, IDC_RA_ACHPROGRESSENABLE );
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_EXAMPLE ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_EXAMPLE ), bEnabled ); 
 			break;
 		}
 
@@ -995,14 +995,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 							//	Reverse find where I am in the list:
 							unsigned int nOffset = 0;
-							for( ; nOffset < g_pActiveAchievements->Count(); ++nOffset )
+							for( ; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset )
 							{
 								if( pActiveAch == &g_pActiveAchievements->GetAchievement( nOffset ) )
 									break;
 							}
 
-							assert( nOffset < g_pActiveAchievements->Count() );
-							if( nOffset < g_pActiveAchievements->Count() )
+							assert( nOffset < g_pActiveAchievements->NumAchievements() );
+							if( nOffset < g_pActiveAchievements->NumAchievements() )
 							{
 								g_AchievementsDialog.OnEditData( nOffset, Dlg_Achievements::Title, pActiveAch->Title() );
 							}
@@ -1259,44 +1259,25 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						if( ofn.lpstrFile != NULL )
 						{
-							DataStream Response;
-							BOOL bOK = RAWeb::DoBlockingImageUpload( "requestuploadbadge.php", ofn.lpstrFile, Response );
-							if( bOK )
+							Document Response;
+							if( RAWeb::DoBlockingImageUpload( RequestUploadBadgeImage, ofn.lpstrFile, Response ) )
 							{
-								Document doc;
-								doc.ParseInsitu( DataStreamAsString( Response ) );
-								//if( strncmp( pBuffer, "OK:", 3 ) == 0 )
-								if( !doc.HasParseError() )
-								{
-									//TBD: ensure that:
-									//	The image is copied to the cache/badge dir
-									//	The image doesn't already exist in teh cache/badge dir (ask overwrite)
-									//	The image is the correct dimensions or can be scaled
-									//	The image can be uploaded OK
-									//	The image is not copyright
+								//TBD: ensure that:
+								//	The image is copied to the cache/badge dir
+								//	The image doesn't already exist in teh cache/badge dir (ask overwrite)
+								//	The image is the correct dimensions or can be scaled
+								//	The image can be uploaded OK
+								//	The image is not copyright
 
-									char sNewIcon[16];
-									strncpy_s( sNewIcon, pBuffer+3, 5 );
-									sNewIcon[5] = '\0';
-									
-									//pBuffer will contain "OK:" and the number of the uploaded file.
-									//	Add the value to the available values in the cbo, and it *should* self-populate.
-									MessageBox( NULL, "Successful!", "Upload OK", MB_OK );
+								const Value& ResponseData = Response["Response"];
+								const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
 
-									//	Probably the only time to call this independently:
-									//m_BadgeNames.FetchNewBadgeNamesThreaded();	//	NO!
-									m_BadgeNames.AddNewBadgeName( sNewIcon, TRUE );
+								//pBuffer will contain "OK:" and the number of the uploaded file.
+								//	Add the value to the available values in the cbo, and it *should* self-populate.
+								MessageBox( NULL, "Successful!", "Upload OK", MB_OK );
 
-									UpdateBadge( sNewIcon );
-								}
-								else
-								{
-									char sTemp[2048];
-									sprintf_s( sTemp, 2048, 
-										"Error reported!\n"
-										"\nServer response: %s", pBuffer );
-									MessageBox( NULL, sTemp, "Error", MB_OK );
-								}
+								m_BadgeNames.AddNewBadgeName( sNewBadgeIter, TRUE );
+								UpdateBadge( sNewBadgeIter );
 							}
 							else
 							{

@@ -10,10 +10,6 @@
 #include <map>
 #include <time.h>
 
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-using namespace rapidjson;
 
 #include "RA_Interface.h"
 #include "RA_Defs.h"
@@ -427,9 +423,10 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 			AchievementSet::DeletePatchFile( AT_CORE, nGameID );
 			AchievementSet::DeletePatchFile( AT_UNOFFICIAL, nGameID );
 
-			CoreAchievements->Load( nGameID );
-			UnofficialAchievements->Load( nGameID );
-			LocalAchievements->Load( nGameID );
+			AchievementSet::Load( nGame );
+			//CoreAchievements->Load( nGameID );
+			//UnofficialAchievements->Load( nGameID );
+			//LocalAchievements->Load( nGameID );
 
 			RAUsers::LocalUser.PostActivity( ActivityType_StartPlaying );
 		}
@@ -1158,37 +1155,65 @@ void _FetchMyProgressFromWeb()
 	}
 }
 
+void EnsureDialogVisible( HWND hDlg )
+{
+	//	Does this nudge the dlg back onto the screen?
+
+	const int nScreenWidth = GetSystemMetrics( SM_CXSCREEN );
+	const int nScreenHeight = GetSystemMetrics( SM_CYMAXIMIZED ) - ( GetSystemMetrics( SM_CYSCREEN ) - GetSystemMetrics( SM_CYMAXIMIZED ) );
+
+	RECT rc;
+	GetWindowRect( g_AchievementsDialog.GetHWND(), &rc );
+	
+	const int nDlgWidth = rc.right - rc.left;
+	const int nDlgHeight = rc.bottom - rc.top;
+
+	if( rc.left < 0 || rc.top < 0 )
+		SetWindowPos( hDlg, NULL, rc.left < 0 ? 0 : rc.left, rc.top < 0 ? 0 : rc.top, 0, 0, SWP_NOSIZE );
+	else if( ( rc.right > nScreenWidth ) || ( rc.bottom > nScreenHeight ) )
+		SetWindowPos( hDlg, NULL, rc.right > nScreenWidth ? nScreenWidth - nDlgWidth : rc.left, rc.bottom > nScreenHeight ? nScreenHeight - nDlgHeight : rc.top, 0, 0, SWP_NOSIZE );
+}
+
 API void CCONV _RA_InvokeDialog( LPARAM nID )
 {
 	switch( nID )
 	{
 		case IDM_RA_FILES_ACHIEVEMENTS:
-
-			if( g_AchievementsDialog.GetHWND() == NULL )
-				g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
-			if( g_AchievementsDialog.GetHWND() != NULL )
-				ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_AchievementsDialog.GetHWND() == NULL )
+					g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
+				if( g_AchievementsDialog.GetHWND() != NULL )
+					ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 
 		case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-
-			if( g_AchievementEditorDialog.GetHWND() == NULL )
-				g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
-			if( g_AchievementEditorDialog.GetHWND() != NULL )
-				ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_AchievementEditorDialog.GetHWND() == NULL )
+					g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
+				if( g_AchievementEditorDialog.GetHWND() != NULL )
+					ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 
 		case IDM_RA_FILES_MEMORYFINDER:
-
-			if( g_MemoryDialog.GetHWND() == NULL )
-				g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
-			if( g_MemoryDialog.GetHWND() != NULL )
-				ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_MemoryDialog.GetHWND() == NULL )
+					g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
+				if( g_MemoryDialog.GetHWND() != NULL )
+					ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 		
 		case IDM_RA_FILES_LOGIN:
 			{
-				DialogBox( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, LoginProc );
+				RA_Dlg_Login::DoModalLogin();
 				_RA_SavePreferences();
 				//RA_RebuildMenu();
 			}
@@ -1224,15 +1249,23 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 			_RA_ResetEmulation();
 			
-			if( CoreAchievements->GameID() != 0 )
+			GameID nTargetGameID = CoreAchievements->GetGameID();
+
+			if( nTargetGameID != 0 )
 			{
 				//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-				AchievementSet::DeletePatchFile( AT_CORE, CoreAchievements->GameID() );
-				AchievementSet::DeletePatchFile( AT_UNOFFICIAL, CoreAchievements->GameID() );
-
-				CoreAchievements->Load( CoreAchievements->GameID() );
-				UnofficialAchievements->Load( CoreAchievements->GameID() );
-				LocalAchievements->Load( CoreAchievements->GameID() );
+				AchievementSet::DeletePatchFile( AT_CORE, nTargetGameID );
+				AchievementSet::DeletePatchFile( AT_UNOFFICIAL, nTargetGameID );
+				
+				if( !AchievementSet::LoadFromFile( nTargetGameID ) )
+				{
+					//	Fetch then load again from file
+					AchievementSet::FetchFromWebBlocking( nTargetGameID );
+					AchievementSet::LoadFromFile( nTargetGameID );
+				}
+				//CoreAchievements->Load( CoreAchievements->GameID() );
+				//UnofficialAchievements->Load( CoreAchievements->GameID() );
+				//LocalAchievements->Load( CoreAchievements->GameID() );
 			}
 
 			_RA_RebuildMenu();
@@ -1247,12 +1280,13 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_GETROMCHECKSUM:
 			{
-				if( g_pActiveAchievements->Count() == 0 )
+				if( g_pActiveAchievements->NumAchievements() == 0 )
 				{
 					MessageBox( NULL, "No ROM loaded!", "Error", MB_OK );
 				}
 				else
-				{	char buffer[2048];
+				{
+					char buffer[2048];
 					sprintf_s( buffer, "Current ROM MD5: %s", g_sCurrentROMMD5 );
 				
 					MessageBox( NULL, buffer, "Get ROM Checksum", MB_OK );
@@ -1262,14 +1296,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_OPENUSERPAGE:
 			{
-				if( RAUsers::LocalUserIsLoggedIn() )
+				if( RAUsers::LocalUser.IsLoggedIn() )
 				{
-					char buffer[1024];
-					sprintf_s( buffer, 1024, "http://www.retroachievements.org/User/%s", RAUsers::LocalUser.m_sUsername );
-
 					ShellExecute( NULL,
 						"open",
-						buffer,
+						( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser.Username() ).c_str(),
 						NULL,
 						NULL,
 						SW_SHOWNORMAL );
@@ -1279,14 +1310,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_OPENGAMEPAGE:
 			{
-				if( g_pActiveAchievements->GameID() != 0 )
+				if( g_pActiveAchievements->GetGameID() != 0 )
 				{
-					char buffer[1024];
-					sprintf_s( buffer, 1024, "http://www.retroachievements.org/Game/%d", g_pActiveAchievements->GameID() );
-
 					ShellExecute( NULL,
 						"open",
-						buffer,
+						( RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() ) ).c_str(),
 						NULL,
 						NULL,
 						SW_SHOWNORMAL );
@@ -1319,14 +1347,19 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 				if( g_sROMDirLocation[0] != '\0' )
 				{
-					_FetchGameHashLibraryFromWeb();
-					_FetchGameTitlesFromWeb();
-					_FetchMyProgressFromWeb();
-							
 					if( g_GameLibrary.GetHWND() == NULL )
+					{
+						_FetchGameHashLibraryFromWeb();
+						_FetchGameTitlesFromWeb();
+						_FetchMyProgressFromWeb();
+							
 						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
+					}
+
 					if( g_GameLibrary.GetHWND() != NULL )
+					{
 						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
+					}
 
 					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}
@@ -1336,10 +1369,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_PARSERICHPRESENCE:
 			{
-				if( g_pActiveAchievements->GameID() != 0 )
+				if( g_pActiveAchievements->GetGameID() != 0 )
 				{
 					char sRichPresenceFile[1024];
-					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GameID() );
+					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GetGameID() );
 
 					//	Then install it
 					g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
@@ -1545,6 +1578,18 @@ int _WriteBufferToFile( const std::string& sFileName, const DataStream& raw )
 	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
 	{
 		fwrite( raw.data(), 1, raw.size(), pf );
+		fclose( pf );
+	}
+
+	return 0;
+}
+
+int _WriteBufferToFile( const std::string& sFileName, const std::string& sData )
+{
+	FILE* pf;
+	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
+	{
+		fwrite( sData.data(), 1, sData.length(), pf );
 		fclose( pf );
 	}
 

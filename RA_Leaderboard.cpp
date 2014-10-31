@@ -138,6 +138,11 @@ RA_Leaderboard::~RA_Leaderboard()
 {
 }
 
+void RA_Leaderboard::LoadFromJSON( Document& doc )
+{
+
+}
+
 void RA_Leaderboard::ParseLine( char* sBuffer )
 {
 	char* pChar = &sBuffer[0];
@@ -362,7 +367,7 @@ void RA_Leaderboard::Test()
 
 			char sTitle[1024];
 			char sSubtitle[1024];
-			sprintf_s( sTitle, 1024, " Challenge Available: %s ", m_sTitle );
+			sprintf_s( sTitle, 1024, " Challenge Available: %s ", m_sTitle.c_str() );
 			sprintf_s( sSubtitle, 1024, " %s ", m_sDescription );
 			g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_LEADERBOARD_INFO, NULL );
 			g_PopupWindows.LeaderboardPopups().Activate( m_nID );
@@ -379,7 +384,7 @@ void RA_Leaderboard::Test()
 			char sTitle[1024];
 			char sSubtitle[1024];
 			sprintf_s( sTitle, 1024, " Leaderboard attempt cancelled! " );
-			sprintf_s( sSubtitle, 1024, " %s ", m_sTitle );
+			sprintf_s( sSubtitle, 1024, " %s ", m_sTitle.c_str() );
 			g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_LEADERBOARD_CANCEL, NULL );
 		}
 		else if( bSubmitOK )
@@ -400,7 +405,7 @@ void RA_Leaderboard::Test()
 			{
 				//	TBD: move to keys!
 				char sValidationSig[50];
-				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.m_sUsername, m_nID );
+				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.Username().c_str(), m_nID );
 
 				char sValidation[50];
 				md5_GenerateMD5( sValidationSig, strlen(sValidationSig), sValidation );

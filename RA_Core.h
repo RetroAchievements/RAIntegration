@@ -130,6 +130,8 @@ extern char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate );
 
 //	Write out the buffer to a file
 extern int _WriteBufferToFile( const std::string& sFileName, const DataStream& rawData );
+extern int _WriteBufferToFile( const std::string& sFileName, const Document& doc );
+extern int _WriteBufferToFile( const std::string& sFileName, const std::string& sString );
 extern int _WriteBufferToFile( const char* sFile, const BYTE* sBuffer, int nBytes );
 
 //	Fetch various interim txt/data files

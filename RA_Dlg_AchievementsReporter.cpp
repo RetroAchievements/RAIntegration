@@ -75,13 +75,13 @@ int Dlg_AchievementsReporter::AddAchievementToListBox( HWND hList, const Achieve
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%d", pAch->ID() );
 				break;*/
 			case COL_TITLE:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Title() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Title().c_str() );
 				break;
 			case COL_DESC:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Description() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Description().c_str() );
 				break;
 			case COL_AUTHOR:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Author() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Author().c_str() );
 				break;
 			case COL_ACHIEVED:
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, !pAch->Active() ? "Yes" : "No" );
@@ -133,7 +133,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP );
 		//ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
 
-		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser.Username() );
+		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser.Username().c_str() );
 
 		return FALSE;
 		//return DefWindowProc( hDlg, uMsg, wParam, lParam );
@@ -289,7 +289,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 //static
 void Dlg_AchievementsReporter::DoModalDialog( HINSTANCE hInst, HWND hParent )
 {
-	if( g_pActiveAchievements->Count() == 0 )
+	if( g_pActiveAchievements->NumAchievements() == 0 )
 	{
 		MessageBox( hParent, "No ROM loaded!", "Error", MB_OK );
 	}

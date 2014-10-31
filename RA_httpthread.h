@@ -37,21 +37,31 @@ enum RequestType
 	RequestUserPic,
 	RequestBadge,
 	RequestBadgeIter,
+	RequestGameTitles,
 
 	//	Submit
 	RequestPing,
 	RequestPostActivity,
-	RequestUploadBadgeImage,
 	RequestSubmitAwardAchievement,
 	RequestSubmitCodeNote,
 	RequestSubmitLeaderboardEntry,
 	RequestSubmitAchievementData,
 	RequestSubmitTicket,
-
+	RequestSubmitNewTitle,
+	
+	
 	//	Special:
 	StopThread,
 	
 	NumRequestTypes
+};
+
+enum UploadType
+{
+	//	Upload:
+	RequestUploadBadgeImage,
+
+	NumUploadTypes
 };
 
 extern const char* RequestTypeToString[];
@@ -139,8 +149,9 @@ public:
 
 	//static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
-	static BOOL DoBlockingImageUpload( RequestType nType, const std::string& sFilename, Document& ResponseOut );
-	static BOOL DoBlockingImageUpload( RequestType nType, const std::string& sFilename, DataStream& ResponseOut );
+
+	static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut );
+	//static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, DataStream& ResponseOut );
 
 	static DWORD __stdcall HTTPWorkerThread( LPVOID lpParameter );
 };

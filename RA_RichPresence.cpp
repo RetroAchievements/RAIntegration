@@ -255,3 +255,17 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 
 	return sReturnVal;
 }
+
+//	static
+void PersistAndParseScript( GameID nGameID, const std::string& str )
+{
+	char sRichPresenceFile[1024];
+	sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, nGameID );
+
+	//	Read to file:
+	SetCurrentDirectory( g_sHomeDir );
+	_WriteBufferToFile( sRichPresenceFile, str );
+						
+	//	Then install it
+	g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
+}

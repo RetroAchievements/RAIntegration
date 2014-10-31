@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include "RA_Leaderboard.h"
+#include "RA_Defs.h"
 
 typedef unsigned int DataPos;
 
@@ -38,6 +39,9 @@ private:
 
 class RA_RichPresenceInterpretter
 {
+public:
+	static void PersistAndParseScript( GameID nGameID, const std::string& sScript );
+
 public:
 	RA_RichPresenceInterpretter() {}
 

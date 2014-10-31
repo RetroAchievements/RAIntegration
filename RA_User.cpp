@@ -29,12 +29,6 @@ BOOL RAUsers::DatabaseContainsUser( const std::string& sUser )
 	return( UserDatabase.find( sUser ) != UserDatabase.end() );
 }
 
-//static
-void RAUsers::ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages )
-{
-	RAUsers::LocalUser = LocalRAUser( sUser );
-}
-
 void OnUserPicDownloaded( void* pReqObj )
 {
 	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
@@ -117,7 +111,6 @@ LocalRAUser::LocalRAUser( const std::string& sUser ) :
 	RAUser( sUser ),
 	m_bIsLoggedIn( FALSE ),
 	m_bStoreToken( FALSE )
-
 {
 }
 
@@ -138,7 +131,7 @@ void LocalRAUser::AttemptLogin()
 	else
 	{
 		//	Push dialog to get them to login!
-		DialogBox( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, LoginProc );
+		DialogBox( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_LoginProc );
 		_RA_SavePreferences();
 	}
 }
@@ -157,21 +150,23 @@ void LocalRAUser::AttemptSilentLogin()
 	m_bStoreToken = TRUE;	//	Store it! We just fetched it!
 }
 
-//	Store user/pass, issue login commands
-void LocalRAUser::Login( const std::string& sUser, const std::string& sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages )
+void LocalRAUser::ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin )
 {
+	SetUserName( sUser );
+	SetToken( sToken );
+	SetScore( nPoints );
+	//SetUnreadMessageCount( nMessages );
+
 	m_bIsLoggedIn = TRUE;
-	sprintf_s( RAUsers::LocalUser.m_sUsername, 50, sUser );
+
 	SetToken( sToken );
 
 	//	Used only for persistence: always store in memory (we need it!)
-	m_bStoreToken = bRememberLogin;
- 	m_Friends.clear();
+	RAUsers::LocalUser.SetStoreToken( bRememberLogin );
+ 	m_aFriends.clear();
 
 	RequestAndStoreUserImage();
 	RequestFriendList();
-	
-	RAUsers::LocalUser.m_nLatestScore = nPoints;
 	
 	char sTitle[256];
 	char sSubtitle[256];
@@ -180,7 +175,7 @@ void LocalRAUser::Login( const std::string& sUser, const std::string& sToken, BO
 
 	g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_LOGIN );
 
-	g_AchievementsDialog.OnLoad_NewRom( g_pActiveAchievements->GameID() );
+	g_AchievementsDialog.OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 	g_AchievementEditorDialog.OnLoad_NewRom();
 	g_AchievementOverlay.OnLoad_NewRom();
 

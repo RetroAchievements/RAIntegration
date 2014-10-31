@@ -7,13 +7,6 @@
 
 namespace
 {
-	enum AchievementType
-	{
-		AT_CORE,
-		AT_UNOFFICIAL,
-		AT_USER
-	};
-
 	extern const char* LockedBadge;
 	extern const char* LockedBadgeFile;
 };
@@ -39,10 +32,12 @@ enum Achievement_DirtyFlags
 class Achievement
 {
 public:
-	Achievement();
+	Achievement( AchievementSetType nType );
 
 public:
 	void Clear();
+
+	BOOL IsCoreAchievement() const		{ return m_nSetType == AT_CORE; }
 
 	BOOL Test();
 
@@ -98,7 +93,7 @@ public:
 
 	Condition& GetCondition( size_t nCondGroup, unsigned int i )	{ return m_vConditions[nCondGroup].GetAt( i ); }
 	
-	std::string Achievement::CreateMemString() const;
+	std::string CreateMemString() const;
 	int CreateMemString( char* pStrOut, const int nNumChars );
 
 	void Reset();
@@ -109,6 +104,11 @@ public:
 
 	//	Returns the new char* offset after parsing.
 	char* ParseLine( char* buffer );
+	
+	//	Parse from json element
+	void Parse( const Value& element );
+	
+	char* ParseMemString( char* sMem );
 
 	//	Used for rendering updates when editing achievements. Usually always false.
 	unsigned int GetDirtyFlags() const			{ return m_nDirtyFlags; }
@@ -117,6 +117,8 @@ public:
 	void ClearDirtyFlag()						{ m_nDirtyFlags = 0; }
 
 private:
+	const AchievementSetType m_nSetType;
+
 	AchievementID m_nAchievementID;
 	std::vector<ConditionSet> m_vConditions;
 
@@ -155,7 +157,7 @@ private:
 class AchievementSet
 {
 public:
-	AchievementSet( AchievementType nType ) :
+	AchievementSet( AchievementSetType nType ) :
 		m_nSetType( nType ),
 		m_nGameID( 0 ),
 		m_bProcessingActive( true )
@@ -163,13 +165,18 @@ public:
 	}
 
 public:
-	static BOOL DeletePatchFile( unsigned int nAchievementSet, unsigned int nGameID );
-	static void GetAchievementsFilename( unsigned int nAchievementSet, unsigned int nGameID, char* pCharOut, int nNumChars );
+	static BOOL DeletePatchFile( AchievementSetType nSet, GameID nGameID );
+	static std::string GetAchievementSetFilename( GameID nGameID );
+	static BOOL FetchFromWebBlocking( GameID nGameID );
+	static BOOL LoadFromFile( GameID nGameID );
+	static BOOL SaveToFile();
 
 public:
 	void Init();
 	void Clear();
 	void Test();
+
+	BOOL Serialize( FileStream& Stream );
 
 	//	Get Achievement at offset
 	Achievement& GetAchievement( unsigned int nIter )		{ return m_Achievements[ nIter ]; }
@@ -183,12 +190,11 @@ public:
 	//	Find achievement with ID, or NULL if it can't be found.
 	Achievement* Find( unsigned int nID );
 
-	BOOL RemoveAchievement( unsigned int nIter );
-	
-	BOOL FetchFromWebBlocking();
+	//	Find index of the given achievement in the array list (useful for LBX lookups)
+	size_t GetAchievementIndex( const Achievement& Ach );
 
-	BOOL Save();
-	BOOL Load( const unsigned int nGameID );
+	BOOL RemoveAchievement( unsigned int nIter );
+
 
 	void SaveProgress( const char* sRomName );
 	void LoadProgress( const char* sRomName );
@@ -203,20 +209,20 @@ public:
 	const std::string& GameTitle() const			{ return m_sPreferredGameTitle; }
 	void SetGameTitle( const std::string& str )		{ m_sPreferredGameTitle = str; }
 	
-	void SetGameID( unsigned int nGameID )			{ m_nGameID = nGameID; }
-	inline unsigned int GameID() const				{ return m_nGameID; }
+	inline GameID GetGameID() const					{ return m_nGameID; }
+	void SetGameID( GameID nGameID )				{ m_nGameID = nGameID; }
 
 	BOOL HasUnsavedChanges();
 	BOOL IsCurrentAchievementSetSelected() const;
 
-	inline unsigned int NumAchievements() const		{ return m_Achievements.size(); }
+	inline size_t NumAchievements() const		{ return m_Achievements.size(); }
 
 private:
-	const AchievementType m_nSetType;
+	const AchievementSetType m_nSetType;
 	std::vector<Achievement> m_Achievements;
 
 	std::string m_sPreferredGameTitle;
-	unsigned int m_nGameID;				//	Should be fetched from DB query
+	GameID m_nGameID;
 
 	BOOL m_bProcessingActive;
 };
@@ -229,6 +235,6 @@ extern AchievementSet* UnofficialAchievements;
 extern AchievementSet* LocalAchievements;
 extern AchievementSet* g_pActiveAchievements;
 
-extern AchievementType g_nActiveAchievementSet;
+extern AchievementSetType g_nActiveAchievementSet;
 	
-extern void SetAchievementCollection( enum AchievementType Type );
+extern void SetAchievementCollection( enum AchievementSetType Type );

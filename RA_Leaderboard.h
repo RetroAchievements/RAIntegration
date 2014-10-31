@@ -66,7 +66,9 @@ public:
 	~RA_Leaderboard();
 
 public:
+	void LoadFromJSON( Document& doc );
 	void ParseLine( char* sBuffer );
+
 	void Test();
 	double GetCurrentValue();
 	double GetCurrentValueProgress() const;	//	Attempt to get a 'progress' alternative
@@ -76,8 +78,8 @@ public:
 	void Reset();
 
 	unsigned int ID() const									{ return m_nID; }
-	const char* Title() const								{ return m_sTitle; }
-	const char* Description() const							{ return m_sDescription; }
+	const std::string& Title() const						{ return m_sTitle; }
+	const std::string& Description() const					{ return m_sDescription; }
 
 	void SubmitRankInfo( unsigned int nRank, const char* sUsername, unsigned int nScore, time_t nAchieved );
 	void ClearRankInfo()									{ m_RankInfo.clear(); }
@@ -99,8 +101,8 @@ private:
 	FormatType		m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 	unsigned int	m_nID;			//	DB ID for this LB
 
-	char			m_sTitle[80];			//	
-	char			m_sDescription[300];	//	
+	std::string		m_sTitle;		//	
+	std::string		m_sDescription;	//	
 
 	std::vector<LB_Entry> m_RankInfo;
 };

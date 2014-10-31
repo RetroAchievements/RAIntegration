@@ -65,7 +65,7 @@ public:
 
 	void SetIgnoreEdits( BOOL bIgnore )								{ m_bPopulatingAchievementEditorData = bIgnore; }
 
-	void UpdateBadge( const char* sNewBadgeName );					//	Call to set/update data
+	void UpdateBadge( const std::string& sNewName );					//	Call to set/update data
 	void UpdateSelectedBadgeImage(const char* sBackupBadgeToUse=NULL);	//	Call to just update the badge image/bitmap
 
 	BadgeNames& GetBadgeNames()										{ return m_BadgeNames; }

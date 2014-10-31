@@ -20,6 +20,9 @@
 
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
+#include "rapidjson/include/rapidjson/reader.h"
+#include "rapidjson/include/rapidjson/writer.h"
+#include "rapidjson/include/rapidjson/filestream.h"
 using namespace rapidjson;
 
 #endif	//RA_EXPORTS
@@ -47,6 +50,8 @@ using namespace rapidjson;
 #define RA_IMG_HOST "retroachievements.org"
 #define RA_IMG_HOST_W MAKEWIDE( RA_IMG_HOST )
 
+#define RA_HOST_URL "http://" RA_HOST
+
 #define SIZEOF_ARRAY( ar ) ( sizeof( ar )/sizeof( ar[0] ) )
 
 typedef unsigned char       BYTE;
@@ -58,6 +63,13 @@ typedef std::vector<BYTE> DataStream;
 
 typedef unsigned int AchievementID;
 typedef unsigned int GameID;
+
+enum AchievementSetType
+{
+	AT_CORE,
+	AT_UNOFFICIAL,
+	AT_USER
+};
 
 char* DataStreamAsString( DataStream& stream );
 

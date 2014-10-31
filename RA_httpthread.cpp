@@ -30,14 +30,15 @@ const char* RequestTypeToString[] =
 	"RequestUserPic",
 	"RequestBadge",
 	"RequestBadgeIter",
+	"RequestGameTitles",
 	"RequestPing",
 	"RequestPostActivity",
-	"RequestUploadBadgeImage",
 	"RequestSubmitAwardAchievement",
 	"RequestSubmitCodeNote",
 	"RequestSubmitLeaderboardEntry",
 	"RequestSubmitAchievementData",
 	"RequestSubmitTicket",
+	"RequestSubmitNewTitleEntry",
 	"STOP_THREAD",
 	"",
 };
@@ -58,18 +59,30 @@ const char* RequestTypeToPost[] =
 	"",						//	TBD RequestUserPic
 	"",						//	TBD RequestBadge
 	"badgeiter",
+	"gametitles",
 	"",						//	TBD RequestPing (ping.php)
 	"postactivity",
-	"uploadbadgeimage",
 	"awardachievement",
 	"submitcodenote",
 	"",						//	TBD: Complex!!! See requestsubmitlbentry.php
 	"uploadachievement",
 	"submitticket",
+	"submittitle",
 	"",						//	STOP_THREAD
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
 
+const char* UploadTypeToString[] = 
+{
+	"RequestUploadBadgeImage",
+};
+static_assert( SIZEOF_ARRAY( UploadTypeToString ) == NumUploadTypes, "Must match up!" );
+
+const char* UploadTypeToPost[] =
+{
+	"uploadbadgeimage",
+};
+static_assert( SIZEOF_ARRAY( UploadTypeToPost ) == NumUploadTypes, "Must match up!" );
 
 //	No game-specific code here please!
 
@@ -343,34 +356,12 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilename, Document& ResponseOut )
+BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, DataStream& ResponseOut )
 {
-	DataStream response;
-	if( DoBlockingImageUpload( nType, sFilename, response ) )
-	{
-		ResponseOut.ParseInsitu( DataStreamAsString( response ) );
-		if( !ResponseOut.HasParseError() )
-		{
-			return TRUE;
-		}
-		else
-		{
-			RA_LOG( __FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), ResponseOut.GetParseError() );
-			return FALSE;
-		}
-	}
-	else
-	{
-		RA_LOG( __FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str() );
-		return FALSE;
-	}
-}
+	const std::string sRequestedPage = "doupload.php";
+	const std::string sRTarget = RequestTypeToPost[nType]; //"uploadbadgeimage";
 
-BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilename, DataStream& ResponseOut )
-{
-	const std::string sTarget = RequestTypeToPost[nType] //"uploadbadgeimage";
-
-	RA_LOG( __FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage );
+	RA_LOG( __FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str() );
 
 	BOOL bSuccess = FALSE;
 	HINTERNET hConnect = NULL, hRequest = NULL;
@@ -430,7 +421,7 @@ BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilena
 			//	## EXPERIMENTAL ##
 			sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";										//	Item header    'r'
 			sb_ascii << "\r\n";																					//	Spacing
-			sb_ascii << rTarget << "\r\n";																	//	Binary content
+			sb_ascii << rTarget << "\r\n";																		//	Binary content
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
 
@@ -481,6 +472,29 @@ BOOL RAWeb::DoBlockingImageUpload( RequestType nType, const std::string& sFilena
 	}
 
 	return bSuccess;
+}
+
+BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut )
+{
+	DataStream response;
+	if( ::DoBlockingImageUpload( nType, sFilename, response ) )
+	{
+		ResponseOut.ParseInsitu( DataStreamAsString( response ) );
+		if( !ResponseOut.HasParseError() )
+		{
+			return TRUE;
+		}
+		else
+		{
+			RA_LOG( __FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), ResponseOut.GetParseError() );
+			return FALSE;
+		}
+	}
+	else
+	{
+		RA_LOG( __FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str() );
+		return FALSE;
+	}
 }
 
 BOOL RAWeb::HTTPRequestExists( const char* sRequestPageName )

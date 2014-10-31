@@ -270,7 +270,7 @@ void CodeNotes::Add( const char* sAuthor, const char* sAddress, const char* sDes
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser.Username();
 		args['t'] = RAUsers::LocalUser.Token();
-		args['g'] = std::to_string( g_pActiveAchievements->GameID() );
+		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 		args['a'] = sAddress;
 		args['d'] = sDescription;
 
@@ -307,7 +307,7 @@ BOOL CodeNotes::Remove( const char* sAddress )
 				PostArgs args;
 				args['u'] = RAUsers::LocalUser.Username();
 				args['t'] = RAUsers::LocalUser.Token();
-				args['g'] = std::to_string( g_pActiveAchievements->GameID() );
+				args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 				args['a'] = sAddress;
 				args['n'] = "";
 

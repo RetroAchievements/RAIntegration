@@ -150,7 +150,7 @@ void ParseGameTitlesFromFile( std::map<unsigned int, std::string>& GameTitlesLis
 				char* pTitle = NULL;
 				strtok_s( buffer, ":", &pTitle );
 
-				GameTitlesListOut[ nGameID ] = pTitle;//	Implicit alloc?
+				GameTitlesListOut[ nGameID ] = pTitle;
 			}
 		}
 

@@ -41,9 +41,10 @@ public:
 	void LoadUserImageFromFile();
 	void RequestAndStoreUserImage();
 
-	unsigned int GetScore() const					{ return m_nLatestScore; }
-	void SetScore( unsigned int nScore )			{ m_nLatestScore = nScore; }
+	unsigned int GetScore() const					{ return m_nScore; }
+	void SetScore( unsigned int nScore )			{ m_nScore = nScore; }
 	
+	void SetUserName( const std::string& sUser )	{ m_sUsername = sUser; }
 	const std::string& Username() const				{ return m_sUsername; }
 	
 	void UpdateActivity( const std::string& sAct )	{ m_sActivity = sAct; }
@@ -58,12 +59,12 @@ public:
 	void OnUserPicCB( RequestObject* pObj );
 
 private:
-	const std::string	m_sUsername;
-	std::string			m_sActivity;
-	unsigned int		m_nLatestScore;
+	/*const*/std::string	m_sUsername;
+	std::string				m_sActivity;
+	unsigned int			m_nScore;
 
-	HBITMAP				m_hUserImage;
-	BOOL				m_bFetchingUserImage;
+	HBITMAP					m_hUserImage;
+	BOOL					m_bFetchingUserImage;
 };
 
 class LocalRAUser : public RAUser
@@ -75,7 +76,8 @@ public:
 public:
 	void AttemptLogin();
 	void AttemptSilentLogin();
-	void Login( const std::string& sUser, const std::string& sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages );
+
+	void ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin );
 	void Logout();
 
 	void RequestFriendList();
@@ -88,6 +90,9 @@ public:
 	RAUser* GetFriendByIter( size_t nOffs )				{ return nOffs < m_aFriends.size() ? m_aFriends[ nOffs ] : NULL; }
 	const size_t NumFriends() const						{ return m_aFriends.size(); }
 
+	void SetStoreToken( BOOL bStoreToken )				{ bStoreToken = bStoreToken; }
+
+	void SetToken( const std::string& sToken )			{ m_sToken = sToken; }
 	const std::string& Token() const					{ return m_sToken; }
 	
 	BOOL IsLoggedIn() const		{ return m_bIsLoggedIn; }
@@ -111,7 +116,6 @@ public:
 	static std::map<std::string, RAUser*> UserDatabase;
 
 	static BOOL DatabaseContainsUser( const std::string& sUser );
-	static void ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages );
 };
 
 

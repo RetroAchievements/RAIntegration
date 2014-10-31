@@ -984,30 +984,18 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						HWND hList = GetDlgItem( g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS );
 						int nSelectedIndex = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
-						if( nSelectedIndex == -1 )
-							return FALSE;
-
-						//	Implicit updating:
-						char* psTitle = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements::Title );
-						if( GetDlgItemText( hDlg, IDC_RA_ACH_TITLE, psTitle, 80 ) )
+						if( nSelectedIndex != -1 )
 						{
-							pActiveAch->SetTitle( psTitle );
-
-							//	Reverse find where I am in the list:
-							unsigned int nOffset = 0;
-							for( ; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset )
+							//	Implicit updating:
+							char buffer[1024];
+							if( GetDlgItemText( hDlg, IDC_RA_ACH_TITLE, buffer, 1024 ) )
 							{
-								if( pActiveAch == &g_pActiveAchievements->GetAchievement( nOffset ) )
-									break;
-							}
+								pActiveAch->SetTitle( buffer );
 
-							assert( nOffset < g_pActiveAchievements->NumAchievements() );
-							if( nOffset < g_pActiveAchievements->NumAchievements() )
-							{
-								g_AchievementsDialog.OnEditData( nOffset, Dlg_Achievements::Title, pActiveAch->Title() );
+								//	Persist/Update/Inject local LBX data back into LBX (?)
+								g_AchievementsDialog.OnEditData( g_pActiveAchievements->GetAchievementIndex( *pActiveAch ), Dlg_Achievements::Title, pActiveAch->Title() );
 							}
 						}
-
 					}
 					break;
 				}
@@ -1657,37 +1645,31 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const char* sBackupBadgeTo
 		InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
 	}
 
-	char buffer[16];//= "00000";
-	strcpy_s( buffer, 16, LockedBadge );
+	std::string sBadgeName;
 
 	if( m_pSelectedAchievement != NULL )
-	{
-		strcpy_s( buffer, 16, m_pSelectedAchievement->BadgeImageFilename() );
-	}
+		sBadgeName = m_pSelectedAchievement->BadgeImageFilename();
 	else if( sBackupBadgeToUse != NULL )
-	{
-		strcpy_s( buffer, 16, sBackupBadgeToUse );
-	}
-
+		sBadgeName = sBackupBadgeToUse;
+	else
+		sBadgeName = LockedBadge;
+	
 	//	Trim the '.png"
-	buffer[5] = '\0';
+	sBadgeName = sBadgeName.substr( 0, 5 );
 
 	//	Find buffer in the dropdown list
 	HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME );
-	int nSel = ComboBox_FindStringExact( hCtrl, 0, buffer );
-
+	int nSel = ComboBox_FindStringExact( hCtrl, 0, sBadgeName.c_str() );
 	if( nSel != -1 )
-	{
-		ComboBox_SetCurSel( hCtrl, nSel );
-	}
+		ComboBox_SetCurSel( hCtrl, nSel );	//	Force select
 }
 
-void Dlg_AchievementEditor::UpdateBadge( const char* sNewName )
+void Dlg_AchievementEditor::UpdateBadge( const std::string& sNewName )
 {
 	//	If a change is detected: change it!
 	if( m_pSelectedAchievement != NULL )
 	{
-		if( strcmp( m_pSelectedAchievement->BadgeImageFilename(), sNewName ) != 0 )
+		if( m_pSelectedAchievement->BadgeImageFilename().compare( sNewName ) != 0 )
 		{
 			//	The badge we are about to show is different from the one stored for this achievement.
 			//	This implies that we are changing the badge: this achievement is modified!
@@ -1703,7 +1685,7 @@ void Dlg_AchievementEditor::UpdateBadge( const char* sNewName )
 	}
 
 	//	Always attempt update.
-	UpdateSelectedBadgeImage( sNewName );
+	UpdateSelectedBadgeImage( sNewName.c_str() );
 }
 
 void Dlg_AchievementEditor::RepopulateGroupList( Achievement* pCheevo )
@@ -1809,10 +1791,10 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		sprintf_s( buffer, 1024, "%d", m_pSelectedAchievement->Points() );
 		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, buffer );
 
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename().c_str() );
 
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_ID ), FALSE );
@@ -1886,19 +1868,19 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		}
 		if( (pCheevo->GetDirtyFlags() & Dirty_Title) && !bTitleSelected )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title().c_str() );
 		}
 		if( (pCheevo->GetDirtyFlags() & Dirty_Description) && !bDescSelected )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description().c_str() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Author )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author().c_str() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Badge )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename().c_str() );
 			UpdateBadge( m_pSelectedAchievement->BadgeImageFilename() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Conditions )

@@ -62,6 +62,7 @@ typedef DWORD				ARGB;
 typedef std::vector<BYTE> DataStream;
 
 typedef unsigned int AchievementID;
+typedef unsigned int LeaderboardID;
 typedef unsigned int GameID;
 
 enum AchievementSetType
@@ -75,6 +76,15 @@ char* DataStreamAsString( DataStream& stream );
 
 extern void DebugLog( const char* sFormat, ... );
 extern BOOL DirectoryExists( const char* sPath );
+
+namespace RA
+{
+	template<typename T>
+	static inline const T& Clamp( const T& val, const T& lower, const T& upper )
+	{
+		return( val < lower ) ? lower : ( ( val > upper ) ? upper : val );
+	}
+};
 
 #ifdef _DEBUG
 #define RA_LOG DebugLog

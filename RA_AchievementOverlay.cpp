@@ -967,8 +967,8 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 
 			RA_Leaderboard& nextLB = g_LeaderboardManager.GetLB( i );
 
-			const char* sTitle = nextLB.Title();
-			const char* sPayload = nextLB.Description();
+			const char* sTitle = nextLB.Title().c_str();
+			const char* sPayload = nextLB.Description().c_str();
 			
 			BOOL bSelected = ( (*pnSelectedItem) == i );
 			if( bSelected )

@@ -31,6 +31,8 @@ const char* RequestTypeToString[] =
 	"RequestBadge",
 	"RequestBadgeIter",
 	"RequestGameTitles",
+	"RequestUnlocks",
+
 	"RequestPing",
 	"RequestPostActivity",
 	"RequestSubmitAwardAchievement",
@@ -60,6 +62,8 @@ const char* RequestTypeToPost[] =
 	"",						//	TBD RequestBadge
 	"badgeiter",
 	"gametitles",
+	"unlocks",
+
 	"",						//	TBD RequestPing (ping.php)
 	"postactivity",
 	"awardachievement",

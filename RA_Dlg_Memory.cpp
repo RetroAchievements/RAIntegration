@@ -1364,7 +1364,6 @@ void Dlg_Memory::OnWatchingMemChange()
 
 void Dlg_Memory::RepopulateMemNotesFromFile()
 {
-	//char sNotesFilename[1024];
 	HWND hMemWatch = GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING );
 	if( hMemWatch != NULL )
 	{
@@ -1372,7 +1371,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 		{
 		}
 
-		int nGameID = g_pActiveAchievements->m_nGameID;
+		int nGameID = g_pActiveAchievements->GetGameID();
 		if( nGameID != 0 )
 		{
 			char sNotesFilename[1024];

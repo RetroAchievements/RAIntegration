@@ -48,9 +48,6 @@ void CodeNotes::Sort()
 				CodeNoteObj temp = m_sCodeNotes[i];
 				m_sCodeNotes[i] = m_sCodeNotes[j];
 				m_sCodeNotes[j] = temp;
-
-				//std::swap<CodeNotePair>( m_sCodeNotes[j], m_sCodeNotes[i] );
-				//swap
 			}
 		}
 
@@ -71,54 +68,24 @@ BOOL CodeNotes::Update( unsigned int nID )
 }
 
 //	static
-void CodeNotes::s_OnUpdateCB( void* pReqObj )
+void CodeNotes::OnCodeNotesResponse( Document& doc )
 {
-	if( pReqObj == NULL )
-		return;
+	//	This is pointless?
+	//ASSERT( doc["CodeNotes"].IsArray() );
+	//const Value& Notes = doc["CodeNotes"];
+	//for( SizeType i = 0; i < Notes.Size(); ++i )
+	//{
+	//	const Value& Note = Notes[i];
+	//	const std::string& sUser = Note["User"].GetString();
+	//	const std::string& sAddress = Note["Address"].GetString();
+	//	const std::string& sNote = Note["Note"].GetString();
+	//	RA_LOG( "CodeNote: %s, %s (%s)\n", sAddress.c_str(), sNote.c_str(), sUser.c_str() );
+	//}
 
-	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
+	const GameID nGameID = doc["GameID"].GetUint();
 
-	if( !pObj->GetSuccess() )
-	{
-		assert(!"Bad response from requestcodenotes!");
-		return;
-	}
-	
-	DataStream Response = pObj->GetResponse();
-	//const std::vector<char> Response = static_cast< const std::vector<char> >( pObj->GetResponse() );	//	Copy by val
-	
-	//BYTE* pIter = &rObj.[3];
-	//	JSON TBD:
-
-	Document doc;
-	doc.ParseInsitu( DataStreamAsString( Response ) );
-
-	//Response
-	//{"Success":true,"CodeNotes":[{"User":"Retromancer","Address":"0x00d008","Note":"''"},{"User":"jadersonic","Address":"0x00d01c","Note":""}]}
-
-	if( !doc.HasParseError() && doc["Success"].GetBool() )
-	{
-		assert( doc["CodeNotes"].IsArray() );
-		const Value& Notes = doc["CodeNotes"];
-		for( SizeType i = 0; i < Notes.Size(); ++i )
-		{
-			const Value& Note = Notes[i];
-			const std::string& sUser = Note["User"].GetString();
-			const std::string& sAddress = Note["Address"].GetString();
-			const std::string& sNote = Note["Note"].GetString();
-			RA_LOG( "CodeNote: %s, %s (%s)\n", sAddress.c_str(), sNote.c_str(), sUser.c_str() );
-			//	TBD: store?
-		}
-	}
-
-	std::string sGameID = pObj->GetPostArgs().at('g');
-	
 	SetCurrentDirectory( g_sHomeDir );
-
-	char sFilename[256];
-	sprintf_s( sFilename, 256, "%s%s-Notes2.txt", RA_DIR_DATA, sGameID.c_str() );
-	//_WriteBufferToFile( buffer, pIter, rObj.m_nBytesRead-nBytesToSkip );
-	_WriteBufferToFile( sFilename, Response.data(), Response.size() );
+	_WriteBufferToFile( std::string( RA_DIR_DATA ) + std::to_string( nGameID ) + "-Notes2.txt", doc );
 
 	g_MemoryDialog.RepopulateMemNotesFromFile();
 }
@@ -210,29 +177,29 @@ BOOL CodeNotes::Save( const char* sFile )
 	}
 }
 
-BOOL CodeNotes::Exists( const char* sAddress, char* sAuthorOut, char* sDescriptionOut, const size_t nMaxLen )
-{
-	std::vector< CodeNoteObj >::const_iterator iter;
-	iter = m_sCodeNotes.begin();
+//BOOL CodeNotes::Exists( const char* sAddress, char* sAuthorOut, char* sDescriptionOut, const size_t nMaxLen )
+//{
+//	std::vector< CodeNoteObj >::const_iterator iter;
+//	iter = m_sCodeNotes.begin();
+//
+//	while( iter != m_sCodeNotes.end() )
+//	{
+//		const CodeNoteObj& NextItem = (*iter);
+//		if( strcmp( sAddress, NextItem.m_sAddress.c_str() ) == 0 )
+//		{
+//			if( sAuthorOut )
+//				strcpy_s( sAuthorOut, nMaxLen, NextItem.m_sAuthor.c_str() );
+//			if( sDescriptionOut )
+//				strcpy_s( sDescriptionOut, nMaxLen, NextItem.m_sNote.c_str() );
+//			return TRUE;
+//		}
+//		iter++;
+//	}
+//
+//	return FALSE;
+//}
 
-	while( iter != m_sCodeNotes.end() )
-	{
-		const CodeNoteObj& NextItem = (*iter);
-		if( strcmp( sAddress, NextItem.m_sAddress.c_str() ) == 0 )
-		{
-			if( sAuthorOut )
-				strcpy_s( sAuthorOut, nMaxLen, NextItem.m_sAuthor.c_str() );
-			if( sDescriptionOut )
-				strcpy_s( sDescriptionOut, nMaxLen, NextItem.m_sNote.c_str() );
-			return TRUE;
-		}
-		iter++;
-	}
-
-	return FALSE;
-}
-
-BOOL CodeNotes::ExistsRef( const char* sAddress, std::string*& psDescOut )
+CodeNoteObj* CodeNotes::GetNote( const char* sAddress, std::string*& psDescOut )
 {
 	std::vector< CodeNoteObj >::iterator iter;
 	iter = m_sCodeNotes.begin();
@@ -252,10 +219,10 @@ BOOL CodeNotes::ExistsRef( const char* sAddress, std::string*& psDescOut )
 	return FALSE;
 }
 
-void CodeNotes::Add( const char* sAuthor, const char* sAddress, const char* sDescription )
+void CodeNotes::Add( const std::string& sAuthor, const std::string& sAddress, const std::string& sDescription )
 {
 	std::string* psDesc = NULL;
-	if( ExistsRef( sAddress, psDesc ) )
+	if( Find( sAddress, psDesc ) )
 	{
 		//	Update it:
 		(*psDesc) = sDescription;

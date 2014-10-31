@@ -1,5 +1,4 @@
-#ifndef __RA_CORE__
-#define __RA_CORE__
+#pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
@@ -140,5 +139,3 @@ extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
 extern std::string _TimeStampToString( unsigned long nTime );
-
-#endif //__RA_CORE__

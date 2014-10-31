@@ -1088,38 +1088,39 @@ void AchievementSet::Test()
 
 			if( RAUsers::LocalUser.IsLoggedIn() )
 			{
-				char sTitle[1024];
-				char sSubtitle[1024];
+				const std::string sPoints = std::to_string( ach.Points() );
 
 				if( ach.ID() == 0 )
 				{
-					//g_AchievementsDialog.OnGet_Achievement( i );
-
-					sprintf_s( sTitle, 1024, " Test: Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, ach.BadgeImage() );
+					g_PopupWindows.AchievementPopups().AddMessage( 
+						MessagePopup( " Test: Achievement Unlocked ",
+									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+									  PopupAchievementUnlocked,
+									  ach.BadgeImage() ) );
 				}
 				else if( ach.Modified() )
 				{
-					//g_AchievementsDialog.OnGet_Achievement( i );
-					
-					sprintf_s( sTitle, 1024, " Modified: Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, ach.BadgeImage() );
+					g_PopupWindows.AchievementPopups().AddMessage( 
+						MessagePopup( " Modified: Achievement Unlocked ",
+									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+									  PopupAchievementUnlocked,
+									  ach.BadgeImage() ) );
 				}
 				else if( g_fnDoValidation == NULL )
 				{
-					//g_AchievementsDialog.OnGet_Achievement( i );
-					
-					sprintf_s( sTitle, 1024, " (Missing RA_Keys.DLL): Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, ach.BadgeImage() );
+					g_PopupWindows.AchievementPopups().AddMessage( 
+						MessagePopup( " (Missing RA_Keys.DLL): Achievement Unlocked ",
+									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+									  PopupAchievementError,
+									  ach.BadgeImage() ) );
 				}
 				else if( g_bRAMTamperedWith )
 				{
-					sprintf_s( sTitle, 1024, " (RAM tampered with!): Achievement Unlocked " );
-					sprintf_s( sSubtitle, 1024, " %s (%d) (Unofficial) ", ach.Title(), ach.Points() );
-					g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, ach.BadgeImage() );
+					g_PopupWindows.AchievementPopups().AddMessage( 
+						MessagePopup( " (RAM tampered with!): Achievement Unlocked ",
+									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+									  PopupAchievementError,
+									  ach.BadgeImage() ) );
 				}
 				else
 				{
@@ -1219,6 +1220,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	PostArgs args;
 	args['u'] = RAUsers::LocalUser.Username();
 	args['g'] = std::to_string( nGameID );
+	args['h'] = g_hardcoreModeActive ? "1" : "0";
 	//args['f'] = std::to_string( GetFlagsFromType( m_nSetType ) );
 
 	const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), NULL, 10 );
@@ -1282,9 +1284,8 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	else
 	{
 		//	Could not connect...
-		char buffer[4096];
-		sprintf_s( buffer, 4096, " Could not connect to " RA_HOST "... " );
-		g_PopupWindows.AchievementPopups().AddMessage( buffer, " Working offline... ", MSG_INFO ); //?
+		PopupWindows::AchievementPopups().AddMessage( 
+			MessagePopup( " Could not connect to " RA_HOST "... ", " Working offline... ", PopupInfo ) ); //?
 
 		return FALSE;
 	}
@@ -1367,31 +1368,11 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			{
 				//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
 				
-					RA_Leaderboard lb;
-					lb.ParseLine( buffer );
+				RA_Leaderboard lb( LeaderboardsData[i]["ID"].GetUint() );
+				lb.LoadFromJSON( LeaderboardsData[i] );
 
-					g_LeaderboardManager.AddLeaderboard( lb );
-
-				LeaderboardsData["ID"];
-
-				//	Parse into correct boxes
-				unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
-				if( nFlags == 3 )
-				{
-					Achievement& newAch = CoreAchievements->AddAchievement();
-					newAch.Parse( AchievementsData[i] );
-				}
-				else if( nFlags == 5 )
-				{
-					Achievement& newAch = UnofficialAchievements->AddAchievement();
-					newAch.Parse( AchievementsData[i] );
-				}
-				else
-				{
-					RA_LOG( "Cannot deal with achievement with flags: %d\n", nFlags );
-				}
+				g_LeaderboardManager.AddLeaderboard( lb );
 			}
-			
 		}
 		else
 		{
@@ -1400,118 +1381,28 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			return FALSE;
 		}
 
-		//	Get game title:
-		_ReadTil( EndLine, buffer, 4096, &nCharsRead, pFile );
-		if( nCharsRead > 0 )
-		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			strcpy_s( m_sPreferredGameTitle, 64, buffer );
-		}
-
-		while( !feof(pFile) )
-		{
-			ZeroMemory( buffer, 4096 );
-			_ReadTil( EndLine, buffer, 4096, &nCharsRead, pFile );
-			if( nCharsRead > 0 )
-			{
-				if( buffer[0] == 'L' )
-				{
-					RA_Leaderboard lb;
-					lb.ParseLine( buffer );
-
-					g_LeaderboardManager.AddLeaderboard( lb );
-				}
-				else if( isdigit( buffer[0] ) )
-				{
-					Achievement& newAch = AddAchievement();
-					buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-
-					newAch.ParseLine( buffer );
-
-					if( m_nType == AT_CORE )
-					{
-						newAch.SetActive( TRUE );
-					}
-					else
-					{
-						//	Set all unofficial achievements deactivated by default
-						newAch.SetActive( FALSE );
-					}
-
-					nNumAchievementsLoaded++;
-				}
-			}
-		}
-
 		fclose( pFile );
 		
-		
-		if( m_nType == AT_CORE )
-		{
-			//	Fire off a request to get the latest rich presence info
-			//char bufferPost[256];
-			//sprintf_s( bufferPost, 256, "g=%d", m_nGameID );
-			//CreateHTTPRequestThread( "requestrichpresence.php", bufferPost, HTTPRequest_Post, m_nGameID );
+		unsigned int nTotalPoints = 0;
+		for( size_t i = 0; i < CoreAchievements->NumAchievements(); ++i )
+			nTotalPoints += CoreAchievements->GetAchievement( i ).Points();
 
+		if( RAUsers::LocalUser.IsLoggedIn() )
+		{	
+			//	Loaded OK: post a request for unlocks
 			PostArgs args;
-			args['g'] = std::to_string( m_nGameID );
-			RAWeb::CreateThreadedHTTPRequest( RequestRichPresence, args );
-		}
+			args['u'] = RAUsers::LocalUser.Username();
+			args['t'] = RAUsers::LocalUser.Token();
+			args['g'] = std::to_string( nGameID );
+			args['h'] = g_hardcoreModeActive ? "1" : "0";
 
-		if( nNumAchievementsLoaded > 0 )
-		{
-			if( m_nType == AT_CORE )
-			{
-				for( i = 0; i < m_nNumAchievements; ++i )
-					nTotalPoints += m_Achievements[i].Points();
+			RAWeb::CreateThreadedHTTPRequest( RequestUnlocks, args );
+			
+			std::string sNumCoreAch = std::to_string( CoreAchievements->NumAchievements() );
 
-				//g_PopupWindows.AchievementPopups().AddMessage( buffer, NULL, MSG_INFO );	//TBD
-			}
-		}
-
-		//	Loaded OK: now query against player:
-
-		if( m_nType == AT_CORE )
-		{
-			if( RAUsers::LocalUserIsLoggedIn() )
-			{
-				sprintf_s( sPostData, 512, "u=%s&t=%s&g=%d&h=%d", RAUsers::LocalUser.m_sUsername, RAUsers::LocalUser.m_sToken, nGameID, g_hardcoreModeActive );
-
-				ZeroMemory( bufferOut, 32768 );
-				DWORD nCharsRead = 0;
-				if( RAWeb::DoBlockingHttpPost( "requestunlocks.php", sPostData, bufferOut, 4096, nCharsRead ) )
-				{
-					pBufferOut = &bufferOut[0];
-					if( strncmp( pBufferOut, "OK:", 3 ) == 0 )
-					{
-						pBufferOut += 3;
-						while( *pBufferOut != '\0' )
-						{
-							nID = strtol( pBufferOut, &pBufferOut, 10 );
-							if( nID == 0 )
-								break;
-
-							//Unlock achievement nID
-							if( Unlock( nID ) )
-								nNumUnlocked++;
-
-							if( (*pBufferOut) == ':' )
-								pBufferOut++;
-						}
-					}
-					else
-					{
-						assert(!"Could not parse request unlocks return value?");
-						MessageBox( NULL, "Could not log you in. Please login again.", "Error logging in!", MB_OK );
-						RAUsers::LocalUser.Clear();
-						//Build_Main_Menu();
-					}
-				}
-
-				sprintf_s( buffer, 4096, " Loaded %d achievements, total score: %d ", nNumAchievementsLoaded, nTotalPoints );
-				sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
-				g_PopupWindows.AchievementPopups().AddMessage( buffer, sMessage, MSG_INFO );	//	TBD
-			}
+			//sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
+			g_PopupWindows.AchievementPopups().AddMessage( 
+				MessagePopup( "Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string( nTotalPoints ), "", PopupInfo ) );	//	TBD
 		}
 
 		return TRUE;
@@ -1526,7 +1417,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 {
-	if( !RAUsers::LocalUserIsLoggedIn() )
+	if( !RAUsers::LocalUser.IsLoggedIn() )
 		return;
 
 	if( sSaveStateFilename == NULL )

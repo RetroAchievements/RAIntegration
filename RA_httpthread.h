@@ -38,6 +38,7 @@ enum RequestType
 	RequestBadge,
 	RequestBadgeIter,
 	RequestGameTitles,
+	RequestUnlocks,
 
 	//	Submit
 	RequestPing,

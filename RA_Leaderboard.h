@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "RA_Defs.h"
 #include "RA_Condition.h"
 
 
@@ -60,14 +61,15 @@ public:
 
 		Format__MAX
 	};
-
+	
 public:
-	RA_Leaderboard();
+	RA_Leaderboard( const LeaderboardID nLBID );
 	~RA_Leaderboard();
 
 public:
-	void LoadFromJSON( Document& doc );
+	void LoadFromJSON( const Value& element );
 	void ParseLine( char* sBuffer );
+	void ParseLBData( char* sBuffer );
 
 	void Test();
 	double GetCurrentValue();
@@ -90,21 +92,21 @@ public:
 	FormatType GetFormatType() const						{ return m_format; }
 
 private:
-	ConditionSet	m_startCond;	//	Start monitoring if this is true
-	ConditionSet	m_cancelCond;	//	Cancel monitoring if this is true
-	ConditionSet	m_submitCond;	//	Submit new score if this is true
+	const unsigned int		m_nID;			//	DB ID for this LB
+	ConditionSet			m_startCond;	//	Start monitoring if this is true
+	ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
+	ConditionSet			m_submitCond;	//	Submit new score if this is true
 
-	bool			m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
+	BOOL					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
 
-	ValueSet		m_value;		//	A collection of memory addresses and values to produce one value.
-	ValueSet		m_progress;		//	A collection of memory addresses, used to show progress towards completion.
-	FormatType		m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
-	unsigned int	m_nID;			//	DB ID for this LB
+	ValueSet				m_value;		//	A collection of memory addresses and values to produce one value.
+	ValueSet				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
+	FormatType				m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
-	std::string		m_sTitle;		//	
-	std::string		m_sDescription;	//	
+	std::string				m_sTitle;		//	
+	std::string				m_sDescription;	//	
 
-	std::vector<LB_Entry> m_RankInfo;
+	std::vector<LB_Entry>	m_RankInfo;		//	Recent users ranks
 };
 
 

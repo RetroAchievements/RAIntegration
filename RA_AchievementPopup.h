@@ -4,63 +4,65 @@
 #include "RA_AchievementOverlay.h"
 #include <queue>
 
-namespace
-{
-	enum OVERLAY_MESSAGE_TYPE
-	{
-		MSG_LOGIN,
-		MSG_INFO,
-		MSG_ACHIEVEMENT_UNLOCKED,
-		MSG_ACHIEVEMENT_ERROR,
-		MSG_LEADERBOARD_INFO,
-		MSG_LEADERBOARD_CANCEL,
-
-		MSG__MAX
-	};
-};
-
 //	Graphic to display an obtained achievement
 
-#define OVERLAY_MESSAGE_QUEUE_SIZE (5)
+enum PopupMessageType
+{
+	PopupLogin,
+	PopupInfo,
+	PopupAchievementUnlocked,
+	PopupAchievementError,
+	PopupLeaderboardInfo,
+	PopupLeaderboardCancel,
+
+	NumMessageTypes
+};
+
+class MessagePopup
+{
+public:
+	MessagePopup( const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = NULL ) :
+		m_sMessageTitle( sTitle ),
+		m_sMessageSubtitle( sSubtitle ),
+		m_nMessageType( nMsgType ),
+		m_hMessageImage( hImg )
+	{}
+public:
+	const std::string& Title() const	{ return m_sMessageTitle; }
+	const std::string& Subtitle() const	{ return m_sMessageSubtitle; }
+	PopupMessageType Type() const		{ return m_nMessageType; }
+	HBITMAP Image() const				{ return m_hMessageImage; }
+
+private:
+	const std::string m_sMessageTitle;
+	const std::string m_sMessageSubtitle;
+	const PopupMessageType m_nMessageType;
+	const HBITMAP m_hMessageImage;
+};
 
 class AchievementPopup
 {
+public:
+
 public:
 	AchievementPopup();
 
 	void Update( ControllerInput input, float fDelta, bool bFullScreen, bool bPaused );
 	void Render( HDC hDC, RECT& rcDest );
 
-	void AddMessage( const char* sTitle, const char* sMessage, int nMessageType=MSG_INFO, HBITMAP hImage=NULL );
+	void AddMessage( const MessagePopup& msg );
 	float GetYOffsetPct() const;
 
-	bool IsActive() const				{ return ( m_vMessages.size() > 0 ); }
-	const char* GetTitle() const		{ return m_vMessages.front().m_sMessageTitle; }
-	const char* GetDesc() const			{ return m_vMessages.front().m_sMessageDesc; }
-	unsigned int GetMessageType() const	{ return m_vMessages.front().m_nMessageType; }
-	HBITMAP GetImage() const			{ return m_vMessages.front().m_hMessageImage; }
-
-	void SuppressNextDeltaUpdate()		{ m_bSuppressDeltaUpdate = true; }
+	//bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
+	bool MessagesPresent() const				{ return( m_vMessages.size() > 0 ); }
+	const MessagePopup& ActiveMessage() const	{ return m_vMessages.front(); }
 
 	void Clear();
 	void PlayAudio();
 
 private:
-	void NextMessage();
-
-private:
-	struct MessagePopup
-	{
-		char m_sMessageTitle[1024];
-		char m_sMessageDesc[1024];
-		HBITMAP m_hMessageImage;
-		int m_nMessageType;
-	};
-
 	std::queue<MessagePopup> m_vMessages;
-
 	float m_fTimer;
-	bool m_bSuppressDeltaUpdate;
 };
 
 //extern AchievementPopup g_PopupWindow;

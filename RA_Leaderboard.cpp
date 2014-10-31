@@ -9,6 +9,20 @@
 
 RA_LeaderboardManager g_LeaderboardManager;
 
+namespace
+{
+	const char* FormatTypeToString[] =
+	{
+		"TIME",			//	TimeFrames
+		"TIMESECS",		//	TimeSecs
+		"MILLISECS",	//	TimeMillisecs
+		"SCORE",		//	Score	/POINTS
+		"VALUE",		//	Value
+		"OTHER",		//	Other
+	};
+	static_assert( SIZEOF_ARRAY( FormatTypeToString ) == RA_Leaderboard::Format__MAX, "These must match!" );
+}
+
 //////////////////////////////////////////////////////////////////////////
 double MemValue::GetValue() const
 {
@@ -127,35 +141,51 @@ void ValueSet::Clear()
 }
 
 //////////////////////////////////////////////////////////////////////////
-RA_Leaderboard::RA_Leaderboard()
+RA_Leaderboard::RA_Leaderboard( const unsigned nLeaderboardID ) :
+	m_nID( nLeaderboardID ),
+	m_bStarted( FALSE ),
+	m_format( Format_Value )
 {
-	m_sTitle[0] = '\0';
-	m_sDescription[0] = '\0';
-	m_bStarted = false;
 }
 
 RA_Leaderboard::~RA_Leaderboard()
 {
 }
 
-void RA_Leaderboard::LoadFromJSON( Document& doc )
-{
+//{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 2","Description":"Complete this act in the fastest time!"},
 
+void RA_Leaderboard::LoadFromJSON( const Value& element )
+{
+	const LeaderboardID nID = element["ID"].GetUint();
+	ASSERT( nID == m_nID );	//	Must match!
+
+	const std::string sMem = element["Mem"].GetString();
+	char buffer[4096];
+	strcpy( buffer, sMem.c_str() );
+	ParseLBData( buffer );
+
+	m_sTitle = element["Title"].GetString();
+	m_sDescription = element["Description"].GetString();
+
+	const std::string sFmt = element["Format"].GetString();
+	for( size_t i = 0; i < Format__MAX; ++i )
+	{
+		if( sFmt.compare( FormatTypeToString[i] ) == 0 )
+		{
+			m_format = (FormatType)i;
+			break;
+		}
+	}
 }
 
-void RA_Leaderboard::ParseLine( char* sBuffer )
+void RA_Leaderboard::ParseLBData( char* pChar )
 {
-	char* pChar = &sBuffer[0];
-
-	pChar++;								//	Skip over 'L' character
-	m_nID = strtol( pChar, &pChar, 10 );	//	Get ID
-
 	while( *pChar != '\n' && *pChar != '\0' )
 	{
 		if( pChar[0] == ':' && pChar[1] == ':' )	//	New Phrase (double colon)
 			pChar += 2;
 
-		if( strncmp( pChar, "STA:", sizeof("STA:")-1 ) == 0 )
+		if( std::string( "STA:" ).compare( pChar )  == 0 )
 		{
 			pChar += 4;
 
@@ -173,7 +203,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			while( *pChar == '_' );
 		}
-		else if( strncmp( pChar, "CAN:", sizeof("CAN:")-1 ) == 0 )
+		else if( std::string( "CAN:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Cancel condition
@@ -190,7 +220,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			while( *pChar == '_' );
 		}
-		else if( strncmp( pChar, "SUB:", sizeof("SUB:")-1 ) == 0 )
+		else if( std::string( "SUB:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Submit condition
@@ -207,7 +237,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			while( *pChar == '_' );
 		}
-		else if( strncmp( pChar, "VAL:", sizeof("VAL:")-1 ) == 0 )
+		else if( std::string( "VAL:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Value condition
@@ -225,7 +255,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			while( *pChar == '_' );
 		}
-		else if( strncmp( pChar, "PRO:", sizeof("PRO:")-1 ) == 0 )
+		else if( std::string( "PRO:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Progress: normally same as value:
@@ -243,7 +273,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			while( *pChar == '_' );
 		}
-		else if( strncmp( pChar, "FOR:", sizeof("FOR:")-1 ) == 0 )
+		else if( std::string( "FOR:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Format
@@ -285,7 +315,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 					pChar++;
 			}
 		}
-		else if( strncmp( pChar, "TTL:", sizeof("TTL:")-1 ) == 0 )
+		else if( std::string( "TTL:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Title:
@@ -298,7 +328,7 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			}
 			*pDest = '\0';
 		}
-		else if( strncmp( pChar, "DES:", sizeof("DES:")-1 ) == 0 )
+		else if( std::string( "DES:" ).compare( pChar ) == 0 )
 		{
 			pChar += 4;
 			//	Description:
@@ -318,6 +348,17 @@ void RA_Leaderboard::ParseLine( char* sBuffer )
 			break;
 		}
 	}
+}
+
+void RA_Leaderboard::ParseLine( char* sBuffer )
+{
+	char* pChar = &sBuffer[0];
+
+	pChar++;								//	Skip over 'L' character
+	m_nID = strtol( pChar, &pChar, 10 );	//	Get ID
+
+	pChar = ParseLBData( pChar );
+
 }
 
 double RA_Leaderboard::GetCurrentValue()

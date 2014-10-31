@@ -1017,35 +1017,34 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 			case IDC_RA_VOTE_POS:
 			case IDC_RA_VOTE_NEG:
 			{
-				Achievement* pActiveAch = g_AchievementEditorDialog.ActiveAchievement();
-				if( pActiveAch == NULL )
-					break;
+				//Achievement* pActiveAch = g_AchievementEditorDialog.ActiveAchievement();
+				//if( pActiveAch == NULL )
+				//	break;
 
-				unsigned int nVote = (LOWORD(wParam)==IDC_RA_VOTE_POS) ? 1 : -1;
+				//unsigned int nVote = (LOWORD(wParam)==IDC_RA_VOTE_POS) ? 1 : -1;
 
-				char bufferPost[1024];
-				sprintf_s( bufferPost, 1024, "u=%s&t=%s&v=%d&a=%d", 
-					RAUsers::LocalUser.m_sUsername, RAUsers::LocalUser.m_sToken, nVote, pActiveAch->ID() );
+				//char bufferPost[1024];
+				//sprintf_s( bufferPost, 1024, "u=%s&t=%s&v=%d&a=%d", 
+				//	RAUsers::LocalUser.Username().c_str(), RAUsers::LocalUser.Token().c_str(), nVote, pActiveAch->ID() );
 
-				char bufferResponse[4096];
-				ZeroMemory( bufferResponse, 4096 );
-				char* pBufferResponse = &bufferResponse[0];
-				DWORD nCharsRead = 0;
-				if( DoBlockingHttpPost( "requestvote.php", bufferPost, pBufferResponse, 4096, &nCharsRead ) )
-				{
-					//	Grab the response from the server and throw it into the listbox
-					HWND hList = GetDlgItem( hDlg, IDC_RA_LISTACHIEVEMENTS );
-					int nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
-					OnEditData( nSel, Votes, bufferResponse );
+				//char bufferResponse[4096];
+				//ZeroMemory( bufferResponse, 4096 );
+				//char* pBufferResponse = &bufferResponse[0];
+				//DWORD nCharsRead = 0;
+				//if( DoBlockingHttpPost( "requestvote.php", bufferPost, pBufferResponse, 4096, &nCharsRead ) )
+				//{
+				//	//	Grab the response from the server and throw it into the listbox
+				//	HWND hList = GetDlgItem( hDlg, IDC_RA_LISTACHIEVEMENTS );
+				//	int nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
+				//	OnEditData( nSel, Votes, bufferResponse );
 
-					//	Vote cast/updated
-					MessageBox( hDlg, "Posted vote successfully!", "Success", MB_OK|MB_ICONWARNING );
-				}
-				else
-				{
-					MessageBox( hDlg, bufferResponse, "Error!", MB_OK|MB_ICONWARNING );
-				}
-
+				//	//	Vote cast/updated
+				//	MessageBox( hDlg, "Posted vote successfully!", "Success", MB_OK|MB_ICONWARNING );
+				//}
+				//else
+				//{
+				//	MessageBox( hDlg, bufferResponse, "Error!", MB_OK|MB_ICONWARNING );
+				//}
 			}
 			break;
 			case IDC_RA_RESET_ACH:
@@ -1070,20 +1069,14 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 							Cheevo.Reset();
 							Cheevo.SetActive( true );
 
-							//	Reverse find where I am in the list:
-							unsigned int nOffset = 0;
-							for( ; nOffset < g_pActiveAchievements->Count(); ++nOffset )
-							{
-								if( &Cheevo == &g_pActiveAchievements->GetAchievement( nOffset ) )
-									break;
-							}
-							assert( nOffset < g_pActiveAchievements->Count() );
-							if( nOffset < g_pActiveAchievements->Count() )
+							size_t nIndex = g_pActiveAchievements->GetAchievementIndex( Cheevo );
+							ASSERT( nIndex < g_pActiveAchievements->NumAchievements() );
+							if( nIndex < g_pActiveAchievements->NumAchievements() )
 							{
 								if( g_nActiveAchievementSet == AT_CORE )
-									OnEditData( nOffset, Dlg_Achievements::Achieved, "No" );
+									OnEditData( nIndex, Dlg_Achievements::Achieved, "No" );
 								else
-									OnEditData( nOffset, Dlg_Achievements::Active, "Yes" );
+									OnEditData( nIndex, Dlg_Achievements::Active, "Yes" );
 							}
 
 							InvalidateRect( hDlg, NULL, TRUE );
@@ -1180,8 +1173,8 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_UPLOAD_ACH ), TRUE );
 		}
 
-		sprintf_s( buffer, " %d", g_pActiveAchievements->Count() );
-		SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer );		
+		sprintf_s( buffer, " %d", g_pActiveAchievements->NumAchievements() );
+		SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer );	
 	}
 }
 
@@ -1189,30 +1182,24 @@ void Dlg_Achievements::OnGet_Achievement( int nOffs )
 {
 	if( g_nActiveAchievementSet == AT_CORE )
 	{
-		OnEditData( nOffs, (int)Achieved, "Yes" );
+		OnEditData( nOffs, Achieved, "Yes" );
 	}
 	else
 	{
-		OnEditData( nOffs, (int)Active, "No" );
+		OnEditData( nOffs, Active, "No" );
 	}
 }
 
-void Dlg_Achievements::OnEditAchievement( Achievement* pAch )
+void Dlg_Achievements::OnEditAchievement( const Achievement& ach )
 {
-	//	Reverse find where I am in the list:
-	unsigned int nOffset = 0;
-	for( ; nOffset < g_pActiveAchievements->Count(); ++nOffset )
-	{
-		if( pAch == &g_pActiveAchievements->GetAchievement( nOffset ) )
-			break;
-	}
-	assert( nOffset < g_pActiveAchievements->Count() );
-	if( nOffset < g_pActiveAchievements->Count() )
+	size_t nIndex = g_pActiveAchievements->GetAchievementIndex( ach );
+	ASSERT( nIndex < g_pActiveAchievements->NumAchievements() );
+	if( nIndex < g_pActiveAchievements->NumAchievements() )
 	{
 		if( g_nActiveAchievementSet == AT_CORE )
-			OnEditData( nOffset, Dlg_Achievements::Modified, "Yes" );
+			OnEditData( nIndex, Dlg_Achievements::Modified, "Yes" );
 		else
-			OnEditData( nOffset, Dlg_Achievements::Active, "No" );
+			OnEditData( nIndex, Dlg_Achievements::Active, "No" );
 	}
 }
 
@@ -1234,10 +1221,11 @@ void Dlg_Achievements::ReloadLBXData( int nOffset )
 		OnEditData( nOffset, Dlg_Achievements::Title, Ach.Title() );
 		OnEditData( nOffset, Dlg_Achievements::Author, Ach.Author() );
 		OnEditData( nOffset, Dlg_Achievements::Active, Ach.Active() ? "Yes" : "No" );
-
-		char buffer[256];
-		sprintf_s( buffer, 256, "%d/%d", Ach.Upvotes(), Ach.Downvotes() );
-		OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
+		
+		//char buffer[256];
+		//sprintf_s( buffer, 256, "%d/%d", Ach.Upvotes(), Ach.Downvotes() );
+		//OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
+		OnEditData( nOffset, Dlg_Achievements::Votes, "N/A" );
 	}
 }
 

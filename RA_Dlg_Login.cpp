@@ -76,7 +76,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 						sResponse = "Logged in as " + sUser + ".";
 						sResponseTitle = "Logged in Successfully!";
 
-						g_PopupWindows.AchievementPopups().SuppressNextDeltaUpdate();
+						//g_PopupWindows.AchievementPopups().SuppressNextDeltaUpdate();
 					}
 					else
 					{

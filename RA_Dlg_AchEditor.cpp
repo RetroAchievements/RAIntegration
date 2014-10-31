@@ -980,7 +980,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						//	Set this achievement as modified
 						pActiveAch->SetModified( TRUE );
-						g_AchievementsDialog.OnEditAchievement( pActiveAch );
+						g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 						HWND hList = GetDlgItem( g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS );
 						int nSelectedIndex = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
@@ -1019,7 +1019,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 					
 					//	Set this achievement as modified:
 					pActiveAch->SetModified( TRUE );
-					g_AchievementsDialog.OnEditAchievement( pActiveAch );
+					g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 					HWND hList = GetDlgItem( g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS );
 					int nSelectedIndex = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
@@ -1099,7 +1099,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 				//	Set this achievement as 'modified'
 				pActiveAch->SetModified( TRUE );
-				g_AchievementsDialog.OnEditAchievement( pActiveAch );
+				g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 				LoadAchievement( pActiveAch, FALSE );
 				pActiveAch->ClearDirtyFlag();
@@ -1135,7 +1135,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 					//	Update this achievement entry as 'modified':
 					pActiveAch->SetModified( TRUE );
-					g_AchievementsDialog.OnEditAchievement( pActiveAch );
+					g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 					LoadAchievement( pActiveAch, FALSE );
 					pActiveAch->ClearDirtyFlag();
@@ -1169,7 +1169,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 							
 							//	Set this achievement as 'modified'
 							pActiveAch->SetModified( TRUE );
-							g_AchievementsDialog.OnEditAchievement( pActiveAch );
+							g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 							//	Refresh:
 							LoadAchievement( pActiveAch, TRUE );
@@ -1492,7 +1492,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						//	Update this achievement as 'modified'
 						pActiveAch->SetModified( TRUE );
-						g_AchievementsDialog.OnEditAchievement( pActiveAch );
+						g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 					}
 
 					//	Inject the new text into the lbx

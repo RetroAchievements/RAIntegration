@@ -179,7 +179,7 @@ public:
 	BOOL Serialize( FileStream& Stream );
 
 	//	Get Achievement at offset
-	Achievement& GetAchievement( unsigned int nIter )		{ return m_Achievements[ nIter ]; }
+	Achievement& GetAchievement( size_t nIter )		{ return m_Achievements[ nIter ]; }
 
 	//	Add a new achievement to the list, and return a reference to it.
 	Achievement& AddAchievement();

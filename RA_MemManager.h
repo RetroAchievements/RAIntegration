@@ -38,7 +38,7 @@ public:
 
 	unsigned int Compare( unsigned int nCompareType, unsigned int nTestValue, BOOL& bResultsFound );
 	
-	inline DWORD ValidMemAddrFound( int iter ) const			{ return m_Candidates[ iter ].m_nAddr; }
+	inline DWORD ValidMemAddrFound( size_t iter ) const			{ return m_Candidates[ iter ].m_nAddr; }
 	inline DWORD RAMTotalSize() const							{ return ( m_nCoreRAMSize + m_nRAMExtraSize ); }
 
 	inline unsigned char RAMByte(unsigned int nOffs) const					{ return (*m_pfnRAMByteRead)(nOffs); }

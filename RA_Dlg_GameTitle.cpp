@@ -34,13 +34,13 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 		const char* NewLine = "\n";
 		char* pNextTitle = NULL;
 
-		strcpy_s( sGameTitleTidy, 64, g_GameTitleDialog.m_sEstimatedGameTitle );
+		strcpy_s( sGameTitleTidy, 64, g_GameTitleDialog.m_sEstimatedGameTitle.c_str() );
 		Dlg_GameTitle::CleanRomName( sGameTitleTidy, 64 );
 
 		SetDlgItemText( hDlg, IDC_RA_GAMETITLE, sGameTitleTidy );
 
 		//	Load in the checksum
-		SetDlgItemText( hDlg, IDC_RA_CHECKSUM, g_GameTitleDialog.m_sMD5 );
+		SetDlgItemText( hDlg, IDC_RA_CHECKSUM, g_GameTitleDialog.m_sMD5.c_str() );
 
 		//	Populate the dropdown
 		//	***Do blocking fetch of all game titles.***
@@ -97,14 +97,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
  			{
 				//	Fetch input data:
 				char sSelectedTitle[512];
- 				char sRequest[512];
- 				char sResponse[4096];
-				const char* sDestPage = NULL;
- 				DWORD nBytesRead = 0;
-  				
-				HWND hKnownGamesCbo = GetDlgItem( hDlg, IDC_RA_KNOWNGAMES );
-
-				ComboBox_GetText( hKnownGamesCbo, sSelectedTitle, 512 );
+				ComboBox_GetText( GetDlgItem( hDlg, IDC_RA_KNOWNGAMES ), sSelectedTitle, 512 );
 				
 				GameID nGameID = 0;
 				if( strcmp( sSelectedTitle, "<New Title>" ) == 0 )
@@ -122,19 +115,27 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				PostArgs args;
 				args['u'] = RAUsers::LocalUser.Username();
 				args['t'] = RAUsers::LocalUser.Token();
-				args['m'] = RAUsers::LocalUser.Username();
+				args['m'] = m_sMD5;
 				args['g'] = sSelectedTitle;
 				args['c'] = std::to_string( g_ConsoleID );
 
 				Document doc;
 				if( RAWeb::DoBlockingRequest( RequestSubmitNewTitle, args, doc ) )
 				{
- 					//g_pActiveAchievements->SetGameTitle( sSelectedTitle );
-					CoreAchievements->SetGameTitle( sSelectedTitle );
-					UnofficialAchievements->SetGameTitle( sSelectedTitle );
-					LocalAchievements->SetGameTitle( sSelectedTitle );
+					const GameID nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
+					const std::string& sGameTitle = doc["GameTitle"].GetString();
+
+					//	If we're setting the game title here...
+					CoreAchievements->SetGameTitle( sGameTitle );
+					UnofficialAchievements->SetGameTitle( sGameTitle );
+					LocalAchievements->SetGameTitle( sGameTitle );
  
-					g_GameTitleDialog.m_nReturnedGameID = strtol( sResponse+3, NULL, 10 );
+					//	Surely we could set the game ID here too?
+					CoreAchievements->SetGameID( nGameID );
+					UnofficialAchievements->SetGameID( nGameID );
+					LocalAchievements->SetGameID( nGameID );
+
+					g_GameTitleDialog.m_nReturnedGameID = nGameID;
 
  					//	Close this dialog
  					EndDialog( hDlg, TRUE );
@@ -142,9 +143,21 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
  				}
  				else
  				{
-					char bufferFeedback[2048];
- 					sprintf_s( bufferFeedback, 2048, "Failed!\n\nResponse From Server:\n\n%s", sResponse );
- 					MessageBox( hDlg, bufferFeedback, "Error from server!", MB_OK );
+					if( !doc.HasParseError() && doc.HasMember( "Error" ) )
+					{
+						//Error given
+						MessageBox( hDlg,
+							( std::string( "Could not add new title: " ) + std::string( doc["Error"].GetString() ) ).c_str(),
+							"Errors encountered",
+							MB_OK );
+					}
+					else
+					{
+ 						MessageBox( hDlg, 
+							"Cannot contact server!", 
+							"Error in connection", 
+							MB_OK );
+					}
  
  					return TRUE;
  				}
@@ -206,9 +219,9 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 	return FALSE;
 }
 
-unsigned int Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, const char* sMD5, const char* sEstimatedGameTitle )
+unsigned int Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, const std::string& sMD5, const std::string& sEstimatedGameTitle )
 {
-	if( sMD5 == NULL )
+	if( sMD5.length() == 0 )
 		return 0;
 
 	if( !RAUsers::LocalUser.IsLoggedIn() )

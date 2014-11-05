@@ -92,7 +92,7 @@ void Achievement::Parse( const Value& element )
 	m_sAuthor = element["Author"].GetString();
 	m_nTimestampModified = element["Modified"].GetUint();
 	m_nTimestampCreated = element["Created"].GetUint();
-	m_sBadgeImageFilename = element["BadgeName"].GetUint();
+	m_sBadgeImageURI = element["BadgeName"].GetUint();
 	//unsigned int nFlags = element["Flags"].GetUint();
 
 	if( element["MemAddr"].IsString() )
@@ -254,7 +254,7 @@ void Achievement::Clear()
 	m_sTitle.clear();
 	m_sDescription.clear();
 	m_sAuthor.clear();
-	m_sBadgeImageFilename.clear();
+	m_sBadgeImageURI.clear();
 
 	m_nPointValue = 0;
 	m_bActive = FALSE;
@@ -321,17 +321,17 @@ void Achievement::SetModified( BOOL bModified )
 	}
 }
 
-void Achievement::SetBadgeImage( const std::string& sFilename )
+void Achievement::SetBadgeImage( const std::string& sBadgeURI )
 {
 	SetDirtyFlag( Dirty_Badge );
 	ClearBadgeImage();
 
-	m_sBadgeImageFilename = sFilename;
+	m_sBadgeImageURI = sBadgeURI;
 
 	//	Blocking :S
-	m_hBadgeImage = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sFilename + ".png", 64, 64 );
+	m_hBadgeImage = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sBadgeURI + ".png", 64, 64 );
 	//	Blocking :S
-	m_hBadgeImageLocked = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sFilename + "_lock.png", 64, 64 );
+	m_hBadgeImageLocked = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sBadgeURI + "_lock.png", 64, 64 );
 }
 
 void Achievement::Reset()
@@ -696,7 +696,7 @@ void Achievement::Set( const Achievement& rRHS )
 	SetPoints( rRHS.m_nPointValue );
 	SetTitle( rRHS.m_sTitle );
 	SetModified( rRHS.m_bModified );
-	SetBadgeImage( rRHS.m_sBadgeImageFilename );
+	SetBadgeImage( rRHS.m_sBadgeImageURI );
 	
 	//	TBD: move to 'now'?
 	SetModifiedDate( rRHS.m_nTimestampModified );
@@ -964,7 +964,7 @@ BOOL AchievementSet::DeletePatchFile( AchievementSetType nSet, GameID nGameID )
 		std::string sFilename = AchievementSet::GetAchievementSetFilename( nGameID );
 							
 		//	Remove the text file
-		SetCurrentDirectory( g_sHomeDir );
+		SetCurrentDirectory( g_sHomeDir.c_str() );
 		if( _access( sFilename.c_str(), 06 ) != -1 )	//	06= Read/write permission
 		{
 			if( remove( sFilename.c_str() ) == -1 )
@@ -1304,7 +1304,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 	const std::string sFilename = GetAchievementSetFilename( nGameID );
 
-	SetCurrentDirectory( g_sHomeDir );
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	FILE* pFile = NULL;
 	fopen_s( &pFile, sFilename.c_str(), "rb" );
 	if( pFile != NULL )
@@ -1434,7 +1434,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 		return;
 	}
 
-	for( unsigned int i = 0; i < m_nNumAchievements; ++i )
+	for( size_t i = 0; i < NumAchievements(); ++i )
 	{
 		Achievement* pAch = &m_Achievements[i];
 		if( !pAch->Active() )
@@ -1465,7 +1465,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 		//	Generate a slightly different key to md5ificateorise:
 		char cheevoProgressMangled[4096];
 		sprintf_s( cheevoProgressMangled, 4096, "%s%s%s%d", 
-			RAUsers::LocalUser.m_sUsername, cheevoProgressString, RAUsers::LocalUser.m_sUsername, pAch->ID() );
+			RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), pAch->ID() );
 
 		char md5Progress[33];
 		md5_GenerateMD5( cheevoProgressMangled, strlen( cheevoProgressMangled ), md5Progress );
@@ -1508,7 +1508,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 	int nMemStringLen = 0;
 	char pRecalculatedAchievementMD5[33];
 
-	if( !RAUsers::LocalUserIsLoggedIn() )
+	if( !RAUsers::LocalUser.IsLoggedIn() )
 		return;
 
 	if( sLoadStateFilename == NULL )
@@ -1564,7 +1564,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 		
 			//	Regenerate the md5 and see if it sticks:
 			sprintf_s( cheevoMD5TestMangled, 4096, "%s%s%s%d", 
-				RAUsers::LocalUser.m_sUsername, cheevoProgressString, RAUsers::LocalUser.m_sUsername, nID );
+				RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), nID );
 			md5_GenerateMD5( cheevoMD5TestMangled, strlen(cheevoMD5TestMangled), pRecalculatedProgressMD5 );
 
 			if( strncmp( pGivenProgressMD5, pRecalculatedProgressMD5, 32 ) == 0 )
@@ -1630,22 +1630,18 @@ Achievement& AchievementSet::Clone( unsigned int nIter )
 	return newAch;
 }
 
-BOOL AchievementSet::Unlock( unsigned int nAchievementID )
+BOOL AchievementSet::Unlock( AchievementID nAchID )
 {
-	unsigned int i = 0;
-
-	for( i = 0; i < m_nNumAchievements; ++i )
+	for( size_t i = 0; i < NumAchievements(); ++i )
 	{
-		if( m_Achievements[i].ID() == nAchievementID )
+		if( m_Achievements[ i ].ID() == nAchID )
 		{
-			m_Achievements[i].SetActive( FALSE );
-			//	Update Dlg? //TBD
-			return TRUE;
+			m_Achievements[ i ].SetActive( FALSE );
+			return TRUE;	//	Update Dlg? //TBD
 		}
 	}
 
-	RA_LOG( "Attempted to unlock achievement %d but failed!\n", nAchievementID );
-	//assert( !"Cannot unlock this achievement..." );
+	RA_LOG( "Attempted to unlock achievement %d but failed!\n", nAchID );
 	return FALSE;//??
 }
 
@@ -1656,8 +1652,7 @@ BOOL AchievementSet::IsCurrentAchievementSetSelected() const
 
 BOOL AchievementSet::HasUnsavedChanges()
 {
-	unsigned int i = 0;
-	for( i = 0; i < m_nNumAchievements; ++i )
+	for( size_t i = 0; i < NumAchievements(); ++i )
 	{
 		if( m_Achievements[i].Modified() )
 			return TRUE;

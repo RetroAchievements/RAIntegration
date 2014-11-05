@@ -1615,7 +1615,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const char* sBackupBadgeTo
 	sprintf_s( sCheevoBitmapPath, 256, "%s%s", RA_DIR_BADGE, LockedBadgeFile );
 
 	if( m_pSelectedAchievement != NULL )
-		sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", m_pSelectedAchievement->BadgeImageFilename() );
+		sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", m_pSelectedAchievement->BadgeImageURI() );
 	//else if( sBackupBadgeToUse != NULL )
 	//	sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", sBackupBadgeToUse );
 
@@ -1648,7 +1648,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const char* sBackupBadgeTo
 	std::string sBadgeName;
 
 	if( m_pSelectedAchievement != NULL )
-		sBadgeName = m_pSelectedAchievement->BadgeImageFilename();
+		sBadgeName = m_pSelectedAchievement->BadgeImageURI();
 	else if( sBackupBadgeToUse != NULL )
 		sBadgeName = sBackupBadgeToUse;
 	else
@@ -1669,7 +1669,7 @@ void Dlg_AchievementEditor::UpdateBadge( const std::string& sNewName )
 	//	If a change is detected: change it!
 	if( m_pSelectedAchievement != NULL )
 	{
-		if( m_pSelectedAchievement->BadgeImageFilename().compare( sNewName ) != 0 )
+		if( m_pSelectedAchievement->BadgeImageURI().compare( sNewName ) != 0 )
 		{
 			//	The badge we are about to show is different from the one stored for this achievement.
 			//	This implies that we are changing the badge: this achievement is modified!
@@ -1794,7 +1794,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title().c_str() );
 		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description().c_str() );
 		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author().c_str() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageURI().c_str() );
 
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_ID ), FALSE );
@@ -1808,7 +1808,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_PROGRESSINDICATORS ), FALSE );
 
-		UpdateBadge( m_pSelectedAchievement->BadgeImageFilename() );
+		UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 
 		m_bPopulatingAchievementEditorData = FALSE;
 	}
@@ -1880,8 +1880,8 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Badge )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename().c_str() );
-			UpdateBadge( m_pSelectedAchievement->BadgeImageFilename() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageURI().c_str() );
+			UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Conditions )
 		{

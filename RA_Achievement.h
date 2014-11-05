@@ -86,7 +86,7 @@ public:
 
 	inline HBITMAP BadgeImage() const								{ return m_hBadgeImage; }
 	inline HBITMAP BadgeImageLocked() const							{ return m_hBadgeImageLocked; }
-	inline const std::string& BadgeImageFilename() const			{ return m_sBadgeImageFilename; }
+	inline const std::string& BadgeImageURI() const					{ return m_sBadgeImageURI; }
 	
 	void SetBadgeImage( const std::string& sFilename );
 	void ClearBadgeImage();
@@ -117,7 +117,7 @@ public:
 	void ClearDirtyFlag()						{ m_nDirtyFlags = 0; }
 
 private:
-	const AchievementSetType m_nSetType;
+	/*const*/ AchievementSetType m_nSetType;
 
 	AchievementID m_nAchievementID;
 	std::vector<ConditionSet> m_vConditions;
@@ -125,7 +125,7 @@ private:
 	std::string m_sTitle;
 	std::string m_sDescription;
 	std::string m_sAuthor;
-	std::string m_sBadgeImageFilename;
+	std::string m_sBadgeImageURI;
 
 	unsigned int m_nPointValue;
 	BOOL m_bActive;
@@ -188,7 +188,7 @@ public:
 	Achievement& Clone( unsigned int nIter );
 
 	//	Find achievement with ID, or NULL if it can't be found.
-	Achievement* Find( unsigned int nID );
+	Achievement* Find( AchievementID nID );
 
 	//	Find index of the given achievement in the array list (useful for LBX lookups)
 	size_t GetAchievementIndex( const Achievement& Ach );

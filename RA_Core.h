@@ -96,9 +96,9 @@ API void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCaus
 
 //	Non-exposed:
 
-extern char g_sKnownRAVersion[50];
-extern char g_sHomeDir[2048];
-extern char g_sROMDirLocation[2048];
+extern std::string g_sKnownRAVersion;
+extern std::string g_sHomeDir;
+extern std::string g_sROMDirLocation;
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;

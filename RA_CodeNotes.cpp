@@ -1,62 +1,57 @@
 #include "RA_CodeNotes.h"
 
 #include <Windows.h>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include "RA_Core.h"
-#include "RA_Dlg_Memory.h"
-#include "RA_Achievement.h"
 #include "RA_httpthread.h"
-#include "RA_MemManager.h"
+#include "RA_Dlg_Memory.h"
 #include "RA_User.h"
-
-#include "rapidjson/include/rapidjson/document.h"
-
-namespace
-{
-	const char Divider = ':';
-	const char EndLine = '\n';
-}
-
-CodeNotes::CodeNotes()
-{
-}
-
-CodeNotes::~CodeNotes()
-{
-}
+#include "RA_Achievement.h"
 
 void CodeNotes::Clear()
 {
-	m_sCodeNotes.clear();
+	m_CodeNotes.clear();
 }
 
-
-void CodeNotes::Sort()
+size_t CodeNotes::Load( const std::string& sFile )
 {
-	for( size_t i = 0; i < m_sCodeNotes.size(); ++i )
+	Clear();
+	
+	FILE* pf = NULL;
+	if( fopen_s( &pf, sFile.c_str(), "rb" ) == 0 )
 	{
-		BOOL bComplete = TRUE;
-		for( size_t j = i; j < m_sCodeNotes.size(); ++j )
+		Document doc;
+		doc.ParseStream( FileStream( pf ) );
+		if( !doc.HasParseError() )
 		{
-			if( strcmp( m_sCodeNotes[j].m_sAddress.c_str(), m_sCodeNotes[i].m_sAddress.c_str() ) < 0 )
-			{
-				bComplete = FALSE;
+			ASSERT( doc["Notes"].IsArray() );
 
-				CodeNoteObj temp = m_sCodeNotes[i];
-				m_sCodeNotes[i] = m_sCodeNotes[j];
-				m_sCodeNotes[j] = temp;
+			const Value& NoteArray = doc["CodeNotes"];
+
+			for( SizeType i = 0; i < NoteArray.Size(); ++i )
+			{
+				const Value& NextNote = NoteArray[i];
+				ByteAddress nAddr = static_cast<ByteAddress>( NextNote["Address"].GetUint() );
+				const std::string& sAuthor = NextNote["Author"].GetString();
+				const std::string& sNote = NextNote["Note"].GetString();
+				
+				//m_CodeNotes[ nAddr ] = CodeNoteObj( sAuthor, sNote );
+				m_CodeNotes.insert( std::map<ByteAddress,CodeNoteObj>::value_type( nAddr, CodeNoteObj( sAuthor, sNote ) ) );
 			}
 		}
-
-		if( bComplete )
-			break;
+		fclose( pf );
 	}
+
+	return m_CodeNotes.size();
+} 
+
+BOOL CodeNotes::Save( const std::string& sFile )
+{
+	return FALSE;
+	//	All saving should be cloud-based!
 }
 
-BOOL CodeNotes::Update( unsigned int nID )
+BOOL CodeNotes::ReloadFromWeb( GameID nID )
 {
 	if( nID == 0 )
 		return FALSE;
@@ -70,182 +65,33 @@ BOOL CodeNotes::Update( unsigned int nID )
 //	static
 void CodeNotes::OnCodeNotesResponse( Document& doc )
 {
-	//	This is pointless?
-	//ASSERT( doc["CodeNotes"].IsArray() );
-	//const Value& Notes = doc["CodeNotes"];
-	//for( SizeType i = 0; i < Notes.Size(); ++i )
-	//{
-	//	const Value& Note = Notes[i];
-	//	const std::string& sUser = Note["User"].GetString();
-	//	const std::string& sAddress = Note["Address"].GetString();
-	//	const std::string& sNote = Note["Note"].GetString();
-	//	RA_LOG( "CodeNote: %s, %s (%s)\n", sAddress.c_str(), sNote.c_str(), sUser.c_str() );
-	//}
-
+	//	Persist then reload
 	const GameID nGameID = doc["GameID"].GetUint();
 
-	SetCurrentDirectory( g_sHomeDir );
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	_WriteBufferToFile( std::string( RA_DIR_DATA ) + std::to_string( nGameID ) + "-Notes2.txt", doc );
 
 	g_MemoryDialog.RepopulateMemNotesFromFile();
 }
 
-size_t CodeNotes::Load( const char* sFile )
+void CodeNotes::Add( const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote )
 {
-	Clear();
-
-	FILE* pFile = NULL;
-	if( fopen_s( &pFile, sFile, "r" ) == 0 )
-	{
-		//	Get game title:
-		DWORD nCharsRead = 0;
-		do
-		{
-			char sAuthor[64];
-			char sAddress[64];
-			char sNote[512];
-
-			if( !_ReadTil( Divider, sAuthor, 64, &nCharsRead, pFile ) )
-				break;
-
-			//	Turn colon into a endstring
-			sAuthor[nCharsRead-1] = '\0';
-
-			if( !_ReadTil( Divider, sAddress, 64, &nCharsRead, pFile ) )
-				break;
-
-			//	Turn colon into a endstring
-			sAddress[nCharsRead-1] = '\0';
-
-			if( !_ReadTil( '#', sNote, 512, &nCharsRead, pFile ) )
-				break;
-			
-			//	Turn newline into a endstring
-			sNote[nCharsRead-1] = '\0';
-
-			char sAddressFixed[64];
-			if( g_MemManager.RAMTotalSize() > 65536 )
-				sprintf_s( sAddressFixed, 64, "0x%s", sAddress+2 ); 
-			else
-				sprintf_s( sAddressFixed, 64, "0x%s", sAddress+4 );	//	Adjust the 6-figure readout
-			
-			m_sCodeNotes.push_back( CodeNoteObj( sAuthor, sAddressFixed, sNote ) );
-		}
-		while ( !feof( pFile ) );
-
-		fclose( pFile );
-	}
+	if( m_CodeNotes.find( nAddr ) == m_CodeNotes.end() )
+		m_CodeNotes.insert( std::map<ByteAddress,CodeNoteObj>::value_type( nAddr, CodeNoteObj( sAuthor, sNote ) ) );
 	else
-	{
-		//	Create?
-	}
+		m_CodeNotes.at( nAddr ).SetNote( sNote );
 
-	return m_sCodeNotes.size();
-} 
-
-BOOL CodeNotes::Save( const char* sFile )
-{
-	unsigned int nCharsRead = 0;
-
-	Sort();
-
-	FILE* pFile = NULL;
-	if( fopen_s( &pFile, sFile, "w" ) == 0 )
-	{
-		std::vector< CodeNoteObj >::const_iterator iter = m_sCodeNotes.begin();
-		while( iter != m_sCodeNotes.end() )
-		{
-			const CodeNoteObj& NextItem = (*iter);
-			fwrite( NextItem.m_sAuthor.c_str(), sizeof(char), NextItem.m_sAuthor.length(), pFile );
-			fwrite( &Divider, sizeof(char), 1, pFile );
-			fwrite( NextItem.m_sAddress.c_str(), sizeof(char), NextItem.m_sAddress.length(), pFile );
-			fwrite( &Divider, sizeof(char), 1, pFile );
-			fwrite( NextItem.m_sNote.c_str(), sizeof(char), NextItem.m_sNote.length(), pFile );
-			fwrite( &EndLine, sizeof(char), 1, pFile );
-
-			iter++;
-		}
-
-		fclose( pFile );
-
-		return TRUE;
-	}
-	else
-	{
-		//	Create?
-		return FALSE;
-	}
-}
-
-//BOOL CodeNotes::Exists( const char* sAddress, char* sAuthorOut, char* sDescriptionOut, const size_t nMaxLen )
-//{
-//	std::vector< CodeNoteObj >::const_iterator iter;
-//	iter = m_sCodeNotes.begin();
-//
-//	while( iter != m_sCodeNotes.end() )
-//	{
-//		const CodeNoteObj& NextItem = (*iter);
-//		if( strcmp( sAddress, NextItem.m_sAddress.c_str() ) == 0 )
-//		{
-//			if( sAuthorOut )
-//				strcpy_s( sAuthorOut, nMaxLen, NextItem.m_sAuthor.c_str() );
-//			if( sDescriptionOut )
-//				strcpy_s( sDescriptionOut, nMaxLen, NextItem.m_sNote.c_str() );
-//			return TRUE;
-//		}
-//		iter++;
-//	}
-//
-//	return FALSE;
-//}
-
-CodeNoteObj* CodeNotes::GetNote( const char* sAddress, std::string*& psDescOut )
-{
-	std::vector< CodeNoteObj >::iterator iter;
-	iter = m_sCodeNotes.begin();
-
-	while( iter != m_sCodeNotes.end() )
-	{
-		CodeNoteObj& rNextItem = (*iter);
-		if( strcmp( sAddress, rNextItem.m_sAddress.c_str() ) == 0 )
-		{
-			psDescOut = &rNextItem.m_sNote;
-			return TRUE;
-		}
-		
-		iter++;
-	}
-
-	return FALSE;
-}
-
-void CodeNotes::Add( const std::string& sAuthor, const std::string& sAddress, const std::string& sDescription )
-{
-	std::string* psDesc = NULL;
-	if( Find( sAddress, psDesc ) )
-	{
-		//	Update it:
-		(*psDesc) = sDescription;
-	}
-	else
-	{
-		m_sCodeNotes.push_back( CodeNoteObj( sAuthor, sAddress, sDescription ) );
-	}
-
-	if( RAUsers::LocalUser.IsLoggedIn() && ( strlen( sAddress ) > 2 ) )
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{ 
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser.Username();
 		args['t'] = RAUsers::LocalUser.Token();
 		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
-		args['a'] = sAddress;
-		args['d'] = sDescription;
+		args['m'] = std::to_string( nAddr );
+		args['n'] = sNote;
 
-		//	faf
-		//CreateHTTPRequestThread( "requestsubmitcodenote.php", buffer, HTTPRequest_Post, 0, NULL );
-		
-		DataStream Response;
-		if( RAWeb::DoBlockingHttpPost( "requestsubmitcodenote.php", PostArgsToString( args ), Response ) )
+		Document doc;
+		if( RAWeb::DoBlockingRequest( RequestSubmitCodeNote, args, doc ) )
 		{
 			//	OK!
 			MessageBeep( 0xFFFFFFFF );
@@ -257,36 +103,28 @@ void CodeNotes::Add( const std::string& sAuthor, const std::string& sAddress, co
 	}
 }
 
-BOOL CodeNotes::Remove( const char* sAddress )
+BOOL CodeNotes::Remove( const ByteAddress& nAddr )
 {
-	std::vector< CodeNoteObj >::iterator iter;
-	iter = m_sCodeNotes.begin();
-
-	while( iter != m_sCodeNotes.end() )
+	if( m_CodeNotes.find( nAddr ) == m_CodeNotes.end() )
 	{
-		CodeNoteObj& rNextItem = (*iter);
-		if( strcmp( rNextItem.m_sAddress.c_str(), sAddress ) == 0 )
-		{
-			m_sCodeNotes.erase( (iter) );
+		RA_LOG( "Already deleted this code note? (%d), nAddr " );
+		return FALSE;
+	}
 
-			if( RAUsers::LocalUser.IsLoggedIn() )
-			{
-				PostArgs args;
-				args['u'] = RAUsers::LocalUser.Username();
-				args['t'] = RAUsers::LocalUser.Token();
-				args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
-				args['a'] = sAddress;
-				args['n'] = "";
+	m_CodeNotes.erase( nAddr );
+	
+	if( RAUsers::LocalUser.IsLoggedIn() )
+	{
+		PostArgs args;
+		args['u'] = RAUsers::LocalUser.Username();
+		args['t'] = RAUsers::LocalUser.Token();
+		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
+		args['m'] = std::to_string( nAddr );
+		args['n'] = "";
 
-				//	faf
-				RAWeb::CreateThreadedHTTPRequest( RequestSubmitCodeNote, args );
-			}
-
-			return TRUE;
-		}
-
-		iter++;
+		//	faf
+		RAWeb::CreateThreadedHTTPRequest( RequestSubmitCodeNote, args );
 	}
 	
-	return FALSE;
+	return TRUE;
 }

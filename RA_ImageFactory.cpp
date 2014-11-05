@@ -131,7 +131,7 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 	g_UserImageFactoryInst.m_pIWICFactory = NULL;
 	g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 
-	CoUninitialize();
+	//CoUninitialize();	//	This could shutdown someone else's CoInitializeEx
 
 	HeapSetInformation( NULL, HeapEnableTerminationOnCorruption, NULL, 0 );
 
@@ -246,7 +246,7 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 
 HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned int nHeight )
 {
-	SetCurrentDirectory( g_sHomeDir );
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 
 	FILE* fTemp = NULL;
 	fopen_s( &fTemp, sPath.c_str(), "r" );

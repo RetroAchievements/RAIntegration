@@ -54,12 +54,16 @@ using namespace rapidjson;
 
 #define SIZEOF_ARRAY( ar ) ( sizeof( ar )/sizeof( ar[0] ) )
 
+#define SAFE_DELETE( x ) { if( x != NULL ) { delete x; x = NULL; } }
+
 typedef unsigned char       BYTE;
 typedef unsigned long       DWORD;
 typedef int                 BOOL;
 typedef DWORD				ARGB;
 
 typedef std::vector<BYTE> DataStream;
+
+typedef unsigned long ByteAddress;
 
 typedef unsigned int AchievementID;
 typedef unsigned int LeaderboardID;

@@ -425,7 +425,7 @@ BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Data
 			//	## EXPERIMENTAL ##
 			sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";										//	Item header    'r'
 			sb_ascii << "\r\n";																					//	Spacing
-			sb_ascii << rTarget << "\r\n";																		//	Binary content
+			sb_ascii << sRTarget << "\r\n";																		//	Binary content
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
 
@@ -581,8 +581,7 @@ DWORD HTTPWorkerThread( LPVOID lpParameter )
 			{
 				//	Take ownership and delete(): we caused the 'pop' earlier, so we have responsibility to
 				//	 either pass to LastHttpResults, or deal with it here.
-				delete( pObj );
-				pObj = NULL;
+				SAFE_DELETE( pObj );
 			}
 		}
 
@@ -697,8 +696,7 @@ void HttpResults::Clear()
 		{
 			RequestObject* pObj = m_aRequests.front();
 			m_aRequests.pop_front();
-			delete( pObj );	//	Must free after pop! Otherwise mem leak!
-			pObj = NULL;
+			SAFE_DELETE( pObj );
 		}
 	}
 	ReleaseMutex( RAWeb::g_hHTTPMutex );

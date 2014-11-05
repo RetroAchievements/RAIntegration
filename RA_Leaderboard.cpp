@@ -161,7 +161,7 @@ void RA_Leaderboard::LoadFromJSON( const Value& element )
 
 	const std::string sMem = element["Mem"].GetString();
 	char buffer[4096];
-	strcpy( buffer, sMem.c_str() );
+	strcpy_s( buffer, 4096, sMem.c_str() );
 	ParseLBData( buffer );
 
 	m_sTitle = element["Title"].GetString();
@@ -353,12 +353,10 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 void RA_Leaderboard::ParseLine( char* sBuffer )
 {
 	char* pChar = &sBuffer[0];
-
 	pChar++;								//	Skip over 'L' character
-	m_nID = strtol( pChar, &pChar, 10 );	//	Get ID
+	ASSERT( m_nID == strtol( pChar, &pChar, 10 ) );
 
-	pChar = ParseLBData( pChar );
-
+	ParseLBData( pChar );
 }
 
 double RA_Leaderboard::GetCurrentValue()

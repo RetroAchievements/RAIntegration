@@ -347,7 +347,7 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	args['m'] = sMem;
 	args['z'] = std::to_string( Ach.Points() );
 	args['f'] = std::to_string( nFlags );
-	args['b'] = Ach.BadgeImageFilename();
+	args['b'] = Ach.BadgeImageURI();
 	args['h'] = sTestHash;
 
 	return( RAWeb::DoBlockingRequest( RequestSubmitAchievementData, args, doc ) );
@@ -1178,16 +1178,14 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 	}
 }
 
-void Dlg_Achievements::OnGet_Achievement( int nOffs )
+void Dlg_Achievements::OnGet_Achievement( const Achievement& ach )
 {
+	size_t nIndex = g_pActiveAchievements->GetAchievementIndex( ach );
+
 	if( g_nActiveAchievementSet == AT_CORE )
-	{
-		OnEditData( nOffs, Achieved, "Yes" );
-	}
+		OnEditData( nIndex, Achieved, "Yes" );
 	else
-	{
-		OnEditData( nOffs, Active, "No" );
-	}
+		OnEditData( nIndex, Active, "No" );
 }
 
 void Dlg_Achievements::OnEditAchievement( const Achievement& ach )

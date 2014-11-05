@@ -39,7 +39,7 @@ public:
 public:
 	int GetSelectedAchievementIndex();
 	void OnLoad_NewRom( GameID nGameID );
-	void OnGet_Achievement( int nOffs );
+	void OnGet_Achievement( const Achievement& ach );
 	void ReloadLBXData( int nOffset );
 	void OnEditData( size_t nItem, Column nColumn, const std::string& sNewData );
 	void OnEditAchievement( const Achievement& ach );

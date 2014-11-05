@@ -37,10 +37,11 @@
 #include "RA_RichPresence.h"
 
 
-char g_sKnownRAVersion[50];
-char g_sHomeDir[2048];
-char g_sROMDirLocation[2048];
-char g_sCurrentROMMD5[33];
+std::string g_sKnownRAVersion;
+std::string g_sHomeDir;
+std::string g_sROMDirLocation;
+std::string g_sCurrentROMMD5;	//	Internal
+
 HMODULE g_hThisDLLInst;
 HINSTANCE g_hRAKeysDLL;
 HWND g_RAMainWnd;
@@ -57,7 +58,7 @@ bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
 const char* (*g_fnKeysVersion)(void) = NULL;
-void (*g_fnDoValidation)(char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID) = NULL;
+void (*g_fnDoValidation)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID ) = NULL;
 
 //	local func def.
 bool _InstallKeys();
@@ -152,10 +153,12 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		RA_LOG( "(found as: %s)\n", g_sClientName );
 	}
 
+	char buffer[2048];
+	GetCurrentDirectory( 2048, buffer );
+	g_sHomeDir = buffer;
+	strcat_s( buffer, "\\" );
 
-	GetCurrentDirectory( 2048, g_sHomeDir );
-	strcat_s( g_sHomeDir, "\\" );
-	RA_LOG( "%s - storing \"%s\" as home dir\n", __FUNCTION__, g_sHomeDir );
+	RA_LOG( __FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str() );
 
 	g_sROMDirLocation[0] = '\0';
 
@@ -176,7 +179,8 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 			if( nMBReply == IDYES )
 			{
 				DataStream Response;
-				if( RAWeb::DoBlockingHttpGet( "RA_Keys.dll", Response ) )
+				//if( RAWeb::DoBlockingHttpGet( "RA_Keys.dll", Response ) )
+				if( RAWeb::DoBlockingHttpPost( "RA_Keys.dll", "", Response ) )
 					_WriteBufferToFile( "RA_Keys.dll", Response.data(), Response.size() );
 			}
 		}
@@ -228,7 +232,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Setup min required directories:
-	SetCurrentDirectory( g_sHomeDir );
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	
 	//////////////////////////////////////////////////////////////////////////
 	//	Update news:
@@ -362,18 +366,22 @@ API int _RA_HTTPGetRequestExists( const char* sPageName )
 
 API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, unsigned int nRAMSize, BYTE* pRAMExtra, unsigned int nRAMExtraSize )
 {
-	ZeroMemory( g_sCurrentROMMD5, 33 );
+	//ZeroMemory( g_sCurrentROMMD5, 33 );
+	g_sCurrentROMMD5.clear();
+	char buffer[64];
 	if( pROM != NULL && nROMSize > 0 )
-		md5_GenerateMD5Raw( pROM, nROMSize, g_sCurrentROMMD5 );
+	{
+		md5_GenerateMD5Raw( pROM, nROMSize, buffer );
+		g_sCurrentROMMD5 = buffer;
+	}
 
 	g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
 
 	//	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
 
 	//	TBD: local DB of MD5 to GameIDs here
-
 	GameID nGameID = 0;
-	if( strcmp( g_sCurrentROMMD5, "" ) != 0 )
+	if( g_sCurrentROMMD5.length() > 0 )
 	{
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
@@ -423,7 +431,7 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 			AchievementSet::DeletePatchFile( AT_CORE, nGameID );
 			AchievementSet::DeletePatchFile( AT_UNOFFICIAL, nGameID );
 
-			AchievementSet::Load( nGame );
+			AchievementSet::LoadFromFile( nGameID );
 			//CoreAchievements->Load( nGameID );
 			//UnofficialAchievements->Load( nGameID );
 			//LocalAchievements->Load( nGameID );
@@ -538,28 +546,134 @@ API int CCONV _RA_HandleHTTPResults()
 	while( pObj	!= NULL )
 	{
 		Document doc;
-		BOOL bJSONReady = pObj->ParseResponseToJSON( doc );
+		BOOL bJSONParsedOK = pObj->ParseResponseToJSON( doc );
 
 		switch( pObj->GetRequestType() )
 		{
-		case RequestScore:
-			ASSERT( doc["Success"].GetBool() );
-			const std::string& sUser = doc["User"].GetString();
-			unsigned int nScore = doc["Score"].GetUint();
-			RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
-			if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
+		case RequestBadge:
 			{
-				RAUsers::LocalUser.SetScore( nScore );
-			}
-			else
-			{
-				//	Find friend? Update this information?
+				SetCurrentDirectory( g_sHomeDir.c_str() );
 
+				const std::string& sPageTarget = pObj->GetPageURL();
+				const size_t nPos = sPageTarget.find( "/Badge/" );
+				if( nPos != -1 )
+				{
+					const std::string sBadgeFile = sPageTarget.substr( nPos + strlen( "/Badge/" ) );
+					const std::string sTargetFileName = RA_DIR_BADGE + sBadgeFile;
+
+					_WriteBufferToFile( sTargetFileName, pObj->GetResponse() );
+
+					const std::string sBadgeURI = sBadgeFile.substr( 0, 5 );
+					for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
+					{
+						Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+						if( ach.BadgeImageURI().compare( sBadgeURI ) == 0 )
+						{
+							//	Re-set this badge image
+							//	NB. This is already a non-modifying op
+							ach.SetBadgeImage( sBadgeURI );
+						}
+					}
+
+					g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
+				}
+			}
+			break;
+
+		case RequestBadgeIter:
+			g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
+			break;
+
+		case RequestUserPic:
+
+			//	Dodge!
+			extern void OnUserPicDownloaded( void* );
+			OnUserPicDownloaded( pObj );
+
+			break;
+
+		case RequestScore:
+			{
+				ASSERT( doc["Success"].GetBool() );
+
+				const std::string& sUser = doc["User"].GetString();
+				unsigned int nScore = doc["Score"].GetUint();
+				RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
+
+				if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
+				{
+					RAUsers::LocalUser.SetScore( nScore );
+				}
+				else
+				{
+					//	Find friend? Update this information?
+					RAUsers::UserDatabase[sUser]->SetScore( nScore );
+				}
+			}
+			break;
+
+		case RequestLatestClientPage:
+			{
+				const std::string& sReply = DataStreamAsString( pObj->GetResponse() );
+				if( sReply.length() > 2 && sReply.compare( 0, 2, "0." ) == 0 )
+				{
+					long nValServer = strtol( sReply.c_str()+2, NULL, 10 );
+					long nValKnown = strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
+					long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
+
+					if( nValKnown < nValServer && nValCurrent < nValServer )
+					{
+						//	Update available:
+						_RA_OfferNewRAUpdate( sReply.c_str() );
+
+						//	Update the last version I've heard of:
+						g_sKnownRAVersion = sReply;
+					}
+				}
+			}
+			break;
+
+		case RequestSubmitAwardAchievement:
+			{
+				//	Response to an achievement being awarded:
+				const Achievement* pAch = CoreAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+				if( pAch == NULL )
+					pAch = UnofficialAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+				if( pAch != NULL )
+				{
+					if( !doc.HasMember("Error") )
+					{
+						g_PopupWindows.AchievementPopups().AddMessage( 
+							MessagePopup( " Achievement Unlocked ",
+										  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+										  PopupMessageType::PopupAchievementUnlocked,
+										  pAch->BadgeImage() ) );
+						g_AchievementsDialog.OnGet_Achievement( *pAch );
+					
+						RAUsers::LocalUser.SetScore( doc["Score"].GetUint() );
+					}
+					else
+					{
+						g_PopupWindows.AchievementPopups().AddMessage( 
+							MessagePopup( " Achievement Unlocked (Error) ", 
+										  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+										  PopupMessageType::PopupAchievementError, 
+										  pAch->BadgeImage() ) );
+						g_AchievementsDialog.OnGet_Achievement( *pAch );
+
+						g_PopupWindows.AchievementPopups().AddMessage( 
+							MessagePopup( 
+								"Error submitting achievement:", 
+								doc["Error"].GetString() ) ); //?
+
+						//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+					}
+				}
 			}
 			break;
 
 		case RequestNews:
-			SetCurrentDirectory( g_sHomeDir );
+			SetCurrentDirectory( g_sHomeDir.c_str() );
 			
 			_WriteBufferToFile( RA_DIR_DATA "ra_news.txt", doc );
 
@@ -572,237 +686,72 @@ API int CCONV _RA_HandleHTTPResults()
 				g_AchExamine.OnReceiveData( doc );
 			break;
 
+		case RequestCodeNotes:
+			CodeNotes::s_OnUpdateCB( pObj );
+			break;
+
+		case RequestSubmitLeaderboardEntry:
+			RA_LeaderboardManager::s_OnSubmitEntry( pObj );
+			break;
+
 		case RequestLeaderboardInfo:
 			if( pObj->ParseResponseToJSON( doc ) )
 				g_LBExamine.OnReceiveData( doc );
 			break;
 		}
 		
-				else if( strcmp( pObj->m_sRequestPageName, "requestlbinfo.php" ) == 0 )
-				{
-				}
+		//if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
+		//{
+		//	if( pObj->m_bResponse == TRUE )
+		//	{
+		//		if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
+		//		{
+		//			char buffer[4096];
+		//			sprintf_s( buffer, 4096, 
+		//				"%s failed:\n\n"
+		//				"Response from server:\n"
+		//				"%s",
+		//				( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
+		//				pObj->m_sResponse );
 
-		//if( pObj->m_pfCallbackOnReceive != NULL )
-		{
-			//	Banish this shizzle!
-			//	Do a mainthread cb
-			//pObj->m_pfCallbackOnReceive( pObj );
-		}
-		//else
-		{
-			switch( pObj->m_nReqType )
-			{
-			case HTTPRequest_Get:
-				//	Get some data. What do you want with it?
-				if( strncmp( pObj->m_sRequestPageName, "Badge", 5 ) == 0 )
-				{
-					SetCurrentDirectory( g_sHomeDir );
+		//			MessageBox( NULL, buffer, "Error in login", MB_OK );
+		//			RAUsers::LocalUser.Clear();
+		//		}
+		//		else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
+		//		{
+		//			//	will return a valid token : points : messages
 
-					char sTargetFile[1024];
-					sprintf_s( sTargetFile, 1024, RA_DIR_BADGE "%s", pObj->m_sRequestPageName+6 );
+		//			//	fish out the username again
+		//			char* pUserPtr = pObj->m_sRequestPost+2;
+		//			char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
 
-					_WriteBufferToFile( sTargetFile, pObj->m_sResponse, pObj->m_nBytesRead );
+		//			//	find the token, points, and num messages
+		//			char* pBuf = pObj->m_sResponse+3;
+		//			char* pToken = strtok_s( pBuf, ":", &pBuf );
+		//			unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
+		//			pBuf++;
+		//			unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
+		//			//pBuf++;
+		//					
+		//			RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
+		//		}
+		//		else
+		//		{
+		//			MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+		//			RAUsers::LocalUser.Clear();
+		//		}
+		//	}
+		//	else
+		//	{
+		//		MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+		//		RAUsers::LocalUser.Clear();
+		//	}
 
-					//	Fetch minimal name
-					char buffer[16];
-					sprintf_s( buffer, 16, pObj->m_sRequestPageName+6 );
-					buffer[5] = '\0';
+		//	RA_RebuildMenu();
+		//	_RA_UpdateAppTitle();
+		//}
 
-					for( unsigned int iter = 0; iter < g_pActiveAchievements->m_nNumAchievements; ++iter )
-					{
-						Achievement* pAch = &g_pActiveAchievements->m_Achievements[iter];
-						if( strcmp( pAch->BadgeImageFilename(), buffer ) == 0 )
-						{
-							//	Re-set this badge image
-							//	NB. This is already a non-modifying op
-							pAch->SetBadgeImage( buffer );
-						}
-					}
-
-					g_AchievementEditorDialog.UpdateSelectedBadgeImage();
-				}
-				else if( strncmp( pObj->m_sRequestPageName, "UserPic", 7 ) == 0 )
-				{
-					//	Dodge!
-					extern void OnUserPicDownloaded( void* );
-					OnUserPicDownloaded( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, g_sGetLatestClientPage ) == 0 )
-				{
-					if( strlen( pObj->m_sResponse ) > 2 && pObj->m_sResponse[0] == '0' && pObj->m_sResponse[1] == '.' )
-					{
-						long nValServer = strtol( pObj->m_sResponse+2, NULL, 10 );
-						long nValKnown = strtol( g_sKnownRAVersion+2, NULL, 10 );
-						long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
-
-						if( nValKnown < nValServer && nValCurrent < nValServer )
-						{
-							//	Update available:
-							_RA_OfferNewRAUpdate( pObj->m_sResponse );
-
-							//	Update the last version I've heard of:
-							strcpy_s( g_sKnownRAVersion, 50, pObj->m_sResponse );
-						}
-					}
-					else
-					{
-						//	Ignore: nonsense response from server
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestbadgenames.php" ) == 0 )
-				{
-					g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
-				}
-
-
-				break;
-			case HTTPRequest_Post:
-				//	Post some data. Is the reply important?
-				if( strcmp( pObj->m_sRequestPageName, "requestachievement.php" ) == 0 )
-				{
-					if( pObj->m_bResponse == TRUE )
-					{
-						char sTitle[64];
-						char sSubtitle[1024];
-						Achievement* pAch = &g_pActiveAchievements->m_Achievements[ pObj->m_nUserRef ];
-
-						if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
-						{
-							sprintf_s( sTitle, 64, " Achievement Unlocked " );
-							sprintf_s( sSubtitle, 1024, " %s (%d) ", pAch->Title(), pAch->Points() );
-							g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, pAch->BadgeImage() );
-							g_AchievementsDialog.OnGet_Achievement( pObj->m_nUserRef );
-
-							//	First param passed back will be score
-
-							//	first four chars after OK: are FBOK, FBDC, FBNA, or FBER
-							RAUsers::LocalUser.m_nLatestScore = strtol( &( pObj->m_sResponse[3+4] ), NULL, 10 );
-						}
-						else
-						{
-							sprintf_s( sTitle, 64, " Achievement Unlocked (Error) " );
-							sprintf_s( sSubtitle, 1024, " %s (%d) ", pAch->Title(), pAch->Points() );
-							g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, pAch->BadgeImage() );
-							g_AchievementsDialog.OnGet_Achievement( pObj->m_nUserRef );
-
-							g_PopupWindows.AchievementPopups().AddMessage( "Error with submission, please check!", pObj->m_sResponse, MSG_INFO ); //?
-
-							//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
-						}
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestunlocks.php" ) == 0 )
-				{
-					//	Done blocking instead
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
-				{
-					if( pObj->m_bResponse == TRUE )
-					{
-						if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
-						{
-							char buffer[4096];
-							sprintf_s( buffer, 4096, 
-								"%s failed:\n\n"
-								"Response from server:\n"
-								"%s",
-								( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
-								pObj->m_sResponse );
-
-							MessageBox( NULL, buffer, "Error in login", MB_OK );
-							RAUsers::LocalUser.Clear();
-						}
-						else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
-						{
-							//	will return a valid token : points : messages
-
-							//	fish out the username again
-							char* pUserPtr = pObj->m_sRequestPost+2;
-							char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
-
-							//	find the token, points, and num messages
-							char* pBuf = pObj->m_sResponse+3;
-							char* pToken = strtok_s( pBuf, ":", &pBuf );
-							unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
-							pBuf++;
-							unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
-							//pBuf++;
-							
-							RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
-						}
-						else
-						{
-							MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-							RAUsers::LocalUser.Clear();
-						}
-					}
-					else
-					{
-						MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-						RAUsers::LocalUser.Clear();
-					}
-
-					RA_RebuildMenu();
-					_RA_UpdateAppTitle();
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestnews.php" ) == 0 )
-				{
-					if( pObj->m_bResponse )
-					{
-						SetCurrentDirectory( g_sHomeDir );
-						_WriteBufferToFile( RA_DIR_DATA "ra_news.txt", pObj->m_sResponse, pObj->m_nBytesRead );
-						g_AchievementOverlay.InstallNewsArticlesFromFile();
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestrichpresence.php" ) == 0 )
-				{
-					if( pObj->m_bResponse && ( pObj->m_nBytesRead > 0 ) )
-					{
-						char sRichPresenceFile[1024];
-						sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, pObj->m_nUserRef );
-
-						//	Read to file:
-						SetCurrentDirectory( g_sHomeDir );
-						_WriteBufferToFile( sRichPresenceFile, pObj->m_sResponse, pObj->m_nBytesRead );
-						
-						//	Then install it
-						g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestcodenotes.php" ) == 0 )
-				{
-					CodeNotes::s_OnUpdateCB( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestachievementinfo.php" ) == 0 )
-				{
-					//g_AchExamine.OnReceiveData( 
-					//AchievementExamine::CB_OnReceiveData( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestsubmitlbentry.php" ) == 0 )
-				{
-					RA_LeaderboardManager::s_OnSubmitEntry( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "dorequest.php" ) == 0 )
-				{
-					//	Do not use, see earlier
-					Document doc;
-					doc.ParseInsitu( pObj->m_sResponse );
-					if( !doc.HasParseError() && doc["Success"].GetBool() )
-					{
-						//if( pObj->m_sRequestPageName
-						int nScore = doc["Score"].GetInt();
-						RA_LOG( "Score: %d", doc["Score"].GetInt() );
-					}
-					else
-					{
-						RA_LOG( "JSON parse error: %d\n", doc.GetParseError() );
-					}
-				}
-				break;
-			}
-		}
-
-		free( pObj );
+		SAFE_DELETE( pObj );
 		pObj = RAWeb::LastHttpResults.PopNextItem();
 	}
 
@@ -852,8 +801,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
 API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 {
-	char sNewTitle[1024];
-	sprintf_s( sNewTitle, 1024, "%s %s", g_sClientName, g_sClientVersion );
+	std::stringstream sstr;
+	sstr << std::string( g_sClientName ) << " " << std::string( g_sClientVersion );
 
 	if( sMessage != NULL )
 	{
@@ -862,10 +811,10 @@ API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 		strcat_s( sNewTitle, 1024, " " );
 	}
 
-	if( RAUsers::LocalUserIsLoggedIn() )
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
 		strcat_s( sNewTitle, 1024, " (" );
-		strcat_s( sNewTitle, 1024, RAUsers::LocalUser.m_sUsername );
+		strcat_s( sNewTitle, 1024, RAUsers::LocalUser.Username().c_str() );
 		strcat_s( sNewTitle, 1024, ")" );
 	}
 

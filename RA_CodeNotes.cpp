@@ -65,7 +65,7 @@ BOOL CodeNotes::Update( unsigned int nID )
 	char buffer[256];
     sprintf_s(buffer, 256, "r=codenotes&g=%d", nID);
 
-    CreateHTTPRequestThread("requestcodenotes.php", buffer, HTTPRequest_Post, 0, &CodeNotes::s_OnUpdateCB);
+    CreateHTTPRequestThread("requestcodenotes.php", buffer, HTTPRequest_Post, 0 );
 	
 	return TRUE;
 }
@@ -292,7 +292,7 @@ BOOL CodeNotes::Remove( const char* sAddress )
 					sAddress );
 
 				//	faf
-				CreateHTTPRequestThread( "requestsubmitcodenote.php", buffer, HTTPRequest_Post, 0, NULL );
+				CreateHTTPRequestThread( "requestsubmitcodenote.php", buffer, HTTPRequest_Post, 0 );
 			}
 
 			return TRUE;

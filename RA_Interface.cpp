@@ -326,19 +326,12 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 
 void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 {
-	TCHAR buffer[256];
-	GetCurrentDirectory( 256, buffer );
-
-	//MessageBox( NULL, "Writing new RA_Integration to file!", buffer, MB_OK );
-
 	FILE* pf;
 	fopen_s( &pf, sFile, "wb" );
-	if( pf )
+	if( pf != NULL )
 	{
 		fwrite( sBuffer, 1, nBytes, pf );
 		fclose( pf );
-		
-		//MessageBox( NULL, "File written OK!", sFile, MB_OK );
 	}
 	else
 	{

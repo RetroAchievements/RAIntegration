@@ -155,7 +155,17 @@ public:
 	void InstallNewsArticlesFromFile();
 
 public:
-	const static int m_nMaxNews = 6;
+	struct NewsItem
+	{
+		unsigned int m_nID;
+		std::string m_sTitle;
+		std::string m_sPayload;
+		time_t m_nPostedAt;
+		std::string m_sPostedAt;
+		std::string m_sAuthor;
+		std::string m_sLink;
+		std::string m_sImage;
+	};
 
 private:
 	int	m_nAchievementsScrollOffset;
@@ -176,8 +186,7 @@ private:
 
 	BOOL				 m_bInputLock;	//	Waiting for pad release
 
-	char				 m_sNewsArticleHeaders[m_nMaxNews][256];
-	char				 m_sNewsArticles[m_nMaxNews][2048];
+	std::vector<NewsItem> m_LatestNews;
 
 	enum TransitionState m_nTransitionState;
 	float				 m_fTransitionTimer;

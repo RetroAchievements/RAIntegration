@@ -46,7 +46,7 @@ public:
 	RA_RichPresenceInterpretter() {}
 
 public:
-	void ParseRichPresenceFile( const char* sFilename );
+	void ParseRichPresenceFile( const std::string& sFilename );
 
 	const std::string& GetRichPresenceString();
 	const std::string& Lookup( const std::string& sLookupName, const std::string& sMemString ) const;

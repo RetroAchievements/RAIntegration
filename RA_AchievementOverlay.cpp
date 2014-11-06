@@ -78,8 +78,8 @@ const COLORREF g_ColSelectedBoxBG = RGB( 22, 22, 60 );
 const COLORREF g_ColWarning1 = RGB( 255, 0, 0 );
 const COLORREF g_ColWarning2 = RGB( 80, 0, 0 );
 
-const unsigned int g_nBGWidth = 1024;
-const unsigned int g_nBGHeight = 1024;
+const unsigned int OVERLAY_WIDTH = 1024;
+const unsigned int OVERLAY_HEIGHT = 1024;
 
 
 void AchievementOverlay::SelectNextTopLevelPage( BOOL bPressedRight )
@@ -147,13 +147,9 @@ void AchievementOverlay::Initialize( HINSTANCE hInst )
 	m_nNumFriendsBeingRendered = 0;
 	m_nNumLeaderboardsBeingRendered = 0;
 	
-	for( int i = 0; i < 3; ++i )
-	{
-		m_sNewsArticleHeaders[i][0] = '\0';
-		m_sNewsArticles[i][0] = '\0';
-	}
+	m_LatestNews.clear();
 
-	m_hOverlayBackground = LoadLocalPNG( RA_DIR_OVERLAY "overlayBG.png", g_nBGWidth, g_nBGHeight );
+	m_hOverlayBackground = LoadLocalPNG( RA_OVERLAY_BG_FILENAME, RASize( OVERLAY_WIDTH, OVERLAY_HEIGHT ) );
 	//if( m_hOverlayBackground == NULL )
 	//{
 	//	//	Backup
@@ -409,7 +405,7 @@ BOOL AchievementOverlay::Update( ControllerInput* pInput, float fDelta, BOOL bFu
 			//	Scroll news
 			if( input.m_bDownPressed )
 			{
-				if( (*pnSelectedItem) < (m_nMaxNews-1) )
+				if( (*pnSelectedItem) < static_cast<int>( m_LatestNews.size() ) )
 				{
 					(*pnSelectedItem)++;
 					m_bInputLock = TRUE;
@@ -701,7 +697,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 				continue;
 
 			if( pFriend->GetUserImage() == NULL && !pFriend->IsFetchingUserImage() )
-				pFriend->RequestAndStoreUserImage();
+				pFriend->LoadOrFetchUserImage();
 
 			if( pFriend->GetUserImage() != NULL )
 				DrawImage( hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64 );
@@ -878,10 +874,10 @@ void AchievementOverlay::DrawNewsPage( HDC hDC, int nDX, int nDY, const RECT& rc
 
 	HGDIOBJ hOldObject = SelectObject( hDC, g_hFontDesc2 );
 
-	for( int i = m_nNewsSelectedItem; i < m_nMaxNews; ++i )
+	for( int i = m_nNewsSelectedItem; i < static_cast<int>( m_LatestNews.size() ); ++i )
 	{
-		const char* sTitle = m_sNewsArticleHeaders[i];
-		const char* sPayload = m_sNewsArticles[i];
+		const char* sTitle = m_LatestNews[i].m_sTitle.c_str();
+		const char* sPayload = m_LatestNews[i].m_sPayload.c_str();
 
 		RECT rcNews;
 
@@ -1226,8 +1222,8 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	int nOldBkMode = SetBkMode( hDC, TRANSPARENT );
 	
 	RECT rcBGSize;
-	SetRect( &rcBGSize, 0, 0, g_nBGWidth, g_nBGHeight );
-	OffsetRect( &rcBGSize, -((LONG)g_nBGWidth-rc.right), 0 );
+	SetRect( &rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT );
+	OffsetRect( &rcBGSize, -((LONG)OVERLAY_WIDTH-rc.right), 0 );
 	DrawImageTiled( hDC, m_hOverlayBackground, rcBGSize, rc );
 
 	g_hBrushBG			= CreateSolidBrush( g_ColUserFrameBG );
@@ -1643,44 +1639,43 @@ void AchievementOverlay::Flip(HWND hWnd)
 
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
-	long nUnused;
-	char* pRawFile = _MallocAndBulkReadFileToBuffer( RA_DIR_DATA "ra_news.txt", nUnused );
-	
-	if( pRawFile != NULL )
+	m_LatestNews.clear();
+
+	FILE* pf = NULL;
+	fopen_s( &pf, RA_NEWS_FILENAME, "rb" );
+	if( pf != NULL )
 	{
-		char* pIter = &pRawFile[0];
-		int i = 0;
+		Document doc;
+		doc.ParseStream( FileStream( pf ) );
 
-		if( strncmp( pRawFile, "Error", 5 ) == 0 )
+		if( doc.HasMember("Success") && doc["Success"].GetBool() )
 		{
-			//	Fucked?
-		}
-		else
-		{
-			while( (*pIter) != '\0' )
+			const Value& News = doc["News"];
+			for( SizeType i = 0; i < News.Size(); ++i )
 			{
-				char* sTimestamp = strtok_s( pIter, "\n", &pIter );
-				char* sTitle = strtok_s( pIter, "\n", &pIter );
-				char* sPayload = strtok_s( pIter, "\n", &pIter );
-			
-				if( (!sTimestamp) || (!sTitle) || (!sPayload) )
-					break;
-
-				time_t nTime = (time_t)strtol( sTimestamp, NULL, 10 );
+				const Value& NextNewsArticle = News[i];
+				
+				NewsItem nNewsItem;
+				nNewsItem.m_nID = NextNewsArticle["ID"].GetUint();
+				nNewsItem.m_sTitle = NextNewsArticle["Title"].GetString();
+				nNewsItem.m_sPayload = NextNewsArticle["Payload"].GetString();
+				nNewsItem.m_sAuthor = NextNewsArticle["Author"].GetString();
+				nNewsItem.m_sLink = NextNewsArticle["Link"].GetString();
+				nNewsItem.m_sImage = NextNewsArticle["Image"].GetString();
+				nNewsItem.m_nPostedAt = NextNewsArticle["TimePosted"].GetUint();
+				
 				tm destTime;
-				localtime_s( &destTime, &nTime );
+				localtime_s( &destTime, &nNewsItem.m_nPostedAt );
 
-				char sTimeBuffer[256];
-				strftime( sTimeBuffer, 256, "%b %d", &destTime );
+				char buffer[256];
+				strftime( buffer, 256, "%b %d", &destTime );
+				nNewsItem.m_sPostedAt = buffer;
 
-				sprintf_s( m_sNewsArticleHeaders[i], 256, " %s: %s ", sTimeBuffer, sTitle );
-				strcpy_s( m_sNewsArticles[i], 2048, sPayload );
-				++i;
+				m_LatestNews.push_back( nNewsItem );
 			}
 		}
 
-		free( pRawFile );
-		pRawFile = NULL;
+		fclose( pf );
 	}
 }
 

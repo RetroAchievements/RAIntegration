@@ -1609,57 +1609,38 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 	//return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
-void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const char* sBackupBadgeToUse )
+void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const std::string& sBackupBadgeToUse )
 {
-	char sCheevoBitmapPath[256];// = DIR_BADGE "00000.png";
-	sprintf_s( sCheevoBitmapPath, 256, "%s%s", RA_DIR_BADGE, LockedBadgeFile );
+	std::string sAchievementBadgeURI = RA_LOCKED_BADGE_IMAGE_URI;
 
 	if( m_pSelectedAchievement != NULL )
-		sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", m_pSelectedAchievement->BadgeImageURI() );
-	//else if( sBackupBadgeToUse != NULL )
-	//	sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", sBackupBadgeToUse );
+		sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
+	else if( sBackupBadgeToUse.length() > 2 )
+		sAchievementBadgeURI = sBackupBadgeToUse;
 
 	if( m_hAchievementBadge != NULL )
 		DeleteObject( m_hAchievementBadge );
 	m_hAchievementBadge = NULL;
 
-	HBITMAP hBitmap = LoadLocalPNG( sCheevoBitmapPath, 64, 64 );
-	if( hBitmap != NULL )
-	{
-		m_hAchievementBadge = hBitmap;
-	}
-	else
-	{
-		//InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
-		return;//meh
-	}
+	HBITMAP hBitmap = LoadOrFetchBadge( sAchievementBadgeURI, RA_BADGE_PX );
+	if( hBitmap == NULL )
+		return;
 
-	HWND hCheevo = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC );
+	m_hAchievementBadge = hBitmap;
 
-	if( hCheevo != NULL )
+	HWND hAchBadgeImageWindow = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC );
+	if( hAchBadgeImageWindow != NULL )
 	{
-		SendMessage( hCheevo, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
+		SendMessage( hAchBadgeImageWindow, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
 		// 				RECT rc;
-		// 				GetClientRect( hCheevo, &rc );
+		// 				GetClientRect( hAchBadgeImageWindow, &rc );
 		// 				InvalidateRect( m_hAchievementEditorDlg, &rc, TRUE );
 		InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
 	}
 
-	std::string sBadgeName;
-
-	if( m_pSelectedAchievement != NULL )
-		sBadgeName = m_pSelectedAchievement->BadgeImageURI();
-	else if( sBackupBadgeToUse != NULL )
-		sBadgeName = sBackupBadgeToUse;
-	else
-		sBadgeName = LockedBadge;
-	
-	//	Trim the '.png"
-	sBadgeName = sBadgeName.substr( 0, 5 );
-
 	//	Find buffer in the dropdown list
 	HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME );
-	int nSel = ComboBox_FindStringExact( hCtrl, 0, sBadgeName.c_str() );
+	int nSel = ComboBox_FindStringExact( hCtrl, 0, sAchievementBadgeURI.c_str() );
 	if( nSel != -1 )
 		ComboBox_SetCurSel( hCtrl, nSel );	//	Force select
 }

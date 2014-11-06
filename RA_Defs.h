@@ -31,10 +31,26 @@ using namespace rapidjson;
 #define PASTE(x, y) x##y
 #define MAKEWIDE(x) PASTE(L,x)
 
-#define RA_DIR_BASE		".\\RACache\\"
-#define RA_DIR_BADGE	".\\RACache\\Badge\\"
-#define RA_DIR_DATA		".\\RACache\\Data\\"
-#define RA_DIR_OVERLAY	".\\Overlay\\"
+#define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
+#define RA_LOCKED_BADGE_IMAGE_URI		"00000.png"
+
+#define RA_DIR_OVERLAY					".\\Overlay\\"
+#define RA_DIR_BASE						".\\RACache\\"
+#define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
+#define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
+#define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"
+
+#define RA_GAME_HASH_FILENAME			RA_DIR_DATA##"gamehashlibrary.txt"
+#define RA_GAME_LIST_FILENAME			RA_DIR_DATA##"gametitles.txt"
+#define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA##"myprogress.txt"
+#define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA##"mygamelibrary.txt"
+
+#define RA_NEWS_FILENAME				RA_DIR_DATA##"ra_news.txt"
+#define RA_OVERLAY_BG_FILENAME			RA_DIR_OVERLAY##"overlayBG.png"
+#define RA_TITLES_FILENAME				RA_DIR_DATA##"gametitles.txt"
+#define RA_LOCKED_BADGE_IMAGE_FILENAME	RA_DIR_BADGE##RA_LOCKED_BADGE_IMAGE_URI
+#define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
+
 
 //	Seconds
 #define RA_SERVER_POLL_DURATION 1*60
@@ -68,6 +84,27 @@ typedef unsigned long ByteAddress;
 typedef unsigned int AchievementID;
 typedef unsigned int LeaderboardID;
 typedef unsigned int GameID;
+
+class RASize
+{
+public:
+	RASize() : m_nWidth( 0 ), m_nHeight( 0 ) {}
+	RASize( const RASize& rhs ) : m_nWidth( rhs.m_nWidth ), m_nHeight( rhs.m_nHeight ) {}
+	RASize( int nW, int nH ) : m_nWidth( nW ), m_nHeight( nH ) {}
+
+public:
+	inline int Width() const		{ return m_nWidth; }
+	inline int Height() const		{ return m_nHeight; }
+	inline void SetWidth( int nW )	{ m_nWidth = nW; }
+	inline void SetHeight( int nH )	{ m_nHeight = nH; }
+
+private:
+	int m_nWidth;
+	int m_nHeight;
+};
+
+const RASize RA_BADGE_PX( 64, 64 );
+const RASize RA_USERPIC_PX( 64, 64 );
 
 enum AchievementSetType
 {

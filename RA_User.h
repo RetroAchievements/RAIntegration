@@ -38,13 +38,12 @@ public:
 
 public:
 	void FlushBitmap();
-	void LoadUserImageFromFile();
-	void RequestAndStoreUserImage();
+	void LoadOrFetchUserImage();
 
 	unsigned int GetScore() const					{ return m_nScore; }
 	void SetScore( unsigned int nScore )			{ m_nScore = nScore; }
 	
-	void SetUserName( const std::string& sUser )	{ m_sUsername = sUser; }
+	void SetUsername( const std::string& sUser )	{ m_sUsername = sUser; }
 	const std::string& Username() const				{ return m_sUsername; }
 	
 	void UpdateActivity( const std::string& sAct )	{ m_sActivity = sAct; }
@@ -55,9 +54,6 @@ public:
 
 	BOOL IsFetchingUserImage() const				{ return m_bFetchingUserImage; }
 	
-	static void s_OnUserPicCB( void* pvObj );
-	void OnUserPicCB( RequestObject* pObj );
-
 private:
 	/*const*/std::string	m_sUsername;
 	std::string				m_sActivity;
@@ -81,8 +77,7 @@ public:
 	void Logout();
 
 	void RequestFriendList();
-	static void s_OnFriendListCB( void* pvObj );
-	void OnFriendListCB( RequestObject* pObj );
+	void OnFriendListResponse( const Document& doc );
 	
 	RAUser* AddFriend( const std::string& sFriend, unsigned int nScore );
 	RAUser* FindFriend( const std::string& sName );
@@ -113,9 +108,16 @@ class RAUsers
 {
 public:
 	static LocalRAUser LocalUser;
-	static std::map<std::string, RAUser*> UserDatabase;
 
 	static BOOL DatabaseContainsUser( const std::string& sUser );
+	static void OnUserPicDownloaded( const RequestObject& obj );
+
+	static void RegisterUser( const std::string& sUsername, RAUser* pUser )		{ UserDatabase[ sUsername ] = pUser; }
+
+	static RAUser* GetUser( const std::string& sUser );
+
+private:
+	static std::map<std::string, RAUser*> UserDatabase;
 };
 
 

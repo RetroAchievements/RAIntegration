@@ -27,11 +27,12 @@ const char* RequestTypeToString[] =
 	"RequestLeaderboardInfo",
 	"RequestCodeNotes",
 	"RequestFriendList"
-	"RequestUserPic",
-	"RequestBadge",
 	"RequestBadgeIter",
 	"RequestGameTitles",
 	"RequestUnlocks",
+	"RequestHashLibrary",
+	"RequestGamesList",
+	"RequestAllProgress",
 
 	"RequestPing",
 	"RequestPostActivity",
@@ -41,6 +42,10 @@ const char* RequestTypeToString[] =
 	"RequestSubmitAchievementData",
 	"RequestSubmitTicket",
 	"RequestSubmitNewTitleEntry",
+	
+	"RequestUserPic",
+	"RequestBadge",
+
 	"STOP_THREAD",
 	"",
 };
@@ -58,20 +63,25 @@ const char* RequestTypeToPost[] =
 	"lbinfo",
 	"codenotes2",
 	"getfriendlist",
-	"",						//	TBD RequestUserPic
-	"",						//	TBD RequestBadge
 	"badgeiter",
 	"gametitles",
 	"unlocks",
+	"hashlibrary",
+	"gameslist",
+	"allprogress",
 
 	"",						//	TBD RequestPing (ping.php)
 	"postactivity",
 	"awardachievement",
 	"submitcodenote",
-	"",						//	TBD: Complex!!! See requestsubmitlbentry.php
+	"submitlbentry",
 	"uploadachievement",
 	"submitticket",
 	"submittitle",
+	
+	"",						//	TBD RequestUserPic
+	"",						//	TBD RequestBadge
+
 	"",						//	STOP_THREAD
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
@@ -500,22 +510,27 @@ BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilenam
 		return FALSE;
 	}
 }
+//
+//BOOL RAWeb::HTTPRequestExists( const char* sRequestPageName )
+//{
+//	return HttpRequestQueue.PageRequestExists( sRequestPageName );
+//}
 
-BOOL RAWeb::HTTPRequestExists( const char* sRequestPageName )
+BOOL RAWeb::HTTPRequestExists( RequestType nType, const std::string& sData )
 {
-	return HttpRequestQueue.PageRequestExists( sRequestPageName );
+	return HttpRequestQueue.PageRequestExists( nType, sData );
 }
 
 //	Adds items to the httprequest queue
-void RAWeb::CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData, const std::string& sCustomPageURL, int nUserRef )
+void RAWeb::CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData, const std::string& sData )
 {
-	HttpRequestQueue.PushItem( new RequestObject( nType, PostData, sCustomPageURL, nUserRef ) );
-	RA_LOG( __FUNCTION__ " added '%s', '%s', queue (%d)\n", RequestTypeToString[nType], sCustomPageURL, HttpRequestQueue.Count() );
+	HttpRequestQueue.PushItem( new RequestObject( nType, PostData, sData ) );
+	RA_LOG( __FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData, HttpRequestQueue.Count() );
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-void RA_InitializeHTTPThreads()
+void RAWeb::RA_InitializeHTTPThreads()
 {
 	RA_LOG( __FUNCTION__ " called\n" );
 
@@ -535,7 +550,7 @@ void RA_InitializeHTTPThreads()
 }
 
 //	Takes items from the http request queue, and posts them to the last http results queue.
-DWORD HTTPWorkerThread( LPVOID lpParameter )
+DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 {
 	time_t nSendNextKeepAliveAt = time( NULL ) + RA_SERVER_POLL_DURATION;
 
@@ -631,7 +646,7 @@ DWORD HTTPWorkerThread( LPVOID lpParameter )
 	return 0;
 }
 
-void RA_KillHTTPThreads()
+void RAWeb::RA_KillHTTPThreads()
 {
 	RA_LOG( __FUNCTION__ " called\n" );
 
@@ -714,7 +729,7 @@ size_t HttpResults::Count() const
 	return nCount;
 }
 
-BOOL HttpResults::PageRequestExists( const char* sPageName ) const
+BOOL HttpResults::PageRequestExists( RequestType nType, const std::string& sData ) const
 {
 	BOOL bRetVal = FALSE;
 	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
@@ -723,12 +738,8 @@ BOOL HttpResults::PageRequestExists( const char* sPageName ) const
 		while( iter != m_aRequests.end() )
 		{
 			const RequestObject* pObj = (*iter);
-			if( _stricmp( pObj->GetPageURL().c_str(), sPageName ) == 0 )
-			{
-				bRetVal = TRUE;
-				break;
-			}
-			else if( _stricmp( RequestTypeToString[ pObj->GetRequestType() ], sPageName ) == 0 )
+			if( pObj->GetRequestType() == nType &&
+				pObj->GetData().compare( sData ) == 0 )
 			{
 				bRetVal = TRUE;
 				break;
@@ -740,4 +751,24 @@ BOOL HttpResults::PageRequestExists( const char* sPageName ) const
 	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return bRetVal;
+}
+
+std::string PostArgsToString( const PostArgs& args )
+{
+	std::string str = "";
+	PostArgs::const_iterator iter = args.begin();
+	while( iter != args.end() )
+	{
+		if( iter == args.begin() )
+			str += "?";
+		else
+			str += "&";
+
+		str += (*iter).first;
+		str += "=";
+		str += (*iter).second;
+
+		iter++;
+	}
+	return str;
 }

@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <Windows.h>
 
-#define DEBUG_LOGFILE "RALog.txt"
-
 void DebugLog( const char* format, ... )
 {
 	char    buf[4096], *p = buf;
@@ -25,12 +23,13 @@ void DebugLog( const char* format, ... )
 	*p   = '\0';
 
 	OutputDebugString( buf );
-
-	FILE* pFile = NULL;
-	if( fopen_s( &pFile, RA_DIR_DATA DEBUG_LOGFILE, "a" ) == 0 )
+	
+	//SetCurrentDirectory( g_sHomeDir.c_str() );//?
+	FILE* pf = NULL;
+	if( fopen_s( &pf, RA_LOG_FILENAME, "a" ) == 0 )
 	{
-		fwrite( buf, sizeof(char), strlen( buf ), pFile );
-		fclose( pFile );
+		fwrite( buf, sizeof(char), strlen( buf ), pf );
+		fclose( pf );
 	}
 }
 

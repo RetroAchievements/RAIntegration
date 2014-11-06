@@ -54,7 +54,7 @@ private:
 	void SetupColumns( HWND hList );
 	void LoadAchievements( HWND hList );
 
-	void RemoveAchievement( HWND hList, size_t nIter );
+	void RemoveAchievement( HWND hList, int nIter );
 	size_t AddAchievement( HWND hList, const Achievement& Ach );
 
 private:

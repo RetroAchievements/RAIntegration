@@ -34,11 +34,9 @@ public:
 	BOOL ReloadFromWeb( GameID nID );
 	static void OnCodeNotesResponse( Document& doc );
 
-	const CodeNoteObj* Find( const ByteAddress& nAddr );
-
 	void Add( const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote );
 	BOOL Remove( const ByteAddress& nAddr );
-
+	
 	const CodeNoteObj& GetCodeNote( const ByteAddress& nAddr ) const		{ return m_CodeNotes.at( nAddr ); }
 
 	const std::string& GetNote( const ByteAddress& nAddr ) const			{ return GetCodeNote( nAddr ).Note(); }

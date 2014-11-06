@@ -42,7 +42,7 @@ protected:
 struct LB_Entry
 {
 	unsigned int m_nRank;
-	char		 m_sUsername[50];
+	std::string	 m_sUsername;
 	unsigned int m_nScore;
 	time_t		 m_TimeAchieved;
 };
@@ -76,14 +76,15 @@ public:
 	double GetCurrentValueProgress() const;	//	Attempt to get a 'progress' alternative
 	void Clear();
 
+	std::string FormatScore( int nScore );
 	static void FormatScore( FormatType nType, unsigned int nScoreIn, char* pBuffer, unsigned int nLen );
 	void Reset();
 
-	unsigned int ID() const									{ return m_nID; }
+	LeaderboardID ID() const								{ return m_nID; }
 	const std::string& Title() const						{ return m_sTitle; }
 	const std::string& Description() const					{ return m_sDescription; }
 
-	void SubmitRankInfo( unsigned int nRank, const char* sUsername, unsigned int nScore, time_t nAchieved );
+	void SubmitRankInfo( unsigned int nRank, const std::string& sUsername, unsigned int nScore, time_t nAchieved );
 	void ClearRankInfo()									{ m_RankInfo.clear(); }
 	const LB_Entry& GetRankInfo( unsigned int nAt ) const	{ return m_RankInfo.at( nAt ); }
 	size_t GetRankInfoCount() const							{ return m_RankInfo.size(); }
@@ -92,7 +93,7 @@ public:
 	FormatType GetFormatType() const						{ return m_format; }
 
 private:
-	const unsigned int		m_nID;			//	DB ID for this LB
+	const LeaderboardID		m_nID;			//	DB ID for this LB
 	ConditionSet			m_startCond;	//	Start monitoring if this is true
 	ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
 	ConditionSet			m_submitCond;	//	Submit new score if this is true
@@ -113,7 +114,7 @@ private:
 class RA_LeaderboardManager
 {
 public:
-	static void s_OnSubmitEntry( void* pDataSent );
+	static void OnSubmitEntry( const Document& doc );
 
 public:
 	void AddLeaderboard( const RA_Leaderboard& lb );

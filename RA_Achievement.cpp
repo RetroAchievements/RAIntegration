@@ -37,7 +37,6 @@ AchievementSet* g_pActiveAchievements = CoreAchievements;
 
 namespace
 {
-	const char* LockedBadge = "00000";
 	const char* LockedBadgeFile = "00000.png";
 
 	unsigned int GetFlagsFromType( AchievementSetType nType )
@@ -328,10 +327,8 @@ void Achievement::SetBadgeImage( const std::string& sBadgeURI )
 
 	m_sBadgeImageURI = sBadgeURI;
 
-	//	Blocking :S
-	m_hBadgeImage = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sBadgeURI + ".png", 64, 64 );
-	//	Blocking :S
-	m_hBadgeImageLocked = LoadLocalPNG( std::string( RA_DIR_BADGE ) + sBadgeURI + "_lock.png", 64, 64 );
+	m_hBadgeImage = LoadOrFetchBadge( sBadgeURI, RA_BADGE_PX );
+	m_hBadgeImageLocked = LoadOrFetchBadge( sBadgeURI + "_lock", RA_BADGE_PX );
 }
 
 void Achievement::Reset()
@@ -1263,6 +1260,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 		}
 		else
 		{
+			SetCurrentDirectory( g_sHomeDir.c_str() );
 			FILE* pf = NULL;
 			fopen_s( &pf, std::string( RA_DIR_DATA + std::to_string( nGameID ) + ".txt" ).c_str(), "wb" );
 			if( pf != NULL )
@@ -1425,7 +1423,8 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 
 	char buffer[4096];
 	sprintf_s( buffer, 4096, "%s%s.rap", RA_DIR_DATA, sSaveStateFilename );
-
+	
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	FILE* pf = NULL;
 	fopen_s( &pf, buffer, "w" );
 	if( pf == NULL )
@@ -1487,7 +1486,6 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 
 void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 {
-	FILE* pf = NULL;
 	char buffer[4096];
 	long nFileSize = 0;
 	unsigned int CondNumHits[50];	//	50 conditions per achievement

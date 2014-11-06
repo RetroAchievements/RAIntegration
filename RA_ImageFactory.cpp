@@ -243,32 +243,51 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 	return hr;
 }
 
-
-HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned int nHeight )
+HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 {
 	SetCurrentDirectory( g_sHomeDir.c_str() );
 
-	FILE* fTemp = NULL;
-	fopen_s( &fTemp, sPath.c_str(), "r" );
-	if( fTemp == NULL )
+	if( !_FileExists( RA_DIR_BADGE + sBadgeURI ) )
 	{
-		//	This is a badge I'm not aware of...
-		//	Request this missing badge from the server
-		
-		const char* pCh = strchr( sPath.c_str(), '\\' );
-		while( pCh != NULL && strchr( pCh+1, '\\' ) != NULL )
-			pCh = strchr( pCh+1, '\\' );
-		
-		char sReqBadgeName[1024];
-		sprintf_s( sReqBadgeName, 1024, "Badge/%s", pCh+1 );	//	NB: skip the ".\\Cache\\" part as input
-		for( size_t i = 0; i < strlen( sReqBadgeName ); ++i )		//	Replace backslashes with forwardslashes
-			if( sReqBadgeName[i] == '\\' )
-				sReqBadgeName[i] = '/';
+		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestBadge, PostArgs(), sBadgeURI );
 
-		if( !RAWeb::HTTPRequestExists( sReqBadgeName ) )
-			RAWeb::CreateThreadedHTTPRequest( RequestBadge, PostArgs(), sReqBadgeName );
 		return NULL;
 	}
+	else
+	{
+		return LoadLocalPNG( RA_DIR_BADGE + sBadgeURI, sz );
+	}
+}
+
+HBITMAP LoadOrFetchUserPic( const std::string& sBadgeURI, const RASize& sz )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+
+	if( !_FileExists( RA_DIR_USERPIC + sBadgeURI ) )
+	{
+		if( !RAWeb::HTTPRequestExists( RequestUserPic, sBadgeURI ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sBadgeURI );
+
+		return NULL;
+	}
+	else
+	{
+		return LoadLocalPNG( RA_DIR_USERPIC + sBadgeURI, sz );
+	}
+}
+
+HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+
+	ASSERT( _FileExists( sPath ) );
+	if( !_FileExists( sPath ) )
+	{
+		RA_LOG( "File could not be found: %s\n", sPath.c_str() );
+		return NULL;
+	}
+
 	
 	HBITMAP hRetVal = NULL;
 	WCHAR szFileName[MAX_PATH];
@@ -335,7 +354,7 @@ HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned in
 		if( SUCCEEDED(hr) )
 		{
 			RECT rc;
-			SetRect( &rc, 0, 0, nWidth, nHeight );
+			SetRect( &rc, 0, 0, sz.Width(), sz.Height() );
 			hr = ConvertBitmapSource( rc, &pToRenderBitmapSource );
 		}
 
@@ -375,7 +394,6 @@ HBITMAP LoadLocalPNG( const std::string& sPath, unsigned int nWidth, unsigned in
 	//DeleteObject( m_pOriginalBitmapSource );
 	//m_pOriginalBitmapSource = NULL;
 
-	fclose( fTemp );
 	return hRetVal;
 }
 

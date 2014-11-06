@@ -622,11 +622,11 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 			for( int j = 0; j < 16; j++ )
 			{
 				//sprintf_s( sLocalAddr, 64, IsLargeRAM() ? "0x%06x" : "0x%04x", addr+j );
-				const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.m_pCodeNotes->Find( addr+j );
+				const CodeNotes::CodeNoteObj& SavedNote = g_MemoryDialog.m_pCodeNotes->GetCodeNote( addr+j );
 	
 				if( addr+j == nWatchedAddress )
 					SetTextColor( hMemDC, RGB(255,0,0) );
-				else if( pNote != NULL )
+				else if( SavedNote.Note().length() > 0 )
 					SetTextColor( hMemDC, RGB(0,0,255) );
 				else
 					SetTextColor( hMemDC, RGB(0,0,0) );
@@ -641,11 +641,12 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 			for( int j = 0; j < 16; j += 2 )
 			{
 				//sprintf_s( sLocalAddr, 64, IsLargeRAM() ? "0x%06x" : "0x%04x", addr+j );
-				const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.m_pCodeNotes->Find( addr+j );
+				//const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.m_pCodeNotes->Find( addr+j );
+				const CodeNotes::CodeNoteObj& SavedNote = g_MemoryDialog.m_pCodeNotes->GetCodeNote( addr+j );
 	
 				if( ((addr+j) - (addr+j)%2) == nWatchedAddress )
 					SetTextColor( hMemDC, RGB(255,0,0) );
-				else if( pNote != NULL )
+				else if( SavedNote.Note().length() > 0 )
 					SetTextColor( hMemDC, RGB(0,0,255) );
 				else
 					SetTextColor( hMemDC, RGB(0,0,0) );
@@ -1096,11 +1097,11 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 							//?
 						}
 
-						const CodeNotes::CodeNoteObj* pNote = m_pCodeNotes->Find( nCandidateAddr );
-						if( pNote != NULL )
+						const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nCandidateAddr );
+						if( SavedNote.Note().length() > 0 )
 						{
 							strcat_s( buffer, " (" );
-							strcat_s( buffer, pNote->Note().c_str() );
+							strcat_s( buffer, SavedNote.Note().c_str() );
 							strcat_s( buffer, ")" );
 						}
 
@@ -1210,10 +1211,10 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
  				BOOL bDoSave = FALSE;
 
 				const ByteAddress nAddr = static_cast< ByteAddress >( std::strtoul( sAddress+2, NULL, 16 ) );
-				const CodeNotes::CodeNoteObj* pObj = m_pCodeNotes->Find( nAddr );
- 				if( pObj != NULL )
+				const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nAddr );
+				if( SavedNote.Note().length() )
  				{
- 					if( pObj->Note().compare( sNewNote ) != 0 )	//	New note is different
+ 					if( SavedNote.Note().compare( sNewNote ) != 0 )	//	New note is different
  					{
  						char sWarning[4096];
  						sprintf_s( sWarning, 4096, 
@@ -1224,8 +1225,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
  							"Would you like to overwrite with\n\n"
  							"%s",
  							nAddr, 
-							pObj->Note().c_str(), 
-							pObj->Author().c_str(),
+							SavedNote.Note().c_str(), 
+							SavedNote.Author().c_str(),
 							sNewNote );
  						
  						if( MessageBox( hDlg, sWarning, "Warning: overwrite note?", MB_YESNO ) == IDYES )
@@ -1294,9 +1295,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 						ComboBox_SetText( hMemWatch, (LPCTSTR)sSelectedString );
 					}
 
-					const CodeNotes::CodeNoteObj* pNote = m_pCodeNotes->Find( nAddr );
- 					if( pNote != NULL )
- 						SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, pNote->Note().c_str() );
+					const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nAddr );
+					if( SavedNote.Note().length() > 0 )
+ 						SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, SavedNote.Note().c_str() );
  					else
  						SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, "" );
 
@@ -1316,9 +1317,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 						if( ComboBox_GetLBText( hMemWatch, nSel, sAddr ) > 0 )
 						{
 							ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr+2, NULL, 16 ) );
-							const CodeNotes::CodeNoteObj* pNote = m_pCodeNotes->Find( nAddr );
- 							if( pNote != NULL )
-								SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, pNote->Note().c_str() );
+							const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nAddr );
+							if( SavedNote.Note().length() > 0 )
+								SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, SavedNote.Note().c_str() );
 						}	
 					}
 
@@ -1355,9 +1356,9 @@ void Dlg_Memory::OnWatchingMemChange()
 
 	ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr+2, NULL, 16 ) );
 
-	const CodeNotes::CodeNoteObj* pNote = m_pCodeNotes->Find( nAddr );
-	if( pNote != NULL )
-		SetDlgItemText( m_hWnd, IDC_RA_MEMSAVENOTE, pNote->Note().c_str() );
+	const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nAddr );
+	if( SavedNote.Note().length() > 0 )
+		SetDlgItemText( m_hWnd, IDC_RA_MEMSAVENOTE, SavedNote.Note().c_str() );
 	else
 		SetDlgItemText( m_hWnd, IDC_RA_MEMSAVENOTE, "" );
 
@@ -1403,9 +1404,9 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 				ComboBox_GetLBText( hMemWatch, 0, sAddr );
 
 				ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr+2, NULL, 16 ) );
-				const CodeNotes::CodeNoteObj* pNote = m_pCodeNotes->Find( nAddr );
-				if( pNote != NULL )
-					SetDlgItemText( m_hWnd, IDC_RA_MEMSAVENOTE, pNote->Note().c_str() );
+				const CodeNotes::CodeNoteObj& SavedNote = m_pCodeNotes->GetCodeNote( nAddr );
+				if( SavedNote.Note().length() > 0 )
+					SetDlgItemText( m_hWnd, IDC_RA_MEMSAVENOTE, SavedNote.Note().c_str() );
 			}
 		}
 	}

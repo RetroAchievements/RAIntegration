@@ -34,11 +34,12 @@ enum RequestType
 	RequestLeaderboardInfo,
 	RequestCodeNotes,
 	RequestFriendList,
-	RequestUserPic,
-	RequestBadge,
 	RequestBadgeIter,
 	RequestGameTitles,
 	RequestUnlocks,
+	RequestHashLibrary,
+	RequestGamesList,
+	RequestAllProgress,
 
 	//	Submit
 	RequestPing,
@@ -50,6 +51,9 @@ enum RequestType
 	RequestSubmitTicket,
 	RequestSubmitNewTitle,
 	
+	//	Media:
+	RequestUserPic,
+	RequestBadge,
 	
 	//	Special:
 	StopThread,
@@ -69,51 +73,32 @@ extern const char* RequestTypeToString[];
 
 typedef std::map<char, std::string> PostArgs;
 
-std::string PostArgsToString( const PostArgs& args )
-{
-	std::string str = "";
-	PostArgs::const_iterator iter = args.begin();
-	while( iter != args.end() )
-	{
-		if( iter == args.begin() )
-			str += "?";
-		else
-			str += "&";
-
-		str += (*iter).first;
-		str += "=";
-		str += (*iter).second;
-
-		iter++;
-	}
-	return str;
-}
+extern std::string PostArgsToString( const PostArgs& args );
 
 class RequestObject
 {
 public:
-	RequestObject( RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sPage = "", const int nUserRef = 0 ) :
-		m_nType( nType ), m_PostArgs( PostArgs ), m_sPageURL( sPage ), m_nUserRef( nUserRef )
+	RequestObject( RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "" ) :
+		m_nType( nType ), m_PostArgs( PostArgs ), m_sData( sData )
 		{}
 
 public:
-	const RequestType GetRequestType() const		{ return m_nType; }
-	const PostArgs& GetPostArgs() const				{ return m_PostArgs; }
-	const std::string& GetPageURL() const			{ return m_sPageURL; }
-	const int GetUserRef() const					{ return m_nUserRef; }
+	const RequestType GetRequestType() const						{ return m_nType; }
+	const PostArgs& GetPostArgs() const								{ return m_PostArgs; }
+	const std::string& GetData() const								{ return m_sData; }
 	
-	BOOL GetSuccess() const							{ return m_bSuccess; }
-	DataStream& GetResponse()						{ return m_sResponse; }
+	BOOL GetSuccess() const											{ return m_bSuccess; }
+	DataStream& GetResponse()										{ return m_sResponse; }
+	const DataStream& GetResponse() const							{ return m_sResponse; }
 
-	void SetResult( BOOL bSuccess, const DataStream& sResponse );
+	void SetResult( BOOL bSuccess, const DataStream& sResponse )	{ m_bSuccess = bSuccess; m_sResponse = sResponse; }
 
 	BOOL ParseResponseToJSON( Document& rDocOut );
 
 private:
 	const RequestType m_nType;
 	const PostArgs m_PostArgs;
-	const std::string m_sPageURL;
-	const int m_nUserRef;
+	const std::string m_sData;
 
 	BOOL m_bSuccess;
 	DataStream m_sResponse;
@@ -128,7 +113,7 @@ public:
 	void PushItem( RequestObject* pObj );
 	void Clear();
 	size_t Count() const;
-	BOOL PageRequestExists( const char* sPageName ) const;
+	BOOL PageRequestExists( RequestType nType, const std::string& sData ) const;
 
 private:
 	std::deque<RequestObject*> m_aRequests;
@@ -143,8 +128,8 @@ public:
 	static void RA_InitializeHTTPThreads();
 	static void RA_KillHTTPThreads();
 
-	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sCustomPageURL = "", int nUserRef = 0 );
-	static BOOL HTTPRequestExists( const char* sRequestPageName );
+	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "" );
+	static BOOL HTTPRequestExists( RequestType nType, const std::string& sData );
 	
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );

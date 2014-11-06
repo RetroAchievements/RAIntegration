@@ -148,7 +148,7 @@ LRESULT ProcessCustomDraw (LPARAM lParam)
 }
 
 
-void Dlg_Achievements::RemoveAchievement( HWND hList, size_t nIter )
+void Dlg_Achievements::RemoveAchievement( HWND hList, int nIter )
 {
 	assert( nIter < ListView_GetItemCount( hList ) );
 	ListView_DeleteItem( hList, nIter );
@@ -680,7 +680,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 					if( &Cheevo == &g_pActiveAchievements->GetAchievement( nOffset ) )
 						break;
 				}
-				assert( nOffset < g_pActiveAchievements->Count() );
+				assert( nOffset < g_pActiveAchievements->NumAchievements() );
 				if( nOffset < g_pActiveAchievements->NumAchievements() )
 					OnEditData( nOffset, Dlg_Achievements::Author, Cheevo.Author() );
 

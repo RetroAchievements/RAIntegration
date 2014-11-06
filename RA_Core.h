@@ -138,4 +138,6 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-extern std::string _TimeStampToString( unsigned long nTime );
+extern BOOL _FileExists( const std::string& sFileName );
+
+extern std::string _TimeStampToString( time_t nTime );

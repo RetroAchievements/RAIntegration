@@ -18,6 +18,7 @@
 const char* RequestTypeToString[] = 
 {
 	"RequestLogin",
+
 	"RequestScore",
 	"RequestNews",
 	"RequestPatch",
@@ -227,30 +228,13 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 //	return bSuccess;
 //}
 
-BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut )
-{
-	PostArgs args = PostData;	//	Take a copy
-	args['r'] = RequestTypeToPost[nType];
-	return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
-}
-
 BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut )
 {
-	PostArgs args = PostData;	//	Take a copy
-	args['r'] = RequestTypeToPost[nType];
 	DataStream response;
-	if( DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), response ) )
+	if( DoBlockingRequest( nType, PostData, response ) )
 	{
 		JSONResponseOut.ParseInsitu( DataStreamAsString( response ) );
-		if( !JSONResponseOut.HasParseError() )
-		{
-			return TRUE;
-		}
-		else
-		{
-			//	Cannot parse json?
-			return FALSE;
-		}
+		return( !JSONResponseOut.HasParseError() );
 	}
 	else
 	{
@@ -258,16 +242,23 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 	}
 }
 
+BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut )
+{
+	PostArgs args = PostData;	//	Take a copy
+	args['r'] = RequestTypeToPost[nType];
+	return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
+}
+
 BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut )
 {
-	if( strcmp( sRequestedPage.c_str(), "requestlogin.php" ) == 0 )
+	if( sPostString.find( "r=login" ) != std::string::npos )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
 		RA_LOG( __FUNCTION__ ": (%04x) POST to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
 	}
 	else
 	{
-		RA_LOG( __FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
+		RA_LOG( __FUNCTION__ ": (%04x) POST to %s%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
 	}
 	
 	ResponseOut.clear();
@@ -525,7 +516,7 @@ BOOL RAWeb::HTTPRequestExists( RequestType nType, const std::string& sData )
 void RAWeb::CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData, const std::string& sData )
 {
 	HttpRequestQueue.PushItem( new RequestObject( nType, PostData, sData ) );
-	RA_LOG( __FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData, HttpRequestQueue.Count() );
+	RA_LOG( __FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count() );
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -552,7 +543,7 @@ void RAWeb::RA_InitializeHTTPThreads()
 //	Takes items from the http request queue, and posts them to the last http results queue.
 DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 {
-	time_t nSendNextKeepAliveAt = time( NULL ) + RA_SERVER_POLL_DURATION;
+	time_t nSendNextKeepAliveAt = time( NULL ) + SERVER_PING_DURATION;
 
 	BOOL bThreadActive = true;
 	BOOL bDoPingKeepAlive = ( (int)lpParameter ) == 0;
@@ -563,29 +554,25 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 		if( pObj != NULL )
 		{
 			BOOL bSuccess = FALSE;
-			DataStream WebResponse;
+			DataStream Response;
 
 			switch( pObj->GetRequestType() )
 			{
 			case RequestLogin:
 					//	TBD
 				break;
-			default:
-				{
-					PostArgs Args = pObj->GetPostArgs();
-					Args['r'] = RequestTypeToPost[ pObj->GetRequestType() ];
-					std::string sPost = PostArgsToString( Args );
-					bSuccess = RAWeb::DoBlockingHttpPost( "request.php", sPost.c_str(), WebResponse );
-				}
-				break;
 
 			case StopThread:
 				bThreadActive = FALSE;
 				bDoPingKeepAlive = FALSE;
 				break;
+
+			default:
+				DoBlockingRequest( pObj->GetRequestType(), pObj->GetPostArgs(), Response );
+				break;
 			}
 
-			pObj->SetResult( bSuccess, WebResponse );
+			pObj->SetResult( bSuccess, Response );
 
 			if( bThreadActive )
 			{
@@ -605,7 +592,7 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 			//	Post a pingback once every few minutes to keep the server aware of our presence
 			if( time( NULL ) > nSendNextKeepAliveAt )
 			{
-				nSendNextKeepAliveAt += RA_SERVER_POLL_DURATION;
+				nSendNextKeepAliveAt += SERVER_PING_DURATION;
 
 				//	Post a keepalive packet:
 				if( RAUsers::LocalUser.IsLoggedIn() )

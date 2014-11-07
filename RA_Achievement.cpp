@@ -32,7 +32,7 @@ AchievementSet* CoreAchievements = NULL;
 AchievementSet* UnofficialAchievements = NULL;
 AchievementSet* LocalAchievements = NULL;
 
-AchievementSetType g_nActiveAchievementSet = AT_CORE;
+AchievementSetType g_nActiveAchievementSet = AchievementSetCore;
 AchievementSet* g_pActiveAchievements = CoreAchievements;
 
 namespace
@@ -43,9 +43,9 @@ namespace
 	{
 		unsigned int nFlags = 0;
 		nFlags = 1<<0;						//	Active achievements! : 1
-		if( nType == AT_CORE )
+		if( nType == AchievementSetCore )
 			nFlags |= 1<<1;					//	Core: 3
-		else if( nType == AT_UNOFFICIAL )
+		else if( nType == AchievementSetUnofficial )
 			nFlags |= 1<<2;					//	Unofficial: 5
 		else
 			nFlags |= 1<<3;					//	Local and custom... (9)
@@ -60,13 +60,13 @@ void SetAchievementCollection( AchievementSetType Type )
 	g_nActiveAchievementSet = Type;
 	switch( Type )
 	{
-	case AT_CORE:
+	case AchievementSetCore:
 		g_pActiveAchievements = CoreAchievements;
 		break;
-	case AT_UNOFFICIAL:
+	case AchievementSetUnofficial:
 		g_pActiveAchievements = UnofficialAchievements;
 		break;
-	case AT_USER:
+	case AchievementSetLocal:
 		g_pActiveAchievements = LocalAchievements;
 		break;
 	}
@@ -943,12 +943,12 @@ std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )
 
 	//switch( nSet )
 	//{
-	//case AT_CORE:
+	//case AchievementSetCore:
 	//	return RA_DIR_DATA + std::to_string( nGameID ) + ".txt";
-	//case AT_UNOFFICIAL:
+	//case AchievementSetUnofficial:
 	//	return RA_DIR_DATA + std::to_string( nGameID ) + "-Unofficial.txt";
 	//default:
-	//case AT_USER:
+	//case AchievementSetLocal:
 	//	return RA_DIR_DATA + std::to_string( nGameID ) + "-User.txt";
 	//}
 }

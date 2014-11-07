@@ -61,8 +61,11 @@ RAUser::RAUser( const std::string& sUsername ) :
 	m_bFetchingUserImage( false )
 {
 	//	Register
-	ASSERT( !RAUsers::DatabaseContainsUser( sUsername ) );
-	RAUsers::RegisterUser( sUsername, this );
+	if( sUsername.length() > 2 )
+	{
+		ASSERT( !RAUsers::DatabaseContainsUser( sUsername ) );
+		RAUsers::RegisterUser( sUsername, this );
+	}
 }
 
 RAUser::~RAUser()

@@ -354,18 +354,39 @@ void FetchIntegrationFromWeb()
 	}
 }
 
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+std::string GetLastErrorAsString()
+{
+    //Get the error message, if any.
+    DWORD errorMessageID = ::GetLastError();
+    if(errorMessageID == 0)
+        return "No error message has been recorded";
+
+    LPSTR messageBuffer = nullptr;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+    std::string message(messageBuffer, size);
+
+    //Free the buffer.
+    LocalFree(messageBuffer);
+
+    return message;
+}
+
 const char* CCONV _RA_InstallIntegration()
 {
-	
+	SetErrorMode( 0 );
+
 #ifndef NDEBUG
-	g_hRADLL = LoadLibrary( TEXT( "RA_Integration_d.dll" ) );
+	g_hRADLL = ::LoadLibraryEx( TEXT( "RA_Integration_d.dll" ), NULL, 0 ); //LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE
 #else
-	g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
+	g_hRADLL = ::LoadLibrary( TEXT( "RA_Integration.dll" ) );
 #endif
 	if( g_hRADLL == NULL )
 	{
 		char buffer[1024];
-		sprintf_s( buffer, 1024, "LoadLibrary failed: %d\n", GetLastError() );
+		sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
 		MessageBox( NULL, buffer, "Sorry!", MB_OK );
 		return "0.000";
 	}

@@ -215,13 +215,13 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Initialize All AchievementSets
-	CoreAchievements = new AchievementSet( AT_CORE );
+	CoreAchievements = new AchievementSet( AchievementSetCore );
 	CoreAchievements->Clear();
 
-	UnofficialAchievements = new AchievementSet( AT_UNOFFICIAL );
+	UnofficialAchievements = new AchievementSet( AchievementSetUnofficial );
 	UnofficialAchievements->Clear();
 
-	LocalAchievements = new AchievementSet( AT_USER );
+	LocalAchievements = new AchievementSet( AchievementSetLocal );
 	LocalAchievements->Clear();
 
 	g_pActiveAchievements = CoreAchievements;
@@ -257,24 +257,10 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 API int CCONV _RA_Shutdown()
 {
 	_RA_SavePreferences();
-
-	if( CoreAchievements != NULL )
-	{
-		delete( CoreAchievements );
-		CoreAchievements = NULL;
-	}
-
-	if( UnofficialAchievements != NULL )
-	{
-		delete( UnofficialAchievements );
-		UnofficialAchievements = NULL;
-	}
-
-	if( LocalAchievements != NULL )
-	{
-		delete( LocalAchievements );
-		LocalAchievements = NULL;
-	}
+	
+	SAFE_DELETE( CoreAchievements );
+	SAFE_DELETE( UnofficialAchievements );
+	SAFE_DELETE( LocalAchievements );
 
 	RAWeb::RA_KillHTTPThreads();
 
@@ -304,6 +290,8 @@ API int CCONV _RA_Shutdown()
 
 	g_GameLibrary.KillThread();
 	
+	CoUninitialize();
+
 	return 0;
 }
 
@@ -354,12 +342,12 @@ API int CCONV _RA_SetConsoleID( unsigned int nConsoleID )
 	return 0;
 }
 
-API int _RA_HardcoreModeIsActive()
+API int CCONV _RA_HardcoreModeIsActive()
 {
 	return g_hardcoreModeActive;
 }
 
-API int _RA_HTTPGetRequestExists( const char* sPageName )
+API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 {
 	//return RAWeb::HTTPRequestExists( sPageName );	//	Deprecated
 	return 0;
@@ -429,8 +417,8 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 		if( RAUsers::LocalUser.IsLoggedIn() )
 		{
 			//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-			AchievementSet::DeletePatchFile( AT_CORE, nGameID );
-			AchievementSet::DeletePatchFile( AT_UNOFFICIAL, nGameID );
+			AchievementSet::DeletePatchFile( AchievementSetCore, nGameID );
+			AchievementSet::DeletePatchFile( AchievementSetUnofficial, nGameID );
 
 			AchievementSet::LoadFromFile( nGameID );
 			//CoreAchievements->Load( nGameID );
@@ -546,196 +534,200 @@ API int CCONV _RA_HandleHTTPResults()
 	RequestObject* pObj = RAWeb::LastHttpResults.PopNextItem();
 	while( pObj	!= NULL )
 	{
-		Document doc;
-		BOOL bJSONParsedOK = pObj->ParseResponseToJSON( doc );
-
-		switch( pObj->GetRequestType() )
+		if( pObj->GetResponse().size() > 0 )
 		{
-		case RequestBadge:
+			Document doc;
+			BOOL bJSONParsedOK = pObj->ParseResponseToJSON( doc );
+
+			switch( pObj->GetRequestType() )
 			{
-				SetCurrentDirectory( g_sHomeDir.c_str() );
-
-				const std::string& sBadgeURI = pObj->GetData();
-				_WriteBufferToFile( RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse() );
-
-				for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
+			case RequestBadge:
 				{
-					Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-					if( ach.BadgeImageURI().compare( sBadgeURI ) == 0 )
+					SetCurrentDirectory( g_sHomeDir.c_str() );
+
+					const std::string& sBadgeURI = pObj->GetData();
+					_WriteBufferToFile( RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse() );
+
+					for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
 					{
-						//	Re-set this badge image
-						//	NB. This is already a non-modifying op
-						ach.SetBadgeImage( sBadgeURI );
+						Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+						if( ach.BadgeImageURI().compare( sBadgeURI ) == 0 )
+						{
+							//	Re-set this badge image
+							//	NB. This is already a non-modifying op
+							ach.SetBadgeImage( sBadgeURI );
+						}
 					}
+
+					g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
 				}
+				break;
 
-				g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
-			}
-			break;
+			case RequestBadgeIter:
+				g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
+				break;
 
-		case RequestBadgeIter:
-			g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
-			break;
+			case RequestUserPic:
+				RAUsers::OnUserPicDownloaded( *pObj );
+				break;
 
-		case RequestUserPic:
-			RAUsers::OnUserPicDownloaded( *pObj );
-			break;
-
-		case RequestScore:
-			{
-				ASSERT( doc["Success"].GetBool() );
-
-				const std::string& sUser = doc["User"].GetString();
-				unsigned int nScore = doc["Score"].GetUint();
-				RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
-
-				if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
+			case RequestScore:
 				{
-					RAUsers::LocalUser.SetScore( nScore );
-				}
-				else
-				{
-					//	Find friend? Update this information?
-					RAUsers::GetUser( sUser )->SetScore( nScore );
-				}
-			}
-			break;
+					ASSERT( doc["Success"].GetBool() );
 
-		case RequestLatestClientPage:
-			{
-				const std::string& sReply = DataStreamAsString( pObj->GetResponse() );
-				if( sReply.length() > 2 && sReply.compare( 0, 2, "0." ) == 0 )
-				{
-					long nValServer = strtol( sReply.c_str()+2, NULL, 10 );
-					long nValKnown = strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
-					long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
+					const std::string& sUser = doc["User"].GetString();
+					unsigned int nScore = doc["Score"].GetUint();
+					RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
 
-					if( nValKnown < nValServer && nValCurrent < nValServer )
+					if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
 					{
-						//	Update available:
-						_RA_OfferNewRAUpdate( sReply.c_str() );
-
-						//	Update the last version I've heard of:
-						g_sKnownRAVersion = sReply;
-					}
-				}
-			}
-			break;
-
-		case RequestSubmitAwardAchievement:
-			{
-				//	Response to an achievement being awarded:
-				const Achievement* pAch = CoreAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
-				if( pAch == NULL )
-					pAch = UnofficialAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
-				if( pAch != NULL )
-				{
-					if( !doc.HasMember("Error") )
-					{
-						g_PopupWindows.AchievementPopups().AddMessage( 
-							MessagePopup( " Achievement Unlocked ",
-										  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
-										  PopupMessageType::PopupAchievementUnlocked,
-										  pAch->BadgeImage() ) );
-						g_AchievementsDialog.OnGet_Achievement( *pAch );
-					
-						RAUsers::LocalUser.SetScore( doc["Score"].GetUint() );
+						RAUsers::LocalUser.SetScore( nScore );
 					}
 					else
 					{
-						g_PopupWindows.AchievementPopups().AddMessage( 
-							MessagePopup( " Achievement Unlocked (Error) ", 
-										  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
-										  PopupMessageType::PopupAchievementError, 
-										  pAch->BadgeImage() ) );
-						g_AchievementsDialog.OnGet_Achievement( *pAch );
-
-						g_PopupWindows.AchievementPopups().AddMessage( 
-							MessagePopup( 
-								"Error submitting achievement:", 
-								doc["Error"].GetString() ) ); //?
-
-						//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+						//	Find friend? Update this information?
+						RAUsers::GetUser( sUser )->SetScore( nScore );
 					}
 				}
+				break;
+
+			case RequestLatestClientPage:
+				{
+					const std::string& sReply = DataStreamAsString( pObj->GetResponse() );
+					if( sReply.length() > 2 && sReply.compare( 0, 2, "0." ) == 0 )
+					{
+						long nValServer = strtol( sReply.c_str()+2, NULL, 10 );
+						long nValKnown = strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
+						long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
+
+						if( nValKnown < nValServer && nValCurrent < nValServer )
+						{
+							//	Update available:
+							_RA_OfferNewRAUpdate( sReply.c_str() );
+
+							//	Update the last version I've heard of:
+							g_sKnownRAVersion = sReply;
+						}
+					}
+				}
+				break;
+
+			case RequestSubmitAwardAchievement:
+				{
+					//	Response to an achievement being awarded:
+					const Achievement* pAch = CoreAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+					if( pAch == NULL )
+						pAch = UnofficialAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+					if( pAch != NULL )
+					{
+						if( !doc.HasMember("Error") )
+						{
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( " Achievement Unlocked ",
+											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+											  PopupMessageType::PopupAchievementUnlocked,
+											  pAch->BadgeImage() ) );
+							g_AchievementsDialog.OnGet_Achievement( *pAch );
+					
+							RAUsers::LocalUser.SetScore( doc["Score"].GetUint() );
+						}
+						else
+						{
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( " Achievement Unlocked (Error) ", 
+											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+											  PopupMessageType::PopupAchievementError, 
+											  pAch->BadgeImage() ) );
+							g_AchievementsDialog.OnGet_Achievement( *pAch );
+
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( 
+									"Error submitting achievement:", 
+									doc["Error"].GetString() ) ); //?
+
+							//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+						}
+					}
+				}
+				break;
+
+			case RequestNews:
+				SetCurrentDirectory( g_sHomeDir.c_str() );
+				_WriteBufferToFile( RA_NEWS_FILENAME, doc );
+				g_AchievementOverlay.InstallNewsArticlesFromFile();
+				break;
+
+			case RequestAchievementInfo:
+				if( pObj->ParseResponseToJSON( doc ) )
+					g_AchExamine.OnReceiveData( doc );
+				break;
+
+			case RequestCodeNotes:
+				CodeNotes::OnCodeNotesResponse( doc );
+				break;
+
+			case RequestSubmitLeaderboardEntry:
+				RA_LeaderboardManager::OnSubmitEntry( doc );
+				break;
+
+			case RequestLeaderboardInfo:
+				if( pObj->ParseResponseToJSON( doc ) )
+					g_LBExamine.OnReceiveData( doc );
+				break;
 			}
-			break;
-
-		case RequestNews:
-			SetCurrentDirectory( g_sHomeDir.c_str() );
-			_WriteBufferToFile( RA_NEWS_FILENAME, doc );
-			g_AchievementOverlay.InstallNewsArticlesFromFile();
-			break;
-
-		case RequestAchievementInfo:
-			if( pObj->ParseResponseToJSON( doc ) )
-				g_AchExamine.OnReceiveData( doc );
-			break;
-
-		case RequestCodeNotes:
-			CodeNotes::OnCodeNotesResponse( doc );
-			break;
-
-		case RequestSubmitLeaderboardEntry:
-			RA_LeaderboardManager::OnSubmitEntry( doc );
-			break;
-
-		case RequestLeaderboardInfo:
-			if( pObj->ParseResponseToJSON( doc ) )
-				g_LBExamine.OnReceiveData( doc );
-			break;
-		}
 		
-		//if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
-		//{
-		//	if( pObj->m_bResponse == TRUE )
-		//	{
-		//		if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
-		//		{
-		//			char buffer[4096];
-		//			sprintf_s( buffer, 4096, 
-		//				"%s failed:\n\n"
-		//				"Response from server:\n"
-		//				"%s",
-		//				( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
-		//				pObj->m_sResponse );
+			//if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
+			//{
+			//	if( pObj->m_bResponse == TRUE )
+			//	{
+			//		if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
+			//		{
+			//			char buffer[4096];
+			//			sprintf_s( buffer, 4096, 
+			//				"%s failed:\n\n"
+			//				"Response from server:\n"
+			//				"%s",
+			//				( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
+			//				pObj->m_sResponse );
 
-		//			MessageBox( NULL, buffer, "Error in login", MB_OK );
-		//			RAUsers::LocalUser.Clear();
-		//		}
-		//		else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
-		//		{
-		//			//	will return a valid token : points : messages
+			//			MessageBox( NULL, buffer, "Error in login", MB_OK );
+			//			RAUsers::LocalUser.Clear();
+			//		}
+			//		else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
+			//		{
+			//			//	will return a valid token : points : messages
 
-		//			//	fish out the username again
-		//			char* pUserPtr = pObj->m_sRequestPost+2;
-		//			char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
+			//			//	fish out the username again
+			//			char* pUserPtr = pObj->m_sRequestPost+2;
+			//			char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
 
-		//			//	find the token, points, and num messages
-		//			char* pBuf = pObj->m_sResponse+3;
-		//			char* pToken = strtok_s( pBuf, ":", &pBuf );
-		//			unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
-		//			pBuf++;
-		//			unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
-		//			//pBuf++;
-		//					
-		//			RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
-		//		}
-		//		else
-		//		{
-		//			MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-		//			RAUsers::LocalUser.Clear();
-		//		}
-		//	}
-		//	else
-		//	{
-		//		MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-		//		RAUsers::LocalUser.Clear();
-		//	}
+			//			//	find the token, points, and num messages
+			//			char* pBuf = pObj->m_sResponse+3;
+			//			char* pToken = strtok_s( pBuf, ":", &pBuf );
+			//			unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
+			//			pBuf++;
+			//			unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
+			//			//pBuf++;
+			//					
+			//			RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
+			//		}
+			//		else
+			//		{
+			//			MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+			//			RAUsers::LocalUser.Clear();
+			//		}
+			//	}
+			//	else
+			//	{
+			//		MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+			//		RAUsers::LocalUser.Clear();
+			//	}
 
-		//	RA_RebuildMenu();
-		//	_RA_UpdateAppTitle();
-		//}
+			//	RA_RebuildMenu();
+			//	_RA_UpdateAppTitle();
+			//}
+
+		}
 
 		SAFE_DELETE( pObj );
 		pObj = RAWeb::LastHttpResults.PopNextItem();
@@ -909,16 +901,24 @@ API void CCONV _RA_LoadPreferences()
 		Document doc;
 		doc.ParseStream( FileStream( pf ) );
 		
-		if( doc.HasMember( "Username" ) )
-			RAUsers::LocalUser.SetUsername( doc["Username"].GetString() );
-		if( doc.HasMember( "Token" ) )
-			RAUsers::LocalUser.SetToken( doc["Token"].GetString() );
-		if( doc.HasMember( "Hardcore Active" ) )
-			g_hardcoreModeActive = doc["Hardcore Active"].GetBool();
-		if( doc.HasMember( "Num Background Threads" ) )
-			g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-		if( doc.HasMember( "ROM Directory" ) )
-			g_sROMDirLocation = doc["ROM Directory"].GetString();
+		if( doc.HasParseError() )
+		{
+			//MessageBox( NULL, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
+			_RA_SavePreferences();
+		}
+		else
+		{
+			if( doc.HasMember( "Username" ) )
+				RAUsers::LocalUser.SetUsername( doc["Username"].GetString() );
+			if( doc.HasMember( "Token" ) )
+				RAUsers::LocalUser.SetToken( doc["Token"].GetString() );
+			if( doc.HasMember( "Hardcore Active" ) )
+				g_hardcoreModeActive = doc["Hardcore Active"].GetBool();
+			if( doc.HasMember( "Num Background Threads" ) )
+				g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
+			if( doc.HasMember( "ROM Directory" ) )
+				g_sROMDirLocation = doc["ROM Directory"].GetString();
+		}
 
 		fclose( pf );
 	}
@@ -940,14 +940,17 @@ API void CCONV _RA_SavePreferences()
 		Writer<FileStream> writer( fs );
 
 		Document doc;
-		Document::AllocatorType& a = doc.GetAllocator();
+		doc.SetObject();
 
+		Document::AllocatorType& a = doc.GetAllocator();
 		doc.AddMember( "Username", StringRef( RAUsers::LocalUser.Username().c_str() ), a );
 		doc.AddMember( "Token", StringRef( RAUsers::LocalUser.Token().c_str() ), a );
 		doc.AddMember( "Hardcore Active", g_hardcoreModeActive, a );
 		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
 		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
 		
+		doc.Accept( writer );	//	Save
+
 		fclose( pf );
 	}
 
@@ -1082,8 +1085,8 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 			if( CoreAchievements->GetGameID() != 0 )
 			{
 				//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-				AchievementSet::DeletePatchFile( AT_CORE, CoreAchievements->GetGameID() );
-				AchievementSet::DeletePatchFile( AT_UNOFFICIAL, CoreAchievements->GetGameID() );
+				AchievementSet::DeletePatchFile( AchievementSetCore, CoreAchievements->GetGameID() );
+				AchievementSet::DeletePatchFile( AchievementSetUnofficial, CoreAchievements->GetGameID() );
 				if( !AchievementSet::LoadFromFile( CoreAchievements->GetGameID() ) )
 				{
 					//	Fetch then load again from file
@@ -1306,7 +1309,7 @@ API void CCONV _RA_DoAchievementsFrame()
 	}
 }
 
-void _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) )
+void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) )
 {
 	//	NB. Must be called from within DLL
 	_RA_GameIsActive			= fpIsActive;

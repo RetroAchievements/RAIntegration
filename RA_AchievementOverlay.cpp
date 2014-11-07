@@ -559,7 +559,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 	}
 
 	SelectObject( hDC, g_hFontDesc );
-	if( g_nActiveAchievementSet == AT_CORE )
+	if( g_nActiveAchievementSet == AchievementSetCore )
 	{
 		for( i = 0; i < nNumAchievements; ++i )
 		{
@@ -1399,7 +1399,7 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 
 	if( bCanLock )
 	{
-		if( g_nActiveAchievementSet == AT_CORE )
+		if( g_nActiveAchievementSet == AchievementSetCore )
 			bLocked = pAch->Active();
 	}
 
@@ -1486,9 +1486,6 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 
 const int* AchievementOverlay::GetActiveScrollOffset() const
 {	
-	static int nZero = 0;
-	nZero = 0;
-
 	switch( m_Pages[m_nPageStackPointer] )
 	{
 	case OP_ACHIEVEMENTS:
@@ -1503,7 +1500,7 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
 		return &m_nLeaderboardScrollOffset;
 	case OP_LEADERBOARD_EXAMINE:
 	case OP_ACHIEVEMENT_EXAMINE:
-		return &nZero;
+		return 0;
 	default:
 		assert(0);
 		return &m_nAchievementsScrollOffset;
@@ -1512,9 +1509,6 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
 
 const int* AchievementOverlay::GetActiveSelectedItem() const
 {
-	static int nZero = 0;
-	nZero = 0;
-
 	switch( m_Pages[m_nPageStackPointer] )
 	{
 	case OP_ACHIEVEMENTS:
@@ -1529,7 +1523,7 @@ const int* AchievementOverlay::GetActiveSelectedItem() const
 		return &m_nLeaderboardSelectedItem;
 	case OP_ACHIEVEMENT_EXAMINE:
 	case OP_LEADERBOARD_EXAMINE:
-		return &nZero;
+		return 0;
 	default:
 		assert(0);
 		return &m_nAchievementsSelectedItem;
@@ -1566,75 +1560,75 @@ void AchievementOverlay::InitDirectX()
 		return;
 	}
 
-	LPDIRECTDRAW lpDD_Init;
-	if (DirectDrawCreate(NULL, &lpDD_Init, NULL) != DD_OK)
-	{
-		MessageBox( g_RAMainWnd, "DirectDrawCreate failed!", "Error!", MB_OK );
-		return;
-	}
-	
-	if (lpDD_Init->QueryInterface(IID_IDirectDraw4, (LPVOID *) &m_lpDD) != DD_OK)
-	{
-		MessageBox( g_RAMainWnd, "Error with QueryInterface!", "Error!", MB_OK );
-		return;
-	}
+	//LPDIRECTDRAW lpDD_Init;
+	//if (DirectDrawCreate(NULL, &lpDD_Init, NULL) != DD_OK)
+	//{
+	//	MessageBox( g_RAMainWnd, "DirectDrawCreate failed!", "Error!", MB_OK );
+	//	return;
+	//}
+	//
+	//if (lpDD_Init->QueryInterface(IID_IDirectDraw4, (LPVOID *) &m_lpDD) != DD_OK)
+	//{
+	//	MessageBox( g_RAMainWnd, "Error with QueryInterface!", "Error!", MB_OK );
+	//	return;
+	//}
 
-	lpDD_Init->Release();
-	lpDD_Init = NULL;
+	//lpDD_Init->Release();
+	//lpDD_Init = NULL;
 
-	m_lpDD->SetCooperativeLevel( g_RAMainWnd, DDSCL_NORMAL );
+	//m_lpDD->SetCooperativeLevel( g_RAMainWnd, DDSCL_NORMAL );
 
 	ResetDirectX();
 }
 
 void AchievementOverlay::ResetDirectX()
 {
-	if( m_lpDD == NULL )
-		return;
+	//if( m_lpDD == NULL )
+	//	return;
 
-	RECT rcTgtSize;
-	SetRect( &rcTgtSize, 0, 0, 640, 480 );
+	//RECT rcTgtSize;
+	//SetRect( &rcTgtSize, 0, 0, 640, 480 );
 
-	if( m_lpDDS_Overlay != NULL )
-	{
-		m_lpDDS_Overlay->Release();
-		m_lpDDS_Overlay = NULL;
-	}
+	//if( m_lpDDS_Overlay != NULL )
+	//{
+	//	m_lpDDS_Overlay->Release();
+	//	m_lpDDS_Overlay = NULL;
+	//}
 
-	DDSURFACEDESC2 ddsd;
-	memset(&ddsd, 0, sizeof(ddsd));
-	ddsd.dwSize = sizeof(ddsd);
-	ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
-	
-	ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
-	ddsd.dwWidth = rcTgtSize.right - rcTgtSize.left;
-	ddsd.dwHeight = rcTgtSize.bottom - rcTgtSize.top;
+	//DDSURFACEDESC2 ddsd;
+	//memset(&ddsd, 0, sizeof(ddsd));
+	//ddsd.dwSize = sizeof(ddsd);
+	//ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+	//
+	//ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+	//ddsd.dwWidth = rcTgtSize.right - rcTgtSize.left;
+	//ddsd.dwHeight = rcTgtSize.bottom - rcTgtSize.top;
 
-	HRESULT hr = m_lpDD->CreateSurface(&ddsd, &m_lpDDS_Overlay, NULL);
-	if( hr != DD_OK )
-	{
-		assert(!"Cannot create overlay surface!");
-		return;
-	}
+	//HRESULT hr = m_lpDD->CreateSurface(&ddsd, &m_lpDDS_Overlay, NULL);
+	//if( hr != DD_OK )
+	//{
+	//	assert(!"Cannot create overlay surface!");
+	//	return;
+	//}
 
 }
 
 void AchievementOverlay::Flip(HWND hWnd)
 {
-	if( m_lpDDS_Overlay == NULL )
-		return;
+	//if( m_lpDDS_Overlay == NULL )
+	//	return;
 
-	RECT rcDest;
-	GetWindowRect( g_RAMainWnd, &rcDest );
-	OffsetRect( &rcDest, -rcDest.left, -rcDest.top);
+	//RECT rcDest;
+	//GetWindowRect( g_RAMainWnd, &rcDest );
+	//OffsetRect( &rcDest, -rcDest.left, -rcDest.top);
 
-	HDC hDC;
-	if( m_lpDDS_Overlay->GetDC( &hDC )== DD_OK )
-	{
-		g_AchievementOverlay.Render( hDC, &rcDest );
+	//HDC hDC;
+	//if( m_lpDDS_Overlay->GetDC( &hDC )== DD_OK )
+	//{
+	//	g_AchievementOverlay.Render( hDC, &rcDest );
 
-		m_lpDDS_Overlay->ReleaseDC( hDC );
-	}
+	//	m_lpDDS_Overlay->ReleaseDC( hDC );
+	//}
 }
 
 void AchievementOverlay::InstallNewsArticlesFromFile()

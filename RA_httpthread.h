@@ -138,7 +138,6 @@ public:
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
 
 	static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut );
-	//static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, DataStream& ResponseOut );
 
 	static DWORD __stdcall HTTPWorkerThread( LPVOID lpParameter );
 };

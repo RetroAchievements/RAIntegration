@@ -56,11 +56,11 @@ void Dlg_Achievements::SetupColumns( HWND hList )
 
 	for( size_t i = 0; i < m_nNumCols; ++i )
 	{	
-		if( g_nActiveAchievementSet == AT_CORE )
+		if( g_nActiveAchievementSet == AchievementSetCore )
 			sColTitles[i] = g_sColTitles[i];
-		else if( g_nActiveAchievementSet == AT_UNOFFICIAL )
+		else if( g_nActiveAchievementSet == AchievementSetUnofficial )
 			sColTitles[i] = g_sColTitlesUnofficial[i];
-		else if( g_nActiveAchievementSet == AT_USER )
+		else if( g_nActiveAchievementSet == AchievementSetLocal )
 			sColTitles[i] = g_sColTitlesUser[i];
 	}
 
@@ -166,7 +166,7 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 	newRow[ Title ] = Ach.Title();
 	newRow[ Author ] = Ach.Author();
 
-	if( g_nActiveAchievementSet == AT_CORE )
+	if( g_nActiveAchievementSet == AchievementSetCore )
 	{
 		newRow[ Achieved ] = !Ach.Active() ? "Yes" : "No";
 		newRow[ Modified ] = Ach.Modified() ? "Yes" : "No";
@@ -357,7 +357,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 {
 	SetAchievementCollection( nAchievementSet );
 
-	if( nAchievementSet == AT_CORE )
+	if( nAchievementSet == AchievementSetCore )
 	{
 		BOOL bAllowCoreAchievementEdit = FALSE;
 
@@ -389,7 +389,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, FALSE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, FALSE );
 	}
-	else if( nAchievementSet == AT_UNOFFICIAL )
+	else if( nAchievementSet == AchievementSetUnofficial )
 	{
 		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 		g_AchievementEditorDialog.OnLoad_NewRom();
@@ -415,7 +415,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, TRUE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, FALSE );
 	}
-	else if( nAchievementSet == AT_USER )
+	else if( nAchievementSet == AchievementSetLocal )
 	{
 		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 		g_AchievementEditorDialog.OnLoad_NewRom();
@@ -463,13 +463,13 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 
 			switch( g_nActiveAchievementSet )
 			{
-			case AT_CORE:
+			case AchievementSetCore:
 				SendDlgItemMessage( hDlg, IDC_RA_ACTIVE_CORE, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				break;
-			case AT_UNOFFICIAL:
+			case AchievementSetUnofficial:
 				SendDlgItemMessage( hDlg, IDC_RA_ACTIVE_UNOFFICIAL, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				break;
-			case AT_USER:
+			case AchievementSetLocal:
 				SendDlgItemMessage( hDlg, IDC_RA_ACTIVE_LOCAL, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				break;
 			default:
@@ -486,7 +486,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 			//g_AchievementsDialog.LoadAchievements( hList );
 
 			//	Click the core 
-			OnClickAchievementSet( AT_CORE );
+			OnClickAchievementSet( AchievementSetCore );
 			//SendDlgItemMessage( hDlg, IDC_RA_ACTIVE_CORE, WM_COMMAND, MAKELONG(IDC_RA_ACTIVE_CORE, 0), 0 );
 			//AchievementsProc( hDlg, 
 		}
@@ -498,19 +498,19 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 		{
 		case IDC_RA_ACTIVE_CORE:
 			{
-				OnClickAchievementSet( AT_CORE );
+				OnClickAchievementSet( AchievementSetCore );
 				bHandled = TRUE;
 			}
 			break;
 		case IDC_RA_ACTIVE_UNOFFICIAL:
 			{
-				OnClickAchievementSet( AT_UNOFFICIAL );
+				OnClickAchievementSet( AchievementSetUnofficial );
 				bHandled = TRUE;
 			}
 			break;
 		case IDC_RA_ACTIVE_LOCAL:
 			{
-				OnClickAchievementSet( AT_USER );
+				OnClickAchievementSet( AchievementSetLocal );
 				bHandled = TRUE;
 			}
 			break;
@@ -546,7 +546,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 				}
 				else
 				{
-					if( g_nActiveAchievementSet == AT_USER )
+					if( g_nActiveAchievementSet == AchievementSetLocal )
 					{
 						//if( g_pActiveAchievements->Save() )
 						if( FALSE ) //NIMPL
@@ -558,7 +558,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 							MessageBox( hDlg, "Error during save!", "Error", MB_OK|MB_ICONWARNING );
 						}
 					}
-					else if( g_nActiveAchievementSet == AT_UNOFFICIAL )
+					else if( g_nActiveAchievementSet == AchievementSetUnofficial )
 					{
 						HWND hList = GetDlgItem( hDlg, IDC_RA_LISTACHIEVEMENTS );
 						int nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
@@ -579,7 +579,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 							const Achievement& selectedAch = g_pActiveAchievements->GetAchievement( nSel );
 										
 							unsigned int nFlags = 1<<0;	//	Active achievements! : 1
-							if( g_nActiveAchievementSet == AT_UNOFFICIAL )
+							if( g_nActiveAchievementSet == AchievementSetUnofficial )
 								nFlags |= 1<<1;			//	Official achievements: 3
 
 							char buffer[1024];
@@ -619,7 +619,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 						}
 
 					}
-// 					else if( g_nActiveAchievementSet == AT_CORE )
+// 					else if( g_nActiveAchievementSet == AchievementSetCore )
 // 					{
 // 						//	Demote from Core
 // 
@@ -716,7 +716,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 				sprintf_s( buffer, 256, "%s (copy)", NewClone.Title() );
 				NewClone.SetTitle( buffer );
 
-				OnClickAchievementSet( AT_USER );
+				OnClickAchievementSet( AchievementSetLocal );
 
 				ListView_SetItemState( hList, LocalAchievements->NumAchievements()-1, LVIS_FOCUSED|LVIS_SELECTED, -1 );
 				ListView_EnsureVisible( hList, LocalAchievements->NumAchievements()-1, FALSE );
@@ -808,15 +808,15 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 						BOOL bMovedFromUserToUnofficial = FALSE;
 
 						unsigned int nFlags = 1<<0;	//	Active achievements! : 1
-						if( g_nActiveAchievementSet == AT_CORE )
+						if( g_nActiveAchievementSet == AchievementSetCore )
 						{
 							nFlags |= 1<<1;			//	Core: 3
 						}
-						else if( g_nActiveAchievementSet == AT_UNOFFICIAL )
+						else if( g_nActiveAchievementSet == AchievementSetUnofficial )
 						{
 							nFlags |= 1<<2;			//	Retain at Unofficial: 5
 						}
-						else if( g_nActiveAchievementSet == AT_USER )
+						else if( g_nActiveAchievementSet == AchievementSetLocal )
 						{
 							bMovedFromUserToUnofficial = TRUE;
 							nFlags |= 1<<2;			//	Promote to Unofficial: 5
@@ -858,7 +858,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 									ASSERT( nIndex < g_pActiveAchievements->NumAchievements() );
 									if( nIndex < g_pActiveAchievements->NumAchievements() )
 									{
-										if( g_nActiveAchievementSet == AT_CORE )
+										if( g_nActiveAchievementSet == AchievementSetCore )
 											OnEditData( nIndex, Dlg_Achievements::Modified, "No" );
 									}
 
@@ -981,7 +981,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 								assert( nIndex < g_pActiveAchievements->NumAchievements() );
 								if( nIndex < g_pActiveAchievements->NumAchievements() )
 								{
-									if( g_nActiveAchievementSet == AT_CORE )
+									if( g_nActiveAchievementSet == AchievementSetCore )
 										OnEditData( nIndex, Dlg_Achievements::Achieved, "Yes" );
 									else
 										OnEditData( nIndex, Dlg_Achievements::Active, "No" );
@@ -1061,7 +1061,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 					if( !Cheevo.Active() )
 					{
 						const char* sMessage = "Temporarily reset 'achieved' state of this achievement?\n";
-						if( g_nActiveAchievementSet != AT_CORE )
+						if( g_nActiveAchievementSet != AchievementSetCore )
 							sMessage = "Activate this achievement?";
 
 						if( MessageBox( hDlg, sMessage, "Reset Achieved?", MB_YESNO ) == IDYES )
@@ -1073,7 +1073,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT uMsg, WPARAM wParam,
 							ASSERT( nIndex < g_pActiveAchievements->NumAchievements() );
 							if( nIndex < g_pActiveAchievements->NumAchievements() )
 							{
-								if( g_nActiveAchievementSet == AT_CORE )
+								if( g_nActiveAchievementSet == AchievementSetCore )
 									OnEditData( nIndex, Dlg_Achievements::Achieved, "No" );
 								else
 									OnEditData( nIndex, Dlg_Achievements::Active, "Yes" );
@@ -1182,7 +1182,7 @@ void Dlg_Achievements::OnGet_Achievement( const Achievement& ach )
 {
 	size_t nIndex = g_pActiveAchievements->GetAchievementIndex( ach );
 
-	if( g_nActiveAchievementSet == AT_CORE )
+	if( g_nActiveAchievementSet == AchievementSetCore )
 		OnEditData( nIndex, Achieved, "Yes" );
 	else
 		OnEditData( nIndex, Active, "No" );
@@ -1194,7 +1194,7 @@ void Dlg_Achievements::OnEditAchievement( const Achievement& ach )
 	ASSERT( nIndex < g_pActiveAchievements->NumAchievements() );
 	if( nIndex < g_pActiveAchievements->NumAchievements() )
 	{
-		if( g_nActiveAchievementSet == AT_CORE )
+		if( g_nActiveAchievementSet == AchievementSetCore )
 			OnEditData( nIndex, Dlg_Achievements::Modified, "Yes" );
 		else
 			OnEditData( nIndex, Dlg_Achievements::Active, "No" );
@@ -1207,7 +1207,7 @@ void Dlg_Achievements::ReloadLBXData( int nOffset )
 	//const char* g_sColTitlesUnofficial[]  = { "ID", "Title", "Author", "Active", "Votes" };
 
 	Achievement& Ach = g_pActiveAchievements->GetAchievement( nOffset );
-	if( g_nActiveAchievementSet == AT_CORE )
+	if( g_nActiveAchievementSet == AchievementSetCore )
 	{
 		OnEditData( nOffset, Dlg_Achievements::Title, Ach.Title() );
 		OnEditData( nOffset, Dlg_Achievements::Author, Ach.Author() );

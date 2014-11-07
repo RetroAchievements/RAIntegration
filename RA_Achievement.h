@@ -5,11 +5,6 @@
 #include "RA_Condition.h"
 #include "RA_Defs.h"
 
-namespace
-{
-	extern const char* LockedBadge;
-	extern const char* LockedBadgeFile;
-};
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
@@ -37,7 +32,7 @@ public:
 public:
 	void Clear();
 
-	BOOL IsCoreAchievement() const		{ return m_nSetType == AT_CORE; }
+	BOOL IsCoreAchievement() const		{ return m_nSetType == AchievementSetCore; }
 
 	BOOL Test();
 

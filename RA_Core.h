@@ -14,9 +14,9 @@
 #define CCONV __cdecl
 #endif
 
-
-extern "C"
-{
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //	Fetch the version number of this integration version.
 API const char* CCONV _RA_IntegrationVersion();
@@ -90,8 +90,9 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName );
 //	Install user-side functions that can be called from the DLL
 API void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) );
 
-
+#ifdef __cplusplus
 }
+#endif
 
 
 //	Non-exposed:

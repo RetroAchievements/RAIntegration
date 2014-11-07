@@ -34,12 +34,10 @@ namespace
 
 Dlg_Memory g_MemoryDialog;
 
-//HWND MemoryViewerControl::m_hControl = NULL;
 HFONT MemoryViewerControl::m_hViewerFont = NULL;
 SIZE MemoryViewerControl::m_szFontSize;
 unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
 unsigned int MemoryViewerControl::m_nAddressOffset = 0;
-//unsigned int MemoryViewerControl::m_nAddressSize = 0;
 unsigned int MemoryViewerControl::m_nDataSize = 0;
 unsigned int MemoryViewerControl::m_nEditAddress = 0;
 unsigned int MemoryViewerControl::m_nEditNibble = 0;
@@ -61,7 +59,7 @@ std::string ByteAddressToString( ByteAddress nAddr )
 	if( IsLargeRAM() )
 		sprintf_s( buffer, "0x%06x", nAddr );
 	else
-		sprintf_s( buffer, "0x%06x", nAddr );
+		sprintf_s( buffer, "0x%04x", nAddr );
 
 	return std::string( buffer );
 }

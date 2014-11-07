@@ -131,8 +131,6 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 	g_UserImageFactoryInst.m_pIWICFactory = NULL;
 	g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 
-	//CoUninitialize();	//	This could shutdown someone else's CoInitializeEx
-
 	HeapSetInformation( NULL, HeapEnableTerminationOnCorruption, NULL, 0 );
 
 	hr = CoInitializeEx( NULL, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE );

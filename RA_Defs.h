@@ -3,7 +3,6 @@
 //	NULL, etc
 #include <stddef.h>
 #include <vector>
-//#include <WinDef.h>
 
 #ifndef RA_EXPORTS
 
@@ -29,9 +28,6 @@ using namespace rapidjson;
 #endif	//RA_EXPORTS
 
 
-#define PASTE(x, y) x##y
-#define MAKEWIDE(x) PASTE(L,x)
-
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
 #define RA_LOCKED_BADGE_IMAGE_URI		"00000.png"
 
@@ -53,16 +49,11 @@ using namespace rapidjson;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
-#if defined _DEBUG
+#if defined _DEBUG && !defined( _LIVEURL )
 #define RA_HOST "localhost"
 #else
 #define RA_HOST "retroachievements.org"
 #endif
-
-#define RA_HOST_W MAKEWIDE( RA_HOST )
-
-#define RA_IMG_HOST "retroachievements.org"
-#define RA_IMG_HOST_W MAKEWIDE( RA_IMG_HOST )
 
 #define RA_HOST_URL "http://" RA_HOST
 

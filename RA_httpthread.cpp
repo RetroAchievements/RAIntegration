@@ -286,7 +286,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
  	// Specify an HTTP server.
 	if( hSession != NULL )
 	{
- 		hConnect = WinHttpConnect( hSession, RA_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0 );
+ 		hConnect = WinHttpConnect( hSession, RA_HOST_URL, INTERNET_DEFAULT_HTTP_PORT, 0 );
  
  		// Create an HTTP Request handle.
  		if( hConnect != NULL )
@@ -386,7 +386,7 @@ BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Data
 
 	// Specify an HTTP server.
 	if( hSession != NULL )
-		hConnect = WinHttpConnect( hSession, RA_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0 );
+		hConnect = WinHttpConnect( hSession, RA_HOST_URL, INTERNET_DEFAULT_HTTP_PORT, 0 );
 
 	if( hConnect != NULL )
 	{

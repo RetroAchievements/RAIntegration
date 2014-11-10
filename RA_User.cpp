@@ -47,7 +47,7 @@ void RAUsers::OnUserPicDownloaded( const RequestObject& obj )
 //static 
 RAUser* RAUsers::GetUser( const std::string& sUser )
 {
-	if( !DatabaseContainsUser( sUser ) == FALSE )
+	if( DatabaseContainsUser( sUser ) == FALSE )
 		UserDatabase[ sUser ] = new RAUser( sUser );
 
 	return UserDatabase[ sUser ];
@@ -83,7 +83,7 @@ void RAUser::FlushBitmap()
 
 void RAUser::LoadOrFetchUserImage()
 {
-	m_hUserImage = LoadOrFetchUserPic( RA_DIR_USERPIC + m_sUsername + ".png", RA_USERPIC_PX );
+	m_hUserImage = LoadOrFetchUserPic( m_sUsername, RA_USERPIC_PX );
 	m_bFetchingUserImage = false;
 }
 
@@ -126,8 +126,26 @@ void LocalRAUser::AttemptSilentLogin()
 	m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
+void LocalRAUser::HandleSilentLoginResponse( Document& doc )
+{
+	if( doc.HasMember( "Success" ) && doc["Success"].GetBool() )
+	{
+		const std::string& sUser = doc["User"].GetString();
+		const std::string& sToken = doc["Token"].GetString();
+		const unsigned int nPoints = doc["Score"].GetUint();
+		const unsigned int nUnreadMessages = doc["Messages"].GetUint();
+		ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, TRUE );
+	}
+	else
+	{
+		MessageBox( NULL, "Silent login failed, please login again!", "Sorry!", MB_OK );
+	}
+}
+
 void LocalRAUser::ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin )
 {
+	m_bIsLoggedIn = TRUE;
+
 	SetUsername( sUser );
 	SetToken( sToken );
 	SetScore( nPoints );
@@ -151,11 +169,9 @@ void LocalRAUser::ProcessSuccessfulLogin( const std::string& sUser, const std::s
 	g_AchievementsDialog.OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 	g_AchievementEditorDialog.OnLoad_NewRom();
 	g_AchievementOverlay.OnLoad_NewRom();
-
+	
 	RA_RebuildMenu();
 	_RA_UpdateAppTitle();
-	
-	m_bIsLoggedIn = TRUE;
 }
 
 void LocalRAUser::Logout()

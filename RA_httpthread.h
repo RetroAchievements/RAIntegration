@@ -40,6 +40,7 @@ enum RequestType
 	RequestHashLibrary,
 	RequestGamesList,
 	RequestAllProgress,
+	RequestGameID,
 
 	//	Submit
 	RequestPing,
@@ -79,7 +80,7 @@ class RequestObject
 {
 public:
 	RequestObject( RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "" ) :
-		m_nType( nType ), m_PostArgs( PostArgs ), m_sData( sData )
+		m_nType( nType ), m_PostArgs( PostArgs ), m_sData( sData ), m_bSuccess( 0 )
 		{}
 
 public:

@@ -49,13 +49,18 @@ using namespace rapidjson;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
+#define WIDEN2(x) L ## x
+#define TOWIDESTR(x) WIDEN2(x)
+
+
 #if defined _DEBUG && !defined( _LIVEURL )
 #define RA_HOST "localhost"
 #else
 #define RA_HOST "retroachievements.org"
 #endif
 
-#define RA_HOST_URL "http://" RA_HOST
+#define RA_HOST_URL RA_HOST
+#define RA_HOST_URL_WIDE TOWIDESTR( RA_HOST_URL )
 
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[0] ) )
 #define SAFE_DELETE( x )	{ if( x != NULL ) { delete x; x = NULL; } }

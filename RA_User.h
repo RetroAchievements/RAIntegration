@@ -71,7 +71,9 @@ public:
 
 public:
 	void AttemptLogin();
+
 	void AttemptSilentLogin();
+	void HandleSilentLoginResponse( Document& doc );
 
 	void ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin );
 	void Logout();

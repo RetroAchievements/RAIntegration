@@ -85,6 +85,8 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		_mkdir( RA_DIR_BADGE );
 	if( DirectoryExists( RA_DIR_DATA ) == FALSE )
 		_mkdir( RA_DIR_DATA );
+	if( DirectoryExists( RA_DIR_USERPIC ) == FALSE )
+		_mkdir( RA_DIR_USERPIC );
 	if( DirectoryExists( RA_DIR_OVERLAY ) == FALSE )	//	It should already, really...
 		_mkdir( RA_DIR_OVERLAY );
 
@@ -243,13 +245,15 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Attempt to fetch latest client version:
-	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage );	//	g_sGetLatestClientPage
+	args.clear();
+	args['c'] = std::to_string( g_ConsoleID );
+	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage, args );	//	g_sGetLatestClientPage
 	
 	//	TBD:
-	PostArgs args2;
-	args2['u'] = RAUsers::LocalUser.Username();
-	args2['t'] = RAUsers::LocalUser.Token();
-	RAWeb::CreateThreadedHTTPRequest( RequestType::RequestScore, args2 );
+	args.clear();
+	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
+	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
 	
 	return TRUE;
 }
@@ -374,25 +378,24 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 	{
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
-		args['r'] = "gameid";
 		args['u'] = RAUsers::LocalUser.Username();
 		args['m'] = g_sCurrentROMMD5;
 
-		DataStream Response;
-		if( RAWeb::DoBlockingHttpPost( "request.php", PostArgsToString( args ), Response ) )
+		Document doc;
+		if( RAWeb::DoBlockingRequest( RequestGameID, args, doc ) )
 		{
-			Document doc; 
-			doc.ParseInsitu( DataStreamAsString( Response ) );
-			if( !doc.HasParseError() )
+			nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
+			if( nGameID == 0 )	//	Unknown
 			{
-				nGameID = doc["GameID"].GetUint();
-			}
-			else
-			{
+				RA_LOG( "Could not recognise game with MD5 %s\n", g_sCurrentROMMD5 );
 				char sEstimatedGameTitle[64];
 				ZeroMemory( sEstimatedGameTitle, 64 );
 				RA_GetEstimatedGameTitle( sEstimatedGameTitle );
 				nGameID = Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle );
+			}
+			else
+			{
+				RA_LOG( "Successfully looked up game with ID %d\n", nGameID );
 			}
 		}
 		else
@@ -541,6 +544,10 @@ API int CCONV _RA_HandleHTTPResults()
 
 			switch( pObj->GetRequestType() )
 			{
+			case RequestLogin:
+				RAUsers::LocalUser.HandleSilentLoginResponse( doc );
+				break;
+
 			case RequestBadge:
 				{
 					SetCurrentDirectory( g_sHomeDir.c_str() );
@@ -593,20 +600,27 @@ API int CCONV _RA_HandleHTTPResults()
 
 			case RequestLatestClientPage:
 				{
-					const std::string& sReply = DataStreamAsString( pObj->GetResponse() );
-					if( sReply.length() > 2 && sReply.compare( 0, 2, "0." ) == 0 )
+					if( doc.HasMember( "LatestVersion" ) )
 					{
-						long nValServer = strtol( sReply.c_str()+2, NULL, 10 );
-						long nValKnown = strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
-						long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
-
-						if( nValKnown < nValServer && nValCurrent < nValServer )
+						const std::string& sReply = doc["LatestVersion"].GetString();
+						if( sReply.substr( 0, 2 ).compare( "0." ) == 0 )
 						{
-							//	Update available:
-							_RA_OfferNewRAUpdate( sReply.c_str() );
+							long nValServer = std::strtol( sReply.c_str()+2, NULL, 10 );
+							long nValKnown = std::strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
+							long nValCurrent = std::strtol( g_sClientVersion+2, NULL, 10 );
 
-							//	Update the last version I've heard of:
-							g_sKnownRAVersion = sReply;
+							if( nValKnown < nValServer && nValCurrent < nValServer )
+							{
+								//	Update available:
+								_RA_OfferNewRAUpdate( sReply.c_str() );
+
+								//	Update the last version I've heard of:
+								g_sKnownRAVersion = sReply;
+							}
+							else
+							{
+								RA_LOG( "Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent );
+							}
 						}
 					}
 				}
@@ -669,7 +683,7 @@ API int CCONV _RA_HandleHTTPResults()
 			case RequestSubmitLeaderboardEntry:
 				RA_LeaderboardManager::OnSubmitEntry( doc );
 				break;
-
+				
 			case RequestLeaderboardInfo:
 				if( pObj->ParseResponseToJSON( doc ) )
 					g_LBExamine.OnReceiveData( doc );
@@ -771,8 +785,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA") );
 	}
 
-	AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
-	AppendMenu(hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update") );
+	AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
+	AppendMenu( hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update") );
 	
 	return hRA;
 }
@@ -780,13 +794,13 @@ API HMENU CCONV _RA_CreatePopupMenu()
 API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 {
 	std::stringstream sstr;
-	sstr << std::string( g_sClientName ) << " " << std::string( g_sClientVersion );
+	sstr << std::string( g_sClientName ) << " - " << std::string( g_sClientVersion );
 
 	if( sMessage != NULL )
-		sstr << " " << sMessage << " ";
+		sstr << " - " << sMessage;
 
 	if( RAUsers::LocalUser.IsLoggedIn() )
-		sstr << " " << RAUsers::LocalUser.Username() << " ";
+		sstr << " - " << RAUsers::LocalUser.Username();
 
 	SetWindowText( g_RAMainWnd, sstr.str().c_str() );
 
@@ -801,8 +815,11 @@ API int CCONV _RA_CheckForUpdate()
 	char* sReplyCh = &sReply[0];
 	unsigned long nCharsRead = 0;
 
+	PostArgs args;
+	args['c'] = g_ConsoleID;
+
 	DataStream Response;
-	if( RAWeb::DoBlockingRequest( RequestLatestClientPage, PostArgs(), Response ) )
+	if( RAWeb::DoBlockingRequest( RequestLatestClientPage, args, Response ) )
 	{
 		std::string sReply = DataStreamAsString( Response );
 		if( sReply.length() > 2 && sReply[0] == '0' && sReply[1] == '.' )

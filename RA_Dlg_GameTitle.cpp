@@ -50,7 +50,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 		ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
 		PostArgs args;
-		args['c'] = g_ConsoleID;
+		args['c'] = std::to_string( g_ConsoleID );
 
 		Document doc;
 		if( RAWeb::DoBlockingRequest( RequestGameTitles, args, doc ) )
@@ -62,7 +62,13 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				Value::ConstMemberIterator iter = Data.MemberBegin();
 				while( iter != Data.MemberEnd() )
 				{
-					const GameID nGameID = iter->name.GetUint();
+					if( iter->name.IsNull() || iter->value.IsNull() )
+					{
+						iter++;
+						continue;
+					}
+
+					const GameID nGameID = std::strtoul( iter->name.GetString(), NULL, 10 );	//	Keys cannot be anything but strings
 					const std::string& sTitle = iter->value.GetString();
 					m_aGameTitles[sTitle] = nGameID;
 
@@ -120,7 +126,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				args['c'] = std::to_string( g_ConsoleID );
 
 				Document doc;
-				if( RAWeb::DoBlockingRequest( RequestSubmitNewTitle, args, doc ) )
+				if( RAWeb::DoBlockingRequest( RequestSubmitNewTitle, args, doc ) && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("GameID") )
 				{
 					const GameID nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
 					const std::string& sGameTitle = doc["GameTitle"].GetString();

@@ -1,6 +1,3 @@
-
-#define COBJMACROS
-#define CINTERFACE
 #include <wincodec.h>
 #include <WTypes.h>
 #include <windows.h>
@@ -40,8 +37,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 
 
 	// Check BitmapSource format
-	hr = IWICBitmapSource_GetPixelFormat( pToRenderBitmapSource, &pixelFormat );
-	//hr = pToRenderBitmapSource->GetPixelFormat(&pixelFormat);
+	//hr = IWICBitmapSource_GetPixelFormat( pToRenderBitmapSource, &pixelFormat );
+	hr = pToRenderBitmapSource->GetPixelFormat( &pixelFormat );
 
 	if (SUCCEEDED(hr))
 	{
@@ -50,8 +47,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 
 	if (SUCCEEDED(hr))
 	{
-		hr = IWICBitmapSource_GetSize( pToRenderBitmapSource, &nWidth, &nHeight );
-		//hr = pToRenderBitmapSource->GetSize( &nWidth, &nHeight );
+		//hr = IWICBitmapSource_GetSize( pToRenderBitmapSource, &nWidth, &nHeight );
+		hr = pToRenderBitmapSource->GetSize( &nWidth, &nHeight );
 	}
 
 	// Create a DIB section based on Bitmap Info
@@ -107,7 +104,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 	// Extract the image into the HBITMAP    
 	if (SUCCEEDED(hr))
 	{
-		hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
+		hr = pToRenderBitmapSource->CopyPixels(
+		//hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
 			NULL,
 			cbStride,
 			cbImage, 
@@ -177,37 +175,41 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 	if (SUCCEEDED(hr))
 	{
 		// Create a BitmapScaler
-
-		hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
+		hr = g_UserImageFactoryInst.m_pIWICFactory->CreateBitmapScaler( &pScaler );
+		//hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
 
 		// Initialize the bitmap scaler from the original bitmap map bits
 		if (SUCCEEDED(hr))
 		{
-			hr = IWICBitmapScaler_Initialize( pScaler, 
+			pScaler->Initialize(
+			//hr = IWICBitmapScaler_Initialize( pScaler, 
 				g_UserImageFactoryInst.m_pOriginalBitmapSource, 
 				rcDest.right - rcDest.left, 
 				rcDest.bottom - rcDest.top, 
 				WICBitmapInterpolationModeFant);
 		}
 
-		hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
+		//hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
+		hr = pScaler->GetPixelFormat( &pxformat );
 
 		// Format convert the bitmap into 32bppBGR, a convenient 
 		// pixel format for GDI rendering 
 		if (SUCCEEDED(hr))
 		{
-			hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
+			//hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
+			hr = g_UserImageFactoryInst.m_pIWICFactory->CreateFormatConverter( &pConverter );
 
 			// Format convert to 32bppBGR
 			if (SUCCEEDED(hr))
 			{
-				hr = IWICFormatConverter_Initialize( pConverter, 
-					(IWICBitmapSource*)pScaler,      // Input bitmap to convert
-					GUID_WICPixelFormat32bppBGR,	 //&GUID_WICPixelFormat32bppBGR,
-					WICBitmapDitherTypeNone,         // Specified dither patterm
-					NULL,                            // Specify a particular palette 
-					0.f,                             // Alpha threshold
-					WICBitmapPaletteTypeCustom       // Palette translation type
+				//hr = IWICFormatConverter_Initialize( pConverter, 
+				hr = pConverter->Initialize(
+					static_cast<IWICBitmapSource*>( pScaler ),	// Input bitmap to convert
+					GUID_WICPixelFormat32bppBGR,				//	&GUID_WICPixelFormat32bppBGR,
+					WICBitmapDitherTypeNone,					// Specified dither patterm
+					NULL,										// Specify a particular palette 
+					0.f,										// Alpha threshold
+					WICBitmapPaletteTypeCustom					// Palette translation type
 					);
 
 				// Store the converted bitmap as ppToRenderBitmapSource 
@@ -219,23 +221,21 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 #else
 					const IID* nIID = &IID_IWICBitmapSource;
 #endif
-
-					IWICFormatConverter_QueryInterface( 
-						pConverter, 
+					pConverter->QueryInterface(
+					//IWICFormatConverter_QueryInterface( 
 						nIID,
 						(LPVOID*)(ppToRenderBitmapSource)
 						);
 				}
 			}
-
-			IWICFormatConverter_Release( pConverter );
+			//IWICFormatConverter_Release( pConverter );
+			pConverter->Release();
 			pConverter = NULL;
-			//SafeRelease(pConverter);
 		}
-
-		IWICBitmapScaler_Release( pScaler );
+		
+		//IWICBitmapScaler_Release( pScaler );
+		pScaler->Release();
 		pScaler = NULL;
-		//SafeRelease(pScaler);
 	}
 
 	return hr;
@@ -258,20 +258,20 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 	}
 }
 
-HBITMAP LoadOrFetchUserPic( const std::string& sBadgeURI, const RASize& sz )
+HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 {
 	SetCurrentDirectory( g_sHomeDir.c_str() );
 
-	if( !_FileExists( RA_DIR_USERPIC + sBadgeURI ) )
+	if( !_FileExists( RA_DIR_USERPIC + sUserName + ".png" ) )
 	{
-		if( !RAWeb::HTTPRequestExists( RequestUserPic, sBadgeURI ) )
-			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sBadgeURI );
+		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sUserName );
 
 		return NULL;
 	}
 	else
 	{
-		return LoadLocalPNG( RA_DIR_USERPIC + sBadgeURI, sz );
+		return LoadLocalPNG( RA_DIR_USERPIC + sUserName + ".png", sz );
 	}
 }
 
@@ -298,8 +298,9 @@ HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
 		
 		IWICBitmapDecoder* pDecoder = NULL;
 		// Create a decoder
-		HRESULT hr = IWICImagingFactory_CreateDecoderFromFilename( 
-			g_UserImageFactoryInst.m_pIWICFactory, 
+		HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(
+		//HRESULT hr = IWICImagingFactory_CreateDecoderFromFilename( 
+		//	g_UserImageFactoryInst.m_pIWICFactory, 
 			szFileName,                      // Image to be decoded
 			NULL,                            // Do not prefer a particular vendor
 			GENERIC_READ,                    // Desired read access to the file
@@ -311,7 +312,8 @@ HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
 		IWICBitmapFrameDecode* pFrame = NULL;
 		if( SUCCEEDED(hr) )
 		{
-			hr = IWICBitmapDecoder_GetFrame( pDecoder, 0, &pFrame );
+			hr = pDecoder->GetFrame( 0, &pFrame );
+			//hr = IWICBitmapDecoder_GetFrame( pDecoder, 0, &pFrame );
 		}
 
 // 		IWICColorContext* pContexts[5];
@@ -330,13 +332,14 @@ HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
 #endif
 			if( g_UserImageFactoryInst.m_pOriginalBitmapSource != NULL )
 			{
-				IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+				//IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+				g_UserImageFactoryInst.m_pOriginalBitmapSource->Release();
 				g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 			}
 
-			
-			hr = IWICBitmapFrameDecode_QueryInterface( 
-				pFrame,
+			pFrame->QueryInterface(
+			//hr = IWICBitmapFrameDecode_QueryInterface( 
+				//pFrame,
 				nIID, 
 				(LPVOID*)(&g_UserImageFactoryInst.m_pOriginalBitmapSource)
 				);
@@ -364,29 +367,30 @@ HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
 
 		if( pToRenderBitmapSource != NULL )
 		{
-			IWICBitmapSource_Release( pToRenderBitmapSource );
+			//IWICBitmapSource_Release( pToRenderBitmapSource );
+			pToRenderBitmapSource->Release();
 			pToRenderBitmapSource = NULL;
 		}
-		//SafeRelease(pToRenderBitmapSource);
 
 		if( pDecoder != NULL )
 		{
-			IWICBitmapDecoder_Release( pDecoder );
+			//IWICBitmapDecoder_Release( pDecoder );
+			pDecoder->Release();
 			pDecoder = NULL;
 		}
-		//SafeRelease(pDecoder);
 
 		if( pFrame != NULL )
 		{
-			IWICBitmapFrameDecode_Release( pFrame );
+			//IWICBitmapFrameDecode_Release( pFrame );
+			pFrame->Release();
 			pFrame = NULL;
 		}
-		//SafeRelease(pFrame);
 	}
 
 	if( g_UserImageFactoryInst.m_pOriginalBitmapSource != NULL )
 	{
-		IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+		//IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+		g_UserImageFactoryInst.m_pOriginalBitmapSource->Release();
 		g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 	}
 	//DeleteObject( m_pOriginalBitmapSource );

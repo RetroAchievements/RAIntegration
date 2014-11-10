@@ -34,6 +34,7 @@ const char* RequestTypeToString[] =
 	"RequestHashLibrary",
 	"RequestGamesList",
 	"RequestAllProgress",
+	"RequestGameID",
 
 	"RequestPing",
 	"RequestPostActivity",
@@ -58,27 +59,28 @@ const char* RequestTypeToPost[] =
 	"score",
 	"news",
 	"patch",
-	"",						//	TBD RequestLatestClientPage
+	"latestclient",
 	"richpresencepatch",
 	"achievementwondata",
 	"lbinfo",
 	"codenotes2",
 	"getfriendlist",
 	"badgeiter",
-	"gametitles",
+	"gameslist",	//	dupe of GamesList
 	"unlocks",
 	"hashlibrary",
 	"gameslist",
 	"allprogress",
+	"gameid",
 
-	"",						//	TBD RequestPing (ping.php)
+	"ping",					//	TBD RequestPing (ping.php)
 	"postactivity",
 	"awardachievement",
 	"submitcodenote",
 	"submitlbentry",
 	"uploadachievement",
 	"submitticket",
-	"submittitle",
+	"submitgametitle",
 	
 	"",						//	TBD RequestUserPic
 	"",						//	TBD RequestBadge
@@ -233,13 +235,14 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 	DataStream response;
 	if( DoBlockingRequest( nType, PostData, response ) )
 	{
-		JSONResponseOut.ParseInsitu( DataStreamAsString( response ) );
-		return( !JSONResponseOut.HasParseError() );
+		if( response.size() > 0 )
+		{
+			JSONResponseOut.Parse( DataStreamAsString( response ) );
+			return( !JSONResponseOut.HasParseError() );
+		}
 	}
-	else
-	{
-		return FALSE;
-	}
+	
+	return FALSE;
 }
 
 BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut )
@@ -254,11 +257,11 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	if( sPostString.find( "r=login" ) != std::string::npos )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
-		RA_LOG( __FUNCTION__ ": (%04x) POST to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
+		RA_LOG( __FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
 	}
 	else
 	{
-		RA_LOG( __FUNCTION__ ": (%04x) POST to %s%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
+		RA_LOG( __FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
 	}
 	
 	ResponseOut.clear();
@@ -286,7 +289,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
  	// Specify an HTTP server.
 	if( hSession != NULL )
 	{
- 		hConnect = WinHttpConnect( hSession, RA_HOST_URL, INTERNET_DEFAULT_HTTP_PORT, 0 );
+ 		hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
  
  		// Create an HTTP Request handle.
  		if( hConnect != NULL )
@@ -325,26 +328,34 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 
 					while( nBytesToRead > 0 )
 					{
-						//ZeroMemory( sHttpReadData, 8192 );
-						DataStream sHttpReadData;
-						sHttpReadData.reserve( 8192 );
-
-						assert( nBytesToRead <= 8192 );
-						if( nBytesToRead <= 8192 )
+						BYTE* pData = new BYTE[nBytesToRead];
+						//if( nBytesToRead <= 32 )
 						{
 							nBytesFetched = 0;
-							if( WinHttpReadData( hRequest, sHttpReadData.data(), nBytesToRead, &nBytesFetched ) )
+							if( WinHttpReadData( hRequest, pData, nBytesToRead, &nBytesFetched ) )
 							{
-								assert( nBytesToRead == nBytesFetched );
-								ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+								ASSERT( nBytesToRead == nBytesFetched );
+								ResponseOut.insert( ResponseOut.end(), pData, pData+nBytesFetched );
+								//ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
 							}
 						}
 
+						delete[] pData;
 						WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 					}
 
-					RA_LOG( "DoBlockingHttpPost: POST to %s Success: %d bytes read\n", sRequestedPage, ResponseOut.size() );
-
+					if( ResponseOut.size() > 0 )
+						ResponseOut.push_back( '\0' );	//	EOS for parsing
+					
+					if( sPostString.find( "r=login" ) != std::string::npos )
+					{
+						//	Special case: DO NOT LOG raw user credentials!
+						RA_LOG( "... " __FUNCTION__ ": (%04x) LOGIN Success: %d bytes read\n", GetCurrentThreadId(), ResponseOut.size() );
+					}
+					else
+					{
+						RA_LOG( "-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %d bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size() );
+					}
 				}
  			}
  		}
@@ -386,7 +397,7 @@ BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Data
 
 	// Specify an HTTP server.
 	if( hSession != NULL )
-		hConnect = WinHttpConnect( hSession, RA_HOST_URL, INTERNET_DEFAULT_HTTP_PORT, 0 );
+		hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
 
 	if( hConnect != NULL )
 	{
@@ -558,10 +569,6 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 
 			switch( pObj->GetRequestType() )
 			{
-			case RequestLogin:
-					//	TBD
-				break;
-
 			case StopThread:
 				bThreadActive = FALSE;
 				bDoPingKeepAlive = FALSE;
@@ -747,7 +754,7 @@ std::string PostArgsToString( const PostArgs& args )
 	while( iter != args.end() )
 	{
 		if( iter == args.begin() )
-			str += "?";
+			str += "";//?
 		else
 			str += "&";
 

@@ -357,16 +357,11 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 	return 0;
 }
 
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, unsigned int nRAMSize, BYTE* pRAMExtra, unsigned int nRAMExtraSize )
+API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize, BYTE* pRAM, size_t nRAMSize, BYTE* pRAMExtra, size_t nRAMExtraSize )
 {
-	//ZeroMemory( g_sCurrentROMMD5, 33 );
 	g_sCurrentROMMD5.clear();
-	char buffer[64];
 	if( pROM != NULL && nROMSize > 0 )
-	{
-		md5_GenerateMD5Raw( pROM, nROMSize, buffer );
-		g_sCurrentROMMD5 = buffer;
-	}
+		g_sCurrentROMMD5 = RA::GenerateMD5( pROM, nROMSize );
 
 	g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
 
@@ -387,7 +382,7 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 			nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
 			if( nGameID == 0 )	//	Unknown
 			{
-				RA_LOG( "Could not recognise game with MD5 %s\n", g_sCurrentROMMD5 );
+				RA_LOG( "Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str() );
 				char sEstimatedGameTitle[64];
 				ZeroMemory( sEstimatedGameTitle, 64 );
 				RA_GetEstimatedGameTitle( sEstimatedGameTitle );
@@ -423,6 +418,7 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 			AchievementSet::DeletePatchFile( AchievementSetCore, nGameID );
 			AchievementSet::DeletePatchFile( AchievementSetUnofficial, nGameID );
 
+			AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
 			AchievementSet::LoadFromFile( nGameID );
 			//CoreAchievements->Load( nGameID );
 			//UnofficialAchievements->Load( nGameID );
@@ -816,7 +812,7 @@ API int CCONV _RA_CheckForUpdate()
 	unsigned long nCharsRead = 0;
 
 	PostArgs args;
-	args['c'] = g_ConsoleID;
+	args['c'] = std::to_string( g_ConsoleID );
 
 	DataStream Response;
 	if( RAWeb::DoBlockingRequest( RequestLatestClientPage, args, Response ) )
@@ -978,7 +974,7 @@ API void CCONV _RA_SavePreferences()
 void _FetchGameHashLibraryFromWeb()
 {
 	PostArgs args;
-	args['c'] = g_ConsoleID;
+	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestHashLibrary, args, Response ) )
@@ -988,7 +984,7 @@ void _FetchGameHashLibraryFromWeb()
 void _FetchGameTitlesFromWeb()
 {
 	PostArgs args;
-	args['c'] = g_ConsoleID;
+	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestGamesList, args, Response ) )
@@ -998,7 +994,7 @@ void _FetchGameTitlesFromWeb()
 void _FetchMyProgressFromWeb()
 {
 	PostArgs args;
-	args['c'] = g_ConsoleID;
+	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestAllProgress, args, Response ) )

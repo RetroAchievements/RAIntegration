@@ -333,9 +333,8 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 		sMem,
 		Ach.Points(),
 		Ach.Points()*3 );
-
-	char sTestHash[33];						
-	md5_GenerateMD5( sPostCode, strlen( sPostCode ), sTestHash );
+				
+	std::string sPostCodeHash = RA::GenerateMD5( std::string( sPostCode ) );
 
 	PostArgs args;
 	args['u'] = RAUsers::LocalUser.Username();
@@ -348,7 +347,7 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	args['z'] = std::to_string( Ach.Points() );
 	args['f'] = std::to_string( nFlags );
 	args['b'] = Ach.BadgeImageURI();
-	args['h'] = sTestHash;
+	args['h'] = sPostCodeHash;
 
 	return( RAWeb::DoBlockingRequest( RequestSubmitAchievementData, args, doc ) );
 }

@@ -238,6 +238,13 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 		if( response.size() > 0 )
 		{
 			JSONResponseOut.Parse( DataStreamAsString( response ) );
+
+			//	DebugLog:
+			GenericStringBuffer< UTF8<> > buffer;
+			Writer<GenericStringBuffer< UTF8<> > > writer( buffer );
+			JSONResponseOut.Accept( writer );
+			RA_LOG( buffer.GetString() );
+
 			return( !JSONResponseOut.HasParseError() );
 		}
 	}
@@ -337,6 +344,11 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 								ASSERT( nBytesToRead == nBytesFetched );
 								ResponseOut.insert( ResponseOut.end(), pData, pData+nBytesFetched );
 								//ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+							}
+							else
+							{
+								RA_LOG( "Assumed timed out connection?!" );
+								break;	//Timed out?
 							}
 						}
 

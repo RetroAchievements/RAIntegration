@@ -185,7 +185,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		if( pChar[0] == ':' && pChar[1] == ':' )	//	New Phrase (double colon)
 			pChar += 2;
 
-		if( std::string( "STA:" ).compare( pChar )  == 0 )
+		if( std::string( "STA:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 
@@ -203,7 +203,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			while( *pChar == '_' );
 		}
-		else if( std::string( "CAN:" ).compare( pChar ) == 0 )
+		else if( std::string( "CAN:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Cancel condition
@@ -220,7 +220,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			while( *pChar == '_' );
 		}
-		else if( std::string( "SUB:" ).compare( pChar ) == 0 )
+		else if( std::string( "SUB:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Submit condition
@@ -237,7 +237,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			while( *pChar == '_' );
 		}
-		else if( std::string( "VAL:" ).compare( pChar ) == 0 )
+		else if( std::string( "VAL:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Parse Value condition
@@ -255,7 +255,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			while( *pChar == '_' );
 		}
-		else if( std::string( "PRO:" ).compare( pChar ) == 0 )
+		else if( std::string( "PRO:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Progress: normally same as value:
@@ -273,7 +273,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			while( *pChar == '_' );
 		}
-		else if( std::string( "FOR:" ).compare( pChar ) == 0 )
+		else if( std::string( "FOR:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Format
@@ -315,7 +315,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 					pChar++;
 			}
 		}
-		else if( std::string( "TTL:" ).compare( pChar ) == 0 )
+		else if( std::string( "TTL:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Title:
@@ -328,7 +328,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			}
 			*pDest = '\0';
 		}
-		else if( std::string( "DES:" ).compare( pChar ) == 0 )
+		else if( std::string( "DES:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
 			//	Description:
@@ -344,7 +344,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		else
 		{
 			//	badly formatted... cannot progress!
-			assert(!"Badly formatted: this leaderboard makes no sense!");
+			ASSERT(!"Badly formatted: this leaderboard makes no sense!");
 			break;
 		}
 	}
@@ -445,15 +445,13 @@ void RA_Leaderboard::Test()
 				//	TBD: move to keys!
 				char sValidationSig[50];
 				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.Username().c_str(), m_nID );
-
-				char sValidation[50];
-				md5_GenerateMD5( sValidationSig, strlen(sValidationSig), sValidation );
+				std::string sValidationMD5 = RA::GenerateMD5( sValidationSig );
 
 				PostArgs args;
 				args['u'] = RAUsers::LocalUser.Username();
 				args['t'] = RAUsers::LocalUser.Token();
 				args['i'] = std::to_string( m_nID );
-				args['v'] = sValidation;
+				args['v'] = sValidationMD5;
 				args['s'] = std::to_string( nVal );
 
 				RAWeb::CreateThreadedHTTPRequest( RequestSubmitLeaderboardEntry, args );

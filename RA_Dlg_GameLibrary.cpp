@@ -121,7 +121,11 @@ void ParseGameHashLibraryFromFile( std::map<std::string, GameID>& GameHashLibrar
 			const Value& List = doc["MD5List"];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
+				if( iter->name.IsNull() || iter->value.IsNull() )
+					continue;
+
 				const std::string sMD5 = iter->name.GetString();
+				//GameID nID = static_cast<GameID>( std::strtoul( iter->value.GetString(), NULL, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
 				GameID nID = static_cast<GameID>( iter->value.GetUint() );
 				GameHashLibraryOut[ sMD5 ] = nID;
 			}
@@ -146,7 +150,10 @@ void ParseGameTitlesFromFile( std::map<GameID, std::string>& GameTitlesListOut )
 			const Value& List = doc["Response"];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
-				GameID nID = static_cast<GameID>( iter->name.GetUint() );
+				if( iter->name.IsNull() || iter->value.IsNull() )
+					continue;
+
+				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), NULL, 10 ) );	//	KEYS ARE STRINGS, must convert afterwards!
 				const std::string sTitle = iter->value.GetString();
 				GameTitlesListOut[ nID ] = sTitle;
 			}
@@ -172,7 +179,7 @@ void ParseMyProgressFromFile( std::map<GameID, std::string>& GameProgressOut )
 			const Value& List = doc["Response"];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
-				GameID nID = static_cast<GameID>( iter->name.GetUint() );
+				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), NULL, 10 ) );	//	KEYS MUST BE STRINGS
 				const unsigned int nNumAchievements = iter->value["NumAch"].GetUint();
 				const unsigned int nEarned = iter->value["Earned"].GetUint();
 				const unsigned int nEarnedHardcore = iter->value["HCEarned"].GetUint();
@@ -283,6 +290,7 @@ void Dlg_GameLibrary::ClearTitles()
 	m_vGameEntries.clear();
 
 	ListView_DeleteAllItems( GetDlgItem( m_hDialogBox, IDC_RA_LBX_GAMELIST ) );
+	VisibleResults.clear();
 }
 
 //static
@@ -300,40 +308,32 @@ void Dlg_GameLibrary::ThreadedScanProc()
 		}
 		mtx.unlock();
 
-		FILE* pFile = NULL;
-		if( fopen_s( &pFile, FilesToScan.front().c_str(), "rb" ) == 0 )
+		FILE* pf = NULL;
+		if( fopen_s( &pf, FilesToScan.front().c_str(), "rb" ) == 0 )
 		{
 			// obtain file size:
-			fseek( pFile, 0, SEEK_END );
-			DWORD nSize = ftell( pFile );
-			rewind( pFile );
+			fseek( pf, 0, SEEK_END );
+			DWORD nSize = ftell( pf );
+			rewind( pf );
 
-			//	No point.. ffs
-			//unsigned char* fileBuf = (unsigned char*)malloc(sizeof(unsigned char)*nSize);
-			
-			unsigned char* fileBuf = (unsigned char*)malloc(6 * 1024 * 1024);
-			memset( fileBuf, 0, 6 * 1024 * 1024);
-			//memset(Rom_Data, 0, 6 * 1024 * 1024);
+			static BYTE* pBuf = NULL;
+			if( pBuf == NULL )
+				pBuf = new BYTE[ 6 * 1024 * 1024 ];
 
-			if( fileBuf != NULL )
+			//BYTE* pBuf = new BYTE[ nSize ];	//	Do we really need to load this into memory?
+			if( pBuf != NULL )
 			{
-				fread( fileBuf, 1, nSize, pFile );
+				//fread( pBuf, 1, nSize, pFile );
+				fread( pBuf, sizeof( BYTE ), nSize, pf );	//Check
+				Results[ FilesToScan.front() ] = RA::GenerateMD5( pBuf, nSize );
 
-				//std::string sResult = FilesToScan.front().c_str();
-				//sResult.append( " -> \t" );
-				//sResult.append( md5( buffer, nSize ) );
-				
-				char md5Buffer[33];
-				md5_GenerateMD5Raw( fileBuf, 6 * 1024 * 1024, md5Buffer );
-
-				Results[FilesToScan.front()] = md5Buffer;
-				
 				SendMessage( g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL );
 
-				free( fileBuf );
+				//delete[] pBuf; //Leak!
+				//pBuf = NULL;
 			}
 
-			fclose( pFile );
+			fclose( pf );
 		}
 		
 		mtx.lock();
@@ -354,15 +354,15 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 	HANDLE hFind = FindFirstFile( sSearchDir, &ffd );
 	if( hFind != INVALID_HANDLE_VALUE )
 	{
-		unsigned int nMaxROMSize = 6*1024*1024;
-		unsigned char* sROMRawData = new unsigned char[nMaxROMSize];
+		unsigned int ROM_MAX_SIZE = 6*1024*1024;
+		unsigned char* sROMRawData = new unsigned char[ROM_MAX_SIZE];
 
 		do
 		{
 			if( KEYDOWN( VK_ESCAPE ) )
 				break;
 
-			memset( sROMRawData, 0, nMaxROMSize );
+			memset( sROMRawData, 0, ROM_MAX_SIZE );
 			if( strcmp( ffd.cFileName, "." ) == 0 || strcmp( ffd.cFileName, ".." ) == 0 )
 			{
 				//	Ignore 'this'
@@ -380,7 +380,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 				LARGE_INTEGER filesize;
 				filesize.LowPart = ffd.nFileSizeLow;
 				filesize.HighPart = ffd.nFileSizeHigh;
-				if( filesize.QuadPart < 2048 || filesize.QuadPart > nMaxROMSize )
+				if( filesize.QuadPart < 2048 || filesize.QuadPart > ROM_MAX_SIZE )
 				{
 					//	Ignore: wrong size
 					RA_LOG( "Ignoring %s, wrong size\n", ffd.cFileName );
@@ -406,11 +406,10 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 						
 						DWORD nBytes = 0;
 						BOOL bResult = ReadFile( hROMReader, sROMRawData, nSize, &nBytes, NULL );
-						char sHashOut[33];
 						//md5_GenerateMD5Raw( sROMRawData, nBytes, sHashOut );
-						md5_GenerateMD5Raw( sROMRawData, nMaxROMSize, sHashOut );
+						const std::string sHashOut = RA::GenerateMD5( sROMRawData, nSize );
 
-						if( m_GameHashLibrary.find( std::string( sHashOut ) ) != m_GameHashLibrary.end() )
+						if( m_GameHashLibrary.find( sHashOut ) != m_GameHashLibrary.end() )
 						{
 							const unsigned int nGameID = m_GameHashLibrary[ std::string( sHashOut ) ];
 							RA_LOG( "Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[ nGameID ].c_str() );
@@ -459,8 +458,11 @@ void Dlg_GameLibrary::ReloadGameListData()
 	while( FilesToScan.size() > 0 )
 		FilesToScan.pop_front();
 	mtx.unlock();
+	
+	bool bOK = ListFiles( sROMDir, "*.bin", FilesToScan );
+	bOK |= ListFiles( sROMDir, "*.gen", FilesToScan );
 
-	if( ListFiles( sROMDir, "*", FilesToScan ) )
+	if( bOK )
 	{
 		//ScanAndAddRomsRecursive( sROMDir );
 		std::thread scanner( &Dlg_GameLibrary::ThreadedScanProc );

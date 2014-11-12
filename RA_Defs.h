@@ -23,6 +23,7 @@
 #include "rapidjson/include/rapidjson/reader.h"
 #include "rapidjson/include/rapidjson/writer.h"
 #include "rapidjson/include/rapidjson/filestream.h"
+#include "rapidjson/include/rapidjson/stringbuffer.h"
 using namespace rapidjson;
 
 #endif	//RA_EXPORTS

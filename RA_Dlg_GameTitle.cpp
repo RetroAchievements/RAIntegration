@@ -122,14 +122,16 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				args['u'] = RAUsers::LocalUser.Username();
 				args['t'] = RAUsers::LocalUser.Token();
 				args['m'] = m_sMD5;
-				args['g'] = sSelectedTitle;
+				args['i'] = sSelectedTitle;
 				args['c'] = std::to_string( g_ConsoleID );
 
 				Document doc;
-				if( RAWeb::DoBlockingRequest( RequestSubmitNewTitle, args, doc ) && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("GameID") )
+				if( RAWeb::DoBlockingRequest( RequestSubmitNewTitle, args, doc ) && doc.HasMember("Success") && doc["Success"].GetBool() )
 				{
-					const GameID nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
-					const std::string& sGameTitle = doc["GameTitle"].GetString();
+					const Value& Response = doc["Response"];
+
+					const GameID nGameID = static_cast<GameID>( Response["GameID"].GetUint() );
+					const std::string& sGameTitle = Response["GameTitle"].GetString();
 
 					//	If we're setting the game title here...
 					CoreAchievements->SetGameTitle( sGameTitle );

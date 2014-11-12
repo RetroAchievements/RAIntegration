@@ -57,9 +57,9 @@ BOOL CodeNotes::ReloadFromWeb( GameID nID )
 	if( nID == 0 )
 		return FALSE;
 	
-	PostArgs Args;
-	Args['g'] = std::to_string( nID );
-	RAWeb::CreateThreadedHTTPRequest( RequestCodeNotes, Args );
+	PostArgs args;
+	args['g'] = std::to_string( nID );
+	RAWeb::CreateThreadedHTTPRequest( RequestCodeNotes, args );
 	return TRUE;
 }
 

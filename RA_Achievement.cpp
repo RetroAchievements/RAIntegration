@@ -91,7 +91,7 @@ void Achievement::Parse( const Value& element )
 	m_sAuthor = element["Author"].GetString();
 	m_nTimestampModified = element["Modified"].GetUint();
 	m_nTimestampCreated = element["Created"].GetUint();
-	m_sBadgeImageURI = element["BadgeName"].GetUint();
+	m_sBadgeImageURI = element["BadgeName"].GetString();
 	//unsigned int nFlags = element["Flags"].GetUint();
 
 	if( element["MemAddr"].IsString() )
@@ -1059,8 +1059,7 @@ void AchievementSet::Test()
 	if( !m_bProcessingActive )
 		return;
 	
-	std::vector<Achievement>::iterator iter = m_Achievements.begin();
-	while( iter != m_Achievements.end() )
+	for( std::vector<Achievement>::iterator iter = m_Achievements.begin(); iter != m_Achievements.end(); ++iter )
 	{
 		Achievement& ach = (*iter);
 		if( !ach.Active() )
@@ -1216,6 +1215,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	//	Can't open file: attempt to find it on SQL server!
 	PostArgs args;
 	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
 	args['g'] = std::to_string( nGameID );
 	args['h'] = g_hardcoreModeActive ? "1" : "0";
 	//args['f'] = std::to_string( GetFlagsFromType( m_nSetType ) );
@@ -1223,42 +1223,44 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), NULL, 10 );
 
 	Document doc;
-	if( RAWeb::DoBlockingRequest( RequestPatch, args, doc ) )
+	if( RAWeb::DoBlockingRequest( RequestPatch, args, doc ) && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("PatchData") )
 	{
-		const std::string& sMinVer = doc["MinVer"].GetString();
-		const long nMinVerRequired = strtol( sMinVer.substr( 2 ).c_str(), NULL, 10 );
+		const Value& PatchData = doc["PatchData"];
 
-		if( CURRENT_VER < nMinVerRequired )
-		{
-			//	Client version too old!
+		//const std::string& sMinVer = PatchData["MinVer"].GetString();
+		//const long nMinVerRequired = strtol( sMinVer.substr( 2 ).c_str(), NULL, 10 );
 
-			char buffer[4096];
-			sprintf_s( buffer, 4096, 
-				"Client version of 0.%03d is too old for the latest patch format.\r\n"
-				"Version 0.%03d or greater required.\r\n"
-				"Visit " RA_HOST " for a more recent version? ",
-				CURRENT_VER,
-				nMinVerRequired );
+		//if( CURRENT_VER < nMinVerRequired )
+		//{
+		//	//	Client version too old!
 
-			if( MessageBox( NULL, buffer, "Client out of date!", MB_YESNO ) == IDYES )
-			{
-				sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
+		//	char buffer[4096];
+		//	sprintf_s( buffer, 4096, 
+		//		"Client version of 0.%03d is too old for the latest patch format.\r\n"
+		//		"Version 0.%03d or greater required.\r\n"
+		//		"Visit " RA_HOST " for a more recent version? ",
+		//		CURRENT_VER,
+		//		nMinVerRequired );
 
-				ShellExecute( NULL,
-					"open",
-					buffer,
-					NULL,
-					NULL,
-					SW_SHOWNORMAL );
-			}
-			else
-			{
-				//MessageBox( NULL, "Cannot load achievements for this game.", "Error", MB_OK );
-			}
+		//	if( MessageBox( NULL, buffer, "Client out of date!", MB_YESNO ) == IDYES )
+		//	{
+		//		sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
 
-			return FALSE;
-		}
-		else
+		//		ShellExecute( NULL,
+		//			"open",
+		//			buffer,
+		//			NULL,
+		//			NULL,
+		//			SW_SHOWNORMAL );
+		//	}
+		//	else
+		//	{
+		//		//MessageBox( NULL, "Cannot load achievements for this game.", "Error", MB_OK );
+		//	}
+
+		//	return FALSE;
+		//}
+		//else
 		{
 			SetCurrentDirectory( g_sHomeDir.c_str() );
 			FILE* pf = NULL;
@@ -1267,7 +1269,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 			{
 				FileStream fs( pf );
 				Writer<FileStream> writer( fs );
-				doc.Accept( writer );
+				PatchData.Accept( writer );
 				fclose( pf );
 				return TRUE;
 			}
@@ -1316,29 +1318,30 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 		doc.ParseStream( FileStream( pFile ) );
 		if( !doc.HasParseError() )
 		{
-			ASSERT( doc["Success"].GetBool() );
-			const Value& PatchData = doc["PatchData"];
-			const GameID nGameIDFetched = PatchData["ID"].GetUint();
+			
+			//ASSERT( doc["Success"].GetBool() );
+			//const Value& PatchData = doc["PatchData"];
+			const GameID nGameIDFetched = doc["ID"].GetUint();
 			ASSERT( nGameIDFetched == nGameID );
-			const std::string& sGameTitle = PatchData["Title"].GetString();
-			const unsigned int nConsoleID = PatchData["ConsoleID"].GetUint();
-			const std::string& sConsoleName = PatchData["ConsoleName"].GetString();
-			const unsigned int nForumTopicID = PatchData["ForumTopicID"].GetUint();
-			const unsigned int nGameFlags = PatchData["Flags"].GetUint();
-			const std::string& sImageIcon = PatchData["ImageIcon"].GetString();
-			const std::string& sImageTitle = PatchData["ImageTitle"].GetString();
-			const std::string& sImageIngame = PatchData["ImageIngame"].GetString();
-			const std::string& sImageBoxArt = PatchData["ImageBoxArt"].GetString();
-			const std::string& sPublisher = PatchData["Publisher"].GetString();
-			const std::string& sDeveloper = PatchData["Developer"].GetString();
-			const std::string& sGenre = PatchData["Genre"].GetString();
-			const std::string& sReleased = PatchData["Released"].GetString();
-			const bool bIsFinal = PatchData["IsFinal"].GetBool();
-			const std::string& sRichPresencePatch = PatchData["RichPresencePatch"].GetString();
+			const std::string& sGameTitle = doc["Title"].GetString();
+			const unsigned int nConsoleID = doc["ConsoleID"].GetUint();
+			const std::string& sConsoleName = doc["ConsoleName"].GetString();
+			const unsigned int nForumTopicID = doc["ForumTopicID"].GetUint();
+			const unsigned int nGameFlags = doc["Flags"].GetUint();
+			const std::string& sImageIcon = doc["ImageIcon"].GetString();
+			const std::string& sImageTitle = doc["ImageTitle"].GetString();
+			const std::string& sImageIngame = doc["ImageIngame"].GetString();
+			const std::string& sImageBoxArt = doc["ImageBoxArt"].GetString();
+			const std::string& sPublisher = doc["Publisher"].GetString();
+			const std::string& sDeveloper = doc["Developer"].GetString();
+			const std::string& sGenre = doc["Genre"].GetString();
+			const std::string& sReleased = doc["Released"].GetString();
+			const bool bIsFinal = doc["IsFinal"].GetBool();
+			const std::string& sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
 			
 			RA_RichPresenceInterpretter::PersistAndParseScript( nGameIDFetched, sRichPresencePatch );
 
-			const Value& AchievementsData = PatchData["Achievements"];
+			const Value& AchievementsData = doc["Achievements"];
 
 			for( SizeType i = 0; i < AchievementsData.Size(); ++i )
 			{
@@ -1360,7 +1363,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 				}
 			}
 			
-			const Value& LeaderboardsData = PatchData["Leaderboards"];
+			const Value& LeaderboardsData = doc["Leaderboards"];
 			
 			for( SizeType i = 0; i < LeaderboardsData.Size(); ++i )
 			{
@@ -1461,23 +1464,18 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 			}
 		}
 		
-		//	Generate a slightly different key to md5ificateorise:
-		char cheevoProgressMangled[4096];
-		sprintf_s( cheevoProgressMangled, 4096, "%s%s%s%d", 
+		//	Generate a slightly different key to md5ify:
+		char sCheevoProgressMangled[4096];
+		sprintf_s( sCheevoProgressMangled, 4096, "%s%s%s%d", 
 			RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), pAch->ID() );
-
-		char md5Progress[33];
-		md5_GenerateMD5( cheevoProgressMangled, strlen( cheevoProgressMangled ), md5Progress );
-
-		char achMemString[4096];
-		int nMemStringLen = pAch->CreateMemString( achMemString, 4096 );
-		char md5Achievement[33];
-		md5_GenerateMD5( achMemString, nMemStringLen, md5Achievement );
+		
+		std::string sMD5Progress = RA::GenerateMD5( std::string( sCheevoProgressMangled ) );
+		std::string sMD5Achievement = RA::GenerateMD5( pAch->CreateMemString() );
 		
 		fwrite( cheevoProgressString, sizeof(char), strlen(cheevoProgressString), pf );
-		fwrite( md5Progress, sizeof(char), 32, pf );
+		fwrite( sMD5Progress.c_str(), sizeof(char), sMD5Progress.length(), pf );
 		fwrite( ":", sizeof(char), 1, pf );
-		fwrite( md5Achievement, sizeof(char), 32, pf );
+		fwrite( sMD5Achievement.c_str(), sizeof(char), sMD5Achievement.length(), pf );
 		fwrite( ":", sizeof(char), 1, pf );	//	Check!
 	}
 
@@ -1500,11 +1498,8 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 	unsigned int j = 0;
 	char* pGivenProgressMD5 = NULL;
 	char* pGivenCheevoMD5 = NULL;
-	char pRecalculatedProgressMD5[33];
 	char cheevoMD5TestMangled[4096];
-	char bufferMemString[4096];
 	int nMemStringLen = 0;
-	char pRecalculatedAchievementMD5[33];
 
 	if( !RAUsers::LocalUser.IsLoggedIn() )
 		return;
@@ -1563,20 +1558,20 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 			//	Regenerate the md5 and see if it sticks:
 			sprintf_s( cheevoMD5TestMangled, 4096, "%s%s%s%d", 
 				RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), nID );
-			md5_GenerateMD5( cheevoMD5TestMangled, strlen(cheevoMD5TestMangled), pRecalculatedProgressMD5 );
 
-			if( strncmp( pGivenProgressMD5, pRecalculatedProgressMD5, 32 ) == 0 )
+			std::string sRecalculatedProgressMD5 = RA::GenerateMD5( cheevoMD5TestMangled );
+
+			if( sRecalculatedProgressMD5.compare( pGivenProgressMD5 ) == 0 )
 			{
 				//	Embed in achievement:
 				Achievement* pAch = Find( nID );
 				if( pAch != NULL )
 				{
-					nMemStringLen = pAch->CreateMemString( bufferMemString, 4096 );
+					std::string sMemStr = pAch->CreateMemString();
 
 					//	Recalculate the current achievement to see if it's compatible:
-					md5_GenerateMD5( bufferMemString, nMemStringLen, pRecalculatedAchievementMD5 );
-
-					if( strncmp( pGivenCheevoMD5, pRecalculatedAchievementMD5, 32 ) == 0 )
+					std::string sMemMD5 = RA::GenerateMD5( sMemStr );
+					if( sMemMD5.compare( 0, 32, pGivenCheevoMD5 ) == 0 )
 					{
 						for( size_t nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp )
 						{
@@ -1596,12 +1591,14 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 					}
 					else
 					{
-						assert(!"Achievement progress savestate incompatible (achievement has changed?)");
+						ASSERT( !"Achievement progress savestate incompatible (achievement has changed?)" );
+						RA_LOG( "Achievement progress savestate incompatible (achievement has changed?)" );
 					}
 				}
 				else
 				{
-					assert(!"Achievement doesn't exist!");
+					ASSERT( !"Achievement doesn't exist!" );
+					RA_LOG( "Achievement doesn't exist!" );
 				}
 			}
 			else

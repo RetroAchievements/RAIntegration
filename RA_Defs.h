@@ -3,6 +3,7 @@
 //	NULL, etc
 #include <stddef.h>
 #include <vector>
+#include <assert.h>
 
 #ifndef RA_EXPORTS
 
@@ -128,8 +129,10 @@ using namespace RA;
 
 #ifdef _DEBUG
 #define RA_LOG DebugLog
+#undef ASSERT
 #define ASSERT(x) assert(x)
 #else
 #define RA_LOG DebugLog
+#undef ASSERT
 #define ASSERT(x) {}
 #endif

@@ -247,8 +247,10 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 
 	if( !_FileExists( RA_DIR_BADGE + sBadgeURI ) )
 	{
+		PostArgs args;
+		args['b'] = sBadgeURI;
 		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) )
-			RAWeb::CreateThreadedHTTPRequest( RequestBadge, PostArgs(), sBadgeURI );
+			RAWeb::CreateThreadedHTTPRequest( RequestBadge, args, sBadgeURI );
 
 		return NULL;
 	}

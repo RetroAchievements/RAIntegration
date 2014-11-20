@@ -554,7 +554,7 @@ API int CCONV _RA_HandleHTTPResults()
 					for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
 					{
 						Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-						if( ach.BadgeImageURI().compare( sBadgeURI ) == 0 )
+						if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
 						{
 							//	Re-set this badge image
 							//	NB. This is already a non-modifying op

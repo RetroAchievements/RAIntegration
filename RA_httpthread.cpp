@@ -27,7 +27,7 @@ const char* RequestTypeToString[] =
 	"RequestAchievementInfo",
 	"RequestLeaderboardInfo",
 	"RequestCodeNotes",
-	"RequestFriendList"
+	"RequestFriendList",
 	"RequestBadgeIter",
 	"RequestGameTitles",
 	"RequestUnlocks",
@@ -49,7 +49,6 @@ const char* RequestTypeToString[] =
 	"RequestBadge",
 
 	"STOP_THREAD",
-	"",
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToString ) == NumRequestTypes, "Must match up!" );
 
@@ -83,9 +82,9 @@ const char* RequestTypeToPost[] =
 	"submitgametitle",
 	
 	"",						//	TBD RequestUserPic
-	"",						//	TBD RequestBadge
+	"_requestbadge_",		//	TBD RequestBadge
 
-	"",						//	STOP_THREAD
+	"_stopthread_",			//	STOP_THREAD
 };
 static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
 
@@ -230,6 +229,15 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 //	return bSuccess;
 //}
 
+void RAWeb::LogJSON( const Document& doc )
+{
+	//	DebugLog:
+	GenericStringBuffer< UTF8<> > buffer;
+	Writer<GenericStringBuffer< UTF8<> > > writer( buffer );
+	doc.Accept( writer );
+	RA_LOG( buffer.GetString() );
+}
+
 BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut )
 {
 	DataStream response;
@@ -238,12 +246,7 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 		if( response.size() > 0 )
 		{
 			JSONResponseOut.Parse( DataStreamAsString( response ) );
-
-			//	DebugLog:
-			GenericStringBuffer< UTF8<> > buffer;
-			Writer<GenericStringBuffer< UTF8<> > > writer( buffer );
-			JSONResponseOut.Accept( writer );
-			RA_LOG( buffer.GetString() );
+			LogJSON( JSONResponseOut );
 
 			return( !JSONResponseOut.HasParseError() );
 		}
@@ -254,9 +257,85 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 
 BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut )
 {
-	PostArgs args = PostData;	//	Take a copy
-	args['r'] = RequestTypeToPost[nType];
-	return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
+	PostArgs args = PostData;				//	Take a copy
+	args['r'] = RequestTypeToPost[ nType ];	//	Embed request type
+	
+	switch( nType )
+	{
+	case RequestBadge:
+		return DoBlockingHttpGet( std::string( "i.retroachievements.org/Badge/" + PostData.at('b') + ".png" ), ResponseOut );
+	default:
+		return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
+	}
+}
+
+BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut )
+{
+	BOOL bSuccess = FALSE;
+
+	RA_LOG( __FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
+	ResponseOut.clear();
+	
+	std::string sClientName = "Retro Achievements Client " + std::string( g_sClientName ) + " " + g_sClientVersion;
+	WCHAR wClientNameBuffer[1024];
+	size_t nTemp;
+	mbstowcs_s( &nTemp, wClientNameBuffer, 1024, sClientName.c_str(), sClientName.length()+1 );
+
+ 	// Use WinHttpOpen to obtain a session handle.
+ 	HINTERNET hSession = WinHttpOpen( wClientNameBuffer, 
+ 		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+ 		WINHTTP_NO_PROXY_NAME, 
+ 		WINHTTP_NO_PROXY_BYPASS, 0);
+ 
+ 	// Specify an HTTP server.
+	if( hSession != NULL )
+	{
+ 		HINTERNET hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
+ 
+ 		// Create an HTTP Request handle.
+ 		if( hConnect != NULL )
+		{
+			WCHAR wBuffer[1024];
+			mbstowcs_s( &nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen( sRequestedPage.c_str() )+1 );
+
+ 			HINTERNET hRequest = WinHttpOpenRequest( hConnect, 
+ 				L"GET", 
+ 				wBuffer, 
+ 				NULL, 
+ 				WINHTTP_NO_REFERER, 
+ 				WINHTTP_DEFAULT_ACCEPT_TYPES,
+ 				0);
+ 
+ 			// Send a Request.
+ 			if( hRequest != NULL )
+ 			{
+ 				BOOL bResults = WinHttpSendRequest( hRequest, 
+ 					L"Content-Type: application/x-www-form-urlencoded",
+ 					0, 
+ 					WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
+ 					0, 
+ 					0,
+ 					0);
+
+				if( WinHttpReceiveResponse( hRequest, NULL ) )
+				{
+					bSuccess = TRUE;
+				}
+
+			}
+
+			if( hRequest != NULL )
+				WinHttpCloseHandle( hRequest );
+		}
+
+		if( hConnect != NULL )
+			WinHttpCloseHandle( hConnect );
+	}
+
+	if( hSession != NULL )
+		WinHttpCloseHandle( hSession );
+	
+	return bSuccess;
 }
 
 BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut )
@@ -380,6 +459,14 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 		WinHttpCloseHandle( hConnect );
 	if( hSession != NULL )
 		WinHttpCloseHandle( hSession );
+
+#ifdef _DEBUG
+	{
+		Document doc;
+		doc.Parse( DataStreamAsString( ResponseOut ) );
+		LogJSON( doc );
+	}
+#endif
 
 	return bSuccess;
 }
@@ -539,7 +626,7 @@ BOOL RAWeb::HTTPRequestExists( RequestType nType, const std::string& sData )
 void RAWeb::CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData, const std::string& sData )
 {
 	HttpRequestQueue.PushItem( new RequestObject( nType, PostData, sData ) );
-	RA_LOG( __FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count() );
+	RA_LOG( __FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[ nType ], sData.c_str(), HttpRequestQueue.Count() );
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -1429,11 +1429,11 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 			DrawImage( hDC, pAch->BadgeImageLocked(), nX+nAchImageOffset, nY, 64, 64 );
 	}
 
-	sprintf_s( buffer, 1024, " %s ", pAch->Description() );
+	sprintf_s( buffer, 1024, " %s ", pAch->Description().c_str() );
 	SelectObject( hDC, g_hFontDesc2 );
 	TextOut( hDC, nX+nAchLeftOffset2, nY+nAchSpacingDesc, buffer, strlen( buffer ) );
 
-	sprintf_s( buffer, 1024, " %s (%d Points) ", pAch->Title(), pAch->Points() );
+	sprintf_s( buffer, 1024, " %s (%d Points) ", pAch->Title().c_str(), pAch->Points() );
 	SelectObject( hDC, g_hFontDesc );
 	TextOut( hDC, nX+nAchLeftOffset1, nY, buffer, strlen( buffer ) );
 }

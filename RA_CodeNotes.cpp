@@ -25,7 +25,7 @@ size_t CodeNotes::Load( const std::string& sFile )
 		doc.ParseStream( FileStream( pf ) );
 		if( !doc.HasParseError() )
 		{
-			ASSERT( doc["Notes"].IsArray() );
+			ASSERT( doc["CodeNotes"].IsArray() );
 
 			const Value& NoteArray = doc["CodeNotes"];
 

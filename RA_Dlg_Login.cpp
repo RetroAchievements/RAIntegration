@@ -99,7 +99,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 				}
 				else
 				{
-					if( !doc.HasParseError() )
+					if( !doc.HasParseError() && doc.HasMember("Error") )
 						MessageBox( hDlg, ( std::string( "Server error: " ) + std::string( doc["Error"].GetString() ) ).c_str(), "Error!", MB_OK );
 					else
 						MessageBox( hDlg, "Unknown error connecting... please try again!", "Error!", MB_OK );

@@ -10,13 +10,13 @@
 typedef void* HANDLE;
 typedef void* LPVOID;
 
-enum HTTPRequestType
+enum HTTPRequestMethod
 {
-	HTTPRequest_Post,
-	HTTPRequest_Get,
-	HTTPRequest_StopThread,
+	Post,
+	Get,
+	_TerminateThread,
 
-	HTTPRequest__Max
+	NumHTTPRequestMethods
 };
 
 enum RequestType
@@ -129,13 +129,15 @@ public:
 	static void RA_InitializeHTTPThreads();
 	static void RA_KillHTTPThreads();
 
+	static void LogJSON( const Document& doc );
+
 	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "" );
 	static BOOL HTTPRequestExists( RequestType nType, const std::string& sData );
 	
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );
 
-	//static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
+	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
 
 	static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut );

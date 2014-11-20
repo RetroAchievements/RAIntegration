@@ -91,8 +91,10 @@ void Achievement::Parse( const Value& element )
 	m_sAuthor = element["Author"].GetString();
 	m_nTimestampModified = element["Modified"].GetUint();
 	m_nTimestampCreated = element["Created"].GetUint();
-	m_sBadgeImageURI = element["BadgeName"].GetString();
+	//m_sBadgeImageURI = element["BadgeName"].GetString();
+	SetBadgeImage( element["BadgeName"].GetString() );
 	//unsigned int nFlags = element["Flags"].GetUint();
+
 
 	if( element["MemAddr"].IsString() )
 	{
@@ -1332,10 +1334,10 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			const std::string& sImageTitle = doc["ImageTitle"].GetString();
 			const std::string& sImageIngame = doc["ImageIngame"].GetString();
 			const std::string& sImageBoxArt = doc["ImageBoxArt"].GetString();
-			const std::string& sPublisher = doc["Publisher"].GetString();
-			const std::string& sDeveloper = doc["Developer"].GetString();
-			const std::string& sGenre = doc["Genre"].GetString();
-			const std::string& sReleased = doc["Released"].GetString();
+			const std::string& sPublisher = doc["Publisher"].IsNull() ? "Unknown" : doc["Publisher"].GetString();
+			const std::string& sDeveloper = doc["Developer"].IsNull() ? "Unknown" : doc["Developer"].GetString();
+			const std::string& sGenre = doc["Genre"].IsNull() ? "Unknown" : doc["Genre"].GetString();
+			const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
 			const bool bIsFinal = doc["IsFinal"].GetBool();
 			const std::string& sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
 			

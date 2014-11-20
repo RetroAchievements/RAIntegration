@@ -245,7 +245,7 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 {
 	SetCurrentDirectory( g_sHomeDir.c_str() );
 
-	if( !_FileExists( RA_DIR_BADGE + sBadgeURI ) )
+	if( !_FileExists( RA_DIR_BADGE + sBadgeURI + ".png" ) )
 	{
 		PostArgs args;
 		args['b'] = sBadgeURI;
@@ -256,7 +256,7 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 	}
 	else
 	{
-		return LoadLocalPNG( RA_DIR_BADGE + sBadgeURI, sz );
+		return LoadLocalPNG( RA_DIR_BADGE + sBadgeURI + ".png", sz );
 	}
 }
 

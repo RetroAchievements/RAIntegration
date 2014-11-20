@@ -330,7 +330,8 @@ void Achievement::SetBadgeImage( const std::string& sBadgeURI )
 	m_sBadgeImageURI = sBadgeURI;
 
 	m_hBadgeImage = LoadOrFetchBadge( sBadgeURI, RA_BADGE_PX );
-	m_hBadgeImageLocked = LoadOrFetchBadge( sBadgeURI + "_lock", RA_BADGE_PX );
+	if( sBadgeURI.find( "_lock" ) == std::string::npos )	//	Ensure we're not going to look for _lock_lock
+		m_hBadgeImageLocked = LoadOrFetchBadge( sBadgeURI + "_lock", RA_BADGE_PX );
 }
 
 void Achievement::Reset()

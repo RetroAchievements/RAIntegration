@@ -30,6 +30,7 @@ using namespace rapidjson;
 #endif	//RA_EXPORTS
 
 
+#define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
 #define RA_LOCKED_BADGE_IMAGE_URI		"00000.png"
 
@@ -63,6 +64,9 @@ using namespace rapidjson;
 
 #define RA_HOST_URL RA_HOST
 #define RA_HOST_URL_WIDE TOWIDESTR( RA_HOST_URL )
+
+#define RA_HOST_IMG_URL "i.retroachievements.org"
+#define RA_HOST_IMG_URL_WIDE TOWIDESTR( RA_HOST_IMG_URL )
 
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[0] ) )
 #define SAFE_DELETE( x )	{ if( x != NULL ) { delete x; x = NULL; } }

@@ -182,9 +182,8 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 			if( nMBReply == IDYES )
 			{
 				DataStream Response;
-				//if( RAWeb::DoBlockingHttpGet( "RA_Keys.dll", Response ) )
-				if( RAWeb::DoBlockingHttpPost( "RA_Keys.dll", "", Response ) )
-					_WriteBufferToFile( "RA_Keys.dll", Response.data(), Response.size() );
+				if( RAWeb::DoBlockingHttpGet( RA_KEYS_DLL, Response ) )
+					_WriteBufferToFile( RA_KEYS_DLL, Response );
 			}
 		}
 		else
@@ -536,7 +535,16 @@ API int CCONV _RA_HandleHTTPResults()
 		if( pObj->GetResponse().size() > 0 )
 		{
 			Document doc;
-			BOOL bJSONParsedOK = pObj->ParseResponseToJSON( doc );
+			BOOL bJSONParsedOK = FALSE;
+			
+			if( pObj->GetRequestType() == RequestBadge )
+			{
+				//	Ignore...
+			}
+			else
+			{
+				bJSONParsedOK = pObj->ParseResponseToJSON( doc );
+			}
 
 			switch( pObj->GetRequestType() )
 			{

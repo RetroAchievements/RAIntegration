@@ -114,9 +114,7 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 	rDocOut.ParseInsitu( DataStreamAsString( GetResponse() ) );
 
 	if( rDocOut.HasParseError() )
-	{
-		RA_LOG( "Parse issue on response, %s (%s)\n", rDocOut.GetParseError(), RequestTypeToString[m_nType] );
-	}
+		RA_LOG( "Possible parse issue on response, %d (%s)\n", rDocOut.GetParseError(), RequestTypeToString[m_nType] );
 
 	return !rDocOut.HasParseError();
 }
@@ -263,7 +261,7 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Data
 	switch( nType )
 	{
 	case RequestBadge:
-		return DoBlockingHttpGet( std::string( "i.retroachievements.org/Badge/" + PostData.at('b') + ".png" ), ResponseOut );
+		return DoBlockingHttpGet( std::string( "Badge/" + PostData.at('b') + ".png" ), ResponseOut );
 	default:
 		return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
 	}
@@ -290,7 +288,7 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
  	// Specify an HTTP server.
 	if( hSession != NULL )
 	{
- 		HINTERNET hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
+ 		HINTERNET hConnect = WinHttpConnect( hSession, RA_HOST_IMG_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
  
  		// Create an HTTP Request handle.
  		if( hConnect != NULL )
@@ -319,7 +317,37 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
 
 				if( WinHttpReceiveResponse( hRequest, NULL ) )
 				{
+					DWORD nBytesToRead = 0;
+					WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
+
+					//	Note: success is much earlier, as 0 bytes read is VALID
+					//	i.e. fetch achievements for new game will return 0 bytes.
 					bSuccess = TRUE;
+
+					while( nBytesToRead > 0 )
+					{
+						BYTE* pData = new BYTE[nBytesToRead];
+						//if( nBytesToRead <= 32 )
+						{
+							DWORD nBytesFetched = 0;
+							if( WinHttpReadData( hRequest, pData, nBytesToRead, &nBytesFetched ) )
+							{
+								ASSERT( nBytesToRead == nBytesFetched );
+								ResponseOut.insert( ResponseOut.end(), pData, pData+nBytesFetched );
+								//ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+							}
+							else
+							{
+								RA_LOG( "Assumed timed out connection?!" );
+								break;	//Timed out?
+							}
+						}
+
+						delete[] pData;
+						WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
+					}
+
+					RA_LOG( __FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size() );
 				}
 
 			}

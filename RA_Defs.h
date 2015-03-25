@@ -32,12 +32,12 @@ using namespace rapidjson;
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
-#define RA_LOCKED_BADGE_IMAGE_URI		"00000.png"
+#define RA_UNKNOWN_BADGE_IMAGE_URI		"00000"
 
 #define RA_DIR_OVERLAY					".\\Overlay\\"
 #define RA_DIR_BASE						".\\RACache\\"
-#define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
 #define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
+#define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
 #define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"
 
 #define RA_GAME_HASH_FILENAME			RA_DIR_DATA##"gamehashlibrary.txt"
@@ -45,10 +45,9 @@ using namespace rapidjson;
 #define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA##"myprogress.txt"
 #define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA##"mygamelibrary.txt"
 
-#define RA_NEWS_FILENAME				RA_DIR_DATA##"ra_news.txt"
 #define RA_OVERLAY_BG_FILENAME			RA_DIR_OVERLAY##"overlayBG.png"
+#define RA_NEWS_FILENAME				RA_DIR_DATA##"ra_news.txt"
 #define RA_TITLES_FILENAME				RA_DIR_DATA##"gametitles.txt"
-#define RA_LOCKED_BADGE_IMAGE_FILENAME	RA_DIR_BADGE##RA_LOCKED_BADGE_IMAGE_URI
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 

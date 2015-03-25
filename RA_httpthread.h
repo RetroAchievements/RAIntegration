@@ -35,7 +35,6 @@ enum RequestType
 	RequestCodeNotes,
 	RequestFriendList,
 	RequestBadgeIter,
-	RequestGameTitles,
 	RequestUnlocks,
 	RequestHashLibrary,
 	RequestGamesList,
@@ -133,6 +132,7 @@ public:
 
 	static void CreateThreadedHTTPRequest( RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "" );
 	static BOOL HTTPRequestExists( RequestType nType, const std::string& sData );
+	static BOOL HTTPResponseExists( RequestType nType, const std::string& sData );
 	
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );

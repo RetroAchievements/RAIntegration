@@ -2,6 +2,7 @@
 
 #include <windowsx.h>
 #include <stdio.h>
+#include <sstream>
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -26,34 +27,23 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
  	{
  	case WM_INITDIALOG:
 	{
-		HWND hKnownGamesCbo = GetDlgItem( hDlg, IDC_RA_KNOWNGAMES );
-		char sGameTitleTidy[64];
-		char buffer[65535];
-		char* pBuffer = &buffer[0];
-		int nSel = 0;
-		const char* NewLine = "\n";
-		char* pNextTitle = NULL;
-
-		strcpy_s( sGameTitleTidy, 64, g_GameTitleDialog.m_sEstimatedGameTitle.c_str() );
-		Dlg_GameTitle::CleanRomName( sGameTitleTidy, 64 );
-
-		SetDlgItemText( hDlg, IDC_RA_GAMETITLE, sGameTitleTidy );
+		const HWND hKnownGamesCbo = GetDlgItem( hDlg, IDC_RA_KNOWNGAMES );
+		std::string sGameTitleTidy = Dlg_GameTitle::CleanRomName( g_GameTitleDialog.m_sEstimatedGameTitle );
+		SetDlgItemText( hDlg, IDC_RA_GAMETITLE, sGameTitleTidy.c_str() );
 
 		//	Load in the checksum
 		SetDlgItemText( hDlg, IDC_RA_CHECKSUM, g_GameTitleDialog.m_sMD5.c_str() );
 
 		//	Populate the dropdown
 		//	***Do blocking fetch of all game titles.***
-		ZeroMemory( buffer, 65535 );
-		
-		nSel = ComboBox_AddString( hKnownGamesCbo, "<New Title>" );
+		int nSel = ComboBox_AddString( hKnownGamesCbo, "<New Title>" );
 		ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
 		PostArgs args;
 		args['c'] = std::to_string( g_ConsoleID );
 
 		Document doc;
-		if( RAWeb::DoBlockingRequest( RequestGameTitles, args, doc ) )
+		if( RAWeb::DoBlockingRequest( RequestGamesList, args, doc ) )
 		{
 			const Value& Data = doc["Response"];
 
@@ -80,10 +70,12 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				std::map<std::string,GameID>::const_iterator iter = m_aGameTitles.begin();
 				while( iter != m_aGameTitles.end() )
 				{
-					nSel = ComboBox_AddString( hKnownGamesCbo, (*iter).first.c_str() );
+					const std::string& sTitle = iter->first;
+
+					nSel = ComboBox_AddString( hKnownGamesCbo, sTitle.c_str() );
 
 					//	Attempt to find this game and select it by default: case insensitive comparison
-					if( _stricmp( sGameTitleTidy, (*iter).first.c_str() ) == 0 )
+					if( sGameTitleTidy.compare( sTitle ) == 0 )
 						ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
 					iter++;
@@ -170,10 +162,12 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
  					return TRUE;
  				}
  			}
+
  		case IDCANCEL:
  			EndDialog( hDlg, TRUE );
  			return TRUE;
  			break;
+
 		case IDC_RA_GAMETITLE:
 			switch( HIWORD(wParam) )
 			{
@@ -189,6 +183,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 			break;
+
 		case IDC_RA_KNOWNGAMES:
 			switch( HIWORD(wParam) )
 			{
@@ -206,69 +201,56 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 			break;
+
  		}
  		break;
+
  	case WM_KEYDOWN:
-		//IDC_RA_GAMETITLE
-		wParam;
 		break;
+
  	case WM_CLOSE:
- 		// 		if (Full_Screen)
- 		// 		{
- 		// 			while (ShowCursor(true) < 0);
- 		// 			while (ShowCursor(false) >= 0);
- 		// 		}
- 
  		EndDialog( hDlg, FALSE );
  		return TRUE;
- 		break;
  	}
 
 	return FALSE;
 }
 
-unsigned int Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, const std::string& sMD5, const std::string& sEstimatedGameTitle )
+void Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut )
 {
-	if( sMD5.length() == 0 )
-		return 0;
+	if( sMD5InOut.length() == 0 )
+		return;
 
 	if( !RAUsers::LocalUser.IsLoggedIn() )
-		return 0;
+		return;
 
-	g_GameTitleDialog.m_sMD5 = sMD5;
-	g_GameTitleDialog.m_sEstimatedGameTitle = sEstimatedGameTitle;
+	g_GameTitleDialog.m_sMD5 = sMD5InOut;
+	g_GameTitleDialog.m_sEstimatedGameTitle = sEstimatedGameTitleInOut;
 	g_GameTitleDialog.m_nReturnedGameID = 0; 
 
 	DialogBox( hInst, MAKEINTRESOURCE(IDD_RA_GAMETITLESEL), hParent, s_GameTitleProc );
-
-	return g_GameTitleDialog.m_nReturnedGameID;
+	
+	sMD5InOut = g_GameTitleDialog.m_sMD5;
+	sEstimatedGameTitleInOut = g_GameTitleDialog.m_sEstimatedGameTitle;
+	nGameIDOut = g_GameTitleDialog.m_nReturnedGameID;
 }
 
 //	static
-void Dlg_GameTitle::CleanRomName( char* sRomNameRef, unsigned int nLen )
+std::string Dlg_GameTitle::CleanRomName( const std::string& sTryName )
 {
-	if( strlen( sRomNameRef ) < 2 )
-		return;
+	std::stringstream sstr;
 
-	unsigned int i = 0;
+	//	Scan through, reform sRomNameRef using all logical characters
 	int nCharsAdded = 0;
-	char* buffer = (char*)malloc( nLen );
 
-	for( i = 0; i < nLen-1; ++i )
+	for( size_t i = 0; i < sTryName.length(); ++i )
 	{
-		if( sRomNameRef[i] != ' ' || 
-			( sRomNameRef[i+1] != ' ' && sRomNameRef[i+1] != '\0' ) )
-		{
-			//	Attempt to avoid any double-spaces
-			buffer[nCharsAdded] = sRomNameRef[i];
-			nCharsAdded++;
-		}
+		if( sTryName[ i ] == '\0' )
+			break;
+
+		if( __isascii( sTryName[ i ] ) )
+			sstr << sTryName[ i ];
 	}
 
-	buffer[nCharsAdded] = '\0';
-
-	strcpy_s( sRomNameRef, nLen, buffer );
-
-	free( buffer );
-	buffer = NULL;
+	return sstr.str();
 }

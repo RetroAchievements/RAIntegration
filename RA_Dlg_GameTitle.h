@@ -8,8 +8,8 @@
 class Dlg_GameTitle
 {
 public:
-	static void CleanRomName( char* sRomNameRef, unsigned int nLen );
-	static unsigned int DoModalDialog( HINSTANCE hInst, HWND hParent, const std::string& sMD5, const std::string& sEstimatedGameTitle );
+	std::string CleanRomName( const std::string& sTryName );
+	static void DoModalDialog( HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut );
 	
 	INT_PTR GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam );
 

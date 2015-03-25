@@ -382,10 +382,11 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize, BYTE* pRAM, size_t 
 			if( nGameID == 0 )	//	Unknown
 			{
 				RA_LOG( "Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str() );
-				char sEstimatedGameTitle[64];
-				ZeroMemory( sEstimatedGameTitle, 64 );
-				RA_GetEstimatedGameTitle( sEstimatedGameTitle );
-				nGameID = Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle );
+				char buffer[64];
+				ZeroMemory( buffer, 64 );
+				RA_GetEstimatedGameTitle( buffer );
+				std::string sEstimatedGameTitle( buffer );
+				Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle, nGameID );
 			}
 			else
 			{
@@ -811,14 +812,9 @@ API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 	return 0;
 }
 
+//	##BLOCKING##
 API int CCONV _RA_CheckForUpdate()
 {
-	//	Blocking:
-	char sReply[8192];
-	ZeroMemory( sReply, 8192 );
-	char* sReplyCh = &sReply[0];
-	unsigned long nCharsRead = 0;
-
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
 
@@ -826,13 +822,13 @@ API int CCONV _RA_CheckForUpdate()
 	if( RAWeb::DoBlockingRequest( RequestLatestClientPage, args, Response ) )
 	{
 		std::string sReply = DataStreamAsString( Response );
-		if( sReply.length() > 2 && sReply[0] == '0' && sReply[1] == '.' )
+		if( sReply.length() > 2 && sReply.at( 0 ) == '0' && sReply.at( 1 ) == '.' )
 		{
 			//	Ignore g_sKnownRAVersion: check against g_sRAVersion
-			long nCurrent = strtol( g_sClientVersion+2, NULL, 10 );
-			long nUpdate = strtol( sReplyCh+2, NULL, 10 );
+			const unsigned long nLocalVersion = std::strtoul( g_sClientVersion+2, NULL, 10 );
+			const unsigned long nServerVersion = std::strtoul( sReply.c_str()+2, NULL, 10 );
 
-			if( nCurrent < nUpdate )
+			if( nLocalVersion < nServerVersion )
 			{
 				_RA_OfferNewRAUpdate( sReply.c_str() );
 			}
@@ -840,7 +836,7 @@ API int CCONV _RA_CheckForUpdate()
 			{
 				//	Up to date
 				char buffer[1024];
-				sprintf_s( buffer, 1024, "You have the latest version of %s: %s", g_sClientEXEName, sReplyCh );
+				sprintf_s( buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion );
 				MessageBox( g_RAMainWnd, buffer, "Up to date", MB_OK );
 			}
 		}

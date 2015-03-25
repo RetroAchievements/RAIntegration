@@ -117,7 +117,7 @@ void LocalRAUser::AttemptLogin()
 
 void LocalRAUser::AttemptSilentLogin()
 {
-	//	NB. Don't login here: cause a login when requestlogin.php returns!
+	//	NB. Don't login here: cause a login when http request returns!
 	PostArgs args;
 	args['u'] = Username();
 	args['t'] = Token();

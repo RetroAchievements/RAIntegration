@@ -249,7 +249,8 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 	{
 		PostArgs args;
 		args['b'] = sBadgeURI;
-		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) )
+		//	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
+		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) && !RAWeb::HTTPResponseExists( RequestBadge, sBadgeURI ) )
 			RAWeb::CreateThreadedHTTPRequest( RequestBadge, args, sBadgeURI );
 
 		return NULL;
@@ -266,7 +267,8 @@ HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 
 	if( !_FileExists( RA_DIR_USERPIC + sUserName + ".png" ) )
 	{
-		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) )
+		//	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
+		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) && !RAWeb::HTTPResponseExists( RequestUserPic, sUserName ) )
 			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sUserName );
 
 		return NULL;

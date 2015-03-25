@@ -29,7 +29,6 @@ const char* RequestTypeToString[] =
 	"RequestCodeNotes",
 	"RequestFriendList",
 	"RequestBadgeIter",
-	"RequestGameTitles",
 	"RequestUnlocks",
 	"RequestHashLibrary",
 	"RequestGamesList",
@@ -65,14 +64,13 @@ const char* RequestTypeToPost[] =
 	"codenotes2",
 	"getfriendlist",
 	"badgeiter",
-	"gameslist",	//	dupe of GamesList
 	"unlocks",
 	"hashlibrary",
 	"gameslist",
 	"allprogress",
 	"gameid",
 
-	"ping",					//	TBD RequestPing (ping.php)
+	"ping",
 	"postactivity",
 	"awardachievement",
 	"submitcodenote",
@@ -81,7 +79,7 @@ const char* RequestTypeToPost[] =
 	"submitticket",
 	"submitgametitle",
 	
-	"",						//	TBD RequestUserPic
+	"_requestuserpic_",		//	TBD RequestUserPic
 	"_requestbadge_",		//	TBD RequestBadge
 
 	"_stopthread_",			//	STOP_THREAD
@@ -347,7 +345,7 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
 						WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 					}
 
-					RA_LOG( __FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size() );
+					RA_LOG( __FUNCTION__ ": success! %s Returned %d bytes.", sRequestedPage.c_str(), ResponseOut.size() );
 				}
 
 			}
@@ -648,6 +646,11 @@ BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilenam
 BOOL RAWeb::HTTPRequestExists( RequestType nType, const std::string& sData )
 {
 	return HttpRequestQueue.PageRequestExists( nType, sData );
+}
+
+BOOL RAWeb::HTTPResponseExists( RequestType nType, const std::string& sData )
+{
+	return LastHttpResults.PageRequestExists( nType, sData );
 }
 
 //	Adds items to the httprequest queue

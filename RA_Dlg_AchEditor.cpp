@@ -1611,7 +1611,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const std::string& sBackupBadgeToUse )
 {
-	std::string sAchievementBadgeURI = RA_LOCKED_BADGE_IMAGE_URI;
+	std::string sAchievementBadgeURI = RA_UNKNOWN_BADGE_IMAGE_URI;
 
 	if( m_pSelectedAchievement != NULL )
 		sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();

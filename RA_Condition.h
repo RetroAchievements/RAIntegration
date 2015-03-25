@@ -3,7 +3,6 @@
 #include <vector>
 
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

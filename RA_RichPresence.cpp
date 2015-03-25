@@ -37,7 +37,7 @@ std::string RA_Formattable::Lookup( DataPos nValue ) const
 	return buffer;
 }
 
-void RA_RichPresenceInterpretter::ParseRichPresenceFile( const char* sFilename )
+void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFilename )
 {
 	m_formats.clear();
 	m_lookups.clear();
@@ -51,7 +51,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile( const char* sFilename )
 	const char* DisplayableStr = "Display:";
 
 	FILE* pFile = NULL;
-	fopen_s( &pFile, sFilename, "r" );
+	fopen_s( &pFile, sFilename.c_str(), "r" );
 	if( pFile != NULL )
 	{
 		DWORD nCharsRead = 0;
@@ -254,4 +254,15 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 	}
 
 	return sReturnVal;
+}
+
+//	static
+void RA_RichPresenceInterpretter::PersistAndParseScript( GameID nGameID, const std::string& str )
+{
+	//	Read to file:
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	_WriteBufferToFile( RA_DIR_DATA + std::to_string( nGameID ) + "-Rich.txt", str );
+						
+	//	Then install it
+	g_RichPresenceInterpretter.ParseRichPresenceFile( RA_DIR_DATA + std::to_string( nGameID ) + "-Rich.txt" );
 }

@@ -26,11 +26,10 @@ enum EmulatorID
 	RA__MAX
 };
 
-
-extern bool	(*_RA_GameIsActive)();
-extern void	(*_RA_CauseUnpause)();
-extern void	(*_RA_RebuildMenu)();
-extern void	(*_RA_GetEstimatedGameTitle)(char* sNameOut);
+extern bool (*_RA_GameIsActive)();
+extern void (*_RA_CauseUnpause)();
+extern void (*_RA_RebuildMenu)();
+extern void (*_RA_GetEstimatedGameTitle)(char* sNameOut);
 extern void (*_RA_ResetEmulation)();
 extern void (*_RA_LoadROM)(char* sFullPath);
 

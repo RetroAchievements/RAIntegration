@@ -8,6 +8,8 @@
 #include <shlobj.h>
 #include <string>
 #include <map>
+#include <time.h>
+#include <sstream>
 
 #include "RA_Interface.h"
 #include "RA_Defs.h"
@@ -35,10 +37,12 @@
 #include "RA_RichPresence.h"
 
 
-char g_sKnownRAVersion[50];
-char g_sHomeDir[2048];
-char g_sROMDirLocation[2048];
-char g_sCurrentROMMD5[33];
+
+std::string g_sKnownRAVersion;
+std::string g_sHomeDir;
+std::string g_sROMDirLocation;
+std::string g_sCurrentROMMD5;	//	Internal
+
 HMODULE g_hThisDLLInst;
 HINSTANCE g_hRAKeysDLL;
 HWND g_RAMainWnd;
@@ -55,7 +59,7 @@ bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
 const char* (*g_fnKeysVersion)(void) = NULL;
-void (*g_fnDoValidation)(char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID) = NULL;
+void (*g_fnDoValidation)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID ) = NULL;
 
 //	local func def.
 bool _InstallKeys();
@@ -81,6 +85,8 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		_mkdir( RA_DIR_BADGE );
 	if( DirectoryExists( RA_DIR_DATA ) == FALSE )
 		_mkdir( RA_DIR_DATA );
+	if( DirectoryExists( RA_DIR_USERPIC ) == FALSE )
+		_mkdir( RA_DIR_USERPIC );
 	if( DirectoryExists( RA_DIR_OVERLAY ) == FALSE )	//	It should already, really...
 		_mkdir( RA_DIR_OVERLAY );
 
@@ -150,10 +156,12 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		RA_LOG( "(found as: %s)\n", g_sClientName );
 	}
 
+	char buffer[2048];
+	GetCurrentDirectory( 2048, buffer );
+	g_sHomeDir = buffer;
+	strcat_s( buffer, "\\" );
 
-	GetCurrentDirectory( 2048, g_sHomeDir );
-	strcat_s( g_sHomeDir, "\\" );
-	RA_LOG( "%s - storing \"%s\" as home dir\n", __FUNCTION__, g_sHomeDir );
+	RA_LOG( __FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str() );
 
 	g_sROMDirLocation[0] = '\0';
 
@@ -173,10 +181,9 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 			
 			if( nMBReply == IDYES )
 			{
-				char buffer[65536];
-				DWORD nBytesRead = 0;
-				if( DoBlockingHttpGet( "RA_Keys.dll", buffer, 65536, &nBytesRead ) )
-					_WriteBufferToFile( "RA_Keys.dll", buffer, nBytesRead );
+				DataStream Response;
+				if( RAWeb::DoBlockingHttpGet( RA_KEYS_DLL, Response ) )
+					_WriteBufferToFile( RA_KEYS_DLL, Response );
 			}
 		}
 		else
@@ -197,7 +204,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		return FALSE;
 	}
 
-	RA_InitializeHTTPThreads();
+	RAWeb::RA_InitializeHTTPThreads();
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Memory Manager
@@ -209,13 +216,13 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Initialize All AchievementSets
-	CoreAchievements = new AchievementSet( AT_CORE );
+	CoreAchievements = new AchievementSet( AchievementSetCore );
 	CoreAchievements->Clear();
 
-	UnofficialAchievements = new AchievementSet( AT_UNOFFICIAL );
+	UnofficialAchievements = new AchievementSet( AchievementSetUnofficial );
 	UnofficialAchievements->Clear();
 
-	LocalAchievements = new AchievementSet( AT_USER );
+	LocalAchievements = new AchievementSet( AchievementSetLocal );
 	LocalAchievements->Clear();
 
 	g_pActiveAchievements = CoreAchievements;
@@ -227,44 +234,38 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Setup min required directories:
-	SetCurrentDirectory( g_sHomeDir );
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	
 	//////////////////////////////////////////////////////////////////////////
 	//	Update news:
-	char sPostVars[256];
-	sprintf_s( sPostVars, 256, "n=%d&a=1", AchievementOverlay::m_nMaxNews );
-	CreateHTTPRequestThread( "requestnews.php", sPostVars, HTTPRequest_Post, 0 );
+	PostArgs args;
+	args['c'] = std::to_string( 6 );
+	RAWeb::CreateThreadedHTTPRequest( RequestNews, args );
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Attempt to fetch latest client version:
-	CreateHTTPRequestThread( g_sGetLatestClientPage, "", HTTPRequest_Get, 0 );
-
+	args.clear();
+	args['c'] = std::to_string( g_ConsoleID );
+	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage, args );	//	g_sGetLatestClientPage
+	
+	//	TBD:
+	args.clear();
+	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
+	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
+	
 	return TRUE;
 }
 
 API int CCONV _RA_Shutdown()
 {
 	_RA_SavePreferences();
+	
+	SAFE_DELETE( CoreAchievements );
+	SAFE_DELETE( UnofficialAchievements );
+	SAFE_DELETE( LocalAchievements );
 
-	if( CoreAchievements != NULL )
-	{
-		delete( CoreAchievements );
-		CoreAchievements = NULL;
-	}
-
-	if( UnofficialAchievements != NULL )
-	{
-		delete( UnofficialAchievements );
-		UnofficialAchievements = NULL;
-	}
-
-	if( LocalAchievements != NULL )
-	{
-		delete( LocalAchievements );
-		LocalAchievements = NULL;
-	}
-
-	RA_KillHTTPThreads();
+	RAWeb::RA_KillHTTPThreads();
 
 	if( g_AchievementsDialog.GetHWND() != NULL )
 	{
@@ -292,6 +293,8 @@ API int CCONV _RA_Shutdown()
 
 	g_GameLibrary.KillThread();
 	
+	CoUninitialize();
+
 	return 0;
 }
 
@@ -342,66 +345,62 @@ API int CCONV _RA_SetConsoleID( unsigned int nConsoleID )
 	return 0;
 }
 
-API int _RA_HardcoreModeIsActive()
+API int CCONV _RA_HardcoreModeIsActive()
 {
 	return g_hardcoreModeActive;
 }
 
-API int _RA_HTTPGetRequestExists( const char* sPageName )
+API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 {
-	return HTTPRequestExists( sPageName );
+	//return RAWeb::HTTPRequestExists( sPageName );	//	Deprecated
+	return 0;
 }
 
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, unsigned int nRAMSize, BYTE* pRAMExtra, unsigned int nRAMExtraSize )
+API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize, BYTE* pRAM, size_t nRAMSize, BYTE* pRAMExtra, size_t nRAMExtraSize )
 {
-	ZeroMemory( g_sCurrentROMMD5, 33 );
+	g_sCurrentROMMD5.clear();
 	if( pROM != NULL && nROMSize > 0 )
-	{
-		md5_GenerateMD5Raw( pROM, nROMSize, g_sCurrentROMMD5 );
-	}
+		g_sCurrentROMMD5 = RA::GenerateMD5( pROM, nROMSize );
 
 	g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
 
 	//	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
 
 	//	TBD: local DB of MD5 to GameIDs here
-
-	unsigned int nGameID = 0;
-	if( strcmp( g_sCurrentROMMD5, "" ) != 0 )
+	GameID nGameID = 0;
+	if( g_sCurrentROMMD5.length() > 0 )
 	{
 		//	Fetch the gameID from the DB here:
-		char sPostString[1024];
-		sprintf_s( sPostString, 1024, "u=%s&m=%s", g_LocalUser.m_sUsername, g_sCurrentROMMD5 );
+		PostArgs args;
+		args['u'] = RAUsers::LocalUser.Username();
+		args['m'] = g_sCurrentROMMD5;
 
-		char sBufferOut[1024];
-		ZeroMemory( sBufferOut, 1024 );
-
-		DWORD nBytesRead = 0;
-		if( DoBlockingHttpPost( "requestgameid.php", sPostString, sBufferOut, 1024, &nBytesRead ) )
+		Document doc;
+		if( RAWeb::DoBlockingRequest( RequestGameID, args, doc ) )
 		{
-			if( strncmp( sBufferOut, "OK:", 3 ) == 0 )
+			nGameID = static_cast<GameID>( doc["GameID"].GetUint() );
+			if( nGameID == 0 )	//	Unknown
 			{
-				nGameID = strtol( sBufferOut+3, NULL, 10 );
-			}
-			else if( strncmp( sBufferOut, "UNRECOGNISED", strlen( "UNRECOGNISED" ) ) == 0 )
-			{
-				//	Unknown game: harass user to select/submit details, then reload!
-
-				char sEstimatedGameTitle[64];
-				ZeroMemory( sEstimatedGameTitle, 64 );
-				RA_GetEstimatedGameTitle( sEstimatedGameTitle );
-				nGameID = Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle );
+				RA_LOG( "Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str() );
+				char buffer[64];
+				ZeroMemory( buffer, 64 );
+				RA_GetEstimatedGameTitle( buffer );
+				std::string sEstimatedGameTitle( buffer );
+				Dlg_GameTitle::DoModalDialog( g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle, nGameID );
 			}
 			else
 			{
-				//	Some other fatal error... panic?
-				assert( !"Unknown error from requestgameid.php" );
-
-				char msgboxText[8192];
-				sprintf_s( msgboxText, 8192, "Error from " RA_HOST "!\n%s", sBufferOut );
-
-				MessageBox( g_RAMainWnd, msgboxText, "Error returned!", MB_OK );
+				RA_LOG( "Successfully looked up game with ID %d\n", nGameID );
 			}
+		}
+		else
+		{
+			//	Some other fatal error... panic?
+			assert( !"Unknown error from requestgameid.php" );
+
+			char buffer[8192];
+			sprintf_s( buffer, 8192, "Error from " RA_HOST "!\n" );
+			MessageBox( g_RAMainWnd, buffer, "Error returned!", MB_OK );
 		}
 	}
 
@@ -413,17 +412,19 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 
 	if( nGameID != 0 )
 	{ 
-		if( g_LocalUser.m_bIsLoggedIn )
+		if( RAUsers::LocalUser.IsLoggedIn() )
 		{
 			//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-			AchievementSet::DeletePatchFile( AT_CORE, nGameID );
-			AchievementSet::DeletePatchFile( AT_UNOFFICIAL, nGameID );
+			AchievementSet::DeletePatchFile( AchievementSetCore, nGameID );
+			AchievementSet::DeletePatchFile( AchievementSetUnofficial, nGameID );
 
-			CoreAchievements->Load( nGameID );
-			UnofficialAchievements->Load( nGameID );
-			LocalAchievements->Load( nGameID );
+			AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
+			AchievementSet::LoadFromFile( nGameID );
+			//CoreAchievements->Load( nGameID );
+			//UnofficialAchievements->Load( nGameID );
+			//LocalAchievements->Load( nGameID );
 
-			g_LocalUser.PostActivity( ActivityType_StartPlaying );
+			RAUsers::LocalUser.PostActivity( ActivityType_StartPlaying );
 		}
 	}
 	else
@@ -443,26 +444,26 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, u
 }
 
 
-void FetchBinaryFromWeb( const char* sFilename )
-{
-	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
-
-	char* buffer = new char[nBufferSize];	
-	if( buffer != NULL )
-	{
-		char sAddr[1024];
-		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
-		char sOutput[1024];
-		sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
-
-		DWORD nBytesRead = 0;
-		if( DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
-			_WriteBufferToFile( sOutput, buffer, nBytesRead );
-
-		delete[] ( buffer );
-		buffer = NULL;
-	}
-}
+//void FetchBinaryFromWeb( const char* sFilename )
+//{
+//	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
+//
+//	char* buffer = new char[nBufferSize];	
+//	if( buffer != NULL )
+//	{
+//		char sAddr[1024];
+//		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
+//		char sOutput[1024];
+//		sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
+//
+//		DWORD nBytesRead = 0;
+//		if( RAWeb::DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
+//			_WriteBufferToFile( sOutput, buffer, nBytesRead );
+//
+//		delete[] ( buffer );
+//		buffer = NULL;
+//	}
+//}
 
 API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer )
 {
@@ -527,223 +528,231 @@ API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer )
 
 API int CCONV _RA_HandleHTTPResults()
 {
-	WaitForSingleObject( g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
 
-	RequestObject* pObj = LastHttpResults.PopNextItem();
+	RequestObject* pObj = RAWeb::LastHttpResults.PopNextItem();
 	while( pObj	!= NULL )
 	{
-		//if( pObj->m_pfCallbackOnReceive != NULL )
+		if( pObj->GetResponse().size() > 0 )
 		{
-			//	Banish this shizzle!
-			//	Do a mainthread cb
-			//pObj->m_pfCallbackOnReceive( pObj );
-		}
-		//else
-		{
-			switch( pObj->m_nReqType )
+			Document doc;
+			BOOL bJSONParsedOK = FALSE;
+			
+			if( pObj->GetRequestType() == RequestBadge )
 			{
-			case HTTPRequest_Get:
-				//	Get some data. What do you want with it?
-				if( strncmp( pObj->m_sRequestPageName, "Badge", 5 ) == 0 )
+				//	Ignore...
+			}
+			else
+			{
+				bJSONParsedOK = pObj->ParseResponseToJSON( doc );
+			}
+
+			switch( pObj->GetRequestType() )
+			{
+			case RequestLogin:
+				RAUsers::LocalUser.HandleSilentLoginResponse( doc );
+				break;
+
+			case RequestBadge:
 				{
-					SetCurrentDirectory( g_sHomeDir );
+					SetCurrentDirectory( g_sHomeDir.c_str() );
 
-					char sTargetFile[1024];
-					sprintf_s( sTargetFile, 1024, RA_DIR_BADGE "%s", pObj->m_sRequestPageName+6 );
+					const std::string& sBadgeURI = pObj->GetData();
+					_WriteBufferToFile( RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse() );
 
-					_WriteBufferToFile( sTargetFile, pObj->m_sResponse, pObj->m_nBytesRead );
-
-					//	Fetch minimal name
-					char buffer[16];
-					sprintf_s( buffer, 16, pObj->m_sRequestPageName+6 );
-					buffer[5] = '\0';
-
-					for( unsigned int iter = 0; iter < g_pActiveAchievements->m_nNumAchievements; ++iter )
+					for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
 					{
-						Achievement* pAch = &g_pActiveAchievements->m_Achievements[iter];
-						if( strcmp( pAch->BadgeImageFilename(), buffer ) == 0 )
+						Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+						if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
 						{
 							//	Re-set this badge image
 							//	NB. This is already a non-modifying op
-							pAch->SetBadgeImage( buffer );
+							ach.SetBadgeImage( sBadgeURI );
 						}
 					}
 
-					g_AchievementEditorDialog.UpdateSelectedBadgeImage();
+					g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
 				}
-				else if( strncmp( pObj->m_sRequestPageName, "UserPic", 7 ) == 0 )
+				break;
+
+			case RequestBadgeIter:
+				g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
+				break;
+
+			case RequestUserPic:
+				RAUsers::OnUserPicDownloaded( *pObj );
+				break;
+
+			case RequestScore:
 				{
-					//	Dodge!
-					extern void OnUserPicDownloaded( void* );
-					OnUserPicDownloaded( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, g_sGetLatestClientPage ) == 0 )
-				{
-					if( strlen( pObj->m_sResponse ) > 2 && pObj->m_sResponse[0] == '0' && pObj->m_sResponse[1] == '.' )
+					ASSERT( doc["Success"].GetBool() );
+
+					const std::string& sUser = doc["User"].GetString();
+					unsigned int nScore = doc["Score"].GetUint();
+					RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
+
+					if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
 					{
-						long nValServer = strtol( pObj->m_sResponse+2, NULL, 10 );
-						long nValKnown = strtol( g_sKnownRAVersion+2, NULL, 10 );
-						long nValCurrent = strtol( g_sClientVersion+2, NULL, 10 );
-
-						if( nValKnown < nValServer && nValCurrent < nValServer )
-						{
-							//	Update available:
-							_RA_OfferNewRAUpdate( pObj->m_sResponse );
-
-							//	Update the last version I've heard of:
-							strcpy_s( g_sKnownRAVersion, 50, pObj->m_sResponse );
-						}
+						RAUsers::LocalUser.SetScore( nScore );
 					}
 					else
 					{
-						//	Ignore: nonsense response from server
+						//	Find friend? Update this information?
+						RAUsers::GetUser( sUser )->SetScore( nScore );
 					}
 				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestbadgenames.php" ) == 0 )
-				{
-					g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
-				}
-
-
 				break;
-			case HTTPRequest_Post:
-				//	Post some data. Is the reply important?
-				if( strcmp( pObj->m_sRequestPageName, "requestachievement.php" ) == 0 )
+
+			case RequestLatestClientPage:
 				{
-					if( pObj->m_bResponse == TRUE )
+					if( doc.HasMember( "LatestVersion" ) )
 					{
-						char sTitle[64];
-						char sSubtitle[1024];
-						Achievement* pAch = &g_pActiveAchievements->m_Achievements[ pObj->m_nUserRef ];
-
-						if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
+						const std::string& sReply = doc["LatestVersion"].GetString();
+						if( sReply.substr( 0, 2 ).compare( "0." ) == 0 )
 						{
-							sprintf_s( sTitle, 64, " Achievement Unlocked " );
-							sprintf_s( sSubtitle, 1024, " %s (%d) ", pAch->Title(), pAch->Points() );
-							g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_UNLOCKED, pAch->BadgeImage() );
-							g_AchievementsDialog.OnGet_Achievement( pObj->m_nUserRef );
+							long nValServer = std::strtol( sReply.c_str()+2, NULL, 10 );
+							long nValKnown = std::strtol( g_sKnownRAVersion.c_str()+2, NULL, 10 );
+							long nValCurrent = std::strtol( g_sClientVersion+2, NULL, 10 );
 
-							//	First param passed back will be score
+							if( nValKnown < nValServer && nValCurrent < nValServer )
+							{
+								//	Update available:
+								_RA_OfferNewRAUpdate( sReply.c_str() );
 
-							//	first four chars after OK: are FBOK, FBDC, FBNA, or FBER
-							g_LocalUser.m_nLatestScore = strtol( &( pObj->m_sResponse[3+4] ), NULL, 10 );
+								//	Update the last version I've heard of:
+								g_sKnownRAVersion = sReply;
+							}
+							else
+							{
+								RA_LOG( "Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent );
+							}
+						}
+					}
+				}
+				break;
+
+			case RequestSubmitAwardAchievement:
+				{
+					//	Response to an achievement being awarded:
+					const Achievement* pAch = CoreAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+					if( pAch == NULL )
+						pAch = UnofficialAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
+					if( pAch != NULL )
+					{
+						if( !doc.HasMember("Error") )
+						{
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( " Achievement Unlocked ",
+											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+											  PopupMessageType::PopupAchievementUnlocked,
+											  pAch->BadgeImage() ) );
+							g_AchievementsDialog.OnGet_Achievement( *pAch );
+					
+							RAUsers::LocalUser.SetScore( doc["Score"].GetUint() );
 						}
 						else
 						{
-							sprintf_s( sTitle, 64, " Achievement Unlocked (Error) " );
-							sprintf_s( sSubtitle, 1024, " %s (%d) ", pAch->Title(), pAch->Points() );
-							g_PopupWindows.AchievementPopups().AddMessage( sTitle, sSubtitle, MSG_ACHIEVEMENT_ERROR, pAch->BadgeImage() );
-							g_AchievementsDialog.OnGet_Achievement( pObj->m_nUserRef );
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( " Achievement Unlocked (Error) ", 
+											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+											  PopupMessageType::PopupAchievementError, 
+											  pAch->BadgeImage() ) );
+							g_AchievementsDialog.OnGet_Achievement( *pAch );
 
-							g_PopupWindows.AchievementPopups().AddMessage( "Error with submission, please check!", pObj->m_sResponse, MSG_INFO ); //?
+							g_PopupWindows.AchievementPopups().AddMessage( 
+								MessagePopup( 
+									"Error submitting achievement:", 
+									doc["Error"].GetString() ) ); //?
 
 							//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
 						}
 					}
 				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestunlocks.php" ) == 0 )
-				{
-					//	Done blocking instead
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
-				{
-					if( pObj->m_bResponse == TRUE )
-					{
-						if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
-						{
-							char buffer[4096];
-							sprintf_s( buffer, 4096, 
-								"%s failed:\n\n"
-								"Response from server:\n"
-								"%s",
-								( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
-								pObj->m_sResponse );
+				break;
 
-							MessageBox( NULL, buffer, "Error in login", MB_OK );
-							g_LocalUser.Clear();
-						}
-						else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
-						{
-							//	will return a valid token : points : messages
+			case RequestNews:
+				SetCurrentDirectory( g_sHomeDir.c_str() );
+				_WriteBufferToFile( RA_NEWS_FILENAME, doc );
+				g_AchievementOverlay.InstallNewsArticlesFromFile();
+				break;
 
-							//	fish out the username again
-							char* pUserPtr = pObj->m_sRequestPost+2;
-							char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
+			case RequestAchievementInfo:
+				if( pObj->ParseResponseToJSON( doc ) )
+					g_AchExamine.OnReceiveData( doc );
+				break;
 
-							//	find the token, points, and num messages
-							char* pBuf = pObj->m_sResponse+3;
-							char* pToken = strtok_s( pBuf, ":", &pBuf );
-							unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
-							pBuf++;
-							unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
-							//pBuf++;
+			case RequestCodeNotes:
+				CodeNotes::OnCodeNotesResponse( doc );
+				break;
 
-							g_LocalUser.Login( sUser, pToken, g_LocalUser.m_bStoreToken, nPoints, nMessages );
-						}
-						else
-						{
-							MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-							g_LocalUser.Clear();
-						}
-					}
-					else
-					{
-						MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-						g_LocalUser.Clear();
-					}
-
-					RA_RebuildMenu();
-					_RA_UpdateAppTitle();
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestnews.php" ) == 0 )
-				{
-					if( pObj->m_bResponse )
-					{
-						SetCurrentDirectory( g_sHomeDir );
-						_WriteBufferToFile( RA_DIR_DATA "ra_news.txt", pObj->m_sResponse, pObj->m_nBytesRead );
-						g_AchievementOverlay.InstallNewsArticlesFromFile();
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestrichpresence.php" ) == 0 )
-				{
-					if( pObj->m_bResponse && ( pObj->m_nBytesRead > 0 ) )
-					{
-						char sRichPresenceFile[1024];
-						sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, pObj->m_nUserRef );
-
-						//	Read to file:
-						SetCurrentDirectory( g_sHomeDir );
-						_WriteBufferToFile( sRichPresenceFile, pObj->m_sResponse, pObj->m_nBytesRead );
-						
-						//	Then install it
-						g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
-					}
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestcodenotes.php" ) == 0 )
-				{
-					CodeNotes::s_OnUpdateCB( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestachievementinfo.php" ) == 0 )
-				{
-					AchievementExamine::CB_OnReceiveData( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestlbinfo.php" ) == 0 )
-				{
-					LeaderboardExamine::CB_OnReceiveData( pObj );
-				}
-				else if( strcmp( pObj->m_sRequestPageName, "requestsubmitlbentry.php" ) == 0 )
-				{
-					RA_LeaderboardManager::s_OnSubmitEntry( pObj );
-				}
+			case RequestSubmitLeaderboardEntry:
+				RA_LeaderboardManager::OnSubmitEntry( doc );
+				break;
+				
+			case RequestLeaderboardInfo:
+				if( pObj->ParseResponseToJSON( doc ) )
+					g_LBExamine.OnReceiveData( doc );
 				break;
 			}
+		
+			//if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
+			//{
+			//	if( pObj->m_bResponse == TRUE )
+			//	{
+			//		if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
+			//		{
+			//			char buffer[4096];
+			//			sprintf_s( buffer, 4096, 
+			//				"%s failed:\n\n"
+			//				"Response from server:\n"
+			//				"%s",
+			//				( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
+			//				pObj->m_sResponse );
+
+			//			MessageBox( NULL, buffer, "Error in login", MB_OK );
+			//			RAUsers::LocalUser.Clear();
+			//		}
+			//		else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
+			//		{
+			//			//	will return a valid token : points : messages
+
+			//			//	fish out the username again
+			//			char* pUserPtr = pObj->m_sRequestPost+2;
+			//			char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
+
+			//			//	find the token, points, and num messages
+			//			char* pBuf = pObj->m_sResponse+3;
+			//			char* pToken = strtok_s( pBuf, ":", &pBuf );
+			//			unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
+			//			pBuf++;
+			//			unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
+			//			//pBuf++;
+			//					
+			//			RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
+			//		}
+			//		else
+			//		{
+			//			MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+			//			RAUsers::LocalUser.Clear();
+			//		}
+			//	}
+			//	else
+			//	{
+			//		MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
+			//		RAUsers::LocalUser.Clear();
+			//	}
+
+			//	RA_RebuildMenu();
+			//	_RA_UpdateAppTitle();
+			//}
+
 		}
 
-		free( pObj );
-		pObj = LastHttpResults.PopNextItem();
+		SAFE_DELETE( pObj );
+		pObj = RAWeb::LastHttpResults.PopNextItem();
 	}
 
-	ReleaseMutex( g_hHTTPMutex );
+	ReleaseMutex( RAWeb::g_hHTTPMutex );
 
 	return 0;
 }
@@ -752,7 +761,7 @@ API int CCONV _RA_HandleHTTPResults()
 API HMENU CCONV _RA_CreatePopupMenu()
 {
 	HMENU hRA = CreatePopupMenu();
-	if( g_LocalUser.m_bIsLoggedIn )
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
@@ -781,64 +790,53 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA") );
 	}
 
-	AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
-	AppendMenu(hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update") );
+	AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
+	AppendMenu( hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update") );
 	
 	return hRA;
 }
 
 API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 {
-	char sNewTitle[1024];
-	sprintf_s( sNewTitle, 1024, "%s %s", g_sClientName, g_sClientVersion );
+	std::stringstream sstr;
+	sstr << std::string( g_sClientName ) << " - " << std::string( g_sClientVersion );
 
 	if( sMessage != NULL )
-	{
-		strcat_s( sNewTitle, 1024, " " );
-		strcat_s( sNewTitle, 1024, sMessage );
-		strcat_s( sNewTitle, 1024, " " );
-	}
+		sstr << " - " << sMessage;
 
-	if( g_LocalUser.m_bIsLoggedIn )
-	{
-		strcat_s( sNewTitle, 1024, " (" );
-		strcat_s( sNewTitle, 1024, g_LocalUser.m_sUsername );
-		strcat_s( sNewTitle, 1024, ")" );
-	}
+	if( RAUsers::LocalUser.IsLoggedIn() )
+		sstr << " - " << RAUsers::LocalUser.Username();
 
-	SetWindowText( g_RAMainWnd, sNewTitle );
+	SetWindowText( g_RAMainWnd, sstr.str().c_str() );
 
 	return 0;
 }
 
+//	##BLOCKING##
 API int CCONV _RA_CheckForUpdate()
 {
-	//	Blocking:
-	char sReply[8192];
-	ZeroMemory( sReply, 8192 );
-	char* sReplyCh = &sReply[0];
-	unsigned long nCharsRead = 0;
+	PostArgs args;
+	args['c'] = std::to_string( g_ConsoleID );
 
-	if( DoBlockingHttpPost( g_sGetLatestClientPage, "", sReplyCh, 8192, &nCharsRead ) )
+	DataStream Response;
+	if( RAWeb::DoBlockingRequest( RequestLatestClientPage, args, Response ) )
 	{
-		//	Error in download
-		if( nCharsRead > 2 && sReplyCh[0] == '0' && sReplyCh[1] == '.' )
+		std::string sReply = DataStreamAsString( Response );
+		if( sReply.length() > 2 && sReply.at( 0 ) == '0' && sReply.at( 1 ) == '.' )
 		{
 			//	Ignore g_sKnownRAVersion: check against g_sRAVersion
-			long nCurrent = strtol( g_sClientVersion+2, NULL, 10 );
-			long nUpdate = strtol( sReplyCh+2, NULL, 10 );
+			const unsigned long nLocalVersion = std::strtoul( g_sClientVersion+2, NULL, 10 );
+			const unsigned long nServerVersion = std::strtoul( sReply.c_str()+2, NULL, 10 );
 
-			char buffer[1024];
-
-			if( nCurrent < nUpdate )
+			if( nLocalVersion < nServerVersion )
 			{
-				_RA_OfferNewRAUpdate( sReply );
+				_RA_OfferNewRAUpdate( sReply.c_str() );
 			}
 			else
 			{
-				sprintf_s( buffer, 1024, "You have the latest version of %s: %s", g_sClientEXEName, sReplyCh );
-
 				//	Up to date
+				char buffer[1024];
+				sprintf_s( buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion );
 				MessageBox( g_RAMainWnd, buffer, "Up to date", MB_OK );
 			}
 		}
@@ -863,29 +861,24 @@ API int CCONV _RA_CheckForUpdate()
 	return 0;
 }
 
-
-//	Load preferences from ra_prefs.cfg
 API void CCONV _RA_LoadPreferences()
 {
 	RA_LOG( __FUNCTION__ " - loading preferences...\n" );
-
-	char buffer[2048];
-	sprintf_s( buffer, 2048, "%s\\ra_prefs_%s.cfg", g_sHomeDir, g_sClientName );
-
-	FILE* pConfigFile = NULL;
-	fopen_s( &pConfigFile, buffer, "r" );
-
-	//	Test for first-time use:
-	if( pConfigFile == NULL )
+	
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	FILE* pf = NULL;
+	fopen_s( &pf, std::string( std::string( RA_PREFERENCES_FILENAME_PREFIX ) + g_sClientName + ".cfg" ).c_str(), "rb" );
+	if( pf == NULL )
 	{
+		//	Test for first-time use:
 		//RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
 		//
 		//char sWelcomeMessage[4096];
-
+		
 		//sprintf_s( sWelcomeMessage, 4096, 
 		//	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
 		//	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
-
+			
 		//switch( g_EmulatorID )
 		//{
 		//case RA_Gens:
@@ -909,187 +902,126 @@ API void CCONV _RA_LoadPreferences()
 		//		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
 		//	break;
 		//}
-
+			
 		//strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
 		//	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
-
+			
 		//MessageBox( g_RAMainWnd, 
 		//	sWelcomeMessage,
 		//	"Welcome to RetroAchievements!", MB_OK );
-
+			
 		//	TBD: setup some decent default variables:
 		_RA_SavePreferences();
 	}
 	else
 	{
-		//	Load and read variables:
-		DWORD nCharsRead = 0;
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	'--Username:'
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	
-
-		if( nCharsRead > 0 )
+		Document doc;
+		doc.ParseStream( FileStream( pf ) );
+		
+		if( doc.HasParseError() )
 		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			g_LocalUser.SetUsername( buffer );
-		}
-
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	'--Token:'
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	
-
-		if( nCharsRead > 0 )
-		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			strcpy_s( g_LocalUser.m_sToken, 64, buffer );
-		}
-
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	'--HardcoreModeActive:'
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	
-
-		if( nCharsRead > 0 )
-		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			g_hardcoreModeActive = ( *buffer == '1' );
-		}
-
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	'--NumberHTTPThreads:'
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	
-
-		if( nCharsRead > 0 )
-		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			g_nNumHTTPThreads = atoi( buffer );
-
-			if( g_nNumHTTPThreads <= 0 )
-				g_nNumHTTPThreads = 1;
-			else if( g_nNumHTTPThreads > 100 )
-				g_nNumHTTPThreads = 100;
-		}
-
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	'--ROMDir:'
-		_ReadTil( '\n', buffer, 2048, &nCharsRead, pConfigFile );	//	
-
-		if( nCharsRead > 0 )
-		{
-			buffer[nCharsRead-1] = '\0';	//	Turn that endline into an end-string
-			strcpy_s( g_sROMDirLocation, 2048, buffer );
-		}
-
-		fclose( pConfigFile );
-	}
-
-	//g_GameLibrary.LoadAll();
-}
-
-//	Save preferences to ra_prefs.cfg
-API void CCONV _RA_SavePreferences()
-{
-	char buffer[2048];
-	sprintf_s( buffer, 2048, "%s\\ra_prefs_%s.cfg", g_sHomeDir, g_sClientName );
-
-	FILE* pConfigFile = NULL;
-	fopen_s( &pConfigFile, buffer, "w" );
-
-	if( pConfigFile != NULL )
-	{
-		//	Save config here:
-		fwrite( "--Username:\n", sizeof(char), strlen( "--Username:\n" ), pConfigFile );
-
-		fwrite( g_LocalUser.Username(), sizeof(char), strlen( g_LocalUser.Username() ), pConfigFile );
-		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
-
-
-		fwrite( "--Token:\n", sizeof(char), strlen( "--Token:\n" ), pConfigFile );
-
-		if( g_LocalUser.m_bStoreToken )
-		{
-			fwrite( g_LocalUser.m_sToken, sizeof(char), strlen( g_LocalUser.m_sToken ), pConfigFile );
+			//MessageBox( NULL, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
+			_RA_SavePreferences();
 		}
 		else
 		{
-			//fwrite( "", sizeof(char), strlen( "" ), pConfigFile );
+			if( doc.HasMember( "Username" ) )
+				RAUsers::LocalUser.SetUsername( doc["Username"].GetString() );
+			if( doc.HasMember( "Token" ) )
+				RAUsers::LocalUser.SetToken( doc["Token"].GetString() );
+			if( doc.HasMember( "Hardcore Active" ) )
+				g_hardcoreModeActive = doc["Hardcore Active"].GetBool();
+			if( doc.HasMember( "Num Background Threads" ) )
+				g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
+			if( doc.HasMember( "ROM Directory" ) )
+				g_sROMDirLocation = doc["ROM Directory"].GetString();
 		}
 
-		fwrite( "\n", sizeof(char), 1, pConfigFile );
-
-		fwrite( "--HardcoreModeActive:\n", sizeof(char), strlen( "--HardcoreModeActive:\n" ), pConfigFile );
-		fwrite( g_hardcoreModeActive ? "1" : "0", sizeof(char), 1, pConfigFile ); 
-		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
-
-		fwrite( "--NumberHTTPThreads:\n", sizeof(char), strlen( "--NumberHTTPThreads:\n" ), pConfigFile );
-		char sNumThreads[256];
-		sprintf_s( sNumThreads, 256, "%d", g_nNumHTTPThreads );
-		fwrite( sNumThreads, sizeof(char), strlen( sNumThreads ), pConfigFile ); 
-		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
-
-		fwrite( "--ROMDir:\n", sizeof(char), strlen( "--ROMDir:\n" ), pConfigFile );
-		fwrite( g_sROMDirLocation, sizeof(char), strlen( g_sROMDirLocation ), pConfigFile ); 
-		fwrite( "\n", sizeof(char), 1, pConfigFile ); 
-
-		//	Add more parameters here:
-		//fwrite( g_LocalUser.Username(), sizeof(char), strlen( g_LocalUser.Username() ), pConfigFile );
-		//fwrite( "\n", sizeof(char), strlen( "\n" ), pConfigFile );
-
-		fclose( pConfigFile );
+		fclose( pf );
 	}
 	
+	//TBD:
+	//g_GameLibrary.LoadAll();
+}
+
+API void CCONV _RA_SavePreferences()
+{
+	RA_LOG( __FUNCTION__ " - saving preferences...\n" );
+	
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	FILE* pf = NULL;
+	fopen_s( &pf, std::string( std::string( RA_PREFERENCES_FILENAME_PREFIX ) + g_sClientName + ".cfg" ).c_str(), "wb" );
+	if( pf != NULL )
+	{
+		FileStream fs( pf );
+		Writer<FileStream> writer( fs );
+
+		Document doc;
+		doc.SetObject();
+
+		Document::AllocatorType& a = doc.GetAllocator();
+		doc.AddMember( "Username", StringRef( RAUsers::LocalUser.Username().c_str() ), a );
+		doc.AddMember( "Token", StringRef( RAUsers::LocalUser.Token().c_str() ), a );
+		doc.AddMember( "Hardcore Active", g_hardcoreModeActive, a );
+		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
+		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
+		
+		doc.Accept( writer );	//	Save
+
+		fclose( pf );
+	}
+
+	//TBD:
 	//g_GameLibrary.SaveAll();
 }
 
 void _FetchGameHashLibraryFromWeb()
 {
-	const unsigned int BUFFER_SIZE = 1*1024*1024;
-	char* buffer = new char[BUFFER_SIZE];
-	if( buffer != NULL )
-	{
-		DWORD nBytesRead = 0;
-
-		char sTarget[256];
-		sprintf_s( sTarget, 256, "requesthashlibrary.php?c=%d", g_ConsoleID );
-
-		if( DoBlockingHttpGet( sTarget, buffer, BUFFER_SIZE, &nBytesRead ) )
-			_WriteBufferToFile( RA_DIR_DATA "gamehashlibrary.txt", buffer, nBytesRead );
- 
-		delete[] ( buffer );
-		buffer = NULL;
-	}
+	PostArgs args;
+	args['c'] = std::to_string( g_ConsoleID );
+	args['u'] = RAUsers::LocalUser.Username();
+	DataStream Response; 
+	if( RAWeb::DoBlockingRequest( RequestHashLibrary, args, Response ) )
+		_WriteBufferToFile( RA_GAME_HASH_FILENAME, Response );
 }
 
 void _FetchGameTitlesFromWeb()
 {
-	const unsigned int BUFFER_SIZE = 1*1024*1024;
-	char* buffer = new char[BUFFER_SIZE];
-	if( buffer != NULL )
-	{
-		DWORD nBytesRead = 0;
-
-		char sTarget[256];
-		sprintf_s( sTarget, 256, "requestgametitles.php?c=%d", g_ConsoleID );
-
-		if( DoBlockingHttpGet( sTarget, buffer, BUFFER_SIZE, &nBytesRead ) )
-			_WriteBufferToFile( RA_DIR_DATA "gametitles.txt", buffer, nBytesRead );
- 
-		delete[] ( buffer );
-		buffer = NULL;
-	}
+	PostArgs args;
+	args['c'] = std::to_string( g_ConsoleID );
+	args['u'] = RAUsers::LocalUser.Username();
+	DataStream Response; 
+	if( RAWeb::DoBlockingRequest( RequestGamesList, args, Response ) )
+		_WriteBufferToFile( RA_GAME_LIST_FILENAME, Response );
 }
 
 void _FetchMyProgressFromWeb()
 {
-	const unsigned int BUFFER_SIZE = 1*1024*1024;
-	char* buffer = new char[BUFFER_SIZE];
-	if( buffer != NULL )
-	{
-		DWORD nBytesRead = 0;
+	PostArgs args;
+	args['c'] = std::to_string( g_ConsoleID );
+	args['u'] = RAUsers::LocalUser.Username();
+	DataStream Response; 
+	if( RAWeb::DoBlockingRequest( RequestAllProgress, args, Response ) )
+		_WriteBufferToFile( RA_MY_PROGRESS_FILENAME, Response );
+}
 
-		char sTarget[256];
-		sprintf_s( sTarget, 256, "requestallmyprogress.php?u=%s&c=%d", g_LocalUser.Username(), g_ConsoleID );
+void EnsureDialogVisible( HWND hDlg )
+{
+	//	Does this nudge the dlg back onto the screen?
 
-		if( DoBlockingHttpGet( sTarget, buffer,BUFFER_SIZE, &nBytesRead ) )
-			_WriteBufferToFile( RA_DIR_DATA "myprogress.txt", buffer, nBytesRead );
- 
-		delete[] ( buffer );
-		buffer = NULL;
-	}
+	const int nScreenWidth = GetSystemMetrics( SM_CXSCREEN );
+	const int nScreenHeight = GetSystemMetrics( SM_CYMAXIMIZED ) - ( GetSystemMetrics( SM_CYSCREEN ) - GetSystemMetrics( SM_CYMAXIMIZED ) );
+
+	RECT rc;
+	GetWindowRect( g_AchievementsDialog.GetHWND(), &rc );
+	
+	const int nDlgWidth = rc.right - rc.left;
+	const int nDlgHeight = rc.bottom - rc.top;
+
+	if( rc.left < 0 || rc.top < 0 )
+		SetWindowPos( hDlg, NULL, rc.left < 0 ? 0 : rc.left, rc.top < 0 ? 0 : rc.top, 0, 0, SWP_NOSIZE );
+	else if( ( rc.right > nScreenWidth ) || ( rc.bottom > nScreenHeight ) )
+		SetWindowPos( hDlg, NULL, rc.right > nScreenWidth ? nScreenWidth - nDlgWidth : rc.left, rc.bottom > nScreenHeight ? nScreenHeight - nDlgHeight : rc.top, 0, 0, SWP_NOSIZE );
 }
 
 API void CCONV _RA_InvokeDialog( LPARAM nID )
@@ -1097,32 +1029,41 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 	switch( nID )
 	{
 		case IDM_RA_FILES_ACHIEVEMENTS:
-
-			if( g_AchievementsDialog.GetHWND() == NULL )
-				g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
-			if( g_AchievementsDialog.GetHWND() != NULL )
-				ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_AchievementsDialog.GetHWND() == NULL )
+					g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
+				if( g_AchievementsDialog.GetHWND() != NULL )
+					ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 
 		case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-
-			if( g_AchievementEditorDialog.GetHWND() == NULL )
-				g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
-			if( g_AchievementEditorDialog.GetHWND() != NULL )
-				ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_AchievementEditorDialog.GetHWND() == NULL )
+					g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
+				if( g_AchievementEditorDialog.GetHWND() != NULL )
+					ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 
 		case IDM_RA_FILES_MEMORYFINDER:
-
-			if( g_MemoryDialog.GetHWND() == NULL )
-				g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
-			if( g_MemoryDialog.GetHWND() != NULL )
-				ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
+			{
+				if( g_MemoryDialog.GetHWND() == NULL )
+					g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
+				if( g_MemoryDialog.GetHWND() != NULL )
+					ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
+			
+				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			}
 		break;
 		
 		case IDM_RA_FILES_LOGIN:
 			{
-				DialogBox( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, LoginProc );
+				RA_Dlg_Login::DoModalLogin();
 				_RA_SavePreferences();
 				//RA_RebuildMenu();
 			}
@@ -1131,7 +1072,7 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_FILES_LOGOUT:
 
-			g_LocalUser.Clear();
+			RAUsers::LocalUser.Clear();
 			g_PopupWindows.Clear();
 			
 			_RA_SavePreferences();
@@ -1158,15 +1099,17 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 			_RA_ResetEmulation();
 			
-			if( CoreAchievements->GameID() != 0 )
+			if( CoreAchievements->GetGameID() != 0 )
 			{
 				//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-				AchievementSet::DeletePatchFile( AT_CORE, CoreAchievements->GameID() );
-				AchievementSet::DeletePatchFile( AT_UNOFFICIAL, CoreAchievements->GameID() );
-
-				CoreAchievements->Load( CoreAchievements->GameID() );
-				UnofficialAchievements->Load( CoreAchievements->GameID() );
-				LocalAchievements->Load( CoreAchievements->GameID() );
+				AchievementSet::DeletePatchFile( AchievementSetCore, CoreAchievements->GetGameID() );
+				AchievementSet::DeletePatchFile( AchievementSetUnofficial, CoreAchievements->GetGameID() );
+				if( !AchievementSet::LoadFromFile( CoreAchievements->GetGameID() ) )
+				{
+					//	Fetch then load again from file
+					AchievementSet::FetchFromWebBlocking( CoreAchievements->GetGameID() );
+					AchievementSet::LoadFromFile( CoreAchievements->GetGameID() );
+				}
 			}
 
 			_RA_RebuildMenu();
@@ -1181,12 +1124,13 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_GETROMCHECKSUM:
 			{
-				if( g_pActiveAchievements->Count() == 0 )
+				if( g_pActiveAchievements->NumAchievements() == 0 )
 				{
 					MessageBox( NULL, "No ROM loaded!", "Error", MB_OK );
 				}
 				else
-				{	char buffer[2048];
+				{
+					char buffer[2048];
 					sprintf_s( buffer, "Current ROM MD5: %s", g_sCurrentROMMD5 );
 				
 					MessageBox( NULL, buffer, "Get ROM Checksum", MB_OK );
@@ -1196,14 +1140,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_OPENUSERPAGE:
 			{
-				if( g_LocalUser.m_bIsLoggedIn )
+				if( RAUsers::LocalUser.IsLoggedIn() )
 				{
-					char buffer[1024];
-					sprintf_s( buffer, 1024, "http://www.retroachievements.org/User/%s", g_LocalUser.m_sUsername );
-
 					ShellExecute( NULL,
 						"open",
-						buffer,
+						( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser.Username() ).c_str(),
 						NULL,
 						NULL,
 						SW_SHOWNORMAL );
@@ -1213,14 +1154,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_OPENGAMEPAGE:
 			{
-				if( g_pActiveAchievements->GameID() != 0 )
+				if( g_pActiveAchievements->GetGameID() != 0 )
 				{
-					char buffer[1024];
-					sprintf_s( buffer, 1024, "http://www.retroachievements.org/Game/%d", g_pActiveAchievements->GameID() );
-
 					ShellExecute( NULL,
 						"open",
-						buffer,
+						( RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() ) ).c_str(),
 						NULL,
 						NULL,
 						SW_SHOWNORMAL );
@@ -1242,8 +1180,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 					if( pidl != 0 )
 					{
 						// get the name of the folder
-						if( SHGetPathFromIDList( pidl, g_sROMDirLocation ) )
+						char buffer[4096];
+						if( SHGetPathFromIDList( pidl, buffer ) )
 						{
+							g_sROMDirLocation = buffer;
 							RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation );
 						}
 
@@ -1253,14 +1193,19 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 				if( g_sROMDirLocation[0] != '\0' )
 				{
-					_FetchGameHashLibraryFromWeb();
-					_FetchGameTitlesFromWeb();
-					_FetchMyProgressFromWeb();
-							
 					if( g_GameLibrary.GetHWND() == NULL )
+					{
+						_FetchGameHashLibraryFromWeb();
+						_FetchGameTitlesFromWeb();
+						_FetchMyProgressFromWeb();
+							
 						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
+					}
+
 					if( g_GameLibrary.GetHWND() != NULL )
+					{
 						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
+					}
 
 					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 				}
@@ -1270,10 +1215,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_PARSERICHPRESENCE:
 			{
-				if( g_pActiveAchievements->GameID() != 0 )
+				if( g_pActiveAchievements->GetGameID() != 0 )
 				{
 					char sRichPresenceFile[1024];
-					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GameID() );
+					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GetGameID() );
 
 					//	Then install it
 					g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
@@ -1325,17 +1270,18 @@ API void CCONV _RA_SetPaused( bool bIsPaused )
 
 API const char* CCONV _RA_Username()
 {
-	return g_LocalUser.Username();
+	return RAUsers::LocalUser.Username().c_str();
 }
 
 API void CCONV _RA_AttemptLogin()
 {
-	g_LocalUser.AttemptLogin();
+	RAUsers::LocalUser.AttemptLogin();
 }
 
 API void CCONV _RA_OnSaveState( const char* sFilename )
 {
-	if( g_LocalUser.m_bIsLoggedIn )
+	//	Save State is being allowed by app (user was warned!)
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
 		if( g_hardcoreModeActive )
 		{
@@ -1353,7 +1299,8 @@ API void CCONV _RA_OnSaveState( const char* sFilename )
 
 API void CCONV _RA_OnLoadState( const char* sFilename )
 {
-	if( g_LocalUser.m_bIsLoggedIn )
+	//	Save State is being allowed by app (user was warned!)
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
 		if( g_hardcoreModeActive )
 		{
@@ -1371,7 +1318,7 @@ API void CCONV _RA_OnLoadState( const char* sFilename )
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-	if( g_LocalUser.m_bIsLoggedIn )
+	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
 		g_pActiveAchievements->Test();
 		g_LeaderboardManager.Test();
@@ -1379,7 +1326,7 @@ API void CCONV _RA_DoAchievementsFrame()
 	}
 }
 
-void _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) )
+void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) )
 {
 	//	NB. Must be called from within DLL
 	_RA_GameIsActive			= fpIsActive;
@@ -1457,8 +1404,52 @@ char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate )
 	return (pStartString);
 }
 
-int _WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
+int _WriteBufferToFile( const std::string& sFileName, const Document& doc )
 {
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	FILE* pf = NULL;
+	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
+	{
+		FileStream fs( pf );
+		Writer<FileStream> writer( fs );
+		doc.Accept( writer );
+
+		//fwrite( raw.data(), 1, raw.size(), pf );
+		fclose( pf );
+	}
+
+	return 0;
+}
+
+int _WriteBufferToFile( const std::string& sFileName, const DataStream& raw )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	FILE* pf;
+	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
+	{
+		fwrite( raw.data(), 1, raw.size(), pf );
+		fclose( pf );
+	}
+
+	return 0;
+}
+
+int _WriteBufferToFile( const std::string& sFileName, const std::string& sData )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+	FILE* pf;
+	if( fopen_s( &pf, sFileName.c_str(), "wb" ) == 0 )
+	{
+		fwrite( sData.data(), 1, sData.length(), pf );
+		fclose( pf );
+	}
+
+	return 0;
+}
+
+int _WriteBufferToFile( const char* sFile, const BYTE* sBuffer, int nBytes )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	FILE* pf;
 	if( fopen_s( &pf, sFile, "wb" ) == 0 )
 	{
@@ -1471,6 +1462,7 @@ int _WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 
 char* _MallocAndBulkReadFileToBuffer( const char* sFilename, long& nFileSizeOut )
 {
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 	FILE* pf = NULL;
 	fopen_s( &pf, sFilename, "r" );
 	if( pf == NULL )
@@ -1499,3 +1491,24 @@ char* _MallocAndBulkReadFileToBuffer( const char* sFilename, long& nFileSizeOut 
 	return pRawFileOut;
 }
 
+std::string _TimeStampToString( time_t nTime )
+{
+	char buffer[64];
+	ctime_s( buffer, 64, &nTime );
+	return std::string( buffer );
+}
+
+BOOL _FileExists( const std::string& sFileName )
+{
+	FILE* pf = NULL;
+	fopen_s( &pf, sFileName.c_str(), "rb" );
+	if( pf != NULL )
+	{
+		fclose( pf );
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}

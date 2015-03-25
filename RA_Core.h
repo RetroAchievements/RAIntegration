@@ -1,5 +1,4 @@
-#ifndef __RA_CORE__
-#define __RA_CORE__
+#pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
@@ -15,9 +14,9 @@
 #define CCONV __cdecl
 #endif
 
-
-extern "C"
-{
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //	Fetch the version number of this integration version.
 API const char* CCONV _RA_IntegrationVersion();
@@ -91,15 +90,16 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName );
 //	Install user-side functions that can be called from the DLL
 API void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(char*) );
 
-
+#ifdef __cplusplus
 }
+#endif
 
 
 //	Non-exposed:
 
-extern char g_sKnownRAVersion[50];
-extern char g_sHomeDir[2048];
-extern char g_sROMDirLocation[2048];
+extern std::string g_sKnownRAVersion;
+extern std::string g_sHomeDir;
+extern std::string g_sROMDirLocation;
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
@@ -129,11 +129,16 @@ extern BOOL _ReadTil( const char nChar, char buffer[], unsigned int nSize, DWORD
 extern char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate );
 
 //	Write out the buffer to a file
-extern int _WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes );
+extern int _WriteBufferToFile( const std::string& sFileName, const DataStream& rawData );
+extern int _WriteBufferToFile( const std::string& sFileName, const Document& doc );
+extern int _WriteBufferToFile( const std::string& sFileName, const std::string& sString );
+extern int _WriteBufferToFile( const char* sFile, const BYTE* sBuffer, int nBytes );
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-#endif //__RA_CORE__
+extern BOOL _FileExists( const std::string& sFileName );
+
+extern std::string _TimeStampToString( time_t nTime );

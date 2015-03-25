@@ -37,7 +37,7 @@ private:
 	static SIZE m_szFontSize;
 	static unsigned int m_nDataStartXOffset;
 	static unsigned int m_nAddressOffset;
-	static unsigned int m_nAddressSize;
+	//static unsigned int m_nAddressSize;
 	static unsigned int m_nDataSize;
 	static unsigned int m_nEditAddress;
 	static unsigned int m_nEditNibble;
@@ -71,6 +71,8 @@ public:
 	void Invalidate();
 	
 	void SetWatchingAddress( unsigned int nAddr );
+
+	BOOL IsActive() const;
 
 public:
 	CodeNotes* m_pCodeNotes;

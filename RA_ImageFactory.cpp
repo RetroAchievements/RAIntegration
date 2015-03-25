@@ -1,6 +1,3 @@
-
-#define COBJMACROS
-#define CINTERFACE
 #include <wincodec.h>
 #include <WTypes.h>
 #include <windows.h>
@@ -40,8 +37,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 
 
 	// Check BitmapSource format
-	hr = IWICBitmapSource_GetPixelFormat( pToRenderBitmapSource, &pixelFormat );
-	//hr = pToRenderBitmapSource->GetPixelFormat(&pixelFormat);
+	//hr = IWICBitmapSource_GetPixelFormat( pToRenderBitmapSource, &pixelFormat );
+	hr = pToRenderBitmapSource->GetPixelFormat( &pixelFormat );
 
 	if (SUCCEEDED(hr))
 	{
@@ -50,8 +47,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 
 	if (SUCCEEDED(hr))
 	{
-		hr = IWICBitmapSource_GetSize( pToRenderBitmapSource, &nWidth, &nHeight );
-		//hr = pToRenderBitmapSource->GetSize( &nWidth, &nHeight );
+		//hr = IWICBitmapSource_GetSize( pToRenderBitmapSource, &nWidth, &nHeight );
+		hr = pToRenderBitmapSource->GetSize( &nWidth, &nHeight );
 	}
 
 	// Create a DIB section based on Bitmap Info
@@ -107,7 +104,8 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 	// Extract the image into the HBITMAP    
 	if (SUCCEEDED(hr))
 	{
-		hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
+		hr = pToRenderBitmapSource->CopyPixels(
+		//hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
 			NULL,
 			cbStride,
 			cbImage, 
@@ -130,8 +128,6 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 
 	g_UserImageFactoryInst.m_pIWICFactory = NULL;
 	g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
-
-	CoUninitialize();
 
 	HeapSetInformation( NULL, HeapEnableTerminationOnCorruption, NULL, 0 );
 
@@ -179,37 +175,41 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 	if (SUCCEEDED(hr))
 	{
 		// Create a BitmapScaler
-
-		hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
+		hr = g_UserImageFactoryInst.m_pIWICFactory->CreateBitmapScaler( &pScaler );
+		//hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
 
 		// Initialize the bitmap scaler from the original bitmap map bits
 		if (SUCCEEDED(hr))
 		{
-			hr = IWICBitmapScaler_Initialize( pScaler, 
+			pScaler->Initialize(
+			//hr = IWICBitmapScaler_Initialize( pScaler, 
 				g_UserImageFactoryInst.m_pOriginalBitmapSource, 
 				rcDest.right - rcDest.left, 
 				rcDest.bottom - rcDest.top, 
 				WICBitmapInterpolationModeFant);
 		}
 
-		hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
+		//hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
+		hr = pScaler->GetPixelFormat( &pxformat );
 
 		// Format convert the bitmap into 32bppBGR, a convenient 
 		// pixel format for GDI rendering 
 		if (SUCCEEDED(hr))
 		{
-			hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
+			//hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
+			hr = g_UserImageFactoryInst.m_pIWICFactory->CreateFormatConverter( &pConverter );
 
 			// Format convert to 32bppBGR
 			if (SUCCEEDED(hr))
 			{
-				hr = IWICFormatConverter_Initialize( pConverter, 
-					(IWICBitmapSource*)pScaler,      // Input bitmap to convert
-					GUID_WICPixelFormat32bppBGR,	 //&GUID_WICPixelFormat32bppBGR,
-					WICBitmapDitherTypeNone,         // Specified dither patterm
-					NULL,                            // Specify a particular palette 
-					0.f,                             // Alpha threshold
-					WICBitmapPaletteTypeCustom       // Palette translation type
+				//hr = IWICFormatConverter_Initialize( pConverter, 
+				hr = pConverter->Initialize(
+					static_cast<IWICBitmapSource*>( pScaler ),	// Input bitmap to convert
+					GUID_WICPixelFormat32bppBGR,				//	&GUID_WICPixelFormat32bppBGR,
+					WICBitmapDitherTypeNone,					// Specified dither patterm
+					NULL,										// Specify a particular palette 
+					0.f,										// Alpha threshold
+					WICBitmapPaletteTypeCustom					// Palette translation type
 					);
 
 				// Store the converted bitmap as ppToRenderBitmapSource 
@@ -221,75 +221,90 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource** ppToRenderBitmapSou
 #else
 					const IID* nIID = &IID_IWICBitmapSource;
 #endif
-
-					IWICFormatConverter_QueryInterface( 
-						pConverter, 
+					pConverter->QueryInterface(
+					//IWICFormatConverter_QueryInterface( 
 						nIID,
 						(LPVOID*)(ppToRenderBitmapSource)
 						);
 				}
 			}
-
-			IWICFormatConverter_Release( pConverter );
+			//IWICFormatConverter_Release( pConverter );
+			pConverter->Release();
 			pConverter = NULL;
-			//SafeRelease(pConverter);
 		}
-
-		IWICBitmapScaler_Release( pScaler );
+		
+		//IWICBitmapScaler_Release( pScaler );
+		pScaler->Release();
 		pScaler = NULL;
-		//SafeRelease(pScaler);
 	}
 
 	return hr;
 }
 
-
-HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeight )
+HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 {
-	HRESULT hr = S_OK;
-	WCHAR szFileName[MAX_PATH];
-	char sReqBadgeName[1024];
-	unsigned int i = 0;
-	DWORD nBytesRead = 0;
-	size_t requiredSize = 255;
-	IWICBitmapDecoder* pDecoder = NULL;
-	IWICBitmapFrameDecode* pFrame = NULL;
-	IWICBitmapSource* pToRenderBitmapSource = NULL;
-	RECT rc;
-	HBITMAP hRetVal = NULL;
+	SetCurrentDirectory( g_sHomeDir.c_str() );
 
-	SetCurrentDirectory( g_sHomeDir );
-
-	FILE* fTemp = NULL;
-	fopen_s( &fTemp, sPath, "r" );
-	if( fTemp == NULL )
+	if( !_FileExists( RA_DIR_BADGE + sBadgeURI + ".png" ) )
 	{
-		//	This is a badge I'm not aware of...
-		//	Request this missing badge from the server
-		
-		const char* pCh = strchr( sPath, '\\' );
-		while( pCh != NULL && strchr( pCh+1, '\\' ) != NULL )
-			pCh = strchr( pCh+1, '\\' );
-		
-		sprintf_s( sReqBadgeName, 1024, "Badge/%s", pCh+1 );	//	NB: skip the ".\\Cache\\" part as input
-		for( i = 0; i < strlen( sReqBadgeName ); ++i )		//	Replace backslashes with forwardslashes
-			if( sReqBadgeName[i] == '\\' )
-				sReqBadgeName[i] = '/';
+		PostArgs args;
+		args['b'] = sBadgeURI;
+		//	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
+		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) && !RAWeb::HTTPResponseExists( RequestBadge, sBadgeURI ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestBadge, args, sBadgeURI );
 
-		if( !HTTPRequestExists( sReqBadgeName ) )
-			CreateHTTPRequestThread( sReqBadgeName, "", HTTPRequest_Get, 0 );
-		return hRetVal;
+		return NULL;
+	}
+	else
+	{
+		return LoadLocalPNG( RA_DIR_BADGE + sBadgeURI + ".png", sz );
+	}
+}
+
+HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+
+	if( !_FileExists( RA_DIR_USERPIC + sUserName + ".png" ) )
+	{
+		//	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
+		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) && !RAWeb::HTTPResponseExists( RequestUserPic, sUserName ) )
+			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sUserName );
+
+		return NULL;
+	}
+	else
+	{
+		return LoadLocalPNG( RA_DIR_USERPIC + sUserName + ".png", sz );
+	}
+}
+
+HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
+{
+	SetCurrentDirectory( g_sHomeDir.c_str() );
+
+	ASSERT( _FileExists( sPath ) );
+	if( !_FileExists( sPath ) )
+	{
+		RA_LOG( "File could not be found: %s\n", sPath.c_str() );
+		return NULL;
 	}
 
-	if( mbstowcs_s( &requiredSize, szFileName, requiredSize+1, sPath, requiredSize ) != (size_t)(-1) )
+	
+	HBITMAP hRetVal = NULL;
+	WCHAR szFileName[MAX_PATH];
+	size_t requiredSize = 255;
+	if( mbstowcs_s( &requiredSize, szFileName, requiredSize+1, sPath.c_str(), requiredSize ) != (size_t)(-1) )
 	// Step 1: Create the open dialog box and locate the image file
 	//if (LocateImageFile(hWnd, szFileName, ARRAYSIZE(szFileName)))
 	{
 		// Step 2: Decode the source image to IWICBitmapSource
-
+		
+		IWICBitmapDecoder* pDecoder = NULL;
 		// Create a decoder
-		hr = IWICImagingFactory_CreateDecoderFromFilename( 
-			g_UserImageFactoryInst.m_pIWICFactory, 
+		HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(
+		//HRESULT hr = IWICImagingFactory_CreateDecoderFromFilename( 
+		//	g_UserImageFactoryInst.m_pIWICFactory, 
 			szFileName,                      // Image to be decoded
 			NULL,                            // Do not prefer a particular vendor
 			GENERIC_READ,                    // Desired read access to the file
@@ -298,9 +313,11 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 			);
 
 		// Retrieve the first frame of the image from the decoder
-		if (SUCCEEDED(hr))
+		IWICBitmapFrameDecode* pFrame = NULL;
+		if( SUCCEEDED(hr) )
 		{
-			hr = IWICBitmapDecoder_GetFrame( pDecoder, 0, &pFrame );
+			hr = pDecoder->GetFrame( 0, &pFrame );
+			//hr = IWICBitmapDecoder_GetFrame( pDecoder, 0, &pFrame );
 		}
 
 // 		IWICColorContext* pContexts[5];
@@ -310,7 +327,7 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 // 		DWORD nErr = GetLastError();
 
 		// Retrieve IWICBitmapSource from the frame
-		if (SUCCEEDED(hr))
+		if( SUCCEEDED(hr) )
 		{
 #if defined (__cplusplus)
 			const IID& nIID = IID_IWICBitmapSource;
@@ -319,13 +336,14 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 #endif
 			if( g_UserImageFactoryInst.m_pOriginalBitmapSource != NULL )
 			{
-				IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+				//IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+				g_UserImageFactoryInst.m_pOriginalBitmapSource->Release();
 				g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 			}
 
-			
-			hr = IWICBitmapFrameDecode_QueryInterface( 
-				pFrame,
+			pFrame->QueryInterface(
+			//hr = IWICBitmapFrameDecode_QueryInterface( 
+				//pFrame,
 				nIID, 
 				(LPVOID*)(&g_UserImageFactoryInst.m_pOriginalBitmapSource)
 				);
@@ -337,49 +355,51 @@ HBITMAP LoadLocalPNG( const char* sPath, unsigned int nWidth, unsigned int nHeig
 
 		// Step 3: Scale the original IWICBitmapSource to the client rect size
 		// and convert the pixel format
-		if (SUCCEEDED(hr))
+		IWICBitmapSource* pToRenderBitmapSource = NULL;
+		if( SUCCEEDED(hr) )
 		{
-			SetRect( &rc, 0, 0, nWidth, nHeight );
+			RECT rc;
+			SetRect( &rc, 0, 0, sz.Width(), sz.Height() );
 			hr = ConvertBitmapSource( rc, &pToRenderBitmapSource );
 		}
 
 		// Step 4: Create a DIB from the converted IWICBitmapSource
-		if (SUCCEEDED(hr))
+		if( SUCCEEDED(hr) )
 		{
 			hr = UserImageFactory_CreateDIBSectionFromBitmapSource( pToRenderBitmapSource, hRetVal );
 		}
 
 		if( pToRenderBitmapSource != NULL )
 		{
-			IWICBitmapSource_Release( pToRenderBitmapSource );
+			//IWICBitmapSource_Release( pToRenderBitmapSource );
+			pToRenderBitmapSource->Release();
 			pToRenderBitmapSource = NULL;
 		}
-		//SafeRelease(pToRenderBitmapSource);
 
 		if( pDecoder != NULL )
 		{
-			IWICBitmapDecoder_Release( pDecoder );
+			//IWICBitmapDecoder_Release( pDecoder );
+			pDecoder->Release();
 			pDecoder = NULL;
 		}
-		//SafeRelease(pDecoder);
 
 		if( pFrame != NULL )
 		{
-			IWICBitmapFrameDecode_Release( pFrame );
+			//IWICBitmapFrameDecode_Release( pFrame );
+			pFrame->Release();
 			pFrame = NULL;
 		}
-		//SafeRelease(pFrame);
 	}
 
 	if( g_UserImageFactoryInst.m_pOriginalBitmapSource != NULL )
 	{
-		IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+		//IWICBitmapSource_Release( g_UserImageFactoryInst.m_pOriginalBitmapSource );
+		g_UserImageFactoryInst.m_pOriginalBitmapSource->Release();
 		g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
 	}
 	//DeleteObject( m_pOriginalBitmapSource );
 	//m_pOriginalBitmapSource = NULL;
 
-	fclose( fTemp );
 	return hRetVal;
 }
 

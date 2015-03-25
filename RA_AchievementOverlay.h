@@ -1,5 +1,4 @@
-#ifndef _ACHIEVEMENTOVERLAY_H_
-#define _ACHIEVEMENTOVERLAY_H_
+#pragma once
 
 #include <wtypes.h>
 #include "RA_Achievement.h"
@@ -42,7 +41,8 @@ class LeaderboardExamine
 {
 public:
 	void Initialize( const unsigned int nLBIDIn );
-	static void CB_OnReceiveData( void* pRequestObject );
+	//static void CB_OnReceiveData( void* pRequestObject );
+	void OnReceiveData( const Document& doc );
 	
 public:
 	unsigned int m_nLBID;
@@ -55,25 +55,50 @@ extern LeaderboardExamine g_LBExamine;
 class AchievementExamine
 {
 public:
-	void Initialize( const Achievement* AchIn );
-	void Clear();
-	static void CB_OnReceiveData( void* pRequestObject );
+	class RecentWinnerData
+	{
+	public:
+		RecentWinnerData( const std::string& sUser, const std::string& sWonAt ) :
+			m_sUser( sUser ), m_sWonAt( sWonAt )
+		{}
+		const std::string& User() const		{ return m_sUser; }
+		const std::string& WonAt() const	{ return m_sWonAt; }
+
+	private:
+		const std::string m_sUser;
+		const std::string m_sWonAt;
+	};
 
 public:
-	char m_Author[32];
-	char m_CreatedOn[32];
-	char m_LastModified[32];
-	int m_nID;
+	AchievementExamine();
 
+public:
+	void Initialize( const Achievement* pAchIn );
+	void Clear();
+	static void CB_OnReceiveData( void* pRequestObject );
+	void OnReceiveData( Document& doc );
+	
+	BOOL HasData() const											{ return m_bHasData; }
+	const std::string& CreatedDate() const							{ return m_CreatedDate; }
+	const std::string& ModifiedDate() const							{ return m_LastModifiedDate; }
+	size_t NumRecentWinners() const									{ return RecentWinners.size(); }
+	const RecentWinnerData& GetRecentWinner( size_t nOffs ) const	{ return RecentWinners.at( nOffs ); }
+	
+	int TotalWinners() const										{ return m_nTotalWinners; }
+	int PossibleWinners() const										{ return m_nPossibleWinners; }
+
+private:
+	const Achievement* m_pSelectedAchievement;
+	std::string m_CreatedDate;
+	std::string m_LastModifiedDate;
+	
+	BOOL m_bHasData;
+
+	//	Data found:
 	int	m_nTotalWinners;
 	int m_nPossibleWinners;
 
-	unsigned int m_nNumRecentWinners;
-	char m_RecentWinnerName[5][128];
-	char m_RecentWinAt[5][128];
-
-	BOOL m_bHasData;
-	const Achievement* m_pSelectedAchievement;
+	std::vector<RecentWinnerData> RecentWinners;
 };
 extern AchievementExamine g_AchExamine;
 
@@ -130,7 +155,17 @@ public:
 	void InstallNewsArticlesFromFile();
 
 public:
-	const static int m_nMaxNews = 6;
+	struct NewsItem
+	{
+		unsigned int m_nID;
+		std::string m_sTitle;
+		std::string m_sPayload;
+		time_t m_nPostedAt;
+		std::string m_sPostedAt;
+		std::string m_sAuthor;
+		std::string m_sLink;
+		std::string m_sImage;
+	};
 
 private:
 	int	m_nAchievementsScrollOffset;
@@ -151,8 +186,7 @@ private:
 
 	BOOL				 m_bInputLock;	//	Waiting for pad release
 
-	char				 m_sNewsArticleHeaders[m_nMaxNews][256];
-	char				 m_sNewsArticles[m_nMaxNews][2048];
+	std::vector<NewsItem> m_LatestNews;
 
 	enum TransitionState m_nTransitionState;
 	float				 m_fTransitionTimer;
@@ -171,13 +205,11 @@ extern AchievementOverlay g_AchievementOverlay;
 //	Exposed to DLL
 extern "C"
 {
+	API extern int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused );
+	API extern void _RA_RenderOverlay( HDC hDC, RECT* rcSize );
 
-API extern int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused );
-API extern void _RA_RenderOverlay( HDC hDC, RECT* rcSize );
-
-API extern void _RA_InitDirectX();
-API extern void _RA_OnPaint( HWND hWnd );
-
+	API extern void _RA_InitDirectX();
+	API extern void _RA_OnPaint( HWND hWnd );
 }
 
 extern const COLORREF g_ColText;
@@ -188,5 +220,3 @@ extern const COLORREF g_ColBlack;
 extern const COLORREF g_ColPopupBG;
 extern const COLORREF g_ColPopupText;
 extern const COLORREF g_ColPopupShadow;
-
-#endif // _ACHIEVEMENTOVERLAY_H_

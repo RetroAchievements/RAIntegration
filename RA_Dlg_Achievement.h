@@ -6,8 +6,7 @@
 #include <wtypes.h>
 #include <assert.h>
 
-const int g_nMaxAchievements = 200;
-const int g_nMaxTextItemSize = 80;
+const int MAX_TEXT_ITEM_SIZE = 80;
 
 //extern const char* g_sColTitles[];
 //extern const int g_nColSizes[];
@@ -27,8 +26,7 @@ public:
 		Modified,
 		Votes=Modified,
 
-		_NumberOfCols,
-		_Max=_NumberOfCols
+		NUM_COLS
 	};
 
 public:
@@ -40,36 +38,31 @@ public:
 
 public:
 	int GetSelectedAchievementIndex();
-	void OnLoad_NewRom( unsigned int nGameID );
-	void OnGet_Achievement( int nOffs );
+	void OnLoad_NewRom( GameID nGameID );
+	void OnGet_Achievement( const Achievement& ach );
 	void ReloadLBXData( int nOffset );
-	void OnEditData( unsigned int nItem, /*Column*/int nColumn, const char* sNewData );
-	void OnEditAchievement( Achievement* pAch );
-	void OnClickAchievementSet( AchievementType nAchievementSet );
+	void OnEditData( size_t nItem, Column nColumn, const std::string& sNewData );
+	void OnEditAchievement( const Achievement& ach );
+	void OnClickAchievementSet( AchievementSetType nAchievementSet );
 
-	inline char* LbxDataAt( unsigned int nRow, unsigned int nCol ) { if(nRow<m_nNumOccupiedRows && nCol<m_nNumCols) return m_lbxData[nRow][nCol]; assert(0); return NULL; }
+	inline std::string& LbxDataAt( size_t nRow, Column nCol )	{ return( m_lbxData[ nRow ] )[ nCol ]; }
 
 	inline HWND GetHWND() const		{ return m_hAchievementsDlg; }
 	void InstallHWND( HWND hWnd )	{ m_hAchievementsDlg = hWnd; }
 
 private:
-	//void Clear();
 	void SetupColumns( HWND hList );
 	void LoadAchievements( HWND hList );
-	BOOL GetRowData( unsigned int nRow, unsigned int& rnID, char*& sTitle, char*& sAuthor, BOOL& bAchieved, BOOL& bModified );
-	BOOL FindRowData( unsigned int nAchievementID, char*& sTitle, char*& sAuthor, BOOL& bAchieved );
 
-	void RemoveAchievement( HWND hList, const int nIter );
-	const int AddAchievement( HWND hList, const Achievement& Ach );
+	void RemoveAchievement( HWND hList, int nIter );
+	size_t AddAchievement( HWND hList, const Achievement& Ach );
 
 private:
 	static const int m_nNumCols = 5;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
 
 	HWND m_hAchievementsDlg;
-
-	char m_lbxData[g_nMaxAchievements][m_nNumCols][g_nMaxTextItemSize];
-	unsigned int m_nNumOccupiedRows;
-
+	typedef std::vector< std::string > AchievementDlgRow;
+	std::vector< AchievementDlgRow > m_lbxData;
 };
 
 extern Dlg_Achievements g_AchievementsDialog;

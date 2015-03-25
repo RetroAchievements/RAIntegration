@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <stdio.h>
 
+#include "RA_Defs.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
@@ -24,34 +25,33 @@
 
 //AchievementPopup g_PopupWindow;
 
-AchievementPopup::AchievementPopup()
+AchievementPopup::AchievementPopup() :
+	m_fTimer( 0.0f )
 {
-	m_fTimer = 0.0f;
-	m_bSuppressDeltaUpdate = false;
 }
 
 void AchievementPopup::PlayAudio()
 {
-	if( IsActive() )
+	if( MessagesPresent() )
 	{
-		switch( GetMessageType() )
+		switch( ActiveMessage().Type() )
 		{
-		case MSG_ACHIEVEMENT_UNLOCKED:
+		case PopupAchievementUnlocked:
 			PlaySound( "./Overlay/unlock.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
-		case MSG_ACHIEVEMENT_ERROR:
+		case PopupAchievementError:
 			PlaySound( "./Overlay/acherror.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
-		case MSG_LEADERBOARD_INFO:
+		case PopupLeaderboardInfo:
 			PlaySound( "./Overlay/lb.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
-		case MSG_LEADERBOARD_CANCEL:
+		case PopupLeaderboardCancel:
 			PlaySound( "./Overlay/lbcancel.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
-		case MSG_LOGIN:
+		case PopupLogin:
 			PlaySound( "./Overlay/login.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
-		case MSG_INFO:
+		case PopupInfo:
 			PlaySound( "./Overlay/info.wav", NULL, SND_FILENAME|SND_ASYNC );
 			break;
 		default:
@@ -61,25 +61,14 @@ void AchievementPopup::PlayAudio()
 	}
 }
 
-void AchievementPopup::AddMessage( const char* sTitle, const char* sDesc, int nMessageType, HBITMAP hImage )
+void AchievementPopup::AddMessage( const MessagePopup& msg )
 {
 	//	Add to the first available slot.
-	MessagePopup nNewMsg;
-	strcpy_s( nNewMsg.m_sMessageTitle, 1024, sTitle );
-	strcpy_s( nNewMsg.m_sMessageDesc, 1024, sDesc );
-	nNewMsg.m_nMessageType = nMessageType;
-	nNewMsg.m_hMessageImage = hImage;
-
-	bool bActive = IsActive();
-	m_vMessages.push( nNewMsg );
+	bool bActive = MessagesPresent();
+	m_vMessages.push( msg );
 
 	if( !bActive )
 		PlayAudio();
-}
-
-void AchievementPopup::NextMessage()
-{
-	m_vMessages.pop();
 }
 
 void AchievementPopup::Update( ControllerInput input, float fDelta, bool bFullScreen, bool bPaused )
@@ -87,18 +76,20 @@ void AchievementPopup::Update( ControllerInput input, float fDelta, bool bFullSc
 	if( bPaused )
 		fDelta = 0.0f;
 
-	if( m_bSuppressDeltaUpdate )
-	{
-		m_bSuppressDeltaUpdate = false;
-		return;
-	}
+	fDelta = RA::Clamp<float>( fDelta, 0.0f, 0.3f );	//	Limit this!
+
+	//if( m_bSuppressDeltaUpdate )
+	//{
+	//	m_bSuppressDeltaUpdate = false;
+	//	return;
+	//}
 
 	if( m_vMessages.size() > 0 )
 		m_fTimer += fDelta;
 
 	if( ( m_vMessages.size() > 0 ) && ( m_fTimer >= FINISH_AT ) )
 	{
-		NextMessage();
+		m_vMessages.pop();
 		PlayAudio();
 		m_fTimer = 0.0f;
 	}
@@ -112,9 +103,7 @@ float AchievementPopup::GetYOffsetPct() const
 	{
 		//	Fading in.
 		float fDelta = (APPEAR_AT - m_fTimer);
-
 		fDelta *= fDelta;	//	Quadratic
-
 		fVal = fDelta;
 	}
 	else if( m_fTimer < (FADEOUT_AT) )
@@ -126,9 +115,7 @@ float AchievementPopup::GetYOffsetPct() const
 	{
 		//	Fading out
 		float fDelta = ( FADEOUT_AT - m_fTimer );
-
-		fDelta *= fDelta;	//	Quardratic
-
+		fDelta *= fDelta;	//	Quadratic
 		fVal = ( fDelta );
 	}
 	else
@@ -142,8 +129,10 @@ float AchievementPopup::GetYOffsetPct() const
 
 void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 {
-	if( !IsActive() )
+	if( !MessagesPresent() )
 		return;
+
+	const MessagePopup& msg = ActiveMessage();
 
 	const int nPixelWidth = rcDest.right - rcDest.left;
 
@@ -164,61 +153,59 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 
 
 	int nTitleX = 10;
-	int nDescX = nTitleX+2;
+	int nDescX = nTitleX + 2;
 
 	const int nHeight = rcDest.bottom - rcDest.top;
 
 	float fFadeInY = GetYOffsetPct() * ( POPUP_DIST_Y_FROM_PCT * (float)nHeight );
-	fFadeInY += (POPUP_DIST_Y_TO_PCT * (float)nHeight );
+	fFadeInY += ( POPUP_DIST_Y_TO_PCT * (float)nHeight );
 
 	int nTitleY = (int)fFadeInY;
 	int nDescY = nTitleY + 32;
 
-	if( GetMessageType() == MSG_ACHIEVEMENT_UNLOCKED || GetMessageType() == MSG_ACHIEVEMENT_ERROR )
+	if( msg.Type() == PopupAchievementUnlocked || msg.Type() == PopupAchievementError )
 	{
-		DrawImage( hDC, GetImage(), nTitleX, nTitleY, 64, 64 );
+		DrawImage( hDC, msg.Image(), nTitleX, nTitleY, 64, 64 );
 
-		nTitleX += 64+4+2;	//	Negate the 2 from earlier!
-		nDescX += 64+4;
+		nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
+		nDescX += 64 + 4;
 	}
-	else if( GetMessageType() == MSG_LEADERBOARD_INFO )
+	else if( msg.Type() == PopupLeaderboardInfo )
 	{
 		//	meh
 	}
 
-	SIZE szTitle, szAchievement;
+	SIZE szTitle = { 0, 0 }, szAchievement = { 0, 0 };
 
 	SelectObject( hDC, hFontTitle );
-	TextOut( hDC, nTitleX, nTitleY, (LPCSTR)GetTitle(), strlen( GetTitle() ) );
-	GetTextExtentPoint32( hDC, GetTitle(), strlen( GetTitle() ), &szTitle );
+	TextOut( hDC, nTitleX, nTitleY, ActiveMessage().Title().c_str(), strlen( ActiveMessage().Title().c_str() ) );
+	GetTextExtentPoint32( hDC, msg.Title().c_str(), strlen( msg.Title().c_str() ), &szTitle );
 	
-	//SetBkColor( hDC, g_ColPopupBG );
-
 	SelectObject( hDC, hFontDesc );
-	TextOut( hDC, nDescX, nDescY, (LPCSTR)GetDesc(), strlen( GetDesc() ) );
-	GetTextExtentPoint32( hDC, GetDesc(), strlen( GetDesc() ), &szAchievement );
+	TextOut( hDC, nDescX, nDescY, msg.Subtitle().c_str(), strlen( msg.Subtitle().c_str() ) );
+	GetTextExtentPoint32( hDC, msg.Subtitle().c_str(), strlen( msg.Subtitle().c_str() ), &szAchievement );
 
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, g_ColPopupShadow );
 	SelectObject( hDC, hPen );
 
-	MoveToEx( hDC, nTitleX, nTitleY+szTitle.cy, NULL );
-	LineTo( hDC, nTitleX+szTitle.cx, nTitleY+szTitle.cy );	//	right
-	LineTo( hDC, nTitleX+szTitle.cx, nTitleY+1 );			//	up
+	MoveToEx( hDC, nTitleX, nTitleY + szTitle.cy, NULL );
+	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy );	//	right
+	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + 1 );			//	up
 
-	if( GetDesc()[0] != '\0' )
+	if( msg.Subtitle().length() > 0 )
 	{
-		MoveToEx( hDC, nDescX, nDescY+szAchievement.cy, NULL );
-		LineTo( hDC, nDescX+szAchievement.cx, nDescY+szAchievement.cy );
-		LineTo( hDC, nDescX+szAchievement.cx, nDescY+1 );
+		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, NULL );
+		LineTo( hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy );
+		LineTo( hDC, nDescX + szAchievement.cx, nDescY + 1 );
 	}
 
-	DeleteObject(hPen);
-	DeleteObject(hFontTitle);
-	DeleteObject(hFontDesc);
+	DeleteObject( hPen );
+	DeleteObject( hFontTitle );
+	DeleteObject( hFontDesc );
 }
 
 void AchievementPopup::Clear()
 {
-	for( int i = 0; i < OVERLAY_MESSAGE_QUEUE_SIZE; ++i )
-		NextMessage();
+	while( m_vMessages.size() > 0 )
+		m_vMessages.pop();
 }

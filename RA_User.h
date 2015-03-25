@@ -1,8 +1,8 @@
-#ifndef _RAUSER_H_
-#define _RAUSER_H_
+#pragma once
 
 #include <Windows.h>
 #include <vector>
+#include <map>
 #include "RA_Core.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -33,74 +33,99 @@ enum ActivityType
 class RAUser
 {
 public:
-	RAUser();
+	RAUser( const std::string& sUsername );
+	virtual ~RAUser();
 
 public:
 	void FlushBitmap();
-	void SetUsername( const char* sUsername );
-	void UpdateActivity( const char* sActivity );
-	void LoadUserImageFromFile();
-	void RequestAndStoreUserImage();
-	void Clear();
+	void LoadOrFetchUserImage();
 
-	const char* Username() const		{ return m_sUsername; }
-	const char* Activity() const		{ return m_sActivity; }
-	unsigned int Score() const			{ return m_nLatestScore; }
-	HBITMAP Image() const				{ return m_hUserImage; }
-	BOOL IsFetchingUserImage() const	{ return m_bFetchingUserImage; }
+	unsigned int GetScore() const					{ return m_nScore; }
+	void SetScore( unsigned int nScore )			{ m_nScore = nScore; }
 	
-	static void s_OnUserPicCB( void* pvObj );
-	void OnUserPicCB( RequestObject* pObj );
+	void SetUsername( const std::string& sUser )	{ m_sUsername = sUser; }
+	const std::string& Username() const				{ return m_sUsername; }
+	
+	void UpdateActivity( const std::string& sAct )	{ m_sActivity = sAct; }
+	const std::string& Activity() const				{ return m_sActivity; }
 
-public:
-	char		 m_sUsername[64];
-	char		 m_sActivity[256];
-	unsigned int m_nLatestScore;
-	HBITMAP		 m_hUserImage;
-	BOOL		 m_bFetchingUserImage;
+	HBITMAP GetUserImage() const					{ return m_hUserImage; }
+	void InstallUserImage( HBITMAP hImg )			{ m_hUserImage = hImg; }
+
+	BOOL IsFetchingUserImage() const				{ return m_bFetchingUserImage; }
+	
+private:
+	/*const*/std::string	m_sUsername;
+	std::string				m_sActivity;
+	unsigned int			m_nScore;
+
+	HBITMAP					m_hUserImage;
+	BOOL					m_bFetchingUserImage;
 };
-
-
 
 class LocalRAUser : public RAUser
 {
 public:
-	LocalRAUser();
+	LocalRAUser( const std::string& sUser );
+	virtual ~LocalRAUser();
 
 public:
 	void AttemptLogin();
+
 	void AttemptSilentLogin();
-	void Login( const char* sUser, const char* sToken, BOOL bRememberLogin, unsigned int nPoints, unsigned int nMessages );
+	void HandleSilentLoginResponse( Document& doc );
+
+	void ProcessSuccessfulLogin( const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin );
 	void Logout();
 
 	void RequestFriendList();
-	static void s_OnFriendListCB( void* pvObj );
-	void OnFriendListCB( RequestObject* pObj );
+	void OnFriendListResponse( const Document& doc );
 	
-	RAUser& AddFriend( const char* sFriend, unsigned int nScore );
-	RAUser* GetFriend( unsigned int nOffs );
-	const size_t NumFriends() const		{ return m_Friends.size(); }
-	
-	void PostActivity( enum ActivityType nActivityType );
+	RAUser* AddFriend( const std::string& sFriend, unsigned int nScore );
+	RAUser* FindFriend( const std::string& sName );
 
+	RAUser* GetFriendByIter( size_t nOffs )				{ return nOffs < m_aFriends.size() ? m_aFriends[ nOffs ] : NULL; }
+	const size_t NumFriends() const						{ return m_aFriends.size(); }
+
+	void SetStoreToken( BOOL bStoreToken )				{ bStoreToken = bStoreToken; }
+
+	void SetToken( const std::string& sToken )			{ m_sToken = sToken; }
+	const std::string& Token() const					{ return m_sToken; }
+	
+	BOOL IsLoggedIn() const		{ return m_bIsLoggedIn; }
+
+	void PostActivity( enum ActivityType nActivityType );
+	
 	void Clear();
 
-public:
-	char					m_sToken[64];	//	AppToken Issued by server
+private:
+	std::string				m_sToken;		//	AppToken Issued by server
 	BOOL					m_bIsLoggedIn;
-	BOOL					m_bStoreToken;	//	Store the token/'password' for next time
-	std::vector<RAUser>		m_Friends;
-	std::vector<RAMessage>	m_Messages;
+	BOOL					m_bStoreToken;	//	Preference: Store the token/'password' for next time
+	std::vector<RAUser*>	m_aFriends;
+	std::vector<RAMessage>	m_aMessages;
 };
-extern LocalRAUser g_LocalUser;
+
+class RAUsers
+{
+public:
+	static LocalRAUser LocalUser;
+
+	static BOOL DatabaseContainsUser( const std::string& sUser );
+	static void OnUserPicDownloaded( const RequestObject& obj );
+
+	static void RegisterUser( const std::string& sUsername, RAUser* pUser )		{ UserDatabase[ sUsername ] = pUser; }
+
+	static RAUser* GetUser( const std::string& sUser );
+
+private:
+	static std::map<std::string, RAUser*> UserDatabase;
+};
+
 
 
 //	Exposed to DLL
 extern "C"
 {
-
-API extern bool _RA_UserLoggedIn();
-
+	API extern bool _RA_UserLoggedIn();
 }
-
-#endif //_RAUSER_H_

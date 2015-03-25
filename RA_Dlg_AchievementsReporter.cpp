@@ -75,13 +75,13 @@ int Dlg_AchievementsReporter::AddAchievementToListBox( HWND hList, const Achieve
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, "%d", pAch->ID() );
 				break;*/
 			case COL_TITLE:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Title() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Title().c_str() );
 				break;
 			case COL_DESC:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Description() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Description().c_str() );
 				break;
 			case COL_AUTHOR:
-				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Author() );
+				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, pAch->Author().c_str() );
 				break;
 			case COL_ACHIEVED:
 				sprintf_s( m_lbxData[m_nNumOccupiedRows][i], MAX_TEXT_SIZE, !pAch->Active() ? "Yes" : "No" );
@@ -125,7 +125,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		HWND hList = GetDlgItem( hDlg, IDC_RA_REPORTBROKENACHIEVEMENTSLIST );	
 		Dlg_AchievementsReporter::SetupColumns( hList );
 
-		for( size_t i = 0; i < g_pActiveAchievements->Count(); ++i )
+		for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
 		{
 			Dlg_AchievementsReporter::AddAchievementToListBox( hList, &g_pActiveAchievements->GetAchievement( i ) );
 		}
@@ -133,7 +133,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP );
 		//ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
 
-		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, g_LocalUser.Username() );
+		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser.Username().c_str() );
 
 		return FALSE;
 		//return DefWindowProc( hDlg, uMsg, wParam, lParam );
@@ -192,7 +192,6 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 				char sBugReportComment[4096];
 				GetDlgItemText( hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportComment, 4096 );
 
-				
 				char sBugReportInFull[8192];
 				sprintf_s( sBugReportInFull, 8192, 
 					"--New Bug Report--\n"
@@ -208,52 +207,59 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					CoreAchievements->GameTitle(),
 					sBuggedIDs,
 					sProblemTypeNice,
-					g_LocalUser.Username(),
+					RAUsers::LocalUser.Username(),
 					sBugReportComment );
 
 				if( MessageBox( NULL, sBugReportInFull, "Summary", MB_YESNO ) == IDNO )
 					return FALSE;
 								
-				//	Pack query string:
-				char sRequest[512];
- 				sprintf_s( sRequest, 512, "u=%s&t=%s&i=%s&p=%s&n=%s", 
-					g_LocalUser.m_sUsername, g_LocalUser.m_sToken, sBuggedIDs, sProblemStr, sBugReportComment );
+				PostArgs args;
+				args['u'] = RAUsers::LocalUser.Username();
+				args['t'] = RAUsers::LocalUser.Token();
+				args['i'] = sBuggedIDs;
+				args['p'] = sProblemType;
+				args['n'] = sBugReportComment;
 
-				//	Send request:
-				char sResponse[4096];
-				ZeroMemory( sResponse, 4096 );
+				Document doc;
+				if( RAWeb::DoBlockingRequest( RequestSubmitTicket, args, doc ) )
+				{
+					if( doc["Success"].GetBool() )
+					{
+						sprintf_s( buffer, 1024, "Submitted OK!\n"
+							"\n"
+							"Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+							"\n"
+							"The development team will investigate this bug as soon as possible\n"
+							"and we will send you a message on RetroAchievements.org\n"
+							"as soon as we have a solution.\n"
+							"\n"
+							"Thanks again!" );
 
- 				DWORD nBytesRead = 0;
- 				if( DoBlockingHttpPost( "requestsubmitticket.php", sRequest, sResponse, 4096, &nBytesRead ) &&
-					strncmp( sResponse, "OK:", 3 ) == 0 )
- 				{
- 					//g_pActiveAchievements->SetGameTitle( sSelectedTitle );
-					//CoreAchievements->SetGameTitle( sSelectedTitle );
-					//UnofficialAchievements->SetGameTitle( sSelectedTitle );
-					//LocalAchievements->SetGameTitle( sSelectedTitle );
- 
-					//g_GameTitleDialog.m_nReturnedGameID = strtol( sResponse+3, NULL, 10 );
-
-					sprintf_s( buffer, 1024, "Submitted OK! %s\n"
-						"\n"
-						"Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-						"\n"
-						"The development team will investigate this bug as soon as possible\n"
-						"and we will send you a message on RetroAchievements.org\n"
-						"as soon as we have a solution.\n"
-						"\n"
-						"Thanks again!",
-						( nBytesRead == 3 ) ? "" : sResponse+3 );	//	Pack in custom server msg
-
-					MessageBox( hDlg, buffer, "Success!", MB_OK );
-		 			EndDialog( hDlg, TRUE );
- 					return TRUE;
+						MessageBox( hDlg, buffer, "Success!", MB_OK );
+		 				EndDialog( hDlg, TRUE );
+ 						return TRUE;
+					}
+					else
+					{
+						char bufferFeedback[2048];
+ 						sprintf_s( bufferFeedback, 2048, 
+							"Failed!\n"
+							"\n"
+							"Response From Server:\n"
+							"\n"
+							"Error code: %d", doc.GetParseError() );
+ 						MessageBox( hDlg, bufferFeedback, "Error from server!", MB_OK );
+						return FALSE;
+					}
  				}
  				else
  				{
-					char bufferFeedback[2048];
- 					sprintf_s( bufferFeedback, 2048, "Failed!\n\nResponse From Server:\n\n%s", sResponse );
- 					MessageBox( hDlg, bufferFeedback, "Error from server!", MB_OK );
+ 					MessageBox( hDlg, 
+						"Failed!\n"
+						"\n"
+						"Cannot reach server... are you online?\n"
+						"\n",
+						"Error!", MB_OK );
 					return FALSE;
  				}
  			}
@@ -283,7 +289,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 //static
 void Dlg_AchievementsReporter::DoModalDialog( HINSTANCE hInst, HWND hParent )
 {
-	if( g_pActiveAchievements->Count() == 0 )
+	if( g_pActiveAchievements->NumAchievements() == 0 )
 	{
 		MessageBox( hParent, "No ROM loaded!", "Error", MB_OK );
 	}

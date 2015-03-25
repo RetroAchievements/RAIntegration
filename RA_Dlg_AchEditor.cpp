@@ -17,12 +17,7 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 
-#if defined (RA_GENS)
-//#include "g_main.h"
-//#include "G_dsound.h"
-//#include "Rom.h"
-#elif defined (RA_VBA)
-#endif
+#include "rapidjson/include/rapidjson/document.h"
 
 
 #pragma comment(lib, "comctl32.lib")
@@ -67,10 +62,10 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 		Achievement* pAch = g_AchievementEditorDialog.ActiveAchievement();
 		if( pAch == NULL )
 			return FALSE;
-
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), pAch->Progress() );
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), pAch->ProgressMax() );
-		SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), pAch->ProgressFmt() );
+		 
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), pAch->Progress() );
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), pAch->ProgressMax() );
+		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), pAch->ProgressFmt() );
 
 		bHandled = TRUE;
 	}
@@ -83,10 +78,10 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 		case IDC_RA_ACHPROGRESSENABLE:
 		{
 			BOOL bEnabled = IsDlgButtonChecked(hDlg, IDC_RA_ACHPROGRESSENABLE );
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), bEnabled ); 
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_EXAMPLE ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), bEnabled ); 
+			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_EXAMPLE ), bEnabled ); 
 			break;
 		}
 
@@ -985,34 +980,22 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						//	Set this achievement as modified
 						pActiveAch->SetModified( TRUE );
-						g_AchievementsDialog.OnEditAchievement( pActiveAch );
+						g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 						HWND hList = GetDlgItem( g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS );
 						int nSelectedIndex = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
-						if( nSelectedIndex == -1 )
-							return FALSE;
-
-						//	Implicit updating:
-						char* psTitle = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements::Title );
-						if( GetDlgItemText( hDlg, IDC_RA_ACH_TITLE, psTitle, 80 ) )
+						if( nSelectedIndex != -1 )
 						{
-							pActiveAch->SetTitle( psTitle );
-
-							//	Reverse find where I am in the list:
-							unsigned int nOffset = 0;
-							for( ; nOffset < g_pActiveAchievements->Count(); ++nOffset )
+							//	Implicit updating:
+							char buffer[1024];
+							if( GetDlgItemText( hDlg, IDC_RA_ACH_TITLE, buffer, 1024 ) )
 							{
-								if( pActiveAch == &g_pActiveAchievements->GetAchievement( nOffset ) )
-									break;
-							}
+								pActiveAch->SetTitle( buffer );
 
-							assert( nOffset < g_pActiveAchievements->Count() );
-							if( nOffset < g_pActiveAchievements->Count() )
-							{
-								g_AchievementsDialog.OnEditData( nOffset, Dlg_Achievements::Title, pActiveAch->Title() );
+								//	Persist/Update/Inject local LBX data back into LBX (?)
+								g_AchievementsDialog.OnEditData( g_pActiveAchievements->GetAchievementIndex( *pActiveAch ), Dlg_Achievements::Title, pActiveAch->Title() );
 							}
 						}
-
 					}
 					break;
 				}
@@ -1036,7 +1019,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 					
 					//	Set this achievement as modified:
 					pActiveAch->SetModified( TRUE );
-					g_AchievementsDialog.OnEditAchievement( pActiveAch );
+					g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 					HWND hList = GetDlgItem( g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS );
 					int nSelectedIndex = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
@@ -1116,7 +1099,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 				//	Set this achievement as 'modified'
 				pActiveAch->SetModified( TRUE );
-				g_AchievementsDialog.OnEditAchievement( pActiveAch );
+				g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 				LoadAchievement( pActiveAch, FALSE );
 				pActiveAch->ClearDirtyFlag();
@@ -1152,7 +1135,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 					//	Update this achievement entry as 'modified':
 					pActiveAch->SetModified( TRUE );
-					g_AchievementsDialog.OnEditAchievement( pActiveAch );
+					g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 					LoadAchievement( pActiveAch, FALSE );
 					pActiveAch->ClearDirtyFlag();
@@ -1186,7 +1169,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 							
 							//	Set this achievement as 'modified'
 							pActiveAch->SetModified( TRUE );
-							g_AchievementsDialog.OnEditAchievement( pActiveAch );
+							g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 
 							//	Refresh:
 							LoadAchievement( pActiveAch, TRUE );
@@ -1264,44 +1247,25 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						if( ofn.lpstrFile != NULL )
 						{
-							DWORD nCharsRead = 0;
-							char buffer[1024];
-							char* pBuffer = &buffer[0];
-							//DoBlockingHttpPost( "requestuploadbadge.php", "Test=true", pBuffer, 1024, nCharsRead );
-							BOOL bOK = DoBlockingImageUpload( "requestuploadbadge.php", ofn.lpstrFile, pBuffer, 1024, &nCharsRead );
-							if( bOK )
+							Document Response;
+							if( RAWeb::DoBlockingImageUpload( RequestUploadBadgeImage, ofn.lpstrFile, Response ) )
 							{
-								if( strncmp( pBuffer, "OK:", 3 ) == 0 )
-								{
-									//TBD: ensure that:
-									//	The image is copied to the cache/badge dir
-									//	The image doesn't already exist in teh cache/badge dir (ask overwrite)
-									//	The image is the correct dimensions or can be scaled
-									//	The image can be uploaded OK
-									//	The image is not copyright
+								//TBD: ensure that:
+								//	The image is copied to the cache/badge dir
+								//	The image doesn't already exist in teh cache/badge dir (ask overwrite)
+								//	The image is the correct dimensions or can be scaled
+								//	The image can be uploaded OK
+								//	The image is not copyright
 
-									char sNewIcon[16];
-									strncpy_s( sNewIcon, pBuffer+3, 5 );
-									sNewIcon[5] = '\0';
-									
-									//pBuffer will contain "OK:" and the number of the uploaded file.
-									//	Add the value to the available values in the cbo, and it *should* self-populate.
-									MessageBox( NULL, "Successful!", "Upload OK", MB_OK );
+								const Value& ResponseData = Response["Response"];
+								const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
 
-									//	Probably the only time to call this independently:
-									//m_BadgeNames.FetchNewBadgeNamesThreaded();	//	NO!
-									m_BadgeNames.AddNewBadgeName( sNewIcon, TRUE );
+								//pBuffer will contain "OK:" and the number of the uploaded file.
+								//	Add the value to the available values in the cbo, and it *should* self-populate.
+								MessageBox( NULL, "Successful!", "Upload OK", MB_OK );
 
-									UpdateBadge( sNewIcon );
-								}
-								else
-								{
-									char sTemp[2048];
-									sprintf_s( sTemp, 2048, 
-										"Error reported!\n"
-										"\nServer response: %s", pBuffer );
-									MessageBox( NULL, sTemp, "Error", MB_OK );
-								}
+								m_BadgeNames.AddNewBadgeName( sNewBadgeIter, TRUE );
+								UpdateBadge( sNewBadgeIter );
 							}
 							else
 							{
@@ -1528,7 +1492,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 						//	Update this achievement as 'modified'
 						pActiveAch->SetModified( TRUE );
-						g_AchievementsDialog.OnEditAchievement( pActiveAch );
+						g_AchievementsDialog.OnEditAchievement( *pActiveAch );
 					}
 
 					//	Inject the new text into the lbx
@@ -1645,80 +1609,55 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 	//return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
-void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const char* sBackupBadgeToUse )
+void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const std::string& sBackupBadgeToUse )
 {
-	char sCheevoBitmapPath[256];// = DIR_BADGE "00000.png";
-	sprintf_s( sCheevoBitmapPath, 256, "%s%s", RA_DIR_BADGE, LockedBadgeFile );
+	std::string sAchievementBadgeURI = RA_UNKNOWN_BADGE_IMAGE_URI;
 
 	if( m_pSelectedAchievement != NULL )
-		sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", m_pSelectedAchievement->BadgeImageFilename() );
-	//else if( sBackupBadgeToUse != NULL )
-	//	sprintf_s( sCheevoBitmapPath, 256, RA_DIR_BADGE "%s.png", sBackupBadgeToUse );
+		sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
+	else if( sBackupBadgeToUse.length() > 2 )
+		sAchievementBadgeURI = sBackupBadgeToUse;
 
 	if( m_hAchievementBadge != NULL )
 		DeleteObject( m_hAchievementBadge );
 	m_hAchievementBadge = NULL;
 
-	HBITMAP hBitmap = LoadLocalPNG( sCheevoBitmapPath, 64, 64 );
-	if( hBitmap != NULL )
-	{
-		m_hAchievementBadge = hBitmap;
-	}
-	else
-	{
-		//InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
-		return;//meh
-	}
+	HBITMAP hBitmap = LoadOrFetchBadge( sAchievementBadgeURI, RA_BADGE_PX );
+	if( hBitmap == NULL )
+		return;
 
-	HWND hCheevo = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC );
+	m_hAchievementBadge = hBitmap;
 
-	if( hCheevo != NULL )
+	HWND hAchBadgeImageWindow = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC );
+	if( hAchBadgeImageWindow != NULL )
 	{
-		SendMessage( hCheevo, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
+		SendMessage( hAchBadgeImageWindow, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
 		// 				RECT rc;
-		// 				GetClientRect( hCheevo, &rc );
+		// 				GetClientRect( hAchBadgeImageWindow, &rc );
 		// 				InvalidateRect( m_hAchievementEditorDlg, &rc, TRUE );
 		InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
 	}
 
-	char buffer[16];//= "00000";
-	strcpy_s( buffer, 16, LockedBadge );
-
-	if( m_pSelectedAchievement != NULL )
-	{
-		strcpy_s( buffer, 16, m_pSelectedAchievement->BadgeImageFilename() );
-	}
-	else if( sBackupBadgeToUse != NULL )
-	{
-		strcpy_s( buffer, 16, sBackupBadgeToUse );
-	}
-
-	//	Trim the '.png"
-	buffer[5] = '\0';
-
 	//	Find buffer in the dropdown list
 	HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME );
-	int nSel = ComboBox_FindStringExact( hCtrl, 0, buffer );
-
+	int nSel = ComboBox_FindStringExact( hCtrl, 0, sAchievementBadgeURI.c_str() );
 	if( nSel != -1 )
-	{
-		ComboBox_SetCurSel( hCtrl, nSel );
-	}
+		ComboBox_SetCurSel( hCtrl, nSel );	//	Force select
 }
 
-void Dlg_AchievementEditor::UpdateBadge( const char* sNewName )
+void Dlg_AchievementEditor::UpdateBadge( const std::string& sNewName )
 {
 	//	If a change is detected: change it!
 	if( m_pSelectedAchievement != NULL )
 	{
-		if( strcmp( m_pSelectedAchievement->BadgeImageFilename(), sNewName ) != 0 )
+		if( m_pSelectedAchievement->BadgeImageURI().compare( sNewName ) != 0 )
 		{
 			//	The badge we are about to show is different from the one stored for this achievement.
 			//	This implies that we are changing the badge: this achievement is modified!
 			m_pSelectedAchievement->SetBadgeImage( sNewName );
 			m_pSelectedAchievement->SetModified( TRUE );
 
-			if( g_nActiveAchievementSet == AT_CORE )
+			if( g_nActiveAchievementSet == AchievementSetCore )
 			{
 				int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
 				g_AchievementsDialog.OnEditData( nOffs, Dlg_Achievements::Modified, "Yes" );
@@ -1727,7 +1666,7 @@ void Dlg_AchievementEditor::UpdateBadge( const char* sNewName )
 	}
 
 	//	Always attempt update.
-	UpdateSelectedBadgeImage( sNewName );
+	UpdateSelectedBadgeImage( sNewName.c_str() );
 }
 
 void Dlg_AchievementEditor::RepopulateGroupList( Achievement* pCheevo )
@@ -1833,10 +1772,10 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		sprintf_s( buffer, 1024, "%d", m_pSelectedAchievement->Points() );
 		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, buffer );
 
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author() );
-		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author().c_str() );
+		SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageURI().c_str() );
 
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_ID ), FALSE );
@@ -1850,7 +1789,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_PROGRESSINDICATORS ), FALSE );
 
-		UpdateBadge( m_pSelectedAchievement->BadgeImageFilename() );
+		UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 
 		m_bPopulatingAchievementEditorData = FALSE;
 	}
@@ -1910,20 +1849,20 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		}
 		if( (pCheevo->GetDirtyFlags() & Dirty_Title) && !bTitleSelected )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, m_pSelectedAchievement->Title().c_str() );
 		}
 		if( (pCheevo->GetDirtyFlags() & Dirty_Description) && !bDescSelected )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_DESC, m_pSelectedAchievement->Description().c_str() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Author )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, m_pSelectedAchievement->Author().c_str() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Badge )
 		{
-			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageFilename() );
-			UpdateBadge( m_pSelectedAchievement->BadgeImageFilename() );
+			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, m_pSelectedAchievement->BadgeImageURI().c_str() );
+			UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 		}
 		if( pCheevo->GetDirtyFlags() & Dirty_Conditions )
 		{
@@ -2021,49 +1960,31 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup( int nGrp ) const
 
 void BadgeNames::FetchNewBadgeNamesThreaded()
 {
-	CreateHTTPRequestThread( "requestbadgenames.php", "", HTTPRequest_Get, 0 );
+	RAWeb::CreateThreadedHTTPRequest( RequestBadgeIter );
 }
 
 //static
-void BadgeNames::CB_OnNewBadgeNames(void* pObj)
+void BadgeNames::CB_OnNewBadgeNames( void* pReqObj )
 {
-	RequestObject* pRObj = (RequestObject*)(pObj);
-	RequestObject& rObj = *pRObj;
-
-	if( strncmp( rObj.m_sResponse, "OK:", 3 ) )
+	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
+	Document doc;
+	if( !pObj->ParseResponseToJSON( doc ) )
 		return;
+	
+	const unsigned int nLowerLimit = doc["FirstBadge"].GetUint();
+	const unsigned int nUpperLimit = doc["NextBadge"].GetUint();
 
 	//	Clean out cbo
 	while( ComboBox_DeleteString( m_hDestComboBox, 0 ) > 0 )
 	{
 	}
 
-	char* pIter = &rObj.m_sResponse[3];
-
-	const size_t nLowerLimit = 80;
-	const size_t nUpperLimit = atoi( pIter );
-
 	char buffer[256];
-	for( size_t i = nLowerLimit; i < nUpperLimit; ++i )
+	for( unsigned int i = nLowerLimit; i < nUpperLimit; ++i )
 	{
 		sprintf_s( buffer, 256, "%05d", i );
 		ComboBox_AddString( m_hDestComboBox, buffer );
 	}
-
-	////	Assume we are in mainthread, as the thread request was made from main thread
-	//char* pNextBadgeName = NULL;
-	//while( ( pNextBadgeName = strtok_s( pIter, ",", &pIter ) ) != NULL )
-	//{
-	//	//	Only want properly formatted names
-	//	if( strlen( pNextBadgeName ) != 5 )
-	//		continue;
-
-	//	for( size_t i = 0; i < 5; ++i )
-	//		if( !isdigit( pNextBadgeName[i] ) )
-	//			continue;
-
-	//	ComboBox_AddString( m_hDestComboBox, pNextBadgeName );
-	//}
 }
 
 void BadgeNames::AddNewBadgeName( const char* pStr, BOOL bAndSelect )

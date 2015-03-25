@@ -1,23 +1,24 @@
 #pragma once
 
 #include <wtypes.h>
+#include <map>
 
-INT_PTR CALLBACK GameTitleProc(HWND, UINT, WPARAM, LPARAM);
+#include "RA_Defs.h"
 
 class Dlg_GameTitle
 {
 public:
-	static void CleanRomName( char* sRomNameRef, unsigned int nLen );
-	static unsigned int DoModalDialog( HINSTANCE hInst, HWND hParent, const char* sMD5, const char* sEstimatedGameTitle );
+	std::string CleanRomName( const std::string& sTryName );
+	static void DoModalDialog( HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut );
+	
+	INT_PTR GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
-public:
-	unsigned int m_nReturnedGameID;
-	const char* m_sMD5;
-	const char* m_sEstimatedGameTitle;
+private:
+	GameID m_nReturnedGameID;
+	std::string m_sMD5;
+	std::string m_sEstimatedGameTitle;
+
+	std::map<std::string, GameID> m_aGameTitles;
 };
 
 extern Dlg_GameTitle g_GameTitleDialog;
-
-
-
-

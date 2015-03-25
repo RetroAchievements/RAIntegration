@@ -1,15 +1,12 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <wtypes.h>
-//	Dialog
-INT_PTR CALLBACK LoginProc(HWND, UINT, WPARAM, LPARAM);
 
+class RA_Dlg_Login
+{
+public:
+	static BOOL DoModalLogin();
 
-
-#ifdef __cplusplus
+public:
+	static INT_PTR CALLBACK RA_Dlg_LoginProc( HWND, UINT, WPARAM, LPARAM );
 };
-#endif

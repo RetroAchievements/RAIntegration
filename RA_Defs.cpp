@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <Windows.h>
 
-#define DEBUG_LOGFILE "RALog.txt"
-
-void DebugLog( const char* format, ... )
+void RA::DebugLog( const char* format, ... )
 {
 	char    buf[4096], *p = buf;
 	va_list args;
@@ -25,11 +23,24 @@ void DebugLog( const char* format, ... )
 	*p   = '\0';
 
 	OutputDebugString( buf );
-
-	FILE* pFile = NULL;
-	if( fopen_s( &pFile, RA_DIR_DATA DEBUG_LOGFILE, "a" ) == 0 )
+	
+	//SetCurrentDirectory( g_sHomeDir.c_str() );//?
+	FILE* pf = NULL;
+	if( fopen_s( &pf, RA_LOG_FILENAME, "a" ) == 0 )
 	{
-		fwrite( buf, sizeof(char), strlen( buf ), pFile );
-		fclose( pFile );
+		fwrite( buf, sizeof(char), strlen( buf ), pf );
+		fclose( pf );
 	}
+}
+
+BOOL RA::DirectoryExists( const char* sPath )
+{
+	DWORD dwAttrib = GetFileAttributes( sPath );
+	return( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+}
+
+static_assert( sizeof( BYTE* ) == sizeof( char* ), "dangerous cast ahead" );
+char* RA::DataStreamAsString( DataStream& stream )
+{
+	return reinterpret_cast<char*>( stream.data() );
 }

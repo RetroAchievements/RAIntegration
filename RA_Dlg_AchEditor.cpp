@@ -19,7 +19,7 @@
 
 #include "rapidjson/include/rapidjson/document.h"
 
-
+//?
 #pragma comment(lib, "comctl32.lib")
 
 //	NOTE: ENSURE that these match up with the definitions in Achievement.h!
@@ -109,13 +109,12 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 
 
 Dlg_AchievementEditor::Dlg_AchievementEditor()
+ :	m_hAchievementEditorDlg( nullptr ),
+	m_hICEControl( nullptr ),
+	m_pSelectedAchievement( nullptr ),
+	m_hAchievementBadge( nullptr ),
+	m_bPopulatingAchievementEditorData( false )
 {
-	m_hAchievementEditorDlg = NULL;
-	m_hICEControl = NULL;
-	m_pSelectedAchievement = NULL;
-	m_bPopulatingAchievementEditorData = false;
-	m_hAchievementBadge = NULL;
-
 	for( size_t i = 0; i < g_nMaxConditions; ++i )
 	{
 		if( i == 0 )
@@ -180,57 +179,36 @@ void Dlg_AchievementEditor::SetupColumns( HWND hList )
 const int Dlg_AchievementEditor::AddCondition( HWND hList, const Condition& Cond )
 {
 	//	Add to our local array:
-
-	BOOL bDeltaSrc = ( Cond.CompSource().m_nVarType == CMPTYPE_DELTAMEM );
-	BOOL bDeltaDst = ( Cond.CompTarget().m_nVarType == CMPTYPE_DELTAMEM );
-
-	unsigned int nValSrc = Cond.CompSource().m_nVal;
-	unsigned int nValDst = Cond.CompTarget().m_nVal;
-
-	unsigned int nValTypeSrc = Cond.CompSource().m_nVarSize;
-	unsigned int nValTypeDst = Cond.CompTarget().m_nVarSize;
-
-	const char* sCmpStr = g_CmpStrings[ (int)Cond.ComparisonType() ];
-
 	const char* sMemTypStrSrc = "Value";
-	const char* sMemTypStrDst = "Value";
 	const char* sMemSizeStrSrc = "";
-	const char* sMemSizeStrDst = "";
-
-	if( Cond.CompSource().m_nVarType != CMPTYPE_VALUE )
+	if( Cond.CompSource().Type() != ValueComparison )
 	{
-		sMemSizeStrSrc = g_MemSizeStrings[ (int)Cond.CompSource().m_nVarSize ];
-		sMemTypStrSrc = Cond.CompSource().m_nVarType==CMPTYPE_ADDRESS ? "Mem" : "Delta";
+		sMemTypStrSrc = ( Cond.CompSource().Type() == Address ) ? "Mem" : "Delta";
+		sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[ Cond.CompSource().Size() ];
 	}
-
-	if( Cond.CompTarget().m_nVarType != CMPTYPE_VALUE )
+	const char* sMemTypStrDst = "Value";
+	const char* sMemSizeStrDst = "";
+	if( Cond.CompTarget().Type() != ValueComparison )
 	{
-		sMemSizeStrDst = g_MemSizeStrings[ (int)Cond.CompTarget().m_nVarSize ];
-		sMemTypStrDst = Cond.CompTarget().m_nVarType==CMPTYPE_ADDRESS ? "Mem" : "Delta";
+		sMemTypStrDst = ( Cond.CompTarget().Type() == Address ) ? "Mem" : "Delta";
+		sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[ Cond.CompTarget().Size() ];
 	}
 	
-	const char* sGroup = Cond.IsResetCondition() ? "ResetIf:" : Cond.IsPauseCondition() ? "PauseIf:" : "";
-
 	sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_ID], g_nMaxMemStringTextItemSize, "%d", m_nNumOccupiedRows+1 );
-	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_GROUP], g_nMaxMemStringTextItemSize, sGroup );
+	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_GROUP], g_nMaxMemStringTextItemSize, Cond.IsResetCondition() ? "ResetIf:" : Cond.IsPauseCondition() ? "PauseIf:" : "" );
 	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_TYPE_SRC], g_nMaxMemStringTextItemSize, sMemTypStrSrc );
 	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_SIZE_SRC], g_nMaxMemStringTextItemSize, sMemSizeStrSrc );
-	if( g_MemManager.RAMTotalSize() > 65536 )
-		sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_SRC], g_nMaxMemStringTextItemSize, "0x%06x", nValSrc );
-	else
-		sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_SRC], g_nMaxMemStringTextItemSize, "0x%04x", nValSrc );
-	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_COMPARISON], g_nMaxMemStringTextItemSize, sCmpStr );
+	sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_SRC], g_nMaxMemStringTextItemSize, "0x%06x", Cond.CompSource().Value() );
+	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_COMPARISON], g_nMaxMemStringTextItemSize, COMPARISONTYPE_STR[ Cond.CompareType() ] );
 	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_TYPE_TGT], g_nMaxMemStringTextItemSize, sMemTypStrDst );
 	strcpy_s( m_lbxData[m_nNumOccupiedRows][CSI_SIZE_TGT], g_nMaxMemStringTextItemSize, sMemSizeStrDst );
-	sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_TGT], g_nMaxMemStringTextItemSize, "0x%02x", nValDst );
+	sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_TGT], g_nMaxMemStringTextItemSize, "0x%02x", Cond.CompTarget().Value() );
 	sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_HITCOUNT], g_nMaxMemStringTextItemSize, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits() );
 
 	if( g_bPreferDecimalVal )
 	{
-		if( Cond.CompTarget().m_nVarType == CMPTYPE_VALUE )
-		{
-			sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_TGT], g_nMaxMemStringTextItemSize, "%d", nValDst );
-		}
+		if( Cond.CompTarget().Type() == ValueComparison )
+			sprintf_s( m_lbxData[m_nNumOccupiedRows][CSI_VALUE_TGT], g_nMaxMemStringTextItemSize, "%d", Cond.CompTarget().Value() );
 	}
 
 	//	Copy our local text into the listbox (:S)
@@ -706,14 +684,12 @@ BOOL CreateIPE( int nItem, int nSubItem )
 				break;
 			}
 
-			const int nNumItems = g_NumMemSizeStrings;	//	"4-bit upper, lower, 8-bit, 16-bit"
-
 			g_hIPEEdit = CreateWindowEx( 
 				WS_EX_CLIENTEDGE, 
 				"ComboBox", 
 				"", 
 				WS_CHILD|WS_VISIBLE|WS_POPUPWINDOW|WS_BORDER|CBS_DROPDOWNLIST,
-				rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f*nHeight*nNumItems),
+				rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.6f * nHeight * NUM_COMP_VARIABLE_SIZES ),
 				g_AchievementEditorDialog.GetHWND(), 
 				0, 
 				GetModuleHandle(NULL), 
@@ -726,15 +702,15 @@ BOOL CreateIPE( int nItem, int nSubItem )
 				break;
 			};
 
-			for( int i = 0; i < g_NumMemSizeStrings; ++i )
+			for( size_t i = 0; i < NUM_COMP_VARIABLE_SIZES; ++i )
 			{
-				ComboBox_AddString( g_hIPEEdit, g_MemSizeStrings[i] );
+				ComboBox_AddString( g_hIPEEdit, COMPARISONVARIABLESIZE_STR[ i ] );
 
-				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), g_MemSizeStrings[i] ) == 0 )
+				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONVARIABLESIZE_STR[i] ) == 0 )
 					ComboBox_SetCurSel( g_hIPEEdit, i );
 			}
 
-			SendMessage( g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT),  TRUE);
+			SendMessage( g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject( DEFAULT_GUI_FONT ),  TRUE);
 			ComboBox_ShowDropdown( g_hIPEEdit, TRUE );
 
 			EOldProc = (WNDPROC)SetWindowLong( g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc );
@@ -743,35 +719,33 @@ BOOL CreateIPE( int nItem, int nSubItem )
 	case CSI_COMPARISON:
 		{
 			//	Compare: dropdown
-			assert( g_hIPEEdit == NULL );
+			ASSERT( g_hIPEEdit == NULL );
 			if( g_hIPEEdit )
 				break;
-
-			const int nNumItems = g_NumCompTypes;
 
 			g_hIPEEdit = CreateWindowEx( 
 				WS_EX_CLIENTEDGE, 
 				"ComboBox", 
 				"", 
 				WS_CHILD|WS_VISIBLE|WS_POPUPWINDOW|WS_BORDER|CBS_DROPDOWNLIST,
-				rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f*nHeight*nNumItems),
+				rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.6f * nHeight * NUM_COMPARISON_TYPES ),
 				g_AchievementEditorDialog.GetHWND(), 
 				0, 
-				GetModuleHandle(NULL), 
+				GetModuleHandle( NULL ),
 				NULL );
 
 			if( g_hIPEEdit == NULL )
 			{
-				assert(0);
+				ASSERT( !"Could not create combo box..." );
 				MessageBox( NULL, "Could not create combo box.", "Error", MB_OK | MB_ICONERROR );
 				break;
 			};
 
-			for( int i = 0; i < g_NumCompTypes; ++i )
+			for( size_t i = 0; i < NUM_COMPARISON_TYPES; ++i )
 			{
-				ComboBox_AddString( g_hIPEEdit, g_CmpStrings[i] );
+				ComboBox_AddString( g_hIPEEdit, COMPARISONVARIABLETYPE_STR[ i ] );
 
-				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), g_CmpStrings[i] ) == 0 )
+				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONVARIABLETYPE_STR[ i ] ) == 0 )
 					ComboBox_SetCurSel( g_hIPEEdit, i );
 			}
 
@@ -1066,29 +1040,22 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 		case IDC_RA_ADDCOND:
 			{
 				Achievement* pActiveAch = ActiveAchievement();
-				if( pActiveAch == NULL )
+				if( pActiveAch == nullptr )
 					return FALSE;
 
 				Condition NewCondition;
 				NewCondition.SetIsBasicCondition();
-
-				NewCondition.CompSource().m_nVarSize = CMP_SZ_16BIT;
-				NewCondition.CompSource().m_nVarType = CMPTYPE_ADDRESS;
-				NewCondition.CompSource().m_nVal = 0x8000;
-
-				NewCondition.ComparisonType() = CMP_EQ;
-
-				NewCondition.CompTarget().m_nVarSize = CMP_SZ_16BIT;
-				NewCondition.CompTarget().m_nVarType = CMPTYPE_VALUE;
-				NewCondition.CompTarget().m_nVal = 10;
+				NewCondition.CompSource().Set( ComparisonVariableSize::SixteenBit, ComparisonVariableType::Address, 0x8000, 0 );
+				NewCondition.CompTarget().Set( ComparisonVariableSize::SixteenBit, ComparisonVariableType::ValueComparison, 10, 0 );	//	Compare defaults!
 
 				//	Helper: guess that the currently watched memory location
 				//	 is probably what they are about to want to add a cond for.
-				if( g_MemoryDialog.m_hWnd != NULL )
+				if( g_MemoryDialog.GetHWND() != nullptr )
 				{
 					char Str_Tmp[256];
-					GetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, Str_Tmp, 14 );
-					NewCondition.CompSource().m_nVal = strtol( Str_Tmp, NULL, 16 );
+					GetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, Str_Tmp, 14 );
+					unsigned int nVal = strtol( Str_Tmp, NULL, 16 );
+					NewCondition.CompSource().SetValues( nVal, nVal );
 				}
 
 				const size_t nNewID = pActiveAch->AddCondition( GetSelectedConditionGroup(), NewCondition )-1;
@@ -1416,41 +1383,36 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 						Condition& rCond = ActiveAchievement()->GetCondition( GetSelectedConditionGroup(), pOnClick->iItem );
 
 						//HWND hMem = GetDlgItem( HWndMemoryDlg, IDC_RA_WATCHING );
-						char buffer[256];
 						if( pOnClick->iSubItem == CSI_VALUE_SRC )
 						{
-							if( rCond.CompSource().m_nVarType != CMPTYPE_VALUE )
+							if( rCond.CompSource().Type() != ValueComparison )
 							{
 								//	Wake up the mem dlg via the main app
 								SendMessage( g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0 );
 
 								//	Update the text to match
-								if( g_MemManager.RAMTotalSize() > 65536 )
-									sprintf_s( buffer, 16, "0x%06x", rCond.CompSource().m_nVal );
-								else
-									sprintf_s( buffer, 16, "0x%04x", rCond.CompSource().m_nVal );
+								char buffer[ 16 ];
+								sprintf_s( buffer, 16, "0x%06x", rCond.CompSource().Value() );
+								SetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer );
 
-								SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, buffer );
 								//	Nudge the ComboBox to update the mem note
-								SendMessage( g_MemoryDialog.m_hWnd, WM_COMMAND, MAKELONG( IDC_RA_WATCHING, CBN_EDITCHANGE ), 0 );
+								SendMessage( g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG( IDC_RA_WATCHING, CBN_EDITCHANGE ), 0 );
 							}
 						}
 						else if( pOnClick->iSubItem == CSI_VALUE_TGT )
 						{
-							if( rCond.CompTarget().m_nVarType != CMPTYPE_VALUE )
+							if( rCond.CompTarget().Type() != ValueComparison )
 							{
 								//	Wake up the mem dlg via the main app
 								SendMessage( g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0 );
 
 								//	Update the text to match
-								if( g_MemManager.RAMTotalSize() > 65536 )
-									sprintf_s( buffer, 16, "0x%06x", rCond.CompTarget().m_nVal );
-								else
-									sprintf_s( buffer, 16, "0x%04x", rCond.CompTarget().m_nVal );
+								char buffer[ 16 ];
+								sprintf_s( buffer, 16, "0x%06x", rCond.CompTarget().Value() );
+								SetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer );
 
-								SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, buffer );
 								//	Nudge the ComboBox to update the mem note
-								SendMessage( g_MemoryDialog.m_hWnd, WM_COMMAND, MAKELONG( IDC_RA_WATCHING, CBN_EDITCHANGE ), 0 );
+								SendMessage( g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG( IDC_RA_WATCHING, CBN_EDITCHANGE ), 0 );
 							}
 						}
 					}
@@ -1508,52 +1470,52 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 						case CSI_TYPE_SRC:
 							{
 								if( strcmp( sData, "Mem" ) == 0 )
-									rCond.CompSource().m_nVarType = CMPTYPE_ADDRESS;
+									rCond.CompSource().SetType( Address );
 								else if( strcmp( sData, "Delta" ) == 0 )
-									rCond.CompSource().m_nVarType = CMPTYPE_DELTAMEM;
+									rCond.CompSource().SetType( DeltaMem );
 								else
-									rCond.CompSource().m_nVarType = CMPTYPE_VALUE;
+									rCond.CompSource().SetType( ValueComparison );
 
 								break;
 							}
 						case CSI_TYPE_TGT:
 							{
 								if( strcmp( sData, "Mem" ) == 0 )
-									rCond.CompTarget().m_nVarType = CMPTYPE_ADDRESS;
+									rCond.CompTarget().SetType( Address );
 								else if( strcmp( sData, "Delta" ) == 0 )
-									rCond.CompTarget().m_nVarType = CMPTYPE_DELTAMEM;
+									rCond.CompTarget().SetType( DeltaMem );
 								else
-									rCond.CompTarget().m_nVarType = CMPTYPE_VALUE;
+									rCond.CompTarget().SetType( ValueComparison );
 
 								break;
 							}
 
 						case CSI_SIZE_SRC:
 							{
-								for( int i = 0; i < g_NumMemSizeStrings; ++i )
+								for( int i = 0; i < NUM_COMP_VARIABLE_SIZES; ++i )
 								{
-									if( strcmp( sData, g_MemSizeStrings[i] ) == 0 )
-										rCond.CompSource().m_nVarSize = (CompVariableSize)i;
+									if( strcmp( sData, COMPARISONVARIABLESIZE_STR[ i ] ) == 0 )
+										rCond.CompSource().SetSize( static_cast<ComparisonVariableSize>( i ) );
 								}
 								//	TBD: Limit validation
 								break;
 							}
 						case CSI_SIZE_TGT:
 							{
-								for( int i = 0; i < g_NumMemSizeStrings; ++i )
+								for( int i = 0; i < NUM_COMP_VARIABLE_SIZES; ++i )
 								{
-									if( strcmp( sData, g_MemSizeStrings[i] ) == 0 )
-										rCond.CompTarget().m_nVarSize = (CompVariableSize)i;
+									if( strcmp( sData, COMPARISONVARIABLESIZE_STR[ i ] ) == 0 )
+										rCond.CompTarget().SetSize( static_cast<ComparisonVariableSize>( i ) );
 								}
 								//	TBD: Limit validation
 								break;
 							}
 						case CSI_COMPARISON:
 							{
-								for( int i = 0; i < g_NumCompTypes; ++i )
+								for( int i = 0; i < NUM_COMPARISON_TYPES; ++i )
 								{
-									if( strcmp( sData, g_CmpStrings[i] ) == 0 )
-										rCond.ComparisonType() = (CompType)i;
+									if( strcmp( sData, COMPARISONTYPE_STR[ i ] ) == 0 )
+										rCond.SetCompareType( static_cast<ComparisonType>( i ) );
 								}
 								break;
 							}
@@ -1561,19 +1523,21 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 						case CSI_VALUE_SRC:
 							{
 								int nBase = 16;
-								if( rCond.CompSource().m_nVarType == CMPTYPE_VALUE && g_bPreferDecimalVal )
+								if( rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal )
 									nBase = 10;
 
-								rCond.CompSource().m_nVal = strtol( sData, NULL, nBase );
+								unsigned int nVal = strtol( sData, NULL, nBase );
+								rCond.CompSource().SetValues( nVal, nVal );
 								break;
 							}
 						case CSI_VALUE_TGT:
 							{
 								int nBase = 16;
-								if( rCond.CompTarget().m_nVarType == CMPTYPE_VALUE && g_bPreferDecimalVal )
+								if( rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal )
 									nBase = 10;
-
-								rCond.CompTarget().m_nVal = strtol( sData, NULL, nBase );
+								
+								unsigned int nVal = strtol( sData, NULL, nBase );
+								rCond.CompTarget().SetValues( nVal, nVal );
 								break;
 							}
 						case CSI_HITCOUNT:
@@ -1583,7 +1547,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 								break;
 							}
 						default:
-							assert(0); //unhandled!
+							ASSERT( !"Unhandled!" );
 							break;
 					}
 

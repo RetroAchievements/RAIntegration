@@ -8,7 +8,6 @@
 #include <windowsx.h>
 #include <stdio.h>
 #include <time.h>
-#include <assert.h>
 
 #include "RA_Interface.h"
 #include "RA_Achievement.h"
@@ -1469,7 +1468,7 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 	sprintf_s( buffer, 256, " %d Points ", pUser->GetScore() );
 	TextOut( hDC, nTextX, nTextY2, buffer, strlen( buffer ) );
 
-	if( g_hardcoreModeActive )
+	if( g_bHardcoreModeActive )
 	{
 		COLORREF nLastColor = SetTextColor( hDC, g_ColWarning1 );
 		COLORREF nLastColorBk = SetBkColor( hDC, g_ColWarning2 );

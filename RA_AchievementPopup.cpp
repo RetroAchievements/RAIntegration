@@ -76,7 +76,7 @@ void AchievementPopup::Update( ControllerInput input, float fDelta, bool bFullSc
 	if( bPaused )
 		fDelta = 0.0f;
 
-	fDelta = RA::Clamp<float>( fDelta, 0.0f, 0.3f );	//	Limit this!
+	fDelta = RAClamp<float>( fDelta, 0.0f, 0.3f );	//	Limit this!
 
 	//if( m_bSuppressDeltaUpdate )
 	//{

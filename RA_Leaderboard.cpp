@@ -33,34 +33,41 @@ double MemValue::GetValue() const
 	}
 	else
 	{
-		if( m_nVarSize == CMP_SZ_4BIT_LOWER )
+		if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
 		{
-			nRetVal = g_MemManager.RAMByte( m_nAddress )&0xf;
+			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & 0xf;
 		}
-		else if( m_nVarSize == CMP_SZ_4BIT_UPPER )
+		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
 		{
-			nRetVal = (g_MemManager.RAMByte( m_nAddress )>>4)&0xf;
+			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) >> 4 ) & 0xf;
 		}
-		else if( m_nVarSize == CMP_SZ_8BIT )
+		else if( m_nVarSize == ComparisonVariableSize::EightBit )
 		{
-			nRetVal = g_MemManager.RAMByte( m_nAddress );
+			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
 		}
-		else if( m_nVarSize == CMP_SZ_16BIT )
+		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
 		{
-			nRetVal = g_MemManager.RAMByte( m_nAddress );
-			nRetVal |= (g_MemManager.RAMByte( m_nAddress+1 ) << 8);
+			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
+			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
 		}
-		else if( m_nVarSize >= CMP_SZ_1BIT_0 && m_nVarSize <= CMP_SZ_1BIT_7 )
+		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
 		{
-			const unsigned int nBitmask = ( 1 << (m_nVarSize-CMP_SZ_1BIT_0) );
-			nRetVal = ( g_MemManager.RAMByte( m_nAddress ) & nBitmask ) != 0;
+			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
+			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
+			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 2 ) << 16 );
+			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 3 ) << 24 );
+		}
+		else if( ( m_nVarSize >= ComparisonVariableSize::Bit_0 ) && ( m_nVarSize <= ComparisonVariableSize::Bit_7 ) )
+		{
+			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
+			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & nBitmask ) != 0;
 		}
 		//nRetVal = g_MemManager.RAMByte( m_nAddress );
 
 		if( m_bBCDParse )
 		{
 			//	Reparse this value as a binary coded decimal.
-			nRetVal = ( ( (nRetVal>>4)&0xf) * 10) + (nRetVal&0xf);
+			nRetVal = ( ( ( nRetVal >> 4 ) & 0xf ) * 10 ) + ( nRetVal & 0xf );
 		}
 	}
 
@@ -87,8 +94,8 @@ char* MemValue::ParseFromString( char* pBuffer )
 
 	CompVariable varTemp;
 	varTemp.ParseVariable( pIter );
-	m_nAddress = varTemp.m_nVal;	//	Fetch value ('address') as parsed
-	m_nVarSize = varTemp.m_nVarSize;
+	m_nAddress = varTemp.GetValue();	//	Fetch value ('address') as parsed
+	m_nVarSize = varTemp.Size();
 
 	m_fModifier = 1.0;
 	if( *pIter == '*' )

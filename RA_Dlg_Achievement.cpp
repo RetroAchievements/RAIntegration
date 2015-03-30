@@ -158,7 +158,7 @@ void Dlg_Achievements::RemoveAchievement( HWND hList, int nIter )
 size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 {
 	AchievementDlgRow newRow;
-	newRow.reserve( NUM_COLS );
+	newRow.resize( NUM_COLS );
 
 	//	Add to our local array:
 
@@ -197,7 +197,7 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 			ListView_SetItem( hList, &item );
 	}
 
-	assert( item.iItem == m_lbxData.size() );
+	ASSERT( item.iItem == ( m_lbxData.size()-1 ) );
 	return static_cast<size_t>( item.iItem );
 }
 

@@ -1,5 +1,4 @@
-#ifndef _DLG_ACHIEVEMENTEDITOR_H_
-#define _DLG_ACHIEVEMENTEDITOR_H_
+#pragma once
 
 #include <wtypes.h>
 #include <vector>
@@ -12,11 +11,6 @@ namespace
 	const int g_nMaxConditions = 200;
 	const int g_nMaxMemStringTextItemSize = 80;
 }
-
-//struct Achievement;
-
-//extern const char* g_sColTitles[];
-//extern const int g_nColSizes[];
 
 class BadgeNames
 {
@@ -60,9 +54,7 @@ public:
 	HWND GetHWND() const											{ return m_hAchievementEditorDlg; }
 
 	Achievement* ActiveAchievement() const							{ return m_pSelectedAchievement; }
-
 	BOOL IsPopulatingAchievementEditorData() const					{ return m_bPopulatingAchievementEditorData; }
-
 	void SetIgnoreEdits( BOOL bIgnore )								{ m_bPopulatingAchievementEditorData = bIgnore; }
 
 	void UpdateBadge( const std::string& sNewName );							//	Call to set/update data
@@ -92,15 +84,10 @@ private:
 	int m_nNumOccupiedRows;
 
 	Achievement* m_pSelectedAchievement;
-
 	BOOL m_bPopulatingAchievementEditorData;
-
 	HBITMAP m_hAchievementBadge;
 
 	BadgeNames m_BadgeNames;
 };
 
 extern Dlg_AchievementEditor g_AchievementEditorDialog;
-
-
-#endif //_DLG_ACHIEVEMENT_H_

@@ -267,9 +267,11 @@ HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 
 	if( !_FileExists( RA_DIR_USERPIC + sUserName + ".png" ) )
 	{
+		PostArgs args;
+		args['u'] = sUserName;
 		//	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
 		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) && !RAWeb::HTTPResponseExists( RequestUserPic, sUserName ) )
-			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, PostArgs(), sUserName );
+			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, args, sUserName );
 
 		return NULL;
 	}

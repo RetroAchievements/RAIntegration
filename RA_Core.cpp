@@ -43,18 +43,18 @@ std::string g_sHomeDir;
 std::string g_sROMDirLocation;
 std::string g_sCurrentROMMD5;	//	Internal
 
-HMODULE g_hThisDLLInst;
-HINSTANCE g_hRAKeysDLL;
-HWND g_RAMainWnd;
-EmulatorID g_EmulatorID;					//	Uniquely identifies the emulator
-unsigned int g_ConsoleID = -1;				//	Currently active Console ID
+HMODULE g_hThisDLLInst = nullptr;
+HINSTANCE g_hRAKeysDLL = nullptr;
+HWND g_RAMainWnd = nullptr;
+EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
+ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 const char* g_sGetLatestClientPage = NULL;	
 const char* g_sClientVersion = NULL;		
 const char* g_sClientName = NULL;			
 const char* g_sClientDownloadURL = NULL;	
 const char* g_sClientEXEName = NULL;
 bool g_bRAMTamperedWith = false;
-bool g_hardcoreModeActive = false;
+bool g_bHardcoreModeActive = false;
 bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
@@ -90,7 +90,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	if( DirectoryExists( RA_DIR_OVERLAY ) == FALSE )	//	It should already, really...
 		_mkdir( RA_DIR_OVERLAY );
 
-	g_EmulatorID = (EmulatorID)nEmulatorID;
+	g_EmulatorID = static_cast<EmulatorID>( nEmulatorID );
 	g_RAMainWnd = hMainHWND;
 	//g_hThisDLLInst
 
@@ -99,7 +99,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	switch( g_EmulatorID )
 	{
 	case RA_Gens:
-		g_ConsoleID				= 1;
+		g_ConsoleID				= MegaDrive;
 		g_sGetLatestClientPage	= "LatestRAGensVersion.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RAGens_REWiND";
@@ -107,7 +107,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		g_sClientEXEName		= "RAGens.exe";
 		break;
 	case RA_Project64:
-		g_ConsoleID				= 2;
+		g_ConsoleID				= N64;
 		g_sGetLatestClientPage	= "LatestRAP64Version.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RAP64";
@@ -115,7 +115,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		g_sClientEXEName		= "RAP64.exe";
 		break;
 	case RA_Snes9x:
-		g_ConsoleID				= 3;
+		g_ConsoleID				= SNES;
 		g_sGetLatestClientPage	= "LatestRASnesVersion.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RASnes9X";
@@ -123,7 +123,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		g_sClientEXEName		= "RASnes9X.exe";
 		break;
 	case RA_VisualboyAdvance:
-		g_ConsoleID				= 4;
+		g_ConsoleID				= GB;
 		g_sGetLatestClientPage	= "LatestRAVBAVersion.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RAVisualBoyAdvance";
@@ -132,7 +132,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		break;
 	case RA_Nester:
 	case RA_FCEUX:
-		g_ConsoleID				= 7;
+		g_ConsoleID				= NES;
 		g_sGetLatestClientPage	= "LatestRANESVersion.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RANes";
@@ -140,7 +140,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		g_sClientEXEName		= "RANes.exe";
 		break;
 	case RA_PCE:
-		g_ConsoleID				= 8;
+		g_ConsoleID				= PCEngine;
 		g_sGetLatestClientPage	= "LatestRAPCEVersion.html";
 		g_sClientVersion		= sClientVer;
 		g_sClientName			= "RAPCE";
@@ -182,7 +182,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 			if( nMBReply == IDYES )
 			{
 				DataStream Response;
-				if( RAWeb::DoBlockingHttpGet( RA_KEYS_DLL, Response ) )
+				if( RAWeb::DoBlockingHttpGet( RA_KEYS_DLL, Response, false ) )
 					_WriteBufferToFile( RA_KEYS_DLL, Response );
 			}
 		}
@@ -207,10 +207,6 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	RAWeb::RA_InitializeHTTPThreads();
 
 	//////////////////////////////////////////////////////////////////////////
-	//	Memory Manager
-	g_MemManager.Init();
-	g_MemManager.Reset( CMP_SZ_8BIT );
-
 	//	Dialogs:
 	g_MemoryDialog.Init();
 
@@ -339,15 +335,14 @@ API BOOL CCONV _RA_ConfirmLoadNewRom( BOOL bQuittingApp )
 	return ( nResult == IDYES );
 }
 
-API int CCONV _RA_SetConsoleID( unsigned int nConsoleID )
+API void CCONV _RA_SetConsoleID( unsigned int nConsoleID )
 {
-	g_ConsoleID = nConsoleID;
-	return 0;
+	g_ConsoleID = static_cast<ConsoleID>( nConsoleID );
 }
 
 API int CCONV _RA_HardcoreModeIsActive()
 {
-	return g_hardcoreModeActive;
+	return g_bHardcoreModeActive;
 }
 
 API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
@@ -356,13 +351,16 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 	return 0;
 }
 
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize, BYTE* pRAM, size_t nRAMSize, BYTE* pRAMExtra, size_t nRAMExtraSize )
+API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize )
 {
 	g_sCurrentROMMD5.clear();
 	if( pROM != NULL && nROMSize > 0 )
 		g_sCurrentROMMD5 = RA::GenerateMD5( pROM, nROMSize );
+	
+	g_MemManager.ClearMemoryBanks();
 
-	g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
+	//	Per console basis...?
+	//g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
 
 	//	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
 
@@ -441,6 +439,11 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize, BYTE* pRAM, size_t 
 	g_AchievementOverlay.OnLoad_NewRom();
 
 	return 0;
+}
+
+API void CCONV _RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize )
+{
+	g_MemManager.AddMemoryBank( static_cast<size_t>( nBankID ), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>( nBankSize ) );
 }
 
 
@@ -773,7 +776,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
 		AppendMenu( hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
-		AppendMenu( hRA, g_hardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode") );
+		AppendMenu( hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor") );
@@ -930,7 +933,7 @@ API void CCONV _RA_LoadPreferences()
 			if( doc.HasMember( "Token" ) )
 				RAUsers::LocalUser.SetToken( doc["Token"].GetString() );
 			if( doc.HasMember( "Hardcore Active" ) )
-				g_hardcoreModeActive = doc["Hardcore Active"].GetBool();
+				g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
 			if( doc.HasMember( "Num Background Threads" ) )
 				g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
 			if( doc.HasMember( "ROM Directory" ) )
@@ -962,7 +965,7 @@ API void CCONV _RA_SavePreferences()
 		Document::AllocatorType& a = doc.GetAllocator();
 		doc.AddMember( "Username", StringRef( RAUsers::LocalUser.Username().c_str() ), a );
 		doc.AddMember( "Token", StringRef( RAUsers::LocalUser.Token().c_str() ), a );
-		doc.AddMember( "Hardcore Active", g_hardcoreModeActive, a );
+		doc.AddMember( "Hardcore Active", g_bHardcoreModeActive, a );
 		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
 		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
 		
@@ -1095,7 +1098,7 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 
 		case IDM_RA_HARDCORE_MODE:
 
-			g_hardcoreModeActive = !g_hardcoreModeActive;
+			g_bHardcoreModeActive = !g_bHardcoreModeActive;
 
 			_RA_ResetEmulation();
 			
@@ -1283,9 +1286,9 @@ API void CCONV _RA_OnSaveState( const char* sFilename )
 	//	Save State is being allowed by app (user was warned!)
 	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
-		if( g_hardcoreModeActive )
+		if( g_bHardcoreModeActive )
 		{
-			g_hardcoreModeActive = false;
+			g_bHardcoreModeActive = false;
 			RA_RebuildMenu();
 			//RA_ResetEmulation();
 		}
@@ -1302,10 +1305,10 @@ API void CCONV _RA_OnLoadState( const char* sFilename )
 	//	Save State is being allowed by app (user was warned!)
 	if( RAUsers::LocalUser.IsLoggedIn() )
 	{
-		if( g_hardcoreModeActive )
+		if( g_bHardcoreModeActive )
 		{
 			MessageBox( NULL, "Savestates are not allowed during Hardcore Mode!", "Warning!", MB_OK|MB_ICONEXCLAMATION );
-			g_hardcoreModeActive = false;
+			g_bHardcoreModeActive = false;
 			RA_RebuildMenu();
 			RA_ResetEmulation();
 		}

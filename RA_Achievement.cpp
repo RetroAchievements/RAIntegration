@@ -37,8 +37,6 @@ AchievementSet* g_pActiveAchievements = CoreAchievements;
 
 namespace
 {
-	const char* LockedBadgeFile = "00000.png";
-
 	unsigned int GetFlagsFromType( AchievementSetType nType )
 	{
 		unsigned int nFlags = 0;
@@ -52,7 +50,6 @@ namespace
 
 		return nFlags;
 	}
-
 }
 
 void SetAchievementCollection( AchievementSetType Type )
@@ -375,302 +372,90 @@ void Achievement::RemoveAllConditions( size_t nConditionGroup )
 std::string Achievement::CreateMemString() const
 {
 	std::stringstream sstr;
-	
-	unsigned int i = 0;
-	char* sDelta = "";
-	char* sSize = "";
-
 	for( size_t nGrp = 0; nGrp < NumConditionGroups(); ++nGrp )
 	{
-		if( m_vConditions[nGrp].Count() == 0 )	//Ignore empty groups when saving
+		if( m_vConditions[ nGrp ].Count() == 0 )	//	Ignore empty groups when saving
 			continue;
 		
 		if( nGrp > 0 )	//	Subcondition start found
 			sstr << "S";
 
-		for( i = 0; i < m_vConditions[nGrp].Count(); ++i )
+		for( size_t i = 0; i < m_vConditions[ nGrp ].Count(); ++i )
 		{
-			const Condition* pNextCond = &m_vConditions[nGrp].GetAt(i);
+			const Condition& NextCond = m_vConditions[ nGrp ].GetAt( i );
+			const CompVariable& Src = NextCond.CompSource();
+			const CompVariable& Target = NextCond.CompTarget();
 
-			char sNextCondition[256];
+			char sNextCondition[ 256 ];
 			memset( sNextCondition, 0, 256 );
-
-			//	Source:
-			sDelta = (pNextCond->CompSource().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
-			sSize = "";
-
-			if( pNextCond->IsResetCondition() )
+			
+			if( NextCond.IsResetCondition() )
 				strcat_s( sNextCondition, 256, "R:" );
-			else if( pNextCond->IsPauseCondition() )
+			else if( NextCond.IsPauseCondition() )
 				strcat_s( sNextCondition, 256, "P:" );
-
-			if( pNextCond->CompSource().m_nVarType != CMPTYPE_VALUE )
+			
+			//	Source:
+			if( ( Src.Type() == ComparisonVariableType::Address ) || 
+				( Src.Type() == ComparisonVariableType::DeltaMem ) )
 			{
-				if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
-					sSize = "L";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
-					sSize = "U";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_8BIT )		//	H=half
-					sSize = "H";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
-					sSize = "M";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_1 )
-					sSize = "N";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_2 )
-					sSize = "O";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_3 )
-					sSize = "P";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_4 )
-					sSize = "Q";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_5 )
-					sSize = "R";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_6 )
-					sSize = "S";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_7 )
-					sSize = "T";
-				else //if( pNextCond->CompSource().m_nVarSize == CMP_SZ_16BIT )
-					sSize = "";
-
-				if( g_MemManager.RAMTotalSize() > 65536 )
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
-				else
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
+				char buffer[ 64 ];
+				sprintf_s( buffer, 64, "%s0x%s%06x", ( Src.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Src.Size() ), Src.Value() );
+				strcat_s( sNextCondition, 256, buffer );
+			}
+			else if( Src.Type() == ComparisonVariableType::ValueComparison )
+			{
+				//	Value: use direct!
+				char buffer[ 64 ];
+				sprintf_s( buffer, 64, "%d", Src.Value() );
+				strcat_s( sNextCondition, 256, buffer );
 			}
 			else
 			{
-				//	Value: use direct!
-				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompSource().m_nVal );
+				ASSERT( !"Unknown type? (DynMem)?" );
 			}
 			
 			//	Comparison type:
-			char* sCmpType = "=";
-			switch( pNextCond->ComparisonType() )
-			{
-			case CMP_EQ:
-				sCmpType = "="; break;
-			case CMP_GT:
-				sCmpType = ">"; break;
-			case CMP_GTE:
-				sCmpType = ">="; break;
-			case CMP_LT:
-				sCmpType = "<"; break;
-			case CMP_LTE:
-				sCmpType = "<="; break;
-			case CMP_NEQ:
-				sCmpType = "!="; break;
-			default:
-				assert(0); break;
-			}
-			strcat_s( sNextCondition, 256, sCmpType );
+			strcat_s( sNextCondition, 256, ComparisonTypeToStr( NextCond.CompareType() ) );
 
 			//	Target:
-			sDelta = (pNextCond->CompTarget().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
-			sSize = "";
-
-			if( pNextCond->CompTarget().m_nVarType != CMPTYPE_VALUE )
+			if( ( Target.Type() == ComparisonVariableType::Address ) || 
+				( Target.Type() == ComparisonVariableType::DeltaMem ) )
 			{
-				if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
-					sSize = "L";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
-					sSize = "U";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_8BIT )		//	H=half		
-					sSize = "H";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
-					sSize = "M";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_1 )
-					sSize = "N";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_2 )
-					sSize = "O";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_3 )
-					sSize = "P";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_4 )
-					sSize = "Q";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_5 )
-					sSize = "R";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_6 )
-					sSize = "S";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_7 )
-					sSize = "T";
-				else //if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_16BIT )
-					sSize = "";
-
-				if( g_MemManager.RAMTotalSize() > 65536 )
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
-				else
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
+				char buffer[ 64 ];
+				sprintf_s( buffer, 64, "%s0x%s%06x", ( Target.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Target.Size() ), Target.Value() );
+				strcat_s( sNextCondition, 256, buffer );
+			}
+			else if( Target.Type() == ComparisonVariableType::ValueComparison )
+			{
+				//	Value: use direct!
+				char buffer[ 64 ];
+				sprintf_s( buffer, 64, "%d", Target.Value() );
+				strcat_s( sNextCondition, 256, buffer );
 			}
 			else
 			{
-				//	Value: use direct!
-				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompTarget().m_nVal );
+				ASSERT( !"Unknown type? (DynMem)?" );
 			}
-
+			
 			//	Hit count:
+			if( NextCond.RequiredHits() > 0 )
+			{
+				char buffer[ 64 ];
+				sprintf_s( buffer, 256, ".%d.", NextCond.RequiredHits() );
+				strcat_s( sNextCondition, 256, buffer );
+			}
 			
-			if( pNextCond->RequiredHits() > 0 )
-				sprintf_s( sNextCondition, 256, "%s.%d.", sNextCondition, pNextCond->RequiredHits() );
-			
-			//	Are we on the last condition? THIS IS IMPORTANT: check the parsing code!
-			if( (i+1) < m_vConditions[nGrp].Count() )
-				strcat_s( sNextCondition, 256, "_" );
-
 			//	Copy in the next condition:
 			sstr << sNextCondition;
+
+			//	Are we on the last condition? THIS IS IMPORTANT: check the parsing code!
+			if( ( i + 1 ) < m_vConditions[nGrp].Count() )
+				sstr << "_";
 		}
 	}
 
 	return sstr.str();
 }
-
-int Achievement::CreateMemString( char* pStrOut, const int nNumChars )
-{
-	unsigned int i = 0;
-	char sNextCondition[256];
-	char* sDelta = "";
-	char* sSize = "";
-
-	pStrOut[0] = '\0';
-
-	for( size_t nGrp = 0; nGrp < NumConditionGroups(); ++nGrp )
-	{
-		if( m_vConditions[nGrp].Count() == 0 )	//Ignore empty groups when saving
-			continue;
-		
-		if( nGrp > 0 )	//	Subcondition start found
-			strcat_s( pStrOut, nNumChars, "S" );
-
-		for( i = 0; i < m_vConditions[nGrp].Count(); ++i )
-		{
-			Condition* pNextCond = &m_vConditions[nGrp].GetAt(i);
-			memset( sNextCondition, 0, 256 );
-
-			//	Source:
-			sDelta = (pNextCond->CompSource().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
-			sSize = "";
-
-			if( pNextCond->IsResetCondition() )
-				strcat_s( sNextCondition, 256, "R:" );
-			else if( pNextCond->IsPauseCondition() )
-				strcat_s( sNextCondition, 256, "P:" );
-
-			if( pNextCond->CompSource().m_nVarType != CMPTYPE_VALUE )
-			{
-				if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
-					sSize = "L";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
-					sSize = "U";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_8BIT )		//	H=half
-					sSize = "H";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
-					sSize = "M";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_1 )
-					sSize = "N";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_2 )
-					sSize = "O";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_3 )
-					sSize = "P";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_4 )
-					sSize = "Q";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_5 )
-					sSize = "R";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_6 )
-					sSize = "S";
-				else if( pNextCond->CompSource().m_nVarSize == CMP_SZ_1BIT_7 )
-					sSize = "T";
-				else //if( pNextCond->CompSource().m_nVarSize == CMP_SZ_16BIT )
-					sSize = "";
-
-				if( g_MemManager.RAMTotalSize() > 65536 )
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
-				else
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompSource().m_nVal );
-			}
-			else
-			{
-				//	Value: use direct!
-				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompSource().m_nVal );
-			}
-			
-			//	Comparison type:
-			char* sCmpType = "=";
-			switch( pNextCond->ComparisonType() )
-			{
-			case CMP_EQ:
-				sCmpType = "="; break;
-			case CMP_GT:
-				sCmpType = ">"; break;
-			case CMP_GTE:
-				sCmpType = ">="; break;
-			case CMP_LT:
-				sCmpType = "<"; break;
-			case CMP_LTE:
-				sCmpType = "<="; break;
-			case CMP_NEQ:
-				sCmpType = "!="; break;
-			default:
-				assert(0); break;
-			}
-			strcat_s( sNextCondition, 256, sCmpType );
-
-			//	Target:
-			sDelta = (pNextCond->CompTarget().m_nVarType==CMPTYPE_DELTAMEM) ? "d" : "";
-			sSize = "";
-
-			if( pNextCond->CompTarget().m_nVarType != CMPTYPE_VALUE )
-			{
-				if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_LOWER )		//	L=lower
-					sSize = "L";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_4BIT_UPPER )	//	U=upper
-					sSize = "U";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_8BIT )		//	H=half		
-					sSize = "H";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_0 )		//	MNOPQRST=bits
-					sSize = "M";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_1 )
-					sSize = "N";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_2 )
-					sSize = "O";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_3 )
-					sSize = "P";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_4 )
-					sSize = "Q";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_5 )
-					sSize = "R";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_6 )
-					sSize = "S";
-				else if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_1BIT_7 )
-					sSize = "T";
-				else //if( pNextCond->CompTarget().m_nVarSize == CMP_SZ_16BIT )
-					sSize = "";
-
-				if( g_MemManager.RAMTotalSize() > 65536 )
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%06x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
-				else
-					sprintf_s( sNextCondition, 256, "%s%s0x%s%04x", sNextCondition, sDelta, sSize, pNextCond->CompTarget().m_nVal );
-			}
-			else
-			{
-				//	Value: use direct!
-				sprintf_s( sNextCondition, 256, "%s%d", sNextCondition, pNextCond->CompTarget().m_nVal );
-			}
-
-			//	Hit count:
-			
-			if( pNextCond->RequiredHits() > 0 )
-				sprintf_s( sNextCondition, 256, "%s.%d.", sNextCondition, pNextCond->RequiredHits() );
-			
-			//	Are we on the last condition? THIS IS IMPORTANT: check the parsing code!
-			if( (i+1) < m_vConditions[nGrp].Count() )
-				strcat_s( sNextCondition, 256, "_" );
-
-			//	Copy in the next condition:
-			strcat_s( pStrOut, nNumChars, sNextCondition );
-		}
-	}
-
-	return strlen( pStrOut );
-}
-
 
 void Achievement::ClearBadgeImage()
 {
@@ -719,7 +504,7 @@ void Achievement::Set( const Achievement& rRHS )
 
 //int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )
 //{
-//	assert( m_nNumDynamicVars < 5 );
+//	ASSERT( m_nNumDynamicVars < 5 );
 // 	
 //	//m_nDynamicVars[m_nNumDynamicVars].m_nVar = nVar;
 //	//strcpy_s( m_nDynamicVars[m_nNumDynamicVars].m_sName, 16, pVarName );
@@ -786,7 +571,7 @@ void Achievement::Set( const Achievement& rRHS )
 //				sprintf_s( buffer, 256, "Unrecognised operator character at %d",
 //					(&pStrIter) - (&pExp) );
 // 
-//				assert(!"Unrecognised operator in format expression!");
+//				ASSERT(!"Unrecognised operator in format expression!");
 //				return 0.0f;
 //			}
 //			
@@ -814,14 +599,14 @@ void Achievement::Set( const Achievement& rRHS )
 //				else
 //				{
 //					//wtf? Both elements are 'value'?
-//					assert(!"Bolloxed");
+//					ASSERT(!"Bolloxed");
 //					fNextVal = 0.0f;
 //				}
 //			}
 //			else
 //			{
 //				//	Report error?
-//				assert(!"Bolloxed2");
+//				ASSERT(!"Bolloxed2");
 //				return 0.0f;
 //			}
 //		}
@@ -849,7 +634,7 @@ void Achievement::Set( const Achievement& rRHS )
 //			fProgressValue -= fNextVal;
 //			break;
 //		default:
-//			assert(!"Unrecognised operator?!");
+//			ASSERT(!"Unrecognised operator?!");
 //			break;
 //		}
 // 
@@ -861,7 +646,7 @@ void Achievement::Set( const Achievement& rRHS )
 // 
 //	if( nIterations == 20 )
 //	{
-//		assert(!"Bugger... can't parse this 'progress' thing. Too many iterations!");
+//		ASSERT(!"Bugger... can't parse this 'progress' thing. Too many iterations!");
 //	}
 // 
 //	return fProgressValue;
@@ -917,7 +702,7 @@ void Achievement::Set( const Achievement& rRHS )
 //		
 //		if( pFirstFmt==NULL || pSecondFmt==NULL )
 //		{
-//			assert(!"FUCK. Format string is fucked");
+//			ASSERT(!"FUCK. Format string is fucked");
 //			return;
 //		}
 //		
@@ -999,7 +784,7 @@ BOOL AchievementSet::RemoveAchievement( size_t nIter )
 	}
 	else
 	{
-		assert( 0 );
+		ASSERT( !"There are no achievements to remove..." );
 		return FALSE;
 	}
 }
@@ -1131,7 +916,7 @@ void AchievementSet::Test()
 					args['t'] = RAUsers::LocalUser.Token();
 					args['a'] = std::to_string( ach.ID() );
 					args['v'] = sValidation;
-					args['h'] = std::to_string( static_cast<int>( g_hardcoreModeActive ) );
+					args['h'] = std::to_string( static_cast<int>( g_bHardcoreModeActive ) );
 					
 					RAWeb::CreateThreadedHTTPRequest( RequestSubmitAwardAchievement, args );
 				}
@@ -1220,7 +1005,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	args['u'] = RAUsers::LocalUser.Username();
 	args['t'] = RAUsers::LocalUser.Token();
 	args['g'] = std::to_string( nGameID );
-	args['h'] = g_hardcoreModeActive ? "1" : "0";
+	args['h'] = g_bHardcoreModeActive ? "1" : "0";
 	//args['f'] = std::to_string( GetFlagsFromType( m_nSetType ) );
 
 	const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), NULL, 10 );
@@ -1398,7 +1183,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			args['u'] = RAUsers::LocalUser.Username();
 			args['t'] = RAUsers::LocalUser.Token();
 			args['g'] = std::to_string( nGameID );
-			args['h'] = g_hardcoreModeActive ? "1" : "0";
+			args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
 			RAWeb::CreateThreadedHTTPRequest( RequestUnlocks, args );
 			
@@ -1435,7 +1220,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 	fopen_s( &pf, buffer, "w" );
 	if( pf == NULL )
 	{
-		assert(0);
+		ASSERT( !"Could not save progress!" );
 		return;
 	}
 
@@ -1459,10 +1244,10 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 				Condition& cond = pAch->GetCondition( nGrp, j );
 				sprintf_s( buffer, 4096, "%d:%d:%d:%d:%d:", 
 					cond.CurrentHits(),
-					cond.CompSource().m_nVal,
-					cond.CompSource().m_nLastVal,
-					cond.CompTarget().m_nVal,
-					cond.CompTarget().m_nLastVal );
+					cond.CompSource().Value(),
+					cond.CompSource().PreviousValue(),
+					cond.CompTarget().Value(),
+					cond.CompTarget().PreviousValue() );
 				strcat_s( cheevoProgressString, 4096, buffer );
 			}
 		}
@@ -1582,11 +1367,9 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 							{
 								Condition& cond = pAch->GetCondition( nGrp, j );
 
-								cond.OverrideCurrentHits( CondNumHits[j] );
-								cond.CompSource().m_nVal		= CondSourceVal[j];
-								cond.CompSource().m_nLastVal	= CondSourceLastVal[j];
-								cond.CompTarget().m_nVal		= CondTargetVal[j];
-								cond.CompTarget().m_nLastVal	= CondTargetLastVal[j];
+								cond.OverrideCurrentHits( CondNumHits[ j ] );
+								cond.CompSource().SetValues( CondSourceVal[ j ], CondSourceLastVal[ j ] );
+								cond.CompTarget().SetValues( CondTargetVal[ j ], CondTargetLastVal[ j ] );
 
 								pAch->SetDirtyFlag( Dirty_Conditions );
 							}

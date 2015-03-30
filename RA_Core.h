@@ -34,8 +34,13 @@ API HMENU CCONV _RA_CreatePopupMenu();
 API int CCONV _RA_ConfirmLoadNewRom( BOOL bQuittingApp );
 
 //	On or immediately after a new ROM is loaded, including if the ROM is reset.
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize, BYTE* pRAM, unsigned int nRAMSize, BYTE* pRAMExtra, unsigned int nRAMExtraSize );
+API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize );
 
+//	On or immediately after a new ROM is loaded, for each memory bank found
+//	NB:
+//pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
+//pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+API void CCONV _RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize );
 
 //	Immediately after loading a new state.
 API void CCONV _RA_OnLoadState( const char* sFileName );
@@ -49,7 +54,7 @@ API void CCONV _RA_DoAchievementsFrame();
 
 
 //	Use in special cases where the emulator contains more than one console ID.
-API int CCONV _RA_SetConsoleID( unsigned int nConsoleID );
+API void CCONV _RA_SetConsoleID( unsigned int nConsoleID );
 
 //	Display a dialog helping the user get the latest RA client version
 API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer );
@@ -104,12 +109,12 @@ extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
 extern EmulatorID g_EmulatorID;
-extern unsigned int g_ConsoleID;
+extern ConsoleID g_ConsoleID;
 extern const char* g_sGetLatestClientPage;
 extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
-extern bool g_hardcoreModeActive;
+extern bool g_bHardcoreModeActive;
 extern bool g_bLeaderboardsActive;
 extern unsigned int g_nNumHTTPThreads;
 

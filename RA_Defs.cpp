@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <Windows.h>
 
-void RA::DebugLog( const char* format, ... )
+void RADebugLog( const char* format, ... )
 {
 	char    buf[4096], *p = buf;
 	va_list args;
@@ -33,14 +33,14 @@ void RA::DebugLog( const char* format, ... )
 	}
 }
 
-BOOL RA::DirectoryExists( const char* sPath )
+BOOL DirectoryExists( const char* sPath )
 {
 	DWORD dwAttrib = GetFileAttributes( sPath );
 	return( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 }
 
 static_assert( sizeof( BYTE* ) == sizeof( char* ), "dangerous cast ahead" );
-char* RA::DataStreamAsString( DataStream& stream )
+char* DataStreamAsString( DataStream& stream )
 {
 	return reinterpret_cast<char*>( stream.data() );
 }

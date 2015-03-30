@@ -31,10 +31,11 @@ size_t CodeNotes::Load( const std::string& sFile )
 
 			for( SizeType i = 0; i < NoteArray.Size(); ++i )
 			{
-				const Value& NextNote = NoteArray[i];
-				ByteAddress nAddr = static_cast<ByteAddress>( NextNote["Address"].GetUint() );
-				const std::string& sAuthor = NextNote["Author"].GetString();
-				const std::string& sNote = NextNote["Note"].GetString();
+				const Value& NextNote = NoteArray[i]; 
+				const std::string& sAddr = NextNote[ "Address" ].GetString();
+				ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr.c_str(), nullptr, 16 ) );
+				const std::string& sAuthor = NextNote[ "User" ].GetString();	//	Author?
+				const std::string& sNote = NextNote[ "Note" ].IsNull() ? "" : NextNote[ "Note" ].GetString();
 				
 				//m_CodeNotes[ nAddr ] = CodeNoteObj( sAuthor, sNote );
 				m_CodeNotes.insert( std::map<ByteAddress,CodeNoteObj>::value_type( nAddr, CodeNoteObj( sAuthor, sNote ) ) );

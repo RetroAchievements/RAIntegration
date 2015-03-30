@@ -1,12 +1,11 @@
-#ifndef _DLG_MEMORY_H_
-#define _DLG_MEMORY_H_
+#pragma once
+
+#include "RA_Defs.h"
+#include "RA_CodeNotes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <wtypes.h>
-#include <assert.h>
 
 class CodeNotes;
 
@@ -32,12 +31,10 @@ public:
 	static void Invalidate();
 
 private:
-	//static HWND m_hControl;
 	static HFONT m_hViewerFont;
 	static SIZE m_szFontSize;
 	static unsigned int m_nDataStartXOffset;
 	static unsigned int m_nAddressOffset;
-	//static unsigned int m_nAddressSize;
 	static unsigned int m_nDataSize;
 	static unsigned int m_nEditAddress;
 	static unsigned int m_nEditNibble;
@@ -46,13 +43,14 @@ private:
 	static bool m_bHasCaret;
 	static unsigned int m_nCaretWidth;
 	static unsigned int m_nCaretHeight;
+
+	static unsigned short m_nActiveMemBank;
 };
 
 class Dlg_Memory
 {
 public:
 	Dlg_Memory();
-	~Dlg_Memory();
 
 public:
 	void Init();
@@ -60,9 +58,9 @@ public:
 	static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
 	INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
 
-	void InstallHWND( HWND hWnd )	{ m_hWnd = hWnd; }
-	HWND GetHWND() const			{ return m_hWnd; }
-
+	void InstallHWND( HWND hWnd )				{ m_hWnd = hWnd; }
+	HWND GetHWND() const						{ return m_hWnd; }
+	
 	void OnLoad_NewRom();
 
 	void OnWatchingMemChange();
@@ -71,18 +69,17 @@ public:
 	void Invalidate();
 	
 	void SetWatchingAddress( unsigned int nAddr );
-
 	BOOL IsActive() const;
 
-public:
-	CodeNotes* m_pCodeNotes;
+	const CodeNotes& Notes() const				{ return m_CodeNotes; }
+
+private:
+	CodeNotes m_CodeNotes;
 	HWND m_hWnd;
 };
+
 extern Dlg_Memory g_MemoryDialog;
 
 #ifdef __cplusplus
 };
 #endif
-
-
-#endif //_DLG_ACHIEVEMENT_H_

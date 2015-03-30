@@ -7,20 +7,20 @@
 class MemValue
 {
 public:
-	MemValue()	{ m_nAddress = 0; m_fModifier = 1.0f; m_nVarSize = CMP_SZ_8BIT; m_bBCDParse = false; m_bParseVal = false; }
-	MemValue( unsigned int nAddr, double fMod, CompVariableSize nSize, bool bBCDParse, bool bParseVal )
-		: m_nAddress(nAddr), m_fModifier(fMod), m_nVarSize(nSize), m_bBCDParse(bBCDParse), m_bParseVal(bParseVal) {}
+	MemValue()	{ m_nAddress = 0; m_fModifier = 1.0f; m_nVarSize = ComparisonVariableSize::EightBit; m_bBCDParse = false; m_bParseVal = false; }
+	MemValue( unsigned int nAddr, double fMod, ComparisonVariableSize nSize, bool bBCDParse, bool bParseVal )
+		: m_nAddress( nAddr ), m_fModifier( fMod ), m_nVarSize( nSize ), m_bBCDParse( bBCDParse ), m_bParseVal( bParseVal ) {}
 	
 public:
 	char* ParseFromString( char* pBuffer );		//	Parse string into values, returns end of string
 	double GetValue() const;					//	Get the value in-memory with modifiers
 
 public:
-	unsigned int		m_nAddress;					//	Raw address of an 8-bit, or value.
-	CompVariableSize	m_nVarSize;				
-	double				m_fModifier;				//	* 60 etc
-	bool				m_bBCDParse;				//	Parse as a binary coded decimal.
-	bool				m_bParseVal;				//	Parse as a value
+	unsigned int			m_nAddress;					//	Raw address of an 8-bit, or value.
+	ComparisonVariableSize	m_nVarSize;				
+	double					m_fModifier;				//	* 60 etc
+	bool					m_bBCDParse;				//	Parse as a binary coded decimal.
+	bool					m_bParseVal;				//	Parse as a value
 };
 
 

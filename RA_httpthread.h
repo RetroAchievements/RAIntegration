@@ -137,7 +137,7 @@ public:
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut );
 	static BOOL DoBlockingRequest( RequestType nType, const PostArgs& PostData, DataStream& ResponseOut );
 
-	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut );
+	static BOOL DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut, bool bIsImageRequest );
 	static BOOL DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut );
 
 	static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut );

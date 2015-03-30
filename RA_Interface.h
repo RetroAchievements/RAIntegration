@@ -1,5 +1,7 @@
 #pragma once
 
+//	NB. Shared between RA_Integration and emulator
+
 #include "RA_Defs.h"
 
 struct ControllerInput
@@ -23,8 +25,29 @@ enum EmulatorID
 	RA_FCEUX,
 	RA_PCE,
 
-	RA__MAX
+	NumEmulatorIDs,
+	UnknownEmulator = NumEmulatorIDs
 };
+
+//	Should match DB!
+enum ConsoleID
+{
+	UnknownConsoleID = 0,
+	MegaDrive = 1,	//	DB
+	N64,
+	SNES,
+	GB,
+	GBA,
+	GBC,
+	NES,
+	PCEngine,
+	SegaCD,
+	Sega32X,
+	MasterSystem,
+
+	NumConsoleIDs
+};
+
 
 extern bool (*_RA_GameIsActive)();
 extern void (*_RA_CauseUnpause)();
@@ -78,7 +101,12 @@ extern const char* RA_Username();
 extern void RA_AttemptLogin();
 
 //	Should be called immediately after a new ROM is loaded.
-extern void RA_OnLoadNewRom( BYTE* pROMData, const unsigned int nROMSize, BYTE* pRAMData, const unsigned int nRAMSize, BYTE* pExtraRAMData, const unsigned int nExtraRAMSize );
+extern void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize );
+
+//	Call once for each memory bank found, immediately after a new rom or load
+//pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
+//pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+extern void RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize );
 
 //	Call this before loading a new ROM or quitting, to ensure no developer changes are lost.
 extern bool RA_ConfirmLoadNewRom( bool bIsQuitting );
@@ -96,7 +124,7 @@ extern void RA_HandleHTTPResults();
 extern void RA_SetPaused( bool bIsPaused );
 
 //	With multiple platform emulators, call this immediately before loading a new ROM.
-extern int	RA_SetConsoleID( unsigned int nConsoleID );
+extern void RA_SetConsoleID( unsigned int nConsoleID );
 
 //	Should be called immediately after loading or saving a new state.
 extern void RA_OnLoadState( const char* sFilename );

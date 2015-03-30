@@ -140,10 +140,16 @@ void RA_UpdateRenderOverlay( HDC hDC, ControllerInput* pInput, float fDeltaTime,
 		_RA_RenderOverlay( hDC, prcSize );
 }
 
-void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize, BYTE* pRAMData, unsigned int nRAMSize, BYTE* pRAMExtraData, unsigned int nRAMExtraSize )
+void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize )
 {
 	if( _RA_OnLoadNewRom != NULL )
-		_RA_OnLoadNewRom(pROMData, nROMSize, pRAMData, nRAMSize, pRAMExtraData, nRAMExtraSize);
+		_RA_OnLoadNewRom( pROMData, nROMSize );
+}
+
+void RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize )
+{
+	if( _RA_InstallMemoryBank != NULL )
+		_RA_InstallMemoryBank( nBankID, pReader, pWriter, nBankSize );
 }
 
 HMENU RA_CreatePopupMenu()
@@ -210,11 +216,10 @@ void RA_DoAchievementsFrame()
 		_RA_DoAchievementsFrame();
 }
 
-int RA_SetConsoleID( unsigned int nConsoleID )
+void RA_SetConsoleID( unsigned int nConsoleID )
 {
 	if( _RA_SetConsoleID != NULL )
-		return _RA_SetConsoleID( nConsoleID );
-	return 0;
+		_RA_SetConsoleID( nConsoleID );
 }
 
 int RA_HardcoreModeIsActive()

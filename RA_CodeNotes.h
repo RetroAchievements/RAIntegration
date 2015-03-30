@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <map>
-
 #include "RA_Defs.h"
 
 class CodeNotes

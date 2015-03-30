@@ -45,25 +45,15 @@ bool MemoryViewerControl::m_bHasCaret = 0;
 unsigned int MemoryViewerControl::m_nCaretWidth = 0;
 unsigned int MemoryViewerControl::m_nCaretHeight = 0;
 unsigned int MemoryViewerControl::m_nDisplayedLines = 0;
+unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
-
-BOOL IsLargeRAM() 
-{
-	return( g_MemManager.RAMTotalSize() > 65536 );
-}
 
 std::string ByteAddressToString( ByteAddress nAddr )
 {
 	static char buffer[16];
-
-	if( IsLargeRAM() )
-		sprintf_s( buffer, "0x%06x", nAddr );
-	else
-		sprintf_s( buffer, "0x%04x", nAddr );
-
+	sprintf_s( buffer, "0x%06x", nAddr );
 	return std::string( buffer );
 }
-
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
@@ -214,7 +204,7 @@ void MemoryViewerControl::moveAddress( int offset, int nibbleOff )
 	  MessageBeep((UINT)-1);
       return;
     }
-    if( m_nEditAddress >= g_MemManager.RAMTotalSize() )
+    if( m_nEditAddress >= g_MemManager.ActiveBankSize() )
 	{
       m_nEditAddress -= offset;
 	  MessageBeep((UINT)-1);
@@ -264,21 +254,21 @@ void MemoryViewerControl::editData( unsigned int nByteAddress, bool bLowerNibble
 	{
 		//	We're submitting a new lower nibble:
 		//	Fetch existing upper nibble,
-		unsigned int nVal = ( g_MemManager.RAMByte( nByteAddress ) >> 4 ) << 4;
+		unsigned int nVal = ( g_MemManager.RAMByte( m_nActiveMemBank, nByteAddress ) >> 4 ) << 4;
 		//	Merge in given (lower nibble) value,
 		nVal |= nNewVal;
 		//	Write value:
-		g_MemManager.RAMByteWrite( nByteAddress, nVal );
+		g_MemManager.RAMByteWrite( m_nActiveMemBank, nByteAddress, nVal );
 	}
 	else
 	{
 		//	We're submitting a new upper nibble:
 		//	Fetch existing lower nibble,
-		unsigned int nVal = g_MemManager.RAMByte( nByteAddress ) & 0xf;
+		unsigned int nVal = g_MemManager.RAMByte( m_nActiveMemBank, nByteAddress ) & 0xf;
 		//	Merge in given value at upper nibble
-		nVal |= (nNewVal<<4);
+		nVal |= ( nNewVal << 4 );
 		//	Write value:
-		g_MemManager.RAMByteWrite( nByteAddress, nVal );
+		g_MemManager.RAMByteWrite( m_nActiveMemBank, nByteAddress, nVal );
 	}
 }
 
@@ -333,19 +323,6 @@ bool MemoryViewerControl::OnEditInput( UINT c )
 
 		editData( nByteAddress, bLowerNibble, value );
 
-		//switch(m_nDataSize)
-		//{
-		//case 0:
-		//	editData( m_nEditAddress, 8, mask, value );
-		//	break;
-		//case 1:
-		//	editData( m_nEditAddress, 16, mask, value );
-		//	break;
-		//case 2:
-		//	editData( m_nEditAddress, 32, mask, value );
-		//	break;
-		//}
-
 		moveAddress(0, 1);
 		Invalidate();
 
@@ -381,8 +358,8 @@ void MemoryViewerControl::SetCaretPos()
 	g_MemoryDialog.SetWatchingAddress( m_nEditAddress );
 
 	unsigned int nTopLeft = m_nAddressOffset - 0x40;
-	if( g_MemManager.RAMTotalSize() > 0 )
-		nTopLeft %= g_MemManager.RAMTotalSize();
+	if( g_MemManager.ActiveBankSize() > 0 )
+		nTopLeft %= g_MemManager.ActiveBankSize();
 	else
 		nTopLeft %= 0x10000;
 
@@ -470,8 +447,8 @@ void MemoryViewerControl::OnClick( POINT point )
 
 	m_nEditAddress = ( nTopLeft + (line<<4) );
 
-	if( g_MemManager.RAMTotalSize() > 0 )
-		m_nEditAddress %= g_MemManager.RAMTotalSize();
+	if( g_MemManager.ActiveBankSize() > 0 )
+		m_nEditAddress %= g_MemManager.ActiveBankSize();
 	else
 		m_nEditAddress %= 0x10000;
 
@@ -542,7 +519,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	//if( g_MemManager.RAMTotalSize() == 0 )
 	//	break;
 	
-	BOOL bUseLongAddresses = IsLargeRAM();
+	BOOL bUseLongAddresses = true;
 	const DWORD nOKAddressLength = ( bUseLongAddresses ? 8 : 6 );
 
 	m_nDataSize = ( bGroup32 ? 2 : ( bGroup16 ? 1 : 0 ) );
@@ -572,7 +549,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	//if( addr < 0 )
 	//	addr = 0;
 
-	if( IsLargeRAM() )
+	if( true )
 		addr &= 0xffffff;
 	else
 		addr &= 0xffff;
@@ -599,12 +576,8 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	for( int i = 0; i < lines; i++ )
 	{
 		//char sLocalAddr[64];
-		char buffer[4096];
-
-		if( IsLargeRAM() )
-			sprintf_s( buffer, 4096, "0x%06x", addr );
-		else
-			sprintf_s( buffer, 4096, "0x%04x", addr );
+		char buffer[ 4096 ];
+		sprintf_s( buffer, 4096, "0x%06x", addr );
 
 		DrawText( hMemDC, buffer, strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
 
@@ -612,18 +585,18 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 		m_nDataStartXOffset = r.left;
 
 		for( int j = 0; j < 16; ++j )
-			data[j] = g_MemManager.RAMByte(addr+j);
+			data[j] = g_MemManager.RAMByte( m_nActiveMemBank, addr+j );
 		//readData(addr, 16, data);
 
 		if( m_nDataSize == 0 )	//	8-bit
 		{
 			for( int j = 0; j < 16; j++ )
 			{
-				const CodeNotes::CodeNoteObj* SavedNote = g_MemoryDialog.m_pCodeNotes->FindCodeNote( addr+j );
+				const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote( addr+j );
 	
 				if( addr+j == nWatchedAddress )
 					SetTextColor( hMemDC, RGB(255,0,0) );
-				else if( SavedNote != NULL )
+				else if( pSavedNote != NULL )
 					SetTextColor( hMemDC, RGB(0,0,255) );
 				else
 					SetTextColor( hMemDC, RGB(0,0,0) );
@@ -637,11 +610,11 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 		{
 			for( int j = 0; j < 16; j += 2 )
 			{
-				const CodeNotes::CodeNoteObj* SavedNote = g_MemoryDialog.m_pCodeNotes->FindCodeNote( addr+j );
+				const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote( addr+j );
 	
 				if( ((addr+j) - (addr+j)%2) == nWatchedAddress )
 					SetTextColor( hMemDC, RGB(255,0,0) );
-				else if( SavedNote != NULL )
+				else if( pSavedNote != NULL )
 					SetTextColor( hMemDC, RGB(0,0,255) );
 				else
 					SetTextColor( hMemDC, RGB(0,0,0) );
@@ -698,7 +671,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 
 		addr += 16;
 
-		if( IsLargeRAM() )
+		if( true )
 			addr &= 0xffffff;
 		else
 			addr &= 0xffff;
@@ -735,14 +708,8 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 
 
 Dlg_Memory::Dlg_Memory()
+ :	m_hWnd( nullptr )
 {
-	m_pCodeNotes = new CodeNotes();
-	m_hWnd = NULL;
-}
-
-Dlg_Memory::~Dlg_Memory()
-{
-	SAFE_DELETE( m_pCodeNotes );
 }
 
 void Dlg_Memory::Init()
@@ -785,14 +752,14 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, "" );
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS, "" );
 
-			if( g_MemManager.RAMTotalSize() == 0 )
+			if( g_MemManager.ActiveBankSize() == 0 )
 				break;
 
 			BOOL bView8Bit = (BOOL)SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, (WPARAM)0, 0);
 			if( !bView8Bit )
 				break;
 
-			BOOL bUseLongAddresses = ( g_MemManager.RAMTotalSize() > 65536 );
+			BOOL bUseLongAddresses = true;
 			const DWORD nOKAddressLength = ( bUseLongAddresses ? 8 : 6 );
 
 			GetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, sOutputBuffer, 14 );
@@ -800,19 +767,19 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			{
 				char* sData = sOutputBuffer+2;
 				DWORD nAddr = strtol( sData, NULL, 16 );
-				unsigned short nVal = (unsigned short)( g_MemManager.RAMByte(nAddr) );
+				unsigned short nVal = (unsigned short)( g_MemManager.ActiveBankRAMByteRead( nAddr ) );
 
 				const char* sTitle =	"Bits: 7 6 5 4 3 2 1 0";
 				char sDesc[32];
 				sprintf_s( sDesc, 32,	"      %d %d %d %d %d %d %d %d",
-					(int)( (nVal&(1<<7))!=0 ),
-					(int)( (nVal&(1<<6))!=0 ),
-					(int)( (nVal&(1<<5))!=0 ),
-					(int)( (nVal&(1<<4))!=0 ),
-					(int)( (nVal&(1<<3))!=0 ),
-					(int)( (nVal&(1<<2))!=0 ),
-					(int)( (nVal&(1<<1))!=0 ),
-					(int)( (nVal&(1<<0))!=0 ) );
+					static_cast<int>( (nVal&(1<<7))!=0 ),
+					static_cast<int>( (nVal&(1<<6))!=0 ),
+					static_cast<int>( (nVal&(1<<5))!=0 ),
+					static_cast<int>( (nVal&(1<<4))!=0 ),
+					static_cast<int>( (nVal&(1<<3))!=0 ),
+					static_cast<int>( (nVal&(1<<2))!=0 ),
+					static_cast<int>( (nVal&(1<<1))!=0 ),
+					static_cast<int>( (nVal&(1<<0))!=0 ) );
 
 				SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, sTitle );
 				SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
@@ -918,7 +885,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
  			int dy1 = (rc.bottom - rc.top);
  			SetWindowPos(hDlg, NULL, rc.right, rc.top, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
-			if( g_MemManager.m_bUseLastKnownValue )
+			if( g_MemManager.UseLastKnownValue() )
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_GIVENVAL, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_LASTKNOWNVAL, BM_SETCHECK, (WPARAM)1, (LONG)0 );
@@ -931,33 +898,38 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				EnableWindow( GetDlgItem( hDlg, IDC_RA_TESTVAL ), TRUE );
 			}
 
-			if( g_MemManager.m_nComparisonSizeMode == CMP_SZ_4BIT_LOWER || g_MemManager.m_nComparisonSizeMode == CMP_SZ_4BIT_UPPER )
+			if( ( g_MemManager.MemoryComparisonSize() == ComparisonVariableSize::Nibble_Lower ) || 
+				( g_MemManager.MemoryComparisonSize() == ComparisonVariableSize::Nibble_Upper ) )
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_4BIT, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_8BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_16BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_32BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 			}
-			else if( g_MemManager.m_nComparisonSizeMode == CMP_SZ_8BIT )
+			else if( g_MemManager.MemoryComparisonSize() == ComparisonVariableSize::EightBit )
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_4BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_8BIT, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_16BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_32BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 			}
-			else if( g_MemManager.m_nComparisonSizeMode == CMP_SZ_16BIT )
+			else if( g_MemManager.MemoryComparisonSize() == ComparisonVariableSize::SixteenBit )
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_4BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_8BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_16BIT, BM_SETCHECK, (WPARAM)1, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_32BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 			}
-			else //if( g_MemManager.m_nComparisonSizeMode == CMP_SZ_32BIT )
+			else if( g_MemManager.MemoryComparisonSize() == ComparisonVariableSize::ThirtyTwoBit )
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_4BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_8BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_16BIT, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_32BIT, BM_SETCHECK, (WPARAM)1, (LONG)0 );
+			}
+			else
+			{
+				ASSERT( !"Unset comp type?" );
 			}
 
 			sprintf_s( buffer, 1024, "Restored: Aware of %d mem locations.", g_MemManager.m_NumCandidates );
@@ -1061,7 +1033,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 						char buffer[1024];
 
 						char sMem[16];
-						if( IsLargeRAM() )
+						if( true )
 							sprintf_s( sMem, 16, "0x%06x", nCandidateAddr );
 						else
 							sprintf_s( sMem, 16, "0x%04x", nCandidateAddr );
@@ -1430,12 +1402,8 @@ void Dlg_Memory::Invalidate()
 
 void Dlg_Memory::SetWatchingAddress( unsigned int nAddr )
 {
-	char buffer[32];
-	if( g_MemManager.RAMTotalSize() <= 65536 )
-		sprintf_s( buffer, 32, "0x%04x", nAddr );
-	else
-		sprintf_s( buffer, 32, "0x%06x", nAddr );
-
+	char buffer[ 32 ];
+	sprintf_s( buffer, 32, "0x%06x", nAddr );
 	SetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer );
 
 	OnWatchingMemChange();

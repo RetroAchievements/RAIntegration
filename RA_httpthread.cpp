@@ -258,14 +258,16 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Data
 	
 	switch( nType )
 	{
+	case RequestUserPic:
+		return DoBlockingHttpGet( std::string( "UserPic/" + PostData.at('u') + ".png" ), ResponseOut, false );	//	UserPic needs migrating to S3...
 	case RequestBadge:
-		return DoBlockingHttpGet( std::string( "Badge/" + PostData.at('b') + ".png" ), ResponseOut );
+		return DoBlockingHttpGet( std::string( "Badge/" + PostData.at('b') + ".png" ), ResponseOut, true );
 	default:
 		return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
 	}
 }
 
-BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut )
+BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut, bool bIsImageRequest )
 {
 	BOOL bSuccess = FALSE;
 
@@ -286,7 +288,7 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
  	// Specify an HTTP server.
 	if( hSession != NULL )
 	{
- 		HINTERNET hConnect = WinHttpConnect( hSession, RA_HOST_IMG_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
+ 		HINTERNET hConnect = WinHttpConnect( hSession, bIsImageRequest ? RA_HOST_IMG_URL_WIDE : RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
  
  		// Create an HTTP Request handle.
  		if( hConnect != NULL )

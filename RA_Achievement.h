@@ -31,10 +31,9 @@ public:
 
 public:
 	void Clear();
+	BOOL Test();
 
 	BOOL IsCoreAchievement() const		{ return m_nSetType == AchievementSetCore; }
-
-	BOOL Test();
 
 	size_t AddCondition( size_t nConditionGroup, const Condition& pNewCond );
 	BOOL RemoveCondition( size_t nConditionGroup, unsigned int nConditionID );
@@ -76,8 +75,8 @@ public:
 	void AddConditionGroup();
 	void RemoveConditionGroup();
 
-	inline unsigned int NumConditionGroups() const					{ return m_vConditions.size(); }
-	inline unsigned int NumConditions( size_t nGroup ) const		{ return m_vConditions[nGroup].Count(); }
+	inline size_t NumConditionGroups() const						{ return m_vConditions.size(); }
+	inline size_t NumConditions( size_t nGroup ) const				{ return m_vConditions[ nGroup ].Count(); }
 
 	inline HBITMAP BadgeImage() const								{ return m_hBadgeImage; }
 	inline HBITMAP BadgeImageLocked() const							{ return m_hBadgeImageLocked; }
@@ -86,10 +85,9 @@ public:
 	void SetBadgeImage( const std::string& sFilename );
 	void ClearBadgeImage();
 
-	Condition& GetCondition( size_t nCondGroup, unsigned int i )	{ return m_vConditions[nCondGroup].GetAt( i ); }
+	Condition& GetCondition( size_t nCondGroup, size_t i )			{ return m_vConditions[ nCondGroup ].GetAt( i ); }
 	
 	std::string CreateMemString() const;
-	int CreateMemString( char* pStrOut, const int nNumChars );
 
 	void Reset();
 

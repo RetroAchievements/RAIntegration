@@ -4,6 +4,11 @@
 #include <stddef.h>
 #include <vector>
 #include <assert.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <Windows.h>
+//#include <WinDef.h>
 
 #ifndef RA_EXPORTS
 
@@ -75,10 +80,10 @@ typedef unsigned long       DWORD;
 typedef int                 BOOL;
 typedef DWORD				ARGB;
 
-namespace RA
-{
+//namespace RA
+//{
 	template<typename T>
-	static inline const T& Clamp( const T& val, const T& lower, const T& upper )
+	static inline const T& RAClamp( const T& val, const T& lower, const T& upper )
 	{
 		return( val < lower ) ? lower : ( ( val > upper ) ? upper : val );
 	}
@@ -122,20 +127,23 @@ namespace RA
 
 	char* DataStreamAsString( DataStream& stream );
 
-	extern void DebugLog( const char* sFormat, ... );
+	extern void RADebugLog( const char* sFormat, ... );
 	extern BOOL DirectoryExists( const char* sPath );
 
 	const int SERVER_PING_DURATION = 1*60;	//s
-};
-
-using namespace RA;
+//};
+//using namespace RA;
 
 #ifdef _DEBUG
-#define RA_LOG DebugLog
+#define RA_LOG RADebugLog
 #undef ASSERT
 #define ASSERT(x) assert(x)
 #else
-#define RA_LOG DebugLog
+#define RA_LOG RADebugLog
 #undef ASSERT
 #define ASSERT(x) {}
+#endif
+	
+#ifndef UNUSED
+#define UNUSED(x) (x);
 #endif

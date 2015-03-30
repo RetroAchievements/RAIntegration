@@ -1,88 +1,111 @@
 #pragma once
-#include <wtypes.h>
-#include <vector>
+#include "RA_Defs.h"
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-namespace
+enum ComparisonVariableSize
 {
-	enum CompVariableSize
-	{
-		CMP_SZ_1BIT_0,
-		CMP_SZ_1BIT_1,
-		CMP_SZ_1BIT_2,
-		CMP_SZ_1BIT_3,
-		CMP_SZ_1BIT_4,
-		CMP_SZ_1BIT_5,
-		CMP_SZ_1BIT_6,
-		CMP_SZ_1BIT_7,
-		CMP_SZ_4BIT_LOWER,
-		CMP_SZ_4BIT_UPPER,
-		CMP_SZ_8BIT,  
-		CMP_SZ_16BIT,
-		//CMP_SZ_32BIT,
-		CMP_SZ__MAX
-	};
-	extern const char* g_MemSizeStrings[];
-	extern const int g_NumMemSizeStrings;
+	Bit_0,
+	Bit_1,
+	Bit_2,
+	Bit_3,
+	Bit_4,
+	Bit_5,
+	Bit_6,
+	Bit_7,
+	Nibble_Lower,
+	Nibble_Upper,
+	Byte,
+	EightBit=Byte,  
+	SixteenBit,
+	ThirtyTwoBit,
 
-	enum CompVariableType
-	{
-		CMPTYPE_ADDRESS = 0,	//	compare to the value of a live address in RAM
-		CMPTYPE_VALUE,			//	a number. assume 32 bit 
-		CMPTYPE_DELTAMEM,		//	the value last known at this address.
-		CMPTYPE_DYNVAR,			//	a custom user-set variable
-	};
-	extern const char* g_MemTypeStrings[];
-	extern const int g_NumMemTypeStrings;
+	NUM_COMP_VARIABLE_SIZES
+};
+extern const char* COMPARISONVARIABLESIZE_STR[];
 
-	enum CompType
-	{
-		CMP_EQ = 0,
-		CMP_LT,
-		CMP_LTE,
-		CMP_GT,
-		CMP_GTE,
-		CMP_NEQ,
-		CMP__MAX
-	};
-	extern const char* g_CmpStrings[];
-	extern const int g_NumCompTypes;
+enum ComparisonVariableType
+{
+	Address,			//	compare to the value of a live address in RAM
+	ValueComparison,	//	a number. assume 32 bit 
+	DeltaMem,			//	the value last known at this address.
+	DynamicVariable,	//	a custom user-set variable
 
-}
+	NUM_COMP_VARIABLE_TYPES
+};
+extern const char* COMPARISONVARIABLETYPE_STR[];
 
-#ifdef __cplusplus
-}
-#endif
+enum ComparisonType
+{
+	Equals,
+	LessThan,
+	LessThanOrEqual,
+	GreaterThan,
+	GreaterThanOrEqual,
+	NotEqualTo,
+
+	NUM_COMPARISON_TYPES
+};
+extern const char* COMPARISONTYPE_STR[];
+
 
 class CompVariable
 {
 public:
 	CompVariable()
+	 :	m_nVal( 0 ),
+		m_nPreviousVal( 0 ),
+		m_nVarSize( ComparisonVariableSize::EightBit ),
+		m_nVarType( ComparisonVariableType::Address ),
+		m_nBankID( 0 )
 	{
-		Clear();
 	}
 
 public:
-	void Clear()
+	void Set( ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue, unsigned short nBankID )
 	{
-		m_nVal = 0;
-		m_nLastVal = 0;
-		m_nVarSize = CMP_SZ_8BIT;
-		m_nVarType = CMPTYPE_ADDRESS;
+		m_nVarSize = nSize;
+		m_nVarType = nType;
+		m_nVal = nInitialValue;
+		m_nBankID = nBankID;
 	}
+
+	void SetValues( unsigned int nVal, unsigned int nPrevVal )
+	{
+		m_nVal = nVal;
+		m_nPreviousVal = nPrevVal;
+	}
+
+	void ResetDelta()
+	{
+		m_nPreviousVal = m_nVal;
+	}
+	
+	//void Clear()
+	//{
+	//	m_nVal = 0;
+	//	m_nPreviousVal = 0;
+	//	m_nVarSize = COMPVAR_8BIT;
+	//	m_nVarType = COMPVARTYPE_ADDRESS;
+	//}
 
 	void ParseVariable( char*& sInString );	//	Parse from string
-	unsigned int GetValue();						//	Returns the live value
+	unsigned int GetValue();				//	Returns the live value
+	
+	inline void SetSize( ComparisonVariableSize nSize )		{ m_nVarSize = nSize; }
+	inline ComparisonVariableSize Size() const				{ return m_nVarSize; }
 
-public:
-	CompVariableSize m_nVarSize;
-	CompVariableType m_nVarType;
+	inline void SetType( ComparisonVariableType nType )		{ m_nVarType = nType; }
+	inline ComparisonVariableType Type() const				{ return m_nVarType; }
+	
+	inline unsigned int Value()	const						{ return m_nVal; }
+	inline unsigned int PreviousValue()	const				{ return m_nPreviousVal; }
+	inline unsigned short BankID() const					{ return m_nBankID; }
+
+private:
+	ComparisonVariableSize m_nVarSize;
+	ComparisonVariableType m_nVarType;
+	unsigned short m_nBankID;
 	unsigned int m_nVal;
-	unsigned int m_nLastVal;
+	unsigned int m_nPreviousVal;
 };
 
 
@@ -90,9 +113,12 @@ class Condition
 {
 public:
 	Condition()
-	{
-		Clear();
-	}
+	 :	m_nCompareType( Equals ),
+		m_nRequiredHits( 0 ),
+		m_nCurrentHits( 0 ),
+		m_bIsResetCondition( FALSE ),
+		m_bIsPauseCondition( FALSE )
+	{}
 
 public:
 	//	Parse a Condition from a string of characters
@@ -106,40 +132,42 @@ public:
 
 	//	Resets 'last known' values
 	void ResetDeltas();
-
 	void Clear();
-
-	inline unsigned int RequiredHits() const	{ return m_nRequiredHits; }
-	inline unsigned int CurrentHits() const		{ return m_nCurrentHits; }
-	inline CompVariable& CompSource()			{ return m_nCompSource; }
-	inline CompType& ComparisonType()			{ return m_nComparison; }
-	inline CompVariable& CompTarget()			{ return m_nCompTarget; }
-	inline BOOL IsResetCondition() const		{ return m_bIsResetCondition; }
-	inline BOOL IsPauseCondition() const		{ return m_bIsPauseCondition; }
-
+	
+	inline CompVariable& CompSource()				{ return m_nCompSource; }	//	NB both required!!
 	inline const CompVariable& CompSource() const	{ return m_nCompSource; }
+	inline CompVariable& CompTarget()				{ return m_nCompTarget; }
 	inline const CompVariable& CompTarget() const	{ return m_nCompTarget; }
-	inline const CompType& ComparisonType() const	{ return m_nComparison; }
 
-	void SetRequiredHits( unsigned int nHits )	{ m_nRequiredHits = nHits; }
-	void IncrHits()								{ m_nCurrentHits++; }
-	BOOL IsComplete() const						{ return (m_nCurrentHits >= m_nRequiredHits); }
+	void SetCompareType( ComparisonType nType )		{ m_nCompareType = nType; }
 
-	void OverrideCurrentHits(unsigned int nHits){ m_nCurrentHits = nHits; }
+	inline ComparisonType CompareType() const		{ return m_nCompareType; }
 
-	void SetIsBasicCondition()					{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = FALSE; }
-	void SetIsPauseCondition()					{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = TRUE; }
-	void SetIsResetCondition()					{ m_bIsResetCondition = TRUE; m_bIsPauseCondition = FALSE; }
+	inline unsigned int RequiredHits() const		{ return m_nRequiredHits; }
+	inline unsigned int CurrentHits() const			{ return m_nCurrentHits; }
 
-	void Set( const Condition& rRHS )			{ (*this) = rRHS; }
+	inline BOOL IsResetCondition() const			{ return m_bIsResetCondition; }
+	inline BOOL IsPauseCondition() const			{ return m_bIsPauseCondition; }
+
+	void SetRequiredHits( unsigned int nHits )		{ m_nRequiredHits = nHits; }
+	void IncrHits()									{ m_nCurrentHits++; }
+	BOOL IsComplete() const							{ return( m_nCurrentHits >= m_nRequiredHits ); }
+
+	void OverrideCurrentHits( unsigned int nHits )	{ m_nCurrentHits = nHits; }
+
+	void SetIsBasicCondition()						{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = FALSE; }
+	void SetIsPauseCondition()						{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = TRUE; }
+	void SetIsResetCondition()						{ m_bIsResetCondition = TRUE; m_bIsPauseCondition = FALSE; }
+
+	void Set( const Condition& rRHS )				{ (*this) = rRHS; }
 
 private:
+	CompVariable	m_nCompSource;
+	ComparisonType	m_nCompareType;
+	CompVariable	m_nCompTarget;
+	
 	unsigned int	m_nRequiredHits;
 	unsigned int	m_nCurrentHits;
-
-	CompVariable	m_nCompSource;
-	CompType		m_nComparison;
-	CompVariable	m_nCompTarget;
 
 	BOOL 			m_bIsResetCondition;
 	BOOL 			m_bIsPauseCondition;
@@ -163,6 +191,10 @@ protected:
 	std::vector<Condition> m_Conditions;
 };
 
+extern ComparisonVariableSize PrefixToComparisonSize( char cPrefix );
+extern const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize );
+extern const char* ComparisonTypeToStr( ComparisonType nType );
+
 //extern BOOL CompareConditionValues( unsigned int nLHS, const enum CompType nCmpType, unsigned int nRHS );
-extern enum CompType ReadOperator( char*& pBufferInOut );
+extern ComparisonType ReadOperator( char*& pBufferInOut );
 extern unsigned int ReadHits( char*& pBufferInOut );

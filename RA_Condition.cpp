@@ -1,19 +1,68 @@
 #include "RA_Condition.h"
-#include <assert.h>
-
 #include "RA_MemManager.h"
 
-namespace
+const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
+static_assert( SIZEOF_ARRAY( COMPARISONVARIABLESIZE_STR ) == NUM_COMP_VARIABLE_SIZES, "Must match!" );
+const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
+static_assert( SIZEOF_ARRAY( COMPARISONVARIABLETYPE_STR ) == NUM_COMP_VARIABLE_TYPES, "Must match!" );
+const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
+static_assert( SIZEOF_ARRAY( COMPARISONTYPE_STR ) == NUM_COMPARISON_TYPES, "Must match!" );
+
+
+ComparisonVariableSize PrefixToComparisonSize( char cPrefix )
 {
-	const char* g_MemSizeStrings[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit" };
-	const int g_NumMemSizeStrings = sizeof( g_MemSizeStrings ) / sizeof( g_MemSizeStrings[0] );
+	switch( cPrefix )
+	{
+		case 'M':	return Bit_0;
+		case 'N':	return Bit_1;
+		case 'O':	return Bit_2;
+		case 'P':	return Bit_3;
+		case 'Q':	return Bit_4;
+		case 'R':	return Bit_5;
+		case 'S':	return Bit_6;
+		case 'T':	return Bit_7;
+		case 'L':	return Nibble_Lower;
+		case 'U':	return Nibble_Upper;
+		case 'H':	return EightBit;
+		case 'X':	return ThirtyTwoBit;
+		default:
+		case ' ':	return SixteenBit;
+	}
+}
+const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize )
+{
+	switch( nSize )
+	{
+		case Bit_0:			return "M";
+		case Bit_1:			return "N";
+		case Bit_2:			return "O";
+		case Bit_3:			return "P";
+		case Bit_4:			return "Q";
+		case Bit_5:			return "R";
+		case Bit_6:			return "S";
+		case Bit_7:			return "T";
+		case Nibble_Lower:	return "L";
+		case Nibble_Upper:	return "U";
+		case EightBit:		return "H";
+		case ThirtyTwoBit:	return "X";
+		default:			
+		case SixteenBit:	return " ";
+	}
+}
 
-	const char* g_MemTypeStrings[] = { "Memory", "Value", "Delta" };
-	const int g_NumMemTypeStrings = sizeof( g_MemTypeStrings ) / sizeof( g_MemTypeStrings[0] );
-
-	const char* g_CmpStrings[] = { "=", "<", "<=", ">", ">=", "!=" };
-	const int g_NumCompTypes = sizeof( g_CmpStrings ) / sizeof( g_CmpStrings[0] );
-};
+const char* ComparisonTypeToStr( ComparisonType nType )
+{
+	switch( nType )
+	{
+		case Equals:				return "=";
+		case GreaterThan:			return ">";
+		case GreaterThanOrEqual:	return ">=";
+		case LessThan:				return "<";
+		case LessThanOrEqual:		return "<=";
+		case NotEqualTo:			return "!=";
+		default:					return "";
+	}
+}
 
 
 void Condition::ParseFromString( char*& pBuffer )
@@ -34,7 +83,7 @@ void Condition::ParseFromString( char*& pBuffer )
 	} 
 
 	m_nCompSource.ParseVariable( pBuffer );
-	m_nComparison = ReadOperator( pBuffer );
+	m_nCompareType = ReadOperator( pBuffer );
 	m_nCompTarget.ParseVariable( pBuffer );
 	ResetHits();
 	m_nRequiredHits = ReadHits( pBuffer );
@@ -52,17 +101,17 @@ BOOL Condition::ResetHits()
 
 void Condition::ResetDeltas()
 {
-	m_nCompSource.m_nLastVal = m_nCompSource.m_nVal;
-	m_nCompTarget.m_nLastVal = m_nCompTarget.m_nVal;
+	m_nCompSource.ResetDelta();
+	m_nCompTarget.ResetDelta();
 }
 
 void Condition::Clear()
 {
 	m_nCurrentHits = 0;
 	m_nRequiredHits = 0;
-	m_nCompSource.Clear();
-	m_nCompTarget.Clear();
-	m_nComparison = CMP_EQ;
+	m_nCompSource.SetValues( 0, 0 );
+	m_nCompTarget.SetValues( 0, 0 );
+	m_nCompareType = ComparisonType::Equals;
 	m_bIsResetCondition = FALSE;
 	m_bIsPauseCondition = FALSE;
 }
@@ -77,17 +126,17 @@ void CompVariable::ParseVariable( char*& pBufferInOut )
 	{
 		//	Assume 'd0x' and four hex following it.
 		pBufferInOut += 3;
-		m_nVarType = CMPTYPE_DELTAMEM;
+		m_nVarType = ComparisonVariableType::DeltaMem;
 	}
 	else if( pBufferInOut[0] == '0' && toupper( pBufferInOut[1] ) == 'X' )
 	{
 		//	Assume '0x' and four hex following it.
 		pBufferInOut += 2;
-		m_nVarType = CMPTYPE_ADDRESS;
+		m_nVarType = ComparisonVariableType::Address;
 	}
 	else 
 	{
-		m_nVarType = CMPTYPE_VALUE;
+		m_nVarType = ComparisonVariableType::ValueComparison;
 		//	Val only
 		if( toupper( pBufferInOut[0] ) == 'H' )
 		{
@@ -102,184 +151,127 @@ void CompVariable::ParseVariable( char*& pBufferInOut )
 	}
 
 
-	if( m_nVarType == CMPTYPE_VALUE )
+	if( m_nVarType == ComparisonVariableType::ValueComparison )
 	{
 		//	Values don't have a size!
 	}
 	else
 	{
-		if( toupper( pBufferInOut[0] ) == 'H' )
-		{
-			//	Half: 8-bit
-			m_nVarSize = CMP_SZ_8BIT;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'L' )
-		{
-			//	Nibble: 4-bit, LOWER
-			m_nVarSize = CMP_SZ_4BIT_LOWER;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'U' )
-		{
-			//	Nibble: 4-bit, UPPER
-			m_nVarSize = CMP_SZ_4BIT_UPPER;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'M' )	//	MNOPQRST=bits
-		{
-			//	Bit: 0
-			m_nVarSize = CMP_SZ_1BIT_0;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'N' )	//	MNOPQRST=bits
-		{
-			//	Bit: 1
-			m_nVarSize = CMP_SZ_1BIT_1;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'O' )	//	MNOPQRST=bits
-		{
-			//	Bit: 2
-			m_nVarSize = CMP_SZ_1BIT_2;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'P' )	//	MNOPQRST=bits
-		{
-			//	Bit: 3
-			m_nVarSize = CMP_SZ_1BIT_3;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'Q' )	//	MNOPQRST=bits
-		{
-			//	Bit: 4
-			m_nVarSize = CMP_SZ_1BIT_4;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'R' )	//	MNOPQRST=bits
-		{
-			//	Bit: 5
-			m_nVarSize = CMP_SZ_1BIT_5;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'S' )	//	MNOPQRST=bits
-		{
-			//	Bit: 6
-			m_nVarSize = CMP_SZ_1BIT_6;
-			pBufferInOut++;
-		}
-		else if( toupper( pBufferInOut[0] ) == 'T' )	//	MNOPQRST=bits
-		{
-			//	Bit: 7
-			m_nVarSize = CMP_SZ_1BIT_7;
-			pBufferInOut++;
-		}
-		else
-		{
-			//	Regular: 16-bit
-			m_nVarSize = CMP_SZ_16BIT;
-		}
+		m_nVarSize = PrefixToComparisonSize( toupper( pBufferInOut[ 0 ] ) );
+		if( m_nVarSize != ComparisonVariableSize::SixteenBit )
+			pBufferInOut++;	//	In all cases except one, advance char ptr
 	}
 
 	m_nVal = strtol( pBufferInOut, &nNextChar, nBase );
 	pBufferInOut = nNextChar;
 }
 
-//	Return the raw, live value of this variable
+//	Return the raw, live value of this variable. Advances 'deltamem'
 unsigned int CompVariable::GetValue()
 {
-	unsigned int nLastVal = m_nLastVal;
+	unsigned int nPreviousVal = m_nPreviousVal;
 	unsigned int nLiveVal = 0;
 
-	if( m_nVarType == CMPTYPE_VALUE )
+	if( m_nVarType == ComparisonVariableType::ValueComparison )
 	{
 		//	It's a raw value; return it.
 		return m_nVal;
 	}
-	else 
+	else if( ( m_nVarType == ComparisonVariableType::Address ) || ( m_nVarType == ComparisonVariableType::DeltaMem ) )
 	{
 		//	It's an address in memory: return it!
 
-		if( m_nVarSize == CMP_SZ_4BIT_LOWER )
+		if( m_nVarSize >= ComparisonVariableSize::Bit_0 && m_nVarSize <= ComparisonVariableSize::Bit_7 )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nVal )&0xf;
+			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
+			nLiveVal = ( g_MemManager.RAMByte( m_nBankID, m_nVal ) & nBitmask ) != 0;
 		}
-		else if( m_nVarSize == CMP_SZ_4BIT_UPPER )
+		else if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
 		{
-			nLiveVal = (g_MemManager.RAMByte( m_nVal )>>4)&0xf;
+			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal ) & 0xf;
 		}
-		else if( m_nVarSize == CMP_SZ_8BIT )
+		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nVal );
+			nLiveVal = ( g_MemManager.RAMByte( m_nBankID, m_nVal ) >> 4 ) & 0xf;
 		}
-		else if( m_nVarSize == CMP_SZ_16BIT )
+		else if( m_nVarSize == ComparisonVariableSize::EightBit )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nVal );
-			nLiveVal |= (g_MemManager.RAMByte( m_nVal+1 ) << 8);
+			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
 		}
-		else if( m_nVarSize >= CMP_SZ_1BIT_0 && m_nVarSize <= CMP_SZ_1BIT_7 )
+		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
 		{
-			const unsigned int nBitmask = ( 1 << (m_nVarSize-CMP_SZ_1BIT_0) );
-			nLiveVal = ( g_MemManager.RAMByte( m_nVal ) & nBitmask ) != 0;
+			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
+			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 1 ) << 8 );
+		}
+		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
+		{
+			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
+			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 1 ) << 8 );
+			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 2 ) << 16 );
+			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 3 ) << 24 );
 		}
 
-		if( m_nVarType == CMPTYPE_DELTAMEM )
+		if( m_nVarType == ComparisonVariableType::DeltaMem )
 		{
-			//	Return the backed up (last frame) value, but
-			//	 store the new one for the next frame!
-			m_nLastVal = nLiveVal;
-			return nLastVal;
+			//	Return the backed up (last frame) value, but store the new one for the next frame!
+			m_nPreviousVal = nLiveVal;
+			return nPreviousVal;
 		}
 		else
 		{
 			return nLiveVal;
 		}
 	}
+	else
+	{
+		//	Panic!
+		ASSERT( !"Undefined mem type!" );
+		return 0;
+	}
 }
 
-CompType ReadOperator( char*& pBufferInOut )
+ComparisonType ReadOperator( char*& pBufferInOut )
 {
-	if( pBufferInOut[0] == '=' && pBufferInOut[1] == '=' )
+	if( pBufferInOut[ 0 ] == '=' && pBufferInOut[ 1 ] == '=' )
 	{
 		pBufferInOut += 2; 
-		return CMP_EQ;
+		return ComparisonType::Equals;
 	}
-	else if( pBufferInOut[0] == '=' )
+	else if( pBufferInOut[ 0 ] == '=' )
 	{
 		pBufferInOut += 1;
-		return CMP_EQ;
+		return ComparisonType::Equals;
 	}
-
-	if( pBufferInOut[0] == '!' && pBufferInOut[1] == '=' )
+	else if( pBufferInOut[ 0 ] == '!' && pBufferInOut[ 1 ] == '=' )
 	{
 		pBufferInOut += 2;
-		return CMP_NEQ;
+		return ComparisonType::NotEqualTo;
 	}
-
-	if( pBufferInOut[0] == '<' && pBufferInOut[1] == '=' )
+	else if( pBufferInOut[ 0 ] == '<' && pBufferInOut[ 1 ] == '=' )
 	{
 		pBufferInOut += 2;
-		return CMP_LTE;
+		return ComparisonType::LessThanOrEqual;
 	}
-	else if( pBufferInOut[0] == '<' )
+	else if( pBufferInOut[ 0 ] == '<' )
 	{
 		pBufferInOut += 1;
-		return CMP_LT;
+		return ComparisonType::LessThan;
 	}
-
-	if( pBufferInOut[0] == '>' && pBufferInOut[1] == '=' )
+	else if( pBufferInOut[ 0 ] == '>' && pBufferInOut[ 1 ] == '=' )
 	{
 		pBufferInOut += 2;
-		return CMP_GTE;
+		return ComparisonType::GreaterThanOrEqual;
 	}
-	else if( pBufferInOut[0] == '>' )
+	else if( pBufferInOut[ 0 ] == '>' )
 	{
 		pBufferInOut += 1;
-		return CMP_GT;
+		return ComparisonType::GreaterThan;
 	}
-
-	assert(0);	
-	return CMP_EQ;
+	else
+	{
+		ASSERT( !"Could not parse?!" );
+		return ComparisonType::Equals;
+	}
 }
 
 unsigned int ReadHits( char*& pBufferInOut )
@@ -300,37 +292,23 @@ unsigned int ReadHits( char*& pBufferInOut )
 
 BOOL Condition::Compare()
 {
-	BOOL bValid = TRUE;
-
-	unsigned int nLHS = m_nCompSource.GetValue();
-	unsigned int nRHS = m_nCompTarget.GetValue();
-
-	switch( m_nComparison )
+	switch( m_nCompareType )
 	{
-	case CMP_EQ:
-		bValid = (nLHS == nRHS);
-		break;
-	case CMP_LT:
-		bValid = (nLHS < nRHS);
-		break;
-	case CMP_LTE:
-		bValid = (nLHS <= nRHS);
-		break;
-	case CMP_GT:
-		bValid = (nLHS > nRHS);
-		break;
-	case CMP_GTE:
-		bValid = (nLHS >= nRHS);
-		break;
-	case CMP_NEQ:
-		bValid = (nLHS != nRHS);
-		break;
+	case Equals:
+		return( m_nCompSource.GetValue() == m_nCompTarget.GetValue() );
+	case LessThan:
+		return( m_nCompSource.GetValue() < m_nCompTarget.GetValue() );
+	case LessThanOrEqual:
+		return( m_nCompSource.GetValue() <= m_nCompTarget.GetValue() );
+	case GreaterThan:
+		return( m_nCompSource.GetValue() > m_nCompTarget.GetValue() );
+	case GreaterThanOrEqual:
+		return( m_nCompSource.GetValue() >= m_nCompTarget.GetValue() );
+	case NotEqualTo:
+		return( m_nCompSource.GetValue() != m_nCompTarget.GetValue() );
 	default:
-		//	bValid = true;
-		break;
+		return true;	//?
 	}
-
-	return bValid;
 }
 
 BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAny )
@@ -356,7 +334,6 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 			if( pNextCond->Compare() )
 			{
 				pNextCond->OverrideCurrentHits( 1 );
-				//SetDirtyFlag( Dirty_Conditions );
 				bDirtyConditions = TRUE;
 
 				//	Early out: this achievement is paused, do not process any further!

@@ -452,7 +452,7 @@ void RA_Leaderboard::Test()
 				//	TBD: move to keys!
 				char sValidationSig[50];
 				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.Username().c_str(), m_nID );
-				std::string sValidationMD5 = RA::GenerateMD5( sValidationSig );
+				std::string sValidationMD5 = RAGenerateMD5( sValidationSig );
 
 				PostArgs args;
 				args['u'] = RAUsers::LocalUser.Username();

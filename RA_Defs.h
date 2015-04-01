@@ -1,13 +1,18 @@
 #pragma once
 
-//	NULL, etc
 #include <stddef.h>
-#include <vector>
 #include <assert.h>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <map>
 #include <Windows.h>
+#include <WindowsX.h>
+#include <io.h>
+#include <CommCtrl.h>
+#include <direct.h>
+#include <ShlObj.h>
+#include <time.h>
 //#include <WinDef.h>
 
 #ifndef RA_EXPORTS
@@ -30,7 +35,9 @@
 #include "rapidjson/include/rapidjson/writer.h"
 #include "rapidjson/include/rapidjson/filestream.h"
 #include "rapidjson/include/rapidjson/stringbuffer.h"
+#include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
+extern GetParseErrorFunc GetJSONParseErrorStr;
 
 #endif	//RA_EXPORTS
 
@@ -72,13 +79,13 @@ using namespace rapidjson;
 #define RA_HOST_IMG_URL "i.retroachievements.org"
 #define RA_HOST_IMG_URL_WIDE TOWIDESTR( RA_HOST_IMG_URL )
 
-#define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[0] ) )
-#define SAFE_DELETE( x )	{ if( x != NULL ) { delete x; x = NULL; } }
+#define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
+#define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
 
-typedef unsigned char       BYTE;
-typedef unsigned long       DWORD;
-typedef int                 BOOL;
-typedef DWORD				ARGB;
+typedef unsigned char	BYTE;
+typedef unsigned long	DWORD;
+typedef int				BOOL;
+typedef DWORD			ARGB;
 
 //namespace RA
 //{
@@ -111,9 +118,9 @@ typedef DWORD				ARGB;
 
 	enum AchievementSetType
 	{
-		AchievementSetCore,
-		AchievementSetUnofficial,
-		AchievementSetLocal,
+		Core,
+		Unofficial,
+		Local,
 
 		NumAchievementSetTypes
 	};
@@ -133,17 +140,17 @@ typedef DWORD				ARGB;
 	const int SERVER_PING_DURATION = 1*60;	//s
 //};
 //using namespace RA;
+	
+#define RA_LOG RADebugLog
 
 #ifdef _DEBUG
-#define RA_LOG RADebugLog
 #undef ASSERT
-#define ASSERT(x) assert(x)
+#define ASSERT( x ) assert( x )
 #else
-#define RA_LOG RADebugLog
 #undef ASSERT
-#define ASSERT(x) {}
+#define ASSERT( x ) {}
 #endif
 	
 #ifndef UNUSED
-#define UNUSED(x) (x);
+#define UNUSED( x ) ( x );
 #endif

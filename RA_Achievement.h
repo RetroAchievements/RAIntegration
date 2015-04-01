@@ -1,6 +1,5 @@
 #pragma once
 
-#include <WTypes.h>
 #include <vector>
 #include "RA_Condition.h"
 #include "RA_Defs.h"
@@ -11,17 +10,17 @@
 //////////////////////////////////////////////////////////////////////////
 enum Achievement_DirtyFlags
 {
-	Dirty_Title		= 1<<0,
-	Dirty_Desc		= 1<<1,
-	Dirty_Points	= 1<<2,
-	Dirty_Author	= 1<<3,
-	Dirty_ID		= 1<<4,
-	Dirty_Badge		= 1<<5,
-	Dirty_Conditions= 1<<6,
-	Dirty_Votes		= 1<<7,
-	Dirty_Description= 1<<8,
+	Dirty_Title			= 1<<0,
+	Dirty_Desc			= 1<<1,
+	Dirty_Points		= 1<<2,
+	Dirty_Author		= 1<<3,
+	Dirty_ID			= 1<<4,
+	Dirty_Badge			= 1<<5,
+	Dirty_Conditions	= 1<<6,
+	Dirty_Votes			= 1<<7,
+	Dirty_Description	= 1<<8,
 
-	Dirty__All		= (unsigned int)(-1)
+	Dirty__All			= (unsigned int)(-1)
 };
 
 class Achievement
@@ -32,8 +31,6 @@ public:
 public:
 	void Clear();
 	BOOL Test();
-
-	BOOL IsCoreAchievement() const		{ return m_nSetType == AchievementSetCore; }
 
 	size_t AddCondition( size_t nConditionGroup, const Condition& pNewCond );
 	BOOL RemoveCondition( size_t nConditionGroup, unsigned int nConditionID );
@@ -47,6 +44,8 @@ public:
 	inline BOOL Modified() const										{ return m_bModified; }
 	void SetModified( BOOL bModified );
 	
+	BOOL IsCoreAchievement() const										{ return m_nSetType == Core; }
+
 	void SetID( AchievementID nID );
 	inline AchievementID ID() const										{ return m_nAchievementID; }
 
@@ -142,92 +141,3 @@ private:
 	HBITMAP m_hBadgeImageLocked;
 };
 
-
-//////////////////////////////////////////////////////////////////////////
-//	AchievementSet
-//////////////////////////////////////////////////////////////////////////
-
-class AchievementSet
-{
-public:
-	AchievementSet( AchievementSetType nType ) :
-		m_nSetType( nType ),
-		m_nGameID( 0 ),
-		m_bProcessingActive( true )
-	{
-	}
-
-public:
-	static BOOL DeletePatchFile( AchievementSetType nSet, GameID nGameID );
-	static std::string GetAchievementSetFilename( GameID nGameID );
-	static BOOL FetchFromWebBlocking( GameID nGameID );
-	static BOOL LoadFromFile( GameID nGameID );
-	static BOOL SaveToFile();
-
-public:
-	void Init();
-	void Clear();
-	void Test();
-
-	BOOL Serialize( FileStream& Stream );
-
-	//	Get Achievement at offset
-	Achievement& GetAchievement( size_t nIter )		{ return m_Achievements[ nIter ]; }
-
-	//	Add a new achievement to the list, and return a reference to it.
-	Achievement& AddAchievement();
-
-	//	Take a copy of the achievement at nIter, add it and return a reference to it.
-	Achievement& Clone( unsigned int nIter );
-
-	//	Find achievement with ID, or NULL if it can't be found.
-	Achievement* Find( AchievementID nID );
-
-	//	Find index of the given achievement in the array list (useful for LBX lookups)
-	size_t GetAchievementIndex( const Achievement& Ach );
-
-	BOOL RemoveAchievement( unsigned int nIter );
-
-
-	void SaveProgress( const char* sRomName );
-	void LoadProgress( const char* sRomName );
-
-	BOOL Unlock( unsigned int nAchievementID );
-
-	unsigned int NumActive() const;
-	
-	BOOL ProcessingActive() const					{ return m_bProcessingActive; }
-	void SetPaused( BOOL bIsPaused )				{ m_bProcessingActive = !bIsPaused; }
-
-	const std::string& GameTitle() const			{ return m_sPreferredGameTitle; }
-	void SetGameTitle( const std::string& str )		{ m_sPreferredGameTitle = str; }
-	
-	inline GameID GetGameID() const					{ return m_nGameID; }
-	void SetGameID( GameID nGameID )				{ m_nGameID = nGameID; }
-
-	BOOL HasUnsavedChanges();
-	BOOL IsCurrentAchievementSetSelected() const;
-
-	inline size_t NumAchievements() const		{ return m_Achievements.size(); }
-
-private:
-	const AchievementSetType m_nSetType;
-	std::vector<Achievement> m_Achievements;
-
-	std::string m_sPreferredGameTitle;
-	GameID m_nGameID;
-
-	BOOL m_bProcessingActive;
-};
-
-
-//	Externals:
-
-extern AchievementSet* CoreAchievements;
-extern AchievementSet* UnofficialAchievements;
-extern AchievementSet* LocalAchievements;
-extern AchievementSet* g_pActiveAchievements;
-
-extern AchievementSetType g_nActiveAchievementSet;
-	
-extern void SetAchievementCollection( enum AchievementSetType Type );

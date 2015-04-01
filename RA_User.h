@@ -1,9 +1,6 @@
 #pragma once
 
-#include <Windows.h>
-#include <vector>
-#include <map>
-#include "RA_Core.h"
+#include "RA_Defs.h"
 
 //////////////////////////////////////////////////////////////////////////
 //	RAUser
@@ -21,12 +18,12 @@ class RequestObject;
 
 enum ActivityType
 {
-	ActivityType_Unknown = 0,	//	DO NOT USE
-	ActivityType_Achievement,	//	DO NOT USE: handled at PHP level
-	ActivityType_Login,			//	DO NOT USE: handled at PHP level
-	ActivityType_StartPlaying,
-	ActivityType_UploadAch,
-	ActivityType_ModifyAch,
+	ActivityTypeUnknown = 0,	//	DO NOT USE
+	PlayerEarnedAchievement,	//	DO NOT USE: handled at PHP level
+	PlayerLoggedIn,				//	DO NOT USE: handled at PHP level
+	PlayerStartedPlaying,
+	UserUploadedAchievement,
+	UserModifiedAchievement,
 };
 
 
@@ -67,10 +64,9 @@ class LocalRAUser : public RAUser
 {
 public:
 	LocalRAUser( const std::string& sUser );
-	virtual ~LocalRAUser();
 
 public:
-	void AttemptLogin();
+	void AttemptLogin( bool bBlocking );
 
 	void AttemptSilentLogin();
 	void HandleSilentLoginResponse( Document& doc );
@@ -121,11 +117,3 @@ public:
 private:
 	static std::map<std::string, RAUser*> UserDatabase;
 };
-
-
-
-//	Exposed to DLL
-extern "C"
-{
-	API extern bool _RA_UserLoggedIn();
-}

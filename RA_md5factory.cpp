@@ -11,7 +11,7 @@ namespace
 	const static unsigned int MD5_STRING_LEN = 32;
 }
 
-std::string RA::GenerateMD5( const std::string& sStringToMD5 )
+std::string RAGenerateMD5( const std::string& sStringToMD5 )
 {
 	static char buffer[33];
 	
@@ -42,7 +42,7 @@ std::string RA::GenerateMD5( const std::string& sStringToMD5 )
 	return buffer;
 }
 
-std::string RA::GenerateMD5( const BYTE* pRawData, size_t nDataLen )
+std::string RAGenerateMD5( const BYTE* pRawData, size_t nDataLen )
 {
 	static char buffer[33];
 	
@@ -65,7 +65,7 @@ std::string RA::GenerateMD5( const BYTE* pRawData, size_t nDataLen )
 	return buffer;	//	Implicit promotion to std::string
 }
 
-std::string RA::GenerateMD5( const std::vector<BYTE> DataIn )
+std::string RAGenerateMD5( const std::vector<BYTE> DataIn )
 {
-	return GenerateMD5( DataIn.data(), DataIn.size() );
+	return RAGenerateMD5( DataIn.data(), DataIn.size() );
 }

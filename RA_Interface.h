@@ -98,10 +98,13 @@ extern bool RA_UserLoggedIn();
 extern const char* RA_Username();
 
 //	Attempts to login, or show login dialog.
-extern void RA_AttemptLogin();
+extern void RA_AttemptLogin( bool bBlocking );
 
 //	Should be called immediately after a new ROM is loaded.
 extern void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize );
+
+//	Clear all memory banks before installing any new ones!
+extern void RA_ClearMemoryBanks();
 
 //	Call once for each memory bank found, immediately after a new rom or load
 //pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );

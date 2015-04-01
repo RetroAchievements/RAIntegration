@@ -34,13 +34,16 @@ API HMENU CCONV _RA_CreatePopupMenu();
 API int CCONV _RA_ConfirmLoadNewRom( BOOL bQuittingApp );
 
 //	On or immediately after a new ROM is loaded, including if the ROM is reset.
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, unsigned int nROMSize );
+API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize );
 
 //	On or immediately after a new ROM is loaded, for each memory bank found
 //	NB:
 //pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
 //pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
 API void CCONV _RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize );
+
+//	Call before installing any memory banks
+API void CCONV _RA_ClearMemoryBanks();
 
 //	Immediately after loading a new state.
 API void CCONV _RA_OnLoadState( const char* sFileName );
@@ -84,7 +87,7 @@ API void CCONV _RA_SetPaused( bool bIsPaused );
 API const char* CCONV _RA_Username();
 
 //	Attempt to login, or present login dialog.
-API void CCONV _RA_AttemptLogin();
+API void CCONV _RA_AttemptLogin( bool bBlocking );
 
 //	Return whether or not the hardcore mode is active.
 API int CCONV _RA_HardcoreModeIsActive();
@@ -105,6 +108,8 @@ API void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCaus
 extern std::string g_sKnownRAVersion;
 extern std::string g_sHomeDir;
 extern std::string g_sROMDirLocation;
+extern std::string g_sCurrentROMMD5;
+
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
@@ -147,3 +152,8 @@ extern void _FetchMyProgressFromWeb();
 extern BOOL _FileExists( const std::string& sFileName );
 
 extern std::string _TimeStampToString( time_t nTime );
+
+extern std::string GetFolderURLFromDialog();
+
+extern std::string WideStrToStr( const std::wstring& wstr );
+extern std::wstring StrToWideStr( const std::string& str );

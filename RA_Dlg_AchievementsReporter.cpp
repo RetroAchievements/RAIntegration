@@ -1,14 +1,11 @@
 #include "RA_Dlg_AchievementsReporter.h"
 
-#include <windowsx.h>
-#include <stdio.h>
-#include <commctrl.h>
-
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
 
 
@@ -200,6 +197,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					"Achievement IDs: %s\n"
 					"Problem: %s\n"
 					"Reporter: %s\n"
+					"ROM Checksum: %s\n"
 					"\n"
 					"Comment: %s\n"
 					"\n"
@@ -208,6 +206,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					sBuggedIDs,
 					sProblemTypeNice,
 					RAUsers::LocalUser.Username(),
+					g_sCurrentROMMD5,
 					sBugReportComment );
 
 				if( MessageBox( NULL, sBugReportInFull, "Summary", MB_YESNO ) == IDNO )
@@ -219,6 +218,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 				args['i'] = sBuggedIDs;
 				args['p'] = sProblemType;
 				args['n'] = sBugReportComment;
+				args['m'] = g_sCurrentROMMD5;
 
 				Document doc;
 				if( RAWeb::DoBlockingRequest( RequestSubmitTicket, args, doc ) )

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <Windows.h>
 
+GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+
 void RADebugLog( const char* format, ... )
 {
 	char    buf[4096], *p = buf;

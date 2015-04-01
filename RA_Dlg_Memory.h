@@ -50,10 +50,13 @@ private:
 class Dlg_Memory
 {
 public:
-	Dlg_Memory();
+	Dlg_Memory() {}
 
 public:
 	void Init();
+	
+	void ClearLogOutput();
+	void AddLogLine( const std::string& sNextLine );
 
 	static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
 	INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
@@ -74,8 +77,8 @@ public:
 	const CodeNotes& Notes() const				{ return m_CodeNotes; }
 
 private:
-	CodeNotes m_CodeNotes;
-	HWND m_hWnd;
+	static CodeNotes m_CodeNotes;
+	static HWND m_hWnd;
 };
 
 extern Dlg_Memory g_MemoryDialog;

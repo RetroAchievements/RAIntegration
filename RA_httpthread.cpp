@@ -112,7 +112,7 @@ BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 	rDocOut.ParseInsitu( DataStreamAsString( GetResponse() ) );
 
 	if( rDocOut.HasParseError() )
-		RA_LOG( "Possible parse issue on response, %d (%s)\n", rDocOut.GetParseError(), RequestTypeToString[m_nType] );
+		RA_LOG( "Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr( rDocOut.GetParseError() ), RequestTypeToString[ m_nType ] );
 
 	return !rDocOut.HasParseError();
 }
@@ -490,10 +490,18 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 
 #ifdef _DEBUG
 	{
-		Document doc;
-		doc.Parse( DataStreamAsString( ResponseOut ) );
-		LogJSON( doc );
+		if( ResponseOut.size() > 0 )
+		{
+			Document doc;
+			doc.Parse( DataStreamAsString( ResponseOut ) );
+			LogJSON( doc );
+		}
+		else
+		{
+			RA_LOG( "Empty JSON Response!" );
+		}
 	}
+
 #endif
 
 	return bSuccess;

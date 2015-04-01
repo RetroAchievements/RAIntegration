@@ -325,7 +325,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 			{
 				//fread( pBuf, 1, nSize, pFile );
 				fread( pBuf, sizeof( BYTE ), nSize, pf );	//Check
-				Results[ FilesToScan.front() ] = RA::GenerateMD5( pBuf, nSize );
+				Results[ FilesToScan.front() ] = RAGenerateMD5( pBuf, nSize );
 
 				SendMessage( g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL );
 
@@ -407,7 +407,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 						DWORD nBytes = 0;
 						BOOL bResult = ReadFile( hROMReader, sROMRawData, nSize, &nBytes, NULL );
 						//md5_GenerateMD5Raw( sROMRawData, nBytes, sHashOut );
-						const std::string sHashOut = RA::GenerateMD5( sROMRawData, nSize );
+						const std::string sHashOut = RAGenerateMD5( sROMRawData, nSize );
 
 						if( m_GameHashLibrary.find( sHashOut ) != m_GameHashLibrary.end() )
 						{
@@ -721,24 +721,9 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 			break;
 
 		case IDC_RA_PICKROMDIR:
-			{
-				BROWSEINFO bi = { 0 };
-				bi.lpszTitle = "Select your ROM directory";
-				LPITEMIDLIST pidl = SHBrowseForFolder( &bi );
-				if( pidl != 0 )
-				{
-					// get the name of the folder
-					char buffer[1024];
-					if( SHGetPathFromIDList( pidl, buffer ) )
-					{
-						g_sROMDirLocation = buffer;
-						RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation );
-						SetDlgItemText( hDlg, IDC_RA_ROMDIR, g_sROMDirLocation.c_str() );
-						//ReloadGameListData();
-					}
-					CoTaskMemFree( pidl );
-				}
-			}
+			g_sROMDirLocation = GetFolderURLFromDialog();
+			RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation );
+			SetDlgItemText( hDlg, IDC_RA_ROMDIR, g_sROMDirLocation.c_str() );
 			break;
 
 		case IDC_RA_LBX_GAMELIST:
@@ -749,18 +734,13 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 				{
 					char sGameTitle[1024];
 					ListView_GetItemText( hList, nSel, 1, sGameTitle, 1024 );
-					//const int nSel = ListBox_GetCurSel( hList );
-					//char buffer[256];
-					//ListView_GetText( hList, nSel, buffer );
 					SetWindowText( GetDlgItem( hDlg, IDC_RA_GLIB_NAME ), sGameTitle );
 				}
 			}
 			break;
 
 		case IDC_RA_REFRESH:
-			{
-				RefreshList();
-			}
+			RefreshList();
 			break;
 
  		//case IDCANCEL:

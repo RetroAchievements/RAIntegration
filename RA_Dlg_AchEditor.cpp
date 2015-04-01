@@ -1,12 +1,7 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include <windows.h>
-#include <windowsx.h>
-#include <CommCtrl.h>
-#include <stdio.h>
-#include <assert.h>
-
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_Resource.h"
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -17,16 +12,14 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 
-#include "rapidjson/include/rapidjson/document.h"
+//#include "rapidjson/include/rapidjson/document.h"
 
 //?
 #pragma comment(lib, "comctl32.lib")
 
-//	NOTE: ENSURE that these match up with the definitions in Achievement.h!
-//	Add static assert?
-
-const char* g_sColTitles[] = { "ID", "Special?", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int g_nColSizes[] = { 30, 53, 42, 50, 60, 35, 42, 50, 60, 48 };
+const char* COLUMN_TITLE[] = { "ID", "Special?", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
+const int COLUMN_WIDTH[] = { 30, 53, 42, 50, 60, 35, 42, 50, 60, 48 };
+static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
 
 enum CondSubItems
 {
@@ -44,19 +37,14 @@ enum CondSubItems
 };
 
 BOOL g_bPreferDecimalVal = TRUE;
-
-//static 
-HWND BadgeNames::m_hDestComboBox = NULL;
-
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
-INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK AchProgressProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam )
 {
 	BOOL bHandled = FALSE;
 
-	switch(message)
+	switch( nMsg )
 	{
-
 	case WM_INITDIALOG:
 	{
 		Achievement* pAch = g_AchievementEditorDialog.ActiveAchievement();
@@ -141,18 +129,15 @@ void Dlg_AchievementEditor::SetupColumns( HWND hList )
 	//	Remove all data.
 	ListView_DeleteAllItems( hList );
 
-	char buffer[256];
-
 	LV_COLUMN col;
 	ZeroMemory( &col, sizeof( col ) );
 
 	for( size_t i = 0; i < m_nNumCols; ++i )
 	{
 		col.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM|LVCF_FMT;
-		col.cx = g_nColSizes[i];
+		col.cx = COLUMN_WIDTH[ i ];
+		col.pszText = const_cast<LPSTR>( COLUMN_TITLE[ i ] );
 		col.cchTextMax = 255;
-		sprintf_s( buffer, 256, g_sColTitles[i] );
-		col.pszText = buffer;
 		col.iSubItem = i;
 
 		col.fmt = LVCFMT_LEFT|LVCFMT_FIXED_WIDTH;
@@ -842,14 +827,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 				LoadAchievement( pActiveAch, TRUE );
 				pActiveAch->ClearDirtyFlag();
 			}
-
 		}
 		break;
+
 	case WM_INITDIALOG:
 		{
-			RECT r;
-			GetWindowRect( g_RAMainWnd, &r );
-			SetWindowPos( hDlg, NULL, r.right, r.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
+			RECT rc;
+			GetWindowRect( g_RAMainWnd, &rc );
+			SetWindowPos( hDlg, NULL, rc.right, rc.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
 			m_hAchievementEditorDlg = hDlg;
 
@@ -864,9 +849,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			m_BadgeNames.InstallAchEditorCombo( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME ) );
 			m_BadgeNames.FetchNewBadgeNamesThreaded();
 		}
+		return TRUE;
 
-		bHandled = TRUE;
-		break;
 	case WM_COMMAND:
 		switch(LOWORD(wParam))
 		{
@@ -1621,7 +1605,7 @@ void Dlg_AchievementEditor::UpdateBadge( const std::string& sNewName )
 			m_pSelectedAchievement->SetBadgeImage( sNewName );
 			m_pSelectedAchievement->SetModified( TRUE );
 
-			if( g_nActiveAchievementSet == AchievementSetCore )
+			if( g_nActiveAchievementSet == Core )
 			{
 				int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
 				g_AchievementsDialog.OnEditData( nOffs, Dlg_Achievements::Modified, "Yes" );
@@ -1927,16 +1911,10 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
 	RAWeb::CreateThreadedHTTPRequest( RequestBadgeIter );
 }
 
-//static
-void BadgeNames::CB_OnNewBadgeNames( void* pReqObj )
+void BadgeNames::OnNewBadgeNames( const Document& data )
 {
-	RequestObject* pObj = static_cast<RequestObject*>( pReqObj );
-	Document doc;
-	if( !pObj->ParseResponseToJSON( doc ) )
-		return;
-	
-	const unsigned int nLowerLimit = doc["FirstBadge"].GetUint();
-	const unsigned int nUpperLimit = doc["NextBadge"].GetUint();
+	unsigned int nLowerLimit = data[ "FirstBadge" ].GetUint();
+	unsigned int nUpperLimit = data[ "NextBadge" ].GetUint();
 
 	//	Clean out cbo
 	while( ComboBox_DeleteString( m_hDestComboBox, 0 ) > 0 )

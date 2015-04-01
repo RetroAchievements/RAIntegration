@@ -1,23 +1,18 @@
 #include "RA_User.h"
 
-#include <stdio.h>
-#include <wincodec.h>
-#include <direct.h>
-
-#include "RA_Interface.h"
-
-#include "RA_Defs.h"
-#include "RA_Core.h"
-#include "RA_Resource.h"
-
 #include "RA_Achievement.h"
-#include "RA_ImageFactory.h"
-#include "RA_PopupWindows.h"
 #include "RA_AchievementOverlay.h"
+#include "RA_AchievementSet.h"
+#include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Login.h"
 #include "RA_httpthread.h"
+#include "RA_ImageFactory.h"
+#include "RA_Interface.h"
+#include "RA_PopupWindows.h"
+#include "RA_Resource.h"
 
 //static 
 LocalRAUser RAUsers::LocalUser("");
@@ -39,8 +34,8 @@ void RAUsers::OnUserPicDownloaded( const RequestObject& obj )
 	
 	//	Write this image to local, then signal overlay that new data has arrived.
 	_WriteBufferToFile( RA_DIR_USERPIC + sUsername + ".png", obj.GetResponse() );
-	g_AchievementOverlay.OnHTTP_UserPic( sUsername.c_str() );
-		
+	g_AchievementOverlay.OnUserPicDownloaded( sUsername.c_str() );
+	
 	pUser->LoadOrFetchUserImage();
 }
 
@@ -94,18 +89,35 @@ LocalRAUser::LocalRAUser( const std::string& sUser ) :
 {
 }
 
-//virtual 
-LocalRAUser::~LocalRAUser()
-{
-}
-
-void LocalRAUser::AttemptLogin()
+void LocalRAUser::AttemptLogin( bool bBlocking )
 {
 	m_bIsLoggedIn = FALSE;
 
 	if( Username().length() > 0 )
 	{
-		AttemptSilentLogin();
+		if( bBlocking )
+		{
+			PostArgs args;
+			args['u'] = Username();
+			args['t'] = Token();		//	Plaintext password(!)
+				
+			Document doc;
+			RAWeb::DoBlockingRequest( RequestLogin, args, doc );
+			
+			if( doc[ "Success" ].GetBool() )
+			{
+				const std::string& sUser = doc[ "User" ].GetString();
+				const std::string& sToken = doc[ "Token" ].GetString();
+				const unsigned int nPoints = doc[ "Score" ].GetUint();
+				const unsigned int nUnreadMessages = doc[ "Messages" ].GetUint();
+
+				ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, true );
+			}
+		}
+		else
+		{
+			AttemptSilentLogin();
+		}
 	}
 	else
 	{
@@ -113,6 +125,7 @@ void LocalRAUser::AttemptLogin()
 		DialogBox( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc );
 		_RA_SavePreferences();
 	}
+
 }
 
 void LocalRAUser::AttemptSilentLogin()
@@ -237,7 +250,7 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 {
 	switch( nActivityType )
 	{
-		case ActivityType_StartPlaying:
+		case PlayerStartedPlaying:
 		{
 			PostArgs args;
 			args['u'] = Username();
@@ -248,12 +261,11 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 			RAWeb::CreateThreadedHTTPRequest( RequestPostActivity, args );
 			break;
 		}
+
 		default:
-		{
 			//	unhandled
-			assert(0);
+			ASSERT( !"User isn't designed to handle posting this activity!" );
 			break;
-		}
 	}
 }
 
@@ -272,9 +284,4 @@ RAUser* LocalRAUser::FindFriend( const std::string& sName )
 			return *iter;
 	}
 	return NULL;
-}
-
-API bool _RA_UserLoggedIn()
-{
-	return( RAUsers::LocalUser.IsLoggedIn() == TRUE );
 }

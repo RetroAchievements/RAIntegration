@@ -66,48 +66,50 @@ void RA_GetEstimatedGameTitle( char* sNameOut )
 //	Expose to app:
  
 //	Generic:
-const char* (CCONV *_RA_IntegrationVersion) () = NULL;
-int		(CCONV *_RA_InitI) ( HWND hMainWnd, int nConsoleID, const char* sClientVer ) = NULL;
-int		(CCONV *_RA_Shutdown) () = NULL;
+const char* (CCONV *_RA_IntegrationVersion) () = nullptr;
+int		(CCONV *_RA_InitI) ( HWND hMainWnd, int nConsoleID, const char* sClientVer ) = nullptr;
+int		(CCONV *_RA_Shutdown) () = nullptr;
 //	Load/Save
-int		(CCONV *_RA_ConfirmLoadNewRom) (int bQuitting) = NULL;
-int		(CCONV *_RA_OnLoadNewRom) (const BYTE* pROM, const unsigned int nROMSize, const BYTE* pRAM, const unsigned int nRAMSize, const BYTE* pExtraRAM, const unsigned int nRAMExtraSize) = NULL;
-void	(CCONV *_RA_OnLoadState)(const char* sFilename) = NULL;
-void	(CCONV *_RA_OnSaveState)(const char* sFilename) = NULL;
+int		(CCONV *_RA_ConfirmLoadNewRom)( int bQuitting ) = nullptr;
+int		(CCONV *_RA_OnLoadNewRom)( const BYTE* pROM, unsigned int nROMSize ) = nullptr;
+void	(CCONV *_RA_InstallMemoryBank)( int nBankID, void* pReader, void* pWriter, int nBankSize ) = nullptr;
+void	(CCONV *_RA_ClearMemoryBanks)() = nullptr;
+void	(CCONV *_RA_OnLoadState)( const char* sFilename ) = nullptr;
+void	(CCONV *_RA_OnSaveState)( const char* sFilename ) = nullptr;
 //	Achievements:
-void	(CCONV *_RA_DoAchievementsFrame)() = NULL;
+void	(CCONV *_RA_DoAchievementsFrame)() = nullptr;
 //	User:
-bool	(CCONV *_RA_UserLoggedIn)() = NULL;
-const char*	(CCONV *_RA_Username)() = NULL;
-void	(CCONV *_RA_AttemptLogin)() = NULL;
+bool	(CCONV *_RA_UserLoggedIn)() = nullptr;
+const char*	(CCONV *_RA_Username)() = nullptr;
+void	(CCONV *_RA_AttemptLogin)( bool bBlocking ) = nullptr;
 //	Graphics:
-void	(CCONV *_RA_InitDirectX) (void) = NULL;
-void	(CCONV *_RA_OnPaint)(HWND hWnd) = NULL;
+void	(CCONV *_RA_InitDirectX) (void) = nullptr;
+void	(CCONV *_RA_OnPaint)(HWND hWnd) = nullptr;
 //	Tools:
-void	(CCONV *_RA_SetPaused)(bool bIsPaused) = NULL;
-HMENU	(CCONV *_RA_CreatePopupMenu)() = NULL;
-void	(CCONV *_RA_UpdateAppTitle) (const char* pMessage) = NULL;
-void	(CCONV *_RA_HandleHTTPResults) (void) = NULL;
-void	(CCONV *_RA_InvokeDialog)(LPARAM nID) = NULL;
-void	(CCONV *_RA_InstallSharedFunctions)( bool(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(char*) ) = NULL;
-int		(CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = NULL;
-int		(CCONV *_RA_HardcoreModeIsActive)(void) = NULL;
-int		(CCONV *_RA_HTTPGetRequestExists)(const char* sPageName) = NULL;
+void	(CCONV *_RA_SetPaused)(bool bIsPaused) = nullptr;
+HMENU	(CCONV *_RA_CreatePopupMenu)() = nullptr;
+void	(CCONV *_RA_UpdateAppTitle) (const char* pMessage) = nullptr;
+void	(CCONV *_RA_HandleHTTPResults) (void) = nullptr;
+void	(CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
+void	(CCONV *_RA_InstallSharedFunctions)( bool(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(char*) ) = nullptr;
+int		(CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
+int		(CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
+int		(CCONV *_RA_HTTPGetRequestExists)(const char* sPageName) = nullptr;
 
 //	Don't expose to app
-HINSTANCE g_hRADLL = NULL;
+HINSTANCE g_hRADLL = nullptr;
 
 
-int		(CCONV *_RA_UpdateOverlay) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = NULL;
-int		(CCONV *_RA_UpdatePopups) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = NULL;
-void	(CCONV *_RA_RenderOverlay) (HDC hDC, RECT* prcSize) = NULL;
-void	(CCONV *_RA_RenderPopups) (HDC hDC, RECT* prcSize) = NULL;
+int		(CCONV *_RA_UpdateOverlay) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
+int		(CCONV *_RA_UpdatePopups) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
+void	(CCONV *_RA_RenderOverlay) (HDC hDC, RECT* prcSize) = nullptr;
+void	(CCONV *_RA_RenderPopups) (HDC hDC, RECT* prcSize) = nullptr;
 
 
 //	Helpers:
 bool RA_UserLoggedIn()
 {
-	if( _RA_UserLoggedIn != NULL )
+	if( _RA_UserLoggedIn != nullptr )
 		return _RA_UserLoggedIn();
 
 	return false;
@@ -118,54 +120,60 @@ const char* RA_Username()
 	return _RA_Username ? _RA_Username() : "";
 }
 
-void RA_AttemptLogin()
+void RA_AttemptLogin( bool bBlocking )
 {
-	if( _RA_AttemptLogin != NULL )
-		_RA_AttemptLogin();
+	if( _RA_AttemptLogin != nullptr )
+		_RA_AttemptLogin( bBlocking );
 }
 
 void RA_UpdateRenderOverlay( HDC hDC, ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen, bool Paused )
 {
-	if( _RA_UpdatePopups != NULL )
+	if( _RA_UpdatePopups != nullptr )
 		_RA_UpdatePopups( pInput, fDeltaTime, Full_Screen, Paused );
 
-	if( _RA_RenderPopups != NULL )
+	if( _RA_RenderPopups != nullptr )
 		_RA_RenderPopups( hDC, prcSize );
 
 	//	NB. Render overlay second, on top of popups!
-	if( _RA_UpdateOverlay != NULL )
+	if( _RA_UpdateOverlay != nullptr )
 		_RA_UpdateOverlay( pInput, fDeltaTime, Full_Screen, Paused );
 
-	if( _RA_RenderOverlay != NULL )
+	if( _RA_RenderOverlay != nullptr )
 		_RA_RenderOverlay( hDC, prcSize );
 }
 
 void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize )
 {
-	if( _RA_OnLoadNewRom != NULL )
+	if( _RA_OnLoadNewRom != nullptr )
 		_RA_OnLoadNewRom( pROMData, nROMSize );
+}
+
+void RA_ClearMemoryBanks()
+{
+	if( _RA_ClearMemoryBanks != nullptr )
+		_RA_ClearMemoryBanks();
 }
 
 void RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize )
 {
-	if( _RA_InstallMemoryBank != NULL )
+	if( _RA_InstallMemoryBank != nullptr )
 		_RA_InstallMemoryBank( nBankID, pReader, pWriter, nBankSize );
 }
 
 HMENU RA_CreatePopupMenu()
 {
-	return ( _RA_CreatePopupMenu != NULL ) ? _RA_CreatePopupMenu() : NULL;
+	return ( _RA_CreatePopupMenu != nullptr ) ? _RA_CreatePopupMenu() : nullptr;
 }
 
 void RA_UpdateAppTitle( const char* sCustomMsg )
 {
-	if( _RA_UpdateAppTitle != NULL )
+	if( _RA_UpdateAppTitle != nullptr )
 		_RA_UpdateAppTitle(sCustomMsg);
 }
 
 void RA_HandleHTTPResults()
 {
-	if( _RA_HandleHTTPResults != NULL )
+	if( _RA_HandleHTTPResults != nullptr )
 		_RA_HandleHTTPResults();
 }
 
@@ -176,67 +184,67 @@ bool RA_ConfirmLoadNewRom( bool bIsQuitting )
 
 void RA_InitDirectX()
 {
-	if( _RA_InitDirectX != NULL )
+	if( _RA_InitDirectX != nullptr )
 		_RA_InitDirectX();
 }
 
 void RA_OnPaint( HWND hWnd )
 {
-	if( _RA_OnPaint != NULL )
+	if( _RA_OnPaint != nullptr )
 		_RA_OnPaint( hWnd );
 }
 
 void RA_InvokeDialog( LPARAM nID )
 {
-	if( _RA_InvokeDialog != NULL )
+	if( _RA_InvokeDialog != nullptr )
 		_RA_InvokeDialog( nID );
 }
 
 void RA_SetPaused( bool bIsPaused )
 {
-	if( _RA_SetPaused != NULL )
+	if( _RA_SetPaused != nullptr )
 		_RA_SetPaused( bIsPaused );
 }
 
 void RA_OnLoadState( const char* sFilename )
 {
-	if( _RA_OnLoadState != NULL )
+	if( _RA_OnLoadState != nullptr )
 		_RA_OnLoadState( sFilename );
 }
 
 void RA_OnSaveState( const char* sFilename )
 {
-	if( _RA_OnSaveState != NULL )
+	if( _RA_OnSaveState != nullptr )
 		_RA_OnSaveState( sFilename );
 }
 
 void RA_DoAchievementsFrame()
 {
-	if( _RA_DoAchievementsFrame != NULL )
+	if( _RA_DoAchievementsFrame != nullptr )
 		_RA_DoAchievementsFrame();
 }
 
 void RA_SetConsoleID( unsigned int nConsoleID )
 {
-	if( _RA_SetConsoleID != NULL )
+	if( _RA_SetConsoleID != nullptr )
 		_RA_SetConsoleID( nConsoleID );
 }
 
 int RA_HardcoreModeIsActive()
 {
-	return ( _RA_HardcoreModeIsActive != NULL ) ? _RA_HardcoreModeIsActive() : 0;
+	return ( _RA_HardcoreModeIsActive != nullptr ) ? _RA_HardcoreModeIsActive() : 0;
 }
 
 int RA_HTTPRequestExists( const char* sPageName )
 {
-	return ( _RA_HTTPGetRequestExists != NULL ) ? _RA_HTTPGetRequestExists( sPageName ) : 0;
+	return ( _RA_HTTPGetRequestExists != nullptr ) ? _RA_HTTPGetRequestExists( sPageName ) : 0;
 }
 
 
 BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsigned int /*nBufferOutSize*/, DWORD* pBytesRead )
 {
 	BOOL bResults = FALSE, bSuccess = FALSE;
-	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
+	HINTERNET hSession = nullptr, hConnect = nullptr, hRequest = nullptr;
 
 	WCHAR wBuffer[1024];
 	size_t nTemp;
@@ -256,12 +264,12 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 		WINHTTP_NO_PROXY_BYPASS, 0);
 
 	// Specify an HTTP server.
-	if( hSession != NULL )
+	if( hSession != nullptr )
 	{
 		hConnect = WinHttpConnect( hSession, L"www.retroachievements.org", INTERNET_DEFAULT_HTTP_PORT, 0);
 
 		// Create an HTTP Request handle.
-		if( hConnect != NULL )
+		if( hConnect != nullptr )
 		{
 			mbstowcs_s( &nTemp, wBuffer, 1024, sRequestedPage, strlen(sRequestedPage)+1 );
 
@@ -274,7 +282,7 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 				0);
 
 			// Send a Request.
-			if( hRequest != NULL )
+			if( hRequest != nullptr )
 			{
 				bResults = WinHttpSendRequest( hRequest, 
 					L"Content-Type: application/x-www-form-urlencoded",
@@ -333,21 +341,21 @@ void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 {
 	FILE* pf;
 	fopen_s( &pf, sFile, "wb" );
-	if( pf != NULL )
+	if( pf != nullptr )
 	{
 		fwrite( sBuffer, 1, nBytes, pf );
 		fclose( pf );
 	}
 	else
 	{
-		MessageBoxA( NULL, "Problems writing file!", sFile, MB_OK );
+		MessageBox( nullptr, "Problems writing file!", sFile, MB_OK );
 	}
 }
 
 void FetchIntegrationFromWeb()
 {
 	char* buffer = new char[2*1024*1024];
-	if( buffer != NULL )
+	if( buffer != nullptr )
 	{
 		DWORD nBytesRead = 0;
 
@@ -355,7 +363,7 @@ void FetchIntegrationFromWeb()
 			WriteBufferToFile( "RA_Integration.dll", buffer, nBytesRead );
  
 		delete[] ( buffer );
-		buffer = NULL;
+		buffer = nullptr;
 	}
 }
 
@@ -403,12 +411,13 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_Shutdown			= (int(CCONV *)(void))							GetProcAddress( g_hRADLL, "_RA_Shutdown" );
 	_RA_UserLoggedIn		= (bool(CCONV *)(void))							GetProcAddress( g_hRADLL, "_RA_UserLoggedIn" );
 	_RA_Username			= (const char*(CCONV *)(void))					GetProcAddress( g_hRADLL, "_RA_Username" );
-	_RA_AttemptLogin		= (void(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_AttemptLogin" );
+	_RA_AttemptLogin		= (void(CCONV *)(bool))							GetProcAddress( g_hRADLL, "_RA_AttemptLogin" );
 	_RA_UpdateOverlay		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdateOverlay" );
 	_RA_UpdatePopups		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdatePopups" );
 	_RA_RenderOverlay		= (void(CCONV *)(HDC, RECT*))					GetProcAddress( g_hRADLL, "_RA_RenderOverlay" );
 	_RA_RenderPopups		= (void(CCONV *)(HDC, RECT*))					GetProcAddress( g_hRADLL, "_RA_RenderPopups" );
-	_RA_OnLoadNewRom		= (int(CCONV *)(const BYTE*, const unsigned int, const BYTE*, const unsigned int, const BYTE*, const unsigned int))	GetProcAddress( g_hRADLL, "_RA_OnLoadNewRom" );
+	_RA_OnLoadNewRom		= (int(CCONV *)(const BYTE*, unsigned int))		GetProcAddress( g_hRADLL, "_RA_OnLoadNewRom" );
+	_RA_InstallMemoryBank	= (void(CCONV *)(int, void*, void*, int))		GetProcAddress( g_hRADLL, "_RA_InstallMemoryBank" );
 	_RA_UpdateAppTitle		= (void(CCONV *)(const char*))					GetProcAddress( g_hRADLL, "_RA_UpdateAppTitle" );
 	
 	_RA_HandleHTTPResults	= (void(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_HandleHTTPResults" );
@@ -505,39 +514,41 @@ void RA_Shutdown()
 		_RA_Shutdown();
 
 	//	Clear func ptrs
-	_RA_IntegrationVersion	= NULL;
-	_RA_InitI				= NULL;
-	_RA_Shutdown			= NULL;
-	_RA_UserLoggedIn		= NULL;
-	_RA_Username			= NULL;
-	_RA_UpdateOverlay		= NULL;
-	_RA_UpdatePopups		= NULL;
-	_RA_RenderOverlay		= NULL;
-	_RA_RenderPopups		= NULL;
-	_RA_OnLoadNewRom		= NULL;
-	_RA_UpdateAppTitle		= NULL;
-	_RA_HandleHTTPResults	= NULL;
-	_RA_ConfirmLoadNewRom	= NULL;
-	_RA_CreatePopupMenu		= NULL;
-	_RA_InitDirectX			= NULL;
-	_RA_OnPaint				= NULL;
-	_RA_InvokeDialog		= NULL;
-	_RA_SetPaused			= NULL;
-	_RA_OnLoadState			= NULL;
-	_RA_OnSaveState			= NULL;
-	_RA_DoAchievementsFrame = NULL;
-	_RA_InstallSharedFunctions= NULL;
+	_RA_IntegrationVersion		= nullptr;
+	_RA_InitI					= nullptr;
+	_RA_Shutdown				= nullptr;
+	_RA_UserLoggedIn			= nullptr;
+	_RA_Username				= nullptr;
+	_RA_UpdateOverlay			= nullptr;
+	_RA_UpdatePopups			= nullptr;
+	_RA_RenderOverlay			= nullptr;
+	_RA_RenderPopups			= nullptr;
+	_RA_OnLoadNewRom			= nullptr;
+	_RA_InstallMemoryBank		= nullptr;
+	_RA_ClearMemoryBanks		= nullptr;
+	_RA_UpdateAppTitle			= nullptr;
+	_RA_HandleHTTPResults		= nullptr;
+	_RA_ConfirmLoadNewRom		= nullptr;
+	_RA_CreatePopupMenu			= nullptr;
+	_RA_InitDirectX				= nullptr;
+	_RA_OnPaint					= nullptr;
+	_RA_InvokeDialog			= nullptr;
+	_RA_SetPaused				= nullptr;
+	_RA_OnLoadState				= nullptr;
+	_RA_OnSaveState				= nullptr;
+	_RA_DoAchievementsFrame		= nullptr;
+	_RA_InstallSharedFunctions	= nullptr;
 
-	_RA_GameIsActive		= NULL;
-	_RA_CauseUnpause		= NULL;
-	_RA_RebuildMenu			= NULL;
-	_RA_GetEstimatedGameTitle= NULL;
-	_RA_ResetEmulation		= NULL;
-	_RA_LoadROM				= NULL;
-	_RA_SetConsoleID		= NULL;
-	_RA_HardcoreModeIsActive= NULL;
-	_RA_HTTPGetRequestExists= NULL;
-	_RA_AttemptLogin		= NULL;
+	_RA_GameIsActive			= nullptr;
+	_RA_CauseUnpause			= nullptr;
+	_RA_RebuildMenu				= nullptr;
+	_RA_GetEstimatedGameTitle	= nullptr;
+	_RA_ResetEmulation			= nullptr;
+	_RA_LoadROM					= nullptr;
+	_RA_SetConsoleID			= nullptr;
+	_RA_HardcoreModeIsActive	= nullptr;
+	_RA_HTTPGetRequestExists	= nullptr;
+	_RA_AttemptLogin			= nullptr;
 
 	//	Uninstall DLL
 	FreeLibrary( g_hRADLL );

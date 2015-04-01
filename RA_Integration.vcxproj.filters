@@ -79,6 +79,12 @@
     <ClCompile Include="RA_User.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="RA_AchievementSet.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Dlg_RomChecksum.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -160,6 +166,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="RA_User.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_AchievementSet.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

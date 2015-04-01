@@ -1,21 +1,24 @@
-#if defined RA_VBA
-#include "stdafx.h"
-#endif
+//#if defined RA_VBA
+//#include "stdafx.h"
+//#endif
 
-#include <Windows.h>
-#include <stdio.h>
-#include <direct.h>
-#include <shlobj.h>
-#include <string>
-#include <map>
-#include <time.h>
-#include <sstream>
+//#include <Windows.h>
+//#include <stdio.h>
+//#include <direct.h>
+//#include <shlobj.h>
+//#include <string>
+//#include <map>
+//#include <time.h>
+//#include <sstream>
+#include <locale>
+#include <codecvt>
 
+#include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_Interface.h"
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_Achievement.h"
 #include "RA_Leaderboard.h"
 #include "RA_MemManager.h"
 #include "RA_CodeNotes.h"
@@ -27,6 +30,7 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
+#include "RA_Dlg_RomChecksum.h"
 
 #include "RA_AchievementOverlay.h"
 #include "RA_httpthread.h"
@@ -212,16 +216,10 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Initialize All AchievementSets
-	CoreAchievements = new AchievementSet( AchievementSetCore );
-	CoreAchievements->Clear();
-
-	UnofficialAchievements = new AchievementSet( AchievementSetUnofficial );
-	UnofficialAchievements->Clear();
-
-	LocalAchievements = new AchievementSet( AchievementSetLocal );
-	LocalAchievements->Clear();
-
-	g_pActiveAchievements = CoreAchievements;
+	CoreAchievements		= new AchievementSet( Core );
+	UnofficialAchievements	= new AchievementSet( Unofficial );
+	LocalAchievements		= new AchievementSet( Local );
+	g_pActiveAchievements	= CoreAchievements;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Image rendering: Setup image factory and overlay
@@ -351,19 +349,17 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 	return 0;
 }
 
-API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize )
+API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 {
 	g_sCurrentROMMD5.clear();
 	if( pROM != NULL && nROMSize > 0 )
-		g_sCurrentROMMD5 = RA::GenerateMD5( pROM, nROMSize );
+		g_sCurrentROMMD5 = RAGenerateMD5( pROM, nROMSize );
 	
-	g_MemManager.ClearMemoryBanks();
+	RA_LOG( "Loading new ROM... MD5 is %s\n", g_sCurrentROMMD5.c_str() );
 
-	//	Per console basis...?
-	//g_MemManager.InstallRAM( pRAM, nRAMSize, pRAMExtra, nRAMExtraSize );
+	ASSERT( g_MemManager.NumMemoryBanks() > 0 );
 
 	//	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
-
 	//	TBD: local DB of MD5 to GameIDs here
 	GameID nGameID = 0;
 	if( g_sCurrentROMMD5.length() > 0 )
@@ -394,7 +390,7 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize )
 		else
 		{
 			//	Some other fatal error... panic?
-			assert( !"Unknown error from requestgameid.php" );
+			ASSERT( !"Unknown error from requestgameid.php" );
 
 			char buffer[8192];
 			sprintf_s( buffer, 8192, "Error from " RA_HOST "!\n" );
@@ -412,17 +408,13 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize )
 	{ 
 		if( RAUsers::LocalUser.IsLoggedIn() )
 		{
-			//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-			AchievementSet::DeletePatchFile( AchievementSetCore, nGameID );
-			AchievementSet::DeletePatchFile( AchievementSetUnofficial, nGameID );
-
+			//	Delete Core and Unofficial Achievements so they are redownloaded every time:
+			AchievementSet::DeletePatchFile( Core, nGameID );
+			AchievementSet::DeletePatchFile( Unofficial, nGameID );
 			AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
 			AchievementSet::LoadFromFile( nGameID );
-			//CoreAchievements->Load( nGameID );
-			//UnofficialAchievements->Load( nGameID );
-			//LocalAchievements->Load( nGameID );
 
-			RAUsers::LocalUser.PostActivity( ActivityType_StartPlaying );
+			RAUsers::LocalUser.PostActivity( PlayerStartedPlaying );
 		}
 	}
 	else
@@ -444,6 +436,11 @@ API int CCONV _RA_OnLoadNewRom( BYTE* pROM, size_t nROMSize )
 API void CCONV _RA_InstallMemoryBank( int nBankID, void* pReader, void* pWriter, int nBankSize )
 {
 	g_MemManager.AddMemoryBank( static_cast<size_t>( nBankID ), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>( nBankSize ) );
+}
+
+API void CCONV _RA_ClearMemoryBanks()
+{
+	g_MemManager.ClearMemoryBanks();
 }
 
 
@@ -579,7 +576,7 @@ API int CCONV _RA_HandleHTTPResults()
 				break;
 
 			case RequestBadgeIter:
-				g_AchievementEditorDialog.GetBadgeNames().CB_OnNewBadgeNames( pObj );
+				g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames( doc );
 				break;
 
 			case RequestUserPic:
@@ -680,8 +677,7 @@ API int CCONV _RA_HandleHTTPResults()
 				break;
 
 			case RequestAchievementInfo:
-				if( pObj->ParseResponseToJSON( doc ) )
-					g_AchExamine.OnReceiveData( doc );
+				g_AchExamine.OnReceiveData( doc );
 				break;
 
 			case RequestCodeNotes:
@@ -693,62 +689,14 @@ API int CCONV _RA_HandleHTTPResults()
 				break;
 				
 			case RequestLeaderboardInfo:
-				if( pObj->ParseResponseToJSON( doc ) )
-					g_LBExamine.OnReceiveData( doc );
+				g_LBExamine.OnReceiveData( doc );
+				break;
+
+			case RequestUnlocks:
+				AchievementSet::OnRequestUnlocks( doc );
+				//sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
 				break;
 			}
-		
-			//if( strcmp( pObj->m_sRequestPageName, "requestlogin.php" ) == 0 )
-			//{
-			//	if( pObj->m_bResponse == TRUE )
-			//	{
-			//		if( strncmp( pObj->m_sResponse, "FAILED", 6 ) == 0 )
-			//		{
-			//			char buffer[4096];
-			//			sprintf_s( buffer, 4096, 
-			//				"%s failed:\n\n"
-			//				"Response from server:\n"
-			//				"%s",
-			//				( pObj->m_nUserRef == 1 ) ? "Auto-login" : "Login",
-			//				pObj->m_sResponse );
-
-			//			MessageBox( NULL, buffer, "Error in login", MB_OK );
-			//			RAUsers::LocalUser.Clear();
-			//		}
-			//		else if( strncmp( pObj->m_sResponse, "OK:", 3 ) == 0 )
-			//		{
-			//			//	will return a valid token : points : messages
-
-			//			//	fish out the username again
-			//			char* pUserPtr = pObj->m_sRequestPost+2;
-			//			char* sUser = strtok_s( pUserPtr, "&", &pUserPtr );
-
-			//			//	find the token, points, and num messages
-			//			char* pBuf = pObj->m_sResponse+3;
-			//			char* pToken = strtok_s( pBuf, ":", &pBuf );
-			//			unsigned int nPoints = strtol( pBuf, &pBuf, 10 );
-			//			pBuf++;
-			//			unsigned int nMessages = strtol( pBuf, &pBuf, 10 );
-			//			//pBuf++;
-			//					
-			//			RAUsers::ProcessSuccessfulLogin( sUser, pToken, RAUsers::LocalUser.m_bStoreToken, nPoints, nMessages );
-			//		}
-			//		else
-			//		{
-			//			MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-			//			RAUsers::LocalUser.Clear();
-			//		}
-			//	}
-			//	else
-			//	{
-			//		MessageBox( NULL, "Login failed: please check user/password!", "Error", MB_OK );
-			//		RAUsers::LocalUser.Clear();
-			//	}
-
-			//	RA_RebuildMenu();
-			//	_RA_UpdateAppTitle();
-			//}
-
 		}
 
 		SAFE_DELETE( pObj );
@@ -811,7 +759,6 @@ API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 		sstr << " - " << RAUsers::LocalUser.Username();
 
 	SetWindowText( g_RAMainWnd, sstr.str().c_str() );
-
 	return 0;
 }
 
@@ -828,8 +775,8 @@ API int CCONV _RA_CheckForUpdate()
 		if( sReply.length() > 2 && sReply.at( 0 ) == '0' && sReply.at( 1 ) == '.' )
 		{
 			//	Ignore g_sKnownRAVersion: check against g_sRAVersion
-			const unsigned long nLocalVersion = std::strtoul( g_sClientVersion+2, NULL, 10 );
-			const unsigned long nServerVersion = std::strtoul( sReply.c_str()+2, NULL, 10 );
+			unsigned long nLocalVersion = std::strtoul( g_sClientVersion + 2, nullptr, 10 );
+			unsigned long nServerVersion = std::strtoul( sReply.c_str() + 2, nullptr, 10 );
 
 			if( nLocalVersion < nServerVersion )
 			{
@@ -838,7 +785,7 @@ API int CCONV _RA_CheckForUpdate()
 			else
 			{
 				//	Up to date
-				char buffer[1024];
+				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion );
 				MessageBox( g_RAMainWnd, buffer, "Up to date", MB_OK );
 			}
@@ -869,9 +816,9 @@ API void CCONV _RA_LoadPreferences()
 	RA_LOG( __FUNCTION__ " - loading preferences...\n" );
 	
 	SetCurrentDirectory( g_sHomeDir.c_str() );
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s( &pf, std::string( std::string( RA_PREFERENCES_FILENAME_PREFIX ) + g_sClientName + ".cfg" ).c_str(), "rb" );
-	if( pf == NULL )
+	if( pf == nullptr )
 	{
 		//	Test for first-time use:
 		//RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
@@ -1011,7 +958,6 @@ void _FetchMyProgressFromWeb()
 void EnsureDialogVisible( HWND hDlg )
 {
 	//	Does this nudge the dlg back onto the screen?
-
 	const int nScreenWidth = GetSystemMetrics( SM_CXSCREEN );
 	const int nScreenHeight = GetSystemMetrics( SM_CYMAXIMIZED ) - ( GetSystemMetrics( SM_CYSCREEN ) - GetSystemMetrics( SM_CYMAXIMIZED ) );
 
@@ -1032,223 +978,158 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 	switch( nID )
 	{
 		case IDM_RA_FILES_ACHIEVEMENTS:
-			{
-				if( g_AchievementsDialog.GetHWND() == NULL )
-					g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
-				if( g_AchievementsDialog.GetHWND() != NULL )
-					ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
+			if( g_AchievementsDialog.GetHWND() == NULL )
+				g_AchievementsDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE( IDD_RA_ACHIEVEMENTS ), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc ) );
+			if( g_AchievementsDialog.GetHWND() != NULL )
+				ShowWindow( g_AchievementsDialog.GetHWND(), SW_SHOW );
 			
-				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
-			}
-		break;
+			EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			break;
 
 		case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-			{
-				if( g_AchievementEditorDialog.GetHWND() == NULL )
-					g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
-				if( g_AchievementEditorDialog.GetHWND() != NULL )
-					ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
+			if( g_AchievementEditorDialog.GetHWND() == NULL )
+				g_AchievementEditorDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE( IDD_RA_ACHIEVEMENTEDITOR ), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc ) );
+			if( g_AchievementEditorDialog.GetHWND() != NULL )
+				ShowWindow( g_AchievementEditorDialog.GetHWND(), SW_SHOW );
 			
-				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
-			}
-		break;
+			EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			break;
 
 		case IDM_RA_FILES_MEMORYFINDER:
-			{
-				if( g_MemoryDialog.GetHWND() == NULL )
-					g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
-				if( g_MemoryDialog.GetHWND() != NULL )
-					ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
+			if( g_MemoryDialog.GetHWND() == NULL )
+				g_MemoryDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE( IDD_RA_MEMORY ), g_RAMainWnd, g_MemoryDialog.s_MemoryProc ) );
+			if( g_MemoryDialog.GetHWND() != NULL )
+				ShowWindow( g_MemoryDialog.GetHWND(), SW_SHOW );
 			
-				EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
-			}
-		break;
+			EnsureDialogVisible( g_AchievementsDialog.GetHWND() );
+			break;
 		
 		case IDM_RA_FILES_LOGIN:
-			{
-				RA_Dlg_Login::DoModalLogin();
-				_RA_SavePreferences();
-				//RA_RebuildMenu();
-			}
-
+			RA_Dlg_Login::DoModalLogin();
+			_RA_SavePreferences();
 			break;
 
 		case IDM_RA_FILES_LOGOUT:
-
 			RAUsers::LocalUser.Clear();
 			g_PopupWindows.Clear();
-			
 			_RA_SavePreferences();
-
-			//UpdateAppTitle();
 			_RA_UpdateAppTitle();
 
-			MessageBox( g_RAMainWnd, "You are now logged out.", "Info", MB_OK );
-
-			//Reset_Genesis();
+			MessageBox( g_RAMainWnd, "You are now logged out.", "Info", MB_OK );	//	##BLOCKING##
 			_RA_RebuildMenu();
-
 			break;
 
 		case IDM_RA_FILES_CHECKFORUPDATE:
 
 			_RA_CheckForUpdate();
-
 			break;
 
 		case IDM_RA_HARDCORE_MODE:
 
 			g_bHardcoreModeActive = !g_bHardcoreModeActive;
-
 			_RA_ResetEmulation();
 			
-			if( CoreAchievements->GetGameID() != 0 )
+			if( AchievementSet::GetGameID() != 0 )
 			{
 				//	Delete Core and Unofficial Achievements so it is redownloaded every time:
-				AchievementSet::DeletePatchFile( AchievementSetCore, CoreAchievements->GetGameID() );
-				AchievementSet::DeletePatchFile( AchievementSetUnofficial, CoreAchievements->GetGameID() );
-				if( !AchievementSet::LoadFromFile( CoreAchievements->GetGameID() ) )
-				{
-					//	Fetch then load again from file
-					AchievementSet::FetchFromWebBlocking( CoreAchievements->GetGameID() );
-					AchievementSet::LoadFromFile( CoreAchievements->GetGameID() );
-				}
+				AchievementSet::DeletePatchFile( Core, AchievementSet::GetGameID() );
+				AchievementSet::DeletePatchFile( Unofficial, AchievementSet::GetGameID() );
+
+				//	Fetch remotely then load again from file
+				AchievementSet::FetchFromWebBlocking( AchievementSet::GetGameID() );
+				AchievementSet::LoadFromFile( AchievementSet::GetGameID() );
 			}
 
 			_RA_RebuildMenu();
-
 			break;
 
 		case IDM_RA_REPORTBROKENACHIEVEMENTS:
-			{
-				Dlg_AchievementsReporter::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
-			}
+			Dlg_AchievementsReporter::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
 			break;
 
 		case IDM_RA_GETROMCHECKSUM:
-			{
-				if( g_pActiveAchievements->NumAchievements() == 0 )
-				{
-					MessageBox( NULL, "No ROM loaded!", "Error", MB_OK );
-				}
-				else
-				{
-					char buffer[2048];
-					sprintf_s( buffer, "Current ROM MD5: %s", g_sCurrentROMMD5 );
-				
-					MessageBox( NULL, buffer, "Get ROM Checksum", MB_OK );
-				}
-			}
+		{
+			RA_Dlg_RomChecksum::DoModalDialog();
+			//MessageBox( NULL, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
 			break;
+		}
+			//if( g_pActiveAchievements->NumAchievements() == 0 )
+			//	MessageBox( NULL, "No ROM loaded!", "Error", MB_OK );
+			//else
+			//	MessageBox( NULL, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
+			//break;
 
 		case IDM_RA_OPENUSERPAGE:
+			if( RAUsers::LocalUser.IsLoggedIn() )
 			{
-				if( RAUsers::LocalUser.IsLoggedIn() )
-				{
-					ShellExecute( NULL,
-						"open",
-						( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser.Username() ).c_str(),
-						NULL,
-						NULL,
-						SW_SHOWNORMAL );
-				}
+				ShellExecute( NULL,
+					"open",
+					( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser.Username() ).c_str(),
+					NULL,
+					NULL,
+					SW_SHOWNORMAL );
 			}
 			break;
 
 		case IDM_RA_OPENGAMEPAGE:
+			if( g_pActiveAchievements->GetGameID() != 0 )
 			{
-				if( g_pActiveAchievements->GetGameID() != 0 )
-				{
-					ShellExecute( NULL,
-						"open",
-						( RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() ) ).c_str(),
-						NULL,
-						NULL,
-						SW_SHOWNORMAL );
-				}
-				else
-				{
-					MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
-				}
+				ShellExecute( NULL,
+					"open",
+					( RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() ) ).c_str(),
+					NULL,
+					NULL,
+					SW_SHOWNORMAL );
+			}
+			else
+			{
+				MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
 			}
 			break;
 
 		case IDM_RA_SCANFORGAMES:
+			if( g_sROMDirLocation.length() == 0 )
+				g_sROMDirLocation = GetFolderURLFromDialog();
+
+			if( g_sROMDirLocation.length() > 0 )
 			{
-				if( g_sROMDirLocation[0] == '\0' )
+				if( g_GameLibrary.GetHWND() == NULL )
 				{
-					BROWSEINFO bi = { 0 };
-					bi.lpszTitle = "Select your ROM directory";
-					LPITEMIDLIST pidl = SHBrowseForFolder( &bi );
-					if( pidl != 0 )
-					{
-						// get the name of the folder
-						char buffer[4096];
-						if( SHGetPathFromIDList( pidl, buffer ) )
-						{
-							g_sROMDirLocation = buffer;
-							RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation );
-						}
-
-						CoTaskMemFree( pidl );
-					}
-				}
-
-				if( g_sROMDirLocation[0] != '\0' )
-				{
-					if( g_GameLibrary.GetHWND() == NULL )
-					{
-						_FetchGameHashLibraryFromWeb();
-						_FetchGameTitlesFromWeb();
-						_FetchMyProgressFromWeb();
+					_FetchGameHashLibraryFromWeb();		//	##BLOCKING##
+					_FetchGameTitlesFromWeb();			//	##BLOCKING##
+					_FetchMyProgressFromWeb();			//	##BLOCKING##
 							
-						g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
-					}
-
-					if( g_GameLibrary.GetHWND() != NULL )
-					{
-						ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
-					}
-
-					//Dlg_GameLibrary::DoModalDialog( g_hThisDLLInst, g_RAMainWnd );
+					g_GameLibrary.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE( IDD_RA_GAMELIBRARY ), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc ) );
 				}
 
+				if( g_GameLibrary.GetHWND() != NULL )
+					ShowWindow( g_GameLibrary.GetHWND(), SW_SHOW );
 			}
 			break;
 
 		case IDM_RA_PARSERICHPRESENCE:
+			if( g_pActiveAchievements->GetGameID() != 0 )
 			{
-				if( g_pActiveAchievements->GetGameID() != 0 )
-				{
-					char sRichPresenceFile[1024];
-					sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GetGameID() );
+				char sRichPresenceFile[1024];
+				sprintf_s( sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pActiveAchievements->GetGameID() );
 
-					//	Then install it
-					g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
+				//	Then install it
+				g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
 
-					//	Then fetch immediately
-					std::string sRP = g_RichPresenceInterpretter.GetRichPresenceString();
+				//	Then fetch immediately
+				std::string sRP = g_RichPresenceInterpretter.GetRichPresenceString();
 
-					MessageBox( NULL, sRP.c_str(), "Rich Presence script result", MB_OK );
-				}
-				else
-				{
-					MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
-				}
+				MessageBox( NULL, sRP.c_str(), "Rich Presence script result", MB_OK );
+			}
+			else
+			{
+				MessageBox( NULL, "No ROM loaded!", "Error!", MB_ICONWARNING );
 			}
 			break;
 
 		case IDM_RA_TOGGLELEADERBOARDS:
-			if( g_bLeaderboardsActive )
-			{
-				g_bLeaderboardsActive = false;
-				MessageBox( NULL, "Leaderboards are now disabled", "Warning", MB_OK );
-			}
-			else
-			{
-				g_bLeaderboardsActive = true;
-				MessageBox( NULL, "Leaderboards are now enabled", "Warning", MB_OK );
-			}
+			g_bLeaderboardsActive = !g_bLeaderboardsActive;
+			MessageBox( NULL, std::string( std::string( "Leaderboards are now " ) + ( g_bLeaderboardsActive ? "disabled" : "enabled" ) ).c_str(), "Warning", MB_OK );
 			break;
 
 		default:
@@ -1276,9 +1157,9 @@ API const char* CCONV _RA_Username()
 	return RAUsers::LocalUser.Username().c_str();
 }
 
-API void CCONV _RA_AttemptLogin()
+API void CCONV _RA_AttemptLogin( bool bBlocking )
 {
-	RAUsers::LocalUser.AttemptLogin();
+	RAUsers::LocalUser.AttemptLogin( bBlocking );
 }
 
 API void CCONV _RA_OnSaveState( const char* sFilename )
@@ -1338,6 +1219,11 @@ void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnp
 	_RA_GetEstimatedGameTitle	= fpEstimateTitle;
 	_RA_ResetEmulation			= fpResetEmulation;
 	_RA_LoadROM					= fpLoadROM;
+}
+
+API bool _RA_UserLoggedIn()
+{
+	return( RAUsers::LocalUser.IsLoggedIn() == TRUE );
 }
 
 
@@ -1514,4 +1400,46 @@ BOOL _FileExists( const std::string& sFileName )
 	{
 		return FALSE;
 	}
+}
+
+std::string WideStrToStr( const std::wstring& wstr )
+{
+    std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
+    return converter.to_bytes( wstr );
+}
+
+std::wstring StrToWideStr( const std::string& str )
+{
+    std::wstring_convert< std::codecvt_utf8< wchar_t > , wchar_t > converter;
+    return converter.from_bytes( str );
+}
+
+std::string GetFolderURLFromDialog()
+{
+	std::string sRetVal;
+	//HRESULT hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
+	IFileOpenDialog* pDlg = nullptr;
+	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
+	if( hr == S_OK )
+	{
+		pDlg->SetOptions( FOS_PICKFOLDERS );
+		hr = pDlg->Show( nullptr );
+		if( hr == S_OK )
+		{
+			IShellItem* pItem = nullptr;
+			hr = pDlg->GetResult( &pItem );
+			if( hr == S_OK )
+			{
+				LPWSTR pStr;
+				hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
+				if( hr == S_OK )
+					sRetVal = WideStrToStr( pStr );
+
+				pItem->Release();
+			}
+		}
+		pDlg->Release();
+	}
+	//CoUninitialize();
+	return sRetVal;
 }

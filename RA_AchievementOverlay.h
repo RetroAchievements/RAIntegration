@@ -10,8 +10,7 @@
 
 enum OverlayPage
 {
-	OP__START = 0,
-	OP_ACHIEVEMENTS = OP__START,
+	OP_ACHIEVEMENTS,
 	OP_FRIENDS,
 	OP_MESSAGES,
 	OP_NEWS,
@@ -24,7 +23,7 @@ enum OverlayPage
 	OP_LEADERBOARD_EXAMINE,
 	OP_MESSAGE_VIEWER,
 
-	OP__MAX
+	NumOverlayPages
 };
 
 enum TransitionState
@@ -118,13 +117,13 @@ public:
 	void Render( HDC hDC, RECT* rcDest ) const;
 	BOOL Update( ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused );
 
-	BOOL IsActive();
+	BOOL IsActive() const	{ return( m_nTransitionState!=TS_OFF ); }
 
 	const int* GetActiveScrollOffset() const;
 	const int* GetActiveSelectedItem() const;
 
 	void OnLoad_NewRom();
-	void OnHTTP_UserPic( const char* sUsername );
+	void OnUserPicDownloaded( const char* sUsername );
 
 	void DrawAchievementsPage( HDC hDC, int nDX, int nDY, const RECT& rcTarget ) const;
 	void DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, const RECT& rcTarget ) const;
@@ -134,15 +133,12 @@ public:
 	void DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const RECT& rcTarget ) const;
 	void DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, const RECT& rcTarget ) const;
 
-
-
-
 	void DrawBar( HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel ) const;
 	void DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH ) const;
 	void DrawAchievement( HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock ) const;
 
-	enum OverlayPage CurrentPage();
-	void AddPage( enum OverlayPage NewPage );
+	OverlayPage CurrentPage()		{ return m_Pages[ m_nPageStackPointer ]; }
+	void AddPage( OverlayPage NewPage );
 	BOOL GoBack();
 
 	void SelectNextTopLevelPage( BOOL bPressedRight );
@@ -184,15 +180,13 @@ private:
 	mutable int m_nNumFriendsBeingRendered;
 	mutable int m_nNumLeaderboardsBeingRendered;
 
-	BOOL				 m_bInputLock;	//	Waiting for pad release
+	BOOL					m_bInputLock;	//	Waiting for pad release
+	std::vector<NewsItem>	m_LatestNews;
+	TransitionState			m_nTransitionState;
+	float					m_fTransitionTimer;
 
-	std::vector<NewsItem> m_LatestNews;
-
-	enum TransitionState m_nTransitionState;
-	float				 m_fTransitionTimer;
-
-	enum OverlayPage	 m_Pages[5];
-	unsigned int		 m_nPageStackPointer;
+	OverlayPage				m_Pages[ 5 ];
+	unsigned int			m_nPageStackPointer;
 
 	//HBITMAP m_hLockedBitmap;	//	Cached	
 	HBITMAP m_hOverlayBackground;

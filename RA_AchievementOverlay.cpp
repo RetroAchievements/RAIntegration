@@ -1,52 +1,42 @@
-#if defined (RA_VBA)
-#include "stdafx.h"
-#endif
-
 #include "RA_AchievementOverlay.h"
-
-#include <windows.h>
-#include <windowsx.h>
-#include <stdio.h>
-#include <time.h>
 
 #include "RA_Interface.h"
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_User.h"
 #include "RA_httpthread.h"
-#include "RA_resource.h"
+#include "RA_Resource.h"
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
 #include "RA_Core.h"
 #include "RA_Leaderboard.h"
 
-//	No emulator-specific code here please!
+#include <time.h>
 
-#define SCROLL_TIMER_START  (1.0f)
-#define SCROLL_TIMER_REPEAT (0.4f)
+namespace
+{
+	const float PAGE_TRANSITION_IN = (-0.2f);
+	const float PAGE_TRANSITION_OUT = ( 0.2f);
+	const int NUM_MESSAGES_TO_DRAW = 4;
+	const LPCSTR FONT_TO_USE = TEXT( "Tahoma" );
 
-#define PAGE_TRANSITION_IN  (-0.2f)
-#define PAGE_TRANSITION_OUT ( 0.2f)
+	const char* PAGE_TITLES[] = { 
+		" Achievements ", 
+		" Friends ", 
+		" Messages ",
+		" News ", 
+		" Leaderboards ",
+		" Achievement Info ", 
+		" Achievement Compare ",
+		" Friend Info ",
+		" Friend Add ",
+		" Leaderboard Examine ", 
+		" Message Viewer "
 
+		};
+	static_assert( SIZEOF_ARRAY( PAGE_TITLES ) == NumOverlayPages, "Must match!" );
 
-#define NUM_MESSAGES_TO_DRAW (4)
-
-#define FONT_TO_USE "Tahoma"
-
-const char* g_sPageTitles[] = { 
-	" Achievements ", 
-	" Friends ", 
-	" Messages ",
-	" News ", 
-	" Leaderboards ", 
-
-	" Achievement Info ", 
-	" Achievement Compare ",
-	" Friend Info ",
-	" Friend Add ",
-	" Leaderboard Examine ", 
-	" Message Viewer "
-
-	};	//	NB. Update enum OverlayPage in header!
+}
 
 
 HFONT g_hFontTitle;
@@ -558,7 +548,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 	}
 
 	SelectObject( hDC, g_hFontDesc );
-	if( g_nActiveAchievementSet == AchievementSetCore )
+	if( g_nActiveAchievementSet == Core )
 	{
 		for( i = 0; i < nNumAchievements; ++i )
 		{
@@ -1189,16 +1179,16 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	
 	
 	g_hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT(FONT_TO_USE) );
+		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE );
 
 	g_hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, 
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT(FONT_TO_USE) );
+		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE );
 
 	g_hFontDesc2 = CreateFont( nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT(FONT_TO_USE) );
+		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE );
 
 	g_hFontTiny = CreateFont( nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT(FONT_TO_USE) );
+		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE );
 
 	float fPctOffScreen = ( m_nTransitionState == TS_IN ) ?
 							( m_fTransitionTimer / PAGE_TRANSITION_IN ) : 
@@ -1244,47 +1234,40 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 
 
 	//	Draw the bulk of the page:
-	const OverlayPage currentPage = m_Pages[m_nPageStackPointer];
-	switch( currentPage )
+	const OverlayPage nCurrentPage = m_Pages[ m_nPageStackPointer ];
+	switch( nCurrentPage )
 	{
 	case OP_ACHIEVEMENTS:
-		{
-			DrawAchievementsPage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawAchievementsPage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_MESSAGES:
-		{
-			DrawMessagesPage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawMessagesPage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_FRIENDS:
-		{
-			DrawFriendsPage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawFriendsPage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_ACHIEVEMENT_EXAMINE:
-		{
-			DrawAchievementExaminePage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawAchievementExaminePage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_NEWS:
-		{
-			DrawNewsPage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawNewsPage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_LEADERBOARDS:
-		{
-			DrawLeaderboardPage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawLeaderboardPage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	case OP_LEADERBOARD_EXAMINE:
-		{
-			DrawLeaderboardExaminePage( hDC, nDX, nDY, rcTarget );
-		}
+		DrawLeaderboardExaminePage( hDC, nDX, nDY, rcTarget );
 		break;
+
 	default:
 		//	Not implemented!
-		assert(!"Attempting to render an undefined overlay page!" );
+		ASSERT( !"Attempting to render an undefined overlay page!" );
 		break;
 	}
 
@@ -1294,7 +1277,8 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	//	Title:
 	SelectObject( hDC, g_hFontTitle );
 	SetTextColor( hDC, g_ColText );
-	sprintf_s( buffer, 1024, g_sPageTitles[ (int)currentPage ], (*pnScrollOffset)+1 );
+	sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ] );
+	//sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ], (*pnScrollOffset)+1 );
 	TextOut( hDC, 
 		nDX+nBorder, 
 		4+nBorder, 
@@ -1342,12 +1326,12 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 		TextOut( hDC, nRightPx-nControlsX2, nControlsY2, buffer, strlen( buffer ) );
 	}
 
-	DeleteObject(g_hBrushBG);
-	DeleteObject(g_hBrushSelectedBG);
-	DeleteObject(g_hFontTitle);
-	DeleteObject(g_hFontDesc);
-	DeleteObject(g_hFontDesc2);
-	DeleteObject(g_hFontTiny);
+	DeleteObject( g_hBrushBG );
+	DeleteObject( g_hBrushSelectedBG );
+	DeleteObject( g_hFontTitle );
+	DeleteObject( g_hFontDesc );
+	DeleteObject( g_hFontDesc2 );
+	DeleteObject( g_hFontTiny );
 	
 	SetBkColor( hDC, nPrevBkColor );
 	SetTextColor( hDC, nPrevTextColor );
@@ -1356,9 +1340,8 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 
 void AchievementOverlay::DrawBar( HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel ) const
 {
-	HBRUSH hBarBack = (HBRUSH)GetStockObject( DKGRAY_BRUSH );
-	HBRUSH hBarFront = (HBRUSH)GetStockObject( LTGRAY_BRUSH );
-	RECT rc;
+	HBRUSH hBarBack = static_cast<HBRUSH>( GetStockObject( DKGRAY_BRUSH ) );
+	HBRUSH hBarFront = static_cast<HBRUSH>( GetStockObject( LTGRAY_BRUSH ) );
 	float fNumMax = (float)( nMax );
 	const float fInnerBarMaxSizePx = (float)nH - 4.0f;
 
@@ -1370,7 +1353,8 @@ void AchievementOverlay::DrawBar( HDC hDC, int nX, int nY, int nW, int nH, int n
 	//	Draw bar:
 	SetBkColor( hDC, g_ColBarBG );
 	SetTextColor( hDC, g_ColBarFG );
-
+	
+	RECT rc;
 	SetRect( &rc, nX, nY, nX+nW, nY+nH );
 	if( FillRect( hDC, &rc, hBarBack ) )
 	{
@@ -1398,7 +1382,7 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 
 	if( bCanLock )
 	{
-		if( g_nActiveAchievementSet == AchievementSetCore )
+		if( g_nActiveAchievementSet == Core )
 			bLocked = pAch->Active();
 	}
 
@@ -1485,7 +1469,7 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 
 const int* AchievementOverlay::GetActiveScrollOffset() const
 {	
-	switch( m_Pages[m_nPageStackPointer] )
+	switch( m_Pages[ m_nPageStackPointer ] )
 	{
 	case OP_ACHIEVEMENTS:
 		return &m_nAchievementsScrollOffset;
@@ -1497,18 +1481,20 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
 		return &m_nNewsScrollOffset;
 	case OP_LEADERBOARDS:
 		return &m_nLeaderboardScrollOffset;
+
 	case OP_LEADERBOARD_EXAMINE:
 	case OP_ACHIEVEMENT_EXAMINE:
 		return 0;
+
 	default:
-		assert(0);
+		ASSERT( !"Unknown page" );
 		return &m_nAchievementsScrollOffset;
 	}
 }
 
 const int* AchievementOverlay::GetActiveSelectedItem() const
 {
-	switch( m_Pages[m_nPageStackPointer] )
+	switch( m_Pages[ m_nPageStackPointer ] )
 	{
 	case OP_ACHIEVEMENTS:
 		return &m_nAchievementsSelectedItem;	//	?
@@ -1520,11 +1506,13 @@ const int* AchievementOverlay::GetActiveSelectedItem() const
 		return &m_nNewsSelectedItem;
 	case OP_LEADERBOARDS:
 		return &m_nLeaderboardSelectedItem;
+
 	case OP_ACHIEVEMENT_EXAMINE:
 	case OP_LEADERBOARD_EXAMINE:
 		return 0;
+
 	default:
-		assert(0);
+		ASSERT( !"Unknown page" );
 		return &m_nAchievementsSelectedItem;
 	}
 }
@@ -1536,19 +1524,9 @@ void AchievementOverlay::OnLoad_NewRom()
 		Deactivate();
 }
 
-void AchievementOverlay::OnHTTP_UserPic( const char* sUsername )
+void AchievementOverlay::OnUserPicDownloaded( const char* sUsername )
 {
- 	
-}
-
-BOOL AchievementOverlay::IsActive()	
-{ 
-	return m_nTransitionState!=TS_OFF;
-}
-
-enum OverlayPage AchievementOverlay::CurrentPage()	
-{ 
-	return m_Pages[m_nPageStackPointer];
+	RA_LOG( "Overlay detected Userpic downloaded (%s)", sUsername );		//##SD unhandled?
 }
 
 void AchievementOverlay::InitDirectX()
@@ -1713,7 +1691,10 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 		m_LastModifiedDate = _TimeStampToString( pAch->ModifiedDate() );
 
 		PostArgs args;
-		args['a'] = std::to_string( m_pSelectedAchievement->ID() );
+		args[ 'u' ] = RAUsers::LocalUser.Username();
+		args[ 't' ] = RAUsers::LocalUser.Token();
+		args[ 'a' ] = std::to_string( m_pSelectedAchievement->ID() );
+		args[ 'f' ] = true;	//	Friends only?
 		RAWeb::CreateThreadedHTTPRequest( RequestAchievementInfo, args );
 	}
 }
@@ -1725,7 +1706,7 @@ void AchievementExamine::OnReceiveData( Document& doc )
 	const unsigned int nCount = doc["Count"].GetUint();
 	const unsigned int nFriendsOnly = doc["FriendsOnly"].GetUint();
 	const unsigned int nAchievementID = doc["AchievementID"].GetUint();
-	const Value& ResponseData = doc["Response"];
+	const Value& ResponseData = doc["RecentWinner"];
 	
 	const unsigned int nEarnedBy = ResponseData["NumEarned"].GetUint();
 	const unsigned int nTotalPlayers = ResponseData["TotalPlayers"].GetUint();

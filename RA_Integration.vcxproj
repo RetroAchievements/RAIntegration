@@ -132,6 +132,7 @@
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementPopup.cpp" />
+    <ClCompile Include="RA_AchievementSet.cpp" />
     <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />
@@ -143,6 +144,7 @@
     <ClCompile Include="RA_Dlg_GameTitle.cpp" />
     <ClCompile Include="RA_Dlg_Login.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
+    <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
@@ -160,6 +162,7 @@
     <ClInclude Include="RA_Achievement.h" />
     <ClInclude Include="RA_AchievementOverlay.h" />
     <ClInclude Include="RA_AchievementPopup.h" />
+    <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_CodeNotes.h" />
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />
@@ -171,6 +174,7 @@
     <ClInclude Include="RA_Dlg_GameTitle.h" />
     <ClInclude Include="RA_Dlg_Login.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
+    <ClInclude Include="RA_Dlg_RomChecksum.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Leaderboard.h" />

@@ -16,19 +16,15 @@ class BadgeNames
 {
 public:
 	BadgeNames()
-	{
-		m_hDestComboBox = NULL;
-	}
-
+	 :	m_hDestComboBox( nullptr ) {}
 	void InstallAchEditorCombo( HWND hCombo )	{ m_hDestComboBox = hCombo; }
-
-	//cb
-	static void CB_OnNewBadgeNames( void* pObj );
+	
 	void FetchNewBadgeNamesThreaded();
 	void AddNewBadgeName( const char* pStr, BOOL bAndSelect );
+	void OnNewBadgeNames( const Document& data );
 
 private:
-	static HWND m_hDestComboBox;
+	HWND m_hDestComboBox;
 };
 
 

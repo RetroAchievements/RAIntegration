@@ -1,14 +1,15 @@
 #include "RA_Dlg_GameTitle.h"
 
-#include <windowsx.h>
-#include <stdio.h>
-#include <sstream>
+//#include <windowsx.h>
+//#include <stdio.h>
+//#include <sstream>
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
 
 
@@ -126,19 +127,14 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 					const std::string& sGameTitle = Response["GameTitle"].GetString();
 
 					//	If we're setting the game title here...
-					CoreAchievements->SetGameTitle( sGameTitle );
-					UnofficialAchievements->SetGameTitle( sGameTitle );
-					LocalAchievements->SetGameTitle( sGameTitle );
- 
-					//	Surely we could set the game ID here too?
-					CoreAchievements->SetGameID( nGameID );
-					UnofficialAchievements->SetGameID( nGameID );
-					LocalAchievements->SetGameID( nGameID );
+					//	 surely we could set the game ID here too?
+					AchievementSet::SetGameTitle( sGameTitle );
+					AchievementSet::SetGameID( nGameID );
 
 					g_GameTitleDialog.m_nReturnedGameID = nGameID;
 
  					//	Close this dialog
- 					EndDialog( hDlg, TRUE );
+ 					EndDialog( hDlg, 1 );
  					return TRUE;
  				}
  				else
@@ -147,7 +143,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 					{
 						//Error given
 						MessageBox( hDlg,
-							( std::string( "Could not add new title: " ) + std::string( doc["Error"].GetString() ) ).c_str(),
+							( std::string( "Could not add new title: " ) + std::string( doc[ "Error" ].GetString() ) ).c_str(),
 							"Errors encountered",
 							MB_OK );
 					}

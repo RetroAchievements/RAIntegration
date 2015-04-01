@@ -57,8 +57,6 @@ private:
 	size_t AddAchievement( HWND hList, const Achievement& Ach );
 
 private:
-	static const int m_nNumCols = 5;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
-
 	HWND m_hAchievementsDlg;
 	typedef std::vector< std::string > AchievementDlgRow;
 	std::vector< AchievementDlgRow > m_lbxData;

@@ -32,13 +32,16 @@ void MemManager::AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByt
 {
 	if( m_Banks.find( nBankID ) != m_Banks.end() )
 	{
-		ASSERT( !"Failed! Bank already added!" );
+		ASSERT( !"Failed! Bank already added! Did you remove the existing bank?" );
+		return;
 	}
 	
-	m_Banks[ nBankID ] = BankData( pReader, pWriter, nBankSize );
+	m_Banks[ nBankID ].BankSize = nBankSize;
+	m_Banks[ nBankID ].Reader = pReader;
+	m_Banks[ nBankID ].Writer = pWriter;
 }
 
-void MemManager::Reset( unsigned short nSelectedMemBank )
+void MemManager::Reset( unsigned short nSelectedMemBank, ComparisonVariableSize nNewVarSize )
 {
 	//	RAM must be installed for this to work!
 	if( m_Banks.size() == 0 )
@@ -48,25 +51,30 @@ void MemManager::Reset( unsigned short nSelectedMemBank )
 		return;
 
 	m_nActiveMemBank = nSelectedMemBank;
-
+	m_nComparisonSizeMode = nNewVarSize;
+	
 	const size_t RAM_SIZE = m_Banks[ m_nActiveMemBank ].BankSize;
+	
+	if( m_Candidates == nullptr )
+		m_Candidates = new MemCandidate[ RAM_SIZE*2 ];	//	To allow for upper and lower nibbles
 
 	//	Initialize the memory cache: i.e. every memory address is valid!
-	if( ( m_nComparisonSizeMode == ComparisonVariableSize::Nibble_Lower ) || ( m_nComparisonSizeMode == ComparisonVariableSize::Nibble_Upper ) )
+	if( ( m_nComparisonSizeMode == Nibble_Lower ) ||
+		( m_nComparisonSizeMode == Nibble_Upper ) )
 	{
 		for( size_t i = 0; i < RAM_SIZE; ++i )
 		{
 			m_Candidates[ ( i * 2 ) ].m_nAddr = i;
 			m_Candidates[ ( i * 2 ) ].m_bUpperNibble = false;			//lower first?
-			m_Candidates[ ( i * 2 ) ].m_nLastKnownValue = ( RAMByte( m_nActiveMemBank, i ) & 0xf );
+			m_Candidates[ ( i * 2 ) ].m_nLastKnownValue = static_cast<unsigned int>( RAMByte( m_nActiveMemBank, i ) & 0xf );
 
 			m_Candidates[ ( i * 2 ) + 1 ].m_nAddr = i;
 			m_Candidates[ ( i * 2 ) + 1 ].m_bUpperNibble = true;
-			m_Candidates[ ( i * 2 ) + 1 ].m_nLastKnownValue = ( ( RAMByte( m_nActiveMemBank, i ) >> 4 ) & 0xf );
+			m_Candidates[ ( i * 2 ) + 1 ].m_nLastKnownValue = static_cast<unsigned int>( ( RAMByte( m_nActiveMemBank, i ) >> 4 ) & 0xf );
 		}
 		m_nNumCandidates = RAM_SIZE * 2;
 	}
-	else if( m_nComparisonSizeMode == ComparisonVariableSize::EightBit )
+	else if( m_nComparisonSizeMode == EightBit )
 	{
 		for( DWORD i = 0; i < RAM_SIZE; ++i )
 		{
@@ -75,63 +83,59 @@ void MemManager::Reset( unsigned short nSelectedMemBank )
 		}
 		m_nNumCandidates = RAM_SIZE;
 	}
-	else if( m_nComparisonSizeMode == ComparisonVariableSize::SixteenBit )
+	else if( m_nComparisonSizeMode == SixteenBit )
 	{
 		for( DWORD i = 0; i < ( RAM_SIZE / 2 ); ++i )
 		{
-			m_Candidates[ i ].m_nAddr = i*2;
-			m_Candidates[ i ].m_nLastKnownValue = ( RAMByte( m_nActiveMemBank, i * 2 ) ) | ( RAMByte( m_nActiveMemBank, ( ( i * 2 ) + 1 ) << 8 ) );
+			m_Candidates[ i ].m_nAddr = ( i * 2 );
+			m_Candidates[ i ].m_nLastKnownValue = 
+				( RAMByte( m_nActiveMemBank, ( i * 2 ) ) ) | 
+				( RAMByte( m_nActiveMemBank, ( i * 2 ) + 1 ) << 8 );
 		}
 		m_nNumCandidates = RAM_SIZE / 2;
 	}
-// 	else if( m_nComparisonSizeMode == CMP_SZ_32BIT )
-// 	{
-// 		//	Assuming 32-bit-aligned!
-// 
-// 		for( unsigned int i = 0; i < (MemorySize/4); ++i )
-// 		{
-// 			m_Candidates[ i ].m_nAddr = (unsigned short)i*4;
-// 			m_Candidates[ i ].m_nLastKnownValue = (Ram_68k[i] | (Ram_68k[i+1] << 8) | (Ram_68k[i+2] << 16) | (Ram_68k[i+3] << 24));
-// 		}
-// 		m_nNumCandidates = MemorySize/4;
-// 	}
+ 	else if( m_nComparisonSizeMode == ThirtyTwoBit )
+ 	{
+ 		//	Assuming 32-bit-aligned! 		
+		for( DWORD i = 0; i < ( RAM_SIZE / 4 ); ++i )
+ 		{
+			m_Candidates[ i ].m_nAddr = ( i * 4 );
+			m_Candidates[ i ].m_nLastKnownValue =
+				( RAMByte( m_nActiveMemBank, ( i * 4 ) ) ) |
+				( RAMByte( m_nActiveMemBank, ( i * 4 ) + 1 ) << 8 ) |
+				( RAMByte( m_nActiveMemBank, ( i * 4 ) + 2 ) << 16 ) |
+				( RAMByte( m_nActiveMemBank, ( i * 4 ) + 3 ) << 24 );
+ 		}
+		m_nNumCandidates = RAM_SIZE / 4;
+ 	}
 }
 
 size_t MemManager::Compare( ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound )
 {
 	size_t nGoodResults = 0;
-	MemCandidate* pResults = new MemCandidate[ m_nNumCandidates ];
-	if( pResults == NULL )
-	{
-		char buffer[ 1024 ];
-		sprintf_s( buffer, 1024, "Could not allocate %d KB for comparison in RA MemManager!", ( m_nNumCandidates ) / 1024 );
-		MessageBox( NULL, buffer, "Error in allocation!", MB_OK );
-		return 0;
-	}
-	
 	for( size_t i = 0; i < m_nNumCandidates; ++i )
 	{
 		unsigned int nAddr = m_Candidates[ i ].m_nAddr;
 		unsigned int nLiveValue = 0;
 
-		if( ( m_nComparisonSizeMode == ComparisonVariableSize::Nibble_Lower ) || 
-			( m_nComparisonSizeMode == ComparisonVariableSize::Nibble_Upper ) )
+		if( ( m_nComparisonSizeMode == Nibble_Lower ) || 
+			( m_nComparisonSizeMode == Nibble_Upper ) )
 		{
 			if( m_Candidates[ i ].m_bUpperNibble )
 				nLiveValue = ( RAMByte( m_nActiveMemBank, nAddr ) >> 4 ) & 0xf;
 			else
 				nLiveValue = RAMByte( m_nActiveMemBank, nAddr ) & 0xf;
 		}
-		else if( m_nComparisonSizeMode == ComparisonVariableSize::EightBit )
+		else if( m_nComparisonSizeMode == EightBit )
 		{
 			nLiveValue = RAMByte( m_nActiveMemBank, nAddr );
 		}
-		else if( m_nComparisonSizeMode == ComparisonVariableSize::SixteenBit )
+		else if( m_nComparisonSizeMode == SixteenBit )
 		{
 			nLiveValue = RAMByte( m_nActiveMemBank, nAddr );
 			nLiveValue |= ( RAMByte( m_nActiveMemBank, nAddr + 1 ) << 8 );
 		}
- 		else if( m_nComparisonSizeMode == ComparisonVariableSize::ThirtyTwoBit )
+ 		else if( m_nComparisonSizeMode == ThirtyTwoBit )
  		{
 			nLiveValue = RAMByte( m_nActiveMemBank, nAddr );
 			nLiveValue |= ( RAMByte( m_nActiveMemBank, nAddr + 1 ) << 8 );
@@ -157,68 +161,32 @@ size_t MemManager::Compare( ComparisonType nCompareType, unsigned int nTestValue
 		//	If the current address in ram still matches the query, store in result[]
 		if( bValid )
 		{
-			pResults[ nGoodResults ].m_nLastKnownValue = nLiveValue;
-			pResults[ nGoodResults ].m_nAddr = m_Candidates[ i ].m_nAddr;
-			pResults[ nGoodResults ].m_bUpperNibble = m_Candidates[ i ].m_bUpperNibble;
+			//	Optimisation: just store it back in m_Candidates
+			m_Candidates[ nGoodResults ].m_nLastKnownValue = nLiveValue;
+			m_Candidates[ nGoodResults ].m_nAddr = m_Candidates[ i ].m_nAddr;
+			m_Candidates[ nGoodResults ].m_bUpperNibble = m_Candidates[ i ].m_bUpperNibble;
 			nGoodResults++;
 		}
 	}
 	
+	//	If we have any results, this is good :)
 	bResultsFound = ( nGoodResults > 0 );
 	if( bResultsFound )
-	{
 		m_nNumCandidates = nGoodResults;
-		for( size_t i = 0; i < m_nNumCandidates; ++i )
-		{
-			m_Candidates[ i ].m_nAddr = pResults[ i ].m_nAddr;
-			m_Candidates[ i ].m_nLastKnownValue = pResults[ i ].m_nLastKnownValue;
-			m_Candidates[ i ].m_bUpperNibble = pResults[ i ].m_bUpperNibble;
-		}
-	}
 
-	delete[] pResults;
 	return m_nNumCandidates;
 }
 
-//void MemManager::InstallRAM( unsigned char* pRAM, unsigned int nRAMBytes, unsigned char* pRAMExtra, unsigned int nRAMExtraBytes )
-//{
-//	if( g_ConsoleID == 4 || g_ConsoleID == 6 )
-//	{
-//		//	GB/GBC override
-// 		m_pfnRAMByteRead  = RAMByteGBC;
-// 		m_pfnRAMByteWrite = RAMByteGBCWrite;
-//	}
-//	else if( g_ConsoleID == 7 )
-//	{
-//		//	NES override
-//		m_pfnRAMByteRead  = RAMByteNES;
-//		m_pfnRAMByteWrite = RAMByteNESWrite;
-//	}
-//	else
-//	{
-//		m_pfnRAMByteRead  = RAMByteStandard;
-//		m_pfnRAMByteWrite = RAMByteStandardWrite;
-//	}
-//	
-//	m_pCoreRAM = pRAM;
-//	m_nCoreRAMSize = nRAMBytes;
-//
-//	m_pRAMExtra = pRAMExtra;
-//	m_nRAMExtraSize = nRAMExtraBytes;
-//
-//	if( m_Candidates != NULL )
-//	{
-//		delete[] m_Candidates;
-//		m_Candidates = NULL;
-//	}
-//
-//	m_Candidates = new MemCandidate[ RAMTotalSize()*2 ];	//	Doubled so we can inspect nibbles!
-//	if( m_Candidates == NULL )
-//	{
-//		char buffer[ 1024 ];
-//		sprintf_s( buffer, 1024, "Could not allocate %d KB for RA MemManager!", RAMTotalSize()/1024 );
-//		MessageBox( NULL, buffer, "Error in allocation!", MB_OK );
-//	}
-//
-//	Reset();
-//}
+void MemManager::ChangeActiveMemBank( unsigned short nMemBank )
+{
+	if( m_Banks.find( nMemBank ) == m_Banks.end() )
+	{
+		ASSERT( !"Cannot find memory bank!" );
+		return;
+	}
+	
+	if( m_Candidates != nullptr )
+		delete[] m_Candidates;
+
+	Reset( nMemBank, m_nComparisonSizeMode );
+}

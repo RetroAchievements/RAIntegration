@@ -7,6 +7,7 @@
 #include "RA_Dlg_Memory.h"
 #include "RA_User.h"
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 
 void CodeNotes::Clear()
 {
@@ -31,13 +32,16 @@ size_t CodeNotes::Load( const std::string& sFile )
 
 			for( SizeType i = 0; i < NoteArray.Size(); ++i )
 			{
-				const Value& NextNote = NoteArray[i]; 
+				const Value& NextNote = NoteArray[i];
+
+				if( NextNote[ "Note" ].IsNull() )
+					continue;
+
 				const std::string& sAddr = NextNote[ "Address" ].GetString();
 				ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr.c_str(), nullptr, 16 ) );
 				const std::string& sAuthor = NextNote[ "User" ].GetString();	//	Author?
-				const std::string& sNote = NextNote[ "Note" ].IsNull() ? "" : NextNote[ "Note" ].GetString();
+				const std::string& sNote = NextNote[ "Note" ].GetString();
 				
-				//m_CodeNotes[ nAddr ] = CodeNoteObj( sAuthor, sNote );
 				m_CodeNotes.insert( std::map<ByteAddress,CodeNoteObj>::value_type( nAddr, CodeNoteObj( sAuthor, sNote ) ) );
 			}
 		}

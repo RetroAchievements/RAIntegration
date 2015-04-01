@@ -692,13 +692,9 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 				DrawImage( hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64 );
 
 			if( (m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i )
-			{
 				SetTextColor( hDC, g_ColSelected );
-			}
 			else
-			{
 				SetTextColor( hDC, g_ColText );
-			}
 
 			HANDLE hOldObj = SelectObject( hDC, g_hFontDesc );
 
@@ -762,7 +758,7 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 	const int nRecentWinnersSubtitleY = 250;
 
 	const int nWonByPlayerNameX = 20;
-	const int nWonByPlayerDateX = 180;
+	const int nWonByPlayerDateX = 220;
 
 	char bufTime[256];
 
@@ -793,7 +789,10 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 
 	if( g_AchExamine.HasData() )
 	{
-		sprintf_s( buffer, 256, " Won by %d of %d ", g_AchExamine.TotalWinners(), g_AchExamine.PossibleWinners() );
+		sprintf_s( buffer, 256, " Won by %d of %d (%1.0f%%)", 
+				   g_AchExamine.TotalWinners(), 
+				   g_AchExamine.PossibleWinners(),
+				   static_cast<float>( g_AchExamine.TotalWinners() * 100 ) / static_cast<float>( g_AchExamine.PossibleWinners() ) );
 		TextOut( hDC, nDX+20, nCoreDetailsY+(nCoreDetailsSpacing*2), buffer, strlen( buffer ) );
 
 		if( g_AchExamine.NumRecentWinners() > 0 )
@@ -1706,11 +1705,12 @@ void AchievementExamine::OnReceiveData( Document& doc )
 	const unsigned int nCount = doc["Count"].GetUint();
 	const unsigned int nFriendsOnly = doc["FriendsOnly"].GetUint();
 	const unsigned int nAchievementID = doc["AchievementID"].GetUint();
-	const Value& ResponseData = doc["RecentWinner"];
+	const Value& ResponseData = doc["Response"];
 	
-	const unsigned int nEarnedBy = ResponseData["NumEarned"].GetUint();
-	const unsigned int nTotalPlayers = ResponseData["TotalPlayers"].GetUint();
 	const unsigned int nGameID = ResponseData["GameID"].GetUint();
+
+	m_nTotalWinners = ResponseData["NumEarned"].GetUint();
+	m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
 	const Value& RecentWinnerData = ResponseData["RecentWinner"];
 	ASSERT( RecentWinnerData.IsArray() );

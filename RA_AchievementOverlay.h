@@ -83,8 +83,8 @@ public:
 	size_t NumRecentWinners() const									{ return RecentWinners.size(); }
 	const RecentWinnerData& GetRecentWinner( size_t nOffs ) const	{ return RecentWinners.at( nOffs ); }
 	
-	int TotalWinners() const										{ return m_nTotalWinners; }
-	int PossibleWinners() const										{ return m_nPossibleWinners; }
+	unsigned int TotalWinners() const								{ return m_nTotalWinners; }
+	unsigned int PossibleWinners() const							{ return m_nPossibleWinners; }
 
 private:
 	const Achievement* m_pSelectedAchievement;
@@ -94,8 +94,8 @@ private:
 	BOOL m_bHasData;
 
 	//	Data found:
-	int	m_nTotalWinners;
-	int m_nPossibleWinners;
+	unsigned int m_nTotalWinners;
+	unsigned int m_nPossibleWinners;
 
 	std::vector<RecentWinnerData> RecentWinners;
 };

@@ -13,7 +13,7 @@ public:
 	RA_Lookup( const std::string& sDesc );
 	
 public:
-	void AddLookupData( DataPos nValue, const std::string& sLookupData );
+	void AddLookupData( DataPos nValue, const std::string& sLookupData )	{ m_lookupData[ nValue ] = sLookupData; }
 	const std::string& Lookup( DataPos nValue ) const;
 
 	const std::string& Description() const									{ return m_sLookupDescription; }

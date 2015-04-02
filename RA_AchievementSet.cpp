@@ -91,12 +91,13 @@ void AchievementSet::OnRequestUnlocks( const Document& doc )
 	for( SizeType i = 0; i < UserUnlocks.Size(); ++i )
 	{
 		AchievementID nNextAchID = static_cast<AchievementID>( UserUnlocks[ i ].GetUint() );
-		//	Attempt unlock in both, IDs could be present in either:
-		CoreAchievements->Unlock( nNextAchID );
-		UnofficialAchievements->Unlock( nNextAchID );
+		//	IDs could be present in either core or unofficial:
+		if( CoreAchievements->Find( nNextAchID ) != nullptr )
+			CoreAchievements->Unlock( nNextAchID );
+		else if( UnofficialAchievements->Find( nNextAchID ) != nullptr )
+			UnofficialAchievements->Unlock( nNextAchID );
 	}
 }
-
 
 Achievement& AchievementSet::AddAchievement()
 {
@@ -128,7 +129,7 @@ Achievement* AchievementSet::Find( AchievementID nAchievementID )
 		iter++;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 size_t AchievementSet::GetAchievementIndex( const Achievement& Ach )

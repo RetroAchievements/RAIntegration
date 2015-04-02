@@ -242,7 +242,7 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 		if( response.size() > 0 )
 		{
 			JSONResponseOut.Parse( DataStreamAsString( response ) );
-			LogJSON( JSONResponseOut );
+			//LogJSON( JSONResponseOut );	//	Already logged during DoBlockingRequest()?
 
 			return( !JSONResponseOut.HasParseError() );
 		}
@@ -488,21 +488,17 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	if( hSession != NULL )
 		WinHttpCloseHandle( hSession );
 
-#ifdef _DEBUG
+	//	Debug logging...
+	if( ResponseOut.size() > 0 )
 	{
-		if( ResponseOut.size() > 0 )
-		{
-			Document doc;
-			doc.Parse( DataStreamAsString( ResponseOut ) );
-			LogJSON( doc );
-		}
-		else
-		{
-			RA_LOG( "Empty JSON Response!" );
-		}
+		Document doc;
+		doc.Parse( DataStreamAsString( ResponseOut ) );
+		LogJSON( doc );
 	}
-
-#endif
+	else
+	{
+		RA_LOG( "Empty JSON Response!" );
+	}
 
 	return bSuccess;
 }

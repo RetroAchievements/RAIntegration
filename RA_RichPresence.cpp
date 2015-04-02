@@ -8,19 +8,12 @@ RA_Lookup::RA_Lookup( const std::string& sDesc )
 {
 }
 
-void RA_Lookup::AddLookupData( DataPos nValue, const std::string& sLookupData )
-{
-	m_lookupData[ nValue ] = sLookupData;
-}
-
 const std::string& RA_Lookup::Lookup( DataPos nValue ) const
 {
 	if( m_lookupData.find( nValue ) != m_lookupData.end() )
-	{
 		return m_lookupData.find( nValue )->second;
-	}
 
-	static std::string sUnknown = "Unknown";
+	static const std::string sUnknown = "Unknown";
 	return sUnknown;
 }
 
@@ -32,7 +25,7 @@ RA_Formattable::RA_Formattable( const std::string& sDesc, RA_Leaderboard::Format
 
 std::string RA_Formattable::Lookup( DataPos nValue ) const
 {
-	char buffer[1024];
+	char buffer[ 1024 ];
 	RA_Leaderboard::FormatScore( m_nFormatType, nValue, buffer, 1024 );
 	return buffer;
 }
@@ -203,7 +196,7 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 
 	for( size_t i = 0; i < m_sDisplay.size(); ++i )
 	{
-		const char& c = m_sDisplay.at( i );
+		char c = m_sDisplay.at( i );
 
 		if( bParsingLookupContent )
 		{

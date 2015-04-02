@@ -406,11 +406,11 @@ const char* CCONV _RA_InstallIntegration()
 
 	//	Install function pointers one by one
  
-	_RA_IntegrationVersion	= (const char*(CCONV *)(void))					GetProcAddress( g_hRADLL, "_RA_IntegrationVersion" );
+	_RA_IntegrationVersion	= (const char*(CCONV *)())						GetProcAddress( g_hRADLL, "_RA_IntegrationVersion" );
 	_RA_InitI				= (int(CCONV *)(HWND, int, const char*))		GetProcAddress( g_hRADLL, "_RA_InitI" );;
-	_RA_Shutdown			= (int(CCONV *)(void))							GetProcAddress( g_hRADLL, "_RA_Shutdown" );
-	_RA_UserLoggedIn		= (bool(CCONV *)(void))							GetProcAddress( g_hRADLL, "_RA_UserLoggedIn" );
-	_RA_Username			= (const char*(CCONV *)(void))					GetProcAddress( g_hRADLL, "_RA_Username" );
+	_RA_Shutdown			= (int(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_Shutdown" );
+	_RA_UserLoggedIn		= (bool(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_UserLoggedIn" );
+	_RA_Username			= (const char*(CCONV *)())						GetProcAddress( g_hRADLL, "_RA_Username" );
 	_RA_AttemptLogin		= (void(CCONV *)(bool))							GetProcAddress( g_hRADLL, "_RA_AttemptLogin" );
 	_RA_UpdateOverlay		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdateOverlay" );
 	_RA_UpdatePopups		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdatePopups" );
@@ -418,8 +418,8 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_RenderPopups		= (void(CCONV *)(HDC, RECT*))					GetProcAddress( g_hRADLL, "_RA_RenderPopups" );
 	_RA_OnLoadNewRom		= (int(CCONV *)(const BYTE*, unsigned int))		GetProcAddress( g_hRADLL, "_RA_OnLoadNewRom" );
 	_RA_InstallMemoryBank	= (void(CCONV *)(int, void*, void*, int))		GetProcAddress( g_hRADLL, "_RA_InstallMemoryBank" );
+	_RA_ClearMemoryBanks	= (void(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_ClearMemoryBanks" );
 	_RA_UpdateAppTitle		= (void(CCONV *)(const char*))					GetProcAddress( g_hRADLL, "_RA_UpdateAppTitle" );
-	
 	_RA_HandleHTTPResults	= (void(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_HandleHTTPResults" );
 	_RA_ConfirmLoadNewRom	= (int(CCONV *)(int))							GetProcAddress( g_hRADLL, "_RA_ConfirmLoadNewRom" );
 	_RA_CreatePopupMenu		= (HMENU(CCONV *)(void))						GetProcAddress( g_hRADLL, "_RA_CreatePopupMenu" );

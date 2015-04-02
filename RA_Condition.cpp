@@ -11,6 +11,7 @@ static_assert( SIZEOF_ARRAY( COMPARISONTYPE_STR ) == NUM_COMPARISON_TYPES, "Must
 
 ComparisonVariableSize PrefixToComparisonSize( char cPrefix )
 {
+	//	Careful not to use ABCDEF here, this denotes part of an actual variable!
 	switch( cPrefix )
 	{
 		case 'M':	return Bit_0;

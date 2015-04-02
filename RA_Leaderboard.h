@@ -7,7 +7,8 @@
 class MemValue
 {
 public:
-	MemValue()	{ m_nAddress = 0; m_fModifier = 1.0f; m_nVarSize = ComparisonVariableSize::EightBit; m_bBCDParse = false; m_bParseVal = false; }
+	MemValue()
+		: m_nAddress( 0 ), m_fModifier( 1.0f ), m_nVarSize( EightBit ), m_bBCDParse( false ), m_bParseVal( false ) {}
 	MemValue( unsigned int nAddr, double fMod, ComparisonVariableSize nSize, bool bBCDParse, bool bParseVal )
 		: m_nAddress( nAddr ), m_fModifier( fMod ), m_nVarSize( nSize ), m_bBCDParse( bBCDParse ), m_bParseVal( bParseVal ) {}
 	
@@ -117,14 +118,13 @@ public:
 	static void OnSubmitEntry( const Document& doc );
 
 public:
-	void AddLeaderboard( const RA_Leaderboard& lb );
-	void Test();
-	void Clear()					{ m_Leaderboards.clear(); }
-	size_t Count() const			{ return m_Leaderboards.size(); }
-
 	void Reset();
 
-	inline RA_Leaderboard& GetLB( unsigned int nOffs )	{ return m_Leaderboards[nOffs]; }
+	void AddLeaderboard( const RA_Leaderboard& lb );
+	void Test();
+	void Clear()								{ m_Leaderboards.clear(); }
+	size_t Count() const						{ return m_Leaderboards.size(); }
+	inline RA_Leaderboard& GetLB( size_t iter )	{ return m_Leaderboards[ iter ]; }
 
 	RA_Leaderboard* FindLB( unsigned int nID );
 

@@ -635,7 +635,6 @@ void RA_LeaderboardManager::OnSubmitEntry( const Document& doc )
 	}
 
 	g_PopupWindows.LeaderboardPopups().ShowScoreboard( pThisLB->ID() );
-
 */
 
 }

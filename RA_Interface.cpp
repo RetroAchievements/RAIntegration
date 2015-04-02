@@ -390,7 +390,7 @@ std::string GetLastErrorAsString()
 const char* CCONV _RA_InstallIntegration()
 {
 	SetErrorMode( 0 );
-
+	
 #ifndef NDEBUG
 	g_hRADLL = ::LoadLibraryEx( TEXT( "RA_Integration_d.dll" ), NULL, 0 ); //LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE
 #else

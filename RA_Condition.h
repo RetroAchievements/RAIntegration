@@ -13,8 +13,8 @@ enum ComparisonVariableSize
 	Bit_7,
 	Nibble_Lower,
 	Nibble_Upper,
-	Byte,
-	EightBit=Byte,  
+	//Byte,
+	EightBit,//=Byte,  
 	SixteenBit,
 	ThirtyTwoBit,
 

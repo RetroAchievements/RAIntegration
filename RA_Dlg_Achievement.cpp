@@ -94,13 +94,16 @@ LRESULT ProcessCustomDraw( LPARAM lParam )
 	case CDDS_ITEMPREPAINT: //Before an item is drawn
 		{
 			int nNextItem = (int)lplvcd->nmcd.dwItemSpec;
-			//if (((int)lplvcd->nmcd.dwItemSpec%2)==0)
-			BOOL bSelected = &g_pActiveAchievements->GetAchievement( nNextItem ) == g_AchievementEditorDialog.ActiveAchievement();
-			BOOL bModified = g_pActiveAchievements->GetAchievement( nNextItem ).Modified();
 
-			lplvcd->clrText   = bModified ? RGB(255,0,0) : RGB(0,0,0);
-			lplvcd->clrTextBk = bSelected ? RGB(222,222,222) : RGB(255,255,255);
+			if( nNextItem < g_pActiveAchievements->NumAchievements() )
+			{
+				//if (((int)lplvcd->nmcd.dwItemSpec%2)==0)
+				BOOL bSelected = &g_pActiveAchievements->GetAchievement( nNextItem ) == g_AchievementEditorDialog.ActiveAchievement();
+				BOOL bModified = g_pActiveAchievements->GetAchievement( nNextItem ).Modified();
 
+				lplvcd->clrText = bModified ? RGB( 255, 0, 0 ) : RGB( 0, 0, 0 );
+				lplvcd->clrTextBk = bSelected ? RGB( 222, 222, 222 ) : RGB( 255, 255, 255 );
+			}
 			return CDRF_NEWFONT;
 		}
 		break;

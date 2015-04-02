@@ -287,6 +287,9 @@ void MemoryViewerControl::editData( unsigned int nByteAddress, bool bLowerNibble
 
 bool MemoryViewerControl::OnEditInput( UINT c )
 {
+	if( g_MemManager.NumMemoryBanks() == 0 )
+		return false;
+
 	if( c > 255 || !RA_GameIsActive() )
 	{
 		MessageBeep((UINT)-1);
@@ -361,6 +364,9 @@ void MemoryViewerControl::destroyEditCaret()
 
 void MemoryViewerControl::SetCaretPos()
 {
+	if( g_MemManager.NumMemoryBanks() == 0 )
+		return;
+
 	HWND hOurDlg = GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER );
 	if(GetFocus() != hOurDlg)
 	{
@@ -424,6 +430,9 @@ void MemoryViewerControl::SetCaretPos()
 
 void MemoryViewerControl::OnClick( POINT point )
 {
+	if( g_MemManager.NumMemoryBanks() == 0 )
+		return;
+
 	HWND hOurDlg = GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER );
 
 	int x = point.x;
@@ -502,6 +511,9 @@ void MemoryViewerControl::OnClick( POINT point )
 
 void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 {
+	if( m_nActiveMemBank >= g_MemManager.NumMemoryBanks() )
+		return;
+
 	PAINTSTRUCT ps;
 	HDC dc = BeginPaint( hTarget, &ps );
 	HDC hMemDC = CreateCompatibleDC( dc );
@@ -764,7 +776,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, "" );
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS, "" );
 
-			if( g_MemManager.ActiveBankSize() == 0 )
+			if( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.ActiveBankSize() == 0 ) )
 				break;
 
 			bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
@@ -808,7 +820,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
  			GetWindowRect( g_RAMainWnd, &rc );
  			SetWindowPos( hDlg, NULL, rc.right, rc.top, NULL, NULL, SWP_NOSIZE|SWP_NOZORDER|SWP_SHOWWINDOW );
 
-			if( g_MemManager.UseLastKnownValue() )
+			if( g_MemManager.UseLastKnownValue() )	
 			{
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_GIVENVAL, BM_SETCHECK, (WPARAM)0, (LONG)0 );
 				SendDlgItemMessage( hDlg, IDC_RA_CBO_LASTKNOWNVAL, BM_SETCHECK, (WPARAM)1, (LONG)0 );

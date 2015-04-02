@@ -615,7 +615,6 @@ void RA_LeaderboardManager::OnSubmitEntry( const Document& doc )
 	pLB->SortRankInfo();
 	
 	const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-
 	const Value& RankData = Response["RankInfo"];
 
 	//	TBD!

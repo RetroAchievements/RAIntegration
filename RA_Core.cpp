@@ -243,10 +243,13 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage, args );	//	g_sGetLatestClientPage
 	
 	//	TBD:
-	args.clear();
-	args['u'] = RAUsers::LocalUser.Username();
-	args['t'] = RAUsers::LocalUser.Token();
-	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
+	//if( RAUsers::LocalUser.Username().length() > 0 )
+	//{
+	//	args.clear();
+	//	args[ 'u' ] = RAUsers::LocalUser.Username();
+	//	args[ 't' ] = RAUsers::LocalUser.Token();
+	//	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
+	//}
 	
 	return TRUE;
 }

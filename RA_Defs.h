@@ -18,7 +18,7 @@
 #ifndef RA_EXPORTS
 
 //NB. These must ONLY accessible from the emulator!
-#define RAGENS_VERSION			"0.051"
+//#define RAGENS_VERSION			"0.051"
 #define RASNES9X_VERSION		"0.016"
 #define RAVBA_VERSION			"0.019"
 #define RANES_VERSION			"0.009"

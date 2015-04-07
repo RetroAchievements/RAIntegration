@@ -95,7 +95,7 @@ LRESULT ProcessCustomDraw( LPARAM lParam )
 		{
 			int nNextItem = (int)lplvcd->nmcd.dwItemSpec;
 
-			if( nNextItem < g_pActiveAchievements->NumAchievements() )
+			if( static_cast<size_t>( nNextItem ) < g_pActiveAchievements->NumAchievements() )
 			{
 				//if (((int)lplvcd->nmcd.dwItemSpec%2)==0)
 				BOOL bSelected = &g_pActiveAchievements->GetAchievement( nNextItem ) == g_AchievementEditorDialog.ActiveAchievement();

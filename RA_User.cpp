@@ -173,11 +173,10 @@ void LocalRAUser::ProcessSuccessfulLogin( const std::string& sUser, const std::s
 	RequestFriendList();
 	
 	g_PopupWindows.AchievementPopups().AddMessage( 
-		MessagePopup( 
-			" Welcome back " + Username() + " (" + std::to_string( nPoints ) + ") ", 
-			" You have " + std::to_string( nMessages ) + " new " + std::string( (nMessages==1) ? "message" : "messages" ) + ". ", 
-			PopupMessageType::PopupLogin,
-			GetUserImage() ) );
+		MessagePopup( "Welcome back " + Username() + " (" + std::to_string( nPoints ) + ")",
+					  "You have " + std::to_string( nMessages ) + " new " + std::string( (nMessages==1) ? "message" : "messages" ) + ".",
+					  PopupMessageType::PopupLogin,
+					  GetUserImage() ) );
 
 	g_AchievementsDialog.OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 	g_AchievementEditorDialog.OnLoad_NewRom();

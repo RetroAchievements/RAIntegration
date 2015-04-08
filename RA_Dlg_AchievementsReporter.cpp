@@ -186,10 +186,10 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 						return FALSE;
 				}
 
-				char sBugReportComment[4096];
+				char sBugReportComment[ 4096 ];
 				GetDlgItemText( hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportComment, 4096 );
 
-				char sBugReportInFull[8192];
+				char sBugReportInFull[ 8192 ];
 				sprintf_s( sBugReportInFull, 8192, 
 					"--New Bug Report--\n"
 					"\n"
@@ -202,11 +202,11 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					"Comment: %s\n"
 					"\n"
 					"Is this OK?",
-					CoreAchievements->GameTitle(),
+					CoreAchievements->GameTitle().c_str(),
 					sBuggedIDs,
 					sProblemTypeNice,
-					RAUsers::LocalUser.Username(),
-					g_sCurrentROMMD5,
+					RAUsers::LocalUser.Username().c_str(),
+					g_sCurrentROMMD5.c_str(),
 					sBugReportComment );
 
 				if( MessageBox( NULL, sBugReportInFull, "Summary", MB_YESNO ) == IDNO )

@@ -205,32 +205,32 @@ void AchievementSet::Test()
 				if( ach.ID() == 0 )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
-						MessagePopup( " Test: Achievement Unlocked ",
-									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+						MessagePopup( "Test: Achievement Unlocked",
+									  ach.Title() + " (" + sPoints + ") (Unofficial)",
 									  PopupAchievementUnlocked,
 									  ach.BadgeImage() ) );
 				}
 				else if( ach.Modified() )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
-						MessagePopup( " Modified: Achievement Unlocked ",
-									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+						MessagePopup( "Modified: Achievement Unlocked",
+									  ach.Title() + " (" + sPoints + ") (Unofficial)",
 									  PopupAchievementUnlocked,
 									  ach.BadgeImage() ) );
 				}
 				else if( g_fnDoValidation == NULL )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
-						MessagePopup( " (Missing RA_Keys.DLL): Achievement Unlocked ",
-									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+						MessagePopup( "(Missing RA_Keys.DLL): Achievement Unlocked",
+									  ach.Title() + " (" + sPoints + ") (Unofficial)",
 									  PopupAchievementError,
 									  ach.BadgeImage() ) );
 				}
 				else if( g_bRAMTamperedWith )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
-						MessagePopup( " (RAM tampered with!): Achievement Unlocked ",
-									  " " + ach.Title() + " (" + sPoints + ") (Unofficial) ",
+						MessagePopup( "(RAM tampered with!): Achievement Unlocked",
+									  ach.Title() + " (" + sPoints + ") (Unofficial)",
 									  PopupAchievementError,
 									  ach.BadgeImage() ) );
 				}
@@ -401,7 +401,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	{
 		//	Could not connect...
 		PopupWindows::AchievementPopups().AddMessage( 
-			MessagePopup( " Could not connect to " RA_HOST "... ", " Working offline... ", PopupInfo ) ); //?
+			MessagePopup( "Could not connect to " RA_HOST "...", "Working offline...", PopupInfo ) ); //?
 
 		return FALSE;
 	}
@@ -540,11 +540,10 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 
 	if( sSaveStateFilename == NULL )
 		return;
-
-	char buffer[4096];
-	sprintf_s( buffer, 4096, "%s%s.rap", RA_DIR_DATA, sSaveStateFilename );
 	
 	SetCurrentDirectory( g_sHomeDir.c_str() );
+	char buffer[ 4096 ];
+	sprintf_s( buffer, 4096, "%s.rap", sSaveStateFilename );
 	FILE* pf = NULL;
 	fopen_s( &pf, buffer, "w" );
 	if( pf == NULL )

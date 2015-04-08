@@ -412,8 +412,8 @@ void RA_Leaderboard::Test()
 			m_bStarted = TRUE;
 
 			g_PopupWindows.AchievementPopups().AddMessage( 
-				MessagePopup( " Challenge Available: " + m_sTitle + " ",
-							  " " + m_sDescription + " ",
+				MessagePopup( "Challenge Available: " + m_sTitle,
+							  m_sDescription,
 							  PopupLeaderboardInfo,
 							  NULL ) );
 			g_PopupWindows.LeaderboardPopups().Activate( m_nID );
@@ -428,8 +428,8 @@ void RA_Leaderboard::Test()
 			g_PopupWindows.LeaderboardPopups().Deactivate( m_nID );
 			
 			g_PopupWindows.AchievementPopups().AddMessage( 
-				MessagePopup( " Leaderboard attempt cancelled! ",
-							  " " + m_sTitle + " ",
+				MessagePopup( "Leaderboard attempt cancelled!",
+							  m_sTitle,
 							  PopupLeaderboardCancel,
 							  NULL ) );
 		}
@@ -443,8 +443,8 @@ void RA_Leaderboard::Test()
 			if( g_bRAMTamperedWith )
 			{
 				g_PopupWindows.AchievementPopups().AddMessage( 
-					MessagePopup( " Not posting to leaderboard: memory tamper detected! ",
-								  " Reset game to reenable posting. ",
+					MessagePopup( "Not posting to leaderboard: memory tamper detected!",
+								  "Reset game to reenable posting.",
 								  PopupInfo ) );
 			}
 			else if( g_hRAKeysDLL != NULL && g_fnDoValidation != NULL )

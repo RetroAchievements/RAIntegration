@@ -167,8 +167,8 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	const int nFontSize2 = 22;
 	const int nFontSize3 = 16;
 
-	SetBkColor( hDC, g_ColTextHighlight );
-	SetTextColor( hDC, g_ColPopupText );
+	SetBkColor( hDC, COL_TEXT_HIGHLIGHT );
+	SetTextColor( hDC, COL_POPUP );
 
 	HFONT hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, 
 		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
@@ -278,12 +278,12 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 					if( lbInfo.m_sUsername.compare( RAUsers::LocalUser.Username() ) == 0 )
 					{
 						SetBkMode( hDC, OPAQUE );
-						SetTextColor( hDC, g_ColPopupText );
+						SetTextColor( hDC, COL_POPUP );
 					}
 					else
 					{
 						SetBkMode( hDC, TRANSPARENT );
-						SetTextColor( hDC, g_ColTextHighlight );
+						SetTextColor( hDC, COL_TEXT_HIGHLIGHT );
 					}
 
 					char buffer[1024];

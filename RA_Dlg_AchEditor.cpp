@@ -1029,8 +1029,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 				Condition NewCondition;
 				NewCondition.SetIsBasicCondition();
-				NewCondition.CompSource().Set( ComparisonVariableSize::SixteenBit, ComparisonVariableType::Address, 0x8000, 0 );
-				NewCondition.CompTarget().Set( ComparisonVariableSize::SixteenBit, ComparisonVariableType::ValueComparison, 10, 0 );	//	Compare defaults!
+				NewCondition.CompSource().Set( ComparisonVariableSize::EightBit, ComparisonVariableType::Address, 0x0000, 0 );
+				NewCondition.CompTarget().Set( ComparisonVariableSize::EightBit, ComparisonVariableType::ValueComparison, 0, 0 );	//	Compare defaults!
 
 				//	Helper: guess that the currently watched memory location
 				//	 is probably what they are about to want to add a cond for.

@@ -301,7 +301,7 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 					while( nBytesToRead > 0 )
 					{
 						char sHttpReadData[8192];
-						ZeroMemory( sHttpReadData, 8192 );
+						ZeroMemory( sHttpReadData, 8192*sizeof(char) );
 
 						assert( nBytesToRead <= 8192 );
 						if( nBytesToRead <= 8192 )

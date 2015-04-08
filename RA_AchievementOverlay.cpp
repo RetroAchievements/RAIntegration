@@ -50,22 +50,22 @@ AchievementOverlay g_AchievementOverlay;
 AchievementExamine g_AchExamine;
 LeaderboardExamine g_LBExamine;
 
-const COLORREF g_ColText = RGB( 17, 102, 221 );
-const COLORREF g_ColTextHighlight = RGB( 251, 102, 0 );
-const COLORREF g_ColSelected = RGB( 255, 255, 255 );
-const COLORREF g_ColTextLocked = RGB( 137, 137, 137 );
-const COLORREF g_ColSelectedLocked = RGB( 202, 202, 202 );
-const COLORREF g_ColBlack = RGB( 0, 0, 0 );
-const COLORREF g_ColWhite = RGB( 255, 255, 255 );
-const COLORREF g_ColBarFG = RGB( 0, 40, 0 );
-const COLORREF g_ColBarBG = RGB( 0, 212, 0 );
-const COLORREF g_ColPopupBG = RGB( 212, 212, 212 );
-const COLORREF g_ColPopupText = RGB( 0, 0, 40 );
-const COLORREF g_ColPopupShadow = RGB( 0, 0, 0 );
-const COLORREF g_ColUserFrameBG = RGB( 32, 32, 32 );
-const COLORREF g_ColSelectedBoxBG = RGB( 22, 22, 60 );
-const COLORREF g_ColWarning1 = RGB( 255, 0, 0 );
-const COLORREF g_ColWarning2 = RGB( 80, 0, 0 );
+const COLORREF COL_TEXT = RGB( 17, 102, 221 );
+const COLORREF COL_TEXT_HIGHLIGHT = RGB( 251, 102, 0 );
+const COLORREF COL_SELECTED = RGB( 255, 255, 255 );
+const COLORREF COL_TEXT_LOCKED = RGB( 137, 137, 137 );
+const COLORREF COL_SELECTED_LOCKED = RGB( 202, 202, 202 );
+const COLORREF COL_BLACK = RGB( 0, 0, 0 );
+const COLORREF COL_WHITE = RGB( 255, 255, 255 );
+const COLORREF COL_BAR = RGB( 0, 40, 0 );
+const COLORREF COL_BAR_BG = RGB( 0, 212, 0 );
+const COLORREF COL_POPUP = RGB( 0, 0, 40 );
+const COLORREF COL_POPUP_BG = RGB( 212, 212, 212 );
+const COLORREF COL_POPUP_SHADOW = RGB( 0, 0, 0 );
+const COLORREF COL_USER_FRAME_BG = RGB( 32, 32, 32 );
+const COLORREF COL_SELECTED_BOX_BG = RGB( 22, 22, 60 );
+const COLORREF COL_WARNING = RGB( 255, 0, 0 );
+const COLORREF COL_WARNING_BG = RGB( 80, 0, 0 );
 
 const unsigned int OVERLAY_WIDTH = 1024;
 const unsigned int OVERLAY_HEIGHT = 1024;
@@ -542,7 +542,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 	if( g_pActiveAchievements->GameTitle().length() > 0 )
 	{
 		SelectObject( hDC, g_hFontTitle );
-		SetTextColor( hDC, g_ColText );
+		SetTextColor( hDC, COL_TEXT );
 		sprintf_s( buffer, 256, " %s ", g_pActiveAchievements->GameTitle().c_str() );
 		TextOut( hDC, nGameTitleX+nDX, nGameTitleY+nDY, buffer, strlen( buffer ) );
 	}
@@ -563,7 +563,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 
 		if( nNumAchievements > 0 )
 		{
-			SetTextColor( hDC, g_ColTextLocked );
+			SetTextColor( hDC, COL_TEXT_LOCKED );
 			sprintf_s( buffer, 256, " %d of %d won (%d/%d) ",
 				nUserCompleted, nNumAchievements,
 				nUserPts, nMaxPts );
@@ -692,9 +692,9 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 				DrawImage( hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64 );
 
 			if( (m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i )
-				SetTextColor( hDC, g_ColSelected );
+				SetTextColor( hDC, COL_SELECTED );
 			else
-				SetTextColor( hDC, g_ColText );
+				SetTextColor( hDC, COL_TEXT );
 
 			HANDLE hOldObj = SelectObject( hDC, g_hFontDesc );
 
@@ -951,7 +951,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 
 			RA_Leaderboard& nextLB = g_LeaderboardManager.GetLB( i );
 
-			const char* sTitle = nextLB.Title().c_str();
+			const char* sTitle = std::string( " " + nextLB.Title() + " " ).c_str();
 			const char* sPayload = nextLB.Description().c_str();
 			
 			BOOL bSelected = ( (*pnSelectedItem) == i );
@@ -984,11 +984,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			if( rcNews.bottom > nHeight )
 				rcNews.bottom = nHeight;
 
-			
-			if( bSelected )
-				SetTextColor( hDC, g_ColSelected );
-			else
-				SetTextColor( hDC, g_ColText );
+			SetTextColor( hDC, bSelected ? COL_SELECTED : COL_TEXT );
 
 			//	Draw title:
 			DrawText( hDC, sTitle, strlen(sTitle), &rcNews, DT_TOP|DT_LEFT|DT_WORDBREAK );
@@ -1007,7 +1003,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			if( rcNews.bottom > nHeight )
 				rcNews.bottom = nHeight;
 
-			SetTextColor( hDC, g_ColSelectedLocked );
+			SetTextColor( hDC, COL_SELECTED_LOCKED );
 
 			//	Draw payload:
 			DrawText( hDC, sPayload, strlen(sPayload), &rcNews, DT_TOP|DT_LEFT|DT_WORDBREAK );
@@ -1071,11 +1067,11 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 		sprintf_s( buffer, 256, " %s ", pLB->Title() );
 		TextOut( hDC, nDX+20, nCoreDetailsY, buffer, strlen( buffer ) );
 
-		SetTextColor( hDC, g_ColSelectedLocked );
+		SetTextColor( hDC, COL_SELECTED_LOCKED );
 		sprintf_s( buffer, 256, " %s ", pLB->Description() );
 		TextOut( hDC, nDX+20, nCoreDetailsY+nCoreDetailsSpacing, buffer, strlen( buffer ) );
 
-		SetTextColor( hDC, g_ColText );
+		SetTextColor( hDC, COL_TEXT );
 
 		if( g_LBExamine.m_bHasData )
 		{
@@ -1214,10 +1210,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	OffsetRect( &rcBGSize, -((LONG)OVERLAY_WIDTH-rc.right), 0 );
 	DrawImageTiled( hDC, m_hOverlayBackground, rcBGSize, rc );
 
-	g_hBrushBG			= CreateSolidBrush( g_ColUserFrameBG );
-	g_hBrushSelectedBG	= CreateSolidBrush( g_ColSelectedBoxBG );
+	g_hBrushBG			= CreateSolidBrush( COL_USER_FRAME_BG );
+	g_hBrushSelectedBG	= CreateSolidBrush( COL_SELECTED_BOX_BG );
 
-	SetTextColor( hDC, g_ColText );
+	SetTextColor( hDC, COL_TEXT );
 	SelectObject( hDC, g_hFontDesc );
 
 	//	Draw user info
@@ -1275,7 +1271,7 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 
 	//	Title:
 	SelectObject( hDC, g_hFontTitle );
-	SetTextColor( hDC, g_ColText );
+	SetTextColor( hDC, COL_TEXT );
 	sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ] );
 	//sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ], (*pnScrollOffset)+1 );
 	TextOut( hDC, 
@@ -1350,14 +1346,14 @@ void AchievementOverlay::DrawBar( HDC hDC, int nX, int nY, int nW, int nH, int n
 	const int nInnerBarAbsY = (int)( nY+2.0f+fInnerBarOffsetY );
 
 	//	Draw bar:
-	SetBkColor( hDC, g_ColBarBG );
-	SetTextColor( hDC, g_ColBarFG );
+	SetTextColor( hDC, COL_BAR );
+	SetBkColor( hDC, COL_BAR_BG );
 	
 	RECT rc;
 	SetRect( &rc, nX, nY, nX+nW, nY+nH );
 	if( FillRect( hDC, &rc, hBarBack ) )
 	{
-		SetTextColor( hDC, g_ColText );
+		SetTextColor( hDC, COL_TEXT );
 
 		if( fNumMax <= 0.0f )
 			fNumMax = 1.0f;
@@ -1386,19 +1382,9 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 	}
 
 	if( bSelected )
-	{
-		if( bLocked )
-			SetTextColor( hDC, g_ColSelectedLocked );
-		else
-			SetTextColor( hDC, g_ColSelected );
-	}
+		SetTextColor( hDC, bLocked ? COL_SELECTED_LOCKED : COL_SELECTED );
 	else
-	{
-		if( bLocked )
-			SetTextColor( hDC, g_ColTextLocked );
-		else
-			SetTextColor( hDC, g_ColText );
-	}
+		SetTextColor( hDC, bLocked ? COL_TEXT_LOCKED : COL_TEXT );
 
 	if( !bLocked )
 	{
@@ -1423,7 +1409,7 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH ) const
 {
 	char buffer[256];
-	HBRUSH hBrush2 = CreateSolidBrush( g_ColUserFrameBG );
+	HBRUSH hBrush2 = CreateSolidBrush( COL_USER_FRAME_BG );
 	RECT rcUserFrame;
 
 	const int nTextX = nX+4;
@@ -1442,7 +1428,7 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 			64, 64 );
 	}
 
-	SetTextColor( hDC, g_ColText );
+	SetTextColor( hDC, COL_TEXT );
 	SelectObject( hDC, g_hFontDesc );
 
 	sprintf_s( buffer, 256, " %s ", pUser->Username().c_str() );
@@ -1453,8 +1439,8 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 
 	if( g_bHardcoreModeActive )
 	{
-		COLORREF nLastColor = SetTextColor( hDC, g_ColWarning1 );
-		COLORREF nLastColorBk = SetBkColor( hDC, g_ColWarning2 );
+		COLORREF nLastColor = SetTextColor( hDC, COL_WARNING );
+		COLORREF nLastColorBk = SetBkColor( hDC, COL_WARNING_BG );
 
 		sprintf_s( buffer, 256, " HARDCORE " );
 		TextOut( hDC, nX+180, nY+70, buffer, strlen( buffer ) );

@@ -13,7 +13,7 @@
 #include <direct.h>
 #include <ShlObj.h>
 #include <time.h>
-//#include <WinDef.h>
+#include <tchar.h>
 
 #ifndef RA_EXPORTS
 

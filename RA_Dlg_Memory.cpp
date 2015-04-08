@@ -584,6 +584,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	SetTextColor( hMemDC, RGB(0,0,0) );
 
 	unsigned int data[32];
+	ZeroMemory( data, 32*sizeof(unsigned int) );
 
 	RECT r;
 	r.top = 3;
@@ -606,11 +607,14 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 
 		DrawText( hMemDC, buffer, strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
 
-		r.left += 10*m_szFontSize.cx;
+		r.left += 10 * m_szFontSize.cx;
 		m_nDataStartXOffset = r.left;
 
 		for( int j = 0; j < 16; ++j )
-			data[j] = g_MemManager.RAMByte( m_nActiveMemBank, addr+j );
+		{
+			if( static_cast<size_t>( addr + j ) < g_MemManager.BankSize( m_nActiveMemBank ) )
+				data[ j ] = g_MemManager.RAMByte( m_nActiveMemBank, addr + j );
+		}
 		//readData(addr, 16, data);
 
 		if( m_nDataSize == 0 )	//	8-bit

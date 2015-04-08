@@ -6,11 +6,13 @@
 #include <fstream>
 #include <sstream>
 #include <time.h>
+#include <algorithm>	//	std::replace
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_User.h"
 #include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_RichPresence.h"
 
@@ -741,7 +743,9 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 				if( RAUsers::LocalUser.IsLoggedIn() )
 				{
 					PostArgs args;
-					args['u'] = RAUsers::LocalUser.Username();
+					args[ 'u' ] = RAUsers::LocalUser.Username();
+					args[ 't' ] = RAUsers::LocalUser.Token();
+					args[ 'g' ] = std::to_string( AchievementSet::GetGameID() );
 
 					if( RA_GameIsActive() )
 					{
@@ -900,5 +904,9 @@ std::string PostArgsToString( const PostArgs& args )
 
 		iter++;
 	}
+
+	//	Replace all spaces with '+' (RFC 1738)
+	std::replace( str.begin(), str.end(), ' ', '+' );
+
 	return str;
 }

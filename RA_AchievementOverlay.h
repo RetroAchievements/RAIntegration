@@ -206,11 +206,11 @@ extern "C"
 	API extern void _RA_OnPaint( HWND hWnd );
 }
 
-extern const COLORREF g_ColText;
-extern const COLORREF g_ColTextHighlight;
-extern const COLORREF g_ColSelected;
-extern const COLORREF g_ColWhite;
-extern const COLORREF g_ColBlack;
-extern const COLORREF g_ColPopupBG;
-extern const COLORREF g_ColPopupText;
-extern const COLORREF g_ColPopupShadow;
+extern const COLORREF COL_TEXT;
+extern const COLORREF COL_TEXT_HIGHLIGHT;
+extern const COLORREF COL_SELECTED;
+extern const COLORREF COL_WHITE;
+extern const COLORREF COL_BLACK;
+extern const COLORREF COL_POPUP;
+extern const COLORREF COL_POPUP_BG;
+extern const COLORREF COL_POPUP_SHADOW;

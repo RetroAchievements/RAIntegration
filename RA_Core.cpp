@@ -370,6 +370,7 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser.Username();
+		args['t'] = RAUsers::LocalUser.Token();
 		args['m'] = g_sCurrentROMMD5;
 
 		Document doc;
@@ -645,8 +646,8 @@ API int CCONV _RA_HandleHTTPResults()
 						if( !doc.HasMember("Error") )
 						{
 							g_PopupWindows.AchievementPopups().AddMessage( 
-								MessagePopup( " Achievement Unlocked ",
-											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+								MessagePopup( "Achievement Unlocked",
+											  pAch->Title() + " (" + std::to_string( pAch->Points() ) + ")",
 											  PopupMessageType::PopupAchievementUnlocked,
 											  pAch->BadgeImage() ) );
 							g_AchievementsDialog.OnGet_Achievement( *pAch );
@@ -656,16 +657,15 @@ API int CCONV _RA_HandleHTTPResults()
 						else
 						{
 							g_PopupWindows.AchievementPopups().AddMessage( 
-								MessagePopup( " Achievement Unlocked (Error) ", 
-											  " " + pAch->Title() + " (" + std::to_string( pAch->Points() ) + ") ",
+								MessagePopup( "Achievement Unlocked (Error)", 
+											  pAch->Title() + " (" + std::to_string( pAch->Points() ) + ")",
 											  PopupMessageType::PopupAchievementError, 
 											  pAch->BadgeImage() ) );
 							g_AchievementsDialog.OnGet_Achievement( *pAch );
 
 							g_PopupWindows.AchievementPopups().AddMessage( 
-								MessagePopup( 
-									"Error submitting achievement:", 
-									doc["Error"].GetString() ) ); //?
+								MessagePopup( "Error submitting achievement:", 
+											  doc["Error"].GetString() ) ); //?
 
 							//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
 						}
@@ -933,6 +933,7 @@ void _FetchGameHashLibraryFromWeb()
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestHashLibrary, args, Response ) )
 		_WriteBufferToFile( RA_GAME_HASH_FILENAME, Response );
@@ -943,6 +944,7 @@ void _FetchGameTitlesFromWeb()
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestGamesList, args, Response ) )
 		_WriteBufferToFile( RA_GAME_LIST_FILENAME, Response );
@@ -953,6 +955,7 @@ void _FetchMyProgressFromWeb()
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
 	args['u'] = RAUsers::LocalUser.Username();
+	args['t'] = RAUsers::LocalUser.Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestAllProgress, args, Response ) )
 		_WriteBufferToFile( RA_MY_PROGRESS_FILENAME, Response );

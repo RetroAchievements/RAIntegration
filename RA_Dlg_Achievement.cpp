@@ -253,62 +253,7 @@ BOOL LocalValidateAchievementsBeforeCommit( int nLbxItems[1] )
 
 	return TRUE;
 }
-
-//BOOL ValidateGameTitleOrUpload()
-//{
-//	//if( Game == NULL ) //TBD
-//	//	return FALSE;
-//
-//	if( strlen( g_pActiveAchievements->GameTitle() ) < 2 )
-//	{
-//		if( Dlg_GameTitle::DoModalDialog( g_AchievementsDialog.GetHWND(),  ) )
-//		{
-//			return TRUE;
-//		}
-//		else
-//		{
-//			return FALSE;	//	User cancelled - do not progress?
-//		}
-//	}
-//	else
-//	{
-//		//	We have a title, no panic :)
-//		return TRUE;
-//	}
-//}
-
-void urlEncode( char stringsToEncode[][1024], const int numStrings )
-{
-	for( int i = 0; i < numStrings; ++i )
-	{
-		char* pString = stringsToEncode[i];
-		char sArrayReplace[1024];
-		strcpy_s( sArrayReplace, 1024, pString );
-
-		char* pDestIter = &pString[0];
-
-		int nNumCharsRead = 0;
-		int nDestOffset = 0;
-		char cNextChar = sArrayReplace[nNumCharsRead];
-		while( cNextChar != '\0' )
-		{
-			if( cNextChar == '&' )
-			{
-				strcat_s( pDestIter, 1024, "&amp;" );
-				nDestOffset += 5;
-			}
-			else
-			{
-				pDestIter[nDestOffset] = cNextChar;
-				nDestOffset++;
-				pDestIter++;
-			}
-
-			cNextChar = sArrayReplace[++nNumCharsRead];
-		}
-	}
-}
-							
+				
 //static
 INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam )
 {
@@ -615,6 +560,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				}
 			}
 			break;
+
 		case IDC_RA_ADD_ACH:
 			{
 				if( !RA_GameIsActive() )
@@ -634,7 +580,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					if( &Cheevo == &g_pActiveAchievements->GetAchievement( nOffset ) )
 						break;
 				}
-				assert( nOffset < g_pActiveAchievements->NumAchievements() );
+				ASSERT( nOffset < g_pActiveAchievements->NumAchievements() );
 				if( nOffset < g_pActiveAchievements->NumAchievements() )
 					OnEditData( nOffset, Dlg_Achievements::Author, Cheevo.Author() );
 
@@ -643,8 +589,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				ListView_SetItemState( hList, nNewID, LVIS_FOCUSED|LVIS_SELECTED, -1 );
 				ListView_EnsureVisible( hList, nNewID, FALSE );
 			}
-			
 			break;
+
 		case IDC_RA_CLONE_ACH:
 			{
 				if( !RA_GameIsActive() )

@@ -356,16 +356,16 @@ std::string Achievement::CreateMemString() const
 			if( ( Src.Type() == ComparisonVariableType::Address ) || 
 				( Src.Type() == ComparisonVariableType::DeltaMem ) )
 			{
-				char buffer[ 64 ];
-				sprintf_s( buffer, 64, "%s0x%s%06x", ( Src.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Src.Size() ), Src.Value() );
-				strcat_s( sNextCondition, 256, buffer );
+				char buffer1[ 64 ];
+				sprintf_s( buffer1, 64, "%s0x%s%06x", ( Src.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Src.Size() ), Src.Value() );
+				strcat_s( sNextCondition, 256, buffer1 );
 			}
 			else if( Src.Type() == ComparisonVariableType::ValueComparison )
 			{
 				//	Value: use direct!
-				char buffer[ 64 ];
-				sprintf_s( buffer, 64, "%d", Src.Value() );
-				strcat_s( sNextCondition, 256, buffer );
+				char buffer2[ 64 ];
+				sprintf_s( buffer2, 64, "%d", Src.Value() );
+				strcat_s( sNextCondition, 256, buffer2 );
 			}
 			else
 			{
@@ -379,16 +379,16 @@ std::string Achievement::CreateMemString() const
 			if( ( Target.Type() == ComparisonVariableType::Address ) || 
 				( Target.Type() == ComparisonVariableType::DeltaMem ) )
 			{
-				char buffer[ 64 ];
-				sprintf_s( buffer, 64, "%s0x%s%06x", ( Target.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Target.Size() ), Target.Value() );
-				strcat_s( sNextCondition, 256, buffer );
+				char buffer3[ 64 ];
+				sprintf_s( buffer3, 64, "%s0x%s%06x", ( Target.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Target.Size() ), Target.Value() );
+				strcat_s( sNextCondition, 256, buffer3 );
 			}
 			else if( Target.Type() == ComparisonVariableType::ValueComparison )
 			{
 				//	Value: use direct!
-				char buffer[ 64 ];
-				sprintf_s( buffer, 64, "%d", Target.Value() );
-				strcat_s( sNextCondition, 256, buffer );
+				char buffer4[ 64 ];
+				sprintf_s( buffer4, 64, "%d", Target.Value() );
+				strcat_s( sNextCondition, 256, buffer4 );
 			}
 			else
 			{
@@ -398,9 +398,9 @@ std::string Achievement::CreateMemString() const
 			//	Hit count:
 			if( NextCond.RequiredHits() > 0 )
 			{
-				char buffer[ 64 ];
-				sprintf_s( buffer, 256, ".%d.", NextCond.RequiredHits() );
-				strcat_s( sNextCondition, 256, buffer );
+				char buffer5[ 64 ];
+				sprintf_s( buffer5, 64, ".%d.", NextCond.RequiredHits() );
+				strcat_s( sNextCondition, 256, buffer5 );
 			}
 			
 			//	Copy in the next condition:

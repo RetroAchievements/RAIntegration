@@ -14,6 +14,7 @@ enum PopupMessageType
 	PopupAchievementError,
 	PopupLeaderboardInfo,
 	PopupLeaderboardCancel,
+	PopupMessage,
 
 	NumMessageTypes
 };

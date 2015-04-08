@@ -130,7 +130,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 		ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP );
 		//ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
 
-		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser.Username().c_str() );
+		SetDlgItemText( hDlg, IDC_RA_BROKENACH_BUGREPORTER, RAUsers::LocalUser().Username().c_str() );
 
 		return FALSE;
 		//return DefWindowProc( hDlg, uMsg, wParam, lParam );
@@ -205,7 +205,7 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					CoreAchievements->GameTitle().c_str(),
 					sBuggedIDs,
 					sProblemTypeNice,
-					RAUsers::LocalUser.Username().c_str(),
+					RAUsers::LocalUser().Username().c_str(),
 					g_sCurrentROMMD5.c_str(),
 					sBugReportComment );
 
@@ -213,8 +213,8 @@ INT_PTR CALLBACK AchievementsReporterProc( HWND hDlg, UINT uMsg, WPARAM wParam, 
 					return FALSE;
 								
 				PostArgs args;
-				args['u'] = RAUsers::LocalUser.Username();
-				args['t'] = RAUsers::LocalUser.Token();
+				args['u'] = RAUsers::LocalUser().Username();
+				args['t'] = RAUsers::LocalUser().Token();
 				args['i'] = sBuggedIDs;
 				args['p'] = sProblemType;
 				args['n'] = sBugReportComment;

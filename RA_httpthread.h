@@ -1,11 +1,6 @@
 #pragma once
 
 #include "RA_Defs.h"
-#include <deque>
-#include <map>
-#include <string>
-#include <vector>
-#include <assert.h>
 
 typedef void* HANDLE;
 typedef void* LPVOID;
@@ -79,7 +74,7 @@ class RequestObject
 {
 public:
 	RequestObject( RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "" ) :
-		m_nType( nType ), m_PostArgs( PostArgs ), m_sData( sData ), m_bSuccess( 0 )
+		m_nType( nType ), m_PostArgs( PostArgs ), m_sData( sData )
 		{}
 
 public:
@@ -87,11 +82,9 @@ public:
 	const PostArgs& GetPostArgs() const								{ return m_PostArgs; }
 	const std::string& GetData() const								{ return m_sData; }
 	
-	BOOL GetSuccess() const											{ return m_bSuccess; }
 	DataStream& GetResponse()										{ return m_sResponse; }
 	const DataStream& GetResponse() const							{ return m_sResponse; }
-
-	void SetResult( BOOL bSuccess, const DataStream& sResponse )	{ m_bSuccess = bSuccess; m_sResponse = sResponse; }
+	void SetResponse( const DataStream& sResponse )					{ m_sResponse = sResponse; }
 
 	BOOL ParseResponseToJSON( Document& rDocOut );
 
@@ -100,7 +93,6 @@ private:
 	const PostArgs m_PostArgs;
 	const std::string m_sData;
 
-	BOOL m_bSuccess;
 	DataStream m_sResponse;
 };
 
@@ -122,9 +114,6 @@ private:
 class RAWeb
 {
 public:
-	static HANDLE g_hHTTPMutex;
-	static HttpResults LastHttpResults;
-
 	static void RA_InitializeHTTPThreads();
 	static void RA_KillHTTPThreads();
 
@@ -142,5 +131,12 @@ public:
 
 	static BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Document& ResponseOut );
 
-	static DWORD __stdcall HTTPWorkerThread( LPVOID lpParameter );
+	static DWORD WINAPI HTTPWorkerThread( LPVOID lpParameter );
+
+	static HANDLE Mutex()								{ return ms_hHTTPMutex; }
+	static RequestObject* PopNextHttpResult()			{ return ms_LastHttpResults.PopNextItem(); }
+
+private:	
+	static HANDLE ms_hHTTPMutex;
+	static HttpResults ms_LastHttpResults;
 };

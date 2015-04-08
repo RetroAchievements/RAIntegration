@@ -20,8 +20,8 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 	{
 	case WM_INITDIALOG:
 
-		SetDlgItemText( hDlg, IDC_RA_USERNAME, RAUsers::LocalUser.Username().c_str() );
-		if( RAUsers::LocalUser.Username().length() > 2 )
+		SetDlgItemText( hDlg, IDC_RA_USERNAME, RAUsers::LocalUser().Username().c_str() );
+		if( RAUsers::LocalUser().Username().length() > 2 )
 		{
 			HWND hPass = GetDlgItem( hDlg, IDC_RA_PASSWORD );
 			SetFocus( hPass );
@@ -71,7 +71,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 						
 						bool bRememberLogin = ( IsDlgButtonChecked( hDlg, IDC_RA_SAVEPASSWORD ) != BST_UNCHECKED );
 						
-						RAUsers::LocalUser.ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, bRememberLogin );
+						RAUsers::LocalUser().ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, bRememberLogin );
 						
 						sResponse = "Logged in as " + sUser + ".";
 						sResponseTitle = "Logged in Successfully!";
@@ -89,7 +89,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 					MessageBox( hDlg, sResponse.c_str(), sResponseTitle.c_str(), MB_OK );
 					
 					//	If we are now logged in
-					if( RAUsers::LocalUser.IsLoggedIn() )
+					if( RAUsers::LocalUser().IsLoggedIn() )
 					{
 						//	Close this dialog
 						EndDialog( hDlg, TRUE );

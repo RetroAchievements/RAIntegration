@@ -39,12 +39,12 @@ AchievementPopup::AchievementPopup() :
 
 void AchievementPopup::PlayAudio()
 {
-	if( MessagesPresent() )
-		PlaySound( MSG_SOUND[ ActiveMessage().Type() ], NULL, SND_FILENAME|SND_ASYNC );
+	PlaySound( MSG_SOUND[ ActiveMessage().Type() ], NULL, SND_FILENAME|SND_ASYNC );
 }
 
 void AchievementPopup::AddMessage( const MessagePopup& msg )
 {
+	PlayAudio();
 	m_vMessages.push( msg );
 }
 
@@ -52,17 +52,15 @@ void AchievementPopup::Update( ControllerInput input, float fDelta, bool bFullSc
 {
 	if( bPaused )
 		fDelta = 0.0f;
-
 	fDelta = RAClamp<float>( fDelta, 0.0f, 0.3f );	//	Limit this!
-
 	if( m_vMessages.size() > 0 )
-		m_fTimer += fDelta;
-
-	if( ( m_vMessages.size() > 0 ) && ( m_fTimer >= FINISH_AT ) )
 	{
-		m_vMessages.pop();
-		PlayAudio();
-		m_fTimer = 0.0f;
+		m_fTimer += fDelta;
+		if( m_fTimer >= FINISH_AT )
+		{
+			m_vMessages.pop();
+			m_fTimer = 0.0f;
+		}
 	}
 }
 
@@ -174,6 +172,6 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 
 void AchievementPopup::Clear()
 {
-	while( m_vMessages.size() > 0 )
+	while( !m_vMessages.empty() )
 		m_vMessages.pop();
 }

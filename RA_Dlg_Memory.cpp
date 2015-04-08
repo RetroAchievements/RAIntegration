@@ -1103,7 +1103,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
  						
  						if( MessageBox( hDlg, sWarning, "Warning: overwrite note?", MB_YESNO ) == IDYES )
  						{
- 							m_CodeNotes.Add( nAddr, RAUsers::LocalUser.Username(), sNewNote );
+ 							m_CodeNotes.Add( nAddr, RAUsers::LocalUser().Username(), sNewNote );
  							//ComboBox_AddString( hMemWatch, (LPSTR)sAddress );	//	Already added!
  						}
  					}
@@ -1115,7 +1115,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
  				else
  				{
  					//	Doesn't yet exist: add it newly!
- 					m_CodeNotes.Add( nAddr, RAUsers::LocalUser.Username(), sNewNote );
+ 					m_CodeNotes.Add( nAddr, RAUsers::LocalUser().Username(), sNewNote );
  					ComboBox_AddString( hMemWatch, (LPSTR)sAddress );
  				}
  

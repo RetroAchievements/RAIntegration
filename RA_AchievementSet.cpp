@@ -9,6 +9,8 @@
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 
+#include <io.h>		//	_access()
+
 AchievementSet* CoreAchievements = nullptr;
 AchievementSet* UnofficialAchievements = nullptr;
 AchievementSet* LocalAchievements = nullptr;
@@ -56,6 +58,7 @@ BOOL AchievementSet::DeletePatchFile( AchievementSetType nSet, GameID nGameID )
 							
 		//	Remove the text file
 		SetCurrentDirectory( g_sHomeDir.c_str() );
+		
 		if( _access( sFilename.c_str(), 06 ) != -1 )	//	06= Read/write permission
 		{
 			if( remove( sFilename.c_str() ) == -1 )
@@ -198,7 +201,7 @@ void AchievementSet::Test()
  			if( nOffset < NumAchievements() )
 				g_AchievementsDialog.ReloadLBXData( nOffset );
 
-			if( RAUsers::LocalUser.IsLoggedIn() )
+			if( RAUsers::LocalUser().IsLoggedIn() )
 			{
 				const std::string sPoints = std::to_string( ach.Points() );
 
@@ -237,11 +240,11 @@ void AchievementSet::Test()
 				else
 				{
 					char sValidation[50];
-					g_fnDoValidation( sValidation, RAUsers::LocalUser.Username().c_str(), RAUsers::LocalUser.Token().c_str(), ach.ID() );
+					g_fnDoValidation( sValidation, RAUsers::LocalUser().Username().c_str(), RAUsers::LocalUser().Token().c_str(), ach.ID() );
 
 					PostArgs args;
-					args['u'] = RAUsers::LocalUser.Username();
-					args['t'] = RAUsers::LocalUser.Token();
+					args['u'] = RAUsers::LocalUser().Username();
+					args['t'] = RAUsers::LocalUser().Token();
 					args['a'] = std::to_string( ach.ID() );
 					args['v'] = sValidation;
 					args['h'] = std::to_string( static_cast<int>( g_bHardcoreModeActive ) );
@@ -330,8 +333,8 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 {
 	//	Can't open file: attempt to find it on SQL server!
 	PostArgs args;
-	args['u'] = RAUsers::LocalUser.Username();
-	args['t'] = RAUsers::LocalUser.Token();
+	args['u'] = RAUsers::LocalUser().Username();
+	args['t'] = RAUsers::LocalUser().Token();
 	args['g'] = std::to_string( nGameID );
 	args['h'] = g_bHardcoreModeActive ? "1" : "0";
 	//args['f'] = std::to_string( GetFlagsFromType( m_nSetType ) );
@@ -506,12 +509,12 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 		for( size_t i = 0; i < CoreAchievements->NumAchievements(); ++i )
 			nTotalPoints += CoreAchievements->GetAchievement( i ).Points();
 
-		if( RAUsers::LocalUser.IsLoggedIn() )
+		if( RAUsers::LocalUser().IsLoggedIn() )
 		{	
 			//	Loaded OK: post a request for unlocks
 			PostArgs args;
-			args['u'] = RAUsers::LocalUser.Username();
-			args['t'] = RAUsers::LocalUser.Token();
+			args['u'] = RAUsers::LocalUser().Username();
+			args['t'] = RAUsers::LocalUser().Token();
 			args['g'] = std::to_string( nGameID );
 			args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
@@ -535,7 +538,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 {
-	if( !RAUsers::LocalUser.IsLoggedIn() )
+	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;
 
 	if( sSaveStateFilename == NULL )
@@ -583,7 +586,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 		//	Generate a slightly different key to md5ify:
 		char sCheevoProgressMangled[4096];
 		sprintf_s( sCheevoProgressMangled, 4096, "%s%s%s%d", 
-			RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), pAch->ID() );
+			RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID() );
 		
 		std::string sMD5Progress = RAGenerateMD5( std::string( sCheevoProgressMangled ) );
 		std::string sMD5Achievement = RAGenerateMD5( pAch->CreateMemString() );
@@ -617,7 +620,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 	char cheevoMD5TestMangled[4096];
 	int nMemStringLen = 0;
 
-	if( !RAUsers::LocalUser.IsLoggedIn() )
+	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;
 
 	if( sLoadStateFilename == NULL )
@@ -673,7 +676,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 		
 			//	Regenerate the md5 and see if it sticks:
 			sprintf_s( cheevoMD5TestMangled, 4096, "%s%s%s%d", 
-				RAUsers::LocalUser.Username().c_str(), cheevoProgressString, RAUsers::LocalUser.Username().c_str(), nID );
+				RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID );
 
 			std::string sRecalculatedProgressMD5 = RAGenerateMD5( cheevoMD5TestMangled );
 

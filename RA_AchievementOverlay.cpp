@@ -190,9 +190,9 @@ BOOL AchievementOverlay::GoBack()
 BOOL AchievementOverlay::Update( ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused )
 {
 	const int nAchCount = (const int)( g_pActiveAchievements->NumAchievements() );
-	const int nNumFriends = (const int)( RAUsers::LocalUser.NumFriends() );
+	const int nNumFriends = (const int)( RAUsers::LocalUser().NumFriends() );
 	const int nNumLBs = (const int)( g_LeaderboardManager.Count() );
-	//const int nMsgCount = (const int)( RAUsers::LocalUser.MessageCount() );
+	//const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
 	const int nMsgCount = 0;
 	int* pnScrollOffset = const_cast<int*>( GetActiveScrollOffset() );	//	Dirty!
 	int* pnSelectedItem = const_cast<int*>( GetActiveSelectedItem() );
@@ -386,7 +386,7 @@ BOOL AchievementOverlay::Update( ControllerInput* pInput, float fDelta, BOOL bFu
 			break;
 		case OP_MESSAGE_VIEWER:
 			{
-				//RAMessage Msg = RAUsers::LocalUser.GetMessage( m_nMessagesSelectedItem );
+				//RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
 
 				break;
 			}
@@ -669,7 +669,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 	unsigned int nOffset = m_nFriendsScrollOffset;
 
-	const unsigned int nNumFriends = RAUsers::LocalUser.NumFriends();
+	const unsigned int nNumFriends = RAUsers::LocalUser().NumFriends();
 
 	for( unsigned int i = 0; i < nFriendsToDraw; ++i )
 	{
@@ -681,7 +681,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 		if( (i+nOffset) < nNumFriends )
 		{
-			RAUser* pFriend = RAUsers::LocalUser.GetFriendByIter( (i+nOffset) );
+			RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter( (i+nOffset) );
 			if( pFriend == NULL )
 				continue;
 
@@ -1143,7 +1143,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 {
 	//	Rendering:
-	if( !RAUsers::LocalUser.IsLoggedIn() )
+	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;	//	Not available!
 
 	const COLORREF nPrevTextColor = GetTextColor( hDC );
@@ -1220,7 +1220,7 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	if( rcTarget.right > 360 )
 	{
 		DrawUserFrame( 
-			hDC, &RAUsers::LocalUser,
+			hDC, &RAUsers::LocalUser(),
 			( nDX+(rcTarget.right - nMinUserFrameWidth) )-4,
 			4+nBorder, 
 			nMinUserFrameWidth, 
@@ -1676,8 +1676,8 @@ void AchievementExamine::Initialize( const Achievement* pAch )
 		m_LastModifiedDate = _TimeStampToString( pAch->ModifiedDate() );
 
 		PostArgs args;
-		args[ 'u' ] = RAUsers::LocalUser.Username();
-		args[ 't' ] = RAUsers::LocalUser.Token();
+		args[ 'u' ] = RAUsers::LocalUser().Username();
+		args[ 't' ] = RAUsers::LocalUser().Token();
 		args[ 'a' ] = std::to_string( m_pSelectedAchievement->ID() );
 		args[ 'f' ] = true;	//	Friends only?
 		RAWeb::CreateThreadedHTTPRequest( RequestAchievementInfo, args );

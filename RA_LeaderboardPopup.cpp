@@ -275,7 +275,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 				{
 					const LB_Entry& lbInfo = pLB->GetRankInfo( i );
 
-					if( lbInfo.m_sUsername.compare( RAUsers::LocalUser.Username() ) == 0 )
+					if( lbInfo.m_sUsername.compare( RAUsers::LocalUser().Username() ) == 0 )
 					{
 						SetBkMode( hDC, OPAQUE );
 						SetTextColor( hDC, COL_POPUP );

@@ -1,11 +1,10 @@
 #include "RA_Leaderboard.h"
-#include <vector>
-#include <assert.h>
-#include <time.h>
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_md5factory.h"
 #include "RA_httpthread.h"
+
+#include <time.h>
 
 RA_LeaderboardManager g_LeaderboardManager;
 
@@ -451,12 +450,12 @@ void RA_Leaderboard::Test()
 			{
 				//	TBD: move to keys!
 				char sValidationSig[50];
-				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser.Username().c_str(), m_nID );
+				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser().Username().c_str(), m_nID );
 				std::string sValidationMD5 = RAGenerateMD5( sValidationSig );
 
 				PostArgs args;
-				args['u'] = RAUsers::LocalUser.Username();
-				args['t'] = RAUsers::LocalUser.Token();
+				args['u'] = RAUsers::LocalUser().Username();
+				args['t'] = RAUsers::LocalUser().Token();
 				args['i'] = std::to_string( m_nID );
 				args['v'] = sValidationMD5;
 				args['s'] = std::to_string( nVal );

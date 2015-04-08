@@ -105,8 +105,7 @@ private:
 class RAUsers
 {
 public:
-	static LocalRAUser LocalUser;
-
+	static LocalRAUser LocalUser()		{ return ms_LocalUser; }
 	static BOOL DatabaseContainsUser( const std::string& sUser );
 	static void OnUserPicDownloaded( const RequestObject& obj );
 
@@ -115,5 +114,6 @@ public:
 	static RAUser* GetUser( const std::string& sUser );
 
 private:
+	static LocalRAUser ms_LocalUser;
 	static std::map<std::string, RAUser*> UserDatabase;
 };

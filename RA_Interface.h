@@ -4,6 +4,10 @@
 
 #include "RA_Defs.h"
 
+#ifndef CCONV
+#define CCONV __cdecl
+#endif
+
 struct ControllerInput
 {
 	BOOL m_bUpPressed;

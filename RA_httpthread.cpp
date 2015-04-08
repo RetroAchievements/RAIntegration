@@ -1,13 +1,5 @@
 #include "RA_httpthread.h"
 
-#include <vector>
-#include <Windows.h>	//	GetFileAttributes
-#include <winhttp.h>
-#include <fstream>
-#include <sstream>
-#include <time.h>
-#include <algorithm>	//	std::replace
-
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_User.h"
@@ -15,6 +7,11 @@
 #include "RA_AchievementSet.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_RichPresence.h"
+
+#include <winhttp.h>
+#include <fstream>
+#include <time.h>
+#include <algorithm>	//	std::replace
 
 
 const char* RequestTypeToString[] = 
@@ -105,8 +102,8 @@ static_assert( SIZEOF_ARRAY( UploadTypeToPost ) == NumUploadTypes, "Must match u
 std::vector<HANDLE> g_vhHTTPThread;
 HttpResults HttpRequestQueue;
 
-HANDLE RAWeb::g_hHTTPMutex = NULL;
-HttpResults RAWeb::LastHttpResults;
+HANDLE RAWeb::ms_hHTTPMutex = NULL;
+HttpResults RAWeb::ms_LastHttpResults;
 
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
@@ -658,7 +655,7 @@ BOOL RAWeb::HTTPRequestExists( RequestType nType, const std::string& sData )
 
 BOOL RAWeb::HTTPResponseExists( RequestType nType, const std::string& sData )
 {
-	return LastHttpResults.PageRequestExists( nType, sData );
+	return ms_LastHttpResults.PageRequestExists( nType, sData );
 }
 
 //	Adds items to the httprequest queue
@@ -674,17 +671,16 @@ void RAWeb::RA_InitializeHTTPThreads()
 {
 	RA_LOG( __FUNCTION__ " called\n" );
 
-	DWORD dwThread;
-	RAWeb::g_hHTTPMutex = CreateMutex( NULL, FALSE, NULL );
-
+	RAWeb::ms_hHTTPMutex = CreateMutex( NULL, FALSE, NULL );
 	for( size_t i = 0; i < g_nNumHTTPThreads; ++i )
 	{
+		DWORD dwThread;
 		HANDLE hThread = CreateThread( NULL, 0, RAWeb::HTTPWorkerThread, (void*)i, 0 , &dwThread );
-		assert( hThread != NULL );
+		ASSERT( hThread != NULL );
 		if( hThread != NULL )
 		{
 			g_vhHTTPThread.push_back( hThread );
-			RA_LOG( __FUNCTION__ " Adding HTTP thread %d\n", i );
+			RA_LOG( __FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread );
 		}
 	}
 }
@@ -692,24 +688,22 @@ void RAWeb::RA_InitializeHTTPThreads()
 //	Takes items from the http request queue, and posts them to the last http results queue.
 DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 {
-	time_t nSendNextKeepAliveAt = time( NULL ) + SERVER_PING_DURATION;
+	time_t nSendNextKeepAliveAt = time( nullptr ) + SERVER_PING_DURATION;
 
-	BOOL bThreadActive = true;
-	BOOL bDoPingKeepAlive = ( (int)lpParameter ) == 0;
+	bool bThreadActive = true;
+	bool bDoPingKeepAlive = ( reinterpret_cast<int>( lpParameter ) == 0 );	//	Cause this only on first thread
 
 	while( bThreadActive )
 	{
 		RequestObject* pObj = HttpRequestQueue.PopNextItem();
 		if( pObj != NULL )
 		{
-			BOOL bSuccess = FALSE;
 			DataStream Response;
-
 			switch( pObj->GetRequestType() )
 			{
-			case StopThread:
-				bThreadActive = FALSE;
-				bDoPingKeepAlive = FALSE;
+			case StopThread:	//	Exception:
+				bThreadActive = false;
+				bDoPingKeepAlive = false;
 				break;
 
 			default:
@@ -717,12 +711,12 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 				break;
 			}
 
-			pObj->SetResult( bSuccess, Response );
+			pObj->SetResponse( Response );
 
 			if( bThreadActive )
 			{
 				//	Push object over to results queue - let app deal with them now.
-				RAWeb::LastHttpResults.PushItem( pObj );
+				ms_LastHttpResults.PushItem( pObj );
 			}
 			else
 			{
@@ -740,11 +734,11 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 				nSendNextKeepAliveAt += SERVER_PING_DURATION;
 
 				//	Post a keepalive packet:
-				if( RAUsers::LocalUser.IsLoggedIn() )
+				if( RAUsers::LocalUser().IsLoggedIn() )
 				{
 					PostArgs args;
-					args[ 'u' ] = RAUsers::LocalUser.Username();
-					args[ 't' ] = RAUsers::LocalUser.Token();
+					args[ 'u' ] = RAUsers::LocalUser().Username();
+					args[ 't' ] = RAUsers::LocalUser().Token();
 					args[ 'g' ] = std::to_string( AchievementSet::GetGameID() );
 
 					if( RA_GameIsActive() )
@@ -775,8 +769,7 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 	}
 
 	//	Delete and empty queue - allocated data is within!
-	RAWeb::LastHttpResults.Clear();
-
+	RAWeb::ms_LastHttpResults.Clear();
 	return 0;
 }
 
@@ -803,7 +796,7 @@ void RAWeb::RA_KillHTTPThreads()
 RequestObject* HttpResults::PopNextItem()
 {
 	RequestObject* pRetVal = NULL;
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		if( m_aRequests.size() > 0 )
 		{
@@ -811,7 +804,7 @@ RequestObject* HttpResults::PopNextItem()
 			m_aRequests.pop_front();
 		}
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 
 	return pRetVal;
 }
@@ -819,27 +812,27 @@ RequestObject* HttpResults::PopNextItem()
 const RequestObject* HttpResults::PeekNextItem() const
 {
 	RequestObject* pRetVal = NULL;
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		pRetVal = m_aRequests.front();
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 		
 	return pRetVal; 
 }
 
 void HttpResults::PushItem( RequestObject* pObj )
 { 
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		m_aRequests.push_front( pObj ); 
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 }
 
 void HttpResults::Clear()
 { 
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		while( !m_aRequests.empty() )
 		{
@@ -848,17 +841,17 @@ void HttpResults::Clear()
 			SAFE_DELETE( pObj );
 		}
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 }
 
 size_t HttpResults::Count() const
 { 
 	size_t nCount = 0;
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		nCount = m_aRequests.size();
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 
 	return nCount;
 }
@@ -866,7 +859,7 @@ size_t HttpResults::Count() const
 BOOL HttpResults::PageRequestExists( RequestType nType, const std::string& sData ) const
 {
 	BOOL bRetVal = FALSE;
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 	{
 		std::deque<RequestObject*>::const_iterator iter = m_aRequests.begin();
 		while( iter != m_aRequests.end() )
@@ -882,7 +875,7 @@ BOOL HttpResults::PageRequestExists( RequestType nType, const std::string& sData
 			iter++;
 		}
 	}
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
+	ReleaseMutex( RAWeb::Mutex() );
 
 	return bRetVal;
 }

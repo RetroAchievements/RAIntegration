@@ -1,28 +1,22 @@
 #pragma once
 
-#include <stddef.h>
-#include <assert.h>
+#include <Windows.h>
+#include <WindowsX.h>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <queue>
+#include <deque>
 #include <map>
-#include <Windows.h>
-#include <WindowsX.h>
-#include <io.h>
-#include <CommCtrl.h>
-#include <direct.h>
+//#include <CommCtrl.h>
+//#include <direct.h>
 #include <ShlObj.h>
-#include <time.h>
 #include <tchar.h>
+#include <assert.h>
 
 #ifndef RA_EXPORTS
 
-//NB. These must ONLY accessible from the emulator!
-//#define RAGENS_VERSION			"0.051"
-//#define RASNES9X_VERSION		"0.016"
-//#define RAVBA_VERSION			"0.019"
-//#define RANES_VERSION			"0.009"
-//#define RAPCE_VERSION			"0.002"
+//	Version Information is integrated into tags
 
 #else
 

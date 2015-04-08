@@ -15,7 +15,7 @@
 #include "RA_Resource.h"
 
 //static 
-LocalRAUser RAUsers::LocalUser("");
+LocalRAUser RAUsers::ms_LocalUser("");
 std::map<std::string, RAUser*> RAUsers::UserDatabase;
 
 //static 

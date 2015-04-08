@@ -216,7 +216,7 @@ const int Dlg_AchievementEditor::AddCondition( HWND hList, const Condition& Cond
 		ListView_SetItem( hList, &item );
 	}
 
-	assert( item.iItem == m_nNumOccupiedRows );
+	ASSERT( item.iItem == m_nNumOccupiedRows );
 
 	m_nNumOccupiedRows++;
 	return item.iItem;
@@ -549,8 +549,9 @@ BOOL CreateIPE( int nItem, int nSubItem )
 	switch( nSubItem )
 	{
 	case CSI_ID:
-		assert(0);	//	nothing we do if we click the first element!
+		ASSERT( !"First element does nothing!" );	//	nothing we do if we click the first element!
 		break;
+
 	case CSI_GROUP:
 		{
 			//	Group: BOOL (dropdown?)
@@ -601,7 +602,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 		{
 			//	Type: dropdown
 
-			assert( g_hIPEEdit == NULL );
+			ASSERT( g_hIPEEdit == NULL );
 			if( g_hIPEEdit )
 				break;
 
@@ -620,7 +621,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			if( g_hIPEEdit == NULL )
 			{
-				assert(0);
+				ASSERT( !"Could not create edit box!" );
 				MessageBox( NULL, "Could not create edit box.", "Error", MB_OK | MB_ICONERROR );
 				break;
 			};
@@ -658,7 +659,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 	case CSI_SIZE_TGT:
 		{
 			//	Size: dropdown
-			assert( g_hIPEEdit == NULL );
+			ASSERT( g_hIPEEdit == NULL );
 			if( g_hIPEEdit )
 				break;
 
@@ -682,7 +683,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			if( g_hIPEEdit == NULL )
 			{
-				assert(0);
+				ASSERT( !"Could not create combo box!" );
 				MessageBox( NULL, "Could not create combo box.", "Error", MB_OK | MB_ICONERROR );
 				break;
 			};
@@ -744,7 +745,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 	case CSI_VALUE_SRC:	//	Mem/Val: edit
 	case CSI_VALUE_TGT: //	Mem/Val: edit
 		{
-			assert( g_hIPEEdit == NULL );
+			ASSERT( g_hIPEEdit == NULL );
 			if( g_hIPEEdit )
 				break;
 
@@ -761,7 +762,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			if( g_hIPEEdit == NULL )
 			{
-				assert(0);
+				ASSERT( !"Could not create edit box!" );
 				MessageBox( NULL, "Could not create edit box.", "Error", MB_OK | MB_ICONERROR );
 				break;
 			};
@@ -1136,7 +1137,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 				//	Pressed Upload Badge
 // 				//	Special case for image:
 // 				HWND hPic = GetDlgItem( hDlg, IDC_RA_CHEEVOPIC );
-// 				assert( hPic );
+// 				ASSERT( hPic );
 // 				RECT rc;
 // 				if( GetClientRect( hPic, &rc ) )
  				{
@@ -1333,7 +1334,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 					//	http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
 					HWND hList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
-					assert( hList != NULL );
+					ASSERT( hList != NULL );
 
 					//	Note: first item should be an ID!
 					if( pOnClick->iItem != -1 && pOnClick->iSubItem != 0 )

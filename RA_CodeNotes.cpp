@@ -89,11 +89,11 @@ void CodeNotes::Add( const ByteAddress& nAddr, const std::string& sAuthor, const
 	else
 		m_CodeNotes.at( nAddr ).SetNote( sNote );
 
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{ 
 		PostArgs args;
-		args['u'] = RAUsers::LocalUser.Username();
-		args['t'] = RAUsers::LocalUser.Token();
+		args['u'] = RAUsers::LocalUser().Username();
+		args['t'] = RAUsers::LocalUser().Token();
 		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 		args['m'] = std::to_string( nAddr );
 		args['n'] = sNote;
@@ -121,11 +121,11 @@ BOOL CodeNotes::Remove( const ByteAddress& nAddr )
 
 	m_CodeNotes.erase( nAddr );
 	
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{
 		PostArgs args;
-		args['u'] = RAUsers::LocalUser.Username();
-		args['t'] = RAUsers::LocalUser.Token();
+		args['u'] = RAUsers::LocalUser().Username();
+		args['t'] = RAUsers::LocalUser().Token();
 		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 		args['m'] = std::to_string( nAddr );
 		args['n'] = "";

@@ -268,7 +268,7 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	//	Deal with secret:
 	char sPostCode[2048];
 	sprintf_s( sPostCode, "%sSECRET%dSEC%s%dRE2%d",
-		RAUsers::LocalUser.Username().c_str(),
+		RAUsers::LocalUser().Username().c_str(),
 		Ach.ID(),
 		sMem,
 		Ach.Points(),
@@ -277,8 +277,8 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	std::string sPostCodeHash = RAGenerateMD5( std::string( sPostCode ) );
 
 	PostArgs args;
-	args['u'] = RAUsers::LocalUser.Username();
-	args['p'] = RAUsers::LocalUser.Token();
+	args['u'] = RAUsers::LocalUser().Username();
+	args['p'] = RAUsers::LocalUser().Token();
 	args['i'] = std::to_string( Ach.ID() );
 	args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 	args['t'] = Ach.Title();
@@ -301,7 +301,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		BOOL bAllowCoreAchievementEdit = FALSE;
 
 		//	TBD: User authority
-		//if( RAUsers::LocalUser.GetAuthority() == 5 )
+		//if( RAUsers::LocalUser().GetAuthority() == 5 )
 		//	bAllowCoreAchievementEdit = TRUE;
 
 		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
@@ -571,7 +571,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 				//	Add a new achievement with default params
 				Achievement& Cheevo = g_pActiveAchievements->AddAchievement();
-				Cheevo.SetAuthor( RAUsers::LocalUser.Username() );
+				Cheevo.SetAuthor( RAUsers::LocalUser().Username() );
 
 				//	Reverse find where I am in the list:
 				unsigned int nOffset = 0;
@@ -611,7 +611,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				Achievement& NewClone = LocalAchievements->AddAchievement();
 				NewClone.Set( Ach );
 				NewClone.SetID( 0 );
-				NewClone.SetAuthor( RAUsers::LocalUser.Username() );
+				NewClone.SetAuthor( RAUsers::LocalUser().Username() );
 				char buffer[256];
 				sprintf_s( buffer, 256, "%s (copy)", NewClone.Title() );
 				NewClone.SetTitle( buffer );

@@ -1,44 +1,33 @@
-//#if defined RA_VBA
-//#include "stdafx.h"
-//#endif
-
-//#include <Windows.h>
-//#include <stdio.h>
-//#include <direct.h>
-//#include <shlobj.h>
-//#include <string>
-//#include <map>
-//#include <time.h>
-//#include <sstream>
-#include <locale>
-#include <codecvt>
+#include "RA_Core.h"
 
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
-#include "RA_Interface.h"
-#include "RA_Defs.h"
-#include "RA_Core.h"
-#include "RA_Resource.h"
-#include "RA_Leaderboard.h"
-#include "RA_MemManager.h"
-#include "RA_CodeNotes.h"
-
-#include "RA_Dlg_Login.h"
-#include "RA_Dlg_Memory.h"
-#include "RA_Dlg_GameTitle.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_AchievementsReporter.h"
-#include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_RomChecksum.h"
-
 #include "RA_AchievementOverlay.h"
+#include "RA_CodeNotes.h"
+#include "RA_Defs.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_PopupWindows.h"
+#include "RA_Interface.h"
+#include "RA_Leaderboard.h"
 #include "RA_md5factory.h"
-#include "RA_User.h"
+#include "RA_MemManager.h"
+#include "RA_PopupWindows.h"
+#include "RA_Resource.h"
 #include "RA_RichPresence.h"
+#include "RA_User.h"
+
+#include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_AchievementsReporter.h"
+#include "RA_Dlg_GameLibrary.h"
+#include "RA_Dlg_GameTitle.h"
+#include "RA_Dlg_Login.h"
+#include "RA_Dlg_Memory.h"
+#include "RA_Dlg_RomChecksum.h"
+
+#include <locale>
+#include <codecvt>
+#include <direct.h>
 
 
 
@@ -243,11 +232,11 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 	RAWeb::CreateThreadedHTTPRequest( RequestLatestClientPage, args );	//	g_sGetLatestClientPage
 	
 	//	TBD:
-	//if( RAUsers::LocalUser.Username().length() > 0 )
+	//if( RAUsers::LocalUser().Username().length() > 0 )
 	//{
 	//	args.clear();
-	//	args[ 'u' ] = RAUsers::LocalUser.Username();
-	//	args[ 't' ] = RAUsers::LocalUser.Token();
+	//	args[ 'u' ] = RAUsers::LocalUser().Username();
+	//	args[ 't' ] = RAUsers::LocalUser().Token();
 	//	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
 	//}
 	
@@ -369,8 +358,8 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 	{
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
-		args['u'] = RAUsers::LocalUser.Username();
-		args['t'] = RAUsers::LocalUser.Token();
+		args['u'] = RAUsers::LocalUser().Username();
+		args['t'] = RAUsers::LocalUser().Token();
 		args['m'] = g_sCurrentROMMD5;
 
 		Document doc;
@@ -410,7 +399,7 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 
 	if( nGameID != 0 )
 	{ 
-		if( RAUsers::LocalUser.IsLoggedIn() )
+		if( RAUsers::LocalUser().IsLoggedIn() )
 		{
 			//	Delete Core and Unofficial Achievements so they are redownloaded every time:
 			AchievementSet::DeletePatchFile( Core, nGameID );
@@ -418,7 +407,7 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 			AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
 			AchievementSet::LoadFromFile( nGameID );
 
-			RAUsers::LocalUser.PostActivity( PlayerStartedPlaying );
+			RAUsers::LocalUser().PostActivity( PlayerStartedPlaying );
 		}
 	}
 	else
@@ -532,9 +521,9 @@ API BOOL CCONV _RA_OfferNewRAUpdate( const char* sNewVer )
 
 API int CCONV _RA_HandleHTTPResults()
 {
-	WaitForSingleObject( RAWeb::g_hHTTPMutex, INFINITE );
+	WaitForSingleObject( RAWeb::Mutex(), INFINITE );
 
-	RequestObject* pObj = RAWeb::LastHttpResults.PopNextItem();
+	RequestObject* pObj = RAWeb::PopNextHttpResult();
 	while( pObj	!= NULL )
 	{
 		if( pObj->GetResponse().size() > 0 )
@@ -554,13 +543,12 @@ API int CCONV _RA_HandleHTTPResults()
 			switch( pObj->GetRequestType() )
 			{
 			case RequestLogin:
-				RAUsers::LocalUser.HandleSilentLoginResponse( doc );
+				RAUsers::LocalUser().HandleSilentLoginResponse( doc );
 				break;
 
 			case RequestBadge:
 				{
 					SetCurrentDirectory( g_sHomeDir.c_str() );
-
 					const std::string& sBadgeURI = pObj->GetData();
 					_WriteBufferToFile( RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse() );
 
@@ -590,19 +578,26 @@ API int CCONV _RA_HandleHTTPResults()
 			case RequestScore:
 				{
 					ASSERT( doc["Success"].GetBool() );
-
-					const std::string& sUser = doc["User"].GetString();
-					unsigned int nScore = doc["Score"].GetUint();
-					RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
-
-					if( sUser.compare( RAUsers::LocalUser.Username() ) == 0 )
+					if( doc[ "Success" ].GetBool() && doc.HasMember( "User" ) && doc.HasMember( "Score" ) )
 					{
-						RAUsers::LocalUser.SetScore( nScore );
+						const std::string& sUser = doc[ "User" ].GetString();
+						unsigned int nScore = doc[ "Score" ].GetUint();
+						RA_LOG( "%s's score: %d", sUser.c_str(), nScore );
+
+						if( sUser.compare( RAUsers::LocalUser().Username() ) == 0 )
+						{
+							RAUsers::LocalUser().SetScore( nScore );
+						}
+						else
+						{
+							//	Find friend? Update this information?
+							RAUsers::GetUser( sUser )->SetScore( nScore );
+						}
 					}
 					else
 					{
-						//	Find friend? Update this information?
-						RAUsers::GetUser( sUser )->SetScore( nScore );
+						ASSERT( !"RequestScore bad response!?" );
+						RA_LOG( "RequestScore bad response!?" );
 					}
 				}
 				break;
@@ -632,16 +627,22 @@ API int CCONV _RA_HandleHTTPResults()
 							}
 						}
 					}
+					else
+					{
+						ASSERT( !"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!" );
+						RA_LOG( "RequestLatestClientPage responded, but 'LatestVersion' cannot be found?" );
+					}
 				}
 				break;
 
 			case RequestSubmitAwardAchievement:
 				{
 					//	Response to an achievement being awarded:
-					const Achievement* pAch = CoreAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
-					if( pAch == NULL )
-						pAch = UnofficialAchievements->Find( static_cast<AchievementID>( doc["AchievementID"].GetUint() ) );
-					if( pAch != NULL )
+					AchievementID nAchID = static_cast<AchievementID>( doc[ "AchievementID" ].GetUint() );
+					const Achievement* pAch = CoreAchievements->Find( nAchID );
+					if( pAch == nullptr )
+						pAch = UnofficialAchievements->Find( nAchID );
+					if( pAch != nullptr )
 					{
 						if( !doc.HasMember("Error") )
 						{
@@ -652,7 +653,7 @@ API int CCONV _RA_HandleHTTPResults()
 											  pAch->BadgeImage() ) );
 							g_AchievementsDialog.OnGet_Achievement( *pAch );
 					
-							RAUsers::LocalUser.SetScore( doc["Score"].GetUint() );
+							RAUsers::LocalUser().SetScore( doc["Score"].GetUint() );
 						}
 						else
 						{
@@ -669,6 +670,11 @@ API int CCONV _RA_HandleHTTPResults()
 
 							//MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
 						}
+					}
+					else
+					{
+						ASSERT( !"RequestSubmitAwardAchievement responded, but cannot find achievement ID!" );
+						RA_LOG( "RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID );
 					}
 				}
 				break;
@@ -703,11 +709,10 @@ API int CCONV _RA_HandleHTTPResults()
 		}
 
 		SAFE_DELETE( pObj );
-		pObj = RAWeb::LastHttpResults.PopNextItem();
+		pObj = RAWeb::PopNextHttpResult();
 	}
 
-	ReleaseMutex( RAWeb::g_hHTTPMutex );
-
+	ReleaseMutex( RAWeb::Mutex() );
 	return 0;
 }
 
@@ -715,7 +720,7 @@ API int CCONV _RA_HandleHTTPResults()
 API HMENU CCONV _RA_CreatePopupMenu()
 {
 	HMENU hRA = CreatePopupMenu();
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
@@ -758,8 +763,8 @@ API int CCONV _RA_UpdateAppTitle( const char* sMessage )
 	if( sMessage != NULL )
 		sstr << " - " << sMessage;
 
-	if( RAUsers::LocalUser.IsLoggedIn() )
-		sstr << " - " << RAUsers::LocalUser.Username();
+	if( RAUsers::LocalUser().IsLoggedIn() )
+		sstr << " - " << RAUsers::LocalUser().Username();
 
 	SetWindowText( g_RAMainWnd, sstr.str().c_str() );
 	return 0;
@@ -879,9 +884,9 @@ API void CCONV _RA_LoadPreferences()
 		else
 		{
 			if( doc.HasMember( "Username" ) )
-				RAUsers::LocalUser.SetUsername( doc["Username"].GetString() );
+				RAUsers::LocalUser().SetUsername( doc["Username"].GetString() );
 			if( doc.HasMember( "Token" ) )
-				RAUsers::LocalUser.SetToken( doc["Token"].GetString() );
+				RAUsers::LocalUser().SetToken( doc["Token"].GetString() );
 			if( doc.HasMember( "Hardcore Active" ) )
 				g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
 			if( doc.HasMember( "Num Background Threads" ) )
@@ -913,8 +918,8 @@ API void CCONV _RA_SavePreferences()
 		doc.SetObject();
 
 		Document::AllocatorType& a = doc.GetAllocator();
-		doc.AddMember( "Username", StringRef( RAUsers::LocalUser.Username().c_str() ), a );
-		doc.AddMember( "Token", StringRef( RAUsers::LocalUser.Token().c_str() ), a );
+		doc.AddMember( "Username", StringRef( RAUsers::LocalUser().Username().c_str() ), a );
+		doc.AddMember( "Token", StringRef( RAUsers::LocalUser().Token().c_str() ), a );
 		doc.AddMember( "Hardcore Active", g_bHardcoreModeActive, a );
 		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
 		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
@@ -932,8 +937,8 @@ void _FetchGameHashLibraryFromWeb()
 {
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
-	args['u'] = RAUsers::LocalUser.Username();
-	args['t'] = RAUsers::LocalUser.Token();
+	args['u'] = RAUsers::LocalUser().Username();
+	args['t'] = RAUsers::LocalUser().Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestHashLibrary, args, Response ) )
 		_WriteBufferToFile( RA_GAME_HASH_FILENAME, Response );
@@ -943,8 +948,8 @@ void _FetchGameTitlesFromWeb()
 {
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
-	args['u'] = RAUsers::LocalUser.Username();
-	args['t'] = RAUsers::LocalUser.Token();
+	args['u'] = RAUsers::LocalUser().Username();
+	args['t'] = RAUsers::LocalUser().Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestGamesList, args, Response ) )
 		_WriteBufferToFile( RA_GAME_LIST_FILENAME, Response );
@@ -954,8 +959,8 @@ void _FetchMyProgressFromWeb()
 {
 	PostArgs args;
 	args['c'] = std::to_string( g_ConsoleID );
-	args['u'] = RAUsers::LocalUser.Username();
-	args['t'] = RAUsers::LocalUser.Token();
+	args['u'] = RAUsers::LocalUser().Username();
+	args['t'] = RAUsers::LocalUser().Token();
 	DataStream Response; 
 	if( RAWeb::DoBlockingRequest( RequestAllProgress, args, Response ) )
 		_WriteBufferToFile( RA_MY_PROGRESS_FILENAME, Response );
@@ -1016,7 +1021,7 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 			break;
 
 		case IDM_RA_FILES_LOGOUT:
-			RAUsers::LocalUser.Clear();
+			RAUsers::LocalUser().Clear();
 			g_PopupWindows.Clear();
 			_RA_SavePreferences();
 			_RA_UpdateAppTitle();
@@ -1066,11 +1071,11 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 			//break;
 
 		case IDM_RA_OPENUSERPAGE:
-			if( RAUsers::LocalUser.IsLoggedIn() )
+			if( RAUsers::LocalUser().IsLoggedIn() )
 			{
 				ShellExecute( NULL,
 					"open",
-					( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser.Username() ).c_str(),
+					( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser().Username() ).c_str(),
 					NULL,
 					NULL,
 					SW_SHOWNORMAL );
@@ -1160,18 +1165,18 @@ API void CCONV _RA_SetPaused( bool bIsPaused )
 
 API const char* CCONV _RA_Username()
 {
-	return RAUsers::LocalUser.Username().c_str();
+	return RAUsers::LocalUser().Username().c_str();
 }
 
 API void CCONV _RA_AttemptLogin( bool bBlocking )
 {
-	RAUsers::LocalUser.AttemptLogin( bBlocking );
+	RAUsers::LocalUser().AttemptLogin( bBlocking );
 }
 
 API void CCONV _RA_OnSaveState( const char* sFilename )
 {
 	//	Save State is being allowed by app (user was warned!)
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{
 		if( g_bHardcoreModeActive )
 		{
@@ -1190,7 +1195,7 @@ API void CCONV _RA_OnSaveState( const char* sFilename )
 API void CCONV _RA_OnLoadState( const char* sFilename )
 {
 	//	Save State is being allowed by app (user was warned!)
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{
 		if( g_bHardcoreModeActive )
 		{
@@ -1208,7 +1213,7 @@ API void CCONV _RA_OnLoadState( const char* sFilename )
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-	if( RAUsers::LocalUser.IsLoggedIn() )
+	if( RAUsers::LocalUser().IsLoggedIn() )
 	{
 		g_pActiveAchievements->Test();
 		g_LeaderboardManager.Test();
@@ -1229,7 +1234,7 @@ void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnp
 
 API bool _RA_UserLoggedIn()
 {
-	return( RAUsers::LocalUser.IsLoggedIn() == TRUE );
+	return( RAUsers::LocalUser().IsLoggedIn() == TRUE );
 }
 
 

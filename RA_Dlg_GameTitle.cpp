@@ -112,8 +112,8 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				}
 
 				PostArgs args;
-				args['u'] = RAUsers::LocalUser.Username();
-				args['t'] = RAUsers::LocalUser.Token();
+				args['u'] = RAUsers::LocalUser().Username();
+				args['t'] = RAUsers::LocalUser().Token();
 				args['m'] = m_sMD5;
 				args['i'] = sSelectedTitle;
 				args['c'] = std::to_string( g_ConsoleID );
@@ -217,7 +217,7 @@ void Dlg_GameTitle::DoModalDialog( HINSTANCE hInst, HWND hParent, std::string& s
 	if( sMD5InOut.length() == 0 )
 		return;
 
-	if( !RAUsers::LocalUser.IsLoggedIn() )
+	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;
 
 	g_GameTitleDialog.m_sMD5 = sMD5InOut;

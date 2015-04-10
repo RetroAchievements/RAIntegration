@@ -20,7 +20,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 	{
 	case WM_INITDIALOG:
 
-		SetDlgItemText( hDlg, IDC_RA_USERNAME, RAUsers::LocalUser().Username().c_str() );
+		SetDlgItemText( hDlg, IDC_RA_USERNAME, Widen( RAUsers::LocalUser().Username() ).c_str() );
 		if( RAUsers::LocalUser().Username().length() > 2 )
 		{
 			HWND hPass = GetDlgItem( hDlg, IDC_RA_PASSWORD );
@@ -37,24 +37,21 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 		{
 		case IDOK:
 			{
-				char sUserEntry[ 64 ];
-				char sPassEntry[ 64 ];
-				ZeroMemory( sUserEntry, 64 );
-				ZeroMemory( sPassEntry, 64 );
-
 				BOOL bValid = TRUE;
-				bValid &= ( GetDlgItemText( hDlg, IDC_RA_USERNAME, sUserEntry, 64 ) != 0 );
-				bValid &= ( GetDlgItemText( hDlg, IDC_RA_PASSWORD, sPassEntry, 64 ) != 0 );
+				wchar_t sUserEntry[ 64 ];
+				bValid &= ( GetDlgItemText( hDlg, IDC_RA_USERNAME, sUserEntry, 64 ) > 0 );
+				wchar_t sPassEntry[ 64 ];
+				bValid &= ( GetDlgItemText( hDlg, IDC_RA_PASSWORD, sPassEntry, 64 ) > 0 );
 
-				if( !bValid || strlen( sUserEntry ) < 0 || strlen( sPassEntry ) < 0 )
+				if( !bValid || lstrlen( sUserEntry ) < 0 || lstrlen( sPassEntry ) < 0 )
 				{
-					MessageBox( NULL, "Username/password not valid! Please check and reenter", "Error!", MB_OK );
+					MessageBox( nullptr, L"Username/password not valid! Please check and reenter", L"Error!", MB_OK );
 					return TRUE;
 				}
 
 				PostArgs args;
-				args['u'] = sUserEntry;
-				args['p'] = sPassEntry;		//	Plaintext password(!)
+				args[ 'u' ] = Narrow( sUserEntry );
+				args[ 'p' ] = Narrow( sPassEntry );		//	Plaintext password(!)
 				
 				Document doc;
 				if( RAWeb::DoBlockingRequest( RequestLogin, args, doc ) )
@@ -62,17 +59,17 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 					std::string sResponse;
 					std::string sResponseTitle;
 
-					if( doc["Success"].GetBool() )
+					if( doc[ "Success" ].GetBool() )
 					{
-						const std::string& sUser = doc["User"].GetString();
-						const std::string& sToken = doc["Token"].GetString();
-						const unsigned int nPoints = doc["Score"].GetUint();
-						const unsigned int nUnreadMessages = doc["Messages"].GetUint();
-						
+						const std::string& sUser = doc[ "User" ].GetString();
+						const std::string& sToken = doc[ "Token" ].GetString();
+						const unsigned int nPoints = doc[ "Score" ].GetUint();
+						const unsigned int nUnreadMessages = doc[ "Messages" ].GetUint();
+
 						bool bRememberLogin = ( IsDlgButtonChecked( hDlg, IDC_RA_SAVEPASSWORD ) != BST_UNCHECKED );
-						
+
 						RAUsers::LocalUser().ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, bRememberLogin );
-						
+
 						sResponse = "Logged in as " + sUser + ".";
 						sResponseTitle = "Logged in Successfully!";
 
@@ -81,13 +78,13 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 					else
 					{
 						sResponse = std::string( "Failed!\r\n" ) +
-									std::string( "Response From Server:\r\n" ) +
-									doc["Error"].GetString();
+							std::string( "Response From Server:\r\n" ) +
+							doc[ "Error" ].GetString();
 						sResponseTitle = "Error logging in!";
 					}
 
-					MessageBox( hDlg, sResponse.c_str(), sResponseTitle.c_str(), MB_OK );
-					
+					MessageBox( hDlg, Widen( sResponse ).c_str(), Widen( sResponseTitle ).c_str(), MB_OK );
+
 					//	If we are now logged in
 					if( RAUsers::LocalUser().IsLoggedIn() )
 					{
@@ -99,11 +96,11 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 				}
 				else
 				{
-					if( !doc.HasParseError() && doc.HasMember("Error") )
-						MessageBox( hDlg, ( std::string( "Server error: " ) + std::string( doc["Error"].GetString() ) ).c_str(), "Error!", MB_OK );
+					if( !doc.HasParseError() && doc.HasMember( "Error" ) )
+						MessageBox( hDlg, Widen( std::string( "Server error: " ) + std::string( doc[ "Error" ].GetString() ) ).c_str(), L"Error!", MB_OK );
 					else
-						MessageBox( hDlg, "Unknown error connecting... please try again!", "Error!", MB_OK );
-					
+						MessageBox( hDlg, L"Unknown error connecting... please try again!", L"Error!", MB_OK );
+
 					return TRUE;	//	==Handled
 				}
 			}

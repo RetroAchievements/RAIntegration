@@ -1,22 +1,14 @@
 #include "RA_Dlg_Achievement.h"
 
-//#include <windows.h>
-//#include <windowsx.h>
-//#include <CommCtrl.h>
-//#include <stdio.h>
-//#include <assert.h>
-//#include <shellapi.h>
-
-#include "RA_Defs.h"
-#include "RA_Core.h"
-#include "RA_Resource.h"
-
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
+#include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
+#include "RA_Resource.h"
 #include "RA_User.h"
 
 
@@ -42,35 +34,30 @@ Dlg_Achievements::Dlg_Achievements()
 void Dlg_Achievements::SetupColumns( HWND hList )
 {
 	//	Remove all columns and data.
-	BOOL bDeleted = TRUE;
-	while( bDeleted )
-		bDeleted = ListView_DeleteColumn( hList, 0 );
-
+	while( ListView_DeleteColumn( hList, 0 ) == TRUE )
+	{}
 	ListView_DeleteAllItems( hList );
 	
 	for( int i = 0; i < NUM_COLS; ++i )
 	{
-		const int BUF_SIZE = 256;
-		char buffer[ BUF_SIZE ];
-
+		const char* sColTitle = nullptr;
 		if( g_nActiveAchievementSet == Core )
-			sprintf_s( buffer, BUF_SIZE, COLUMN_TITLES_CORE[ i ] );
+			sColTitle = COLUMN_TITLES_CORE[ i ];
 		else if( g_nActiveAchievementSet == Unofficial )
-			sprintf_s( buffer, BUF_SIZE, COLUMN_TITLES_UNOFFICIAL[ i ] );
+			sColTitle = COLUMN_TITLES_UNOFFICIAL[ i ];
 		else if( g_nActiveAchievementSet == Local )
-			sprintf_s( buffer, BUF_SIZE, COLUMN_TITLES_LOCAL[ i ] );
+			sColTitle = COLUMN_TITLES_LOCAL[ i ];
 		
 		LV_COLUMN newColumn;
 		ZeroMemory( &newColumn, sizeof( newColumn ) );
-		
 		newColumn.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM|LVCF_FMT;
 		newColumn.fmt = LVCFMT_LEFT|LVCFMT_FIXED_WIDTH;
 		if( i == ( NUM_COLS - 1 ) )
 			newColumn.fmt |= LVCFMT_FILL; 
 		newColumn.cx = COLUMN_SIZE[ i ];
-
-		newColumn.pszText = buffer;
-		newColumn.cchTextMax = ( BUF_SIZE - 1 );
+		std::wstring sColTitleW = Widen( sColTitle );
+		newColumn.pszText = const_cast<LPWSTR>( sColTitleW.c_str() );	//	implicit non-const (!)
+		newColumn.cchTextMax = 255;
 		newColumn.iSubItem = i;
 		
 		ListView_InsertColumn( hList, i, &newColumn );
@@ -84,16 +71,16 @@ void Dlg_Achievements::SetupColumns( HWND hList )
 LRESULT ProcessCustomDraw( LPARAM lParam )
 {
 	LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>( lParam );
-
-	switch(lplvcd->nmcd.dwDrawStage) 
+	switch( lplvcd->nmcd.dwDrawStage )
 	{
-	case CDDS_PREPAINT : //Before the paint cycle begins
-		//request notifications for individual listview items
+	case CDDS_PREPAINT:
+		//	Before the paint cycle begins
+		//	request notifications for individual listview items
 		return CDRF_NOTIFYITEMDRAW;
 
 	case CDDS_ITEMPREPAINT: //Before an item is drawn
 		{
-			int nNextItem = (int)lplvcd->nmcd.dwItemSpec;
+			int nNextItem = static_cast<int>( lplvcd->nmcd.dwItemSpec );
 
 			if( static_cast<size_t>( nNextItem ) < g_pActiveAchievements->NumAchievements() )
 			{
@@ -145,7 +132,7 @@ LRESULT ProcessCustomDraw( LPARAM lParam )
 
 void Dlg_Achievements::RemoveAchievement( HWND hList, int nIter )
 {
-	assert( nIter < ListView_GetItemCount( hList ) );
+	ASSERT( nIter < ListView_GetItemCount( hList ) );
 	ListView_DeleteItem( hList, nIter );
 	m_lbxData.erase( m_lbxData.begin() + nIter );
 }
@@ -156,7 +143,6 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 	newRow.resize( NUM_COLS );
 
 	//	Add to our local array:
-
 	newRow[ ID ] = std::to_string( Ach.ID() );
 	newRow[ Title ] = Ach.Title();
 	newRow[ Author ] = Ach.Author();
@@ -180,11 +166,11 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 	item.mask = LVIF_TEXT;
 	item.cchTextMax = 256;
 	item.iItem = static_cast<int>( m_lbxData.size() );
-	item.pszText = const_cast<LPSTR>( m_lbxData.back()[ID].data() );
 
 	for( item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem )
 	{
-		item.pszText = const_cast<LPSTR>( m_lbxData.back()[ item.iSubItem ].data() );
+		std::wstring sTextData = Widen( m_lbxData.back()[ item.iSubItem ].data() );	//	Cache this (stack) to ensure it lives until after ListView_*Item
+		item.pszText = const_cast<LPWSTR>( sTextData.c_str() );
 
 		if( item.iSubItem == 0 )
 			item.iItem = ListView_InsertItem( hList, &item );
@@ -196,56 +182,56 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 	return static_cast<size_t>( item.iItem );
 }
 
-BOOL LocalValidateAchievementsBeforeCommit( int nLbxItems[1] )
+BOOL LocalValidateAchievementsBeforeCommit( int nLbxItems[ 1 ] )
 {
-	char buffer[2048];
+	char buffer[ 2048 ];
 	for( size_t i = 0; i < 1; ++i )
 	{
-		int nIter = nLbxItems[i];
+		int nIter = nLbxItems[ i ];
 		const Achievement& Ach = g_pActiveAchievements->GetAchievement( nIter );
 		if( Ach.Title().length() < 2 )
 		{
 			sprintf_s( buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title() );
-			MessageBox( NULL, buffer, "Error!", MB_OK );
+			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 		if( Ach.Title().length() > 63 )
 		{
 			sprintf_s( buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.", Ach.Title() );
-			MessageBox( NULL, buffer, "Error!", MB_OK );
+			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 
 		if( Ach.Description().length() < 2 )
 		{
 			sprintf_s( buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.", Ach.Description() );
-			MessageBox( NULL, buffer, "Error!", MB_OK );
+			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 		if( Ach.Description().length() > 255 )
 		{
 			sprintf_s( buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.", Ach.Description() );
-			MessageBox( NULL, buffer, "Error!", MB_OK );
+			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 
 		char sIllegalChars[] = { '&', ':' };
 
-		const size_t nNumIllegalChars = sizeof(sIllegalChars) / sizeof(sIllegalChars[0]);
+		const size_t nNumIllegalChars = sizeof( sIllegalChars ) / sizeof( sIllegalChars[ 0 ] );
 		for( size_t i = 0; i < nNumIllegalChars; ++i )
 		{
-			char cNextChar = sIllegalChars[i];
+			char cNextChar = sIllegalChars[ i ];
 
-			if( strchr( Ach.Title().c_str(), cNextChar ) != NULL )
+			if( strchr( Ach.Title().c_str(), cNextChar ) != nullptr )
 			{
 				sprintf_s( buffer, 2048, "Achievement title contains an illegal character: '%c'\nPlease remove and try again", cNextChar );
-				MessageBox( NULL, buffer, "Error!", MB_OK );
+				MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 				return FALSE;
 			}
-			if( strchr( Ach.Description().c_str(), cNextChar ) != NULL )
+			if( strchr( Ach.Description().c_str(), cNextChar ) != nullptr )
 			{
 				sprintf_s( buffer, 2048, "Achievement description contains an illegal character: '%c'\nPlease remove and try again", cNextChar );
-				MessageBox( NULL, buffer, "Error!", MB_OK );
+				MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 				return FALSE;
 			}
 		}
@@ -298,28 +284,22 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 
 	if( nAchievementSet == Core )
 	{
-		BOOL bAllowCoreAchievementEdit = FALSE;
-
-		//	TBD: User authority
-		//if( RAUsers::LocalUser().GetAuthority() == 5 )
-		//	bAllowCoreAchievementEdit = TRUE;
-
 		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
 		g_AchievementEditorDialog.OnLoad_NewRom();
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), bAllowCoreAchievementEdit );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_CLONE_ACH ), TRUE );	//	Clone to user
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DEL_ACH ), bAllowCoreAchievementEdit );
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), FALSE );		//	Cannot add direct to Core
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_CLONE_ACH ), TRUE );		//	Clone to user
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DEL_ACH ), FALSE );		//	Cannot delete from Core (?)
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_REVERTSELECTED ), TRUE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), FALSE );
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), "Demote From Core" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), L"Demote From Core" );
 
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), "Reset Achieved Status" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), L"Reset Achieved Status" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), FALSE );
@@ -343,9 +323,9 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), TRUE );
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), "Promote To Core" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), L"Promote To Core" );
 
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), "Activate" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), L"Activate" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), TRUE );
@@ -369,9 +349,9 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), TRUE );
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), "Save Local" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_SAVELOCAL ), L"Save Local" );
 
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), "Activate" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), L"Activate" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), FALSE );
@@ -446,7 +426,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			//	Replace with background upload?
 			if( !RA_GameIsActive() )
 			{
-				MessageBox( hDlg, "ROM not loaded: please load a ROM first!", "Error!", MB_OK );
+				MessageBox( hDlg, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
 			}
 			else
 			{
@@ -455,11 +435,11 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					//if( g_pActiveAchievements->Save() )
 					if( FALSE ) //NIMPL
 					{
-						MessageBox( hDlg, "Saved OK!", "OK", MB_OK );
+						MessageBox( hDlg, L"Saved OK!", L"OK", MB_OK );
 					}
 					else
 					{
-						MessageBox( hDlg, "Error during save!", "Error", MB_OK|MB_ICONWARNING );
+						MessageBox( hDlg, L"Error during save!", L"Error", MB_OK|MB_ICONWARNING );
 					}
 				}
 				else if( g_nActiveAchievementSet == Unofficial )
@@ -473,12 +453,12 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 					//	Note: specify that this is a one-way operation
 					if( MessageBox( hDlg, 
-						"Promote this achievement to the Core Achievement set.\n\n"
-						"Please note this is a one-way operation, and will allow players\n"
-						"to officially obtain this achievement and the points for it.\n"
-						"Note: all players who have achieved it while it has been unofficial\n"
-						"will have to earn this again now it is in the core group.\n",
-						"Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
+						L"Promote this achievement to the Core Achievement set.\n\n"
+						L"Please note this is a one-way operation, and will allow players\n"
+						L"to officially obtain this achievement and the points for it.\n"
+						L"Note: all players who have achieved it while it has been unofficial\n"
+						L"will have to earn this again now it is in the core group.\n",
+						L"Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
 					{
 						const Achievement& selectedAch = g_pActiveAchievements->GetAchievement( nSel );
 										
@@ -506,18 +486,18 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 								//CoreAchievements->Save();
 								//UnofficialAchievements->Save();
 
-								MessageBox( hDlg, "Successfully uploaded achievement!", "Success!", MB_OK );
+								MessageBox( hDlg, L"Successfully uploaded achievement!", L"Success!", MB_OK );
 							}
 							else
 							{
 								MessageBox( hDlg, 
-											std::string( std::string( "Error in upload: response from server:" ) + response["Error"].GetString() ).c_str(), 
-											"Error in upload!", MB_OK );
+											Widen( std::string( "Error in upload: response from server:" ) + std::string( response[ "Error" ].GetString( ) ) ).c_str(),
+											L"Error in upload!", MB_OK );
 							}
 						}
 						else
 						{
-							MessageBox( hDlg, "Error connecting to server... are you online?", "Error in upload!", MB_OK );
+							MessageBox( hDlg, L"Error connecting to server... are you online?", L"Error in upload!", MB_OK );
 						}
 					}
 
@@ -536,10 +516,10 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					break;
 
 				if( MessageBox( hDlg, 
-					"Download fresh achievements from " RA_HOST "\n"
-					"Are you sure? This will overwrite any changes you have made\n"
-					"with fresh achievements from the server.\n",
-					"Are you sure?",
+					L"Download fresh achievements from " RA_HOST_URL_WIDE L"\n"
+					L"Are you sure? This will overwrite any changes you have made\n"
+					L"with fresh achievements from the server.\n",
+					L"Are you sure?",
 					MB_YESNO|MB_ICONWARNING ) == IDYES )
 				{
 					const GameID nGameID = g_pActiveAchievements->GetGameID();
@@ -565,7 +545,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			{
 				if( !RA_GameIsActive() )
 				{
-					MessageBox( hDlg, "ROM not loaded: please load a ROM first!", "Error!", MB_OK );
+					MessageBox( hDlg, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
 					break;
 				}
 
@@ -595,7 +575,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			{
 				if( !RA_GameIsActive() )
 				{
-					MessageBox( hDlg, "ROM not loaded: please load a ROM first!", "Error!", MB_OK );
+					MessageBox( hDlg, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
 					break;
 				}
 
@@ -627,7 +607,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			{
 				if( !RA_GameIsActive() )
 				{
-					MessageBox( hDlg, "ROM not loaded: please load a ROM first!", "Error!", MB_OK );
+					MessageBox( hDlg, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
 					break;
 				}
 
@@ -642,7 +622,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					if( Ach.ID() == 0 )
 					{
 						//	Local achievement
-						if( MessageBox( hDlg, "Remove Achievement: are you sure?", "Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
+						if( MessageBox( hDlg, L"Remove Achievement: are you sure?", L"Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
 						{
 							RemoveAchievement( hList, nSel );
 							g_pActiveAchievements->RemoveAchievement( nSel );
@@ -653,11 +633,11 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						//	This achievement exists on the server: must call SQL to remove!
 						//	Note: this is probably going to affect other users: frown on this D:
 						MessageBox( hDlg, 
-							"This achievement exists on " RA_HOST ".\n"
-							"\n"
-							"*Removing it will affect other gamers*\n"
-							"\n"
-							"Are you absolutely sure you want to delete this??", "Are you sure?", MB_YESNO|MB_ICONWARNING );
+							L"This achievement exists on " RA_HOST_URL_WIDE L".\n"
+							L"\n"
+							L"*Removing it will affect other gamers*\n"
+							L"\n"
+							L"Are you absolutely sure you want to delete this??", L"Are you sure?", MB_YESNO|MB_ICONWARNING );
 					}
 				}
 			}
@@ -690,7 +670,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				if( LocalValidateAchievementsBeforeCommit( nLbxItemsChecked ) == FALSE )
 					return FALSE;
 
-				char buffer[1024];
+				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, "Uploading the selected %d achievement(s)", nNumChecked );// with ID%s: ", nNumChecked, nNumChecked>1 ? "s" : "" );
 
 				strcat_s( buffer, "\n"
@@ -699,11 +679,11 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 				BOOL bErrorsEncountered = FALSE;
 
-				if( MessageBox( hDlg, buffer, "Are you sure?",MB_YESNO|MB_ICONWARNING ) == IDYES )
+				if( MessageBox( hDlg, Widen( buffer ).c_str(), L"Are you sure?",MB_YESNO|MB_ICONWARNING ) == IDYES )
 				{
 					for( size_t i = 0; i < nNumChecked; ++i )
 					{
-						Achievement& NextAch = g_pActiveAchievements->GetAchievement( nLbxItemsChecked[i] );
+						Achievement& NextAch = g_pActiveAchievements->GetAchievement( nLbxItemsChecked[ i ] );
 
 						BOOL bMovedFromUserToUnofficial = ( g_nActiveAchievementSet == Local );
 
@@ -718,16 +698,16 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						Document response;
 						if( AttemptUploadAchievementBlocking( NextAch, nFlags, response ) )
 						{
-							if( response["Success"].GetBool() )
+							if( response[ "Success" ].GetBool() )
 							{
-								const AchievementID nAchID = response["AchievementID"].GetUint();
+								const AchievementID nAchID = response[ "AchievementID" ].GetUint();
 								NextAch.SetID( nAchID );
 
 								//	Update listbox on achievements dlg
 
 								//sprintf_s( LbxDataAt( nLbxItemsChecked[i], 0 ), 32, "%d", nAchID );
-								LbxDataAt( nLbxItemsChecked[i], ID ) = std::to_string( nAchID );
-									
+								LbxDataAt( nLbxItemsChecked[ i ], ID ) = std::to_string( nAchID );
+
 								if( bMovedFromUserToUnofficial )
 								{
 									//	Remove the achievement from the local/user achievement set,
@@ -735,8 +715,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 									Achievement& NewAch = UnofficialAchievements->AddAchievement();
 									NewAch.Set( NextAch );
 									NewAch.SetModified( FALSE );
-									LocalAchievements->RemoveAchievement( nLbxItemsChecked[0] );
-									RemoveAchievement( hList, nLbxItemsChecked[0] );
+									LocalAchievements->RemoveAchievement( nLbxItemsChecked[ 0 ] );
+									RemoveAchievement( hList, nLbxItemsChecked[ 0 ] );
 
 									//LocalAchievements->Save();
 									//UnofficialAchievements->Save();
@@ -763,10 +743,9 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 							}
 							else
 							{
-								char buffer[1024];
-								sprintf_s(buffer, 1024, "Error!!\n%s", response["Error"].GetString() );
-
-								MessageBox( hDlg, buffer, "Error!", MB_OK );
+								char buffer[ 1024 ];
+								sprintf_s( buffer, 1024, "Error!!\n%s", std::string( response[ "Error" ].GetString() ).c_str() );
+								MessageBox( hDlg, Widen( buffer ).c_str(), L"Error!", MB_OK );
 								bErrorsEncountered = TRUE;
 							}
 						}
@@ -774,13 +753,13 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 					if( bErrorsEncountered )
 					{
-						MessageBox( hDlg, "Errors encountered!\nPlease recheck your data, or get latest.", "Errors!", MB_OK );
+						MessageBox( hDlg, L"Errors encountered!\nPlease recheck your data, or get latest.", L"Errors!", MB_OK );
 					}
 					else
 					{
-						char buffer[512];
+						char buffer[ 512 ];
 						sprintf_s( buffer, 512, "Successfully uploaded data for %d achievements!", nNumChecked );
-						MessageBox( hDlg, buffer, "Success!", MB_OK );
+						MessageBox( hDlg, Widen( buffer ).c_str(), L"Success!", MB_OK );
 
 						InvalidateRect( hDlg, NULL, TRUE );
 					}
@@ -788,43 +767,33 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 			}
 			break;
-		case IDC_RA_GOTOWIKI:
-			{
-				char buffer[512];
-
-				if( !RA_GameIsActive() || g_pActiveAchievements->GameTitle() == "" )
-				{
-					sprintf_s( buffer, 512, "\"http://%s/wiki/Main_Page\"", RA_HOST );
-				}
-				else
-				{
-					sprintf_s( buffer, 512, "\"http://%s/wiki/%s\"", RA_HOST, g_pActiveAchievements->GameTitle() );
-				}
-				
-				ShellExecute( NULL,
-					"open",
-					buffer,
-					NULL,
-					NULL,
-					SW_SHOWNORMAL );
-			}
-			break;
+		//case IDC_RA_GOTOWIKI:
+		//	{
+		//		char buffer[ 512 ];
+		//		if( !RA_GameIsActive() || g_pActiveAchievements->GameTitle() == "" )
+		//			sprintf_s( buffer, 512, "\"http://%s/wiki/Main_Page\"", RA_HOST_URL );
+		//		else
+		//			sprintf_s( buffer, 512, "\"http://%s/wiki/%s\"", RA_HOST_URL, g_pActiveAchievements->GameTitle() );
+		//		
+		//		ShellExecute( NULL,
+		//			L"open",
+		//			Widen( buffer ).c_str(),
+		//			NULL,
+		//			NULL,
+		//			SW_SHOWNORMAL );
+		//	}
+		//	break;
 		case IDC_RA_GOTOWEB:
 			{
-				char buffer[512];
-
-				if( !RA_GameIsActive() || (g_pActiveAchievements->GetGameID() == 0) )
-				{
-					sprintf_s( buffer, 512, "\"http://%s\"", RA_HOST );
-				}
+				char buffer[ 512 ];
+				if( !RA_GameIsActive() || ( g_pActiveAchievements->GetGameID() == 0 ) )
+					sprintf_s( buffer, 512, "\"http://%s\"", RA_HOST_URL );
 				else
-				{
-					sprintf_s( buffer, 512, "\"http://%s/Game/%d\"", RA_HOST, g_pActiveAchievements->GetGameID() );
-				}
+					sprintf_s( buffer, 512, "\"http://%s/Game/%d\"", RA_HOST_URL, g_pActiveAchievements->GetGameID() );
 
 				ShellExecute( NULL,
-					"open",
-					buffer,
+					L"open",
+					Widen( buffer ).c_str(),
 					NULL,
 					NULL,
 					SW_SHOWNORMAL );
@@ -848,8 +817,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						break;
 
 					if( MessageBox( hDlg,
-						"Attempt to revert this achievement from file?",
-						"Revert from file?", MB_YESNO ) == IDYES )
+						L"Attempt to revert this achievement from file?",
+						L"Revert from file?", MB_YESNO ) == IDYES )
 					{
 						//	Find Achievement with Ach.ID()
 						unsigned int nID = Cheevo.ID();
@@ -891,7 +860,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 						if( !bFound )
 						{
-							MessageBox( hDlg, "Couldn't find!", "Error!", MB_OK );
+							MessageBox( hDlg, L"Couldn't find!", L"Error!", MB_OK );
 						}
 						else
 						{
@@ -923,7 +892,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						if( g_nActiveAchievementSet != Core )
 							sMessage = "Activate this achievement?";
 
-						if( MessageBox( hDlg, sMessage, "Reset Achieved?", MB_YESNO ) == IDYES )
+						if( MessageBox( hDlg, Widen( sMessage ).c_str(), L"Reset Achieved?", MB_YESNO ) == IDYES )
 						{
 							Cheevo.Reset();
 							Cheevo.SetActive( true );
@@ -956,7 +925,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				case LVN_ITEMCHANGED:	//!?? LVN on a LPNMHDR?
 					{
 						iSelect = -1;
-						//MessageBox( NULL, "Item changed!", "TEST", MB_OK );
+						//MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
 						LPNMLISTVIEW pLVInfo = (LPNMLISTVIEW)lParam;
 						if( pLVInfo->iItem != -1 )
 						{
@@ -1005,7 +974,7 @@ void Dlg_Achievements::LoadAchievements( HWND hList )
 
 void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 {
-	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWIKI ), FALSE );
+	//EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWIKI ), FALSE );
 	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), FALSE );
 	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_UPLOAD_ACH ), FALSE );
 
@@ -1015,19 +984,19 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 		//SetupColumns( hList );
 		LoadAchievements( hList );
 
-		char buffer[256];
+		char buffer[ 256 ];
 		sprintf_s( buffer, 256, " %d", nGameID );
-		SetDlgItemText( m_hAchievementsDlg, IDC_RA_GAMEHASH, buffer );
+		SetDlgItemText( m_hAchievementsDlg, IDC_RA_GAMEHASH, Widen( buffer ).c_str() );
 
 		if( nGameID != 0 )
 		{
-			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWIKI ), TRUE );
+			//EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWIKI ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE);
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_UPLOAD_ACH ), TRUE );
 		}
 
 		sprintf_s( buffer, " %d", g_pActiveAchievements->NumAchievements() );
-		SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer );	
+		SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, Widen( buffer ).c_str() );	
 	}
 }
 
@@ -1085,7 +1054,7 @@ void Dlg_Achievements::OnEditData( size_t nItem, Column nColumn, const std::stri
 	if( nItem >= m_lbxData.size() )
 		return;
 
-	m_lbxData[nItem][nColumn] = sNewData;
+	m_lbxData[ nItem ][ nColumn ] = sNewData;
 
 	HWND hList = GetDlgItem( m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS );
 	if( hList != NULL )
@@ -1097,7 +1066,7 @@ void Dlg_Achievements::OnEditData( size_t nItem, Column nColumn, const std::stri
 		item.iItem = nItem;
 		item.iSubItem = nColumn;
 		item.cchTextMax = 256;
-		item.pszText = const_cast<LPSTR>( m_lbxData[nItem][nColumn].data() );
+		item.pszText = const_cast<LPWSTR>( Widen( m_lbxData[ nItem ][ nColumn ].data() ).c_str() );
 		if( ListView_SetItem( hList, &item ) == FALSE )
 		{
 			ASSERT( !"Failed to ListView_SetItem!" );

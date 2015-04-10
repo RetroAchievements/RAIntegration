@@ -14,8 +14,8 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc( HWND hDlg, UINT nMs
 	switch( nMsg )
 	{
 	case WM_INITDIALOG:
-		SetDlgItemText( hDlg, IDC_RA_ROMCHECKSUMTEXT, std::string( std::string( "ROM Checksum: " ) + g_sCurrentROMMD5 ).c_str() );
-		break;
+		SetDlgItemText( hDlg, IDC_RA_ROMCHECKSUMTEXT, Widen( std::string( "ROM Checksum: " ) + g_sCurrentROMMD5 ).c_str() );
+		return FALSE;
 
 	case WM_COMMAND:
 		switch( wParam )
@@ -23,7 +23,6 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc( HWND hDlg, UINT nMs
 		case IDOK:
 			EndDialog( hDlg, TRUE );
 			return TRUE;
-		break;
 
 		case IDC_RA_COPYCHECKSUMCLIPBOARD:
 			{
@@ -40,13 +39,16 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc( HWND hDlg, UINT nMs
 				//MessageBeep( 0xffffffff );
 			}
 			return TRUE;
+
+		default:
+			return FALSE;
 		}
-		break;
 
 	case WM_CLOSE:
 		EndDialog( hDlg, TRUE );
 		return TRUE;
-	}
 
-	return FALSE;	//	By default, return false to allow OS to call DefDlgProc itself!
+	default:
+		return FALSE;
+	}
 }

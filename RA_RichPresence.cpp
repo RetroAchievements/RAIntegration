@@ -253,7 +253,7 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 void RA_RichPresenceInterpretter::PersistAndParseScript( GameID nGameID, const std::string& str )
 {
 	//	Read to file:
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	_WriteBufferToFile( RA_DIR_DATA + std::to_string( nGameID ) + "-Rich.txt", str );
 						
 	//	Then install it

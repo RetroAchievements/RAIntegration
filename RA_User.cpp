@@ -141,17 +141,17 @@ void LocalRAUser::AttemptSilentLogin()
 
 void LocalRAUser::HandleSilentLoginResponse( Document& doc )
 {
-	if( doc.HasMember( "Success" ) && doc["Success"].GetBool() )
+	if( doc.HasMember( "Success" ) && doc[ "Success" ].GetBool() )
 	{
-		const std::string& sUser = doc["User"].GetString();
-		const std::string& sToken = doc["Token"].GetString();
-		const unsigned int nPoints = doc["Score"].GetUint();
-		const unsigned int nUnreadMessages = doc["Messages"].GetUint();
+		const std::string& sUser = doc[ "User" ].GetString();
+		const std::string& sToken = doc[ "Token" ].GetString();
+		const unsigned int nPoints = doc[ "Score" ].GetUint();
+		const unsigned int nUnreadMessages = doc[ "Messages" ].GetUint();
 		ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, TRUE );
 	}
 	else
 	{
-		MessageBox( NULL, "Silent login failed, please login again!", "Sorry!", MB_OK );
+		MessageBox( nullptr, L"Silent login failed, please login again!", L"Sorry!", MB_OK );
 	}
 }
 
@@ -195,23 +195,23 @@ void LocalRAUser::Logout()
 
 	m_bIsLoggedIn = FALSE;
 
-	MessageBox( NULL, "You are now logged out.", "Info", MB_OK );
+	MessageBox( nullptr, L"You are now logged out.", L"Info", MB_OK );
 }
 
 void LocalRAUser::OnFriendListResponse( const Document& doc )
 {
-	if( !doc.HasMember("Friends") )
+	if( !doc.HasMember( "Friends" ) )
 		return;
 
-	const Value& FriendData = doc["Friends"];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+	const Value& FriendData = doc[ "Friends" ];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
 
 	for( SizeType i = 0; i < FriendData.Size(); ++i )
 	{
-		const Value& NextFriend = FriendData[i];
+		const Value& NextFriend = FriendData[ i ];
 
-		RAUser* pUser = RAUsers::GetUser( NextFriend["Friend"].GetString() );
-		pUser->SetScore( NextFriend["RAPoints"].GetUint() );
-		pUser->UpdateActivity( NextFriend["LastSeen"].GetString() );
+		RAUser* pUser = RAUsers::GetUser( NextFriend[ "Friend" ].GetString() );
+		pUser->SetScore( NextFriend[ "RAPoints" ].GetUint() );
+		pUser->UpdateActivity( NextFriend[ "LastSeen" ].GetString() );
 	}
 }
 
@@ -233,12 +233,12 @@ RAUser* LocalRAUser::AddFriend( const std::string& sUser, unsigned int nScore )
 	std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
 	while( iter != m_aFriends.end() )
 	{
-		if( (*iter) == pUser )
+		if( ( *iter ) == pUser )
 			break;
 
 		iter++;
 	}
-	
+
 	if( iter == m_aFriends.end() )
 		m_aFriends.push_back( pUser );
 
@@ -249,13 +249,13 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 {
 	switch( nActivityType )
 	{
-		case PlayerStartedPlaying:
+	case PlayerStartedPlaying:
 		{
 			PostArgs args;
-			args['u'] = Username();
-			args['t'] = Token();
-			args['a'] = std::to_string( nActivityType );
-			args['m'] = std::to_string( g_pActiveAchievements->GetGameID() );
+			args[ 'u' ] = Username();
+			args[ 't' ] = Token();
+			args[ 'a' ] = std::to_string( nActivityType );
+			args[ 'm' ] = std::to_string( g_pActiveAchievements->GetGameID() );
 
 			RAWeb::CreateThreadedHTTPRequest( RequestPostActivity, args );
 			break;
@@ -270,7 +270,7 @@ void LocalRAUser::PostActivity( enum ActivityType nActivityType )
 
 void LocalRAUser::Clear()
 {
-	SetToken("");
+	SetToken( "" );
 	m_bIsLoggedIn = FALSE;
 }
 
@@ -279,8 +279,8 @@ RAUser* LocalRAUser::FindFriend( const std::string& sName )
 	std::vector<RAUser*>::iterator iter = m_aFriends.begin();
 	while( iter != m_aFriends.end() )
 	{
-		if( sName.compare( (*iter)->Username() ) == 0 )
+		if( sName.compare( ( *iter )->Username() ) == 0 )
 			return *iter;
 	}
-	return NULL;
+	return nullptr;
 }

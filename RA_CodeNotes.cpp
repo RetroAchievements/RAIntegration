@@ -18,7 +18,7 @@ size_t CodeNotes::Load( const std::string& sFile )
 {
 	Clear();
 	
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	FILE* pf = NULL;
 	if( fopen_s( &pf, sFile.c_str(), "rb" ) == 0 )
 	{
@@ -76,7 +76,7 @@ void CodeNotes::OnCodeNotesResponse( Document& doc )
 	//	Persist then reload
 	const GameID nGameID = doc["GameID"].GetUint();
 
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	_WriteBufferToFile( std::string( RA_DIR_DATA ) + std::to_string( nGameID ) + "-Notes2.txt", doc );
 
 	g_MemoryDialog.RepopulateMemNotesFromFile();
@@ -106,7 +106,7 @@ void CodeNotes::Add( const ByteAddress& nAddr, const std::string& sAuthor, const
 		}
 		else
 		{
-			MessageBox( g_RAMainWnd, "Could not save note! Please check you are online and retry.", "Error!", MB_OK|MB_ICONWARNING );
+			MessageBox( g_RAMainWnd, _T( "Could not save note! Please check you are online and retry." ), _T( "Error!" ), MB_OK|MB_ICONWARNING );
 		}
 	}
 }

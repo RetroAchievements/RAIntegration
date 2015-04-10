@@ -57,7 +57,7 @@ BOOL AchievementSet::DeletePatchFile( AchievementSetType nSet, GameID nGameID )
 		std::string sFilename = AchievementSet::GetAchievementSetFilename( nGameID );
 							
 		//	Remove the text file
-		SetCurrentDirectory( g_sHomeDir.c_str() );
+		SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 		
 		if( _access( sFilename.c_str(), 06 ) != -1 )	//	06= Read/write permission
 		{
@@ -337,18 +337,19 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	args['t'] = RAUsers::LocalUser().Token();
 	args['g'] = std::to_string( nGameID );
 	args['h'] = g_bHardcoreModeActive ? "1" : "0";
-	//args['f'] = std::to_string( GetFlagsFromType( m_nSetType ) );
-
-	const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), NULL, 10 );
 
 	Document doc;
-	if( RAWeb::DoBlockingRequest( RequestPatch, args, doc ) && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("PatchData") )
+	if( RAWeb::DoBlockingRequest( RequestPatch, args, doc ) && 
+		doc.HasMember( "Success" ) && 
+		doc[ "Success" ].GetBool() && 
+		doc.HasMember( "PatchData" ) )
 	{
-		const Value& PatchData = doc["PatchData"];
+		const Value& PatchData = doc[ "PatchData" ];
 
 		//const std::string& sMinVer = PatchData["MinVer"].GetString();
 		//const long nMinVerRequired = strtol( sMinVer.substr( 2 ).c_str(), NULL, 10 );
-
+		
+		//const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), nullptr, 10 );
 		//if( CURRENT_VER < nMinVerRequired )
 		//{
 		//	//	Client version too old!
@@ -361,7 +362,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 		//		CURRENT_VER,
 		//		nMinVerRequired );
 
-		//	if( MessageBox( NULL, buffer, "Client out of date!", MB_YESNO ) == IDYES )
+		//	if( MessageBox( nullptr, buffer, "Client out of date!", MB_YESNO ) == IDYES )
 		//	{
 		//		sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
 
@@ -374,14 +375,14 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 		//	}
 		//	else
 		//	{
-		//		//MessageBox( NULL, "Cannot load achievements for this game.", "Error", MB_OK );
+		//		//MessageBox( nullptr, "Cannot load achievements for this game.", "Error", MB_OK );
 		//	}
 
 		//	return FALSE;
 		//}
 		//else
 		{
-			SetCurrentDirectory( g_sHomeDir.c_str() );
+			SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 			FILE* pf = nullptr;
 			fopen_s( &pf, std::string( RA_DIR_DATA + std::to_string( nGameID ) + ".txt" ).c_str(), "wb" );
 			if( pf != nullptr )
@@ -404,7 +405,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	{
 		//	Could not connect...
 		PopupWindows::AchievementPopups().AddMessage( 
-			MessagePopup( "Could not connect to " RA_HOST "...", "Working offline...", PopupInfo ) ); //?
+			MessagePopup( "Could not connect to " RA_HOST_URL "...", "Working offline...", PopupInfo ) ); //?
 
 		return FALSE;
 	}
@@ -423,7 +424,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 	const std::string sFilename = GetAchievementSetFilename( nGameID );
 
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	FILE* pFile = NULL;
 	fopen_s( &pFile, sFilename.c_str(), "rb" );
 	if( pFile != NULL )
@@ -544,7 +545,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 	if( sSaveStateFilename == NULL )
 		return;
 	
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	char buffer[ 4096 ];
 	sprintf_s( buffer, 4096, "%s.rap", sSaveStateFilename );
 	FILE* pf = NULL;

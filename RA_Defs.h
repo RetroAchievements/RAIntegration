@@ -62,12 +62,11 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 
 
 #if defined _DEBUG && !defined( _LIVEURL )
-#define RA_HOST "localhost"
+#define RA_HOST_URL "localhost"
 #else
-#define RA_HOST "retroachievements.org"
+#define RA_HOST_URL "retroachievements.org"
 #endif
 
-#define RA_HOST_URL RA_HOST
 #define RA_HOST_URL_WIDE TOWIDESTR( RA_HOST_URL )
 
 #define RA_HOST_IMG_URL "i.retroachievements.org"
@@ -148,3 +147,8 @@ typedef DWORD			ARGB;
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
+
+extern std::string Narrow( const wchar_t* wstr );
+extern std::string Narrow( const std::wstring& wstr );
+extern std::wstring Widen( const char* str );
+extern std::wstring Widen( const std::string& str );

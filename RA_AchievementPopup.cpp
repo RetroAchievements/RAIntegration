@@ -101,8 +101,6 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	if( !MessagesPresent() )
 		return;
 
-	const MessagePopup& msg = ActiveMessage();
-
 	const int nPixelWidth = rcDest.right - rcDest.left;
 
 	//SetBkColor( hDC, RGB( 0, 212, 0 ) );
@@ -128,28 +126,30 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	const int nTitleY = static_cast<int>( fFadeInY );
 	const int nDescY = nTitleY + 32;
 
-	if( msg.Type() == PopupAchievementUnlocked || msg.Type() == PopupAchievementError )
+	if( ActiveMessage().Type() == PopupAchievementUnlocked || ActiveMessage().Type() == PopupAchievementError )
 	{
-		DrawImage( hDC, msg.Image(), nTitleX, nTitleY, 64, 64 );
+		DrawImage( hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64 );
 
 		nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
 		nDescX += 64 + 4;
 	}
-	else if( msg.Type() == PopupLeaderboardInfo )
+	else if( ActiveMessage().Type() == PopupLeaderboardInfo )
 	{
 		//	meh
 	}
 
+	const std::string& sTitle = ActiveMessage().Title();
+	const std::string& sSubTitle = ActiveMessage().Subtitle();
 
 	SelectObject( hDC, hFontTitle );
-	TextOut( hDC, nTitleX, nTitleY, ActiveMessage().Title().c_str(), strlen( ActiveMessage().Title().c_str() ) );
+	TextOut( hDC, nTitleX, nTitleY, Widen( sTitle ).c_str(), sTitle.length() );
 	SIZE szTitle = { 0, 0 };
-	GetTextExtentPoint32( hDC, msg.Title().c_str(), strlen( msg.Title().c_str() ), &szTitle );
+	GetTextExtentPoint32( hDC, Widen( sTitle ).c_str(), sTitle.length(), &szTitle );
 	
 	SelectObject( hDC, hFontDesc );
-	TextOut( hDC, nDescX, nDescY, msg.Subtitle().c_str(), strlen( msg.Subtitle().c_str() ) );
+	TextOut( hDC, nDescX, nDescY, Widen( sSubTitle ).c_str(), sSubTitle.length() );
 	SIZE szAchievement = { 0, 0 };
-	GetTextExtentPoint32( hDC, msg.Subtitle().c_str(), strlen( msg.Subtitle().c_str() ), &szAchievement );
+	GetTextExtentPoint32( hDC, Widen( sSubTitle ).c_str(), sSubTitle.length(), &szAchievement );
 
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, COL_POPUP_SHADOW );
 	SelectObject( hDC, hPen );
@@ -158,7 +158,7 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy );	//	right
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + 1 );			//	up
 
-	if( msg.Subtitle().length() > 0 )
+	if( sSubTitle.length() > 0 )
 	{
 		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, NULL );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy );

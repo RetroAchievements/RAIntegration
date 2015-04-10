@@ -18,7 +18,7 @@ enum ComparisonVariableSize
 	SixteenBit,
 	ThirtyTwoBit,
 
-	NUM_COMP_VARIABLE_SIZES
+	NumComparisonVariableSizeTypes
 };
 extern const char* COMPARISONVARIABLESIZE_STR[];
 
@@ -29,7 +29,7 @@ enum ComparisonVariableType
 	DeltaMem,			//	the value last known at this address.
 	DynamicVariable,	//	a custom user-set variable
 
-	NUM_COMP_VARIABLE_TYPES
+	NumComparisonVariableTypes
 };
 extern const char* COMPARISONVARIABLETYPE_STR[];
 
@@ -42,10 +42,11 @@ enum ComparisonType
 	GreaterThanOrEqual,
 	NotEqualTo,
 
-	NUM_COMPARISON_TYPES
+	NumComparisonTypes
 };
 extern const char* COMPARISONTYPE_STR[];
 
+extern const char* CONDITIONTYPE_STR[];
 
 class CompVariable
 {
@@ -112,12 +113,21 @@ private:
 class Condition
 {
 public:
+	enum ConditionType
+	{
+		Standard,
+		PauseIf,
+		ResetIf,
+
+		NumConditionTypes
+	};
+
+public:
 	Condition()
-	 :	m_nCompareType( Equals ),
+	 :	m_nConditionType( Standard ),
+		m_nCompareType( Equals ),
 		m_nRequiredHits( 0 ),
-		m_nCurrentHits( 0 ),
-		m_bIsResetCondition( FALSE ),
-		m_bIsPauseCondition( FALSE )
+		m_nCurrentHits( 0 )
 	{}
 
 public:
@@ -146,31 +156,32 @@ public:
 	inline unsigned int RequiredHits() const		{ return m_nRequiredHits; }
 	inline unsigned int CurrentHits() const			{ return m_nCurrentHits; }
 
-	inline BOOL IsResetCondition() const			{ return m_bIsResetCondition; }
-	inline BOOL IsPauseCondition() const			{ return m_bIsPauseCondition; }
-
+	inline BOOL IsResetCondition() const			{ return( m_nConditionType == ResetIf ); }
+	inline BOOL IsPauseCondition() const			{ return( m_nConditionType == PauseIf ); }
+	inline ConditionType GetConditionType() const	{ return m_nConditionType; }
+	void SetConditionType( ConditionType nNewType )	{ m_nConditionType = nNewType; }
+	
 	void SetRequiredHits( unsigned int nHits )		{ m_nRequiredHits = nHits; }
 	void IncrHits()									{ m_nCurrentHits++; }
 	BOOL IsComplete() const							{ return( m_nCurrentHits >= m_nRequiredHits ); }
 
 	void OverrideCurrentHits( unsigned int nHits )	{ m_nCurrentHits = nHits; }
 
-	void SetIsBasicCondition()						{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = FALSE; }
-	void SetIsPauseCondition()						{ m_bIsResetCondition = FALSE; m_bIsPauseCondition = TRUE; }
-	void SetIsResetCondition()						{ m_bIsResetCondition = TRUE; m_bIsPauseCondition = FALSE; }
+	void SetIsBasicCondition()						{ m_nConditionType = Standard; }
+	void SetIsPauseCondition()						{ m_nConditionType = PauseIf; }
+	void SetIsResetCondition()						{ m_nConditionType = ResetIf; }
 
 	void Set( const Condition& rRHS )				{ (*this) = rRHS; }
 
 private:
+	ConditionType	m_nConditionType;
+
 	CompVariable	m_nCompSource;
 	ComparisonType	m_nCompareType;
 	CompVariable	m_nCompTarget;
 	
 	unsigned int	m_nRequiredHits;
 	unsigned int	m_nCurrentHits;
-
-	BOOL 			m_bIsResetCondition;
-	BOOL 			m_bIsPauseCondition;
 };
 
 class ConditionSet

@@ -221,7 +221,6 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	case State_ShowingProgress:
 	{
 		int nProgressYOffs = 0;
-
 		std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
 		while( iter != m_vActiveLBIDs.end() )
 		{
@@ -229,27 +228,26 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 			if( pLB != NULL )
 			{
 				//	Show current progress:
-				char scoreBuffer[1024];
+				char scoreBuffer[ 1024 ];
 				RA_Leaderboard::FormatScore( pLB->GetFormatType(), (int)pLB->GetCurrentValueProgress(), scoreBuffer, 1024 );
 
-				char buffer[1024];
+				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, " %s ", scoreBuffer );
 
 				SIZE szProgress;
-				GetTextExtentPoint32( hDC, buffer, strlen( buffer ), &szProgress );
+				GetTextExtentPoint32( hDC, Widen( buffer ).c_str(), strlen( buffer ), &szProgress );
 
 				HGDIOBJ hTemp = SelectObject( hDC, hPen );
 
-				MoveToEx( hDC, nWidth-8, nHeight-8-szProgress.cy+nProgressYOffs, NULL );
-				LineTo( hDC, nWidth-8, nHeight-8+nProgressYOffs );							//	down
-				LineTo( hDC, nWidth-8-szProgress.cx, nHeight-8+nProgressYOffs );			//	left
+				MoveToEx( hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, NULL );
+				LineTo( hDC, nWidth - 8, nHeight - 8 + nProgressYOffs );							//	down
+				LineTo( hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs );			//	left
 
 				RECT rcProgress;
-				SetRect( &rcProgress, 0, 0, nWidth-8, nHeight-8+nProgressYOffs );
-				DrawText( hDC, buffer, strlen( buffer ), &rcProgress, DT_BOTTOM|DT_RIGHT|DT_SINGLELINE );
+				SetRect( &rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs );
+				DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
 
 				SelectObject( hDC, hTemp );
-
 				nProgressYOffs -= 26;
 			}
 
@@ -257,20 +255,19 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 		}
 	}
 		break;
+
 	case State_ShowingScoreboard:
 		{
 			const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( m_vScoreboardQueue.front() );
 			if( pLB != NULL )
 			{
-				char buffer[1024];
+				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, " Results: %s ", pLB->Title() );
-				RECT rcTitle;
-				SetRect( &rcTitle, nScoreboardX+2, nScoreboardY+2, nRightLim-2, nHeight-8 );
-				DrawText( hDC, buffer, strlen( buffer ), &rcTitle, DT_TOP|DT_LEFT|DT_SINGLELINE );
+				RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
+				DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
 				//	Show scoreboard
-				RECT rcScoreboard;
-				SetRect( &rcScoreboard, nScoreboardX+2, nScoreboardY+32, nRightLim-2, nHeight-16 );
+				RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
 				for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
 				{
 					const LB_Entry& lbInfo = pLB->GetRankInfo( i );
@@ -286,59 +283,34 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 						SetTextColor( hDC, COL_TEXT_HIGHLIGHT );
 					}
 
-					char buffer[1024];
+					char buffer[ 1024 ];
 					sprintf_s( buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername );
-					DrawText( hDC, buffer, strlen( buffer ), &rcScoreboard, DT_TOP|DT_LEFT|DT_SINGLELINE );
+					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
-					char scoreBuffer[1024];
+					char scoreBuffer[ 1024 ];
 					RA_Leaderboard::FormatScore( pLB->GetFormatType(), lbInfo.m_nScore, scoreBuffer, 1024 );
 					sprintf_s( buffer, 1024, " %s ", scoreBuffer );
-					DrawText( hDC, buffer, strlen( buffer ), &rcScoreboard, DT_TOP|DT_RIGHT|DT_SINGLELINE ); 
+					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE );
 
 					rcScoreboard.top += 24;
 
 					//	If we're about to draw the local, outranked player, offset a little more
-					if( i==5 )
+					if( i == 5 )
 						rcScoreboard.top += 4;
 				}
 			}
-					
-
+			
 			//	Restore
 			//SetBkMode( hDC, nOldBkMode );
-
 		}
 		break;
+
 	default:
 		break;
 	}
 
 	//	Restore old obj
 	SelectObject( hDC, hOld );
-
-	//SIZE szTitle, szAchievement;
-
-
-	//RECT rcHeader;
-	//SetRect( &rcHeader, nTitleX, nTitleY, nWidth-10, nHeight-10 );
-
-	//SelectObject( hDC, hFontTitle );
-	//DrawText( hDC, (LPCSTR)GetTitle(), strlen( GetTitle() ), &rcHeader, DT_TOP|DT_WORDBREAK );
-	//GetTextExtentPoint32( hDC, GetTitle(), strlen( GetTitle() ), &szTitle );
-
-
-	//SetRect( &rcHeader, nDescX, nDescY, nWidth-10, nHeight-10 );
-
-	//SelectObject( hDC, hFontDesc );
-	//DrawText( hDC, (LPCSTR)GetDesc(), strlen( GetDesc() ), &rcHeader, DT_TOP|DT_WORDBREAK );
-	//GetTextExtentPoint32( hDC, GetDesc(), strlen( GetDesc() ), &szAchievement );
-
-	//if( GetDesc()[0] != '\0' )
-	//{
-	//	MoveToEx( hDC, nDescX, nDescY+szAchievement.cy, NULL );
-	//	LineTo( hDC, nDescX+szAchievement.cx, nDescY+szAchievement.cy );
-	//	LineTo( hDC, nDescX+szAchievement.cx, nDescY+1 );
-	//}
 
 	DeleteObject( hBrushBG );
 	DeleteObject( hPen );

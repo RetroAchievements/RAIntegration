@@ -25,11 +25,9 @@
 
 namespace
 {
-	const char* g_sColTitles[] = { "ID", "Game Title", "Completion", "File Path" };
-	const int g_nColSizes[] = { 30, 230, 110, 170 };
-
-	const size_t NUM_COLS = sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
-
+	const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
+	const int COL_SIZE[] = { 30, 230, 110, 170 };
+	static_assert( SIZEOF_ARRAY( COL_TITLE ) == SIZEOF_ARRAY( COL_SIZE ), "Must match!" );
 	const bool bCancelScan = false;
 
 	std::mutex mtx;
@@ -47,49 +45,45 @@ Dlg_GameLibrary g_GameLibrary;
 
 bool ListFiles( std::string path, std::string mask, std::deque<std::string>& rFileListOut )
 {
-    HANDLE hFind = INVALID_HANDLE_VALUE;
-    WIN32_FIND_DATA ffd;
-    std::string spec;
-    std::stack<std::string> directories;
+	std::stack<std::string> directories;
+	directories.push( path );
 
-    directories.push(path);
+	while( !directories.empty() )
+	{
+		path = directories.top();
+		std::string spec = path + "\\" + mask;
+		directories.pop();
 
-    while (!directories.empty()) {
-        path = directories.top();
-        spec = path + "\\" + mask;
-        directories.pop();
+		WIN32_FIND_DATA ffd;
+		HANDLE hFind = FindFirstFile( Widen( spec ).c_str(), &ffd );
+		if( hFind == INVALID_HANDLE_VALUE )
+			return false;
 
-        hFind = FindFirstFile(spec.c_str(), &ffd);
-        if( hFind == INVALID_HANDLE_VALUE )
-            return false;
-
-        do {
-			if( ( strcmp( ffd.cFileName, "." ) == 0 ) ||
-				( strcmp( ffd.cFileName, ".." ) == 0 ) )
+		do
+		{
+			std::string sFilename = Narrow( ffd.cFileName );
+			if( ( strcmp( sFilename.c_str(), "." ) == 0 ) ||
+				( strcmp( sFilename.c_str(), ".." ) == 0 ) )
 				continue;
 
 			if( ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
-			{
-				directories.push( path + "\\" + ffd.cFileName );
-			}
+				directories.push( path + "\\" + sFilename );
 			else
-			{
-				rFileListOut.push_front( path + "\\" + ffd.cFileName );
-			}
+				rFileListOut.push_front( path + "\\" + sFilename );
+		}
+		while( FindNextFile( hFind, &ffd ) != 0 );
 
-		} while (FindNextFile(hFind, &ffd) != 0);
-
-        if (GetLastError() != ERROR_NO_MORE_FILES)
+		if( GetLastError() != ERROR_NO_MORE_FILES )
 		{
-            FindClose(hFind);
-            return false;
-        }
+			FindClose( hFind );
+			return false;
+		}
 
-        FindClose(hFind);
-        hFind = INVALID_HANDLE_VALUE;
-    }
-	
-    return true;
+		FindClose( hFind );
+		hFind = INVALID_HANDLE_VALUE;
+	}
+
+	return true;
 }
 
 //HWND Dlg_GameLibrary::m_hDialogBox = NULL;
@@ -98,7 +92,7 @@ bool ListFiles( std::string path, std::string mask, std::deque<std::string>& rFi
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
 Dlg_GameLibrary::Dlg_GameLibrary()
- :	m_hDialogBox( NULL )
+ :	m_hDialogBox( nullptr )
 {
 }
 
@@ -108,7 +102,7 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 
 void ParseGameHashLibraryFromFile( std::map<std::string, GameID>& GameHashLibraryOut )
 {
-	SetCurrentDirectory( g_sHomeDir.c_str() );
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	FILE* pf = NULL;
 	fopen_s( &pf, RA_GAME_HASH_FILENAME, "rb" );
 	if( pf != NULL )
@@ -116,9 +110,9 @@ void ParseGameHashLibraryFromFile( std::map<std::string, GameID>& GameHashLibrar
 		Document doc;
 		doc.ParseStream( FileStream( pf ) );
 
-		if( !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List") )
+		if( !doc.HasParseError() && doc.HasMember( "Success" ) && doc[ "Success" ].GetBool() && doc.HasMember( "MD5List" ) )
 		{
-			const Value& List = doc["MD5List"];
+			const Value& List = doc[ "MD5List" ];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
 				if( iter->name.IsNull() || iter->value.IsNull() )
@@ -137,23 +131,23 @@ void ParseGameHashLibraryFromFile( std::map<std::string, GameID>& GameHashLibrar
 
 void ParseGameTitlesFromFile( std::map<GameID, std::string>& GameTitlesListOut )
 {
-	SetCurrentDirectory( g_sHomeDir.c_str() );
-	FILE* pf = NULL;
+	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+	FILE* pf = nullptr;
 	fopen_s( &pf, RA_TITLES_FILENAME, "rb" );
-	if( pf != NULL )
+	if( pf != nullptr )
 	{
 		Document doc;
 		doc.ParseStream( FileStream( pf ) );
 
-		if( !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response") )
+		if( !doc.HasParseError() && doc.HasMember( "Success" ) && doc[ "Success" ].GetBool() && doc.HasMember( "Response" ) )
 		{
-			const Value& List = doc["Response"];
+			const Value& List = doc[ "Response" ];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
 				if( iter->name.IsNull() || iter->value.IsNull() )
 					continue;
 
-				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), NULL, 10 ) );	//	KEYS ARE STRINGS, must convert afterwards!
+				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), nullptr, 10 ) );	//	KEYS ARE STRINGS, must convert afterwards!
 				const std::string sTitle = iter->value.GetString();
 				GameTitlesListOut[ nID ] = sTitle;
 			}
@@ -165,24 +159,24 @@ void ParseGameTitlesFromFile( std::map<GameID, std::string>& GameTitlesListOut )
 
 void ParseMyProgressFromFile( std::map<GameID, std::string>& GameProgressOut )
 {
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s( &pf, RA_MY_PROGRESS_FILENAME, "rb" );
-	if( pf != NULL )
+	if( pf != nullptr )
 	{
 		Document doc;
 		doc.ParseStream( FileStream( pf ) );
 
-		if( !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response") )
+		if( !doc.HasParseError() && doc.HasMember( "Success" ) && doc[ "Success" ].GetBool() && doc.HasMember( "Response" ) )
 		{
 			//{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
-			
-			const Value& List = doc["Response"];
+
+			const Value& List = doc[ "Response" ];
 			for( Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter )
 			{
-				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), NULL, 10 ) );	//	KEYS MUST BE STRINGS
-				const unsigned int nNumAchievements = iter->value["NumAch"].GetUint();
-				const unsigned int nEarned = iter->value["Earned"].GetUint();
-				const unsigned int nEarnedHardcore = iter->value["HCEarned"].GetUint();
+				GameID nID = static_cast<GameID>( std::strtoul( iter->name.GetString(), nullptr, 10 ) );	//	KEYS MUST BE STRINGS
+				const unsigned int nNumAchievements = iter->value[ "NumAch" ].GetUint();
+				const unsigned int nEarned = iter->value[ "Earned" ].GetUint();
+				const unsigned int nEarnedHardcore = iter->value[ "HCEarned" ].GetUint();
 
 				std::stringstream sstr;
 				sstr << nEarned;
@@ -192,8 +186,8 @@ void ParseMyProgressFromFile( std::map<GameID, std::string>& GameProgressOut )
 				if( nNumAchievements > 0 )
 				{
 					const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-					char bufPct[256];
-					sprintf_s( bufPct, 256, " (%1.1f%%)", ( (float)nNumEarnedTotal / (float)nNumAchievements ) * 100.0f );	
+					char bufPct[ 256 ];
+					sprintf_s( bufPct, 256, " (%1.1f%%)", ( nNumEarnedTotal / static_cast<float>( nNumAchievements ) ) * 100.0f );
 					sstr << bufPct;
 				}
 
@@ -213,74 +207,51 @@ void Dlg_GameLibrary::SetupColumns( HWND hList )
 	//	Remove all data.
 	ListView_DeleteAllItems( hList );
 
-	char buffer[256];
-	
 	LV_COLUMN col;
 	ZeroMemory( &col, sizeof( col ) );
 
-	for( size_t i = 0; i < NUM_COLS; ++i )
+	for( size_t i = 0; i < SIZEOF_ARRAY( COL_TITLE ); ++i )
 	{
-		col.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM|LVCF_FMT;
-		col.cx = g_nColSizes[i];
+		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cchTextMax = 255;
-		sprintf_s( buffer, 256, g_sColTitles[i] );
-		col.pszText = buffer;
+		col.pszText = const_cast<LPWSTR>( Widen( COL_TITLE[ i ] ).c_str() );
+		col.cx = COL_SIZE[ i ];
 		col.iSubItem = i;
 
-		col.fmt = LVCFMT_LEFT|LVCFMT_FIXED_WIDTH;
-		if( i == NUM_COLS-1 )
-			col.fmt |= LVCFMT_FILL; 
+		col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
+		if( i == SIZEOF_ARRAY( COL_TITLE ) - 1 )	//	Final column should fill
+			col.fmt |= LVCFMT_FILL;
 
-		ListView_InsertColumn( hList, i, (LPARAM)&col );
+		ListView_InsertColumn( hList, i, reinterpret_cast<LPARAM>( &col ) );
 	}
-
-	//ZeroMemory( &m_lbxData, sizeof(m_lbxData) );
-
-	//BOOL bSuccess = ListView_SetExtendedListViewStyle( hList, LVS_EX_FULLROWSELECT );
-	//bSuccess = ListView_EnableGroupView( hList, FALSE );
 }
 
 //static
-void Dlg_GameLibrary::AddTitle( const std::string& sTitle, const std::string& sFilename, unsigned int nGameID )
+void Dlg_GameLibrary::AddTitle( const std::string& sTitle, const std::string& sFilename, GameID nGameID )
 {
 	LV_ITEM item;
 	ZeroMemory( &item, sizeof( item ) );
-
 	item.mask = LVIF_TEXT;
-	item.cchTextMax = 256;
+	item.cchTextMax = 255;
 	item.iItem = m_vGameEntries.size();
-
-	//const char* g_sColTitles[] = { "ID", "Game Title", "Completion", "File Path" };
 
 	HWND hList = GetDlgItem( m_hDialogBox, IDC_RA_LBX_GAMELIST );
 
 	//	id:
 	item.iSubItem = 0;
-	char buffer[16];
-	sprintf_s( buffer, 16, "%d", nGameID );
-	item.pszText = buffer;	//	dangerous!
+	item.pszText = const_cast<LPWSTR>( std::to_wstring( nGameID ).c_str() );
 	item.iItem = ListView_InsertItem( hList, &item );
 
-	//	title:
 	item.iSubItem = 1;
-	//item.pszText = ;
-	ListView_SetItemText( hList, item.iItem, 1, (LPSTR)sTitle.c_str() );
-	//ListView_SetItem( hList, &item );
+	ListView_SetItemText( hList, item.iItem, 1, const_cast<LPWSTR>( Widen( sTitle ).c_str() ) );
 
-	//	completion:
 	item.iSubItem = 2;
-	//item.pszText = (LPSTR)m_ProgressLibrary[ nGameID ].c_str();
-	//ListView_SetItem( hList, &item );
-	ListView_SetItemText( hList, item.iItem, 2, (LPSTR)m_ProgressLibrary[ nGameID ].c_str() );
+	ListView_SetItemText( hList, item.iItem, 2, const_cast<LPWSTR>( Widen( m_ProgressLibrary[ nGameID ] ).c_str() ) );
 
-	//	file path:
 	item.iSubItem = 3;
-	//item.pszText = (LPSTR)sFilename.c_str();
-	//ListView_SetItem( hList, &item );
-	ListView_SetItemText( hList, item.iItem, 3, (LPSTR)sFilename.c_str() );
+	ListView_SetItemText( hList, item.iItem, 3, const_cast<LPWSTR>( Widen( sFilename ).c_str() ) );
 
-	const GameEntry nNewGame( sTitle, sFilename, nGameID );
-	m_vGameEntries.push_back( nNewGame );
+	m_vGameEntries.push_back( GameEntry( sTitle, sFilename, nGameID ) );
 }
 
 void Dlg_GameLibrary::ClearTitles()
@@ -347,32 +318,33 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
 void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 {
-	char sSearchDir[2048];
+	char sSearchDir[ 2048 ];
 	sprintf_s( sSearchDir, 2048, "%s\\*.*", sBaseDir.c_str() );
 
 	WIN32_FIND_DATA ffd;
-	HANDLE hFind = FindFirstFile( sSearchDir, &ffd );
+	HANDLE hFind = FindFirstFile( Widen( sSearchDir ).c_str(), &ffd );
 	if( hFind != INVALID_HANDLE_VALUE )
 	{
-		unsigned int ROM_MAX_SIZE = 6*1024*1024;
-		unsigned char* sROMRawData = new unsigned char[ROM_MAX_SIZE];
+		unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
+		unsigned char* sROMRawData = new unsigned char[ ROM_MAX_SIZE ];
 
 		do
 		{
 			if( KEYDOWN( VK_ESCAPE ) )
 				break;
 
-			memset( sROMRawData, 0, ROM_MAX_SIZE );
-			if( strcmp( ffd.cFileName, "." ) == 0 || strcmp( ffd.cFileName, ".." ) == 0 )
+			memset( sROMRawData, 0, ROM_MAX_SIZE );	//?!??
+
+			const std::string sFilename = Narrow( ffd.cFileName );
+			if( strcmp( sFilename.c_str(), "." ) == 0 || 
+				strcmp( sFilename.c_str(), ".." ) == 0 )
 			{
 				//	Ignore 'this'
 			}
 			else if( ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
 			{
 				RA_LOG( "Directory found: %s\n", ffd.cFileName );
-				
-				std::string sRecurseDir = sBaseDir + "\\" + ffd.cFileName;
-				//sprintf_s( sRecurseDir, 2048, "%s\\%s", sBaseDir.c_str(), ffd.cFileName );
+				std::string sRecurseDir = sBaseDir + "\\" + sFilename.c_str();
 				ScanAndAddRomsRecursive( sRecurseDir );
 			}
 			else
@@ -383,19 +355,18 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 				if( filesize.QuadPart < 2048 || filesize.QuadPart > ROM_MAX_SIZE )
 				{
 					//	Ignore: wrong size
-					RA_LOG( "Ignoring %s, wrong size\n", ffd.cFileName );
+					RA_LOG( "Ignoring %s, wrong size\n", sFilename.c_str() );
 				}
 				else
 				{
 					//	Parse as ROM!
-					
-					RA_LOG( "%s looks good: parsing!\n", ffd.cFileName );
-					
-					char sAbsFileDir[2048];
-					sprintf_s( sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), ffd.cFileName );
+					RA_LOG( "%s looks good: parsing!\n", sFilename.c_str() );
 
-					HANDLE hROMReader = CreateFile( sAbsFileDir, GENERIC_READ, FILE_SHARE_READ, 
-						NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+					char sAbsFileDir[ 2048 ];
+					sprintf_s( sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str() );
+
+					HANDLE hROMReader = CreateFile( Widen( sAbsFileDir ).c_str(), GENERIC_READ, FILE_SHARE_READ,
+													NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
 
 					if( hROMReader != INVALID_HANDLE_VALUE )
 					{
@@ -403,32 +374,20 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 						int nSize = 0;
 						if( GetFileInformationByHandle( hROMReader, &File_Inf ) )
 							nSize = ( File_Inf.nFileSizeHigh << 16 ) + File_Inf.nFileSizeLow;
-						
+
 						DWORD nBytes = 0;
 						BOOL bResult = ReadFile( hROMReader, sROMRawData, nSize, &nBytes, NULL );
-						//md5_GenerateMD5Raw( sROMRawData, nBytes, sHashOut );
 						const std::string sHashOut = RAGenerateMD5( sROMRawData, nSize );
 
 						if( m_GameHashLibrary.find( sHashOut ) != m_GameHashLibrary.end() )
 						{
 							const unsigned int nGameID = m_GameHashLibrary[ std::string( sHashOut ) ];
 							RA_LOG( "Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[ nGameID ].c_str() );
-															
-							//std::map<unsigned int, std::string>::iterator iter = m_ProgressLibrary.begin();
-							//while( iter != m_ProgressLibrary.end() )
-							//{
-							//	const unsigned int nGameID2 = (*iter).first;
-								const std::string& sGameTitle = m_GameTitlesLibrary[ nGameID ];
-								//const std::string& sGameProgress = m_ProgressLibrary[ nGameID ];
-								
-								AddTitle( sGameTitle, sAbsFileDir, nGameID );
-								
-								SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, sGameTitle.c_str() );
-								InvalidateRect( m_hDialogBox, NULL, true );
 
-							//	iter++;
-							//}
-
+							const std::string& sGameTitle = m_GameTitlesLibrary[ nGameID ];
+							AddTitle( sGameTitle, sAbsFileDir, nGameID );
+							SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, Widen( sGameTitle ).c_str() );
+							InvalidateRect( m_hDialogBox, nullptr, TRUE );
 						}
 
 						CloseHandle( hROMReader );
@@ -437,34 +396,33 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive( const std::string& sBaseDir )
 			}
 		}
 		while( FindNextFile( hFind, &ffd ) != 0 );
-	
+
 		delete[]( sROMRawData );
 		sROMRawData = NULL;
 
 		FindClose( hFind );
 	}
 
-	SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, "Scanning complete" );
+	SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, L"Scanning complete" );
 }
 
 void Dlg_GameLibrary::ReloadGameListData()
 {
 	ClearTitles();
 
-	char sROMDir[1024];
+	wchar_t sROMDir[ 1024 ];
 	GetDlgItemText( m_hDialogBox, IDC_RA_ROMDIR, sROMDir, 1024 );
-	
+
 	mtx.lock();
 	while( FilesToScan.size() > 0 )
 		FilesToScan.pop_front();
 	mtx.unlock();
-	
-	bool bOK = ListFiles( sROMDir, "*.bin", FilesToScan );
-	bOK |= ListFiles( sROMDir, "*.gen", FilesToScan );
+
+	bool bOK = ListFiles( Narrow( sROMDir ), "*.bin", FilesToScan );
+	bOK |= ListFiles( Narrow( sROMDir ), "*.gen", FilesToScan );
 
 	if( bOK )
 	{
-		//ScanAndAddRomsRecursive( sROMDir );
 		std::thread scanner( &Dlg_GameLibrary::ThreadedScanProc );
 		scanner.detach();
 	}
@@ -472,46 +430,30 @@ void Dlg_GameLibrary::ReloadGameListData()
 
 void Dlg_GameLibrary::RefreshList()
 {
-	//ClearTitles();
-
-	//for( int i = 0; i > Results.size(); ++i )
-	std::map<std::string,std::string>::iterator iter = Results.begin();
+	std::map<std::string, std::string>::iterator iter = Results.begin();
 	while( iter != Results.end() )
 	{
-		const std::string& filepath = (*iter).first;
-		const std::string& md5 = (*iter).second;
+		const std::string& filepath = iter->first;
+		const std::string& md5 = iter->second;
 
 		if( VisibleResults.find( filepath ) == VisibleResults.end() )
 		{
+			//	Not yet added,
 			if( m_GameHashLibrary.find( md5 ) != m_GameHashLibrary.end() )
 			{
-				const unsigned int nGameID = m_GameHashLibrary[ md5 ];
+				//	Found in our hash library!
+				const GameID nGameID = m_GameHashLibrary[ md5 ];
 				RA_LOG( "Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[ nGameID ].c_str() );
-															
-				//std::map<unsigned int, std::string>::iterator iter = m_ProgressLibrary.begin();
-				//while( iter != m_ProgressLibrary.end() )
-				//{
-				//	const unsigned int nGameID2 = (*iter).first;
-					const std::string& sGameTitle = m_GameTitlesLibrary[ nGameID ];
-					//const std::string& sGameProgress = m_ProgressLibrary[ nGameID ];
-								
-					AddTitle( sGameTitle, filepath, nGameID );
-					
 
-					//SetDlgItemText( m_hDialogBox, IDC_RA_GLIB_NAME, sGameTitle.c_str() );
-					SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, sGameTitle.c_str() );
+				const std::string& sGameTitle = m_GameTitlesLibrary[ nGameID ];
+				AddTitle( sGameTitle, filepath, nGameID );
 
-
-					//InvalidateRect( m_hDialogBox, NULL, true );
-
-				//	iter++;
-				//}
-				VisibleResults[filepath] = md5;	//	Copy to VisibleResults
+				SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, Widen( sGameTitle ).c_str() );
+				VisibleResults[ filepath ] = md5;	//	Copy to VisibleResults
 			}
 		}
-
 		iter++;
-	}					
+	}
 }
 
 BOOL Dlg_GameLibrary::LaunchSelected()
@@ -520,16 +462,19 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 	const int nSel = ListView_GetSelectionMark( hList );
 	if( nSel != -1 )
 	{
-		char buffer[1024];
+		wchar_t buffer[ 1024 ];
 		ListView_GetItemText( hList, nSel, 1, buffer, 1024 );
 		SetWindowText( GetDlgItem( m_hDialogBox, IDC_RA_GLIB_NAME ), buffer );
 
 		ListView_GetItemText( hList, nSel, 3, buffer, 1024 );
-		_RA_LoadROM( buffer );
+		_RA_LoadROM( Narrow( buffer ).c_str() );
+
 		return TRUE;
 	}
-
-	return FALSE;
+	else
+	{
+		return FALSE;
+	}
 }
 
 void Dlg_GameLibrary::LoadAll()
@@ -611,23 +556,15 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 {
  	switch( uMsg )
  	{
- 	case WM_INITDIALOG:
+	case WM_INITDIALOG:
 	{
-		//	m_hDialogBox = hDlg;//	?
-
-		HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_GAMELIST );	
+		HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_GAMELIST );
 		SetupColumns( hList );
 
 		ListView_SetExtendedListViewStyle( hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP );
-		//ListView_SetExtendedListViewStyle( hList, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT );
 
-		//#define IDC_RA_RESCAN                   1591
-		//#define IDC_RA_LBX_GAMELIST             1592
-		//#define IDC_RA_ROMDIR                   1593
-		//#define IDC_RA_GLIB_NAME                1594
-
-		SetDlgItemText( hDlg, IDC_RA_ROMDIR, g_sROMDirLocation.c_str() );
-		SetDlgItemText( hDlg, IDC_RA_GLIB_NAME, "" );
+		SetDlgItemText( hDlg, IDC_RA_ROMDIR, Widen( g_sROMDirLocation ).c_str() );
+		SetDlgItemText( hDlg, IDC_RA_GLIB_NAME, L"" );
 
 		m_GameHashLibrary.clear();
 		m_GameTitlesLibrary.clear();
@@ -635,96 +572,91 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 		ParseGameHashLibraryFromFile( m_GameHashLibrary );
 		ParseGameTitlesFromFile( m_GameTitlesLibrary );
 		ParseMyProgressFromFile( m_ProgressLibrary );
-		
-		int msBetweenRefresh = 1000;	//	auto?
 
+		//int msBetweenRefresh = 1000;	//	auto?
 		//SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
 		RefreshList();
 
-		//ReloadGameListData();
-
 		return FALSE;
 	}
-	break;
 
 	case WM_TIMER:
 		if( ( g_GameLibrary.GetHWND() != NULL ) && ( IsWindowVisible( g_GameLibrary.GetHWND() ) ) )
 			RefreshList();
 		//ReloadGameListData();
-		break;
+		return FALSE;
  
 	case WM_NOTIFY:
- 		switch( LOWORD(wParam) )
+ 		switch( LOWORD( wParam ) )
 		{
 		case IDC_RA_LBX_GAMELIST:
 			{
-				switch( ((LPNMHDR)lParam)->code )
+				switch( ( (LPNMHDR)lParam )->code )
 				{
-					case LVN_ITEMCHANGED:
+				case LVN_ITEMCHANGED:
+				{
+					//RA_LOG( "Item Changed\n" );
+					HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_GAMELIST );
+					const int nSel = ListView_GetSelectionMark( hList );
+					if( nSel != -1 )
 					{
-						//RA_LOG( "Item Changed\n" );
-						HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_GAMELIST );
-						const int nSel = ListView_GetSelectionMark( hList );
-						if( nSel != -1 )
-						{
-							char buffer[1024];
-							ListView_GetItemText( hList, nSel, 1, buffer, 1024 );
-							SetWindowText( GetDlgItem( hDlg, IDC_RA_GLIB_NAME ), buffer );
-						}
+						wchar_t buffer[ 1024 ];
+						ListView_GetItemText( hList, nSel, 1, buffer, 1024 );
+						SetWindowText( GetDlgItem( hDlg, IDC_RA_GLIB_NAME ), buffer );
+					}
+				}
+					break;
 
-					}
-						break;
-					case NM_CLICK:
-						//RA_LOG( "Click\n" );
-						break;
-					case NM_DBLCLK:
+				case NM_CLICK:
+					//RA_LOG( "Click\n" );
+					break;
+
+				case NM_DBLCLK:
+					if( LaunchSelected() )
 					{
-						//RA_LOG( "Double click\n" );	
-						if( LaunchSelected() )
-						{
-							EndDialog( hDlg, TRUE );
-							return TRUE;
-						}
+						EndDialog( hDlg, TRUE );
+						return TRUE;
 					}
-						break;
-					default:
-						break;
+					break;
+
+				default:
+					break;
 				}
 			}
-			break;
+			return FALSE;
+
 		default:
 			RA_LOG( "%08x, %08x\n", wParam, lParam );
-			break;
+			return FALSE;
 		}
 
  	case WM_COMMAND:
- 		switch( LOWORD(wParam) )
+ 		switch( LOWORD( wParam ) )
  		{
  		case IDOK:
- 			{
-				if( LaunchSelected() )
-				{
-					EndDialog( hDlg, TRUE );
-					return TRUE;
-				}
- 			}
-			break;
+			if( LaunchSelected() )
+			{
+				EndDialog( hDlg, TRUE );
+				return TRUE;
+			}
+			else
+			{
+				return FALSE;
+			}
 
 		case IDC_RA_RESCAN:
-			{
-				ReloadGameListData();
+			ReloadGameListData();
 				
-				mtx.lock();	//?
-				SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, "Scanning..." );
-				mtx.unlock();
-			}
-			break;
+			mtx.lock();	//?
+			SetDlgItemText( m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, L"Scanning..." );
+			mtx.unlock();
+			return FALSE;
 
 		case IDC_RA_PICKROMDIR:
 			g_sROMDirLocation = GetFolderURLFromDialog();
 			RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation.c_str() );
-			SetDlgItemText( hDlg, IDC_RA_ROMDIR, g_sROMDirLocation.c_str() );
-			break;
+			SetDlgItemText( hDlg, IDC_RA_ROMDIR, Widen( g_sROMDirLocation ).c_str() );
+			return FALSE;
 
 		case IDC_RA_LBX_GAMELIST:
 			{
@@ -732,52 +664,36 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 				const int nSel = ListView_GetSelectionMark( hList );
 				if( nSel != -1 )
 				{
-					char sGameTitle[1024];
+					wchar_t sGameTitle[ 1024 ];
 					ListView_GetItemText( hList, nSel, 1, sGameTitle, 1024 );
 					SetWindowText( GetDlgItem( hDlg, IDC_RA_GLIB_NAME ), sGameTitle );
 				}
 			}
-			break;
+			return FALSE;
 
 		case IDC_RA_REFRESH:
 			RefreshList();
-			break;
+			return FALSE;
 
- 		//case IDCANCEL:
- 		//	EndDialog( hDlg, TRUE );
- 		//	return TRUE;
- 		//	break;
+		default:
+			return FALSE;
 		}
- 		break;
 
 	case WM_PAINT:
 		if( nNumParsed != Results.size() )
-		{
 			nNumParsed = Results.size();
-			//	Repopulate
-
-			//RefreshList();
-		}
- 		return DefWindowProc( hDlg, uMsg, wParam, lParam );
+		return FALSE;
 
  	case WM_CLOSE:
- 		// 		if (Full_Screen)
- 		// 		{
- 		// 			while (ShowCursor(true) < 0);
- 		// 			while (ShowCursor(false) >= 0);
- 		// 		}
- 
  		EndDialog( hDlg, FALSE );
  		return TRUE;
- 		break;
 
 	case WM_USER:
+		return FALSE;
 
-		break;
+	default:
+		return FALSE;
  	}
-
-	return FALSE;
-	//return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
 void Dlg_GameLibrary::KillThread()

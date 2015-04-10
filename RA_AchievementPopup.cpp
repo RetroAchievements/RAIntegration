@@ -39,13 +39,14 @@ AchievementPopup::AchievementPopup() :
 
 void AchievementPopup::PlayAudio()
 {
+	ASSERT( MessagesPresent() );	//	ActiveMessage() dereferences!
 	PlaySound( MSG_SOUND[ ActiveMessage().Type() ], NULL, SND_FILENAME|SND_ASYNC );
 }
 
 void AchievementPopup::AddMessage( const MessagePopup& msg )
 {
-	PlayAudio();
 	m_vMessages.push( msg );
+	PlayAudio();
 }
 
 void AchievementPopup::Update( ControllerInput input, float fDelta, bool bFullScreen, bool bPaused )
@@ -75,12 +76,12 @@ float AchievementPopup::GetYOffsetPct() const
 		fDelta *= fDelta;	//	Quadratic
 		fVal = fDelta;
 	}
-	else if( m_fTimer < (FADEOUT_AT) )
+	else if( m_fTimer < FADEOUT_AT )
 	{
 		//	Faded in - held
 		fVal = 0.0f;
 	}
-	else if( m_fTimer < (FINISH_AT) )
+	else if( m_fTimer < FINISH_AT )
 	{
 		//	Fading out
 		float fDelta = ( FADEOUT_AT - m_fTimer );
@@ -138,8 +139,8 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 		//	meh
 	}
 
-	const std::string& sTitle = ActiveMessage().Title();
-	const std::string& sSubTitle = ActiveMessage().Subtitle();
+	const std::string sTitle = std::string( " " + ActiveMessage().Title() + " " );
+	const std::string sSubTitle = std::string( " " + ActiveMessage().Subtitle() + " " );
 
 	SelectObject( hDC, hFontTitle );
 	TextOut( hDC, nTitleX, nTitleY, Widen( sTitle ).c_str(), sTitle.length() );

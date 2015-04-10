@@ -384,23 +384,23 @@ const char* CCONV _RA_InstallIntegration()
 {
 	SetErrorMode( 0 );
 	
-#ifdef DEBUG
+#ifdef _DEBUG
 	g_hRADLL = LoadLibraryEx( TEXT( "RA_Integration_d.dll" ), nullptr, 0 );
 #else
 	g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
 #endif
 	if( g_hRADLL == NULL )
 	{
-		char buffer[ 1024 ];
-		sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
-		MessageBox( nullptr, buffer, "Sorry!", MB_OK );
+		TCHAR buffer[ 1024 ];
+		sprintf_s( buffer, 1024, _T( "LoadLibrary failed: %d : %s\n" ), ::GetLastError(), GetLastErrorAsString().c_str() );
+		MessageBox( nullptr, buffer, _T( "Sorry!" ), MB_OK );
 		return "0.000";
 	}
 
 	//	Install function pointers one by one
  
 	_RA_IntegrationVersion	= (const char*(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_IntegrationVersion" );
-	_RA_InitI				= (int(CCONV *)(HWND, int, const char*))				GetProcAddress( g_hRADLL, "_RA_InitI" );;
+	_RA_InitI				= (int(CCONV *)(HWND, int, const char*))				GetProcAddress( g_hRADLL, "_RA_InitI" );
 	_RA_Shutdown			= (int(CCONV *)())										GetProcAddress( g_hRADLL, "_RA_Shutdown" );
 	_RA_UserLoggedIn		= (bool(CCONV *)())										GetProcAddress( g_hRADLL, "_RA_UserLoggedIn" );
 	_RA_Username			= (const char*(CCONV *)())								GetProcAddress( g_hRADLL, "_RA_Username" );

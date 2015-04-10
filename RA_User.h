@@ -90,7 +90,7 @@ public:
 	
 	BOOL IsLoggedIn() const		{ return m_bIsLoggedIn; }
 
-	void PostActivity( enum ActivityType nActivityType );
+	void PostActivity( ActivityType nActivityType );
 	
 	void Clear();
 
@@ -105,7 +105,7 @@ private:
 class RAUsers
 {
 public:
-	static LocalRAUser LocalUser()		{ return ms_LocalUser; }
+	static LocalRAUser& LocalUser()												{ return ms_LocalUser; }
 	static BOOL DatabaseContainsUser( const std::string& sUser );
 	static void OnUserPicDownloaded( const RequestObject& obj );
 

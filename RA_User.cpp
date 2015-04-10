@@ -245,7 +245,7 @@ RAUser* LocalRAUser::AddFriend( const std::string& sUser, unsigned int nScore )
 	return pUser;
 }
  
-void LocalRAUser::PostActivity( enum ActivityType nActivityType )
+void LocalRAUser::PostActivity( ActivityType nActivityType )
 {
 	switch( nActivityType )
 	{

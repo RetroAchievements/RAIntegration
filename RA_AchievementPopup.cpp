@@ -121,7 +121,7 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 
 	const int nHeight = rcDest.bottom - rcDest.top;
 
-	float fFadeInY = GetYOffsetPct() * ( POPUP_DIST_Y_FROM_PCT * (float)nHeight );
+	float fFadeInY = GetYOffsetPct() * ( POPUP_DIST_Y_FROM_PCT * static_cast<float>( nHeight ) );
 	fFadeInY += ( POPUP_DIST_Y_TO_PCT * static_cast<float>( nHeight ) );
 
 	const int nTitleY = static_cast<int>( fFadeInY );

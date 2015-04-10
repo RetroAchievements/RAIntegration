@@ -2,17 +2,15 @@
 
 #include <Windows.h>
 #include <WindowsX.h>
+#include <ShlObj.h>
+#include <tchar.h>
+#include <assert.h>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <queue>
 #include <deque>
 #include <map>
-//#include <CommCtrl.h>
-//#include <direct.h>
-#include <ShlObj.h>
-#include <tchar.h>
-#include <assert.h>
 
 #ifndef RA_EXPORTS
 

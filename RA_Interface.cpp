@@ -341,7 +341,7 @@ void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 	}
 	else
 	{
-		MessageBox( nullptr, "Problems writing file!", sFile, MB_OK );
+		MessageBox( nullptr, _T( "Problems writing file!" ), Widen( sFile ).c_str(), MB_OK );
 	}
 }
 
@@ -391,9 +391,9 @@ const char* CCONV _RA_InstallIntegration()
 #endif
 	if( g_hRADLL == NULL )
 	{
-		TCHAR buffer[ 1024 ];
-		sprintf_s( buffer, 1024, _T( "LoadLibrary failed: %d : %s\n" ), ::GetLastError(), GetLastErrorAsString().c_str() );
-		MessageBox( nullptr, buffer, _T( "Sorry!" ), MB_OK );
+		char buffer[ 1024 ];
+		sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
+		MessageBox( nullptr, Widen( buffer ).c_str(), _T( "Sorry!" ), MB_OK );
 		return "0.000";
 	}
 

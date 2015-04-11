@@ -341,7 +341,11 @@ void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 	}
 	else
 	{
+#ifdef UNICODE
 		MessageBox( nullptr, _T( "Problems writing file!" ), Widen( sFile ).c_str(), MB_OK );
+#else
+		MessageBox( nullptr, _T( "Problems writing file!" ), sFile, MB_OK );
+#endif
 	}
 }
 
@@ -393,7 +397,13 @@ const char* CCONV _RA_InstallIntegration()
 	{
 		char buffer[ 1024 ];
 		sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
+
+#ifdef UNICODE
 		MessageBox( nullptr, Widen( buffer ).c_str(), _T( "Sorry!" ), MB_OK );
+#else
+		MessageBox( nullptr, buffer, _T( "Sorry!" ), MB_OK );
+#endif
+
 		return "0.000";
 	}
 

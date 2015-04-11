@@ -613,9 +613,9 @@ BOOL CreateIPE( int nItem, int nSubItem )
 // 			}
 
 			/*CB_ERRSPACE*/
-			ComboBox_AddString( g_hIPEEdit, "Mem" );
-			ComboBox_AddString( g_hIPEEdit, "Delta" );
-			ComboBox_AddString( g_hIPEEdit, "Value" );
+			ComboBox_AddString( g_hIPEEdit, Widen("Mem").c_str() );
+			ComboBox_AddString( g_hIPEEdit, Widen("Delta").c_str() );
+			ComboBox_AddString( g_hIPEEdit, Widen("Value").c_str() );
 			
 			int nSel;
 			if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), "Mem" ) == 0 )
@@ -668,7 +668,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			for( size_t i = 0; i < NumComparisonVariableSizeTypes; ++i )
 			{
-				ComboBox_AddString( g_hIPEEdit, COMPARISONVARIABLESIZE_STR[ i ] );
+				ComboBox_AddString( g_hIPEEdit, Widen( COMPARISONVARIABLESIZE_STR[ i ] ).c_str() );
 
 				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONVARIABLESIZE_STR[i] ) == 0 )
 					ComboBox_SetCurSel( g_hIPEEdit, i );
@@ -707,7 +707,7 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			for( size_t i = 0; i < NumComparisonTypes; ++i )
 			{
-				ComboBox_AddString( g_hIPEEdit, COMPARISONVARIABLETYPE_STR[ i ] );
+				ComboBox_AddString( g_hIPEEdit, Widen( COMPARISONVARIABLETYPE_STR[ i ] ).c_str() );
 
 				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONVARIABLETYPE_STR[ i ] ) == 0 )
 					ComboBox_SetCurSel( g_hIPEEdit, i );
@@ -1823,13 +1823,13 @@ void BadgeNames::OnNewBadgeNames( const Document& data )
 	for( unsigned int i = nLowerLimit; i < nUpperLimit; ++i )
 	{
 		sprintf_s( buffer, 256, "%05d", i );
-		ComboBox_AddString( m_hDestComboBox, buffer );
+		ComboBox_AddString( m_hDestComboBox, Widen( buffer ).c_str() );
 	}
 }
 
 void BadgeNames::AddNewBadgeName( const char* pStr, bool bAndSelect )
 {
-	int nSel = ComboBox_AddString( m_hDestComboBox, pStr );
+	int nSel = ComboBox_AddString( m_hDestComboBox, Widen( pStr ).c_str() );
 
 	if( bAndSelect )
 	{

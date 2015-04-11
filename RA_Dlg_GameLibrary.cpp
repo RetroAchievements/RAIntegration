@@ -214,7 +214,8 @@ void Dlg_GameLibrary::SetupColumns( HWND hList )
 	{
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cchTextMax = 255;
-		col.pszText = const_cast<LPWSTR>( Widen( COL_TITLE[ i ] ).c_str() );
+		std::wstring sCol = Widen( COL_TITLE[ i ] ).c_str();
+		col.pszText = const_cast<LPWSTR>( sCol.c_str() );
 		col.cx = COL_SIZE[ i ];
 		col.iSubItem = i;
 

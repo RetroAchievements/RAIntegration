@@ -28,64 +28,64 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 	{
 	case WM_INITDIALOG:
 	{
-						  const HWND hKnownGamesCbo = GetDlgItem( hDlg, IDC_RA_KNOWNGAMES );
-						  std::string sGameTitleTidy = Dlg_GameTitle::CleanRomName( g_GameTitleDialog.m_sEstimatedGameTitle );
-						  SetDlgItemText( hDlg, IDC_RA_GAMETITLE, Widen( sGameTitleTidy ).c_str() );
+		const HWND hKnownGamesCbo = GetDlgItem( hDlg, IDC_RA_KNOWNGAMES );
+		std::string sGameTitleTidy = Dlg_GameTitle::CleanRomName( g_GameTitleDialog.m_sEstimatedGameTitle );
+		SetDlgItemText( hDlg, IDC_RA_GAMETITLE, Widen( sGameTitleTidy ).c_str() );
 
-						  //	Load in the checksum
-						  SetDlgItemText( hDlg, IDC_RA_CHECKSUM, Widen( g_GameTitleDialog.m_sMD5 ).c_str() );
+		//	Load in the checksum
+		SetDlgItemText( hDlg, IDC_RA_CHECKSUM, Widen( g_GameTitleDialog.m_sMD5 ).c_str() );
 
-						  //	Populate the dropdown
-						  //	***Do blocking fetch of all game titles.***
-						  int nSel = ComboBox_AddString( hKnownGamesCbo, "<New Title>" );
-						  ComboBox_SetCurSel( hKnownGamesCbo, nSel );
+		//	Populate the dropdown
+		//	***Do blocking fetch of all game titles.***
+		int nSel = ComboBox_AddString( hKnownGamesCbo, Widen( "<New Title>" ).c_str() );
+		ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
-						  PostArgs args;
-						  args[ 'c' ] = std::to_string( g_ConsoleID );
+		PostArgs args;
+		args[ 'c' ] = std::to_string( g_ConsoleID );
 
-						  Document doc;
-						  if( RAWeb::DoBlockingRequest( RequestGamesList, args, doc ) )
-						  {
-							  const Value& Data = doc[ "Response" ];
+		Document doc;
+		if( RAWeb::DoBlockingRequest( RequestGamesList, args, doc ) )
+		{
+			const Value& Data = doc[ "Response" ];
 
-							  //	For all data responses to this request, populate our m_aGameTitles map
-							  {
-								  Value::ConstMemberIterator iter = Data.MemberBegin();
-								  while( iter != Data.MemberEnd() )
-								  {
-									  if( iter->name.IsNull() || iter->value.IsNull() )
-									  {
-										  iter++;
-										  continue;
-									  }
+			//	For all data responses to this request, populate our m_aGameTitles map
+			{
+				Value::ConstMemberIterator iter = Data.MemberBegin();
+				while( iter != Data.MemberEnd() )
+				{
+					if( iter->name.IsNull() || iter->value.IsNull() )
+					{
+						iter++;
+						continue;
+					}
 
-									  const GameID nGameID = std::strtoul( iter->name.GetString(), nullptr, 10 );	//	Keys cannot be anything but strings
-									  const std::string& sTitle = iter->value.GetString();
-									  m_aGameTitles[ sTitle ] = nGameID;
+					const GameID nGameID = std::strtoul( iter->name.GetString(), nullptr, 10 );	//	Keys cannot be anything but strings
+					const std::string& sTitle = iter->value.GetString();
+					m_aGameTitles[ sTitle ] = nGameID;
 
-									  iter++;
-								  }
-							  }
+					iter++;
+				}
+			}
 
-							  {
-								  std::map<std::string, GameID>::const_iterator iter = m_aGameTitles.begin();
-								  while( iter != m_aGameTitles.end() )
-								  {
-									  const std::string& sTitle = iter->first;
+			{
+				std::map<std::string, GameID>::const_iterator iter = m_aGameTitles.begin();
+				while( iter != m_aGameTitles.end() )
+				{
+					const std::string& sTitle = iter->first;
 
-									  nSel = ComboBox_AddString( hKnownGamesCbo, sTitle.c_str() );
+					nSel = ComboBox_AddString( hKnownGamesCbo, Widen( sTitle ).c_str() );
 
-									  //	Attempt to find this game and select it by default: case insensitive comparison
-									  if( sGameTitleTidy.compare( sTitle ) == 0 )
-										  ComboBox_SetCurSel( hKnownGamesCbo, nSel );
+					//	Attempt to find this game and select it by default: case insensitive comparison
+					if( sGameTitleTidy.compare( sTitle ) == 0 )
+						ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
-									  iter++;
-								  }
+					iter++;
+				}
 
-							  }
-						  }
+			}
+		}
 
-						  return TRUE;
+		return TRUE;
 	}
 		break;
 

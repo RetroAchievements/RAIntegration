@@ -146,11 +146,14 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	TextOut( hDC, nTitleX, nTitleY, Widen( sTitle ).c_str(), sTitle.length() );
 	SIZE szTitle = { 0, 0 };
 	GetTextExtentPoint32( hDC, Widen( sTitle ).c_str(), sTitle.length(), &szTitle );
-	
-	SelectObject( hDC, hFontDesc );
-	TextOut( hDC, nDescX, nDescY, Widen( sSubTitle ).c_str(), sSubTitle.length() );
+
 	SIZE szAchievement = { 0, 0 };
-	GetTextExtentPoint32( hDC, Widen( sSubTitle ).c_str(), sSubTitle.length(), &szAchievement );
+	if( ActiveMessage().Subtitle().length() > 0 )
+	{
+		SelectObject( hDC, hFontDesc );
+		TextOut( hDC, nDescX, nDescY, Widen( sSubTitle ).c_str(), sSubTitle.length() );
+		GetTextExtentPoint32( hDC, Widen( sSubTitle ).c_str(), sSubTitle.length(), &szAchievement );
+	}
 
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, COL_POPUP_SHADOW );
 	SelectObject( hDC, hPen );
@@ -159,7 +162,7 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy );	//	right
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + 1 );			//	up
 
-	if( sSubTitle.length() > 0 )
+	if( ActiveMessage().Subtitle().length() > 0 )
 	{
 		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, NULL );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy );

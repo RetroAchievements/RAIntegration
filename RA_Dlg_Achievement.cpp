@@ -27,15 +27,14 @@ Dlg_Achievements g_AchievementsDialog;
 int iSelect = -1;
 
 Dlg_Achievements::Dlg_Achievements()
+ :	m_hAchievementsDlg( nullptr )
 {
-	m_hAchievementsDlg = NULL;
 }
 
 void Dlg_Achievements::SetupColumns( HWND hList )
 {
 	//	Remove all columns and data.
-	while( ListView_DeleteColumn( hList, 0 ) == TRUE )
-	{}
+	while( ListView_DeleteColumn( hList, 0 ) == TRUE ) {}
 	ListView_DeleteAllItems( hList );
 	
 	for( int i = 0; i < NUM_COLS; ++i )
@@ -1066,7 +1065,8 @@ void Dlg_Achievements::OnEditData( size_t nItem, Column nColumn, const std::stri
 		item.iItem = nItem;
 		item.iSubItem = nColumn;
 		item.cchTextMax = 256;
-		item.pszText = const_cast<LPWSTR>( Widen( m_lbxData[ nItem ][ nColumn ].data() ).c_str() );
+		std::wstring sStrWide = Widen( m_lbxData[ nItem ][ nColumn ].data() );	//	scoped cache
+		item.pszText = const_cast<LPWSTR>( sStrWide.c_str() );
 		if( ListView_SetItem( hList, &item ) == FALSE )
 		{
 			ASSERT( !"Failed to ListView_SetItem!" );

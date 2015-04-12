@@ -301,7 +301,7 @@ API bool CCONV _RA_ConfirmLoadNewRom( bool bQuittingApp )
 			"If you %s you will lose these changes.\n"
 			"%s", sCurrentAction, sNextAction );
 
-		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING|MB_YESNO );
+		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING | MB_YESNO );
 	}
 	if( UnofficialAchievements->HasUnsavedChanges() )
 	{
@@ -311,7 +311,7 @@ API bool CCONV _RA_ConfirmLoadNewRom( bool bQuittingApp )
 			"If you %s you will lose these changes.\n"
 			"%s", sCurrentAction, sNextAction );
 
-		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING|MB_YESNO );
+		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING | MB_YESNO );
 	}
 	if( LocalAchievements->HasUnsavedChanges() )
 	{
@@ -321,7 +321,7 @@ API bool CCONV _RA_ConfirmLoadNewRom( bool bQuittingApp )
 			"If you %s you will lose these changes.\n"
 			"%s", sCurrentAction, sNextAction );
 
-		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING|MB_YESNO );
+		nResult = MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Warning", MB_ICONWARNING | MB_YESNO );
 	}
 
 	return( nResult == IDYES );

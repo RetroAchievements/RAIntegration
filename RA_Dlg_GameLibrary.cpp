@@ -214,7 +214,7 @@ void Dlg_GameLibrary::SetupColumns( HWND hList )
 	{
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cchTextMax = 255;
-		std::wstring sCol = Widen( COL_TITLE[ i ] ).c_str();
+		std::wstring sCol = Widen( COL_TITLE[ i ] ).c_str();	//	scoped cache
 		col.pszText = const_cast<LPWSTR>( sCol.c_str() );
 		col.cx = COL_SIZE[ i ];
 		col.iSubItem = i;
@@ -240,7 +240,8 @@ void Dlg_GameLibrary::AddTitle( const std::string& sTitle, const std::string& sF
 
 	//	id:
 	item.iSubItem = 0;
-	item.pszText = const_cast<LPWSTR>( std::to_wstring( nGameID ).c_str() );
+	std::wstring sIDWide = std::to_wstring( nGameID );	//scoped cache!
+	item.pszText = const_cast<LPWSTR>( sIDWide.c_str() );
 	item.iItem = ListView_InsertItem( hList, &item );
 
 	item.iSubItem = 1;

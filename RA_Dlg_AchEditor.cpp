@@ -313,9 +313,9 @@ HWND g_hIPEEdit;
 int nSelItem;
 int nSelSubItem;
 
-long _stdcall EditProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+long _stdcall EditProc( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
 {
-	switch(message)
+	switch( nMsg )
 	{
 		case WM_DESTROY:
 			g_hIPEEdit = nullptr;
@@ -371,7 +371,7 @@ long _stdcall EditProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
  		}
 	}
 
-	return CallWindowProc( EOldProc, hwnd, message, wParam, lParam );
+	return CallWindowProc( EOldProc, hwnd, nMsg, wParam, lParam );
 }
 
 long _stdcall DropDownProc( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
@@ -481,29 +481,6 @@ long _stdcall DropDownProc( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
 		case CBN_SELCHANGE:
 		case CBN_CLOSEUP:
 		case CBN_KILLFOCUS:
-			{
-// 				LV_DISPINFO lvDispinfo;
-// 				ZeroMemory(&lvDispinfo,sizeof(LV_DISPINFO));
-// 				lvDispinfo.hdr.hwndFrom = hwnd;
-// 				lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-// 				lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
-// 				lvDispinfo.item.mask = LVIF_TEXT;
-// 				lvDispinfo.item.iItem = nSelItem;
-// 				lvDispinfo.item.iSubItem = nSelSubItem;
-// 				lvDispinfo.item.pszText = NULL;
-// 
-// 				char szEditText[12];
-// 				GetWindowText( hwnd, szEditText, 12 );
-// 				lvDispinfo.item.pszText = szEditText;
-// 				lvDispinfo.item.cchTextMax = lstrlen(szEditText);
-// 
-// 				HWND hList = GetDlgItem( g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS );
-// 
-// 				//	the LV ID and the LVs Parent window's HWND
-// 				SendMessage( GetParent( hList ), WM_NOTIFY, (WPARAM)IDC_RA_LBX_CONDITIONS, (LPARAM)&lvDispinfo );
-// 
-// 				DestroyWindow(hwnd);
-			}
 			break;
 		}
 	}
@@ -560,7 +537,8 @@ BOOL CreateIPE( int nItem, int nSubItem )
 				ZeroMemory( &lvItem, sizeof( lvItem ) );
 				lvItem.iItem = nItem;
 				lvItem.iSubItem = nSubItem;
-				lvItem.pszText = const_cast<LPWSTR>( Widen( sNewText ).c_str() );
+				std::wstring sStrWide = Widen( sNewText );	//	Scoped cache!
+				lvItem.pszText = const_cast<LPWSTR>( sStrWide.c_str() );
 				lvItem.cchTextMax = 256;
 
 				//	Inject the new text into the lbx
@@ -831,16 +809,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 		return TRUE;
 
 	case WM_COMMAND:
-		switch(LOWORD(wParam))
+		switch( LOWORD( wParam ) )
 		{
-// 		case IDAPPLY:
-// 			//TBD: deal with whatever 'OK' is supposed to do(?)
-// 			bHandled = TRUE;
-// 			break;
 		case IDCLOSE:
-			EndDialog(hDlg, true);
+			EndDialog( hDlg, true );
 			bHandled = TRUE;
 			break;
+
 		case IDC_RA_CHK_SHOW_DECIMALS:
 			{
 				g_bPreferDecimalVal = !g_bPreferDecimalVal;

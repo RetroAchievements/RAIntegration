@@ -781,12 +781,12 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 	ctime_s( bufTime, 256, &tCreated );
 	bufTime[strlen(bufTime)-1] = '\0';	//	Remove pesky newline
 	sprintf_s( buffer, 256, " Created: %s ", bufTime );
-	TextOut( hDC, nDX+20, nCoreDetailsY, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nDX + 20, nCoreDetailsY, Widen( buffer ).c_str(), strlen( buffer ) );
 
 	ctime_s( bufTime, 256, &tModified );
 	bufTime[strlen(bufTime)-1] = '\0';	//	Remove pesky newline
 	sprintf_s( buffer, 256, " Modified: %s ", bufTime );
-	TextOut( hDC, nDX+20, nCoreDetailsY+nCoreDetailsSpacing, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, Widen( buffer ).c_str(), strlen( buffer ) );
 
 	if( g_AchExamine.HasData() )
 	{
@@ -794,12 +794,12 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 				   g_AchExamine.TotalWinners(), 
 				   g_AchExamine.PossibleWinners(),
 				   static_cast<float>( g_AchExamine.TotalWinners() * 100 ) / static_cast<float>( g_AchExamine.PossibleWinners() ) );
-		TextOut( hDC, nDX+20, nCoreDetailsY+(nCoreDetailsSpacing*2), Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nDX + 20, nCoreDetailsY + ( nCoreDetailsSpacing * 2 ), Widen( buffer ).c_str(), strlen( buffer ) );
 
 		if( g_AchExamine.NumRecentWinners() > 0 )
 		{
 			sprintf_s( buffer, 256, " Recent winners: " );
-			TextOut( hDC, nDX+nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, Widen( buffer ).c_str(), strlen( buffer ) );
 		}
 
 		for( unsigned int i = 0; i < g_AchExamine.NumRecentWinners(); ++i )
@@ -814,15 +814,15 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 
 			//	Draw/Fetch user image? //TBD
 
-			TextOut( hDC, 
-				nDX+nWonByPlayerNameX, 
-				nWonByPlayerYOffs+(i*nWonByPlayerYSpacing), 
-				Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC,
+					 nDX + nWonByPlayerNameX,
+					 nWonByPlayerYOffs + ( i*nWonByPlayerYSpacing ),
+					 Widen( buffer ).c_str(), strlen( buffer ) );
 
-			TextOut( hDC, 
-				nDX+nWonByPlayerDateX, 
-				nWonByPlayerYOffs+(i*nWonByPlayerYSpacing), 
-				Widen( buffer2 ).c_str(), strlen( buffer2 ) );
+			TextOut( hDC,
+					 nDX + nWonByPlayerDateX,
+					 nWonByPlayerYOffs + ( i*nWonByPlayerYSpacing ),
+					 Widen( buffer2 ).c_str(), strlen( buffer2 ) );
 		}
 	}
 	else
@@ -840,7 +840,7 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 			nDotCount > 2 ? '.' : ' ',
 			nDotCount > 3 ? '.' : ' ' );
 
-		TextOut( hDC, nDX+nLoadingMessageX, nLoadingMessageY, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nDX + nLoadingMessageX, nLoadingMessageY, Widen( buffer ).c_str(), strlen( buffer ) );
 	}
 }
 
@@ -1177,16 +1177,16 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	
 	
 	g_hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
 
-	g_hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, 
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+	g_hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
 
 	g_hFontDesc2 = CreateFont( nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
 
 	g_hFontTiny = CreateFont( nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
 
 	float fPctOffScreen = ( m_nTransitionState == TS_IN ) ?
 							( m_fTransitionTimer / PAGE_TRANSITION_IN ) : 
@@ -1303,10 +1303,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 
 		//	Draw control text:
 		sprintf_s( buffer, 1024, " ->:%s ", "Next" );
-		TextOut( hDC, nRightPx-nControlsX1, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX1, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
 
 		sprintf_s( buffer, 1024, " <-:%s ", "Prev" );
-		TextOut( hDC, nRightPx-nControlsX1, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX1, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
 
 		char cBackChar = 'B';
 		char cSelectChar = 'A';
@@ -1318,10 +1318,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 		}
 
 		sprintf_s( buffer, 1024, " %c:%s ", cBackChar, "Back" );
-		TextOut( hDC, nRightPx-nControlsX2, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX2, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
 
 		sprintf_s( buffer, 1024, " %c:%s ", cSelectChar, "Select" );
-		TextOut( hDC, nRightPx-nControlsX2, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX2, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
 	}
 
 	DeleteObject( g_hBrushBG );

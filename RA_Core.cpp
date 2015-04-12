@@ -1097,6 +1097,7 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 			break;
 
 		case IDM_RA_SCANFORGAMES:
+
 			if( g_sROMDirLocation.length() == 0 )
 				g_sROMDirLocation = GetFolderURLFromDialog();
 

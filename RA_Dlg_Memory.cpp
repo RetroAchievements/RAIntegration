@@ -1039,10 +1039,10 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 						int nSel = ComboBox_GetCurSel( hMemWatch );
 						if( nSel != CB_ERR )
 						{
-							char sAddr[ 64 ];
+							wchar_t sAddr[ 64 ];
 							if( ComboBox_GetLBText( hMemWatch, nSel, sAddr ) > 0 )
 							{
-								ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sAddr + 2, NULL, 16 ) );
+								ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( Narrow( sAddr ).c_str() + 2, nullptr, 16 ) );
 								const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( nAddr );
 								if( pSavedNote != NULL && pSavedNote->Note().length() > 0 )
 									SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, Widen( pSavedNote->Note() ).c_str() );

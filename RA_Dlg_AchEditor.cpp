@@ -184,17 +184,17 @@ const int Dlg_AchievementEditor::AddCondition( HWND hList, const Condition& Cond
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_GROUP ],		MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[ Cond.GetConditionType() ] );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_TYPE_SRC ],		MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_SIZE_SRC ],		MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_SRC ],	MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().Value() );
+	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_SRC ],	MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue() );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_COMPARISON ],	MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[ Cond.CompareType() ] );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_TYPE_TGT ],		MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_SIZE_TGT ],		MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ],	MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().Value() );
+	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ],	MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue() );
 	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_HITCOUNT ],		MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits() );
 
 	if( g_bPreferDecimalVal )
 	{
 		if( Cond.CompTarget().Type() == ValueComparison )
-			sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().Value() );
+			sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue() );
 	}
 
 	//	Copy our local text into the listbox (:S)
@@ -1291,7 +1291,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 								//	Update the text to match
 								char buffer[ 16 ];
-								sprintf_s( buffer, 16, "0x%06x", rCond.CompSource().Value() );
+								sprintf_s( buffer, 16, "0x%06x", rCond.CompSource().RawValue() );
 								SetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, Widen( buffer ).c_str() );
 
 								//	Nudge the ComboBox to update the mem note
@@ -1307,7 +1307,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 								//	Update the text to match
 								char buffer[ 16 ];
-								sprintf_s( buffer, 16, "0x%06x", rCond.CompTarget().Value() );
+								sprintf_s( buffer, 16, "0x%06x", rCond.CompTarget().RawValue() );
 								SetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, Widen( buffer ).c_str() );
 
 								//	Nudge the ComboBox to update the mem note

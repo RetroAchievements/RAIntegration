@@ -353,18 +353,18 @@ std::string Achievement::CreateMemString() const
 				strcat_s( sNextCondition, 256, "P:" );
 			
 			//	Source:
-			if( ( Src.Type() == ComparisonVariableType::Address ) || 
-				( Src.Type() == ComparisonVariableType::DeltaMem ) )
+			if( ( Src.Type() == Address ) || 
+				( Src.Type() == DeltaMem ) )
 			{
 				char buffer1[ 64 ];
-				sprintf_s( buffer1, 64, "%s0x%s%06x", ( Src.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Src.Size() ), Src.Value() );
+				sprintf_s( buffer1, 64, "%s0x%s%06x", ( Src.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Src.Size() ), Src.RawValue() );
 				strcat_s( sNextCondition, 256, buffer1 );
 			}
-			else if( Src.Type() == ComparisonVariableType::ValueComparison )
+			else if( Src.Type() == ValueComparison )
 			{
 				//	Value: use direct!
 				char buffer2[ 64 ];
-				sprintf_s( buffer2, 64, "%d", Src.Value() );
+				sprintf_s( buffer2, 64, "%d", Src.RawValue() );
 				strcat_s( sNextCondition, 256, buffer2 );
 			}
 			else
@@ -376,18 +376,23 @@ std::string Achievement::CreateMemString() const
 			strcat_s( sNextCondition, 256, ComparisonTypeToStr( NextCond.CompareType() ) );
 
 			//	Target:
-			if( ( Target.Type() == ComparisonVariableType::Address ) || 
-				( Target.Type() == ComparisonVariableType::DeltaMem ) )
+			if( ( Target.Type() == Address ) || 
+				( Target.Type() == DeltaMem ) )
 			{
 				char buffer3[ 64 ];
-				sprintf_s( buffer3, 64, "%s0x%s%06x", ( Target.Type() == DeltaMem ) ? "d" : "", ComparisonSizeToPrefix( Target.Size() ), Target.Value() );
+				sprintf_s( buffer3, 64,
+						   "%s%s%06x",
+						   ( Target.Type() == DeltaMem ) ? "d0x" : "0x",
+						   ComparisonSizeToPrefix( Target.Size() ), 
+						   Target.RawValue() );
+
 				strcat_s( sNextCondition, 256, buffer3 );
 			}
-			else if( Target.Type() == ComparisonVariableType::ValueComparison )
+			else if( Target.Type() == ValueComparison )
 			{
 				//	Value: use direct!
 				char buffer4[ 64 ];
-				sprintf_s( buffer4, 64, "%d", Target.Value() );
+				sprintf_s( buffer4, 64, "%d", Target.RawValue() );
 				strcat_s( sNextCondition, 256, buffer4 );
 			}
 			else

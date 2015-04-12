@@ -10,20 +10,16 @@
 
 //	No emulator-specific code here please!
 
-//START_AT						(0.0f)
-#define SCOREBOARD_APPEAR_AT	(0.8f)
-#define SCOREBOARD_FADEOUT_AT	(6.2f)
-#define SCOREBOARD_FINISH_AT	(7.0f)
+namespace
+{
+	const float SCOREBOARD_APPEAR_AT = 0.8f;
+	const float SCOREBOARD_FADEOUT_AT = 6.2f;
+	const float SCOREBOARD_FINISH_AT = 7.0f;
 
-//	Where on screen to end up
-//#define POPUP_DIST_TO_PCT	(0.63f)
-//	Amount of screens to travel
-//#define POPUP_DIST_FROM_PCT	(0.4f)
+	const char* FONT_TO_USE = "Tahoma";
 
-#define FONT_TO_USE "Tahoma"
-
-const COLORREF g_ColBG = RGB( 32, 32, 32 );
-
+	const COLORREF g_ColBG = RGB( 32, 32, 32 );
+}
 
 
 LeaderboardPopup::LeaderboardPopup()
@@ -31,7 +27,7 @@ LeaderboardPopup::LeaderboardPopup()
 	Reset();
 }
 
-void LeaderboardPopup::ShowScoreboard( unsigned int nID )
+void LeaderboardPopup::ShowScoreboard( LeaderboardID nID )
 {
 	m_vScoreboardQueue.push( nID );
 
@@ -170,17 +166,17 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	SetBkColor( hDC, COL_TEXT_HIGHLIGHT );
 	SetTextColor( hDC, COL_POPUP );
 
-	HFONT hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, 
-		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-		DEFAULT_PITCH, TEXT(FONT_TO_USE) );
+	HFONT hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+								   DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
+								   DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
-	HFONT hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, 
-		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-		DEFAULT_PITCH, TEXT(FONT_TO_USE) );
+	HFONT hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
+								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
-	HFONT hFontText = CreateFont( nFontSize3, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, 
-		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-		DEFAULT_PITCH, TEXT(FONT_TO_USE) );
+	HFONT hFontText = CreateFont( nFontSize3, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
+								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
 
 	const int nWidth = rcDest.right - rcDest.left;
@@ -228,14 +224,10 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 			if( pLB != NULL )
 			{
 				//	Show current progress:
-				char scoreBuffer[ 1024 ];
-				RA_Leaderboard::FormatScore( pLB->GetFormatType(), (int)pLB->GetCurrentValueProgress(), scoreBuffer, 1024 );
-
-				char buffer[ 1024 ];
-				sprintf_s( buffer, 1024, " %s ", scoreBuffer );
+				std::string sScoreSoFar = std::string( " " ) + pLB->FormatScore( static_cast<int>( pLB->GetCurrentValueProgress() ) ) + std::string( " " );
 
 				SIZE szProgress;
-				GetTextExtentPoint32( hDC, Widen( buffer ).c_str(), strlen( buffer ), &szProgress );
+				GetTextExtentPoint32( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &szProgress );
 
 				HGDIOBJ hTemp = SelectObject( hDC, hPen );
 
@@ -245,7 +237,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 
 				RECT rcProgress;
 				SetRect( &rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs );
-				DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
+				DrawText( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
 
 				SelectObject( hDC, hTemp );
 				nProgressYOffs -= 26;
@@ -262,7 +254,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 			if( pLB != NULL )
 			{
 				char buffer[ 1024 ];
-				sprintf_s( buffer, 1024, " Results: %s ", pLB->Title() );
+				sprintf_s( buffer, 1024, " Results: %s ", pLB->Title().c_str() );
 				RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
 				DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
@@ -284,7 +276,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 					}
 
 					char buffer[ 1024 ];
-					sprintf_s( buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername );
+					sprintf_s( buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str() );
 					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
 					char scoreBuffer[ 1024 ];

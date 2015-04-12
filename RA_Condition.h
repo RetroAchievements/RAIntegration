@@ -97,8 +97,8 @@ public:
 	inline void SetType( ComparisonVariableType nType )		{ m_nVarType = nType; }
 	inline ComparisonVariableType Type() const				{ return m_nVarType; }
 	
-	inline unsigned int Value()	const						{ return m_nVal; }
-	inline unsigned int PreviousValue()	const				{ return m_nPreviousVal; }
+	inline unsigned int RawValue() const					{ return m_nVal; }
+	inline unsigned int RawPreviousValue() const			{ return m_nPreviousVal; }
 	inline unsigned short BankID() const					{ return m_nBankID; }
 
 private:

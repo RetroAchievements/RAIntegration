@@ -44,8 +44,8 @@ struct LB_Entry
 {
 	unsigned int m_nRank;
 	std::string	 m_sUsername;
-	unsigned int m_nScore;
-	time_t		 m_TimeAchieved;
+	int m_nScore;
+	time_t m_TimeAchieved;
 };
 
 class RA_Leaderboard
@@ -77,15 +77,15 @@ public:
 	double GetCurrentValueProgress() const;	//	Attempt to get a 'progress' alternative
 	void Clear();
 
-	std::string FormatScore( int nScore );
-	static void FormatScore( FormatType nType, unsigned int nScoreIn, char* pBuffer, unsigned int nLen );
+	std::string FormatScore( int nScoreIn ) const;
+	static void FormatScore( FormatType nType, int nScoreIn, char* pBuffer, unsigned int nLen );
 	void Reset();
 
 	LeaderboardID ID() const								{ return m_nID; }
 	const std::string& Title() const						{ return m_sTitle; }
 	const std::string& Description() const					{ return m_sDescription; }
 
-	void SubmitRankInfo( unsigned int nRank, const std::string& sUsername, unsigned int nScore, time_t nAchieved );
+	void SubmitRankInfo( unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved );
 	void ClearRankInfo()									{ m_RankInfo.clear(); }
 	const LB_Entry& GetRankInfo( unsigned int nAt ) const	{ return m_RankInfo.at( nAt ); }
 	size_t GetRankInfoCount() const							{ return m_RankInfo.size(); }

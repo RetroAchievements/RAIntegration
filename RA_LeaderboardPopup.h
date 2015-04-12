@@ -24,10 +24,10 @@ public:
 	void Render( HDC hDC, RECT& rcDest );
 
 	void Reset();
-	BOOL Activate( unsigned int nLBID );
-	BOOL Deactivate( unsigned int nLBID );
+	BOOL Activate( LeaderboardID nLBID );
+	BOOL Deactivate( LeaderboardID nLBID );
 
-	void ShowScoreboard( unsigned int nLBID );
+	void ShowScoreboard( LeaderboardID nLBID );
 
 private:
 	float GetOffsetPct() const;

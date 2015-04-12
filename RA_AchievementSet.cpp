@@ -576,10 +576,10 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 				Condition& cond = pAch->GetCondition( nGrp, j );
 				sprintf_s( buffer, 4096, "%d:%d:%d:%d:%d:", 
 					cond.CurrentHits(),
-					cond.CompSource().Value(),
-					cond.CompSource().PreviousValue(),
-					cond.CompTarget().Value(),
-					cond.CompTarget().PreviousValue() );
+					cond.CompSource().RawValue(),
+					cond.CompSource().RawPreviousValue(),
+					cond.CompTarget().RawValue(),
+					cond.CompTarget().RawPreviousValue() );
 				strcat_s( cheevoProgressString, 4096, buffer );
 			}
 		}

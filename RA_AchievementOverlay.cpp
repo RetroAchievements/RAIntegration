@@ -1771,7 +1771,7 @@ void LeaderboardExamine::OnReceiveData( const Document& doc )
 		const Value& NextLBData = Entries[ i ];
 		const unsigned int nRank = NextLBData[ "Rank" ].GetUint();
 		const std::string& sUser = NextLBData[ "User" ].GetString();
-		const unsigned int nScore = NextLBData[ "Score" ].GetUint();
+		const int nScore = NextLBData[ "Score" ].GetInt();
 		const unsigned int nDate = NextLBData[ "DateSubmitted" ].GetUint();
 
 		RA_LOG( "LB Entry: %d: %s earned %d at %d\n", nRank, sUser.c_str(), nScore, nDate );

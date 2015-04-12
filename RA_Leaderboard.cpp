@@ -93,7 +93,7 @@ char* MemValue::ParseFromString( char* pBuffer )
 
 	CompVariable varTemp;
 	varTemp.ParseVariable( pIter );
-	m_nAddress = varTemp.GetValue();	//	Fetch value ('address') as parsed
+	m_nAddress = varTemp.RawValue();	//	Fetch value ('address') as parsed. Note RawValue! Do not parse memory!
 	m_nVarSize = varTemp.Size();
 
 	m_fModifier = 1.0;
@@ -466,7 +466,7 @@ void RA_Leaderboard::Test()
 	}
 }
 
-void RA_Leaderboard::SubmitRankInfo( unsigned int nRank, const std::string& sUsername, unsigned int nScore, time_t nAchieved )
+void RA_Leaderboard::SubmitRankInfo( unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved )
 {
 	LB_Entry newEntry;
 	newEntry.m_nRank = nRank;
@@ -508,34 +508,34 @@ void RA_Leaderboard::SortRankInfo()
 	}
 }
 
-std::string RA_Leaderboard::FormatScore( int nScore )
+std::string RA_Leaderboard::FormatScore( int nScoreIn ) const
 {
-	char buffer[1024];
-	FormatScore( m_format, nScore, buffer, 1024 );
+	char buffer[ 1024 ];
+	FormatScore( m_format, nScoreIn, buffer, 1024 );
 	return std::string( buffer );
 }
 
 //static 
-void RA_Leaderboard::FormatScore( FormatType nType, unsigned int nScoreIn, char* pBuffer, unsigned int nLen )
+void RA_Leaderboard::FormatScore( FormatType nType, int nScoreIn, char* pBuffer, unsigned int nLen )
 {
 	if( nType == Format_TimeFrames )
 	{
-		int nMins = nScoreIn/3600;
-		int nSecs = (nScoreIn%3600)/60;
-		int nMilli = (int)( ( (nScoreIn%3600)%60 ) * (100.0/60.0) );	//	Convert from frames to 'millisecs'
+		int nMins = nScoreIn / 3600;
+		int nSecs = ( nScoreIn % 3600 ) / 60;
+		int nMilli = static_cast<int>( ( ( nScoreIn % 3600 ) % 60 ) * ( 100.0 / 60.0 ) );	//	Convert from frames to 'millisecs'
 		sprintf_s( pBuffer, nLen, "%02d:%02d.%02d", nMins, nSecs, nMilli );
 	}
 	else if( nType == Format_TimeSecs )
 	{
-		int nMins = nScoreIn/60;
-		int nSecs = nScoreIn%60;
+		int nMins = nScoreIn / 60;
+		int nSecs = nScoreIn % 60;
 		sprintf_s( pBuffer, nLen, "%02d:%02d", nMins, nSecs );
 	}
 	else if( nType == Format_TimeMillisecs )
 	{
-		int nMins = nScoreIn/6000;
-		int nSecs = (nScoreIn%6000)/100;
-		int nMilli = (int)( nScoreIn%100 );
+		int nMins = nScoreIn / 6000;
+		int nSecs = ( nScoreIn % 6000 ) / 100;
+		int nMilli = static_cast<int>( nScoreIn % 100 );
 		sprintf_s( pBuffer, nLen, "%02d:%02d.%02d", nMins, nSecs, nMilli );
 	}
 	else if( nType == Format_Score )
@@ -573,68 +573,64 @@ void RA_LeaderboardManager::OnSubmitEntry( const Document& doc )
 {
 	if( !doc.HasMember( "Response" ) )
 	{
-		ASSERT(!"Cannot process this LB Response!" );
+		ASSERT( !"Cannot process this LB Response!" );
 		return;
 	}
 
-	const Value& Response = doc["Response"];
-	
-	const Value& LBData = Response["LBData"];
+	const Value& Response = doc[ "Response" ];
 
-	const std::string& sFormat = LBData["Format"].GetString();
-	const LeaderboardID nLBID = static_cast<LeaderboardID>( LBData["LeaderboardID"].GetUint() );
-	const GameID nGameID = static_cast<GameID>( LBData["GameID"].GetUint() );
-	const std::string& sLBTitle = LBData["Title"].GetString();
-	const bool bLowerIsBetter = LBData["LowerIsBetter"].GetBool();
+	const Value& LBData = Response[ "LBData" ];
+
+	const std::string& sFormat = LBData[ "Format" ].GetString();
+	const LeaderboardID nLBID = static_cast<LeaderboardID>( LBData[ "LeaderboardID" ].GetUint() );
+	const GameID nGameID = static_cast<GameID>( LBData[ "GameID" ].GetUint() );
+	const std::string& sLBTitle = LBData[ "Title" ].GetString();
+	const bool bLowerIsBetter = ( LBData[ "LowerIsBetter" ].GetUint() == 1 );
 
 	RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( nLBID );
 
-	const int nSubmittedScore = Response["Score"].GetInt();
-	const int nBestScore = Response["BestScore"].GetInt();
-	const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
-	
+	const int nSubmittedScore = Response[ "Score" ].GetInt();
+	const int nBestScore = Response[ "BestScore" ].GetInt();
+	const std::string& sScoreFormatted = Response[ "ScoreFormatted" ].GetString();
+
 	pLB->ClearRankInfo();
 
 	RA_LOG( "LB Data, Top Entries:\n" );
-	const Value& TopEntries = Response["TopEntries"];
+	const Value& TopEntries = Response[ "TopEntries" ];
 	for( SizeType i = 0; i < TopEntries.Size(); ++i )
 	{
-		const Value& NextEntry = TopEntries[i];
-		
-		const unsigned int nRank = NextEntry["Rank"].GetUint();
-		const std::string& sUser = NextEntry["User"].GetString();
-		const int nUserScore = NextEntry["Score"].GetUint();	//	Entry
-		time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
-		
+		const Value& NextEntry = TopEntries[ i ];
+
+		const unsigned int nRank = NextEntry[ "Rank" ].GetUint();
+		const std::string& sUser = NextEntry[ "User" ].GetString();
+		const int nUserScore = NextEntry[ "Score" ].GetInt();
+		time_t nSubmitted = NextEntry[ "DateSubmitted" ].GetUint();
+
 		RA_LOG( std::string( "(" + std::to_string( nRank ) + ") " + sUser + ": " + pLB->FormatScore( nUserScore ) ).c_str() );
 
 		pLB->SubmitRankInfo( nRank, sUser, nUserScore, nSubmitted );
 	}
 
 	pLB->SortRankInfo();
-	
-	const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-	const Value& RankData = Response["RankInfo"];
+
+	const Value& TopEntriesFriends = Response[ "TopEntriesFriends" ];
+	const Value& RankData = Response[ "RankInfo" ];
 
 	//	TBD!
-	/*
-	char sTestData[4096];
-	sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pThisLB->Title(), pThisLB->Description() );
-	for( size_t i = 0; i < pThisLB->GetRankInfoCount(); ++i )
-	{
-		const LB_Entry& NextScore = pThisLB->GetRankInfo( i );
-		char bufferScore[256];
-					
-		RA_Leaderboard::FormatScore( pThisLB->GetFormatType(), NextScore.m_nScore, bufferScore, 256 );
+	//char sTestData[ 4096 ];
+	//sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pLB->Title().c_str(), pLB->Description().c_str() );
+	//for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
+	//{
+	//	const LB_Entry& NextScore = pLB->GetRankInfo( i );
 
-		char bufferMessage[512];
-		sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, bufferScore );
-		strcat_s( sTestData, 4096, bufferMessage );
-	}
+	//	std::string sScoreFormatted = pLB->FormatScore( NextScore.m_nScore );
 
-	g_PopupWindows.LeaderboardPopups().ShowScoreboard( pThisLB->ID() );
-*/
+	//	char bufferMessage[ 512 ];
+	//	sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
+	//	strcat_s( sTestData, 4096, bufferMessage );
+	//}
 
+	g_PopupWindows.LeaderboardPopups().ShowScoreboard( pLB->ID() );
 }
 
 void RA_LeaderboardManager::AddLeaderboard( const RA_Leaderboard& lb )

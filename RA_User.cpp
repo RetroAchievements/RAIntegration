@@ -98,20 +98,21 @@ void LocalRAUser::AttemptLogin( bool bBlocking )
 		if( bBlocking )
 		{
 			PostArgs args;
-			args['u'] = Username();
-			args['t'] = Token();		//	Plaintext password(!)
+			args[ 'u' ] = Username();
+			args[ 't' ] = Token();		//	Plaintext password(!)
 				
 			Document doc;
-			RAWeb::DoBlockingRequest( RequestLogin, args, doc );
-			
-			if( doc[ "Success" ].GetBool() )
+			if( RAWeb::DoBlockingRequest( RequestLogin, args, doc ) )
 			{
-				const std::string& sUser = doc[ "User" ].GetString();
-				const std::string& sToken = doc[ "Token" ].GetString();
-				const unsigned int nPoints = doc[ "Score" ].GetUint();
-				const unsigned int nUnreadMessages = doc[ "Messages" ].GetUint();
+				if( doc[ "Success" ].GetBool() )
+				{
+					const std::string& sUser = doc[ "User" ].GetString();
+					const std::string& sToken = doc[ "Token" ].GetString();
+					const unsigned int nPoints = doc[ "Score" ].GetUint();
+					const unsigned int nUnreadMessages = doc[ "Messages" ].GetUint();
 
-				ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, true );
+					ProcessSuccessfulLogin( sUser, sToken, nPoints, nUnreadMessages, true );
+				}
 			}
 		}
 		else

@@ -46,7 +46,7 @@ public:
 public:
 	unsigned int m_nLBID;
 	//	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
-	BOOL m_bHasData;
+	bool m_bHasData;
 };
 extern LeaderboardExamine g_LBExamine;
 
@@ -77,7 +77,7 @@ public:
 	static void CB_OnReceiveData( void* pRequestObject );
 	void OnReceiveData( Document& doc );
 	
-	BOOL HasData() const											{ return m_bHasData; }
+	bool HasData() const											{ return m_bHasData; }
 	const std::string& CreatedDate() const							{ return m_CreatedDate; }
 	const std::string& ModifiedDate() const							{ return m_LastModifiedDate; }
 	size_t NumRecentWinners() const									{ return RecentWinners.size(); }
@@ -91,7 +91,7 @@ private:
 	std::string m_CreatedDate;
 	std::string m_LastModifiedDate;
 	
-	BOOL m_bHasData;
+	bool m_bHasData;
 
 	//	Data found:
 	unsigned int m_nTotalWinners;

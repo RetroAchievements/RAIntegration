@@ -351,12 +351,12 @@ void WriteBufferToFile( const char* sFile, const char* sBuffer, int nBytes )
 
 void FetchIntegrationFromWeb()
 {
-	char* buffer = new char[2*1024*1024];
+	const int MAX_SIZE = 2 * 1024 * 1024;
+	char* buffer = new char[ MAX_SIZE ];
 	if( buffer != nullptr )
 	{
 		DWORD nBytesRead = 0;
-
-		if( DoBlockingHttpGet( "RA_Integration.dll", buffer, 2*1024*1024, &nBytesRead ) )
+		if( DoBlockingHttpGet( "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead ) )
 			WriteBufferToFile( "RA_Integration.dll", buffer, nBytesRead );
  
 		delete[] ( buffer );

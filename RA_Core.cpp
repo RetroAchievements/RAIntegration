@@ -345,18 +345,17 @@ API int CCONV _RA_HTTPGetRequestExists( const char* sPageName )
 
 API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 {
-	g_sCurrentROMMD5.clear();
-	if( pROM != NULL && nROMSize > 0 )
-		g_sCurrentROMMD5 = RAGenerateMD5( pROM, nROMSize );
+	static std::string sMD5NULL = RAGenerateMD5( nullptr, 0 );
 
-	RA_LOG( "Loading new ROM... MD5 is %s\n", g_sCurrentROMMD5.c_str() );
+	g_sCurrentROMMD5 = RAGenerateMD5( pROM, nROMSize );
+	RA_LOG( "Loading new ROM... MD5 is %s\n", ( g_sCurrentROMMD5 == sMD5NULL ) ? "Null" : g_sCurrentROMMD5.c_str() );
 
 	ASSERT( g_MemManager.NumMemoryBanks() > 0 );
 
 	//	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
 	//	TBD: local DB of MD5 to GameIDs here
 	GameID nGameID = 0;
-	if( g_sCurrentROMMD5.length() > 0 )
+	if( pROM != nullptr )
 	{
 		//	Fetch the gameID from the DB here:
 		PostArgs args;
@@ -387,9 +386,7 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 			//	Some other fatal error... panic?
 			ASSERT( !"Unknown error from requestgameid.php" );
 
-			char buffer[ 8192 ];
-			sprintf_s( buffer, 8192, "Error from " RA_HOST_URL "!\n" );
-			MessageBox( g_RAMainWnd, Widen( buffer ).c_str(), L"Error returned!", MB_OK );
+			MessageBox( g_RAMainWnd, Widen( "Error from " RA_HOST_URL "!\n" ).c_str(), L"Error returned!", MB_OK );
 		}
 	}
 
@@ -1072,24 +1069,26 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 		case IDM_RA_OPENUSERPAGE:
 			if( RAUsers::LocalUser().IsLoggedIn() )
 			{
+				std::string sTarget = "http://" RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser().Username();
 				ShellExecute( NULL,
-					L"open",
-					Widen( RA_HOST_URL + std::string( "/User/" ) + RAUsers::LocalUser().Username() ).c_str(),
-					NULL,
-					NULL,
-					SW_SHOWNORMAL );
+							  L"open",
+							  Widen( sTarget ).c_str(),
+							  NULL,
+							  NULL,
+							  SW_SHOWNORMAL );
 			}
 			break;
 
 		case IDM_RA_OPENGAMEPAGE:
 			if( g_pActiveAchievements->GetGameID() != 0 )
 			{
+				std::string sTarget = "http://" RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() );
 				ShellExecute( NULL,
-					L"open",
-					Widen( RA_HOST_URL + std::string( "/Game/" ) + std::to_string( g_pActiveAchievements->GetGameID() ) ).c_str(),
-					NULL,
-					NULL,
-					SW_SHOWNORMAL );
+							  L"open",
+							  Widen( sTarget ).c_str(),
+							  NULL,
+							  NULL,
+							  SW_SHOWNORMAL );
 			}
 			else
 			{

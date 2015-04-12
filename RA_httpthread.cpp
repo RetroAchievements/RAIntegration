@@ -367,6 +367,9 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
 
 BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::string& sPostString, DataStream& ResponseOut )
 {
+	BOOL bSuccess = FALSE;
+	ResponseOut.clear();
+
 	if( sPostString.find( "r=login" ) != std::string::npos )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
@@ -376,80 +379,52 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	{
 		RA_LOG( __FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
 	}
-	
-	ResponseOut.clear();
 
-	BOOL bResults = FALSE, bSuccess = FALSE;
-	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
-
-	WCHAR wBuffer[1024];
-	size_t nTemp;
-	DWORD nBytesToRead = 0;
-	DWORD nBytesFetched = 0;
-	int nRemainingBuffer = 0;
-
-	char sClientName[1024];
-	sprintf_s( sClientName, 1024, "Retro Achievements Client %s %s", g_sClientName, g_sClientVersion );
-	WCHAR wClientNameBuffer[1024];
-	mbstowcs_s( &nTemp, wClientNameBuffer, 1024, sClientName, strlen( sClientName )+1 );
-
- 	// Use WinHttpOpen to obtain a session handle.
- 	hSession = WinHttpOpen( wClientNameBuffer, 
- 		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
- 		WINHTTP_NO_PROXY_NAME, 
- 		WINHTTP_NO_PROXY_BYPASS, 0);
- 
- 	// Specify an HTTP server.
-	if( hSession != NULL )
+	HINTERNET hSession = WinHttpOpen( Widen( std::string( "Retro Achievements Client " ) + g_sClientName + " " + g_sClientVersion ).c_str(),
+									  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+									  WINHTTP_NO_PROXY_NAME,
+									  WINHTTP_NO_PROXY_BYPASS, 0 );
+	if( hSession != nullptr )
 	{
- 		hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
- 
- 		// Create an HTTP Request handle.
- 		if( hConnect != NULL )
+		HINTERNET hConnect = WinHttpConnect( hSession, RA_HOST_URL_WIDE, INTERNET_DEFAULT_HTTP_PORT, 0 );
+		if( hConnect != nullptr )
 		{
-			mbstowcs_s( &nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen( sRequestedPage.c_str() )+1 );
+			HINTERNET hRequest = WinHttpOpenRequest( hConnect,
+													 L"POST",
+													 Widen( sRequestedPage ).c_str(),
+													 NULL,
+													 WINHTTP_NO_REFERER,
+													 WINHTTP_DEFAULT_ACCEPT_TYPES,
+													 0 );
+			if( hRequest != nullptr )
+			{
+				char sPostBuffer[ 1024 ];
+				sprintf_s( sPostBuffer, 1024, "%s", sPostString.c_str() );
+				BOOL bSendSuccess = WinHttpSendRequest( hRequest,
+														L"Content-Type: application/x-www-form-urlencoded",
+														0,
+														reinterpret_cast<LPVOID>( sPostBuffer ), //WINHTTP_NO_REQUEST_DATA,
+														strlen( sPostString.c_str() ),
+														strlen( sPostString.c_str() ),
+														0 );
 
- 			hRequest = WinHttpOpenRequest( hConnect, 
- 				L"POST", 
- 				wBuffer, 
- 				NULL, 
- 				WINHTTP_NO_REFERER, 
- 				WINHTTP_DEFAULT_ACCEPT_TYPES,
- 				0);
- 
- 			// Send a Request.
- 			if( hRequest != NULL )
- 			{
- 				bResults = WinHttpSendRequest( hRequest, 
- 					L"Content-Type: application/x-www-form-urlencoded",
- 					0, 
- 					(LPVOID)sPostString.c_str(), //WINHTTP_NO_REQUEST_DATA,
- 					strlen( sPostString.c_str() ), 
- 					strlen( sPostString.c_str() ),
- 					0);
-
-				if( WinHttpReceiveResponse( hRequest, NULL ) )
+				if( bSendSuccess && WinHttpReceiveResponse( hRequest, nullptr ) )
 				{
-					//BYTE* sDataDestOffset = &pBufferOut[0];
-
-					nBytesToRead = 0;
-					WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
-
 					//	Note: success is much earlier, as 0 bytes read is VALID
 					//	i.e. fetch achievements for new game will return 0 bytes.
 					bSuccess = TRUE;
 
+					DWORD nBytesToRead = 0;
+					WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 					while( nBytesToRead > 0 )
 					{
-						BYTE* pData = new BYTE[nBytesToRead];
-						//if( nBytesToRead <= 32 )
+						BYTE* pData = new BYTE[ nBytesToRead ];
 						{
-							nBytesFetched = 0;
+							DWORD nBytesFetched = 0;
 							if( WinHttpReadData( hRequest, pData, nBytesToRead, &nBytesFetched ) )
 							{
 								ASSERT( nBytesToRead == nBytesFetched );
-								ResponseOut.insert( ResponseOut.end(), pData, pData+nBytesFetched );
-								//ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+								ResponseOut.insert( ResponseOut.end(), pData, pData + nBytesFetched );
 							}
 							else
 							{
@@ -464,7 +439,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 
 					if( ResponseOut.size() > 0 )
 						ResponseOut.push_back( '\0' );	//	EOS for parsing
-					
+
 					if( sPostString.find( "r=login" ) != std::string::npos )
 					{
 						//	Special case: DO NOT LOG raw user credentials!
@@ -475,17 +450,15 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 						RA_LOG( "-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %d bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size() );
 					}
 				}
- 			}
- 		}
-	}
- 
-	// Close open handles.
-	if( hRequest != NULL )
-		WinHttpCloseHandle( hRequest );
-	if( hConnect != NULL )
-		WinHttpCloseHandle( hConnect );
-	if( hSession != NULL )
+
+				WinHttpCloseHandle( hRequest );
+			}
+
+			WinHttpCloseHandle( hConnect );
+		}
+
 		WinHttpCloseHandle( hSession );
+	}
 
 	//	Debug logging...
 	if( ResponseOut.size() > 0 )
@@ -496,7 +469,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	}
 	else
 	{
-		RA_LOG( "Empty JSON Response!" );
+		RA_LOG( __FUNCTION__ ": (%04x) Empty JSON Response\n", GetCurrentThreadId() );
 	}
 
 	return bSuccess;

@@ -1819,11 +1819,11 @@ void BadgeNames::OnNewBadgeNames( const Document& data )
 	{
 	}
 
-	char buffer[256];
 	for( unsigned int i = nLowerLimit; i < nUpperLimit; ++i )
 	{
-		sprintf_s( buffer, 256, "%05d", i );
-		ComboBox_AddString( m_hDestComboBox, Widen( buffer ).c_str() );
+		wchar_t buffer[ 256 ];
+		wsprintf( buffer, L"%05d", i );
+		ComboBox_AddString( m_hDestComboBox, buffer );
 	}
 }
 

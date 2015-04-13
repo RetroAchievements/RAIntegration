@@ -8,9 +8,9 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_httpthread.h"
-#include "RA_User.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
+#include "RA_User.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -33,6 +33,7 @@ enum CondSubItems
 	CSI_SIZE_TGT,
 	CSI_VALUE_TGT,
 	CSI_HITCOUNT,
+
 	NumColumns
 };
 
@@ -41,57 +42,38 @@ Dlg_AchievementEditor g_AchievementEditorDialog;
 
 INT_PTR CALLBACK AchProgressProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam )
 {
-	BOOL bHandled = FALSE;
-
 	switch( nMsg )
 	{
 	case WM_INITDIALOG:
-	{
-		Achievement* pAch = g_AchievementEditorDialog.ActiveAchievement();
-		if( pAch == NULL )
+		if( g_AchievementEditorDialog.ActiveAchievement() == nullptr )
 			return FALSE;
-		 
-		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), pAch->Progress() );
-		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), pAch->ProgressMax() );
-		//SetWindowText( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), pAch->ProgressFmt() );
 
-		bHandled = TRUE;
-	}
-	break;
+		return TRUE;
 
 	case WM_COMMAND:
 	{
-		switch(LOWORD(wParam))
+		switch( LOWORD( wParam ) )
 		{
 		case IDC_RA_ACHPROGRESSENABLE:
-		{
-			BOOL bEnabled = IsDlgButtonChecked(hDlg, IDC_RA_ACHPROGRESSENABLE );
-			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMULA ), bEnabled ); 
-			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_MAXIMUM ), bEnabled ); 
-			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_FORMATTING ), bEnabled ); 
-			//EnableWindow( GetDlgItem( hDlg, IDC_RA_ACHPROGRESS_EXAMPLE ), bEnabled ); 
-			break;
-		}
+			//BOOL bEnabled = IsDlgButtonChecked( hDlg, IDC_RA_ACHPROGRESSENABLE );
+			return FALSE;
 
 		case IDOK:
 		case IDCLOSE:
-			EndDialog(hDlg, true);
-			bHandled = TRUE;
-			break;
-		}
+			EndDialog( hDlg, true );
+			return TRUE;
 
-		break;
+		default:
+			return FALSE;
+			}
 	}
 
 	case WM_DESTROY:
-	{
 		EndDialog( hDlg, true );
-		break;
+		return FALSE;
 	}
 
-	}
-
-	return bHandled;
+	return FALSE;
 }
 
 
@@ -1477,36 +1459,28 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage( const std::string& sBackup
 {
 	std::string sAchievementBadgeURI = RA_UNKNOWN_BADGE_IMAGE_URI;
 
-	if( m_pSelectedAchievement != NULL )
+	if( m_pSelectedAchievement != nullptr )
 		sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
 	else if( sBackupBadgeToUse.length() > 2 )
 		sAchievementBadgeURI = sBackupBadgeToUse;
 
-	if( m_hAchievementBadge != NULL )
+	if( m_hAchievementBadge != nullptr )
 		DeleteObject( m_hAchievementBadge );
-	m_hAchievementBadge = NULL;
+	m_hAchievementBadge = nullptr;
 
 	HBITMAP hBitmap = LoadOrFetchBadge( sAchievementBadgeURI, RA_BADGE_PX );
-	if( hBitmap == NULL )
+	if( hBitmap == nullptr )
 		return;
 
 	m_hAchievementBadge = hBitmap;
 
-	HWND hAchBadgeImageWindow = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC );
-	if( hAchBadgeImageWindow != NULL )
-	{
-		SendMessage( hAchBadgeImageWindow, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
-		// 				RECT rc;
-		// 				GetClientRect( hAchBadgeImageWindow, &rc );
-		// 				InvalidateRect( m_hAchievementEditorDlg, &rc, TRUE );
-		InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
-	}
+	SendMessage( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC ), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge );
+	InvalidateRect( m_hAchievementEditorDlg, NULL, TRUE );
 
 	//	Find buffer in the dropdown list
-	HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME );
-	int nSel = ComboBox_FindStringExact( hCtrl, 0, sAchievementBadgeURI.c_str() );
+	int nSel = ComboBox_FindStringExact( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME ), 0, sAchievementBadgeURI.c_str() );
 	if( nSel != -1 )
-		ComboBox_SetCurSel( hCtrl, nSel );	//	Force select
+		ComboBox_SetCurSel( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME ), nSel );	//	Force select
 }
 
 void Dlg_AchievementEditor::UpdateBadge( const std::string& sNewName )

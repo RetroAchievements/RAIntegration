@@ -17,9 +17,9 @@ void RADebugLog( const char* format, ... )
 	int n = _vsnprintf_s( p, 4096, sizeof buf - 3, format, args ); // buf-3 is room for CR/LF/NUL
 	va_end( args );
 
-	p += (n < 0) ? sizeof buf - 3 : n;
+	p += ( n < 0 ) ? sizeof buf - 3 : n;
 
-	while ( p > buf  &&  isspace(p[-1]) )
+	while( ( p > buf ) && ( isspace( p[ -1 ] ) ) )
 		*--p = '\0';
 
 	*p++ = '\r';
@@ -51,24 +51,24 @@ char* DataStreamAsString( DataStream& stream )
 
 std::string Narrow( const wchar_t* wstr )
 {
-	std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.to_bytes( wstr );
 }
 
 std::string Narrow( const std::wstring& wstr )
 {
-	std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.to_bytes( wstr );
 }
 
 std::wstring Widen( const char* str )
 {
-	std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.from_bytes( str );
 }
 
 std::wstring Widen( const std::string& str )
 {
-	std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.from_bytes( str );
 }

@@ -87,6 +87,23 @@ typedef DWORD			ARGB;
 		return( val < lower ) ? lower : ( ( val > upper ) ? upper : val );
 	}
 	
+	class RARect : public RECT
+	{
+	public:
+		RARect() {}
+		RARect( LONG nX, LONG nY, LONG nW, LONG nH )
+		{
+			left = nX;
+			right = nX + nW;
+			top = nY;
+			bottom = nY + nH;
+		}
+
+	public:
+		inline int Width() const		{ return( right - left ); }
+		inline int Height() const		{ return( bottom - top ); }
+	};
+
 	class RASize
 	{
 	public:

@@ -1,6 +1,5 @@
 #pragma once
-
-#include <wtypes.h>
+#include "RA_Defs.h"
 
 class Achievement;
 

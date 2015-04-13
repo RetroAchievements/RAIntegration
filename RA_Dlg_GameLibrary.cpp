@@ -281,7 +281,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 		}
 		mtx.unlock();
 
-		FILE* pf = NULL;
+		FILE* pf = nullptr;
 		if( fopen_s( &pf, FilesToScan.front().c_str(), "rb" ) == 0 )
 		{
 			// obtain file size:
@@ -289,21 +289,17 @@ void Dlg_GameLibrary::ThreadedScanProc()
 			DWORD nSize = ftell( pf );
 			rewind( pf );
 
-			static BYTE* pBuf = NULL;
-			if( pBuf == NULL )
+			static BYTE* pBuf = nullptr;	//	static (optimisation)
+			if( pBuf == nullptr )
 				pBuf = new BYTE[ 6 * 1024 * 1024 ];
 
 			//BYTE* pBuf = new BYTE[ nSize ];	//	Do we really need to load this into memory?
-			if( pBuf != NULL )
+			if( pBuf != nullptr )
 			{
-				//fread( pBuf, 1, nSize, pFile );
 				fread( pBuf, sizeof( BYTE ), nSize, pf );	//Check
 				Results[ FilesToScan.front() ] = RAGenerateMD5( pBuf, nSize );
 
 				SendMessage( g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL );
-
-				//delete[] pBuf; //Leak!
-				//pBuf = NULL;
 			}
 
 			fclose( pf );

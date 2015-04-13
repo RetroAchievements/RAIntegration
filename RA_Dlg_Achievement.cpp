@@ -20,11 +20,11 @@ namespace
 	const int COLUMN_SIZE[] =					{ 45, 220, 80, 65, 65 };
 	
 	const int NUM_COLS = SIZEOF_ARRAY( COLUMN_SIZE );
+
+	int iSelect = -1;
 }
 
 Dlg_Achievements g_AchievementsDialog;
-
-int iSelect = -1;
 
 Dlg_Achievements::Dlg_Achievements()
  :	m_hAchievementsDlg( nullptr )
@@ -251,13 +251,13 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	const std::string sMem = Ach.CreateMemString();
 
 	//	Deal with secret:
-	char sPostCode[2048];
+	char sPostCode[ 2048 ];
 	sprintf_s( sPostCode, "%sSECRET%dSEC%s%dRE2%d",
-		RAUsers::LocalUser().Username().c_str(),
-		Ach.ID(),
-		sMem,
-		Ach.Points(),
-		Ach.Points()*3 );
+			   RAUsers::LocalUser().Username().c_str(),
+			   Ach.ID(),
+			   sMem.c_str(),
+			   Ach.Points(),
+			   Ach.Points() * 3 );
 				
 	std::string sPostCodeHash = RAGenerateMD5( std::string( sPostCode ) );
 

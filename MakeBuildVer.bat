@@ -5,13 +5,11 @@ git describe --tags --match "RAIntegration.*" > LiveTag.txt
 @set VERSION_NUM=%ACTIVE_TAG:~14,3%
 
 git rev-parse --abbrev-ref HEAD > Temp.txt
-@set /p ACTIVE_BRANCH=<LiveTag.txt
+@set /p ACTIVE_BRANCH=<Temp.txt
 @if NOT "%ACTIVE_BRANCH%"=="master" GOTO NonMasterBranch
 
-git diff HEAD > Diffs.txt
-@set /p RAW_DIFFS_FOUND=<Diffs.txt
-
 setlocal
+git diff HEAD > Diffs.txt
 @for /F "usebackq" %%A in ('"Diffs.txt"') do set DIFF_FILE_SIZE=%%~zA
 @if %DIFF_FILE_SIZE% GTR 0 set ACTIVE_TAG=Unstaged Changes
 

@@ -19,7 +19,7 @@
 #else
 
 //NB. These must NOT be accessible from the emulator!
-#define RA_INTEGRATION_VERSION	"0.053"
+//#define RA_INTEGRATION_VERSION	"0.053"
 
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"

@@ -3,6 +3,7 @@
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_AchievementOverlay.h"
+#include "RA_BuildVer.h"
 #include "RA_CodeNotes.h"
 #include "RA_Defs.h"
 #include "RA_httpthread.h"

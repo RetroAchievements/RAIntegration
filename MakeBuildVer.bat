@@ -1,9 +1,12 @@
 @echo off
 
-REM git describe --tags --long > LiveTag.txt
 git describe --tags --match "RAIntegration.*" > LiveTag.txt
 @set /p ACTIVE_TAG=<LiveTag.txt
 @set VERSION_NUM=%ACTIVE_TAG:~14,3%
+
+git rev-parse --abbrev-ref HEAD > Temp.txt
+@set /p ACTIVE_BRANCH=<LiveTag.txt
+@if NOT "%ACTIVE_BRANCH%"=="master" GOTO NonMasterBranch
 
 git diff HEAD > Diffs.txt
 @set /p RAW_DIFFS_FOUND=<Diffs.txt
@@ -14,3 +17,11 @@ setlocal
 
 @echo RAIntegration Tag: %ACTIVE_TAG% (%VERSION_NUM%)
 @echo #define RA_INTEGRATION_VERSION "0.%VERSION_NUM%" > ./RA_BuildVer.h
+
+@GOTO End
+
+:NonMasterBranch
+@echo RAIntegration Tag 0.000 - Not on Master Branch!
+@echo #define RA_INTEGRATION_VERSION "0.000" > ./RA_BuildVer.h
+
+:End

@@ -120,7 +120,7 @@ extern bool g_bLeaderboardsActive;
 extern unsigned int g_nNumHTTPThreads;
 
 extern const char* (*g_fnKeysVersion)(void);
-extern void (*g_fnDoValidation)(char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID);
+extern void (*RAKeys_DoValidation)(char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID);
 
 //	Install validation tools.
 extern bool _RA_InstallKeys();

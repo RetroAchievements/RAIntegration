@@ -221,7 +221,7 @@ void AchievementSet::Test()
 									  PopupAchievementUnlocked,
 									  ach.BadgeImage() ) );
 				}
-				else if( g_fnDoValidation == NULL )
+				else if( g_fnDoValidation == nullptr )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
 						MessagePopup( "(Missing RA_Keys.DLL): Achievement Unlocked",
@@ -239,8 +239,8 @@ void AchievementSet::Test()
 				}
 				else
 				{
-					char sValidation[50];
-					g_fnDoValidation( sValidation, RAUsers::LocalUser().Username().c_str(), RAUsers::LocalUser().Token().c_str(), ach.ID() );
+					char sValidation[ 50 ];
+					RAKeys_DoValidation( sValidation, RAUsers::LocalUser().Username().c_str(), RAUsers::LocalUser().Token().c_str(), ach.ID() );
 
 					PostArgs args;
 					args['u'] = RAUsers::LocalUser().Username();

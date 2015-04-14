@@ -52,8 +52,8 @@ bool g_bHardcoreModeActive = false;
 bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
-const char* (*g_fnKeysVersion)(void) = NULL;
-void (*g_fnDoValidation)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID ) = NULL;
+const char* (*g_fnKeysVersion)(void) = nullptr;
+void (*RAKeys_DoValidation)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID ) = nullptr;
 
 //	local func def.
 bool _InstallKeys();
@@ -1245,17 +1245,17 @@ bool _InstallKeys()
 		return false;
 
 	//	Achievement
-	g_fnDoValidation = ( void( *)( char sBufferOut[ 50 ], const char* sUser, const char* sToken, const unsigned int nID ) ) GetProcAddress( g_hRAKeysDLL, "GenerateValidation" );
-	if( g_fnDoValidation == NULL )
+	RAKeys_DoValidation = ( void( *)( char sBufferOut[ 50 ], const char* sUser, const char* sToken, const unsigned int nID ) ) GetProcAddress( g_hRAKeysDLL, "GenerateValidation" );
+	if( RAKeys_DoValidation == nullptr )
 		return false;
 
 	//	Leaderboards //TBD
-	//g_fnDoValidation = (void(*)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID )) GetProcAddress( g_hRAKeysDLL, "GenerateValidation2" );
-	//if( g_fnDoValidation == NULL )
+	//RAKeys_DoValidation = (void(*)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID )) GetProcAddress( g_hRAKeysDLL, "GenerateValidation2" );
+	//if( RAKeys_DoValidation == NULL )
 	//	return false;
 
 	g_fnKeysVersion = ( const char*( *)( void ) ) GetProcAddress( g_hRAKeysDLL, "KeysVersion" );
-	if( g_fnKeysVersion == NULL )
+	if( g_fnKeysVersion == nullptr )
 		return false;
 
 	const char* sVer = g_fnKeysVersion();

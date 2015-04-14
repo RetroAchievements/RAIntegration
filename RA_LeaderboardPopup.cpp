@@ -19,6 +19,10 @@ namespace
 	const char* FONT_TO_USE = "Tahoma";
 
 	const COLORREF g_ColBG = RGB( 32, 32, 32 );
+	
+	const int FONT_SIZE_TITLE = 28;
+	const int FONT_SIZE_SUBTITLE = 22;
+	const int FONT_SIZE_TEXT = 16;
 }
 
 
@@ -159,22 +163,18 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	if( !g_bLeaderboardsActive )	//	If not, simply ignore them.
 		return;
 
-	const int nFontSize1 = 28;
-	const int nFontSize2 = 22;
-	const int nFontSize3 = 16;
-
 	SetBkColor( hDC, COL_TEXT_HIGHLIGHT );
 	SetTextColor( hDC, COL_POPUP );
 
-	HFONT hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	HFONT hFontTitle = CreateFont( FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								   DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
 								   DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
-	HFONT hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	HFONT hFontDesc = CreateFont( FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
 								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
-	HFONT hFontText = CreateFont( nFontSize3, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	HFONT hFontText = CreateFont( FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
 								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
 
@@ -221,7 +221,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 		while( iter != m_vActiveLBIDs.end() )
 		{
 			const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( *iter );
-			if( pLB != NULL )
+			if( pLB != nullptr )
 			{
 				//	Show current progress:
 				std::string sScoreSoFar = std::string( " " ) + pLB->FormatScore( static_cast<int>( pLB->GetCurrentValueProgress() ) ) + std::string( " " );
@@ -229,9 +229,9 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 				SIZE szProgress;
 				GetTextExtentPoint32( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &szProgress );
 
-				HGDIOBJ hTemp = SelectObject( hDC, hPen );
+				HGDIOBJ hBkup = SelectObject( hDC, hPen );
 
-				MoveToEx( hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, NULL );
+				MoveToEx( hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr );
 				LineTo( hDC, nWidth - 8, nHeight - 8 + nProgressYOffs );							//	down
 				LineTo( hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs );			//	left
 
@@ -239,7 +239,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 				SetRect( &rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs );
 				DrawText( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
 
-				SelectObject( hDC, hTemp );
+				SelectObject( hDC, hBkup );
 				nProgressYOffs -= 26;
 			}
 
@@ -251,7 +251,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	case State_ShowingScoreboard:
 		{
 			const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( m_vScoreboardQueue.front() );
-			if( pLB != NULL )
+			if( pLB != nullptr )
 			{
 				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, " Results: %s ", pLB->Title().c_str() );
@@ -279,10 +279,8 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 					sprintf_s( buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str() );
 					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
-					char scoreBuffer[ 1024 ];
-					RA_Leaderboard::FormatScore( pLB->GetFormatType(), lbInfo.m_nScore, scoreBuffer, 1024 );
-					sprintf_s( buffer, 1024, " %s ", scoreBuffer );
-					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE );
+					std::string sScore( " " + pLB->FormatScore( lbInfo.m_nScore ) + " " );
+					DrawText( hDC, Widen( sScore ).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE );
 
 					rcScoreboard.top += 24;
 

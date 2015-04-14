@@ -20,7 +20,7 @@ enum PopupMessageType
 class MessagePopup
 {
 public:
-	MessagePopup( const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = NULL ) :
+	MessagePopup( const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = nullptr ) :
 		m_sMessageTitle( sTitle ),
 		m_sMessageSubtitle( sSubtitle ),
 		m_nMessageType( nMsgType ),

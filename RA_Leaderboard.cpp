@@ -149,7 +149,7 @@ void ValueSet::Clear()
 //////////////////////////////////////////////////////////////////////////
 RA_Leaderboard::RA_Leaderboard( const unsigned nLeaderboardID ) :
 	m_nID( nLeaderboardID ),
-	m_bStarted( FALSE ),
+	m_bStarted( false ),
 	m_format( Format_Value )
 {
 }
@@ -186,9 +186,9 @@ void RA_Leaderboard::LoadFromJSON( const Value& element )
 
 void RA_Leaderboard::ParseLBData( char* pChar )
 {
-	while( *pChar != '\n' && *pChar != '\0' )
+	while( ( ( *pChar ) != '\n' ) && ( ( *pChar ) != '\0' ) )
 	{
-		if( pChar[0] == ':' && pChar[1] == ':' )	//	New Phrase (double colon)
+		if( ( pChar[ 0 ] == ':' ) && ( pChar[ 1 ] == ':' ) )	//	New Phrase (double colon)
 			pChar += 2;
 
 		if( std::string( "STA:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
@@ -198,10 +198,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			//	Parse Start condition
 			do 
 			{
-				{
-					while( (*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|' )
-						pChar++; // Skip any chars up til this point :S
-				}
+				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
+					pChar++; // Skip any chars up til this point :S
 				
 				Condition nNewCond;
 				nNewCond.ParseFromString( pChar );
@@ -215,10 +213,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			//	Parse Cancel condition
 			do 
 			{
-				{
-					while( (*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|' )
-						pChar++; // Skip any chars up til this point :S
-				}
+				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
+					pChar++; // Skip any chars up til this point :S
 				
 				Condition nNewCond;
 				nNewCond.ParseFromString( pChar );
@@ -232,10 +228,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			//	Parse Submit condition
 			do 
 			{
-				{
-					while( (*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|' )
-						pChar++; // Skip any chars up til this point :S
-				}
+				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
+					pChar++; // Skip any chars up til this point :S
 
 				Condition nNewCond;
 				nNewCond.ParseFromString( pChar );
@@ -250,10 +244,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			//	Value is a collection of memory addresses and modifiers.
 			do 
 			{
-				{
-					while( (*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|' )
-						pChar++; // Skip any chars up til this point :S
-				}
+				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
+					pChar++; // Skip any chars up til this point :S
 
 				MemValue newMemVal;
 				pChar = newMemVal.ParseFromString( pChar );
@@ -268,10 +260,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 			//	Progress is a collection of memory addresses and modifiers.
 			do 
 			{
-				{
-					while( (*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|' )
-						pChar++; // Skip any chars up til this point :S
-				}
+				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
+					pChar++; // Skip any chars up til this point :S
 
 				MemValue newMemVal;
 				pChar = newMemVal.ParseFromString( pChar );
@@ -282,37 +272,37 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		else if( std::string( "FOR:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-			//	Format
 
-			if( strncmp( pChar, "TIMESECS", sizeof("TIMESECS")-1 ) == 0 )
+			//	Format
+			if( strncmp( pChar, "TIMESECS", sizeof( "TIMESECS" ) - 1 ) == 0 )
 			{
 				m_format = Format_TimeSecs;
-				pChar += sizeof("TIMESECS")-1;
+				pChar += sizeof( "TIMESECS" ) - 1;
 			}
-			else if( strncmp( pChar, "TIME", sizeof("TIME")-1 ) == 0 ) 
+			else if( strncmp( pChar, "TIME", sizeof( "TIME" ) - 1 ) == 0 )
 			{
 				m_format = Format_TimeFrames;
-				pChar += sizeof("TIME")-1;
+				pChar += sizeof( "TIME" ) - 1;
 			}
-			else if( strncmp( pChar, "MILLISECS", sizeof("MILLISECS")-1 ) == 0 ) 
+			else if( strncmp( pChar, "MILLISECS", sizeof( "MILLISECS" ) - 1 ) == 0 )
 			{
 				m_format = Format_TimeMillisecs;
-				pChar += sizeof("MILLISECS")-1;
+				pChar += sizeof( "MILLISECS" ) - 1;
 			}
-			else if( strncmp( pChar, "POINTS", sizeof("POINTS")-1 ) == 0 )
+			else if( strncmp( pChar, "POINTS", sizeof( "POINTS" ) - 1 ) == 0 )
 			{
 				m_format = Format_Score;
-				pChar += sizeof("POINTS")-1;
+				pChar += sizeof( "POINTS" ) - 1;
 			}
-			else if( strncmp( pChar, "SCORE", sizeof("SCORE")-1 ) == 0 )	//dupe
+			else if( strncmp( pChar, "SCORE", sizeof( "SCORE" ) - 1 ) == 0 )	//dupe
 			{
 				m_format = Format_Score;
-				pChar += sizeof("SCORE")-1;
+				pChar += sizeof( "SCORE" ) - 1;
 			}
-			else if( strncmp( pChar, "VALUE", sizeof("VALUE")-1 ) == 0 )
+			else if( strncmp( pChar, "VALUE", sizeof( "VALUE" ) - 1 ) == 0 )
 			{
 				m_format = Format_Value;
-				pChar += sizeof("VALUE")-1;
+				pChar += sizeof( "VALUE" ) - 1;
 			}
 			else
 			{
@@ -325,8 +315,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		{
 			pChar += 4;
 			//	Title:
-			char* pDest = &m_sTitle[0];
-			while( !( pChar[0] == ':' && pChar[1] == ':' ) )
+			char* pDest = &m_sTitle[ 0 ];
+			while( !( pChar[ 0 ] == ':' && pChar[ 1 ] == ':' ) )
 			{
 				*pDest = *pChar;	//	char copy
 				pDest++;
@@ -338,8 +328,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		{
 			pChar += 4;
 			//	Description:
-			char* pDest = &m_sDescription[0];
-			while( pChar[0] != '\n' && pChar[0] != '\0' )
+			char* pDest = &m_sDescription[ 0 ];
+			while( ( pChar[ 0 ] != '\n' ) && ( pChar[ 0 ] != '\0' ) )
 			{
 				*pDest = *pChar;	//	char copy
 				pDest++;
@@ -350,7 +340,7 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		else
 		{
 			//	badly formatted... cannot progress!
-			ASSERT(!"Badly formatted: this leaderboard makes no sense!");
+			ASSERT( !"Badly formatted: this leaderboard makes no sense!" );
 			break;
 		}
 	}
@@ -358,10 +348,9 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 
 void RA_Leaderboard::ParseLine( char* sBuffer )
 {
-	char* pChar = &sBuffer[0];
-	pChar++;								//	Skip over 'L' character
-	ASSERT( m_nID == strtol( pChar, &pChar, 10 ) );
-
+	char* pChar = &sBuffer[ 0 ];
+	pChar++;											//	Skip over 'L' character
+	ASSERT( m_nID == strtol( pChar, &pChar, 10 ) );		//	Skip over Leaderboard ID
 	ParseLBData( pChar );
 }
 
@@ -400,21 +389,21 @@ void RA_Leaderboard::Test()
 
 	//	Ensure these are always tested once every frame, to ensure delta
 	//	 variables work properly :)
-	BOOL bStartOK  = m_startCond.Test(bUnused, bUnused, FALSE);
-	BOOL bCancelOK = m_cancelCond.Test(bUnused, bUnused, TRUE);
-	BOOL bSubmitOK = m_submitCond.Test(bUnused, bUnused, FALSE);
+	BOOL bStartOK = m_startCond.Test( bUnused, bUnused, FALSE );
+	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused, TRUE );
+	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused, FALSE );
 
 	if( !m_bStarted )
 	{
 		if( bStartOK )
 		{
-			m_bStarted = TRUE;
+			m_bStarted = true;
 
 			g_PopupWindows.AchievementPopups().AddMessage( 
 				MessagePopup( "Challenge Available: " + m_sTitle,
 							  m_sDescription,
 							  PopupLeaderboardInfo,
-							  NULL ) );
+							  nullptr ) );
 			g_PopupWindows.LeaderboardPopups().Activate( m_nID );
 		}
 	}
@@ -422,22 +411,19 @@ void RA_Leaderboard::Test()
 	{
  		if( bCancelOK )
 		{
-			m_bStarted = FALSE;
-
+			m_bStarted = false;
 			g_PopupWindows.LeaderboardPopups().Deactivate( m_nID );
 			
 			g_PopupWindows.AchievementPopups().AddMessage( 
 				MessagePopup( "Leaderboard attempt cancelled!",
 							  m_sTitle,
 							  PopupLeaderboardCancel,
-							  NULL ) );
+							  nullptr ) );
 		}
 		else if( bSubmitOK )
 		{
+			m_bStarted = false;
 			g_PopupWindows.LeaderboardPopups().Deactivate( m_nID );
-
-			m_bStarted = FALSE;
-			int nVal = (int)m_value.GetValue();
 
 			if( g_bRAMTamperedWith )
 			{
@@ -446,10 +432,10 @@ void RA_Leaderboard::Test()
 								  "Reset game to reenable posting.",
 								  PopupInfo ) );
 			}
-			else if( g_hRAKeysDLL != NULL && g_fnDoValidation != NULL )
+			else if( ( g_hRAKeysDLL != nullptr ) && ( RAKeys_DoValidation != nullptr ) )
 			{
 				//	TBD: move to keys!
-				char sValidationSig[50];
+				char sValidationSig[ 50 ];
 				sprintf_s( sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser().Username().c_str(), m_nID );
 				std::string sValidationMD5 = RAGenerateMD5( sValidationSig );
 
@@ -458,7 +444,7 @@ void RA_Leaderboard::Test()
 				args['t'] = RAUsers::LocalUser().Token();
 				args['i'] = std::to_string( m_nID );
 				args['v'] = sValidationMD5;
-				args['s'] = std::to_string( nVal );
+				args['s'] = std::to_string( static_cast<int>( m_value.GetValue() ) );	//	Concern about rounding?
 
 				RAWeb::CreateThreadedHTTPRequest( RequestSubmitLeaderboardEntry, args );
 			}
@@ -498,25 +484,17 @@ void RA_Leaderboard::SortRankInfo()
 			if( i == j )
 				continue;
 
-			if( m_RankInfo.at(i).m_nRank > m_RankInfo.at(j).m_nRank )
+			if( m_RankInfo.at( i ).m_nRank > m_RankInfo.at( j ).m_nRank )
 			{
-				LB_Entry temp = m_RankInfo[i];
-				m_RankInfo[i]= m_RankInfo[j];
-				m_RankInfo[j] = temp;
+				LB_Entry temp = m_RankInfo[ i ];
+				m_RankInfo[ i ] = m_RankInfo[ j ];
+				m_RankInfo[ j ] = temp;
 			}
 		}
 	}
 }
 
-std::string RA_Leaderboard::FormatScore( int nScoreIn ) const
-{
-	char buffer[ 1024 ];
-	FormatScore( m_format, nScoreIn, buffer, 1024 );
-	return std::string( buffer );
-}
-
-//static 
-void RA_Leaderboard::FormatScore( FormatType nType, int nScoreIn, char* pBuffer, unsigned int nLen )
+std::string RA_Leaderboard::FormatScore( int nScoreIn )
 {
 	if( nType == Format_TimeFrames )
 	{

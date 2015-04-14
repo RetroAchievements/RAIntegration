@@ -99,7 +99,7 @@ private:
 	ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
 	ConditionSet			m_submitCond;	//	Submit new score if this is true
 
-	BOOL					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
+	bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
 
 	ValueSet				m_value;		//	A collection of memory addresses and values to produce one value.
 	ValueSet				m_progress;		//	A collection of memory addresses, used to show progress towards completion.

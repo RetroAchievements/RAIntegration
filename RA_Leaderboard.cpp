@@ -494,40 +494,57 @@ void RA_Leaderboard::SortRankInfo()
 	}
 }
 
-std::string RA_Leaderboard::FormatScore( int nScoreIn )
+//	static
+std::string RA_Leaderboard::FormatScore( FormatType nType, int nScoreIn )
 {
-	if( nType == Format_TimeFrames )
+	//	NB. This is accessed by RA_Formattable... ought to be refactored really
+	char buffer[ 256 ];
+	switch( nType )
 	{
-		int nMins = nScoreIn / 3600;
-		int nSecs = ( nScoreIn % 3600 ) / 60;
-		int nMilli = static_cast<int>( ( ( nScoreIn % 3600 ) % 60 ) * ( 100.0 / 60.0 ) );	//	Convert from frames to 'millisecs'
-		sprintf_s( pBuffer, nLen, "%02d:%02d.%02d", nMins, nSecs, nMilli );
+		case Format_TimeFrames:
+		{
+			int nMins = nScoreIn / 3600;
+			int nSecs = ( nScoreIn % 3600 ) / 60;
+			int nMilli = static_cast<int>( ( ( nScoreIn % 3600 ) % 60 ) * ( 100.0 / 60.0 ) );	//	Convert from frames to 'millisecs'
+			sprintf_s( buffer, 256, "%02d:%02d.%02d", nMins, nSecs, nMilli );
+		}
+		break;
+
+		case Format_TimeSecs:
+		{
+			int nMins = nScoreIn / 60;
+			int nSecs = nScoreIn % 60;
+			sprintf_s( buffer, 256, "%02d:%02d", nMins, nSecs );
+		}
+		break;
+
+		case Format_TimeMillisecs:
+		{
+			int nMins = nScoreIn / 6000;
+			int nSecs = ( nScoreIn % 6000 ) / 100;
+			int nMilli = static_cast<int>( nScoreIn % 100 );
+			sprintf_s( buffer, 256, "%02d:%02d.%02d", nMins, nSecs, nMilli );
+		}
+		break;
+
+		case Format_Score:
+			sprintf_s( buffer, 256, "%06d Points", nScoreIn );
+			break;
+
+		case Format_Value:
+			sprintf_s( buffer, 256, "%01d", nScoreIn );
+			break;
+
+		default:
+			sprintf_s( buffer, 256, "%06d", nScoreIn );
+			break;
 	}
-	else if( nType == Format_TimeSecs )
-	{
-		int nMins = nScoreIn / 60;
-		int nSecs = nScoreIn % 60;
-		sprintf_s( pBuffer, nLen, "%02d:%02d", nMins, nSecs );
-	}
-	else if( nType == Format_TimeMillisecs )
-	{
-		int nMins = nScoreIn / 6000;
-		int nSecs = ( nScoreIn % 6000 ) / 100;
-		int nMilli = static_cast<int>( nScoreIn % 100 );
-		sprintf_s( pBuffer, nLen, "%02d:%02d.%02d", nMins, nSecs, nMilli );
-	}
-	else if( nType == Format_Score )
-	{
-		sprintf_s( pBuffer, nLen, "%06d Points", nScoreIn );
-	}
-	else if( nType == Format_Value )
-	{
-		sprintf_s( pBuffer, nLen, "%01d", nScoreIn );
-	}
-	else
-	{
-		sprintf_s( pBuffer, nLen, "%06d", nScoreIn );
-	}
+	return buffer;
+}
+
+std::string RA_Leaderboard::FormatScore( int nScoreIn ) const
+{
+	return FormatScore( m_format, nScoreIn );
 }
 
 RA_Leaderboard* RA_LeaderboardManager::FindLB( LeaderboardID nID )

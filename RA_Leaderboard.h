@@ -77,8 +77,9 @@ public:
 	double GetCurrentValueProgress() const;	//	Attempt to get a 'progress' alternative
 	void Clear();
 
+	//	Helper: tbd; refactor *into* RA_Formattable
+	static std::string RA_Leaderboard::FormatScore( FormatType nType, int nScoreIn );
 	std::string FormatScore( int nScoreIn ) const;
-	static void FormatScore( FormatType nType, int nScoreIn, char* pBuffer, unsigned int nLen );
 	void Reset();
 
 	LeaderboardID ID() const								{ return m_nID; }

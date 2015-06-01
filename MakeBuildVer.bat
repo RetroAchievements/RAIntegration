@@ -21,7 +21,7 @@ setlocal
 @GOTO End
 
 :NonMasterBranch
-@echo RAIntegration Tag 0.000 - Not on Master Branch!
-@echo #define RA_INTEGRATION_VERSION "0.000" > ./RA_BuildVer.h
+@echo RAIntegration Tag 0.999 - Not on Master Branch!
+@echo #define RA_INTEGRATION_VERSION "0.999" > ./RA_BuildVer.h
 
 :End

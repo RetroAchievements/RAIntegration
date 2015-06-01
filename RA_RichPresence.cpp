@@ -25,9 +25,7 @@ RA_Formattable::RA_Formattable( const std::string& sDesc, RA_Leaderboard::Format
 
 std::string RA_Formattable::Lookup( DataPos nValue ) const
 {
-	char buffer[ 1024 ];
-	RA_Leaderboard::FormatScore( m_nFormatType, nValue, buffer, 1024 );
-	return buffer;
+	return RA_Leaderboard::FormatScore( m_nFormatType, nValue );
 }
 
 void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFilename )

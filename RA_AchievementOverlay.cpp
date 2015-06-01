@@ -1071,10 +1071,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 			for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
 			{
 				const LB_Entry& rEntry = pLB->GetRankInfo( i );
-				
-				unsigned int nScore = rEntry.m_nScore;
-				char bufferScoreFormatted[ 256 ];
-				RA_Leaderboard::FormatScore( pLB->GetFormatType(), nScore, bufferScoreFormatted, 256 );
+				std::string sScoreFormatted = pLB->FormatScore( rEntry.m_nScore );
 
 				char sRankText[ 256 ];
 				sprintf_s( sRankText, 256, " %d ", rEntry.m_nRank );
@@ -1083,7 +1080,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 				sprintf_s( sNameText, 256, " %s ", rEntry.m_sUsername.c_str() );
 
 				char sScoreText[ 256 ];
-				sprintf_s( sScoreText, 256, " %s ", bufferScoreFormatted );
+				sprintf_s( sScoreText, 256, " %s ", sScoreFormatted.c_str() );
 
 				//	Draw/Fetch user image? //TBD
 				TextOut( hDC,
@@ -1487,7 +1484,11 @@ const int* AchievementOverlay::GetActiveSelectedItem() const
 
 void AchievementOverlay::OnLoad_NewRom()
 {
+	m_nAchievementsSelectedItem = 0;
 	m_nAchievementsScrollOffset = 0;
+	m_nLeaderboardSelectedItem = 0;
+	m_nLeaderboardScrollOffset = 0;
+
 	if( IsActive() )
 		Deactivate();
 }

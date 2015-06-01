@@ -903,7 +903,13 @@ API void CCONV _RA_LoadPreferences()
 API void CCONV _RA_SavePreferences()
 {
 	RA_LOG( __FUNCTION__ " - saving preferences...\n" );
-	
+
+	if( g_sClientName == nullptr )
+	{
+		RA_LOG( __FUNCTION__ " - aborting save, we don't even know who we are...\n" );
+		return;
+	}
+
 	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
 	FILE* pf = NULL;
 	fopen_s( &pf, std::string( std::string( RA_PREFERENCES_FILENAME_PREFIX ) + g_sClientName + ".cfg" ).c_str(), "wb" );

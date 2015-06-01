@@ -42,18 +42,18 @@ HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
 EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
 ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
-const char* g_sGetLatestClientPage = NULL;	
-const char* g_sClientVersion = NULL;		
-const char* g_sClientName = NULL;			
-const char* g_sClientDownloadURL = NULL;	
-const char* g_sClientEXEName = NULL;
+const char* g_sGetLatestClientPage = nullptr;
+const char* g_sClientVersion = nullptr;
+const char* g_sClientName = nullptr;
+const char* g_sClientDownloadURL = nullptr;
+const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
 bool g_bHardcoreModeActive = false;
 bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
-const char* (*g_fnKeysVersion)(void) = nullptr;
-void (*RAKeys_DoValidation)( char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID ) = nullptr;
+const char* ( *g_fnKeysVersion )( void ) = nullptr;
+void( *g_fnDoValidation )( char sBufferOut[ 50 ], const char* sUser, const char* sToken, const unsigned int nID ) = nullptr;
 
 //	local func def.
 bool _InstallKeys();
@@ -145,7 +145,7 @@ API BOOL CCONV _RA_InitI( HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, co
 		break;
 	}
 
-	if( g_sClientName != NULL )
+	if( g_sClientName != nullptr )
 	{
 		RA_LOG( "(found as: %s)\n", g_sClientName );
 	}
@@ -734,6 +734,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
+		AppendMenu( hRA, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT( "Use &Leaderboards" ) );
+		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector") );
@@ -742,7 +744,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games") );
-		AppendMenu( hRA, MF_STRING, IDM_RA_TOGGLELEADERBOARDS, TEXT("Toggle &Leaderboards") );
 	}
 	else
 	{

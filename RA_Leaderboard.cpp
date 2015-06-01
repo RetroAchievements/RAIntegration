@@ -541,7 +541,7 @@ RA_Leaderboard* RA_LeaderboardManager::FindLB( LeaderboardID nID )
 		iter++;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 

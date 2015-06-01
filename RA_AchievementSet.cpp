@@ -221,7 +221,7 @@ void AchievementSet::Test()
 									  PopupAchievementUnlocked,
 									  ach.BadgeImage() ) );
 				}
-				else if( g_fnDoValidation == nullptr )
+				else if( RAKeys_DoValidation == nullptr )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
 						MessagePopup( "(Missing RA_Keys.DLL): Achievement Unlocked",

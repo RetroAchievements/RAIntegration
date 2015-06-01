@@ -53,7 +53,7 @@ bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 
 const char* ( *g_fnKeysVersion )( void ) = nullptr;
-void( *g_fnDoValidation )( char sBufferOut[ 50 ], const char* sUser, const char* sToken, const unsigned int nID ) = nullptr;
+void( *RAKeys_DoValidation )( char sBufferOut[ 50 ], const char* sUser, const char* sToken, const unsigned int nID ) = nullptr;
 
 //	local func def.
 bool _InstallKeys();

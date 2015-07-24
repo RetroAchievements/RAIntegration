@@ -255,28 +255,28 @@ API int CCONV _RA_Shutdown()
 
 	RAWeb::RA_KillHTTPThreads();
 
-	if( g_AchievementsDialog.GetHWND() != NULL )
+	if( g_AchievementsDialog.GetHWND() != nullptr )
 	{
 		DestroyWindow( g_AchievementsDialog.GetHWND() );
-		g_AchievementsDialog.InstallHWND( NULL );
+		g_AchievementsDialog.InstallHWND( nullptr );
 	}
 
-	if( g_AchievementEditorDialog.GetHWND() != NULL )
+	if( g_AchievementEditorDialog.GetHWND() != nullptr )
 	{
 		DestroyWindow( g_AchievementEditorDialog.GetHWND() );
-		g_AchievementEditorDialog.InstallHWND( NULL );
+		g_AchievementEditorDialog.InstallHWND( nullptr );
 	}
 
-	if( g_MemoryDialog.GetHWND() != NULL )
+	if( g_MemoryDialog.GetHWND() != nullptr )
 	{
 		DestroyWindow( g_MemoryDialog.GetHWND() );
-		g_MemoryDialog.InstallHWND( NULL );
+		g_MemoryDialog.InstallHWND( nullptr );
 	}
 	
-	if( g_GameLibrary.GetHWND() != NULL )
+	if( g_GameLibrary.GetHWND() != nullptr )
 	{
 		DestroyWindow( g_GameLibrary.GetHWND() );
-		g_GameLibrary.InstallHWND( NULL );
+		g_GameLibrary.InstallHWND( nullptr );
 	}
 
 	g_GameLibrary.KillThread();
@@ -1146,8 +1146,21 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 			break;
 
 		case IDM_RA_TOGGLELEADERBOARDS:
+		{
 			g_bLeaderboardsActive = !g_bLeaderboardsActive;
-			MessageBox( nullptr, Widen( std::string( "Leaderboards are now " ) + ( g_bLeaderboardsActive ? "disabled" : "enabled" ) ).c_str(), L"Warning", MB_OK );
+
+			std::string msg;
+			msg += "Leaderboards are now ";
+			msg += ( g_bLeaderboardsActive ? "enabled." : "disabled." );
+			msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
+
+			MessageBox( nullptr, Widen( msg ).c_str(), L"Success", MB_OK );
+
+			if( !g_bLeaderboardsActive )
+				g_PopupWindows.LeaderboardPopups().Reset();
+
+			_RA_RebuildMenu();
+		}
 			break;
 
 		default:

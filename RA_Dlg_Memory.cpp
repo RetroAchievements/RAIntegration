@@ -75,15 +75,15 @@ INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc( HWND hDlg, UINT uMsg, WP
 	case WM_ERASEBKGND:
 		return TRUE;
 
-	//case WM_LBUTTONUP:
-	//	OnClick( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-	//	return FALSE;
+	case WM_LBUTTONUP:
+		OnClick( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+		return FALSE;
 
-	//case WM_KEYDOWN:
-	//	return( !OnKeyDown( static_cast<UINT>( LOWORD( wParam ) ) ) );
+	case WM_KEYDOWN:
+		return( !OnKeyDown( static_cast<UINT>( LOWORD( wParam ) ) ) );
 
-	//case WM_CHAR:
-	//	return( !OnEditInput( static_cast<UINT>( LOWORD( wParam ) ) ) );
+	case WM_CHAR:
+		return( !OnEditInput( static_cast<UINT>( LOWORD( wParam ) ) ) );
 	}
 
 	return DefWindowProc( hDlg, uMsg, wParam, lParam );
@@ -528,7 +528,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	int addr = m_nAddressOffset;
 	addr -= ( 0x40 );	//	Offset will be this quantity (push up four lines)...
 	//addr &= 0xffffff;	//	This should be mem size!!!
-	if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )
+	if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )				///CHECK THIS ITS DODGY ##SD
 		addr &= ( g_MemManager.ActiveBankSize() - 1 );
 
 	int line = 0;
@@ -772,6 +772,12 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			MemoryProc( hDlg, WM_COMMAND, IDC_RA_CBO_8BIT, 0 );		//	Imitate a buttonpress of '8-bit'
 			g_MemoryDialog.OnLoad_NewRom();
+
+			//	Fetch banks
+			ClearBanks();
+			std::vector<size_t> bankIDs = g_MemManager.GetBankIDs();
+			for( size_t i = 0; i < bankIDs.size(); ++i )
+				AddBank( bankIDs[ i ] );
 
 			return TRUE;
 		}
@@ -1061,6 +1067,27 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 						//return DefWindowProc( hDlg, nMsg, wParam, lParam );
 				}
 
+			case IDC_RA_MEMBANK:
+				switch( HIWORD( wParam ) )
+				{
+					case LBN_SELCHANGE:
+					{
+						RA_LOG( "Sel detected!" );
+						HWND hMemBanks = GetDlgItem( m_hWnd, IDC_RA_MEMBANK );
+						int nSelectedIdx = ComboBox_GetCurSel( hMemBanks );
+						
+						unsigned short nBankID = static_cast<unsigned short>( ComboBox_GetItemData( hMemBanks, nSelectedIdx ) );
+
+						MemoryViewerControl::m_nActiveMemBank = nBankID;
+						g_MemManager.ChangeActiveMemBank( nBankID );
+
+						InvalidateRect( m_hWnd, NULL, TRUE );	//	Force redraw on mem viewer
+						break;
+					}
+				}
+
+				return TRUE;
+
 			default:
 				return FALSE;	//	unhandled
 		}
@@ -1167,4 +1194,29 @@ void Dlg_Memory::SetWatchingAddress( unsigned int nAddr )
 BOOL Dlg_Memory::IsActive() const
 {
 	return( g_MemoryDialog.GetHWND() != NULL ) && ( IsWindowVisible( g_MemoryDialog.GetHWND() ) );
+}
+
+void Dlg_Memory::ClearBanks()
+{
+	if( m_hWnd == nullptr )
+		return;
+
+	HWND hMemBanks = GetDlgItem( m_hWnd, IDC_RA_MEMBANK );
+	while( ComboBox_DeleteString( hMemBanks, 0 ) != CB_ERR ) {}
+}
+
+void Dlg_Memory::AddBank( size_t nBankID )
+{
+	if( m_hWnd == nullptr )
+		return;
+
+	HWND hMemBanks = GetDlgItem( m_hWnd, IDC_RA_MEMBANK );
+	int nIndex = ComboBox_AddString( hMemBanks, Widen( std::to_string( nBankID ) ).c_str() );
+	if( nIndex != CB_ERR )
+	{
+		ComboBox_SetItemData( hMemBanks, nIndex, nBankID );
+	}
+
+	//	Select first element by default ('0')
+	ComboBox_SetCurSel( hMemBanks, 0 );
 }

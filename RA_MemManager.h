@@ -2,10 +2,6 @@
 
 #include "RA_Condition.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 class MemCandidate
 {
 public:
@@ -68,6 +64,8 @@ public:
 	inline size_t BankSize( unsigned short nBank ) const			{ return m_Banks.at( nBank ).BankSize; }
 	inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
 	//inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
+
+	std::vector<size_t> GetBankIDs() const;
 	
 	size_t NumCandidates() const									{ return m_nNumCandidates; }
 	const MemCandidate& GetCandidate( size_t nAt ) const			{ return m_Candidates[ nAt ]; }
@@ -80,10 +78,10 @@ public:
 	inline unsigned char RAMByte( unsigned short nBankID, ByteAddress nOffs ) const						{ return( ( *( m_Banks.at( nBankID ).Reader ) )( nOffs ) ); }
 	inline void RAMByteWrite( unsigned short nBankID, ByteAddress nOffs, unsigned int nVal ) const		{ ( *( m_Banks.at( nBankID ).Writer ) )( nOffs, nVal ); }
 
-	void PokeByte( unsigned int nAddr, unsigned int nValue );
+	//void PokeByte( unsigned int nAddr, unsigned int nValue );
 
 private:
-	std::map<unsigned short, BankData> m_Banks;
+	std::map<size_t, BankData> m_Banks;
 	unsigned short m_nActiveMemBank;
 
 	MemCandidate* m_Candidates;		//	Pointer to an array
@@ -94,73 +92,3 @@ private:
 };
 
 extern MemManager g_MemManager;
-
-
-//	Move to game-side!!!
-//
-//unsigned char RAMByteStandard( unsigned int nOffs )
-//{
-//	return g_MemManager.
-//	//if( nOffs >= g_MemManager.RAMTotalSize() )
-//	//	return 0;
-//	//
-//	//return (nOffs<g_MemManager.m_nCoreRAMSize) ? *(g_MemManager.m_pCoreRAM+nOffs) : (nOffs<g_MemManager.RAMTotalSize()) ? *(g_MemManager.m_pRAMExtra+(nOffs-g_MemManager.m_nCoreRAMSize)) : 0;
-//}
-//
-////	Alternative for GBC
-//unsigned char RAMByteGBC( unsigned int nOffs )
-//{
-//	if( nOffs >= g_MemManager.RAMTotalSize() )
-//		return 0;
-//
-//	return ( (unsigned char**)g_MemManager.m_pCoreRAM)[(nOffs) >> 12][(nOffs) & 0xfff];
-//}
-//
-//void RAMByteStandardWrite( unsigned int nOffs, unsigned int nVal )
-//{
-//	if( nOffs >= g_MemManager.RAMTotalSize() )
-//		return;
-//
-//	if( nOffs < g_MemManager.m_nCoreRAMSize )
-//	{
-//		*( g_MemManager.m_pCoreRAM+nOffs ) = nVal;
-//	}
-//	else
-//	{
-//		nOffs -= g_MemManager.m_nCoreRAMSize;
-//		*( g_MemManager.m_pRAMExtra+nOffs ) = nVal;
-//	}
-//}
-//
-////	Alternative for GBC
-//void RAMByteGBCWrite( unsigned int nOffs, unsigned int nVal )
-//{
-//	if( nOffs >= g_MemManager.RAMTotalSize() )
-//		return;
-//
-//	( (unsigned char**)g_MemManager.m_pCoreRAM)[(nOffs) >> 12][(nOffs) & 0xfff] = nVal;
-//}
-//
-//typedef void (*writefunc)( unsigned int A, unsigned char V );
-//typedef unsigned char (*readfunc)( unsigned int A );
-//
-//unsigned char RAMByteNES( unsigned int nOffs )
-//{
-//	//	g_MemManager.m_pCoreRAM is an array of readfunc function ptrs which we cast to, THEN dereference, then call
-//	return ( ( (readfunc*)( g_MemManager.m_pCoreRAM ) )[nOffs] )(nOffs);
-//}
-//
-//void RAMByteNESWrite( unsigned int nOffs, unsigned int nVal )
-//{
-//	//	g_MemManager.m_pRAMExtra is an array of writefunc function ptrs which we cast to, THEN dereference, then call
-//	( (writefunc*)( g_MemManager.m_pRAMExtra ) )[nOffs]( nOffs, nVal );
-//}
-
-//void RAMByteWriteStandard( unsigned int nOffs, unsigned int nVal );
-//void RAMByteWriteGBC( unsigned int nOffs, unsigned int nVal );
-
-//unsigned short MemManager_ValidMemAddrFound( int iter );
-
-#ifdef __cplusplus
-};
-#endif

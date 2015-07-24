@@ -2,6 +2,7 @@
 
 #include "RA_Core.h"
 #include "RA_Achievement.h"
+#include "RA_Dlg_Memory.h"
 
 MemManager g_MemManager;
 
@@ -26,6 +27,8 @@ void MemManager::ClearMemoryBanks()
 		delete[] m_Candidates;
 		m_Candidates = nullptr;
 	}
+
+	g_MemoryDialog.ClearBanks();
 }
 
 void MemManager::AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize )
@@ -39,6 +42,8 @@ void MemManager::AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByt
 	m_Banks[ nBankID ].BankSize = nBankSize;
 	m_Banks[ nBankID ].Reader = pReader;
 	m_Banks[ nBankID ].Writer = pWriter;
+
+	g_MemoryDialog.AddBank( nBankID );
 }
 
 void MemManager::Reset( unsigned short nSelectedMemBank, ComparisonVariableSize nNewVarSize )
@@ -186,7 +191,22 @@ void MemManager::ChangeActiveMemBank( unsigned short nMemBank )
 	}
 	
 	if( m_Candidates != nullptr )
+	{
 		delete[] m_Candidates;
+		m_Candidates = nullptr;
+	}
 
 	Reset( nMemBank, m_nComparisonSizeMode );
+}
+
+std::vector<size_t> MemManager::GetBankIDs() const
+{
+	std::vector<size_t> bankIDs;
+	std::map<size_t, BankData>::const_iterator iter = m_Banks.begin();
+	while( iter != m_Banks.end() )
+	{
+		bankIDs.push_back( iter->first );
+		iter++;
+	}
+	return bankIDs;
 }

@@ -60,8 +60,8 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 
 
 #if defined _DEBUG
-//#define RA_HOST_URL "localhost"
-#define RA_HOST_URL "retroachievements.org"
+#define RA_HOST_URL "localhost"
+//#define RA_HOST_URL "retroachievements.org"
 #else
 #define RA_HOST_URL "retroachievements.org"
 #endif
@@ -143,6 +143,7 @@ typedef DWORD			ARGB;
 
 	char* DataStreamAsString( DataStream& stream );
 
+	extern void RADebugLogNoFormat( const char* data );
 	extern void RADebugLog( const char* sFormat, ... );
 	extern BOOL DirectoryExists( const char* sPath );
 

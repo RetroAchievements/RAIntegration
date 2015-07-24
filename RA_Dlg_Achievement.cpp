@@ -190,26 +190,26 @@ BOOL LocalValidateAchievementsBeforeCommit( int nLbxItems[ 1 ] )
 		const Achievement& Ach = g_pActiveAchievements->GetAchievement( nIter );
 		if( Ach.Title().length() < 2 )
 		{
-			sprintf_s( buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title() );
+			sprintf_s( buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title().c_str() );
 			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 		if( Ach.Title().length() > 63 )
 		{
-			sprintf_s( buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.", Ach.Title() );
+			sprintf_s( buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.", Ach.Title().c_str() );
 			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 
 		if( Ach.Description().length() < 2 )
 		{
-			sprintf_s( buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.", Ach.Description() );
+			sprintf_s( buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.", Ach.Description().c_str() );
 			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
 		if( Ach.Description().length() > 255 )
 		{
-			sprintf_s( buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.", Ach.Description() );
+			sprintf_s( buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.", Ach.Description().c_str() );
 			MessageBox( nullptr, Widen( buffer ).c_str(), L"Error!", MB_OK );
 			return FALSE;
 		}
@@ -592,7 +592,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				NewClone.SetID( 0 );
 				NewClone.SetAuthor( RAUsers::LocalUser().Username() );
 				char buffer[256];
-				sprintf_s( buffer, 256, "%s (copy)", NewClone.Title() );
+				sprintf_s( buffer, 256, "%s (copy)", NewClone.Title().c_str() );
 				NewClone.SetTitle( buffer );
 
 				OnClickAchievementSet( Local );

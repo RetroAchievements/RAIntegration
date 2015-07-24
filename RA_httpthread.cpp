@@ -230,7 +230,9 @@ void RAWeb::LogJSON( const Document& doc )
 	GenericStringBuffer< UTF8<> > buffer;
 	Writer<GenericStringBuffer< UTF8<> > > writer( buffer );
 	doc.Accept( writer );
-	RA_LOG( buffer.GetString() );
+
+	//	buffer may contain percentage literals!
+	RADebugLogNoFormat( buffer.GetString() );
 }
 
 BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Document& JSONResponseOut )
@@ -242,6 +244,11 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 		{
 			JSONResponseOut.Parse( DataStreamAsString( response ) );
 			//LogJSON( JSONResponseOut );	//	Already logged during DoBlockingRequest()?
+
+			if( JSONResponseOut.HasParseError() )
+			{
+				RA_LOG( "JSON Parse Error encountered!\n" );
+			}
 
 			return( !JSONResponseOut.HasParseError() );
 		}
@@ -261,6 +268,8 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Data
 		return DoBlockingHttpGet( std::string( "UserPic/" + PostData.at('u') + ".png" ), ResponseOut, false );	//	UserPic needs migrating to S3...
 	case RequestBadge:
 		return DoBlockingHttpGet( std::string( "Badge/" + PostData.at('b') + ".png" ), ResponseOut, true );
+	case RequestLogin:
+		return DoBlockingHttpPost( "login_app.php", PostArgsToString( args ), ResponseOut );
 	default:
 		return DoBlockingHttpPost( "dorequest.php", PostArgsToString( args ), ResponseOut );
 	}
@@ -370,7 +379,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	BOOL bSuccess = FALSE;
 	ResponseOut.clear();
 
-	if( sPostString.find( "r=login" ) != std::string::npos )
+	if( sRequestedPage.compare( "login_app.php" ) == 0 )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
 		RA_LOG( __FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
@@ -465,7 +474,17 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	{
 		Document doc;
 		doc.Parse( DataStreamAsString( ResponseOut ) );
-		LogJSON( doc );
+
+		if( doc.HasParseError() )
+		{
+			RA_LOG( "Cannot parse JSON!\n" );
+			RA_LOG( DataStreamAsString( ResponseOut ) );
+			RA_LOG( "\n" );
+		}
+		else
+		{
+			LogJSON( doc );
+		}
 	}
 	else
 	{

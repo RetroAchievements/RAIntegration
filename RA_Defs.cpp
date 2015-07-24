@@ -7,6 +7,19 @@
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 
+void RADebugLogNoFormat( const char* data )
+{
+	OutputDebugString( Widen( data ).c_str() );
+
+	//SetCurrentDirectory( g_sHomeDir.c_str() );//?
+	FILE* pf = NULL;
+	if( fopen_s( &pf, RA_LOG_FILENAME, "a" ) == 0 )
+	{
+		fwrite( data, sizeof( char ), strlen( data ), pf );
+		fclose( pf );
+	}
+}
+
 void RADebugLog( const char* format, ... )
 {
 	char buf[ 4096 ];

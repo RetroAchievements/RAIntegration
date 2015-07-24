@@ -68,6 +68,7 @@
 #define IDC_RA_BADGENAME                1564
 #define IDC_RA_KNOWNGAMES               1565
 #define IDC_RA_CHECKSUM                 1566
+#define IDC_RA_MEMBANK                  1567
 #define IDC_RA_ACHPROGRESS_FORMULA      1569
 #define IDC_RA_ACHPROGRESS_EXAMPLE      1570
 #define IDC_RA_ACHPROGRESSENABLE        1571
@@ -118,11 +119,15 @@
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_MENUEND                  1739
 
+//#include <Windows.h>
+//#define IDC_STATIC -1
+//#include "afxres.h"
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        113
+#define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101

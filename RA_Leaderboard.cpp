@@ -636,11 +636,14 @@ void RA_LeaderboardManager::AddLeaderboard( const RA_Leaderboard& lb )
 
 void RA_LeaderboardManager::Test()
 {
-	std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-	while( iter != m_Leaderboards.end() )
+	if( g_bLeaderboardsActive )
 	{
-		(*iter).Test();
-		iter++;
+		std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
+		while( iter != m_Leaderboards.end() )
+		{
+			( *iter ).Test();
+			iter++;
+		}
 	}
 }
 

@@ -7,7 +7,9 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include <Windows.h>
+#define IDC_STATIC -1
+//#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -56,6 +58,8 @@ BEGIN
     CONTROL         "Viewer",IDC_RA_MEMTEXTVIEWER,"MemoryViewerControl",WS_TABSTOP,10,212,314,90
     LTEXT           "Bit: 0 1 2 3 4 5 6 7",IDC_RA_MEMBITS_TITLE,200,194,123,8,0,WS_EX_RIGHT
     LTEXT           "    0 0 0 0 0 0 0 0",IDC_RA_MEMBITS,200,204,123,8,0,WS_EX_RIGHT
+	LTEXT           "Mem Bank:", IDC_STATIC, 10, 185, 44, 9
+	COMBOBOX         IDC_RA_MEMBANK,63,182,47,87, CBS_DROPDOWNLIST | CBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP, WS_EX_CLIENTEDGE
 END
 
 IDD_RA_ACHIEVEMENTS DIALOGEX 0, 0, 430, 188
@@ -257,10 +261,6 @@ BEGIN
 0x5447, 0x0045, 
     IDC_RA_CBO_CMPTYPE, 0x403, 4, 0
 0x454e, 0x0051, 
-    IDC_RA_WATCHING, 0x403, 3, 0
-0x7830, "\000" 
-    IDC_RA_WATCHING, 0x403, 1, 0
-"\000" 
     0
 END
 
@@ -461,6 +461,17 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_RA_MEMORY AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////

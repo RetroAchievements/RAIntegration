@@ -696,11 +696,11 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 
 			HANDLE hOldObj = SelectObject( hDC, g_hFontDesc );
 
-			sprintf_s( buffer, 256, " %s (%d) ", pFriend->Username(), pFriend->GetScore() );
+			sprintf_s( buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore() );
 			TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs, Widen( buffer ).c_str(), strlen( buffer ) );
 
 			SelectObject( hDC, g_hFontTiny );
-			sprintf_s( buffer, 256, " %s ", pFriend->Activity() );
+			sprintf_s( buffer, 256, " %s ", pFriend->Activity().c_str() );
 			//RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
 			RECT rcDest;
 			SetRect( &rcDest, 
@@ -961,9 +961,9 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 				const int nSelBoxHeight = nItemSpacing;
 
 				RECT rcSelected = { nDX + nSelBoxXOffs,
-									nYOffset,
+									static_cast<LONG>( nYOffset ),
 									nDX + nSelBoxXOffs + nSelBoxWidth,
-									nYOffset + nSelBoxHeight };
+									static_cast<LONG>( nYOffset + nSelBoxHeight ) };
 
 				FillRect( hDC, &rcSelected, g_hBrushSelectedBG );
 			}

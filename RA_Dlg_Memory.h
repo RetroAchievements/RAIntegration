@@ -3,10 +3,6 @@
 #include "RA_Defs.h"
 #include "RA_CodeNotes.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 class CodeNotes;
 
 class MemoryViewerControl
@@ -30,6 +26,9 @@ public:
 	static void editData( unsigned int nByteAddress, bool bLowerNibble, unsigned int value );
 	static void Invalidate();
 
+public:
+	static unsigned short m_nActiveMemBank;
+
 private:
 	static HFONT m_hViewerFont;
 	static SIZE m_szFontSize;
@@ -43,8 +42,6 @@ private:
 	static bool m_bHasCaret;
 	static unsigned int m_nCaretWidth;
 	static unsigned int m_nCaretHeight;
-
-	static unsigned short m_nActiveMemBank;
 };
 
 class Dlg_Memory
@@ -76,13 +73,12 @@ public:
 
 	const CodeNotes& Notes() const				{ return m_CodeNotes; }
 
+	void ClearBanks();
+	void AddBank( size_t nBankID );
+
 private:
 	static CodeNotes m_CodeNotes;
 	static HWND m_hWnd;
 };
 
 extern Dlg_Memory g_MemoryDialog;
-
-#ifdef __cplusplus
-};
-#endif

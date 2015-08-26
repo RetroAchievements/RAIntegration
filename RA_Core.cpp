@@ -766,6 +766,9 @@ API void CCONV _RA_UpdateAppTitle( const char* sMessage )
 
 	if( RAUsers::LocalUser().IsLoggedIn() )
 		sstr << " - " << RAUsers::LocalUser().Username();
+	
+	if( _stricmp( RA_HOST_URL, "localhost" ) == 0 )
+		sstr << " *AT LOCALHOST*";
 
 	SetWindowText( g_RAMainWnd, Widen( sstr.str() ).c_str() );
 }

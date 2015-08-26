@@ -60,8 +60,8 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 
 
 #if defined _DEBUG
-#define RA_HOST_URL "localhost"
-//#define RA_HOST_URL "retroachievements.org"
+//#define RA_HOST_URL "localhost"
+#define RA_HOST_URL "retroachievements.org"
 #else
 #define RA_HOST_URL "retroachievements.org"
 #endif

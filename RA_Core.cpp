@@ -407,14 +407,20 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 			//AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
 			CoreAchievements->FetchFromWebBlocking(nGameID);
 			UnofficialAchievements->FetchFromWebBlocking(nGameID);
-			//AchievementSet::LoadFromFile( nGameID );
 
-			g_nActiveAchievementSet = Core;
-			CoreAchievements->LoadFromFile(nGameID);
-			g_nActiveAchievementSet = Unofficial;
-			UnofficialAchievements->LoadFromFile(nGameID);
-			g_nActiveAchievementSet = Local;
-			LocalAchievements->LoadFromFile(nGameID);
+
+			CoreAchievements->Clear();
+			UnofficialAchievements->Clear();
+			LocalAchievements->Clear();
+
+			AchievementSet::LoadFromFile( nGameID );
+
+			//g_nActiveAchievementSet = Core;
+			//CoreAchievements->LoadFromFile(nGameID);
+			//g_nActiveAchievementSet = Unofficial;
+			//UnofficialAchievements->LoadFromFile(nGameID);
+			//g_nActiveAchievementSet = Local;
+			//LocalAchievements->LoadFromFile(nGameID);
 
 			RAUsers::LocalUser().PostActivity( PlayerStartedPlaying );
 		}

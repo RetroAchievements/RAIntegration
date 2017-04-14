@@ -394,60 +394,22 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 		doc.HasMember( "PatchData" ) )
 	{
 		const Value& PatchData = doc[ "PatchData" ];
-
-		//const std::string& sMinVer = PatchData["MinVer"].GetString();
-		//const long nMinVerRequired = strtol( sMinVer.substr( 2 ).c_str(), NULL, 10 );
-		
-		//const long CURRENT_VER = strtol( std::string( g_sClientVersion ).substr( 2 ).c_str(), nullptr, 10 );
-		//if( CURRENT_VER < nMinVerRequired )
-		//{
-		//	//	Client version too old!
-
-		//	char buffer[4096];
-		//	sprintf_s( buffer, 4096, 
-		//		"Client version of 0.%03d is too old for the latest patch format.\r\n"
-		//		"Version 0.%03d or greater required.\r\n"
-		//		"Visit " RA_HOST " for a more recent version? ",
-		//		CURRENT_VER,
-		//		nMinVerRequired );
-
-		//	if( MessageBox( nullptr, buffer, "Client out of date!", MB_YESNO ) == IDYES )
-		//	{
-		//		sprintf_s( buffer, 4096, "http://" RA_HOST "/download.php" );
-
-		//		ShellExecute( NULL,
-		//			"open",
-		//			buffer,
-		//			NULL,
-		//			NULL,
-		//			SW_SHOWNORMAL );
-		//	}
-		//	else
-		//	{
-		//		//MessageBox( nullptr, "Cannot load achievements for this game.", "Error", MB_OK );
-		//	}
-
-		//	return FALSE;
-		//}
-		//else
+		SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+		FILE* pf = nullptr;
+		fopen_s( &pf, std::string( RA_DIR_DATA + std::to_string( nGameID ) + ".txt" ).c_str(), "wb" );
+		if( pf != nullptr )
 		{
-			SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
-			FILE* pf = nullptr;
-			fopen_s( &pf, std::string( RA_DIR_DATA + std::to_string( nGameID ) + ".txt" ).c_str(), "wb" );
-			if( pf != nullptr )
-			{
-				FileStream fs( pf );
-				Writer<FileStream> writer( fs );
-				PatchData.Accept( writer );
-				fclose( pf );
-				return TRUE;
-			}
-			else
-			{
-				ASSERT( !"Could not open patch file for writing?" );
-				RA_LOG( "Could not open patch file for writing?" );
-				return FALSE;
-			}
+			FileStream fs( pf );
+			Writer<FileStream> writer( fs );
+			PatchData.Accept( writer );
+			fclose( pf );
+			return TRUE;
+		}
+		else
+		{
+			ASSERT( !"Could not open patch file for writing?" );
+			RA_LOG( "Could not open patch file for writing?" );
+			return FALSE;
 		}
 	}
 	else
@@ -463,10 +425,6 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 //	static
 BOOL AchievementSet::LoadFromFile( GameID nGameID )
 {
-	CoreAchievements->Clear();
-	UnofficialAchievements->Clear();
-	LocalAchievements->Clear();
-
 	if (nGameID == 0)
 		return TRUE;
 

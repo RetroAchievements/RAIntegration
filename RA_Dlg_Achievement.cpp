@@ -526,7 +526,14 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					{
 						AchievementSet::DeletePatchFile( g_nActiveAchievementSet, nGameID );
 
-						//	Reload the achievements file (will fetch from server fresh)
+						//	Reload the achievements file (fetch from server fresh)
+
+						CoreAchievements->Clear();
+						UnofficialAchievements->Clear();
+						LocalAchievements->Clear();
+
+						CoreAchievements->FetchFromWebBlocking(nGameID);
+						UnofficialAchievements->FetchFromWebBlocking(nGameID);
 
 						AchievementSet::LoadFromFile( nGameID );
 
@@ -536,7 +543,6 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						//	Cause it to reload!
 						OnClickAchievementSet( g_nActiveAchievementSet );
 					}
-
 				}
 			}
 			break;

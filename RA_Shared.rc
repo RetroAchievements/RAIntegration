@@ -7,9 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include <Windows.h>
-#define IDC_STATIC -1
-//#include "afxres.h"
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -58,8 +56,8 @@ BEGIN
     CONTROL         "Viewer",IDC_RA_MEMTEXTVIEWER,"MemoryViewerControl",WS_TABSTOP,10,212,314,90
     LTEXT           "Bit: 0 1 2 3 4 5 6 7",IDC_RA_MEMBITS_TITLE,200,194,123,8,0,WS_EX_RIGHT
     LTEXT           "    0 0 0 0 0 0 0 0",IDC_RA_MEMBITS,200,204,123,8,0,WS_EX_RIGHT
-	LTEXT           "Mem Bank:", IDC_STATIC, 10, 185, 44, 9
-	COMBOBOX         IDC_RA_MEMBANK,63,182,47,87, CBS_DROPDOWNLIST | CBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP, WS_EX_CLIENTEDGE
+    LTEXT           "Mem Bank:",IDC_STATIC,10,185,44,9
+    COMBOBOX        IDC_RA_MEMBANK,63,182,47,87,CBS_DROPDOWNLIST | CBS_DISABLENOSCROLL | WS_DISABLED | WS_VSCROLL | WS_TABSTOP,WS_EX_CLIENTEDGE
 END
 
 IDD_RA_ACHIEVEMENTS DIALOGEX 0, 0, 430, 188

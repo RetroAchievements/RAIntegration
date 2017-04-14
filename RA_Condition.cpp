@@ -185,31 +185,31 @@ unsigned int CompVariable::GetValue()
 		if( m_nVarSize >= ComparisonVariableSize::Bit_0 && m_nVarSize <= ComparisonVariableSize::Bit_7 )
 		{
 			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
-			nLiveVal = ( g_MemManager.RAMByte( m_nBankID, m_nVal ) & nBitmask ) != 0;
+			nLiveVal = ( g_MemManager.ActiveBankRAMByteRead( m_nVal ) & nBitmask ) != 0;
 		}
 		else if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal ) & 0xf;
+			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal ) & 0xf;
 		}
 		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
 		{
-			nLiveVal = ( g_MemManager.RAMByte( m_nBankID, m_nVal ) >> 4 ) & 0xf;
+			nLiveVal = ( g_MemManager.ActiveBankRAMByteRead( m_nVal ) >> 4 ) & 0xf;
 		}
 		else if( m_nVarSize == ComparisonVariableSize::EightBit )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
+			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
 		}
 		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
-			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 1 ) << 8 );
+			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
+			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 1 ) << 8 );
 		}
 		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
 		{
-			nLiveVal = g_MemManager.RAMByte( m_nBankID, m_nVal );
-			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 1 ) << 8 );
-			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 2 ) << 16 );
-			nLiveVal |= ( g_MemManager.RAMByte( m_nBankID, m_nVal + 3 ) << 24 );
+			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
+			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 1 ) << 8 );
+			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 2 ) << 16 );
+			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 3 ) << 24 );
 		}
 
 		if( m_nVarType == ComparisonVariableType::DeltaMem )

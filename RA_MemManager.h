@@ -62,8 +62,9 @@ public:
 	inline bool UseLastKnownValue() const							{ return m_bUseLastKnownValue; }
 	inline void SetUseLastKnownValue( bool bUseLastKnownValue )		{ m_bUseLastKnownValue = bUseLastKnownValue; }
 	inline size_t BankSize( unsigned short nBank ) const			{ return m_Banks.at( nBank ).BankSize; }
-	inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
+	//inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
 	//inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
+	inline size_t TotalBankSize() const								{ return m_nTotalBankSize; }
 
 	std::vector<size_t> GetBankIDs() const;
 	
@@ -72,11 +73,14 @@ public:
 
 	void ChangeActiveMemBank( unsigned short nMemBank );
 
-	inline unsigned char ActiveBankRAMByteRead( ByteAddress nOffs ) const								{ return( ( *( m_Banks.at( m_nActiveMemBank ).Reader ) )( nOffs ) ); }
-	inline void ActiveBankRAMByteWrite( ByteAddress nOffs, unsigned int nVal ) const					{ ( *( m_Banks.at( m_nActiveMemBank ).Writer ) )( nOffs, nVal ); }
+	unsigned char ActiveBankRAMByteRead(ByteAddress nOffs) const;
+	void ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal);
 
-	inline unsigned char RAMByte( unsigned short nBankID, ByteAddress nOffs ) const						{ return( ( *( m_Banks.at( nBankID ).Reader ) )( nOffs ) ); }
-	inline void RAMByteWrite( unsigned short nBankID, ByteAddress nOffs, unsigned int nVal ) const		{ ( *( m_Banks.at( nBankID ).Writer ) )( nOffs, nVal ); }
+	//inline unsigned char ActiveBankRAMByteRead( ByteAddress nOffs ) const								{ return( ( *( m_Banks.at( m_nActiveMemBank ).Reader ) )( nOffs ) ); }
+	//inline void ActiveBankRAMByteWrite( ByteAddress nOffs, unsigned int nVal ) const					{ ( *( m_Banks.at( m_nActiveMemBank ).Writer ) )( nOffs, nVal ); }
+
+	//inline unsigned char RAMByte( unsigned short nBankID, ByteAddress nOffs ) const						{ return( ( *( m_Banks.at( nBankID ).Reader ) )( nOffs ) ); }
+	//inline void RAMByteWrite( unsigned short nBankID, ByteAddress nOffs, unsigned int nVal ) const		{ ( *( m_Banks.at( nBankID ).Writer ) )( nOffs, nVal ); }
 
 	//void PokeByte( unsigned int nAddr, unsigned int nValue );
 
@@ -89,6 +93,7 @@ private:
 
 	ComparisonVariableSize m_nComparisonSizeMode;
 	bool m_bUseLastKnownValue;
+	size_t m_nTotalBankSize;
 };
 
 extern MemManager g_MemManager;

@@ -187,7 +187,7 @@ void MemoryViewerControl::moveAddress( int offset, int nibbleOff )
 	  MessageBeep((UINT)-1);
       return;
     }
-    if( m_nEditAddress >= g_MemManager.ActiveBankSize() )
+    if( m_nEditAddress >= g_MemManager.TotalBankSize() )
 	{
       m_nEditAddress -= offset;
 	  MessageBeep((UINT)-1);
@@ -237,21 +237,21 @@ void MemoryViewerControl::editData( unsigned int nByteAddress, bool bLowerNibble
 	{
 		//	We're submitting a new lower nibble:
 		//	Fetch existing upper nibble,
-		unsigned int nVal = ( g_MemManager.RAMByte( m_nActiveMemBank, nByteAddress ) >> 4 ) << 4;
+		unsigned int nVal = ( g_MemManager.ActiveBankRAMByteRead( nByteAddress ) >> 4 ) << 4;
 		//	Merge in given (lower nibble) value,
 		nVal |= nNewVal;
 		//	Write value:
-		g_MemManager.RAMByteWrite( m_nActiveMemBank, nByteAddress, nVal );
+		g_MemManager.ActiveBankRAMByteWrite( nByteAddress, nVal );
 	}
 	else
 	{
 		//	We're submitting a new upper nibble:
 		//	Fetch existing lower nibble,
-		unsigned int nVal = g_MemManager.RAMByte( m_nActiveMemBank, nByteAddress ) & 0xf;
+		unsigned int nVal = g_MemManager.ActiveBankRAMByteRead( nByteAddress ) & 0xf;
 		//	Merge in given value at upper nibble
 		nVal |= ( nNewVal << 4 );
 		//	Write value:
-		g_MemManager.RAMByteWrite( m_nActiveMemBank, nByteAddress, nVal );
+		g_MemManager.ActiveBankRAMByteWrite( nByteAddress, nVal );
 	}
 }
 
@@ -311,8 +311,8 @@ bool MemoryViewerControl::OnEditInput( UINT c )
 
 		moveAddress(0, 1);
 		Invalidate();
-
     }
+
 	return true;
 }
 
@@ -347,8 +347,8 @@ void MemoryViewerControl::SetCaretPos()
 	g_MemoryDialog.SetWatchingAddress( m_nEditAddress );
 
 	unsigned int nTopLeft = m_nAddressOffset - 0x40;
-	if( g_MemManager.ActiveBankSize() > 0 )
-		nTopLeft %= g_MemManager.ActiveBankSize();
+	if( g_MemManager.TotalBankSize() > 0 )
+		nTopLeft %= g_MemManager.TotalBankSize();
 	else
 		nTopLeft %= 0x10000;
 
@@ -439,8 +439,8 @@ void MemoryViewerControl::OnClick( POINT point )
 
 	m_nEditAddress = ( nTopLeft + (line<<4) );
 
-	if( g_MemManager.ActiveBankSize() > 0 )
-		m_nEditAddress %= g_MemManager.ActiveBankSize();
+	if( g_MemManager.TotalBankSize() > 0 )
+		m_nEditAddress %= g_MemManager.TotalBankSize();
 	else
 		m_nEditAddress %= 0x10000;
 
@@ -529,7 +529,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	addr -= ( 0x40 );	//	Offset will be this quantity (push up four lines)...
 	//addr &= 0xffffff;	//	This should be mem size!!!
 	if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )				///CHECK THIS ITS DODGY ##SD
-		addr &= ( g_MemManager.ActiveBankSize() - 1 );
+		addr &= ( g_MemManager.TotalBankSize() - 1 );
 
 	int line = 0;
 
@@ -566,8 +566,8 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 		{
 			if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )
 			{
-				if( static_cast<size_t>( addr + j ) < g_MemManager.BankSize( m_nActiveMemBank ) )
-					data[ j ] = g_MemManager.RAMByte( m_nActiveMemBank, addr + j );
+				if( static_cast<size_t>( addr + j ) < g_MemManager.TotalBankSize() )
+					data[ j ] = g_MemManager.ActiveBankRAMByteRead( addr + j );
 			}
 		}
 		//readData(addr, 16, data);
@@ -631,7 +631,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 		addr += 16;
 
 		if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )
-			addr &= ( g_MemManager.ActiveBankSize() - 1 );
+			addr &= ( g_MemManager.TotalBankSize() - 1 );
 
 		r.top += m_szFontSize.cy;
 		r.bottom += m_szFontSize.cy;
@@ -701,7 +701,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, L"" );
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS, L"" );
 
-			if( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.ActiveBankSize() == 0 ) )
+			if( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.TotalBankSize() == 0 ) )
 				return FALSE;
 
 			bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
@@ -791,7 +791,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				if( g_MemManager.NumMemoryBanks() == 0 )
 					return TRUE;	//	Ignored
 
-				if( g_MemManager.ActiveBankSize() == 0 )
+				if( g_MemManager.TotalBankSize() == 0 )
 					return TRUE;	//	Handled
 
 				ComparisonType nCmpType = static_cast<ComparisonType>( ComboBox_GetCurSel( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ) ) );

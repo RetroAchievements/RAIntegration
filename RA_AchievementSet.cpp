@@ -463,10 +463,9 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 //	static
 BOOL AchievementSet::LoadFromFile( GameID nGameID )
 {
-	//	Is this safe?
-	//CoreAchievements->Clear();
-	//UnofficialAchievements->Clear();
-	//LocalAchievements->Clear();			//?!?!?
+	CoreAchievements->Clear();
+	UnofficialAchievements->Clear();
+	LocalAchievements->Clear();
 
 	if (nGameID == 0)
 		return TRUE;

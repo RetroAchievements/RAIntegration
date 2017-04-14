@@ -404,8 +404,17 @@ API int CCONV _RA_OnLoadNewRom( const BYTE* pROM, unsigned int nROMSize )
 			//	Delete Core and Unofficial Achievements so they are redownloaded every time:
 			AchievementSet::DeletePatchFile( Core, nGameID );
 			AchievementSet::DeletePatchFile( Unofficial, nGameID );
-			AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
-			AchievementSet::LoadFromFile( nGameID );
+			//AchievementSet::FetchFromWebBlocking( nGameID );	//##BLOCKING##
+			CoreAchievements->FetchFromWebBlocking(nGameID);
+			UnofficialAchievements->FetchFromWebBlocking(nGameID);
+			//AchievementSet::LoadFromFile( nGameID );
+
+			g_nActiveAchievementSet = Core;
+			CoreAchievements->LoadFromFile(nGameID);
+			g_nActiveAchievementSet = Unofficial;
+			UnofficialAchievements->LoadFromFile(nGameID);
+			g_nActiveAchievementSet = Local;
+			LocalAchievements->LoadFromFile(nGameID);
 
 			RAUsers::LocalUser().PostActivity( PlayerStartedPlaying );
 		}

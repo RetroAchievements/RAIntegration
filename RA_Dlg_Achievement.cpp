@@ -431,8 +431,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			{
 				if( g_nActiveAchievementSet == Local )
 				{
-					//if( g_pActiveAchievements->Save() )
-					if( FALSE ) //NIMPL
+					//if( FALSE ) //NIMPL
+					if (g_pActiveAchievements->SaveToFile())
 					{
 						MessageBox( hDlg, L"Saved OK!", L"OK", MB_OK );
 					}
@@ -527,6 +527,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						AchievementSet::DeletePatchFile( g_nActiveAchievementSet, nGameID );
 
 						//	Reload the achievements file (will fetch from server fresh)
+
 						AchievementSet::LoadFromFile( nGameID );
 
 						//	Refresh dialog contents:
@@ -551,6 +552,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				//	Add a new achievement with default params
 				Achievement& Cheevo = g_pActiveAchievements->AddAchievement();
 				Cheevo.SetAuthor( RAUsers::LocalUser().Username() );
+				Cheevo.SetBadgeImage("00000");
 
 				//	Reverse find where I am in the list:
 				unsigned int nOffset = 0;

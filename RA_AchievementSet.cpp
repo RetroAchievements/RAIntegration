@@ -442,59 +442,62 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			//const Value& PatchData = doc["PatchData"];
 			const GameID nGameIDFetched = doc["ID"].GetUint();
 			ASSERT( nGameIDFetched == nGameID );
-			const std::string& sGameTitle = doc["Title"].GetString();
-			const unsigned int nConsoleID = doc["ConsoleID"].GetUint();
-			const std::string& sConsoleName = doc["ConsoleName"].GetString();
-			const unsigned int nForumTopicID = doc["ForumTopicID"].GetUint();
-			const unsigned int nGameFlags = doc["Flags"].GetUint();
-			const std::string& sImageIcon = doc["ImageIcon"].GetString();
-			const std::string& sImageTitle = doc["ImageTitle"].GetString();
-			const std::string& sImageIngame = doc["ImageIngame"].GetString();
-			const std::string& sImageBoxArt = doc["ImageBoxArt"].GetString();
-			const std::string& sPublisher = doc["Publisher"].IsNull() ? "Unknown" : doc["Publisher"].GetString();
-			const std::string& sDeveloper = doc["Developer"].IsNull() ? "Unknown" : doc["Developer"].GetString();
-			const std::string& sGenre = doc["Genre"].IsNull() ? "Unknown" : doc["Genre"].GetString();
-			const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
-			const bool bIsFinal = doc["IsFinal"].GetBool();
-			const std::string& sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
-			
-			//##SD store all this data somewhere? Do we want it?
-			m_sPreferredGameTitle = sGameTitle;
-
-			RA_RichPresenceInterpretter::PersistAndParseScript( nGameIDFetched, sRichPresencePatch );
-
-			const Value& AchievementsData = doc["Achievements"];
-
-			for( SizeType i = 0; i < AchievementsData.Size(); ++i )
+			if (nGameIDFetched != 0)
 			{
-				//	Parse into correct boxes
-				unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
-				if( nFlags == 3 )
-				{
-					Achievement& newAch = CoreAchievements->AddAchievement();
-					newAch.Parse( AchievementsData[i] );
-				}
-				else if( nFlags == 5 )
-				{
-					Achievement& newAch = UnofficialAchievements->AddAchievement();
-					newAch.Parse( AchievementsData[i] );
-				}
-				else
-				{
-					RA_LOG( "Cannot deal with achievement with flags: %d\n", nFlags );
-				}
-			}
-			
-			const Value& LeaderboardsData = doc["Leaderboards"];
-			
-			for( SizeType i = 0; i < LeaderboardsData.Size(); ++i )
-			{
-				//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
-				
-				RA_Leaderboard lb( LeaderboardsData[i]["ID"].GetUint() );
-				lb.LoadFromJSON( LeaderboardsData[i] );
+				const std::string& sGameTitle = doc["Title"].GetString();
+				const unsigned int nConsoleID = doc["ConsoleID"].GetUint();
+				const std::string& sConsoleName = doc["ConsoleName"].GetString();
+				const unsigned int nForumTopicID = doc["ForumTopicID"].GetUint();
+				const unsigned int nGameFlags = doc["Flags"].GetUint();
+				const std::string& sImageIcon = doc["ImageIcon"].GetString();
+				const std::string& sImageTitle = doc["ImageTitle"].GetString();
+				const std::string& sImageIngame = doc["ImageIngame"].GetString();
+				const std::string& sImageBoxArt = doc["ImageBoxArt"].GetString();
+				const std::string& sPublisher = doc["Publisher"].IsNull() ? "Unknown" : doc["Publisher"].GetString();
+				const std::string& sDeveloper = doc["Developer"].IsNull() ? "Unknown" : doc["Developer"].GetString();
+				const std::string& sGenre = doc["Genre"].IsNull() ? "Unknown" : doc["Genre"].GetString();
+				const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
+				const bool bIsFinal = doc["IsFinal"].GetBool();
+				const std::string& sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
 
-				g_LeaderboardManager.AddLeaderboard( lb );
+				//##SD store all this data somewhere? Do we want it?
+				m_sPreferredGameTitle = sGameTitle;
+
+				RA_RichPresenceInterpretter::PersistAndParseScript(nGameIDFetched, sRichPresencePatch);
+
+				const Value& AchievementsData = doc["Achievements"];
+
+				for (SizeType i = 0; i < AchievementsData.Size(); ++i)
+				{
+					//	Parse into correct boxes
+					unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
+					if (nFlags == 3)
+					{
+						Achievement& newAch = CoreAchievements->AddAchievement();
+						newAch.Parse(AchievementsData[i]);
+					}
+					else if (nFlags == 5)
+					{
+						Achievement& newAch = UnofficialAchievements->AddAchievement();
+						newAch.Parse(AchievementsData[i]);
+					}
+					else
+					{
+						RA_LOG("Cannot deal with achievement with flags: %d\n", nFlags);
+					}
+				}
+
+				const Value& LeaderboardsData = doc["Leaderboards"];
+
+				for (SizeType i = 0; i < LeaderboardsData.Size(); ++i)
+				{
+					//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
+
+					RA_Leaderboard lb(LeaderboardsData[i]["ID"].GetUint());
+					lb.LoadFromJSON(LeaderboardsData[i]);
+
+					g_LeaderboardManager.AddLeaderboard(lb);
+				}
 			}
 		}
 		else

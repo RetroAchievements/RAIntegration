@@ -63,6 +63,9 @@ public:
 	inline time_t ModifiedDate() const									{ return m_nTimestampModified; }
 	void SetModifiedDate( time_t nTimeModified )						{ m_nTimestampModified = nTimeModified; }
 	
+	inline unsigned short Upvotes() const { return m_nUpvotes; }
+	inline unsigned short Downvotes() const { return m_nDownvotes; }
+
 	inline const std::string& Progress() const							{ return m_sProgress; }
 	void SetProgressIndicator( const std::string& sProgress )			{ m_sProgress = sProgress; }
 	inline const std::string& ProgressMax() const						{ return m_sProgressMax; }
@@ -136,6 +139,9 @@ private:
 
 	time_t m_nTimestampCreated;
 	time_t m_nTimestampModified;
+
+	unsigned short m_nUpvotes;
+	unsigned short m_nDownvotes;
 
 	HBITMAP m_hBadgeImage;
 	HBITMAP m_hBadgeImageLocked;

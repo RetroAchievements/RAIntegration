@@ -1068,6 +1068,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 				AchievementSet::DeletePatchFile( Core, AchievementSet::GetGameID() );
 				AchievementSet::DeletePatchFile( Unofficial, AchievementSet::GetGameID() );
 
+				CoreAchievements->Clear();
+				UnofficialAchievements->Clear();
+				LocalAchievements->Clear();
+
 				//	Fetch remotely then load again from file
 				AchievementSet::FetchFromWebBlocking( AchievementSet::GetGameID() );
 				AchievementSet::LoadFromFile( AchievementSet::GetGameID() );

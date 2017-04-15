@@ -963,8 +963,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 		}
 
 	case WM_CLOSE:
-		//EndDialog( hDlg, 1 );
-		DestroyWindow( hDlg );	//?
+		EndDialog( hDlg, TRUE );
 		return TRUE;
 	}
 

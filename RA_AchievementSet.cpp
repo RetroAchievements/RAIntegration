@@ -39,13 +39,10 @@ std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )
 
 	switch (g_nActiveAchievementSet)
 	{
-	case Core:
-		return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
-	case Unofficial:
-		return RA_DIR_DATA + std::to_string(nGameID) + "-Unofficial.txt";
-	default:
 	case Local:
 		return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
+	default:
+		return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
 	}
 }
 

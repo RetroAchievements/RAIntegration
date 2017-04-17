@@ -334,8 +334,8 @@ void MemoryViewerControl::destroyEditCaret()
 
 void MemoryViewerControl::SetCaretPos()
 {
-	if( g_MemManager.NumMemoryBanks() == 0 )
-		return;
+	//if( g_MemManager.NumMemoryBanks() == 0 )
+		//return;
 
 	HWND hOurDlg = GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER );
 	if(GetFocus() != hOurDlg)
@@ -1012,17 +1012,19 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			case IDC_RA_MEM_LIST:
 			{
-				char sSelectedString[ 1024 ];
+				wchar_t sSelectedString[ 1024 ];
 				HWND hListbox = GetDlgItem( hDlg, IDC_RA_MEM_LIST );
 				ListBox_GetText( hListbox, ListBox_GetCurSel( hListbox ), sSelectedString );
 
-				if( strlen( sSelectedString ) > 6 &&
+				if( wcslen( sSelectedString ) > 6 &&
 					sSelectedString[ 0 ] == '0' &&
 					sSelectedString[ 1 ] == 'x' )
 				{
-					sSelectedString[ 8 ] = '\0';
-					ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( sSelectedString + 2, NULL, 16 ) );	//	NB. Hex
-					ComboBox_SetText( GetDlgItem( hDlg, IDC_RA_WATCHING ), Widen( sSelectedString ).c_str() );
+					char nString[1024];
+					wcstombs(nString, sSelectedString, 1024);
+					nString[ 8 ] = '\0';
+					ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul(nString + 2, NULL, 16 ) );	//	NB. Hex
+					ComboBox_SetText( GetDlgItem( hDlg, IDC_RA_WATCHING ), Widen(nString).c_str() );
 
 					const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( nAddr );
 					if( ( pSavedNote != nullptr ) && ( pSavedNote->Note().length() > 0 ) )

@@ -667,9 +667,9 @@ BOOL CreateIPE( int nItem, int nSubItem )
 
 			for( size_t i = 0; i < NumComparisonTypes; ++i )
 			{
-				ComboBox_AddString( g_hIPEEdit, Widen( COMPARISONVARIABLETYPE_STR[ i ] ).c_str() );
+				ComboBox_AddString( g_hIPEEdit, Widen(COMPARISONTYPE_STR[ i ] ).c_str() );
 
-				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONVARIABLETYPE_STR[ i ] ) == 0 )
+				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), COMPARISONTYPE_STR[ i ] ) == 0 )
 					ComboBox_SetCurSel( g_hIPEEdit, i );
 			}
 

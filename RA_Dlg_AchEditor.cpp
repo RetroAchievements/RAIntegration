@@ -88,9 +88,9 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
 	for( size_t i = 0; i < MAX_CONDITIONS; ++i )
 	{
 		if( i == 0 )
-			sprintf_s( m_lbxGroupNames[ i ], MEM_STRING_TEXT_LEN, "Core" );
+			swprintf_s( m_lbxGroupNames[ i ], MEM_STRING_TEXT_LEN, L"Core" );
 		else
-			sprintf_s( m_lbxGroupNames[ i ], MEM_STRING_TEXT_LEN, "Alt %02d", i );
+			swprintf_s( m_lbxGroupNames[ i ], MEM_STRING_TEXT_LEN, L"Alt %02d", i );
 	}
 }
 

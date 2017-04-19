@@ -334,8 +334,8 @@ void MemoryViewerControl::destroyEditCaret()
 
 void MemoryViewerControl::SetCaretPos()
 {
-	//if( g_MemManager.NumMemoryBanks() == 0 )
-		//return;
+	if( g_MemManager.NumMemoryBanks() == 0 )
+		return;
 
 	HWND hOurDlg = GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER );
 	if(GetFocus() != hOurDlg)

@@ -108,7 +108,7 @@ HttpResults RAWeb::ms_LastHttpResults;
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 {
-	rDocOut.ParseInsitu( DataStreamAsString( GetResponse() ) );
+	rDocOut.Parse( DataStreamAsString( GetResponse() ) );
 
 	if( rDocOut.HasParseError() )
 		RA_LOG( "Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr( rDocOut.GetParseError() ), RequestTypeToString[ m_nType ] );
@@ -355,6 +355,9 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
 						WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 					}
 
+					if (ResponseOut.size() > 0)
+						ResponseOut.push_back('\0');	//	EOS for parsing
+
 					RA_LOG( __FUNCTION__ ": success! %s Returned %d bytes.", sRequestedPage.c_str(), ResponseOut.size() );
 				}
 
@@ -496,8 +499,10 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 
 BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, DataStream& ResponseOut )
 {
+	ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
+
 	const std::string sRequestedPage = "doupload.php";
-	const std::string sRTarget = RequestTypeToPost[nType]; //"uploadbadgeimage";
+	const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
 
 	RA_LOG( __FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str() );
 
@@ -547,23 +552,27 @@ BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Data
 			// Add the photo to the stream
 			std::ifstream f( sFilename, std::ios::binary );
 
+			std::string sRTargetAndExtension = sRTarget + sFilename.substr(sFilename.length() - 4);
+
 			std::ostringstream sb_ascii;
 			//sb_ascii << str;									
 			sb_ascii << "--" << mimeBoundary << "\r\n";															//	--Boundary
-			sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sFilename << "\"\r\n";	//	Item header    'file'
+			sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sRTargetAndExtension << "\"\r\n";	//	Item header    'file' - Hijacking to determine request type!
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << f.rdbuf();																				//	Binary content
 			sb_ascii << "\r\n";																					//	Spacing
 			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
 
 			//	## EXPERIMENTAL ##
-			sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";										//	Item header    'r'
-			sb_ascii << "\r\n";																					//	Spacing
-			sb_ascii << sRTarget << "\r\n";																		//	Binary content
-			sb_ascii << "\r\n";																					//	Spacing
-			sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
+			//sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";										//	Item header    'r'
+			//sb_ascii << "\r\n";																					//	Spacing
+			//sb_ascii << sRTarget << "\r\n";																		//	Binary content
+			//sb_ascii << "\r\n";																					//	Spacing
+			//sb_ascii << "--" << mimeBoundary << "--\r\n";														//	--Boundary--
 
 			const std::string str = sb_ascii.str();
+
+			//	Inject type of request
 
 			bSuccess = WinHttpSendRequest(
 				hRequest,
@@ -584,26 +593,31 @@ BOOL DoBlockingImageUpload( UploadType nType, const std::string& sFilename, Data
 
 			//	Note: success is much earlier, as 0 bytes read is VALID
 			//	i.e. fetch achievements for new game will return 0 bytes.
-			bSuccess = TRUE;
+			bSuccess = nBytesToRead > 0;
 
 			while( nBytesToRead > 0 )
 			{
-				DataStream sHttpReadData;
-				sHttpReadData.reserve( 8192 );
+				BYTE* pData = new BYTE[nBytesToRead];
+				//DataStream sHttpReadData;
+				//sHttpReadData.reserve( 8192 );
 
-				assert( nBytesToRead <= 8192 );
+				ASSERT( nBytesToRead <= 8192 );
 				if( nBytesToRead <= 8192 )
 				{
 					DWORD nBytesFetched = 0;
-					if( WinHttpReadData( hRequest, sHttpReadData.data(), nBytesToRead, &nBytesFetched ) )
+					if( WinHttpReadData( hRequest, pData, nBytesToRead, &nBytesFetched ) )
 					{
-						assert( nBytesToRead == nBytesFetched );
-						ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+						ASSERT( nBytesToRead == nBytesFetched );
+						ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
 					}
 				}
 
+				delete[] pData;
 				WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 			}
+
+			if (ResponseOut.size() > 0)
+				ResponseOut.push_back('\0');	//	EOS for parsing
 
 			RA_LOG( __FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size() );
 		}
@@ -617,14 +631,14 @@ BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilenam
 	DataStream response;
 	if( ::DoBlockingImageUpload( nType, sFilename, response ) )
 	{
-		ResponseOut.ParseInsitu( DataStreamAsString( response ) );
+		ResponseOut.Parse(DataStreamAsString(response));
 		if( !ResponseOut.HasParseError() )
 		{
 			return TRUE;
 		}
 		else
 		{
-			RA_LOG( __FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), ResponseOut.GetParseError() );
+			RA_LOG( __FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En( ResponseOut.GetParseError() ) );
 			return FALSE;
 		}
 	}

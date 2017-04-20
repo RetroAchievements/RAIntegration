@@ -701,6 +701,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, L"" );
 			SetDlgItemText( hDlg, IDC_RA_MEMBITS, L"" );
 
+			//	Force this through to invalidate mem viewer:
+			Invalidate();
+
 			if( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.TotalBankSize() == 0 ) )
 				return FALSE;
 
@@ -750,8 +753,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			ComboBox_SetCurSel( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), 0 );
 
-			//	Every 50ms, update timer proc
-			SetTimer( hDlg, 1, 50, (TIMERPROC)s_MemoryProc );
+			//	Every 16ms, update timer proc
+			SetTimer(hDlg, 1, 16, (TIMERPROC)s_MemoryProc);
 
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_DOTEST ), g_MemManager.NumCandidates() > 0 );
 

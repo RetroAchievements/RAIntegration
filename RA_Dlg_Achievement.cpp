@@ -264,7 +264,7 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	PostArgs args;
 	args['u'] = RAUsers::LocalUser().Username();
 	args['t'] = RAUsers::LocalUser().Token();
-	args['i'] = std::to_string( Ach.ID() );
+	args['a'] = std::to_string( Ach.ID() );
 	args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
 	args['n'] = Ach.Title();
 	args['d'] = Ach.Description();

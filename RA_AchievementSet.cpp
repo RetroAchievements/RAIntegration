@@ -49,7 +49,7 @@ std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )
 //	static
 BOOL AchievementSet::DeletePatchFile( AchievementSetType nSet, GameID nGameID )
 {
-	if( nGameID != 0 )
+	if( nGameID != 0 && g_nActiveAchievementSet != Local)
 	{
 		std::string sFilename = AchievementSet::GetAchievementSetFilename( nGameID );
 							

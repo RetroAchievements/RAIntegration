@@ -535,7 +535,10 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						CoreAchievements->FetchFromWebBlocking(nGameID);
 						UnofficialAchievements->FetchFromWebBlocking(nGameID);
 
-						AchievementSet::LoadFromFile( nGameID );
+						g_nActiveAchievementSet = Local;
+						LocalAchievements->LoadFromFile(nGameID);
+						g_nActiveAchievementSet = Core;
+						CoreAchievements->LoadFromFile(nGameID);
 
 						//	Refresh dialog contents:
 						OnLoad_NewRom( nGameID );

@@ -532,6 +532,11 @@ BOOL CreateIPE( int nItem, int nSubItem )
 				
 				//	Update the achievement data
 				rCond.SetConditionType( static_cast<Condition::ConditionType>( ( rCond.GetConditionType() + 1 ) % Condition::NumConditionTypes ) );
+
+        // achievement is now dirty
+        Achievement* pActiveAch = g_AchievementEditorDialog.ActiveAchievement();
+        pActiveAch->SetModified(TRUE);
+        g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 			}
 		}
 		break;

@@ -48,7 +48,7 @@ const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
-bool g_bHardcoreModeActive = false;
+bool g_bHardcoreModeActive = true;
 bool g_bLeaderboardsActive = true;
 unsigned int g_nNumHTTPThreads = 15;
 

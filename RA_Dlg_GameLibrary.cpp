@@ -651,7 +651,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc( HWND hDlg, UINT uMsg, WPARAM 
 			return FALSE;
 
 		case IDC_RA_PICKROMDIR:
-			g_sROMDirLocation = GetFolderURLFromDialog();
+			g_sROMDirLocation = GetFolderFromDialog();
 			RA_LOG( "Selected Folder: %s\n", g_sROMDirLocation.c_str() );
 			SetDlgItemText( hDlg, IDC_RA_ROMDIR, Widen( g_sROMDirLocation ).c_str() );
 			return FALSE;

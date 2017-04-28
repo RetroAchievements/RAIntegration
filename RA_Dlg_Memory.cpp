@@ -4,6 +4,7 @@
 #include "RA_AchievementSet.h"
 #include "RA_CodeNotes.h"
 #include "RA_Core.h"
+#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
@@ -1024,7 +1025,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					sSelectedString[ 1 ] == 'x' )
 				{
 					char nString[1024];
-					wcstombs(nString, sSelectedString, 1024);
+					size_t nUnused = 0;
+					wcstombs_s(&nUnused, nString, sSelectedString, 1024);
 					nString[ 8 ] = '\0';
 					ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul(nString + 2, NULL, 16 ) );	//	NB. Hex
 					ComboBox_SetText( GetDlgItem( hDlg, IDC_RA_WATCHING ), Widen(nString).c_str() );
@@ -1127,11 +1129,12 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 	HWND hMemWatch = GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING );
 	if( hMemWatch != NULL )
 	{
-		SetDlgItemText( hMemWatch, IDC_RA_MEMSAVENOTE, L"" );
-
+		SetDlgItemText(hMemWatch, IDC_RA_WATCHING, L"");
+		SetDlgItemText(hMemWatch, IDC_RA_MEMSAVENOTE, L"");
+		
 		while( ComboBox_DeleteString( hMemWatch, 0 ) != CB_ERR ) {}
 
-		GameID nGameID = g_pActiveAchievements->GetGameID();
+		GameID nGameID = g_pCurrentGameData->GetGameID();
 		if( nGameID != 0 )
 		{
 			char sNotesFilename[1024];
@@ -1168,11 +1171,11 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
 void Dlg_Memory::OnLoad_NewRom()
 {
-	m_CodeNotes.ReloadFromWeb( g_pActiveAchievements->GetGameID() );
+	m_CodeNotes.ReloadFromWeb( g_pCurrentGameData->GetGameID() );
 	
 	SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_MEM_LIST, L"" );
 	SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE, L"" );
-	if( g_pActiveAchievements->GetGameID() == 0 )
+	if(g_pCurrentGameData->GetGameID() == 0)
 		SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, L"" );
 	else
 		SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, L"Loading..." );

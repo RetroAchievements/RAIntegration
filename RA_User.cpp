@@ -8,6 +8,7 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Login.h"
+#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
@@ -179,7 +180,7 @@ void LocalRAUser::ProcessSuccessfulLogin( const std::string& sUser, const std::s
 					  PopupMessageType::PopupLogin,
 					  GetUserImage() ) );
 
-	g_AchievementsDialog.OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
+	g_AchievementsDialog.OnLoad_NewRom(g_pCurrentGameData->GetGameID());
 	g_AchievementEditorDialog.OnLoad_NewRom();
 	g_AchievementOverlay.OnLoad_NewRom();
 	
@@ -256,7 +257,7 @@ void LocalRAUser::PostActivity( ActivityType nActivityType )
 			args[ 'u' ] = Username();
 			args[ 't' ] = Token();
 			args[ 'a' ] = std::to_string( nActivityType );
-			args[ 'm' ] = std::to_string( g_pActiveAchievements->GetGameID() );
+			args[ 'm' ] = std::to_string(g_pCurrentGameData->GetGameID());
 
 			RAWeb::CreateThreadedHTTPRequest( RequestPostActivity, args );
 			break;

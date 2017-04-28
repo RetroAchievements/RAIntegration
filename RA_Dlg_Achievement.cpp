@@ -6,10 +6,12 @@
 #include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
+#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
+#include "RA_GameData.h"
 
 
 namespace
@@ -265,7 +267,7 @@ BOOL AttemptUploadAchievementBlocking( const Achievement& Ach, unsigned int nFla
 	args['u'] = RAUsers::LocalUser().Username();
 	args['t'] = RAUsers::LocalUser().Token();
 	args['a'] = std::to_string( Ach.ID() );
-	args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
+	args['g'] = std::to_string( g_pCurrentGameData->GetGameID() );
 	args['n'] = Ach.Title();
 	args['d'] = Ach.Description();
 	args['m'] = sMem;
@@ -283,7 +285,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 
 	if( nAchievementSet == Core )
 	{
-		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
+		OnLoad_NewRom(g_pCurrentGameData->GetGameID());
 		g_AchievementEditorDialog.OnLoad_NewRom();
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
@@ -309,7 +311,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 	}
 	else if( nAchievementSet == Unofficial )
 	{
-		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
+		OnLoad_NewRom(g_pCurrentGameData->GetGameID());
 		g_AchievementEditorDialog.OnLoad_NewRom();
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
@@ -335,7 +337,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 	}
 	else if( nAchievementSet == Local )
 	{
-		OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
+		OnLoad_NewRom(g_pCurrentGameData->GetGameID());
 		g_AchievementEditorDialog.OnLoad_NewRom();
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), FALSE );
@@ -359,7 +361,6 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, FALSE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, TRUE );
 	}
-
 }
 
 INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam )
@@ -394,7 +395,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 			}
 
 			//	Continue as if a new rom had been loaded
-			OnLoad_NewRom( g_pActiveAchievements->GetGameID() );
+			OnLoad_NewRom(g_pCurrentGameData->GetGameID());
 			CheckDlgButton( hDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive() );
 
 			//	Click the core 
@@ -475,9 +476,9 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 								//	Remove the achievement from the local/user achievement set,
 								//	 add it to the unofficial set.
-								Achievement& newAch = CoreAchievements->AddAchievement();
+								Achievement& newAch = g_pCoreAchievements->AddAchievement();
 								newAch.Set( selectedAch );
-								UnofficialAchievements->RemoveAchievement( nSel );
+								g_pUnofficialAchievements->RemoveAchievement( nSel );
 								RemoveAchievement( hList, nSel );
 
 								newAch.SetActive( TRUE );	//	Disable it: all promoted ach must be reachieved
@@ -521,24 +522,23 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					L"Are you sure?",
 					MB_YESNO|MB_ICONWARNING ) == IDYES )
 				{
-					const GameID nGameID = g_pActiveAchievements->GetGameID();
+					GameID nGameID = g_pCurrentGameData->GetGameID();
 					if( nGameID != 0 )
 					{
-						AchievementSet::DeletePatchFile( g_nActiveAchievementSet, nGameID );
+						g_pCoreAchievements->DeletePatchFile(nGameID);
+						g_pUnofficialAchievements->DeletePatchFile(nGameID);
+
+						g_pCoreAchievements->Clear();
+						g_pUnofficialAchievements->Clear();
+						g_pLocalAchievements->Clear();
 
 						//	Reload the achievements file (fetch from server fresh)
 
-						CoreAchievements->Clear();
-						UnofficialAchievements->Clear();
-						LocalAchievements->Clear();
+						AchievementSet::FetchFromWebBlocking(nGameID);
 
-						CoreAchievements->FetchFromWebBlocking(nGameID);
-						UnofficialAchievements->FetchFromWebBlocking(nGameID);
-
-						g_nActiveAchievementSet = Local;
-						LocalAchievements->LoadFromFile(nGameID);
-						g_nActiveAchievementSet = Core;
-						CoreAchievements->LoadFromFile(nGameID);
+						g_pLocalAchievements->LoadFromFile(nGameID);
+						g_pUnofficialAchievements->LoadFromFile(nGameID);
+						g_pCoreAchievements->LoadFromFile(nGameID);
 
 						//	Refresh dialog contents:
 						OnLoad_NewRom( nGameID );
@@ -598,7 +598,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				const Achievement& Ach = g_pActiveAchievements->GetAchievement( nSel );
 
 				//	switch to LocalAchievements
-				Achievement& NewClone = LocalAchievements->AddAchievement();
+				Achievement& NewClone = g_pLocalAchievements->AddAchievement();
 				NewClone.Set( Ach );
 				NewClone.SetID( 0 );
 				NewClone.SetAuthor( RAUsers::LocalUser().Username() );
@@ -608,8 +608,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 				OnClickAchievementSet( Local );
 
-				ListView_SetItemState( hList, LocalAchievements->NumAchievements()-1, LVIS_FOCUSED|LVIS_SELECTED, -1 );
-				ListView_EnsureVisible( hList, LocalAchievements->NumAchievements()-1, FALSE );
+				ListView_SetItemState( hList, g_pLocalAchievements->NumAchievements()-1, LVIS_FOCUSED|LVIS_SELECTED, -1 );
+				ListView_EnsureVisible( hList, g_pLocalAchievements->NumAchievements()-1, FALSE );
 			}
 
 			break;
@@ -722,10 +722,10 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 								{
 									//	Remove the achievement from the local/user achievement set,
 									//	 add it to the unofficial set.
-									Achievement& NewAch = UnofficialAchievements->AddAchievement();
+									Achievement& NewAch = g_pUnofficialAchievements->AddAchievement();
 									NewAch.Set( NextAch );
 									NewAch.SetModified( FALSE );
-									LocalAchievements->RemoveAchievement( nLbxItemsChecked[ 0 ] );
+									g_pLocalAchievements->RemoveAchievement( nLbxItemsChecked[ 0 ] );
 									RemoveAchievement( hList, nLbxItemsChecked[ 0 ] );
 
 									//LocalAchievements->Save();
@@ -796,10 +796,10 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 		case IDC_RA_GOTOWEB:
 			{
 				char buffer[ 512 ];
-				if( !RA_GameIsActive() || ( g_pActiveAchievements->GetGameID() == 0 ) )
+				if( !RA_GameIsActive() || ( g_pCurrentGameData->GetGameID() == 0 ) )
 					sprintf_s( buffer, 512, "\"http://%s\"", RA_HOST_URL );
 				else
-					sprintf_s( buffer, 512, "\"http://%s/Game/%d\"", RA_HOST_URL, g_pActiveAchievements->GetGameID() );
+					sprintf_s( buffer, 512, "\"http://%s/Game/%d\"", RA_HOST_URL, g_pCurrentGameData->GetGameID() );
 
 				ShellExecute( NULL,
 					L"open",
@@ -835,9 +835,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 						BOOL bFound = FALSE;
 
-						//	Lots of stack use here... :S is this OK?
 						AchievementSet TempSet( g_nActiveAchievementSet );
-						if( TempSet.LoadFromFile( g_pActiveAchievements->GetGameID() ) )
+						if(TempSet.LoadFromFile(g_pCurrentGameData->GetGameID()))
 						{
 							Achievement* pAchBackup = TempSet.Find( nID );
 							if( pAchBackup != NULL )
@@ -870,7 +869,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 						if( !bFound )
 						{
-							MessageBox( hDlg, L"Couldn't find!", L"Error!", MB_OK );
+							MessageBox( hDlg, L"Couldn't find this achievement!", L"Error!", MB_OK );
 						}
 						else
 						{

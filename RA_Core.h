@@ -100,7 +100,6 @@ API void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCaus
 
 
 //	Non-exposed:
-
 extern std::string g_sKnownRAVersion;
 extern std::string g_sHomeDir;
 extern std::string g_sROMDirLocation;
@@ -118,12 +117,6 @@ extern bool g_bRAMTamperedWith;
 extern bool g_bHardcoreModeActive;
 extern bool g_bLeaderboardsActive;
 extern unsigned int g_nNumHTTPThreads;
-
-extern const char* (*g_fnKeysVersion)(void);
-extern void (*RAKeys_DoValidation)(char sBufferOut[50], const char* sUser, const char* sToken, const unsigned int nID);
-
-//	Install validation tools.
-extern bool _RA_InstallKeys();
 
 //	Read a file to a malloc'd buffer. Returns NULL on error. Owner MUST free() buffer if not NULL.
 extern char* _MallocAndBulkReadFileToBuffer( const char* sFilename, long& nFileSizeOut );
@@ -149,4 +142,6 @@ extern BOOL _FileExists( const std::string& sFileName );
 
 extern std::string _TimeStampToString( time_t nTime );
 
-extern std::string GetFolderURLFromDialog();
+extern std::string GetFolderFromDialog();
+
+extern BOOL RemoveFileIfExists(const std::string& sFilePath);

@@ -119,6 +119,7 @@
     <ClCompile Include="RA_Dlg_Login.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="RA_GameData.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="RA_Dlg_Login.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Leaderboard.h" />

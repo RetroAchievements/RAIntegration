@@ -10,6 +10,7 @@
 #include "RA_PopupWindows.h"
 #include "RA_Core.h"
 #include "RA_Leaderboard.h"
+#include "RA_GameData.h"
 
 #include <time.h>
 
@@ -536,11 +537,11 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 	const int nWidth = rcTarget.right - rcTarget.left;
 	const int nHeight = rcTarget.bottom - rcTarget.top;
 
-	if( g_pActiveAchievements->GameTitle().length() > 0 )
+	if( g_pCurrentGameData->GameTitle().length() > 0 )
 	{
 		SelectObject( hDC, g_hFontTitle );
 		SetTextColor( hDC, COL_TEXT );
-		std::string sTitleWithSpaces( " " + g_pActiveAchievements->GameTitle() + " " );
+		std::string sTitleWithSpaces( " " + g_pCurrentGameData->GameTitle() + " " );
 		TextOut( hDC, nGameTitleX + nDX, nGameTitleY + nDY, Widen( sTitleWithSpaces ).c_str(), sTitleWithSpaces.length() );
 	}
 
@@ -595,7 +596,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 				DrawAchievement( hDC,
 								 &g_pActiveAchievements->GetAchievement( nAchIdx ),	//	pAch
 								 nDX,												//	X
-								 ( nAchTopEdge + ( i*nAchSpacing ) ),					//	Y
+								 ( nAchTopEdge + ( i*nAchSpacing ) ),				//	Y
 								 bSelected,											//	Selected
 								 TRUE );
 			}

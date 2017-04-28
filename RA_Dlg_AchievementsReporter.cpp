@@ -4,6 +4,7 @@
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"
+#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
@@ -184,7 +185,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc( HWND hDlg, 
 					"Comment: %s\n"
 					"\n"
 					"Is this OK?",
-					CoreAchievements->GameTitle().c_str(),
+					g_pCurrentGameData->GameTitle().c_str(),
 					sBuggedIDs,
 					sProblemTypeNice,
 					RAUsers::LocalUser().Username().c_str(),

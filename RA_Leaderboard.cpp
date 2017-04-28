@@ -432,7 +432,7 @@ void RA_Leaderboard::Test()
 								  "Reset game to reenable posting.",
 								  PopupInfo ) );
 			}
-			else if( ( g_hRAKeysDLL != nullptr ) && ( RAKeys_DoValidation != nullptr ) )
+			else
 			{
 				//	TBD: move to keys!
 				char sValidationSig[ 50 ];

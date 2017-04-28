@@ -8,6 +8,7 @@
 #include "RA_User.h"
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
+#include "RA_GameData.h"
 
 void CodeNotes::Clear()
 {
@@ -94,7 +95,7 @@ void CodeNotes::Add( const ByteAddress& nAddr, const std::string& sAuthor, const
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser().Username();
 		args['t'] = RAUsers::LocalUser().Token();
-		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
+		args['g'] = std::to_string( g_pCurrentGameData->GetGameID() );
 		args['m'] = std::to_string( nAddr );
 		args['n'] = sNote;
 
@@ -126,7 +127,7 @@ BOOL CodeNotes::Remove( const ByteAddress& nAddr )
 		PostArgs args;
 		args['u'] = RAUsers::LocalUser().Username();
 		args['t'] = RAUsers::LocalUser().Token();
-		args['g'] = std::to_string( g_pActiveAchievements->GetGameID() );
+		args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
 		args['m'] = std::to_string( nAddr );
 		args['n'] = "";
 

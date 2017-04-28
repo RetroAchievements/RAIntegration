@@ -6,6 +6,7 @@
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_Dlg_Memory.h"
+#include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
 #include <winhttp.h>
@@ -745,7 +746,7 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 					PostArgs args;
 					args[ 'u' ] = RAUsers::LocalUser().Username();
 					args[ 't' ] = RAUsers::LocalUser().Token();
-					args[ 'g' ] = std::to_string( AchievementSet::GetGameID() );
+					args[ 'g' ] = std::to_string(g_pCurrentGameData->GetGameID());
 
 					if( RA_GameIsActive() )
 					{

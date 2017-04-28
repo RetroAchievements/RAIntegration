@@ -8,22 +8,18 @@
 #include "RA_httpthread.h"
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
+#include "RA_GameData.h"
 
-#include <io.h>		//	_access()
+AchievementSet* g_pCoreAchievements = nullptr;
+AchievementSet* g_pUnofficialAchievements = nullptr;
+AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet* CoreAchievements = nullptr;
-AchievementSet* UnofficialAchievements = nullptr;
-AchievementSet* LocalAchievements = nullptr;
-
-AchievementSet** ACH_SETS[] = { &CoreAchievements, &UnofficialAchievements, &LocalAchievements };
+AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert( SIZEOF_ARRAY( ACH_SETS ) == NumAchievementSetTypes, "Must match!" );
 
 AchievementSetType g_nActiveAchievementSet = Core;
-AchievementSet* g_pActiveAchievements = CoreAchievements;
+AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
-//static 
-std::string AchievementSet::m_sPreferredGameTitle;
-GameID AchievementSet::m_nGameID = 0;
 
 void RASetAchievementCollection( AchievementSetType Type )
 {
@@ -31,48 +27,38 @@ void RASetAchievementCollection( AchievementSetType Type )
 	g_pActiveAchievements = *ACH_SETS[ Type ];
 }
 
-////////////////////////////////////////////////////////////////////////// 
-//	static
 std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )
 {
-	//return RA_DIR_DATA + std::to_string( nGameID ) + ".txt";
-
-	switch (g_nActiveAchievementSet)
+	switch (m_nSetType)
 	{
+	case Core:
+		return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	
+	case Unofficial:
+		return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
 	case Local:
 		return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
 	default:
-		return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
+		return "";
 	}
 }
 
-//	static
-BOOL AchievementSet::DeletePatchFile( AchievementSetType nSet, GameID nGameID )
+BOOL AchievementSet::DeletePatchFile( GameID nGameID )
 {
-	if( nGameID != 0 && g_nActiveAchievementSet != Local)
+	if (nGameID == 0)
 	{
-		std::string sFilename = AchievementSet::GetAchievementSetFilename( nGameID );
-							
-		//	Remove the text file
-		SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
-		
-		if( _access( sFilename.c_str(), 06 ) != -1 )	//	06= Read/write permission
-		{
-			if( remove( sFilename.c_str() ) == -1 )
-			{
-				//	Remove issues?
-				ASSERT( !"Could not remove patch file!?" );
-				return FALSE;
-			}
-		}
+		//	Nothing to do
+		return TRUE;
+	}
 
-		return TRUE;
-	}
-	else
+	if (m_nSetType == Local)
 	{
-		//	m_nGameID == 0, therefore there will be no patch file.
+		//	We do not automatically delete Local patch files
 		return TRUE;
 	}
+
+	//	Remove the text file
+	std::string sFilename = GetAchievementSetFilename( nGameID );
+	return RemoveFileIfExists(g_sHomeDir + "\\" + sFilename);
 }
 
 //static 
@@ -92,10 +78,10 @@ void AchievementSet::OnRequestUnlocks( const Document& doc )
 	{
 		AchievementID nNextAchID = static_cast<AchievementID>( UserUnlocks[ i ].GetUint() );
 		//	IDs could be present in either core or unofficial:
-		if( CoreAchievements->Find( nNextAchID ) != nullptr )
-			CoreAchievements->Unlock( nNextAchID );
-		else if( UnofficialAchievements->Find( nNextAchID ) != nullptr )
-			UnofficialAchievements->Unlock( nNextAchID );
+		if( g_pCoreAchievements->Find( nNextAchID ) != nullptr )
+			g_pCoreAchievements->Unlock( nNextAchID );
+		else if( g_pUnofficialAchievements->Find( nNextAchID ) != nullptr )
+			g_pUnofficialAchievements->Unlock( nNextAchID );
 	}
 }
 
@@ -218,14 +204,6 @@ void AchievementSet::Test()
 									  PopupAchievementUnlocked,
 									  ach.BadgeImage() ) );
 				}
-				else if( RAKeys_DoValidation == nullptr )
-				{
-					g_PopupWindows.AchievementPopups().AddMessage( 
-						MessagePopup( "(Missing RA_Keys.DLL): Achievement Unlocked",
-									  ach.Title() + " (" + sPoints + ") (Unofficial)",
-									  PopupAchievementError,
-									  ach.BadgeImage() ) );
-				}
 				else if( g_bRAMTamperedWith )
 				{
 					g_PopupWindows.AchievementPopups().AddMessage( 
@@ -236,14 +214,10 @@ void AchievementSet::Test()
 				}
 				else
 				{
-					char sValidation[ 50 ];
-					RAKeys_DoValidation( sValidation, RAUsers::LocalUser().Username().c_str(), RAUsers::LocalUser().Token().c_str(), ach.ID() );
-
 					PostArgs args;
 					args['u'] = RAUsers::LocalUser().Username();
 					args['t'] = RAUsers::LocalUser().Token();
 					args['a'] = std::to_string( ach.ID() );
-					args['v'] = sValidation;
 					args['h'] = std::to_string( static_cast<int>( g_bHardcoreModeActive ) );
 					
 					RAWeb::CreateThreadedHTTPRequest( RequestSubmitAwardAchievement, args );
@@ -261,7 +235,7 @@ BOOL AchievementSet::SaveToFile()
 	char sMem[2048];
 	unsigned int i = 0;
 
-	const std::string sFilename = AchievementSet::GetAchievementSetFilename(m_nGameID);
+	const std::string sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
 
 	fopen_s(&pFile, sFilename.c_str(), "w");
 	if (pFile != NULL)
@@ -269,14 +243,14 @@ BOOL AchievementSet::SaveToFile()
 		sprintf_s(sNextLine, 2048, "0.030\n");						//	Min ver
 		fwrite(sNextLine, sizeof(char), strlen(sNextLine), pFile);
 
-		sprintf_s(sNextLine, 2048, "%s\n", m_sPreferredGameTitle.c_str());
+		sprintf_s(sNextLine, 2048, "%s\n", g_pCurrentGameData->GameTitle().c_str());
 		fwrite(sNextLine, sizeof(char), strlen(sNextLine), pFile);
 
 		//std::vector<Achievement>::const_iterator iter = g_pActiveAchievements->m_Achievements.begin();
 		//while (iter != g_pActiveAchievements->m_Achievements.end())
-		for (i = 0; i < LocalAchievements->NumAchievements(); ++i)
+		for (i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
 		{
-			Achievement* pAch = &LocalAchievements->GetAchievement(i);
+			Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
 
 			ZeroMemory(sMem, 2048);
 			pAch->CreateMemString();
@@ -308,7 +282,7 @@ BOOL AchievementSet::SaveToFile()
 	return FALSE;
 
 	//FILE* pf = NULL;
-	//const std::string sFilename = AchievementSet::GetAchievementSetFilename( m_nGameID );
+	//const std::string sFilename = GetAchievementSetFilename( m_nGameID );
 	//if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
 	//{
 	//	FileStream fs( pf );
@@ -327,7 +301,7 @@ BOOL AchievementSet::Serialize( FileStream& Stream )
 	return FALSE;
 
 	//FILE* pf = NULL;
-	//const std::string sFilename = AchievementSet::GetAchievementSetFilename( m_nGameID );
+	//const std::string sFilename = GetAchievementSetFilename( m_nGameID );
 	//if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
 	//{
 	//	FileStream fs( pf );
@@ -375,6 +349,7 @@ BOOL AchievementSet::Serialize( FileStream& Stream )
 	//}
 }
 
+//	static: fetches both core and unofficial
 BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 {
 	//	Can't open file: attempt to find it on SQL server!
@@ -419,26 +394,24 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	}
 }
 
-//	static
 BOOL AchievementSet::LoadFromFile( GameID nGameID )
 {
 	if (nGameID == 0)
+	{
 		return TRUE;
+	}
 
 	const std::string sFilename = GetAchievementSetFilename(nGameID);
 
 	SetCurrentDirectory(Widen(g_sHomeDir).c_str());
-	FILE* pFile = NULL;
-	errno_t err = 0;
-	err = fopen_s(&pFile, sFilename.c_str(), "r");
-	if (pFile != NULL)
+	FILE* pFile = nullptr;
+	errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
+	if (pFile != nullptr)
 	{
 		//	Store this: we are now assuming this is the correct checksum if we have a file for it
-		CoreAchievements->SetGameID(nGameID);
-		UnofficialAchievements->SetGameID(nGameID);
-		LocalAchievements->SetGameID(nGameID);
+		g_pCurrentGameData->SetGameID(nGameID);
 
-		if (g_nActiveAchievementSet == Local)
+		if (m_nSetType == Local)
 		{
 			const char EndLine = '\n';
 			char buffer[4096];
@@ -447,12 +420,15 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			//	Get min ver:
 			_ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
 			//	UNUSED at this point? TBD
+
 			//	Get game title:
 			_ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
 			if (nCharsRead > 0)
 			{
 				buffer[nCharsRead - 1] = '\0';	//	Turn that endline into an end-string
-				m_sPreferredGameTitle = buffer;
+
+				//	Loading Local from file...?
+				g_pCurrentGameData->SetGameTitle(buffer);
 			}
 
 			while (!feof(pFile))
@@ -471,7 +447,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 					}
 					else if (isdigit(buffer[0]))
 					{
-						Achievement& newAch = LocalAchievements->AddAchievement();
+						Achievement& newAch = g_pLocalAchievements->AddAchievement();
 						buffer[nCharsRead - 1] = '\0';	//	Turn that endline into an end-string
 
 						newAch.ParseLine(buffer);
@@ -484,60 +460,34 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 		}
 		else
 		{
-
 			Document doc;
 			doc.ParseStream(FileStream(pFile));
 			if (!doc.HasParseError())
 			{
 				//ASSERT( doc["Success"].GetBool() );
-				//const Value& PatchData = doc["PatchData"];
-				const GameID nGameIDFetched = doc["ID"].GetUint();
-				ASSERT(nGameIDFetched == nGameID);
-				const std::string& sGameTitle = doc["Title"].GetString();
-				const unsigned int nConsoleID = doc["ConsoleID"].GetUint();
-				const std::string& sConsoleName = doc["ConsoleName"].GetString();
-				const unsigned int nForumTopicID = doc["ForumTopicID"].GetUint();
-				const unsigned int nGameFlags = doc["Flags"].GetUint();
-				const std::string& sImageIcon = doc["ImageIcon"].GetString();
-				const std::string& sImageTitle = doc["ImageTitle"].GetString();
-				const std::string& sImageIngame = doc["ImageIngame"].GetString();
-				const std::string& sImageBoxArt = doc["ImageBoxArt"].GetString();
-				const std::string& sPublisher = doc["Publisher"].IsNull() ? "Unknown" : doc["Publisher"].GetString();
-				const std::string& sDeveloper = doc["Developer"].IsNull() ? "Unknown" : doc["Developer"].GetString();
-				const std::string& sGenre = doc["Genre"].IsNull() ? "Unknown" : doc["Genre"].GetString();
-				const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
-				const bool bIsFinal = doc["IsFinal"].GetBool();
-				const std::string& sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
+				g_pCurrentGameData->ParseData(doc);
+				GameID nGameID = g_pCurrentGameData->GetGameID();
 
-				//##SD store all this data somewhere? Do we want it?
-				m_sPreferredGameTitle = sGameTitle;
-
-				RA_RichPresenceInterpretter::PersistAndParseScript(nGameIDFetched, sRichPresencePatch);
+				RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
 
 				const Value& AchievementsData = doc["Achievements"];
-
 				for (SizeType i = 0; i < AchievementsData.Size(); ++i)
 				{
 					//	Parse into correct boxes
 					unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
-					if (nFlags == 3)
+					if (nFlags == 3 && m_nSetType == Core)
 					{
-						Achievement& newAch = CoreAchievements->AddAchievement();
+						Achievement& newAch = AddAchievement();
 						newAch.Parse(AchievementsData[i]);
 					}
-					else if (nFlags == 5)
+					else if (nFlags == 5 && m_nSetType == Unofficial)
 					{
-						Achievement& newAch = UnofficialAchievements->AddAchievement();
+						Achievement& newAch = AddAchievement();
 						newAch.Parse(AchievementsData[i]);
-					}
-					else
-					{
-						RA_LOG("Cannot deal with achievement with flags: %d\n", nFlags);
 					}
 				}
 
 				const Value& LeaderboardsData = doc["Leaderboards"];
-
 				for (SizeType i = 0; i < LeaderboardsData.Size(); ++i)
 				{
 					//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
@@ -558,8 +508,8 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 			fclose(pFile);
 
 			unsigned int nTotalPoints = 0;
-			for (size_t i = 0; i < CoreAchievements->NumAchievements(); ++i)
-				nTotalPoints += CoreAchievements->GetAchievement(i).Points();
+			for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
+				nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
 
 			if (RAUsers::LocalUser().IsLoggedIn())
 			{
@@ -572,10 +522,10 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 				RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
 
-				std::string sNumCoreAch = std::to_string(CoreAchievements->NumAchievements());
+				std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
 
 				g_PopupWindows.AchievementPopups().AddMessage(
-					MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));	//	TBD
+					MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
 			}
 
 			return TRUE;
@@ -585,7 +535,9 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 	{
 		//	Cannot open file
 		RA_LOG("Cannot open file %s\n", sFilename.c_str());
-		RA_LOG("Error %s\n", strerror(err));
+		char sErrMsg[2048];
+		strerror_s(sErrMsg, nErr);
+		RA_LOG("Error %s\n", sErrMsg);
 		return FALSE;
 	}
 }

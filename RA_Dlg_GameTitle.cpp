@@ -11,6 +11,7 @@
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
+#include "RA_GameData.h"
 
 
 Dlg_GameTitle g_GameTitleDialog;
@@ -129,8 +130,8 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 
 				//	If we're setting the game title here...
 				//	 surely we could set the game ID here too?
-				AchievementSet::SetGameTitle( sGameTitle );
-				AchievementSet::SetGameID( nGameID );
+				g_pCurrentGameData->SetGameTitle( sGameTitle );
+				g_pCurrentGameData->SetGameID( nGameID );
 
 				g_GameTitleDialog.m_nReturnedGameID = nGameID;
 

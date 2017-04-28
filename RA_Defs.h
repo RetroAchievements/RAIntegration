@@ -147,7 +147,7 @@ typedef DWORD			ARGB;
 	extern void RADebugLog( const char* sFormat, ... );
 	extern BOOL DirectoryExists( const char* sPath );
 
-	const int SERVER_PING_DURATION = 1*60;	//s
+	const int SERVER_PING_DURATION = 10*60;	//s
 //};
 //using namespace RA;
 	

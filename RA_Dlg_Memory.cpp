@@ -120,95 +120,127 @@ bool MemoryViewerControl::OnKeyDown( UINT nChar )
 		return true;
 
 	case VK_DOWN:
-		moveAddress( 16, 0 );
+		moveAddress( 0x10, 0 );
 		return true;
 
 	case VK_UP:
-		moveAddress( -16, 0 );
+		moveAddress(-0x10, 0);
+		return true;
+
+	case VK_PRIOR:	//	Page up (!)
+		moveAddress(-0x40, 0);
+		return true;
+
+	case VK_NEXT:	//	Page down (!)
+		moveAddress(0x40, 0);
+		return true;
+
+	case VK_HOME:
+		m_nEditAddress = 0;
+		m_nEditNibble = 0;
+		setAddress(0);
+		return true;
+
+	case VK_END:
+		m_nEditAddress = g_MemManager.TotalBankSize() - 0x10;
+		m_nEditNibble = 0;
+		setAddress(m_nEditAddress);
 		return true;
 	}
 
 	return false;
 }
 
-void MemoryViewerControl::moveAddress( int offset, int nibbleOff )
+void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 {
 	unsigned int maxNibble = 0;
-	if(m_nDataSize == 0)
+	if (m_nDataSize == 0)
 		maxNibble = 1;
-	else if(m_nDataSize == 1)
+	else if (m_nDataSize == 1)
 		maxNibble = 3;
 	else
 		maxNibble = 7;
 
-  if(offset == 0)
-  {
-    if(nibbleOff == -1)
+	if (offset == 0)
 	{
-      m_nEditNibble--;
-      if(m_nEditNibble == -1)
-	  {
-        m_nEditAddress -= (maxNibble + 1) >> 1;
-        m_nEditNibble = maxNibble;
-      }
-      if(m_nAddressOffset == 0 && (m_nEditAddress >= (unsigned int)(m_nDisplayedLines<<4))) {
-        m_nEditAddress = 0;
-        m_nEditNibble = 0;
-		MessageBeep((UINT)-1);
-      }
-      if(m_nEditAddress < m_nAddressOffset)
-        setAddress(m_nAddressOffset - 16);
-    } else {
-      m_nEditNibble++;
-      if(m_nEditNibble > maxNibble) {
-        m_nEditNibble = 0;
-        m_nEditAddress += (maxNibble + 1) >> 1;
-      }
-      if(m_nEditAddress < m_nAddressOffset) {
-        m_nEditAddress -= (maxNibble + 1) >> 1;
-        m_nEditNibble = maxNibble;
-	  MessageBeep((UINT)-1);
-      }
-      if(m_nEditAddress >= (m_nAddressOffset+(m_nDisplayedLines<<4)))
-        setAddress(m_nAddressOffset+16);
-    }
-  } 
-  else
-  {
-    m_nEditAddress += offset;
-    if(offset < 0 && m_nEditAddress > (m_nAddressOffset-1+(m_nDisplayedLines<<4)))
+		if (nibbleOff == -1)
+		{
+			//	Going left
+			m_nEditNibble--;
+			if (m_nEditNibble == -1)
+			{
+				m_nEditAddress -= (maxNibble + 1) >> 1;
+				m_nEditNibble = maxNibble;
+			}
+			if (m_nEditAddress < m_nAddressOffset) //(m_nAddressOffset == 0 && (m_nEditAddress >= (unsigned int)(m_nDisplayedLines << 4))) 
+			{
+				m_nEditAddress += (maxNibble + 1) >> 1;
+				m_nEditNibble = 0;
+				MessageBeep((UINT)-1);
+			}
+			if (m_nEditAddress < m_nAddressOffset)
+			{
+				setAddress(m_nAddressOffset - 16);
+			}
+		}
+		else
+		{
+			//	Going right
+			m_nEditNibble++;
+			if (m_nEditNibble > maxNibble) 
+			{
+				m_nEditNibble = 0;
+				m_nEditAddress += (maxNibble + 1) >> 1;
+			}
+			if (m_nEditAddress > ( m_nAddressOffset + 0xf ))
+			{
+				//	Undo this movement.
+				m_nEditAddress -= (maxNibble + 1) >> 1;
+				m_nEditNibble = maxNibble;
+				MessageBeep((UINT)-1);
+			}
+			if (m_nEditAddress >= (m_nAddressOffset + (m_nDisplayedLines << 4)))
+			{
+				setAddress(m_nAddressOffset + 16);
+			}
+		}
+	}
+	else
 	{
-      m_nEditAddress -= offset;
-	  MessageBeep((UINT)-1);
-      return;
-    }
-    if(offset > 0 && (m_nEditAddress < m_nAddressOffset)) 
-	{
-      m_nEditAddress -= offset;
-	  MessageBeep((UINT)-1);
-      return;
-    }
-    if( m_nEditAddress >= g_MemManager.TotalBankSize() )
-	{
-      m_nEditAddress -= offset;
-	  MessageBeep((UINT)-1);
-      return;
-    }
-    if(m_nEditAddress < m_nAddressOffset)
-	{
-      if(offset & 15)
-        setAddress((m_nAddressOffset+offset-16) & ~15);
-      else
-        setAddress(m_nAddressOffset+offset);
-    }
-	else if(m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines<<4)))
-	{
-      if(offset & 15)
-        setAddress((m_nAddressOffset+offset+16) & ~15);
-      else
-        setAddress(m_nAddressOffset+offset);
-    }
-  }
+		m_nEditAddress += offset;
+		if (offset < 0 && m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)))
+		{
+			m_nEditAddress -= offset;
+			MessageBeep((UINT)-1);
+			return;
+		}
+		if (offset > 0 && (m_nEditAddress < m_nAddressOffset))
+		{
+			m_nEditAddress -= offset;
+			MessageBeep((UINT)-1);
+			return;
+		}
+		if (m_nEditAddress >= g_MemManager.TotalBankSize())
+		{
+			m_nEditAddress -= offset;
+			MessageBeep((UINT)-1);
+			return;
+		}
+		if (m_nEditAddress < m_nAddressOffset)
+		{
+			if (offset & 15)
+				setAddress((m_nAddressOffset + offset - 16) & ~15);
+			else
+				setAddress(m_nAddressOffset + offset);
+		}
+		else if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)))
+		{
+			if (offset & 15)
+				setAddress((m_nAddressOffset + offset + 16) & ~15);
+			else
+				setAddress(m_nAddressOffset + offset);
+		}
+	}
 
 	SetCaretPos();
 }
@@ -347,23 +379,10 @@ void MemoryViewerControl::SetCaretPos()
 
 	g_MemoryDialog.SetWatchingAddress( m_nEditAddress );
 
-	unsigned int nTopLeft = m_nAddressOffset - 0x40;
-	if( g_MemManager.TotalBankSize() > 0 )
-		nTopLeft %= g_MemManager.TotalBankSize();
-	else
-		nTopLeft %= 0x10000;
-
-	//	Doesn't work if we have wrap-around...
-	//if(m_nEditAddress < nTopLeft || m_nEditAddress > (nTopLeft-1 + (m_nDisplayedLines<<4)))
-	//{
-	//	destroyEditCaret();
-	//	return;
-	//}
+	//int nTopLeft = m_nAddressOffset - 0x40;
 
 	int subAddress = (m_nEditAddress - m_nAddressOffset);
 
-	int topLeft = m_nAddressOffset - 0x40;
-	//const int nYSpacing = ( m_nEditAddress-topLeft ) >> 4;
 	const int nYSpacing = 4;
 
 	int x = 3 + ( 10*m_szFontSize.cx ) + ( m_nEditNibble*m_szFontSize.cx );
@@ -392,8 +411,10 @@ void MemoryViewerControl::SetCaretPos()
 		return;
 	}
 	int w = m_szFontSize.cx;
-	if((x+m_szFontSize.cx)>=r.right)
+	if ((x + m_szFontSize.cx) >= r.right)
+	{
 		w = r.right - x;
+	}
 	createEditCaret(w, m_szFontSize.cy);
 	::SetCaretPos(x, y);
 	ShowCaret( hOurDlg );
@@ -436,14 +457,19 @@ void MemoryViewerControl::OnClick( POINT point )
 			break;
 	}
 
-	unsigned int nTopLeft = m_nAddressOffset - 0x40;//( m_nAddressOffset - ( m_nAddressOffset % 0xf ) );
+	int nTopLeft = m_nAddressOffset - 0x40;
 
-	m_nEditAddress = ( nTopLeft + (line<<4) );
+	int nAddressRowClicked = (nTopLeft + (line << 4));
 
-	if( g_MemManager.TotalBankSize() > 0 )
-		m_nEditAddress %= g_MemManager.TotalBankSize();
-	else
-		m_nEditAddress %= 0x10000;
+	//	Clamp:
+	if (nAddressRowClicked < 0 || nAddressRowClicked > g_MemManager.TotalBankSize() )
+	{
+		//	ignore; clicked above limit
+		return;
+	}
+
+	m_nEditAddress = static_cast<unsigned int>( nAddressRowClicked );
+
 
 	if( x >= (int)m_nDataStartXOffset && x < rowLengthPx )
 	{
@@ -528,9 +554,6 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 
 	int addr = m_nAddressOffset;
 	addr -= ( 0x40 );	//	Offset will be this quantity (push up four lines)...
-	//addr &= 0xffffff;	//	This should be mem size!!!
-	if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )				///CHECK THIS ITS DODGY ##SD
-		addr &= ( g_MemManager.TotalBankSize() - 1 );
 
 	int line = 0;
 
@@ -552,87 +575,89 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	r.top += m_szFontSize.cy;
 	r.bottom += m_szFontSize.cy;
 
-	for( int i = 0; i < lines; i++ )
+	for (int i = 0; i < lines; i++)
 	{
-		//char sLocalAddr[64];
-		char buffer[ 4096 ];
-		sprintf_s( buffer, 4096, "0x%06x", addr );
-
-		DrawText( hMemDC, Widen( buffer ).c_str(), strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
-
-		r.left += 10 * m_szFontSize.cx;
-		m_nDataStartXOffset = r.left;
-
-		for( int j = 0; j < 16; ++j )
+		if( g_MemManager.NumMemoryBanks() == 0 )
 		{
-			if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )
-			{
-				if( static_cast<size_t>( addr + j ) < g_MemManager.TotalBankSize() )
-					data[ j ] = g_MemManager.ActiveBankRAMByteRead( addr + j );
-			}
-		}
-		//readData(addr, 16, data);
-
-		if( m_nDataSize == 0 )	//	8-bit
-		{
-			for( int j = 0; j < 16; j++ )
-			{
-				const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote( addr + j );
-
-				if( addr + j == nWatchedAddress )
-					SetTextColor( hMemDC, RGB( 255, 0, 0 ) );
-				else if( pSavedNote != NULL )
-					SetTextColor( hMemDC, RGB( 0, 0, 255 ) );
-				else
-					SetTextColor( hMemDC, RGB( 0, 0, 0 ) );
-
-				sprintf_s( buffer, 4096, "%02x", data[ j ] );
-				DrawText( hMemDC, Widen( buffer ).c_str(), strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
-				r.left += 3 * m_szFontSize.cx;
-			}
-		}
-		else if( m_nDataSize == 1 )	//	16-bit
-		{
-			for( int j = 0; j < 16; j += 2 )
-			{
-				const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote( addr + j );
-
-				if( ( ( addr + j ) - ( addr + j ) % 2 ) == nWatchedAddress )
-					SetTextColor( hMemDC, RGB( 255, 0, 0 ) );
-				else if( pSavedNote != NULL )
-					SetTextColor( hMemDC, RGB( 0, 0, 255 ) );
-				else
-					SetTextColor( hMemDC, RGB( 0, 0, 0 ) );
-
-				sprintf_s( buffer, 4096, "%04x", data[ j ] | data[ j + 1 ] << 8 );
-				DrawText( hMemDC, Widen( buffer ).c_str(), strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
-				r.left += 5 * m_szFontSize.cx;
-			}
-		}
-		else if( m_nDataSize == 2 )	//	32-bit
-		{
-			for( int j = 0; j < 16; j += 4 )
-			{
-				if( ( ( addr + j ) - ( addr + j ) % 4 ) == nWatchedAddress )
-					SetTextColor( hMemDC, RGB( 255, 0, 0 ) );
-				else
-					SetTextColor( hMemDC, RGB( 0, 0, 0 ) );
-
-				sprintf_s( buffer, 4096, "%08x", data[ j ] | data[ j + 1 ] << 8 | data[ j + 2 ] << 16 | data[ j + 3 ] << 24 );
-				DrawText( hMemDC, Widen( buffer ).c_str(), strlen( buffer ), &r, DT_TOP | DT_LEFT | DT_NOPREFIX );
-				r.left += 9 * m_szFontSize.cx;
-			}
+			break;
 		}
 
-		SetTextColor( hMemDC, RGB( 0, 0, 0 ) );
+		if ((addr >= 0x0000) && (addr < g_MemManager.TotalBankSize()))
+		{
+			char buffer[4096];
+			sprintf_s(buffer, 4096, "0x%06x", addr);
 
-		line = r.left;
-		r.left += m_szFontSize.cx;
+			DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+
+			r.left += 10 * m_szFontSize.cx;
+			m_nDataStartXOffset = r.left;
+
+			for (int j = 0; j < 16; ++j)
+			{
+				if (static_cast<size_t>(addr + j) < g_MemManager.TotalBankSize())
+				{
+					data[j] = g_MemManager.ActiveBankRAMByteRead(addr + j);
+				}
+			}
+
+			if (m_nDataSize == 0)	//	8-bit
+			{
+				for (int j = 0; j < 16; j++)
+				{
+					const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(addr + j);
+
+					if (addr + j == nWatchedAddress)
+						SetTextColor(hMemDC, RGB(255, 0, 0));
+					else if (pSavedNote != NULL)
+						SetTextColor(hMemDC, RGB(0, 0, 255));
+					else
+						SetTextColor(hMemDC, RGB(0, 0, 0));
+
+					sprintf_s(buffer, 4096, "%02x", data[j]);
+					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+					r.left += 3 * m_szFontSize.cx;
+				}
+			}
+			else if (m_nDataSize == 1)	//	16-bit
+			{
+				for (int j = 0; j < 16; j += 2)
+				{
+					const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(addr + j);
+
+					if (((addr + j) - (addr + j) % 2) == nWatchedAddress)
+						SetTextColor(hMemDC, RGB(255, 0, 0));
+					else if (pSavedNote != NULL)
+						SetTextColor(hMemDC, RGB(0, 0, 255));
+					else
+						SetTextColor(hMemDC, RGB(0, 0, 0));
+
+					sprintf_s(buffer, 4096, "%04x", data[j] | data[j + 1] << 8);
+					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+					r.left += 5 * m_szFontSize.cx;
+				}
+			}
+			else if (m_nDataSize == 2)	//	32-bit
+			{
+				for (int j = 0; j < 16; j += 4)
+				{
+					if (((addr + j) - (addr + j) % 4) == nWatchedAddress)
+						SetTextColor(hMemDC, RGB(255, 0, 0));
+					else
+						SetTextColor(hMemDC, RGB(0, 0, 0));
+
+					sprintf_s(buffer, 4096, "%08x", data[j] | data[j + 1] << 8 | data[j + 2] << 16 | data[j + 3] << 24);
+					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+					r.left += 9 * m_szFontSize.cx;
+				}
+			}
+
+			SetTextColor(hMemDC, RGB(0, 0, 0));
+
+			line = r.left;
+			r.left += m_szFontSize.cx;
+		}
 
 		addr += 16;
-
-		if( m_nActiveMemBank < g_MemManager.NumMemoryBanks() )
-			addr &= ( g_MemManager.TotalBankSize() - 1 );
 
 		r.top += m_szFontSize.cy;
 		r.bottom += m_szFontSize.cy;

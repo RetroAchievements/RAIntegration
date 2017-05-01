@@ -955,6 +955,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 							return FALSE;
 
 						pActiveAch->SetPoints( nVal );
+            // achievement is now dirty
+            pActiveAch->SetModified(TRUE);
+            g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 						return TRUE;
 					}
 				}

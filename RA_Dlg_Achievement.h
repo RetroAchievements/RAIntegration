@@ -19,6 +19,7 @@ public:
 	{
 		ID,
 		Title,
+    Points,
 		Author,
 		Achieved,
 		Active=Achieved,

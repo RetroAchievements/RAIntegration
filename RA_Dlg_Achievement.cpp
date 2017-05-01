@@ -16,10 +16,10 @@
 
 namespace
 {
-	const char* COLUMN_TITLES_CORE[] =			{ "ID", "Title", "Author", "Achieved?", "Modified?" };
-	const char* COLUMN_TITLES_UNOFFICIAL[] =	{ "ID", "Title", "Author", "Active",	"Votes" };
-	const char* COLUMN_TITLES_LOCAL[] =			{ "ID", "Title", "Author", "Active",	"Votes" };
-	const int COLUMN_SIZE[] =					{ 45, 220, 80, 65, 65 };
+	const char* COLUMN_TITLES_CORE[] =			{ "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
+	const char* COLUMN_TITLES_UNOFFICIAL[] =	{ "ID", "Title", "Points", "Author", "Active",	"Votes" };
+	const char* COLUMN_TITLES_LOCAL[] =			{ "ID", "Title", "Points", "Author", "Active",	"Votes" };
+	const int COLUMN_SIZE[] =					{ 45, 200, 45, 80, 65, 65 };
 	
 	const int NUM_COLS = SIZEOF_ARRAY( COLUMN_SIZE );
 
@@ -146,6 +146,7 @@ size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
 	//	Add to our local array:
 	newRow[ ID ] = std::to_string( Ach.ID() );
 	newRow[ Title ] = Ach.Title();
+  newRow[Points] = std::to_string(Ach.Points());
 	newRow[ Author ] = Ach.Author();
 
 	if( g_nActiveAchievementSet == Core )

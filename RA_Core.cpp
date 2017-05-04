@@ -853,6 +853,8 @@ API void CCONV _RA_LoadPreferences()
 				RAUsers::LocalUser().SetToken( doc["Token"].GetString() );
 			if( doc.HasMember( "Hardcore Active" ) )
 				g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
+      if (doc.HasMember("Leaderboards Active"))
+        g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
 			if( doc.HasMember( "Num Background Threads" ) )
 				g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
 			if( doc.HasMember( "ROM Directory" ) )
@@ -891,6 +893,7 @@ API void CCONV _RA_SavePreferences()
 		doc.AddMember( "Username", StringRef( RAUsers::LocalUser().Username().c_str() ), a );
 		doc.AddMember( "Token", StringRef( RAUsers::LocalUser().Token().c_str() ), a );
 		doc.AddMember( "Hardcore Active", g_bHardcoreModeActive, a );
+    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
 		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
 		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
 		

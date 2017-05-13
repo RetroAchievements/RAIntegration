@@ -53,7 +53,8 @@ public:
 	void AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize );
 	size_t NumMemoryBanks() const									{ return m_Banks.size(); }
 
-	void Reset( unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize );
+	void Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize);
+	void ResetAll(ComparisonVariableSize nNewComparisonVariableSize);
 
 	size_t Compare( ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound );
 	

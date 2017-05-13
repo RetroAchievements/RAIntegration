@@ -939,7 +939,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				else //if( b32BitSet )
 					nCompSize = ThirtyTwoBit;
 
-				g_MemManager.Reset( 0, nCompSize );
+				g_MemManager.ResetAll( nCompSize );
 
 				ClearLogOutput();
 				AddLogLine( "Cleared: (" + std::string( COMPARISONVARIABLESIZE_STR[ nCompSize ] ) + ") mode. Aware of " + std::to_string( g_MemManager.NumCandidates() ) + " RAM locations." );

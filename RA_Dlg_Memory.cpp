@@ -462,7 +462,7 @@ void MemoryViewerControl::OnClick( POINT point )
 	int nAddressRowClicked = (nTopLeft + (line << 4));
 
 	//	Clamp:
-	if (nAddressRowClicked < 0 || nAddressRowClicked > g_MemManager.TotalBankSize() )
+	if (nAddressRowClicked < 0 || nAddressRowClicked > (int)g_MemManager.TotalBankSize() )
 	{
 		//	ignore; clicked above limit
 		return;
@@ -582,7 +582,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 			break;
 		}
 
-		if ((addr >= 0x0000) && (addr < g_MemManager.TotalBankSize()))
+		if ((addr >= 0x0000) && (addr < (int)g_MemManager.TotalBankSize()))
 		{
 			char buffer[4096];
 			sprintf_s(buffer, 4096, "0x%06x", addr);

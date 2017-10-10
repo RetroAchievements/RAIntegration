@@ -17,7 +17,7 @@
 namespace
 {
 	const char* COLUMN_TITLE[] = { "ID", "Special?", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-	const int COLUMN_WIDTH[] = { 30, 53, 42, 50, 60, 35, 42, 50, 60, 48 };
+	const int COLUMN_WIDTH[] = { 30, 53, 42, 50, 60, 35, 42, 50, 60, 72 };
 	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
 }
 
@@ -1648,7 +1648,6 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
 
 		int nScrollTo = -1;
-		int nSelected = -1;
 		if( bAttemptKeepSelected )
 		{
 			SCROLLINFO scroll;
@@ -1656,9 +1655,6 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 			scroll.fMask = SIF_POS;
 			GetScrollInfo( hCtrl, SB_VERT, &scroll );
 			nScrollTo = scroll.nPos;
-
-			//	Get selected item:
-			nSelected = ListView_GetNextItem( hCtrl, -1, LVNI_SELECTED );
 		}
 
 		if( !m_pSelectedAchievement->IsDirty() )
@@ -1681,6 +1677,8 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 			SetDlgItemText( m_hAchievementEditorDlg, IDC_RA_BADGENAME, Widen( m_pSelectedAchievement->BadgeImageURI() ).c_str() );
 			UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 		}
+
+		// NOTE: this actually destroys and recreates all of the condition rows, which is why we have to reset the scroll position later
 		if( pCheevo->GetDirtyFlags() & Dirty_Conditions )
 			PopulateConditions( m_pSelectedAchievement );
 		
@@ -1698,20 +1696,11 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		
 		m_bPopulatingAchievementEditorData = FALSE;
 
-		if( bAttemptKeepSelected && ( nScrollTo != 0 || nSelected != -1 ) )
+		if( bAttemptKeepSelected && nScrollTo != 0 )
 		{
-			//	Note: bit of a hack, but this actually selects a condition. We don't want to also be doing this 
-			//	 if the scroller is right at the top.
-			if( nScrollTo > 0 )
-			{
-				ListView_SetItemState( hCtrl, nScrollTo, LVIS_FOCUSED|LVIS_SELECTED, -1 );
-				ListView_EnsureVisible( hCtrl, nScrollTo, FALSE );
-			}
-			else if( nSelected >= 0 )
-			{
-				ListView_SetItemState( hCtrl, nSelected, LVIS_FOCUSED|LVIS_SELECTED, -1 )
-				ListView_EnsureVisible( hCtrl, nSelected, FALSE );
-			}
+			// tricky magic - scroll to the bottom, then up just enough to get the desired first item into view
+			ListView_EnsureVisible( hCtrl, ListView_GetItemCount(hCtrl) - 1, FALSE );
+			ListView_EnsureVisible( hCtrl, nScrollTo, FALSE );
 		}
 	}
 

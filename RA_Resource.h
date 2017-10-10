@@ -2,6 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by RA_Shared.rc
 //
+#define IDD_RA_RICHPRESENCE             114
+#define IDC_RA_RICHPRESENCERESULTTEXT   1022
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -119,17 +121,13 @@
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_MENUEND                  1739
 
-//#include <Windows.h>
-//#define IDC_STATIC -1
-//#include "afxres.h"
-
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        114
+#define _APS_NEXT_RESOURCE_VALUE        116
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

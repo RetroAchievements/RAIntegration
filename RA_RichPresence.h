@@ -51,6 +51,8 @@ public:
 	const std::string& GetRichPresenceString();
 	const std::string& Lookup( const std::string& sLookupName, const std::string& sMemString ) const;
 
+	bool Enabled() const;
+
 private:
 	std::vector<RA_Lookup> m_lookups;
 	std::vector<RA_Formattable> m_formats;

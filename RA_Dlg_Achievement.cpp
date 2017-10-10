@@ -898,11 +898,11 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					Achievement& Cheevo = g_pActiveAchievements->GetAchievement( nSel );
 					if( !Cheevo.Active() )
 					{
-						const char* sMessage = "Temporarily reset 'achieved' state of this achievement?\n";
-						if( g_nActiveAchievementSet != Core )
-							sMessage = "Activate this achievement?";
+						const wchar_t* sMessage = L"Temporarily reset 'achieved' state of this achievement?";
+						if (g_nActiveAchievementSet != Core)
+							sMessage = L"Activate this achievement?";
 
-						if( MessageBox( hDlg, Widen( sMessage ).c_str(), L"Reset Achieved?", MB_YESNO ) == IDYES )
+						if( MessageBox( hDlg, sMessage, L"Activate Achievement", MB_YESNO ) == IDYES )
 						{
 							Cheevo.Reset();
 							Cheevo.SetActive( true );
@@ -921,6 +921,26 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 							//	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
 						}
 					}
+					else if ( g_nActiveAchievementSet != Core )
+					{
+						if (MessageBox(hDlg, L"Deactivate this achievement?", L"Deactivate Achievement", MB_YESNO) == IDYES)
+						{
+							Cheevo.SetActive(false);
+
+							size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+							ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
+							if (nIndex < g_pActiveAchievements->NumAchievements())
+							{
+								OnEditData(nIndex, Dlg_Achievements::Active, "No");
+							}
+
+							InvalidateRect(hDlg, NULL, TRUE);
+							//	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
+						}
+					}
+
+					if ( g_nActiveAchievementSet != Core )
+					    SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), Cheevo.Active() ? L"Deactivate" : L"Activate" );
 				}
 
 				return TRUE;
@@ -943,7 +963,11 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 							if( (pLVInfo->uNewState &= LVIS_SELECTED) != 0 )
 							{
 								int nNewIndexSelected = pLVInfo->iItem;
-								g_AchievementEditorDialog.LoadAchievement( &g_pActiveAchievements->GetAchievement(nNewIndexSelected), FALSE );
+								Achievement& Cheevo = g_pActiveAchievements->GetAchievement( nNewIndexSelected );
+								g_AchievementEditorDialog.LoadAchievement( &Cheevo, FALSE );
+
+								if ( g_nActiveAchievementSet != Core )
+									SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), Cheevo.Active() ? L"Deactivate" : L"Activate" );
 							}
 						}
 					}

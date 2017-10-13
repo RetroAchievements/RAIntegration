@@ -146,41 +146,6 @@ void Dlg_AchievementEditor::SetupColumns( HWND hList )
 
 const int Dlg_AchievementEditor::AddCondition( HWND hList, const Condition& Cond )
 {
-	//	Add to our local array:
-	const char* sMemTypStrSrc = "Value";
-	const char* sMemSizeStrSrc = "";
-	if( Cond.CompSource().Type() != ValueComparison )
-	{
-		sMemTypStrSrc = ( Cond.CompSource().Type() == Address ) ? "Mem" : "Delta";
-		sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[ Cond.CompSource().Size() ];
-	}
-	const char* sMemTypStrDst = "Value";
-	const char* sMemSizeStrDst = "";
-	if( Cond.CompTarget().Type() != ValueComparison )
-	{
-		sMemTypStrDst = ( Cond.CompTarget().Type() == Address ) ? "Mem" : "Delta";
-		sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[ Cond.CompTarget().Size() ];
-	}
-	
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_ID ],			MEM_STRING_TEXT_LEN, "%d", m_nNumOccupiedRows + 1 );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_GROUP ],		MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[ Cond.GetConditionType() ] );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_TYPE_SRC ],		MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_SIZE_SRC ],		MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_SRC ],	MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue() );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_COMPARISON ],	MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[ Cond.CompareType() ] );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_TYPE_TGT ],		MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_SIZE_TGT ],		MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ],	MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue() );
-	sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_HITCOUNT ],		MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits() );
-
-	if( g_bPreferDecimalVal )
-	{
-		if( Cond.CompTarget().Type() == ValueComparison )
-			sprintf_s( m_lbxData[ m_nNumOccupiedRows ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue() );
-	}
-
-	//	Copy our local text into the listbox (:S)
-
 	LV_ITEM item;
 	ZeroMemory( &item, sizeof( item ) );
 	item.mask = LVIF_TEXT;
@@ -191,19 +156,61 @@ const int Dlg_AchievementEditor::AddCondition( HWND hList, const Condition& Cond
 	item.pszText = const_cast<LPWSTR>( sData.c_str() );
 	item.iItem = ListView_InsertItem( hList, &item );
 
-	for( size_t i = 1; i < NumColumns; ++i )
-	{
-		item.iSubItem = i;
-		std::wstring sData = Widen( m_lbxData[ m_nNumOccupiedRows ][ i ] );
-		item.pszText = const_cast<LPWSTR>( sData.c_str() );
-		ListView_SetItem( hList, &item );
-	}
+	UpdateCondition( hList, item, Cond );
 
 	ASSERT( item.iItem == m_nNumOccupiedRows );
 
 	m_nNumOccupiedRows++;
 	return item.iItem;
 }
+
+void Dlg_AchievementEditor::UpdateCondition( HWND hList, LV_ITEM& item, const Condition& Cond )
+{
+	int nRow = item.iItem;
+
+	//	Update our local array:
+	const char* sMemTypStrSrc = "Value";
+	const char* sMemSizeStrSrc = "";
+	if( Cond.CompSource().Type() != ValueComparison )
+	{
+		sMemTypStrSrc = ( Cond.CompSource().Type() == Address ) ? "Mem" : "Delta";
+		sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[ Cond.CompSource().Size() ];
+	}
+
+	const char* sMemTypStrDst = "Value";
+	const char* sMemSizeStrDst = "";
+	if( Cond.CompTarget().Type() != ValueComparison )
+	{
+		sMemTypStrDst = ( Cond.CompTarget().Type() == Address ) ? "Mem" : "Delta";
+		sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[ Cond.CompTarget().Size() ];
+	}
+
+	sprintf_s( m_lbxData[ nRow ][ CSI_ID ], MEM_STRING_TEXT_LEN, "%d", nRow + 1 );
+	sprintf_s( m_lbxData[ nRow ][ CSI_GROUP ], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[ Cond.GetConditionType() ] );
+	sprintf_s( m_lbxData[ nRow ][ CSI_TYPE_SRC ], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc );
+	sprintf_s( m_lbxData[ nRow ][ CSI_SIZE_SRC ], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc );
+	sprintf_s( m_lbxData[ nRow ][ CSI_VALUE_SRC ], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue() );
+	sprintf_s( m_lbxData[ nRow ][ CSI_COMPARISON ], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[ Cond.CompareType() ] );
+	sprintf_s( m_lbxData[ nRow ][ CSI_TYPE_TGT ], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst );
+	sprintf_s( m_lbxData[ nRow ][ CSI_SIZE_TGT ], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst );
+	sprintf_s( m_lbxData[ nRow ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue() );
+	sprintf_s( m_lbxData[ nRow ][ CSI_HITCOUNT ], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits() );
+
+	if( g_bPreferDecimalVal )
+	{
+		if( Cond.CompTarget().Type() == ValueComparison )
+			sprintf_s( m_lbxData[ nRow ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue() );
+	}
+
+	for( size_t i = 0; i < NumColumns; ++i )
+	{
+		item.iSubItem = i;
+		std::wstring sData = Widen( m_lbxData[ nRow ][ i ] );
+		item.pszText = const_cast<LPWSTR>( sData.c_str() );
+		ListView_SetItem( hList, &item );
+	}
+}
+
 
 // LRESULT CALLBACK ICEDialogProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 // {
@@ -792,6 +799,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 			m_BadgeNames.InstallAchEditorCombo( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_BADGENAME ) );
 			m_BadgeNames.FetchNewBadgeNamesThreaded();
+
+			if ( m_pSelectedAchievement != NULL )
+				RepopulateGroupList(m_pSelectedAchievement);
 		}
 		return TRUE;
 
@@ -1547,18 +1557,13 @@ void Dlg_AchievementEditor::PopulateConditions( Achievement* pCheevo )
 		return;
 
 	ListView_DeleteAllItems( hCondList );
-
-	unsigned int nGrp = GetSelectedConditionGroup();
-
 	m_nNumOccupiedRows = 0;
 
 	if( pCheevo != NULL )
 	{
-		//for( size_t nGrp = 0; nGrp < pCheevo->NumConditionGroups(); ++nGrp )
-		{
-			for( size_t i = 0; i < m_pSelectedAchievement->NumConditions( nGrp ); ++i )
-				AddCondition( hCondList, m_pSelectedAchievement->GetCondition( nGrp, i ) );
-		}
+		unsigned int nGrp = GetSelectedConditionGroup(); 
+		for( size_t i = 0; i < m_pSelectedAchievement->NumConditions( nGrp ); ++i )
+			AddCondition( hCondList, m_pSelectedAchievement->GetCondition( nGrp, i ) );
 	}
 }
 
@@ -1647,16 +1652,6 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		BOOL bPointsSelected = ( GetFocus() == GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS ) );
 		HWND hCtrl = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
 
-		int nScrollTo = -1;
-		if( bAttemptKeepSelected )
-		{
-			SCROLLINFO scroll;
-			scroll.cbSize = sizeof( SCROLLINFO );
-			scroll.fMask = SIF_POS;
-			GetScrollInfo( hCtrl, SB_VERT, &scroll );
-			nScrollTo = scroll.nPos;
-		}
-
 		if( !m_pSelectedAchievement->IsDirty() )
 			return;
 
@@ -1678,9 +1673,33 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 			UpdateBadge( m_pSelectedAchievement->BadgeImageURI() );
 		}
 
-		// NOTE: this actually destroys and recreates all of the condition rows, which is why we have to reset the scroll position later
 		if( pCheevo->GetDirtyFlags() & Dirty_Conditions )
-			PopulateConditions( m_pSelectedAchievement );
+		{
+			HWND hCondList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
+			if( hCondList != NULL )
+			{
+				unsigned int nGrp = GetSelectedConditionGroup();
+
+				if( ListView_GetItemCount( hCondList ) != m_pSelectedAchievement->NumConditions( nGrp ) )
+				{
+					PopulateConditions( pCheevo );
+				}
+				else
+				{
+					LV_ITEM item;
+					ZeroMemory( &item, sizeof(item) );
+					item.mask = LVIF_TEXT;
+					item.cchTextMax = 256;
+
+					for( size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i )
+					{
+						const Condition& Cond = m_pSelectedAchievement->GetCondition( nGrp, i );
+						item.iItem = i;
+						UpdateCondition( hCondList, item, Cond );
+					}
+				}
+			}
+		}
 		
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_ID ), FALSE );
@@ -1695,13 +1714,6 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_PROGRESSINDICATORS ), FALSE );
 		
 		m_bPopulatingAchievementEditorData = FALSE;
-
-		if( bAttemptKeepSelected && nScrollTo != 0 )
-		{
-			// tricky magic - scroll to the bottom, then up just enough to get the desired first item into view
-			ListView_EnsureVisible( hCtrl, ListView_GetItemCount(hCtrl) - 1, FALSE );
-			ListView_EnsureVisible( hCtrl, nScrollTo, FALSE );
-		}
 	}
 
 	//InvalidateRect( hList, NULL, TRUE );

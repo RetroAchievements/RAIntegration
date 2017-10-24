@@ -1037,10 +1037,15 @@ void Dlg_Achievements::OnGet_Achievement( const Achievement& ach )
 {
 	size_t nIndex = g_pActiveAchievements->GetAchievementIndex( ach );
 
-	if( g_nActiveAchievementSet == Core )
-		OnEditData( nIndex, Achieved, "Yes" );
+	if (g_nActiveAchievementSet == Core) 
+	{
+		OnEditData(nIndex, Achieved, "Yes");
+	}
 	else
+	{
 		OnEditData( nIndex, Active, "No" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), L"Activate" );
+	}
 }
 
 void Dlg_Achievements::OnEditAchievement( const Achievement& ach )
@@ -1079,6 +1084,8 @@ void Dlg_Achievements::ReloadLBXData( int nOffset )
 		//sprintf_s( buffer, 256, "%d/%d", Ach.Upvotes(), Ach.Downvotes() );
 		//OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
 		OnEditData( nOffset, Dlg_Achievements::Votes, "N/A" );
+
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), Ach.Active() ? L"Deactivate" : L"Activate" );
 	}
 }
 

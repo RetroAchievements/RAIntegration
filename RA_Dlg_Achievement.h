@@ -57,6 +57,8 @@ private:
 	void RemoveAchievement( HWND hList, int nIter );
 	size_t AddAchievement( HWND hList, const Achievement& Ach );
 
+	void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
+
 private:
 	HWND m_hAchievementsDlg;
 	typedef std::vector< std::string > AchievementDlgRow;

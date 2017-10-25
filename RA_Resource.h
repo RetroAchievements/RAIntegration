@@ -27,6 +27,7 @@
 #define IDC_RA_RESET_ACH                1524
 #define IDC_RA_VOTE_POS                 1525
 #define IDC_RA_CHK_SHOW_DECIMALS        1526
+
 #define IDC_RA_DELETECOND               1527
 #define IDC_RA_CLONECOND                1528
 #define IDC_RA_ACH_ID                   1529
@@ -74,6 +75,7 @@
 #define IDC_RA_ACHPROGRESSENABLE        1571
 #define IDC_RA_ACHPROGRESS_FORMATTING   1572
 #define IDC_RA_ACHPROGRESS_MAXIMUM      1573
+#define IDC_RA_ACTIVATE_ALL_ACH         1574
 #define IDC_RA_ACH_GROUP                1575
 #define IDC_RA_ACH_DELGROUP             1576
 #define IDC_RA_ACH_ADDGROUP             1577
@@ -118,10 +120,6 @@
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_MENUEND                  1739
-
-//#include <Windows.h>
-//#define IDC_STATIC -1
-//#include "afxres.h"
 
 // Next default values for new objects
 // 

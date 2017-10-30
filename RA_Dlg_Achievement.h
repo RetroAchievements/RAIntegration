@@ -57,6 +57,8 @@ private:
 	void RemoveAchievement( HWND hList, int nIter );
 	size_t AddAchievement( HWND hList, const Achievement& Ach );
 
+	INT_PTR Dlg_Achievements::CommitAchievements( HWND hDlg );
+
 	void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
 
 private:

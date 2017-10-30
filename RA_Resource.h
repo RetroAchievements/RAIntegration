@@ -53,8 +53,8 @@
 #define IDC_RA_ACH_DESC                 1548
 #define IDC_RA_USERNAME                 1549
 #define IDC_RA_DOWNLOAD_ACH             1550
-#define IDC_RA_UPLOAD_ACH               1551
-#define IDC_RA_SAVELOCAL                1552
+#define IDC_RA_COMMIT_ACH               1551
+#define IDC_RA_PROMOTE_ACH              1552
 #define IDC_RA_CBO_4BIT                 1553
 #define IDC_RA_CBO_8BIT                 1554
 #define IDC_RA_CBO_16BIT                1555

@@ -770,6 +770,12 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
  			GetWindowRect( g_RAMainWnd, &rc );
 			SetWindowPos( hDlg, NULL, rc.right, rc.top, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
+			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED );
+			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED );
+			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, BST_UNCHECKED );
+			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHGAMERAM, BST_UNCHECKED );
+			EnableWindow( GetDlgItem( hDlg, IDC_RA_SEARCHRANGE ), FALSE );
+
 			CheckDlgButton( hDlg, IDC_RA_CBO_GIVENVAL, BST_UNCHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED );
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_TESTVAL ), FALSE );
@@ -956,6 +962,13 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			case IDC_RA_CBO_LASTKNOWNVAL:
 				EnableWindow( GetDlgItem( hDlg, IDC_RA_TESTVAL ), ( IsDlgButtonChecked( hDlg, IDC_RA_CBO_GIVENVAL ) == BST_CHECKED ) );
 				g_MemManager.SetUseLastKnownValue( IsDlgButtonChecked( hDlg, IDC_RA_CBO_GIVENVAL ) == BST_UNCHECKED );
+				return TRUE;
+
+			case IDC_RA_CBO_SEARCHALL:
+			case IDC_RA_CBO_SEARCHCUSTOM:
+			case IDC_RA_CBO_SEARCHSYSTEMRAM:
+			case IDC_RA_CBO_SEARCHGAMERAM:
+				EnableWindow( GetDlgItem(hDlg, IDC_RA_SEARCHRANGE), IsDlgButtonChecked( hDlg, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED );
 				return TRUE;
 
 			case IDC_RA_ADDNOTE:

@@ -756,7 +756,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					static_cast<int>( ( nVal & ( 1 << 1 ) ) != 0 ),
 					static_cast<int>( ( nVal & ( 1 << 0 ) ) != 0 ) );
 
-				SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
+				GetDlgItemText( hDlg, IDC_RA_MEMBITS, bufferWide, 1024 );
+				if( wcscmp( sDesc, bufferWide ) != 0 )
+					SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
 			}
 		}
 		return FALSE;
@@ -774,40 +776,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_SEARCHRANGE ), FALSE );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, BST_UNCHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHGAMERAM, BST_UNCHECKED );
-
-			ByteAddress start, end;
-			if( GetSystemMemoryRange( start, end ) )
-			{
-				wchar_t label[64];
-				if( g_MemManager.TotalBankSize() > 0xFFFF )
-					wsprintf( label, L"System Memory ($%06X-$%06X)", start, end );
-				else
-					wsprintf( label, L"System Memory ($%04X-$%04X)", start, end );
-
-				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, label );
-			}
-			else
-			{
-				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, L"System Memory (unspecified)" );
-				EnableWindow( GetDlgItem(hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
-			}
-
-			if( GetGameMemoryRange( start, end ) )
-			{
-				wchar_t label[64];
-				if( g_MemManager.TotalBankSize() > 0xFFFF )
-					wsprintf( label, L"Game Memory ($%06X-$%06X)", start, end );
-				else
-					wsprintf( label, L"Game Memory ($%04X-$%04X)", start, end );
-
-				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHGAMERAM, label );
-			}
-			else
-			{
-				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHGAMERAM, L"Game Memory (unspecified)" );
-				EnableWindow( GetDlgItem(hDlg, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
-			}
-
 			CheckDlgButton( hDlg, IDC_RA_CBO_GIVENVAL, BST_UNCHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED );
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_TESTVAL ), FALSE );
@@ -984,13 +952,19 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					nCompSize = ThirtyTwoBit;
 
 				ByteAddress start, end;
-				GetSelectedMemoryRange( start, end );
+				if( GetSelectedMemoryRange( start, end ) )
+				{
+					g_MemManager.ResetAll( nCompSize, start, end );
 
-				g_MemManager.ResetAll( nCompSize, start, end );
-
-				ClearLogOutput();
-				AddLogLine( "Cleared: (" + std::string( COMPARISONVARIABLESIZE_STR[ nCompSize ] ) + ") mode. Aware of " + std::to_string( g_MemManager.NumCandidates() ) + " RAM locations." );
-				EnableWindow( GetDlgItem( hDlg, IDC_RA_DOTEST ), g_MemManager.NumCandidates() > 0 );
+					ClearLogOutput();
+					AddLogLine( "Cleared: (" + std::string( COMPARISONVARIABLESIZE_STR[ nCompSize ] ) + ") mode. Aware of " + std::to_string( g_MemManager.NumCandidates() ) + " RAM locations." );
+					EnableWindow( GetDlgItem( hDlg, IDC_RA_DOTEST ), g_MemManager.NumCandidates() > 0 );
+				}
+				else
+				{
+					ClearLogOutput();
+					AddLogLine( "Invalid Range" );
+				}
 
 				return FALSE;
 			}
@@ -1259,6 +1233,42 @@ void Dlg_Memory::OnLoad_NewRom()
 	else
 		SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, L"Loading..." );
 
+	if( g_MemManager.TotalBankSize() > 0 )
+	{ 
+		ByteAddress start, end;
+		if( GetSystemMemoryRange( start, end ) )
+		{
+			wchar_t label[64];
+			if( g_MemManager.TotalBankSize() > 0x10000 )
+				wsprintf( label, L"System Memory (0x%06X-0x%06X)", start, end );
+			else
+				wsprintf( label, L"System Memory (0x%04X-0x%04X)", start, end );
+
+			SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label );
+		}
+		else
+		{
+			SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, L"System Memory (unspecified)" );
+			EnableWindow( GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM ), FALSE);
+		}
+
+		if( GetGameMemoryRange( start, end ) )
+		{
+			wchar_t label[64];
+			if( g_MemManager.TotalBankSize() > 0x10000 )
+				wsprintf( label, L"Game Memory (0x%06X-0x%06X)", start, end );
+			else
+				wsprintf( label, L"Game Memory (0x%04X-0x%04X)", start, end );
+
+			SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label );
+		}
+		else
+		{
+			SetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, L"Game Memory (unspecified)" );
+			EnableWindow( GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ), FALSE);
+		}
+	}
+
 	RepopulateMemNotesFromFile();
 
 	MemoryViewerControl::destroyEditCaret();
@@ -1313,16 +1323,47 @@ bool Dlg_Memory::GetSystemMemoryRange( ByteAddress& start, ByteAddress& end )
 	switch ( g_ConsoleID )
 	{
 	case ConsoleID::NES:
+		// $0000-$07FF are the 2KB internal RAM for the NES. It's mirrored every 2KB until $1FFF.
 		start = 0x0000;
 		end = 0x07FF;
 		return TRUE;
 
 	case ConsoleID::SNES:
+		// SNES RAM runs from $7E0000-$7FFFFF. $7E0000-$7E1FFF is LowRAM, $7E2000-$7E7FFF is 
+		// considered HighRAM, and $7E8000-$7FFFFF is considered Expanded RAM. The Memory Manager
+		// addresses this data from $000000-$1FFFFF. For simplicity, we'll treat LowRAM and HighRAM
+		// as system memory and Expanded RAM as game memory.
 		start = 0x0000;
 		end = 0x7FFF;
 		return TRUE;
 
 	case ConsoleID::GB:
+	case ConsoleID::GBC:
+		// $C000-$CFFF is fixed internal RAM, $D000-$DFFF is banked internal RAM. $C000-$DFFF is
+		// mirrored to $E000-$FDFF.
+		start = 0xC000;
+		end = 0xDFFF;
+		return TRUE;
+
+	case ConsoleID::GBA:
+		// Gameboy Advance memory has three separate memory blocks. $02000000-$0203FFFF is
+		// on-board RAM, $03000000-$03007FF0 is in-chip RAM, and $0E000000-$0E00FFFF is
+		// game pak RAM. The Memory Manager seets the in-chip RAM as $00000-$07FF0, and the
+		// on-board as $8000-$47FFF
+		start = 0x8000;
+		end = 0x47FFF;
+		return TRUE;
+
+	case ConsoleID::MegaDrive:
+		// Genesis RAM runs from $E00000-$FFFFFF. It's really only 64KB, and mirrored for 
+		// each $E0-$FF lead byte. Typically, it's only accessed from $FFxxxx. I'm not sure
+		// what memory is represented by $10000-$1FFFF in the Memory Manager.
+		start = 0x0000;
+		end = 0xFFFF;
+		return TRUE;
+
+	case ConsoleID::MasterSystem:
+		// $C000-$DFFF is system RAM. It's mirrored at $E000-$FFFF.
 		start = 0xC000;
 		end = 0xDFFF;
 		return TRUE;
@@ -1339,6 +1380,8 @@ bool Dlg_Memory::GetGameMemoryRange( ByteAddress& start, ByteAddress& end )
 	switch ( g_ConsoleID )
 	{
 	case ConsoleID::NES:
+		// $4020-$FFFF is cartridge memory and subranges will vary by mapper. The most common mappers reference
+		// battery-backed RAM or additional work RAM in the $6000-$7FFF range. $8000-$FFFF is usually read-only.
 		start = 0x4020;
 		end = 0xFFFF;
 		return TRUE;
@@ -1353,7 +1396,24 @@ bool Dlg_Memory::GetGameMemoryRange( ByteAddress& start, ByteAddress& end )
 		return TRUE;
 
 	case ConsoleID::GB:
+	case ConsoleID::GBC:
+		// $A000-$BFFF is 8KB is external RAM (in cartridge)
 		start = 0xA000;
+		end = 0xBFFF;
+		return TRUE;
+
+	case ConsoleID::GBA:
+		// Gameboy Advance memory has three separate memory blocks. $02000000-$0203FFFF is
+		// on-board RAM, $03000000-$03007FF0 is in-chip RAM, and $0E000000-$0E00FFFF is
+		// game pak RAM. The Memory Manager seets the in-chip RAM as $00000-$07FF0, and the
+		// on-board as $8000-$47FFF
+		start = 0x0000;
+		end = 0x7FFF;
+		return TRUE;
+
+	case ConsoleID::MasterSystem:
+		// $0000-$BFFF is cartridge ROM/RAM
+		start = 0x0000;
 		end = 0xBFFF;
 		return TRUE;
 
@@ -1364,24 +1424,78 @@ bool Dlg_Memory::GetGameMemoryRange( ByteAddress& start, ByteAddress& end )
 	}
 }
 
-void Dlg_Memory::GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end )
+static wchar_t* ParseAddress( wchar_t* ptr, ByteAddress& address )
 {
-	// all items are in "All" range
+	if ( *ptr == '$' )
+		++ptr;
+	else if ( ptr[0] == '0' && ptr[1] == 'x' )
+		ptr += 2;
+
+	address = 0;
+	while( *ptr ) 
+	{
+		if( *ptr >= '0' && *ptr <= '9' )
+		{
+			address <<= 4;
+			address += (*ptr - '0');
+		}
+		else if( *ptr >= 'a' && *ptr <= 'f' )
+		{
+			address <<= 4;
+			address += (*ptr - 'a' + 10);
+		}
+		else if( *ptr >= 'A' && *ptr <= 'F' )
+		{
+			address <<= 4;
+			address += (*ptr - 'A' + 10);
+		}
+		else
+		{
+			break;
+		}
+
+		++ptr;
+	}
+
+	return ptr;
+}
+
+bool Dlg_Memory::GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end )
+{
 	if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHALL ) == BST_CHECKED )
 	{
+		// all items are in "All" range
 		start = 0;
 		end = 0xFFFFFFFF;
+		return TRUE;
 	}
-	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM ) == BST_CHECKED )
+
+	if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM ) == BST_CHECKED )
+		return GetSystemMemoryRange( start, end );
+
+	if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ) == BST_CHECKED )
+		return GetGameMemoryRange( start, end );
+
+	if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHCUSTOM ) == BST_CHECKED )
 	{
-		GetSystemMemoryRange( start, end );
+		wchar_t buffer[ 128 ];
+		GetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_SEARCHRANGE, buffer, 128 );
+		wchar_t *ptr = buffer;
+		
+		ptr = ParseAddress( ptr, start );
+		while( iswspace( *ptr ) )
+			++ptr;
+
+		if (*ptr != '-')
+			return FALSE;
+		++ptr;
+
+		while( iswspace( *ptr ) )
+			++ptr;
+
+		ptr = ParseAddress( ptr, end );
+		return (*ptr == '\0');
 	}
-	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ) == BST_CHECKED )
-	{
-		GetGameMemoryRange( start, end );
-	}
-	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ) == BST_CHECKED )
-	{
-		// TODO: parse start/end
-	}
+
+	return FALSE;
 }

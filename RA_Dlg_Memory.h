@@ -77,6 +77,11 @@ public:
 	void AddBank( size_t nBankID );
 
 private:
+	bool GetSystemMemoryRange( ByteAddress& start, ByteAddress& end );
+	bool GetGameMemoryRange( ByteAddress& start, ByteAddress& end );
+
+	void GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end );
+
 	static CodeNotes m_CodeNotes;
 	static HWND m_hWnd;
 };

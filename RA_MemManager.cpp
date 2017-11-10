@@ -50,7 +50,7 @@ void MemManager::AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByt
 	g_MemoryDialog.AddBank( nBankID );
 }
 
-void MemManager::ResetAll(ComparisonVariableSize nNewVarSize)
+void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start, ByteAddress end)
 {	
 	//	RAM must be installed for this to work!
 	if (m_Banks.size() == 0)
@@ -63,56 +63,68 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize)
 
 	if (m_Candidates == nullptr)
 		m_Candidates = new MemCandidate[RAM_SIZE * 2];	//	To allow for upper and lower nibbles
+	MemCandidate* pCandidate = &m_Candidates[0];
+
+	if (end >= RAM_SIZE)
+		end = RAM_SIZE - 1;
 
 	if ((m_nComparisonSizeMode == Nibble_Lower) ||
 		(m_nComparisonSizeMode == Nibble_Upper))
 	{
-		for (size_t i = 0; i < RAM_SIZE; ++i)
+		for (ByteAddress i = start; i <= end; ++i)
 		{
-			m_Candidates[(i * 2)].m_nAddr = i;
-			m_Candidates[(i * 2)].m_bUpperNibble = false;			//lower first?
-			m_Candidates[(i * 2)].m_nLastKnownValue = static_cast<unsigned int>(ActiveBankRAMByteRead(i) & 0xf);
+			unsigned char byte = ActiveBankRAMByteRead(i);
 
-			m_Candidates[(i * 2) + 1].m_nAddr = i;
-			m_Candidates[(i * 2) + 1].m_bUpperNibble = true;
-			m_Candidates[(i * 2) + 1].m_nLastKnownValue = static_cast<unsigned int>((ActiveBankRAMByteRead(i) >> 4) & 0xf);
+			pCandidate->m_nAddr = i;
+			pCandidate->m_bUpperNibble = false;			//lower first?
+			pCandidate->m_nLastKnownValue = static_cast<unsigned int>(byte & 0xf);
+			++pCandidate;
+
+			pCandidate->m_nAddr = i;
+			pCandidate->m_bUpperNibble = true;
+			pCandidate->m_nLastKnownValue = static_cast<unsigned int>((byte >> 4) & 0xf);
+			++pCandidate;
 		}
-		m_nNumCandidates = RAM_SIZE * 2;
 	}
 	else if (m_nComparisonSizeMode == EightBit)
 	{
-		for (DWORD i = 0; i < RAM_SIZE; ++i)
+		for (ByteAddress i = start; i <= end; ++i)
 		{
-			m_Candidates[i].m_nAddr = i;
-			m_Candidates[i].m_nLastKnownValue = ActiveBankRAMByteRead(i);
+			pCandidate->m_nAddr = i;
+			pCandidate->m_nLastKnownValue = ActiveBankRAMByteRead(i);
+			++pCandidate;
 		}
-		m_nNumCandidates = RAM_SIZE;
 	}
 	else if (m_nComparisonSizeMode == SixteenBit)
 	{
-		for (DWORD i = 0; i < (RAM_SIZE / 2); ++i)
+		unsigned char low = ActiveBankRAMByteRead(start);
+		for (ByteAddress i = start + 1; i <= end; ++i)
 		{
-			m_Candidates[i].m_nAddr = (i * 2);
-			m_Candidates[i].m_nLastKnownValue =
-				(ActiveBankRAMByteRead((i * 2))) |
-				(ActiveBankRAMByteRead((i * 2) + 1) << 8);
+			unsigned char high = ActiveBankRAMByteRead(i);
+			pCandidate->m_nAddr = i - 1;
+			pCandidate->m_nLastKnownValue = low | (high << 8);
+			++pCandidate;
+			low = high;
 		}
-		m_nNumCandidates = RAM_SIZE / 2;
 	}
 	else if (m_nComparisonSizeMode == ThirtyTwoBit)
 	{
-		//	Assuming 32-bit-aligned! 		
-		for (DWORD i = 0; i < (RAM_SIZE / 4); ++i)
+		if (end - start > 3)
 		{
-			m_Candidates[i].m_nAddr = (i * 4);
-			m_Candidates[i].m_nLastKnownValue =
-				(ActiveBankRAMByteRead((i * 4))) |
-				(ActiveBankRAMByteRead((i * 4) + 1) << 8) |
-				(ActiveBankRAMByteRead((i * 4) + 2) << 16) |
-				(ActiveBankRAMByteRead((i * 4) + 3) << 24);
+			unsigned long value = ActiveBankRAMByteRead(start) | (ActiveBankRAMByteRead(start + 1) << 8) | (ActiveBankRAMByteRead(start + 2) << 16);
+
+			for (ByteAddress i = start + 3; i <= end; ++i)
+			{
+				value |= (ActiveBankRAMByteRead(i) << 24);
+				pCandidate->m_nAddr = i - 3;
+				pCandidate->m_nLastKnownValue = value;
+				++pCandidate;
+				value >>= 8;
+			}
 		}
-		m_nNumCandidates = RAM_SIZE / 4;
 	}
+
+	m_nNumCandidates = pCandidate - &m_Candidates[0];
 }
 
 void MemManager::Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewVarSize)

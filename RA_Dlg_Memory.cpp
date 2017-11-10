@@ -724,18 +724,18 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 	{
 	case WM_TIMER:
 		{
-			SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, L"" );
-			SetDlgItemText( hDlg, IDC_RA_MEMBITS, L"" );
-
-			//	Force this through to invalidate mem viewer:
-			Invalidate();
-
 			if( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.TotalBankSize() == 0 ) )
+			{
+				SetDlgItemText( hDlg, IDC_RA_MEMBITS, L"" );
 				return FALSE;
+			}
 
 			bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
 			if( !bView8Bit )
+			{
+				SetDlgItemText( hDlg, IDC_RA_MEMBITS, L"" );
 				return FALSE;
+			}
 			
 			wchar_t bufferWide[ 1024 ];
 			GetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, bufferWide, 1024 );
@@ -756,7 +756,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					static_cast<int>( ( nVal & ( 1 << 1 ) ) != 0 ),
 					static_cast<int>( ( nVal & ( 1 << 0 ) ) != 0 ) );
 
-				SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, L"Bits: 7 6 5 4 3 2 1 0" );
 				SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
 			}
 		}
@@ -772,9 +771,42 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED );
+			EnableWindow( GetDlgItem( hDlg, IDC_RA_SEARCHRANGE ), FALSE );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, BST_UNCHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHGAMERAM, BST_UNCHECKED );
-			EnableWindow( GetDlgItem( hDlg, IDC_RA_SEARCHRANGE ), FALSE );
+
+			ByteAddress start, end;
+			if( GetSystemMemoryRange( start, end ) )
+			{
+				wchar_t label[64];
+				if( g_MemManager.TotalBankSize() > 0xFFFF )
+					wsprintf( label, L"System Memory ($%06X-$%06X)", start, end );
+				else
+					wsprintf( label, L"System Memory ($%04X-$%04X)", start, end );
+
+				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, label );
+			}
+			else
+			{
+				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, L"System Memory (unspecified)" );
+				EnableWindow( GetDlgItem(hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
+			}
+
+			if( GetGameMemoryRange( start, end ) )
+			{
+				wchar_t label[64];
+				if( g_MemManager.TotalBankSize() > 0xFFFF )
+					wsprintf( label, L"Game Memory ($%06X-$%06X)", start, end );
+				else
+					wsprintf( label, L"Game Memory ($%04X-$%04X)", start, end );
+
+				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHGAMERAM, label );
+			}
+			else
+			{
+				SetDlgItemText( hDlg, IDC_RA_CBO_SEARCHGAMERAM, L"Game Memory (unspecified)" );
+				EnableWindow( GetDlgItem(hDlg, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
+			}
 
 			CheckDlgButton( hDlg, IDC_RA_CBO_GIVENVAL, BST_UNCHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED );
@@ -921,9 +953,15 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			case IDC_RA_MEMVIEW8BIT:
 			case IDC_RA_MEMVIEW16BIT:
 			case IDC_RA_MEMVIEW32BIT:
+			{
 				Invalidate();	//	Cause the MemoryViewerControl to refresh
+
+				bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
+				SetDlgItemText( hDlg, IDC_RA_MEMBITS_TITLE, bView8Bit ? L"Bits: 7 6 5 4 3 2 1 0" : L"" );
+
 				MemoryViewerControl::destroyEditCaret();
 				return FALSE;
+			}
 
 			case IDC_RA_CBO_4BIT:
 			case IDC_RA_CBO_8BIT:
@@ -945,7 +983,10 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				else //if( b32BitSet )
 					nCompSize = ThirtyTwoBit;
 
-				g_MemManager.ResetAll( nCompSize );
+				ByteAddress start, end;
+				GetSelectedMemoryRange( start, end );
+
+				g_MemManager.ResetAll( nCompSize, start, end );
 
 				ClearLogOutput();
 				AddLogLine( "Cleared: (" + std::string( COMPARISONVARIABLESIZE_STR[ nCompSize ] ) + ") mode. Aware of " + std::to_string( g_MemManager.NumCandidates() ) + " RAM locations." );
@@ -1265,4 +1306,82 @@ void Dlg_Memory::AddBank( size_t nBankID )
 
 	//	Select first element by default ('0')
 	ComboBox_SetCurSel( hMemBanks, 0 );
+}
+
+bool Dlg_Memory::GetSystemMemoryRange( ByteAddress& start, ByteAddress& end )
+{
+	switch ( g_ConsoleID )
+	{
+	case ConsoleID::NES:
+		start = 0x0000;
+		end = 0x07FF;
+		return TRUE;
+
+	case ConsoleID::SNES:
+		start = 0x0000;
+		end = 0x7FFF;
+		return TRUE;
+
+	case ConsoleID::GB:
+		start = 0xC000;
+		end = 0xDFFF;
+		return TRUE;
+
+	default:
+		start = 0;
+		end = 0;
+		return FALSE;
+	}
+}
+
+bool Dlg_Memory::GetGameMemoryRange( ByteAddress& start, ByteAddress& end )
+{
+	switch ( g_ConsoleID )
+	{
+	case ConsoleID::NES:
+		start = 0x4020;
+		end = 0xFFFF;
+		return TRUE;
+
+	case ConsoleID::SNES:
+		// SNES RAM runs from $7E0000-$7FFFFF. $7E0000-$7E1FFF is LowRAM, $7E2000-$7E7FFF is 
+		// considered HighRAM, and $7E8000-$7FFFFF is considered Expanded RAM. The Memory Manager
+		// addresses this data from $000000-$1FFFFF. For simplicity, we'll treat LowRAM and HighRAM
+		// as system memory and Expanded RAM as game memory.
+		start = 0x008000;
+		end = 0x1FFFFF;
+		return TRUE;
+
+	case ConsoleID::GB:
+		start = 0xA000;
+		end = 0xBFFF;
+		return TRUE;
+
+	default:
+		start = 0;
+		end = 0;
+		return FALSE;
+	}
+}
+
+void Dlg_Memory::GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end )
+{
+	// all items are in "All" range
+	if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHALL ) == BST_CHECKED )
+	{
+		start = 0;
+		end = 0xFFFFFFFF;
+	}
+	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM ) == BST_CHECKED )
+	{
+		GetSystemMemoryRange( start, end );
+	}
+	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ) == BST_CHECKED )
+	{
+		GetGameMemoryRange( start, end );
+	}
+	else if( IsDlgButtonChecked( m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ) == BST_CHECKED )
+	{
+		// TODO: parse start/end
+	}
 }

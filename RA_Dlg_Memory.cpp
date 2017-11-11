@@ -1348,7 +1348,7 @@ bool Dlg_Memory::GetSystemMemoryRange( ByteAddress& start, ByteAddress& end )
 	case ConsoleID::GBA:
 		// Gameboy Advance memory has three separate memory blocks. $02000000-$0203FFFF is
 		// on-board RAM, $03000000-$03007FF0 is in-chip RAM, and $0E000000-$0E00FFFF is
-		// game pak RAM. The Memory Manager seets the in-chip RAM as $00000-$07FF0, and the
+		// game pak RAM. The Memory Manager sees the in-chip RAM as $00000-$07FF0, and the
 		// on-board as $8000-$47FFF
 		start = 0x8000;
 		end = 0x47FFF;
@@ -1405,7 +1405,7 @@ bool Dlg_Memory::GetGameMemoryRange( ByteAddress& start, ByteAddress& end )
 	case ConsoleID::GBA:
 		// Gameboy Advance memory has three separate memory blocks. $02000000-$0203FFFF is
 		// on-board RAM, $03000000-$03007FF0 is in-chip RAM, and $0E000000-$0E00FFFF is
-		// game pak RAM. The Memory Manager seets the in-chip RAM as $00000-$07FF0, and the
+		// game pak RAM. The Memory Manager sees the in-chip RAM as $00000-$07FF0, and the
 		// on-board as $8000-$47FFF
 		start = 0x0000;
 		end = 0x7FFF;

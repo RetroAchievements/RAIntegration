@@ -86,4 +86,6 @@ private:
 	BadgeNames m_BadgeNames;
 };
 
+void GenerateResizes(HWND hDlg);
+
 extern Dlg_AchievementEditor g_AchievementEditorDialog;

@@ -18,7 +18,6 @@
 #define IDC_RA_ADDNOTE                  1515
 #define IDC_RA_REMNOTE                  1516
 #define IDC_RA_UPLOAD_BADGE             1517
-#define IDC_RA_TESTVAL2                 1517
 #define IDC_RA_VOTE_NEG                 1518
 #define IDC_RA_INFO_GG                  1519
 #define IDC_RA_MEM_LIST                 1520

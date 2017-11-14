@@ -98,6 +98,11 @@
 #define IDC_RA_SCANNERFOUNDINFO         1597
 #define IDC_RA_ROMCHECKSUMTEXT          1598
 #define IDC_RA_COPYCHECKSUMCLIPBOARD    1599
+#define IDC_RA_CBO_SEARCHALL            1600
+#define IDC_RA_CBO_SEARCHCUSTOM         1601
+#define IDC_RA_CBO_SEARCHSYSTEMRAM      1602
+#define IDC_RA_CBO_SEARCHGAMERAM        1603
+#define IDC_RA_SEARCHRANGE              1604
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701
@@ -118,10 +123,6 @@
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_MENUEND                  1739
-
-//#include <Windows.h>
-//#define IDC_STATIC -1
-//#include "afxres.h"
 
 // Next default values for new objects
 // 

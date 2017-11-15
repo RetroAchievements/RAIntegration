@@ -285,22 +285,63 @@ std::vector<size_t> MemManager::GetBankIDs() const
 
 unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
 {
+	const BankData* bank = nullptr;
+
 	int bankID = 0;
 	int numBanks = m_Banks.size();
-	while (bankID < numBanks && nOffs >= m_Banks.at(bankID).BankSize)
+	while (bankID < numBanks)
 	{
-		nOffs -= m_Banks.at(bankID).BankSize;
+		bank = &m_Banks.at(bankID);
+		if (nOffs < bank->BankSize)
+			return bank->Reader(nOffs);
+
+		nOffs -= bank->BankSize;
 		bankID++;
 	}
 
-	if (bankID < numBanks)
+	return 0;
+}
+
+void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const
+{
+	const BankData* bank = nullptr;
+
+	int bankID = 0;
+	int numBanks = m_Banks.size();
+	while (bankID < numBanks)
 	{
-		return m_Banks.at(bankID).Reader(nOffs);
+		bank = &m_Banks.at(bankID);
+		if (nOffs < bank->BankSize)
+			break;
+
+		nOffs -= bank->BankSize;
+		bankID++;
 	}
-	else
+
+	if (bank == nullptr)
+		return;
+
+	_RAMByteReadFn* reader = bank->Reader;
+
+	while (nOffs + count >= bank->BankSize)
 	{
-		return 0;
+		size_t firstBankCount = bank->BankSize - nOffs;
+		count -= firstBankCount;
+
+		while (firstBankCount-- > 0)
+			*buffer++ = reader(nOffs++);
+
+		nOffs -= bank->BankSize;
+		bankID++;
+		if (bankID >= numBanks)
+			return;
+		
+		bank = &m_Banks.at(bankID);
+		reader = bank->Reader;
 	}
+
+	while (count-- > 0)
+		*buffer++ = reader(nOffs++);
 }
 
 void MemManager::ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal)

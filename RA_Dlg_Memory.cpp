@@ -560,8 +560,6 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	unsigned char data[ 16 ];
 	unsigned int notes;
 
-	ZeroMemory(data, 16 * sizeof(unsigned char));
-
 	RECT r;
 	r.top = 3;
 	r.left = 3;
@@ -587,8 +585,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 				for (int j = 0; j < 16; ++j)
 					notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != NULL) ? (1 << j) : 0;
 				
-				for (int j = 0; j < 16; ++j)
-					data[j] = g_MemManager.ActiveBankRAMByteRead(addr + j);
+				g_MemManager.ActiveBankRAMRead(data, addr, 16);
 
 				wchar_t* ptr = buffer + wsprintf(buffer, L"0x%06x  ", addr);
 				switch (m_nDataSize)

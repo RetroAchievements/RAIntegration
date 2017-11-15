@@ -878,12 +878,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
 		}
 		break;
-		
-	case WM_SIZING:
-		{
-			
-		}
-		break;
 
 	case WM_COMMAND:
 		switch( LOWORD( wParam ) )

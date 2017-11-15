@@ -547,20 +547,20 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	m_nDisplayedLines = lines;
 
 	//	Infer the offset from the watcher window
-	wchar_t sCurrentAddrWide[ 16 ];
-	ComboBox_GetText( GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING ), sCurrentAddrWide, 16 );
-	unsigned int nWatchedAddress = strtol( Narrow( sCurrentAddrWide ).c_str(), nullptr, 16 );
+	wchar_t buffer[ 64 ];
+	ComboBox_GetText( GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING ), buffer, 64 );
+	unsigned int nWatchedAddress = wcstol( buffer, nullptr, 16 );
 	m_nAddressOffset = ( nWatchedAddress - ( nWatchedAddress & 0xf ) );
 
 	int addr = m_nAddressOffset;
 	addr -= ( 0x40 );	//	Offset will be this quantity (push up four lines)...
 
-	int line = 0;
-
 	SetTextColor( hMemDC, RGB( 0, 0, 0 ) );
 
-	unsigned int data[ 32 ];
-	ZeroMemory( data, 32 * sizeof( unsigned int ) );
+	unsigned char data[ 16 ];
+	unsigned int notes;
+
+	ZeroMemory(data, 16 * sizeof(unsigned char));
 
 	RECT r;
 	r.top = 3;
@@ -575,93 +575,111 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	r.top += m_szFontSize.cy;
 	r.bottom += m_szFontSize.cy;
 
-	for (int i = 0; i < lines; i++)
+	if (g_MemManager.NumMemoryBanks() > 0)
 	{
-		if( g_MemManager.NumMemoryBanks() == 0 )
+		m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
+
+		for (int i = 0; i < lines && addr < (int)g_MemManager.TotalBankSize(); ++i, addr += 16)
 		{
-			break;
-		}
-
-		if ((addr >= 0x0000) && (addr < (int)g_MemManager.TotalBankSize()))
-		{
-			char buffer[4096];
-			sprintf_s(buffer, 4096, "0x%06x", addr);
-
-			DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-			r.left += 10 * m_szFontSize.cx;
-			m_nDataStartXOffset = r.left;
-
-			for (int j = 0; j < 16; ++j)
+			if (addr >= 0)
 			{
-				if (static_cast<size_t>(addr + j) < g_MemManager.TotalBankSize())
-				{
+				notes = 0;
+				for (int j = 0; j < 16; ++j)
+					notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != NULL) ? (1 << j) : 0;
+				
+				for (int j = 0; j < 16; ++j)
 					data[j] = g_MemManager.ActiveBankRAMByteRead(addr + j);
-				}
-			}
 
-			if (m_nDataSize == 0)	//	8-bit
-			{
-				for (int j = 0; j < 16; j++)
+				wchar_t* ptr = buffer + wsprintf(buffer, L"0x%06x  ", addr);
+				switch (m_nDataSize)
 				{
-					const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(addr + j);
-
-					if (addr + j == nWatchedAddress)
-						SetTextColor(hMemDC, RGB(255, 0, 0));
-					else if (pSavedNote != NULL)
-						SetTextColor(hMemDC, RGB(0, 0, 255));
-					else
-						SetTextColor(hMemDC, RGB(0, 0, 0));
-
-					sprintf_s(buffer, 4096, "%02x", data[j]);
-					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-					r.left += 3 * m_szFontSize.cx;
+				case 0:
+					for (int j = 0; j < 16; ++j)
+						ptr += wsprintf(ptr, L"%02x ", data[j]);
+					break;
+				case 1:
+					for (int j = 0; j < 16; j += 2)
+						ptr += wsprintf(ptr, L"%02x%02x ", data[j + 1], data[j]);
+					break;
+				case 2:
+					for (int j = 0; j < 16; j += 4)
+						ptr += wsprintf(ptr, L"%02x%02x%02x%02x ", data[j + 3], data[j + 2], data[j + 1], data[j]);
+					break;
 				}
-			}
-			else if (m_nDataSize == 1)	//	16-bit
-			{
-				for (int j = 0; j < 16; j += 2)
+
+				DrawText(hMemDC, buffer, ptr - buffer, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+
+				if ((nWatchedAddress & ~0x0F) == addr)
 				{
-					const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(addr + j);
+					SetTextColor(hMemDC, RGB(255, 0, 0));
 
-					if (((addr + j) - (addr + j) % 2) == nWatchedAddress)
-						SetTextColor(hMemDC, RGB(255, 0, 0));
-					else if (pSavedNote != NULL)
-						SetTextColor(hMemDC, RGB(0, 0, 255));
-					else
-						SetTextColor(hMemDC, RGB(0, 0, 0));
+					size_t stride;
+					switch(m_nDataSize)
+					{
+					case 0:
+						ptr = buffer + 10 + 3 * (nWatchedAddress & 0x0F);
+						stride = 2;
+						break;
+					case 1:
+						ptr = buffer + 10 + 5 * ((nWatchedAddress & 0x0F) / 2);
+						stride = 4;
+						break;
+					case 2:
+						ptr = buffer + 10 + 9 * ((nWatchedAddress & 0x0F) / 4);
+						stride = 8;
+						break;
+					}
 
-					sprintf_s(buffer, 4096, "%04x", data[j] | data[j + 1] << 8);
-					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-					r.left += 5 * m_szFontSize.cx;
+					r.left = 3 + (ptr - buffer) * m_szFontSize.cx;
+					DrawText(hMemDC, ptr, stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+
+					SetTextColor(hMemDC, RGB(0, 0, 0));
+					r.left = 3;
+
+					// make sure we don't overwrite the current address with a note indicator
+					notes &= ~(1 << (nWatchedAddress & 0x0F));
 				}
-			}
-			else if (m_nDataSize == 2)	//	32-bit
-			{
-				for (int j = 0; j < 16; j += 4)
+
+				if (notes)
 				{
-					if (((addr + j) - (addr + j) % 4) == nWatchedAddress)
-						SetTextColor(hMemDC, RGB(255, 0, 0));
-					else
-						SetTextColor(hMemDC, RGB(0, 0, 0));
+					SetTextColor(hMemDC, RGB(0, 0, 255));
 
-					sprintf_s(buffer, 4096, "%08x", data[j] | data[j + 1] << 8 | data[j + 2] << 16 | data[j + 3] << 24);
-					DrawText(hMemDC, Widen(buffer).c_str(), strlen(buffer), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-					r.left += 9 * m_szFontSize.cx;
+					for (int j = 0; j < 16; ++j)
+					{
+						if (notes & 0x01)
+						{
+							size_t stride;
+							switch (m_nDataSize)
+							{
+							case 0:
+								ptr = buffer + 10 + 3 * j;
+								stride = 2;
+								break;
+							case 1:
+								ptr = buffer + 10 + 5 * (j / 2);
+								stride = 4;
+								break;
+							case 2:
+								ptr = buffer + 10 + 9 * (j / 4);
+								stride = 8;
+								break;
+							}
+
+							r.left = 3 + (ptr - buffer) * m_szFontSize.cx;
+							DrawText(hMemDC, ptr, stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+						}
+
+						notes >>= 1;
+					}
+
+					SetTextColor(hMemDC, RGB(0, 0, 0));
+					r.left = 3;
 				}
 			}
 
-			SetTextColor(hMemDC, RGB(0, 0, 0));
-
-			line = r.left;
-			r.left += m_szFontSize.cx;
+			r.top += m_szFontSize.cy;
+			r.bottom += m_szFontSize.cy;
 		}
-
-		addr += 16;
-
-		r.top += m_szFontSize.cy;
-		r.bottom += m_szFontSize.cy;
-		r.left = 3;
 	}
 
 	{

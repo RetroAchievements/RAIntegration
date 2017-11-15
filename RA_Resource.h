@@ -123,6 +123,7 @@
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_MENUEND                  1739
+#define IDC_RA_OPENPAGE                 1740
 
 // Next default values for new objects
 // 

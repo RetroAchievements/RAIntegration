@@ -802,9 +802,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			SetWindowPos( hDlg, NULL, rc.right, rc.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
 			m_hAchievementEditorDlg = hDlg;
-			//CWnd* pWnd = CWnd::FromHandle(hDlg);
-			//CMFCDynamicLayout* dynamicLayout = pWnd->GetDynamicLayout();
-			//dynamicLayout->LoadResource(pWnd, "IDD_RA_ACHIEVEMENTEDITOR",0);
 			GenerateResizes(hDlg);
 
 			HWND hList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
@@ -824,25 +821,20 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 	case WM_GETMINMAXINFO:
 		{
-			LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
-			lpMMI->ptMinTrackSize.x = 400;
-			lpMMI->ptMinTrackSize.y = 188;
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMinTrackSize.x = nDlgMinX;
+			lpmmi->ptMinTrackSize.y = nDlgMinY;
 		}
-		return 0;
-	case WM_SIZING:
+		break;
+
+	case WM_SIZE:
 		{
 			RECT itemRect, winRect;
 			GetWindowRect(hDlg, &winRect);
-			//int dlgWidth = winRect.right - winRect.left;
-			//int dlgHeight = winRect.bottom - winRect.top;
-			//if (dlgWidth < nDlgMinX) dlgWidth = nDlgMinX;
-			//if (dlgHeight < nDlgMinY) dlgHeight = nDlgMinY;
-			//SetWindowPos(hDlg, NULL, 0, 0, dlgWidth, dlgHeight, SWP_NOMOVE | SWP_NOZORDER);
-
 
 			HWND hItem = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
 			GetWindowRect(hItem, &itemRect);
-			SetWindowPos(hItem, NULL, 0, 0, 
+			SetWindowPos(hItem, NULL, 0, 0,
 				(winRect.right - itemRect.left) + nLBRightGap, (winRect.bottom - itemRect.top) + nLBBottomGap, SWP_NOMOVE | SWP_NOZORDER);
 
 			hItem = GetDlgItem(hDlg, IDC_RA_ACH_GROUP);
@@ -875,15 +867,21 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
 
-			hItem = GetDlgItem(hDlg, IDCLOSE);
-			GetWindowRect(hItem, &itemRect);
-			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nBtnCloseXOffset, (winRect.bottom - winRect.top) + nBtnCloseYOffset,
-				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
 			hItem = GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS);
 			GetWindowRect(hItem, &itemRect);
 			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nChkXOffset, (winRect.bottom - winRect.top) + nChkYOffset,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDCLOSE);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nBtnCloseXOffset, (winRect.bottom - winRect.top) + nBtnCloseYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+		}
+		break;
+		
+	case WM_SIZING:
+		{
+			
 		}
 		break;
 

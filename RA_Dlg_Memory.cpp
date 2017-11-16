@@ -1067,6 +1067,26 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				return FALSE;
 			}
 
+			case IDC_RA_OPENPAGE:
+			{
+				if (g_pCurrentGameData->GetGameID() != 0)
+				{
+					std::string sTarget = "http://" RA_HOST_URL + std::string("/codenotes.php?g=") + std::to_string(g_pCurrentGameData->GetGameID());
+					ShellExecute(NULL,
+						L"open",
+						Widen(sTarget).c_str(),
+						NULL,
+						NULL,
+						SW_SHOWNORMAL);
+				}
+				else
+				{
+					MessageBox(nullptr, L"No ROM loaded!", L"Error!", MB_ICONWARNING);
+				}
+
+				return FALSE;
+			}
+
 			case IDC_RA_MEM_LIST:
 			{
 				wchar_t sSelectedString[ 1024 ];

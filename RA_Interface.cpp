@@ -435,7 +435,7 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_HardcoreModeIsActive= (int(CCONV *)())										GetProcAddress( g_hRADLL, "_RA_HardcoreModeIsActive" );
 	_RA_HTTPGetRequestExists= (int(CCONV *)(const char*))							GetProcAddress( g_hRADLL, "_RA_HTTPGetRequestExists" );
 
-	_RA_InstallSharedFunctions = ( void(CCONV *)( bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) ) GetProcAddress( g_hRADLL, "_RA_InstallSharedFunctions" );
+	_RA_InstallSharedFunctions = ( void(CCONV *)( bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) ) GetProcAddress( g_hRADLL, "_RA_InstallSharedFunctionsExt" );
 
 	return _RA_IntegrationVersion ? _RA_IntegrationVersion() : "0.000";
 }

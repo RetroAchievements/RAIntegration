@@ -50,6 +50,10 @@ unsigned int MemoryViewerControl::m_nCaretHeight = 0;
 unsigned int MemoryViewerControl::m_nDisplayedLines = 0;
 unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
+// Dialog Resizing
+int nDlgMemoryMinX;
+int nDlgMemoryMinY;
+int nDlgMemViewerGapY;
 
 std::string ByteAddressToString( ByteAddress nAddr )
 {
@@ -785,6 +789,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
  			RECT rc;
  			GetWindowRect( g_RAMainWnd, &rc );
 			SetWindowPos( hDlg, NULL, rc.right, rc.top, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
+			GenerateResizes( hDlg );
 
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED );
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED );
@@ -831,6 +836,27 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			return TRUE;
 		}
+
+	case WM_GETMINMAXINFO:
+		{
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMaxTrackSize.x = nDlgMemoryMinX;
+			lpmmi->ptMinTrackSize.x = nDlgMemoryMinX;
+			lpmmi->ptMinTrackSize.y = nDlgMemoryMinY;
+		}
+		break;
+
+	case WM_SIZE:
+		{
+			RECT itemRect, winRect;
+			GetWindowRect(hDlg, &winRect);
+
+			HWND hItem = GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, 0, 0,
+				itemRect.right - itemRect.left, (winRect.bottom - itemRect.top) + nDlgMemViewerGapY, SWP_NOMOVE | SWP_NOZORDER);
+		}
+		break;
 
 	case WM_COMMAND:
 	{
@@ -1533,4 +1559,16 @@ bool Dlg_Memory::GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end )
 	}
 
 	return FALSE;
+}
+
+void Dlg_Memory::GenerateResizes(HWND hDlg)
+{
+	RECT windowRect;
+	GetWindowRect(hDlg, &windowRect);
+	nDlgMemoryMinX = windowRect.right - windowRect.left;
+	nDlgMemoryMinY = windowRect.bottom - windowRect.top;
+
+	RECT itemRect;
+	GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &itemRect);
+	nDlgMemViewerGapY = itemRect.bottom - windowRect.bottom;
 }

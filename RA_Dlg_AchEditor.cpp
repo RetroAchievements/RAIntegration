@@ -41,8 +41,8 @@ BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing
-int nDlgMinX;
-int nDlgMinY;
+int nDlgAchEditorMinX;
+int nDlgAchEditorMinY;
 int nLBRightGap;
 int nLBBottomGap;
 int nBtnMainXOffset;
@@ -822,8 +822,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 	case WM_GETMINMAXINFO:
 		{
 			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-			lpmmi->ptMinTrackSize.x = nDlgMinX;
-			lpmmi->ptMinTrackSize.y = nDlgMinY;
+			lpmmi->ptMinTrackSize.x = nDlgAchEditorMinX;
+			lpmmi->ptMinTrackSize.y = nDlgAchEditorMinY;
 		}
 		break;
 
@@ -1874,8 +1874,8 @@ void GenerateResizes(HWND hDlg)
 {
 	RECT windowRect;
 	GetWindowRect(hDlg, &windowRect);
-	nDlgMinX = windowRect.right - windowRect.left;
-	nDlgMinY = windowRect.bottom - windowRect.top;
+	nDlgAchEditorMinX = windowRect.right - windowRect.left;
+	nDlgAchEditorMinY = windowRect.bottom - windowRect.top;
 
 	RECT itemRect; 
 	GetWindowRect(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), &itemRect);

@@ -75,6 +75,7 @@ public:
 
 	void ClearBanks();
 	void AddBank( size_t nBankID );
+	void GenerateResizes( HWND hDlg );
 
 private:
 	bool GetSystemMemoryRange( ByteAddress& start, ByteAddress& end );

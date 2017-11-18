@@ -40,6 +40,20 @@ enum CondSubItems
 BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
+// Dialog Resizing
+int nDlgAchEditorMinX;
+int nDlgAchEditorMinY;
+int nLBRightGap;
+int nLBBottomGap;
+int nBtnMainXOffset;
+int nBtnMainYOffset;
+int nBtnCloseXOffset;
+int nBtnCloseYOffset;
+int nBtnAddXOffset;
+int nBtnAddYOffset;
+int nChkXOffset;
+int nChkYOffset;
+
 INT_PTR CALLBACK AchProgressProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam )
 {
 	switch( nMsg )
@@ -788,10 +802,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			SetWindowPos( hDlg, NULL, rc.right, rc.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
 			m_hAchievementEditorDlg = hDlg;
+			GenerateResizes(hDlg);
 
 			HWND hList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS );
 			SetupColumns( hList );
-
 			CheckDlgButton( hDlg, IDC_RA_CHK_SHOW_DECIMALS, g_bPreferDecimalVal );
 
 			//	For scanning changes to achievement conditions (hit counts)
@@ -804,6 +818,66 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 				RepopulateGroupList(m_pSelectedAchievement);
 		}
 		return TRUE;
+
+	case WM_GETMINMAXINFO:
+		{
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMinTrackSize.x = nDlgAchEditorMinX;
+			lpmmi->ptMinTrackSize.y = nDlgAchEditorMinY;
+		}
+		break;
+
+	case WM_SIZE:
+		{
+			RECT itemRect, winRect;
+			GetWindowRect(hDlg, &winRect);
+
+			HWND hItem = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, 0, 0,
+				(winRect.right - itemRect.left) + nLBRightGap, (winRect.bottom - itemRect.top) + nLBBottomGap, SWP_NOMOVE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_ACH_GROUP);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, 0, 0,
+				(itemRect.right - itemRect.left), (winRect.bottom - itemRect.top) + nLBBottomGap, SWP_NOMOVE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, nBtnAddXOffset, (winRect.bottom - winRect.top) + nBtnAddYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, nBtnAddXOffset + 36, (winRect.bottom - winRect.top) + nBtnAddYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_ADDCOND);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, nBtnMainXOffset, (winRect.bottom - winRect.top) + nBtnMainYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_CLONECOND);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, nBtnMainXOffset + 78, (winRect.bottom - winRect.top) + nBtnMainYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_DELETECOND);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nChkXOffset, (winRect.bottom - winRect.top) + nChkYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+
+			hItem = GetDlgItem(hDlg, IDCLOSE);
+			GetWindowRect(hItem, &itemRect);
+			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nBtnCloseXOffset, (winRect.bottom - winRect.top) + nBtnCloseYOffset,
+				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+		}
+		break;
 
 	case WM_COMMAND:
 		switch( LOWORD( wParam ) )
@@ -1794,4 +1868,33 @@ void BadgeNames::AddNewBadgeName( const char* pStr, bool bAndSelect )
 		ComboBox_SelectString( m_hDestComboBox, 0, pStr );
 		//ComboBox_SetCurSel( m_hDestComboBox, nSel );
 	}
+}
+
+void GenerateResizes(HWND hDlg)
+{
+	RECT windowRect;
+	GetWindowRect(hDlg, &windowRect);
+	nDlgAchEditorMinX = windowRect.right - windowRect.left;
+	nDlgAchEditorMinY = windowRect.bottom - windowRect.top;
+
+	RECT itemRect; 
+	GetWindowRect(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), &itemRect);
+	nLBRightGap = itemRect.right - windowRect.right;
+	nLBBottomGap = itemRect.bottom - windowRect.bottom;
+
+	GetWindowRect(GetDlgItem(hDlg, IDC_RA_ADDCOND), &itemRect);
+	nBtnMainXOffset = (itemRect.left - windowRect.left) - 8;
+	nBtnMainYOffset = (itemRect.top - windowRect.bottom) - 31;
+
+	GetWindowRect(GetDlgItem(hDlg, IDCLOSE), &itemRect);
+	nBtnCloseXOffset = (itemRect.left - windowRect.right) - 8;
+	nBtnCloseYOffset = (itemRect.top - windowRect.bottom) - 31;
+
+	GetWindowRect(GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), &itemRect);
+	nChkXOffset = (itemRect.left - windowRect.right) - 8;
+	nChkYOffset = (itemRect.top - windowRect.bottom) - 31;
+
+	GetWindowRect(GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), &itemRect);
+	nBtnAddXOffset = (itemRect.left - windowRect.left) - 8;
+	nBtnAddYOffset = (itemRect.top - windowRect.bottom) - 31;
 }

@@ -55,6 +55,7 @@ enum ConsoleID
 
 extern bool (*_RA_GameIsActive)();
 extern void (*_RA_CauseUnpause)();
+extern void (*_RA_CausePause)();
 extern void (*_RA_RebuildMenu)();
 extern void (*_RA_GetEstimatedGameTitle)( char* sNameOut );
 extern void (*_RA_ResetEmulation)();
@@ -63,6 +64,7 @@ extern void (*_RA_LoadROM)( const char* sFullPath );
 //	Shared funcs, should be implemented by emulator.
 extern bool RA_GameIsActive();
 extern void RA_CauseUnpause();
+extern void RA_CausePause();
 extern void RA_RebuildMenu();
 extern void RA_GetEstimatedGameTitle( char* sNameOut );
 extern void RA_ResetEmulation();
@@ -82,7 +84,7 @@ extern void RA_LoadROM( const char* sFullPath );
 extern void RA_Init( HWND hMainHWND, /*enum ConsoleType*/int console, const char* sClientVersion );
 
 //	Call with shared function pointers from app.
-extern void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulator)(void), void(*fpLoadROM)(const char*) );
+extern void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulator)(void), void(*fpLoadROM)(const char*) );
 
 //	Shuts down, tidies up and deallocs the RA DLL from the app's perspective.
 extern void RA_Shutdown();

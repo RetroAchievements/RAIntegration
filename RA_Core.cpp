@@ -1216,11 +1216,18 @@ API void CCONV _RA_DoAchievementsFrame()
 	}
 }
 
-void CCONV _RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*) )
+void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
+{
+	void(*fpCausePause)(void) = NULL;
+	_RA_InstallSharedFunctionsExt(fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
+}
+
+void CCONV _RA_InstallSharedFunctionsExt( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*) )
 {
 	//	NB. Must be called from within DLL
 	_RA_GameIsActive			= fpIsActive;
 	_RA_CauseUnpause			= fpCauseUnpause;
+	_RA_CausePause				= fpCausePause;
 	_RA_RebuildMenu				= fpRebuildMenu;
 	_RA_GetEstimatedGameTitle	= fpEstimateTitle;
 	_RA_ResetEmulation			= fpResetEmulation;

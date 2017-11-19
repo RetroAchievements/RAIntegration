@@ -139,11 +139,11 @@ bool MemoryViewerControl::OnKeyDown( UINT nChar )
 		return true;
 
 	case VK_PRIOR:	//	Page up (!)
-		moveAddress(-0x40, 0);
+		moveAddress(-(m_nDisplayedLines << 4), 0);
 		return true;
 
 	case VK_NEXT:	//	Page down (!)
-		moveAddress(0x40, 0);
+		moveAddress((m_nDisplayedLines << 4), 0);
 		return true;
 
 	case VK_HOME:

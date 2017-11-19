@@ -80,6 +80,13 @@ INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc( HWND hDlg, UINT uMsg, WP
 	case WM_ERASEBKGND:
 		return TRUE;
 
+	case WM_MOUSEWHEEL:
+		if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
+			setAddress(m_nAddressOffset - 32);
+		else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && m_nAddressOffset + (0x40) < g_MemManager.TotalBankSize())
+			setAddress(m_nAddressOffset + 32);
+		return FALSE;
+
 	case WM_LBUTTONUP:
 		OnClick( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
 		return FALSE;

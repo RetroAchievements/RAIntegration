@@ -171,20 +171,16 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 		{
 			//	Going left
 			m_nEditNibble--;
+			if (m_nEditAddress == 0 && m_nEditNibble == -1)
+			{
+				m_nEditNibble = 0;
+				MessageBeep((UINT)-1);
+				return;
+			}
 			if (m_nEditNibble == -1)
 			{
 				m_nEditAddress -= (maxNibble + 1) >> 1;
 				m_nEditNibble = maxNibble;
-			}
-			if (m_nEditAddress < m_nAddressOffset) //(m_nAddressOffset == 0 && (m_nEditAddress >= (unsigned int)(m_nDisplayedLines << 4))) 
-			{
-				m_nEditAddress += (maxNibble + 1) >> 1;
-				m_nEditNibble = 0;
-				MessageBeep((UINT)-1);
-			}
-			if (m_nEditAddress < m_nAddressOffset)
-			{
-				setAddress(m_nAddressOffset - 16);
 			}
 		}
 		else
@@ -196,55 +192,45 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 				m_nEditNibble = 0;
 				m_nEditAddress += (maxNibble + 1) >> 1;
 			}
-			if (m_nEditAddress > ( m_nAddressOffset + 0xf ))
+			if ( m_nEditAddress >= g_MemManager.TotalBankSize() )
 			{
 				//	Undo this movement.
 				m_nEditAddress -= (maxNibble + 1) >> 1;
 				m_nEditNibble = maxNibble;
 				MessageBeep((UINT)-1);
-			}
-			if (m_nEditAddress >= (m_nAddressOffset + (m_nDisplayedLines << 4)))
-			{
-				setAddress(m_nAddressOffset + 16);
+				return;
 			}
 		}
 	}
 	else
 	{
 		m_nEditAddress += offset;
-		if (offset < 0 && m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)))
+	
+		if (offset < 0)
 		{
-			m_nEditAddress -= offset;
-			MessageBeep((UINT)-1);
-			return;
+			
+			if (m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
+			{
+				m_nEditAddress -= offset;
+				MessageBeep((UINT)-1);
+				return;
+			}
 		}
-		if (offset > 0 && (m_nEditAddress < m_nAddressOffset))
+		else
 		{
-			m_nEditAddress -= offset;
-			MessageBeep((UINT)-1);
-			return;
-		}
-		if (m_nEditAddress >= g_MemManager.TotalBankSize())
-		{
-			m_nEditAddress -= offset;
-			MessageBeep((UINT)-1);
-			return;
-		}
-		if (m_nEditAddress < m_nAddressOffset)
-		{
-			if (offset & 15)
-				setAddress((m_nAddressOffset + offset - 16) & ~15);
-			else
-				setAddress(m_nAddressOffset + offset);
-		}
-		else if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)))
-		{
-			if (offset & 15)
-				setAddress((m_nAddressOffset + offset + 16) & ~15);
-			else
-				setAddress(m_nAddressOffset + offset);
+			if (m_nEditAddress >= g_MemManager.TotalBankSize())
+			{
+				m_nEditAddress -= offset;
+				MessageBeep((UINT)-1);
+				return;
+			}
 		}
 	}
+
+	if (m_nEditAddress + (0x40) < m_nAddressOffset)
+		setAddress((m_nEditAddress & ~(0xf)) + (0x40));
+	else if (m_nEditAddress >= (m_nAddressOffset + (m_nDisplayedLines << 4) - (0x40)))
+		setAddress( (m_nEditAddress & ~(0xf)) - (m_nDisplayedLines << 4) + (0x50) );
 
 	SetCaretPos();
 }
@@ -252,7 +238,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 void MemoryViewerControl::setAddress( unsigned int address )
 {
 	m_nAddressOffset = address;
-	g_MemoryDialog.SetWatchingAddress( address );
+	//g_MemoryDialog.SetWatchingAddress( address );
 
 	SetCaretPos();
 	Invalidate();
@@ -387,7 +373,15 @@ void MemoryViewerControl::SetCaretPos()
 
 	int subAddress = (m_nEditAddress - m_nAddressOffset);
 
-	const int nYSpacing = 4;
+	int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
+
+	if ( linePosition < 0 || linePosition > m_nDisplayedLines - 1)
+	{
+		destroyEditCaret();
+		return;
+	}
+
+	const int nYSpacing = linePosition;
 
 	int x = 3 + ( 10*m_szFontSize.cx ) + ( m_nEditNibble*m_szFontSize.cx );
 	int y = 3 + ( nYSpacing*m_szFontSize.cy );
@@ -435,7 +429,7 @@ void MemoryViewerControl::OnClick( POINT point )
 	int y = point.y - m_szFontSize.cy;	//	Adjust for header
 	int line = ((y-3)/m_szFontSize.cy);	
 
-	if( line == -1 )
+	if( line == -1 || line >= m_nDisplayedLines)
 		return;	//	clicked on header
 
 	int rowLengthPx = m_nDataStartXOffset;
@@ -554,7 +548,7 @@ void MemoryViewerControl::RenderMemViewer( HWND hTarget )
 	wchar_t buffer[ 64 ];
 	ComboBox_GetText( GetDlgItem( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING ), buffer, 64 );
 	unsigned int nWatchedAddress = wcstol( buffer, nullptr, 16 );
-	m_nAddressOffset = ( nWatchedAddress - ( nWatchedAddress & 0xf ) );
+	//m_nAddressOffset = ( nWatchedAddress - ( nWatchedAddress & 0xf ) );
 
 	int addr = m_nAddressOffset;
 	addr -= ( 0x40 );	//	Offset will be this quantity (push up four lines)...
@@ -844,7 +838,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			lpmmi->ptMinTrackSize.x = nDlgMemoryMinX;
 			lpmmi->ptMinTrackSize.y = nDlgMemoryMinY;
 		}
-		break;
+		return TRUE;
 
 	case WM_SIZE:
 		{
@@ -856,7 +850,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			SetWindowPos(hItem, NULL, 0, 0,
 				itemRect.right - itemRect.left, (winRect.bottom - itemRect.top) + nDlgMemViewerGapY, SWP_NOMOVE | SWP_NOZORDER);
 		}
-		break;
+		return TRUE;
 
 	case WM_COMMAND:
 	{

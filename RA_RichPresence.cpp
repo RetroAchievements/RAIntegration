@@ -13,7 +13,7 @@ const std::string& RA_Lookup::Lookup( DataPos nValue ) const
 	if( m_lookupData.find( nValue ) != m_lookupData.end() )
 		return m_lookupData.find( nValue )->second;
 
-	static const std::string sUnknown = "Unknown";
+	static const std::string sUnknown = "";
 	return sUnknown;
 }
 

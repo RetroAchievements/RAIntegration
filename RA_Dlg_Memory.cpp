@@ -1221,6 +1221,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 	default:
 		return FALSE;	//	unhandled
 	}
+
+  return FALSE;
 }
 
 void Dlg_Memory::OnWatchingMemChange()

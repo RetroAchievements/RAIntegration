@@ -136,6 +136,14 @@ void Dlg_Achievements::RemoveAchievement( HWND hList, int nIter )
 	ASSERT( nIter < ListView_GetItemCount( hList ) );
 	ListView_DeleteItem( hList, nIter );
 	m_lbxData.erase( m_lbxData.begin() + nIter );
+
+	wchar_t buffer[8];
+	wsprintf( buffer, L" %d", g_pActiveAchievements->NumAchievements() );
+	SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer );
+
+	UpdateSelectedAchievementButtons( NULL );
+
+	g_AchievementEditorDialog.LoadAchievement( NULL, FALSE );
 }
 
 size_t Dlg_Achievements::AddAchievement( HWND hList, const Achievement& Ach )
@@ -289,9 +297,9 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), FALSE );
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), L"Demote from Core" );
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Commit Selected" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), L"Refresh from Server" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Core
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
@@ -306,9 +314,9 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), TRUE );
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), L"Promote to Core" );
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Commit Selected" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), L"Refresh from Server" );
 
 		EnableWindow( GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Unofficial
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), TRUE );
@@ -322,10 +330,10 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 	{
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), TRUE );
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), L"Promote to Unofficial" );
-		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Save Local" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Save All Local" );
+		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), L"Refresh from Disk" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), TRUE ); // Can add to Local
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), FALSE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
@@ -485,11 +493,32 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				if( !RA_GameIsActive() )
 					break;
 
-				if( MessageBox( hDlg, 
-					L"Download fresh achievements from " RA_HOST_URL_WIDE L"\n"
-					L"Are you sure? This will overwrite any changes you have made\n"
-					L"with fresh achievements from the server.\n",
-					L"Are you sure?",
+				if( g_nActiveAchievementSet == Local )
+				{
+					if( MessageBox( hDlg,
+						L"Are you sure that you want to reload achievements from disk?\n"
+						L"This will overwrite any changes that you have made.\n",
+						L"Refresh from Disk",
+						MB_YESNO|MB_ICONWARNING ) == IDYES )
+					{
+						GameID nGameID = g_pCurrentGameData->GetGameID();
+						if (nGameID != 0)
+						{
+							g_pLocalAchievements->Clear();
+							g_pLocalAchievements->LoadFromFile(nGameID);
+
+							//	Refresh dialog contents:
+							OnLoad_NewRom(nGameID);
+
+							//	Cause it to reload!
+							OnClickAchievementSet(g_nActiveAchievementSet);
+						}
+					}
+				}
+				else if( MessageBox( hDlg, 
+					L"Are you sure that you want to download fresh achievements from " RA_HOST_URL_WIDE L"?\n"
+					L"This will overwrite any changes that you have made with fresh achievements from the server.\n",
+					L"Refresh from Server",
 					MB_YESNO|MB_ICONWARNING ) == IDYES )
 				{
 					GameID nGameID = g_pCurrentGameData->GetGameID();
@@ -548,6 +577,13 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				int nNewID = AddAchievement( hList, Cheevo );
 				ListView_SetItemState( hList, nNewID, LVIS_FOCUSED|LVIS_SELECTED, -1 );
 				ListView_EnsureVisible( hList, nNewID, FALSE );
+
+				wchar_t buffer[8];
+				wsprintf( buffer, L" %d", g_pActiveAchievements->NumAchievements() );
+				SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer );
+
+				Cheevo.SetModified( TRUE );
+				UpdateSelectedAchievementButtons( &Cheevo );
 			}
 			break;
 
@@ -580,6 +616,13 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 
 				ListView_SetItemState( hList, g_pLocalAchievements->NumAchievements()-1, LVIS_FOCUSED|LVIS_SELECTED, -1 );
 				ListView_EnsureVisible( hList, g_pLocalAchievements->NumAchievements()-1, FALSE );
+				
+				wchar_t buffer2[8];
+				wsprintf( buffer2, L" %d", g_pActiveAchievements->NumAchievements() );
+				SetDlgItemText( m_hAchievementsDlg, IDC_RA_NUMACH, buffer2 );
+
+				NewClone.SetModified( TRUE );
+				UpdateSelectedAchievementButtons( &NewClone );
 			}
 
 			break;
@@ -604,8 +647,8 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 						//	Local achievement
 						if( MessageBox( hDlg, L"Remove Achievement: are you sure?", L"Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
 						{
+							g_pActiveAchievements->RemoveAchievement(nSel);
 							RemoveAchievement( hList, nSel );
-							g_pActiveAchievements->RemoveAchievement( nSel );
 						}
 					}
 					else
@@ -1104,7 +1147,7 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 		if( nGameID != 0 )
 		{
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWEB ), TRUE );
-			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), g_nActiveAchievementSet != Local);
+			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), g_nActiveAchievementSet == Local );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), TRUE );

@@ -1673,6 +1673,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_PROGRESSINDICATORS ), FALSE );
 
 		UpdateBadge( "00000" );
+		PopulateConditions( NULL );
 
 		m_bPopulatingAchievementEditorData = FALSE;
 	}

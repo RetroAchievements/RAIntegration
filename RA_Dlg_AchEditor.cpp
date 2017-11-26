@@ -1011,8 +1011,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 
 					//	Implicit updating:
 					//char* psDesc = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements:: );
-					wchar_t buffer[ 80 ];
-					if( GetDlgItemText( hDlg, IDC_RA_ACH_DESC, buffer, 80 ) )
+					wchar_t buffer[ 128 ];
+					if( GetDlgItemText( hDlg, IDC_RA_ACH_DESC, buffer, 128 ) )
 						pActiveAch->SetDescription( Narrow( buffer ) );
 				}
 				break;

@@ -291,6 +291,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Commit Selected" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Core
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
@@ -307,6 +308,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Commit Selected" );
 
 		EnableWindow( GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Unofficial
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), TRUE );
@@ -323,6 +325,7 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		SetWindowText( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), L"Save Local" );
 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), TRUE ); // Can add to Local
+		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), FALSE );
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
@@ -1101,7 +1104,7 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 		if( nGameID != 0 )
 		{
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWEB ), TRUE );
-			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE);
+			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), g_nActiveAchievementSet != Local);
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), g_nActiveAchievementSet == Local );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), TRUE );

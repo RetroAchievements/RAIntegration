@@ -411,12 +411,10 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 													 0 );
 			if( hRequest != nullptr )
 			{
-				char sPostBuffer[ 1024 ];
-				sprintf_s( sPostBuffer, 1024, "%s", sPostString.c_str() );
 				BOOL bSendSuccess = WinHttpSendRequest( hRequest,
 														L"Content-Type: application/x-www-form-urlencoded",
 														0,
-														reinterpret_cast<LPVOID>( sPostBuffer ), //WINHTTP_NO_REQUEST_DATA,
+														reinterpret_cast<LPVOID>( const_cast<char*>( sPostString.data() ) ), //WINHTTP_NO_REQUEST_DATA,
 														strlen( sPostString.c_str() ),
 														strlen( sPostString.c_str() ),
 														0 );

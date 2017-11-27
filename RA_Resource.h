@@ -18,14 +18,12 @@
 #define IDC_RA_ADDNOTE                  1515
 #define IDC_RA_REMNOTE                  1516
 #define IDC_RA_UPLOAD_BADGE             1517
-#define IDC_RA_VOTE_NEG                 1518
 #define IDC_RA_INFO_GG                  1519
 #define IDC_RA_MEM_LIST                 1520
 #define IDC_RA_HELP                     1521
 #define IDC_RA_CHEEVOPIC                1522
 #define IDC_RA_REVERTSELECTED           1523
 #define IDC_RA_RESET_ACH                1524
-#define IDC_RA_VOTE_POS                 1525
 #define IDC_RA_CHK_SHOW_DECIMALS        1526
 
 #define IDC_RA_DELETECOND               1527
@@ -37,7 +35,6 @@
 #define IDC_RA_GAMEHASH                 1533
 #define IDC_RA_NUMACH                   1534
 #define IDC_RA_PASSWORD                 1535
-#define IDC_RA_GOTOWEB                  1535
 #define IDC_RA_SAVEPASSWORD             1536
 #define IDC_RA_ACTIVE_CORE              1537
 #define IDC_RA_ACTIVE_UNOFFICIAL        1538

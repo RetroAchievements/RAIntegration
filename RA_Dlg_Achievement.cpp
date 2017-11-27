@@ -302,8 +302,6 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Core
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), FALSE );
 
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, TRUE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, FALSE );
@@ -319,8 +317,6 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		EnableWindow( GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE ); // Cannot add direct to Unofficial
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), TRUE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), TRUE );
 
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, FALSE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, TRUE );
@@ -336,8 +332,6 @@ void Dlg_Achievements::OnClickAchievementSet( AchievementSetType nAchievementSet
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH), TRUE ); // Can add to Local
 
 		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
-		ShowWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), FALSE );
 
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, FALSE );
 		CheckDlgButton( m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, FALSE );
@@ -645,7 +639,7 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 					if( Ach.ID() == 0 )
 					{
 						//	Local achievement
-						if( MessageBox( hDlg, L"Remove Achievement: are you sure?", L"Are you sure?", MB_YESNO|MB_ICONWARNING ) == IDYES )
+						if( MessageBox( hDlg, L"Are you sure that you want to remove this achievement?", L"Remove Achievement", MB_YESNO|MB_ICONWARNING ) == IDYES )
 						{
 							g_pActiveAchievements->RemoveAchievement(nSel);
 							RemoveAchievement( hList, nSel );
@@ -688,38 +682,6 @@ INT_PTR Dlg_Achievements::AchievementsProc( HWND hDlg, UINT nMsg, WPARAM wParam,
 				{
 					CommitAchievements( hDlg );
 				}
-			}
-			break;
-		//case IDC_RA_GOTOWIKI:
-		//	{
-		//		char buffer[ 512 ];
-		//		if( !RA_GameIsActive() || g_pActiveAchievements->GameTitle() == "" )
-		//			sprintf_s( buffer, 512, "\"http://%s/wiki/Main_Page\"", RA_HOST_URL );
-		//		else
-		//			sprintf_s( buffer, 512, "\"http://%s/wiki/%s\"", RA_HOST_URL, g_pActiveAchievements->GameTitle() );
-		//		
-		//		ShellExecute( NULL,
-		//			L"open",
-		//			Widen( buffer ).c_str(),
-		//			NULL,
-		//			NULL,
-		//			SW_SHOWNORMAL );
-		//	}
-		//	break;
-		case IDC_RA_GOTOWEB:
-			{
-				char buffer[ 512 ];
-				if( !RA_GameIsActive() || ( g_pCurrentGameData->GetGameID() == 0 ) )
-					sprintf_s( buffer, 512, "\"http://%s\"", RA_HOST_URL );
-				else
-					sprintf_s( buffer, 512, "\"http://%s/Game/%d\"", RA_HOST_URL, g_pCurrentGameData->GetGameID() );
-
-				ShellExecute( NULL,
-					L"open",
-					Widen( buffer ).c_str(),
-					NULL,
-					NULL,
-					SW_SHOWNORMAL );
 			}
 			break;
 		case IDC_RA_REVERTSELECTED:
@@ -1089,8 +1051,6 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheev
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_RESET_ACH ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_REVERTSELECTED ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), g_nActiveAchievementSet == Local );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), FALSE );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_CLONE_ACH ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DEL_ACH ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), FALSE );
@@ -1099,8 +1059,6 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheev
 	{ 
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_REVERTSELECTED ), Cheevo->Modified() );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_COMMIT_ACH ), g_nActiveAchievementSet == Local ? TRUE : Cheevo->Modified() );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_POS ), TRUE );
-		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_VOTE_NEG ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_CLONE_ACH ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DEL_ACH ), g_nActiveAchievementSet == Local );
 		EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_PROMOTE_ACH ), TRUE );
@@ -1128,7 +1086,6 @@ void Dlg_Achievements::LoadAchievements( HWND hList )
 
 void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 {
-	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWEB ), FALSE );
 	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), FALSE );
 	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), FALSE );
 	EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), FALSE );
@@ -1146,7 +1103,6 @@ void Dlg_Achievements::OnLoad_NewRom( GameID nGameID )
 
 		if( nGameID != 0 )
 		{
-			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_GOTOWEB ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH ), TRUE );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ADD_ACH ), g_nActiveAchievementSet == Local );
 			EnableWindow( GetDlgItem( m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH ), TRUE );
@@ -1164,7 +1120,7 @@ void Dlg_Achievements::OnGet_Achievement( const Achievement& ach )
 {
 	size_t nIndex = g_pActiveAchievements->GetAchievementIndex( ach );
 
-	if (g_nActiveAchievementSet == Core) 
+	if( g_nActiveAchievementSet == Core )
 		OnEditData( nIndex, Achieved, "Yes" );
 	else
 		OnEditData( nIndex, Active, "No" );

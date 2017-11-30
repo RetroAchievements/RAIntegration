@@ -757,10 +757,20 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 						else
 						{
 							const std::string& sRPResponse = g_RichPresenceInterpretter.GetRichPresenceString();
-							if( sRPResponse.size() == 0 )
-								args['m'] = "Earning Achievements";
-							else
+							if( !sRPResponse.empty() )
+							{
 								args['m'] = sRPResponse;
+							}
+							else if( g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0 )
+							{
+								args['m'] = "Earning Achievements";
+							}
+							else
+							{
+								char buffer[128];
+								snprintf( buffer, sizeof(buffer), "Playing %s", g_pCurrentGameData->GameTitle().c_str() );
+								args['m'] = buffer;
+							}
 						}
 					}
 					

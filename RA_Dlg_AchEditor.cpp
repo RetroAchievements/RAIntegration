@@ -1169,8 +1169,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 						sprintf_s( buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
 						if( MessageBox( hDlg, Widen( buffer ).c_str(), L"Warning", MB_YESNO ) == IDYES )
 						{
-							//	Delete condition nSel
-							pActiveAch->RemoveCondition( GetSelectedConditionGroup(), nSel );
+
+							for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+							{
+								//	Delete condition nSel
+								pActiveAch->RemoveCondition(GetSelectedConditionGroup(), nSel);
+							}
 
 							//	Disable all achievement tracking:
 							//g_pActiveAchievements->SetPaused( true );

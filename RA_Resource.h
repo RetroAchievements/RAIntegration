@@ -28,9 +28,11 @@
 #define IDC_RA_VOTE_POS                 1525
 #define IDC_RA_CHK_SHOW_DECIMALS        1526
 #define IDC_RA_DELETECOND               1527
-#define IDC_RA_CLONECOND                1528
+#define IDC_RA_COPYCOND                1528
 #define IDC_RA_ACH_ID                   1529
 #define IDC_RA_DEL_ACH                  1530
+#define IDC_RA_DELETECOND2              1530
+#define IDC_RA_PASTECOND                1530
 #define IDC_RA_CHKACHPROCESSINGACTIVE   1531
 #define IDC_RA_GOTOWIKI                 1532
 #define IDC_RA_GAMEHASH                 1533

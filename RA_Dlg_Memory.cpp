@@ -1175,6 +1175,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 								if( pSavedNote != NULL && pSavedNote->Note().length() > 0 )
 									SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, Widen( pSavedNote->Note() ).c_str() );
 							}
+							ComboBox_GetText(hMemWatch, sAddr, 64);
+							unsigned int nWatchedAddress = wcstol(sAddr, nullptr, 16);
+							MemoryViewerControl::setAddress((nWatchedAddress & ~(0xf)) + ((int)(MemoryViewerControl::m_nDisplayedLines/2) << 4));
 						}
 
 						Invalidate();

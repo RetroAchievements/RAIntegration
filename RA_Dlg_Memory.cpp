@@ -1170,22 +1170,28 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							wchar_t sAddr[ 64 ];
 							if( ComboBox_GetLBText( hMemWatch, nSel, sAddr ) > 0 )
 							{
-								ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( Narrow( sAddr ).c_str() + 2, nullptr, 16 ) );
+								ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( Narrow( sAddr ).c_str(), nullptr, 16 ) );
 								const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( nAddr );
 								if( pSavedNote != NULL && pSavedNote->Note().length() > 0 )
 									SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, Widen( pSavedNote->Note() ).c_str() );
+
+								MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
 							}
-							ComboBox_GetText(hMemWatch, sAddr, 64);
-							unsigned int nWatchedAddress = wcstol(sAddr, nullptr, 16);
-							MemoryViewerControl::setAddress((nWatchedAddress & ~(0xf)) + ((int)(MemoryViewerControl::m_nDisplayedLines/2) << 4));
 						}
 
 						Invalidate();
 						return TRUE;
 					}
 					case CBN_EDITCHANGE:
+					{
 						OnWatchingMemChange();
+
+						wchar_t sAddrWide[ 64 ];
+						GetDlgItemText( hDlg, IDC_RA_WATCHING, sAddrWide, 64 );
+						ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(Narrow(sAddrWide).c_str(), nullptr, 16));
+						MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
 						return TRUE;
+					}
 
 					default:
 						return FALSE;

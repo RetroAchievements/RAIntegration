@@ -139,7 +139,7 @@ bool MemoryViewerControl::OnKeyDown( UINT nChar )
 		return true;
 
 	case VK_PRIOR:	//	Page up (!)
-		moveAddress(-(m_nDisplayedLines << 4), 0);
+		moveAddress(-(int)(m_nDisplayedLines << 4), 0);
 		return true;
 
 	case VK_NEXT:	//	Page down (!)
@@ -382,7 +382,8 @@ void MemoryViewerControl::SetCaretPos()
 
 	int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
 
-	if ( linePosition < 0 || linePosition > m_nDisplayedLines - 1)
+	if ( linePosition < 0 || linePosition > (int)m_nDisplayedLines - 1)
+
 	{
 		destroyEditCaret();
 		return;
@@ -436,7 +437,7 @@ void MemoryViewerControl::OnClick( POINT point )
 	int y = point.y - m_szFontSize.cy;	//	Adjust for header
 	int line = ((y-3)/m_szFontSize.cy);	
 
-	if( line == -1 || line >= m_nDisplayedLines)
+	if( line == -1 || line >= (int)m_nDisplayedLines)
 		return;	//	clicked on header
 
 	int rowLengthPx = m_nDataStartXOffset;
@@ -1231,6 +1232,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 	default:
 		return FALSE;	//	unhandled
 	}
+
+  return FALSE;
 }
 
 void Dlg_Memory::OnWatchingMemChange()

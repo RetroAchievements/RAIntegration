@@ -1152,6 +1152,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					else
 						SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, L"" );
 
+					MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+
 					Invalidate();
 				}
 

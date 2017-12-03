@@ -487,6 +487,8 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 					}
 				}
 
+				if (m_nSetType != Core) return TRUE;
+
 				const Value& LeaderboardsData = doc["Leaderboards"];
 				for (SizeType i = 0; i < LeaderboardsData.Size(); ++i)
 				{

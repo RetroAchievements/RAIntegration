@@ -7,7 +7,8 @@ class MemCandidate
 public:
 	MemCandidate()
 	 :	m_nAddr( 0 ),
-		m_nLastKnownValue( 0 )
+		m_nLastKnownValue( 0 ),
+		m_bUpperNibble( FALSE )
 	{}
 	
 public:
@@ -53,8 +54,8 @@ public:
 	void AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize );
 	size_t NumMemoryBanks() const									{ return m_Banks.size(); }
 
-	void Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize);
-	void ResetAll(ComparisonVariableSize nNewComparisonVariableSize);
+	void Reset( unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize );
+	void ResetAll( ComparisonVariableSize nNewComparisonVariableSize, ByteAddress start, ByteAddress end );
 
 	size_t Compare( ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound );
 	
@@ -77,13 +78,7 @@ public:
 	unsigned char ActiveBankRAMByteRead(ByteAddress nOffs) const;
 	void ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal);
 
-	//inline unsigned char ActiveBankRAMByteRead( ByteAddress nOffs ) const								{ return( ( *( m_Banks.at( m_nActiveMemBank ).Reader ) )( nOffs ) ); }
-	//inline void ActiveBankRAMByteWrite( ByteAddress nOffs, unsigned int nVal ) const					{ ( *( m_Banks.at( m_nActiveMemBank ).Writer ) )( nOffs, nVal ); }
-
-	//inline unsigned char RAMByte( unsigned short nBankID, ByteAddress nOffs ) const						{ return( ( *( m_Banks.at( nBankID ).Reader ) )( nOffs ) ); }
-	//inline void RAMByteWrite( unsigned short nBankID, ByteAddress nOffs, unsigned int nVal ) const		{ ( *( m_Banks.at( nBankID ).Writer ) )( nOffs, nVal ); }
-
-	//void PokeByte( unsigned int nAddr, unsigned int nValue );
+	void ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const;
 
 private:
 	std::map<size_t, BankData> m_Banks;

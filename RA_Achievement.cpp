@@ -282,11 +282,18 @@ void Achievement::SetBadgeImage( const std::string& sBadgeURI )
 	SetDirtyFlag( Dirty_Badge );
 	ClearBadgeImage();
 
-	m_sBadgeImageURI = sBadgeURI;
+	char chars[] = "_lock";
 
-	m_hBadgeImage = LoadOrFetchBadge( sBadgeURI, RA_BADGE_PX );
-	if( sBadgeURI.find( "_lock" ) == std::string::npos )	//	Ensure we're not going to look for _lock_lock
-		m_hBadgeImageLocked = LoadOrFetchBadge( sBadgeURI + "_lock", RA_BADGE_PX );
+	std::string sNewBadgeURI = sBadgeURI;
+
+	for (unsigned int i = 0; i < strlen(chars); ++i)
+		sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
+
+	m_sBadgeImageURI = sNewBadgeURI;
+	m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);
+
+	if (sNewBadgeURI.find("_lock") == std::string::npos)	//	Ensure we're not going to look for _lock_lock
+		m_hBadgeImageLocked = LoadOrFetchBadge(sNewBadgeURI + "_lock", RA_BADGE_PX);
 }
 
 void Achievement::Reset()

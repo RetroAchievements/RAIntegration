@@ -67,6 +67,7 @@ private:
 	void SetupColumns( HWND hList );
 
 	const int AddCondition( HWND hList, const Condition& Cond );
+	void UpdateCondition( HWND hList, LV_ITEM& item, const Condition& Cond );
 
 private:
 	static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
@@ -84,5 +85,7 @@ private:
 
 	BadgeNames m_BadgeNames;
 };
+
+void GenerateResizes(HWND hDlg);
 
 extern Dlg_AchievementEditor g_AchievementEditorDialog;

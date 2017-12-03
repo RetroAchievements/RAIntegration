@@ -34,7 +34,11 @@ public:
 	void Add( const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote );
 	BOOL Remove( const ByteAddress& nAddr );
 	
-	const CodeNoteObj* FindCodeNote( const ByteAddress& nAddr ) const		{ return( m_CodeNotes.find( nAddr ) != m_CodeNotes.end() ) ? &m_CodeNotes.at( nAddr ) : nullptr; }
+	const CodeNoteObj* FindCodeNote( const ByteAddress& nAddr ) const		
+	{
+		std::map<ByteAddress, CodeNoteObj>::const_iterator iter = m_CodeNotes.find( nAddr );
+		return( iter != m_CodeNotes.end() ) ? &iter->second : nullptr; 
+	}
 
 	std::map<ByteAddress, CodeNoteObj>::const_iterator FirstNote() const	{ return m_CodeNotes.begin(); }
 	std::map<ByteAddress, CodeNoteObj>::const_iterator EndOfNotes() const	{ return m_CodeNotes.end(); }

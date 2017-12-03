@@ -8,6 +8,7 @@
 //	App-level:
 bool	(CCONV *_RA_GameIsActive) (void) = NULL;
 void	(CCONV *_RA_CauseUnpause) (void) = NULL;
+void	(CCONV *_RA_CausePause) (void) = NULL;
 void	(CCONV *_RA_RebuildMenu) (void) = NULL;
 void	(CCONV *_RA_ResetEmulation) (void) = NULL;
 void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = NULL;
@@ -25,6 +26,12 @@ void RA_CauseUnpause()
 {
 	if( _RA_CauseUnpause != NULL )
 		_RA_CauseUnpause();
+}
+
+void RA_CausePause()
+{
+	if (_RA_CausePause != NULL)
+		_RA_CausePause();
 }
 
 void RA_RebuildMenu()
@@ -84,7 +91,7 @@ HMENU	(CCONV *_RA_CreatePopupMenu)() = nullptr;
 void	(CCONV *_RA_UpdateAppTitle) (const char* pMessage) = nullptr;
 void	(CCONV *_RA_HandleHTTPResults) (void) = nullptr;
 void	(CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
-void	(CCONV *_RA_InstallSharedFunctions)( bool(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) = nullptr;
+void	(CCONV *_RA_InstallSharedFunctions)( bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) = nullptr;
 int		(CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
 int		(CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
 int		(CCONV *_RA_HTTPGetRequestExists)(const char* sPageName) = nullptr;
@@ -428,7 +435,7 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_HardcoreModeIsActive= (int(CCONV *)())										GetProcAddress( g_hRADLL, "_RA_HardcoreModeIsActive" );
 	_RA_HTTPGetRequestExists= (int(CCONV *)(const char*))							GetProcAddress( g_hRADLL, "_RA_HTTPGetRequestExists" );
 
-	_RA_InstallSharedFunctions = ( void(CCONV *)( bool(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) ) GetProcAddress( g_hRADLL, "_RA_InstallSharedFunctions" );
+	_RA_InstallSharedFunctions = ( void(CCONV *)( bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*) ) ) GetProcAddress( g_hRADLL, "_RA_InstallSharedFunctionsExt" );
 
 	return _RA_IntegrationVersion ? _RA_IntegrationVersion() : "0.000";
 }
@@ -487,10 +494,11 @@ void RA_Init( HWND hMainHWND, int nConsoleID, const char* sClientVersion )
 
 }
 
-void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*) )
+void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*) )
 {
 	_RA_GameIsActive			= fpIsActive;
 	_RA_CauseUnpause			= fpCauseUnpause;
+	_RA_CausePause				= fpCausePause;
 	_RA_RebuildMenu				= fpRebuildMenu;
 	_RA_GetEstimatedGameTitle	= fpEstimateTitle;
 	_RA_ResetEmulation			= fpResetEmulation;
@@ -498,7 +506,7 @@ void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(v
 
 	//	Also install *within* DLL! FFS
 	if( _RA_InstallSharedFunctions != NULL )
-		_RA_InstallSharedFunctions( fpIsActive, fpCauseUnpause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM );
+		_RA_InstallSharedFunctions( fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM );
 }
 
 void RA_Shutdown()
@@ -535,6 +543,7 @@ void RA_Shutdown()
 
 	_RA_GameIsActive			= nullptr;
 	_RA_CauseUnpause			= nullptr;
+	_RA_CausePause				= nullptr;
 	_RA_RebuildMenu				= nullptr;
 	_RA_GetEstimatedGameTitle	= nullptr;
 	_RA_ResetEmulation			= nullptr;

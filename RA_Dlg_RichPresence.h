@@ -20,6 +20,7 @@ private:
 	void StartTimer();
 	void StopTimer();
 
+	HFONT m_hFont;
 	HWND m_hRichPresenceDialog;
 	bool m_bTimerActive;
 };

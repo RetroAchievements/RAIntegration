@@ -12,6 +12,8 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 	{
 	case WM_INITDIALOG:
 	{
+		SendMessage( GetDlgItem( hDlg, IDC_RA_RICHPRESENCERESULTTEXT ), WM_SETFONT, (WPARAM)m_hFont, NULL );
+
 		RECT rc;
 		GetWindowRect( g_RAMainWnd, &rc );
 		SetWindowPos( hDlg, NULL, rc.right, rc.bottom - 120, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
@@ -60,10 +62,12 @@ Dlg_RichPresence::Dlg_RichPresence()
 	: m_hRichPresenceDialog( nullptr ),
 	  m_bTimerActive( false )
 {
+	m_hFont = CreateFont( 15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, NULL );
 }
 
 Dlg_RichPresence::~Dlg_RichPresence()
 {
+	DeleteObject( m_hFont );
 }
 
 void Dlg_RichPresence::StartMonitoring()

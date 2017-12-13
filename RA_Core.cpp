@@ -25,7 +25,6 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RichPresence.h"
 #include "RA_Dlg_RomChecksum.h"
 
 #include <locale>
@@ -239,12 +238,6 @@ API int CCONV _RA_Shutdown()
 
 	g_GameLibrary.KillThread();
 	
-	if (g_RichPresenceDialog.GetHWND() != nullptr)
-	{
-		DestroyWindow( g_RichPresenceDialog.GetHWND() );
-		g_RichPresenceDialog.InstallHWND( nullptr );
-	}
-
 	CoUninitialize();
 
 	return 0;
@@ -709,7 +702,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector") );
-		AppendMenu( hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor") );
+		AppendMenu( hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("&Parse Rich Presence script") );
 		AppendMenu( hRA, MF_SEPARATOR, NULL, NULL );
 		AppendMenu( hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements") );
 		AppendMenu( hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum") );
@@ -953,7 +946,7 @@ void EnsureDialogVisible( HWND hDlg )
 	const int nScreenHeight = GetSystemMetrics( SM_CYMAXIMIZED ) - ( GetSystemMetrics( SM_CYSCREEN ) - GetSystemMetrics( SM_CYMAXIMIZED ) );
 
 	RECT rc;
-	GetWindowRect( hDlg, &rc );
+	GetWindowRect( g_AchievementsDialog.GetHWND(), &rc );
 	
 	const int nDlgWidth = rc.right - rc.left;
 	const int nDlgHeight = rc.bottom - rc.top;
@@ -1121,14 +1114,10 @@ API void CCONV _RA_InvokeDialog( LPARAM nID )
 				//	Then install it
 				g_RichPresenceInterpretter.ParseRichPresenceFile( sRichPresenceFile );
 
-				if (g_RichPresenceDialog.GetHWND() == NULL)
-					g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
-				if (g_RichPresenceDialog.GetHWND() != NULL)
-					ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
+				//	Then fetch immediately
+				std::string sRP = g_RichPresenceInterpretter.GetRichPresenceString();
 
-				g_RichPresenceDialog.StartMonitoring();
-
-				EnsureDialogVisible( g_RichPresenceDialog.GetHWND() );
+				MessageBox( nullptr, Widen( sRP ).c_str(), L"Rich Presence script result", MB_OK );
 			}
 			else
 			{

@@ -64,24 +64,24 @@ char* DataStreamAsString( DataStream& stream )
 
 std::string Narrow( const wchar_t* wstr )
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.to_bytes( wstr );
 }
 
 std::string Narrow( const std::wstring& wstr )
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.to_bytes( wstr );
 }
 
 std::wstring Widen( const char* str )
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.from_bytes( str );
 }
 
 std::wstring Widen( const std::string& str )
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
+	static std::wstring_convert< std::codecvt_utf8< wchar_t >, wchar_t > converter;
 	return converter.from_bytes( str );
 }

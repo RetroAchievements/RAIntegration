@@ -105,7 +105,6 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 			{
 				//	Add a new title!
 				GetDlgItemText( hDlg, IDC_RA_GAMETITLE, sSelectedTitleWide, 512 );
-				sSelectedTitle = Narrow(sSelectedTitleWide);
 			}
 			else
 			{

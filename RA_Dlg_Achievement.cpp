@@ -1136,10 +1136,8 @@ void Dlg_Achievements::OnEditAchievement( const Achievement& ach )
 	{
 		if( g_nActiveAchievementSet == Core )
 			OnEditData( nIndex, Dlg_Achievements::Modified, "Yes" );
-		
-		// Achievement stays active after edit, so this print is unnecessary.
-		/*else
-			OnEditData( nIndex, Dlg_Achievements::Active, "No" );*/
+		else
+			OnEditData( nIndex, Dlg_Achievements::Active, "No" );
 	}
 
 	UpdateSelectedAchievementButtons( &ach );

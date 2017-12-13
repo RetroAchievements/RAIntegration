@@ -28,7 +28,6 @@ public:
 
 public:
 	static unsigned short m_nActiveMemBank;
-	static unsigned int m_nDisplayedLines;
 
 private:
 	static HFONT m_hViewerFont;
@@ -38,6 +37,7 @@ private:
 	static unsigned int m_nDataSize;
 	static unsigned int m_nEditAddress;
 	static unsigned int m_nEditNibble;
+	static unsigned int m_nDisplayedLines;
 
 	static bool m_bHasCaret;
 	static unsigned int m_nCaretWidth;

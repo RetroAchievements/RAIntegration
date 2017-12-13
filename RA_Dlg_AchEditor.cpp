@@ -857,19 +857,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			SetWindowPos(hItem, NULL, nBtnMainXOffset, (winRect.bottom - winRect.top) + nBtnMainYOffset,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
 
-			hItem = GetDlgItem(hDlg, IDC_RA_DELETECOND);
+			hItem = GetDlgItem(hDlg, IDC_RA_CLONECOND);
 			GetWindowRect(hItem, &itemRect);
 			SetWindowPos(hItem, NULL, nBtnMainXOffset + 78, (winRect.bottom - winRect.top) + nBtnMainYOffset,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
 
-			hItem = GetDlgItem(hDlg, IDC_RA_COPYCOND);
+			hItem = GetDlgItem(hDlg, IDC_RA_DELETECOND);
 			GetWindowRect(hItem, &itemRect);
 			SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset,
-				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-			hItem = GetDlgItem(hDlg, IDC_RA_PASTECOND);
-			GetWindowRect(hItem, &itemRect);
-			SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset + 20,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
 
 			hItem = GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS);
@@ -881,8 +876,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 			GetWindowRect(hItem, &itemRect);
 			SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nBtnCloseXOffset, (winRect.bottom - winRect.top) + nBtnCloseYOffset,
 				NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-			InvalidateRect(m_hAchievementEditorDlg, NULL, TRUE);
 		}
 		break;
 
@@ -1096,60 +1089,37 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 				ListView_EnsureVisible( hList, nNewID, FALSE );
 			}
 			break;
-		case IDC_RA_COPYCOND:
+		case IDC_RA_CLONECOND:
 			{
 				HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
+				int nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
 				Achievement* pActiveAch = ActiveAchievement();
 				if( pActiveAch != NULL )
 				{
-					unsigned int uSelectedCount = ListView_GetSelectedCount( hList );
-					
-					if (uSelectedCount > 0)
-					{
-						m_ConditionClipboard.Clear();
-
-						for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-						{
-							Condition& CondToCopy = pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>( i ) );
-
-							Condition NewCondition;
-							NewCondition.Set( CondToCopy );
-
-							m_ConditionClipboard.Add( NewCondition );
-						}
-
-						m_ConditionClipboard.Count();
-					}
-					else
+					if( nSel == -1 || nSel > static_cast<int>( pActiveAch->NumConditions( GetSelectedConditionGroup() ) ) )
 						return FALSE;
-				}
-			}
-			break;
-		case IDC_RA_PASTECOND:
-			{
-				HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
-				Achievement* pActiveAch = ActiveAchievement();
 
-				if ( pActiveAch != NULL )
-				{
-					if (m_ConditionClipboard.Count() > 0)
-					{
-						for (unsigned int i = 0; i < m_ConditionClipboard.Count(); i++)
-						{
-							const size_t nNewID = pActiveAch->AddCondition( GetSelectedConditionGroup(), m_ConditionClipboard.GetAt(i) ) - 1;
-							ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, -1);
-							ListView_EnsureVisible(hList, nNewID, FALSE);
-						}
+					Condition& CondToClone = pActiveAch->GetCondition( GetSelectedConditionGroup(), static_cast<size_t>( nSel ) );
 
-						//	Update this achievement entry as 'modified':
-						pActiveAch->SetModified(TRUE);
-						g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+					Condition NewCondition;
+					NewCondition.Set( CondToClone );
 
-						LoadAchievement(pActiveAch, FALSE);
-						pActiveAch->ClearDirtyFlag();
-					}
-					else
-						return FALSE;
+					const size_t nNewID = pActiveAch->AddCondition( GetSelectedConditionGroup(), NewCondition ) - 1;
+
+					//	Disable all achievement tracking:
+					//g_pActiveAchievements->SetPaused( true );
+					//CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+
+					//	Update this achievement entry as 'modified':
+					pActiveAch->SetModified( TRUE );
+					g_AchievementsDialog.OnEditAchievement( *pActiveAch );
+
+					LoadAchievement( pActiveAch, FALSE );
+					pActiveAch->ClearDirtyFlag();
+
+					//	Select last item
+					ListView_SetItemState( hList, nNewID, LVIS_FOCUSED|LVIS_SELECTED, -1 );
+					ListView_EnsureVisible( hList, nNewID, FALSE );
 				}
 			}
 			break;
@@ -1163,18 +1133,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 					Achievement* pActiveAch = ActiveAchievement();
 					if( pActiveAch != NULL )
 					{
-						unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
-
 						char buffer[ 256 ];
-						sprintf_s( buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
+						sprintf_s( buffer, 256, "Are you sure you wish to delete requirement ID %d?", nSel + 1 );
 						if( MessageBox( hDlg, Widen( buffer ).c_str(), L"Warning", MB_YESNO ) == IDYES )
 						{
-
-							for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-							{
-								//	Delete condition nSel
-								pActiveAch->RemoveCondition(GetSelectedConditionGroup(), nSel);
-							}
+							//	Delete condition nSel
+							pActiveAch->RemoveCondition( GetSelectedConditionGroup(), nSel );
 
 							//	Disable all achievement tracking:
 							//g_pActiveAchievements->SetPaused( true );
@@ -1702,7 +1666,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_DESC ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ADDCOND ), FALSE );
-		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_COPYCOND ), FALSE );
+		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CLONECOND ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_DELETECOND ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS ), FALSE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP ), FALSE );
@@ -1744,7 +1708,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_DESC ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ADDCOND ), TRUE );
-		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_COPYCOND ), TRUE );
+		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CLONECOND ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_DELETECOND ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP ), TRUE );
@@ -1818,7 +1782,7 @@ void Dlg_AchievementEditor::LoadAchievement( Achievement* pCheevo, BOOL bAttempt
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_DESC ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_POINTS ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ADDCOND ), TRUE );
-		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_COPYCOND ), TRUE );
+		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_CLONECOND ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_DELETECOND ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS ), TRUE );
 		EnableWindow( GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP ), TRUE );

@@ -3,6 +3,7 @@
 git describe --tags --match "RAIntegration.*" > LiveTag.txt
 @set /p ACTIVE_TAG=<LiveTag.txt
 @set VERSION_NUM=%ACTIVE_TAG:~14,3%
+@set VERSION_NUM=067
 
 git rev-parse --abbrev-ref HEAD > Temp.txt
 @set /p ACTIVE_BRANCH=<Temp.txt

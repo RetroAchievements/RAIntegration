@@ -88,6 +88,7 @@
     <ClCompile Include="RA_GameData.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="RA_Dlg_RichPresence.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -180,6 +181,7 @@
     <ClInclude Include="RA_GameData.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="RA_Dlg_RichPresence.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

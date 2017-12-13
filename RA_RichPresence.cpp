@@ -181,6 +181,11 @@ const std::string& RA_RichPresenceInterpretter::Lookup( const std::string& sName
 	return sReturnVal;
 }
 
+bool RA_RichPresenceInterpretter::Enabled() const
+{
+	return !m_sDisplay.empty();
+}
+
 const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 {
 	static std::string sReturnVal;

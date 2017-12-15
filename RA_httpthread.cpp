@@ -700,7 +700,9 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 
 	while( bThreadActive )
 	{
+		WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 		RequestObject* pObj = HttpRequestQueue.PopNextItem();
+		ReleaseMutex(RAWeb::Mutex());
 		if( pObj != NULL )
 		{
 			DataStream Response;

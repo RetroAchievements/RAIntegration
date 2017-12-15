@@ -1214,6 +1214,7 @@ API void CCONV _RA_OnLoadState( const char* sFilename )
 		g_pCoreAchievements->LoadProgress( sFilename );
 		g_LeaderboardManager.Reset();
 		g_PopupWindows.LeaderboardPopups().Reset();
+		g_MemoryDialog.Invalidate();
 	}
 }
 

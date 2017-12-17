@@ -106,6 +106,8 @@ HttpResults HttpRequestQueue;
 HANDLE RAWeb::ms_hHTTPMutex = NULL;
 HttpResults RAWeb::ms_LastHttpResults;
 
+PostArgs PrevArgs;
+
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 {
@@ -773,8 +775,12 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 							}
 						}
 					}
-					
-					RAWeb::CreateThreadedHTTPRequest( RequestPing, args );
+
+					if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
+					{
+						RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
+						PrevArgs = args;
+					}
 				}
 			}
 		}

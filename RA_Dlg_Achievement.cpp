@@ -1042,6 +1042,7 @@ INT_PTR Dlg_Achievements::CommitAchievements( HWND hDlg )
 			InvalidateRect( hDlg, NULL, TRUE );
 		}
 	}
+	return TRUE;
 }
 
 void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheevo)

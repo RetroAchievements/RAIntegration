@@ -1170,15 +1170,19 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc( HWND hDlg, UINT uMsg, WPAR
 						if( MessageBox( hDlg, Widen( buffer ).c_str(), L"Warning", MB_YESNO ) == IDYES )
 						{
 
-							for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-							{
-								//	Delete condition nSel
-								pActiveAch->RemoveCondition(GetSelectedConditionGroup(), nSel);
-							}
+							nSel = -1;
+							std::vector<int> items;
 
-							//	Disable all achievement tracking:
-							//g_pActiveAchievements->SetPaused( true );
-							//CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+							while ((nSel = ListView_GetNextItem(hList, nSel, LVNI_SELECTED)) != -1)
+								items.push_back(nSel);
+
+							while (!items.empty())
+							{
+								nSel = items.back();
+								pActiveAch->RemoveCondition(GetSelectedConditionGroup(), nSel);
+
+								items.pop_back();
+							}
 							
 							//	Set this achievement as 'modified'
 							pActiveAch->SetModified( TRUE );

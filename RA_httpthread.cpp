@@ -776,7 +776,10 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 						}
 					}
 
-					if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
+					//	Scott: Temporarily removed; Ping and RP are merged at current
+					//	 and if we don't constantly poll the server, the players are dropped
+					//	 from 'currently playing'.
+					//if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
 					{
 						RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
 						PrevArgs = args;

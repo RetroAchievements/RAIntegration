@@ -366,7 +366,7 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 		doc.HasMember( "PatchData" ) )
 	{
 		const Value& PatchData = doc[ "PatchData" ];
-		SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+		SetCurrentDirectory( NativeStr( g_sHomeDir ).c_str() );
 		FILE* pf = nullptr;
 		fopen_s( &pf, std::string( RA_DIR_DATA + std::to_string( nGameID ) + ".txt" ).c_str(), "wb" );
 		if( pf != nullptr )
@@ -387,8 +387,9 @@ BOOL AchievementSet::FetchFromWebBlocking( GameID nGameID )
 	else
 	{
 		//	Could not connect...
-		PopupWindows::AchievementPopups().AddMessage( 
-			MessagePopup( "Could not connect to " RA_HOST_URL "...", "Working offline...", PopupInfo ) ); //?
+		PopupWindows::AchievementPopups().AddMessage(
+			MessagePopup(std::string("Could not connect to " RA_HOST_URL "..."), "Working offline...", PopupInfo)
+		);
 
 		return FALSE;
 	}
@@ -403,7 +404,7 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 
 	const std::string sFilename = GetAchievementSetFilename(nGameID);
 
-	SetCurrentDirectory(Widen(g_sHomeDir).c_str());
+	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 	FILE* pFile = nullptr;
 	errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
 	if (pFile != nullptr)
@@ -556,7 +557,7 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 	if( sSaveStateFilename == NULL )
 		return;
 	
-	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+	SetCurrentDirectory( NativeStr( g_sHomeDir ).c_str() );
 	char buffer[ 4096 ];
 	sprintf_s( buffer, 4096, "%s.rap", sSaveStateFilename );
 	FILE* pf = NULL;

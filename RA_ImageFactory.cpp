@@ -220,7 +220,7 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource*& pToRenderBitmapSour
 
 HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 {
-	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+	SetCurrentDirectory( NativeStr( g_sHomeDir ).c_str() );
 
 	if( !_FileExists( RA_DIR_BADGE + sBadgeURI + ".png" ) )
 	{
@@ -240,7 +240,7 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 
 HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 {
-	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+	SetCurrentDirectory(NativeStr( g_sHomeDir ).c_str() );
 
 	if( !_FileExists( RA_DIR_USERPIC + sUserName + ".png" ) )
 	{
@@ -260,7 +260,7 @@ HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 
 HBITMAP LoadLocalPNG( const std::string& sPath, const RASize& sz )
 {
-	SetCurrentDirectory( Widen( g_sHomeDir ).c_str() );
+	SetCurrentDirectory(NativeStr( g_sHomeDir ).c_str() );
 
 	ASSERT( _FileExists( sPath ) );
 	if( !_FileExists( sPath ) )

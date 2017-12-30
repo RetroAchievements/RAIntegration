@@ -168,15 +168,15 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 
 	HFONT hFontTitle = CreateFont( FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								   DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-								   DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
+								   DEFAULT_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	HFONT hFontDesc = CreateFont( FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
+								  DEFAULT_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	HFONT hFontText = CreateFont( FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-								  DEFAULT_PITCH, Widen( FONT_TO_USE ).c_str() );
+								  DEFAULT_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 
 	const int nWidth = rcDest.right - rcDest.left;
@@ -227,7 +227,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 				std::string sScoreSoFar = std::string( " " ) + pLB->FormatScore( static_cast<int>( pLB->GetCurrentValueProgress() ) ) + std::string( " " );
 
 				SIZE szProgress;
-				GetTextExtentPoint32( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &szProgress );
+				GetTextExtentPoint32( hDC, NativeStr( sScoreSoFar ).c_str(), sScoreSoFar.length(), &szProgress );
 
 				HGDIOBJ hBkup = SelectObject( hDC, hPen );
 
@@ -237,7 +237,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 
 				RECT rcProgress;
 				SetRect( &rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs );
-				DrawText( hDC, Widen( sScoreSoFar ).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
+				DrawText( hDC, NativeStr( sScoreSoFar ).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE );
 
 				SelectObject( hDC, hBkup );
 				nProgressYOffs -= 26;
@@ -256,7 +256,7 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 				char buffer[ 1024 ];
 				sprintf_s( buffer, 1024, " Results: %s ", pLB->Title().c_str() );
 				RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
-				DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE );
+				DrawText( hDC, NativeStr( buffer ).c_str(), strlen( buffer ), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
 				//	Show scoreboard
 				RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
@@ -277,10 +277,10 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 
 					char buffer[ 1024 ];
 					sprintf_s( buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str() );
-					DrawText( hDC, Widen( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE );
+					DrawText( hDC, NativeStr( buffer ).c_str(), strlen( buffer ), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE );
 
 					std::string sScore( " " + pLB->FormatScore( lbInfo.m_nScore ) + " " );
-					DrawText( hDC, Widen( sScore ).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE );
+					DrawText( hDC, NativeStr( sScore ).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE );
 
 					rcScoreboard.top += 24;
 

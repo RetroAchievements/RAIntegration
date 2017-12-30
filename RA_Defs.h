@@ -55,21 +55,8 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
-#define WIDEN2(x) L ## x
-#define TOWIDESTR(x) WIDEN2(x)
-
-
-#if defined _DEBUG
-//#define RA_HOST_URL "localhost"
-#define RA_HOST_URL "retroachievements.org"
-#else
-#define RA_HOST_URL "retroachievements.org"
-#endif
-
-#define RA_HOST_URL_WIDE TOWIDESTR( RA_HOST_URL )
-
-#define RA_HOST_IMG_URL "i.retroachievements.org"
-#define RA_HOST_IMG_URL_WIDE TOWIDESTR( RA_HOST_IMG_URL )
+#define RA_HOST_URL						"retroachievements.org"
+#define RA_HOST_IMG_URL					"i.retroachievements.org"
 
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
@@ -165,7 +152,24 @@ typedef DWORD			ARGB;
 #define UNUSED( x ) ( x );
 #endif
 
-extern std::string Narrow( const wchar_t* wstr );
-extern std::string Narrow( const std::wstring& wstr );
-extern std::wstring Widen( const char* str );
-extern std::wstring Widen( const std::string& str );
+extern std::string Narrow(const wchar_t* wstr);
+extern std::string Narrow(const std::wstring& wstr);
+extern std::wstring Widen(const char* str);
+extern std::wstring Widen(const std::string& str);
+
+//	No-ops to help convert:
+//	No-ops to help convert:
+extern std::wstring Widen(const wchar_t* wstr);
+extern std::wstring Widen(const std::wstring& wstr);
+extern std::string Narrow(const char* str);
+extern std::string Narrow(const std::string& wstr);
+
+
+
+#ifdef UNICODE
+#define NativeStr(x) Widen(x)
+#define NativeStrType std::wstring
+#else
+#define NativeStr(x) Narrow(x)
+#define NativeStrType std::string
+#endif

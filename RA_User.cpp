@@ -153,7 +153,7 @@ void LocalRAUser::HandleSilentLoginResponse( Document& doc )
 	}
 	else
 	{
-		MessageBox( nullptr, L"Silent login failed, please login again!", L"Sorry!", MB_OK );
+		MessageBox( nullptr, TEXT("Silent login failed, please login again!"), TEXT("Sorry!"), MB_OK );
 	}
 }
 
@@ -197,7 +197,7 @@ void LocalRAUser::Logout()
 
 	m_bIsLoggedIn = FALSE;
 
-	MessageBox( nullptr, L"You are now logged out.", L"Info", MB_OK );
+	MessageBox( nullptr, TEXT("You are now logged out."), TEXT("Info"), MB_OK );
 }
 
 void LocalRAUser::OnFriendListResponse( const Document& doc )

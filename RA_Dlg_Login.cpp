@@ -20,7 +20,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 	{
 	case WM_INITDIALOG:
 
-		SetDlgItemText( hDlg, IDC_RA_USERNAME, Widen( RAUsers::LocalUser().Username() ).c_str() );
+		SetDlgItemText( hDlg, IDC_RA_USERNAME, NativeStr( RAUsers::LocalUser().Username() ).c_str() );
 		if( RAUsers::LocalUser().Username().length() > 2 )
 		{
 			HWND hPass = GetDlgItem( hDlg, IDC_RA_PASSWORD );
@@ -38,14 +38,14 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 		case IDOK:
 			{
 				BOOL bValid = TRUE;
-				wchar_t sUserEntry[ 64 ];
+				TCHAR sUserEntry[ 64 ];
 				bValid &= ( GetDlgItemText( hDlg, IDC_RA_USERNAME, sUserEntry, 64 ) > 0 );
-				wchar_t sPassEntry[ 64 ];
+				TCHAR sPassEntry[ 64 ];
 				bValid &= ( GetDlgItemText( hDlg, IDC_RA_PASSWORD, sPassEntry, 64 ) > 0 );
 
 				if( !bValid || lstrlen( sUserEntry ) < 0 || lstrlen( sPassEntry ) < 0 )
 				{
-					MessageBox( nullptr, L"Username/password not valid! Please check and reenter", L"Error!", MB_OK );
+					MessageBox( nullptr, TEXT("Username/password not valid! Please check and reenter"), TEXT("Error!"), MB_OK );
 					return TRUE;
 				}
 
@@ -77,13 +77,13 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 					}
 					else
 					{
-						sResponse = std::string( "Failed!\r\n" ) +
-							std::string( "Response From Server:\r\n" ) +
-							doc[ "Error" ].GetString();
+						sResponse = std::string( "Failed!\r\n"
+												 "Response From Server:\r\n" ) +
+									doc[ "Error" ].GetString();
 						sResponseTitle = "Error logging in!";
 					}
 
-					MessageBox( hDlg, Widen( sResponse ).c_str(), Widen( sResponseTitle ).c_str(), MB_OK );
+					MessageBox( hDlg, NativeStr( sResponse ).c_str(), NativeStr( sResponseTitle ).c_str(), MB_OK );
 
 					//	If we are now logged in
 					if( RAUsers::LocalUser().IsLoggedIn() )
@@ -96,10 +96,14 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 				}
 				else
 				{
-					if( !doc.HasParseError() && doc.HasMember( "Error" ) )
-						MessageBox( hDlg, Widen( std::string( "Server error: " ) + std::string( doc[ "Error" ].GetString() ) ).c_str(), L"Error!", MB_OK );
+					if (!doc.HasParseError() && doc.HasMember("Error"))
+					{
+						MessageBox(hDlg, NativeStr(std::string("Server error: ") + std::string(doc["Error"].GetString())).c_str(), TEXT("Error!"), MB_OK);
+					}
 					else
-						MessageBox( hDlg, L"Unknown error connecting... please try again!", L"Error!", MB_OK );
+					{
+						MessageBox(hDlg, TEXT("Unknown error connecting... please try again!"), TEXT("Error!"), MB_OK);
+					}
 
 					return TRUE;	//	==Handled
 				}

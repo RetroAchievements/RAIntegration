@@ -14,7 +14,7 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc( HWND hDlg, UINT nMs
 	switch( nMsg )
 	{
 	case WM_INITDIALOG:
-		SetDlgItemText( hDlg, IDC_RA_ROMCHECKSUMTEXT, Widen( std::string( "ROM Checksum: " ) + g_sCurrentROMMD5 ).c_str() );
+		SetDlgItemText( hDlg, IDC_RA_ROMCHECKSUMTEXT, NativeStr( std::string( "ROM Checksum: " ) + g_sCurrentROMMD5 ).c_str() );
 		return FALSE;
 
 	case WM_COMMAND:

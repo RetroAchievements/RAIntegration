@@ -542,7 +542,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 		SelectObject( hDC, g_hFontTitle );
 		SetTextColor( hDC, COL_TEXT );
 		std::string sTitleWithSpaces( " " + g_pCurrentGameData->GameTitle() + " " );
-		TextOut( hDC, nGameTitleX + nDX, nGameTitleY + nDY, Widen( sTitleWithSpaces ).c_str(), sTitleWithSpaces.length() );
+		TextOut( hDC, nGameTitleX + nDX, nGameTitleY + nDY, NativeStr( sTitleWithSpaces ).c_str(), sTitleWithSpaces.length() );
 	}
 
 	SelectObject( hDC, g_hFontDesc );
@@ -566,7 +566,7 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 			sprintf_s( buffer, 256, " %d of %d won (%d/%d) ",
 				nUserCompleted, nNumberOfAchievements,
 				nUserPts, nMaxPts );
-			TextOut( hDC, nDX+nGameTitleX, nGameSubTitleY, Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC, nDX+nGameTitleX, nGameSubTitleY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 		}
 	}
 
@@ -619,12 +619,12 @@ void AchievementOverlay::DrawAchievementsPage( HDC hDC, int nDX, int nDY, const 
 		if( !RA_GameIsActive() )
 		{
 			const std::string sMsg( " No achievements present... " );
-			TextOut( hDC, nDX + nGameTitleX, nGameSubTitleY, Widen( sMsg ).c_str(), sMsg.length() );
+			TextOut( hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr( sMsg ).c_str(), sMsg.length() );
 		}
 		else if( nNumberOfAchievements == 0 )
 		{
 			const std::string sMsg( " No achievements present... " );
-			TextOut( hDC, nDX + nGameTitleX, nGameSubTitleY, Widen( sMsg ).c_str(), sMsg.length() );
+			TextOut( hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr( sMsg ).c_str(), sMsg.length() );
 		}
 	}
 
@@ -698,7 +698,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 			HANDLE hOldObj = SelectObject( hDC, g_hFontDesc );
 
 			sprintf_s( buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore() );
-			TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs, Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 			SelectObject( hDC, g_hFontTiny );
 			sprintf_s( buffer, 256, " %s ", pFriend->Activity().c_str() );
@@ -709,7 +709,7 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 				nYOffs+nFriendSubtitleYOffs, 
 				nDX + rcTarget.right - 40,
 				nYOffs+nFriendSubtitleYOffs + 46 );
-			DrawText( hDC, Widen( pFriend->Activity() ).c_str(), -1, &rcDest, DT_LEFT|DT_WORDBREAK );
+			DrawText( hDC, NativeStr( pFriend->Activity() ).c_str(), -1, &rcDest, DT_LEFT|DT_WORDBREAK );
 
 			//	Restore
 			SelectObject( hDC, hOldObj );
@@ -780,12 +780,12 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 	ctime_s( bufTime, 256, &tCreated );
 	bufTime[strlen(bufTime)-1] = '\0';	//	Remove pesky newline
 	sprintf_s( buffer, 256, " Created: %s ", bufTime );
-	TextOut( hDC, nDX + 20, nCoreDetailsY, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nDX + 20, nCoreDetailsY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 	ctime_s( bufTime, 256, &tModified );
 	bufTime[strlen(bufTime)-1] = '\0';	//	Remove pesky newline
 	sprintf_s( buffer, 256, " Modified: %s ", bufTime );
-	TextOut( hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 	if( g_AchExamine.HasData() )
 	{
@@ -793,12 +793,12 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 				   g_AchExamine.TotalWinners(), 
 				   g_AchExamine.PossibleWinners(),
 				   static_cast<float>( g_AchExamine.TotalWinners() * 100 ) / static_cast<float>( g_AchExamine.PossibleWinners() ) );
-		TextOut( hDC, nDX + 20, nCoreDetailsY + ( nCoreDetailsSpacing * 2 ), Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nDX + 20, nCoreDetailsY + ( nCoreDetailsSpacing * 2 ), NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 		if( g_AchExamine.NumRecentWinners() > 0 )
 		{
 			sprintf_s( buffer, 256, " Recent winners: " );
-			TextOut( hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 		}
 
 		for( unsigned int i = 0; i < g_AchExamine.NumRecentWinners(); ++i )
@@ -816,12 +816,12 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 			TextOut( hDC,
 					 nDX + nWonByPlayerNameX,
 					 nWonByPlayerYOffs + ( i*nWonByPlayerYSpacing ),
-					 Widen( buffer ).c_str(), strlen( buffer ) );
+					 NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 			TextOut( hDC,
 					 nDX + nWonByPlayerDateX,
 					 nWonByPlayerYOffs + ( i*nWonByPlayerYSpacing ),
-					 Widen( buffer2 ).c_str(), strlen( buffer2 ) );
+					 NativeStr( buffer2 ).c_str(), strlen( buffer2 ) );
 		}
 	}
 	else
@@ -837,7 +837,7 @@ void AchievementOverlay::DrawAchievementExaminePage( HDC hDC, int nDX, int nDY, 
 			nDotCount >= 2 ? '.' : ' ',
 			nDotCount >= 3 ? '.' : ' ' );
 
-		TextOut( hDC, nDX + nLoadingMessageX, nLoadingMessageY, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 	}
 }
 
@@ -873,14 +873,14 @@ void AchievementOverlay::DrawNewsPage( HDC hDC, int nDX, int nDY, const RECT& rc
 		SetRect( &rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset );
 
 		//	Calculate height of rect, fetch bottom for next rect:
-		DrawText( hDC, Widen( sTitle ).c_str(), strlen( sTitle ), &rcNews, DT_CALCRECT | DT_WORDBREAK );
+		DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_CALCRECT | DT_WORDBREAK);
 		nYOffset = rcNews.bottom;
 
 		if( rcNews.bottom > nHeight )
 			rcNews.bottom = nHeight;
 
 		//	Draw title:
-		DrawText( hDC, Widen( sTitle ).c_str(), strlen( sTitle ), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
+		DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
 		//	Offset header
 		nYOffset += nHeaderGap;
@@ -890,14 +890,14 @@ void AchievementOverlay::DrawNewsPage( HDC hDC, int nDX, int nDY, const RECT& rc
 		//	Setup initial variables for the rect
 		SetRect( &rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset );
 		//	Calculate height of rect, fetch and inset bottom:
-		DrawText( hDC, Widen( sPayload ).c_str(), strlen( sPayload ), &rcNews, DT_CALCRECT | DT_WORDBREAK );
+		DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_CALCRECT | DT_WORDBREAK);
 		nYOffset = rcNews.bottom;
 
 		if( rcNews.bottom > nHeight )
 			rcNews.bottom = nHeight;
 
 		//	Draw payload:
-		DrawText( hDC, Widen( sPayload ).c_str(), strlen( sPayload ), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
+		DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
 		nYOffset += nArticleGap;
 	}
@@ -975,7 +975,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			RECT rcNews;
 			SetRect( &rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset );
 			//	Calculate height of rect, fetch bottom for next rect:
-			DrawText( hDC, Widen( sTitle ).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK );
+			DrawText( hDC, NativeStr( sTitle ).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK );
 			nYOffset = rcNews.bottom;
 
 			if( rcNews.bottom > nHeight )
@@ -984,7 +984,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			SetTextColor( hDC, bSelected ? COL_SELECTED : COL_TEXT );
 
 			//	Draw title:
-			DrawText( hDC, Widen( sTitle ).c_str(), sTitle.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
+			DrawText( hDC, NativeStr( sTitle ).c_str(), sTitle.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
 
 			//	Offset header
 			nYOffset += nHeaderGap;
@@ -994,7 +994,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			//	Setup initial variables for the rect
 			SetRect( &rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset );
 			//	Calculate height of rect, fetch and inset bottom:
-			DrawText( hDC, Widen( sPayload ).c_str(), sPayload.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK );
+			DrawText( hDC, NativeStr( sPayload ).c_str(), sPayload.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK );
 			nYOffset = rcNews.bottom;
 
 			if( rcNews.bottom > nHeight )
@@ -1003,7 +1003,7 @@ void AchievementOverlay::DrawLeaderboardPage( HDC hDC, int nDX, int nDY, const R
 			SetTextColor( hDC, COL_SELECTED_LOCKED );
 
 			//	Draw payload:
-			DrawText( hDC, Widen( sPayload ).c_str(), sPayload.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
+			DrawText( hDC, NativeStr( sPayload ).c_str(), sPayload.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK );
 
 			nYOffset += nArticleGap;
 
@@ -1054,16 +1054,16 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 	if( pLB == nullptr )
 	{
 		const std::string sMsg( " No leaderboard found " );
-		TextOut( hDC, 120, 120, Widen( sMsg ).c_str(), sMsg.length() );
+		TextOut( hDC, 120, 120, NativeStr( sMsg ).c_str(), sMsg.length() );
 	}
 	else
 	{
 		const std::string sTitle( " " + pLB->Title() + " " );
-		TextOut( hDC, nDX + 20, nCoreDetailsY, Widen( sTitle ).c_str(), sTitle.length() );
+		TextOut( hDC, nDX + 20, nCoreDetailsY, NativeStr( sTitle ).c_str(), sTitle.length() );
 
 		SetTextColor( hDC, COL_SELECTED_LOCKED );
 		const std::string sDesc( " " + pLB->Description() + " " );
-		TextOut( hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, Widen( sDesc ).c_str(), sDesc.length() );
+		TextOut( hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr( sDesc ).c_str(), sDesc.length() );
 
 		SetTextColor( hDC, COL_TEXT );
 
@@ -1087,17 +1087,17 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 				TextOut( hDC,
 						 nDX + nWonByPlayerRankX,
 						 nLeaderboardYOffs + ( i * nLeaderboardYSpacing ),
-						 Widen( sRankText ).c_str(), strlen( sRankText ) );
+						 NativeStr( sRankText ).c_str(), strlen( sRankText ) );
 
 				TextOut( hDC,
 						 nDX + nWonByPlayerUserX,
 						 nLeaderboardYOffs + ( i * nLeaderboardYSpacing ),
-						 Widen( sNameText ).c_str(), strlen( sNameText ) );
+						 NativeStr( sNameText ).c_str(), strlen( sNameText ) );
 
 				TextOut( hDC,
 						 nDX + nWonByPlayerScoreX,
 						 nLeaderboardYOffs + ( i * nLeaderboardYSpacing ),
-						 Widen( sScoreText ).c_str(), strlen( sScoreText ) );
+						 NativeStr( sScoreText ).c_str(), strlen( sScoreText ) );
 			}
 		}
 		else
@@ -1116,7 +1116,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 				nDotCount > 2 ? '.' : ' ',
 				nDotCount > 3 ? '.' : ' ' );
 
-			TextOut( hDC, nDX + nLoadingMessageX, nLoadingMessageY, Widen( buffer ).c_str(), strlen( buffer ) );
+			TextOut( hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 		}	
 	}
 }
@@ -1155,16 +1155,16 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	
 	
 	g_hFontTitle = CreateFont( nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	g_hFontDesc = CreateFont( nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	g_hFontDesc2 = CreateFont( nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							   CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	g_hFontTiny = CreateFont( nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, Widen( FONT_TO_USE ).c_str() );
+							  CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr( FONT_TO_USE ).c_str() );
 
 	float fPctOffScreen = ( m_nTransitionState == TS_IN ) ?
 							( m_fTransitionTimer / PAGE_TRANSITION_IN ) : 
@@ -1258,7 +1258,7 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	TextOut( hDC,
 			 nDX + nBorder,
 			 4 + nBorder,
-			 Widen( buffer ).c_str(), strlen( buffer ) );
+			 NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 
 	//int nNextPage = (int)(m_nCurrentPage+1);
@@ -1281,10 +1281,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 
 		//	Draw control text:
 		sprintf_s( buffer, 1024, " ->:%s ", "Next" );
-		TextOut( hDC, nRightPx - nControlsX1, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX1, nControlsY1, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 		sprintf_s( buffer, 1024, " <-:%s ", "Prev" );
-		TextOut( hDC, nRightPx - nControlsX1, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX1, nControlsY2, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 		char cBackChar = 'B';
 		char cSelectChar = 'A';
@@ -1296,10 +1296,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 		}
 
 		sprintf_s( buffer, 1024, " %c:%s ", cBackChar, "Back" );
-		TextOut( hDC, nRightPx - nControlsX2, nControlsY1, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX2, nControlsY1, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 		sprintf_s( buffer, 1024, " %c:%s ", cSelectChar, "Select" );
-		TextOut( hDC, nRightPx - nControlsX2, nControlsY2, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nRightPx - nControlsX2, nControlsY2, NativeStr( buffer ).c_str(), strlen( buffer ) );
 	}
 
 	DeleteObject( g_hBrushBG );
@@ -1380,11 +1380,11 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 
 	sprintf_s( buffer, 1024, " %s ", pAch->Description().c_str() );
 	SelectObject( hDC, g_hFontDesc2 );
-	TextOut( hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 	sprintf_s( buffer, 1024, " %s (%d Points) ", pAch->Title().c_str(), pAch->Points() );
 	SelectObject( hDC, g_hFontDesc );
-	TextOut( hDC, nX + nAchLeftOffset1, nY, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nX + nAchLeftOffset1, nY, NativeStr( buffer ).c_str(), strlen( buffer ) );
 }
 
 void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH ) const
@@ -1413,10 +1413,10 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 	SelectObject( hDC, g_hFontDesc );
 
 	sprintf_s( buffer, 256, " %s ", pUser->Username().c_str() );
-	TextOut( hDC, nTextX, nTextY1, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nTextX, nTextY1, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 	sprintf_s( buffer, 256, " %d Points ", pUser->GetScore() );
-	TextOut( hDC, nTextX, nTextY2, Widen( buffer ).c_str(), strlen( buffer ) );
+	TextOut( hDC, nTextX, nTextY2, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 	if( g_bHardcoreModeActive )
 	{
@@ -1424,7 +1424,7 @@ void AchievementOverlay::DrawUserFrame( HDC hDC, RAUser* pUser, int nX, int nY, 
 		COLORREF nLastColorBk = SetBkColor( hDC, COL_WARNING_BG );
 
 		sprintf_s( buffer, 256, " HARDCORE " );
-		TextOut( hDC, nX + 180, nY + 70, Widen( buffer ).c_str(), strlen( buffer ) );
+		TextOut( hDC, nX + 180, nY + 70, NativeStr( buffer ).c_str(), strlen( buffer ) );
 
 		SetTextColor( hDC, nLastColor );
 		SetBkColor( hDC, nLastColorBk );
@@ -1503,7 +1503,7 @@ void AchievementOverlay::InitDirectX()
 {
 	if( g_RAMainWnd == nullptr )
 	{
-		MessageBox( g_RAMainWnd, L"InitDirectX failed: g_RAMainWnd invalid (check RA_Init has a valid HWND!)", L"Error!", MB_OK );
+		MessageBox( g_RAMainWnd, TEXT("InitDirectX failed: g_RAMainWnd invalid (check RA_Init has a valid HWND!)"), TEXT("Error!"), MB_OK );
 		return;
 	}
 

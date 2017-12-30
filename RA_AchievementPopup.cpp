@@ -143,16 +143,16 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	const std::string sSubTitle = std::string( " " + ActiveMessage().Subtitle() + " " );
 
 	SelectObject( hDC, hFontTitle );
-	TextOut( hDC, nTitleX, nTitleY, Widen( sTitle ).c_str(), sTitle.length() );
+	TextOut( hDC, nTitleX, nTitleY, NativeStr( sTitle ).c_str(), sTitle.length() );
 	SIZE szTitle = { 0, 0 };
-	GetTextExtentPoint32( hDC, Widen( sTitle ).c_str(), sTitle.length(), &szTitle );
+	GetTextExtentPoint32( hDC, NativeStr( sTitle ).c_str(), sTitle.length(), &szTitle );
 
 	SIZE szAchievement = { 0, 0 };
 	if( ActiveMessage().Subtitle().length() > 0 )
 	{
 		SelectObject( hDC, hFontDesc );
-		TextOut( hDC, nDescX, nDescY, Widen( sSubTitle ).c_str(), sSubTitle.length() );
-		GetTextExtentPoint32( hDC, Widen( sSubTitle ).c_str(), sSubTitle.length(), &szAchievement );
+		TextOut( hDC, nDescX, nDescY, NativeStr( sSubTitle ).c_str(), sSubTitle.length() );
+		GetTextExtentPoint32( hDC, NativeStr( sSubTitle ).c_str(), sSubTitle.length(), &szAchievement );
 	}
 
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, COL_POPUP_SHADOW );

@@ -23,7 +23,7 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 	case WM_TIMER:
 	{
 		std::string sRP = g_RichPresenceInterpretter.GetRichPresenceString();
-		SetDlgItemText( m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, Widen(sRP).c_str() );
+		SetDlgItemText( m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, NativeStr(sRP).c_str() );
 		return TRUE;
 	}
 

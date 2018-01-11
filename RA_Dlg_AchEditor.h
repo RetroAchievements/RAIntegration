@@ -78,7 +78,7 @@ private:
 	HWND m_hICEControl;
 
 	char m_lbxData[ MAX_CONDITIONS ][ m_nNumCols ][ MEM_STRING_TEXT_LEN ];
-	wchar_t m_lbxGroupNames[ MAX_CONDITIONS ][ MEM_STRING_TEXT_LEN ];
+	TCHAR m_lbxGroupNames[ MAX_CONDITIONS ][ MEM_STRING_TEXT_LEN ];
 	int m_nNumOccupiedRows;
 
 	Achievement* m_pSelectedAchievement;

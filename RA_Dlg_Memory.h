@@ -53,7 +53,7 @@ public:
 	void Init();
 	
 	void ClearLogOutput();
-	void AddLogLine( const std::string& sNextLine );
+	void AddLogLine( const tstring& sNextLine );
 
 	static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
 	INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);

@@ -56,8 +56,8 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 		if (i == (NUM_COLS - 1))
 			newColumn.fmt |= LVCFMT_FILL;
 		newColumn.cx = COLUMN_SIZE[i];
-		std::string sColTitleStr = sColTitle;	//	Take a copy
-		newColumn.pszText = const_cast<LPTSTR>(NativeStr(sColTitleStr).c_str());
+		tstring sColTitleStr = NativeStr( sColTitle );	//	Take a copy
+		newColumn.pszText = const_cast<LPTSTR>( sColTitleStr.c_str() );
 		newColumn.cchTextMax = 255;
 		newColumn.iSubItem = i;
 
@@ -181,8 +181,8 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 	{
 		//	Cache this (stack) to ensure it lives until after ListView_*Item
 		//	SD: Is this necessary?
-		std::string sTextData = m_lbxData.back()[item.iSubItem].data();
-		item.pszText = const_cast<LPTSTR>(NativeStr(sTextData).c_str());
+		tstring sTextData = m_lbxData.back()[item.iSubItem].data();
+		item.pszText = const_cast<LPTSTR>( (LPCTSTR)sTextData.c_str() );
 
 		if (item.iSubItem == 0)
 			item.iItem = ListView_InsertItem(hList, &item);
@@ -1095,7 +1095,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
 		//SetupColumns( hList );
 		LoadAchievements(hList);
 
-		char buffer[256];
+		TCHAR buffer[256];
 		sprintf_s(buffer, 256, " %d", nGameID);
 		SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 

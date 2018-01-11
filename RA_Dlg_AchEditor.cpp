@@ -102,9 +102,9 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
 	for (size_t i = 0; i < MAX_CONDITIONS; ++i)
 	{
 		if (i == 0)
-			swprintf_s(m_lbxGroupNames[i], MEM_STRING_TEXT_LEN, L"Core");
+			_stprintf_s(m_lbxGroupNames[i], MEM_STRING_TEXT_LEN, _T("Core"));
 		else
-			swprintf_s(m_lbxGroupNames[i], MEM_STRING_TEXT_LEN, L"Alt %02d", i);
+			_stprintf_s(m_lbxGroupNames[i], MEM_STRING_TEXT_LEN, _T("Alt %02d"), i);
 	}
 }
 
@@ -132,8 +132,8 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
 	{
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cx = COLUMN_WIDTH[i];
-		std::string colTitle = COLUMN_TITLE[i];	//	Take non-const copy
-		col.pszText = const_cast<LPTSTR>(NativeStr(colTitle).c_str());
+		tstring colTitle = COLUMN_TITLE[ i ];	//	Take non-const copy
+		col.pszText = const_cast<LPTSTR>( colTitle.c_str() );
 		col.cchTextMax = 255;
 		col.iSubItem = i;
 
@@ -166,8 +166,8 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
 	item.cchTextMax = 256;
 	item.iItem = m_nNumOccupiedRows;
 	item.iSubItem = 0;
-	std::string sData = m_lbxData[m_nNumOccupiedRows][CSI_ID];
-	item.pszText = const_cast<LPTSTR>(NativeStr(sData).c_str());
+	tstring sData = m_lbxData[m_nNumOccupiedRows][CSI_ID];
+	item.pszText = const_cast<LPTSTR>( sData.c_str() );
 	item.iItem = ListView_InsertItem(hList, &item);
 
 	UpdateCondition(hList, item, Cond);
@@ -219,8 +219,8 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 	for (size_t i = 0; i < NumColumns; ++i)
 	{
 		item.iSubItem = i;
-		std::string sData = m_lbxData[nRow][i];
-		item.pszText = const_cast<LPTSTR>(NativeStr(sData).c_str());
+		tstring sData = m_lbxData[nRow][i];
+		item.pszText = const_cast<LPTSTR>( sData.c_str() );
 		ListView_SetItem(hList, &item);
 	}
 }
@@ -540,8 +540,8 @@ BOOL CreateIPE(int nItem, int nSubItem)
 			ZeroMemory(&lvItem, sizeof(lvItem));
 			lvItem.iItem = nItem;
 			lvItem.iSubItem = nSubItem;
-			std::string sStrWide = sNewText;	//	Scoped cache!
-			lvItem.pszText = const_cast<LPTSTR>(NativeStr(sStrWide).c_str());
+			tstring sStrWide = sNewText;	//	Scoped cache!
+			lvItem.pszText = const_cast<LPTSTR>( sStrWide.c_str() );
 			lvItem.cchTextMax = 256;
 
 			//	Inject the new text into the lbx
@@ -599,9 +599,9 @@ BOOL CreateIPE(int nItem, int nSubItem)
 		// 			}
 
 					/*CB_ERRSPACE*/
-		ComboBox_AddString(g_hIPEEdit, Widen("Mem").c_str());
-		ComboBox_AddString(g_hIPEEdit, Widen("Delta").c_str());
-		ComboBox_AddString(g_hIPEEdit, Widen("Value").c_str());
+		ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
+		ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
+		ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
 
 		int nSel;
 		if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Mem") == 0)
@@ -654,7 +654,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
 		for (size_t i = 0; i < NumComparisonVariableSizeTypes; ++i)
 		{
-			ComboBox_AddString(g_hIPEEdit, Widen(COMPARISONVARIABLESIZE_STR[i]).c_str());
+			ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONVARIABLESIZE_STR[i]).c_str());
 
 			if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONVARIABLESIZE_STR[i]) == 0)
 				ComboBox_SetCurSel(g_hIPEEdit, i);
@@ -693,7 +693,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
 		for (size_t i = 0; i < NumComparisonTypes; ++i)
 		{
-			ComboBox_AddString(g_hIPEEdit, Widen(COMPARISONTYPE_STR[i]).c_str());
+			ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
 
 			if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONTYPE_STR[i]) == 0)
 				ComboBox_SetCurSel(g_hIPEEdit, i);

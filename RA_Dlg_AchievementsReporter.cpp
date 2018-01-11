@@ -40,8 +40,8 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cx = COL_SIZE[i];
 		col.cchTextMax = 255;
-		std::string str = COL_TITLE[i];	//	Hold the temporary object
-		col.pszText = const_cast<LPTSTR>(NativeStr(str).c_str());
+		tstring str = COL_TITLE[i];	//	Hold the temporary object
+		col.pszText = const_cast<LPTSTR>( str.c_str() );
 		col.iSubItem = i;
 
 		col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
@@ -91,8 +91,8 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
 	for (size_t i = 0; i < NumReporterColumns; ++i)
 	{
 		item.iSubItem = i;
-		std::string sStrWide = ms_lbxData[ms_nNumOccupiedRows][i];	//Scoped cache
-		item.pszText = const_cast<LPTSTR>(NativeStr(sStrWide).c_str());
+		tstring sStr = ms_lbxData[ms_nNumOccupiedRows][i];	//Scoped cache
+		item.pszText = const_cast<LPTSTR>( sStr.c_str() );
 
 		if (i == 0)
 			item.iItem = ListView_InsertItem(hList, &item);

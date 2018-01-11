@@ -739,9 +739,9 @@ void Dlg_Memory::ClearLogOutput()
 	ListBox_ResetContent(GetDlgItem(m_hWnd, IDC_RA_MEM_LIST));
 }
 
-void Dlg_Memory::AddLogLine(const std::string& sNextLine)
+void Dlg_Memory::AddLogLine(const tstring& sNextLine)
 {
-	ListBox_AddString(GetDlgItem(m_hWnd, IDC_RA_MEM_LIST), Widen(sNextLine).c_str());
+	ListBox_AddString(GetDlgItem(m_hWnd, IDC_RA_MEM_LIST), sNextLine.c_str());
 }
 
 
@@ -766,14 +766,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
 		TCHAR nativeBuffer[1024];
 		GetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, nativeBuffer, 1024);
-		const std::string buffer = Narrow(nativeBuffer);
+		const tstring buffer = nativeBuffer;
 		if ((buffer.length() >= 3) && buffer[0] == '0' && buffer[1] == 'x')
 		{
 			ByteAddress nAddr = static_cast<ByteAddress>(strtol(buffer.c_str() + 2, nullptr, 16));
 			unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
 
 			TCHAR sDesc[64];
-			_tprintf_s(sDesc, 64, "      %d %d %d %d %d %d %d %d",
+			_stprintf_s(sDesc, 64, _T("      %d %d %d %d %d %d %d %d"),
 				static_cast<int>((nVal & (1 << 7)) != 0),
 				static_cast<int>((nVal & (1 << 6)) != 0),
 				static_cast<int>((nVal & (1 << 5)) != 0),
@@ -888,7 +888,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 				TCHAR nativeBuffer[1024];
 				if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer, 1024))
 				{
-					std::string buffer = Narrow(nativeBuffer);
+					tstring buffer = nativeBuffer;
 					//	Read hex or dec
 					if (buffer[0] == '0' && buffer[1] == 'x')
 						nValueQuery = static_cast<unsigned int>(std::strtoul(buffer.c_str() + 2, NULL, 16));
@@ -1138,17 +1138,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
 		case IDC_RA_MEM_LIST:
 		{
-			wchar_t sSelectedString[1024];
+			TCHAR sSelectedString[1024];
 			HWND hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
 			ListBox_GetText(hListbox, ListBox_GetCurSel(hListbox), sSelectedString);
 
-			if (wcslen(sSelectedString) > 6 &&
+			if (_tcslen(sSelectedString) > 6 &&
 				sSelectedString[0] == '0' &&
 				sSelectedString[1] == 'x')
 			{
-				char nString[1024];
-				size_t nUnused = 0;
-				wcstombs_s(&nUnused, nString, sSelectedString, 1024);
+				TCHAR nString[1024];
+				_stprintf_s( nString, 1024, sSelectedString );
 				nString[8] = '\0';
 				ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(nString + 2, NULL, 16));	//	NB. Hex
 				ComboBox_SetText(GetDlgItem(hDlg, IDC_RA_WATCHING), NativeStr(nString).c_str());
@@ -1176,7 +1175,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 				int nSel = ComboBox_GetCurSel(hMemWatch);
 				if (nSel != CB_ERR)
 				{
-					wchar_t sAddr[64];
+					TCHAR sAddr[64];
 					if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
 					{
 						ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(Narrow(sAddr).c_str(), nullptr, 16));

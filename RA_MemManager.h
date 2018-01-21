@@ -8,13 +8,15 @@ public:
 	MemCandidate()
 	 :	m_nAddr( 0 ),
 		m_nLastKnownValue( 0 ),
-		m_bUpperNibble( FALSE )
+		m_bUpperNibble( FALSE ),
+		m_bHasChanged( FALSE )
 	{}
 	
 public:
 	unsigned int m_nAddr;
 	unsigned int m_nLastKnownValue;		//	A Candidate MAY be a 32-bit candidate!
 	bool m_bUpperNibble;				//	Used only for 4-bit comparisons
+	bool m_bHasChanged;
 };
 
 typedef unsigned char (_RAMByteReadFn)( unsigned int nOffs );
@@ -72,6 +74,9 @@ public:
 	
 	size_t NumCandidates() const									{ return m_nNumCandidates; }
 	const MemCandidate& GetCandidate( size_t nAt ) const			{ return m_Candidates[ nAt ]; }
+
+	inline void ChangeNumCandidates( unsigned int size )			{ m_nNumCandidates = size; }
+	MemCandidate* GetCandidatePointer()								{ return m_Candidates; }
 
 	void ChangeActiveMemBank( unsigned short nMemBank );
 

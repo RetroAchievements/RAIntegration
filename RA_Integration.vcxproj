@@ -203,6 +203,7 @@
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
     <ClCompile Include="RA_Dlg_GameTitle.cpp" />
     <ClCompile Include="RA_Dlg_Login.cpp" />
+    <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
@@ -235,6 +236,7 @@
     <ClInclude Include="RA_Dlg_GameLibrary.h" />
     <ClInclude Include="RA_Dlg_GameTitle.h" />
     <ClInclude Include="RA_Dlg_Login.h" />
+    <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />

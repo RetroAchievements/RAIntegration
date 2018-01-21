@@ -43,6 +43,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
 #define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
 #define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"
+#define RA_DIR_BOOKMARKS				RA_DIR_BASE##"Bookmarks\\"
 
 #define RA_GAME_HASH_FILENAME			RA_DIR_DATA##"gamehashlibrary.txt"
 #define RA_GAME_LIST_FILENAME			RA_DIR_DATA##"gametitles.txt"

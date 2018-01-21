@@ -2,6 +2,8 @@
 
 #include "RA_Defs.h"
 #include "RA_CodeNotes.h"
+#include "RA_MemManager.h"
+#include "RA_Condition.h"
 
 class CodeNotes;
 
@@ -44,6 +46,20 @@ private:
 	static unsigned int m_nCaretHeight;
 };
 
+class SearchResult
+{
+	public:
+		SearchResult() {}
+	public:
+		std::vector<MemCandidate> m_ResultCandidate;
+		unsigned int m_nCount = 0;
+		unsigned int m_nLastQueryVal = 0;
+		bool m_bUseLastValue;
+		std::wstring m_sFirstLine;
+		std::wstring m_sSecondLine;
+		ComparisonType m_nCompareType;
+};
+
 class Dlg_Memory
 {
 public:
@@ -53,7 +69,6 @@ public:
 	void Init();
 	
 	void ClearLogOutput();
-	void AddLogLine( const tstring& sNextLine );
 
 	static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
 	INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
@@ -83,8 +98,17 @@ private:
 
 	bool GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end );
 
+	void UpdateSearchResult( unsigned int index, unsigned int &nMemVal, wchar_t ( &buffer )[ 1024 ] );
+	bool CompareSearchResult ( unsigned int nCurVal, unsigned int nPrevVal );
+
 	static CodeNotes m_CodeNotes;
 	static HWND m_hWnd;
+
+	unsigned int m_nStart = 0;
+	unsigned int m_nEnd = 0;
+	ComparisonVariableSize m_nCompareSize;
+
+	std::vector<SearchResult> m_SearchResults;
 };
 
 extern Dlg_Memory g_MemoryDialog;

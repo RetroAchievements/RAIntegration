@@ -89,6 +89,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
+    <ClCompile Include="RA_Dlg_MemBookmark.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -182,6 +185,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_RichPresence.h" />
+    <ClInclude Include="RA_Dlg_MemBookmark.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

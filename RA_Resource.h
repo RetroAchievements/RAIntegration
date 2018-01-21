@@ -3,7 +3,21 @@
 // Used by RA_Shared.rc
 //
 #define IDD_RA_RICHPRESENCE             114
+#define IDD_RA_MEMBOOKMARK              117
 #define IDC_RA_RICHPRESENCERESULTTEXT   1022
+#define IDC_RA_LBX_ADDRESSES            1023
+#define IDC_RA_ADD_BOOKMARK             1024
+#define IDC_RA_DEL_BOOKMARK             1025
+#define IDC_RA_CLEAR_CHANGE             1026
+#define IDC_RA_RESULTS_BACK             1026
+#define IDC_RA_FREEZE                   1027
+#define IDC_RA_RESULTS_FORWARD          1027
+#define IDC_RA_BREAKPOINT               1028
+#define IDC_RA_RESULTS_REMOVE           1028
+#define IDC_RA_RESULTS_HIGHLIGHT        1029
+#define IDC_RA_DECIMALBOOKMARK          1029
+#define IDC_RA_SAVEBOOKMARK             1030
+#define IDC_RA_LOADBOOKMARK             1031
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -20,6 +34,7 @@
 #define IDC_RA_ADDNOTE                  1515
 #define IDC_RA_REMNOTE                  1516
 #define IDC_RA_UPLOAD_BADGE             1517
+#define IDC_RA_OPENBOOKMARKS            1518
 #define IDC_RA_INFO_GG                  1519
 #define IDC_RA_MEM_LIST                 1520
 #define IDC_RA_HELP                     1521
@@ -27,12 +42,10 @@
 #define IDC_RA_REVERTSELECTED           1523
 #define IDC_RA_RESET_ACH                1524
 #define IDC_RA_CHK_SHOW_DECIMALS        1526
-
 #define IDC_RA_DELETECOND               1527
-#define IDC_RA_COPYCOND                1528
+#define IDC_RA_COPYCOND                 1528
 #define IDC_RA_ACH_ID                   1529
 #define IDC_RA_DEL_ACH                  1530
-#define IDC_RA_DELETECOND2              1530
 #define IDC_RA_PASTECOND                1530
 #define IDC_RA_CHKACHPROCESSINGACTIVE   1531
 #define IDC_RA_GOTOWIKI                 1532
@@ -132,9 +145,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        116
+#define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1023
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -55,8 +55,8 @@ class SearchResult
 		unsigned int m_nCount = 0;
 		unsigned int m_nLastQueryVal = 0;
 		bool m_bUseLastValue;
-		std::wstring m_sFirstLine;
-		std::wstring m_sSecondLine;
+		tstring m_sFirstLine;
+		tstring m_sSecondLine;
 		ComparisonType m_nCompareType;
 };
 
@@ -98,7 +98,7 @@ private:
 
 	bool GetSelectedMemoryRange( ByteAddress& start, ByteAddress& end );
 
-	void UpdateSearchResult( unsigned int index, unsigned int &nMemVal, wchar_t ( &buffer )[ 1024 ] );
+	void UpdateSearchResult( unsigned int index, unsigned int &nMemVal, TCHAR ( &buffer )[ 1024 ] );
 	bool CompareSearchResult ( unsigned int nCurVal, unsigned int nPrevVal );
 
 	static CodeNotes m_CodeNotes;

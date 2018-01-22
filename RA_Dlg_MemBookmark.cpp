@@ -1,6 +1,6 @@
 #include "RA_Dlg_MemBookmark.h"
 
-#include "RA_Core.h";
+#include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
@@ -64,7 +64,7 @@ long _stdcall EditProcBM( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
 			lvDispinfo.item.pszText = nullptr;
 
 			wchar_t sEditText[ 256 ];
-			GetWindowText( hwnd, sEditText, 256 );
+			GetWindowTextW( hwnd, sEditText, 256 );
 			g_MemBookmarkDialog.Bookmarks()[ nSelItemBM ]->SetDescription( sEditText );
 
 			HWND hList = GetDlgItem( g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES );
@@ -187,7 +187,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 						rcLabel.left += ( offset / 2 );
 						rcLabel.right -= offset;
 
-						DrawText( pdis->hDC, buffer, wcslen( buffer ), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS );
+						DrawTextW( pdis->hDC, buffer, wcslen( buffer ), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS );
 					}
 
 					// Draw Item Label for remaining columns
@@ -258,7 +258,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 						rcLabel.left += offset;
 						rcLabel.right -= offset;
 
-						DrawText( pdis->hDC, buffer, wcslen( buffer ), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS );
+						DrawTextW( pdis->hDC, buffer, wcslen( buffer ), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS );
 					}
 
 					//if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
@@ -509,8 +509,8 @@ void Dlg_MemBookmark::SetupColumns( HWND hList )
 	{
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cx = COLUMN_WIDTH[ i ];
-		std::wstring colTitle = Widen( COLUMN_TITLE[ i ] );
-		col.pszText = const_cast<LPWSTR>( colTitle.c_str() );
+		tstring colTitle = NativeStr( COLUMN_TITLE[ i ] ).c_str();
+		col.pszText = const_cast<LPTSTR>( colTitle.c_str() );
 		col.cchTextMax = 255;
 		col.iSubItem = i;
 
@@ -536,7 +536,7 @@ void Dlg_MemBookmark::AddAddress()
 	MemBookmark* NewBookmark = new MemBookmark();
 
 	// Fetch Memory Address from Memory Inspector
-	wchar_t buffer[ 256 ];
+	TCHAR buffer[ 256 ];
 	GetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256 );
 	unsigned int nAddr = strtol( Narrow( buffer ).c_str(), nullptr, 16 );
 	NewBookmark->SetAddress( nAddr );
@@ -556,7 +556,7 @@ void Dlg_MemBookmark::AddAddress()
 	// Get Code Note and add as description
 	const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote( nAddr );
 	if ( ( pSavedNote != nullptr ) && ( pSavedNote->Note().length() > 0 ) )
-		NewBookmark->SetDescription( Widen( pSavedNote->Note().c_str() ) );
+		NewBookmark->SetDescription( Widen( pSavedNote->Note() ).c_str()  );
 
 	// Add Bookmark to vector and map
 	AddBookmark( NewBookmark );
@@ -641,13 +641,13 @@ void Dlg_MemBookmark::ExportJSON()
 {
 	if ( g_pCurrentGameData->GetGameID() == 0 )
 	{
-		MessageBox( nullptr, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
+		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
 		return;
 	}
 
 	if ( m_vBookmarks.size() == 0)
 	{
-		MessageBox( nullptr, L"No bookmarks to save: please create a bookmark before attempting to save.", L"Error!", MB_OK );
+		MessageBox( nullptr, _T("No bookmarks to save: please create a bookmark before attempting to save."), _T("Error!"), MB_OK );
 		return;
 	}
 
@@ -663,7 +663,7 @@ void Dlg_MemBookmark::ExportJSON()
 		if ( hr == S_OK )
 		{
 			char defaultFileName[ 512 ];
-			sprintf ( defaultFileName, "%s-Bookmarks.txt", std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
+			sprintf_s ( defaultFileName, 512, "%s-Bookmarks.txt", std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
 			hr = pDlg->SetFileName( Widen( defaultFileName ).c_str() );
 			if ( hr == S_OK )
 			{
@@ -693,7 +693,7 @@ void Dlg_MemBookmark::ExportJSON()
 								{
 									Value item( kObjectType );
 									char buffer[ 256 ];
-									wcstombs( buffer, bookmark->Description().c_str(), sizeof( buffer ) );
+									sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
 									Value s( buffer, allocator );
 
 									item.AddMember( "Description", s, allocator );
@@ -757,7 +757,7 @@ void Dlg_MemBookmark::ImportFromFile( std::string sFilename )
 			else
 			{
 				ASSERT ( " !Invalid Bookmark File..." );
-				MessageBox( nullptr, L"Could not load properly. Invalid Bookmark file.", L"Error", MB_OK | MB_ICONERROR );
+				MessageBox( nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR );
 				return;
 			}
 		}
@@ -772,7 +772,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 
 	if ( g_pCurrentGameData->GetGameID() == 0 )
 	{
-		MessageBox( nullptr, L"ROM not loaded: please load a ROM first!", L"Error!", MB_OK );
+		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
 		return str;
 	}
 
@@ -840,8 +840,8 @@ BOOL Dlg_MemBookmark::EditLabel ( int nItem, int nSubItem )
 
 	g_hIPEEditBM = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
-		L"EDIT",
-		L"",
+		_T("EDIT"),
+		_T(""),
 		WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
 		rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.5f*nHeight ),
 		g_MemBookmarkDialog.GetHWND(),
@@ -852,12 +852,12 @@ BOOL Dlg_MemBookmark::EditLabel ( int nItem, int nSubItem )
 	if ( g_hIPEEditBM == NULL )
 	{
 		ASSERT( !"Could not create edit box!" );
-		MessageBox( nullptr, L"Could not create edit box.", L"Error", MB_OK | MB_ICONERROR );
+		MessageBox( nullptr, _T("Could not create edit box."), _T("Error"), MB_OK | MB_ICONERROR );
 		return FALSE;
 	};
 
 	SendMessage( g_hIPEEditBM, WM_SETFONT, (WPARAM)GetStockObject( DEFAULT_GUI_FONT ), TRUE );
-	SetWindowText( g_hIPEEditBM, m_vBookmarks[ nItem ]->Description().c_str() );
+	SetWindowText( g_hIPEEditBM, NativeStr( m_vBookmarks[ nItem ]->Description() ).c_str() );
 
 	SendMessage( g_hIPEEditBM, EM_SETSEL, 0, -1 );
 	SetFocus( g_hIPEEditBM );

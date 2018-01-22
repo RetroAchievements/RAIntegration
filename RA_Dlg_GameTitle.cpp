@@ -113,7 +113,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 			{
 				//	Existing title
 				ASSERT( m_aGameTitles.find( std::string( sSelectedTitle ) ) != m_aGameTitles.end() );
-				nGameID = m_aGameTitles[ std::string( sSelectedTitle ) ];
+				nGameID = m_aGameTitles[ std::string( Narrow(sSelectedTitle) ) ];
 			}
 
 			PostArgs args;

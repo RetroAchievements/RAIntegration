@@ -83,7 +83,12 @@ char* Achievement::ParseMemString( char* sMem )
 			nNewCond.ParseFromString( pBuffer );
 			NewConditionGroup.push_back( nNewCond );
 		}
-		while( *pBuffer == '_' || *pBuffer == 'R' || *pBuffer == 'P' ); //	AND, ResetIf, PauseIf
+		while( *pBuffer == '_' ||	// AND
+			*pBuffer == 'R' ||		// ResetIf
+			*pBuffer == 'P' ||		// PauseIf
+			*pBuffer == 'A' ||		// AddSource
+			*pBuffer == 'B' ||		// SubSource
+			*pBuffer == 'C' );		// AddHits
 
 		for( size_t i = 0; i < NewConditionGroup.size(); ++i )
 			AddCondition( nCondGroupID, NewConditionGroup[i] );
@@ -358,6 +363,12 @@ std::string Achievement::CreateMemString() const
 				strcat_s( sNextCondition, 256, "R:" );
 			else if( NextCond.IsPauseCondition() )
 				strcat_s( sNextCondition, 256, "P:" );
+			else if ( NextCond.IsAddCondition() )
+				strcat_s( sNextCondition, 256, "A:" );
+			else if ( NextCond.IsSubCondition() )
+				strcat_s( sNextCondition, 256, "B:" );
+			else if ( NextCond.IsAddHitsCondition() )
+				strcat_s( sNextCondition, 256, "C:" );
 			
 			//	Source:
 			if( ( Src.Type() == Address ) || 

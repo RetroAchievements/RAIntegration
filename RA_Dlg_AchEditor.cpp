@@ -16,8 +16,8 @@
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "ID", "Special?", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-	const int COLUMN_WIDTH[] = { 30, 53, 42, 50, 60, 35, 42, 50, 60, 72 };
+	const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
+	const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 60, 35, 42, 50, 60, 72 };
 	static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
@@ -526,39 +526,41 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
 	case CSI_GROUP:
 	{
-		//	Group: BOOL (dropdown?)
-		if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
+		//	Condition: dropdown
+		ASSERT( g_hIPEEdit == NULL );
+		if ( g_hIPEEdit )
+			break;
+
+		g_hIPEEdit = CreateWindowEx(
+			WS_EX_CLIENTEDGE,
+			TEXT( "ComboBox" ),
+			TEXT( "" ),
+			WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
+			rcSubItem.left, rcSubItem.top, nWidth * 1.5f, (int)( 1.6f * nHeight * Condition::NumConditionTypes ),
+			g_AchievementEditorDialog.GetHWND(),
+			0,
+			GetModuleHandle( NULL ),
+			NULL );
+
+		if ( g_hIPEEdit == NULL )
 		{
-			const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-			Condition& rCond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-			//wchar_t* sNewText = rCond.IsResetCondition() ? L"PauseIf:" : rCond.IsPauseCondition() ? TEXT("") : L"ResetIf:";
-			const char* sNewText = CONDITIONTYPE_STR[(rCond.GetConditionType() + 1) % Condition::NumConditionTypes];
+			ASSERT( !"Could not create combo box!" );
+			MessageBox( nullptr, TEXT( "Could not create combo box." ), TEXT( "Error" ), MB_OK | MB_ICONERROR );
+			break;
+		};
 
-			HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
+		for ( size_t i = 0; i < Condition::NumConditionTypes; ++i )
+		{
+			ComboBox_AddString( g_hIPEEdit, NativeStr( CONDITIONTYPE_STR[ i ] ).c_str() );
 
-			LVITEM lvItem;
-			ZeroMemory(&lvItem, sizeof(lvItem));
-			lvItem.iItem = nItem;
-			lvItem.iSubItem = nSubItem;
-			tstring sStrWide = sNewText;	//	Scoped cache!
-			lvItem.pszText = const_cast<LPTSTR>( sStrWide.c_str() );
-			lvItem.cchTextMax = 256;
-
-			//	Inject the new text into the lbx
-			SendDlgItemMessage(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS, LVM_SETITEMTEXT, (WPARAM)lvItem.iItem, (LPARAM)&lvItem); // put new text
-
-			//	Update the cached data:
-			char* sData = g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem);
-			strcpy_s(sData, MEM_STRING_TEXT_LEN, sNewText);
-
-			//	Update the achievement data
-			rCond.SetConditionType(static_cast<Condition::ConditionType>((rCond.GetConditionType() + 1) % Condition::NumConditionTypes));
-
-			// achievement is now dirty
-			Achievement* pActiveAch = g_AchievementEditorDialog.ActiveAchievement();
-			pActiveAch->SetModified(TRUE);
-			g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+			if ( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), CONDITIONTYPE_STR[ i ] ) == 0 )
+				ComboBox_SetCurSel( g_hIPEEdit, i );
 		}
+
+		SendMessage( g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject( DEFAULT_GUI_FONT ), TRUE );
+		ComboBox_ShowDropdown( g_hIPEEdit, TRUE );
+
+		EOldProc = (WNDPROC)SetWindowLong( g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc );
 	}
 	break;
 
@@ -1486,6 +1488,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 			Condition& rCond = pActiveAch->GetCondition(GetSelectedConditionGroup(), pDispInfo->item.iItem);
 			switch (pDispInfo->item.iSubItem)
 			{
+			case CSI_GROUP:
+			{
+				for ( int i = 0; i < Condition::NumConditionTypes; ++i )
+				{
+					if ( strcmp( sData, CONDITIONTYPE_STR[ i ] ) == 0 )
+						rCond.SetConditionType( static_cast<Condition::ConditionType>( i ) );
+				}
+				break;
+			}
 			case CSI_TYPE_SRC:
 			{
 				if (strcmp(sData, "Mem") == 0)

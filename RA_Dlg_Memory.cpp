@@ -1330,6 +1330,7 @@ void Dlg_Memory::OnLoad_NewRom()
 				wsprintf(label, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
 
 			SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label);
+			EnableWindow( GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM ), TRUE );
 		}
 		else
 		{
@@ -1346,6 +1347,7 @@ void Dlg_Memory::OnLoad_NewRom()
 				wsprintf(label, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
 
 			SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label);
+			EnableWindow( GetDlgItem( g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM ), TRUE );
 		}
 		else
 		{
@@ -1453,6 +1455,13 @@ bool Dlg_Memory::GetSystemMemoryRange(ByteAddress& start, ByteAddress& end)
 		end = 0xDFFF;
 		return TRUE;
 
+	case ConsoleID::N64:
+		// $00000-$3FFFFF covers the standard 4MB RDRAM.
+		// $00000-$1FFFFF is RDRAM range 0, while $200000-$3FFFFF is RDRAM range 1.
+		start = 0x000000;
+		end = 0x3FFFFF;
+		return TRUE;
+
 	default:
 		start = 0;
 		end = 0;
@@ -1502,6 +1511,20 @@ bool Dlg_Memory::GetGameMemoryRange(ByteAddress& start, ByteAddress& end)
 		end = 0xBFFF;
 		return TRUE;
 
+	case ConsoleID::N64:
+		// This range contains the extra 4MB provided by the Expansion Pak.
+		// Only avaliable when memory size is greater than 4MB.
+		if ( g_MemManager.TotalBankSize() > 0x400000 )
+		{
+			start = 0x400000;
+			end = 0x7FFFFF;
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+		
 	default:
 		start = 0;
 		end = 0;

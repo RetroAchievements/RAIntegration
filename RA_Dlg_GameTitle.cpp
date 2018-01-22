@@ -38,7 +38,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 
 		//	Populate the dropdown
 		//	***Do blocking fetch of all game titles.***
-		int nSel = ComboBox_AddString( hKnownGamesCbo, Widen( "<New Title>" ).c_str() );
+		int nSel = ComboBox_AddString( hKnownGamesCbo, NativeStr( "<New Title>" ).c_str() );
 		ComboBox_SetCurSel( hKnownGamesCbo, nSel );
 
 		PostArgs args;
@@ -74,7 +74,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 				{
 					const std::string& sTitle = iter->first;
 
-					nSel = ComboBox_AddString( hKnownGamesCbo, Widen( sTitle ).c_str() );
+					nSel = ComboBox_AddString( hKnownGamesCbo, NativeStr( sTitle ).c_str() );
 
 					//	Attempt to find this game and select it by default: case insensitive comparison
 					if (sGameTitleTidy.compare(sTitle) == 0)
@@ -98,22 +98,22 @@ INT_PTR Dlg_GameTitle::GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 		case IDOK:
 		{
 			//	Fetch input data:
-			TCHAR sSelectedTitleWide[ 512 ];
-			ComboBox_GetText( GetDlgItem( hDlg, IDC_RA_KNOWNGAMES ), sSelectedTitleWide, 512 );
-			std::string sSelectedTitle = Narrow( sSelectedTitleWide );
+			TCHAR sSelectedTitleBuffer[ 512 ];
+			ComboBox_GetText( GetDlgItem( hDlg, IDC_RA_KNOWNGAMES ), sSelectedTitleBuffer, 512 );
+			tstring sSelectedTitle = sSelectedTitleBuffer;
 
 			GameID nGameID = 0;
 			if( strcmp( sSelectedTitle.c_str(), "<New Title>" ) == 0 )
 			{
 				//	Add a new title!
-				GetDlgItemText( hDlg, IDC_RA_GAMETITLE, sSelectedTitleWide, 512 );
-				sSelectedTitle = Narrow(sSelectedTitleWide);
+				GetDlgItemText( hDlg, IDC_RA_GAMETITLE, sSelectedTitleBuffer, 512 );
+				sSelectedTitle = sSelectedTitleBuffer;
 			}
 			else
 			{
 				//	Existing title
 				ASSERT( m_aGameTitles.find( std::string( sSelectedTitle ) ) != m_aGameTitles.end() );
-				nGameID = m_aGameTitles[ std::string( sSelectedTitle ) ];
+				nGameID = m_aGameTitles[ std::string( Narrow(sSelectedTitle) ) ];
 			}
 
 			PostArgs args;

@@ -27,6 +27,7 @@
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_RichPresence.h"
 #include "RA_Dlg_RomChecksum.h"
+#include "RA_Dlg_MemBookmark.h"
 
 #include <locale>
 #include <codecvt>
@@ -69,18 +70,21 @@ API const char* CCONV _RA_IntegrationVersion()
 API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
 {
 	//	Ensure all required directories are created:
-	if (DirectoryExists(RA_DIR_BASE) == FALSE)
-		_mkdir(RA_DIR_BASE);
-	if (DirectoryExists(RA_DIR_BADGE) == FALSE)
-		_mkdir(RA_DIR_BADGE);
-	if (DirectoryExists(RA_DIR_DATA) == FALSE)
-		_mkdir(RA_DIR_DATA);
-	if (DirectoryExists(RA_DIR_USERPIC) == FALSE)
-		_mkdir(RA_DIR_USERPIC);
-	if (DirectoryExists(RA_DIR_OVERLAY) == FALSE)	//	It should already, really...
-		_mkdir(RA_DIR_OVERLAY);
+	if( DirectoryExists( RA_DIR_BASE ) == FALSE )
+		_mkdir( RA_DIR_BASE );
+	if( DirectoryExists( RA_DIR_BADGE ) == FALSE )
+		_mkdir( RA_DIR_BADGE );
+	if( DirectoryExists( RA_DIR_DATA ) == FALSE )
+		_mkdir( RA_DIR_DATA );
+	if( DirectoryExists( RA_DIR_USERPIC ) == FALSE )
+		_mkdir( RA_DIR_USERPIC );
+	if( DirectoryExists( RA_DIR_OVERLAY ) == FALSE )	//	It should already, really...
+		_mkdir( RA_DIR_OVERLAY );
+	if ( DirectoryExists( RA_DIR_BOOKMARKS ) == FALSE )
+		_mkdir( RA_DIR_BOOKMARKS );
 
-	g_EmulatorID = static_cast<EmulatorID>(nEmulatorID);
+
+	g_EmulatorID = static_cast<EmulatorID>( nEmulatorID );
 	g_RAMainWnd = hMainHWND;
 	//g_hThisDLLInst
 
@@ -238,11 +242,17 @@ API int CCONV _RA_Shutdown()
 	}
 
 	g_GameLibrary.KillThread();
-
-	if (g_RichPresenceDialog.GetHWND() != nullptr)
+	
+	if ( g_RichPresenceDialog.GetHWND() != nullptr )
 	{
 		DestroyWindow(g_RichPresenceDialog.GetHWND());
 		g_RichPresenceDialog.InstallHWND(nullptr);
+	}
+
+	if ( g_MemBookmarkDialog.GetHWND() != nullptr )
+	{
+		DestroyWindow( g_MemBookmarkDialog.GetHWND() );
+		g_MemBookmarkDialog.InstallHWND( nullptr );
 	}
 
 	CoUninitialize();
@@ -393,6 +403,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 	g_AchievementEditorDialog.OnLoad_NewRom();
 	g_MemoryDialog.OnLoad_NewRom();
 	g_AchievementOverlay.OnLoad_NewRom();
+	g_MemBookmarkDialog.OnLoad_NewRom();
 
 	return 0;
 }

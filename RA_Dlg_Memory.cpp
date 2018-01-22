@@ -11,9 +11,6 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#include <thread>
-#include <mutex>
-
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif

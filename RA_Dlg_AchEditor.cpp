@@ -982,7 +982,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 					TCHAR buffer[1024];
 					if (GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
 					{
-						pActiveAch->SetTitle(Narrow(buffer));
+						pActiveAch->SetTitle(NativeStr(buffer));
 
 						//	Persist/Update/Inject local LBX data back into LBX (?)
 						g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Title, pActiveAch->Title());
@@ -1043,7 +1043,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 				TCHAR buffer[16];
 				if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer, 16))
 				{
-					int nVal = strtol(Narrow(buffer).c_str(), nullptr, 10);
+					int nVal = strtol(NativeStr(buffer).c_str(), nullptr, 10);
 					if (nVal < 0 || nVal > 100)
 						return FALSE;
 

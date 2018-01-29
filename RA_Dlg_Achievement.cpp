@@ -1190,8 +1190,8 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
 		item.iItem = nItem;
 		item.iSubItem = nColumn;
 		item.cchTextMax = 256;
-		std::string sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
-		item.pszText = const_cast<LPTSTR>(NativeStr(sStr).c_str());
+		tstring sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
+		item.pszText = const_cast<LPTSTR>( sStr.c_str() );
 		if (ListView_SetItem(hList, &item) == FALSE)
 		{
 			ASSERT(!"Failed to ListView_SetItem!");

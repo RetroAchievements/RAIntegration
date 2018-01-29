@@ -783,6 +783,10 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				return FALSE;
 			}
 
+			// Update Search Results
+			InvalidateRect( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), NULL, TRUE );
+
+			// Display Bits
 			bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
 			if ( !bView8Bit )
 			{
@@ -813,8 +817,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				if ( _tcscmp( sDesc, nativeBuffer ) != 0 )
 					SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
 			}
-
-			InvalidateRect( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), NULL, TRUE );
 		}
 		return FALSE;
 
@@ -837,7 +839,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_TESTVAL ), FALSE );
 
 			for ( size_t i = 0; i < NumComparisonTypes; ++i )
-				ComboBox_AddString( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), Widen( COMPARISONTYPE_STR[ i ] ).c_str() );
+				ComboBox_AddString( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), NativeStr( COMPARISONTYPE_STR[ i ] ).c_str() );
 
 			ComboBox_SetCurSel( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), 0 );
 
@@ -1234,7 +1236,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					{
 						//	Doesn't yet exist: add it newly!
 						m_CodeNotes.Add( nAddr, RAUsers::LocalUser().Username(), sNewNote );
-						ComboBox_AddString( hMemWatch, Widen( sAddress ).c_str() );
+						ComboBox_AddString( hMemWatch, NativeStr( sAddress ).c_str() );
 					}
 
 					return FALSE;
@@ -1259,7 +1261,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 					SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, TEXT( "" ) );
 
-					int nIndex = ComboBox_FindString( hMemWatch, -1, Widen( sAddress ).c_str() );
+					int nIndex = ComboBox_FindString( hMemWatch, -1, NativeStr( sAddress ).c_str() );
 					if ( nIndex != CB_ERR )
 						ComboBox_DeleteString( hMemWatch, nIndex );
 
@@ -1625,7 +1627,7 @@ void Dlg_Memory::AddBank(size_t nBankID)
 		return;
 
 	HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-	int nIndex = ComboBox_AddString(hMemBanks, Widen(std::to_string(nBankID)).c_str());
+	int nIndex = ComboBox_AddString(hMemBanks, NativeStr(std::to_string(nBankID)).c_str());
 	if (nIndex != CB_ERR)
 	{
 		ComboBox_SetItemData(hMemBanks, nIndex, nBankID);

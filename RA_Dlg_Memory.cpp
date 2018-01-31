@@ -20,6 +20,9 @@
 
 namespace
 {
+	const size_t MIN_RESULTS_TO_DUMP = 500000;
+	const size_t MIN_SEARCH_PAGE_SIZE = 50;
+
 	const char* COMP_STR[] = {
 		{ "EQUAL" },
 		{ "LESS THAN" },
@@ -1053,6 +1056,12 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					m_SearchResults.push_back( sr );
 					m_nPage++;
 
+					if ( m_SearchResults.size() > MIN_SEARCH_PAGE_SIZE )
+					{
+						m_SearchResults.erase ( m_SearchResults.begin() );
+						m_nPage--;
+					}
+
 					EnableWindow( GetDlgItem( hDlg, IDC_RA_RESULTS_BACK ), TRUE );
 					EnableWindow( GetDlgItem( hDlg, IDC_RA_RESULTS_FORWARD ), FALSE );
 
@@ -1098,9 +1107,14 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					for ( size_t i = 0; i < nResults; i++ )
 					{
 						m_SearchResults[ m_nPage ].m_ResultCandidate.push_back ( g_MemManager.GetCandidate( i ) );
+						if ( i >= MIN_RESULTS_TO_DUMP - 1 )
+						{
+							m_SearchResults[ m_nPage ].m_sSecondLine += " (Displaying first " + std::to_string(MIN_RESULTS_TO_DUMP) + " results)";
+							break;
+						}
 					}
 
-					ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), nResults + 2 );
+					ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), m_SearchResults[ m_nPage ].m_ResultCandidate.size() + 2 );
 
 					EnableWindow( GetDlgItem( hDlg, IDC_RA_DOTEST ), g_MemManager.NumCandidates() > 0 );
 				}
@@ -1304,19 +1318,24 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				{
 					m_nPage--;
 
-					if ( m_nPage > 0 )
+					if ( m_SearchResults[m_nPage].m_sSecondLine.length() > 0)
 					{
 						g_MemManager.ChangeNumCandidates ( m_SearchResults[ m_nPage ].m_nCount );
 						MemCandidate* candidate = g_MemManager.GetCandidatePointer();
 
-						for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_nCount; i++ )
+						for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_ResultCandidate.size(); i++ )
 						{
 							candidate[ i ].m_nAddr = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nAddr;
 							candidate[ i ].m_nLastKnownValue = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nLastKnownValue;
 							candidate[ i ].m_bUpperNibble = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bUpperNibble;
 							candidate[ i ].m_bHasChanged = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bHasChanged;
 						}
-						EnableWindow( GetDlgItem( hDlg, IDC_RA_RESULTS_FORWARD ), TRUE );
+
+						if ( m_nPage != 0 )
+							EnableWindow( GetDlgItem( hDlg, IDC_RA_RESULTS_FORWARD ), TRUE );
+						else
+							EnableWindow( GetDlgItem( hDlg, IDC_RA_RESULTS_BACK ), FALSE );
+
 						ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), m_SearchResults[ m_nPage ].m_nCount + 2 );
 					}
 					else
@@ -1328,6 +1347,29 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 						ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), 1 );
 					}
 
+					return FALSE;
+				}
+
+				case IDC_RA_RESULTS_FORWARD:
+				{
+					m_nPage++;
+
+					g_MemManager.ChangeNumCandidates ( m_SearchResults[ m_nPage ].m_nCount );
+					MemCandidate* candidate = g_MemManager.GetCandidatePointer();
+
+					for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_ResultCandidate.size(); i++ )
+					{
+						candidate[ i ].m_nAddr = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nAddr;
+						candidate[ i ].m_nLastKnownValue = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nLastKnownValue;
+						candidate[ i ].m_bUpperNibble = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bUpperNibble;
+						candidate[ i ].m_bHasChanged = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bHasChanged;
+					}
+
+					EnableWindow( GetDlgItem( m_hWnd, IDC_RA_RESULTS_BACK ), TRUE );
+					if ( m_nPage == m_SearchResults.size() - 1 )
+						EnableWindow( GetDlgItem( m_hWnd, IDC_RA_RESULTS_FORWARD ), FALSE );
+
+					ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), m_SearchResults[ m_nPage ].m_nCount + 2 );
 					return FALSE;
 				}
 
@@ -1350,14 +1392,14 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							m_SearchResults[ m_nPage ].m_ResultCandidate.erase(
 								m_SearchResults[ m_nPage ].m_ResultCandidate.begin() + ( nSel - 2 ) );
 
+							m_SearchResults[ m_nPage ].m_nCount--;
 							ListView_DeleteItem( hList, nSel );
 							nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
 						}
 
-						m_SearchResults[ m_nPage ].m_nCount = m_SearchResults[ m_nPage ].m_ResultCandidate.size();
 						MemCandidate* candidate = g_MemManager.GetCandidatePointer();
 
-						for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_nCount; i++ )
+						for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_ResultCandidate.size(); i++ )
 						{
 							candidate[ i ].m_nAddr = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nAddr;
 							candidate[ i ].m_nLastKnownValue = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nLastKnownValue;
@@ -1366,34 +1408,15 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 						}
 
 						TCHAR buffer[ 1024 ];
-						_stprintf_s( buffer, sizeof( buffer ), _T( "Found %d matches!" ), m_SearchResults[ m_nPage ].m_nCount );
+						if ( m_SearchResults[ m_nPage ].m_nCount > MIN_RESULTS_TO_DUMP )
+							_stprintf_s( buffer, sizeof( buffer ), _T( "Found %d matches! (Displaying first %d results)" ), m_SearchResults[ m_nPage ].m_nCount, MIN_RESULTS_TO_DUMP );
+						else
+							_stprintf_s( buffer, sizeof( buffer ), _T( "Found %d matches!" ), m_SearchResults[ m_nPage ].m_nCount );
+
 						m_SearchResults[ m_nPage ].m_sSecondLine = buffer;
 					}
 
 
-					return FALSE;
-				}
-
-				case IDC_RA_RESULTS_FORWARD:
-				{
-					m_nPage++;
-
-					g_MemManager.ChangeNumCandidates ( m_SearchResults[ m_nPage ].m_nCount );
-					MemCandidate* candidate = g_MemManager.GetCandidatePointer();
-
-					for ( unsigned int i = 0; i < m_SearchResults[ m_nPage ].m_nCount; i++ )
-					{
-						candidate[ i ].m_nAddr = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nAddr;
-						candidate[ i ].m_nLastKnownValue = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_nLastKnownValue;
-						candidate[ i ].m_bUpperNibble = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bUpperNibble;
-						candidate[ i ].m_bHasChanged = m_SearchResults[ m_nPage ].m_ResultCandidate[ i ].m_bHasChanged;
-					}
-
-					EnableWindow( GetDlgItem( m_hWnd, IDC_RA_RESULTS_BACK ), TRUE );
-					if ( m_nPage == m_SearchResults.size() - 1 )
-						EnableWindow( GetDlgItem( m_hWnd, IDC_RA_RESULTS_FORWARD ), FALSE );
-
-					ListView_SetItemCount( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), m_SearchResults[ m_nPage ].m_nCount + 2 );
 					return FALSE;
 				}
 

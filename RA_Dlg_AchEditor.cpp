@@ -204,16 +204,25 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 	sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
 	sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
 	sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
-	sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
-	sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
-	sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
-	sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-	sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
+	sprintf_s( m_lbxData[ nRow ][ CSI_COMPARISON ], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[ Cond.CompareType() ] );
+	sprintf_s( m_lbxData[ nRow ][ CSI_TYPE_TGT ], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst );
+	sprintf_s( m_lbxData[ nRow ][ CSI_SIZE_TGT ], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst );
+	sprintf_s( m_lbxData[ nRow ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue() );
+	sprintf_s( m_lbxData[ nRow ][ CSI_HITCOUNT ], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits() );
 
 	if (g_bPreferDecimalVal)
 	{
 		if (Cond.CompTarget().Type() == ValueComparison)
 			sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
+	}
+
+	if ( Cond.IsAddCondition() || Cond.IsSubCondition() )
+	{
+		sprintf_s( m_lbxData[ nRow ][ CSI_COMPARISON ], MEM_STRING_TEXT_LEN, "" );
+		sprintf_s( m_lbxData[ nRow ][ CSI_TYPE_TGT ], MEM_STRING_TEXT_LEN, "" );
+		sprintf_s( m_lbxData[ nRow ][ CSI_SIZE_TGT ], MEM_STRING_TEXT_LEN, "" );
+		sprintf_s( m_lbxData[ nRow ][ CSI_VALUE_TGT ], MEM_STRING_TEXT_LEN, "" );
+		sprintf_s( m_lbxData[ nRow ][ CSI_HITCOUNT ], MEM_STRING_TEXT_LEN, "" );
 	}
 
 	for (size_t i = 0; i < NumColumns; ++i)
@@ -572,6 +581,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
 		if (g_hIPEEdit)
 			break;
 
+		if ( nSubItem == CSI_TYPE_TGT )
+		{ 
+			const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
+			const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition( nGrp, nItem );
+
+			if ( Cond.IsAddCondition() || Cond.IsSubCondition() )
+				break;
+		}
+
 		const int nNumItems = 3;	//	"Mem", "Delta" or "Value"
 
 		g_hIPEEdit = CreateWindowEx(
@@ -636,6 +654,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
 			break;
 		}
 
+		if ( nSubItem == CSI_SIZE_TGT )
+		{
+			const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
+			const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition( nGrp, nItem );
+
+			if ( Cond.IsAddCondition() || Cond.IsSubCondition() )
+				break;
+		}
+
 		g_hIPEEdit = CreateWindowEx(
 			WS_EX_CLIENTEDGE,
 			TEXT("ComboBox"),
@@ -673,6 +700,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
 		//	Compare: dropdown
 		ASSERT(g_hIPEEdit == NULL);
 		if (g_hIPEEdit)
+			break;
+
+		const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
+		const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition( nGrp, nItem );
+		if ( Cond.IsAddCondition() || Cond.IsSubCondition() )
 			break;
 
 		g_hIPEEdit = CreateWindowEx(
@@ -714,6 +746,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
 		ASSERT(g_hIPEEdit == NULL);
 		if (g_hIPEEdit)
 			break;
+
+		if ( nSubItem != CSI_VALUE_SRC )
+		{
+			const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
+			const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition( nGrp, nItem );
+
+			if ( Cond.IsAddCondition() || Cond.IsSubCondition() )
+				break;
+		}
 
 		g_hIPEEdit = CreateWindowEx(
 			WS_EX_CLIENTEDGE,
@@ -1495,6 +1536,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 					if ( strcmp( sData, CONDITIONTYPE_STR[ i ] ) == 0 )
 						rCond.SetConditionType( static_cast<Condition::ConditionType>( i ) );
 				}
+				UpdateCondition( GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS ), pDispInfo->item, rCond );
 				break;
 			}
 			case CSI_TYPE_SRC:

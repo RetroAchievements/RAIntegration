@@ -146,3 +146,5 @@ extern std::string _TimeStampToString( time_t nTime );
 extern std::string GetFolderFromDialog();
 
 extern BOOL RemoveFileIfExists(const std::string& sFilePath);
+
+BOOL CanCausePause();

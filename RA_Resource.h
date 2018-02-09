@@ -78,7 +78,7 @@
 #define IDC_RA_CBO_CMPTYPE              1559
 #define IDC_RA_CBO_LASTKNOWNVAL         1560
 #define IDC_RA_CBO_GIVENVAL             1561
-#define IDC_RA_ACH_AUTHOR2              1562
+#define IDC_RA_CHK_ACH_ACTIVE           1562
 #define IDC_RA_GAMETITLE                1563
 #define IDC_RA_BADGENAME                1564
 #define IDC_RA_KNOWNGAMES               1565
@@ -100,7 +100,9 @@
 #define IDC_RA_MEMTEXTVIEWER            1582
 #define IDC_RA_MEMBITS                  1583
 #define IDC_RA_MEMBITS_TITLE            1584
+#define IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER 1585
 #define IDC_RA_REPORTBROKENACHIEVEMENTSLIST 1586
+#define IDC_RA_CHK_ACH_PAUSE_ON_RESET   1586
 #define IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT 1587
 #define IDC_RA_PROBLEMTYPE1             1588
 #define IDC_RA_PROBLEMTYPE2             1589

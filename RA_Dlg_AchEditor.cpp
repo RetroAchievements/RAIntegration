@@ -858,7 +858,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 		m_BadgeNames.FetchNewBadgeNamesThreaded();
 
 		if (m_pSelectedAchievement != NULL)
-			RepopulateGroupList(m_pSelectedAchievement);
+  		    RepopulateGroupList(m_pSelectedAchievement);
+
+		if (!CanCausePause())
+		{
+            ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
+            ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);
+		}
 	}
 	return TRUE;
 
@@ -947,8 +953,36 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 				ActiveAchievement()->ClearDirtyFlag();
 			}
 			bHandled = TRUE;
+			break;
 		}
-		break;
+
+		case IDC_RA_CHK_ACH_ACTIVE:
+			if (ActiveAchievement() != NULL)
+			{
+				SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, NULL);
+				CheckDlgButton(hDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
+			}
+			bHandled = TRUE;
+			break;
+
+		case IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER:
+			{
+				if (ActiveAchievement() != NULL)
+					ActiveAchievement()->SetPauseOnTrigger(!ActiveAchievement()->GetPauseOnTrigger());
+
+				bHandled = TRUE;
+			}
+			break;
+
+		case IDC_RA_CHK_ACH_PAUSE_ON_RESET:
+			{
+				if (ActiveAchievement() != NULL)
+					ActiveAchievement()->SetPauseOnReset(!ActiveAchievement()->GetPauseOnReset());
+
+				bHandled = TRUE;
+			}
+			break;
+
 		// 		case ID_SELECT_ALL:
 		// 			{
 		// 				HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
@@ -1789,6 +1823,10 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
 		SetSelectedConditionGroup(0);	//	Select 0 by default
 		PopulateConditions(m_pSelectedAchievement);
 
+		CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
+		CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, ActiveAchievement()->GetPauseOnTrigger());
+		CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
+
 		sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->ID());
 		SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
 
@@ -1827,6 +1865,8 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
 
 		if (!m_pSelectedAchievement->IsDirty())
 			return;
+
+		CheckDlgButton( m_hAchievementEditorDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active() );
 
 		m_bPopulatingAchievementEditorData = TRUE;
 

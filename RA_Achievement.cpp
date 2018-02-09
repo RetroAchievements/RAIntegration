@@ -31,7 +31,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 Achievement::Achievement( AchievementSetType nType ) :
-	m_nSetType( nType )
+	m_nSetType( nType ), m_bPauseOnTrigger( FALSE ), m_bPauseOnReset( FALSE )
 {
 	Clear();
 	m_vConditions.push_back( ConditionSet() );
@@ -195,9 +195,19 @@ BOOL Achievement::Test()
 	{
 		SetDirtyFlag( Dirty_Conditions );
 	}
+
 	if( bResetConditions )
 	{
 		Reset();
+
+		if ( GetPauseOnReset() )
+		{
+			RA_CausePause();
+
+			char buffer[256];
+			sprintf_s( buffer, 256, "Pause on Reset: %s", Title().c_str() );
+			MessageBox( g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK );
+		}
 	}
 
 	return bRetVal && bRetValSubCond;
@@ -221,6 +231,8 @@ void Achievement::Clear()
 	m_nPointValue = 0;
 	m_bActive = FALSE;
 	m_bModified = FALSE;
+	m_bPauseOnTrigger = FALSE;
+	m_bPauseOnReset = FALSE;
 	ClearDirtyFlag();
 	ClearBadgeImage();
 

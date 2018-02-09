@@ -1455,3 +1455,8 @@ BOOL RemoveFileIfExists(const std::string& sFilePath)
 		return TRUE;
 	}
 }
+
+BOOL CanCausePause()
+{
+	return ( _RA_CausePause != nullptr );
+}

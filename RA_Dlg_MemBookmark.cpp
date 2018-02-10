@@ -9,6 +9,8 @@
 #include <strsafe.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
+std::vector<ResizeContent> vDlgMemBookmarkResize;
+POINT pDlgMemBookmarkMin;
 
 WNDPROC EOldProcBM;
 HWND g_hIPEEditBM;
@@ -112,6 +114,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			RECT rc;
 			GetWindowRect( g_MemoryDialog.GetHWND(), &rc );
 			SetWindowPos( hDlg, NULL, rc.left - 64, rc.top + 64, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
+			GenerateResizes( hDlg );
 
 			m_hMemBookmarkDialog = hDlg;
 			hList = GetDlgItem( m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES );
@@ -127,6 +130,25 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 
 			return TRUE;
 		}
+
+		case WM_GETMINMAXINFO:
+		{
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMinTrackSize = pDlgMemBookmarkMin;
+		}
+		break;
+
+		case WM_SIZE:
+		{
+			RARect winRect;
+			GetWindowRect( hDlg, &winRect );
+
+			for ( ResizeContent content : vDlgMemBookmarkResize )
+				content.Resize( winRect.Width(), winRect.Height() );
+
+			//InvalidateRect( hDlg, NULL, TRUE );
+		}
+		break;
 
 		case WM_MEASUREITEM:
 			pmis = (PMEASUREITEMSTRUCT)lParam;
@@ -817,6 +839,33 @@ void Dlg_MemBookmark::OnLoad_NewRom()
 		std::string file = RA_DIR_BOOKMARKS + std::to_string( g_pCurrentGameData->GetGameID() ) + "-Bookmarks.txt";
 		ImportFromFile( file );
 	}
+}
+
+void Dlg_MemBookmark::GenerateResizes( HWND hDlg )
+{
+	RARect windowRect;
+	GetWindowRect ( hDlg, &windowRect );
+	pDlgMemBookmarkMin.x = windowRect.Width();
+	pDlgMemBookmarkMin.y = windowRect.Height();
+
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_LBX_ADDRESSES ), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE ) );
+
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_ADD_BOOKMARK ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_DEL_BOOKMARK ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_CLEAR_CHANGE ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_FREEZE ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_DECIMALBOOKMARK ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_SAVEBOOKMARK ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
+	vDlgMemBookmarkResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_LOADBOOKMARK ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
 }
 
 BOOL Dlg_MemBookmark::EditLabel ( int nItem, int nSubItem )

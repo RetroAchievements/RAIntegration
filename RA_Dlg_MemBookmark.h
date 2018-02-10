@@ -71,6 +71,7 @@ private:
 
 	void ExportJSON();
 	void ImportFromFile( std::string filename );
+	void GenerateResizes( HWND hDlg );
 	std::string ImportDialog();
 
 	void AddBookmarkMap( MemBookmark* bookmark )

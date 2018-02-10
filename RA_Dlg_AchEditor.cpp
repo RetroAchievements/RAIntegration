@@ -41,18 +41,8 @@ BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing
-int nDlgAchEditorMinX;
-int nDlgAchEditorMinY;
-int nLBRightGap;
-int nLBBottomGap;
-int nBtnMainXOffset;
-int nBtnMainYOffset;
-int nBtnCloseXOffset;
-int nBtnCloseYOffset;
-int nBtnAddXOffset;
-int nBtnAddYOffset;
-int nChkXOffset;
-int nChkYOffset;
+std::vector<ResizeContent> vDlgAchEditorResize;
+POINT pDlgAchEditorMin;
 
 INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -871,67 +861,19 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 	case WM_GETMINMAXINFO:
 	{
 		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-		lpmmi->ptMinTrackSize.x = nDlgAchEditorMinX;
-		lpmmi->ptMinTrackSize.y = nDlgAchEditorMinY;
+		lpmmi->ptMinTrackSize = pDlgAchEditorMin;
 	}
 	break;
 
 	case WM_SIZE:
 	{
-		RECT itemRect, winRect;
-		GetWindowRect(hDlg, &winRect);
+		RARect winRect;
+		GetWindowRect( hDlg, &winRect );
 
-		HWND hItem = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, 0, 0,
-			(winRect.right - itemRect.left) + nLBRightGap, (winRect.bottom - itemRect.top) + nLBBottomGap, SWP_NOMOVE | SWP_NOZORDER);
+		for ( ResizeContent content : vDlgAchEditorResize )
+			content.Resize( winRect.Width(), winRect.Height() );
 
-		hItem = GetDlgItem(hDlg, IDC_RA_ACH_GROUP);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, 0, 0,
-			(itemRect.right - itemRect.left), (winRect.bottom - itemRect.top) + nLBBottomGap, SWP_NOMOVE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnAddXOffset, (winRect.bottom - winRect.top) + nBtnAddYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnAddXOffset + 36, (winRect.bottom - winRect.top) + nBtnAddYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_ADDCOND);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnMainXOffset, (winRect.bottom - winRect.top) + nBtnMainYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_DELETECOND);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnMainXOffset + 78, (winRect.bottom - winRect.top) + nBtnMainYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_COPYCOND);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_PASTECOND);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, nBtnMainXOffset + 156, (winRect.bottom - winRect.top) + nBtnMainYOffset + 20,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nChkXOffset, (winRect.bottom - winRect.top) + nChkYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		hItem = GetDlgItem(hDlg, IDCLOSE);
-		GetWindowRect(hItem, &itemRect);
-		SetWindowPos(hItem, NULL, (winRect.right - winRect.left) + nBtnCloseXOffset, (winRect.bottom - winRect.top) + nBtnCloseYOffset,
-			NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-
-		InvalidateRect(m_hAchievementEditorDlg, NULL, TRUE);
+		InvalidateRect( hDlg, NULL, TRUE );
 	}
 	break;
 
@@ -2012,29 +1954,38 @@ void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 
 void GenerateResizes(HWND hDlg)
 {
-	RECT windowRect;
-	GetWindowRect(hDlg, &windowRect);
-	nDlgAchEditorMinX = windowRect.right - windowRect.left;
-	nDlgAchEditorMinY = windowRect.bottom - windowRect.top;
+	RARect windowRect;
+	GetWindowRect ( hDlg, &windowRect );
+	pDlgAchEditorMin.x = windowRect.Width();
+	pDlgAchEditorMin.y = windowRect.Height();
 
-	RECT itemRect;
-	GetWindowRect(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), &itemRect);
-	nLBRightGap = itemRect.right - windowRect.right;
-	nLBBottomGap = itemRect.bottom - windowRect.bottom;
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS ), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_ACH_GROUP ), ResizeContent::ALIGN_BOTTOM, TRUE ) );
 
-	GetWindowRect(GetDlgItem(hDlg, IDC_RA_ADDCOND), &itemRect);
-	nBtnMainXOffset = (itemRect.left - windowRect.left) - 8;
-	nBtnMainYOffset = (itemRect.top - windowRect.bottom) - 31;
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_CHK_ACH_ACTIVE ), ResizeContent::ALIGN_RIGHT, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_CHK_SHOW_DECIMALS ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
 
-	GetWindowRect(GetDlgItem(hDlg, IDCLOSE), &itemRect);
-	nBtnCloseXOffset = (itemRect.left - windowRect.right) - 8;
-	nBtnCloseYOffset = (itemRect.top - windowRect.bottom) - 31;
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_ACH_ADDGROUP ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_ACH_DELGROUP ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_ADDCOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_DELETECOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_COPYCOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_PASTECOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
 
-	GetWindowRect(GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), &itemRect);
-	nChkXOffset = (itemRect.left - windowRect.right) - 8;
-	nChkYOffset = (itemRect.top - windowRect.bottom) - 31;
-
-	GetWindowRect(GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), &itemRect);
-	nBtnAddXOffset = (itemRect.left - windowRect.left) - 8;
-	nBtnAddYOffset = (itemRect.top - windowRect.bottom) - 31;
+	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDCLOSE ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );
 }

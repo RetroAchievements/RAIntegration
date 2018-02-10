@@ -113,6 +113,83 @@ typedef DWORD			ARGB;
 	const RASize RA_BADGE_PX( 64, 64 );
 	const RASize RA_USERPIC_PX( 64, 64 );
 
+	class ResizeContent
+	{
+	public:
+		enum AlignType
+		{
+			NO_ALIGN,
+			ALIGN_RIGHT,
+			ALIGN_BOTTOM,
+			ALIGN_BOTTOM_RIGHT
+		};
+
+	public:
+		HWND hwnd;
+		POINT pLT;
+		POINT pRB;
+		AlignType nAlignType;
+		int nDistanceX;
+		int nDistanceY;
+		bool bResize;
+
+		ResizeContent( HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize )
+		{
+			hwnd = contentHwnd;
+			nAlignType = newAlignType;
+			bResize = isResize;
+			
+			RARect rect;
+			GetWindowRect( hwnd, &rect );
+
+			pLT.x = rect.left;	pLT.y = rect.top;
+			pRB.x = rect.right; pRB.y = rect.bottom;
+
+			ScreenToClient( parentHwnd, &pLT );
+			ScreenToClient( parentHwnd, &pRB );
+
+			GetWindowRect ( parentHwnd, &rect );
+			nDistanceX = rect.Width() - pLT.x;
+			nDistanceY = rect.Height() - pLT.y;
+			
+			if ( bResize )
+			{
+				nDistanceX -= (pRB.x - pLT.x);
+				nDistanceY -= (pRB.y - pLT.y);
+			}
+		}
+
+		void Resize(int width, int height)
+		{
+			int xPos, yPos;
+
+			switch ( nAlignType )
+			{
+				case ResizeContent::ALIGN_RIGHT:
+					xPos = width - nDistanceX - ( bResize ? pLT.x : 0 );
+					yPos = bResize ? ( pRB.y - pLT.x ) : pLT.y;
+					break;
+				case ResizeContent::ALIGN_BOTTOM:
+					xPos = bResize ? ( pRB.x - pLT.x ) : pLT.x;
+					yPos = height - nDistanceY - ( bResize ? pLT.y : 0 );
+					break;
+				case ResizeContent::ALIGN_BOTTOM_RIGHT:
+					xPos = width - nDistanceX - ( bResize ? pLT.x : 0 );
+					yPos = height - nDistanceY - ( bResize ? pLT.y : 0 );
+					break;
+				default:
+					xPos = bResize ? ( pRB.x - pLT.x ) : pLT.x;
+					yPos = bResize ? ( pRB.y - pLT.x ) : pLT.y;
+					break;
+			}
+
+			if ( !bResize )
+				SetWindowPos( hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
+			else
+				SetWindowPos( hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER );
+		}
+	};
+
 	enum AchievementSetType
 	{
 		Core,

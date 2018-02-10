@@ -54,6 +54,8 @@ unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 unsigned int m_nPage = 0;
 
 // Dialog Resizing
+std::vector<ResizeContent> vDlgMemoryResize;
+POINT pDlgMemoryMin;
 int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
@@ -1016,21 +1018,18 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 		case WM_GETMINMAXINFO:
 		{
 			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-			lpmmi->ptMaxTrackSize.x = nDlgMemoryMinX;
-			lpmmi->ptMinTrackSize.x = nDlgMemoryMinX;
-			lpmmi->ptMinTrackSize.y = nDlgMemoryMinY;
+			lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
+			lpmmi->ptMinTrackSize = pDlgMemoryMin;
 		}
 		return TRUE;
 
 		case WM_SIZE:
 		{
-			RECT itemRect, winRect;
+			RARect winRect;
 			GetWindowRect( hDlg, &winRect );
 
-			HWND hItem = GetDlgItem( hDlg, IDC_RA_MEMTEXTVIEWER );
-			GetWindowRect( hItem, &itemRect );
-			SetWindowPos( hItem, NULL, 0, 0,
-				itemRect.right - itemRect.left, ( winRect.bottom - itemRect.top ) + nDlgMemViewerGapY, SWP_NOMOVE | SWP_NOZORDER );
+			for ( ResizeContent content : vDlgMemoryResize )
+				content.Resize( winRect.Width(), winRect.Height() );
 		}
 		return TRUE;
 
@@ -1915,12 +1914,11 @@ bool Dlg_Memory::CompareSearchResult( unsigned int nCurVal, unsigned int nPrevVa
 
 void Dlg_Memory::GenerateResizes(HWND hDlg)
 {
-	RECT windowRect;
+	RARect windowRect;
 	GetWindowRect(hDlg, &windowRect);
-	nDlgMemoryMinX = windowRect.right - windowRect.left;
-	nDlgMemoryMinY = windowRect.bottom - windowRect.top;
+	pDlgMemoryMin.x = windowRect.Width();
+	pDlgMemoryMin.y = windowRect.Height();
 
-	RECT itemRect;
-	GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &itemRect);
-	nDlgMemViewerGapY = itemRect.bottom - windowRect.bottom;
+	vDlgMemoryResize.push_back ( ResizeContent( hDlg,
+		GetDlgItem( hDlg, IDC_RA_MEMTEXTVIEWER ), ResizeContent::ALIGN_BOTTOM, TRUE ) );
 }

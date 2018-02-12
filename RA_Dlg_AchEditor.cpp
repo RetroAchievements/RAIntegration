@@ -1924,26 +1924,38 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
 
 void BadgeNames::OnNewBadgeNames(const Document& data)
 {
-	//	##SD Fix
-	//unsigned int nLowerLimit = data["FirstBadge"].GetUint();
-	//unsigned int nUpperLimit = data["NextBadge"].GetUint();
+	unsigned int nLowerLimit = data["FirstBadge"].GetUint();
+	unsigned int nUpperLimit = data["NextBadge"].GetUint();
 
-	////	Clean out cbo
-	//while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
-	//{
-	//}
+	SendMessage( m_hDestComboBox, WM_SETREDRAW, FALSE, NULL );
 
-	//for (unsigned int i = nLowerLimit; i < nUpperLimit; ++i)
-	//{
-	//	TCHAR buffer[256];
-	//	wsprintf(buffer, L"%05d", i);
-	//	ComboBox_AddString(m_hDestComboBox, buffer);
-	//}
+	//	Clean out cbo
+	while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
+	{
+	}
+
+	for (unsigned int i = nLowerLimit; i < nUpperLimit; ++i)
+	{
+		TCHAR buffer[256];
+		_stprintf(buffer, _T("%05d"), i);
+		ComboBox_AddString(m_hDestComboBox, buffer);
+	}
+
+	SendMessage( m_hDestComboBox, WM_SETREDRAW, TRUE, NULL );
+	RedrawWindow( m_hDestComboBox, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN );
+
+	//	Find buffer in the dropdown list
+	if ( g_AchievementEditorDialog.ActiveAchievement() != NULL )
+	{
+		int nSel = ComboBox_FindStringExact( m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str() );
+		if ( nSel != -1 )
+			ComboBox_SetCurSel( m_hDestComboBox, nSel );	//	Force select
+	}
 }
 
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
-	int nSel = ComboBox_AddString(m_hDestComboBox, Widen(pStr).c_str());
+	int nSel = ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str());
 
 	if (bAndSelect)
 	{

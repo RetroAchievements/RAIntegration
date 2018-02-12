@@ -175,7 +175,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 					rcCol.right = rcCol.left + ListView_GetColumnWidth( hList, 0 );
 
 					// Draw Item Label - Column 0
-					wchar_t buffer[ 256 ];
+					wchar_t buffer[ 512 ];
 					if ( m_vBookmarks[ pdis->itemID ]->Decimal() )
 						swprintf ( buffer, sizeof( buffer ), L"(D)%s", m_vBookmarks[ pdis->itemID ]->Description().c_str() );
 					else

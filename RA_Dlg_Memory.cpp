@@ -48,7 +48,7 @@ unsigned int MemoryViewerControl::m_nEditNibble = 0;
 bool MemoryViewerControl::m_bHasCaret = 0;
 unsigned int MemoryViewerControl::m_nCaretWidth = 0;
 unsigned int MemoryViewerControl::m_nCaretHeight = 0;
-unsigned int MemoryViewerControl::m_nDisplayedLines = 0;
+unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
 unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
 unsigned int m_nPage = 0;
@@ -1552,6 +1552,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 				if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
 				{
 					SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
+					MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
 				}
 			}
 		}

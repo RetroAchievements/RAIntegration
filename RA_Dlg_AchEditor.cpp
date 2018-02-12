@@ -1937,7 +1937,7 @@ void BadgeNames::OnNewBadgeNames(const Document& data)
 	for (unsigned int i = nLowerLimit; i < nUpperLimit; ++i)
 	{
 		TCHAR buffer[256];
-		_stprintf(buffer, _T("%05d"), i);
+		_stprintf_s(buffer, _T("%05d"), i);
 		ComboBox_AddString(m_hDestComboBox, buffer);
 	}
 

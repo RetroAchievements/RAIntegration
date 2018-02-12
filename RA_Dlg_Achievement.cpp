@@ -340,6 +340,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSetType nAchievementSet)
 		CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, TRUE);
 	}
 
+	CheckDlgButton( m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive() );
 	OnLoad_NewRom(g_pCurrentGameData->GetGameID()); // assert: calls UpdateSelectedAchievementButtons
 	g_AchievementEditorDialog.OnLoad_NewRom();
 }
@@ -672,6 +673,10 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 				if (g_pActiveAchievements->SaveToFile())
 				{
 					MessageBox(hDlg, TEXT("Saved OK!"), TEXT("OK"), MB_OK);
+					for ( int i = 0; i < g_pActiveAchievements->NumAchievements(); i++ )
+						g_pActiveAchievements->GetAchievement( i ).SetModified( FALSE );
+
+					InvalidateRect( hDlg, NULL, TRUE );
 				}
 				else
 				{

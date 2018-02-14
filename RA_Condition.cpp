@@ -395,8 +395,11 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 			continue;
 		}
 
-		if( pNextCond->RequiredHits() != 0 && (pNextCond->CurrentHits() + g_AddHits >= pNextCond->RequiredHits()) )
+		if ( g_AddHits > 0 && pNextCond->RequiredHits() != 0 && ( pNextCond->CurrentHits() + g_AddHits >= pNextCond->RequiredHits() ) )
+		{
+			g_AddHits = 0;
 			continue;
+		}
 
 		bConditionValid = pNextCond->Compare();
 		if( bConditionValid )

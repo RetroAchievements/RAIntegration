@@ -206,8 +206,13 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	HBRUSH hBrushBG = CreateSolidBrush( g_ColBG );
 
 	RECT rcScoreboardFrame;
-	SetRect( &rcScoreboardFrame, nScoreboardX, nScoreboardY, nRightLim, nHeight-8 );
-	InflateRect( &rcScoreboardFrame, 2, 2 );
+	if ( g_bLBDisplayScoreboard )
+	{
+		SetRect( &rcScoreboardFrame, nScoreboardX, nScoreboardY, nRightLim, nHeight - 8 );
+		InflateRect( &rcScoreboardFrame, 2, 2 );
+	}
+	else
+		SetRect( &rcScoreboardFrame, 0, 0, 0, 0 );
 	FillRect( hDC, &rcScoreboardFrame, hBrushBG );
 
 	HGDIOBJ hOld = SelectObject( hDC, hFontDesc );
@@ -216,6 +221,9 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 	{
 	case State_ShowingProgress:
 	{
+		if ( !g_bLBDisplayCounter )
+			break;
+
 		int nProgressYOffs = 0;
 		std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
 		while( iter != m_vActiveLBIDs.end() )
@@ -250,6 +258,9 @@ void LeaderboardPopup::Render( HDC hDC, RECT& rcDest )
 
 	case State_ShowingScoreboard:
 		{
+			if ( !g_bLBDisplayScoreboard )
+				break;
+
 			const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB( m_vScoreboardQueue.front() );
 			if( pLB != nullptr )
 			{

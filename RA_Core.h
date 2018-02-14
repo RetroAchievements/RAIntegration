@@ -117,6 +117,9 @@ extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 extern bool g_bHardcoreModeActive;
 extern bool g_bLeaderboardsActive;
+extern bool g_bLBDisplayNotification;
+extern bool g_bLBDisplayCounter;
+extern bool g_bLBDisplayScoreboard;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns NULL on error. Owner MUST free() buffer if not NULL.

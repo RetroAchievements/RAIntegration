@@ -484,11 +484,15 @@ void RA_Leaderboard::Test()
 		{
 			m_bStarted = true;
 
-			g_PopupWindows.AchievementPopups().AddMessage( 
-				MessagePopup( "Challenge Available: " + m_sTitle,
-							  m_sDescription,
-							  PopupLeaderboardInfo,
-							  nullptr ) );
+			if ( g_bLBDisplayNotification )
+			{
+				g_PopupWindows.AchievementPopups().AddMessage(
+					MessagePopup( "Challenge Available: " + m_sTitle,
+						m_sDescription,
+						PopupLeaderboardInfo,
+						nullptr ) );
+			}
+
 			g_PopupWindows.LeaderboardPopups().Activate( m_nID );
 		}
 	}
@@ -499,11 +503,14 @@ void RA_Leaderboard::Test()
 			m_bStarted = false;
 			g_PopupWindows.LeaderboardPopups().Deactivate( m_nID );
 			
-			g_PopupWindows.AchievementPopups().AddMessage( 
-				MessagePopup( "Leaderboard attempt cancelled!",
-							  m_sTitle,
-							  PopupLeaderboardCancel,
-							  nullptr ) );
+			if ( g_bLBDisplayNotification )
+			{
+				g_PopupWindows.AchievementPopups().AddMessage(
+					MessagePopup( "Leaderboard attempt cancelled!",
+						m_sTitle,
+						PopupLeaderboardCancel,
+						nullptr ) );
+			}
 		}
 		else if( bSubmitOK )
 		{
@@ -517,7 +524,7 @@ void RA_Leaderboard::Test()
 								  "Reset game to reenable posting.",
 								  PopupInfo ) );
 			}
-			else
+			else if ( g_bHardcoreModeActive )
 			{
 				//	TBD: move to keys!
 				char sValidationSig[ 50 ];
@@ -532,6 +539,13 @@ void RA_Leaderboard::Test()
 				args['s'] = std::to_string( static_cast<int>( m_value.GetOperationsValue( m_sOperations ) ) );	//	Concern about rounding?
 
 				RAWeb::CreateThreadedHTTPRequest( RequestSubmitLeaderboardEntry, args );
+			}
+			else
+			{
+				g_PopupWindows.AchievementPopups().AddMessage(
+					MessagePopup( "Leaderboard submission post cancelled.",
+						"Enable Hardcore Mode to enable posting.",
+						PopupInfo ) );
 			}
 		}
 	}

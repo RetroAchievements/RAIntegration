@@ -53,6 +53,9 @@ const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
 bool g_bHardcoreModeActive = true;
 bool g_bLeaderboardsActive = true;
+bool g_bLBDisplayNotification = true;
+bool g_bLBDisplayCounter = true;
+bool g_bLBDisplayScoreboard = true;
 unsigned int g_nNumHTTPThreads = 15;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -399,6 +402,17 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 		g_pLocalAchievements->Clear();
 	}
 
+	if ( !g_bHardcoreModeActive && g_bLeaderboardsActive )
+	{
+		g_PopupWindows.AchievementPopups().AddMessage(
+			MessagePopup( "Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo ) );
+	}
+	else if ( !g_bHardcoreModeActive )
+	{
+		g_PopupWindows.AchievementPopups().AddMessage(
+			MessagePopup( "Playing in Softcore Mode", "", PopupInfo ) );
+	}
+
 	g_AchievementsDialog.OnLoad_NewRom(nGameID);
 	g_AchievementEditorDialog.OnLoad_NewRom();
 	g_MemoryDialog.OnLoad_NewRom();
@@ -702,6 +716,7 @@ API int CCONV _RA_HandleHTTPResults()
 API HMENU CCONV _RA_CreatePopupMenu()
 {
 	HMENU hRA = CreatePopupMenu();
+	HMENU hRA_LB = CreatePopupMenu();
 	if (RAUsers::LocalUser().IsLoggedIn())
 	{
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
@@ -716,7 +731,14 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
 		AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
 		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
-		AppendMenu(hRA, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Use &Leaderboards"));
+
+		AppendMenu( hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards" );
+		AppendMenu( hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+		AppendMenu( hRA_LB, MF_SEPARATOR, NULL, NULL );
+		AppendMenu( hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT( "Display Challenge Notification" ) );
+		AppendMenu( hRA_LB, g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT( "Display Time/Score Counter" ) );
+		AppendMenu( hRA_LB, g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT( "Display Rank Scoreboard" ) );
+
 		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
@@ -866,18 +888,26 @@ API void CCONV _RA_LoadPreferences()
 		}
 		else
 		{
-			if (doc.HasMember("Username"))
-				RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-			if (doc.HasMember("Token"))
-				RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-			if (doc.HasMember("Hardcore Active"))
-				g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-			if (doc.HasMember("Leaderboards Active"))
-				g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-			if (doc.HasMember("Num Background Threads"))
-				g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-			if (doc.HasMember("ROM Directory"))
-				g_sROMDirLocation = doc["ROM Directory"].GetString();
+			if ( doc.HasMember( "Username" ) )
+				RAUsers::LocalUser().SetUsername( doc[ "Username" ].GetString() );
+			if ( doc.HasMember( "Token" ) )
+				RAUsers::LocalUser().SetToken( doc[ "Token" ].GetString() );
+			if ( doc.HasMember( "Hardcore Active" ) )
+				g_bHardcoreModeActive = doc[ "Hardcore Active" ].GetBool();
+
+			if ( doc.HasMember( "Leaderboards Active" ) )
+				g_bLeaderboardsActive = doc[ "Leaderboards Active" ].GetBool();
+			if ( doc.HasMember( "Leaderboard Notification Display" ) )
+				g_bLBDisplayNotification = doc[ "Leaderboard Notification Display" ].GetBool();
+			if ( doc.HasMember( "Leaderboard Counter Display" ) )
+				g_bLBDisplayCounter = doc[ "Leaderboard Counter Display" ].GetBool();
+			if ( doc.HasMember( "Leaderboard Scoreboard Display" ) )
+				g_bLBDisplayScoreboard = doc[ "Leaderboard Scoreboard Display" ].GetBool();
+
+			if ( doc.HasMember( "Num Background Threads" ) )
+				g_nNumHTTPThreads = doc[ "Num Background Threads" ].GetUint();
+			if ( doc.HasMember( "ROM Directory" ) )
+				g_sROMDirLocation = doc[ "ROM Directory" ].GetString();
 		}
 
 		fclose(pf);
@@ -909,12 +939,15 @@ API void CCONV _RA_SavePreferences()
 		doc.SetObject();
 
 		Document::AllocatorType& a = doc.GetAllocator();
-		doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-		doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
-		doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-		doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-		doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-		doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
+		doc.AddMember( "Username", StringRef( RAUsers::LocalUser().Username().c_str() ), a );
+		doc.AddMember( "Token", StringRef( RAUsers::LocalUser().Token().c_str() ), a );
+		doc.AddMember( "Hardcore Active", g_bHardcoreModeActive, a );
+		doc.AddMember( "Leaderboards Active", g_bLeaderboardsActive, a );
+		doc.AddMember( "Leaderboard Notification Display", g_bLBDisplayNotification, a );
+		doc.AddMember( "Leaderboard Counter Display", g_bLBDisplayCounter, a );
+		doc.AddMember( "Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a );
+		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
+		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
 
 		doc.Accept(writer);	//	Save
 
@@ -1031,6 +1064,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 	{
 		g_bHardcoreModeActive = !g_bHardcoreModeActive;
 		_RA_ResetEmulation();
+
+		g_PopupWindows.Clear();
 
 		GameID nGameID = g_pCurrentGameData->GetGameID();
 		if (nGameID != 0)
@@ -1165,6 +1200,18 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 		_RA_RebuildMenu();
 	}
 	break;
+	case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
+		g_bLBDisplayNotification = !g_bLBDisplayNotification;
+		_RA_RebuildMenu();
+		break;
+	case IDM_RA_TOGGLE_LB_COUNTER:
+		g_bLBDisplayCounter = !g_bLBDisplayCounter;
+		_RA_RebuildMenu();
+		break;
+	case IDM_RA_TOGGLE_LB_SCOREBOARD:
+		g_bLBDisplayScoreboard = !g_bLBDisplayScoreboard;
+		_RA_RebuildMenu();
+		break;
 
 	default:
 		//	Unknown!

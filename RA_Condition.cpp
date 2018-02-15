@@ -395,8 +395,9 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 			continue;
 		}
 
-		if ( g_AddHits > 0 && pNextCond->RequiredHits() != 0 && ( pNextCond->CurrentHits() + g_AddHits >= pNextCond->RequiredHits() ) )
+		if ( pNextCond->RequiredHits() != 0 && ( pNextCond->CurrentHits() + g_AddHits >= pNextCond->RequiredHits() ) )
 		{
+			g_AddBuffer = 0;
 			g_AddHits = 0;
 			continue;
 		}

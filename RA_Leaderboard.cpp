@@ -217,7 +217,7 @@ void ValueSet::ParseMemString( char* pChar )
 		pChar = newMemVal.ParseFromString( pChar );
 		AddNewValue( newMemVal );
 	}
-	while( *pChar == '_' );
+	while( *pChar == '_' || *pChar == '$' );
 }
 
 void ValueSet::Clear()

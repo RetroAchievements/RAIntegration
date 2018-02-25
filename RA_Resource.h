@@ -52,6 +52,7 @@
 #define IDC_RA_GAMEHASH                 1533
 #define IDC_RA_NUMACH                   1534
 #define IDC_RA_PASSWORD                 1535
+#define IDC_RA_POINT_TOTAL              1535
 #define IDC_RA_SAVEPASSWORD             1536
 #define IDC_RA_ACTIVE_CORE              1537
 #define IDC_RA_ACTIVE_UNOFFICIAL        1538
@@ -140,9 +141,9 @@
 #define IDM_RA_SCANFORGAMES             1715
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
-#define IDM_RA_TOGGLE_LB_NOTIFICATIONS	1718
-#define IDM_RA_TOGGLE_LB_COUNTER		1719
-#define IDM_RA_TOGGLE_LB_SCOREBOARD		1720
+#define IDM_RA_TOGGLE_LB_NOTIFICATIONS  1718
+#define IDM_RA_TOGGLE_LB_COUNTER        1719
+#define IDM_RA_TOGGLE_LB_SCOREBOARD     1720
 #define IDM_RA_MENUEND                  1739
 #define IDC_RA_OPENPAGE                 1740
 

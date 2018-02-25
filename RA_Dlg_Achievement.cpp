@@ -140,6 +140,7 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 	char buffer[16];
 	sprintf_s(buffer, 16, " %d", g_pActiveAchievements->NumAchievements());
 	SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
+	SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 
 	UpdateSelectedAchievementButtons(NULL);
 
@@ -339,6 +340,8 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSetType nAchievementSet)
 		CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, FALSE);
 		CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, TRUE);
 	}
+
+	SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 
 	CheckDlgButton( m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive() );
 	OnLoad_NewRom(g_pCurrentGameData->GetGameID()); // assert: calls UpdateSelectedAchievementButtons
@@ -618,6 +621,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 			char buffer2[16];
 			sprintf_s(buffer2, 16, " %d", g_pActiveAchievements->NumAchievements());
 			SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer2).c_str());
+			SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 
 			NewClone.SetModified(TRUE);
 			UpdateSelectedAchievementButtons(&NewClone);
@@ -1115,6 +1119,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
 
 		sprintf_s(buffer, " %d", g_pActiveAchievements->NumAchievements());
 		SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
+		SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 	}
 
 	UpdateSelectedAchievementButtons(NULL);
@@ -1139,6 +1144,8 @@ void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
 	if (nIndex < g_pActiveAchievements->NumAchievements())
 	{
 		OnEditData(nIndex, Dlg_Achievements::Points, std::to_string(ach.Points()));
+
+		SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 
 		if (g_nActiveAchievementSet == Core)
 			OnEditData(nIndex, Dlg_Achievements::Modified, "Yes");

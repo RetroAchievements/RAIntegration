@@ -40,6 +40,14 @@ public:
 	Achievement& GetAchievement(size_t nIter)	{ return m_Achievements[nIter]; }
 	inline size_t NumAchievements() const		{ return m_Achievements.size(); }
 
+	// Get Points Total
+	inline unsigned int PointTotal()
+	{
+		unsigned int total = 0;
+		for ( Achievement ach : m_Achievements ) total += ach.Points();
+		return total;
+	}
+
 	//	Add a new achievement to the list, and return a reference to it.
 	Achievement& AddAchievement();
 

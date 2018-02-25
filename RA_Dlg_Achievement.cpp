@@ -597,11 +597,12 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 			if (nSel == -1)
 				return FALSE;
 
-			//	Clone TO the user achievements
-			const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
-
 			//	switch to LocalAchievements
 			Achievement& NewClone = g_pLocalAchievements->AddAchievement();
+
+			//	Clone TO the user achievements
+			Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
+
 			NewClone.Set(Ach);
 			NewClone.SetID(0);
 			NewClone.SetAuthor(RAUsers::LocalUser().Username());

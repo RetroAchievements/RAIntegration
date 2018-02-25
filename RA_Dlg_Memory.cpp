@@ -948,7 +948,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 						const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( currentResult.m_nAddr );
 						if ( ( pSavedNote != NULL ) && ( pSavedNote->Note().length() > 0 ) )
-							_tcscat( buffer, tstring( "   (" + pSavedNote->Note() + ")" ).c_str() );
+							_tcscat_s( buffer, tstring( "   (" + pSavedNote->Note() + ")" ).c_str() );
 
 						COLORREF color;
 

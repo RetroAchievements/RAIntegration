@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
-//#include <stdio.h>
+#include <stdio.h>
 
 #if defined RA_EXPORTS
 #define API __declspec(dllexport)

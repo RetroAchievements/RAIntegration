@@ -678,7 +678,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 				if (g_pActiveAchievements->SaveToFile())
 				{
 					MessageBox(hDlg, TEXT("Saved OK!"), TEXT("OK"), MB_OK);
-					for ( int i = 0; i < g_pActiveAchievements->NumAchievements(); i++ )
+					for ( unsigned int i = 0; i < g_pActiveAchievements->NumAchievements(); i++ )
 						g_pActiveAchievements->GetAchievement( i ).SetModified( FALSE );
 
 					InvalidateRect( hDlg, NULL, TRUE );

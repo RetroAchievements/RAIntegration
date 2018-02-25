@@ -204,5 +204,8 @@
     <ResourceCompile Include="RA_Shared.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+    <ResourceCompile Include="RA_Version.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -112,6 +112,9 @@
     <PreBuildEvent>
       <Command>MakeBuildVer.bat</Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <ClCompile>
@@ -135,6 +138,9 @@
     <PreBuildEvent>
       <Command>MakeBuildVer.bat</Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -256,6 +262,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc" />
+    <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

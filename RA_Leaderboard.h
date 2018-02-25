@@ -4,6 +4,7 @@
 #include "RA_Condition.h"
 
 
+
 class MemValue
 {
 public:
@@ -32,10 +33,17 @@ public:
 class ValueSet
 {
 public:
+	enum OperationType
+	{
+		Operation_None,
+		Operation_Addition,
+		Operation_Maximum
+	};
+
+public:
 	void ParseMemString( char* sBuffer );
 	double GetValue() const;
-	double GetOperationsValue( std::vector<std::string> ) const;
-	void MaxValue();
+	double GetOperationsValue( std::vector<OperationType> ) const;
 	void AddNewValue( MemValue nVal );
 	void Clear();
 
@@ -98,7 +106,7 @@ public:
 	void SortRankInfo();
 
 	FormatType GetFormatType() const						{ return m_format; }
-	std::vector<std::string> m_sOperations;
+	std::vector< ValueSet::OperationType > m_sOperations;
 
 private:
 	const LeaderboardID		m_nID;			//	DB ID for this LB

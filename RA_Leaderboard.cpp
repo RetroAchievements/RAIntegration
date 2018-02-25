@@ -149,11 +149,11 @@ double ValueSet::GetValue() const
 	return fVal;
 }
 
-double ValueSet::GetOperationsValue( std::vector<std::string> sOperations ) const
+double ValueSet::GetOperationsValue( std::vector<OperationType> sOperations ) const
 {
 	double fVal = 0.0;
 	std::vector<MemValue>::const_iterator iter = m_Values.begin();
-	std::vector<std::string>::const_iterator sOp = sOperations.begin();
+	std::vector<OperationType>::const_iterator sOp = sOperations.begin();
 
 	if ( iter != m_Values.end() )
 	{
@@ -163,7 +163,7 @@ double ValueSet::GetOperationsValue( std::vector<std::string> sOperations ) cons
 
 	while ( iter != m_Values.end() )
 	{
-		if ( sOp != sOperations.end() && *sOp == "max" )
+		if ( sOp != sOperations.end() && *sOp == Operation_Maximum )
 		{
 			double maxValue = ( *iter ).GetValue();
 			iter++;
@@ -181,22 +181,6 @@ double ValueSet::GetOperationsValue( std::vector<std::string> sOperations ) cons
 	}
 
 	return fVal;
-}
-
-void ValueSet::MaxValue()
-{
-	MemValue fVal;
-	fVal.m_fModifier = 0.0; // Ensures fVal starts at a value of 0.
-	std::vector<MemValue>::const_iterator iter = m_Values.begin();
-	while ( iter != m_Values.end() )
-	{
-		if ( fVal.GetValue() < ( *iter ).GetValue() )
-			fVal = *iter;
-		iter++;
-	}
-
-	m_Values.clear();
-	m_Values.push_back( fVal );
 }
 
 void ValueSet::AddNewValue( MemValue nMemVal )
@@ -332,8 +316,8 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 
 				switch ( *pChar )
 				{
-					case ( '$' ): m_sOperations.push_back( "max" ); break;
-					case ( '_' ): m_sOperations.push_back( "add" ); break;
+					case ( '$' ): m_sOperations.push_back( ValueSet::Operation_Maximum ); break;
+					case ( '_' ): m_sOperations.push_back( ValueSet::Operation_Addition ); break;
 				}
 			}
 			while( *pChar == '_' || ( *pChar ) == '$' );

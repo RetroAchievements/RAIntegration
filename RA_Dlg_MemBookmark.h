@@ -55,6 +55,7 @@ public:
 	std::vector<MemBookmark*> Bookmarks()				{ return m_vBookmarks; }
 	void UpdateBookmarks( bool bForceWrite );
 	void AddBookmark( MemBookmark* newBookmark )		{ m_vBookmarks.push_back(newBookmark); }
+	void WriteFrozenValue( const MemBookmark& Bookmark );
 
 	void OnLoad_NewRom();
 
@@ -66,7 +67,6 @@ private:
 	BOOL EditLabel ( int nItem, int nSubItem );
 	void AddAddress();
 	void ClearAllBookmarks();
-	void WriteFrozenValue( const MemBookmark& Bookmark );
 	unsigned int GetMemory( unsigned int nAddr, int type );
 
 	void ExportJSON();

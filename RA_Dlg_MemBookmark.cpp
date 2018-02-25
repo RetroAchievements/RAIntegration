@@ -611,21 +611,34 @@ void Dlg_MemBookmark::ClearAllBookmarks()
 
 void Dlg_MemBookmark::WriteFrozenValue( const MemBookmark & Bookmark )
 {
+	if ( !Bookmark.Frozen() )
+		return;
+
 	unsigned int addr;
+	unsigned int width;
 	int n;
 	char c;
 
 	switch ( Bookmark.Type() )
 	{
-		case 1: addr = Bookmark.Address();		break;
-		case 2: addr = Bookmark.Address() + 1;	break;
-		case 3: addr = Bookmark.Address() + 3;	break;
+		case 1: 
+			addr = Bookmark.Address();		
+			width = 2;
+			break;
+		case 2: 
+			addr = Bookmark.Address() + 1;	
+			width = 4;
+			break;
+		case 3: 
+			addr = Bookmark.Address() + 3;	
+			width = 8;
+			break;
 		default:
 			break;
 	}
 
 	char buffer[ 32 ];
-	sprintf_s ( buffer, sizeof(buffer), "%x", Bookmark.Value() );
+	sprintf_s ( buffer, sizeof(buffer), "%0*x", width, Bookmark.Value() );
 
 	for ( unsigned int i = 0; i < strlen( buffer ); i++ )
 	{

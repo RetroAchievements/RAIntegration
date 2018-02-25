@@ -326,6 +326,9 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 		bool bLowerNibble = (m_nEditNibble % 2 == 1);
 		unsigned int nByteAddress = m_nEditAddress;
 
+		if ( g_MemBookmarkDialog.GetHWND() != nullptr )
+			g_MemBookmarkDialog.WriteFrozenValue( *g_MemBookmarkDialog.FindBookmark( nByteAddress ) );
+
 		if (m_nDataSize == 0)
 		{
 			//	8 bit
@@ -609,7 +612,13 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 					notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != NULL) ? (1 << j) : 0;
 					const MemBookmark* bm = g_MemBookmarkDialog.FindBookmark(addr + j);
 					bookmarks |= (bm != NULL) ? (1 << j) : 0;
-					freeze |= (bm != NULL && bm->Frozen()) ? (1 << j) : 0;
+					freeze |= ( bm != NULL && bm->Frozen() ) ? ( 1 << j ) : 0;
+
+					if ( bm != NULL && bm->Frozen() )
+					{
+						if ( g_MemBookmarkDialog.GetHWND() != nullptr )
+							g_MemBookmarkDialog.WriteFrozenValue( *bm );
+					}
 				}
 
 				g_MemManager.ActiveBankRAMRead(data, addr, 16);
@@ -1615,10 +1624,10 @@ void Dlg_Memory::OnLoad_NewRom()
 
 void Dlg_Memory::Invalidate()
 {
-	MemoryViewerControl::Invalidate();
-
 	if ( g_MemBookmarkDialog.GetHWND() != nullptr )
 		g_MemBookmarkDialog.UpdateBookmarks( FALSE );
+
+	MemoryViewerControl::Invalidate();
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)

@@ -125,7 +125,7 @@ char* MemValue::ParseFromString( char* pBuffer )
 		if ( strncmp( pIter, "0x", sizeof( "0x" ) - 1 ) == 0 )
 		{
 			varTemp.ParseVariable( pIter );
-			m_nSecondAddress = varTemp.GetValue();
+			m_nSecondAddress = varTemp.RawValue();
 			m_nSecondVarSize = varTemp.Size();
 		}
 		else
@@ -217,7 +217,7 @@ void ValueSet::ParseMemString( char* pChar )
 		pChar = newMemVal.ParseFromString( pChar );
 		AddNewValue( newMemVal );
 	}
-	while( *pChar == '_' || *pChar == '$' );
+	while( *pChar == '_' );
 }
 
 void ValueSet::Clear()

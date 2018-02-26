@@ -177,9 +177,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 					// Draw Item Label - Column 0
 					wchar_t buffer[ 512 ];
 					if ( m_vBookmarks[ pdis->itemID ]->Decimal() )
-						swprintf_s ( buffer, sizeof( buffer ), L"(D)%s", m_vBookmarks[ pdis->itemID ]->Description().c_str() );
+						swprintf_s ( buffer, 512, L"(D)%s", m_vBookmarks[ pdis->itemID ]->Description().c_str() );
 					else
-						swprintf_s ( buffer, sizeof( buffer ), L"%s", m_vBookmarks[ pdis->itemID ]->Description().c_str() );
+						swprintf_s ( buffer, 512, L"%s", m_vBookmarks[ pdis->itemID ]->Description().c_str() );
 
 					if ( pdis->itemState & ODS_SELECTED )
 					{
@@ -224,39 +224,39 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 						switch ( i )
 						{
 							case CSI_ADDRESS:
-								swprintf_s ( buffer, sizeof( buffer ), L"%06x", m_vBookmarks[ pdis->itemID ]->Address() );
+								swprintf_s ( buffer, 512, L"%06x", m_vBookmarks[ pdis->itemID ]->Address() );
 								break;
 							case CSI_VALUE:
 								if ( m_vBookmarks[ pdis->itemID ]->Decimal() )
-									swprintf_s ( buffer, sizeof( buffer ), L"%u", m_vBookmarks[ pdis->itemID ]->Value() );
+									swprintf_s ( buffer, 512, L"%u", m_vBookmarks[ pdis->itemID ]->Value() );
 								else
 								{
 									switch ( m_vBookmarks[ pdis->itemID ]->Type() )
 									{
-										case 1: swprintf_s ( buffer, sizeof( buffer ), L"%02x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
-										case 2: swprintf_s ( buffer, sizeof( buffer ), L"%04x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
-										case 3: swprintf_s ( buffer, sizeof( buffer ), L"%08x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
+										case 1: swprintf_s ( buffer, 512, L"%02x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
+										case 2: swprintf_s ( buffer, 512, L"%04x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
+										case 3: swprintf_s ( buffer, 512, L"%08x", m_vBookmarks[ pdis->itemID ]->Value() ); break;
 									}
 								}
 								break;
 							case CSI_PREVIOUS:
 								if ( m_vBookmarks[ pdis->itemID ]->Decimal() )
-									swprintf_s ( buffer, sizeof( buffer ), L"%u", m_vBookmarks[ pdis->itemID ]->Previous() );
+									swprintf_s ( buffer, 512, L"%u", m_vBookmarks[ pdis->itemID ]->Previous() );
 								else
 								{
 									switch ( m_vBookmarks[ pdis->itemID ]->Type() )
 									{
-										case 1: swprintf_s ( buffer, sizeof( buffer ), L"%02x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
-										case 2: swprintf_s ( buffer, sizeof( buffer ), L"%04x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
-										case 3: swprintf_s ( buffer, sizeof( buffer ), L"%08x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
+										case 1: swprintf_s ( buffer, 512, L"%02x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
+										case 2: swprintf_s ( buffer, 512, L"%04x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
+										case 3: swprintf_s ( buffer, 512, L"%08x", m_vBookmarks[ pdis->itemID ]->Previous() ); break;
 									}
 								}
 								break;
 							case CSI_CHANGES:
-								swprintf_s ( buffer, sizeof( buffer ), L"%d", m_vBookmarks[ pdis->itemID ]->Count() );
+								swprintf_s ( buffer, 512, L"%d", m_vBookmarks[ pdis->itemID ]->Count() );
 								break;
 							default:
-								swprintf_s ( buffer, sizeof( buffer ), L"" );
+								swprintf_s ( buffer, 512, L"" );
 								break;
 						}
 

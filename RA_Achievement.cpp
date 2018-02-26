@@ -336,6 +336,17 @@ size_t Achievement::AddCondition( size_t nConditionGroup, const Condition& rNewC
 	return m_vConditions[nConditionGroup].Count();
 }
 
+size_t Achievement::InsertCondition( size_t nConditionGroup, size_t nIndex, const Condition& rNewCond )
+{ 
+	while( NumConditionGroups() <= nConditionGroup )	//	ENSURE this is a legal op!
+		m_vConditions.push_back( ConditionSet() );
+
+	m_vConditions[nConditionGroup].Insert( nIndex, rNewCond );	//	NB. Copy by value	
+	SetDirtyFlag( Dirty__All );
+
+	return m_vConditions[nConditionGroup].Count();
+}
+
 BOOL Achievement::RemoveCondition( size_t nConditionGroup, unsigned int nID )
 {
 	m_vConditions[nConditionGroup].RemoveAt( nID );

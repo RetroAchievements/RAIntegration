@@ -148,6 +148,11 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
 
 }
 
+BOOL Dlg_AchievementEditor::IsActive() const
+{
+	return(g_AchievementEditorDialog.GetHWND() != NULL) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
+}
+
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
 {
 	LV_ITEM item;

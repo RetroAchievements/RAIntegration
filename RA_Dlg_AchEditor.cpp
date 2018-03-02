@@ -17,7 +17,7 @@
 namespace
 {
 	const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-	const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 60, 35, 42, 50, 60, 72 };
+	const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
 	static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 

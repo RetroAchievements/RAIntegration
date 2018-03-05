@@ -213,6 +213,7 @@ void ValueSet::Clear()
 RA_Leaderboard::RA_Leaderboard( const unsigned nLeaderboardID ) :
 	m_nID( nLeaderboardID ),
 	m_bStarted( false ),
+	m_bSubmitted( false ),
 	m_format( Format_Value )
 {
 }
@@ -462,7 +463,13 @@ void RA_Leaderboard::Test()
 	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused, TRUE );
 	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused, FALSE );
 
-	if( !m_bStarted )
+	if ( m_bSubmitted )
+	{
+		// if we've already submitted or canceled the leaderboard, don't reactivate it until it becomes unactive.
+		if ( !bStartOK )
+			m_bSubmitted = false;
+	}
+	else if( !m_bStarted )
 	{
 		if( bStartOK )
 		{
@@ -495,6 +502,9 @@ void RA_Leaderboard::Test()
 						PopupLeaderboardCancel,
 						nullptr ) );
 			}
+
+			// prevent multiple cancel notifications
+			m_bSubmitted = true;
 		}
 		else if( bSubmitOK )
 		{
@@ -531,6 +541,9 @@ void RA_Leaderboard::Test()
 						"Enable Hardcore Mode to enable posting.",
 						PopupInfo ) );
 			}
+
+			// prevent multiple submissions/notifications
+			m_bSubmitted = true;
 		}
 	}
 }

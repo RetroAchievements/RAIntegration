@@ -326,8 +326,12 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 		bool bLowerNibble = (m_nEditNibble % 2 == 1);
 		unsigned int nByteAddress = m_nEditAddress;
 
-		if ( g_MemBookmarkDialog.GetHWND() != nullptr )
-			g_MemBookmarkDialog.WriteFrozenValue( *g_MemBookmarkDialog.FindBookmark( nByteAddress ) );
+		if (g_MemBookmarkDialog.GetHWND() != nullptr)
+		{
+			const MemBookmark* Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
+			if (Bookmark != NULL)
+				g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
+		}
 
 		if (m_nDataSize == 0)
 		{

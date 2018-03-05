@@ -535,7 +535,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 			TEXT( "ComboBox" ),
 			TEXT( "" ),
 			WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-			rcSubItem.left, rcSubItem.top, nWidth * 1.5f, (int)( 1.6f * nHeight * Condition::NumConditionTypes ),
+			rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.6f * nHeight * Condition::NumConditionTypes ),
 			g_AchievementEditorDialog.GetHWND(),
 			0,
 			GetModuleHandle( NULL ),
@@ -830,10 +830,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
 	case WM_INITDIALOG:
 	{
-		RECT rc;
-		GetWindowRect(g_RAMainWnd, &rc);
-		SetWindowPos(hDlg, NULL, rc.right, rc.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-
 		m_hAchievementEditorDlg = hDlg;
 		GenerateResizes(hDlg);
 
@@ -855,6 +851,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
             ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);
 		}
+
+		RestoreWindowPosition(hDlg, "Achievement Editor", true, true);
 	}
 	return TRUE;
 
@@ -874,8 +872,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 			content.Resize( winRect.Width(), winRect.Height() );
 
 		InvalidateRect( hDlg, NULL, TRUE );
+
+		RememberWindowSize(hDlg, "Achievement Editor");
 	}
 	break;
+
+	case WM_MOVE:
+		RememberWindowPosition(hDlg, "Achievement Editor");
+		break;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam))

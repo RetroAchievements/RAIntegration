@@ -151,3 +151,7 @@ extern std::string GetFolderFromDialog();
 extern BOOL RemoveFileIfExists(const std::string& sFilePath);
 
 BOOL CanCausePause();
+
+void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
+void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
+void RememberWindowSize(HWND hDlg, const char* sDlgKey);

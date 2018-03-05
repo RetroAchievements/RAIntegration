@@ -111,9 +111,6 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 	{
 		case WM_INITDIALOG:
 		{
-			RECT rc;
-			GetWindowRect( g_MemoryDialog.GetHWND(), &rc );
-			SetWindowPos( hDlg, NULL, rc.left - 64, rc.top + 64, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
 			GenerateResizes( hDlg );
 
 			m_hMemBookmarkDialog = hDlg;
@@ -128,6 +125,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 				ImportFromFile( file );
 			}
 
+			RestoreWindowPosition( hDlg, "Memory Bookmarks", true, false );
 			return TRUE;
 		}
 
@@ -147,13 +145,19 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 				content.Resize( winRect.Width(), winRect.Height() );
 
 			//InvalidateRect( hDlg, NULL, TRUE );
+			RememberWindowSize(hDlg, "Memory Bookmarks");
 		}
 		break;
+
+		case WM_MOVE:
+			RememberWindowPosition(hDlg, "Memory Bookmarks");
+			break;
 
 		case WM_MEASUREITEM:
 			pmis = (PMEASUREITEMSTRUCT)lParam;
 			pmis->itemHeight = 16;
 			return TRUE;
+
 		case WM_DRAWITEM:
 		{
 			pdis = (PDRAWITEMSTRUCT)lParam;
@@ -293,6 +297,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			}
 			return TRUE;
 		}
+
 		case WM_NOTIFY:
 		{
 			switch ( LOWORD( wParam ) )

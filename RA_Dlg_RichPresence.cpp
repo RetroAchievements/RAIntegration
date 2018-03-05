@@ -14,9 +14,7 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 	{
 		SendMessage( GetDlgItem( hDlg, IDC_RA_RICHPRESENCERESULTTEXT ), WM_SETFONT, (WPARAM)m_hFont, NULL );
 
-		RECT rc;
-		GetWindowRect( g_RAMainWnd, &rc );
-		SetWindowPos( hDlg, NULL, rc.right, rc.bottom - 120, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
+		RestoreWindowPosition( hDlg, "Rich Presence Monitor", true, true );
 		return TRUE;
 	}
 
@@ -47,6 +45,14 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 		StopTimer();
 		EndDialog( hDlg, true );
 		return FALSE;
+
+	case WM_MOVE:
+		RememberWindowPosition(hDlg, "Rich Presence Monitor");
+		break;
+
+	case WM_SIZE:
+		RememberWindowSize(hDlg, "Rich Presence Monitor");
+		break;
 	}
 
 	return FALSE;

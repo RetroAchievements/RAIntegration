@@ -58,6 +58,20 @@ bool g_bLBDisplayCounter = true;
 bool g_bLBDisplayScoreboard = true;
 unsigned int g_nNumHTTPThreads = 15;
 
+typedef struct WindowPosition {
+	int nLeft;
+	int nTop;
+	int nWidth;
+	int nHeight;
+	bool bLoaded;
+
+	static const int nUnset = -99999;
+} WindowPosition;
+
+typedef std::map<std::string, WindowPosition> WindowPositionMap;
+WindowPositionMap g_mWindowPositions;
+
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
@@ -908,6 +922,26 @@ API void CCONV _RA_LoadPreferences()
 				g_nNumHTTPThreads = doc[ "Num Background Threads" ].GetUint();
 			if ( doc.HasMember( "ROM Directory" ) )
 				g_sROMDirLocation = doc[ "ROM Directory" ].GetString();
+
+			if ( doc.HasMember( "Window Positions" ) ) {
+				const Value& positions = doc[ "Window Positions" ];
+				if ( positions.IsObject() ) {
+					for ( Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter ) {
+						WindowPosition& pos = g_mWindowPositions[ iter->name.GetString() ];
+						pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
+						pos.bLoaded = false;
+
+						if ( iter->value.HasMember( "X" ) )
+							pos.nLeft = iter->value[ "X" ].GetInt();
+						if ( iter->value.HasMember( "Y" ) )
+							pos.nTop = iter->value[ "Y" ].GetInt();
+						if ( iter->value.HasMember( "Width" ) )
+							pos.nWidth = iter->value[ "Width" ].GetInt();
+						if ( iter->value.HasMember( "Height" ) )
+							pos.nHeight = iter->value[ "Height" ].GetInt();
+					}
+				}
+			}
 		}
 
 		fclose(pf);
@@ -948,6 +982,25 @@ API void CCONV _RA_SavePreferences()
 		doc.AddMember( "Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a );
 		doc.AddMember( "Num Background Threads", g_nNumHTTPThreads, a );
 		doc.AddMember( "ROM Directory", StringRef( g_sROMDirLocation.c_str() ), a );
+
+		Value positions(kObjectType);
+		for(WindowPositionMap::const_iterator iter = g_mWindowPositions.begin(); iter != g_mWindowPositions.end(); ++iter) {
+			Value rect(kObjectType);
+			if (iter->second.nLeft != WindowPosition::nUnset)
+				rect.AddMember("X", iter->second.nLeft, a);
+			if (iter->second.nTop != WindowPosition::nUnset)
+				rect.AddMember("Y", iter->second.nTop, a);
+			if (iter->second.nWidth != WindowPosition::nUnset)
+				rect.AddMember("Width", iter->second.nWidth, a);
+			if (iter->second.nHeight != WindowPosition::nUnset)
+				rect.AddMember("Height", iter->second.nHeight, a);
+
+			if (rect.MemberCount() > 0)
+				positions.AddMember(StringRef(iter->first.c_str()), rect, a);
+		}
+
+		if (positions.MemberCount() > 0)
+			doc.AddMember("Window Positions", positions.Move(), a);
 
 		doc.Accept(writer);	//	Save
 
@@ -991,22 +1044,102 @@ void _FetchMyProgressFromWeb()
 		_WriteBufferToFile(RA_MY_PROGRESS_FILENAME, Response);
 }
 
-void EnsureDialogVisible(HWND hDlg)
+void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
 {
-	//	Does this nudge the dlg back onto the screen?
-	const int nScreenWidth = GetSystemMetrics(SM_CXSCREEN);
-	const int nScreenHeight = GetSystemMetrics(SM_CYMAXIMIZED) - (GetSystemMetrics(SM_CYSCREEN) - GetSystemMetrics(SM_CYMAXIMIZED));
+	WindowPosition new_pos;
+	WindowPosition* pos;
+	WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
+	if (iter != g_mWindowPositions.end()) {
+		pos = &iter->second;
+	} else {
+		pos = &new_pos;
+		pos->nLeft = pos->nTop = pos->nWidth = pos->nHeight = WindowPosition::nUnset;
+	}
+
+	RECT rc;
+	GetWindowRect(hDlg, &rc);
+	const int nDlgWidth = rc.right - rc.left;
+	if (pos->nWidth != WindowPosition::nUnset && pos->nWidth < nDlgWidth)
+		pos->nWidth = WindowPosition::nUnset;
+	const int nDlgHeight = rc.bottom - rc.top;
+	if (pos->nHeight != WindowPosition::nUnset && pos->nHeight < nDlgHeight)
+		pos->nHeight = WindowPosition::nUnset;
+
+	RECT rcMainWindow;
+	GetWindowRect(g_RAMainWnd, &rcMainWindow);
+
+	rc.left = (pos->nLeft != WindowPosition::nUnset) ? (rcMainWindow.left + pos->nLeft) : bToRight ? rcMainWindow.right : rcMainWindow.left;
+	rc.right = (pos->nWidth != WindowPosition::nUnset) ? (rc.left + pos->nWidth) : (rc.left + nDlgWidth);
+	rc.top = (pos->nTop != WindowPosition::nUnset) ? (rcMainWindow.top + pos->nTop) : bToBottom ? rcMainWindow.bottom : rcMainWindow.top;
+	rc.bottom = (pos->nHeight != WindowPosition::nUnset) ? (rc.top + pos->nHeight) : (rc.top + nDlgHeight);
+
+	RECT rcWorkArea;
+	if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0))
+	{
+		LONG offset = rc.right - rcWorkArea.right;
+		if (offset > 0) {
+			rc.left -= offset;
+			rc.right -= offset;
+		}
+		offset = rcWorkArea.left - rc.left;
+		if (offset > 0) {
+			rc.left += offset;
+			rc.right += offset;
+		}
+
+		offset = rc.bottom - rcWorkArea.bottom;
+		if (offset > 0) {
+			rc.top -= offset;
+			rc.bottom -= offset;
+		}
+		offset = rcWorkArea.top - rc.top;
+		if (offset > 0) {
+			rc.top += offset;
+			rc.bottom += offset;
+		}
+	}
+
+	SetWindowPos(hDlg, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0);
+
+	pos->bLoaded = true;
+
+	if (pos == &new_pos)
+		g_mWindowPositions[std::string(sDlgKey)] = new_pos;
+}
+
+void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
+{
+	WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
+	if (iter == g_mWindowPositions.end())
+		return;
+
+	if (!iter->second.bLoaded)
+		return;
+
+	RECT rcMainWindow;
+	GetWindowRect(g_RAMainWnd, &rcMainWindow);
 
 	RECT rc;
 	GetWindowRect(hDlg, &rc);
 
-	const int nDlgWidth = rc.right - rc.left;
-	const int nDlgHeight = rc.bottom - rc.top;
+	iter->second.nLeft = rc.left - rcMainWindow.left;
+	iter->second.nTop = rc.top - rcMainWindow.top;
+}
 
-	if (rc.left < 0 || rc.top < 0)
-		SetWindowPos(hDlg, NULL, rc.left < 0 ? 0 : rc.left, rc.top < 0 ? 0 : rc.top, 0, 0, SWP_NOSIZE);
-	else if ((rc.right > nScreenWidth) || (rc.bottom > nScreenHeight))
-		SetWindowPos(hDlg, NULL, rc.right > nScreenWidth ? nScreenWidth - nDlgWidth : rc.left, rc.bottom > nScreenHeight ? nScreenHeight - nDlgHeight : rc.top, 0, 0, SWP_NOSIZE);
+void RememberWindowSize(HWND hDlg, const char* sDlgKey)
+{
+	WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
+	if (iter == g_mWindowPositions.end())
+		return;
+
+	if (!iter->second.bLoaded)
+		return;
+
+	RECT rc;
+	GetWindowRect(hDlg, &rc);
+
+	iter->second.nWidth = rc.right - rc.left;
+	iter->second.nHeight = rc.bottom - rc.top;
 }
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)
@@ -1018,8 +1151,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 			g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
 		if (g_AchievementsDialog.GetHWND() != NULL)
 			ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
-
-		EnsureDialogVisible(g_AchievementsDialog.GetHWND());
 		break;
 
 	case IDM_RA_FILES_ACHIEVEMENTEDITOR:
@@ -1027,8 +1158,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 			g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
 		if (g_AchievementEditorDialog.GetHWND() != NULL)
 			ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
-
-		EnsureDialogVisible(g_AchievementsDialog.GetHWND());
 		break;
 
 	case IDM_RA_FILES_MEMORYFINDER:
@@ -1036,8 +1165,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 			g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
 		if (g_MemoryDialog.GetHWND() != NULL)
 			ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
-
-		EnsureDialogVisible(g_AchievementsDialog.GetHWND());
 		break;
 
 	case IDM_RA_FILES_LOGIN:
@@ -1174,8 +1301,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 				ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
 
 			g_RichPresenceDialog.StartMonitoring();
-
-			EnsureDialogVisible(g_RichPresenceDialog.GetHWND());
 		}
 		else
 		{

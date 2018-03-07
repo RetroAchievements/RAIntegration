@@ -354,9 +354,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 	{
 	case WM_INITDIALOG:
 	{
-		RECT r;
-		GetWindowRect(g_RAMainWnd, &r);
-		SetWindowPos(hDlg, NULL, r.left, r.bottom, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 		m_hAchievementsDlg = hDlg;
 
 		SendDlgItemMessage(hDlg, IDC_RA_ACTIVE_CORE, BM_SETCHECK, (WPARAM)0, (LONG)0);
@@ -385,6 +382,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
 		//	Click the core 
 		OnClickAchievementSet(Core);
+
+		RestoreWindowPosition(hDlg, "Achievements", false, true);
 	}
 	return TRUE;
 
@@ -915,6 +914,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 	case WM_CLOSE:
 		EndDialog(hDlg, TRUE);
 		return TRUE;
+
+	case WM_MOVE:
+		RememberWindowPosition(hDlg, "Achievements");
+		break;
+
+	case WM_SIZE:
+		RememberWindowSize(hDlg, "Achievements");
+		break;
 	}
 
 	return FALSE;	//	Unhandled

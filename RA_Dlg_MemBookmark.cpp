@@ -111,9 +111,6 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 	{
 		case WM_INITDIALOG:
 		{
-			RECT rc;
-			GetWindowRect( g_MemoryDialog.GetHWND(), &rc );
-			SetWindowPos( hDlg, NULL, rc.left - 64, rc.top + 64, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
 			GenerateResizes( hDlg );
 
 			m_hMemBookmarkDialog = hDlg;
@@ -128,6 +125,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 				ImportFromFile( file );
 			}
 
+			RestoreWindowPosition( hDlg, "Memory Bookmarks", true, false );
 			return TRUE;
 		}
 
@@ -147,13 +145,19 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 				content.Resize( winRect.Width(), winRect.Height() );
 
 			//InvalidateRect( hDlg, NULL, TRUE );
+			RememberWindowSize(hDlg, "Memory Bookmarks");
 		}
 		break;
+
+		case WM_MOVE:
+			RememberWindowPosition(hDlg, "Memory Bookmarks");
+			break;
 
 		case WM_MEASUREITEM:
 			pmis = (PMEASUREITEMSTRUCT)lParam;
 			pmis->itemHeight = 16;
 			return TRUE;
+
 		case WM_DRAWITEM:
 		{
 			pdis = (PDRAWITEMSTRUCT)lParam;
@@ -293,6 +297,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			}
 			return TRUE;
 		}
+
 		case WM_NOTIFY:
 		{
 			switch ( LOWORD( wParam ) )
@@ -702,47 +707,53 @@ void Dlg_MemBookmark::ExportJSON()
 			hr = pDlg->SetFileName( Widen( defaultFileName ).c_str() );
 			if ( hr == S_OK )
 			{
-				IShellItem* pItem = nullptr;
-				SHCreateItemFromParsingName( Widen( defaultDir ).c_str(), NULL, IID_PPV_ARGS( &pItem ) );
-				hr = pDlg->SetDefaultFolder( pItem );
+				PIDLIST_ABSOLUTE pidl;
+				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), NULL, &pidl, SFGAO_FOLDER, 0 );
 				if ( hr == S_OK )
 				{
-					pDlg->SetDefaultExtension( L"txt" );
-					hr = pDlg->Show( nullptr );
+					IShellItem* pItem = nullptr;
+					SHCreateShellItem( NULL, NULL, pidl, &pItem );
+					hr = pDlg->SetDefaultFolder( pItem );
 					if ( hr == S_OK )
 					{
-						
-						hr = pDlg->GetResult( &pItem );
+						pDlg->SetDefaultExtension( L"txt" );
+						hr = pDlg->Show( nullptr );
 						if ( hr == S_OK )
 						{
-							LPWSTR pStr = nullptr;
-							hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
+
+							hr = pDlg->GetResult( &pItem );
 							if ( hr == S_OK )
 							{
-								Document doc;
-								Document::AllocatorType& allocator = doc.GetAllocator();
-								doc.SetObject();
-
-								Value bookmarks( kArrayType );
-								for ( MemBookmark* bookmark : m_vBookmarks )
+								LPWSTR pStr = nullptr;
+								hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
+								if ( hr == S_OK )
 								{
-									Value item( kObjectType );
-									char buffer[ 256 ];
-									sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
-									Value s( buffer, allocator );
+									Document doc;
+									Document::AllocatorType& allocator = doc.GetAllocator();
+									doc.SetObject();
 
-									item.AddMember( "Description", s, allocator );
-									item.AddMember( "Address", bookmark->Address(), allocator );
-									item.AddMember( "Type", bookmark->Type(), allocator );
-									item.AddMember( "Decimal", bookmark->Decimal(), allocator );
-									bookmarks.PushBack( item, allocator );
+									Value bookmarks( kArrayType );
+									for ( MemBookmark* bookmark : m_vBookmarks )
+									{
+										Value item( kObjectType );
+										char buffer[ 256 ];
+										sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
+										Value s( buffer, allocator );
+
+										item.AddMember( "Description", s, allocator );
+										item.AddMember( "Address", bookmark->Address(), allocator );
+										item.AddMember( "Type", bookmark->Type(), allocator );
+										item.AddMember( "Decimal", bookmark->Decimal(), allocator );
+										bookmarks.PushBack( item, allocator );
+									}
+									doc.AddMember( "Bookmarks", bookmarks, allocator );
+
+									_WriteBufferToFile( Narrow( pStr ), doc );
 								}
-								doc.AddMember( "Bookmarks", bookmarks, allocator );
 
-								_WriteBufferToFile( Narrow( pStr ), doc );
+								pItem->Release();
+								ILFree( pidl );
 							}
-
-							pItem->Release();
 						}
 					}
 				}

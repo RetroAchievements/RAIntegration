@@ -129,7 +129,8 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 
 	if( ActiveMessage().Type() == PopupAchievementUnlocked || ActiveMessage().Type() == PopupAchievementError )
 	{
-		DrawImage( hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64 );
+		if (ActiveMessage().Image() != NULL)
+			DrawImage( hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64 );
 
 		nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
 		nDescX += 64 + 4;

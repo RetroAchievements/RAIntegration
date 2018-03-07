@@ -326,8 +326,12 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 		bool bLowerNibble = (m_nEditNibble % 2 == 1);
 		unsigned int nByteAddress = m_nEditAddress;
 
-		if ( g_MemBookmarkDialog.GetHWND() != nullptr )
-			g_MemBookmarkDialog.WriteFrozenValue( *g_MemBookmarkDialog.FindBookmark( nByteAddress ) );
+		if (g_MemBookmarkDialog.GetHWND() != nullptr)
+		{
+			const MemBookmark* Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
+			if (Bookmark != NULL)
+				g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
+		}
 
 		if (m_nDataSize == 0)
 		{
@@ -838,9 +842,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 		{
 			g_MemoryDialog.m_hWnd = hDlg;
 
-			RECT rc;
-			GetWindowRect( g_RAMainWnd, &rc );
-			SetWindowPos( hDlg, NULL, rc.right, rc.top, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW );
 			GenerateResizes( hDlg );
 
 			CheckDlgButton( hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED );
@@ -881,6 +882,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			g_MemoryDialog.OnLoad_NewRom();
 
 			// Add a single column for list view
+			RECT rc;
 			LVCOLUMN Col;
 			Col.mask = LVCF_FMT | LVCF_ORDER | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH;
 			Col.fmt = LVCFMT_CENTER;
@@ -903,6 +905,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			for ( size_t i = 0; i < bankIDs.size(); ++i )
 				AddBank( bankIDs[ i ] );
 
+			RestoreWindowPosition( hDlg, "Memory Inspector", true, false );
 			return TRUE;
 		}
 
@@ -1039,8 +1042,14 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 			for ( ResizeContent content : vDlgMemoryResize )
 				content.Resize( winRect.Width(), winRect.Height() );
+
+			RememberWindowSize( hDlg, "Memory Inspector" );
 		}
 		return TRUE;
+
+		case WM_MOVE:
+			RememberWindowPosition( hDlg, "Memory Inspector" );
+			break;
 
 		case WM_COMMAND:
 		{

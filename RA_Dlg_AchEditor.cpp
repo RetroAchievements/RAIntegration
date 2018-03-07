@@ -1271,6 +1271,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 						m_BadgeNames.AddNewBadgeName(sNewBadgeIter, true);
 						UpdateBadge(sNewBadgeIter);
 					}
+					else if (ResponseData.HasMember("Error"))
+					{
+						MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"), MB_OK);
+					}
 					else
 					{
 						MessageBox(nullptr, TEXT("Error in upload! Try another image format, or maybe smaller image?"), TEXT("Error"), MB_OK);

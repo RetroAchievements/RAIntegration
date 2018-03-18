@@ -380,7 +380,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
 						}
 
-						InvalidateRect( hList, NULL, TRUE );
+						InvalidateRect( hList, NULL, FALSE );
 					}
 
 					return TRUE;
@@ -414,7 +414,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							bookmark->ResetCount();
 						}
 						
-						InvalidateRect( hList, NULL, TRUE );
+						InvalidateRect( hList, NULL, FALSE );
 					}
 
 					return TRUE;
@@ -468,6 +468,7 @@ void Dlg_MemBookmark::UpdateBookmarks( bool bForceWrite )
 
 	HWND hList = GetDlgItem( m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES );
 
+	int index = 0;
 	for ( MemBookmark* bookmark : m_vBookmarks )
 	{
 		if ( bookmark->Frozen() && !bForceWrite )
@@ -483,10 +484,14 @@ void Dlg_MemBookmark::UpdateBookmarks( bool bForceWrite )
 			bookmark->SetPrevious( bookmark->Value() );
 			bookmark->SetValue( mem_value );
 			bookmark->IncreaseCount();
-		}
-	}
 
-	InvalidateRect( hList, NULL, TRUE );
+			RECT rcBounds;
+			ListView_GetItemRect(hList, index, &rcBounds, LVIR_BOUNDS);
+			InvalidateRect(hList, &rcBounds, FALSE);
+		}
+
+		index++;
+	}
 }
 
 void Dlg_MemBookmark::PopulateList()

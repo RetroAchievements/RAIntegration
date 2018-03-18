@@ -680,7 +680,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 					for ( unsigned int i = 0; i < g_pActiveAchievements->NumAchievements(); i++ )
 						g_pActiveAchievements->GetAchievement( i ).SetModified( FALSE );
 
-					InvalidateRect( hDlg, NULL, TRUE );
+					InvalidateRect( hDlg, NULL, FALSE );
 				}
 				else
 				{
@@ -802,7 +802,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 								OnEditData(nIndex, Dlg_Achievements::Active, "Yes");
 						}
 
-						InvalidateRect(hDlg, NULL, TRUE);
 						//	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
 					}
 				}
@@ -819,7 +818,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 							OnEditData(nIndex, Dlg_Achievements::Active, "No");
 						}
 
-						InvalidateRect(hDlg, NULL, TRUE);
 						//	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
 					}
 				}
@@ -857,8 +855,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 							UpdateSelectedAchievementButtons(&Cheevo);
 					}
 				}
-
-				InvalidateRect(hDlg, NULL, TRUE);
 			}
 
 			return TRUE;
@@ -1053,7 +1049,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 			sprintf_s(buffer, 512, "Successfully uploaded data for %d achievements!", nNumChecked);
 			MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
-			InvalidateRect(hDlg, NULL, TRUE);
+			InvalidateRect(hDlg, NULL, FALSE);
 		}
 	}
 	return TRUE;
@@ -1216,9 +1212,13 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
 		{
 			ASSERT(!"Failed to ListView_SetItem!");
 		}
+		else
+		{
+			RECT rcBounds;
+			ListView_GetItemRect(hList, nItem, &rcBounds, LVIR_BOUNDS);
+			InvalidateRect(hList, &rcBounds, FALSE);
+		}
 	}
-
-	InvalidateRect(m_hAchievementsDlg, NULL, TRUE);
 }
 
 int Dlg_Achievements::GetSelectedAchievementIndex()

@@ -260,7 +260,14 @@ void MemoryViewerControl::Invalidate()
 {
 	HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
 	if (hOurDlg != NULL)
-		InvalidateRect(hOurDlg, NULL, TRUE);
+	{
+		InvalidateRect(hOurDlg, NULL, FALSE);
+
+		// In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force the render by calling UpdateWindow
+		// TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for the search results
+		if (g_EmulatorID == RA_Libretro)
+			UpdateWindow(hOurDlg);
+	}
 }
 
 void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
@@ -793,51 +800,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 {
 	switch ( nMsg )
 	{
-		case WM_TIMER:
-		{
-			if ( ( g_MemManager.NumMemoryBanks() == 0 ) || ( g_MemManager.TotalBankSize() == 0 ) )
-			{
-				SetDlgItemText( hDlg, IDC_RA_MEMBITS, TEXT( "" ) );
-				return FALSE;
-			}
-
-			// Update Search Results
-			InvalidateRect( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), NULL, TRUE );
-
-			// Display Bits
-			bool bView8Bit = ( SendDlgItemMessage( hDlg, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0 ) == BST_CHECKED );
-			if ( !bView8Bit )
-			{
-				SetDlgItemText( hDlg, IDC_RA_MEMBITS, TEXT( "" ) );
-				return FALSE;
-			}
-
-			TCHAR nativeBuffer[ 1024 ];
-			GetDlgItemText( g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, nativeBuffer, 1024 );
-			const LPTSTR buffer = nativeBuffer;
-			if ( ( _tcslen(buffer) >= 3 ) && buffer[ 0 ] == '0' && buffer[ 1 ] == 'x' )
-			{
-				ByteAddress nAddr = static_cast<ByteAddress>( strtol( buffer + 2, nullptr, 16 ) );
-				unsigned char nVal = g_MemManager.ActiveBankRAMByteRead( nAddr );
-
-				TCHAR sDesc[ 64 ];
-				_stprintf_s( sDesc, 64, _T( "      %d %d %d %d %d %d %d %d" ),
-					static_cast<int>( ( nVal & ( 1 << 7 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 6 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 5 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 4 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 3 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 2 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 1 ) ) != 0 ),
-					static_cast<int>( ( nVal & ( 1 << 0 ) ) != 0 ) );
-
-				GetDlgItemText( hDlg, IDC_RA_MEMBITS, nativeBuffer, 1024 );
-				if ( _tcscmp( sDesc, nativeBuffer ) != 0 )
-					SetDlgItemText( hDlg, IDC_RA_MEMBITS, sDesc );
-			}
-		}
-		return FALSE;
-
 		case WM_INITDIALOG:
 		{
 			g_MemoryDialog.m_hWnd = hDlg;
@@ -857,9 +819,6 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 				ComboBox_AddString( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), NativeStr( COMPARISONTYPE_STR[ i ] ).c_str() );
 
 			ComboBox_SetCurSel( GetDlgItem( hDlg, IDC_RA_CBO_CMPTYPE ), 0 );
-
-			//	Update timer proc
-			SetTimer( hDlg, 1, 1, (TIMERPROC)s_MemoryProc );
 
 			EnableWindow( GetDlgItem( hDlg, IDC_RA_DOTEST ), g_MemManager.NumCandidates() > 0 );
 
@@ -1491,7 +1450,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							MemoryViewerControl::m_nActiveMemBank = nBankID;
 							g_MemManager.ChangeActiveMemBank( nBankID );
 
-							InvalidateRect( m_hWnd, NULL, TRUE );	//	Force redraw on mem viewer
+							InvalidateRect( m_hWnd, NULL, FALSE );	//	Force redraw on mem viewer
 							break;
 						}
 					}
@@ -1633,10 +1592,56 @@ void Dlg_Memory::OnLoad_NewRom()
 
 void Dlg_Memory::Invalidate()
 {
+	if ((g_MemManager.NumMemoryBanks() == 0) || (g_MemManager.TotalBankSize() == 0))
+	{
+		SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
+		return;
+	}
+
+	// Update bookmarked memory
 	if ( g_MemBookmarkDialog.GetHWND() != nullptr )
 		g_MemBookmarkDialog.UpdateBookmarks( FALSE );
 
+	// Update Memory Viewer
 	MemoryViewerControl::Invalidate();
+
+	// Update Search Results
+	HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
+	InvalidateRect(hList, NULL, FALSE);
+	if (g_EmulatorID == RA_Libretro)
+		UpdateWindow(hList);
+
+	// Display Bits
+	bool bView8Bit = (SendDlgItemMessage(m_hWnd, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+	if (!bView8Bit)
+	{
+		SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
+		return;
+	}
+
+	TCHAR nativeBuffer[1024];
+	GetDlgItemText(m_hWnd, IDC_RA_WATCHING, nativeBuffer, 1024);
+	const LPTSTR buffer = nativeBuffer;
+	if ((_tcslen(buffer) >= 3) && buffer[0] == '0' && buffer[1] == 'x')
+	{
+		ByteAddress nAddr = static_cast<ByteAddress>(strtol(buffer + 2, nullptr, 16));
+		unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
+
+		TCHAR sDesc[64];
+		_stprintf_s(sDesc, 64, _T("      %d %d %d %d %d %d %d %d"),
+			static_cast<int>((nVal & (1 << 7)) != 0),
+			static_cast<int>((nVal & (1 << 6)) != 0),
+			static_cast<int>((nVal & (1 << 5)) != 0),
+			static_cast<int>((nVal & (1 << 4)) != 0),
+			static_cast<int>((nVal & (1 << 3)) != 0),
+			static_cast<int>((nVal & (1 << 2)) != 0),
+			static_cast<int>((nVal & (1 << 1)) != 0),
+			static_cast<int>((nVal & (1 << 0)) != 0));
+
+		GetDlgItemText(m_hWnd, IDC_RA_MEMBITS, nativeBuffer, 1024);
+		if (_tcscmp(sDesc, nativeBuffer) != 0)
+			SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sDesc);
+	}
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
@@ -1886,18 +1891,25 @@ void Dlg_Memory::UpdateSearchResult( unsigned int index, unsigned int &nMemVal, 
 
 	const DWORD nAddr = m_SearchResults[ m_nPage ].m_ResultCandidate[ element ].m_nAddr;
 
-	if ( g_MemManager.MemoryComparisonSize() == ThirtyTwoBit )
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) );
-	if ( g_MemManager.MemoryComparisonSize() == SixteenBit )
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) );
-	else if ( g_MemManager.MemoryComparisonSize() == EightBit )
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) );
-	else if ( g_MemManager.MemoryComparisonSize() == Nibble_Lower || g_MemManager.MemoryComparisonSize() == Nibble_Upper )
+	switch ( g_MemManager.MemoryComparisonSize())
 	{
+	case ThirtyTwoBit:
+		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) ||
+		            g_MemManager.ActiveBankRAMByteRead( nAddr + 2 ) << 16 | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 3 ) << 24 ) );
+		break;
+	case SixteenBit:
+		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) );
+		break;
+	case EightBit:
+		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) );
+		break;
+	case Nibble_Lower:
+	case Nibble_Upper:
 		if ( m_SearchResults[ m_nPage ].m_ResultCandidate[ element ].m_bUpperNibble )
 			nMemVal = ( ( g_MemManager.ActiveBankRAMByteRead( nAddr ) >> 4 ) & 0xf );
 		else
 			nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) & 0xf );
+		break;
 	}
 
 	if ( g_MemManager.MemoryComparisonSize() == ThirtyTwoBit )

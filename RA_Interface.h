@@ -28,6 +28,7 @@ enum EmulatorID
 	RA_Nester,
 	RA_FCEUX,
 	RA_PCE,
+	RA_Libretro,
 
 	NumEmulatorIDs,
 	UnknownEmulator = NumEmulatorIDs
@@ -48,6 +49,26 @@ enum ConsoleID
 	SegaCD,
 	Sega32X,
 	MasterSystem,
+	PlayStation,
+	Lynx,
+	NeoGeo,
+	Xbox360,
+	GameCube,
+	Jaguar,
+	DS,
+	WII,
+	WIIU,
+	PlayStation2,
+	Xbox,
+	Skynet,
+	XboxOne,
+	VCS,
+	MSDOS,
+	Arcade,
+	VirtualBoy,
+	MSX,
+	C64,
+	ZX81,
 
 	NumConsoleIDs
 };

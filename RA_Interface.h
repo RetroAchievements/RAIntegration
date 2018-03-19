@@ -52,7 +52,7 @@ enum ConsoleID
 	PlayStation,
 	Lynx,
 	NeoGeo,
-	Xbox360,
+	GameGear,
 	GameCube,
 	Jaguar,
 	DS,

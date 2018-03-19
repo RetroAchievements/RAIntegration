@@ -1121,17 +1121,18 @@ void AchievementOverlay::DrawLeaderboardExaminePage( HDC hDC, int nDX, int nDY, 
 	}
 }
 
-void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
+void AchievementOverlay::Render( HDC hRealDC, RECT* rcDest ) const
 {
 	//	Rendering:
 	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;	//	Not available!
 
-	const COLORREF nPrevTextColor = GetTextColor( hDC );
-	const COLORREF nPrevBkColor = GetBkColor( hDC );
+	if (m_nTransitionState == TS_OFF)
+		return;
+
 	const int nOuterBorder = 4;
 	RECT rcTarget = (*rcDest);
-	int nBorder = 8;
+	const int nBorder = 8;
 
 	const int nFontSize1 = 32;
 	const int nFontSize2 = 26;
@@ -1145,12 +1146,6 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	unsigned int nMinUserFrameHeight = 64+4+4;
 	char buffer[1024];
 
-	HBRUSH hBrush = NULL;
-
-	if( m_nTransitionState == TS_OFF )
-		return;
-
-	const int nWidth = rcTarget.right - rcTarget.left;
 	const int nHeight = rcTarget.bottom - rcTarget.top;
 	
 	
@@ -1182,9 +1177,14 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 			 nDY, 
 			 nDX+rcTarget.right, 
 			 rcTarget.bottom );
-	
+
+	// create backbuffer
+	HDC hDC = CreateCompatibleDC( hRealDC );
+	HBITMAP hBitmap = CreateCompatibleBitmap( hRealDC, rc.right, nHeight );
+	SelectObject( hDC, hBitmap );
+
 	//	Draw background:
-	int nOldBkMode = SetBkMode( hDC, TRANSPARENT );
+	SetBkMode( hDC, TRANSPARENT );
 	
 	RECT rcBGSize;
 	SetRect( &rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT );
@@ -1309,9 +1309,10 @@ void AchievementOverlay::Render( HDC hDC, RECT* rcDest ) const
 	DeleteObject( g_hFontDesc2 );
 	DeleteObject( g_hFontTiny );
 	
-	SetBkColor( hDC, nPrevBkColor );
-	SetTextColor( hDC, nPrevTextColor );
-	SetBkMode( hDC, nOldBkMode );
+	// render backbuffer to real DC
+	BitBlt( hRealDC, 0, 0, rcDest->right - nDX, nHeight, hDC, 0, 0, SRCCOPY );
+	DeleteObject( hBitmap );
+	DeleteObject( hDC );
 }
 
 void AchievementOverlay::DrawBar( HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel ) const

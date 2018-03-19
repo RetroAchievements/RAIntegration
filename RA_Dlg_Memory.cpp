@@ -1607,9 +1607,12 @@ void Dlg_Memory::Invalidate()
 
 	// Update Search Results
 	HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
-	InvalidateRect(hList, NULL, FALSE);
-	if (g_EmulatorID == RA_Libretro)
-		UpdateWindow(hList);
+	if (hList != NULL)
+	{
+		InvalidateRect(hList, NULL, FALSE);
+		if (g_EmulatorID == RA_Libretro)
+			UpdateWindow(hList);
+	}
 
 	// Display Bits
 	bool bView8Bit = (SendDlgItemMessage(m_hWnd, IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED);

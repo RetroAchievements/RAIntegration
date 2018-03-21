@@ -159,7 +159,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 		g_sClientEXEName = "RAPCE.exe";
 		break;
 	case RA_Libretro:
-		g_ConsoleID = VCS;
+		g_ConsoleID = Atari2600;
 		g_sGetLatestClientPage = "LatestRALibretroVersion.html";
 		g_sClientVersion = sClientVer;
 		g_sClientName = "RALibretro";

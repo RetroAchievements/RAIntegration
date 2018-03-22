@@ -1049,7 +1049,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 			sprintf_s(buffer, 512, "Successfully uploaded data for %d achievements!", nNumChecked);
 			MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
-			InvalidateRect(hDlg, NULL, FALSE);
+			RECT rcBounds;
+			GetClientRect(hList, &rcBounds);
+			InvalidateRect(hList, &rcBounds, FALSE);
 		}
 	}
 	return TRUE;

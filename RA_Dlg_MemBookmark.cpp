@@ -474,6 +474,7 @@ void Dlg_MemBookmark::UpdateBookmarks( bool bForceWrite )
 		if ( bookmark->Frozen() && !bForceWrite )
 		{
 			WriteFrozenValue( *bookmark );
+			index++;
 			continue;
 		}
 

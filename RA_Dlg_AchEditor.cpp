@@ -1762,8 +1762,9 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
 
 	m_hAchievementBadge = hBitmap;
 
-	SendMessage(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge);
-	InvalidateRect(m_hAchievementEditorDlg, NULL, TRUE);
+	HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
+	SendMessage(hCheevoPic, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge);
+	InvalidateRect(hCheevoPic, NULL, TRUE);
 
 	//	Find buffer in the dropdown list
 	int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());

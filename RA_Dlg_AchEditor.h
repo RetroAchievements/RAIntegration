@@ -48,6 +48,7 @@ public:
 
 	void InstallHWND( HWND hWnd )									{ m_hAchievementEditorDlg = hWnd; }
 	HWND GetHWND() const											{ return m_hAchievementEditorDlg; }
+	BOOL IsActive() const;
 
 	Achievement* ActiveAchievement() const							{ return m_pSelectedAchievement; }
 	BOOL IsPopulatingAchievementEditorData() const					{ return m_bPopulatingAchievementEditorData; }

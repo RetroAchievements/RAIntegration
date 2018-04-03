@@ -85,6 +85,7 @@
 #define IDC_RA_KNOWNGAMES               1565
 #define IDC_RA_CHECKSUM                 1566
 #define IDC_RA_MEMBANK                  1567
+#define IDC_RA_MOVECONDUP               1568
 #define IDC_RA_ACHPROGRESS_FORMULA      1569
 #define IDC_RA_ACHPROGRESS_EXAMPLE      1570
 #define IDC_RA_ACHPROGRESSENABLE        1571
@@ -122,6 +123,7 @@
 #define IDC_RA_CBO_SEARCHSYSTEMRAM      1602
 #define IDC_RA_CBO_SEARCHGAMERAM        1603
 #define IDC_RA_SEARCHRANGE              1604
+#define IDC_RA_MOVECONDDOWN             1605
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701

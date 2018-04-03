@@ -1119,6 +1119,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 			ListView_EnsureVisible(hList, nNewID, FALSE);
 		}
 		break;
+
 		case IDC_RA_COPYCOND:
 		{
 			HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
@@ -1148,6 +1149,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 			}
 		}
 		break;
+
 		case IDC_RA_PASTECOND:
 		{
 			HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
@@ -1176,6 +1178,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 			}
 		}
 		break;
+
 		case IDC_RA_DELETECOND:
 		{
 			HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
@@ -1192,7 +1195,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 					sprintf_s(buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
 					if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
 					{
-
 						nSel = -1;
 						std::vector<int> items;
 
@@ -1217,6 +1219,118 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 				}
 			}
 
+		}
+		break;
+
+		case IDC_RA_MOVECONDUP:
+		{
+			HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
+			Achievement* pActiveAch = ActiveAchievement();
+			if (pActiveAch != NULL)
+			{
+				int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+				if (nSelectedIndex >= 0)
+				{
+					//  Get conditions to move
+					std::vector<Condition> conditionsToMove;
+					size_t nSelectedConditionGroup = GetSelectedConditionGroup();
+
+					for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+					{
+						// as we remove items, the index within the achievement changes, but not in the UI until we refresh
+						size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size(); 
+
+						const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+						conditionsToMove.push_back(std::move(CondToMove));
+						pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+					}
+
+					//  Insert at new location
+					int nInsertIndex = (nSelectedIndex > 0) ? nSelectedIndex - 1 : 0;
+					size_t nInsertCount = conditionsToMove.size();
+
+					for (size_t i = 0; i < nInsertCount; ++i)
+					{
+						const Condition& CondToMove = conditionsToMove[i];
+						pActiveAch->InsertCondition(nSelectedConditionGroup, nInsertIndex + i, CondToMove);
+					}
+
+					//	Set this achievement as 'modified'
+					pActiveAch->SetModified(TRUE);
+					g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+
+					//	Refresh:
+					LoadAchievement(pActiveAch, TRUE);
+
+					//  Update selections
+					ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
+					for (size_t i = 0; i < nInsertCount; ++i)
+						ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, -1);
+
+					ListView_EnsureVisible(hList, nInsertIndex, FALSE);
+				}
+
+				SetFocus(hList);
+				bHandled = TRUE;
+			}
+		}
+		break;
+
+		case IDC_RA_MOVECONDDOWN:
+		{
+			HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
+			Achievement* pActiveAch = ActiveAchievement();
+			if (pActiveAch != NULL)
+			{
+				int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+				if (nSelectedIndex >= 0)
+				{
+					//  Get conditions to move
+					std::vector<Condition> conditionsToMove;
+					size_t nSelectedConditionGroup = GetSelectedConditionGroup();
+
+					for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+					{
+						// as we remove items, the index within the achievement changes, but not in the UI until we refresh
+						size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
+
+						const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+						conditionsToMove.push_back(std::move(CondToMove));
+						pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+
+						// want to insert after last selected item, update nSelectedIndex
+						nSelectedIndex = nUpdatedIndex;
+					}
+
+					//  Insert at new location
+					int nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
+					int nInsertIndex = (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
+					size_t nInsertCount = conditionsToMove.size();
+
+					for (size_t i = 0; i < nInsertCount; ++i)
+					{
+						const Condition& CondToMove = conditionsToMove[i];
+						pActiveAch->InsertCondition(nSelectedConditionGroup, nInsertIndex + i, CondToMove);
+					}
+
+					//	Set this achievement as 'modified'
+					pActiveAch->SetModified(TRUE);
+					g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+
+					//	Refresh:
+					LoadAchievement(pActiveAch, TRUE);
+
+					//  Update selections
+					ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
+					for (size_t i = 0; i < nInsertCount; ++i)
+						ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, -1);
+
+					ListView_EnsureVisible(hList, nInsertIndex, FALSE);
+				}
+
+				SetFocus(hList);
+				bHandled = TRUE;
+			}
 		}
 		break;
 
@@ -2005,6 +2119,10 @@ void GenerateResizes(HWND hDlg)
 		GetDlgItem( hDlg, IDC_RA_COPYCOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
 	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
 		GetDlgItem( hDlg, IDC_RA_PASTECOND ), ResizeContent::ALIGN_BOTTOM, FALSE ) );
+	vDlgAchEditorResize.push_back( ResizeContent(hDlg,
+		GetDlgItem( hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, FALSE) );
+	vDlgAchEditorResize.push_back( ResizeContent(hDlg,
+		GetDlgItem( hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, FALSE) );
 
 	vDlgAchEditorResize.push_back ( ResizeContent( hDlg,
 		GetDlgItem( hDlg, IDCLOSE ), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE ) );

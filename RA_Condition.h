@@ -201,10 +201,11 @@ public:
 	BOOL Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAny );
 	size_t Count() const		{ return m_Conditions.size(); }
 
-	void Add( const Condition& newCond )		{ m_Conditions.push_back( newCond ); }
-	Condition& GetAt( size_t i )				{ return m_Conditions[i]; }
-	const Condition& GetAt( size_t i ) const	{ return m_Conditions[i]; }
-	void Clear()								{ m_Conditions.clear(); }
+	void Add( const Condition& newCond )				{ m_Conditions.push_back( newCond ); }
+	void Insert( size_t i, const Condition& newCond )	{ m_Conditions.insert( m_Conditions.begin() + i, newCond ); }
+	Condition& GetAt( size_t i )						{ return m_Conditions[i]; }
+	const Condition& GetAt( size_t i ) const			{ return m_Conditions[i]; }
+	void Clear()										{ m_Conditions.clear(); }
 	void RemoveAt( size_t i );
 	BOOL Reset( BOOL bIncludingDeltas );	//	Returns dirty
 

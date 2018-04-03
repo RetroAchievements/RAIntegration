@@ -33,6 +33,7 @@ public:
 	BOOL Test();
 
 	size_t AddCondition( size_t nConditionGroup, const Condition& pNewCond );
+	size_t InsertCondition( size_t nConditionGroup, size_t nIndex, const Condition& pNewCond );
 	BOOL RemoveCondition( size_t nConditionGroup, unsigned int nConditionID );
 	void RemoveAllConditions( size_t nConditionGroup );
 	

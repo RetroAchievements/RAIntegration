@@ -103,8 +103,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\DXSDK_March09_x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
@@ -129,8 +129,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\DXSDK_March09_x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
@@ -157,8 +157,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\DXSDK_March09_x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration />
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -182,8 +182,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;ddraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\DXSDK_March09_x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>

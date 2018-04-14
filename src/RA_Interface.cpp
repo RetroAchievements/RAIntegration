@@ -1,8 +1,6 @@
 #include "RA_Interface.h"
 
-#include <WinHttp.h>
-
-
+#include <stdio.h>
 
 //	Exposed, shared
 //	App-level:
@@ -60,6 +58,11 @@ void RA_GetEstimatedGameTitle( char* sNameOut )
 
 
 #ifndef RA_EXPORTS
+
+#include <WTypes.h>
+#include <WinHttp.h>
+#include <assert.h>
+#include <string>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit
 
@@ -390,20 +393,20 @@ std::string GetLastErrorAsString()
 const char* CCONV _RA_InstallIntegration()
 {
 	SetErrorMode( 0 );
-	
-#ifdef _DEBUG
-	g_hRADLL = LoadLibraryEx( TEXT( "RA_Integration_d.dll" ), nullptr, 0 );
-#else
-	g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
-#endif
-	if( g_hRADLL == NULL )
-	{
-		char buffer[ 1024 ];
-		sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
-		MessageBoxA( nullptr, buffer, "Sorry!", MB_OK );
 
-		return "0.000";
-	}
+    DWORD dwAttrib = GetFileAttributes( TEXT( "RA_Integration.dll" ) );
+    if ( dwAttrib == INVALID_FILE_ATTRIBUTES )
+        return "0.000";
+
+    g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
+    if ( g_hRADLL == NULL )
+    {
+        char buffer[1024];
+        sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
+        MessageBoxA( nullptr, buffer, "Sorry!", MB_OK );
+
+        return "0.000";
+    }
 
 	//	Install function pointers one by one
  
@@ -559,3 +562,4 @@ void RA_Shutdown()
 
 
 #endif //RA_EXPORTS
+

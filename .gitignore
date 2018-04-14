@@ -1,0 +1,5 @@
+/obj
+/bin
+/.vs
+/src/RA_BuildVer.h
+*.user

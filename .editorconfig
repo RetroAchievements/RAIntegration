@@ -1,0 +1,44 @@
+# More info: http://EditorConfig.org
+
+# top-most EditorConfig file
+# If you want to make an override to this file, make a new .editorconfig and
+# put it in a project directory.
+
+# N.B: Don't put this property in overriding files
+root = true
+
+# DOS-lines since we use \r\n
+# * here means any file type
+[*]
+end_of_line          = crlf
+insert_final_newline = true
+
+# latin1 is a type of ASCII, should work with mbcs
+[*.{h,cpp}]
+charset                  = latin1
+indent_style             = space
+indent_size              = 4
+trim_trailing_whitespace = true
+
+# Matches multiple files with brace expansion notation
+# Set default charset
+[*.{js,py}]
+charset = utf-8
+
+# 4 space indentation
+[*.py]
+indent_style = space
+indent_size  = 4
+
+# Tab indentation (no size specified)
+[Makefile]
+indent_style = tab
+
+
+# Matches the exact files either package.json or .travis.yml
+[{package.json,.travis.yml}]
+indent_style = space
+indent_size  = 2
+
+[*.xml]
+indent_style = space

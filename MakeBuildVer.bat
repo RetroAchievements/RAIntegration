@@ -1,8 +1,7 @@
-@echo off
-
 if not exist MakeBuildVer.bat cd ..
 
-git describe --tags --match "RAIntegration.*" > Temp.txt
+echo|set /p="RAIntegration.071-29-gfbde53b" > Temp.txt
+rem git describe --tags --match "RAIntegration.*" > Temp.txt
 set /p ACTIVE_TAG=<Temp.txt
 set VERSION_MAJOR=0
 set VERSION_MINOR=%ACTIVE_TAG:~14,3%
@@ -51,4 +50,3 @@ move RA_BuildVer.h src\RA_BuildVer.h > nul
 
 
 del Temp.txt
-

@@ -1,4 +1,4 @@
-# RA_Integration
+# RAIntegration
 
 The DLL used for interfacing with RetroAchievements.org
 

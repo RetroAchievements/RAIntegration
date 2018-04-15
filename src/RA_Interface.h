@@ -205,4 +205,3 @@ extern int RA_HardcoreModeIsActive();
 extern int RA_HTTPRequestExists( const char* sPageName );
 
 #endif //RA_EXPORTS
-

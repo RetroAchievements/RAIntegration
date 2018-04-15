@@ -562,4 +562,3 @@ void RA_Shutdown()
 
 
 #endif //RA_EXPORTS
-

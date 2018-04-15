@@ -18,6 +18,78 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="md5.c" />
+    <ClCompile Include="RA_Achievement.cpp" />
+    <ClCompile Include="RA_AchievementOverlay.cpp" />
+    <ClCompile Include="RA_AchievementPopup.cpp" />
+    <ClCompile Include="RA_AchievementSet.cpp" />
+    <ClCompile Include="RA_CodeNotes.cpp" />
+    <ClCompile Include="RA_Condition.cpp" />
+    <ClCompile Include="RA_Core.cpp" />
+    <ClCompile Include="RA_Defs.cpp" />
+    <ClCompile Include="RA_Dlg_AchEditor.cpp" />
+    <ClCompile Include="RA_Dlg_Achievement.cpp" />
+    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp" />
+    <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
+    <ClCompile Include="RA_Dlg_GameTitle.cpp" />
+    <ClCompile Include="RA_Dlg_Login.cpp" />
+    <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
+    <ClCompile Include="RA_Dlg_Memory.cpp" />
+    <ClCompile Include="RA_Dlg_RichPresence.cpp" />
+    <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="RA_GameData.cpp" />
+    <ClCompile Include="RA_httpthread.cpp" />
+    <ClCompile Include="RA_ImageFactory.cpp" />
+    <ClCompile Include="RA_Interface.cpp" />
+    <ClCompile Include="RA_Leaderboard.cpp" />
+    <ClCompile Include="RA_LeaderboardPopup.cpp" />
+    <ClCompile Include="RA_md5factory.cpp" />
+    <ClCompile Include="RA_MemManager.cpp" />
+    <ClCompile Include="RA_PopupWindows.cpp" />
+    <ClCompile Include="RA_ProgressPopup.cpp" />
+    <ClCompile Include="RA_RichPresence.cpp" />
+    <ClCompile Include="RA_User.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="md5.h" />
+    <ClInclude Include="RA_Achievement.h" />
+    <ClInclude Include="RA_AchievementOverlay.h" />
+    <ClInclude Include="RA_AchievementPopup.h" />
+    <ClInclude Include="RA_AchievementSet.h" />
+    <ClInclude Include="RA_BuildVer.h" />
+    <ClInclude Include="RA_CodeNotes.h" />
+    <ClInclude Include="RA_Condition.h" />
+    <ClInclude Include="RA_Core.h" />
+    <ClInclude Include="RA_Defs.h" />
+    <ClInclude Include="RA_Dlg_AchEditor.h" />
+    <ClInclude Include="RA_Dlg_Achievement.h" />
+    <ClInclude Include="RA_Dlg_AchievementsReporter.h" />
+    <ClInclude Include="RA_Dlg_GameLibrary.h" />
+    <ClInclude Include="RA_Dlg_GameTitle.h" />
+    <ClInclude Include="RA_Dlg_Login.h" />
+    <ClInclude Include="RA_Dlg_MemBookmark.h" />
+    <ClInclude Include="RA_Dlg_Memory.h" />
+    <ClInclude Include="RA_Dlg_RichPresence.h" />
+    <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="RA_GameData.h" />
+    <ClInclude Include="RA_httpthread.h" />
+    <ClInclude Include="RA_ImageFactory.h" />
+    <ClInclude Include="RA_Interface.h" />
+    <ClInclude Include="RA_Leaderboard.h" />
+    <ClInclude Include="RA_LeaderboardPopup.h" />
+    <ClInclude Include="RA_md5factory.h" />
+    <ClInclude Include="RA_MemManager.h" />
+    <ClInclude Include="RA_PopupWindows.h" />
+    <ClInclude Include="RA_ProgressPopup.h" />
+    <ClInclude Include="RA_Resource.h" />
+    <ClInclude Include="RA_RichPresence.h" />
+    <ClInclude Include="RA_User.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RA_Shared.rc" />
+    <ResourceCompile Include="RA_Version.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>
@@ -67,33 +139,35 @@
     <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(ProjectDir)</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)_d</TargetName>
+    <OutDir>..\bin\$(Configuration)\</OutDir>
+    <IntDir>..\obj\$(Configuration)\</IntDir>
+    <TargetName>RA_Integration</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
-    <OutDir>$(ProjectDir)</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)_d</TargetName>
+    <OutDir>..\bin\$(Configuration)\</OutDir>
+    <IntDir>..\obj\$(Configuration)\</IntDir>
+    <TargetName>RA_Integration</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(ProjectDir)</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>..\bin\$(Configuration)\</OutDir>
+    <IntDir>..\obj\$(Configuration)\</IntDir>
     <IncludePath>C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>RA_Integration</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnicode|Win32'">
-    <OutDir>$(ProjectDir)</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>..\bin\$(Configuration)\</OutDir>
+    <IntDir>..\obj\$(Configuration)\</IntDir>
     <IncludePath>C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>RA_Integration</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\DXSDK_March09_x86\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -110,7 +184,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>MakeBuildVer.bat</Command>
+      <Command>..\MakeBuildVer.bat</Command>
     </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -119,7 +193,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\DXSDK_March09_x86\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -136,7 +210,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>MakeBuildVer.bat</Command>
+      <Command>..\MakeBuildVer.bat</Command>
     </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -147,7 +221,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\DXSDK_March09_x86\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -164,7 +238,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>MakeBuildVer.bat</Command>
+      <Command>..\MakeBuildVer.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnicode|Win32'">
@@ -172,7 +246,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\DXSDK_March09_x86\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -190,80 +264,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>MakeBuildVer.bat</Command>
+      <Command>..\MakeBuildVer.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="md5.c" />
-    <ClCompile Include="RA_Achievement.cpp" />
-    <ClCompile Include="RA_AchievementOverlay.cpp" />
-    <ClCompile Include="RA_AchievementPopup.cpp" />
-    <ClCompile Include="RA_AchievementSet.cpp" />
-    <ClCompile Include="RA_CodeNotes.cpp" />
-    <ClCompile Include="RA_Condition.cpp" />
-    <ClCompile Include="RA_Core.cpp" />
-    <ClCompile Include="RA_Defs.cpp" />
-    <ClCompile Include="RA_Dlg_AchEditor.cpp" />
-    <ClCompile Include="RA_Dlg_Achievement.cpp" />
-    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp" />
-    <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
-    <ClCompile Include="RA_Dlg_GameTitle.cpp" />
-    <ClCompile Include="RA_Dlg_Login.cpp" />
-    <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
-    <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_Dlg_RichPresence.cpp" />
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
-    <ClCompile Include="RA_GameData.cpp" />
-    <ClCompile Include="RA_httpthread.cpp" />
-    <ClCompile Include="RA_ImageFactory.cpp" />
-    <ClCompile Include="RA_Leaderboard.cpp" />
-    <ClCompile Include="RA_LeaderboardPopup.cpp" />
-    <ClCompile Include="RA_md5factory.cpp" />
-    <ClCompile Include="RA_MemManager.cpp" />
-    <ClCompile Include="RA_PopupWindows.cpp" />
-    <ClCompile Include="RA_ProgressPopup.cpp" />
-    <ClCompile Include="RA_RichPresence.cpp" />
-    <ClCompile Include="RA_User.cpp" />
-    <ClCompile Include="RA_Interface.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="md5.h" />
-    <ClInclude Include="RA_Achievement.h" />
-    <ClInclude Include="RA_AchievementOverlay.h" />
-    <ClInclude Include="RA_AchievementPopup.h" />
-    <ClInclude Include="RA_AchievementSet.h" />
-    <ClInclude Include="RA_CodeNotes.h" />
-    <ClInclude Include="RA_Condition.h" />
-    <ClInclude Include="RA_Core.h" />
-    <ClInclude Include="RA_Defs.h" />
-    <ClInclude Include="RA_Dlg_AchEditor.h" />
-    <ClInclude Include="RA_Dlg_Achievement.h" />
-    <ClInclude Include="RA_Dlg_AchievementsReporter.h" />
-    <ClInclude Include="RA_Dlg_GameLibrary.h" />
-    <ClInclude Include="RA_Dlg_GameTitle.h" />
-    <ClInclude Include="RA_Dlg_Login.h" />
-    <ClInclude Include="RA_Dlg_MemBookmark.h" />
-    <ClInclude Include="RA_Dlg_Memory.h" />
-    <ClInclude Include="RA_Dlg_RichPresence.h" />
-    <ClInclude Include="RA_Dlg_RomChecksum.h" />
-    <ClInclude Include="RA_GameData.h" />
-    <ClInclude Include="RA_httpthread.h" />
-    <ClInclude Include="RA_ImageFactory.h" />
-    <ClInclude Include="RA_Leaderboard.h" />
-    <ClInclude Include="RA_LeaderboardPopup.h" />
-    <ClInclude Include="RA_md5factory.h" />
-    <ClInclude Include="RA_MemManager.h" />
-    <ClInclude Include="RA_PopupWindows.h" />
-    <ClInclude Include="RA_ProgressPopup.h" />
-    <ClInclude Include="RA_RichPresence.h" />
-    <ClInclude Include="RA_User.h" />
-    <ClInclude Include="RA_Resource.h" />
-    <ClInclude Include="RA_Interface.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="RA_Shared.rc" />
-    <ResourceCompile Include="RA_Version.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

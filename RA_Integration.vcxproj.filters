@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{8f0b5fde-0825-4716-85cc-51a87832fc5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{b53b98b9-a1be-46b8-aa15-ea926479eebf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\data">
+      <UniqueIdentifier>{16b46e0a-aee0-4513-8379-bc402cbfacfb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\services">
+      <UniqueIdentifier>{b0ca73cf-2f42-453b-aacb-2791bd008c87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\presentation">
+      <UniqueIdentifier>{c3c27575-3e30-4f9a-bc55-420891008b28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\data">
+      <UniqueIdentifier>{c86864f9-077e-4cfd-8242-bd315a9724d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\presentation">
+      <UniqueIdentifier>{269fcb81-2adf-4ca5-9973-ce659cbcaf40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\services">
+      <UniqueIdentifier>{0dc0f93a-5052-4f02-bae6-297c31e492fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{e8b3e304-7e35-4e4d-814e-28b5e9ff94f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\business_logic">
+      <UniqueIdentifier>{0fe84678-7d95-4afb-b5da-b26c72293ae2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\business_logic">
+      <UniqueIdentifier>{8c98f0b5-f493-4743-9cc9-d0f1d87d89a1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resources\RA_BuildVer.h">
+      <Filter>resources</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\RA_Resource.h">
+      <Filter>resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_Achievement.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_AchievementSet.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_CodeNotes.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_Condition.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_GameData.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_Leaderboard.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_RichPresence.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\data\RA_User.h">
+      <Filter>include\data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\business_logic\RA_Core.h">
+      <Filter>include\business_logic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\business_logic\RA_Defs.h">
+      <Filter>include\business_logic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\business_logic\RA_Interface.h">
+      <Filter>include\business_logic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_AchievementOverlay.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_AchievementPopup.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_AchEditor.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_Achievement.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_AchievementsReporter.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_GameLibrary.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_GameTitle.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_Login.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_MemBookmark.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_Memory.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_RichPresence.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_Dlg_RomChecksum.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_LeaderboardPopup.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_PopupWindows.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\presentation\RA_ProgressPopup.h">
+      <Filter>include\presentation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\services\md5.h">
+      <Filter>include\services</Filter>
+    </ClInclude>
+    <ClInclude Include="include\services\RA_httpthread.h">
+      <Filter>include\services</Filter>
+    </ClInclude>
+    <ClInclude Include="include\services\RA_ImageFactory.h">
+      <Filter>include\services</Filter>
+    </ClInclude>
+    <ClInclude Include="include\services\RA_md5factory.h">
+      <Filter>include\services</Filter>
+    </ClInclude>
+    <ClInclude Include="include\services\RA_MemManager.h">
+      <Filter>include\services</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources\RA_Shared.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="resources\RA_Version.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\data\RA_Achievement.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_AchievementSet.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_CodeNotes.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_Condition.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_GameData.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_Leaderboard.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_RichPresence.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RA_User.cpp">
+      <Filter>src\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\business_logic\RA_Core.cpp">
+      <Filter>src\business_logic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\business_logic\RA_Defs.cpp">
+      <Filter>src\business_logic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\business_logic\RA_Interface.cpp">
+      <Filter>src\business_logic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services\md5.c">
+      <Filter>src\services</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services\RA_httpthread.cpp">
+      <Filter>src\services</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services\RA_ImageFactory.cpp">
+      <Filter>src\services</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services\RA_md5factory.cpp">
+      <Filter>src\services</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services\RA_MemManager.cpp">
+      <Filter>src\services</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_AchievementOverlay.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_AchievementPopup.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_AchEditor.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_Achievement.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_AchievementsReporter.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_GameLibrary.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_GameTitle.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_Login.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_MemBookmark.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_Memory.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_RichPresence.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_Dlg_RomChecksum.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_LeaderboardPopup.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_PopupWindows.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\RA_ProgressPopup.cpp">
+      <Filter>src\presentation</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

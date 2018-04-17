@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <IncludeDir>include/</IncludeDir>
+    <PackageDir>$(NUGET_PACKAGES)/</PackageDir>
+    <SourceDir>src/</SourceDir>
+    <ResourceDir>resources/</ResourceDir>
+    <RA_SourceDirs>$(SourceDir)data/;$(SourceDir)business_logic/;$(SourceDir)presentation/;$(SourceDir)services/</RA_SourceDirs>
+    <RapidJSON_IncludeDir>$(PackageDir)rapidjson.v110/1.1.0/build/native/include/</RapidJSON_IncludeDir>
+    <TinyformatDir>$(PackageDir)tinyformat/2.1.0/build/native/include/</TinyformatDir>
+    <RA_IncludeDirs>$(IncludeDir)data/;$(IncludeDir)business_logic/;$(IncludeDir)presentation/;$(IncludeDir)services/;$(ResourceDir);</RA_IncludeDirs>
+    <RA_IncludePath>$(RA_IncludeDirs); $(RapidJSON_IncludeDir);$(TinyformatDir)</RA_IncludePath>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="IncludeDir">
+      <Value>$(IncludeDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="PackageDir">
+      <Value>$(PackageDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="SourceDir">
+      <Value>$(SourceDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="ResourceDir">
+      <Value>$(ResourceDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RA_SourceDirs">
+      <Value>$(RA_SourceDirs)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RapidJSON_IncludeDir">
+      <Value>$(RapidJSON_IncludeDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="TinyformatDir">
+      <Value>$(TinyformatDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RA_IncludeDirs">
+      <Value>$(RA_IncludeDirs)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RA_IncludePath">
+      <Value>$(RA_IncludePath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

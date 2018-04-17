@@ -15,7 +15,7 @@ The DLL used for interfacing with RetroAchievements.org
 
 ## Installing Package Dependencies
 <ul>
-    <li>Make sure you have NuGet.exe installed</li>
+    <li>Make sure you have NuGet.exe installed and it's in the PATH enviornment variable</li>
     <li>Run install-libs.cmd</li>
     <li>Everything else is taken care of for you</li>
 </ul>

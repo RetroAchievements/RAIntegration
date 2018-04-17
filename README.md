@@ -9,7 +9,7 @@ The DLL used for interfacing with RetroAchievements.org
 <ul>
 	<li>MFC and ATL headers</li>
 	<li>Visual Studio 2017 - Windows XP (v141_xp) w/ Windows 7.0 SDK</li>
-	<li>git for windows<ul><li></li>https://git-scm.com/download/win</ul></li>
+	<li><a href="https://git-scm.com/download/win">git for windows</li>
 	<li>NuGet.CommandLine (nuget.exe)
 	  <ul>
 	    <li><a href="https://chocolatey.org/packages/NuGet.CommandLine">chocolatey</a></li>

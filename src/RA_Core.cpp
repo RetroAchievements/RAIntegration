@@ -167,6 +167,9 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 		g_sClientEXEName = "RALibretro.exe";
 		break;
 	default:
+        g_ConsoleID = UnknownConsoleID;
+        g_sClientVersion = sClientVer;
+        g_sClientName = "";
 		break;
 	}
 

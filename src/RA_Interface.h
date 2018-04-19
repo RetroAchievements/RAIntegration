@@ -29,6 +29,7 @@ enum EmulatorID
 	RA_FCEUX,
 	RA_PCE,
 	RA_Libretro,
+	RA_Meka,
 
 	NumEmulatorIDs,
 	UnknownEmulator = NumEmulatorIDs

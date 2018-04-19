@@ -166,10 +166,18 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 		g_sClientDownloadURL = "RALibretro.zip";
 		g_sClientEXEName = "RALibretro.exe";
 		break;
+	case RA_Meka:
+		g_ConsoleID = MasterSystem;
+		g_sGetLatestClientPage = "LatestRAMekaVersion.html";
+		g_sClientVersion = sClientVer;
+		g_sClientName = "RAMeka";
+		g_sClientDownloadURL = "RAMeka.zip";
+		g_sClientEXEName = "RAMeka.exe";
+		break;
 	default:
-        g_ConsoleID = UnknownConsoleID;
-        g_sClientVersion = sClientVer;
-        g_sClientName = "";
+		g_ConsoleID = UnknownConsoleID;
+		g_sClientVersion = sClientVer;
+		g_sClientName = "";
 		break;
 	}
 

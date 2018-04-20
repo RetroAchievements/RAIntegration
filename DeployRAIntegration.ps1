@@ -11,7 +11,7 @@
         ################################################################################
         # Custom Variables:
 
-        $IntegrationDLLSource = "RA_Integration/RA_Integration.dll"
+        $IntegrationDLLSource = "bin/Release/RA_Integration.dll"
 
         $VersionDoc = "..\RAWeb\public\LatestIntegration.html"
 

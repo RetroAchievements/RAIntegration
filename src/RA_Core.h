@@ -130,6 +130,7 @@ extern BOOL _ReadTil( const char nChar, char buffer[], unsigned int nSize, DWORD
 
 //	Read a string til the end of the string, or nChar. bTerminate==TRUE replaces that char with \0.
 extern char* _ReadStringTil( char nChar, char*& pOffsetInOut, BOOL bTerminate );
+extern void  _ReadStringTil( std::string& sValue, char nChar, const char*& pOffsetInOut );
 
 //	Write out the buffer to a file
 extern void _WriteBufferToFile( const std::string& sFileName, const DataStream& rawData );

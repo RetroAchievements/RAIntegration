@@ -26,14 +26,14 @@ private:
 class RA_ConditionalDisplayString
 {
 public:
-	RA_ConditionalDisplayString( char* pLine );
+	RA_ConditionalDisplayString( const char* pLine );
 
 	bool Test();
 	const std::string& GetDisplayString() const { return m_sDisplayString; }
 
 private:
 	std::string m_sDisplayString;
-	std::vector<ConditionSet> m_conditions;
+	ConditionSet m_conditions;
 };
 
 class RA_Formattable

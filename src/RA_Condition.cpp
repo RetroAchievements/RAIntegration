@@ -10,10 +10,7 @@ static_assert( SIZEOF_ARRAY( COMPARISONTYPE_STR ) == NumComparisonTypes, "Must m
 const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits"};
 static_assert( SIZEOF_ARRAY( CONDITIONTYPE_STR ) == Condition::NumConditionTypes, "Must match!" );
 
-int g_AddBuffer = 0;
-int g_AddHits = 0;
-
-ComparisonVariableSize PrefixToComparisonSize( char cPrefix )
+static ComparisonVariableSize PrefixToComparisonSize( char cPrefix )
 {
 	//	Careful not to use ABCDEF here, this denotes part of an actual variable!
 	switch( cPrefix )
@@ -34,7 +31,8 @@ ComparisonVariableSize PrefixToComparisonSize( char cPrefix )
 		case ' ':	return SixteenBit;
 	}
 }
-const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize )
+
+static const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize )
 {
 	switch( nSize )
 	{
@@ -55,7 +53,7 @@ const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize )
 	}
 }
 
-const char* ComparisonTypeToStr( ComparisonType nType )
+static const char* ComparisonTypeToStr( ComparisonType nType )
 {
 	switch( nType )
 	{
@@ -69,53 +67,154 @@ const char* ComparisonTypeToStr( ComparisonType nType )
 	}
 }
 
-void Condition::ParseFromString( char*& pBuffer )
+static ComparisonType ReadOperator(const char*& pBufferInOut)
 {
-	if( pBuffer[0] == 'R' && pBuffer[1] == ':' )
+	switch (pBufferInOut[0])
 	{
-		SetIsResetCondition();
-		pBuffer+=2;
+	case '=':
+		if (pBufferInOut[1] == '=')
+			++pBufferInOut;
+		++pBufferInOut;
+		return ComparisonType::Equals;
+
+	case '!':
+		if (pBufferInOut[1] == '=')
+		{
+			pBufferInOut += 2;
+			return ComparisonType::NotEqualTo;
+		}
+		break;
+
+	case '<':
+		if (pBufferInOut[1] == '=')
+		{
+			pBufferInOut += 2;
+			return ComparisonType::LessThanOrEqual;
+		}
+
+		++pBufferInOut;
+		return ComparisonType::LessThan;
+
+	case '>':
+		if (pBufferInOut[1] == '=')
+		{
+			pBufferInOut += 2;
+			return ComparisonType::GreaterThanOrEqual;
+		}
+
+		++pBufferInOut;
+		return ComparisonType::GreaterThan;
+
+	default:
+		break;
 	}
-	else if( pBuffer[0] == 'P' && pBuffer[1] == ':' )
+
+	ASSERT(!"Could not parse?!");
+	return ComparisonType::Equals;
+}
+
+static unsigned int ReadHits(const char*& pBufferInOut)
+{
+	if (pBufferInOut[0] == '(' || pBufferInOut[0] == '.')
 	{
-		SetIsPauseCondition();
-		pBuffer+=2;
+		unsigned int nNumHits = strtol(pBufferInOut + 1, (char**)&pBufferInOut, 10);	//	dirty!
+		pBufferInOut++;
+		return nNumHits;
 	}
-	else if ( pBuffer[ 0 ] == 'A' && pBuffer[ 1 ] == ':' )
+
+	//	0 by default: disable hit-tracking!
+	return 0;
+}
+
+bool Condition::ParseFromString( const char*& pBuffer )
+{
+	if ( pBuffer[0] == 'R' && pBuffer[1] == ':' )
 	{
-		SetIsAddCondition();
+		m_nConditionType = Condition::ResetIf;
 		pBuffer += 2;
 	}
-	else if ( pBuffer[ 0 ] == 'B' && pBuffer[ 1 ] == ':' )
+	else if ( pBuffer[0] == 'P' && pBuffer[1] == ':' )
 	{
-		SetIsSubCondition();
+		m_nConditionType = Condition::PauseIf;
 		pBuffer += 2;
 	}
-	else if ( pBuffer[ 0 ] == 'C' && pBuffer[ 1 ] == ':' )
+	else if ( pBuffer[0] == 'A' && pBuffer[1] == ':' )
 	{
-		SetIsAddHitsCondition();
+		m_nConditionType = Condition::AddSource;
+		pBuffer += 2;
+	}
+	else if ( pBuffer[0] == 'B' && pBuffer[1] == ':' )
+	{
+		m_nConditionType = Condition::SubSource;
+		pBuffer += 2;
+	}
+	else if ( pBuffer[0] == 'C' && pBuffer[1] == ':' )
+	{
+		m_nConditionType = Condition::AddHits;
 		pBuffer += 2;
 	}
 	else
 	{
-		SetIsBasicCondition();
-	} 
+		m_nConditionType = Condition::Standard;
+	}
 
-	m_nCompSource.ParseVariable( pBuffer );
+	if ( !m_nCompSource.ParseVariable( pBuffer ) )
+		return false;
+
 	m_nCompareType = ReadOperator( pBuffer );
-	m_nCompTarget.ParseVariable( pBuffer );
-	ResetHits();
-	m_nRequiredHits = ReadHits( pBuffer );
 
+	if ( !m_nCompTarget.ParseVariable( pBuffer ) )
+		return false;
+
+	ResetHits();
+	m_nRequiredHits = ReadHits(pBuffer);
+
+	return true;
 }
 
-BOOL Condition::ResetHits()
-{ 
-	if( m_nCurrentHits == 0 )
-		return FALSE;
+void Condition::SerializeAppend(std::string& buffer) const
+{
+	switch (m_nConditionType)
+	{
+	case Condition::ResetIf:
+		buffer.append("R:");
+		break;
+	case Condition::PauseIf:
+		buffer.append("P:");
+		break;
+	case Condition::AddSource:
+		buffer.append("A:");
+		break;
+	case Condition::SubSource:
+		buffer.append("B:");
+		break;
+	case Condition::AddHits:
+		buffer.append("C:");
+		break;
+	default:
+		break;
+	}
+
+	m_nCompSource.SerializeAppend(buffer);
+
+	buffer.append(ComparisonTypeToStr(m_nCompareType));
+
+	m_nCompTarget.SerializeAppend(buffer);
+
+	if (m_nRequiredHits > 0) {
+		char reqHitsBuffer[24];
+		snprintf(reqHitsBuffer, sizeof(reqHitsBuffer), ".%zu.", m_nRequiredHits);
+		buffer.append(reqHitsBuffer);
+	}
+}
+
+bool Condition::ResetHits()
+{
+	if (m_nCurrentHits == 0)
+		return false;
 
 	m_nCurrentHits = 0;
-	return TRUE;
+	return true;
 }
 
 void Condition::ResetDeltas()
@@ -124,18 +223,7 @@ void Condition::ResetDeltas()
 	m_nCompTarget.ResetDelta();
 }
 
-void Condition::Clear()
-{
-	m_nConditionType = Standard;
-	m_nCurrentHits = 0;
-	m_nRequiredHits = 0;
-	m_nCompSource.SetValues( 0, 0 );
-	m_nCompareType = Equals;
-	m_nCompTarget.SetValues( 0, 0 );
-}
-
-
-void CompVariable::ParseVariable( char*& pBufferInOut )
+bool CompVariable::ParseVariable( const char*& pBufferInOut )
 {
 	char* nNextChar = NULL;
 	unsigned int nBase = 16;	//	Assume hex address
@@ -182,163 +270,98 @@ void CompVariable::ParseVariable( char*& pBufferInOut )
 
 	m_nVal = strtol( pBufferInOut, &nNextChar, nBase );
 	pBufferInOut = nNextChar;
+
+	return true;
+}
+
+void CompVariable::SerializeAppend(std::string& buffer) const
+{
+	char valueBuffer[20];
+	switch (m_nVarType)
+	{
+	case ValueComparison:
+		sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
+		buffer.append(valueBuffer);
+		break;
+
+	case DeltaMem:
+		buffer.append(1, 'd');
+		// explicit fallthrough to Address
+
+	case Address:
+		buffer.append("0x");
+
+		buffer.append(ComparisonSizeToPrefix(m_nVarSize));
+
+		if (m_nVal >= 0x10000)
+			sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
+		else
+			sprintf_s(valueBuffer, sizeof(valueBuffer), "%04x", m_nVal);
+		buffer.append(valueBuffer);
+		break;
+
+	default:
+		ASSERT(!"Unknown type? (DynMem)?");
+		break;
+	}
 }
 
 //	Return the raw, live value of this variable. Advances 'deltamem'
 unsigned int CompVariable::GetValue()
 {
-	unsigned int nPreviousVal = m_nPreviousVal;
-	unsigned int nLiveVal = 0;
+	unsigned int nPreviousVal;
 
-	if( m_nVarType == ComparisonVariableType::ValueComparison )
+	switch (m_nVarType)
 	{
-		//	It's a raw value; return it.
+	case ValueComparison:
+		//	It's a raw value. Return it.
 		return m_nVal;
-	}
-	else if( ( m_nVarType == ComparisonVariableType::Address ) || ( m_nVarType == ComparisonVariableType::DeltaMem ) )
-	{
-		//	It's an address in memory: return it!
 
-		if( m_nVarSize >= ComparisonVariableSize::Bit_0 && m_nVarSize <= ComparisonVariableSize::Bit_7 )
-		{
-			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
-			nLiveVal = ( g_MemManager.ActiveBankRAMByteRead( m_nVal ) & nBitmask ) != 0;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
-		{
-			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
-		{
-			nLiveVal = ( g_MemManager.ActiveBankRAMByteRead( m_nVal ) >> 4 ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::EightBit )
-		{
-			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
-		{
-			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
-			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 1 ) << 8 );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
-		{
-			nLiveVal = g_MemManager.ActiveBankRAMByteRead( m_nVal );
-			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 1 ) << 8 );
-			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 2 ) << 16 );
-			nLiveVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nVal + 3 ) << 24 );
-		}
+	case Address:
+		//	It's an address in memory. Return it!
+		return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
-		if( m_nVarType == ComparisonVariableType::DeltaMem )
-		{
-			//	Return the backed up (last frame) value, but store the new one for the next frame!
-			m_nPreviousVal = nLiveVal;
-			return nPreviousVal;
-		}
-		else
-		{
-			return nLiveVal;
-		}
-	}
-	else
-	{
+	case DeltaMem:
+		//	Return the backed up (last frame) value, but store the new one for the next frame!
+		nPreviousVal = m_nPreviousVal;
+		m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
+		return nPreviousVal;
+
+	default:
 		//	Panic!
-		ASSERT( !"Undefined mem type!" );
+		ASSERT(!"Undefined mem type!");
 		return 0;
 	}
 }
 
-ComparisonType ReadOperator( char*& pBufferInOut )
-{
-	if( pBufferInOut[ 0 ] == '=' && pBufferInOut[ 1 ] == '=' )
-	{
-		pBufferInOut += 2; 
-		return ComparisonType::Equals;
-	}
-	else if( pBufferInOut[ 0 ] == '=' )
-	{
-		pBufferInOut += 1;
-		return ComparisonType::Equals;
-	}
-	else if( pBufferInOut[ 0 ] == '!' && pBufferInOut[ 1 ] == '=' )
-	{
-		pBufferInOut += 2;
-		return ComparisonType::NotEqualTo;
-	}
-	else if( pBufferInOut[ 0 ] == '<' && pBufferInOut[ 1 ] == '=' )
-	{
-		pBufferInOut += 2;
-		return ComparisonType::LessThanOrEqual;
-	}
-	else if( pBufferInOut[ 0 ] == '<' )
-	{
-		pBufferInOut += 1;
-		return ComparisonType::LessThan;
-	}
-	else if( pBufferInOut[ 0 ] == '>' && pBufferInOut[ 1 ] == '=' )
-	{
-		pBufferInOut += 2;
-		return ComparisonType::GreaterThanOrEqual;
-	}
-	else if( pBufferInOut[ 0 ] == '>' )
-	{
-		pBufferInOut += 1;
-		return ComparisonType::GreaterThan;
-	}
-	else
-	{
-		ASSERT( !"Could not parse?!" );
-		return ComparisonType::Equals;
-	}
-}
-
-unsigned int ReadHits( char*& pBufferInOut )
-{
-	unsigned int nNumHits = 0;
-	if( pBufferInOut[0] == '(' || pBufferInOut[0] == '.' )
-	{
-		nNumHits = strtol( pBufferInOut+1, (char**)&pBufferInOut, 10 );	//	dirty!
-		pBufferInOut++;
-	}
-	else
-	{	
-		//	0 by default: disable hit-tracking!
-	}
-	
-	return nNumHits;
-}
-
-BOOL Condition::Compare()
+bool Condition::Compare( unsigned int nAddBuffer )
 {
 	switch( m_nCompareType )
 	{
 	case Equals:
-		return( m_nCompSource.GetValue() + g_AddBuffer == m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue() );
 	case LessThan:
-		return( m_nCompSource.GetValue() + g_AddBuffer < m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue() );
 	case LessThanOrEqual:
-		return( m_nCompSource.GetValue() + g_AddBuffer <= m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue() );
 	case GreaterThan:
-		return( m_nCompSource.GetValue() + g_AddBuffer > m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue() );
 	case GreaterThanOrEqual:
-		return( m_nCompSource.GetValue() + g_AddBuffer >= m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue() );
 	case NotEqualTo:
-		return( m_nCompSource.GetValue() + g_AddBuffer != m_nCompTarget.GetValue() );
+		return( m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue() );
 	default:
 		return true;	//?
 	}
 }
 
-BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAny )
+bool ConditionGroup::Test( bool& bDirtyConditions, bool& bResetAll, bool bMatchAny )
 {
-	g_AddBuffer = 0;
-	g_AddHits = 0;
-	BOOL bConditionValid = FALSE;
-	BOOL bSetValid = TRUE;
-	BOOL bPauseActive = FALSE;
+	unsigned int nAddBuffer = 0;
+	unsigned int nAddHits = 0;
+	bool bConditionValid = false;
+	bool bSetValid = true;
 	unsigned int i = 0;
-	unsigned int nSrc = 0;
-	unsigned int nTgt = 0;
 
 	const unsigned int nNumConditions = m_Conditions.size();
 
@@ -366,66 +389,67 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 	for( i = 0; i < nNumConditions; ++i )
 	{
 		Condition* pNextCond = &m_Conditions[ i ];
-		if( pNextCond->IsPauseCondition() || pNextCond->IsResetCondition() )
+
+		switch (pNextCond->GetConditionType())
+		{
+		case Condition::PauseIf:
+		case Condition::ResetIf:
 			continue;
 
-		if ( pNextCond->IsAddCondition() )
-		{
-			g_AddBuffer += pNextCond->CompSource().GetValue();
-			bSetValid &= TRUE;
+		case Condition::AddSource:
+			nAddBuffer += pNextCond->CompSource().GetValue();
 			continue;
-		}
 
-		if ( pNextCond->IsSubCondition() )
-		{
-			g_AddBuffer -= pNextCond->CompSource().GetValue();
-			bSetValid &= TRUE;
+		case Condition::SubSource:
+			nAddBuffer -= pNextCond->CompSource().GetValue();
 			continue;
-		}
 
-		if ( pNextCond->IsAddHitsCondition() )
-		{
-			if ( pNextCond->Compare() )
-			{
-				pNextCond->IncrHits();
-				bDirtyConditions = TRUE;
+		case Condition::AddHits:
+			if (pNextCond->Compare()) {
+				if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits()) {
+					pNextCond->IncrHits();
+					bDirtyConditions = true;
+				}
 			}
 
-			g_AddHits += pNextCond->CurrentHits();
+			nAddHits += pNextCond->CurrentHits();
 			continue;
+
+		default:
+			break;
 		}
 
-		if ( pNextCond->RequiredHits() != 0 && ( pNextCond->CurrentHits() + g_AddHits >= pNextCond->RequiredHits() ) )
+		// if the condition has a target hit count that has already been met, ignore it.
+		if ( pNextCond->RequiredHits() != 0 && ( pNextCond->CurrentHits() + nAddHits >= pNextCond->RequiredHits() ) ) 
 		{
-			g_AddBuffer = 0;
-			g_AddHits = 0;
+			nAddBuffer = 0;
+			nAddHits = 0;
 			continue;
 		}
 
-		bConditionValid = pNextCond->Compare();
+		bConditionValid = pNextCond->Compare( nAddBuffer );
 		if( bConditionValid )
 		{
 			pNextCond->IncrHits();
-			bDirtyConditions = TRUE;
+			bDirtyConditions = true;
 
 			//	Process this logic, if this condition is true:
-
 			if( pNextCond->RequiredHits() == 0 )
 			{
 				//	Not a hit-based requirement: ignore any additional logic!
 			}
-			else if( pNextCond->CurrentHits() + g_AddHits < pNextCond->RequiredHits() )
+			else if( pNextCond->CurrentHits() + nAddHits < pNextCond->RequiredHits() )
 			{
 				//	Not entirely valid yet!
-				bConditionValid = FALSE;
+				bConditionValid = false;
 			}
 
 			if( bMatchAny )	//	'or'
 				break;
 		}
 
-		g_AddBuffer = 0;
-		g_AddHits = 0;
+		nAddBuffer = 0;
+		nAddHits = 0;
 
 		//	Sequential or non-sequential?
 		bSetValid &= bConditionValid;
@@ -440,8 +464,8 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 			bConditionValid = pNextCond->Compare();
 			if( bConditionValid )
 			{
-				bResetRead = TRUE;			//	Resets all hits found so far
-				bSetValid = FALSE;			//	Cannot be valid if we've hit a reset condition.
+				bResetAll = true;			//	Resets all hits found so far
+				bSetValid = false;			//	Cannot be valid if we've hit a reset condition.
 				break;						//	No point processing any further reset conditions.
 			}
 		}
@@ -450,20 +474,21 @@ BOOL ConditionSet::Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAn
 	return bSetValid;
 }
 
-BOOL ConditionSet::Reset( BOOL bIncludingDeltas )
+bool ConditionGroup::Reset(bool bIncludingDeltas)
 {
-	BOOL bDirty = FALSE;
-	for( size_t i = 0; i < m_Conditions.size(); ++i )
+	bool bWasReset = false;
+	for( size_t i = 0; i < m_Conditions.size(); ++i ) 
 	{
-		bDirty |= m_Conditions[i].ResetHits();
+		bWasReset |= m_Conditions[i].ResetHits();
+
 		if( bIncludingDeltas )
 			m_Conditions[i].ResetDeltas();
 	}
 
-	return bDirty;
+	return bWasReset;
 }
 
-void ConditionSet::RemoveAt( size_t nID )
+void ConditionGroup::RemoveAt( size_t nID )
 {
 	size_t nCount = 0;
 	std::vector<Condition>::iterator iter = m_Conditions.begin();
@@ -478,4 +503,119 @@ void ConditionSet::RemoveAt( size_t nID )
 		nCount++;
 		iter++;
 	}
+}
+
+void ConditionGroup::SerializeAppend(std::string& buffer) const
+{
+	if (m_Conditions.empty())
+		return;
+
+	m_Conditions[0].SerializeAppend(buffer);
+	for (size_t i = 1; i < m_Conditions.size(); ++i) {
+		buffer.append(1, '_');
+		m_Conditions[i].SerializeAppend(buffer);
+	}
+}
+
+bool ConditionSet::ParseFromString(const char*& sSerialized)
+{
+	ConditionGroup* group = nullptr;
+	m_vConditionGroups.clear();
+
+	do
+	{
+		Condition condition;
+		if (!condition.ParseFromString(sSerialized))
+			return false;
+
+		if (!group) {
+			m_vConditionGroups.emplace_back();
+			group = &m_vConditionGroups.back();
+		}
+
+		group->Add(condition);
+
+		if (*sSerialized == '_') {
+			// AND
+			++sSerialized;
+		}
+		else if (*sSerialized == 'S') {
+			// OR
+			++sSerialized;
+			group = nullptr;
+		}
+		else {
+			// EOF or invalid character
+			break;
+		}
+
+	} while (true);
+
+	return true;
+}
+
+void ConditionSet::Serialize(std::string& buffer) const
+{
+	buffer.clear();
+	if (m_vConditionGroups.empty())
+		return;
+
+	int conditions = 0;
+	for (const ConditionGroup& group : m_vConditionGroups)
+		conditions += group.Count();
+
+	// estimate 16 bytes per condition: "R:0xH0001=12" is only 12, so we give ourselves a little leeway
+	buffer.reserve(conditions * 16);
+
+	m_vConditionGroups[0].SerializeAppend(buffer);
+	for (size_t i = 1; i < m_vConditionGroups.size(); ++i) {
+		// ignore empty groups when serializing
+		if (m_vConditionGroups[i].Count() == 0)
+			continue;
+
+		buffer.append(1, 'S');
+		m_vConditionGroups[i].SerializeAppend(buffer);
+	}
+}
+
+bool ConditionSet::Test(bool& bDirtyConditions, bool& bResetConditions)
+{
+	// bDirtyConditions is set if any condition's HitCount changes
+	bDirtyConditions = false;
+
+	// bResetConditions is set if any condition's ResetIf triggers
+	bResetConditions = false;
+
+	if (m_vConditionGroups.empty())
+		return false;
+
+	// for a set to be true, the first group (core) must be true. if any additional groups (alt)
+	// exist, at least one of them must also be true.
+	bool bResult = m_vConditionGroups[0].Test(bDirtyConditions, bResetConditions, false);
+	if (m_vConditionGroups.size() > 1) {
+		bool bAltResult = false;
+		for (size_t i = 1; i < m_vConditionGroups.size(); ++i) {
+			if (m_vConditionGroups[i].Test(bDirtyConditions, bResetConditions, false))
+				bAltResult = true;
+		}
+
+		if (!bAltResult || bResetConditions)
+			bResult = false;
+	}
+
+	if (bResetConditions)
+		bDirtyConditions = Reset();
+
+	return bResult;
+}
+
+bool ConditionSet::Reset()
+{
+	bool bWasReset = false;
+	for (ConditionGroup& group : m_vConditionGroups) {
+		if (group.Reset(false))
+			bWasReset = true;
+	}
+
+	return bWasReset;
 }

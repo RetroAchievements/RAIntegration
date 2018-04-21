@@ -1,7 +1,5 @@
 #include "RA_MemManager.h"
 
-#include "RA_Core.h"
-#include "RA_Achievement.h"
 #include "RA_Dlg_Memory.h"
 
 MemManager g_MemManager;
@@ -212,21 +210,9 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
 			else
 				nLiveValue = ActiveBankRAMByteRead(nAddr) & 0xf;
 		}
-		else if (m_nComparisonSizeMode == EightBit)
+		else
 		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-		}
-		else if (m_nComparisonSizeMode == SixteenBit)
-		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 1) << 8);
-		}
-		else if (m_nComparisonSizeMode == ThirtyTwoBit)
-		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 1) << 8);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 2) << 16);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 3) << 24);
+			nLiveValue = ActiveBankRAMRead(nAddr, m_nComparisonSizeMode);
 		}
 
 		bool bValid = false;
@@ -295,6 +281,43 @@ std::vector<size_t> MemManager::GetBankIDs() const
 	return bankIDs;
 }
 
+unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const
+{
+	unsigned char buffer[4];
+	switch (size)
+	{
+	case Bit_0:
+		return (ActiveBankRAMByteRead(nOffs) & 0x01);
+	case Bit_1:
+		return (ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0;
+	case Bit_2:
+		return (ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0;
+	case Bit_3:
+		return (ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0;
+	case Bit_4:
+		return (ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0;
+	case Bit_5:
+		return (ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0;
+	case Bit_6:
+		return (ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0;
+	case Bit_7:
+		return (ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0;
+	case Nibble_Lower:
+		return (ActiveBankRAMByteRead(nOffs) & 0x0F);
+	case Nibble_Upper:
+		return ((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
+	case EightBit:
+		return ActiveBankRAMByteRead(nOffs);
+	default:
+	case SixteenBit:
+		ActiveBankRAMRead(buffer, nOffs, 2);
+		return buffer[0] | (buffer[1] << 8);
+	case ThirtyTwoBit:
+		ActiveBankRAMRead(buffer, nOffs, 4);
+		return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+	}
+}
+
 unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
 {
 	const BankData* bank = nullptr;
@@ -345,8 +368,11 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
 
 		nOffs -= bank->BankSize;
 		bankID++;
-		if (bankID >= numBanks)
+		if (bankID >= numBanks) {
+			while (count-- > 0)
+				*buffer++ = 0;
 			return;
+		}
 		
 		bank = &m_Banks.at(bankID);
 		reader = bank->Reader;

@@ -32,39 +32,12 @@ double MemValue::GetValue() const
 	}
 	else
 	{
-		if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
-		{
-			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) >> 4 ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::EightBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 2 ) << 16 );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 3 ) << 24 );
-		}
-		else if( ( m_nVarSize >= ComparisonVariableSize::Bit_0 ) && ( m_nVarSize <= ComparisonVariableSize::Bit_7 ) )
-		{
-			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
-			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & nBitmask ) != 0;
+		nRetVal = g_MemManager.ActiveBankRAMRead( m_nAddress, m_nVarSize );
 
-			if ( m_bInvertBit )
-				nRetVal = ( nRetVal == 1 ) ? 0 : 1;
+		if( m_bInvertBit && ( m_nVarSize >= ComparisonVariableSize::Bit_0 ) && ( m_nVarSize <= ComparisonVariableSize::Bit_7 ) )
+		{
+    		nRetVal = ( nRetVal == 1 ) ? 0 : 1;
 		}
-		//nRetVal = g_MemManager.RAMByte( m_nAddress );
 
 		if( m_bBCDParse )
 		{
@@ -86,9 +59,9 @@ double MemValue::GetValue() const
 	return nRetVal * m_fModifier;
 }
 
-char* MemValue::ParseFromString( char* pBuffer )
+const char* MemValue::ParseFromString( const char* pBuffer )
 {
-	char* pIter = &pBuffer[0];
+	const char* pIter = &pBuffer[0];
 
 	//	Borrow parsing from CompVariable
 
@@ -129,7 +102,11 @@ char* MemValue::ParseFromString( char* pBuffer )
 			m_nSecondVarSize = varTemp.Size();
 		}
 		else
-			 m_fModifier = strtod( pIter, &pIter );
+		{
+			char* pOut;
+			m_fModifier = strtod( pIter, &pOut );
+			pIter = pOut;
+        }
 	}
 
 	return pIter;
@@ -188,7 +165,7 @@ void ValueSet::AddNewValue( MemValue nMemVal )
 	m_Values.push_back( nMemVal );
 }
 
-void ValueSet::ParseMemString( char* pChar )
+void ValueSet::ParseMemString( const char* pChar )
 {
 	do 
 	{
@@ -248,7 +225,7 @@ void RA_Leaderboard::LoadFromJSON( const Value& element )
 	}
 }
 
-void RA_Leaderboard::ParseLBData( char* pChar )
+void RA_Leaderboard::ParseLBData( const char* pChar )
 {
 	while( ( ( *pChar ) != '\n' ) && ( ( *pChar ) != '\0' ) )
 	{
@@ -455,7 +432,7 @@ void RA_Leaderboard::Reset()
 
 void RA_Leaderboard::Test()
 {
-	BOOL bUnused;
+	bool bUnused;
 
 	//	Ensure these are always tested once every frame, to ensure delta
 	//	 variables work properly :)

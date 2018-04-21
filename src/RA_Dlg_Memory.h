@@ -3,9 +3,6 @@
 #include "RA_Defs.h"
 #include "RA_CodeNotes.h"
 #include "RA_MemManager.h"
-#include "RA_Condition.h"
-
-class CodeNotes;
 
 class MemoryViewerControl
 {

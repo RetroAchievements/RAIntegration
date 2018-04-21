@@ -14,7 +14,7 @@ public:
 		: m_nAddress( nAddr ), m_fModifier( fMod ), m_nVarSize( nSize ), m_bBCDParse( bBCDParse ), m_bParseVal( bParseVal ) {}
 	
 public:
-	char* ParseFromString( char* pBuffer );		//	Parse string into values, returns end of string
+	const char* ParseFromString( const char* pBuffer );		//	Parse string into values, returns end of string
 	double GetValue() const;					//	Get the value in-memory with modifiers
 
 public:
@@ -41,7 +41,7 @@ public:
 	};
 
 public:
-	void ParseMemString( char* sBuffer );
+	void ParseMemString( const char* sBuffer );
 	double GetValue() const;
 	double GetOperationsValue( std::vector<OperationType> ) const;
 	void AddNewValue( MemValue nVal );
@@ -83,7 +83,7 @@ public:
 public:
 	void LoadFromJSON( const Value& element );
 	void ParseLine( char* sBuffer );
-	void ParseLBData( char* sBuffer );
+	void ParseLBData( const char* sBuffer );
 
 	void Test();
 	double GetCurrentValue();
@@ -110,9 +110,9 @@ public:
 
 private:
 	const LeaderboardID		m_nID;			//	DB ID for this LB
-	ConditionSet			m_startCond;	//	Start monitoring if this is true
-	ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
-	ConditionSet			m_submitCond;	//	Submit new score if this is true
+	ConditionGroup			m_startCond;	//	Start monitoring if this is true
+	ConditionGroup			m_cancelCond;	//	Cancel monitoring if this is true
+	ConditionGroup			m_submitCond;	//	Submit new score if this is true
 
 	bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
 	bool                    m_bSubmitted;   //  True if already submitted.

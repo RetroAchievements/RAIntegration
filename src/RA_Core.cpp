@@ -1491,6 +1491,17 @@ char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate)
 	return (pStartString);
 }
 
+void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+{
+    const char* pStartString = pSource;
+
+    while (*pSource != '\0' && *pSource != nChar)
+        pSource++;
+
+    value.assign(pStartString, pSource - pStartString);
+    pSource++;
+}
+
 void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 {
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());

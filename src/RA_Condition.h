@@ -55,18 +55,16 @@ public:
 	 :	m_nVal( 0 ),
 		m_nPreviousVal( 0 ),
 		m_nVarSize( ComparisonVariableSize::EightBit ),
-		m_nVarType( ComparisonVariableType::Address ),
-		m_nBankID( 0 )
+		m_nVarType( ComparisonVariableType::Address )
 	{
 	}
 
 public:
-	void Set( ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue, unsigned short nBankID )
+	void Set( ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue )
 	{
 		m_nVarSize = nSize;
 		m_nVarType = nType;
 		m_nVal = nInitialValue;
-		m_nBankID = nBankID;
 	}
 
 	void SetValues( unsigned int nVal, unsigned int nPrevVal )
@@ -77,18 +75,12 @@ public:
 
 	void ResetDelta()
 	{
-		m_nPreviousVal = m_nVal;
+		m_nPreviousVal = 0;
 	}
-	
-	//void Clear()
-	//{
-	//	m_nVal = 0;
-	//	m_nPreviousVal = 0;
-	//	m_nVarSize = COMPVAR_8BIT;
-	//	m_nVarType = COMPVARTYPE_ADDRESS;
-	//}
 
-	void ParseVariable( char*& sInString );	//	Parse from string
+	bool ParseVariable(const char*& sInString);	//	Parse from string
+	void SerializeAppend(std::string& buffer) const;
+
 	unsigned int GetValue();				//	Returns the live value
 	
 	inline void SetSize( ComparisonVariableSize nSize )		{ m_nVarSize = nSize; }
@@ -99,12 +91,10 @@ public:
 	
 	inline unsigned int RawValue() const					{ return m_nVal; }
 	inline unsigned int RawPreviousValue() const			{ return m_nPreviousVal; }
-	inline unsigned short BankID() const					{ return m_nBankID; }
 
 private:
 	ComparisonVariableSize m_nVarSize;
 	ComparisonVariableType m_nVarType;
-	unsigned short m_nBankID;
 	unsigned int m_nVal;
 	unsigned int m_nPreviousVal;
 };
@@ -135,53 +125,43 @@ public:
 
 public:
 	//	Parse a Condition from a string of characters
-	void ParseFromString( char*& sBuffer );
+	bool ParseFromString(const char*& sBuffer);
+	void SerializeAppend(std::string& buffer) const;
 
 	//	Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
-	BOOL Compare();
+	bool Compare(unsigned int nAddBuffer = 0);
 
 	//	Returns whether a change was made
-	BOOL ResetHits();
+	bool ResetHits();
 
 	//	Resets 'last known' values
 	void ResetDeltas();
-	void Clear();
 	
 	inline CompVariable& CompSource()				{ return m_nCompSource; }	//	NB both required!!
 	inline const CompVariable& CompSource() const	{ return m_nCompSource; }
 	inline CompVariable& CompTarget()				{ return m_nCompTarget; }
 	inline const CompVariable& CompTarget() const	{ return m_nCompTarget; }
-
 	void SetCompareType( ComparisonType nType )		{ m_nCompareType = nType; }
-
 	inline ComparisonType CompareType() const		{ return m_nCompareType; }
 
 	inline unsigned int RequiredHits() const		{ return m_nRequiredHits; }
 	inline unsigned int CurrentHits() const			{ return m_nCurrentHits; }
 
-	inline BOOL IsResetCondition() const			{ return( m_nConditionType == ResetIf ); }
-	inline BOOL IsPauseCondition() const			{ return( m_nConditionType == PauseIf ); }
-	inline BOOL IsAddCondition() const				{ return( m_nConditionType == AddSource ); }
-	inline BOOL IsSubCondition() const				{ return( m_nConditionType == SubSource ); }
-	inline BOOL IsAddHitsCondition() const			{ return( m_nConditionType == AddHits ); }
+	inline bool IsResetCondition() const			{ return( m_nConditionType == ResetIf ); }
+	inline bool IsPauseCondition() const			{ return( m_nConditionType == PauseIf ); }
+	inline bool IsAddCondition() const				{ return( m_nConditionType == AddSource ); }
+	inline bool IsSubCondition() const				{ return( m_nConditionType == SubSource ); }
+	inline bool IsAddHitsCondition() const			{ return( m_nConditionType == AddHits ); }
 
 	inline ConditionType GetConditionType() const	{ return m_nConditionType; }
 	void SetConditionType( ConditionType nNewType )	{ m_nConditionType = nNewType; }
 	
 	void SetRequiredHits( unsigned int nHits )		{ m_nRequiredHits = nHits; }
 	void IncrHits()									{ m_nCurrentHits++; }
-	BOOL IsComplete() const							{ return( m_nCurrentHits >= m_nRequiredHits ); }
+	bool IsComplete() const							{ return( m_nCurrentHits >= m_nRequiredHits ); }
 
 	void OverrideCurrentHits( unsigned int nHits )	{ m_nCurrentHits = nHits; }
 
-	void SetIsBasicCondition()						{ m_nConditionType = Standard; }
-	void SetIsPauseCondition()						{ m_nConditionType = PauseIf; }
-	void SetIsResetCondition()						{ m_nConditionType = ResetIf; }
-	void SetIsAddCondition()						{ m_nConditionType = AddSource; }
-	void SetIsSubCondition()						{ m_nConditionType = SubSource; }
-	void SetIsAddHitsCondition()					{ m_nConditionType = AddHits; }
-
-	void Set( const Condition& rRHS )				{ (*this) = rRHS; }
 
 private:
 	ConditionType	m_nConditionType;
@@ -189,16 +169,18 @@ private:
 	CompVariable	m_nCompSource;
 	ComparisonType	m_nCompareType;
 	CompVariable	m_nCompTarget;
-	
+
 	unsigned int	m_nRequiredHits;
 	unsigned int	m_nCurrentHits;
 };
 
-class ConditionSet
+class ConditionGroup
 {
 public:
+	void SerializeAppend(std::string& buffer) const;
+
 	//	Final param indicates 'or'
-	BOOL Test( BOOL& bDirtyConditions, BOOL& bResetRead, BOOL bMatchAny );
+	bool Test( bool& bDirtyConditions, bool& bResetRead, bool bMatchAny );
 	size_t Count() const		{ return m_Conditions.size(); }
 
 	void Add( const Condition& newCond )				{ m_Conditions.push_back( newCond ); }
@@ -207,16 +189,28 @@ public:
 	const Condition& GetAt( size_t i ) const			{ return m_Conditions[i]; }
 	void Clear()										{ m_Conditions.clear(); }
 	void RemoveAt( size_t i );
-	BOOL Reset( BOOL bIncludingDeltas );	//	Returns dirty
+	bool Reset( bool bIncludingDeltas );	//	Returns dirty
 
 protected:
 	std::vector<Condition> m_Conditions;
 };
 
-extern ComparisonVariableSize PrefixToComparisonSize( char cPrefix );
-extern const char* ComparisonSizeToPrefix( ComparisonVariableSize nSize );
-extern const char* ComparisonTypeToStr( ComparisonType nType );
+class ConditionSet
+{
+public:
+	bool ParseFromString(const char*& sSerialized);
+	void Serialize(std::string& buffer) const;
 
-//extern BOOL CompareConditionValues( unsigned int nLHS, const enum CompType nCmpType, unsigned int nRHS );
-extern ComparisonType ReadOperator( char*& pBufferInOut );
-extern unsigned int ReadHits( char*& pBufferInOut );
+	bool Test(bool& bDirtyConditions, bool& bWasReset);
+	bool Reset();
+
+	void Clear()                                        { m_vConditionGroups.clear(); }
+	size_t GroupCount() const                           { return m_vConditionGroups.size(); }
+	void AddGroup()                                     { m_vConditionGroups.emplace_back(); }
+	void RemoveLastGroup()                              { m_vConditionGroups.pop_back(); }
+	ConditionGroup& GetGroup(size_t i)                  { return m_vConditionGroups[i]; }
+	const ConditionGroup& GetGroup(size_t i) const      { return m_vConditionGroups[i]; }
+
+protected:
+	std::vector<ConditionGroup> m_vConditionGroups;
+};

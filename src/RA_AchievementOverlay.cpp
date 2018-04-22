@@ -1777,6 +1777,11 @@ API void _RA_RenderOverlay( HDC hDC, RECT* rcSize )
 	g_AchievementOverlay.Render( hDC, rcSize );
 }
 
+API bool _RA_IsOverlayFullyVisible()
+{
+    return g_AchievementOverlay.IsFullyVisible();
+}
+
 API void _RA_InitDirectX()
 {
 	g_AchievementOverlay.InitDirectX();

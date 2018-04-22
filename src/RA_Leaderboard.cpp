@@ -235,48 +235,30 @@ void RA_Leaderboard::ParseLBData( const char* pChar )
 		if( std::string( "STA:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-
-			//	Parse Start condition
-			do 
-			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-				
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_startCond.Add( nNewCond );
-			}
-			while( *pChar == '_' );
+			m_startCond.ParseFromString(pChar);
 		}
 		else if( std::string( "CAN:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-			//	Parse Cancel condition
-			do 
+			m_cancelCond.ParseFromString(pChar);
+
+			// temporary backwards compatibility support: all conditions in CANCEL should be OR'd:
+			if (m_cancelCond.GroupCount() == 1 && m_cancelCond.GetGroup(0).Count() > 1)
 			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-				
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_cancelCond.Add( nNewCond );
+				for (size_t i = 0; i < m_cancelCond.GetGroup(0).Count(); ++i)
+				{
+					m_cancelCond.AddGroup();
+					m_cancelCond.GetGroup(i + 1).Add(m_cancelCond.GetGroup(0).GetAt(i));
+				}
+
+				m_cancelCond.GetGroup(0).Clear();
 			}
-			while( *pChar == '_' );
+			// end backwards compatibility conversion
 		}
 		else if( std::string( "SUB:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-			//	Parse Submit condition
-			do 
-			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_submitCond.Add( nNewCond );
-			}
-			while( *pChar == '_' );
+			m_submitCond.ParseFromString(pChar);
 		}
 		else if( std::string( "VAL:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
@@ -425,9 +407,9 @@ void RA_Leaderboard::Reset()
 {
 	m_bStarted = false;
 
-	m_startCond.Reset( true );
-	m_cancelCond.Reset( true );
-	m_submitCond.Reset( true );
+	m_startCond.Reset();
+	m_cancelCond.Reset();
+	m_submitCond.Reset();
 }
 
 void RA_Leaderboard::Test()
@@ -436,9 +418,9 @@ void RA_Leaderboard::Test()
 
 	//	Ensure these are always tested once every frame, to ensure delta
 	//	 variables work properly :)
-	BOOL bStartOK = m_startCond.Test( bUnused, bUnused, FALSE );
-	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused, TRUE );
-	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused, FALSE );
+	BOOL bStartOK = m_startCond.Test( bUnused, bUnused );
+	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused );
+	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused );
 
 	if ( m_bSubmitted )
 	{

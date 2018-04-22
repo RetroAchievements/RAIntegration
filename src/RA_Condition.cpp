@@ -355,12 +355,12 @@ bool Condition::Compare( unsigned int nAddBuffer )
 	}
 }
 
-bool ConditionGroup::Test( bool& bDirtyConditions, bool& bResetAll, bool bMatchAny )
+bool ConditionGroup::Test( bool& bDirtyConditions, bool& bResetAll )
 {
 	unsigned int nAddBuffer = 0;
 	unsigned int nAddHits = 0;
 	bool bConditionValid = false;
-	bool bSetValid = true;
+	bool bSetValid = true; // important: empty group should evaluate true
 	unsigned int i = 0;
 
 	const unsigned int nNumConditions = m_Conditions.size();
@@ -443,9 +443,6 @@ bool ConditionGroup::Test( bool& bDirtyConditions, bool& bResetAll, bool bMatchA
 				//	Not entirely valid yet!
 				bConditionValid = false;
 			}
-
-			if( bMatchAny )	//	'or'
-				break;
 		}
 
 		nAddBuffer = 0;
@@ -511,7 +508,8 @@ void ConditionGroup::SerializeAppend(std::string& buffer) const
 		return;
 
 	m_Conditions[0].SerializeAppend(buffer);
-	for (size_t i = 1; i < m_Conditions.size(); ++i) {
+	for (size_t i = 1; i < m_Conditions.size(); ++i) 
+	{
 		buffer.append(1, '_');
 		m_Conditions[i].SerializeAppend(buffer);
 	}
@@ -522,29 +520,41 @@ bool ConditionSet::ParseFromString(const char*& sSerialized)
 	ConditionGroup* group = nullptr;
 	m_vConditionGroups.clear();
 
+	// if string starts with 'S', there's no Core group. generate an empty one and leave 'group' as null
+	// so the alt group will get created by the first condition.
+	if (*sSerialized == 'S')
+	{
+		++sSerialized;
+		m_vConditionGroups.emplace_back();
+	}
+
 	do
 	{
 		Condition condition;
 		if (!condition.ParseFromString(sSerialized))
 			return false;
 
-		if (!group) {
+		if (!group) 
+		{
 			m_vConditionGroups.emplace_back();
 			group = &m_vConditionGroups.back();
 		}
 
 		group->Add(condition);
 
-		if (*sSerialized == '_') {
+		if (*sSerialized == '_') 
+		{
 			// AND
 			++sSerialized;
 		}
-		else if (*sSerialized == 'S') {
+		else if (*sSerialized == 'S') 
+		{
 			// OR
 			++sSerialized;
 			group = nullptr;
 		}
-		else {
+		else 
+		{
 			// EOF or invalid character
 			break;
 		}
@@ -568,7 +578,8 @@ void ConditionSet::Serialize(std::string& buffer) const
 	buffer.reserve(conditions * 16);
 
 	m_vConditionGroups[0].SerializeAppend(buffer);
-	for (size_t i = 1; i < m_vConditionGroups.size(); ++i) {
+	for (size_t i = 1; i < m_vConditionGroups.size(); ++i)
+	{
 		// ignore empty groups when serializing
 		if (m_vConditionGroups[i].Count() == 0)
 			continue;
@@ -589,22 +600,31 @@ bool ConditionSet::Test(bool& bDirtyConditions, bool& bResetConditions)
 	if (m_vConditionGroups.empty())
 		return false;
 
+	// use local variable for tracking need to reset in case caller passes the same address for 
+	// both variables when they don't care about the result
+	bool bNeedsReset = false;
+
 	// for a set to be true, the first group (core) must be true. if any additional groups (alt)
 	// exist, at least one of them must also be true.
-	bool bResult = m_vConditionGroups[0].Test(bDirtyConditions, bResetConditions, false);
-	if (m_vConditionGroups.size() > 1) {
+	bool bResult = m_vConditionGroups[0].Test(bDirtyConditions, bNeedsReset);
+	if (m_vConditionGroups.size() > 1) 
+	{
 		bool bAltResult = false;
-		for (size_t i = 1; i < m_vConditionGroups.size(); ++i) {
-			if (m_vConditionGroups[i].Test(bDirtyConditions, bResetConditions, false))
+		for (size_t i = 1; i < m_vConditionGroups.size(); ++i) 
+		{
+			if (m_vConditionGroups[i].Test(bDirtyConditions, bNeedsReset))
 				bAltResult = true;
 		}
 
-		if (!bAltResult || bResetConditions)
+		if (!bAltResult || bNeedsReset)
 			bResult = false;
 	}
 
-	if (bResetConditions)
+	if (bNeedsReset)
+	{
+		bResetConditions = true;
 		bDirtyConditions = Reset();
+	}
 
 	return bResult;
 }
@@ -612,7 +632,8 @@ bool ConditionSet::Test(bool& bDirtyConditions, bool& bResetConditions)
 bool ConditionSet::Reset()
 {
 	bool bWasReset = false;
-	for (ConditionGroup& group : m_vConditionGroups) {
+	for (ConditionGroup& group : m_vConditionGroups)
+	{
 		if (group.Reset(false))
 			bWasReset = true;
 	}

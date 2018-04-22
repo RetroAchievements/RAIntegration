@@ -180,7 +180,7 @@ public:
 	void SerializeAppend(std::string& buffer) const;
 
 	//	Final param indicates 'or'
-	bool Test( bool& bDirtyConditions, bool& bResetRead, bool bMatchAny );
+	bool Test( bool& bDirtyConditions, bool& bResetRead );
 	size_t Count() const		{ return m_Conditions.size(); }
 
 	void Add( const Condition& newCond )				{ m_Conditions.push_back( newCond ); }

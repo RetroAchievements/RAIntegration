@@ -110,9 +110,9 @@ public:
 
 private:
 	const LeaderboardID		m_nID;			//	DB ID for this LB
-	ConditionGroup			m_startCond;	//	Start monitoring if this is true
-	ConditionGroup			m_cancelCond;	//	Cancel monitoring if this is true
-	ConditionGroup			m_submitCond;	//	Submit new score if this is true
+	ConditionSet			m_startCond;	//	Start monitoring if this is true
+    ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
+    ConditionSet			m_submitCond;	//	Submit new score if this is true
 
 	bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
 	bool                    m_bSubmitted;   //  True if already submitted.

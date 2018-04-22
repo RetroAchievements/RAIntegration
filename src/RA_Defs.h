@@ -1,5 +1,6 @@
 #pragma once
 
+// Note to self (SyrianBallaS/Samer) don't touch includes until making a pch
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ShlObj.h>
@@ -11,16 +12,48 @@
 #include <queue>
 #include <deque>
 #include <map>
+//#include <memory>
+//#include <thread>
+//#include <mutex>
 
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
 
 #else
+// if you really want to use null instead of nullptr like .net
+#ifndef null
+#define null nullptr
+#endif // !null
 
+// Maybe an extra check just in-case
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _NODISCARD           [[nodiscard]]
+#define _NORETURN            [[noreturn]]
+#define _UNUSED              [[maybe_unused]]
+
+// Disables the use of const_casts, if you get an error, it's not a literal
+// type. You could use it on functions but they will need a deduction guide
+// That would probably be better with a forwarding function
+#define _CONSTANT_VAR inline constexpr auto
+#define _CONSTANT     inline constexpr
+
+
+
+#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
+//	RA-Only
+#define RAPIDJSON_HAS_STDSTRING 1
+// This shit man...
+#pragma warning(push, 1)
+// This is not needed the most recent version
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
 #include "rapidjson/include/rapidjson/reader.h"
@@ -28,9 +61,18 @@
 #include "rapidjson/include/rapidjson/filestream.h"
 #include "rapidjson/include/rapidjson/stringbuffer.h"
 #include "rapidjson/include/rapidjson/error/en.h"
+#pragma warning(pop)
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 
+
+
+using namespace std::string_literals;
+//using namespace std::chrono_literals; we could use this later
+namespace ra {}
+using namespace ra;
+#define _RA ::ra::
+#define _DETAIL ::ra::detail::
 #endif	//RA_EXPORTS
 
 
@@ -62,10 +104,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
 
-typedef unsigned char	BYTE;
-typedef unsigned long	DWORD;
-typedef int				BOOL;
-typedef DWORD			ARGB;
+using ARGB = DWORD;
 
 //namespace RA
 //{
@@ -199,14 +238,10 @@ typedef DWORD			ARGB;
 		NumAchievementSetTypes
 	};
 	
-	typedef std::vector<BYTE> DataStream;
-	typedef unsigned long ByteAddress;
+	
 
-	typedef unsigned int AchievementID;
-	typedef unsigned int LeaderboardID;
-	typedef unsigned int GameID;
 
-	char* DataStreamAsString( DataStream& stream );
+	
 
 	extern void RADebugLogNoFormat( const char* data );
 	extern void RADebugLog( const char* sFormat, ... );
@@ -230,19 +265,9 @@ typedef DWORD			ARGB;
 #define UNUSED( x ) ( x );
 #endif
 
-extern std::string Narrow(const wchar_t* wstr);
-extern std::string Narrow(const std::wstring& wstr);
-extern std::wstring Widen(const char* str);
-extern std::wstring Widen(const std::string& str);
 
-//	No-ops to help convert:
-//	No-ops to help convert:
-extern std::wstring Widen(const wchar_t* wstr);
-extern std::wstring Widen(const std::wstring& wstr);
-extern std::string Narrow(const char* str);
-extern std::string Narrow(const std::string& wstr);
 
-typedef std::basic_string<TCHAR> tstring;
+
 
 
 #ifdef UNICODE
@@ -252,3 +277,250 @@ typedef std::basic_string<TCHAR> tstring;
 #define NativeStr(x) Narrow(x)
 #define NativeStrType std::string
 #endif
+
+namespace ra {
+using cstring       = const char*;
+using cwstring      = const wchar_t*;
+using tstring       = std::basic_string<TCHAR>;
+
+template<typename CharT>
+using string_t = std::basic_string<CharT>;
+
+using DataStream     = std::basic_string<BYTE>;
+using ustring        = DataStream;
+using uofstream      = std::basic_ofstream<BYTE>;
+using uifstream      = std::basic_ifstream<BYTE>;
+using uostringstream = std::basic_ostringstream<BYTE>;
+using uistringstream = std::basic_istringstream<BYTE>;
+using uostream       = std::basic_ostream<BYTE>;
+using uistream       = std::basic_istream<BYTE>;
+
+using ByteAddress   = std::size_t;
+using AchievementID = std::size_t;
+using LeaderboardID = std::size_t;
+using GameID        = std::size_t;
+
+
+inline namespace conversions {
+
+// Noticed some weird uses of rvalues returning as lvalues, whatever they aren't used anywhere
+
+std::string DataStreamAsString(const DataStream& stream);
+extern std::string Narrow(const std::wstring& wstr);
+extern std::string Narrow(const wchar_t* wstr);
+extern std::wstring Widen(const std::string& str);
+extern std::wstring Widen(const char* str);
+
+// There was some weird shit with TCHAR in some files
+template<typename CharT, class = std::enable_if_t<typeid(CharT) != typeid(char)>>
+std::string Narrow(const string_t<CharT>& str) {
+    std::ostringstream oss;
+
+    for (auto& i : str) {
+        oss << static_cast<char>(i);
+    }
+    return oss.str();
+}
+
+template<typename CharT, class = std::enable_if_t<typeid(CharT) != typeid(wchar_t)>>
+std::wstring Widen(const string_t<CharT>& str) {
+    std::wostringstream oss;
+
+    for (auto& i : str) {
+        oss << static_cast<wchar_t>(i);
+    }
+    return oss.str();
+}
+
+//	No-ops to help convert:
+extern std::wstring Widen(const wchar_t* wstr);
+extern std::wstring Widen(const std::wstring& wstr);
+extern std::string Narrow(const char* str);
+extern std::string Narrow(const std::string& wstr);
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
+_CONSTANT_VAR etoi(Enum e) -> std::underlying_type_t<Enum>
+{
+    return static_cast<std::underlying_type_t<Enum>>(e);
+}
+
+// function alias template
+template<typename Enum>
+_CONSTANT_VAR to_integral = etoi<Enum>;
+
+/// <summary>
+///   Converts a standard string with a signed character type to a
+///   <c>DataStream</c>.
+/// </summary>
+/// <param name="str">The string.</param>
+/// <typeparam name="CharT">
+///   The character type, must be signed or you will get an intellisense error.
+/// </typeparam>
+/// <returns><paramref name="str" /> as a <c>DataStream</c>.</returns>
+/// <remarks>
+///   <c>DataStream</c> is just an alias for an unsigned standard string.
+/// </remarks>
+template<
+    typename CharT,
+    class = std::enable_if_t<is_char_v<CharT> && std::is_signed_v<CharT>>
+>
+DataStream stodata_stream(const std::basic_string<CharT>& str) noexcept
+{
+    uostringstream doss;
+    
+    for (auto& i : str)
+        doss << static_cast<typename DataStream::value_type>(i);
+
+    auto dstr = doss.str();
+
+    return dstr;
+} // end function stodata_stream
+
+
+  // This should save some pain...
+template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
+_CONSTANT_VAR to_unsigned(SignedType st) noexcept -> std::make_unsigned_t<SignedType>
+{
+    using unsigned_t = std::make_unsigned_t<SignedType>;
+    return static_cast<unsigned_t>(st);
+}
+
+template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
+_CONSTANT_VAR to_signed(UnsignedType ust) noexcept -> std::make_signed_t<UnsignedType>
+{
+    using signed_t = std::make_signed_t<UnsignedType>;
+    return static_cast<signed_t>(ust);
+}
+
+} // inline namespace conversions
+
+
+namespace detail {
+
+// A lot of these are just extra compile-time validation to ensure types are used correctly
+// Like you will get an intellisense error instead of a runtime error
+
+/// <summary>
+///   A check to tell whether a type is a known character type. If this
+///   function was reached, <typeparamref name="CharT" /> is a known character
+///   type.
+/// </summary>
+/// <typeparam name="CharT">A type to be evalualted</typeparam>
+template<typename CharT>
+struct is_char :
+    std::bool_constant<std::is_integral_v<CharT> &&
+    (std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t> ||
+        std::is_same_v<CharT, char16_t> || std::is_same_v<CharT, char32_t> ||
+        std::is_same_v<CharT, unsigned char>)> {};
+
+// for the hell of it
+template<
+    typename StringType,
+    class = std::void_t<>
+>
+struct is_string : std::false_type {};
+
+// There really should be a buttload of checks but that'll take too long for now
+template<typename StringType>
+struct is_string<StringType, std::enable_if_t<
+    is_char<typename std::char_traits<typename StringType::value_type>::char_type>::value>>
+    : std::true_type {};
+
+template<
+    typename EqualityComparable,
+    class = std::void_t<>
+>
+struct is_equality_comparable : std::false_type {};
+
+
+template<typename EqualityComparable>
+struct is_equality_comparable<EqualityComparable,
+    std::enable_if_t<std::is_convertible_v<
+    decltype(std::declval<EqualityComparable>() == std::declval<EqualityComparable>()), bool>
+    >> : std::true_type {};
+
+template<
+    typename LessThanComparable,
+    class = std::void_t<>
+>
+struct is_lessthan_comparable : std::false_type {};
+
+
+template<typename LessThanComparable>
+struct is_lessthan_comparable<LessThanComparable,
+    std::enable_if_t<std::is_convertible_v<
+    decltype(std::declval<LessThanComparable>() < std::declval<LessThanComparable>()), bool>
+    >> : std::true_type{};
+
+// nothrows: for each one of these the operator has to be marked with noexcept to pass
+template<typename EqualityComparable>
+struct is_nothrow_equality_comparable :
+    std::bool_constant<noexcept(is_equality_comparable<EqualityComparable>::value)> {};
+
+template<typename LessThanComparable>
+struct is_nothrow_lessthan_comparable :
+    std::bool_constant<noexcept(is_lessthan_comparable<LessThanComparable>::value)> {};
+
+} // namespace detail
+
+
+// is_char helper variable template
+template<typename CharT>
+_CONSTANT_VAR is_char_v = _DETAIL is_char<CharT>::value;
+
+
+// is_string helper variable template
+template<typename StringType>
+_CONSTANT_VAR is_string_v = _DETAIL is_string<StringType>::value;
+
+// is_equality_comparable helper variable template
+template<typename EqualityComparable>
+_CONSTANT_VAR is_equality_comparable_v = _DETAIL is_equality_comparable<EqualityComparable>::value;
+
+// is_lessthan_comparable helper variable template
+template<typename LessThanComparable>
+_CONSTANT_VAR is_lessthan_comparable_v = _DETAIL is_lessthan_comparable<LessThanComparable>::value;
+
+// is_nothrow_equality_comparable helper variable template
+template<typename EqualityComparable>
+_CONSTANT_VAR is_nothrow_equality_comparable_v = _DETAIL is_nothrow_equality_comparable<EqualityComparable>::value;
+
+template<typename LessThanComparable>
+_CONSTANT_VAR is_nothrow_lessthan_comparable_v = _DETAIL is_nothrow_lessthan_comparable<LessThanComparable>::value;
+
+// These are down here for demo purposes only to get the idea
+// These are here just to test that the validations works
+// if they don't work then the type you are using is an oxymoron
+//static_assert(is_char_v<BYTE>);
+//static_assert(is_string_v<DataStream>);
+//static_assert(is_equality_comparable_v<std::vector<int>>);
+//static_assert(is_nothrow_equality_comparable_v<std::shared_ptr<int>>);
+//static_assert(is_lessthan_comparable_v<std::move_iterator<int>>);
+//static_assert(is_nothrow_lessthan_comparable_v<std::thread>);
+
+
+// We probably don't need this now but it'll be useful if we upgrade rapidjson
+/// <summary>Calculates the size of any standard fstream.</summary>
+/// <param name="filename">The filename.</param>
+/// <typeparam name="CharT">
+///   The character type, it should be auto deduced if valid. Otherwise you'll
+///   get an intellisense error.
+/// </typeparam>
+/// <typeparam name="Traits">
+///   The character traits of <typeparamref name="CharT" />.
+/// </typeparam>
+/// <returns>The size of the file stream.</returns>
+template<
+    typename CharT,
+    typename Traits = _STD char_traits<CharT>,
+    class = _STD enable_if_t<is_char_v<CharT>>
+>
+typename Traits::pos_type filesize(string_t<CharT>& filename) noexcept {
+    // It's always the little things...
+    using file_type = _STD basic_fstream<CharT>;
+    file_type file{ filename, _STD ios::in | _STD ios::ate | _STD ios::binary };
+    return file.tellg();
+} // end function filesize
+
+
+} // namespace ra

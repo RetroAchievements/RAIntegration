@@ -6,56 +6,72 @@
 #include <codecvt>
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+namespace ra {
 
-static_assert(sizeof(BYTE*) == sizeof(char*), "dangerous cast ahead");
-char* DataStreamAsString(DataStream& stream)
-{
-	return reinterpret_cast<char*>(stream.data());
+inline namespace conversions{
+std::string DataStreamAsString(const DataStream& stream) {
+    std::ostringstream oss;
+
+    // Ok the string has to come from a json for this to work
+    for (auto& i : stream)
+        oss << to_signed(i);
+
+    // pesky null character
+    auto str{ oss.str() };
+
+    // Not sure if this is needed for the old rapidjson but is needed for the new one since there's an
+    // extra nul character, but can't remove that part unless it's changed in RA_Interface as well
+    if (!str.empty()) {
+        str.pop_back();
+    }
+
+    return str; // ok it's definitly showing how it should be
 }
 
-std::string Narrow(const wchar_t* wstr)
-{
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.to_bytes(wstr);
-}
 
 std::string Narrow(const std::wstring& wstr)
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.to_bytes(wstr);
+    std::ostringstream out;
+
+    for (auto& i : wstr)
+        out << static_cast<char>(i);
+
+    return out.str();
 }
 
-std::wstring Widen(const char* str)
+// N.B.: Not totally sure if you want the strings erased at conversion or not, if so we should rvalues
+// instead.
+std::string Narrow(const wchar_t* wstr)
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.from_bytes(str);
+    std::wstring swstr{ wstr };
+    return Narrow(swstr); // the current function uses an lvalue so we need an actual objet
 }
 
 std::wstring Widen(const std::string& str)
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.from_bytes(str);
+    std::wostringstream out;
+
+    for (auto& i : str)
+        out << static_cast<wchar_t>(i);
+
+    return out.str();
 }
 
-std::wstring Widen(const wchar_t* wstr)
+std::wstring Widen(const char* str)
 {
-	return std::wstring(wstr);
+    std::string std_str{ str };
+    return Widen(std_str);
 }
 
-std::wstring Widen(const std::wstring& wstr)
-{
-	return wstr;
-}
+std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }
+std::wstring Widen(const std::wstring& wstr) { return wstr; }
+std::string Narrow(const char* str) { return std::string{ str }; }
+std::string Narrow(const std::string& str) { return str; }
+} // inline namespace conversions
+} // namespace ra
 
-std::string Narrow(const char* str)
-{
-	return std::string(str);
-}
 
-std::string Narrow(const std::string& str)
-{
-	return str;
-}
+
 
 void RADebugLogNoFormat(const char* data)
 {

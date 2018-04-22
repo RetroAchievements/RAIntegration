@@ -300,6 +300,44 @@ using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 using GameID        = std::size_t;
 
+// forgot to add this
+// if you are already in ra or type "using namespace ra" that's good enough
+inline namespace int_literals
+{
+
+// Don't feel like casting non-stop
+// There's also standard literals for strings on clock types
+
+// Use it if you need an unsigned int 
+// Not using _s because that's the literal for std::string
+// usage: auto a{19_z};
+_CONSTANT_VAR operator""_z(unsigned long long n) noexcept
+{
+    return static_cast<std::size_t>(n);
+} // end operator""_z
+
+  // Use it if you need a signed int
+  // usage: auto a{9_i};
+_CONSTANT_VAR operator""_i(unsigned long long n) noexcept
+{
+    return static_cast<std::intptr_t>(n);
+} // end operator""_i
+
+  // We need one for DWORD, because it doesn't match LPDWORD for some stuff
+_CONSTANT_VAR operator""_dw(unsigned long long n) noexcept
+{
+    return static_cast<_CSTD DWORD>(n);
+} // end operator""_dw
+
+  // streamsize varies as well
+_CONSTANT_VAR operator""_ss(unsigned long long n) noexcept
+{
+    return static_cast<std::streamsize>(n);
+} // end operator""_ss
+
+
+} // inline namespace int_literals
+
 
 inline namespace conversions {
 

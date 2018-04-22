@@ -42,6 +42,7 @@ HFONT MemoryViewerControl::m_hViewerFont = nullptr;
 SIZE MemoryViewerControl::m_szFontSize;
 unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
 unsigned int MemoryViewerControl::m_nAddressOffset = 0;
+unsigned int MemoryViewerControl::m_nWatchedAddress = 0;
 unsigned int MemoryViewerControl::m_nDataSize = 0;
 unsigned int MemoryViewerControl::m_nEditAddress = 0;
 unsigned int MemoryViewerControl::m_nEditNibble = 0;
@@ -254,6 +255,12 @@ void MemoryViewerControl::setAddress(unsigned int address)
 
 	SetCaretPos();
 	Invalidate();
+}
+
+void MemoryViewerControl::setWatchedAddress(unsigned int address)
+{
+    m_nWatchedAddress = address;
+    Invalidate();
 }
 
 void MemoryViewerControl::Invalidate()
@@ -574,15 +581,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 	lines -= 1;	//	Watch out for header
 	m_nDisplayedLines = lines;
 
-	//	Infer the offset from the watcher window
 	TCHAR bufferNative[64];
-	ComboBox_GetText(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING), bufferNative, 64);
-
-	//char buffer[64];
-	//memcpy_s(buffer, 64, Narrow(bufferNative).c_str(), 64);
-
-	unsigned long nWatchedAddress = std::strtoul(Narrow(bufferNative).c_str(), nullptr, 16);
-	//m_nAddressOffset = ( nWatchedAddress - ( nWatchedAddress & 0xf ) );
 
 	int addr = m_nAddressOffset;
 	addr -= (0x40);	//	Offset will be this quantity (push up four lines)...
@@ -653,7 +652,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
 				DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
-				if ((nWatchedAddress & ~0x0F) == addr)
+				if ((m_nWatchedAddress & ~0x0F) == addr)
 				{
 					SetTextColor(hMemDC, RGB(255, 0, 0));
 
@@ -661,15 +660,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 					switch (m_nDataSize)
 					{
 					case 0:
-						ptr = bufferNative + 10 + 3 * (nWatchedAddress & 0x0F);
+						ptr = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
 						stride = 2;
 						break;
 					case 1:
-						ptr = bufferNative + 10 + 5 * ((nWatchedAddress & 0x0F) / 2);
+						ptr = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
 						stride = 4;
 						break;
 					case 2:
-						ptr = bufferNative + 10 + 9 * ((nWatchedAddress & 0x0F) / 4);
+						ptr = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
 						stride = 8;
 						break;
 					}
@@ -681,8 +680,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 					r.left = 3;
 
 					// make sure we don't overwrite the current address with an indicator
-					notes		&= ~(1 << (nWatchedAddress & 0x0F));
-					bookmarks	&= ~(1 << (nWatchedAddress & 0x0F));
+					notes		&= ~(1 << (m_nWatchedAddress & 0x0F));
+					bookmarks	&= ~(1 << (m_nWatchedAddress & 0x0F));
 				}
 
 				if (notes || bookmarks)
@@ -975,6 +974,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 								SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, "" );
 
 							MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
+                            MemoryViewerControl::setWatchedAddress( nAddr );
 
 							Invalidate();
 						}
@@ -1414,6 +1414,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 										SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, NativeStr( pSavedNote->Note() ).c_str() );
 
 									MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
+                                    MemoryViewerControl::setWatchedAddress( nAddr );
 								}
 							}
 
@@ -1428,7 +1429,8 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							GetDlgItemText( hDlg, IDC_RA_WATCHING, sAddrBuffer, 64 );
 							ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( Narrow( sAddrBuffer ).c_str(), nullptr, 16 ) );
 							MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
-							return TRUE;
+                            MemoryViewerControl::setWatchedAddress( nAddr );
+                            return TRUE;
 						}
 
 						default:
@@ -1530,6 +1532,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 				{
 					SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
 					MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
+                    MemoryViewerControl::setWatchedAddress( nAddr );
 				}
 			}
 		}

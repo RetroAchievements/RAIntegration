@@ -1,5 +1,7 @@
 #include "RA_RichPresence.h"
+
 #include "RA_Core.h"
+#include "RA_GameData.h"
 
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
@@ -57,6 +59,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFil
 	m_formats.clear();
 	m_lookups.clear();
 	m_sDisplay.clear();
+    m_conditionalDisplayStrings.clear();
 
 	const char EndLine = '\n';
 
@@ -224,6 +227,12 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 {
 	static std::string sReturnVal;
 	sReturnVal.clear();
+
+    if (g_pCurrentGameData->GetGameID() == 0)
+    {
+        sReturnVal = "No game loaded";
+        return sReturnVal;
+    }
 
 	bool bParsingLookupName = false;
 	bool bParsingLookupContent = false;

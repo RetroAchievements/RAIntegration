@@ -355,7 +355,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 		if (lstrcmp(sEditText, TEXT("Value")))
 		{
 			//	Remove the associated 'size' entry
-			strcpy_s(g_AchievementEditorDialog.LbxDataAt(nSelItem, nSelSubItem + 1), 32, "");
+			strcpy_s(g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, lvDispinfo.item.iSubItem + 1), 32, "");
 		}
 
 		DestroyWindow(hwnd);

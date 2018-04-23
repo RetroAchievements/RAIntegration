@@ -10,17 +10,10 @@ namespace ra {
 
 inline namespace conversions{
 std::string DataStreamAsString(const DataStream& stream) {
-    std::ostringstream oss;
 
-    // Ok the string has to come from a json for this to work
-    for (auto& i : stream)
-        oss << to_signed(i);
+    auto str{ convert_string<std::string>(stream) };
 
     // pesky null character
-    auto str{ oss.str() };
-
-    // Not sure if this is needed for the old rapidjson but is needed for the new one since there's an
-    // extra nul character, but can't remove that part unless it's changed in RA_Interface as well
     if (!str.empty()) {
         str.pop_back();
     }
@@ -29,14 +22,8 @@ std::string DataStreamAsString(const DataStream& stream) {
 }
 
 
-std::string Narrow(const std::wstring& wstr)
-{
-    std::ostringstream out;
-
-    for (auto& i : wstr)
-        out << static_cast<char>(i);
-
-    return out.str();
+std::string Narrow(const std::wstring& wstr) {
+    return convert_string<std::string>(wstr);
 }
 
 // N.B.: Not totally sure if you want the strings erased at conversion or not, if so we should rvalues
@@ -44,24 +31,35 @@ std::string Narrow(const std::wstring& wstr)
 std::string Narrow(const wchar_t* wstr)
 {
     std::wstring swstr{ wstr };
-    return Narrow(swstr); // the current function uses an lvalue so we need an actual objet
+    return convert_string<std::string>(swstr);
 }
 
 std::wstring Widen(const std::string& str)
 {
-    std::wostringstream out;
-
-    for (auto& i : str)
-        out << static_cast<wchar_t>(i);
-
-    return out.str();
+    return convert_string<std::wstring>(str);
 }
 
 std::wstring Widen(const char* str)
 {
     std::string std_str{ str };
-    return Widen(std_str);
+    return convert_string<std::wstring>(std_str);
 }
+
+std::string ByteAddressToString(ByteAddress nAddr)
+{
+    // with tinyformat it's easier but I can do it without it
+    // if we used tinyformat it would be like this
+    //return tfm::format("0x%06x", nAddr);
+    // Yup, it's that simple
+
+
+
+    std::ostringstream oss;
+    oss.flags(std::ios::hex | std::ios::basefield | std::ios::showbase);
+    oss << nAddr;
+    return oss.str();
+}
+
 
 std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }
 std::wstring Widen(const std::wstring& wstr) { return wstr; }

@@ -113,7 +113,7 @@ PostArgs PrevArgs;
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 {
-	rDocOut.Parse( _RA DataStreamAsString( GetResponse() ).c_str() );
+	rDocOut.Parse(ra::DataStreamAsString( GetResponse() ).c_str() );
 
 	if( rDocOut.HasParseError() )
 		RA_LOG( "Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr( rDocOut.GetParseError() ), RequestTypeToString[ m_nType ] );
@@ -479,12 +479,12 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	if( ResponseOut.size() > 0 )
 	{
 		Document doc;
-		doc.Parse(_RA DataStreamAsString(ResponseOut).c_str());
+		doc.Parse(ra::DataStreamAsString(ResponseOut).c_str());
 
 		if( doc.HasParseError() )
 		{
 			RA_LOG( "Cannot parse JSON!\n" );
-			RA_LOG( _RA DataStreamAsString( ResponseOut ).c_str() );
+			RA_LOG(ra::DataStreamAsString( ResponseOut ).c_str() );
 			RA_LOG( "\n" );
 		}
 		else
@@ -636,7 +636,7 @@ BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilenam
 	DataStream response;
 	if( ::DoBlockingImageUpload( nType, sFilename, response ) )
 	{
-		ResponseOut.Parse(_RA DataStreamAsString(response).c_str());
+		ResponseOut.Parse(ra::DataStreamAsString(response).c_str());
 		if( !ResponseOut.HasParseError() )
 		{
 			return TRUE;

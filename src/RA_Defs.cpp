@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <locale>
 #include <codecvt>
+#include <iomanip>
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 namespace ra {
@@ -54,10 +55,9 @@ std::string ByteAddressToString(ByteAddress nAddr)
 
 
 
-    std::ostringstream oss;
-    oss.flags(std::ios::hex | std::ios::basefield | std::ios::showbase);
-    oss << nAddr;
-    return oss.str();
+	std::ostringstream oss;
+	oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
+	return oss.str();
 }
 
 

@@ -2,7 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-// Note to self (SyrianBallaS/Samer) don't touch includes until making a pch
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ShlObj.h>
@@ -14,19 +13,14 @@
 #include <queue>
 #include <deque>
 #include <map>
-//#include <memory>
-//#include <thread>
-//#include <mutex>
+
 
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
 
 #else
-// if you really want to use null instead of nullptr like .net
-#ifndef null
-#define null nullptr
-#endif // !null
+
 
 // Maybe an extra check just in-case
 
@@ -41,8 +35,7 @@
 // Disables the use of const_casts, if you get an error, it's not a literal
 // type. You could use it on functions but they will need a deduction guide
 // That would probably be better with a forwarding function
-#define _CONSTANT_VAR inline constexpr auto
-#define _CONSTANT     inline constexpr
+
 
 
 
@@ -73,10 +66,10 @@ using namespace std::string_literals;
 //using namespace std::chrono_literals; we could use this later
 namespace ra {}
 using namespace ra;
-#define _RA ::ra::
-#define _DETAIL ::ra::detail::
-#endif	//RA_EXPORTS
 
+#endif	//RA_EXPORTS
+#define _CONSTANT_VAR inline constexpr auto
+#define _CONSTANT     inline constexpr
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
@@ -272,13 +265,7 @@ const int SERVER_PING_DURATION = 2 * 60;
 
 
 
-#ifdef UNICODE
-#define NativeStr(x) Widen(x)
-#define NativeStrType std::wstring
-#else
-#define NativeStr(x) Narrow(x)
-#define NativeStrType std::string
-#endif
+
 
 namespace ra {
 using cstring       = const char*;
@@ -448,14 +435,7 @@ template<
 >
 DataStream stodata_stream(const std::basic_string<CharT>& str) noexcept
 {
-	uostringstream doss;
-
-	for (auto& i : str)
-		doss << static_cast<typename DataStream::value_type>(i);
-
-	auto dstr = doss.str();
-
-	return dstr;
+	return convert_string<DataStream>(str);
 } // end function stodata_stream
 
 
@@ -548,37 +528,32 @@ struct is_nothrow_lessthan_comparable :
 
 // is_char helper variable template
 template<typename CharT>
-_CONSTANT_VAR is_char_v = _DETAIL is_char<CharT>::value;
+_CONSTANT_VAR is_char_v = detail::is_char<CharT>::value;
 
 
 // is_string helper variable template
 template<typename StringType>
-_CONSTANT_VAR is_string_v = _DETAIL is_string<StringType>::value;
+_CONSTANT_VAR is_string_v = detail::is_string<StringType>::value;
 
 // is_equality_comparable helper variable template
 template<typename EqualityComparable>
-_CONSTANT_VAR is_equality_comparable_v = _DETAIL is_equality_comparable<EqualityComparable>::value;
+_CONSTANT_VAR is_equality_comparable_v = detail::is_equality_comparable<EqualityComparable>::value;
 
 // is_lessthan_comparable helper variable template
 template<typename LessThanComparable>
-_CONSTANT_VAR is_lessthan_comparable_v = _DETAIL is_lessthan_comparable<LessThanComparable>::value;
+_CONSTANT_VAR is_lessthan_comparable_v = detail::is_lessthan_comparable<LessThanComparable>::value;
 
 // is_nothrow_equality_comparable helper variable template
 template<typename EqualityComparable>
-_CONSTANT_VAR is_nothrow_equality_comparable_v = _DETAIL is_nothrow_equality_comparable<EqualityComparable>::value;
+_CONSTANT_VAR is_nothrow_equality_comparable_v = detail::is_nothrow_equality_comparable<EqualityComparable>::value;
 
 template<typename LessThanComparable>
-_CONSTANT_VAR is_nothrow_lessthan_comparable_v = _DETAIL is_nothrow_lessthan_comparable<LessThanComparable>::value;
+_CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_comparable<LessThanComparable>::value;
 
 // These are down here for demo purposes only to get the idea
 // These are here just to test that the validations works
 // if they don't work then the type you are using is an oxymoron
-//static_assert(is_char_v<BYTE>);
-//static_assert(is_string_v<DataStream>);
-//static_assert(is_equality_comparable_v<std::vector<int>>);
-//static_assert(is_nothrow_equality_comparable_v<std::shared_ptr<int>>);
-//static_assert(is_lessthan_comparable_v<std::move_iterator<int>>);
-//static_assert(is_nothrow_lessthan_comparable_v<std::thread>);
+
 
 
 // We probably don't need this now but it'll be useful if we upgrade rapidjson
@@ -594,13 +569,13 @@ _CONSTANT_VAR is_nothrow_lessthan_comparable_v = _DETAIL is_nothrow_lessthan_com
 /// <returns>The size of the file stream.</returns>
 template<
 	typename CharT,
-	typename Traits = _STD char_traits<CharT>,
-	class = _STD enable_if_t<is_char_v<CharT>>
+	typename Traits = std::char_traits<CharT>,
+	class = std::enable_if_t<is_char_v<CharT>>
 >
 typename Traits::pos_type filesize(string_t<CharT>& filename) noexcept {
 	// It's always the little things...
-	using file_type = _STD basic_fstream<CharT>;
-	file_type file{ filename, _STD ios::in | _STD ios::ate | _STD ios::binary };
+	using file_type = std::basic_fstream<CharT>;
+	file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
 	return file.tellg();
 } // end function filesize
 
@@ -646,5 +621,12 @@ OutputString convert_string(_In_ const InputString& in) noexcept {
 
 } // namespace ra
 
+#ifdef UNICODE
+#define NativeStr(x) ra::Widen(x)
+#define NativeStrType std::wstring
+#else
+#define NativeStr(x) ra::Narrow(x)
+#define NativeStrType std::string
+#endif
 
 #endif // !RA_DEFS_H

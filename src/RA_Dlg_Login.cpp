@@ -50,8 +50,8 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc( HWND hDlg, UINT uMsg, WPARAM wP
 				}
 
 				PostArgs args;
-				args[ 'u' ] = _RA Narrow( sUserEntry );
-				args[ 'p' ] = _RA Narrow( sPassEntry );		//	Plaintext password(!)
+				args[ 'u' ] = ra::Narrow( sUserEntry );
+				args[ 'p' ] = ra::Narrow( sPassEntry );		//	Plaintext password(!)
 				
 				Document doc;
 				if( RAWeb::DoBlockingRequest( RequestLogin, args, doc ) )

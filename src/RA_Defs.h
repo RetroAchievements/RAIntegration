@@ -106,42 +106,42 @@ using ARGB = DWORD;
 template<typename T>
 static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
 {
-	return(val < lower) ? lower : ((val > upper) ? upper : val);
+    return(val < lower) ? lower : ((val > upper) ? upper : val);
 }
 
 class RARect : public RECT
 {
 public:
-	RARect() {}
-	RARect(LONG nX, LONG nY, LONG nW, LONG nH)
-	{
-		left = nX;
-		right = nX + nW;
-		top = nY;
-		bottom = nY + nH;
-	}
+    RARect() {}
+    RARect(LONG nX, LONG nY, LONG nW, LONG nH)
+    {
+        left = nX;
+        right = nX + nW;
+        top = nY;
+        bottom = nY + nH;
+    }
 
 public:
-	inline int Width() const { return(right - left); }
-	inline int Height() const { return(bottom - top); }
+    inline int Width() const { return(right - left); }
+    inline int Height() const { return(bottom - top); }
 };
 
 class RASize
 {
 public:
-	RASize() : m_nWidth(0), m_nHeight(0) {}
-	RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
-	RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
+    RASize() : m_nWidth(0), m_nHeight(0) {}
+    RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
+    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
 
 public:
-	inline int Width() const { return m_nWidth; }
-	inline int Height() const { return m_nHeight; }
-	inline void SetWidth(int nW) { m_nWidth = nW; }
-	inline void SetHeight(int nH) { m_nHeight = nH; }
+    inline int Width() const { return m_nWidth; }
+    inline int Height() const { return m_nHeight; }
+    inline void SetWidth(int nW) { m_nWidth = nW; }
+    inline void SetHeight(int nH) { m_nHeight = nH; }
 
 private:
-	int m_nWidth;
-	int m_nHeight;
+    int m_nWidth;
+    int m_nHeight;
 };
 
 const RASize RA_BADGE_PX(64, 64);
@@ -150,87 +150,87 @@ const RASize RA_USERPIC_PX(64, 64);
 class ResizeContent
 {
 public:
-	enum AlignType
-	{
-		NO_ALIGN,
-		ALIGN_RIGHT,
-		ALIGN_BOTTOM,
-		ALIGN_BOTTOM_RIGHT
-	};
+    enum AlignType
+    {
+        NO_ALIGN,
+        ALIGN_RIGHT,
+        ALIGN_BOTTOM,
+        ALIGN_BOTTOM_RIGHT
+    };
 
 public:
-	HWND hwnd;
-	POINT pLT;
-	POINT pRB;
-	AlignType nAlignType;
-	int nDistanceX;
-	int nDistanceY;
-	bool bResize;
+    HWND hwnd;
+    POINT pLT;
+    POINT pRB;
+    AlignType nAlignType;
+    int nDistanceX;
+    int nDistanceY;
+    bool bResize;
 
-	ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
-	{
-		hwnd = contentHwnd;
-		nAlignType = newAlignType;
-		bResize = isResize;
+    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
+    {
+        hwnd = contentHwnd;
+        nAlignType = newAlignType;
+        bResize = isResize;
 
-		RARect rect;
-		GetWindowRect(hwnd, &rect);
+        RARect rect;
+        GetWindowRect(hwnd, &rect);
 
-		pLT.x = rect.left;	pLT.y = rect.top;
-		pRB.x = rect.right; pRB.y = rect.bottom;
+        pLT.x = rect.left;	pLT.y = rect.top;
+        pRB.x = rect.right; pRB.y = rect.bottom;
 
-		ScreenToClient(parentHwnd, &pLT);
-		ScreenToClient(parentHwnd, &pRB);
+        ScreenToClient(parentHwnd, &pLT);
+        ScreenToClient(parentHwnd, &pRB);
 
-		GetWindowRect(parentHwnd, &rect);
-		nDistanceX = rect.Width() - pLT.x;
-		nDistanceY = rect.Height() - pLT.y;
+        GetWindowRect(parentHwnd, &rect);
+        nDistanceX = rect.Width() - pLT.x;
+        nDistanceY = rect.Height() - pLT.y;
 
-		if (bResize)
-		{
-			nDistanceX -= (pRB.x - pLT.x);
-			nDistanceY -= (pRB.y - pLT.y);
-		}
-	}
+        if (bResize)
+        {
+            nDistanceX -= (pRB.x - pLT.x);
+            nDistanceY -= (pRB.y - pLT.y);
+        }
+    }
 
-	void Resize(int width, int height)
-	{
-		int xPos, yPos;
+    void Resize(int width, int height)
+    {
+        int xPos, yPos;
 
-		switch (nAlignType)
-		{
-		case ResizeContent::ALIGN_RIGHT:
-			xPos = width - nDistanceX - (bResize ? pLT.x : 0);
-			yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
-			break;
-		case ResizeContent::ALIGN_BOTTOM:
-			xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
-			yPos = height - nDistanceY - (bResize ? pLT.y : 0);
-			break;
-		case ResizeContent::ALIGN_BOTTOM_RIGHT:
-			xPos = width - nDistanceX - (bResize ? pLT.x : 0);
-			yPos = height - nDistanceY - (bResize ? pLT.y : 0);
-			break;
-		default:
-			xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
-			yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
-			break;
-		}
+        switch (nAlignType)
+        {
+        case ResizeContent::ALIGN_RIGHT:
+            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+            break;
+        case ResizeContent::ALIGN_BOTTOM:
+            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+            break;
+        case ResizeContent::ALIGN_BOTTOM_RIGHT:
+            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+            break;
+        default:
+            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+            break;
+        }
 
-		if (!bResize)
-			SetWindowPos(hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
-		else
-			SetWindowPos(hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
-	}
+        if (!bResize)
+            SetWindowPos(hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+        else
+            SetWindowPos(hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
+    }
 };
 
 enum AchievementSetType
 {
-	Core,
-	Unofficial,
-	Local,
+    Core,
+    Unofficial,
+    Local,
 
-	NumAchievementSetTypes
+    NumAchievementSetTypes
 };
 
 
@@ -313,7 +313,7 @@ inline namespace int_literals
 /// <param name="n">The integer.</param>
 /// <returns>The integer as <c>std::size_t</c>.</returns>
 _CONSTANT_VAR operator""_z(unsigned long long n) noexcept {
-	return static_cast<std::size_t>(n);
+    return static_cast<std::size_t>(n);
 } // end operator""_z
 
 
@@ -330,12 +330,12 @@ _CONSTANT_VAR operator""_z(unsigned long long n) noexcept {
 /// <param name="n">The integer.</param>
 /// <returns>The integer as <c>std::intptr_t</c>.</returns>
 _CONSTANT_VAR operator""_i(unsigned long long n) noexcept {
-	return static_cast<std::intptr_t>(n);
+    return static_cast<std::intptr_t>(n);
 } // end operator""_i
 
   // We need one for DWORD, because it doesn't match LPDWORD for some stuff
 _CONSTANT_VAR operator""_dw(unsigned long long n) noexcept {
-	return static_cast<_CSTD DWORD>(n);
+    return static_cast<_CSTD DWORD>(n);
 } // end operator""_dw
 
 // streamsize varies as well
@@ -345,17 +345,17 @@ _CONSTANT_VAR operator""_dw(unsigned long long n) noexcept {
 /// <param name="n">The n.</param>
 /// <returns></returns>
 _CONSTANT_VAR operator""_ss(unsigned long long n) noexcept {
-	return static_cast<std::streamsize>(n);
+    return static_cast<std::streamsize>(n);
 } // end operator""_ss
 
 // Literal for unsigned short
 _CONSTANT_VAR operator""_hu(unsigned long long n) noexcept {
-	return static_cast<std::uint16_t>(n);
+    return static_cast<std::uint16_t>(n);
 } // end operator""_hu
 
 
 _CONSTANT_VAR operator""_dp(unsigned long long n) noexcept {
-	return static_cast<DataPos>(n);
+    return static_cast<DataPos>(n);
 } // end operator""_dp
 
 // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
@@ -364,22 +364,22 @@ _CONSTANT_VAR operator""_dp(unsigned long long n) noexcept {
 
 _CONSTANT_VAR operator""_ba(unsigned long long n) noexcept
 {
-	return static_cast<ByteAddress>(n);
+    return static_cast<ByteAddress>(n);
 } // end operator""_ba
 
 
 _CONSTANT_VAR operator""_achid(unsigned long long n) noexcept {
-	return static_cast<AchievementID>(n);
+    return static_cast<AchievementID>(n);
 } // end operator""_achid
 
 
 _CONSTANT_VAR operator""_lbid(unsigned long long n) noexcept {
-	return static_cast<LeaderboardID>(n);
+    return static_cast<LeaderboardID>(n);
 } // end operator""_lbid
 
 
 _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
-	return static_cast<GameID>(n);
+    return static_cast<GameID>(n);
 } // end operator""_gameid
 
 } // inline namespace int_literals
@@ -410,7 +410,7 @@ std::string ByteAddressToString(ByteAddress nAddr);
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _CONSTANT_VAR etoi(Enum e) -> std::underlying_type_t<Enum>
 {
-	return static_cast<std::underlying_type_t<Enum>>(e);
+    return static_cast<std::underlying_type_t<Enum>>(e);
 }
 
 // function alias template
@@ -430,12 +430,12 @@ _CONSTANT_VAR to_integral = etoi<Enum>;
 ///   <c>DataStream</c> is just an alias for an unsigned standard string.
 /// </remarks>
 template<
-	typename CharT,
-	class = std::enable_if_t<is_char_v<CharT> && std::is_signed_v<CharT>>
+    typename CharT,
+    class = std::enable_if_t<is_char_v<CharT> && std::is_signed_v<CharT>>
 >
 DataStream stodata_stream(const std::basic_string<CharT>& str) noexcept
 {
-	return convert_string<DataStream>(str);
+    return convert_string<DataStream>(str);
 } // end function stodata_stream
 
 
@@ -443,15 +443,15 @@ DataStream stodata_stream(const std::basic_string<CharT>& str) noexcept
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
 _CONSTANT_VAR to_unsigned(SignedType st) noexcept -> std::make_unsigned_t<SignedType>
 {
-	using unsigned_t = std::make_unsigned_t<SignedType>;
-	return static_cast<unsigned_t>(st);
+    using unsigned_t = std::make_unsigned_t<SignedType>;
+    return static_cast<unsigned_t>(st);
 }
 
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
 _CONSTANT_VAR to_signed(UnsignedType ust) noexcept -> std::make_signed_t<UnsignedType>
 {
-	using signed_t = std::make_signed_t<UnsignedType>;
-	return static_cast<signed_t>(ust);
+    using signed_t = std::make_signed_t<UnsignedType>;
+    return static_cast<signed_t>(ust);
 }
 
 } // inline namespace conversions
@@ -470,58 +470,58 @@ namespace detail {
 /// <typeparam name="CharT">A type to be evalualted</typeparam>
 template<typename CharT>
 struct is_char :
-	std::bool_constant<std::is_integral_v<CharT> &&
-	(std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t> ||
-		std::is_same_v<CharT, char16_t> || std::is_same_v<CharT, char32_t> ||
-		std::is_same_v<CharT, unsigned char>)> {};
+    std::bool_constant<std::is_integral_v<CharT> &&
+    (std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t> ||
+        std::is_same_v<CharT, char16_t> || std::is_same_v<CharT, char32_t> ||
+        std::is_same_v<CharT, unsigned char>)> {};
 
 // for the hell of it
 template<
-	typename StringType,
-	class = std::void_t<>
+    typename StringType,
+    class = std::void_t<>
 >
 struct is_string : std::false_type {};
 
 // There really should be a buttload of checks but that'll take too long for now
 template<typename StringType>
 struct is_string<StringType, std::enable_if_t<
-	is_char<typename std::char_traits<typename StringType::value_type>::char_type>::value>>
-	: std::true_type {};
+    is_char<typename std::char_traits<typename StringType::value_type>::char_type>::value>>
+    : std::true_type {};
 
 template<
-	typename EqualityComparable,
-	class = std::void_t<>
+    typename EqualityComparable,
+    class = std::void_t<>
 >
 struct is_equality_comparable : std::false_type {};
 
 
 template<typename EqualityComparable>
 struct is_equality_comparable<EqualityComparable,
-	std::enable_if_t<std::is_convertible_v<
-	decltype(std::declval<EqualityComparable>() == std::declval<EqualityComparable>()), bool>
-	>> : std::true_type {};
+    std::enable_if_t<std::is_convertible_v<
+    decltype(std::declval<EqualityComparable>() == std::declval<EqualityComparable>()), bool>
+    >> : std::true_type {};
 
 template<
-	typename LessThanComparable,
-	class = std::void_t<>
+    typename LessThanComparable,
+    class = std::void_t<>
 >
 struct is_lessthan_comparable : std::false_type {};
 
 
 template<typename LessThanComparable>
 struct is_lessthan_comparable<LessThanComparable,
-	std::enable_if_t<std::is_convertible_v<
-	decltype(std::declval<LessThanComparable>() < std::declval<LessThanComparable>()), bool>
-	>> : std::true_type{};
+    std::enable_if_t<std::is_convertible_v<
+    decltype(std::declval<LessThanComparable>() < std::declval<LessThanComparable>()), bool>
+    >> : std::true_type{};
 
 // nothrows: for each one of these the operator has to be marked with noexcept to pass
 template<typename EqualityComparable>
 struct is_nothrow_equality_comparable :
-	std::bool_constant<noexcept(is_equality_comparable<EqualityComparable>::value)> {};
+    std::bool_constant<noexcept(is_equality_comparable<EqualityComparable>::value)> {};
 
 template<typename LessThanComparable>
 struct is_nothrow_lessthan_comparable :
-	std::bool_constant<noexcept(is_lessthan_comparable<LessThanComparable>::value)> {};
+    std::bool_constant<noexcept(is_lessthan_comparable<LessThanComparable>::value)> {};
 
 } // namespace detail
 
@@ -568,22 +568,23 @@ _CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_com
 /// </typeparam>
 /// <returns>The size of the file stream.</returns>
 template<
-	typename CharT,
-	typename Traits = std::char_traits<CharT>,
-	class = std::enable_if_t<is_char_v<CharT>>
+    typename CharT,
+    typename Traits = std::char_traits<CharT>,
+    class = std::enable_if_t<is_char_v<CharT>>
 >
 typename Traits::pos_type filesize(string_t<CharT>& filename) noexcept {
-	// It's always the little things...
-	using file_type = std::basic_fstream<CharT>;
-	file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
-	return file.tellg();
+    // It's always the little things...
+    using file_type = std::basic_fstream<CharT>;
+    file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
+    return file.tellg();
 } // end function filesize
 
   // All puporse string converter
   /// <summary>
   ///   Converts <paramref name="in" /> into an
   ///   <typeparamref name="OutputString" />. To use this you have to at least
-  ///   specfiy <typeparamref name="OutputString" />.
+  ///   specfiy <typeparamref name="OutputString" />. It won't work between
+  ///   Mutli-Byte to UTF-16, Use Widen() instead.
   /// </summary>
   /// <typeparam name="InputString">
   ///   The type of string to be converted.
@@ -599,23 +600,26 @@ typename Traits::pos_type filesize(string_t<CharT>& filename) noexcept {
   ///   <see cref="std::ios_base::good_bit" />.
   /// </exception>
 template<
-	typename OutputString,
-	typename InputString, 
-	class = std::enable_if_t<(is_string_v<InputString> && is_string_v<OutputString>) && 
-	(!std::is_same_v<InputString, OutputString>)>
+    typename OutputString,
+    typename InputString,
+    class = std::enable_if_t<(is_string_v<InputString> && is_string_v<OutputString>) &&
+    (!std::is_same_v<InputString, OutputString>) && (!std::is_same_v<OutputString, std::wstring>)>
 >
 OutputString convert_string(_In_ const InputString& in) noexcept {
-	using out_char_t       = typename OutputString::value_type;
-	using out_stringstream = std::basic_ostringstream<out_char_t>;
+    using out_char_t       = typename OutputString::value_type;
+    using out_stringstream = std::basic_ostringstream<out_char_t>;
 
-	out_stringstream oss;
+    out_stringstream oss;
 
-	for (auto& i : in) {
-		oss << static_cast<out_char_t>(i);
-	} // end for
+    for (auto& i : in) {
+        oss << i;
+    } // end for
 
-	return oss.str();
+    return oss.str();
 } // end function convert_string
+
+
+
 
 // noticed a function for timestamp too but if you don't need it formatted std::to_string works
 

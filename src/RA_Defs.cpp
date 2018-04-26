@@ -5,7 +5,7 @@
 #include <locale>
 #include <codecvt>
 #include <iomanip>
-
+#include <clocale>
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 namespace ra {
 
@@ -37,13 +37,19 @@ std::string Narrow(const wchar_t* wstr)
 
 std::wstring Widen(const std::string& str)
 {
-    return convert_string<std::wstring>(str);
+    return Widen(str.c_str());
 }
 
 std::wstring Widen(const char* str)
 {
-    std::string std_str{ str };
-    return convert_string<std::wstring>(std_str);
+    auto state = std::mbstate_t();
+    auto len = 1 + std::mbsrtowcs(nullptr, &str, 0, &state);
+    auto wstr{ L""s };
+    wstr.reserve(len);
+    MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, str, len, wstr.data(),
+        to_signed(wstr.capacity()));
+
+    return wstr.data();
 }
 
 std::string ByteAddressToString(ByteAddress nAddr)

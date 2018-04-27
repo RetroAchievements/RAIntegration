@@ -758,7 +758,9 @@ DWORD RAWeb::HTTPWorkerThread( LPVOID lpParameter )
 					{
 						if( g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive() )
 						{
-							if( g_bHardcoreModeActive )
+							if( !g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0 )
+								args['m'] = "Developing Achievements";
+							else if( g_bHardcoreModeActive )
 								args['m'] = "Inspecting Memory in Hardcore mode";
 							else if( g_nActiveAchievementSet == Core )
 								args['m'] = "Fixing Achievements";

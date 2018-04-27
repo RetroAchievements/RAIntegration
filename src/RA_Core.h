@@ -142,9 +142,11 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
+
 extern BOOL _FileExists( const std::string& sFileName );
 
 extern std::string _TimeStampToString( time_t nTime );
+
 
 extern std::string GetFolderFromDialog();
 

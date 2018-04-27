@@ -11,6 +11,7 @@
 #include <queue>
 #include <deque>
 #include <map>
+#include <array>
 
 #ifndef RA_EXPORTS
 
@@ -21,6 +22,9 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
+#pragma warning(push, 1)
+
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
 #include "rapidjson/include/rapidjson/reader.h"
@@ -28,6 +32,8 @@
 #include "rapidjson/include/rapidjson/filestream.h"
 #include "rapidjson/include/rapidjson/stringbuffer.h"
 #include "rapidjson/include/rapidjson/error/en.h"
+
+#pragma warning(pop)
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 

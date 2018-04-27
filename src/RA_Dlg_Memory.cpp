@@ -20,16 +20,11 @@
 
 namespace
 {
-	const size_t MIN_RESULTS_TO_DUMP = 500000;
-	const size_t MIN_SEARCH_PAGE_SIZE = 50;
-
-	const char* COMP_STR[] = {
-		{ "EQUAL" },
-		{ "LESS THAN" },
-		{ "LESS THAN/EQUAL" },
-		{ "GREATER THAN" },
-		{ "GREATER THAN/EQUAL" },
-		{ "NOT EQUAL" } };
+inline constexpr auto MIN_RESULTS_TO_DUMP = std::size_t{ 500000 };
+inline constexpr auto MIN_SEARCH_PAGE_SIZE = std::size_t{ 50 };
+inline constexpr std::array<const char*, 6> COMP_STR {
+ "EQUAL", "LESS THAN", "LESS THAN/EQUAL", "GREATER THAN", "GREATER THAN/EQUAL", "NOT EQUAL" 
+};
 }
 
 Dlg_Memory g_MemoryDialog;

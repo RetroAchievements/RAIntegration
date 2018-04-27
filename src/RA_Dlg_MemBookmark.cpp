@@ -7,6 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <atlbase.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,15 +20,13 @@ int nSelSubItemBM;
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-	const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
+inline constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+inline constexpr std::array<int, 5> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 }
 
-const COMDLG_FILTERSPEC c_rgFileTypes[] =
-{
-	{ L"Text Document (*.txt)",       L"*.txt" }
-};
+
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+
 
 enum BookmarkSubItems
 {
@@ -710,7 +709,7 @@ void Dlg_MemBookmark::ExportJSON()
 	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
+		hr = pDlg->SetFileTypes( c_rgFileTypes.size(), &c_rgFileTypes.front() );
 		if ( hr == S_OK )
 		{
 			char defaultFileName[ 512 ];
@@ -827,42 +826,50 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
 	std::string str;
 
+	// With how repetive this is, it should be it's own function
 	if ( g_pCurrentGameData->GetGameID() == 0 )
 	{
 		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
 		return str;
-	}
+	} // end if
 
-	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
+	// Never noticed this, nearly identical to the on in RA_Core
+	CComPtr<IFileOpenDialog> pDlg;
+
+	// Keep the scope as local as possible
+	
+	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
+		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		// N.B. If you want to do more than one at a time it needs to be in a loop
+		
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
-			hr = pDlg->Show( nullptr );
-			if ( hr == S_OK )
+			
+			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 			{
-				IShellItem* pItem = nullptr;
-				hr = pDlg->GetResult( &pItem );
-				if ( hr == S_OK )
+				CComPtr<IShellItem> pItem;
+				
+				if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 				{
-					LPWSTR pStr = nullptr;
-					hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-					if ( hr == S_OK )
+					auto pStr = LPWSTR{};
+					
+					if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 					{
 						str = Narrow( pStr );
-					}
+						CoTaskMemFree(static_cast<LPVOID>(pStr));
+						pStr = LPWSTR{};
+					} // end if
 
-					pItem->Release();
-				}
-			}
-		}
-		pDlg->Release();
-	}
+					pItem.Release();
+				} // end if
+			} // end if
+		} // end if
+		pDlg.Release();
+	} // end if
 
 	return str;
-}
+} // end function ImportDialog
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {

@@ -19,6 +19,8 @@ public:
 	bool m_bHasChanged;
 };
 
+// TODO: We should try to make these function objects, or a function type, not sure the intention here
+
 typedef unsigned char (_RAMByteReadFn)( unsigned int nOffs );
 typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
 
@@ -37,6 +39,8 @@ private:
 		{}
 		
 	private:
+        // TODO: If you really want to disable it, mark it with delete and implement move semantics unless
+        // you don't want them moved either (which would make the type useless)
 		//	Copying disabled
 		BankData( const BankData& );
 		BankData& operator=( BankData& );

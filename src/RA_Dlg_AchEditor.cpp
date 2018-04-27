@@ -14,12 +14,7 @@
 
 #pragma comment(lib, "comctl32.lib")
 
-namespace
-{
-	const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-	const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-	static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
-}
+
 
 enum CondSubItems
 {
@@ -36,6 +31,16 @@ enum CondSubItems
 
 	NumColumns
 };
+
+namespace
+{
+inline constexpr std::array<const char*, CondSubItems::NumColumns> COLUMN_TITLE{
+	"ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits"
+};
+inline constexpr std::array<int, CondSubItems::NumColumns> COLUMN_WIDTH{
+	30, 75, 42, 50, 72, 35, 42, 50, 72, 72
+};
+}
 
 BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;

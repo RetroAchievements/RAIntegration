@@ -1,5 +1,6 @@
 #include "RA_Dlg_Achievement.h"
 
+#include "RA_Resource.h" // was this included twice?, when it was lower there were errors
 #include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
@@ -9,21 +10,28 @@
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_Resource.h"
+
 #include "RA_User.h"
 #include "RA_GameData.h"
 
 
 namespace
 {
-	const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
-	const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-	const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-	const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
+inline constexpr auto NUM_COLS = 6;
+inline constexpr std::array<const char*, NUM_COLS> COLUMN_TITLES_CORE{
+	"ID", "Title", "Points", "Author", "Achieved?", "Modified?"
+};
+inline constexpr std::array<const char*, NUM_COLS> COLUMN_TITLES_UNOFFICIAL{
+	"ID", "Title", "Points", "Author", "Active", "Votes"
+};
+inline constexpr std::array<const char*, NUM_COLS> COLUMN_TITLES_LOCAL{
+	"ID", "Title", "Points", "Author", "Active", "Votes"
+};
+inline constexpr std::array<int, NUM_COLS> COLUMN_SIZE{ 45, 200, 45, 80, 65, 65 };
 
-	const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+	
 
-	int iSelect = -1;
+int iSelect = -1;
 }
 
 Dlg_Achievements g_AchievementsDialog;

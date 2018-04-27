@@ -12,17 +12,17 @@
 
 namespace
 {
-	const float SCOREBOARD_APPEAR_AT = 0.8f;
-	const float SCOREBOARD_FADEOUT_AT = 6.2f;
-	const float SCOREBOARD_FINISH_AT = 7.0f;
+	inline constexpr auto SCOREBOARD_APPEAR_AT  = 0.8f;
+	inline constexpr auto SCOREBOARD_FADEOUT_AT = 6.2f;
+	inline constexpr auto SCOREBOARD_FINISH_AT  = 7.0f;
 
-	const char* FONT_TO_USE = "Tahoma";
+	inline constexpr auto FONT_TO_USE = "Tahoma";
 
-	const COLORREF g_ColBG = RGB( 32, 32, 32 );
+	inline constexpr auto g_ColBG = RGB( 32, 32, 32 );
 	
-	const int FONT_SIZE_TITLE = 28;
-	const int FONT_SIZE_SUBTITLE = 22;
-	const int FONT_SIZE_TEXT = 16;
+	inline constexpr auto FONT_SIZE_TITLE    = 28;
+	inline constexpr auto FONT_SIZE_SUBTITLE = 22;
+	inline constexpr auto FONT_SIZE_TEXT     = 16;
 }
 
 

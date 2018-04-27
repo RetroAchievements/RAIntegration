@@ -17,43 +17,12 @@
 #include <algorithm>	//	std::replace
 
 
-const char* RequestTypeToString[] = 
-{
-	"RequestLogin",
 
-	"RequestScore",
-	"RequestNews",
-	"RequestPatch",
-	"RequestLatestClientPage",
-	"RequestRichPresence",
-	"RequestAchievementInfo",
-	"RequestLeaderboardInfo",
-	"RequestCodeNotes",
-	"RequestFriendList",
-	"RequestBadgeIter",
-	"RequestUnlocks",
-	"RequestHashLibrary",
-	"RequestGamesList",
-	"RequestAllProgress",
-	"RequestGameID",
 
-	"RequestPing",
-	"RequestPostActivity",
-	"RequestSubmitAwardAchievement",
-	"RequestSubmitCodeNote",
-	"RequestSubmitLeaderboardEntry",
-	"RequestSubmitAchievementData",
-	"RequestSubmitTicket",
-	"RequestSubmitNewTitleEntry",
-	
-	"RequestUserPic",
-	"RequestBadge",
 
-	"STOP_THREAD",
-};
-static_assert( SIZEOF_ARRAY( RequestTypeToString ) == NumRequestTypes, "Must match up!" );
 
-const char* RequestTypeToPost[] =
+
+inline constexpr RequestTypes RequestTypeToPost
 {
 	"login",
 	"score",
@@ -86,19 +55,19 @@ const char* RequestTypeToPost[] =
 
 	"_stopthread_",			//	STOP_THREAD
 };
-static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
 
-const char* UploadTypeToString[] = 
+
+inline constexpr UploadTypes UploadTypeToString
 {
 	"RequestUploadBadgeImage",
 };
-static_assert( SIZEOF_ARRAY( UploadTypeToString ) == NumUploadTypes, "Must match up!" );
 
-const char* UploadTypeToPost[] =
+
+inline constexpr UploadTypes UploadTypeToPost
 {
 	"uploadbadgeimage",
 };
-static_assert( SIZEOF_ARRAY( UploadTypeToPost ) == NumUploadTypes, "Must match up!" );
+
 
 //	No game-specific code here please!
 

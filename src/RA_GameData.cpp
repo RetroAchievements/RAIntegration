@@ -1,5 +1,7 @@
 #include "RA_GameData.h"
 
+
+// TODO: Does this really need to be a pointer? If so it needs to be owned.
 GameData* g_pCurrentGameData = new GameData();
 
 void GameData::ParseData(const Document& doc)

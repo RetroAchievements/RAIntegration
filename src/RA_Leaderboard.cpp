@@ -10,7 +10,7 @@ RA_LeaderboardManager g_LeaderboardManager;
 
 namespace
 {
-	const char* FormatTypeToString[] =
+	inline constexpr std::array<const char*, RA_Leaderboard::Format__MAX> FormatTypeToString
 	{
 		"TIME",			//	TimeFrames
 		"TIMESECS",		//	TimeSecs
@@ -19,7 +19,6 @@ namespace
 		"VALUE",		//	Value
 		"OTHER",		//	Other
 	};
-	static_assert( SIZEOF_ARRAY( FormatTypeToString ) == RA_Leaderboard::Format__MAX, "These must match!" );
 }
 
 //////////////////////////////////////////////////////////////////////////

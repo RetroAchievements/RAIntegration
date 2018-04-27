@@ -16,12 +16,14 @@
 
 namespace
 {
-	const float PAGE_TRANSITION_IN = (-0.2f);
-	const float PAGE_TRANSITION_OUT = ( 0.2f);
-	const int NUM_MESSAGES_TO_DRAW = 4;
-	const char* FONT_TO_USE = "Tahoma";
+    // I'm going to guess you never want these changed, simple types can be auto deduced
 
-	const char* PAGE_TITLES[] = { 
+	inline constexpr auto PAGE_TRANSITION_IN   = -0.2f;
+	inline constexpr auto PAGE_TRANSITION_OUT  = 0.2f;
+	inline constexpr auto NUM_MESSAGES_TO_DRAW = 4;
+	inline constexpr auto FONT_TO_USE          = "Tahoma";
+
+	inline constexpr std::array<const char*, NumOverlayPages> PAGE_TITLES {
 		" Achievements ", 
 		" Friends ", 
 		" Messages ",
@@ -35,7 +37,6 @@ namespace
 		" Message Viewer "
 
 		};
-	static_assert( SIZEOF_ARRAY( PAGE_TITLES ) == NumOverlayPages, "Must match!" );
 
 }
 

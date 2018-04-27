@@ -8,16 +8,16 @@
 
 namespace
 {
-	const int FONT_SIZE_MAIN = 32;
-	const int FONT_SIZE_SUBTITLE = 28;
+inline constexpr auto FONT_SIZE_MAIN     = 32;
+inline constexpr auto FONT_SIZE_SUBTITLE = 28;
 
-	const float APPEAR_AT = 0.8f;
-	const float FADEOUT_AT = 4.2f;
-	const float FINISH_AT = 5.0f;
+inline constexpr auto APPEAR_AT  = 0.8f;
+inline constexpr auto FADEOUT_AT = 4.2f;
+inline constexpr auto FINISH_AT  = 5.0f;
 
-	const float POPUP_DIST_Y_TO_PCT = 0.856f;	//	Where on screen to end up
-	const float POPUP_DIST_Y_FROM_PCT = 0.4f;	//	Amount of screens to travel
-	const char* FONT_TO_USE = "Tahoma";
+inline constexpr auto POPUP_DIST_Y_TO_PCT   = 0.856f;	//	Where on screen to end up
+inline constexpr auto POPUP_DIST_Y_FROM_PCT = 0.4f;	    //	Amount of screens to travel
+inline constexpr auto FONT_TO_USE           = "Tahoma";
 }
 
 //ProgressPopup g_ProgressPopup;

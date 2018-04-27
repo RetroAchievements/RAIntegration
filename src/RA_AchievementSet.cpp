@@ -245,7 +245,7 @@ void AchievementSet::Test()
 BOOL AchievementSet::SaveToFile()
 {
 	//	Takes all achievements in this group and dumps them in the filename provided.
-	FILE* pFile = NULL;
+	FILE* pFile = nullptr;
 	char sNextLine[2048];
 	char sMem[2048];
 	unsigned int i = 0;
@@ -253,7 +253,7 @@ BOOL AchievementSet::SaveToFile()
 	const std::string sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
 
 	fopen_s(&pFile, sFilename.c_str(), "w");
-	if (pFile != NULL)
+	if (pFile != nullptr)
 	{
 		sprintf_s(sNextLine, 2048, "0.030\n");						//	Min ver
 		fwrite(sNextLine, sizeof(char), strlen(sNextLine), pFile);
@@ -296,7 +296,7 @@ BOOL AchievementSet::SaveToFile()
 	
 	return FALSE;
 
-	//FILE* pf = NULL;
+	//FILE* pf = nullptr;
 	//const std::string sFilename = GetAchievementSetFilename( m_nGameID );
 	//if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
 	//{
@@ -315,7 +315,7 @@ BOOL AchievementSet::Serialize( FileStream& Stream )
 	//	Why not submit each ach straight to cloud?
 	return FALSE;
 
-	//FILE* pf = NULL;
+	//FILE* pf = nullptr;
 	//const std::string sFilename = GetAchievementSetFilename( m_nGameID );
 	//if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
 	//{
@@ -569,15 +569,15 @@ void AchievementSet::SaveProgress( const char* sSaveStateFilename )
 	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;
 
-	if( sSaveStateFilename == NULL )
+	if( sSaveStateFilename == nullptr )
 		return;
 	
 	SetCurrentDirectory( NativeStr( g_sHomeDir ).c_str() );
 	char buffer[ 4096 ];
 	sprintf_s( buffer, 4096, "%s.rap", sSaveStateFilename );
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s( &pf, buffer, "w" );
-	if( pf == NULL )
+	if( pf == nullptr )
 	{
 		ASSERT( !"Could not save progress!" );
 		return;
@@ -643,22 +643,22 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 	char cheevoProgressString[4096];
 	unsigned int i = 0;
 	unsigned int j = 0;
-	char* pGivenProgressMD5 = NULL;
-	char* pGivenCheevoMD5 = NULL;
+	char* pGivenProgressMD5 = nullptr;
+	char* pGivenCheevoMD5 = nullptr;
 	char cheevoMD5TestMangled[4096];
 	int nMemStringLen = 0;
 
 	if( !RAUsers::LocalUser().IsLoggedIn() )
 		return;
 
-	if( sLoadStateFilename == NULL )
+	if( sLoadStateFilename == nullptr )
 		return;
 
 	sprintf_s( buffer, 4096, "%s%s.rap", RA_DIR_DATA, sLoadStateFilename );
 
 	char* pRawFile = _MallocAndBulkReadFileToBuffer( buffer, nFileSize );
 
-	if( pRawFile != NULL )
+	if( pRawFile != nullptr )
 	{
 		unsigned int nOffs = 0;
 		while( nOffs < (unsigned int)(nFileSize-2) && pRawFile[nOffs] != '\0' )
@@ -712,7 +712,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 			{
 				//	Embed in achievement:
 				Achievement* pAch = Find( nID );
-				if( pAch != NULL )
+				if( pAch != nullptr )
 				{
 					std::string sMemStr = pAch->CreateMemString();
 
@@ -755,7 +755,7 @@ void AchievementSet::LoadProgress( const char* sLoadStateFilename )
 		}
 	
 		free( pRawFile );
-		pRawFile = NULL;
+		pRawFile = nullptr;
 	}
 }
 

@@ -144,7 +144,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			for ( ResizeContent content : vDlgMemBookmarkResize )
 				content.Resize( winRect.Width(), winRect.Height() );
 
-			//InvalidateRect( hDlg, NULL, TRUE );
+			//InvalidateRect( hDlg, nullptr, TRUE );
 			RememberWindowSize(hDlg, "Memory Bookmarks");
 		}
 		break;
@@ -380,7 +380,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
 						}
 
-						InvalidateRect( hList, NULL, FALSE );
+						InvalidateRect( hList, nullptr, FALSE );
 					}
 
 					return TRUE;
@@ -414,7 +414,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							bookmark->ResetCount();
 						}
 						
-						InvalidateRect( hList, NULL, FALSE );
+						InvalidateRect( hList, nullptr, FALSE );
 					}
 
 					return TRUE;
@@ -460,7 +460,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 
 BOOL Dlg_MemBookmark::IsActive() const
 {
-	return(g_MemBookmarkDialog.GetHWND() != NULL) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
+	return(g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }
 
 void Dlg_MemBookmark::UpdateBookmarks( bool bForceWrite )
@@ -506,7 +506,7 @@ void Dlg_MemBookmark::PopulateList()
 		return;
 
 	HWND hList = GetDlgItem( m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES );
-	if ( hList == NULL )
+	if ( hList == nullptr )
 		return;
 
 	int topIndex = ListView_GetTopIndex( hList );
@@ -707,7 +707,7 @@ void Dlg_MemBookmark::ExportJSON()
 	defaultDir = g_sHomeDir + defaultDir;
 
 	IFileSaveDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
+	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
 		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
@@ -719,11 +719,11 @@ void Dlg_MemBookmark::ExportJSON()
 			if ( hr == S_OK )
 			{
 				PIDLIST_ABSOLUTE pidl;
-				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), NULL, &pidl, SFGAO_FOLDER, 0 );
+				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), nullptr, &pidl, SFGAO_FOLDER, 0 );
 				if ( hr == S_OK )
 				{
 					IShellItem* pItem = nullptr;
-					SHCreateShellItem( NULL, NULL, pidl, &pItem );
+					SHCreateShellItem( nullptr, nullptr, pidl, &pItem );
 					hr = pDlg->SetDefaultFolder( pItem );
 					if ( hr == S_OK )
 					{
@@ -834,7 +834,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 	}
 
 	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
+	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
 		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
@@ -930,10 +930,10 @@ BOOL Dlg_MemBookmark::EditLabel ( int nItem, int nSubItem )
 		rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.5f*nHeight ),
 		g_MemBookmarkDialog.GetHWND(),
 		0,
-		GetModuleHandle( NULL ),
-		NULL );
+		GetModuleHandle( nullptr ),
+		nullptr );
 
-	if ( g_hIPEEditBM == NULL )
+	if ( g_hIPEEditBM == nullptr )
 	{
 		ASSERT( !"Could not create edit box!" );
 		MessageBox( nullptr, _T("Could not create edit box."), _T("Error"), MB_OK | MB_ICONERROR );

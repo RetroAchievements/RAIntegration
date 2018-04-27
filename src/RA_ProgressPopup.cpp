@@ -31,7 +31,7 @@ ProgressPopup::ProgressPopup()
 		memset( m_sMessageTitleQueue[ i ], '\0', 1024 );
 		memset( m_sMessageDescQueue[ i ], '\0', 1024 );
 		m_nMessageType[ i ] = 0;
-		m_hMessageImage[ i ] = NULL;
+		m_hMessageImage[ i ] = nullptr;
 	}
 }
 
@@ -44,7 +44,7 @@ void ProgressPopup::AddMessage( const char* sTitle, const char* sDesc, int nMess
 		{
 			sprintf_s( m_sMessageTitleQueue[ i ], 1024, "%s", sTitle );
 
-			if( sDesc != NULL )
+			if( sDesc != nullptr )
 				sprintf_s( m_sMessageDescQueue[ i ], 1024, "%s", sDesc );
 			else
 				sprintf_s( m_sMessageDescQueue[ i ], 1024, "%s", "" );
@@ -72,7 +72,7 @@ void ProgressPopup::NextMessage()
 	memset( m_sMessageTitleQueue[ OVERLAY_MESSAGE_QUEUE_SIZE - 1 ], 0, 1024 );
 	memset( m_sMessageDescQueue[ OVERLAY_MESSAGE_QUEUE_SIZE - 1 ], 0, 1024 );
 	m_nMessageType[ OVERLAY_MESSAGE_QUEUE_SIZE - 1 ] = 0;
-	m_hMessageImage[ OVERLAY_MESSAGE_QUEUE_SIZE - 1 ] = NULL;
+	m_hMessageImage[ OVERLAY_MESSAGE_QUEUE_SIZE - 1 ] = nullptr;
 }
 
 void ProgressPopup::Update( ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused )
@@ -185,13 +185,13 @@ void ProgressPopup::Render( HDC hDC, RECT& rcDest )
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, RGB( 0, 0, 0 ) );
 	SelectObject( hDC, hPen );
 
-	MoveToEx( hDC, nTitleX, nTitleY + szTitle.cy, NULL );
+	MoveToEx( hDC, nTitleX, nTitleY + szTitle.cy, nullptr );
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy );	//	right
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + 1 );			//	up
 
 	if( GetDesc()[ 0 ] != '\0' )
 	{
-		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, NULL );
+		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, nullptr );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + 1 );
 	}

@@ -71,6 +71,11 @@ typedef struct WindowPosition {
 typedef std::map<std::string, WindowPosition> WindowPositionMap;
 WindowPositionMap g_mWindowPositions;
 
+namespace
+{
+	const unsigned int PROCESS_WAIT_TIME = 100;
+	unsigned int g_nProcessTimer = 0;
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
@@ -451,6 +456,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 	g_MemoryDialog.OnLoad_NewRom();
 	g_AchievementOverlay.OnLoad_NewRom();
 	g_MemBookmarkDialog.OnLoad_NewRom();
+
+	g_nProcessTimer = 0;
 
 	return 0;
 }
@@ -1418,6 +1425,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 		g_LeaderboardManager.Reset();
 		g_PopupWindows.LeaderboardPopups().Reset();
 		g_MemoryDialog.Invalidate();
+		g_nProcessTimer = PROCESS_WAIT_TIME;
 	}
 }
 
@@ -1425,8 +1433,14 @@ API void CCONV _RA_DoAchievementsFrame()
 {
 	if (RAUsers::LocalUser().IsLoggedIn())
 	{
-		g_pActiveAchievements->Test();
-		g_LeaderboardManager.Test();
+		if (g_nProcessTimer >= PROCESS_WAIT_TIME)
+		{
+			g_pActiveAchievements->Test();
+			g_LeaderboardManager.Test();
+		}
+		else
+			g_nProcessTimer++;
+
 		g_MemoryDialog.Invalidate();
 	}
 }

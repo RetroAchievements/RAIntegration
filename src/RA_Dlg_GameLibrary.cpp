@@ -25,12 +25,12 @@
 
 namespace
 {
-	const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-	const int COL_SIZE[] = { 30, 230, 110, 170 };
-	static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-	const bool bCancelScan = false;
+const char* COL_TITLE[] ={ "ID", "Game Title", "Completion", "File Path" };
+const int COL_SIZE[] ={ 30, 230, 110, 170 };
+static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
+const bool bCancelScan = false;
 
-	std::mutex mtx;
+std::mutex mtx;
 }
 
 //static 
@@ -102,99 +102,99 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	FILE* pf = NULL;
-	fopen_s(&pf, RA_GAME_HASH_FILENAME, "rb");
-	if (pf != NULL)
+	std::ifstream ifile{ RA_GAME_HASH_FILENAME, std::ios::binary };
+
+	// This if is just adding unecessary complexity
+
+	Document doc;
+	IStreamWrapper isw{ ifile };
+	doc.ParseStream(isw);
+
+	if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
 	{
-		Document doc;
-		doc.ParseStream(FileStream(pf));
-
-		if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
+		const auto& List = doc["MD5List"];
+		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
 		{
-			const Value& List = doc["MD5List"];
-			for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-			{
-				if (iter->name.IsNull() || iter->value.IsNull())
-					continue;
+			// Ok, in this case it needs iterators
+			if (iter->name.IsNull() || iter->value.IsNull())
+				continue;
 
-				const std::string sMD5 = iter->name.GetString();
-				//GameID nID = static_cast<GameID>( std::strtoul( iter->value.GetString(), NULL, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
-				GameID nID = static_cast<GameID>(iter->value.GetUint());
-				GameHashLibraryOut[sMD5] = nID;
-			}
+			// If you noticed we didn't put auto here because then it would be const char*, but std::string
+			// has an assignment operator that accepts const char* so it's fine
+			const std::string sMD5 = iter->name.GetString();
+			//GameID nID = static_cast<GameID>( std::strtoul( iter->value.GetString(), NULL, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
+			auto nID = static_cast<GameID>(iter->value.GetUint());
+
+			// NB. Originally, this was not the right way to add something to a collection, if you checked for bounds
+			// Your program will crash
+			GameHashLibraryOut.emplace(sMD5, nID);
 		}
-
-		fclose(pf);
 	}
+
 }
 
 void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
 {
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	FILE* pf = nullptr;
-	fopen_s(&pf, RA_TITLES_FILENAME, "rb");
-	if (pf != nullptr)
+	std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
+
+	Document doc;
+	IStreamWrapper isw{ ifile };
+	
+
+	if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() &&
+		doc.HasMember("Response"))
 	{
-		Document doc;
-		doc.ParseStream(FileStream(pf));
-
-		if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+		const auto& List = doc["Response"];
+		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
 		{
-			const Value& List = doc["Response"];
-			for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-			{
-				if (iter->name.IsNull() || iter->value.IsNull())
-					continue;
+			if (iter->name.IsNull() || iter->value.IsNull())
+				continue;
 
-				GameID nID = static_cast<GameID>(std::strtoul(iter->name.GetString(), nullptr, 10));	//	KEYS ARE STRINGS, must convert afterwards!
-				const std::string sTitle = iter->value.GetString();
-				GameTitlesListOut[nID] = sTitle;
-			}
+			GameID nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS ARE STRINGS, must convert afterwards!
+            // Didn't think a const char* could move, so it's wrapped in a string
+			GameTitlesListOut.emplace(nID, std::string{ iter->value.GetString() });
 		}
-
-		fclose(pf);
 	}
+
 }
 
 void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
 {
-	FILE* pf = nullptr;
-	fopen_s(&pf, RA_MY_PROGRESS_FILENAME, "rb");
-	if (pf != nullptr)
+
+	std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
+
+	Document doc;
+	IStreamWrapper isw{ ifile };
+
+
+	if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
 	{
-		Document doc;
-		doc.ParseStream(FileStream(pf));
+		//{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
 
-		if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+		const auto& List = doc["Response"];
+		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
 		{
-			//{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
+			auto nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
+			const auto nNumAchievements = iter->value["NumAch"].GetUint();
+			const auto nEarned = iter->value["Earned"].GetUint();
+			const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
 
-			const Value& List = doc["Response"];
-			for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
+			std::stringstream sstr;
+			sstr << nEarned;
+			if (nEarnedHardcore > 0)
+				sstr << " (" << std::to_string(nEarnedHardcore) << ")";
+
+
+			if (sstr << " / " << nNumAchievements; nNumAchievements > 0)
 			{
-				GameID nID = static_cast<GameID>(std::strtoul(iter->name.GetString(), nullptr, 10));	//	KEYS MUST BE STRINGS
-				const unsigned int nNumAchievements = iter->value["NumAch"].GetUint();
-				const unsigned int nEarned = iter->value["Earned"].GetUint();
-				const unsigned int nEarnedHardcore = iter->value["HCEarned"].GetUint();
-
-				std::stringstream sstr;
-				sstr << nEarned;
-				if (nEarnedHardcore > 0)
-					sstr << " (" << std::to_string(nEarnedHardcore) << ")";
-				sstr << " / " << nNumAchievements;
-				if (nNumAchievements > 0)
-				{
-					const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-					char bufPct[256];
-					sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
-					sstr << bufPct;
-				}
-
-				GameProgressOut[nID] = sstr.str();
+				const int nNumEarnedTotal = nEarned + nEarnedHardcore;
+				char bufPct[256];
+				sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
+				sstr << bufPct;
 			}
+			GameProgressOut.emplace(nID, sstr.str());
 		}
-
-		fclose(pf);
 	}
 }
 
@@ -214,7 +214,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
 		col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
 		col.cchTextMax = 255;
 		tstring sCol = COL_TITLE[i];	//	scoped cache
-		col.pszText = const_cast<LPTSTR>( sCol.c_str() );
+		col.pszText = const_cast<LPTSTR>(sCol.c_str());
 		col.cx = COL_SIZE[i];
 		col.iSubItem = i;
 
@@ -242,7 +242,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 	//	id:
 	item.iSubItem = 0;
 	tstring sID = std::to_string(nGameID);	//scoped cache!
-	item.pszText = const_cast<LPTSTR>( sID.c_str() );
+	item.pszText = const_cast<LPTSTR>(sID.c_str());
 	item.iItem = ListView_InsertItem(hList, &item);
 
 	item.iSubItem = 1;

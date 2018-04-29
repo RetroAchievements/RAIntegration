@@ -706,50 +706,59 @@ void Dlg_MemBookmark::ExportJSON()
 	defaultDir.erase ( 0, 2 ); // Removes the characters (".\\")
 	defaultDir = g_sHomeDir + defaultDir;
 
-	IFileSaveDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
+    // First time noticing this
+	CComPtr<IFileSaveDialog> pDlg;
+	
+	if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
+        reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		
+		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); hr == S_OK )
 		{
-			char defaultFileName[ 512 ];
-			sprintf_s ( defaultFileName, 512, "%s-Bookmarks.txt", std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
-			hr = pDlg->SetFileName( Widen( defaultFileName ).c_str() );
-			if ( hr == S_OK )
+            // Does this really need a limit?
+            std::string defaultFileName;
+            defaultFileName.reserve(512); // gives it a cap of 512+16 to prevent overflows but deallocates
+            // for now
+			sprintf_s ( defaultFileName.data(), 512, "%s-Bookmarks.txt",
+                std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
+			
+			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
 			{
 				PIDLIST_ABSOLUTE pidl;
-				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), NULL, &pidl, SFGAO_FOLDER, 0 );
-				if ( hr == S_OK )
+				
+				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), NULL, &pidl, SFGAO_FOLDER, 0); SUCCEEDED(hr))
 				{
-					IShellItem* pItem = nullptr;
+					CComPtr<IShellItem> pItem;
 					SHCreateShellItem( NULL, NULL, pidl, &pItem );
-					hr = pDlg->SetDefaultFolder( pItem );
-					if ( hr == S_OK )
+					
+					if (hr = pDlg->SetDefaultFolder(pItem); SUCCEEDED(hr))
 					{
 						pDlg->SetDefaultExtension( L"txt" );
-						hr = pDlg->Show( nullptr );
-						if ( hr == S_OK )
+						
+						if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 						{
 
-							hr = pDlg->GetResult( &pItem );
-							if ( hr == S_OK )
+							
+							if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 							{
 								LPWSTR pStr = nullptr;
-								hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-								if ( hr == S_OK )
+								
+								if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 								{
 									Document doc;
-									Document::AllocatorType& allocator = doc.GetAllocator();
+                                    auto& allocator = doc.GetAllocator();
 									doc.SetObject();
 
 									Value bookmarks( kArrayType );
-									for ( MemBookmark* bookmark : m_vBookmarks )
+                                    // We really shouldn't use pointers if we don't have too
+                                    // This will still use the pointer however, but that's for another time
+									for (auto bookmark : m_vBookmarks )
 									{
 										Value item( kObjectType );
-										char buffer[ 256 ];
-										sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
-										Value s( buffer, allocator );
+										std::string buffer;
+                                        buffer.reserve(256);
+										sprintf_s( buffer.data(), 256, Narrow( bookmark->Description() ).c_str(), buffer.length() );
+                                        Value s{ buffer.c_str(), allocator };
 
 										item.AddMember( "Description", s, allocator );
 										item.AddMember( "Address", bookmark->Address(), allocator );
@@ -760,9 +769,11 @@ void Dlg_MemBookmark::ExportJSON()
 									doc.AddMember( "Bookmarks", bookmarks, allocator );
 
 									_WriteBufferToFile( Narrow( pStr ), doc );
+                                    CoTaskMemFree(static_cast<LPVOID>(pStr));
+                                    pStr = nullptr;
 								}
 
-								pItem->Release();
+								pItem.Release();
 								ILFree( pidl );
 							}
 						}
@@ -770,7 +781,7 @@ void Dlg_MemBookmark::ExportJSON()
 				}
 			}
 		}
-		pDlg->Release();
+		pDlg.Release();
 	}
 }
 
@@ -827,42 +838,50 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
 	std::string str;
 
+	// With how repetive this is, it should be it's own function
 	if ( g_pCurrentGameData->GetGameID() == 0 )
 	{
 		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
 		return str;
-	}
+	} // end if
 
-	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
+	// Never noticed this, nearly identical to the on in RA_Core
+	CComPtr<IFileOpenDialog> pDlg;
+
+	// Keep the scope as local as possible
+	
+	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
+		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		// N.B. If you want to do more than one at a time it needs to be in a loop
+		
+		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); SUCCEEDED(hr))
 		{
-			hr = pDlg->Show( nullptr );
-			if ( hr == S_OK )
+			
+			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 			{
-				IShellItem* pItem = nullptr;
-				hr = pDlg->GetResult( &pItem );
-				if ( hr == S_OK )
+				CComPtr<IShellItem> pItem;
+				
+				if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 				{
-					LPWSTR pStr = nullptr;
-					hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-					if ( hr == S_OK )
+                    LPWSTR pStr = nullptr;
+					
+					if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 					{
 						str = Narrow( pStr );
-					}
+						CoTaskMemFree(static_cast<LPVOID>(pStr));
+						pStr = nullptr;
+					} // end if
 
-					pItem->Release();
-				}
-			}
-		}
-		pDlg->Release();
-	}
+					pItem.Release();
+				} // end if
+			} // end if
+		} // end if
+		pDlg.Release();
+	} // end if
 
 	return str;
-}
+} // end function ImportDialog
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {

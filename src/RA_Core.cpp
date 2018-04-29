@@ -1,22 +1,13 @@
 #include "RA_Core.h"
 
-#include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_BuildVer.h"
-#include "RA_CodeNotes.h"
-#include "RA_Defs.h"
 #include "RA_GameData.h"
-#include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_Interface.h"
-#include "RA_Leaderboard.h"
 #include "RA_md5factory.h"
-#include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
-#include "RA_Resource.h"
 #include "RA_RichPresence.h"
-#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Achievement.h"
@@ -29,10 +20,9 @@
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#include <locale>
+// TODO: Remove this later after PR #23 is accepted
 #include <codecvt>
-#include <direct.h>
-#include <io.h>		//	_access()
+
 
 
 std::string g_sKnownRAVersion;

@@ -1,17 +1,16 @@
+#ifndef RA_DLG_GAMETITLE_H
+#define RA_DLG_GAMETITLE_H
 #pragma once
-
-#include <wtypes.h>
-#include <map>
 
 #include "RA_Defs.h"
 
 class Dlg_GameTitle
 {
 public:
-	std::string CleanRomName( const std::string& sTryName );
-	static void DoModalDialog( HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut );
-	
-	INT_PTR GameTitleProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam );
+	std::string CleanRomName(const std::string& sTryName);
+	static void DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut);
+
+	INT_PTR GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	GameID m_nReturnedGameID;
@@ -22,3 +21,6 @@ private:
 };
 
 extern Dlg_GameTitle g_GameTitleDialog;
+
+
+#endif // !RA_DLG_GAMETITLE_H

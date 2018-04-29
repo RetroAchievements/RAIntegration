@@ -1,8 +1,9 @@
+#ifndef RA_RICHPRESENCE_H
+#define RA_RICHPRESENCE_H
 #pragma once
-#include <vector>
-#include <map>
+
 #include "RA_Leaderboard.h"
-#include "RA_Defs.h"
+
 
 typedef unsigned int DataPos;
 
@@ -10,13 +11,13 @@ typedef unsigned int DataPos;
 class RA_Lookup
 {
 public:
-	RA_Lookup( const std::string& sDesc );
-	
-public:
-	void AddLookupData( DataPos nValue, const std::string& sLookupData )	{ m_lookupData[ nValue ] = sLookupData; }
-	const std::string& Lookup( DataPos nValue ) const;
+	RA_Lookup(const std::string& sDesc);
 
-	const std::string& Description() const									{ return m_sLookupDescription; }
+public:
+	void AddLookupData(DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
+	const std::string& Lookup(DataPos nValue) const;
+
+	const std::string& Description() const { return m_sLookupDescription; }
 
 private:
 	std::string m_sLookupDescription;
@@ -26,7 +27,7 @@ private:
 class RA_ConditionalDisplayString
 {
 public:
-	RA_ConditionalDisplayString( char* pLine );
+	RA_ConditionalDisplayString(char* pLine);
 
 	bool Test();
 	const std::string& GetDisplayString() const { return m_sDisplayString; }
@@ -39,11 +40,11 @@ private:
 class RA_Formattable
 {
 public:
-	RA_Formattable( const std::string& sDesc, RA_Leaderboard::FormatType nType );
+	RA_Formattable(const std::string& sDesc, RA_Leaderboard::FormatType nType);
 
-	std::string Lookup( DataPos nValue ) const;
+	std::string Lookup(DataPos nValue) const;
 
-	const std::string& Description() const									{ return m_sLookupDescription; }
+	const std::string& Description() const { return m_sLookupDescription; }
 
 private:
 	std::string m_sLookupDescription;
@@ -53,16 +54,16 @@ private:
 class RA_RichPresenceInterpretter
 {
 public:
-	static void PersistAndParseScript( GameID nGameID, const std::string& sScript );
+	static void PersistAndParseScript(GameID nGameID, const std::string& sScript);
 
 public:
 	RA_RichPresenceInterpretter() {}
 
 public:
-	void ParseRichPresenceFile( const std::string& sFilename );
+	void ParseRichPresenceFile(const std::string& sFilename);
 
 	const std::string& GetRichPresenceString();
-	const std::string& Lookup( const std::string& sLookupName, const std::string& sMemString ) const;
+	const std::string& Lookup(const std::string& sLookupName, const std::string& sMemString) const;
 
 	bool Enabled() const;
 
@@ -75,3 +76,5 @@ private:
 };
 
 extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+
+#endif // !RA_RICHPRESENCE_H

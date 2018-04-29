@@ -1,7 +1,6 @@
 #ifndef _PROGRESSPOPUP_H_
 #define _PROGRESSPOPUP_H_
 
-#include <wtypes.h>
 #include "RA_AchievementOverlay.h"
 
 //	Graphic to display an progress towards an achievement

@@ -1,13 +1,9 @@
 #include "RA_Dlg_Memory.h"
 
-#include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
-#include "RA_CodeNotes.h"
 #include "RA_Core.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
-#include "RA_MemManager.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
@@ -634,6 +630,10 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
 				g_MemManager.ActiveBankRAMRead(data, addr, 16);
 
+                // TODO: Remove this pragma warning disable if tinyformat ever
+                //       gets accepted or if another approach is done.
+				//       Do we even need wide strings here?
+                #pragma warning(disable : 4995) 
 				TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
 				switch (m_nDataSize)
 				{

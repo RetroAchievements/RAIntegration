@@ -1,3 +1,5 @@
+#ifndef RA_ACHIEVEMENTPOPUP_H
+#define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
 #include "RA_Defs.h"
@@ -20,17 +22,17 @@ enum PopupMessageType
 class MessagePopup
 {
 public:
-	MessagePopup( const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = nullptr ) :
-		m_sMessageTitle( sTitle ),
-		m_sMessageSubtitle( sSubtitle ),
-		m_nMessageType( nMsgType ),
-		m_hMessageImage( hImg )
+	MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = nullptr) :
+		m_sMessageTitle(sTitle),
+		m_sMessageSubtitle(sSubtitle),
+		m_nMessageType(nMsgType),
+		m_hMessageImage(hImg)
 	{}
 public:
-	const std::string& Title() const	{ return m_sMessageTitle; }
-	const std::string& Subtitle() const	{ return m_sMessageSubtitle; }
-	PopupMessageType Type() const		{ return m_nMessageType; }
-	HBITMAP Image() const				{ return m_hMessageImage; }
+	const std::string& Title() const { return m_sMessageTitle; }
+	const std::string& Subtitle() const { return m_sMessageSubtitle; }
+	PopupMessageType Type() const { return m_nMessageType; }
+	HBITMAP Image() const { return m_hMessageImage; }
 
 private:
 	const std::string m_sMessageTitle;
@@ -46,15 +48,15 @@ public:
 public:
 	AchievementPopup();
 
-	void Update( ControllerInput input, float fDelta, bool bFullScreen, bool bPaused );
-	void Render( HDC hDC, RECT& rcDest );
+	void Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused);
+	void Render(HDC hDC, RECT& rcDest);
 
-	void AddMessage( const MessagePopup& msg );
+	void AddMessage(const MessagePopup& msg);
 	float GetYOffsetPct() const;
 
 	//bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
-	bool MessagesPresent() const				{ return( m_vMessages.size() > 0 ); }
-	const MessagePopup& ActiveMessage() const	{ return m_vMessages.front(); }
+	bool MessagesPresent() const { return(m_vMessages.size() > 0); }
+	const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
 
 	void Clear();
 	void PlayAudio();
@@ -65,3 +67,6 @@ private:
 };
 
 //extern AchievementPopup g_PopupWindow;
+
+
+#endif // !RA_ACHIEVEMENTPOPUP_H

@@ -75,7 +75,7 @@ public:
 
 	void ResetDelta()
 	{
-		m_nPreviousVal = 0;
+		m_nPreviousVal = m_nVal;
 	}
 
 	bool ParseVariable(const char*& sInString);	//	Parse from string

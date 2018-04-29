@@ -1,8 +1,7 @@
+#ifndef RA_ACHIEVEMENTSET_H
+#define RA_ACHIEVEMENTSET_H
 #pragma once
 
-#include <vector>
-#include "RA_Condition.h"
-#include "RA_Defs.h"
 #include "RA_Achievement.h"
 
 
@@ -37,14 +36,14 @@ public:
 	std::string GetAchievementSetFilename(GameID nGameID);
 
 	//	Get Achievement at offset
-	Achievement& GetAchievement(size_t nIter)	{ return m_Achievements[nIter]; }
-	inline size_t NumAchievements() const		{ return m_Achievements.size(); }
+	Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
+	inline size_t NumAchievements() const { return m_Achievements.size(); }
 
 	// Get Points Total
 	inline unsigned int PointTotal()
 	{
 		unsigned int total = 0;
-		for ( Achievement ach : m_Achievements ) total += ach.Points();
+		for (Achievement ach : m_Achievements) total += ach.Points();
 		return total;
 	}
 
@@ -89,5 +88,8 @@ extern AchievementSet* g_pLocalAchievements;
 
 extern AchievementSet* g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
-	
-extern void RASetAchievementCollection( enum AchievementSetType Type );
+
+extern void RASetAchievementCollection(enum AchievementSetType Type);
+
+
+#endif // !RA_ACHIEVEMENTSET_H

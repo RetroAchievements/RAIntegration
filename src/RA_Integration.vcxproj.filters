@@ -16,22 +16,13 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Notes">
+      <UniqueIdentifier>{2747c1aa-687e-44a7-ba2f-b977463edc9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
       <Filter>Services</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Achievement.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_AchievementSet.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_CodeNotes.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Condition.cpp">
-      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_Dlg_AchEditor.cpp">
       <Filter>UI</Filter>
@@ -62,18 +53,6 @@
     </ClCompile>
     <ClCompile Include="RA_Dlg_RomChecksum.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_GameData.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Leaderboard.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_RichPresence.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_User.cpp">
-      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_httpthread.cpp">
       <Filter>Services</Filter>
@@ -110,6 +89,33 @@
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Achievement.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_AchievementSet.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_CodeNotes.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Condition.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_GameData.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Leaderboard.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_User.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_RichPresence.cpp">
+      <Filter>Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -212,6 +218,9 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">
@@ -220,5 +229,10 @@
     <ResourceCompile Include="RA_Version.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="transitive_includes.txt">
+      <Filter>Notes</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -1,14 +1,7 @@
-#include <wincodec.h>
-#include <WTypes.h>
-#include <windows.h>
-#include <windowsx.h>
-#include <commdlg.h>
-#include <stdio.h>
-
-#include "RA_Defs.h"
-#include "RA_Core.h"
-#include "RA_Resource.h"
 #include "RA_ImageFactory.h"
+
+
+#include "RA_Core.h"
 #include "RA_Achievement.h"
 #include "RA_httpthread.h"
 

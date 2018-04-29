@@ -1,8 +1,6 @@
 #include "RA_Defs.h"
 
-#include <stdio.h>
-#include <Windows.h>
-#include <locale>
+// TODO: remove these later, it's needed here for now
 #include <codecvt>
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
@@ -13,6 +11,9 @@ char* DataStreamAsString(DataStream& stream)
 	return reinterpret_cast<char*>(stream.data());
 }
 
+
+// TODO: Remove "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" from the project defines
+// once PR #23 has been accepted
 std::string Narrow(const wchar_t* wstr)
 {
 	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;

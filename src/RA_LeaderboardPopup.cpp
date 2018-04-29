@@ -1,9 +1,5 @@
 #include "RA_LeaderboardPopup.h"
 
-#include <windows.h>
-#include <stdio.h>
-
-#include "RA_Achievement.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 #include "RA_Leaderboard.h"

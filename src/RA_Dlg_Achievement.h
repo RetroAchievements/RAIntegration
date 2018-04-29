@@ -1,9 +1,10 @@
+#ifndef RA_DLG_ACHIEVEMENT_H
+#define RA_DLG_ACHIEVEMENT_H
 #pragma once
 
 #include "RA_Achievement.h"
 
-#include <wtypes.h>
-#include <assert.h>
+
 
 const int MAX_TEXT_ITEM_SIZE = 80;
 
@@ -19,7 +20,7 @@ public:
 	{
 		ID,
 		Title,
-    Points,
+		Points,
 		Author,
 		Achieved,
 		Active=Achieved,
@@ -38,26 +39,26 @@ public:
 
 public:
 	int GetSelectedAchievementIndex();
-	void OnLoad_NewRom( GameID nGameID );
-	void OnGet_Achievement( const Achievement& ach );
-	void ReloadLBXData( int nOffset );
-	void OnEditData( size_t nItem, Column nColumn, const std::string& sNewData );
-	void OnEditAchievement( const Achievement& ach );
-	void OnClickAchievementSet( AchievementSetType nAchievementSet );
+	void OnLoad_NewRom(GameID nGameID);
+	void OnGet_Achievement(const Achievement& ach);
+	void ReloadLBXData(int nOffset);
+	void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
+	void OnEditAchievement(const Achievement& ach);
+	void OnClickAchievementSet(AchievementSetType nAchievementSet);
 
-	inline std::string& LbxDataAt( size_t nRow, Column nCol )	{ return( m_lbxData[ nRow ] )[ nCol ]; }
+	inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
 
-	inline HWND GetHWND() const		{ return m_hAchievementsDlg; }
-	void InstallHWND( HWND hWnd )	{ m_hAchievementsDlg = hWnd; }
+	inline HWND GetHWND() const { return m_hAchievementsDlg; }
+	void InstallHWND(HWND hWnd) { m_hAchievementsDlg = hWnd; }
 
 private:
-	void SetupColumns( HWND hList );
-	void LoadAchievements( HWND hList );
+	void SetupColumns(HWND hList);
+	void LoadAchievements(HWND hList);
 
-	void RemoveAchievement( HWND hList, int nIter );
-	size_t AddAchievement( HWND hList, const Achievement& Ach );
+	void RemoveAchievement(HWND hList, int nIter);
+	size_t AddAchievement(HWND hList, const Achievement& Ach);
 
-	INT_PTR Dlg_Achievements::CommitAchievements( HWND hDlg );
+	INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg);
 
 	void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
 
@@ -68,3 +69,6 @@ private:
 };
 
 extern Dlg_Achievements g_AchievementsDialog;
+
+
+#endif // !RA_DLG_ACHIEVEMENT_H

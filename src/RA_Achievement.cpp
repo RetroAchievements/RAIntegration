@@ -1,29 +1,19 @@
 #include "RA_Achievement.h"
 
-#include <windows.h>
-#include <commctrl.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <memory.h>
-#include <assert.h>
-#include <io.h>
-#include <sstream>
-
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_GameTitle.h"
 
-#include "md5.h"
+
 #include "RA_md5factory.h"
 
 #include "RA_MemManager.h"
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
-#include "RA_Defs.h"
+
 #include "RA_ImageFactory.h"
 #include "RA_Core.h"
-#include "RA_Leaderboard.h"
-#include "RA_Condition.h"
+
 #include "RA_RichPresence.h"
 
 //	No game-specific code here please!

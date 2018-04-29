@@ -1,33 +1,37 @@
+#ifndef RA_DEFS_H
+#define RA_DEFS_H
 #pragma once
 
-#include <Windows.h>
-#include <WindowsX.h>
-#include <ShlObj.h>
-#include <tchar.h>
-#include <assert.h>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <queue>
-#include <deque>
-#include <map>
+
 
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
+// TODO: Find out what the emulators actually need
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#ifdef WIN32_LEAN_AND_MEAN
+#include <MMSystem.h>
+#include <ShellAPI.h>
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+#include <WindowsX.h>
+#include <ShlObj.h>
+#include <tchar.h>
+#include <cassert>
+#include <sstream>
+#include <queue>
+#include <map>
+#include "RA_Resource.h" // not sure if it's needed by the dll or not
 
 #else
 
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-//	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
-#include "rapidjson/include/rapidjson/error/en.h"
+
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 
@@ -69,153 +73,153 @@ typedef DWORD			ARGB;
 
 //namespace RA
 //{
-	template<typename T>
-	static inline const T& RAClamp( const T& val, const T& lower, const T& upper )
-	{
-		return( val < lower ) ? lower : ( ( val > upper ) ? upper : val );
-	}
-	
-	class RARect : public RECT
-	{
-	public:
-		RARect() {}
-		RARect( LONG nX, LONG nY, LONG nW, LONG nH )
-		{
-			left = nX;
-			right = nX + nW;
-			top = nY;
-			bottom = nY + nH;
-		}
+template<typename T>
+static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
+{
+    return(val < lower) ? lower : ((val > upper) ? upper : val);
+}
 
-	public:
-		inline int Width() const		{ return( right - left ); }
-		inline int Height() const		{ return( bottom - top ); }
-	};
+class RARect : public RECT
+{
+public:
+    RARect() {}
+    RARect(LONG nX, LONG nY, LONG nW, LONG nH)
+    {
+        left = nX;
+        right = nX + nW;
+        top = nY;
+        bottom = nY + nH;
+    }
 
-	class RASize
-	{
-	public:
-		RASize() : m_nWidth( 0 ), m_nHeight( 0 ) {}
-		RASize( const RASize& rhs ) : m_nWidth( rhs.m_nWidth ), m_nHeight( rhs.m_nHeight ) {}
-		RASize( int nW, int nH ) : m_nWidth( nW ), m_nHeight( nH ) {}
+public:
+    inline int Width() const { return(right - left); }
+    inline int Height() const { return(bottom - top); }
+};
 
-	public:
-		inline int Width() const		{ return m_nWidth; }
-		inline int Height() const		{ return m_nHeight; }
-		inline void SetWidth( int nW )	{ m_nWidth = nW; }
-		inline void SetHeight( int nH )	{ m_nHeight = nH; }
+class RASize
+{
+public:
+    RASize() : m_nWidth(0), m_nHeight(0) {}
+    RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
+    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
 
-	private:
-		int m_nWidth;
-		int m_nHeight;
-	};
+public:
+    inline int Width() const { return m_nWidth; }
+    inline int Height() const { return m_nHeight; }
+    inline void SetWidth(int nW) { m_nWidth = nW; }
+    inline void SetHeight(int nH) { m_nHeight = nH; }
 
-	const RASize RA_BADGE_PX( 64, 64 );
-	const RASize RA_USERPIC_PX( 64, 64 );
+private:
+    int m_nWidth;
+    int m_nHeight;
+};
 
-	class ResizeContent
-	{
-	public:
-		enum AlignType
-		{
-			NO_ALIGN,
-			ALIGN_RIGHT,
-			ALIGN_BOTTOM,
-			ALIGN_BOTTOM_RIGHT
-		};
+const RASize RA_BADGE_PX(64, 64);
+const RASize RA_USERPIC_PX(64, 64);
 
-	public:
-		HWND hwnd;
-		POINT pLT;
-		POINT pRB;
-		AlignType nAlignType;
-		int nDistanceX;
-		int nDistanceY;
-		bool bResize;
+class ResizeContent
+{
+public:
+    enum AlignType
+    {
+        NO_ALIGN,
+        ALIGN_RIGHT,
+        ALIGN_BOTTOM,
+        ALIGN_BOTTOM_RIGHT
+    };
 
-		ResizeContent( HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize )
-		{
-			hwnd = contentHwnd;
-			nAlignType = newAlignType;
-			bResize = isResize;
-			
-			RARect rect;
-			GetWindowRect( hwnd, &rect );
+public:
+    HWND hwnd;
+    POINT pLT;
+    POINT pRB;
+    AlignType nAlignType;
+    int nDistanceX;
+    int nDistanceY;
+    bool bResize;
 
-			pLT.x = rect.left;	pLT.y = rect.top;
-			pRB.x = rect.right; pRB.y = rect.bottom;
+    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
+    {
+        hwnd = contentHwnd;
+        nAlignType = newAlignType;
+        bResize = isResize;
 
-			ScreenToClient( parentHwnd, &pLT );
-			ScreenToClient( parentHwnd, &pRB );
+        RARect rect;
+        GetWindowRect(hwnd, &rect);
 
-			GetWindowRect ( parentHwnd, &rect );
-			nDistanceX = rect.Width() - pLT.x;
-			nDistanceY = rect.Height() - pLT.y;
-			
-			if ( bResize )
-			{
-				nDistanceX -= (pRB.x - pLT.x);
-				nDistanceY -= (pRB.y - pLT.y);
-			}
-		}
+        pLT.x = rect.left;	pLT.y = rect.top;
+        pRB.x = rect.right; pRB.y = rect.bottom;
 
-		void Resize(int width, int height)
-		{
-			int xPos, yPos;
+        ScreenToClient(parentHwnd, &pLT);
+        ScreenToClient(parentHwnd, &pRB);
 
-			switch ( nAlignType )
-			{
-				case ResizeContent::ALIGN_RIGHT:
-					xPos = width - nDistanceX - ( bResize ? pLT.x : 0 );
-					yPos = bResize ? ( pRB.y - pLT.x ) : pLT.y;
-					break;
-				case ResizeContent::ALIGN_BOTTOM:
-					xPos = bResize ? ( pRB.x - pLT.x ) : pLT.x;
-					yPos = height - nDistanceY - ( bResize ? pLT.y : 0 );
-					break;
-				case ResizeContent::ALIGN_BOTTOM_RIGHT:
-					xPos = width - nDistanceX - ( bResize ? pLT.x : 0 );
-					yPos = height - nDistanceY - ( bResize ? pLT.y : 0 );
-					break;
-				default:
-					xPos = bResize ? ( pRB.x - pLT.x ) : pLT.x;
-					yPos = bResize ? ( pRB.y - pLT.x ) : pLT.y;
-					break;
-			}
+        GetWindowRect(parentHwnd, &rect);
+        nDistanceX = rect.Width() - pLT.x;
+        nDistanceY = rect.Height() - pLT.y;
 
-			if ( !bResize )
-				SetWindowPos( hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
-			else
-				SetWindowPos( hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER );
-		}
-	};
+        if (bResize)
+        {
+            nDistanceX -= (pRB.x - pLT.x);
+            nDistanceY -= (pRB.y - pLT.y);
+        }
+    }
 
-	enum AchievementSetType
-	{
-		Core,
-		Unofficial,
-		Local,
+    void Resize(int width, int height)
+    {
+        int xPos, yPos;
 
-		NumAchievementSetTypes
-	};
-	
-	typedef std::vector<BYTE> DataStream;
-	typedef unsigned long ByteAddress;
+        switch (nAlignType)
+        {
+        case ResizeContent::ALIGN_RIGHT:
+            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+            break;
+        case ResizeContent::ALIGN_BOTTOM:
+            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+            break;
+        case ResizeContent::ALIGN_BOTTOM_RIGHT:
+            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+            break;
+        default:
+            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+            break;
+        }
 
-	typedef unsigned int AchievementID;
-	typedef unsigned int LeaderboardID;
-	typedef unsigned int GameID;
+        if (!bResize)
+            SetWindowPos(hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+        else
+            SetWindowPos(hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
+    }
+};
 
-	char* DataStreamAsString( DataStream& stream );
+enum AchievementSetType
+{
+    Core,
+    Unofficial,
+    Local,
 
-	extern void RADebugLogNoFormat( const char* data );
-	extern void RADebugLog( const char* sFormat, ... );
-	extern BOOL DirectoryExists( const char* sPath );
+    NumAchievementSetTypes
+};
 
-	const int SERVER_PING_DURATION = 2*60;
+typedef std::vector<BYTE> DataStream;
+typedef unsigned long ByteAddress;
+
+typedef unsigned int AchievementID;
+typedef unsigned int LeaderboardID;
+typedef unsigned int GameID;
+
+char* DataStreamAsString(DataStream& stream);
+
+extern void RADebugLogNoFormat(const char* data);
+extern void RADebugLog(const char* sFormat, ...);
+extern BOOL DirectoryExists(const char* sPath);
+
+const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
-	
+
 #define RA_LOG RADebugLog
 
 #ifdef _DEBUG
@@ -225,7 +229,7 @@ typedef DWORD			ARGB;
 #undef ASSERT
 #define ASSERT( x ) {}
 #endif
-	
+
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
@@ -252,3 +256,6 @@ typedef std::basic_string<TCHAR> tstring;
 #define NativeStr(x) Narrow(x)
 #define NativeStrType std::string
 #endif
+
+
+#endif // !RA_DEFS_H

@@ -1,7 +1,5 @@
 #include "RA_AchievementPopup.h"
 
-#include "RA_Achievement.h"
-#include "RA_Defs.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 

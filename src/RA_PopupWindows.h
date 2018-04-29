@@ -1,6 +1,8 @@
+#ifndef RA_POPUPWINDOWS_H
+#define RA_POPUPWINDOWS_H
 #pragma once
 
-#include "RA_PopupWindows.h"
+// why was this file including itself?
 
 #include "RA_ProgressPopup.h"
 #include "RA_AchievementPopup.h"
@@ -11,18 +13,18 @@
 class PopupWindows
 {
 public:
-	static void Update( ControllerInput* pInput, float fDelta, bool bFullscreen, bool bPaused )
+	static void Update(ControllerInput* pInput, float fDelta, bool bFullscreen, bool bPaused)
 	{
-		m_ProgressPopups.Update( *pInput, fDelta, bFullscreen, bPaused );
-		m_AchievementPopups.Update( *pInput, fDelta, bFullscreen, bPaused );
-		m_LeaderboardPopups.Update( *pInput, fDelta, bFullscreen, bPaused );
+		m_ProgressPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
+		m_AchievementPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
+		m_LeaderboardPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
 	}
 
-	static void Render( HDC hDC, RECT* rcDest )
+	static void Render(HDC hDC, RECT* rcDest)
 	{
-		m_ProgressPopups.Render( hDC, *rcDest );
-		m_AchievementPopups.Render( hDC, *rcDest );
-		m_LeaderboardPopups.Render( hDC, *rcDest );
+		m_ProgressPopups.Render(hDC, *rcDest);
+		m_AchievementPopups.Render(hDC, *rcDest);
+		m_LeaderboardPopups.Render(hDC, *rcDest);
 	}
 
 	static void Clear()
@@ -31,9 +33,9 @@ public:
 		m_AchievementPopups.Clear();
 	}
 
-	static ProgressPopup& ProgressPopups()			{ return m_ProgressPopups; }
-	static AchievementPopup& AchievementPopups()	{ return m_AchievementPopups; }
-	static LeaderboardPopup& LeaderboardPopups()	{ return m_LeaderboardPopups; }
+	static ProgressPopup& ProgressPopups() { return m_ProgressPopups; }
+	static AchievementPopup& AchievementPopups() { return m_AchievementPopups; }
+	static LeaderboardPopup& LeaderboardPopups() { return m_LeaderboardPopups; }
 
 private:
 	static ProgressPopup m_ProgressPopups;
@@ -44,8 +46,11 @@ private:
 //	Exposed to DLL
 extern "C"
 {
-API extern int _RA_UpdatePopups( ControllerInput* input, float fDTime, bool Full_Screen, bool Paused );
-API extern int _RA_RenderPopups( HDC hDC, RECT* rcSize );
+	API extern int _RA_UpdatePopups(ControllerInput* input, float fDTime, bool Full_Screen, bool Paused);
+	API extern int _RA_RenderPopups(HDC hDC, RECT* rcSize);
 }
 
 extern PopupWindows g_PopupWindows;
+
+
+#endif // !RA_POPUPWINDOWS_H

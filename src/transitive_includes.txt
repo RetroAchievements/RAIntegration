@@ -1,0 +1,125 @@
+This text file is to show what file includes what to limit the size of the precompiled header.
+Deep includes will be included as well.
+
+They are written in the order they were found. Sometimes they were shown more than once because of macro 
+conditionals, so only the first instance will be kept. Some special cases will be accounted for (Windows.h mostly).
+
+
+We will also state the reasoning for some project files that are in the precompiled header as well.
+There are also several "NO{something}" in Windows.h, but those have not been accounted for.
+If there is part of the Windows NT API that we don't need, speak up.
+
+=========================================================================================================
+											Windows API (SDK 7.0/1A)
+=========================================================================================================
+wincodec.h: rpc.h, rpcndr.h", windows.h, ole2.h, wtypes.h, propidl.h, ocidl.h, intsafe.h
+
+---------------------------------------------------------------------------------------------------------
+|	Windows.h (SDK 7.0/1A)     |	Removed from WIN32_LEAN_AND_MEAN	|	Removed Includes we Need	|
+---------------------------------------------------------------------------------------------------------
+|		sdkddkver.h            |				cderr.h                 |			mmsystem.h          |
+|		winresrc.h             |				dde.h                   |			shellapi.h          |
+|		excpt.h                |				ddeml.h                 |			commdlg.h			|
+|		stdarg.h               |			    dlgs.h                  |								|
+|		windef.h               |			    lzexpand.h              |								|
+|		winbase.h              |                mmsystem.h              |								|
+|		wingdi.h               |                nb30.h                  |								|
+|		winuser.h              |                rpc.h					|								|
+|		winnls.h               |                shellapi.h              |								|
+|		wincon.h               |                winperf.h               |								|
+|		winver.h               |                winsock.h               |								|
+|		winreg.h               |                wincrypt.h              |								|
+|		winnetwk.h             |                winefs.h                |								|
+|		cderr.h                |                winscard.h              |								|
+|		dde.h                  |                winspool.h              |								|
+|		ddeml.h                |                ole.h                   |								|
+|		dlgs.h                 |                commdlg.h               |								|
+|		lzexpand.h             |                                        |								|
+|		mmsystem.h             |                                        |								|
+|		nb30.h                 |                                        |								|
+|		rpc.h                  |                                        |								|
+|		shellapi.h,            |                                        |								|
+|		winperf.h              |                                        |								|
+|		winsock.h              |                                        |								|
+|		wincrypt.h             |                                        |								|
+|		winefs.h               |                                        |								|
+|		winscard.h             |                                        |								|
+|		winspool.h             |                                        |								|
+|		ole.h                  |                                        |								|
+|		ole2.h                 |                                        |								|
+|		commdlg.h              |                                        |								|
+|		stralign.h             |                                        |								|
+|		winwlm.h               |                                        |								|
+|		winsvc.h               |                                        |								|
+|		mcx.h                  |                                        |								|
+|		imm.h                  |                                        |								|
+---------------------------------------------------------------------------------------------------------
+
+ShlObj.h: CommCtl.h
+tchar.h:  corecrt.h, wchar.h, string.h, mbstring.h
+
+=========================================================================================================
+												Standard C++
+=========================================================================================================
+Almost every stream type library includes an iostream variant
+Almost every container library includes a memory variant (usually xmemory)
+Almost every library file includes stdexcept
+
+Some stuff are double included in the STL, but it's header-only so different rules applay
+
+
+
+sstream:  string
+queue: algorithm, deque, vector
+map: tuple, xtree, xpolymorphic_allocator.h
+memory: xmemory(cmemory), exception, typeinfo, type_traits
+stack: deque
+
+This has a lot in it, another one "future", has mutex in it as well
+mutex: chrono, functional(memory, unorded_map), system_error(cstdlib, cerrno), thread, tuple, utility
+
+
+=========================================================================================================
+												Standard C
+=========================================================================================================
+
+
+
+=========================================================================================================
+												RapidJSON
+=========================================================================================================
+Difference between old and new isn't that different.
+Yes, RapidJSON does double includes but it's header only.
+
+document.h: reader.h, internal/meta.h, internal/strfunc.h, new, string, iterator
+writer.h: rapidjson.h, internal/stack.h, internal/strfunc.h, internal/dtoa.h, internal/itoa.h, stringbuffer.h, new
+
+This will be replaced with IStreamWrapper and OStreamWrapper later
+filestream.h: cstdio
+
+
+=========================================================================================================
+											  Project Files
+=========================================================================================================
+Noticed some files that were being double included in header files. This will also help us filter
+out what's needed in the source files.
+
+These will not be in the PCH, but are just a reference to see why they aren't there in some files
+-------------------------------------------------------------------------------------------------
+RA_Achievement.h:        RA_Condition.h
+RA_AchievementOverlay.h: RA_Achievement.h, RA_User.h, RA_Core.h
+RA_AchievementSet.h:     RA_Achievement.h
+RA_Condition.h:          RA_Defs.h
+RA_Core.h:               RA_Interface.h, RA_Defs.h
+RA_Dlg_AchEditor.h:      RA_httpthread.h
+RA_Dlg_Memory.h:         RA_CodeNotes.h, RA_MemManager.h
+RA_MemManager.h:         RA_Condition.h
+RA_RichPresence.h:       RA_Leaderboard.h
+RA_Leaderboard.h:        RA_Defs.h
+
+
+Files that should be in PCH:
+----------------------------
+RA_Resource.h: almost never changes
+
+

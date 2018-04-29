@@ -124,9 +124,9 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 _Use_decl_annotations_
 BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
 {
-	HeapSetInformation(HANDLE{}, HeapEnableTerminationOnCorruption, PVOID{}, SIZE_T{});
+	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, SIZE_T{});
 
-	auto hr = CoInitializeEx(LPVOID{}, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
+	auto hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
 
 	// Create WIC factory
 	hr = CoCreateInstance(
@@ -274,12 +274,12 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 	// Step 2: Decode the source image to IWICBitmapSource
 	CComPtr<IWICBitmapDecoder> pDecoder;
 	HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(Widen(sPath).c_str(),			// Image to be decoded
-		nullptr,							// Do not prefer a particular vendor
+		nullptr,						// Do not prefer a particular vendor
 		GENERIC_READ,					// Desired read access to the file
 		WICDecodeMetadataCacheOnDemand,	// Cache metadata when needed
 		&pDecoder);						// Pointer to the decoder
 
-// Retrieve the first frame of the image from the decoder
+	// Retrieve the first frame of the image from the decoder
 	CComPtr<IWICBitmapFrameDecode>  pFrame;
 	if (SUCCEEDED(hr))
 		hr = pDecoder->GetFrame(0, &pFrame);

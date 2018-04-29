@@ -33,7 +33,7 @@
 #include <codecvt>
 #include <direct.h>
 #include <io.h>		//	_access()
-
+#include <atlbase.h> // CComPtr
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
@@ -1591,8 +1591,7 @@ BOOL _FileExists(const std::string& sFileName)
 }
 
 
-// Todo: Remove comment later
-// Tested using the open folder dialog from game library
+
 std::string GetFolderFromDialog()
 {
 	std::string sRetVal;

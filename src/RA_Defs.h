@@ -11,8 +11,7 @@
 #include <queue>
 #include <deque>
 #include <map>
-#include <memory>
-#include <atlbase.h>
+
 
 #ifndef RA_EXPORTS
 
@@ -23,7 +22,7 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-// Dammit, next pr is gonna be an update
+
 #pragma warning(push, 1)
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 

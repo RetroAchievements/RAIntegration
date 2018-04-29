@@ -7,6 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <atlbase.h> // CComPtr
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;

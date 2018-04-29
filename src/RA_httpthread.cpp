@@ -15,7 +15,7 @@
 #include <fstream>
 #include <time.h>
 #include <algorithm>	//	std::replace
-#include <memory> // std::shared_ptr
+
 
 const char* RequestTypeToString[] = 
 {
@@ -387,8 +387,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	BOOL bSuccess = FALSE;
 	ResponseOut.clear();
 
-    // std::string is comparable you know
-	if( sRequestedPage == "login_app.php" )
+	if( sRequestedPage.compare( "login_app.php" ) == 0 )
 	{
 		//	Special case: DO NOT LOG raw user credentials!
 		RA_LOG( __FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str() );
@@ -398,75 +397,49 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 		RA_LOG( __FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str() );
 	}
 
-    // Unless you have rvalue version, i.e.: Widen(string&&), the way it's done won't always work and might get corrupted
-	std::ostringstream oss;
-    // Note: Streams are fast, if you heard of them being slow it might be because someone was using std::endl
-    // all the time, that's the C equivalent of using fflush() after every operation.
-	oss << "Retro Achievements Client " << g_sClientName << " " << g_sClientVersion;
-
-	
-	if(auto hSession = WinHttpOpen(Widen(oss.str()).c_str(),
-		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-		WINHTTP_NO_PROXY_NAME,
-		WINHTTP_NO_PROXY_BYPASS, 0); hSession != nullptr )
+	HINTERNET hSession = WinHttpOpen( Widen( std::string( "Retro Achievements Client " ) + g_sClientName + " " + g_sClientVersion ).c_str(),
+									  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+									  WINHTTP_NO_PROXY_NAME,
+									  WINHTTP_NO_PROXY_BYPASS, 0 );
+	if( hSession != nullptr )
 	{
-		
-		if(auto hConnect = WinHttpConnect(hSession, Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
-		hConnect != nullptr )
+		HINTERNET hConnect = WinHttpConnect(hSession, Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+		if( hConnect != nullptr )
 		{
-			
-			if(auto hRequest = WinHttpOpenRequest(hConnect,
-				L"POST",
-				Widen(sRequestedPage).c_str(),
-				NULL,
-				WINHTTP_NO_REFERER,
-				WINHTTP_DEFAULT_ACCEPT_TYPES,
-				0); hRequest != nullptr )
+			HINTERNET hRequest = WinHttpOpenRequest( hConnect,
+													 L"POST",
+													 Widen( sRequestedPage ).c_str(),
+													 NULL,
+													 WINHTTP_NO_REFERER,
+													 WINHTTP_DEFAULT_ACCEPT_TYPES,
+													 0 );
+			if( hRequest != nullptr )
 			{
-				
+				BOOL bSendSuccess = WinHttpSendRequest( hRequest,
+														L"Content-Type: application/x-www-form-urlencoded",
+														0,
+														reinterpret_cast<LPVOID>( const_cast<char*>( sPostString.data() ) ), //WINHTTP_NO_REQUEST_DATA,
+														strlen( sPostString.c_str() ),
+														strlen( sPostString.c_str() ),
+														0 );
 
-				if(auto bSendSuccess = WinHttpSendRequest(hRequest,
-					L"Content-Type: application/x-www-form-urlencoded",
-					0,
-					reinterpret_cast<LPVOID>(const_cast<char*>(sPostString.data())), //WINHTTP_NO_REQUEST_DATA,
-					strlen(sPostString.c_str()),
-					strlen(sPostString.c_str()),
-					0); bSendSuccess && WinHttpReceiveResponse( hRequest, nullptr ) )
+				if( bSendSuccess && WinHttpReceiveResponse( hRequest, nullptr ) )
 				{
 					//	Note: success is much earlier, as 0 bytes read is VALID
 					//	i.e. fetch achievements for new game will return 0 bytes.
 					bSuccess = TRUE;
 
-                    // using the literals would be better
-					auto nBytesToRead = DWORD{};
+					DWORD nBytesToRead = 0;
 					WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
-					while (nBytesToRead > DWORD{})
+					while( nBytesToRead > 0 )
 					{
-                        // oh no!, super temp
-						// TODO: replace this with DataStream when PR 23 is accepted
-                        // make_shared doesn't have what I'm looking for
-                        // make_unique won't work here
-
-                       
-						// fuck I don't care, I can't do it with smart pointers it has to be a string to begin with
-						auto pData{ new BYTE[nBytesToRead] };
+						BYTE* pData = new BYTE[ nBytesToRead ];
 						{
-							
-                            // let me check what it's type is
-							//using a_type = decltype(&*pData);
-
-							if (auto nBytesFetched = DWORD{};
-							WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
+							DWORD nBytesFetched = 0;
+							if( WinHttpReadData( hRequest, pData, nBytesToRead, &nBytesFetched ) )
 							{
 								ASSERT( nBytesToRead == nBytesFetched );
-
-                                // It's a reference so you have to write to the pointer
-								ResponseOut.reserve(nBytesToRead);
-
-                                // Let's go old-school I guess
-								ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesToRead);
-
-
+								ResponseOut.insert( ResponseOut.end(), pData, pData + nBytesFetched );
 							}
 							else
 							{
@@ -474,12 +447,11 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 								break;	//Timed out?
 							}
 						}
-						delete[] pData; // not sure if it's leaking or not, not all the characters look the same
-						pData = LPBYTE{};
+
+						delete[] pData;
 						WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
 					}
 
-                    // TODO: Find out where else this happens
 					if( ResponseOut.size() > 0 )
 						ResponseOut.push_back( '\0' );	//	EOS for parsing
 
@@ -504,7 +476,7 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	}
 
 	//	Debug logging...
-	if( !ResponseOut.empty() )
+	if( ResponseOut.size() > 0 )
 	{
 		Document doc;
 		doc.Parse( DataStreamAsString( ResponseOut ) );

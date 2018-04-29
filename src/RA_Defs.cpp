@@ -13,15 +13,8 @@ char* DataStreamAsString(DataStream& stream)
 	return reinterpret_cast<char*>(stream.data());
 }
 
-
-// NB. You will get compiler warnings for these funtions 
-
-// TODO: remove "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING later once PR 23 is accepted
-#pragma warning(push, 1)
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 std::string Narrow(const wchar_t* wstr)
 {
-    
 	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
 	return converter.to_bytes(wstr);
 }
@@ -43,7 +36,7 @@ std::wstring Widen(const std::string& str)
 	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
 	return converter.from_bytes(str);
 }
-#pragma warning(pop)
+
 std::wstring Widen(const wchar_t* wstr)
 {
 	return std::wstring(wstr);
@@ -89,7 +82,6 @@ void RADebugLog(const char* format, ...)
 
 	p += (n < 0) ? sizeof buf - 3 : n;
 
-    // This is giving me a debug error
 	while ((p > buf) && (isspace(p[-1])))
 		*--p = '\0';
 

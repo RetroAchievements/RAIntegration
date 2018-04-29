@@ -5,14 +5,12 @@
 #include <ShlObj.h>
 #include <tchar.h>
 #include <assert.h>
-#include <sstream> // has string
+#include <string>
+#include <sstream>
 #include <vector>
 #include <queue>
 #include <deque>
 #include <map>
-
-
-#include <fstream> // we really need a pch
 
 #ifndef RA_EXPORTS
 
@@ -23,13 +21,12 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 //	RA-Only
-#include "rapidjson/include/rapidjson/document.h" // has reader.h
-#include "rapidjson/include/rapidjson/writer.h" // has stringbuffer.h
-#include "rapidjson/include/rapidjson/istreamwrapper.h"
-#include "rapidjson/include/rapidjson/ostreamwrapper.h"
+#include "rapidjson/include/rapidjson/document.h"
+#include "rapidjson/include/rapidjson/reader.h"
+#include "rapidjson/include/rapidjson/writer.h"
+#include "rapidjson/include/rapidjson/filestream.h"
+#include "rapidjson/include/rapidjson/stringbuffer.h"
 #include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
@@ -233,12 +230,10 @@ typedef DWORD			ARGB;
 #define UNUSED( x ) ( x );
 #endif
 
-
 extern std::string Narrow(const wchar_t* wstr);
 extern std::string Narrow(const std::wstring& wstr);
 extern std::wstring Widen(const char* str);
 extern std::wstring Widen(const std::string& str);
-
 
 //	No-ops to help convert:
 //	No-ops to help convert:

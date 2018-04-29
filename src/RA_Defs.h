@@ -11,7 +11,6 @@
 #include <queue>
 #include <deque>
 #include <map>
-#include <atlbase.h>
 
 
 #ifndef RA_EXPORTS

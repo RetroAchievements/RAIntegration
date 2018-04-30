@@ -45,7 +45,6 @@
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-// This shit man...
 #pragma warning(push, 1)
 // This is not needed the most recent version
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
@@ -268,21 +267,9 @@ const int SERVER_PING_DURATION = 2 * 60;
 
 
 namespace ra {
-using cstring       = const char*;
-using cwstring      = const wchar_t*;
+
 using tstring       = std::basic_string<TCHAR>;
-
-template<typename CharT>
-using string_t = std::basic_string<CharT>;
-
-using DataStream     = std::basic_string<BYTE>;
-using ustring        = DataStream;
-using uofstream      = std::basic_ofstream<BYTE>;
-using uifstream      = std::basic_ifstream<BYTE>;
-using uostringstream = std::basic_ostringstream<BYTE>;
-using uistringstream = std::basic_istringstream<BYTE>;
-using uostream       = std::basic_ostream<BYTE>;
-using uistream       = std::basic_istream<BYTE>;
+using DataStream    = std::basic_string<BYTE>;
 
 using ByteAddress   = std::size_t;
 using DataPos       = std::size_t;
@@ -572,7 +559,7 @@ template<
     typename Traits = std::char_traits<CharT>,
     class = std::enable_if_t<is_char_v<CharT>>
 >
-typename Traits::pos_type filesize(string_t<CharT>& filename) noexcept {
+typename Traits::pos_type filesize(std::basic_string<CharT>& filename) noexcept {
     // It's always the little things...
     using file_type = std::basic_fstream<CharT>;
     file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
@@ -617,11 +604,6 @@ OutputString convert_string(_In_ const InputString& in) noexcept {
 
     return oss.str();
 } // end function convert_string
-
-
-
-
-// noticed a function for timestamp too but if you don't need it formatted std::to_string works
 
 } // namespace ra
 

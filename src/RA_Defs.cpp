@@ -2,14 +2,14 @@
 
 #include <stdio.h>
 #include <Windows.h>
-#include <locale>
-#include <codecvt>
 #include <iomanip>
-#include <clocale>
+
+
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 namespace ra {
 
 inline namespace conversions{
+
 std::string DataStreamAsString(const DataStream& stream) {
 
     auto str{ convert_string<std::string>(stream) };
@@ -71,6 +71,7 @@ std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }
 std::wstring Widen(const std::wstring& wstr) { return wstr; }
 std::string Narrow(const char* str) { return std::string{ str }; }
 std::string Narrow(const std::string& str) { return str; }
+
 } // inline namespace conversions
 } // namespace ra
 

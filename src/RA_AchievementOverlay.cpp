@@ -13,6 +13,7 @@
 #include "RA_GameData.h"
 
 #include <time.h>
+#include <fstream>
 
 namespace
 {
@@ -1583,41 +1584,39 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 {
 	m_LatestNews.clear();
 
-	FILE* pf = nullptr;
-	fopen_s( &pf, RA_NEWS_FILENAME, "rb" );
-	if( pf != nullptr )
+	// Those files are clearly *.json, not *.txt
+	std::ifstream ifile{ RA_NEWS_FILENAME, std::ios::binary };
+
+	Document doc;
+	IStreamWrapper isw{ ifile };
+	doc.ParseStream(isw);
+
+	if (doc.HasMember("Success") && doc["Success"].GetBool())
 	{
-		Document doc;
-		doc.ParseStream( FileStream( pf ) );
-
-		if( doc.HasMember( "Success" ) && doc[ "Success" ].GetBool() )
+		const auto& News = doc["News"];
+		for (auto& i : News.GetArray())
 		{
-			const Value& News = doc[ "News" ];
-			for( SizeType i = 0; i < News.Size(); ++i )
-			{
-				const Value& NextNewsArticle = News[ i ];
+			NewsItem nNewsItem{
+				i["ID"].GetUint(),
+				i["Title"].GetString(),
+				i["Payload"].GetString(),
+				i["TimePosted"].GetUint(),
+				std::to_string(i["TimePosted"].GetUint()), // does the format really matter?
+				i["Author"].GetString(),
+				i["Link"].GetString(),
+				i["Image"].GetString()
+			};
 
-				NewsItem nNewsItem;
-				nNewsItem.m_nID = NextNewsArticle[ "ID" ].GetUint();
-				nNewsItem.m_sTitle = NextNewsArticle[ "Title" ].GetString();
-				nNewsItem.m_sPayload = NextNewsArticle[ "Payload" ].GetString();
-				nNewsItem.m_sAuthor = NextNewsArticle[ "Author" ].GetString();
-				nNewsItem.m_sLink = NextNewsArticle[ "Link" ].GetString();
-				nNewsItem.m_sImage = NextNewsArticle[ "Image" ].GetString();
-				nNewsItem.m_nPostedAt = NextNewsArticle[ "TimePosted" ].GetUint();
+			// Commented out just incase
+			//tm destTime;
+			//localtime_s(&destTime, &nNewsItem.m_nPostedAt);
 
-				tm destTime;
-				localtime_s( &destTime, &nNewsItem.m_nPostedAt );
+			//char buffer[256];
+			//strftime(buffer, 256, "%b %d", &destTime);
+			//nNewsItem.m_sPostedAt = buffer;
 
-				char buffer[ 256 ];
-				strftime( buffer, 256, "%b %d", &destTime );
-				nNewsItem.m_sPostedAt = buffer;
-
-				m_LatestNews.push_back( nNewsItem );
-			}
+			m_LatestNews.push_back(nNewsItem);
 		}
-
-		fclose( pf );
 	}
 }
 

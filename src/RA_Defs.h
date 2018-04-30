@@ -22,11 +22,10 @@
 //#define RA_INTEGRATION_VERSION	"0.053"
 
 //	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
+#include "rapidjson/include/rapidjson/document.h" // has reader.h
+#include "rapidjson/include/rapidjson/writer.h" // has stringbuffer.h
+#include "rapidjson/include/rapidjson/istreamwrapper.h"
+#include "rapidjson/include/rapidjson/ostreamwrapper.h"
 #include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;

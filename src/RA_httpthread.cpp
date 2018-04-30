@@ -113,6 +113,7 @@ PostArgs PrevArgs;
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 {
+    // TODO: Append ".c_str()" to DataStreamAsString if for some reason it didn't after PR #23
 	rDocOut.Parse( DataStreamAsString( GetResponse() ) );
 
 	if( rDocOut.HasParseError() )
@@ -339,6 +340,8 @@ BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& Re
 
 					while( nBytesToRead > 0 )
 					{
+
+                        // TODO: Replace pData's type with DataStream after PR #23 has been merged
 						BYTE* pData = new BYTE[nBytesToRead];
 						//if( nBytesToRead <= 32 )
 						{

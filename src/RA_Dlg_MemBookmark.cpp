@@ -7,6 +7,8 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <memory>
+#include <fstream>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -776,50 +778,58 @@ void Dlg_MemBookmark::ExportJSON()
 
 void Dlg_MemBookmark::ImportFromFile( std::string sFilename )
 {
-	FILE* pFile = nullptr;
-	errno_t nErr = fopen_s( &pFile, sFilename.c_str(), "r" );
-	if ( pFile != nullptr )
+	std::ifstream ifile{ sFilename };
+
+	Document doc;
+	IStreamWrapper isw{ ifile };
+
+	if (doc.ParseStream(isw); !doc.HasParseError())
 	{
-		Document doc;
-		doc.ParseStream( FileStream( pFile ) );
-		if ( !doc.HasParseError() )
+		if (doc.HasMember("Bookmarks"))
 		{
-			if ( doc.HasMember( "Bookmarks" ) )
+			ClearAllBookmarks();
+
+			const auto& BookmarksData = doc["Bookmarks"];
+			for (auto& i : BookmarksData.GetArray())
 			{
-				ClearAllBookmarks();
 
-				const Value& BookmarksData = doc[ "Bookmarks" ];
-				for ( SizeType i = 0; i < BookmarksData.Size(); ++i )
-				{
-					MemBookmark* NewBookmark = new MemBookmark();
 
-					wchar_t buffer[ 256 ];
-					swprintf_s ( buffer, 256, L"%s", Widen( BookmarksData[ i ][ "Description" ].GetString() ).c_str() );
-					NewBookmark->SetDescription ( buffer );
+				// You've gotta be kidding me, there wasn't even a delete here...
 
-					NewBookmark->SetAddress( BookmarksData[ i ][ "Address" ].GetUint() );
-					NewBookmark->SetType( BookmarksData[ i ][ "Type" ].GetInt() );
-					NewBookmark->SetDecimal( BookmarksData[ i ][ "Decimal" ].GetBool() );
 
-					NewBookmark->SetValue( GetMemory( NewBookmark->Address(), NewBookmark->Type() ) );
-					NewBookmark->SetPrevious ( NewBookmark->Value() );
+				// I'll leave this alone for now until tinyformat get's accepted
+				wchar_t buffer[256];
+				swprintf_s(buffer, 256, L"%s", Widen(i["Description"].GetString()).c_str());
+				// oh no!
+				// Do you shared ownership or unique?
+				auto NewBookmark = std::make_unique<MemBookmark>();
+				NewBookmark->SetDescription(buffer);
 
-					AddBookmark ( NewBookmark );
-					AddBookmarkMap( NewBookmark );
-				}
+				NewBookmark->SetAddress(i["Address"].GetUint());
+				NewBookmark->SetType(i["Type"].GetInt());
+				NewBookmark->SetDecimal(i["Decimal"].GetBool());
 
-				if ( m_vBookmarks.size() > 0 )
-					PopulateList();
-			}
-			else
-			{
-				ASSERT ( " !Invalid Bookmark File..." );
-				MessageBox( nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR );
-				return;
-			}
+				NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
+				NewBookmark->SetPrevious(NewBookmark->Value());
+
+				AddBookmark(NewBookmark.get());
+				AddBookmarkMap(NewBookmark.get());
+
+				// Unlike to COM pointers, the standard versions release automatically, unless you want to and over
+				// ownership
+			} // end for
+
+
+			if (m_vBookmarks.size() > 0)
+				PopulateList();
 		}
-
-		fclose( pFile );
+		else
+		{
+			ASSERT(" !Invalid Bookmark File...");
+			// lets put to use..
+			ra::ShowError(_T("Could not load properly. Invalid Bookmark file."));
+			return;
+		}
 	}
 }
 

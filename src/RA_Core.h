@@ -155,3 +155,11 @@ BOOL CanCausePause();
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
+
+namespace ra {
+std::string GameJSONFilename(_In_ GameID game_id) noexcept;
+std::string PrefsFilename() noexcept;
+
+_Success_(return != 0)
+int CALLBACK ShowError(_In_ const tstring& str, _In_ HWND hwnd = GetActiveWindow()) noexcept;
+} // namespace ra

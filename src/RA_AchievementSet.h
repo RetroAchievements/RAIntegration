@@ -28,7 +28,7 @@ public:
 	void Clear();
 	void Test();
 
-	BOOL Serialize(FileStream& Stream);
+	/*BOOL Serialize(FileStream& Stream);*/
 	BOOL LoadFromFile(GameID nGameID);
 	BOOL SaveToFile();
 

@@ -16,7 +16,6 @@
 
 namespace
 {
-    // I'm going to guess you never want these changed, simple types can be auto deduced
 
 	inline constexpr auto PAGE_TRANSITION_IN   = -0.2f;
 	inline constexpr auto PAGE_TRANSITION_OUT  = 0.2f;

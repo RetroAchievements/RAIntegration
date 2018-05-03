@@ -107,7 +107,7 @@ int		(CCONV *_RA_UpdateOverlay) (ControllerInput* pInput, float fDeltaTime, bool
 int		(CCONV *_RA_UpdatePopups) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
 void	(CCONV *_RA_RenderOverlay) (HDC hDC, RECT* prcSize) = nullptr;
 void	(CCONV *_RA_RenderPopups) (HDC hDC, RECT* prcSize) = nullptr;
-
+bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
 
 //	Helpers:
 bool RA_UserLoggedIn()
@@ -143,6 +143,14 @@ void RA_UpdateRenderOverlay( HDC hDC, ControllerInput* pInput, float fDeltaTime,
 
 	if( _RA_RenderOverlay != nullptr )
 		_RA_RenderOverlay( hDC, prcSize );
+}
+
+bool RA_IsOverlayFullyVisible()
+{
+    if (_RA_IsOverlayFullyVisible != nullptr)
+        return _RA_IsOverlayFullyVisible();
+
+    return false;
 }
 
 void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize )
@@ -419,6 +427,7 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_UpdateOverlay		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdateOverlay" );
 	_RA_UpdatePopups		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdatePopups" );
 	_RA_RenderOverlay		= (void(CCONV *)(HDC, RECT*))							GetProcAddress( g_hRADLL, "_RA_RenderOverlay" );
+    _RA_IsOverlayFullyVisible=(bool(CCONV *)())                                     GetProcAddress( g_hRADLL, "_RA_IsOverlayFullyVisible" );
 	_RA_RenderPopups		= (void(CCONV *)(HDC, RECT*))							GetProcAddress( g_hRADLL, "_RA_RenderPopups" );
 	_RA_OnLoadNewRom		= (int(CCONV *)(const BYTE*, unsigned int))				GetProcAddress( g_hRADLL, "_RA_OnLoadNewRom" );
 	_RA_InstallMemoryBank	= (void(CCONV *)(int, void*, void*, int))				GetProcAddress( g_hRADLL, "_RA_InstallMemoryBank" );

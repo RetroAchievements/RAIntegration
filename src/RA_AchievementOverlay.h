@@ -74,7 +74,6 @@ public:
 public:
 	void Initialize( const Achievement* pAchIn );
 	void Clear();
-	static void CB_OnReceiveData( void* pRequestObject );
 	void OnReceiveData( Document& doc );
 	
 	bool HasData() const											{ return m_bHasData; }
@@ -109,7 +108,6 @@ public:
 	~AchievementOverlay();
 
 	void Initialize( HINSTANCE hInst );
-	void InstallHINSTANCE( HINSTANCE hInst );
 
 	void Activate();
 	void Deactivate();
@@ -117,7 +115,8 @@ public:
 	void Render( HDC hDC, RECT* rcDest ) const;
 	BOOL Update( ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused );
 
-	BOOL IsActive() const	{ return( m_nTransitionState!=TS_OFF ); }
+    BOOL IsActive() const { return(m_nTransitionState != TS_OFF); }
+    BOOL IsFullyVisible() const { return (m_nTransitionState == TS_HOLD); }
 
 	const int* GetActiveScrollOffset() const;
 	const int* GetActiveSelectedItem() const;
@@ -145,7 +144,6 @@ public:
 	
 	void InitDirectX();
 	void ResetDirectX();
-	void CloseDirectX();
 	void Flip(HWND hWnd);
 
 	void InstallNewsArticlesFromFile();
@@ -201,6 +199,7 @@ extern "C"
 {
 	API extern int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused );
 	API extern void _RA_RenderOverlay( HDC hDC, RECT* rcSize );
+    API extern bool _RA_IsOverlayFullyVisible();
 
 	API extern void _RA_InitDirectX();
 	API extern void _RA_OnPaint( HWND hWnd );

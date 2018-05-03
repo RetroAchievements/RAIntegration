@@ -576,7 +576,7 @@ void Dlg_MemBookmark::AddAddress()
 	// Fetch Memory Address from Memory Inspector
 	TCHAR buffer[ 256 ];
 	GetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256 );
-	unsigned int nAddr = strtol( Narrow( buffer ).c_str(), nullptr, 16 );
+	unsigned int nAddr = strtol(ra::Narrow( buffer ).c_str(), nullptr, 16 );
 	NewBookmark->SetAddress( nAddr );
 
 	// Check Data Type
@@ -747,7 +747,7 @@ void Dlg_MemBookmark::ExportJSON()
 									{
 										Value item( kObjectType );
 										char buffer[ 256 ];
-										sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
+										sprintf_s( buffer, ra::Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
 										Value s( buffer, allocator );
 
 										item.AddMember( "Description", s, allocator );
@@ -758,7 +758,7 @@ void Dlg_MemBookmark::ExportJSON()
 									}
 									doc.AddMember( "Bookmarks", bookmarks, allocator );
 
-									_WriteBufferToFile( Narrow( pStr ), doc );
+									_WriteBufferToFile(ra::Narrow( pStr ), doc );
 								}
 
 								pItem->Release();
@@ -850,7 +850,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 					hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
 					if ( hr == S_OK )
 					{
-						str = Narrow( pStr );
+						str = ra::Narrow( pStr );
 					}
 
 					pItem->Release();

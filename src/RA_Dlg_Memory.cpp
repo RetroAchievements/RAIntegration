@@ -61,12 +61,7 @@ int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
 
-std::string ByteAddressToString(ByteAddress nAddr)
-{
-	static char buffer[16];
-	sprintf_s(buffer, "0x%06x", nAddr);
-	return std::string(buffer);
-}
+
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

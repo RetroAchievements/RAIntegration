@@ -40,7 +40,7 @@ AchievementPopup::AchievementPopup() :
 void AchievementPopup::PlayAudio()
 {
 	ASSERT( MessagesPresent() );	//	ActiveMessage() dereferences!
-	PlaySound( MSG_SOUND[ ActiveMessage().Type() ], NULL, SND_FILENAME|SND_ASYNC );
+	PlaySound( MSG_SOUND[ ActiveMessage().Type() ], nullptr, SND_FILENAME|SND_ASYNC );
 }
 
 void AchievementPopup::AddMessage( const MessagePopup& msg )
@@ -129,7 +129,7 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 
 	if( ActiveMessage().Type() == PopupAchievementUnlocked || ActiveMessage().Type() == PopupAchievementError )
 	{
-		if (ActiveMessage().Image() != NULL)
+		if (ActiveMessage().Image() != nullptr)
 			DrawImage( hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64 );
 
 		nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
@@ -159,13 +159,13 @@ void AchievementPopup::Render( HDC hDC, RECT& rcDest )
 	HGDIOBJ hPen = CreatePen( PS_SOLID, 2, COL_POPUP_SHADOW );
 	SelectObject( hDC, hPen );
 
-	MoveToEx( hDC, nTitleX, nTitleY + szTitle.cy, NULL );
+	MoveToEx( hDC, nTitleX, nTitleY + szTitle.cy, nullptr );
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy );	//	right
 	LineTo( hDC, nTitleX + szTitle.cx, nTitleY + 1 );			//	up
 
 	if( ActiveMessage().Subtitle().length() > 0 )
 	{
-		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, NULL );
+		MoveToEx( hDC, nDescX, nDescY + szAchievement.cy, nullptr );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy );
 		LineTo( hDC, nDescX + szAchievement.cx, nDescY + 1 );
 	}

@@ -53,7 +53,7 @@ RAUser* RAUsers::GetUser( const std::string& sUser )
 RAUser::RAUser( const std::string& sUsername ) :
 	m_sUsername( sUsername ),
 	m_nScore( 0 ),
-	m_hUserImage( NULL ),
+	m_hUserImage( nullptr ),
 	m_bFetchingUserImage( false )
 {
 	//	Register
@@ -71,9 +71,9 @@ RAUser::~RAUser()
 
 void RAUser::FlushBitmap()
 {
-	if( m_hUserImage != NULL )
+	if( m_hUserImage != nullptr )
 		DeleteObject( m_hUserImage );
-	m_hUserImage = NULL;
+	m_hUserImage = nullptr;
 }
 
 

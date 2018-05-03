@@ -478,7 +478,7 @@ API void CCONV _RA_ClearMemoryBanks()
 //	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
 //
 //	char* buffer = new char[nBufferSize];	
-//	if( buffer != NULL )
+//	if( buffer != nullptr )
 //	{
 //		char sAddr[1024];
 //		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
@@ -490,7 +490,7 @@ API void CCONV _RA_ClearMemoryBanks()
 //			_WriteBufferToFile( sOutput, buffer, nBytesRead );
 //
 //		delete[] ( buffer );
-//		buffer = NULL;
+//		buffer = nullptr;
 //	}
 //}
 
@@ -532,18 +532,18 @@ API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 
 		//_WriteBufferToFile( "BatchUpdater.bat", sBatchUpdater, strlen( sBatchUpdater ) );
 
-		//ShellExecute( NULL,
+		//ShellExecute( nullptr,
 		//	"open",
 		//	"BatchUpdater.bat",
-		//	NULL,
-		//	NULL,
+		//	nullptr,
+		//	nullptr,
 		//	SW_SHOWNORMAL ); 
 
-		ShellExecute(NULL,
+		ShellExecute(nullptr,
 			TEXT("open"),
 			TEXT("http://www.retroachievements.org/download.php"),
-			NULL,
-			NULL,
+			nullptr,
+			nullptr,
 			SW_SHOWNORMAL);
 
 		return TRUE;
@@ -645,9 +645,9 @@ API int CCONV _RA_HandleHTTPResults()
 					const std::string& sReply = doc["LatestVersion"].GetString();
 					if (sReply.substr(0, 2).compare("0.") == 0)
 					{
-						long nValServer = std::strtol(sReply.c_str() + 2, NULL, 10);
-						long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, NULL, 10);
-						long nValCurrent = std::strtol(g_sClientVersion + 2, NULL, 10);
+						long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
+						long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
+						long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
 
 						if (nValKnown < nValServer && nValCurrent < nValServer)
 						{
@@ -759,32 +759,35 @@ API HMENU CCONV _RA_CreatePopupMenu()
 	HMENU hRA_LB = CreatePopupMenu();
 	if (RAUsers::LocalUser().IsLoggedIn())
 	{
+		// TODO: Use the literals once PR 23 is accepted
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
-		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+		AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 		AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
 		UINT nGameFlags = MF_STRING;
 		//if( g_pActiveAchievements->GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
 		//	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
+
+        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
 		AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
-		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+		AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 		AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
-		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+		AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 
 		AppendMenu( hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards" );
 		AppendMenu( hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
-		AppendMenu( hRA_LB, MF_SEPARATOR, NULL, NULL );
+		AppendMenu( hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr );
 		AppendMenu( hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT( "Display Challenge Notification" ) );
 		AppendMenu( hRA_LB, g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT( "Display Time/Score Counter" ) );
 		AppendMenu( hRA_LB, g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT( "Display Rank Scoreboard" ) );
 
-		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+		AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
-		AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+		AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 		AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
 		AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
@@ -794,7 +797,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 		AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA"));
 	}
 
-	AppendMenu(hRA, MF_SEPARATOR, NULL, NULL);
+	AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 	AppendMenu(hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update"));
 
 	return hRA;
@@ -988,9 +991,9 @@ API void CCONV _RA_SavePreferences()
 	}
 
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
-	if (pf != NULL)
+	if (pf != nullptr)
 	{
 		FileStream fs(pf);
 		Writer<FileStream> writer(fs);
@@ -1125,7 +1128,7 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
 		}
 	}
 
-	SetWindowPos(hDlg, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0);
+	SetWindowPos(hDlg, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0);
 
 	pos->bLoaded = true;
 
@@ -1173,23 +1176,23 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 	switch (nID)
 	{
 	case IDM_RA_FILES_ACHIEVEMENTS:
-		if (g_AchievementsDialog.GetHWND() == NULL)
+		if (g_AchievementsDialog.GetHWND() == nullptr)
 			g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
-		if (g_AchievementsDialog.GetHWND() != NULL)
+		if (g_AchievementsDialog.GetHWND() != nullptr)
 			ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
 		break;
 
 	case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-		if (g_AchievementEditorDialog.GetHWND() == NULL)
+		if (g_AchievementEditorDialog.GetHWND() == nullptr)
 			g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
-		if (g_AchievementEditorDialog.GetHWND() != NULL)
+		if (g_AchievementEditorDialog.GetHWND() != nullptr)
 			ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
 		break;
 
 	case IDM_RA_FILES_MEMORYFINDER:
-		if (g_MemoryDialog.GetHWND() == NULL)
+		if (g_MemoryDialog.GetHWND() == nullptr)
 			g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
-		if (g_MemoryDialog.GetHWND() != NULL)
+		if (g_MemoryDialog.GetHWND() != nullptr)
 			ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
 		break;
 
@@ -1263,11 +1266,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 		if (RAUsers::LocalUser().IsLoggedIn())
 		{
 			std::string sTarget = "http://" RA_HOST_URL + std::string("/User/") + RAUsers::LocalUser().Username();
-			ShellExecute(NULL,
+			ShellExecute(nullptr,
 				TEXT("open"),
 				NativeStr(sTarget).c_str(),
-				NULL,
-				NULL,
+				nullptr,
+				nullptr,
 				SW_SHOWNORMAL);
 		}
 		break;
@@ -1276,11 +1279,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 		if (g_pCurrentGameData->GetGameID() != 0)
 		{
 			std::string sTarget = "http://" RA_HOST_URL + std::string("/Game/") + std::to_string(g_pCurrentGameData->GetGameID());
-			ShellExecute(NULL,
+			ShellExecute(nullptr,
 				TEXT("open"),
 				NativeStr(sTarget).c_str(),
-				NULL,
-				NULL,
+				nullptr,
+				nullptr,
 				SW_SHOWNORMAL);
 		}
 		else
@@ -1298,7 +1301,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
 		if (g_sROMDirLocation.length() > 0)
 		{
-			if (g_GameLibrary.GetHWND() == NULL)
+			if (g_GameLibrary.GetHWND() == nullptr)
 			{
 				_FetchGameHashLibraryFromWeb();		//	##BLOCKING##
 				_FetchGameTitlesFromWeb();			//	##BLOCKING##
@@ -1307,7 +1310,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 				g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
 			}
 
-			if (g_GameLibrary.GetHWND() != NULL)
+			if (g_GameLibrary.GetHWND() != nullptr)
 				ShowWindow(g_GameLibrary.GetHWND(), SW_SHOW);
 		}
 		break;
@@ -1321,9 +1324,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 			//	Then install it
 			g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
 
-			if (g_RichPresenceDialog.GetHWND() == NULL)
+			if (g_RichPresenceDialog.GetHWND() == nullptr)
 				g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
-			if (g_RichPresenceDialog.GetHWND() != NULL)
+			if (g_RichPresenceDialog.GetHWND() != nullptr)
 				ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
 
 			g_RichPresenceDialog.StartMonitoring();
@@ -1447,7 +1450,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
 void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
 {
-	void(*fpCausePause)(void) = NULL;
+	void(*fpCausePause)(void) = nullptr;
 	_RA_InstallSharedFunctionsExt(fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
 }
 
@@ -1556,8 +1559,8 @@ char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 	FILE* pf = nullptr;
 	fopen_s(&pf, sFilename, "r");
-	if (pf == NULL)
-		return NULL;
+	if (pf == nullptr)
+		return nullptr;
 
 	//	Calculate filesize
 	fseek(pf, 0L, SEEK_END);
@@ -1568,7 +1571,7 @@ char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
 	{
 		//	No good content in this file.
 		fclose(pf);
-		return NULL;
+		return nullptr;
 	}
 
 	//	malloc() must be managed!
@@ -1591,9 +1594,9 @@ std::string _TimeStampToString(time_t nTime)
 
 BOOL _FileExists(const std::string& sFileName)
 {
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s(&pf, sFileName.c_str(), "rb");
-	if (pf != NULL)
+	if (pf != nullptr)
 	{
 		fclose(pf);
 		return TRUE;
@@ -1607,9 +1610,9 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
 	std::string sRetVal;
-	//HRESULT hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
+	//HRESULT hr = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
 	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
+	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
 	if (hr == S_OK)
 	{
 		pDlg->SetOptions(FOS_PICKFOLDERS);

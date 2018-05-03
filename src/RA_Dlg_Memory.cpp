@@ -266,9 +266,9 @@ void MemoryViewerControl::setWatchedAddress(unsigned int address)
 void MemoryViewerControl::Invalidate()
 {
 	HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-	if (hOurDlg != NULL)
+	if (hOurDlg != nullptr)
 	{
-		InvalidateRect(hOurDlg, NULL, FALSE);
+		InvalidateRect(hOurDlg, nullptr, FALSE);
 
 		// In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force the render by calling UpdateWindow
 		// TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for the search results
@@ -343,7 +343,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 		if (g_MemBookmarkDialog.GetHWND() != nullptr)
 		{
 			const MemBookmark* Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
-			if (Bookmark != NULL)
+			if (Bookmark != nullptr)
 				g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
 		}
 
@@ -554,7 +554,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 	int h = rect.bottom - rect.top - 6;
 
 	//	Pick font
-	if (m_hViewerFont == NULL)
+	if (m_hViewerFont == nullptr)
 		m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
 	HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
 
@@ -619,12 +619,12 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 				freeze = 0;
 				for (int j = 0; j < 16; ++j)
 				{
-					notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != NULL) ? (1 << j) : 0;
+					notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
 					const MemBookmark* bm = g_MemBookmarkDialog.FindBookmark(addr + j);
-					bookmarks |= (bm != NULL) ? (1 << j) : 0;
-					freeze |= ( bm != NULL && bm->Frozen() ) ? ( 1 << j ) : 0;
+					bookmarks |= (bm != nullptr) ? (1 << j) : 0;
+					freeze |= ( bm != nullptr && bm->Frozen() ) ? ( 1 << j ) : 0;
 
-					if ( bm != NULL && bm->Frozen() )
+					if ( bm != nullptr && bm->Frozen() )
 					{
 						if ( g_MemBookmarkDialog.GetHWND() != nullptr )
 							g_MemBookmarkDialog.WriteFrozenValue( *bm );
@@ -748,7 +748,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 		HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
 		HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
 
-		MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, NULL);
+		MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
 		LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
 
 		SelectObject(hMemDC, hOldPen);
@@ -773,9 +773,9 @@ void Dlg_Memory::Init()
 	wc.style = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
 	wc.lpfnWndProc = (WNDPROC)MemoryViewerControl::s_MemoryDrawProc;
 	wc.hInstance = g_hThisDLLInst;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = TEXT("MemoryViewerControl");
 
 	RegisterClass(&wc);
@@ -908,7 +908,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 						UpdateSearchResult( pDIS->itemID, nVal, buffer );
 
 						const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( currentResult.m_nAddr );
-						if ( ( pSavedNote != NULL ) && ( pSavedNote->Note().length() > 0 ) )
+						if ( ( pSavedNote != nullptr ) && ( pSavedNote->Note().length() > 0 ) )
 							_tcscat_s( buffer, tstring( "   (" + pSavedNote->Note() + ")" ).c_str() );
 
 						COLORREF color;
@@ -926,9 +926,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 								color = RGB( 255, 215, 215 ); // Red if search result doesn't match comparison.
 								currentResult.m_bHasChanged = true;
 							}
-							else if ( g_MemBookmarkDialog.FindBookmark( currentResult.m_nAddr ) != NULL )
+							else if ( g_MemBookmarkDialog.FindBookmark( currentResult.m_nAddr ) != nullptr )
 								color = RGB( 220, 255, 220 ); // Green if Bookmark is found.
-							else if ( g_MemoryDialog.Notes().FindCodeNote( currentResult.m_nAddr ) != NULL )
+							else if ( g_MemoryDialog.Notes().FindCodeNote( currentResult.m_nAddr ) != nullptr )
 								color = RGB( 220, 240, 255 ); // Blue if Code Note is found.
 							else if ( currentResult.m_bHasChanged )
 								color = RGB( 240, 240, 240 ); // Grey if still valid, but has changed
@@ -1050,9 +1050,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							tstring buffer = nativeBuffer;
 							//	Read hex or dec
 							if ( buffer[ 0 ] == '0' && buffer[ 1 ] == 'x' )
-								nValueQuery = static_cast<unsigned int>( std::strtoul( buffer.c_str() + 2, NULL, 16 ) );
+								nValueQuery = static_cast<unsigned int>( std::strtoul( buffer.c_str() + 2, nullptr, 16 ) );
 							else
-								nValueQuery = static_cast<unsigned int>( std::strtoul( buffer.c_str(), NULL, 10 ) );
+								nValueQuery = static_cast<unsigned int>( std::strtoul( buffer.c_str(), nullptr, 10 ) );
 						}
 					}
 
@@ -1265,11 +1265,11 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 					if ( g_pCurrentGameData->GetGameID() != 0 )
 					{
 						tstring sTarget = "http://" RA_HOST_URL + tstring( "/codenotes.php?g=" ) + std::to_string( g_pCurrentGameData->GetGameID() );
-						ShellExecute( NULL,
+						ShellExecute( nullptr,
 							_T( "open" ),
 							NativeStr( sTarget ).c_str(),
-							NULL,
-							NULL,
+							nullptr,
+							nullptr,
 							SW_SHOWNORMAL );
 					}
 					else
@@ -1282,9 +1282,9 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 
 				case IDC_RA_OPENBOOKMARKS:
 				{
-					if ( g_MemBookmarkDialog.GetHWND() == NULL )
+					if ( g_MemBookmarkDialog.GetHWND() == nullptr )
 						g_MemBookmarkDialog.InstallHWND( CreateDialog( g_hThisDLLInst, MAKEINTRESOURCE( IDD_RA_MEMBOOKMARK ), hDlg, g_MemBookmarkDialog.s_MemBookmarkDialogProc ) );
-					if ( g_MemBookmarkDialog.GetHWND() != NULL )
+					if ( g_MemBookmarkDialog.GetHWND() != nullptr )
 						ShowWindow( g_MemBookmarkDialog.GetHWND(), SW_SHOW );
 
 					return FALSE;
@@ -1410,7 +1410,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 								{
 									ByteAddress nAddr = static_cast<ByteAddress>( std::strtoul( Narrow( sAddr ).c_str(), nullptr, 16 ) );
 									const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote( nAddr );
-									if ( pSavedNote != NULL && pSavedNote->Note().length() > 0 )
+									if ( pSavedNote != nullptr && pSavedNote->Note().length() > 0 )
 										SetDlgItemText( hDlg, IDC_RA_MEMSAVENOTE, NativeStr( pSavedNote->Note() ).c_str() );
 
 									MemoryViewerControl::setAddress( ( nAddr & ~( 0xf ) ) - ( (int)( MemoryViewerControl::m_nDisplayedLines / 2 ) << 4 ) + ( 0x50 ) );
@@ -1452,7 +1452,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 							MemoryViewerControl::m_nActiveMemBank = nBankID;
 							g_MemManager.ChangeActiveMemBank( nBankID );
 
-							InvalidateRect( m_hWnd, NULL, FALSE );	//	Force redraw on mem viewer
+							InvalidateRect( m_hWnd, nullptr, FALSE );	//	Force redraw on mem viewer
 							break;
 						}
 					}
@@ -1493,7 +1493,7 @@ void Dlg_Memory::OnWatchingMemChange()
 void Dlg_Memory::RepopulateMemNotesFromFile()
 {
 	HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
-	if (hMemWatch != NULL)
+	if (hMemWatch != nullptr)
 	{
 		SetDlgItemText(hMemWatch, IDC_RA_WATCHING, TEXT(""));
 		SetDlgItemText(hMemWatch, IDC_RA_MEMSAVENOTE, TEXT(""));
@@ -1610,9 +1610,9 @@ void Dlg_Memory::Invalidate()
 
 	// Update Search Results
 	HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
-	if (hList != NULL)
+	if (hList != nullptr)
 	{
-		InvalidateRect(hList, NULL, FALSE);
+		InvalidateRect(hList, nullptr, FALSE);
 		if (g_EmulatorID == RA_Libretro)
 			UpdateWindow(hList);
 	}
@@ -1661,7 +1661,7 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 
 BOOL Dlg_Memory::IsActive() const
 {
-	return(g_MemoryDialog.GetHWND() != NULL) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
+	return(g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
 }
 
 void Dlg_Memory::ClearBanks()

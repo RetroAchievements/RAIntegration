@@ -279,6 +279,7 @@ using GameID        = std::size_t;
 
 // forgot to add this
 // if you are already in ra or type "using namespace ra" that's good enough
+// This must be an inline namespace
 inline namespace int_literals
 {
 
@@ -372,9 +373,6 @@ _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
 } // inline namespace int_literals
 
 
-inline namespace conversions {
-
-// Noticed some weird uses of rvalues returning as lvalues, whatever they aren't used anywhere
 
 std::string DataStreamAsString(const DataStream& stream);
 std::string Narrow(const std::wstring& wstr);
@@ -441,10 +439,13 @@ _CONSTANT_VAR to_signed(UnsignedType ust) noexcept -> std::make_signed_t<Unsigne
     return static_cast<signed_t>(ust);
 }
 
-} // inline namespace conversions
 
-
+// Stuff in the detail namespace are things people using the RA_Integration API
+// shouldn't use
 namespace detail {
+
+// There helper variable templates that are much easier to use, using these
+// explicitly is not recommended because it can lead to user errors.
 
 // A lot of these are just extra compile-time validation to ensure types are used correctly
 // Like you will get an intellisense error instead of a runtime error
@@ -468,6 +469,8 @@ template<
     class = std::void_t<>
 >
 struct is_string : std::false_type {};
+
+// TODO: Have implementations of concepts that are required for std::basic_string
 
 // There really should be a buttload of checks but that'll take too long for now
 template<typename StringType>
@@ -537,13 +540,7 @@ _CONSTANT_VAR is_nothrow_equality_comparable_v = detail::is_nothrow_equality_com
 template<typename LessThanComparable>
 _CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_comparable<LessThanComparable>::value;
 
-// These are down here for demo purposes only to get the idea
-// These are here just to test that the validations works
-// if they don't work then the type you are using is an oxymoron
-
-
-
-// We probably don't need this now but it'll be useful if we upgrade rapidjson
+// We probably don't need this now but it'll be useful later when using STL filestreams instead of C filestreams
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
 /// <typeparam name="CharT">
@@ -600,7 +597,7 @@ OutputString convert_string(_In_ const InputString& in) noexcept {
 
     for (auto& i : in) {
         oss << i;
-    } // end for
+    }
 
     return oss.str();
 } // end function convert_string

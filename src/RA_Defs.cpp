@@ -1,14 +1,12 @@
 #include "RA_Defs.h"
 
-#include <stdio.h>
-#include <Windows.h>
 #include <iomanip>
 
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 namespace ra {
 
-inline namespace conversions{
+
 
 std::string DataStreamAsString(const DataStream& stream) {
 
@@ -72,7 +70,7 @@ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 std::string Narrow(const char* str) { return std::string{ str }; }
 std::string Narrow(const std::string& str) { return str; }
 
-} // inline namespace conversions
+
 } // namespace ra
 
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "RA_Condition.h"
 #include "RA_Defs.h"
 
@@ -84,8 +83,8 @@ public:
 	void AddConditionGroup();
 	void RemoveConditionGroup();
 
-	inline size_t NumConditionGroups() const						{ return m_vConditions.size(); }
-	inline size_t NumConditions( size_t nGroup ) const				{ return m_vConditions[ nGroup ].Count(); }
+	inline size_t NumConditionGroups() const						{ return m_vConditions.GroupCount(); }
+	inline size_t NumConditions( size_t nGroup ) const				{ return m_vConditions.GetGroup( nGroup ).Count(); }
 
 	inline HBITMAP BadgeImage() const								{ return m_hBadgeImage; }
 	inline HBITMAP BadgeImageLocked() const							{ return m_hBadgeImageLocked; }
@@ -94,23 +93,17 @@ public:
 	void SetBadgeImage( const std::string& sFilename );
 	void ClearBadgeImage();
 
-	Condition& GetCondition( size_t nCondGroup, size_t i )			{ return m_vConditions[ nCondGroup ].GetAt( i ); }
+	Condition& GetCondition( size_t nCondGroup, size_t i )			{ return m_vConditions.GetGroup( nCondGroup ).GetAt( i ); }
 	
 	std::string CreateMemString() const;
 
 	void Reset();
 
-	void UpdateProgress();
-	float ProgressGetNextStep( char* sFormat, float fLastKnownProgress );
-	float ParseProgressExpression( char* pExp );
-
 	//	Returns the new char* offset after parsing.
-	char* ParseLine( char* buffer );
+	const char* ParseLine( const char* buffer );
 	
 	//	Parse from json element
 	void Parse( const Value& element );
-	
-	char* ParseMemString( char* sMem );
 
 	//	Used for rendering updates when editing achievements. Usually always false.
 	unsigned int GetDirtyFlags() const			{ return m_nDirtyFlags; }
@@ -122,7 +115,7 @@ private:
 	/*const*/ AchievementSetType m_nSetType;
 
 	AchievementID m_nAchievementID;
-	std::vector<ConditionSet> m_vConditions;
+	ConditionSet m_vConditions;
 
 	std::string m_sTitle;
 	std::string m_sDescription;

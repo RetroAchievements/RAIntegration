@@ -1899,22 +1899,12 @@ void Dlg_Memory::UpdateSearchResult( unsigned int index, unsigned int &nMemVal, 
 
 	switch ( g_MemManager.MemoryComparisonSize())
 	{
-	case ThirtyTwoBit:
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) ||
-		            g_MemManager.ActiveBankRAMByteRead( nAddr + 2 ) << 16 | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 3 ) << 24 ) );
-		break;
-	case SixteenBit:
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) );
-		break;
-	case EightBit:
-		nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) );
+	default:
+		nMemVal = g_MemManager.ActiveBankRAMRead(nAddr, g_MemManager.MemoryComparisonSize());
 		break;
 	case Nibble_Lower:
 	case Nibble_Upper:
-		if ( m_SearchResults[ m_nPage ].m_ResultCandidate[ element ].m_bUpperNibble )
-			nMemVal = ( ( g_MemManager.ActiveBankRAMByteRead( nAddr ) >> 4 ) & 0xf );
-		else
-			nMemVal = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) & 0xf );
+		nMemVal = g_MemManager.ActiveBankRAMRead(nAddr, m_SearchResults[m_nPage].m_ResultCandidate[element].m_bUpperNibble ? Nibble_Upper : Nibble_Lower);
 		break;
 	}
 

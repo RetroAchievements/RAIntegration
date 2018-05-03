@@ -1,5 +1,7 @@
 #include "RA_RichPresence.h"
+
 #include "RA_Core.h"
+#include "RA_GameData.h"
 
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
@@ -28,32 +30,10 @@ std::string RA_Formattable::Lookup( DataPos nValue ) const
 	return RA_Leaderboard::FormatScore( m_nFormatType, nValue );
 }
 
-RA_ConditionalDisplayString::RA_ConditionalDisplayString( char* pBuffer )
+RA_ConditionalDisplayString::RA_ConditionalDisplayString( const char* pBuffer )
 {
 	++pBuffer; // skip first question mark
-	do
-	{
-		ConditionSet conditionSet;
-
-		do
-		{
-			Condition nNewCond;
-			nNewCond.ParseFromString( pBuffer );
-			conditionSet.Add( nNewCond );
-
-			if( *pBuffer != '_' ) // AND
-				break;
-
-			++pBuffer;
-		} while( true );
-
-		m_conditions.push_back( conditionSet );
-
-		if (*pBuffer != 'S') // OR
-			break;
-
-		++pBuffer;
-	} while( true ); // OR
+	m_conditions.ParseFromString(pBuffer);
 
 	if( *pBuffer == '?' )
 	{
@@ -64,38 +44,14 @@ RA_ConditionalDisplayString::RA_ConditionalDisplayString( char* pBuffer )
 	else
 	{
 		// not a valid condition, ensure Test() never returns true
-		m_conditions.clear();
+		m_conditions.Clear();
 	}
 }
 
 bool RA_ConditionalDisplayString::Test()
 {
-	std::vector<ConditionSet>::iterator iter = m_conditions.begin();
-	if( iter == m_conditions.end() )
-		return false;
-
-	BOOL bDirtyConditions, bResetRead; // for HitCounts - not supported in RichPresence
-
-	// if core condition is not true, it doesnt match
-	if( !iter->Test( bDirtyConditions, bResetRead, false ) )
-		return false;
-
-	// core condition is true. if no alt conditions, it does match.
-	++iter;
-	if (iter == m_conditions.end())
-		return true;
-
-	// core condition is true. if any alt condition is true, it matches
-	do
-	{
-		if ( iter->Test( bDirtyConditions, bResetRead, false ) )
-			return true;
-
-		++iter;
-	} while( iter != m_conditions.end() );
-
-	// no alt conditions are true, not a match.
-	return false;
+	bool bDirtyConditions, bResetRead; // for HitCounts - not supported in RichPresence
+	return m_conditions.Test(bDirtyConditions, bResetRead);
 }
 
 void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFilename )
@@ -103,6 +59,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFil
 	m_formats.clear();
 	m_lookups.clear();
 	m_sDisplay.clear();
+    m_conditionalDisplayStrings.clear();
 
 	const char EndLine = '\n';
 
@@ -270,6 +227,12 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 {
 	static std::string sReturnVal;
 	sReturnVal.clear();
+
+    if (g_pCurrentGameData->GetGameID() == 0)
+    {
+        sReturnVal = "No game loaded";
+        return sReturnVal;
+    }
 
 	bool bParsingLookupName = false;
 	bool bParsingLookupContent = false;

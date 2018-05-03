@@ -355,7 +355,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 		if (lstrcmp(sEditText, TEXT("Value")))
 		{
 			//	Remove the associated 'size' entry
-			strcpy_s(g_AchievementEditorDialog.LbxDataAt(nSelItem, nSelSubItem + 1), 32, "");
+			strcpy_s(g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, lvDispinfo.item.iSubItem + 1), 32, "");
 		}
 
 		DestroyWindow(hwnd);
@@ -1092,9 +1092,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 				return FALSE;
 
 			Condition NewCondition;
-			NewCondition.SetIsBasicCondition();
-			NewCondition.CompSource().Set(EightBit, Address, 0x0000, 0);
-			NewCondition.CompTarget().Set(EightBit, ValueComparison, 0, 0);	//	Compare defaults!
+			NewCondition.CompSource().Set(EightBit, Address, 0x0000);
+			NewCondition.CompTarget().Set(EightBit, ValueComparison, 0);	//	Compare defaults!
 
 			//	Helper: guess that the currently watched memory location
 			//	 is probably what they are about to want to add a cond for.
@@ -1142,8 +1141,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 					{
 						const Condition& CondToCopy = pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>(i));
 
-						Condition NewCondition;
-						NewCondition.Set(CondToCopy);
+						Condition NewCondition(CondToCopy);
 
 						m_ConditionClipboard.Add(NewCondition);
 					}

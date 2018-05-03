@@ -62,7 +62,7 @@ public:
 	size_t GetSelectedConditionGroup() const;
 	void SetSelectedConditionGroup( size_t nGrp ) const;
 
-	ConditionSet m_ConditionClipboard;
+	ConditionGroup m_ConditionClipboard;
 
 private:
 	void RepopulateGroupList( Achievement* pCheevo );

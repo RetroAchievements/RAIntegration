@@ -83,6 +83,8 @@ public:
 	unsigned char ActiveBankRAMByteRead(ByteAddress nOffs) const;
 	void ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal);
 
+	unsigned int ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const;
+
 	void ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const;
 
 private:

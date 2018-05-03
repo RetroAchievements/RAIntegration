@@ -19,8 +19,8 @@ std::string RAGenerateMD5( const std::string& sStringToMD5 )
 	md5_byte_t digest[16];
 
 	md5_byte_t* pDataBuffer = new md5_byte_t[ sStringToMD5.length() ];
-	ASSERT( pDataBuffer != NULL );
-	if( pDataBuffer == NULL )
+	ASSERT( pDataBuffer != nullptr );
+	if( pDataBuffer == nullptr )
 		return "";
 
 	memcpy( pDataBuffer, sStringToMD5.c_str(), sStringToMD5.length() );
@@ -37,7 +37,7 @@ std::string RAGenerateMD5( const std::string& sStringToMD5 )
 			  digest[8],digest[9],digest[10],digest[11],digest[12],digest[13],digest[14],digest[15] );
 
 	delete[] pDataBuffer;
-	pDataBuffer = NULL;
+	pDataBuffer = nullptr;
 
 	return buffer;
 }

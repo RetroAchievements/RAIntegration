@@ -14,7 +14,7 @@ struct IWICImagingFactory;
 class UserImageFactoryVars
 {
 public:
-	UserImageFactoryVars() :m_pOriginalBitmapSource( NULL ), m_pIWICFactory( NULL ) {}
+	UserImageFactoryVars() :m_pOriginalBitmapSource( nullptr ), m_pIWICFactory( nullptr ) {}
 
 public:
 	IWICBitmapSource* m_pOriginalBitmapSource;

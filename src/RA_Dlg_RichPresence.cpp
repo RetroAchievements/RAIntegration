@@ -12,7 +12,7 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 	{
 	case WM_INITDIALOG:
 	{
-		SendMessage( GetDlgItem( hDlg, IDC_RA_RICHPRESENCERESULTTEXT ), WM_SETFONT, (WPARAM)m_hFont, NULL );
+		SendMessage( GetDlgItem( hDlg, IDC_RA_RICHPRESENCERESULTTEXT ), WM_SETFONT, (WPARAM)m_hFont, LPARAM{});
 
 		RestoreWindowPosition( hDlg, "Rich Presence Monitor", true, true );
 		return TRUE;
@@ -68,7 +68,7 @@ Dlg_RichPresence::Dlg_RichPresence()
 	: m_hRichPresenceDialog( nullptr ),
 	  m_bTimerActive( false )
 {
-	m_hFont = CreateFont( 15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, NULL );
+	m_hFont = CreateFont( 15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, nullptr );
 }
 
 Dlg_RichPresence::~Dlg_RichPresence()
@@ -92,7 +92,7 @@ void Dlg_RichPresence::StartTimer()
 {
 	if ( !m_bTimerActive )
 	{
-		SetTimer( m_hRichPresenceDialog, 1, 1000, NULL );
+		SetTimer( m_hRichPresenceDialog, 1, 1000, nullptr );
 		m_bTimerActive = true;
 	}
 }

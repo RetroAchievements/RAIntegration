@@ -12,6 +12,7 @@
 #include <deque>
 #include <map>
 
+
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
@@ -184,9 +185,9 @@ typedef DWORD			ARGB;
 			}
 
 			if ( !bResize )
-				SetWindowPos( hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER );
+				SetWindowPos( hwnd, nullptr, xPos, yPos, 0, 0, SWP_NOSIZE | SWP_NOZORDER );
 			else
-				SetWindowPos( hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER );
+				SetWindowPos( hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER );
 		}
 	};
 

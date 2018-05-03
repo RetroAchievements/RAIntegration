@@ -68,9 +68,9 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFil
 	const char* FormatTypeStr = "FormatType=";
 	const char* DisplayableStr = "Display:";
 
-	FILE* pFile = NULL;
+	FILE* pFile = nullptr;
 	fopen_s( &pFile, sFilename.c_str(), "r" );
-	if( pFile != NULL )
+	if( pFile != nullptr )
 	{
 		DWORD nCharsRead = 0;
 		char buffer[4096];
@@ -96,7 +96,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile( const std::string& sFil
 						if( pValue[0] == '0' && pValue[1] == 'x' )
 							nBase = 16;
 
-						DataPos nVal = static_cast<DataPos>( strtol( pValue, NULL, nBase ) );
+						DataPos nVal = static_cast<DataPos>( strtol( pValue, nullptr, nBase ) );
 
 						newLookup.AddLookupData( nVal, pName );
 					}

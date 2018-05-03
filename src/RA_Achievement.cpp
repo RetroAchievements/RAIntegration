@@ -44,7 +44,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
 {
 	std::string sTemp;
 
-	if (pBuffer == NULL || pBuffer[0] == '\0')
+	if (pBuffer == nullptr || pBuffer[0] == '\0')
 		return pBuffer;
 
 	if (pBuffer[0] == '/' || pBuffer[0] == '\\')
@@ -301,15 +301,15 @@ std::string Achievement::CreateMemString() const
 
 void Achievement::ClearBadgeImage()
 {
-	if( m_hBadgeImage != NULL )
+	if( m_hBadgeImage != nullptr )
 	{
 		DeleteObject( m_hBadgeImage );
-		m_hBadgeImage = NULL;
+		m_hBadgeImage = nullptr;
 	}
-	if( m_hBadgeImageLocked != NULL )
+	if( m_hBadgeImageLocked != nullptr )
 	{
 		DeleteObject( m_hBadgeImageLocked );
-		m_hBadgeImageLocked = NULL;
+		m_hBadgeImageLocked = nullptr;
 	}
 }
 
@@ -360,7 +360,7 @@ void Achievement::Set( const Achievement& rRHS )
 //
 //float Achievement::ProgressGetNextStep( char* sFormat, float fLastKnownProgress )
 //{
-//	const float fStep = ( (float)strtol( sFormat, NULL, 10 ) / 100.0f );
+//	const float fStep = ( (float)strtol( sFormat, nullptr, 10 ) / 100.0f );
 //	int nIter = 1;	//	Progress of 0% doesn't require a popup...
 //	float fStepAt = fStep * nIter;
 //	while( (fLastKnownProgress >= fStepAt) && (fStepAt < 1.0f) && (nIter < 20) )
@@ -377,7 +377,7 @@ void Achievement::Set( const Achievement& rRHS )
 //
 //float Achievement::ParseProgressExpression( char* pExp )
 //{
-//	if( pExp == NULL )
+//	if( pExp == nullptr )
 //		return 0.0f;
 // 
 //	int nOperator = 0;	//	0=add, 1=mult, 2=sub
@@ -390,7 +390,7 @@ void Achievement::Set( const Achievement& rRHS )
 // 
 //	int nIterations = 0;
 // 
-//	while( *pStrIter != NULL && nIterations < 20 )
+//	while( *pStrIter != nullptr && nIterations < 20 )
 //	{
 //		float fNextVal = 0.0f;
 // 
@@ -425,7 +425,7 @@ void Achievement::Set( const Achievement& rRHS )
 //		if( strncmp( pStrIter, "Cond:", 5 ) == 0 )
 //		{
 //			//	Get the specified condition, and the value from it.
-//			unsigned int nCondIter = strtol( pStrIter+5, NULL, 10 );
+//			unsigned int nCondIter = strtol( pStrIter+5, nullptr, 10 );
 //			
 //			if( nCondIter < NumConditions() )
 //			{
@@ -536,14 +536,14 @@ void Achievement::Set( const Achievement& rRHS )
 //		//	sprintf_s( formatSpareBuffer, 256, m_sProgressFmt ); 
 // 
 //		char* pUnused = &formatSpareBuffer[0];
-//		char* pUnused2 = NULL;
-//		char* pFirstFmt = NULL;
-//		char* pSecondFmt = NULL;
+//		char* pUnused2 = nullptr;
+//		char* pFirstFmt = nullptr;
+//		char* pSecondFmt = nullptr;
 //		strtok_s( pUnused, ",", &pFirstFmt );
 //		strtok_s( pFirstFmt, ",", &pSecondFmt );
 //		strtok_s( pSecondFmt, ",\0\n:", &pUnused2 );	//	Adds a very useful '\0' to pSecondFmt 
 //		
-//		if( pFirstFmt==NULL || pSecondFmt==NULL )
+//		if( pFirstFmt==nullptr || pSecondFmt==nullptr )
 //		{
 //			ASSERT(!"FUCK. Format string is fucked");
 //			return;

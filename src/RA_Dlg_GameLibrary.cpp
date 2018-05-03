@@ -85,7 +85,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 	return true;
 }
 
-//HWND Dlg_GameLibrary::m_hDialogBox = NULL;
+//HWND Dlg_GameLibrary::m_hDialogBox = nullptr;
 //std::vector<GameEntry> Dlg_GameLibrary::m_vGameEntries;
 //std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
@@ -102,9 +102,9 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {
 	SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s(&pf, RA_GAME_HASH_FILENAME, "rb");
-	if (pf != NULL)
+	if (pf != nullptr)
 	{
 		Document doc;
 		doc.ParseStream(FileStream(pf));
@@ -118,7 +118,7 @@ void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibrary
 					continue;
 
 				const std::string sMD5 = iter->name.GetString();
-				//GameID nID = static_cast<GameID>( std::strtoul( iter->value.GetString(), NULL, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
+				//GameID nID = static_cast<GameID>( std::strtoul( iter->value.GetString(), nullptr, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
 				GameID nID = static_cast<GameID>(iter->value.GetUint());
 				GameHashLibraryOut[sMD5] = nID;
 			}
@@ -300,7 +300,8 @@ void Dlg_GameLibrary::ThreadedScanProc()
 				fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
 				Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
 
-				SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, NULL, NULL);
+				// TODO: Use the the appropriate literals when PR 23 is accepted
+				SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, WPARAM{}, LPARAM{});
 			}
 
 			fclose(pf);
@@ -365,7 +366,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 					sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
 
 					HANDLE hROMReader = CreateFile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
-						NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+						nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
 					if (hROMReader != INVALID_HANDLE_VALUE)
 					{
@@ -375,7 +376,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 							nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
 
 						DWORD nBytes = 0;
-						BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, NULL);
+						BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr);
 						const std::string sHashOut = RAGenerateMD5(sROMRawData, nSize);
 
 						if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
@@ -396,7 +397,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 		} while (FindNextFile(hFind, &ffd) != 0);
 
 		delete[](sROMRawData);
-		sROMRawData = NULL;
+		sROMRawData = nullptr;
 
 		FindClose(hFind);
 	}
@@ -478,9 +479,9 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 void Dlg_GameLibrary::LoadAll()
 {
 	mtx.lock();
-	FILE* pLoadIn = NULL;
+	FILE* pLoadIn = nullptr;
 	fopen_s(&pLoadIn, RA_MY_GAME_LIBRARY_FILENAME, "rb");
-	if (pLoadIn != NULL)
+	if (pLoadIn != nullptr)
 	{
 		DWORD nCharsRead1 = 0;
 		DWORD nCharsRead2 = 0;
@@ -520,9 +521,9 @@ void Dlg_GameLibrary::LoadAll()
 void Dlg_GameLibrary::SaveAll()
 {
 	mtx.lock();
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	fopen_s(&pf, RA_MY_GAME_LIBRARY_FILENAME, "wb");
-	if (pf != NULL)
+	if (pf != nullptr)
 	{
 		std::map<std::string, std::string>::iterator iter = Results.begin();
 		while (iter != Results.end())
@@ -578,7 +579,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 	}
 
 	case WM_TIMER:
-		if ((g_GameLibrary.GetHWND() != NULL) && (IsWindowVisible(g_GameLibrary.GetHWND())))
+		if ((g_GameLibrary.GetHWND() != nullptr) && (IsWindowVisible(g_GameLibrary.GetHWND())))
 			RefreshList();
 		//ReloadGameListData();
 		return FALSE;

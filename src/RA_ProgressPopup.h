@@ -17,7 +17,7 @@ public:
 	void Update( ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused );
 	void Render( HDC hDC, RECT& rcDest );
 
-	void AddMessage( const char* sTitle, const char* sMessage, int nMessageType=0, HBITMAP hImage=NULL );
+	void AddMessage( const char* sTitle, const char* sMessage, int nMessageType=0, HBITMAP hImage=nullptr );
 	float GetYOffsetPct() const;
 
 	BOOL IsActive() const				{ return m_sMessageTitleQueue[0][0] != '\0'; }

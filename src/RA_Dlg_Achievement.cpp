@@ -142,9 +142,9 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 	SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 	SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 
-	UpdateSelectedAchievementButtons(NULL);
+	UpdateSelectedAchievementButtons(nullptr);
 
-	g_AchievementEditorDialog.LoadAchievement(NULL, FALSE);
+	g_AchievementEditorDialog.LoadAchievement(nullptr, FALSE);
 }
 
 size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
@@ -680,7 +680,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 					for ( unsigned int i = 0; i < g_pActiveAchievements->NumAchievements(); i++ )
 						g_pActiveAchievements->GetAchievement( i ).SetModified( FALSE );
 
-					InvalidateRect( hDlg, NULL, FALSE );
+					InvalidateRect( hDlg, nullptr, FALSE );
 				}
 				else
 				{
@@ -725,7 +725,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 					if (TempSet.LoadFromFile(g_pCurrentGameData->GetGameID()))
 					{
 						Achievement* pAchBackup = TempSet.Find(nID);
-						if (pAchBackup != NULL)
+						if (pAchBackup != nullptr)
 						{
 							Cheevo.Set(*pAchBackup);
 
@@ -886,7 +886,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 			}
 			else
 			{
-				UpdateSelectedAchievementButtons(NULL);
+				UpdateSelectedAchievementButtons(nullptr);
 			}
 		}
 		break;
@@ -1059,7 +1059,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
 void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheevo)
 {
-	if (Cheevo == NULL)
+	if (Cheevo == nullptr)
 	{
 		EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_RESET_ACH), FALSE);
 		EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_REVERTSELECTED), FALSE);
@@ -1105,7 +1105,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
 	EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), FALSE);
 
 	HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-	if (hList != NULL)
+	if (hList != nullptr)
 	{
 		//SetupColumns( hList );
 		LoadAchievements(hList);
@@ -1127,7 +1127,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
 		SetDlgItemText( m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr( std::to_string( g_pActiveAchievements->PointTotal() ) ).c_str() );
 	}
 
-	UpdateSelectedAchievementButtons(NULL);
+	UpdateSelectedAchievementButtons(nullptr);
 }
 
 void Dlg_Achievements::OnGet_Achievement(const Achievement& ach)
@@ -1199,7 +1199,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
 	m_lbxData[nItem][nColumn] = sNewData;
 
 	HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-	if (hList != NULL)
+	if (hList != nullptr)
 	{
 		LV_ITEM item;
 		ZeroMemory(&item, sizeof(item));

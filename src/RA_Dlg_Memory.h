@@ -21,7 +21,8 @@ public:
 	static bool OnEditInput( UINT c );
 
 	static void setAddress( unsigned int nAddr );
-	static void moveAddress( int offset, int nibbleOff );
+    static void setWatchedAddress( unsigned int nAddr );
+    static void moveAddress( int offset, int nibbleOff );
 	static void editData( unsigned int nByteAddress, bool bLowerNibble, unsigned int value );
 	static void Invalidate();
 
@@ -34,6 +35,7 @@ private:
 	static SIZE m_szFontSize;
 	static unsigned int m_nDataStartXOffset;
 	static unsigned int m_nAddressOffset;
+    static unsigned int m_nWatchedAddress;
 	static unsigned int m_nDataSize;
 	static unsigned int m_nEditAddress;
 	static unsigned int m_nEditNibble;

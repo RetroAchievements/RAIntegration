@@ -225,7 +225,7 @@ void Condition::ResetDeltas()
 
 bool CompVariable::ParseVariable( const char*& pBufferInOut )
 {
-	char* nNextChar = NULL;
+	char* nNextChar = nullptr;
 	unsigned int nBase = 16;	//	Assume hex address
 
 	if( toupper( pBufferInOut[0] ) == 'D' && pBufferInOut[1] == '0' && toupper( pBufferInOut[2] ) == 'X' )

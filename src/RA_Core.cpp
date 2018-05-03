@@ -1623,7 +1623,6 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
 	std::string sRetVal;
-	// let me check: these are to check if they need initilizers or not, commented out most of it
 
 
 	CComPtr<IFileOpenDialog> pDlg;

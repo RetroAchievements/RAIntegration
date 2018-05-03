@@ -1,7 +1,5 @@
 #include "RA_MemManager.h"
 
-#include "RA_Core.h"
-#include "RA_Achievement.h"
 #include "RA_Dlg_Memory.h"
 
 MemManager g_MemManager;
@@ -212,21 +210,9 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
 			else
 				nLiveValue = ActiveBankRAMByteRead(nAddr) & 0xf;
 		}
-		else if (m_nComparisonSizeMode == EightBit)
+		else
 		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-		}
-		else if (m_nComparisonSizeMode == SixteenBit)
-		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 1) << 8);
-		}
-		else if (m_nComparisonSizeMode == ThirtyTwoBit)
-		{
-			nLiveValue = ActiveBankRAMByteRead(nAddr);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 1) << 8);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 2) << 16);
-			nLiveValue |= (ActiveBankRAMByteRead(nAddr + 3) << 24);
+			nLiveValue = ActiveBankRAMRead(nAddr, m_nComparisonSizeMode);
 		}
 
 		bool bValid = false;
@@ -382,8 +368,11 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
 
 		nOffs -= bank->BankSize;
 		bankID++;
-		if (bankID >= numBanks)
+		if (bankID >= numBanks) {
+			while (count-- > 0)
+				*buffer++ = 0;
 			return;
+		}
 		
 		bank = &m_Banks.at(bankID);
 		reader = bank->Reader;

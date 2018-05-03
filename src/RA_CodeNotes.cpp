@@ -20,7 +20,7 @@ size_t CodeNotes::Load( const std::string& sFile )
 	Clear();
 	
 	SetCurrentDirectory(NativeStr( g_sHomeDir ).c_str());
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	if( fopen_s( &pf, sFile.c_str(), "rb" ) == 0 )
 	{
 		Document doc;

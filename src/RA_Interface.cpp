@@ -4,55 +4,55 @@
 
 //	Exposed, shared
 //	App-level:
-bool	(CCONV *_RA_GameIsActive) (void) = NULL;
-void	(CCONV *_RA_CauseUnpause) (void) = NULL;
-void	(CCONV *_RA_CausePause) (void) = NULL;
-void	(CCONV *_RA_RebuildMenu) (void) = NULL;
-void	(CCONV *_RA_ResetEmulation) (void) = NULL;
-void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = NULL;
-void	(CCONV *_RA_LoadROM) (const char* sNameOut) = NULL;
+bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
+void	(CCONV *_RA_CauseUnpause) (void) = nullptr;
+void	(CCONV *_RA_CausePause) (void) = nullptr;
+void	(CCONV *_RA_RebuildMenu) (void) = nullptr;
+void	(CCONV *_RA_ResetEmulation) (void) = nullptr;
+void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
+void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
 
 
 bool RA_GameIsActive()
 {
-	if( _RA_GameIsActive != NULL )
+	if( _RA_GameIsActive != nullptr )
 		return _RA_GameIsActive();
 	return false;
 }
 
 void RA_CauseUnpause()
 {
-	if( _RA_CauseUnpause != NULL )
+	if( _RA_CauseUnpause != nullptr )
 		_RA_CauseUnpause();
 }
 
 void RA_CausePause()
 {
-	if (_RA_CausePause != NULL)
+	if (_RA_CausePause != nullptr)
 		_RA_CausePause();
 }
 
 void RA_RebuildMenu()
 {
-	if( _RA_RebuildMenu != NULL )
+	if( _RA_RebuildMenu != nullptr )
 		_RA_RebuildMenu();
 }
 
 void RA_ResetEmulation()
 {
-	if( _RA_ResetEmulation != NULL )
+	if( _RA_ResetEmulation != nullptr )
 		_RA_ResetEmulation();
 }
 
 void RA_LoadROM( const char* sFullPath )
 {
-	if( _RA_LoadROM != NULL )
+	if( _RA_LoadROM != nullptr )
 		_RA_LoadROM( sFullPath );
 }
 
 void RA_GetEstimatedGameTitle( char* sNameOut )
 {
-	if( _RA_GetEstimatedGameTitle != NULL )
+	if( _RA_GetEstimatedGameTitle != nullptr )
 		_RA_GetEstimatedGameTitle( sNameOut );
 }
 
@@ -107,7 +107,7 @@ int		(CCONV *_RA_UpdateOverlay) (ControllerInput* pInput, float fDeltaTime, bool
 int		(CCONV *_RA_UpdatePopups) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
 void	(CCONV *_RA_RenderOverlay) (HDC hDC, RECT* prcSize) = nullptr;
 void	(CCONV *_RA_RenderPopups) (HDC hDC, RECT* prcSize) = nullptr;
-
+bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
 
 //	Helpers:
 bool RA_UserLoggedIn()
@@ -143,6 +143,14 @@ void RA_UpdateRenderOverlay( HDC hDC, ControllerInput* pInput, float fDeltaTime,
 
 	if( _RA_RenderOverlay != nullptr )
 		_RA_RenderOverlay( hDC, prcSize );
+}
+
+bool RA_IsOverlayFullyVisible()
+{
+    if (_RA_IsOverlayFullyVisible != nullptr)
+        return _RA_IsOverlayFullyVisible();
+
+    return false;
 }
 
 void RA_OnLoadNewRom( BYTE* pROMData, unsigned int nROMSize )
@@ -279,7 +287,7 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 			hRequest = WinHttpOpenRequest( hConnect, 
 				L"GET", 
 				wBuffer, 
-				NULL, 
+				nullptr, 
 				WINHTTP_NO_REFERER, 
 				WINHTTP_DEFAULT_ACCEPT_TYPES,
 				0);
@@ -295,7 +303,7 @@ BOOL DoBlockingHttpGet( const char* sRequestedPage, char* pBufferOut, const unsi
 					0,
 					0);
 
-				if( WinHttpReceiveResponse( hRequest, NULL ) )
+				if( WinHttpReceiveResponse( hRequest, nullptr ) )
 				{
 					nBytesToRead = 0;
 					(*pBytesRead) = 0;
@@ -380,7 +388,7 @@ std::string GetLastErrorAsString()
 
     LPSTR messageBuffer = nullptr;
     size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+                                 nullptr, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
 
     std::string message(messageBuffer, size);
 
@@ -399,7 +407,7 @@ const char* CCONV _RA_InstallIntegration()
         return "0.000";
 
     g_hRADLL = LoadLibrary( TEXT( "RA_Integration.dll" ) );
-    if ( g_hRADLL == NULL )
+    if ( g_hRADLL == nullptr )
     {
         char buffer[1024];
         sprintf_s( buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str() );
@@ -419,6 +427,7 @@ const char* CCONV _RA_InstallIntegration()
 	_RA_UpdateOverlay		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdateOverlay" );
 	_RA_UpdatePopups		= (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress( g_hRADLL, "_RA_UpdatePopups" );
 	_RA_RenderOverlay		= (void(CCONV *)(HDC, RECT*))							GetProcAddress( g_hRADLL, "_RA_RenderOverlay" );
+    _RA_IsOverlayFullyVisible=(bool(CCONV *)())                                     GetProcAddress( g_hRADLL, "_RA_IsOverlayFullyVisible" );
 	_RA_RenderPopups		= (void(CCONV *)(HDC, RECT*))							GetProcAddress( g_hRADLL, "_RA_RenderPopups" );
 	_RA_OnLoadNewRom		= (int(CCONV *)(const BYTE*, unsigned int))				GetProcAddress( g_hRADLL, "_RA_OnLoadNewRom" );
 	_RA_InstallMemoryBank	= (void(CCONV *)(int, void*, void*, int))				GetProcAddress( g_hRADLL, "_RA_InstallMemoryBank" );
@@ -451,18 +460,18 @@ void RA_Init( HWND hMainHWND, int nConsoleID, const char* sClientVersion )
 	ZeroMemory( buffer, 1024 );
 	if( DoBlockingHttpGet( "LatestIntegration.html", buffer, 1024, &nBytesRead ) == FALSE )
 	{
-		MessageBoxA( NULL, "Cannot access www.retroachievements.org - working offline.", "Warning", MB_OK|MB_ICONEXCLAMATION );
+		MessageBoxA( nullptr, "Cannot access www.retroachievements.org - working offline.", "Warning", MB_OK|MB_ICONEXCLAMATION );
 		return;
 	}
 
-	const unsigned int nLatestDLLVer = strtol( buffer+2, NULL, 10 );
+	const unsigned int nLatestDLLVer = strtol( buffer+2, nullptr, 10 );
 
 	BOOL bInstalled = FALSE;
 	int nMBReply = IDNO;
 	do
 	{
 		const char* sVerInstalled = _RA_InstallIntegration();
-		const unsigned int nVerInstalled = strtol( sVerInstalled+2, NULL, 10 );
+		const unsigned int nVerInstalled = strtol( sVerInstalled+2, nullptr, 10 );
 		if( nVerInstalled < nLatestDLLVer )
 		{
 			RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite the DLL, so unhook it.%
@@ -475,7 +484,7 @@ void RA_Init( HWND hMainHWND, int nConsoleID, const char* sClientVersion )
 				nLatestDLLVer,
 				"Automatically update your RetroAchievements Toolset file?" );
 
-			nMBReply = MessageBoxA( NULL, sErrorMsg, "Warning", MB_YESNO );
+			nMBReply = MessageBoxA( nullptr, sErrorMsg, "Warning", MB_YESNO );
 
 			if( nMBReply == IDYES )
 			{
@@ -508,14 +517,14 @@ void RA_InstallSharedFunctions( bool(*fpIsActive)(void), void(*fpCauseUnpause)(v
 	_RA_LoadROM					= fpLoadROM;
 
 	//	Also install *within* DLL! FFS
-	if( _RA_InstallSharedFunctions != NULL )
+	if( _RA_InstallSharedFunctions != nullptr )
 		_RA_InstallSharedFunctions( fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM );
 }
 
 void RA_Shutdown()
 {
 	//	Call shutdown on toolchain
-	if( _RA_Shutdown != NULL )
+	if( _RA_Shutdown != nullptr )
 		_RA_Shutdown();
 
 	//	Clear func ptrs

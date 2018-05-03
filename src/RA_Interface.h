@@ -147,6 +147,9 @@ extern void RA_DoAchievementsFrame();
 //	Updates and renders all on-screen overlays.
 extern void RA_UpdateRenderOverlay( HDC hDC, ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen, bool Paused );
 
+//  Determines if the overlay is completely covering the screen.
+extern bool RA_IsOverlayFullyVisible();
+
 //	Returns true if the user has successfully logged in.
 extern bool RA_UserLoggedIn();
 

@@ -54,6 +54,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 	if (SUCCEEDED(hr))
 	{
 
+
 		// TODO: Maybe replace some of these with literals
 		BITMAPINFOHEADER info_header{
 			sizeof(BITMAPINFOHEADER),    // biSize
@@ -104,6 +105,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 	if (SUCCEEDED(hr))
 	{
 		hr = pToRenderBitmapSource->CopyPixels(
+			//hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
 			nullptr,
 			cbStride,
 			cbImage,
@@ -121,12 +123,14 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 } // end function UserImageFactory_CreateDIBSectionFromBitmapSource
 
 
+
 _Use_decl_annotations_
 BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
 {
 	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, SIZE_T{});
 
 	auto hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
+
 
 	// Create WIC factory
 	hr = CoCreateInstance(
@@ -136,8 +140,7 @@ BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
 #else
 		&CLSID_WICImagingFactory,
 #endif
-
-        nullptr,
+		nullptr,
 		CLSCTX_INPROC_SERVER,
 
 #if defined (__cplusplus)
@@ -273,11 +276,11 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 	HBITMAP hRetVal = nullptr;
 	// Step 2: Decode the source image to IWICBitmapSource
 	CComPtr<IWICBitmapDecoder> pDecoder;
-	HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(Widen(sPath).c_str(),			// Image to be decoded
-		nullptr,						// Do not prefer a particular vendor
-		GENERIC_READ,					// Desired read access to the file
-		WICDecodeMetadataCacheOnDemand,	// Cache metadata when needed
-		&pDecoder);						// Pointer to the decoder
+	HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(Widen(sPath).c_str(),	// Image to be decoded
+		nullptr,						                                                                              // Do not prefer a particular vendor
+		GENERIC_READ,					                                                                            // Desired read access to the file
+		WICDecodeMetadataCacheOnDemand,	                                                                  // Cache metadata when needed
+		&pDecoder);						                                                                            // Pointer to the decoder
 
 	// Retrieve the first frame of the image from the decoder
 	CComPtr<IWICBitmapFrameDecode>  pFrame;

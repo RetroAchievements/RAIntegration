@@ -505,7 +505,7 @@ void Dlg_MemBookmark::PopulateList()
 		return;
 
 	HWND hList = GetDlgItem( m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES );
-	if ( hList == NULL )
+	if ( hList == nullptr )
 		return;
 
 	int topIndex = ListView_GetTopIndex( hList );
@@ -704,7 +704,6 @@ void Dlg_MemBookmark::ExportJSON()
 	defaultDir.erase ( 0, 2 ); // Removes the characters (".\\")
 	defaultDir = g_sHomeDir + defaultDir;
 
-    // First time noticing this
 	CComPtr<IFileSaveDialog> pDlg;
 	
 	if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
@@ -723,7 +722,7 @@ void Dlg_MemBookmark::ExportJSON()
 			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
 			{
 				PIDLIST_ABSOLUTE pidl;
-				
+        
 				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), NULL, &pidl, SFGAO_FOLDER, 0); SUCCEEDED(hr))
 				{
 					CComPtr<IShellItem> pItem;
@@ -846,7 +845,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 	// Never noticed this, nearly identical to the on in RA_Core
 	CComPtr<IFileOpenDialog> pDlg;
 
-	// Keep the scope as local as possible
+
 	
 	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
 		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))

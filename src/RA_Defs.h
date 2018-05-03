@@ -1,3 +1,5 @@
+#ifndef RA_DEFS_H
+#define RA_DEFS_H
 #pragma once
 
 #include <Windows.h>
@@ -11,6 +13,8 @@
 #include <queue>
 #include <deque>
 #include <map>
+#include <array>
+
 
 
 #ifndef RA_EXPORTS
@@ -19,13 +23,43 @@
 
 #else
 
+
+// Maybe an extra check just in-case
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _NODISCARD           [[nodiscard]]
+#define _NORETURN            [[noreturn]]
+#define _UNUSED              [[maybe_unused]]
+
+// Disables the use of const_casts, if you get an error, it's not a literal
+// type. You could use it on functions but they will need a deduction guide
+// That would probably be better with a forwarding function
+
+
+
+
+#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
+<<<<<<< HEAD
+#pragma warning(push, 1)
+
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+//	RA-Only
+#define RAPIDJSON_HAS_STDSTRING 1
+#pragma warning(push, 1)
+// This is not needed the most recent version
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+=======
 
 #pragma warning(push, 1)
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 
+>>>>>>> com_smart_pointers
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
 #include "rapidjson/include/rapidjson/reader.h"

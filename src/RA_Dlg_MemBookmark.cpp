@@ -7,7 +7,11 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+<<<<<<< HEAD
+#include <atlbase.h>
+=======
 #include <atlbase.h> // CComPtr
+>>>>>>> com_smart_pointers
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -20,15 +24,13 @@ int nSelSubItemBM;
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-	const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
+inline constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+inline constexpr std::array<int, 5> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 }
 
-const COMDLG_FILTERSPEC c_rgFileTypes[] =
-{
-	{ L"Text Document (*.txt)",       L"*.txt" }
-};
+
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+
 
 enum BookmarkSubItems
 {
@@ -145,7 +147,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			for ( ResizeContent content : vDlgMemBookmarkResize )
 				content.Resize( winRect.Width(), winRect.Height() );
 
-			//InvalidateRect( hDlg, NULL, TRUE );
+			//InvalidateRect( hDlg, nullptr, TRUE );
 			RememberWindowSize(hDlg, "Memory Bookmarks");
 		}
 		break;
@@ -381,7 +383,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							nSel = ListView_GetNextItem( hList, -1, LVNI_SELECTED );
 						}
 
-						InvalidateRect( hList, NULL, FALSE );
+						InvalidateRect( hList, nullptr, FALSE );
 					}
 
 					return TRUE;
@@ -415,7 +417,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 							bookmark->ResetCount();
 						}
 						
-						InvalidateRect( hList, NULL, FALSE );
+						InvalidateRect( hList, nullptr, FALSE );
 					}
 
 					return TRUE;
@@ -461,7 +463,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 
 BOOL Dlg_MemBookmark::IsActive() const
 {
-	return(g_MemBookmarkDialog.GetHWND() != NULL) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
+	return(g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }
 
 void Dlg_MemBookmark::UpdateBookmarks( bool bForceWrite )
@@ -675,14 +677,13 @@ unsigned int Dlg_MemBookmark::GetMemory( unsigned int nAddr, int type )
 	switch ( type )
 	{
 		case 1:
-			mem_value = g_MemManager.ActiveBankRAMByteRead( nAddr );
+			mem_value = g_MemManager.ActiveBankRAMRead(nAddr, EightBit);
 			break;
 		case 2:
-			mem_value = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) );
+			mem_value = g_MemManager.ActiveBankRAMRead(nAddr, SixteenBit);
 			break;
 		case 3:
-			mem_value = ( g_MemManager.ActiveBankRAMByteRead( nAddr ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 1 ) << 8 ) |
-				( g_MemManager.ActiveBankRAMByteRead( nAddr + 2 ) << 16 ) | ( g_MemManager.ActiveBankRAMByteRead( nAddr + 3 ) << 24 ) );
+			mem_value = g_MemManager.ActiveBankRAMRead(nAddr, ThirtyTwoBit);
 			break;
 	}
 
@@ -872,14 +873,15 @@ std::string Dlg_MemBookmark::ImportDialog()
 						str = Narrow( pStr );
 						CoTaskMemFree(static_cast<LPVOID>(pStr));
 						pStr = nullptr;
-					} // end if
+					}
+>>>>>>> com_smart_pointers
 
 					pItem.Release();
-				} // end if
-			} // end if
-		} // end if
+				}
+			}
+		}
 		pDlg.Release();
-	} // end if
+	}
 
 	return str;
 } // end function ImportDialog
@@ -950,10 +952,10 @@ BOOL Dlg_MemBookmark::EditLabel ( int nItem, int nSubItem )
 		rcSubItem.left, rcSubItem.top, nWidth, (int)( 1.5f*nHeight ),
 		g_MemBookmarkDialog.GetHWND(),
 		0,
-		GetModuleHandle( NULL ),
-		NULL );
+		GetModuleHandle( nullptr ),
+		nullptr );
 
-	if ( g_hIPEEditBM == NULL )
+	if ( g_hIPEEditBM == nullptr )
 	{
 		ASSERT( !"Could not create edit box!" );
 		MessageBox( nullptr, _T("Could not create edit box."), _T("Error"), MB_OK | MB_ICONERROR );

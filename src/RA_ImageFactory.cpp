@@ -27,15 +27,15 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 	_Out_ HBITMAP& hBitmapInOut)
 {
 
-	auto nWidth  = UINT{};
-	auto nHeight = UINT{};
+    UINT nWidth  = 0U;
+    UINT nHeight = 0U;
 
 	void *pvImageBits = nullptr;
 
 	auto pixelFormat = WICPixelFormatGUID{};
 
-	auto cbStride = UINT{};
-	auto cbImage  = UINT{};
+    UINT cbStride = 0U;
+    UINT cbImage  = 0U;
 
 
 	// Check BitmapSource format
@@ -56,12 +56,14 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 
 		// TODO: Maybe replace some of these with literals
 		BITMAPINFOHEADER info_header{
-			sizeof(BITMAPINFOHEADER), static_cast<LONG>(nWidth),
-			-static_cast<LONG>(nHeight), WORD{1}, WORD{32},
-			static_cast<DWORD>(BI_RGB), DWORD{}, LONG{}, LONG{},
-			DWORD{}, DWORD{}
+			sizeof(BITMAPINFOHEADER),    // biSize
+            static_cast<LONG>(nWidth),
+			-static_cast<LONG>(nHeight),
+            WORD{1},                     // biPlanes
+            WORD{32},                    // biBitCount
+			static_cast<DWORD>(BI_RGB)
 		};
-		BITMAPINFO bminfo{ info_header, RGBQUAD{} };
+		BITMAPINFO bminfo{ info_header };
 
 		auto hWindow = GetActiveWindow();
 		while (GetParent(hWindow) != nullptr)
@@ -75,9 +77,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 		if (hr = hdcScreen ? S_OK : E_FAIL; SUCCEEDED(hr))
 		{
 			if (hBitmapInOut)
-			{
 				DeleteBitmap(hBitmapInOut);
-			} // end if
 
 			//	TBD: check this. As a handle this should just be as-is, right?
 			hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, DWORD{});
@@ -85,20 +85,20 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 			ReleaseDC(nullptr, hdcScreen);
 
 			hr = hBitmapInOut ? S_OK : E_FAIL;
-		} // end if
-	} // end if
+		}
+	}
 
 	if (SUCCEEDED(hr))
 	{
 		// Size of a scan line represented in bytes: 4 bytes each pixel
 		hr = UIntMult(nWidth, sizeof(ARGB), &cbStride);
-	} // end if
+	}
 
 	if (SUCCEEDED(hr))
 	{
 		// Size of the image, represented in bytes
 		hr = UIntMult(cbStride, nHeight, &cbImage);
-	} // end if
+	}
 
 	// Extract the image into the HBITMAP    
 	if (SUCCEEDED(hr))
@@ -108,14 +108,14 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 			cbStride,
 			cbImage,
 			static_cast<BYTE*>(pvImageBits));
-	} // end if
+	}
 
 	// Image Extraction failed, clear allocated memory
 	if (FAILED(hr))
 	{
 		DeleteBitmap(hBitmapInOut);
 		hBitmapInOut = nullptr;
-	} // end if
+	}
 
 	return hr;
 } // end function UserImageFactory_CreateDIBSectionFromBitmapSource
@@ -137,7 +137,7 @@ BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
 		&CLSID_WICImagingFactory,
 #endif
 
-		LPUNKNOWN{},
+        nullptr,
 		CLSCTX_INPROC_SERVER,
 
 #if defined (__cplusplus)

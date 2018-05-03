@@ -7,11 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
-<<<<<<< HEAD
-#include <atlbase.h>
-=======
 #include <atlbase.h> // CComPtr
->>>>>>> com_smart_pointers
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -28,7 +24,7 @@ inline constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Addres
 inline constexpr std::array<int, 5> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 }
 
-
+// If it's only going to be one we could make it a unique_ptr
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
 
 
@@ -715,7 +711,7 @@ void Dlg_MemBookmark::ExportJSON()
         reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
 		
-		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); hr == S_OK )
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
             // Does this really need a limit?
             std::string defaultFileName;
@@ -857,7 +853,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 	{
 		// N.B. If you want to do more than one at a time it needs to be in a loop
 		
-		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); SUCCEEDED(hr))
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
 			
 			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
@@ -874,8 +870,6 @@ std::string Dlg_MemBookmark::ImportDialog()
 						CoTaskMemFree(static_cast<LPVOID>(pStr));
 						pStr = nullptr;
 					}
->>>>>>> com_smart_pointers
-
 					pItem.Release();
 				}
 			}

@@ -11,12 +11,18 @@
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
 
+// Will leave it alone for now, but having these as raw pointers is a really bad idea
+
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert( SIZEOF_ARRAY( ACH_SETS ) == NumAchievementSetTypes, "Must match!" );
+// for now
+using AchievementSets = std::array<AchievementSet*, 3>;
+// can't be constexpr because AchievementSet isn't a literal type
+inline const AchievementSets ACH_SETS{ g_pCoreAchievements, g_pUnofficialAchievements, g_pLocalAchievements };
+
+static_assert(ACH_SETS.size() == NumAchievementSetTypes, "Must match!" );
 
 AchievementSetType g_nActiveAchievementSet = Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
@@ -25,7 +31,7 @@ AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 void RASetAchievementCollection( AchievementSetType Type )
 {
 	g_nActiveAchievementSet = Type;
-	g_pActiveAchievements = *ACH_SETS[ Type ];
+	g_pActiveAchievements = ACH_SETS.at(Type);
 }
 
 std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )

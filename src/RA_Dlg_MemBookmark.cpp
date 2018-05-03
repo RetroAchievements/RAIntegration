@@ -7,6 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <atlbase.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,15 +20,13 @@ int nSelSubItemBM;
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-	const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
+inline constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+inline constexpr std::array<int, 5> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 }
 
-const COMDLG_FILTERSPEC c_rgFileTypes[] =
-{
-	{ L"Text Document (*.txt)",       L"*.txt" }
-};
+
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+
 
 enum BookmarkSubItems
 {
@@ -709,7 +708,7 @@ void Dlg_MemBookmark::ExportJSON()
 	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
+		hr = pDlg->SetFileTypes( c_rgFileTypes.size(), &c_rgFileTypes.front() );
 		if ( hr == S_OK )
 		{
 			char defaultFileName[ 512 ];
@@ -826,31 +825,40 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
 	std::string str;
 
-	if ( g_pCurrentGameData->GetGameID() == 0 )
+	if (g_pCurrentGameData->GetGameID() == 0)
 	{
-		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
+		MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
 		return str;
 	}
 
 	IFileOpenDialog* pDlg = nullptr;
+<<<<<<< HEAD
 	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
+=======
+	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
+	if (hr == S_OK)
+>>>>>>> global_carrays_to_stdarray
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front());
+		if (hr == S_OK)
 		{
-			hr = pDlg->Show( nullptr );
-			if ( hr == S_OK )
+			hr = pDlg->Show(nullptr);
+			if (hr == S_OK)
 			{
 				IShellItem* pItem = nullptr;
-				hr = pDlg->GetResult( &pItem );
-				if ( hr == S_OK )
+				hr = pDlg->GetResult(&pItem);
+				if (hr == S_OK)
 				{
 					LPWSTR pStr = nullptr;
-					hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-					if ( hr == S_OK )
+					hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
+					if (hr == S_OK)
 					{
+<<<<<<< HEAD
 						str = ra::Narrow( pStr );
+=======
+						str = Narrow(pStr);
+>>>>>>> global_carrays_to_stdarray
 					}
 
 					pItem->Release();

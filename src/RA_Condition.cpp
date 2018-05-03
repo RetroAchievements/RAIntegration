@@ -501,6 +501,7 @@ void ConditionGroup::RemoveAt( size_t nID )
 		iter++;
 	}
 }
+<<<<<<< HEAD
 
 void ConditionGroup::SerializeAppend(std::string& buffer) const
 {
@@ -640,3 +641,5 @@ bool ConditionSet::Reset()
 
 	return bWasReset;
 }
+=======
+>>>>>>> global_carrays_to_stdarray

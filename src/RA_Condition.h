@@ -20,7 +20,10 @@ enum ComparisonVariableSize
 
 	NumComparisonVariableSizeTypes
 };
-extern const char* COMPARISONVARIABLESIZE_STR[];
+inline constexpr std::array<const char*, NumComparisonVariableSizeTypes> COMPARISONVARIABLESIZE_STR{
+	"Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit",
+	"32-bit"
+};
 
 enum ComparisonVariableType
 {
@@ -31,7 +34,9 @@ enum ComparisonVariableType
 
 	NumComparisonVariableTypes
 };
-extern const char* COMPARISONVARIABLETYPE_STR[];
+inline constexpr std::array<const char*, NumComparisonVariableTypes> COMPARISONVARIABLETYPE_STR{
+	"Memory", "Value", "Delta", "DynVar"
+};
 
 enum ComparisonType
 {
@@ -44,9 +49,11 @@ enum ComparisonType
 
 	NumComparisonTypes
 };
-extern const char* COMPARISONTYPE_STR[];
+inline constexpr std::array<const char*, NumComparisonTypes> COMPARISONTYPE_STR{
+	"=", "<", "<=", ">", ">=", "!="
+};
 
-extern const char* CONDITIONTYPE_STR[];
+
 
 class CompVariable
 {
@@ -174,7 +181,16 @@ private:
 	unsigned int	m_nCurrentHits;
 };
 
+<<<<<<< HEAD
 class ConditionGroup
+=======
+inline constexpr std::array<const char*, Condition::NumConditionTypes> CONDITIONTYPE_STR{
+	"", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits"
+};
+
+
+class ConditionSet
+>>>>>>> global_carrays_to_stdarray
 {
 public:
 	void SerializeAppend(std::string& buffer) const;
@@ -214,3 +230,6 @@ public:
 protected:
 	std::vector<ConditionGroup> m_vConditionGroups;
 };
+//extern BOOL CompareConditionValues( unsigned int nLHS, const enum CompType nCmpType, unsigned int nRHS );
+extern ComparisonType ReadOperator( char*& pBufferInOut );
+extern unsigned int ReadHits( char*& pBufferInOut );

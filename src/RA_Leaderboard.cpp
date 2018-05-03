@@ -32,39 +32,12 @@ double MemValue::GetValue() const
 	}
 	else
 	{
-		if( m_nVarSize == ComparisonVariableSize::Nibble_Lower )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::Nibble_Upper )
-		{
-			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) >> 4 ) & 0xf;
-		}
-		else if( m_nVarSize == ComparisonVariableSize::EightBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::SixteenBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
-		}
-		else if( m_nVarSize == ComparisonVariableSize::ThirtyTwoBit )
-		{
-			nRetVal = g_MemManager.ActiveBankRAMByteRead( m_nAddress );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 1 ) << 8 );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 2 ) << 16 );
-			nRetVal |= ( g_MemManager.ActiveBankRAMByteRead( m_nAddress + 3 ) << 24 );
-		}
-		else if( ( m_nVarSize >= ComparisonVariableSize::Bit_0 ) && ( m_nVarSize <= ComparisonVariableSize::Bit_7 ) )
-		{
-			const unsigned int nBitmask = ( 1 << ( m_nVarSize - ComparisonVariableSize::Bit_0 ) );
-			nRetVal = ( g_MemManager.ActiveBankRAMByteRead( m_nAddress ) & nBitmask ) != 0;
+		nRetVal = g_MemManager.ActiveBankRAMRead( m_nAddress, m_nVarSize );
 
-			if ( m_bInvertBit )
-				nRetVal = ( nRetVal == 1 ) ? 0 : 1;
+		if( m_bInvertBit && ( m_nVarSize >= ComparisonVariableSize::Bit_0 ) && ( m_nVarSize <= ComparisonVariableSize::Bit_7 ) )
+		{
+    		nRetVal = ( nRetVal == 1 ) ? 0 : 1;
 		}
-		//nRetVal = g_MemManager.RAMByte( m_nAddress );
 
 		if( m_bBCDParse )
 		{
@@ -86,9 +59,9 @@ double MemValue::GetValue() const
 	return nRetVal * m_fModifier;
 }
 
-char* MemValue::ParseFromString( char* pBuffer )
+const char* MemValue::ParseFromString( const char* pBuffer )
 {
-	char* pIter = &pBuffer[0];
+	const char* pIter = &pBuffer[0];
 
 	//	Borrow parsing from CompVariable
 
@@ -129,7 +102,11 @@ char* MemValue::ParseFromString( char* pBuffer )
 			m_nSecondVarSize = varTemp.Size();
 		}
 		else
-			 m_fModifier = strtod( pIter, &pIter );
+		{
+			char* pOut;
+			m_fModifier = strtod( pIter, &pOut );
+			pIter = pOut;
+        }
 	}
 
 	return pIter;
@@ -188,7 +165,7 @@ void ValueSet::AddNewValue( MemValue nMemVal )
 	m_Values.push_back( nMemVal );
 }
 
-void ValueSet::ParseMemString( char* pChar )
+void ValueSet::ParseMemString( const char* pChar )
 {
 	do 
 	{
@@ -248,7 +225,7 @@ void RA_Leaderboard::LoadFromJSON( const Value& element )
 	}
 }
 
-void RA_Leaderboard::ParseLBData( char* pChar )
+void RA_Leaderboard::ParseLBData( const char* pChar )
 {
 	while( ( ( *pChar ) != '\n' ) && ( ( *pChar ) != '\0' ) )
 	{
@@ -258,48 +235,30 @@ void RA_Leaderboard::ParseLBData( char* pChar )
 		if( std::string( "STA:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-
-			//	Parse Start condition
-			do 
-			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-				
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_startCond.Add( nNewCond );
-			}
-			while( *pChar == '_' );
+			m_startCond.ParseFromString(pChar);
 		}
 		else if( std::string( "CAN:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-			//	Parse Cancel condition
-			do 
+			m_cancelCond.ParseFromString(pChar);
+
+			// temporary backwards compatibility support: all conditions in CANCEL should be OR'd:
+			if (m_cancelCond.GroupCount() == 1 && m_cancelCond.GetGroup(0).Count() > 1)
 			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-				
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_cancelCond.Add( nNewCond );
+				for (size_t i = 0; i < m_cancelCond.GetGroup(0).Count(); ++i)
+				{
+					m_cancelCond.AddGroup();
+					m_cancelCond.GetGroup(i + 1).Add(m_cancelCond.GetGroup(0).GetAt(i));
+				}
+
+				m_cancelCond.GetGroup(0).Clear();
 			}
-			while( *pChar == '_' );
+			// end backwards compatibility conversion
 		}
 		else if( std::string( "SUB:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
 			pChar += 4;
-			//	Parse Submit condition
-			do 
-			{
-				while( ( *pChar ) == ' ' || ( *pChar ) == '_' || ( *pChar ) == '|' )
-					pChar++; // Skip any chars up til this point :S
-
-				Condition nNewCond;
-				nNewCond.ParseFromString( pChar );
-				m_submitCond.Add( nNewCond );
-			}
-			while( *pChar == '_' );
+			m_submitCond.ParseFromString(pChar);
 		}
 		else if( std::string( "VAL:" ).compare( 0, 4, pChar, 0, 4 ) == 0 )
 		{
@@ -448,20 +407,20 @@ void RA_Leaderboard::Reset()
 {
 	m_bStarted = false;
 
-	m_startCond.Reset( true );
-	m_cancelCond.Reset( true );
-	m_submitCond.Reset( true );
+	m_startCond.Reset();
+	m_cancelCond.Reset();
+	m_submitCond.Reset();
 }
 
 void RA_Leaderboard::Test()
 {
-	BOOL bUnused;
+	bool bUnused;
 
 	//	Ensure these are always tested once every frame, to ensure delta
 	//	 variables work properly :)
-	BOOL bStartOK = m_startCond.Test( bUnused, bUnused, FALSE );
-	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused, TRUE );
-	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused, FALSE );
+	BOOL bStartOK = m_startCond.Test( bUnused, bUnused );
+	BOOL bCancelOK = m_cancelCond.Test( bUnused, bUnused );
+	BOOL bSubmitOK = m_submitCond.Test( bUnused, bUnused );
 
 	if ( m_bSubmitted )
 	{

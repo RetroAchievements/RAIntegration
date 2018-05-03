@@ -28,10 +28,10 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 	UINT nWidth = 0;
 	UINT nHeight = 0;
 
-	void *pvImageBits = NULL;
+	void *pvImageBits = nullptr;
 	BITMAPINFO bminfo;
-	HWND hWindow = NULL;
-	HDC hdcScreen = NULL;
+	HWND hWindow = nullptr;
+	HDC hdcScreen = nullptr;
 
 	WICPixelFormatGUID pixelFormat;
 
@@ -63,7 +63,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 		bminfo.bmiHeader.biCompression = BI_RGB;
 
 		hWindow = GetActiveWindow();
-		while( GetParent( hWindow ) != NULL )
+		while( GetParent( hWindow ) != nullptr )
 			hWindow = GetParent( hWindow );
 
 		// Get a DC for the full screen
@@ -79,9 +79,9 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 			}
 
 			//	TBD: check this. As a handle this should just be as-is, right?
-			hBitmapInOut = CreateDIBSection( hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, NULL, 0 );
+			hBitmapInOut = CreateDIBSection( hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, 0 );
 
-			ReleaseDC( NULL, hdcScreen );
+			ReleaseDC( nullptr, hdcScreen );
 
 			hr = hBitmapInOut ? S_OK : E_FAIL;
 		}
@@ -104,7 +104,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 	{
 		hr = pToRenderBitmapSource->CopyPixels(
 			//hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
-			NULL,
+			nullptr,
 			cbStride,
 			cbImage,
 			(BYTE*)pvImageBits );
@@ -114,7 +114,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource( IWICBitmapSource *pTo
 	if( FAILED( hr ) )
 	{
 		DeleteObject( hBitmapInOut );
-		hBitmapInOut = NULL;
+		hBitmapInOut = nullptr;
 	}
 
 	return hr;
@@ -124,12 +124,12 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 {
 	HRESULT hr = S_OK;;
 
-	g_UserImageFactoryInst.m_pIWICFactory = NULL;
-	g_UserImageFactoryInst.m_pOriginalBitmapSource = NULL;
+	g_UserImageFactoryInst.m_pIWICFactory = nullptr;
+	g_UserImageFactoryInst.m_pOriginalBitmapSource = nullptr;
 
-	HeapSetInformation( NULL, HeapEnableTerminationOnCorruption, NULL, 0 );
+	HeapSetInformation( nullptr, HeapEnableTerminationOnCorruption, nullptr, 0 );
 
-	hr = CoInitializeEx( NULL, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE );
+	hr = CoInitializeEx( nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE );
 
 	// Create WIC factory
 	//#define IID_PPV_ARGS(ppType) ((LPVOID*)(ppType))
@@ -141,7 +141,7 @@ BOOL InitializeUserImageFactory( HINSTANCE hInst )
 		&CLSID_WICImagingFactory,
 #endif
 
-		NULL,
+		nullptr,
 		CLSCTX_INPROC_SERVER,
 
 #if defined (__cplusplus)
@@ -201,7 +201,7 @@ HRESULT ConvertBitmapSource( RECT rcDest, IWICBitmapSource*& pToRenderBitmapSour
 				hr = pConverter->Initialize( static_cast<IWICBitmapSource*>( pScaler ),	// Input bitmap to convert
 											 GUID_WICPixelFormat32bppBGR,				//	&GUID_WICPixelFormat32bppBGR,
 											 WICBitmapDitherTypeNone,					// Specified dither patterm
-											 NULL,										// Specify a particular palette 
+											 nullptr,										// Specify a particular palette 
 											 0.f,										// Alpha threshold
 											 WICBitmapPaletteTypeCustom );				// Palette translation type
 
@@ -230,7 +230,7 @@ HBITMAP LoadOrFetchBadge( const std::string& sBadgeURI, const RASize& sz )
 		if( !RAWeb::HTTPRequestExists( RequestBadge, sBadgeURI ) && !RAWeb::HTTPResponseExists( RequestBadge, sBadgeURI ) )
 			RAWeb::CreateThreadedHTTPRequest( RequestBadge, args, sBadgeURI );
 
-		return NULL;
+		return nullptr;
 	}
 	else
 	{
@@ -250,7 +250,7 @@ HBITMAP LoadOrFetchUserPic( const std::string& sUserName, const RASize& sz )
 		if( !RAWeb::HTTPRequestExists( RequestUserPic, sUserName ) && !RAWeb::HTTPResponseExists( RequestUserPic, sUserName ) )
 			RAWeb::CreateThreadedHTTPRequest( RequestUserPic, args, sUserName );
 
-		return NULL;
+		return nullptr;
 	}
 	else
 	{

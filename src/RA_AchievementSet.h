@@ -54,7 +54,7 @@ public:
 	//	Take a copy of the achievement at nIter, add it and return a reference to it.
 	Achievement& Clone(unsigned int nIter);
 
-	//	Find achievement with ID, or NULL if it can't be found.
+	//	Find achievement with ID, or nullptr if it can't be found.
 	Achievement* Find(AchievementID nID);
 
 	//	Find index of the given achievement in the array list (useful for LBX lookups)

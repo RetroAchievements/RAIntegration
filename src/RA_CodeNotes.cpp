@@ -22,6 +22,7 @@ size_t CodeNotes::Load( const std::string& sFile )
 	Clear();
 	
 	SetCurrentDirectory(NativeStr( g_sHomeDir ).c_str());
+
 	std::ifstream ifile{ sFile, std::ios::binary };
 
 	// constructor calls open automatically and throws an exception, should rarely if not ever happen
@@ -30,6 +31,7 @@ size_t CodeNotes::Load( const std::string& sFile )
 	IStreamWrapper isw{ ifile };
 	doc.ParseStream(isw);
 	if (!doc.HasParseError())
+
 	{
 		// You know that assert gets compiled out in release mode right?
 		ASSERT(doc["CodeNotes"].IsArray());

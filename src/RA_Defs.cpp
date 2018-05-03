@@ -62,7 +62,7 @@ void RADebugLogNoFormat(const char* data)
 	OutputDebugString(NativeStr(data).c_str());
 
 	//SetCurrentDirectory( g_sHomeDir.c_str() );//?
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
 	{
 		fwrite(data, sizeof(char), strlen(data), pf);
@@ -92,7 +92,7 @@ void RADebugLog(const char* format, ...)
 	OutputDebugString(NativeStr(buf).c_str());
 
 	//SetCurrentDirectory( g_sHomeDir.c_str() );//?
-	FILE* pf = NULL;
+	FILE* pf = nullptr;
 	if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
 	{
 		fwrite(buf, sizeof(char), strlen(buf), pf);

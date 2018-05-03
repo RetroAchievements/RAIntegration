@@ -101,7 +101,7 @@ void AchievementOverlay::SelectNextTopLevelPage( BOOL bPressedRight )
 
 AchievementOverlay::AchievementOverlay()
 {
-	m_hOverlayBackground = NULL;
+	m_hOverlayBackground = nullptr;
 	m_nAchievementsSelectedItem = 0;
 	m_nFriendsSelectedItem = 0;
 	m_nMessagesSelectedItem = 0;
@@ -111,10 +111,10 @@ AchievementOverlay::AchievementOverlay()
 
 AchievementOverlay::~AchievementOverlay()
 {
-	if( m_hOverlayBackground != NULL )
+	if( m_hOverlayBackground != nullptr )
 	{
 		DeleteObject( m_hOverlayBackground );
-		m_hOverlayBackground = NULL;
+		m_hOverlayBackground = nullptr;
 	}
 }
 
@@ -141,7 +141,7 @@ void AchievementOverlay::Initialize( HINSTANCE hInst )
 	m_LatestNews.clear();
 
 	m_hOverlayBackground = LoadLocalPNG( RA_OVERLAY_BG_FILENAME, RASize( OVERLAY_WIDTH, OVERLAY_HEIGHT ) );
-	//if( m_hOverlayBackground == NULL )
+	//if( m_hOverlayBackground == nullptr )
 	//{
 	//	//	Backup
 	//	m_hOverlayBackground = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_RA_BACKGROUND) );
@@ -682,13 +682,13 @@ void AchievementOverlay::DrawFriendsPage( HDC hDC, int nDX, int nDY, const RECT&
 		if( (i+nOffset) < nNumFriends )
 		{
 			RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter( (i+nOffset) );
-			if( pFriend == NULL )
+			if( pFriend == nullptr )
 				continue;
 
-			if( pFriend->GetUserImage() == NULL && !pFriend->IsFetchingUserImage() )
+			if( pFriend->GetUserImage() == nullptr && !pFriend->IsFetchingUserImage() )
 				pFriend->LoadOrFetchUserImage();
 
-			if( pFriend->GetUserImage() != NULL )
+			if( pFriend->GetUserImage() != nullptr )
 				DrawImage( hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64 );
 
 			if( (m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i )
@@ -1371,12 +1371,12 @@ void AchievementOverlay::DrawAchievement( HDC hDC, const Achievement* pAch, int 
 
 	if( !bLocked )
 	{
-		if( pAch->BadgeImage() != NULL )
+		if( pAch->BadgeImage() != nullptr )
 			DrawImage( hDC, pAch->BadgeImage(), nX + nAchImageOffset, nY, 64, 64 );
 	}
 	else
 	{
-		if( pAch->BadgeImageLocked() != NULL )
+		if( pAch->BadgeImageLocked() != nullptr )
 			DrawImage( hDC, pAch->BadgeImageLocked(), nX + nAchImageOffset, nY, 64, 64 );
 	}
 
@@ -1510,7 +1510,7 @@ void AchievementOverlay::InitDirectX()
 	}
 
 	//LPDIRECTDRAW lpDD_Init;
-	//if (DirectDrawCreate(NULL, &lpDD_Init, NULL) != DD_OK)
+	//if (DirectDrawCreate(nullptr, &lpDD_Init, nullptr) != DD_OK)
 	//{
 	//	MessageBox( g_RAMainWnd, "DirectDrawCreate failed!", "Error!", MB_OK );
 	//	return;
@@ -1523,7 +1523,7 @@ void AchievementOverlay::InitDirectX()
 	//}
 
 	//lpDD_Init->Release();
-	//lpDD_Init = NULL;
+	//lpDD_Init = nullptr;
 
 	//m_lpDD->SetCooperativeLevel( g_RAMainWnd, DDSCL_NORMAL );
 
@@ -1532,16 +1532,16 @@ void AchievementOverlay::InitDirectX()
 
 void AchievementOverlay::ResetDirectX()
 {
-	//if( m_lpDD == NULL )
+	//if( m_lpDD == nullptr )
 	//	return;
 
 	//RECT rcTgtSize;
 	//SetRect( &rcTgtSize, 0, 0, 640, 480 );
 
-	//if( m_lpDDS_Overlay != NULL )
+	//if( m_lpDDS_Overlay != nullptr )
 	//{
 	//	m_lpDDS_Overlay->Release();
-	//	m_lpDDS_Overlay = NULL;
+	//	m_lpDDS_Overlay = nullptr;
 	//}
 
 	//DDSURFACEDESC2 ddsd;
@@ -1553,7 +1553,7 @@ void AchievementOverlay::ResetDirectX()
 	//ddsd.dwWidth = rcTgtSize.right - rcTgtSize.left;
 	//ddsd.dwHeight = rcTgtSize.bottom - rcTgtSize.top;
 
-	//HRESULT hr = m_lpDD->CreateSurface(&ddsd, &m_lpDDS_Overlay, NULL);
+	//HRESULT hr = m_lpDD->CreateSurface(&ddsd, &m_lpDDS_Overlay, nullptr);
 	//if( hr != DD_OK )
 	//{
 	//	assert(!"Cannot create overlay surface!");
@@ -1564,7 +1564,7 @@ void AchievementOverlay::ResetDirectX()
 
 void AchievementOverlay::Flip(HWND hWnd)
 {
-	//if( m_lpDDS_Overlay == NULL )
+	//if( m_lpDDS_Overlay == nullptr )
 	//	return;
 
 	//RECT rcDest;
@@ -1774,6 +1774,11 @@ API int _RA_UpdateOverlay( ControllerInput* pInput, float fDTime, bool Full_Scre
 API void _RA_RenderOverlay( HDC hDC, RECT* rcSize )
 {
 	g_AchievementOverlay.Render( hDC, rcSize );
+}
+
+API bool _RA_IsOverlayFullyVisible()
+{
+    return g_AchievementOverlay.IsFullyVisible();
 }
 
 API void _RA_InitDirectX()

@@ -16,6 +16,7 @@
 #include <array>
 
 
+
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
@@ -44,6 +45,7 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
+<<<<<<< HEAD
 #pragma warning(push, 1)
 
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
@@ -52,6 +54,12 @@
 #pragma warning(push, 1)
 // This is not needed the most recent version
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+=======
+
+#pragma warning(push, 1)
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+
+>>>>>>> com_smart_pointers
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
 #include "rapidjson/include/rapidjson/reader.h"
@@ -66,7 +74,12 @@
 #pragma warning(pop)
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
+<<<<<<< HEAD
 
+=======
+#pragma warning(pop)
+#endif	//RA_EXPORTS
+>>>>>>> com_smart_pointers
 
 
 using namespace std::string_literals;

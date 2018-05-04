@@ -20,16 +20,11 @@
 
 namespace
 {
-	const size_t MIN_RESULTS_TO_DUMP = 500000;
-	const size_t MIN_SEARCH_PAGE_SIZE = 50;
-
-	const char* COMP_STR[] = {
-		{ "EQUAL" },
-		{ "LESS THAN" },
-		{ "LESS THAN/EQUAL" },
-		{ "GREATER THAN" },
-		{ "GREATER THAN/EQUAL" },
-		{ "NOT EQUAL" } };
+inline constexpr auto MIN_RESULTS_TO_DUMP = std::size_t{ 500000 };
+inline constexpr auto MIN_SEARCH_PAGE_SIZE = std::size_t{ 50 };
+inline constexpr std::array<const char*, 6> COMP_STR {
+ "EQUAL", "LESS THAN", "LESS THAN/EQUAL", "GREATER THAN", "GREATER THAN/EQUAL", "NOT EQUAL" 
+};
 }
 
 Dlg_Memory g_MemoryDialog;
@@ -61,12 +56,7 @@ int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
 
-std::string ByteAddressToString(ByteAddress nAddr)
-{
-	static char buffer[16];
-	sprintf_s(buffer, "0x%06x", nAddr);
-	return std::string(buffer);
-}
+
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1664,7 +1654,7 @@ BOOL Dlg_Memory::IsActive() const
 	return(g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
 }
 
-void Dlg_Memory::ClearBanks()
+void Dlg_Memory::ClearBanks() noexcept
 {
 	if (m_hWnd == nullptr)
 		return;

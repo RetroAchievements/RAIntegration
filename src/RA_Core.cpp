@@ -33,7 +33,7 @@
 #include <codecvt>
 #include <direct.h>
 #include <io.h>		//	_access()
-
+#include <atlbase.h> // CComPtr
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
@@ -1618,35 +1618,40 @@ BOOL _FileExists(const std::string& sFileName)
 	}
 }
 
+
+
 std::string GetFolderFromDialog()
 {
 	std::string sRetVal;
-	//HRESULT hr = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
-	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-	if (hr == S_OK)
+
+
+
+	CComPtr<IFileOpenDialog> pDlg;
+	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
+		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
 		pDlg->SetOptions(FOS_PICKFOLDERS);
-		hr = pDlg->Show(nullptr);
-		if (hr == S_OK)
+
+		if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 		{
-			IShellItem* pItem = nullptr;
-			hr = pDlg->GetResult(&pItem);
-			if (hr == S_OK)
+			CComPtr<IShellItem> pItem;
+			if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 			{
 				LPWSTR pStr = nullptr;
-				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
-				if (hr == S_OK)
+				// Microsoft's tripping, primitives and typedefs don't have constructors
+				// static_assert(std::is_default_constructible_v<LPWSTR>);
+				if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 				{
 					sRetVal = Narrow(pStr);
+                    // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
+                    CoTaskMemFree(static_cast<LPVOID>(pStr));
+                    pStr = nullptr; // we didn't use new, so just reset it
 				}
-
-				pItem->Release();
+				pItem.Release();
 			}
 		}
-		pDlg->Release();
+		pDlg.Release(); // Ok, everythings nullified except the return
 	}
-	//CoUninitialize();
 	return sRetVal;
 }
 

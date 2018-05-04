@@ -3,11 +3,14 @@
 
 class Achievement;
 
+
+inline constexpr auto MAX_ACHIEVEMENTS = 200;
+inline constexpr auto MAX_TEXT_LEN     = 250;
+
 class Dlg_AchievementsReporter
 {
 public:
-	static const int MAX_ACHIEVEMENTS = 200;
-	static const int MAX_TEXT_LEN = 250;
+
 
 public:
 	enum ReporterColumns

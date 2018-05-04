@@ -11,12 +11,18 @@
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
 
+// Will leave it alone for now, but having these as raw pointers is a really bad idea
+
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert( SIZEOF_ARRAY( ACH_SETS ) == NumAchievementSetTypes, "Must match!" );
+// for now
+using AchievementSets = std::array<AchievementSet**, 3>;
+// can't be constexpr because AchievementSet isn't a literal type
+inline const AchievementSets ACH_SETS{ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+
+static_assert(ACH_SETS.size() == NumAchievementSetTypes, "Must match!" );
 
 AchievementSetType g_nActiveAchievementSet = Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
@@ -25,7 +31,7 @@ AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 void RASetAchievementCollection( AchievementSetType Type )
 {
 	g_nActiveAchievementSet = Type;
-	g_pActiveAchievements = *ACH_SETS[ Type ];
+	g_pActiveAchievements = *ACH_SETS.at(Type);
 }
 
 std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )
@@ -514,10 +520,10 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 				{
 					//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
 
-					RA_Leaderboard lb(LeaderboardsData[i]["ID"].GetUint());
+					RA_Leaderboard lb{ LeaderboardsData[i]["ID"].GetUint() };
 					lb.LoadFromJSON(LeaderboardsData[i]);
 
-					g_LeaderboardManager.AddLeaderboard(lb);
+					g_LeaderboardManager.AddLeaderboard(std::move(lb));
 				}
 			}
 			else

@@ -2,25 +2,21 @@
 
 #include "RA_Condition.h"
 
-class MemCandidate
+struct MemCandidate
 {
-public:
-	MemCandidate()
-	 :	m_nAddr( 0 ),
-		m_nLastKnownValue( 0 ),
-		m_bUpperNibble( FALSE ),
-		m_bHasChanged( FALSE )
-	{}
-	
-public:
-	unsigned int m_nAddr;
-	unsigned int m_nLastKnownValue;		//	A Candidate MAY be a 32-bit candidate!
-	bool m_bUpperNibble;				//	Used only for 4-bit comparisons
-	bool m_bHasChanged;
+	// If you can use 0 constructors, that's the best. Just use in-class initilizers
+	// Was this supposed be "ByteAddress"?
+	std::size_t m_nAddr{ 0_z };
+	std::size_t m_nLastKnownValue{ 0_z }; //	A Candidate MAY be a 32-bit candidate!
+	bool m_bUpperNibble{ false };		  //	Used only for 4-bit comparisons
+	bool m_bHasChanged{ false };
 };
 
-typedef unsigned char (_RAMByteReadFn)( unsigned int nOffs );
-typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+
+// putting it back
+typedef unsigned char(_RAMByteReadFn)(unsigned int nOffs);
+typedef  void(_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
+
 
 class MemManager
 {
@@ -28,31 +24,39 @@ private:
 	class BankData
 	{
 	public:
-		BankData() 
-		 :	Reader( nullptr ), Writer( nullptr ), BankSize( 0 ) 
-		{}
+		~BankData() noexcept {
+			// got a access violation before
+			Reader   = nullptr;
+			Writer   = nullptr;
+			BankSize = 0_z;
+		}
 
-		BankData( _RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize )
-		 :	Reader( pReadFn ), Writer( pWriteFn ), BankSize( nBankSize )
-		{}
+		BankData( _RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize ) noexcept :
+			Reader{ pReadFn }, Writer{ pWriteFn }, BankSize{ nBankSize } {}
 		
-	private:
-		//	Copying disabled
-		BankData( const BankData& );
-		BankData& operator=( BankData& );
-	
+		BankData( const BankData& ) = delete;
+		BankData& operator=( BankData& ) = delete;
+		// Moving invalidates pointers, meaning you cannot use the right side again
+		BankData(BankData&&) noexcept = default;
+		BankData& operator=(BankData&&) noexcept = default;
+		// parameterless constructor must be at the end or it will delete the rest
+		BankData() noexcept = default;
 	public:
-		_RAMByteReadFn* Reader;
-		_RAMByteWriteFn* Writer;
-		size_t BankSize;
+		_RAMByteReadFn * Reader{ nullptr };
+		_RAMByteWriteFn* Writer{ nullptr };
+		size_t BankSize{ 0_z };
 	};
 
 public:
-	MemManager();
-	virtual ~MemManager();
-
+	~MemManager() noexcept;
+    // You have a global so I guess no copying or moving
+	MemManager(const MemManager&) = delete;
+	MemManager& operator=(const MemManager&) = delete;
+	MemManager(MemManager&&) noexcept = delete;
+	MemManager& operator=(MemManager&&) noexcept = delete;
+	MemManager() = default;
 public:
-	void ClearMemoryBanks();
+	void ClearMemoryBanks() noexcept;
 	void AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize );
 	size_t NumMemoryBanks() const									{ return m_Banks.size(); }
 
@@ -89,14 +93,14 @@ public:
 
 private:
 	std::map<size_t, BankData> m_Banks;
-	unsigned short m_nActiveMemBank;
+	unsigned short m_nActiveMemBank{ 0_hu };
 
-	MemCandidate* m_Candidates;		//	Pointer to an array
-	size_t m_nNumCandidates;		//	Actual quantity of legal candidates
+	MemCandidate* m_Candidates{nullptr};		//	Pointer to an array
+	size_t m_nNumCandidates{ 0_z };		//	Actual quantity of legal candidates
 
-	ComparisonVariableSize m_nComparisonSizeMode;
-	bool m_bUseLastKnownValue;
-	size_t m_nTotalBankSize;
+	ComparisonVariableSize m_nComparisonSizeMode{ ComparisonVariableSize::SixteenBit };
+	bool m_bUseLastKnownValue{ true };
+	size_t m_nTotalBankSize{ 0_z };
 };
 
 extern MemManager g_MemManager;

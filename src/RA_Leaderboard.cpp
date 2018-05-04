@@ -10,7 +10,7 @@ RA_LeaderboardManager g_LeaderboardManager;
 
 namespace
 {
-	const char* FormatTypeToString[] =
+	inline constexpr std::array<const char*, RA_Leaderboard::Format__MAX> FormatTypeToString
 	{
 		"TIME",			//	TimeFrames
 		"TIMESECS",		//	TimeSecs
@@ -19,7 +19,6 @@ namespace
 		"VALUE",		//	Value
 		"OTHER",		//	Other
 	};
-	static_assert( SIZEOF_ARRAY( FormatTypeToString ) == RA_Leaderboard::Format__MAX, "These must match!" );
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -187,17 +186,13 @@ void ValueSet::Clear()
 }
 
 //////////////////////////////////////////////////////////////////////////
-RA_Leaderboard::RA_Leaderboard( const unsigned nLeaderboardID ) :
-	m_nID( nLeaderboardID ),
-	m_bStarted( false ),
-	m_bSubmitted( false ),
-	m_format( Format_Value )
+RA_Leaderboard::RA_Leaderboard( const LeaderboardID nLeaderboardID ) noexcept :
+	m_nID{ nLeaderboardID }
 {
+	// The rest are initilized automatically
 }
 
-RA_Leaderboard::~RA_Leaderboard()
-{
-}
+
 
 //{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 2","Description":"Complete this act in the fastest time!"},
 
@@ -683,10 +678,10 @@ void RA_LeaderboardManager::OnSubmitEntry( const Document& doc )
 	g_PopupWindows.LeaderboardPopups().ShowScoreboard( pLB->ID() );
 }
 
-void RA_LeaderboardManager::AddLeaderboard( const RA_Leaderboard& lb )
+void RA_LeaderboardManager::AddLeaderboard( RA_Leaderboard&& lb )
 {
 	if( g_bLeaderboardsActive )	//	If not, simply ignore them.
-		m_Leaderboards.push_back( lb );
+		m_Leaderboards.push_back( std::move(lb) );
 }
 
 void RA_LeaderboardManager::Test()

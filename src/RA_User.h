@@ -30,11 +30,18 @@ enum ActivityType
 class RAUser
 {
 public:
-	RAUser( const std::string& sUsername );
-	virtual ~RAUser();
+	// Noparam constructor won't throw so this shouldn't either, mark noexcept whenever you can (not blindly)
+	RAUser( const std::string& sUsername ) noexcept;
+	virtual ~RAUser() noexcept;
 
+	// Unique entries should not be copied by value, copying a nonliteral might throw anyway
+	RAUser(const RAUser&) = delete;
+	RAUser& operator=(const RAUser&) = delete;
+	RAUser(RAUser&&) noexcept = default;
+	RAUser& operator=(RAUser&&) noexcept = default;
+	RAUser() noexcept = default;
 public:
-	void FlushBitmap();
+	void FlushBitmap() noexcept;
 	void LoadOrFetchUserImage();
 
 	unsigned int GetScore() const					{ return m_nScore; }
@@ -52,12 +59,13 @@ public:
 	BOOL IsFetchingUserImage() const				{ return m_bFetchingUserImage; }
 	
 private:
-	/*const*/std::string	m_sUsername;
-	std::string				m_sActivity;
-	unsigned int			m_nScore;
 
-	HBITMAP					m_hUserImage;
-	BOOL					m_bFetchingUserImage;
+	std::string	 m_sUsername;
+	std::string	 m_sActivity;
+	unsigned int m_nScore{ 0U };
+
+	HBITMAP		 m_hUserImage{ nullptr };
+	BOOL		 m_bFetchingUserImage{ FALSE };
 };
 
 class LocalRAUser : public RAUser

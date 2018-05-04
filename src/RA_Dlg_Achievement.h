@@ -5,7 +5,7 @@
 #include <wtypes.h>
 #include <assert.h>
 
-const int MAX_TEXT_ITEM_SIZE = 80;
+constexpr auto MAX_TEXT_ITEM_SIZE = 80;
 
 //extern const char* g_sColTitles[];
 //extern const int g_nColSizes[];

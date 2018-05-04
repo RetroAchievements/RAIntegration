@@ -25,9 +25,13 @@ public:
 class Dlg_GameLibrary
 {
 public:
-	Dlg_GameLibrary();
-	~Dlg_GameLibrary();
-
+	~Dlg_GameLibrary() noexcept = default;
+	Dlg_GameLibrary(const Dlg_GameLibrary&) = delete;
+	Dlg_GameLibrary& operator=(const Dlg_GameLibrary&) = delete;
+	// We probably don't need to move if there's a global
+	Dlg_GameLibrary(Dlg_GameLibrary&&) noexcept = delete;
+	Dlg_GameLibrary& operator=(Dlg_GameLibrary&&) noexcept = delete;
+	Dlg_GameLibrary() = default; // might throw
 public:
 	//void DoModalDialog( HINSTANCE hInst, HWND hParent );
 	static INT_PTR CALLBACK s_GameLibraryProc( HWND, UINT, WPARAM, LPARAM );
@@ -63,7 +67,7 @@ private:
 	static bool ThreadProcessingActive;
 	
 private:
-	HWND m_hDialogBox;
+	HWND m_hDialogBox{ nullptr };
 
 	std::map<std::string, GameID> m_GameHashLibrary;
 	std::map<GameID, std::string> m_GameTitlesLibrary;

@@ -104,8 +104,12 @@ extern AchievementExamine g_AchExamine;
 class AchievementOverlay
 {
 public:
-	AchievementOverlay();
-	~AchievementOverlay();
+	~AchievementOverlay() noexcept;
+	AchievementOverlay(const AchievementOverlay&) = delete;
+	AchievementOverlay& operator=(const AchievementOverlay&) = delete;
+	AchievementOverlay(AchievementOverlay&&) = delete;
+	AchievementOverlay& operator=(AchievementOverlay&&) = delete;
+	AchievementOverlay() noexcept = default;
 
 	void Initialize( HINSTANCE hInst );
 
@@ -162,33 +166,42 @@ public:
 	};
 
 private:
-	int	m_nAchievementsScrollOffset;
-	int	m_nFriendsScrollOffset;
-	int	m_nMessagesScrollOffset;
-	int	m_nNewsScrollOffset;
-	int	m_nLeaderboardScrollOffset;
+	/*	m_hOverlayBackground = nullptr;
+	m_nAchievementsSelectedItem = 0;
+	m_nFriendsSelectedItem = 0;
+	m_nMessagesSelectedItem = 0;
+	m_nNewsSelectedItem = 0;
+	m_nLeaderboardSelectedItem = 0;*/
 
-	int	m_nAchievementsSelectedItem;
-	int	m_nFriendsSelectedItem;
-	int	m_nMessagesSelectedItem;
-	int	m_nNewsSelectedItem;
-	int	m_nLeaderboardSelectedItem;
+	int	m_nAchievementsScrollOffset{ 0 };
+	int	m_nFriendsScrollOffset{ 0 };
+	int	m_nMessagesScrollOffset{ 0 };
+	int	m_nNewsScrollOffset{ 0 };
+	int	m_nLeaderboardScrollOffset{ 0 };
 
-	mutable int m_nNumAchievementsBeingRendered;
-	mutable int m_nNumFriendsBeingRendered;
-	mutable int m_nNumLeaderboardsBeingRendered;
+	int	m_nAchievementsSelectedItem{ 0 };
+	int	m_nFriendsSelectedItem{ 0 };
+	int	m_nMessagesSelectedItem{ 0 };
+	int	m_nNewsSelectedItem{ 0 };
+	int	m_nLeaderboardSelectedItem{ 0 };
 
-	BOOL					m_bInputLock;	//	Waiting for pad release
+	mutable int m_nNumAchievementsBeingRendered{ 0 };
+	mutable int m_nNumFriendsBeingRendered{ 0 };
+	mutable int m_nNumLeaderboardsBeingRendered{ 0 };
+
+	BOOL					m_bInputLock{ FALSE };	//	Waiting for pad release
 	std::vector<NewsItem>	m_LatestNews;
-	TransitionState			m_nTransitionState;
-	float					m_fTransitionTimer;
+	TransitionState			m_nTransitionState{ TransitionState::TS_OFF };
+	float					m_fTransitionTimer{ 0.0f };
 
+	// This looks questionable
 	OverlayPage				m_Pages[ 5 ];
-	unsigned int			m_nPageStackPointer;
+	unsigned int			m_nPageStackPointer{ 0U };
 
 	//HBITMAP m_hLockedBitmap;	//	Cached	
-	HBITMAP m_hOverlayBackground;
+	HBITMAP m_hOverlayBackground{ nullptr };
 
+	// Are these even used?
 	LPDIRECTDRAW4 m_lpDD;
 	LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay;
 };

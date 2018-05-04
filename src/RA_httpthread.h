@@ -64,7 +64,43 @@ enum UploadType
 	NumUploadTypes
 };
 
-extern const char* RequestTypeToString[];
+using RequestTypes = std::array<const char*, NumRequestTypes>;
+using UploadTypes  = std::array<const char*, NumUploadTypes>;
+
+inline constexpr RequestTypes RequestTypeToString
+{
+	"RequestLogin",
+
+	"RequestScore",
+	"RequestNews",
+	"RequestPatch",
+	"RequestLatestClientPage",
+	"RequestRichPresence",
+	"RequestAchievementInfo",
+	"RequestLeaderboardInfo",
+	"RequestCodeNotes",
+	"RequestFriendList",
+	"RequestBadgeIter",
+	"RequestUnlocks",
+	"RequestHashLibrary",
+	"RequestGamesList",
+	"RequestAllProgress",
+	"RequestGameID",
+
+	"RequestPing",
+	"RequestPostActivity",
+	"RequestSubmitAwardAchievement",
+	"RequestSubmitCodeNote",
+	"RequestSubmitLeaderboardEntry",
+	"RequestSubmitAchievementData",
+	"RequestSubmitTicket",
+	"RequestSubmitNewTitleEntry",
+
+	"RequestUserPic",
+	"RequestBadge",
+
+	"STOP_THREAD",
+};
 
 typedef std::map<char, std::string> PostArgs;
 

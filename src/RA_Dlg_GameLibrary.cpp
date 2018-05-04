@@ -25,12 +25,12 @@
 
 namespace
 {
-	const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-	const int COL_SIZE[] = { 30, 230, 110, 170 };
-	static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-	const bool bCancelScan = false;
+inline constexpr auto col_max{ 4 };
+inline constexpr std::array<const char*, col_max> COL_TITLE{ "ID", "Game Title", "Completion", "File Path" };
+inline constexpr std::array<int, col_max> COL_SIZE{ 30, 230, 110, 170 };
+inline constexpr auto bCancelScan{ false };
 
-	std::mutex mtx;
+std::mutex mtx;
 }
 
 //static 
@@ -90,14 +90,6 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 //std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
-Dlg_GameLibrary::Dlg_GameLibrary()
-	: m_hDialogBox(nullptr)
-{
-}
-
-Dlg_GameLibrary::~Dlg_GameLibrary()
-{
-}
 
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {

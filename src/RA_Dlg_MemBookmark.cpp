@@ -832,13 +832,9 @@ std::string Dlg_MemBookmark::ImportDialog()
 	}
 
 	IFileOpenDialog* pDlg = nullptr;
-<<<<<<< HEAD
+
 	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
-=======
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-	if (hr == S_OK)
->>>>>>> global_carrays_to_stdarray
 	{
 		hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front());
 		if (hr == S_OK)
@@ -854,11 +850,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 					hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
 					if (hr == S_OK)
 					{
-<<<<<<< HEAD
 						str = ra::Narrow( pStr );
-=======
-						str = Narrow(pStr);
->>>>>>> global_carrays_to_stdarray
 					}
 
 					pItem->Release();

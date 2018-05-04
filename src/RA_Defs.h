@@ -44,14 +44,14 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-#pragma warning(push, 1)
-
-#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
 #pragma warning(push, 1)
+
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+
+
 // This is not needed the most recent version
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
 #include "rapidjson/include/rapidjson/reader.h"
@@ -59,10 +59,7 @@
 #include "rapidjson/include/rapidjson/filestream.h"
 #include "rapidjson/include/rapidjson/stringbuffer.h"
 #include "rapidjson/include/rapidjson/error/en.h"
-<<<<<<< HEAD
-=======
 
->>>>>>> global_carrays_to_stdarray
 #pragma warning(pop)
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;

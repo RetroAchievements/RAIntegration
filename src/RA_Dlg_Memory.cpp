@@ -20,16 +20,11 @@
 
 namespace
 {
-	const size_t MIN_RESULTS_TO_DUMP = 500000;
-	const size_t MIN_SEARCH_PAGE_SIZE = 50;
-
-	const char* COMP_STR[] = {
-		{ "EQUAL" },
-		{ "LESS THAN" },
-		{ "LESS THAN/EQUAL" },
-		{ "GREATER THAN" },
-		{ "GREATER THAN/EQUAL" },
-		{ "NOT EQUAL" } };
+inline constexpr auto MIN_RESULTS_TO_DUMP = std::size_t{ 500000 };
+inline constexpr auto MIN_SEARCH_PAGE_SIZE = std::size_t{ 50 };
+inline constexpr std::array<const char*, 6> COMP_STR {
+ "EQUAL", "LESS THAN", "LESS THAN/EQUAL", "GREATER THAN", "GREATER THAN/EQUAL", "NOT EQUAL" 
+};
 }
 
 Dlg_Memory g_MemoryDialog;
@@ -61,12 +56,7 @@ int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
 
-std::string ByteAddressToString(ByteAddress nAddr)
-{
-	static char buffer[16];
-	sprintf_s(buffer, "0x%06x", nAddr);
-	return std::string(buffer);
-}
+
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -954,6 +944,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			{
 				case IDC_RA_MEM_LIST:
 				{
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					if ( ( (LPNMHDR)lParam )->code == NM_CLICK )
 					{
 						int nSelect = ListView_GetNextItem( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), -1, LVNI_FOCUSED );

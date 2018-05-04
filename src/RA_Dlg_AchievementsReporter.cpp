@@ -12,14 +12,19 @@
 
 namespace
 {
-	const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
-	const int COL_SIZE[] = { 19, 105, 205, 75, 62 };
-	static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-
-	const char* PROBLEM_STR[] = { "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
+inline constexpr auto max_cols{ 6 };
+inline constexpr std::array<const char*, max_cols> COL_TITLE{ "", "Title", "Description", "Author", "Achieved?" };
+inline constexpr std::array<int, max_cols> COL_SIZE{ 19, 105, 205, 75, 62 };
+inline constexpr std::array<const char*, 3> PROBLEM_STR{ 
+	"Unknown", "Triggers at wrong time", "Didn't trigger at all" 
+};
 }
 
 int Dlg_AchievementsReporter::ms_nNumOccupiedRows = 0;
+
+
+// Doing this as a 2d std::array is possible, you just need to make the capacity of the string MAX_TEXT_LEN - 16
+// -16 because the capacity is always 16 more than the size in standard C++
 char Dlg_AchievementsReporter::ms_lbxData[MAX_ACHIEVEMENTS][NumReporterColumns][MAX_TEXT_LEN];
 
 Dlg_AchievementsReporter g_AchievementsReporterDialog;

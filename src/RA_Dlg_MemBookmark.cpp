@@ -7,6 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <atlbase.h> // CComPtr
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,15 +20,13 @@ int nSelSubItemBM;
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-	const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
+inline constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+inline constexpr std::array<int, 5> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 }
 
-const COMDLG_FILTERSPEC c_rgFileTypes[] =
-{
-	{ L"Text Document (*.txt)",       L"*.txt" }
-};
+
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+
 
 enum BookmarkSubItems
 {
@@ -59,6 +58,7 @@ long _stdcall EditProcBM( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
 			ZeroMemory( &lvDispinfo, sizeof( LV_DISPINFO ) );
 			lvDispinfo.hdr.hwndFrom = hwnd;
 			lvDispinfo.hdr.idFrom = GetDlgCtrlID( hwnd );
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 			lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 			lvDispinfo.item.mask = LVIF_TEXT;
 			lvDispinfo.item.iItem = nSelItemBM;
@@ -303,6 +303,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			switch ( LOWORD( wParam ) )
 			{
 				case IDC_RA_LBX_ADDRESSES:
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					if ( ( (LPNMHDR)lParam )->code == NM_CLICK )
 					{
 						hList = GetDlgItem( hDlg, IDC_RA_LBX_ADDRESSES );
@@ -312,6 +313,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 						if ( nSelect == -1 )
 							break;
 					}
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					else if ( ( (LPNMHDR)lParam )->code == NM_DBLCLK )
 					{
 						hList = GetDlgItem( hDlg, IDC_RA_LBX_ADDRESSES );
@@ -576,7 +578,7 @@ void Dlg_MemBookmark::AddAddress()
 	// Fetch Memory Address from Memory Inspector
 	TCHAR buffer[ 256 ];
 	GetDlgItemText( g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256 );
-	unsigned int nAddr = strtol( Narrow( buffer ).c_str(), nullptr, 16 );
+	unsigned int nAddr = strtol(ra::Narrow( buffer ).c_str(), nullptr, 16 );
 	NewBookmark->SetAddress( nAddr );
 
 	// Check Data Type
@@ -705,50 +707,60 @@ void Dlg_MemBookmark::ExportJSON()
 	defaultDir.erase ( 0, 2 ); // Removes the characters (".\\")
 	defaultDir = g_sHomeDir + defaultDir;
 
-	IFileSaveDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
+
+	CComPtr<IFileSaveDialog> pDlg;
+	
+	if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
+        reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
-			char defaultFileName[ 512 ];
-			sprintf_s ( defaultFileName, 512, "%s-Bookmarks.txt", std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
-			hr = pDlg->SetFileName( Widen( defaultFileName ).c_str() );
-			if ( hr == S_OK )
+            // Does this really need a limit?
+            std::string defaultFileName;
+            defaultFileName.reserve(512); // gives it a cap of 512+16 to prevent overflows but deallocates
+            // for now
+			sprintf_s ( defaultFileName.data(), 512, "%s-Bookmarks.txt",
+                std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
+			
+			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
 			{
 				PIDLIST_ABSOLUTE pidl;
-				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), nullptr, &pidl, SFGAO_FOLDER, 0 );
-				if ( hr == S_OK )
+
+				
+				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr); SUCCEEDED(hr))
 				{
-					IShellItem* pItem = nullptr;
-					SHCreateShellItem( nullptr, nullptr, pidl, &pItem );
-					hr = pDlg->SetDefaultFolder( pItem );
-					if ( hr == S_OK )
+					CComPtr<IShellItem> pItem;
+					SHCreateShellItem(nullptr, nullptr, pidl, &pItem );
+					
+					if (hr = pDlg->SetDefaultFolder(pItem); SUCCEEDED(hr))
 					{
 						pDlg->SetDefaultExtension( L"txt" );
-						hr = pDlg->Show( nullptr );
-						if ( hr == S_OK )
+						
+						if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 						{
 
-							hr = pDlg->GetResult( &pItem );
-							if ( hr == S_OK )
+							
+							if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 							{
 								LPWSTR pStr = nullptr;
-								hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-								if ( hr == S_OK )
+								
+								if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 								{
 									Document doc;
-									Document::AllocatorType& allocator = doc.GetAllocator();
+                                    auto& allocator = doc.GetAllocator();
 									doc.SetObject();
 
 									Value bookmarks( kArrayType );
-									for ( MemBookmark* bookmark : m_vBookmarks )
+                                    // We really shouldn't use pointers if we don't have too
+                                    // This will still use the pointer however, but that's for another time
+									for (auto bookmark : m_vBookmarks )
 									{
 										Value item( kObjectType );
-										char buffer[ 256 ];
-										sprintf_s( buffer, Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
-										Value s( buffer, allocator );
+										std::string buffer;
+                                        buffer.reserve(256);
+										sprintf_s( buffer.data(), 256, Narrow( bookmark->Description() ).c_str(), buffer.length() );
+                                        Value s{ buffer.c_str(), allocator };
 
 										item.AddMember( "Description", s, allocator );
 										item.AddMember( "Address", bookmark->Address(), allocator );
@@ -758,10 +770,12 @@ void Dlg_MemBookmark::ExportJSON()
 									}
 									doc.AddMember( "Bookmarks", bookmarks, allocator );
 
-									_WriteBufferToFile( Narrow( pStr ), doc );
+									_WriteBufferToFile(ra::Narrow( pStr ), doc );
+									CoTaskMemFree(static_cast<LPVOID>(pStr));
+									pStr = nullptr;
 								}
 
-								pItem->Release();
+								pItem.Release();
 								ILFree( pidl );
 							}
 						}
@@ -769,7 +783,7 @@ void Dlg_MemBookmark::ExportJSON()
 				}
 			}
 		}
-		pDlg->Release();
+		pDlg.Release();
 	}
 }
 
@@ -826,42 +840,50 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
 	std::string str;
 
-	if ( g_pCurrentGameData->GetGameID() == 0 )
+	if (g_pCurrentGameData->GetGameID() == 0)
 	{
-		MessageBox( nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK );
+		MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
 		return str;
 	}
 
-	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
+	// Never noticed this, nearly identical to the on in RA_Core
+	CComPtr<IFileOpenDialog> pDlg;
+
+
+	// Keep the scope as local as possible
+	
+	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
+		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
-		if ( hr == S_OK )
+		// N.B. If you want to do more than one at a time it needs to be in a loop
+		
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
-			hr = pDlg->Show( nullptr );
-			if ( hr == S_OK )
+			
+			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
 			{
-				IShellItem* pItem = nullptr;
-				hr = pDlg->GetResult( &pItem );
-				if ( hr == S_OK )
+				CComPtr<IShellItem> pItem;
+				
+				if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 				{
-					LPWSTR pStr = nullptr;
-					hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pStr );
-					if ( hr == S_OK )
+                    LPWSTR pStr = nullptr;
+					
+					if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
 					{
 						str = Narrow( pStr );
+						CoTaskMemFree(static_cast<LPVOID>(pStr));
+						pStr = nullptr;
 					}
 
-					pItem->Release();
+					pItem.Release();
 				}
 			}
 		}
-		pDlg->Release();
+		pDlg.Release();
 	}
 
 	return str;
-}
+} // end function ImportDialog
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {

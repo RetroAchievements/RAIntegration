@@ -12,6 +12,7 @@
 #include <stack>
 #include <thread>
 #include <shlobj.h>
+#include <iomanip>
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -25,12 +26,12 @@
 
 namespace
 {
-	const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-	const int COL_SIZE[] = { 30, 230, 110, 170 };
-	static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-	const bool bCancelScan = false;
+inline constexpr auto col_max{ 4 };
+inline constexpr std::array<const char*, col_max> COL_TITLE{ "ID", "Game Title", "Completion", "File Path" };
+inline constexpr std::array<int, col_max> COL_SIZE{ 30, 230, 110, 170 };
+inline constexpr auto bCancelScan{ false };
 
-	std::mutex mtx;
+std::mutex mtx;
 }
 
 //static 
@@ -185,9 +186,13 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
 				if (nNumAchievements > 0)
 				{
 					const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-					char bufPct[256];
-					sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
-					sstr << bufPct;
+					auto tmp_str{ sstr.str() };
+					sstr.str(""); // you have to clear the stream or there will be unexpected results
+					auto fPct{ (static_cast<float>(nNumEarnedTotal) / static_cast<float>(nNumAchievements)) * 100.0f };
+
+					// It shows up like this, is it correct?
+					// "17 (17) / 84 (40.5%)"
+					sstr << std::fixed << tmp_str << " (" << std::setprecision(1) << fPct << "%)";
 				}
 
 				GameProgressOut[nID] = sstr.str();

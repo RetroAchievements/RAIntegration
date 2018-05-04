@@ -15,7 +15,7 @@
 #include <map>
 #include <array>
 
-
+#include <CppCoreCheck/warnings.h> // To suppress some warnings that can't be helped
 
 #ifndef RA_EXPORTS
 

@@ -944,6 +944,7 @@ INT_PTR Dlg_Memory::MemoryProc( HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPar
 			{
 				case IDC_RA_MEM_LIST:
 				{
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					if ( ( (LPNMHDR)lParam )->code == NM_CLICK )
 					{
 						int nSelect = ListView_GetNextItem( GetDlgItem( hDlg, IDC_RA_MEM_LIST ), -1, LVNI_FOCUSED );

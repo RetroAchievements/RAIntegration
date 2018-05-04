@@ -58,6 +58,7 @@ long _stdcall EditProcBM( HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam )
 			ZeroMemory( &lvDispinfo, sizeof( LV_DISPINFO ) );
 			lvDispinfo.hdr.hwndFrom = hwnd;
 			lvDispinfo.hdr.idFrom = GetDlgCtrlID( hwnd );
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 			lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 			lvDispinfo.item.mask = LVIF_TEXT;
 			lvDispinfo.item.iItem = nSelItemBM;
@@ -302,6 +303,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 			switch ( LOWORD( wParam ) )
 			{
 				case IDC_RA_LBX_ADDRESSES:
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					if ( ( (LPNMHDR)lParam )->code == NM_CLICK )
 					{
 						hList = GetDlgItem( hDlg, IDC_RA_LBX_ADDRESSES );
@@ -311,6 +313,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc( HWND hDlg, UINT uMsg, WPARAM wPa
 						if ( nSelect == -1 )
 							break;
 					}
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 					else if ( ( (LPNMHDR)lParam )->code == NM_DBLCLK )
 					{
 						hList = GetDlgItem( hDlg, IDC_RA_LBX_ADDRESSES );

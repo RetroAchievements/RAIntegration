@@ -339,6 +339,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 		ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
 		lvDispinfo.hdr.hwndFrom = hwnd;
 		lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 		lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 		lvDispinfo.item.mask = LVIF_TEXT;
 		lvDispinfo.item.iItem = nSelItem;
@@ -396,6 +397,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 			ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
 			lvDispinfo.hdr.hwndFrom = hwnd;
 			lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 			lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 			lvDispinfo.item.mask = LVIF_TEXT;
 			lvDispinfo.item.iItem = nSelItem;
@@ -427,6 +429,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 		ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
 		lvDispinfo.hdr.hwndFrom = hwnd;
 		lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 		lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 		lvDispinfo.item.mask = LVIF_TEXT;
 		lvDispinfo.item.iItem = nSelItem;
@@ -1483,6 +1486,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 				ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
 				lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
 				lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
+#pragma warning(suppress : CPPCORECHECK_ARITHMETIC_WARNINGS)
 				lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 				lvDispinfo.item.mask = LVIF_TEXT;
 				lvDispinfo.item.iItem = nSelItem;

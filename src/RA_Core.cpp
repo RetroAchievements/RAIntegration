@@ -1623,19 +1623,12 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
 	std::string sRetVal;
-<<<<<<< HEAD
-	//HRESULT hr = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
-	IFileOpenDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-	if (hr == S_OK)
-=======
-	// let me check: these are to check if they need initilizers or not, commented out most of it
+
 
 
 	CComPtr<IFileOpenDialog> pDlg;
 	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
 		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
->>>>>>> com_smart_pointers
 	{
 		pDlg->SetOptions(FOS_PICKFOLDERS);
 
@@ -1644,7 +1637,7 @@ std::string GetFolderFromDialog()
 			CComPtr<IShellItem> pItem;
 			if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
 			{
-				auto pStr = LPWSTR{};
+				LPWSTR pStr = nullptr;
 				// Microsoft's tripping, primitives and typedefs don't have constructors
 				// static_assert(std::is_default_constructible_v<LPWSTR>);
 				if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
@@ -1652,13 +1645,13 @@ std::string GetFolderFromDialog()
 					sRetVal = Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
-                    pStr = LPWSTR{}; // we didn't use new, so just reset it
-				} // end if
+                    pStr = nullptr; // we didn't use new, so just reset it
+				}
 				pItem.Release();
-			} // end if
-		} // end if
+			}
+		}
 		pDlg.Release(); // Ok, everythings nullified except the return
-	} // end if
+	}
 	return sRetVal;
 }
 

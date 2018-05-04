@@ -77,7 +77,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 			if (hBitmapInOut)
 			{
 				DeleteBitmap(hBitmapInOut);
-			} // end if
+			}
 
 			//	TBD: check this. As a handle this should just be as-is, right?
 			hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, DWORD{});
@@ -85,20 +85,20 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 			ReleaseDC(nullptr, hdcScreen);
 
 			hr = hBitmapInOut ? S_OK : E_FAIL;
-		} // end if
-	} // end if
+		}
+	}
 
 	if (SUCCEEDED(hr))
 	{
 		// Size of a scan line represented in bytes: 4 bytes each pixel
 		hr = UIntMult(nWidth, sizeof(ARGB), &cbStride);
-	} // end if
+	}
 
 	if (SUCCEEDED(hr))
 	{
 		// Size of the image, represented in bytes
 		hr = UIntMult(cbStride, nHeight, &cbImage);
-	} // end if
+	}
 
 	// Extract the image into the HBITMAP    
 	if (SUCCEEDED(hr))
@@ -108,14 +108,14 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 			cbStride,
 			cbImage,
 			static_cast<BYTE*>(pvImageBits));
-	} // end if
+	}
 
 	// Image Extraction failed, clear allocated memory
 	if (FAILED(hr))
 	{
 		DeleteBitmap(hBitmapInOut);
 		hBitmapInOut = nullptr;
-	} // end if
+	}
 
 	return hr;
 } // end function UserImageFactory_CreateDIBSectionFromBitmapSource

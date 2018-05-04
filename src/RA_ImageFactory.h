@@ -13,17 +13,8 @@ struct IWICImagingFactory;
 
 struct UserImageFactoryVars
 {
-<<<<<<< HEAD
-public:
-	UserImageFactoryVars() :m_pOriginalBitmapSource( nullptr ), m_pIWICFactory( nullptr ) {}
-
-public:
-	IWICBitmapSource* m_pOriginalBitmapSource;
-	IWICImagingFactory* m_pIWICFactory; 
-=======
 	CComPtr<IWICBitmapSource> m_pOriginalBitmapSource;
 	CComPtr<IWICImagingFactory> m_pIWICFactory;
->>>>>>> com_smart_pointers
 };
 
 _Success_(return != 0)

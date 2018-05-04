@@ -181,16 +181,13 @@ private:
 	unsigned int	m_nCurrentHits;
 };
 
-<<<<<<< HEAD
-class ConditionGroup
-=======
+
 inline constexpr std::array<const char*, Condition::NumConditionTypes> CONDITIONTYPE_STR{
 	"", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits"
 };
 
 
-class ConditionSet
->>>>>>> global_carrays_to_stdarray
+class ConditionGroup
 {
 public:
 	void SerializeAppend(std::string& buffer) const;

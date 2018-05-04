@@ -7,11 +7,7 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
-<<<<<<< HEAD
-#include <atlbase.h>
-=======
 #include <atlbase.h> // CComPtr
->>>>>>> com_smart_pointers
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -708,23 +704,14 @@ void Dlg_MemBookmark::ExportJSON()
 	defaultDir.erase ( 0, 2 ); // Removes the characters (".\\")
 	defaultDir = g_sHomeDir + defaultDir;
 
-<<<<<<< HEAD
-	IFileSaveDialog* pDlg = nullptr;
-	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
-	{
-		hr = pDlg->SetFileTypes( c_rgFileTypes.size(), &c_rgFileTypes.front() );
-		if ( hr == S_OK )
-=======
-    // First time noticing this
+
 	CComPtr<IFileSaveDialog> pDlg;
 	
 	if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
         reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
 	{
 		
-		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); hr == S_OK )
->>>>>>> com_smart_pointers
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
             // Does this really need a limit?
             std::string defaultFileName;
@@ -736,23 +723,14 @@ void Dlg_MemBookmark::ExportJSON()
 			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
 			{
 				PIDLIST_ABSOLUTE pidl;
-<<<<<<< HEAD
-				hr = SHParseDisplayName( Widen( defaultDir ).c_str(), nullptr, &pidl, SFGAO_FOLDER, 0 );
-				if ( hr == S_OK )
-				{
-					IShellItem* pItem = nullptr;
-					SHCreateShellItem( nullptr, nullptr, pidl, &pItem );
-					hr = pDlg->SetDefaultFolder( pItem );
-					if ( hr == S_OK )
-=======
+
 				
-				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), NULL, &pidl, SFGAO_FOLDER, 0); SUCCEEDED(hr))
+				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr); SUCCEEDED(hr))
 				{
 					CComPtr<IShellItem> pItem;
-					SHCreateShellItem( NULL, NULL, pidl, &pItem );
+					SHCreateShellItem(nullptr, nullptr, pidl, &pItem );
 					
 					if (hr = pDlg->SetDefaultFolder(pItem); SUCCEEDED(hr))
->>>>>>> com_smart_pointers
 					{
 						pDlg->SetDefaultExtension( L"txt" );
 						
@@ -776,16 +754,10 @@ void Dlg_MemBookmark::ExportJSON()
 									for (auto bookmark : m_vBookmarks )
 									{
 										Value item( kObjectType );
-<<<<<<< HEAD
-										char buffer[ 256 ];
-										sprintf_s( buffer, ra::Narrow( bookmark->Description() ).c_str(), sizeof( buffer ) );
-										Value s( buffer, allocator );
-=======
 										std::string buffer;
                                         buffer.reserve(256);
 										sprintf_s( buffer.data(), 256, Narrow( bookmark->Description() ).c_str(), buffer.length() );
                                         Value s{ buffer.c_str(), allocator };
->>>>>>> com_smart_pointers
 
 										item.AddMember( "Description", s, allocator );
 										item.AddMember( "Address", bookmark->Address(), allocator );
@@ -795,13 +767,9 @@ void Dlg_MemBookmark::ExportJSON()
 									}
 									doc.AddMember( "Bookmarks", bookmarks, allocator );
 
-<<<<<<< HEAD
 									_WriteBufferToFile(ra::Narrow( pStr ), doc );
-=======
-									_WriteBufferToFile( Narrow( pStr ), doc );
-                                    CoTaskMemFree(static_cast<LPVOID>(pStr));
-                                    pStr = nullptr;
->>>>>>> com_smart_pointers
+									CoTaskMemFree(static_cast<LPVOID>(pStr));
+									pStr = nullptr;
 								}
 
 								pItem.Release();
@@ -869,51 +837,16 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
 	std::string str;
 
-<<<<<<< HEAD
 	if (g_pCurrentGameData->GetGameID() == 0)
-=======
-	// With how repetive this is, it should be it's own function
-	if ( g_pCurrentGameData->GetGameID() == 0 )
->>>>>>> com_smart_pointers
 	{
 		MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
 		return str;
-	} // end if
+	}
 
 	// Never noticed this, nearly identical to the on in RA_Core
 	CComPtr<IFileOpenDialog> pDlg;
 
-<<<<<<< HEAD
-	IFileOpenDialog* pDlg = nullptr;
-<<<<<<< HEAD
-	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
-	if ( hr == S_OK )
-=======
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-	if (hr == S_OK)
->>>>>>> global_carrays_to_stdarray
-	{
-		hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front());
-		if (hr == S_OK)
-		{
-			hr = pDlg->Show(nullptr);
-			if (hr == S_OK)
-			{
-				IShellItem* pItem = nullptr;
-				hr = pDlg->GetResult(&pItem);
-				if (hr == S_OK)
-				{
-					LPWSTR pStr = nullptr;
-					hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
-					if (hr == S_OK)
-					{
-<<<<<<< HEAD
-						str = ra::Narrow( pStr );
-=======
-						str = Narrow(pStr);
->>>>>>> global_carrays_to_stdarray
-					}
-=======
+
 	// Keep the scope as local as possible
 	
 	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
@@ -921,7 +854,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 	{
 		// N.B. If you want to do more than one at a time it needs to be in a loop
 		
-		if (hr = pDlg->SetFileTypes(ARRAYSIZE(c_rgFileTypes), c_rgFileTypes); SUCCEEDED(hr))
+		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
 		{
 			
 			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
@@ -937,15 +870,14 @@ std::string Dlg_MemBookmark::ImportDialog()
 						str = Narrow( pStr );
 						CoTaskMemFree(static_cast<LPVOID>(pStr));
 						pStr = nullptr;
-					} // end if
->>>>>>> com_smart_pointers
+					}
 
 					pItem.Release();
-				} // end if
-			} // end if
-		} // end if
+				}
+			}
+		}
 		pDlg.Release();
-	} // end if
+	}
 
 	return str;
 } // end function ImportDialog

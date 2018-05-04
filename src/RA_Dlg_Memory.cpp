@@ -1654,7 +1654,7 @@ BOOL Dlg_Memory::IsActive() const
 	return(g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
 }
 
-void Dlg_Memory::ClearBanks()
+void Dlg_Memory::ClearBanks() noexcept
 {
 	if (m_hWnd == nullptr)
 		return;

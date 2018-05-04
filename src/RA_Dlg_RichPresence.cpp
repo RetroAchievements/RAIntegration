@@ -64,16 +64,10 @@ INT_PTR CALLBACK Dlg_RichPresence::s_RichPresenceDialogProc(HWND hDlg, UINT uMsg
 	return g_RichPresenceDialog.RichPresenceDialogProc( hDlg, uMsg, wParam, lParam );
 }
 
-Dlg_RichPresence::Dlg_RichPresence()
-	: m_hRichPresenceDialog( nullptr ),
-	  m_bTimerActive( false )
-{
-	m_hFont = CreateFont( 15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, nullptr );
-}
 
-Dlg_RichPresence::~Dlg_RichPresence()
+Dlg_RichPresence::~Dlg_RichPresence() noexcept
 {
-	DeleteObject( m_hFont );
+	DeleteFont( m_hFont );
 }
 
 void Dlg_RichPresence::StartMonitoring()

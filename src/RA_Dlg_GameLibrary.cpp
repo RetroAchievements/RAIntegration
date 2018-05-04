@@ -90,14 +90,6 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 //std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
-Dlg_GameLibrary::Dlg_GameLibrary()
-	: m_hDialogBox(nullptr)
-{
-}
-
-Dlg_GameLibrary::~Dlg_GameLibrary()
-{
-}
 
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {

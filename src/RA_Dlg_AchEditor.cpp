@@ -87,12 +87,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPa
 
 
 
-Dlg_AchievementEditor::Dlg_AchievementEditor()
-	: m_hAchievementEditorDlg(nullptr),
-	m_hICEControl(nullptr),
-	m_pSelectedAchievement(nullptr),
-	m_hAchievementBadge(nullptr),
-	m_bPopulatingAchievementEditorData(false)
+Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
 {
 	for (size_t i = 0; i < MAX_CONDITIONS; ++i)
 	{
@@ -103,11 +98,11 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
 	}
 }
 
-Dlg_AchievementEditor::~Dlg_AchievementEditor()
+Dlg_AchievementEditor::~Dlg_AchievementEditor() noexcept
 {
 	if (m_hAchievementBadge != nullptr)
 	{
-		DeleteObject(m_hAchievementBadge);
+		DeleteBitmap(m_hAchievementBadge);
 		m_hAchievementBadge = nullptr;
 	}
 }

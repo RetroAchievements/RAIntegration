@@ -50,29 +50,30 @@ RAUser* RAUsers::GetUser( const std::string& sUser )
 }
 
 
-RAUser::RAUser( const std::string& sUsername ) :
-	m_sUsername( sUsername ),
-	m_nScore( 0 ),
-	m_hUserImage( nullptr ),
-	m_bFetchingUserImage( false )
+RAUser::RAUser( const std::string& sUsername ) noexcept :
+	m_sUsername( sUsername )
 {
+	// The rest are initilized automatically
+
 	//	Register
 	if( sUsername.length() > 2 )
 	{
+		// To throw or not to throw?
+
 		ASSERT( !RAUsers::DatabaseContainsUser( sUsername ) );
 		RAUsers::RegisterUser( sUsername, this );
 	}
 }
 
-RAUser::~RAUser()
+RAUser::~RAUser() noexcept
 {
 	FlushBitmap();
 }
 
-void RAUser::FlushBitmap()
+void RAUser::FlushBitmap() noexcept
 {
 	if( m_hUserImage != nullptr )
-		DeleteObject( m_hUserImage );
+		DeleteBitmap( m_hUserImage );
 	m_hUserImage = nullptr;
 }
 

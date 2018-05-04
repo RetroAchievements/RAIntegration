@@ -137,23 +137,30 @@ public:
 class RASize
 {
 public:
-    RASize() : m_nWidth(0), m_nHeight(0) {}
-    RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
-    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
+	inline constexpr RASize(int nW, int nH) noexcept : m_nWidth{ nW }, m_nHeight{ nH } {}
+	~RASize() noexcept = default;
+	// copying literal types should be ok
+	inline constexpr RASize(const RASize&) noexcept = default;
+	inline constexpr RASize& operator=(const RASize&) noexcept = default;
+	inline constexpr RASize(RASize&&) noexcept = default;
+	inline constexpr RASize& operator=(RASize&&) noexcept = default;
 
+	// This can be a literal type
+	// This constructor means that this type can used in constant expressions(methods with running times of O(1))
+	inline constexpr RASize() noexcept = default;
 public:
-    inline int Width() const { return m_nWidth; }
-    inline int Height() const { return m_nHeight; }
-    inline void SetWidth(int nW) { m_nWidth = nW; }
-    inline void SetHeight(int nH) { m_nHeight = nH; }
+    inline constexpr int Width() const { return m_nWidth; }
+    inline constexpr int Height() const { return m_nHeight; }
+    inline constexpr void SetWidth(int nW) { m_nWidth = nW; }
+    inline constexpr void SetHeight(int nH) { m_nHeight = nH; }
 
 private:
-    int m_nWidth;
-    int m_nHeight;
+	int m_nWidth{ 0 };
+	int m_nHeight{ 0 };
 };
 
-const RASize RA_BADGE_PX(64, 64);
-const RASize RA_USERPIC_PX(64, 64);
+inline constexpr RASize RA_BADGE_PX{ 64, 64 };
+inline constexpr RASize RA_USERPIC_PX{ 64, 64 };
 
 class ResizeContent
 {

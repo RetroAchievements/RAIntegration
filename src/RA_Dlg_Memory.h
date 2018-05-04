@@ -87,7 +87,7 @@ public:
 
 	const CodeNotes& Notes() const				{ return m_CodeNotes; }
 
-	void ClearBanks();
+	void ClearBanks() noexcept;
 	void AddBank( size_t nBankID );
 	void GenerateResizes( HWND hDlg );
 

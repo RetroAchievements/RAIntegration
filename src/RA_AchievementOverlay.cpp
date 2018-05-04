@@ -98,21 +98,12 @@ void AchievementOverlay::SelectNextTopLevelPage( BOOL bPressedRight )
 	}
 }
 
-AchievementOverlay::AchievementOverlay()
-{
-	m_hOverlayBackground = nullptr;
-	m_nAchievementsSelectedItem = 0;
-	m_nFriendsSelectedItem = 0;
-	m_nMessagesSelectedItem = 0;
-	m_nNewsSelectedItem = 0;
-	m_nLeaderboardSelectedItem = 0;
-}
 
-AchievementOverlay::~AchievementOverlay()
+AchievementOverlay::~AchievementOverlay() noexcept
 {
 	if( m_hOverlayBackground != nullptr )
 	{
-		DeleteObject( m_hOverlayBackground );
+		DeleteBitmap( m_hOverlayBackground );
 		m_hOverlayBackground = nullptr;
 	}
 }

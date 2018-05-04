@@ -8,15 +8,13 @@
 
 namespace
 {
-inline constexpr auto MAX_CONDITIONS      = std::size_t{ 200 };
-inline constexpr auto MEM_STRING_TEXT_LEN = std::size_t{ 80 };
+inline constexpr auto MAX_CONDITIONS      = 200_z;
+inline constexpr auto MEM_STRING_TEXT_LEN = 80_z;
 }
 
 class BadgeNames
 {
 public:
-	BadgeNames()
-	 :	m_hDestComboBox( nullptr ) {}
 	void InstallAchEditorCombo( HWND hCombo )	{ m_hDestComboBox = hCombo; }
 	
 	void FetchNewBadgeNamesThreaded();
@@ -24,15 +22,19 @@ public:
 	void OnNewBadgeNames( const Document& data );
 
 private:
-	HWND m_hDestComboBox;
+	HWND m_hDestComboBox{ nullptr };
 };
 
 
 class Dlg_AchievementEditor
 {
 public:
-	Dlg_AchievementEditor();
-	~Dlg_AchievementEditor();
+	Dlg_AchievementEditor() noexcept;
+	~Dlg_AchievementEditor() noexcept;
+	Dlg_AchievementEditor(const Dlg_AchievementEditor&) = delete;
+	Dlg_AchievementEditor& operator=(const Dlg_AchievementEditor&) = delete;
+	Dlg_AchievementEditor(Dlg_AchievementEditor&&) noexcept = delete;
+	Dlg_AchievementEditor& operator=(Dlg_AchievementEditor&&) noexcept = delete;
 
 public:
 	static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
@@ -75,16 +77,17 @@ private:
 private:
 	static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
 
-	HWND m_hAchievementEditorDlg;
-	HWND m_hICEControl;
+
+	HWND m_hAchievementEditorDlg{ nullptr };
+	HWND m_hICEControl{ nullptr };
 
 	char m_lbxData[ MAX_CONDITIONS ][ m_nNumCols ][ MEM_STRING_TEXT_LEN ];
 	TCHAR m_lbxGroupNames[ MAX_CONDITIONS ][ MEM_STRING_TEXT_LEN ];
-	int m_nNumOccupiedRows;
+	int m_nNumOccupiedRows{ 0 };
 
-	Achievement* m_pSelectedAchievement;
-	BOOL m_bPopulatingAchievementEditorData;
-	HBITMAP m_hAchievementBadge;
+	Achievement* m_pSelectedAchievement{ nullptr };
+	BOOL m_bPopulatingAchievementEditorData{ FALSE };
+	HBITMAP m_hAchievementBadge{ nullptr };
 
 	BadgeNames m_BadgeNames;
 };

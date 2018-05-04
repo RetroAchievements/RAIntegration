@@ -41,6 +41,7 @@ std::wstring Widen(const std::string& str)
 std::wstring Widen(const char* str)
 {
     auto state = std::mbstate_t();
+#pragma warning(suppress : 4996)
     auto len = 1 + std::mbsrtowcs(nullptr, &str, 0, &state);
     auto wstr{ L""s };
     wstr.reserve(len);

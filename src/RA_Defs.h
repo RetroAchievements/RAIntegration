@@ -563,45 +563,6 @@ typename Traits::pos_type filesize(std::basic_string<CharT>& filename) noexcept 
     return file.tellg();
 } // end function filesize
 
-  // All puporse string converter
-  /// <summary>
-  ///   Converts <paramref name="in" /> into an
-  ///   <typeparamref name="OutputString" />. To use this you have to at least
-  ///   specfiy <typeparamref name="OutputString" />. It won't work between
-  ///   Mutli-Byte to UTF-16, Use Widen() instead.
-  /// </summary>
-  /// <typeparam name="InputString">
-  ///   The type of string to be converted.
-  /// </typeparam>
-  /// <typeparam name="OutputString">
-  ///   The type of string to be converted to.
-  /// </typeparam>
-  /// <param name="in">The string to be converted.</param>
-  /// <returns>An <typeparamref name="OutputString" />.</returns>
-  /// <exception cref="std::ios_base::failure">
-  ///   If this was not thrown explicitly, there are no side effects. The runtime
-  ///   throws this exception if any bit in the stream is not
-  ///   <see cref="std::ios_base::good_bit" />.
-  /// </exception>
-template<
-    typename OutputString,
-    typename InputString,
-    class = std::enable_if_t<(is_string_v<InputString> && is_string_v<OutputString>) &&
-    (!std::is_same_v<InputString, OutputString>) && (!std::is_same_v<OutputString, std::wstring>)>
->
-OutputString convert_string(_In_ const InputString& in) noexcept {
-    using out_char_t       = typename OutputString::value_type;
-    using out_stringstream = std::basic_ostringstream<out_char_t>;
-
-    out_stringstream oss;
-
-    for (auto& i : in) {
-        oss << i;
-    }
-
-    return oss.str();
-} // end function convert_string
-
 } // namespace ra
 
 #ifdef UNICODE

@@ -208,8 +208,35 @@ public:
 	size_t GroupCount() const                           { return m_vConditionGroups.size(); }
 	void AddGroup()                                     { m_vConditionGroups.emplace_back(); }
 	void RemoveLastGroup()                              { m_vConditionGroups.pop_back(); }
-	ConditionGroup& GetGroup(size_t i)                  { return m_vConditionGroups[i]; }
-	const ConditionGroup& GetGroup(size_t i) const      { return m_vConditionGroups[i]; }
+
+	// This probably would too.
+	ConditionGroup& GetGroup(size_t i) {
+		try
+		{
+			return m_vConditionGroups.at(i);
+		}
+		catch (const std::out_of_range& e)
+		{
+			tstring str{ e.what() };
+			MessageBox(GetActiveWindow(), str.c_str(), TEXT("Exception!"), MB_ABORTRETRYIGNORE);
+			throw;
+		}
+		return m_vConditionGroups.at(i);
+	}
+
+	// This threw an exception
+	const ConditionGroup& GetGroup(size_t i) const { 
+		try
+		{
+			return m_vConditionGroups.at(i);
+		}
+		catch (const std::out_of_range& e)
+		{
+			tstring str{ e.what() };
+			MessageBox(GetActiveWindow(), str.c_str(), TEXT("Exception!"), MB_ABORTRETRYIGNORE);
+		}
+		return m_vConditionGroups.at(i);
+	}
 
 protected:
 	std::vector<ConditionGroup> m_vConditionGroups;

@@ -10,7 +10,14 @@ namespace ra {
 
 std::string DataStreamAsString(const DataStream& stream) {
 
-    auto str{ convert_string<std::string>(stream) };
+	std::ostringstream oss;
+
+	// This is guarenteed to work
+	for (auto& i : stream) {
+		oss << static_cast<char>(i);
+	}
+
+	auto str{ oss.str() };
 
     // pesky null character
     if (!str.empty()) {
@@ -22,15 +29,24 @@ std::string DataStreamAsString(const DataStream& stream) {
 
 
 std::string Narrow(const std::wstring& wstr) {
-    return convert_string<std::string>(wstr);
+    return Narrow(wstr.c_str());
 }
 
 // N.B.: Not totally sure if you want the strings erased at conversion or not, if so we should rvalues
 // instead.
 std::string Narrow(const wchar_t* wstr)
 {
-    std::wstring swstr{ wstr };
-    return convert_string<std::string>(swstr);
+	auto state = std::mbstate_t();
+	auto len = 1 + std::wcsrtombs(nullptr, &wstr, 0_z, &state);
+	auto str{ ""s };
+
+	str.reserve(len);
+	// Last two params have to be nullptr, the resulting doesn't have to be
+	// multi-byte string but if it is nothing bad will happen.
+	WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, to_signed(len), str.data(),
+		to_signed(str.capacity()), nullptr, nullptr);
+
+	return str.data();
 }
 
 std::wstring Widen(const std::string& str)
@@ -41,7 +57,7 @@ std::wstring Widen(const std::string& str)
 std::wstring Widen(const char* str)
 {
     auto state = std::mbstate_t();
-    auto len = 1 + std::mbsrtowcs(nullptr, &str, 0, &state);
+    auto len = 1 + std::mbsrtowcs(nullptr, &str, 0_z, &state);
     auto wstr{ L""s };
     wstr.reserve(len);
     MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, str, len, wstr.data(),

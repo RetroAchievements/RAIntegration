@@ -219,7 +219,6 @@ public:
 		{
 			tstring str{ e.what() };
 			MessageBox(GetActiveWindow(), str.c_str(), TEXT("Exception!"), MB_ABORTRETRYIGNORE);
-			throw;
 		}
 		return m_vConditionGroups.at(i);
 	}

@@ -18,9 +18,9 @@ AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
 // for now
-using AchievementSets = std::array<AchievementSet*, 3>;
+using AchievementSets = std::array<AchievementSet**, 3>;
 // can't be constexpr because AchievementSet isn't a literal type
-inline const AchievementSets ACH_SETS{ g_pCoreAchievements, g_pUnofficialAchievements, g_pLocalAchievements };
+inline const AchievementSets ACH_SETS{ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 
 static_assert(ACH_SETS.size() == NumAchievementSetTypes, "Must match!" );
 
@@ -31,7 +31,7 @@ AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 void RASetAchievementCollection( AchievementSetType Type )
 {
 	g_nActiveAchievementSet = Type;
-	g_pActiveAchievements = ACH_SETS.at(Type);
+    g_pActiveAchievements = *ACH_SETS.at(Type);
 }
 
 std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )

@@ -157,7 +157,7 @@ public:
 public:
 	void Reset();
 
-	void AddLeaderboard( const RA_Leaderboard& lb );
+	void AddLeaderboard(RA_Leaderboard&& lb);
 	void Test();
 	void Clear()								{ m_Leaderboards.clear(); }
 	size_t Count() const						{ return m_Leaderboards.size(); }

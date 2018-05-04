@@ -520,10 +520,10 @@ BOOL AchievementSet::LoadFromFile( GameID nGameID )
 				{
 					//"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
 
-					RA_Leaderboard lb(LeaderboardsData[i]["ID"].GetUint());
+					RA_Leaderboard lb{ LeaderboardsData[i]["ID"].GetUint() };
 					lb.LoadFromJSON(LeaderboardsData[i]);
 
-					g_LeaderboardManager.AddLeaderboard(lb);
+					g_LeaderboardManager.AddLeaderboard(std::move(lb));
 				}
 			}
 			else

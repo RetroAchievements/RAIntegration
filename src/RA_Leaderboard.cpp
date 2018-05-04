@@ -678,10 +678,10 @@ void RA_LeaderboardManager::OnSubmitEntry( const Document& doc )
 	g_PopupWindows.LeaderboardPopups().ShowScoreboard( pLB->ID() );
 }
 
-void RA_LeaderboardManager::AddLeaderboard( const RA_Leaderboard& lb )
+void RA_LeaderboardManager::AddLeaderboard( RA_Leaderboard&& lb )
 {
 	if( g_bLeaderboardsActive )	//	If not, simply ignore them.
-		m_Leaderboards.push_back( lb );
+		m_Leaderboards.push_back( std::move(lb) );
 }
 
 void RA_LeaderboardManager::Test()

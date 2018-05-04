@@ -12,20 +12,11 @@ struct MemCandidate
 	bool m_bHasChanged{ false };
 };
 
-// TODO: We should try to make these function objects, or a function type, not sure the intention here
-// It's gonna have the same semantics for now it just looks weird
-// Note: It's still a function pointer
 
-using _RAMByteReadFn  = std::add_pointer_t<unsigned char(unsigned int nOffs)>;
-using _RAMByteWriteFn = std::add_pointer_t<void(unsigned int nOffs, unsigned int nVal)>;
+// putting it back
+typedef unsigned char(_RAMByteReadFn)(unsigned int nOffs);
+typedef  void(_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
 
-// lets check
-using test_type = unsigned char(*)(unsigned int);
-static_assert(std::is_same_v<test_type, _RAMByteReadFn>);
-
-// Ok the other one
-using test_type2 = void(*)(unsigned int, unsigned int);
-static_assert(std::is_same_v<test_type2, _RAMByteWriteFn>);
 
 class MemManager
 {
@@ -57,14 +48,15 @@ private:
 	};
 
 public:
-	
-	// unless this is inherited, making this virtual just wastes space
 	~MemManager() noexcept;
-
-	// can't be noexcept because of std::map, but that's fine, just handle it when it's thrown
+    // You have a global so I guess no copying or moving
+	MemManager(const MemManager&) = delete;
+	MemManager& operator=(const MemManager&) = delete;
+	MemManager(MemManager&&) noexcept = delete;
+	MemManager& operator=(MemManager&&) noexcept = delete;
 	MemManager() = default;
 public:
-	void ClearMemoryBanks();
+	void ClearMemoryBanks() noexcept;
 	void AddMemoryBank( size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize );
 	size_t NumMemoryBanks() const									{ return m_Banks.size(); }
 

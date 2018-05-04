@@ -44,8 +44,9 @@ public:
 	inline unsigned int PointTotal()
 	{
 		unsigned int total = 0;
-		for ( Achievement ach : m_Achievements ) total += ach.Points();
-		return total;
+        // Don't you know this has to be reference?
+		for ( auto& ach : m_Achievements ) total += ach.Points();
+		return total; // it's definitly returning a number...
 	}
 
 	//	Add a new achievement to the list, and return a reference to it.

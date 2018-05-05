@@ -59,8 +59,8 @@ void RA_GetEstimatedGameTitle( char* sNameOut )
 
 #ifndef RA_EXPORTS
 
-#include <WTypes.h>
-#include <WinHttp.h>
+#include <wtypes.h>
+#include <winhttp.h>
 #include <assert.h>
 #include <string>
 

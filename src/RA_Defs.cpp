@@ -60,7 +60,7 @@ std::wstring Widen(const char* str)
     auto len = 1 + std::mbsrtowcs(nullptr, &str, 0_z, &state);
     auto wstr{ L""s };
     wstr.reserve(len);
-    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len, wstr.data(),
+    MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, str, len, wstr.data(),
         to_signed(wstr.capacity()));
 
     return wstr.data();

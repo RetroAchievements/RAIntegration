@@ -1,0 +1,11 @@
+==================================================================
+							Test App
+==================================================================
+
+Used mainly to showcase changes that don't need a Unit Test. 
+More elaborate changes will have unit tests.
+
+To use this project, set it up as the start up, and press F5 or 
+Ctrl+F5. Not necessarily required, but you may unload this project
+to prevent confusion when running the main project.
+

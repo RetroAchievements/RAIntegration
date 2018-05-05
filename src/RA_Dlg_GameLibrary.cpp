@@ -25,12 +25,12 @@
 
 namespace
 {
-	const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-	const int COL_SIZE[] = { 30, 230, 110, 170 };
-	static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-	const bool bCancelScan = false;
+inline constexpr auto col_max{ 4 };
+inline constexpr std::array<const char*, col_max> COL_TITLE{ "ID", "Game Title", "Completion", "File Path" };
+inline constexpr std::array<int, col_max> COL_SIZE{ 30, 230, 110, 170 };
+inline constexpr auto bCancelScan{ false };
 
-	std::mutex mtx;
+std::mutex mtx;
 }
 
 //static 

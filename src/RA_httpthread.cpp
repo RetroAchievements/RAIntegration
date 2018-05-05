@@ -17,43 +17,12 @@
 #include <algorithm>	//	std::replace
 
 
-const char* RequestTypeToString[] = 
-{
-	"RequestLogin",
 
-	"RequestScore",
-	"RequestNews",
-	"RequestPatch",
-	"RequestLatestClientPage",
-	"RequestRichPresence",
-	"RequestAchievementInfo",
-	"RequestLeaderboardInfo",
-	"RequestCodeNotes",
-	"RequestFriendList",
-	"RequestBadgeIter",
-	"RequestUnlocks",
-	"RequestHashLibrary",
-	"RequestGamesList",
-	"RequestAllProgress",
-	"RequestGameID",
 
-	"RequestPing",
-	"RequestPostActivity",
-	"RequestSubmitAwardAchievement",
-	"RequestSubmitCodeNote",
-	"RequestSubmitLeaderboardEntry",
-	"RequestSubmitAchievementData",
-	"RequestSubmitTicket",
-	"RequestSubmitNewTitleEntry",
-	
-	"RequestUserPic",
-	"RequestBadge",
 
-	"STOP_THREAD",
-};
-static_assert( SIZEOF_ARRAY( RequestTypeToString ) == NumRequestTypes, "Must match up!" );
 
-const char* RequestTypeToPost[] =
+
+inline constexpr RequestTypes RequestTypeToPost
 {
 	"login",
 	"score",
@@ -86,19 +55,19 @@ const char* RequestTypeToPost[] =
 
 	"_stopthread_",			//	STOP_THREAD
 };
-static_assert( SIZEOF_ARRAY( RequestTypeToPost ) == NumRequestTypes, "Must match up!" );
 
-const char* UploadTypeToString[] = 
+
+inline constexpr UploadTypes UploadTypeToString
 {
 	"RequestUploadBadgeImage",
 };
-static_assert( SIZEOF_ARRAY( UploadTypeToString ) == NumUploadTypes, "Must match up!" );
 
-const char* UploadTypeToPost[] =
+
+inline constexpr UploadTypes UploadTypeToPost
 {
 	"uploadbadgeimage",
 };
-static_assert( SIZEOF_ARRAY( UploadTypeToPost ) == NumUploadTypes, "Must match up!" );
+
 
 //	No game-specific code here please!
 
@@ -113,7 +82,7 @@ PostArgs PrevArgs;
 
 BOOL RequestObject::ParseResponseToJSON( Document& rDocOut )
 {
-	rDocOut.Parse( DataStreamAsString( GetResponse() ) );
+	rDocOut.Parse(ra::DataStreamAsString( GetResponse() ).c_str() );
 
 	if( rDocOut.HasParseError() )
 		RA_LOG( "Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr( rDocOut.GetParseError() ), RequestTypeToString[ m_nType ] );
@@ -247,7 +216,7 @@ BOOL RAWeb::DoBlockingRequest( RequestType nType, const PostArgs& PostData, Docu
 	{
 		if( response.size() > 0 )
 		{
-			JSONResponseOut.Parse( DataStreamAsString( response ) );
+			JSONResponseOut.Parse( DataStreamAsString( response ).c_str());
 			//LogJSON( JSONResponseOut );	//	Already logged during DoBlockingRequest()?
 
 			if( JSONResponseOut.HasParseError() )
@@ -479,12 +448,12 @@ BOOL RAWeb::DoBlockingHttpPost( const std::string& sRequestedPage, const std::st
 	if( ResponseOut.size() > 0 )
 	{
 		Document doc;
-		doc.Parse( DataStreamAsString( ResponseOut ) );
+		doc.Parse(ra::DataStreamAsString(ResponseOut).c_str());
 
 		if( doc.HasParseError() )
 		{
 			RA_LOG( "Cannot parse JSON!\n" );
-			RA_LOG( DataStreamAsString( ResponseOut ) );
+			RA_LOG(ra::DataStreamAsString( ResponseOut ).c_str() );
 			RA_LOG( "\n" );
 		}
 		else
@@ -636,7 +605,7 @@ BOOL RAWeb::DoBlockingImageUpload( UploadType nType, const std::string& sFilenam
 	DataStream response;
 	if( ::DoBlockingImageUpload( nType, sFilename, response ) )
 	{
-		ResponseOut.Parse(DataStreamAsString(response));
+		ResponseOut.Parse(ra::DataStreamAsString(response).c_str());
 		if( !ResponseOut.HasParseError() )
 		{
 			return TRUE;

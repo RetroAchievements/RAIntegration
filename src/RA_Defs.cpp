@@ -1,61 +1,80 @@
 #include "RA_Defs.h"
 
-#include <stdio.h>
-#include <Windows.h>
-#include <locale>
-#include <codecvt>
+#include <iomanip>
+
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+namespace ra {
 
-static_assert(sizeof(BYTE*) == sizeof(char*), "dangerous cast ahead");
-char* DataStreamAsString(DataStream& stream)
-{
-	return reinterpret_cast<char*>(stream.data());
+
+
+std::string DataStreamAsString(const DataStream& stream) {
+
+    auto str{ convert_string<std::string>(stream) };
+
+    // pesky null character
+    if (!str.empty()) {
+        str.pop_back();
+    }
+
+    return str; // ok it's definitly showing how it should be
 }
 
+
+std::string Narrow(const std::wstring& wstr) {
+    return convert_string<std::string>(wstr);
+}
+
+// N.B.: Not totally sure if you want the strings erased at conversion or not, if so we should rvalues
+// instead.
 std::string Narrow(const wchar_t* wstr)
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.to_bytes(wstr);
-}
-
-std::string Narrow(const std::wstring& wstr)
-{
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.to_bytes(wstr);
-}
-
-std::wstring Widen(const char* str)
-{
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.from_bytes(str);
+    std::wstring swstr{ wstr };
+    return convert_string<std::string>(swstr);
 }
 
 std::wstring Widen(const std::string& str)
 {
-	static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
-	return converter.from_bytes(str);
+    return Widen(str.c_str());
 }
 
-std::wstring Widen(const wchar_t* wstr)
+std::wstring Widen(const char* str)
 {
-	return std::wstring(wstr);
+    auto state = std::mbstate_t();
+    auto len = 1 + std::mbsrtowcs(nullptr, &str, 0, &state);
+    auto wstr{ L""s };
+    wstr.reserve(len);
+    MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, str, len, wstr.data(),
+        to_signed(wstr.capacity()));
+
+    return wstr.data();
 }
 
-std::wstring Widen(const std::wstring& wstr)
+std::string ByteAddressToString(ByteAddress nAddr)
 {
-	return wstr;
+    // with tinyformat it's easier but I can do it without it
+    // if we used tinyformat it would be like this
+    //return tfm::format("0x%06x", nAddr);
+    // Yup, it's that simple
+
+
+
+	std::ostringstream oss;
+	oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
+	return oss.str();
 }
 
-std::string Narrow(const char* str)
-{
-	return std::string(str);
-}
 
-std::string Narrow(const std::string& str)
-{
-	return str;
-}
+std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }
+std::wstring Widen(const std::wstring& wstr) { return wstr; }
+std::string Narrow(const char* str) { return std::string{ str }; }
+std::string Narrow(const std::string& str) { return str; }
+
+
+} // namespace ra
+
+
+
 
 void RADebugLogNoFormat(const char* data)
 {

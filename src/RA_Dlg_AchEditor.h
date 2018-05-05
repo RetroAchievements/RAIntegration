@@ -8,8 +8,8 @@
 
 namespace
 {
-	const size_t MAX_CONDITIONS = 200;
-	const size_t MEM_STRING_TEXT_LEN = 80;
+inline constexpr auto MAX_CONDITIONS      = std::size_t{ 200 };
+inline constexpr auto MEM_STRING_TEXT_LEN = std::size_t{ 80 };
 }
 
 class BadgeNames

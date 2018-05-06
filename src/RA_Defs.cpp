@@ -9,28 +9,38 @@ namespace ra {
 
 
 std::string DataStreamAsString(const DataStream& stream) {
+	std::ostringstream oss;
 
-    auto str{ convert_string<std::string>(stream) };
+	for (auto& i : stream)
+		oss << to_signed(i);
+
+    auto str{ oss.str() };
 
     // pesky null character
     if (!str.empty()) {
         str.pop_back();
     }
 
-    return str; // ok it's definitly showing how it should be
+    return str;
 }
 
 
 std::string Narrow(const std::wstring& wstr) {
-    return convert_string<std::string>(wstr);
+    return Narrow(wstr.c_str());
 }
 
-// N.B.: Not totally sure if you want the strings erased at conversion or not, if so we should rvalues
-// instead.
+
 std::string Narrow(const wchar_t* wstr)
 {
-    std::wstring swstr{ wstr };
-    return convert_string<std::string>(swstr);
+	auto state{ std::mbstate_t{}};
+	auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0, &state) };
+	auto str{ ""s };
+
+	str.reserve(len);
+	WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len, str.data(), to_signed(str.capacity()),
+		nullptr, nullptr);
+
+	return str.data();
 }
 
 std::wstring Widen(const std::string& str)
@@ -40,29 +50,34 @@ std::wstring Widen(const std::string& str)
 
 std::wstring Widen(const char* str)
 {
-    auto state = std::mbstate_t();
-    auto len = 1 + std::mbsrtowcs(nullptr, &str, 0, &state);
+	auto state{ std::mbstate_t{} };
+	auto len{ 1 + std::mbsrtowcs(nullptr, &str, 0, &state) };
     auto wstr{ L""s };
+
     wstr.reserve(len);
-    MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, str, len, wstr.data(),
-        to_signed(wstr.capacity()));
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len, wstr.data(), to_signed(wstr.capacity()));
 
     return wstr.data();
 }
 
 std::string ByteAddressToString(ByteAddress nAddr)
 {
-    // with tinyformat it's easier but I can do it without it
-    // if we used tinyformat it would be like this
-    //return tfm::format("0x%06x", nAddr);
-    // Yup, it's that simple
-
-
-
 	std::ostringstream oss;
 	oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
 	return oss.str();
 }
+
+// We'll just force it to be a regular byte string.
+DataStream to_datastream(const std::string& str) noexcept
+{
+	using uostringstream = std::basic_stringstream<DataStream::value_type>;
+	uostringstream oss;
+
+	for (auto& i : str)
+		oss << to_unsigned(i);
+
+	return oss.str();
+} // end function to_datastream
 
 
 std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }

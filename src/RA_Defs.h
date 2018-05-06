@@ -24,22 +24,7 @@
 
 // Maybe an extra check just in-case
 
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _NODISCARD           [[nodiscard]]
-#define _NORETURN            [[noreturn]]
-#define _UNUSED              [[maybe_unused]]
 
-// Disables the use of const_casts, if you get an error, it's not a literal
-// type. You could use it on functions but they will need a deduction guide
-// That would probably be better with a forwarding function
-
-
-
-
-#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
@@ -67,8 +52,29 @@ namespace ra {}
 using namespace ra;
 
 #endif	//RA_EXPORTS
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _NODISCARD           [[nodiscard]]
+#define _NORETURN            [[noreturn]]
+#define _UNUSED              [[maybe_unused]]
+
 #define _CONSTANT_VAR inline constexpr auto
 #define _CONSTANT     inline constexpr
+#else
+#define _DEPRECATED          
+#define _DEPRECATEDR(reason) 
+#define _FALLTHROUGH         
+#define _NODISCARD           
+#define _NORETURN            
+#define _UNUSED              
+
+#define _CONSTANT_VAR constexpr auto
+#define _CONSTANT     constexpr
+#endif // _HAS_CXX17
+
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
@@ -300,7 +306,7 @@ inline namespace int_literals
 /// </summary>
 /// <param name="n">The integer.</param>
 /// <returns>The integer as <c>std::size_t</c>.</returns>
-_CONSTANT_VAR operator""_z(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_z(unsigned long long n) noexcept {
     return static_cast<std::size_t>(n);
 } // end operator""_z
 
@@ -317,12 +323,12 @@ _CONSTANT_VAR operator""_z(unsigned long long n) noexcept {
 /// </summary>
 /// <param name="n">The integer.</param>
 /// <returns>The integer as <c>std::intptr_t</c>.</returns>
-_CONSTANT_VAR operator""_i(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_i(unsigned long long n) noexcept {
     return static_cast<std::intptr_t>(n);
 } // end operator""_i
 
   // We need one for DWORD, because it doesn't match LPDWORD for some stuff
-_CONSTANT_VAR operator""_dw(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_dw(unsigned long long n) noexcept {
     return static_cast<_CSTD DWORD>(n);
 } // end operator""_dw
 
@@ -332,17 +338,17 @@ _CONSTANT_VAR operator""_dw(unsigned long long n) noexcept {
 /// </summary>
 /// <param name="n">The n.</param>
 /// <returns></returns>
-_CONSTANT_VAR operator""_ss(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_ss(unsigned long long n) noexcept {
     return static_cast<std::streamsize>(n);
 } // end operator""_ss
 
 // Literal for unsigned short
-_CONSTANT_VAR operator""_hu(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_hu(unsigned long long n) noexcept {
     return static_cast<std::uint16_t>(n);
 } // end operator""_hu
 
 
-_CONSTANT_VAR operator""_dp(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_dp(unsigned long long n) noexcept {
     return static_cast<DataPos>(n);
 } // end operator""_dp
 
@@ -350,23 +356,23 @@ _CONSTANT_VAR operator""_dp(unsigned long long n) noexcept {
 // These are here if you follow the standards (starts with ISO C++11/C11) rvalue conversions
 
 
-_CONSTANT_VAR operator""_ba(unsigned long long n) noexcept
+_NODISCARD _CONSTANT_VAR operator""_ba(unsigned long long n) noexcept
 {
     return static_cast<ByteAddress>(n);
 } // end operator""_ba
 
 
-_CONSTANT_VAR operator""_achid(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_achid(unsigned long long n) noexcept {
     return static_cast<AchievementID>(n);
 } // end operator""_achid
 
 
-_CONSTANT_VAR operator""_lbid(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_lbid(unsigned long long n) noexcept {
     return static_cast<LeaderboardID>(n);
 } // end operator""_lbid
 
 
-_CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
+_NODISCARD _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
     return static_cast<GameID>(n);
 } // end operator""_gameid
 
@@ -374,66 +380,50 @@ _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
 
 
 
-std::string DataStreamAsString(const DataStream& stream);
-std::string Narrow(const std::wstring& wstr);
-std::string Narrow(const wchar_t* wstr);
-std::wstring Widen(const std::string& str);
-std::wstring Widen(const char* str);
+_NODISCARD std::string DataStreamAsString(const DataStream& stream);
+_NODISCARD std::string Narrow(const std::wstring& wstr);
+_NODISCARD std::string Narrow(const wchar_t* wstr);
+_NODISCARD std::wstring Widen(const std::string& str);
+_NODISCARD std::wstring Widen(const char* str);
 
 
 
 
 
 //	No-ops to help convert:
-std::wstring Widen(const wchar_t* wstr);
-std::wstring Widen(const std::wstring& wstr);
-std::string Narrow(const char* str);
-std::string Narrow(const std::string& wstr);
-std::string ByteAddressToString(ByteAddress nAddr);
+_NODISCARD std::wstring Widen(const wchar_t* wstr);
+_NODISCARD std::wstring Widen(const std::wstring& wstr);
+_NODISCARD std::string Narrow(const char* str);
+_NODISCARD std::string Narrow(const std::string& wstr);
+_NODISCARD std::string ByteAddressToString(ByteAddress nAddr);
 
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_CONSTANT_VAR etoi(Enum e) -> std::underlying_type_t<Enum>
+_NODISCARD _CONSTANT_VAR etoi(Enum e) -> std::underlying_type_t<Enum>
 {
     return static_cast<std::underlying_type_t<Enum>>(e);
 }
 
 // function alias template
 template<typename Enum>
-_CONSTANT_VAR to_integral = etoi<Enum>;
+_NODISCARD _CONSTANT_VAR to_integral = etoi<Enum>;
 
-/// <summary>
-///   Converts a standard string with a signed character type to a
-///   <c>DataStream</c>.
-/// </summary>
-/// <param name="str">The string.</param>
-/// <typeparam name="CharT">
-///   The character type, must be signed or you will get an intellisense error.
-/// </typeparam>
-/// <returns><paramref name="str" /> as a <c>DataStream</c>.</returns>
-/// <remarks>
-///   <c>DataStream</c> is just an alias for an unsigned standard string.
-/// </remarks>
-template<
-    typename CharT,
-    class = std::enable_if_t<is_char_v<CharT> && std::is_signed_v<CharT>>
->
-DataStream stodata_stream(const std::basic_string<CharT>& str) noexcept
-{
-    return convert_string<DataStream>(str);
-} // end function stodata_stream
+// We'll just force it to be a regular byte string.
+_NODISCARD DataStream to_datastream(_In_ const std::string& str) noexcept;
 
 
   // This should save some pain...
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
-_CONSTANT_VAR to_unsigned(SignedType st) noexcept -> std::make_unsigned_t<SignedType>
+_Use_decl_annotations_
+_NODISCARD _CONSTANT_VAR to_unsigned(_In_ SignedType st) noexcept -> std::make_unsigned_t<SignedType>
 {
     using unsigned_t = std::make_unsigned_t<SignedType>;
     return static_cast<unsigned_t>(st);
 }
 
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
-_CONSTANT_VAR to_signed(UnsignedType ust) noexcept -> std::make_signed_t<UnsignedType>
+_Use_decl_annotations_
+_NODISCARD _CONSTANT_VAR to_signed(_In_ UnsignedType ust) noexcept -> std::make_signed_t<UnsignedType>
 {
     using signed_t = std::make_signed_t<UnsignedType>;
     return static_cast<signed_t>(ust);
@@ -523,22 +513,24 @@ _CONSTANT_VAR is_char_v = detail::is_char<CharT>::value;
 
 // is_string helper variable template
 template<typename StringType>
-_CONSTANT_VAR is_string_v = detail::is_string<StringType>::value;
+_NODISCARD _CONSTANT_VAR is_string_v = detail::is_string<StringType>::value;
 
 // is_equality_comparable helper variable template
 template<typename EqualityComparable>
-_CONSTANT_VAR is_equality_comparable_v = detail::is_equality_comparable<EqualityComparable>::value;
+_NODISCARD _CONSTANT_VAR is_equality_comparable_v = detail::is_equality_comparable<EqualityComparable>::value;
 
 // is_lessthan_comparable helper variable template
 template<typename LessThanComparable>
-_CONSTANT_VAR is_lessthan_comparable_v = detail::is_lessthan_comparable<LessThanComparable>::value;
+_NODISCARD _CONSTANT_VAR is_lessthan_comparable_v = detail::is_lessthan_comparable<LessThanComparable>::value;
 
 // is_nothrow_equality_comparable helper variable template
 template<typename EqualityComparable>
-_CONSTANT_VAR is_nothrow_equality_comparable_v = detail::is_nothrow_equality_comparable<EqualityComparable>::value;
+_NODISCARD _CONSTANT_VAR is_nothrow_equality_comparable_v = detail
+::is_nothrow_equality_comparable<EqualityComparable>::value;
 
 template<typename LessThanComparable>
-_CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_comparable<LessThanComparable>::value;
+_NODISCARD _CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail
+::is_nothrow_lessthan_comparable<LessThanComparable>::value;
 
 // We probably don't need this now but it'll be useful later when using STL filestreams instead of C filestreams
 /// <summary>Calculates the size of any standard fstream.</summary>
@@ -556,51 +548,13 @@ template<
     typename Traits = std::char_traits<CharT>,
     class = std::enable_if_t<is_char_v<CharT>>
 >
-typename Traits::pos_type filesize(std::basic_string<CharT>& filename) noexcept {
+_Use_decl_annotations_
+_NODISCARD typename Traits::pos_type filesize(_In_ std::basic_string<CharT>& filename) noexcept {
     // It's always the little things...
     using file_type = std::basic_fstream<CharT>;
     file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
     return file.tellg();
 } // end function filesize
-
-  // All puporse string converter
-  /// <summary>
-  ///   Converts <paramref name="in" /> into an
-  ///   <typeparamref name="OutputString" />. To use this you have to at least
-  ///   specfiy <typeparamref name="OutputString" />. It won't work between
-  ///   Mutli-Byte to UTF-16, Use Widen() instead.
-  /// </summary>
-  /// <typeparam name="InputString">
-  ///   The type of string to be converted.
-  /// </typeparam>
-  /// <typeparam name="OutputString">
-  ///   The type of string to be converted to.
-  /// </typeparam>
-  /// <param name="in">The string to be converted.</param>
-  /// <returns>An <typeparamref name="OutputString" />.</returns>
-  /// <exception cref="std::ios_base::failure">
-  ///   If this was not thrown explicitly, there are no side effects. The runtime
-  ///   throws this exception if any bit in the stream is not
-  ///   <see cref="std::ios_base::good_bit" />.
-  /// </exception>
-template<
-    typename OutputString,
-    typename InputString,
-    class = std::enable_if_t<(is_string_v<InputString> && is_string_v<OutputString>) &&
-    (!std::is_same_v<InputString, OutputString>) && (!std::is_same_v<OutputString, std::wstring>)>
->
-OutputString convert_string(_In_ const InputString& in) noexcept {
-    using out_char_t       = typename OutputString::value_type;
-    using out_stringstream = std::basic_ostringstream<out_char_t>;
-
-    out_stringstream oss;
-
-    for (auto& i : in) {
-        oss << i;
-    }
-
-    return oss.str();
-} // end function convert_string
 
 } // namespace ra
 

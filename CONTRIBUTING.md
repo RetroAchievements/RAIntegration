@@ -195,6 +195,92 @@ In other cases, a pull request may be followed up with a "style nit commit".
   if( do_something( 5 ) )
   ```
 
+### Switch statements  
+* Case labels should be indented one level
+* Code should be indented a second level. 
+* A single line may be placed between distinct cases.
+
+  Preferred:
+  ```
+  switch (x)
+  {
+      case 0:
+          do_something();
+          break;
+          
+      case 1:
+      case 2:
+          do_something_else();
+          break;
+          
+      default:
+          do_the_default();
+          break;
+  }
+  ```
+  
+  Acceptable:
+  ```
+  switch (x)
+  {
+      case 0:
+          do_something();
+          break;
+      case 1:
+      case 2:
+          do_something_else();
+          break;
+      default:
+          do_the_default();
+          break;
+  }
+  ```
+
+  Not acceptable:
+  ```
+  switch (x)
+  {
+  case 0:
+      do_something();
+      break;
+  case 1:
+  case 2:
+      do_something_else();
+      break;
+  default:
+      do_the_default();
+      break;
+  }
+  ```
+
+* Scoping braces should be aligned with the case label and contain the break statement.
+  ```
+  switch (x)
+  {
+      case 0:
+      {
+          int i = do_something();
+          do_something_else(i);
+          break;
+      }
+      
+      case 1:
+      ...
+  ```   
+
+* Fallthrough cases must explicitly document the case they fallthrough to.
+  ```
+  switch (x)
+  {
+      case 0:
+          do_something();
+          // fallthrough to case 1
+      case 1:
+          do_something_else();
+          break;
+  }
+  ```
+
 ### File structure
 * Headers should be grouped 
   * The primary header for the file (in quotes)

@@ -48,49 +48,49 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (nMsg)
     {
-    case WM_DESTROY:
-        g_hIPEEditBM = nullptr;
-        break;
+        case WM_DESTROY:
+            g_hIPEEditBM = nullptr;
+            break;
 
-    case WM_KILLFOCUS:
-    {
-        LV_DISPINFO lvDispinfo;
-        ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
-        lvDispinfo.hdr.hwndFrom = hwnd;
-        lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-        lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
-        lvDispinfo.item.mask = LVIF_TEXT;
-        lvDispinfo.item.iItem = nSelItemBM;
-        lvDispinfo.item.iSubItem = nSelSubItemBM;
-        lvDispinfo.item.pszText = nullptr;
-
-        wchar_t sEditText[256];
-        GetWindowTextW(hwnd, sEditText, 256);
-        g_MemBookmarkDialog.Bookmarks()[nSelItemBM]->SetDescription(sEditText);
-
-        HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
-
-        //	the LV ID and the LVs Parent window's HWND
-        SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
-
-        DestroyWindow(hwnd);
-        break;
-    }
-
-    case WM_KEYDOWN:
-    {
-        if (wParam == VK_RETURN || wParam == VK_ESCAPE)
+        case WM_KILLFOCUS:
         {
-            DestroyWindow(hwnd);	//	Causing a killfocus :)
-        }
-        else
-        {
-            //	Ignore keystroke, or pass it into the edit box!
+            LV_DISPINFO lvDispinfo;
+            ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
+            lvDispinfo.hdr.hwndFrom = hwnd;
+            lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            lvDispinfo.item.mask = LVIF_TEXT;
+            lvDispinfo.item.iItem = nSelItemBM;
+            lvDispinfo.item.iSubItem = nSelSubItemBM;
+            lvDispinfo.item.pszText = nullptr;
+
+            wchar_t sEditText[256];
+            GetWindowTextW(hwnd, sEditText, 256);
+            g_MemBookmarkDialog.Bookmarks()[nSelItemBM]->SetDescription(sEditText);
+
+            HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
+
+            //	the LV ID and the LVs Parent window's HWND
+            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
+
+            DestroyWindow(hwnd);
             break;
         }
 
-        break;
-    }
+        case WM_KEYDOWN:
+        {
+            if (wParam == VK_RETURN || wParam == VK_ESCAPE)
+            {
+                DestroyWindow(hwnd);	//	Causing a killfocus :)
+            }
+            else
+            {
+                //	Ignore keystroke, or pass it into the edit box!
+                break;
+            }
+
+            break;
+        }
     }
 
     return CallWindowProc(EOldProcBM, hwnd, nMsg, wParam, lParam);
@@ -108,350 +108,350 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-    {
-        GenerateResizes(hDlg);
-
-        m_hMemBookmarkDialog = hDlg;
-        hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
-
-        SetupColumns(hList);
-
-        // Auto-import bookmark file when opening dialog
-        if (g_pCurrentGameData->GetGameID() != 0)
+        case WM_INITDIALOG:
         {
-            std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
-            ImportFromFile(file);
+            GenerateResizes(hDlg);
+
+            m_hMemBookmarkDialog = hDlg;
+            hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
+
+            SetupColumns(hList);
+
+            // Auto-import bookmark file when opening dialog
+            if (g_pCurrentGameData->GetGameID() != 0)
+            {
+                std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+                ImportFromFile(file);
+            }
+
+            RestoreWindowPosition(hDlg, "Memory Bookmarks", true, false);
+            return TRUE;
         }
 
-        RestoreWindowPosition(hDlg, "Memory Bookmarks", true, false);
-        return TRUE;
-    }
-
-    case WM_GETMINMAXINFO:
-    {
-        LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-        lpmmi->ptMinTrackSize = pDlgMemBookmarkMin;
-    }
-    break;
-
-    case WM_SIZE:
-    {
-        RARect winRect;
-        GetWindowRect(hDlg, &winRect);
-
-        for (ResizeContent content : vDlgMemBookmarkResize)
-            content.Resize(winRect.Width(), winRect.Height());
-
-        //InvalidateRect( hDlg, nullptr, TRUE );
-        RememberWindowSize(hDlg, "Memory Bookmarks");
-    }
-    break;
-
-    case WM_MOVE:
-        RememberWindowPosition(hDlg, "Memory Bookmarks");
+        case WM_GETMINMAXINFO:
+        {
+            LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+            lpmmi->ptMinTrackSize = pDlgMemBookmarkMin;
+        }
         break;
 
-    case WM_MEASUREITEM:
-        pmis = (PMEASUREITEMSTRUCT)lParam;
-        pmis->itemHeight = 16;
-        return TRUE;
+        case WM_SIZE:
+        {
+            RARect winRect;
+            GetWindowRect(hDlg, &winRect);
 
-    case WM_DRAWITEM:
-    {
-        pdis = (PDRAWITEMSTRUCT)lParam;
+            for (ResizeContent content : vDlgMemBookmarkResize)
+                content.Resize(winRect.Width(), winRect.Height());
 
-        // If there are no list items, skip this message.
-        if (pdis->itemID == -1)
+            //InvalidateRect( hDlg, nullptr, TRUE );
+            RememberWindowSize(hDlg, "Memory Bookmarks");
+        }
+        break;
+
+        case WM_MOVE:
+            RememberWindowPosition(hDlg, "Memory Bookmarks");
             break;
 
-        switch (pdis->itemAction)
+        case WM_MEASUREITEM:
+            pmis = (PMEASUREITEMSTRUCT)lParam;
+            pmis->itemHeight = 16;
+            return TRUE;
+
+        case WM_DRAWITEM:
         {
-        case ODA_SELECT:
-        case ODA_DRAWENTIRE:
+            pdis = (PDRAWITEMSTRUCT)lParam;
 
-            hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+            // If there are no list items, skip this message.
+            if (pdis->itemID == -1)
+                break;
 
-            ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
-            ListView_GetItemRect(hList, pdis->itemID, &rcLabel, LVIR_LABEL);
-            RECT rcCol(rcBounds);
-            rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
-
-            // Draw Item Label - Column 0
-            wchar_t buffer[512];
-            if (m_vBookmarks[pdis->itemID]->Decimal())
-                swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks[pdis->itemID]->Description().c_str());
-            else
-                swprintf_s(buffer, 512, L"%s", m_vBookmarks[pdis->itemID]->Description().c_str());
-
-            if (pdis->itemState & ODS_SELECTED)
+            switch (pdis->itemAction)
             {
-                SetTextColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-                SetBkColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHT));
-                FillRect(pdis->hDC, &rcBounds, GetSysColorBrush(COLOR_HIGHLIGHT));
-            }
-            else
-            {
-                SetTextColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                case ODA_SELECT:
+                case ODA_DRAWENTIRE:
 
-                COLORREF color;
+                    hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
-                if (m_vBookmarks[pdis->itemID]->Frozen())
-                    color = RGB(255, 255, 160);
-                else
-                    color = GetSysColor(COLOR_WINDOW);
+                    ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
+                    ListView_GetItemRect(hList, pdis->itemID, &rcLabel, LVIR_LABEL);
+                    RECT rcCol(rcBounds);
+                    rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
 
-                HBRUSH hBrush = CreateSolidBrush(color);
-                SetBkColor(pdis->hDC, color);
-                FillRect(pdis->hDC, &rcBounds, hBrush);
-                DeleteObject(hBrush);
-            }
-
-            if (wcslen(buffer) > 0)
-            {
-                rcLabel.left += (offset / 2);
-                rcLabel.right -= offset;
-
-                DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-            }
-
-            // Draw Item Label for remaining columns
-            LV_COLUMN lvc;
-            lvc.mask = LVCF_FMT | LVCF_WIDTH;
-
-            for (size_t i = 1; ListView_GetColumn(hList, i, &lvc); ++i)
-            {
-                rcCol.left = rcCol.right;
-                rcCol.right += lvc.cx;
-
-                switch (i)
-                {
-                case CSI_ADDRESS:
-                    swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
-                    break;
-                case CSI_VALUE:
+                    // Draw Item Label - Column 0
+                    wchar_t buffer[512];
                     if (m_vBookmarks[pdis->itemID]->Decimal())
-                        swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
+                        swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                    else
+                        swprintf_s(buffer, 512, L"%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+
+                    if (pdis->itemState & ODS_SELECTED)
+                    {
+                        SetTextColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                        SetBkColor(pdis->hDC, GetSysColor(COLOR_HIGHLIGHT));
+                        FillRect(pdis->hDC, &rcBounds, GetSysColorBrush(COLOR_HIGHLIGHT));
+                    }
                     else
                     {
-                        switch (m_vBookmarks[pdis->itemID]->Type())
-                        {
-                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Value()); break;
-                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Value()); break;
-                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Value()); break;
-                        }
+                        SetTextColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+
+                        COLORREF color;
+
+                        if (m_vBookmarks[pdis->itemID]->Frozen())
+                            color = RGB(255, 255, 160);
+                        else
+                            color = GetSysColor(COLOR_WINDOW);
+
+                        HBRUSH hBrush = CreateSolidBrush(color);
+                        SetBkColor(pdis->hDC, color);
+                        FillRect(pdis->hDC, &rcBounds, hBrush);
+                        DeleteObject(hBrush);
                     }
-                    break;
-                case CSI_PREVIOUS:
-                    if (m_vBookmarks[pdis->itemID]->Decimal())
-                        swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
-                    else
+
+                    if (wcslen(buffer) > 0)
                     {
-                        switch (m_vBookmarks[pdis->itemID]->Type())
+                        rcLabel.left += (offset / 2);
+                        rcLabel.right -= offset;
+
+                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                    }
+
+                    // Draw Item Label for remaining columns
+                    LV_COLUMN lvc;
+                    lvc.mask = LVCF_FMT | LVCF_WIDTH;
+
+                    for (size_t i = 1; ListView_GetColumn(hList, i, &lvc); ++i)
+                    {
+                        rcCol.left = rcCol.right;
+                        rcCol.right += lvc.cx;
+
+                        switch (i)
                         {
-                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                            case CSI_ADDRESS:
+                                swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
+                                break;
+                            case CSI_VALUE:
+                                if (m_vBookmarks[pdis->itemID]->Decimal())
+                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
+                                else
+                                {
+                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    {
+                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                    }
+                                }
+                                break;
+                            case CSI_PREVIOUS:
+                                if (m_vBookmarks[pdis->itemID]->Decimal())
+                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
+                                else
+                                {
+                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    {
+                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                    }
+                                }
+                                break;
+                            case CSI_CHANGES:
+                                swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
+                                break;
+                            default:
+                                swprintf_s(buffer, 512, L"");
+                                break;
+                        }
+
+                        if (wcslen(buffer) == 0)
+                            continue;
+
+                        UINT nJustify = DT_LEFT;
+                        switch (lvc.fmt & LVCFMT_JUSTIFYMASK)
+                        {
+                            case LVCFMT_RIGHT:
+                                nJustify = DT_RIGHT;
+                                break;
+                            case LVCFMT_CENTER:
+                                nJustify = DT_CENTER;
+                                break;
+                            default:
+                                break;
+                        }
+
+                        rcLabel = rcCol;
+                        rcLabel.left += offset;
+                        rcLabel.right -= offset;
+
+                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
+                    }
+
+                    //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
+                    //	DrawFocusRect(pdis->hDC, &rcBounds);
+
+                    break;
+
+                case ODA_FOCUS:
+                    break;
+            }
+            return TRUE;
+        }
+
+        case WM_NOTIFY:
+        {
+            switch (LOWORD(wParam))
+            {
+                case IDC_RA_LBX_ADDRESSES:
+                    if (((LPNMHDR)lParam)->code == NM_CLICK)
+                    {
+                        hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+
+                        nSelect = ListView_GetNextItem(hList, -1, LVNI_FOCUSED);
+
+                        if (nSelect == -1)
+                            break;
+                    }
+                    else if (((LPNMHDR)lParam)->code == NM_DBLCLK)
+                    {
+                        hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+
+                        LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
+
+                        if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_DESC)
+                        {
+                            nSelItemBM = pOnClick->iItem;
+                            nSelSubItemBM = pOnClick->iSubItem;
+
+                            EditLabel(pOnClick->iItem, pOnClick->iSubItem);
+                        }
+                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_ADDRESS)
+                        {
+                            g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
+                            MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
+                                ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                         }
                     }
-                    break;
-                case CSI_CHANGES:
-                    swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
-                    break;
+            }
+            return TRUE;
+        }
+        case WM_COMMAND:
+        {
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                case IDCLOSE:
+                case IDCANCEL:
+                    EndDialog(hDlg, true);
+                    return TRUE;
+
+                case IDC_RA_ADD_BOOKMARK:
+                {
+                    if (g_MemoryDialog.GetHWND() != nullptr)
+                        AddAddress();
+
+                    return TRUE;
+                }
+                case IDC_RA_DEL_BOOKMARK:
+                {
+                    HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+
+                    if (nSel != -1)
+                    {
+                        while (nSel >= 0)
+                        {
+                            MemBookmark* pBookmark = m_vBookmarks[nSel];
+
+                            // Remove from vector
+                            m_vBookmarks.erase(m_vBookmarks.begin() + nSel);
+
+                            // Remove from map
+                            std::vector<const MemBookmark*> *pVector;
+                            pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
+                            pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
+                            if (pVector->size() == 0)
+                                m_BookmarkMap.erase(pBookmark->Address());
+
+                            delete pBookmark;
+
+                            ListView_DeleteItem(hList, nSel);
+
+                            nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        }
+
+                        InvalidateRect(hList, nullptr, FALSE);
+                    }
+
+                    return TRUE;
+                }
+                case IDC_RA_FREEZE:
+                {
+                    if (m_vBookmarks.size() > 0)
+                    {
+                        hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                        unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+
+                        if (uSelectedCount > 0)
+                        {
+                            for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+                                m_vBookmarks[i]->SetFrozen(!m_vBookmarks[i]->Frozen());
+                        }
+                        ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
+                    }
+                    return TRUE;
+                }
+                case IDC_RA_CLEAR_CHANGE:
+                {
+                    if (m_vBookmarks.size() > 0)
+                    {
+                        hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                        int idx = -1;
+                        for (MemBookmark* bookmark : m_vBookmarks)
+                        {
+                            idx++;
+
+                            bookmark->ResetCount();
+                        }
+
+                        InvalidateRect(hList, nullptr, FALSE);
+                    }
+
+                    return TRUE;
+                }
+                case IDC_RA_DECIMALBOOKMARK:
+                {
+                    if (m_vBookmarks.size() > 0)
+                    {
+                        hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                        unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+
+                        if (uSelectedCount > 0)
+                        {
+                            for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+                                m_vBookmarks[i]->SetDecimal(!m_vBookmarks[i]->Decimal());
+                        }
+                        ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
+                    }
+                    return TRUE;
+                }
+                case IDC_RA_SAVEBOOKMARK:
+                {
+                    ExportJSON();
+                    return TRUE;
+                }
+                case IDC_RA_LOADBOOKMARK:
+                {
+                    std::string file = ImportDialog();
+                    if (file.length() > 0)
+                        ImportFromFile(file);
+                    return TRUE;
+                }
                 default:
-                    swprintf_s(buffer, 512, L"");
-                    break;
-                }
-
-                if (wcslen(buffer) == 0)
-                    continue;
-
-                UINT nJustify = DT_LEFT;
-                switch (lvc.fmt & LVCFMT_JUSTIFYMASK)
-                {
-                case LVCFMT_RIGHT:
-                    nJustify = DT_RIGHT;
-                    break;
-                case LVCFMT_CENTER:
-                    nJustify = DT_CENTER;
-                    break;
-                default:
-                    break;
-                }
-
-                rcLabel = rcCol;
-                rcLabel.left += offset;
-                rcLabel.right -= offset;
-
-                DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
+                    return FALSE;
             }
-
-            //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
-            //	DrawFocusRect(pdis->hDC, &rcBounds);
-
-            break;
-
-        case ODA_FOCUS:
-            break;
-        }
-        return TRUE;
-    }
-
-    case WM_NOTIFY:
-    {
-        switch (LOWORD(wParam))
-        {
-        case IDC_RA_LBX_ADDRESSES:
-            if (((LPNMHDR)lParam)->code == NM_CLICK)
-            {
-                hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-
-                nSelect = ListView_GetNextItem(hList, -1, LVNI_FOCUSED);
-
-                if (nSelect == -1)
-                    break;
-            }
-            else if (((LPNMHDR)lParam)->code == NM_DBLCLK)
-            {
-                hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-
-                LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
-
-                if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_DESC)
-                {
-                    nSelItemBM = pOnClick->iItem;
-                    nSelSubItemBM = pOnClick->iSubItem;
-
-                    EditLabel(pOnClick->iItem, pOnClick->iSubItem);
-                }
-                else if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_ADDRESS)
-                {
-                    g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
-                    MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
-                        ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-                }
-            }
-        }
-        return TRUE;
-    }
-    case WM_COMMAND:
-    {
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-        case IDCLOSE:
-        case IDCANCEL:
-            EndDialog(hDlg, true);
-            return TRUE;
-
-        case IDC_RA_ADD_BOOKMARK:
-        {
-            if (g_MemoryDialog.GetHWND() != nullptr)
-                AddAddress();
-
-            return TRUE;
-        }
-        case IDC_RA_DEL_BOOKMARK:
-        {
-            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-            int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
-
-            if (nSel != -1)
-            {
-                while (nSel >= 0)
-                {
-                    MemBookmark* pBookmark = m_vBookmarks[nSel];
-
-                    // Remove from vector
-                    m_vBookmarks.erase(m_vBookmarks.begin() + nSel);
-
-                    // Remove from map
-                    std::vector<const MemBookmark*> *pVector;
-                    pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
-                    pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
-                    if (pVector->size() == 0)
-                        m_BookmarkMap.erase(pBookmark->Address());
-
-                    delete pBookmark;
-
-                    ListView_DeleteItem(hList, nSel);
-
-                    nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
-                }
-
-                InvalidateRect(hList, nullptr, FALSE);
-            }
-
-            return TRUE;
-        }
-        case IDC_RA_FREEZE:
-        {
-            if (m_vBookmarks.size() > 0)
-            {
-                hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
-
-                if (uSelectedCount > 0)
-                {
-                    for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                        m_vBookmarks[i]->SetFrozen(!m_vBookmarks[i]->Frozen());
-                }
-                ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
-            }
-            return TRUE;
-        }
-        case IDC_RA_CLEAR_CHANGE:
-        {
-            if (m_vBookmarks.size() > 0)
-            {
-                hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                int idx = -1;
-                for (MemBookmark* bookmark : m_vBookmarks)
-                {
-                    idx++;
-
-                    bookmark->ResetCount();
-                }
-
-                InvalidateRect(hList, nullptr, FALSE);
-            }
-
-            return TRUE;
-        }
-        case IDC_RA_DECIMALBOOKMARK:
-        {
-            if (m_vBookmarks.size() > 0)
-            {
-                hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
-
-                if (uSelectedCount > 0)
-                {
-                    for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                        m_vBookmarks[i]->SetDecimal(!m_vBookmarks[i]->Decimal());
-                }
-                ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
-            }
-            return TRUE;
-        }
-        case IDC_RA_SAVEBOOKMARK:
-        {
-            ExportJSON();
-            return TRUE;
-        }
-        case IDC_RA_LOADBOOKMARK:
-        {
-            std::string file = ImportDialog();
-            if (file.length() > 0)
-                ImportFromFile(file);
-            return TRUE;
         }
         default:
-            return FALSE;
-        }
-    }
-    default:
-        break;
+            break;
     }
 
     return FALSE;
@@ -636,20 +636,20 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
     switch (Bookmark.Type())
     {
-    case 1:
-        addr = Bookmark.Address();
-        width = 2;
-        break;
-    case 2:
-        addr = Bookmark.Address() + 1;
-        width = 4;
-        break;
-    case 3:
-        addr = Bookmark.Address() + 3;
-        width = 8;
-        break;
-    default:
-        break;
+        case 1:
+            addr = Bookmark.Address();
+            width = 2;
+            break;
+        case 2:
+            addr = Bookmark.Address() + 1;
+            width = 4;
+            break;
+        case 3:
+            addr = Bookmark.Address() + 3;
+            width = 8;
+            break;
+        default:
+            break;
     }
 
     char buffer[32];
@@ -672,15 +672,15 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 
     switch (type)
     {
-    case 1:
-        mem_value = g_MemManager.ActiveBankRAMRead(nAddr, EightBit);
-        break;
-    case 2:
-        mem_value = g_MemManager.ActiveBankRAMRead(nAddr, SixteenBit);
-        break;
-    case 3:
-        mem_value = g_MemManager.ActiveBankRAMRead(nAddr, ThirtyTwoBit);
-        break;
+        case 1:
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, EightBit);
+            break;
+        case 2:
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, SixteenBit);
+            break;
+        case 3:
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, ThirtyTwoBit);
+            break;
     }
 
     return mem_value;

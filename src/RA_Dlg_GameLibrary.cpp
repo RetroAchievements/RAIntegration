@@ -555,143 +555,143 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 {
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-    {
-        HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-        SetupColumns(hList);
-
-        ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
-
-        SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
-        SetDlgItemText(hDlg, IDC_RA_GLIB_NAME, TEXT(""));
-
-        m_GameHashLibrary.clear();
-        m_GameTitlesLibrary.clear();
-        m_ProgressLibrary.clear();
-        ParseGameHashLibraryFromFile(m_GameHashLibrary);
-        ParseGameTitlesFromFile(m_GameTitlesLibrary);
-        ParseMyProgressFromFile(m_ProgressLibrary);
-
-        //int msBetweenRefresh = 1000;	//	auto?
-        //SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
-        RefreshList();
-
-        return FALSE;
-    }
-
-    case WM_TIMER:
-        if ((g_GameLibrary.GetHWND() != nullptr) && (IsWindowVisible(g_GameLibrary.GetHWND())))
-            RefreshList();
-        //ReloadGameListData();
-        return FALSE;
-
-    case WM_NOTIFY:
-        switch (LOWORD(wParam))
-        {
-        case IDC_RA_LBX_GAMELIST:
-        {
-            switch (((LPNMHDR)lParam)->code)
-            {
-            case LVN_ITEMCHANGED:
-            {
-                //RA_LOG( "Item Changed\n" );
-                HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-                const int nSel = ListView_GetSelectionMark(hList);
-                if (nSel != -1)
-                {
-                    TCHAR buffer[1024];
-                    ListView_GetItemText(hList, nSel, 1, buffer, 1024);
-                    SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), buffer);
-                }
-            }
-            break;
-
-            case NM_CLICK:
-                //RA_LOG( "Click\n" );
-                break;
-
-            case NM_DBLCLK:
-                if (LaunchSelected())
-                {
-                    EndDialog(hDlg, TRUE);
-                    return TRUE;
-                }
-                break;
-
-            default:
-                break;
-            }
-        }
-        return FALSE;
-
-        default:
-            RA_LOG("%08x, %08x\n", wParam, lParam);
-            return FALSE;
-        }
-
-    case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-            if (LaunchSelected())
-            {
-                EndDialog(hDlg, TRUE);
-                return TRUE;
-            }
-            else
-            {
-                return FALSE;
-            }
-
-        case IDC_RA_RESCAN:
-            ReloadGameListData();
-
-            mtx.lock();	//?
-            SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, TEXT("Scanning..."));
-            mtx.unlock();
-            return FALSE;
-
-        case IDC_RA_PICKROMDIR:
-            g_sROMDirLocation = GetFolderFromDialog();
-            RA_LOG("Selected Folder: %s\n", g_sROMDirLocation.c_str());
-            SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
-            return FALSE;
-
-        case IDC_RA_LBX_GAMELIST:
+        case WM_INITDIALOG:
         {
             HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-            const int nSel = ListView_GetSelectionMark(hList);
-            if (nSel != -1)
-            {
-                TCHAR sGameTitle[1024];
-                ListView_GetItemText(hList, nSel, 1, sGameTitle, 1024);
-                SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), sGameTitle);
-            }
-        }
-        return FALSE;
+            SetupColumns(hList);
 
-        case IDC_RA_REFRESH:
+            ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+
+            SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
+            SetDlgItemText(hDlg, IDC_RA_GLIB_NAME, TEXT(""));
+
+            m_GameHashLibrary.clear();
+            m_GameTitlesLibrary.clear();
+            m_ProgressLibrary.clear();
+            ParseGameHashLibraryFromFile(m_GameHashLibrary);
+            ParseGameTitlesFromFile(m_GameTitlesLibrary);
+            ParseMyProgressFromFile(m_ProgressLibrary);
+
+            //int msBetweenRefresh = 1000;	//	auto?
+            //SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
             RefreshList();
+
+            return FALSE;
+        }
+
+        case WM_TIMER:
+            if ((g_GameLibrary.GetHWND() != nullptr) && (IsWindowVisible(g_GameLibrary.GetHWND())))
+                RefreshList();
+            //ReloadGameListData();
+            return FALSE;
+
+        case WM_NOTIFY:
+            switch (LOWORD(wParam))
+            {
+                case IDC_RA_LBX_GAMELIST:
+                {
+                    switch (((LPNMHDR)lParam)->code)
+                    {
+                        case LVN_ITEMCHANGED:
+                        {
+                            //RA_LOG( "Item Changed\n" );
+                            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
+                            const int nSel = ListView_GetSelectionMark(hList);
+                            if (nSel != -1)
+                            {
+                                TCHAR buffer[1024];
+                                ListView_GetItemText(hList, nSel, 1, buffer, 1024);
+                                SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), buffer);
+                            }
+                        }
+                        break;
+
+                        case NM_CLICK:
+                            //RA_LOG( "Click\n" );
+                            break;
+
+                        case NM_DBLCLK:
+                            if (LaunchSelected())
+                            {
+                                EndDialog(hDlg, TRUE);
+                                return TRUE;
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+                return FALSE;
+
+                default:
+                    RA_LOG("%08x, %08x\n", wParam, lParam);
+                    return FALSE;
+            }
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                    if (LaunchSelected())
+                    {
+                        EndDialog(hDlg, TRUE);
+                        return TRUE;
+                    }
+                    else
+                    {
+                        return FALSE;
+                    }
+
+                case IDC_RA_RESCAN:
+                    ReloadGameListData();
+
+                    mtx.lock();	//?
+                    SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, TEXT("Scanning..."));
+                    mtx.unlock();
+                    return FALSE;
+
+                case IDC_RA_PICKROMDIR:
+                    g_sROMDirLocation = GetFolderFromDialog();
+                    RA_LOG("Selected Folder: %s\n", g_sROMDirLocation.c_str());
+                    SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
+                    return FALSE;
+
+                case IDC_RA_LBX_GAMELIST:
+                {
+                    HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
+                    const int nSel = ListView_GetSelectionMark(hList);
+                    if (nSel != -1)
+                    {
+                        TCHAR sGameTitle[1024];
+                        ListView_GetItemText(hList, nSel, 1, sGameTitle, 1024);
+                        SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), sGameTitle);
+                    }
+                }
+                return FALSE;
+
+                case IDC_RA_REFRESH:
+                    RefreshList();
+                    return FALSE;
+
+                default:
+                    return FALSE;
+            }
+
+        case WM_PAINT:
+            if (nNumParsed != Results.size())
+                nNumParsed = Results.size();
+            return FALSE;
+
+        case WM_CLOSE:
+            EndDialog(hDlg, FALSE);
+            return TRUE;
+
+        case WM_USER:
             return FALSE;
 
         default:
             return FALSE;
-        }
-
-    case WM_PAINT:
-        if (nNumParsed != Results.size())
-            nNumParsed = Results.size();
-        return FALSE;
-
-    case WM_CLOSE:
-        EndDialog(hDlg, FALSE);
-        return TRUE;
-
-    case WM_USER:
-        return FALSE;
-
-    default:
-        return FALSE;
     }
 }
 

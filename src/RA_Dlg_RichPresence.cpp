@@ -10,49 +10,49 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 {
     switch (nMsg)
     {
-    case WM_INITDIALOG:
-    {
-        SendMessage(GetDlgItem(hDlg, IDC_RA_RICHPRESENCERESULTTEXT), WM_SETFONT, (WPARAM)m_hFont, LPARAM{});
-
-        RestoreWindowPosition(hDlg, "Rich Presence Monitor", true, true);
-        return TRUE;
-    }
-
-    case WM_TIMER:
-    {
-        std::wstring sRP = Widen(g_RichPresenceInterpretter.GetRichPresenceString());
-        SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, sRP.c_str());
-        return TRUE;
-    }
-
-    case WM_COMMAND:
-    {
-        switch (LOWORD(wParam))
+        case WM_INITDIALOG:
         {
-        case IDOK:
-        case IDCLOSE:
-        case IDCANCEL:
+            SendMessage(GetDlgItem(hDlg, IDC_RA_RICHPRESENCERESULTTEXT), WM_SETFONT, (WPARAM)m_hFont, LPARAM{});
+
+            RestoreWindowPosition(hDlg, "Rich Presence Monitor", true, true);
+            return TRUE;
+        }
+
+        case WM_TIMER:
+        {
+            std::wstring sRP = Widen(g_RichPresenceInterpretter.GetRichPresenceString());
+            SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, sRP.c_str());
+            return TRUE;
+        }
+
+        case WM_COMMAND:
+        {
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                case IDCLOSE:
+                case IDCANCEL:
+                    StopTimer();
+                    EndDialog(hDlg, true);
+                    return TRUE;
+
+                default:
+                    return FALSE;
+            }
+        }
+
+        case WM_DESTROY:
             StopTimer();
             EndDialog(hDlg, true);
-            return TRUE;
-
-        default:
             return FALSE;
-        }
-    }
 
-    case WM_DESTROY:
-        StopTimer();
-        EndDialog(hDlg, true);
-        return FALSE;
+        case WM_MOVE:
+            RememberWindowPosition(hDlg, "Rich Presence Monitor");
+            break;
 
-    case WM_MOVE:
-        RememberWindowPosition(hDlg, "Rich Presence Monitor");
-        break;
-
-    case WM_SIZE:
-        RememberWindowSize(hDlg, "Rich Presence Monitor");
-        break;
+        case WM_SIZE:
+            RememberWindowSize(hDlg, "Rich Presence Monitor");
+            break;
     }
 
     return FALSE;

@@ -220,95 +220,95 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
     switch (m_nState)
     {
-    case State_ShowingProgress:
-    {
-        if (!g_bLBDisplayCounter)
-            break;
-
-        int nProgressYOffs = 0;
-        std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
-        while (iter != m_vActiveLBIDs.end())
+        case State_ShowingProgress:
         {
-            const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(*iter);
+            if (!g_bLBDisplayCounter)
+                break;
+
+            int nProgressYOffs = 0;
+            std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
+            while (iter != m_vActiveLBIDs.end())
+            {
+                const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(*iter);
+                if (pLB != nullptr)
+                {
+                    //	Show current progress:
+                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValueProgress())) + std::string(" ");
+
+                    SIZE szProgress;
+                    GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
+
+                    HGDIOBJ hBkup = SelectObject(hDC, hPen);
+
+                    MoveToEx(hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr);
+                    LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);							//	down
+                    LineTo(hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs);			//	left
+
+                    RECT rcProgress;
+                    SetRect(&rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs);
+                    DrawText(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE);
+
+                    SelectObject(hDC, hBkup);
+                    nProgressYOffs -= 26;
+                }
+
+                iter++;
+            }
+        }
+        break;
+
+        case State_ShowingScoreboard:
+        {
+            if (!g_bLBDisplayScoreboard)
+                break;
+
+            const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(m_vScoreboardQueue.front());
             if (pLB != nullptr)
             {
-                //	Show current progress:
-                std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValueProgress())) + std::string(" ");
-
-                SIZE szProgress;
-                GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
-
-                HGDIOBJ hBkup = SelectObject(hDC, hPen);
-
-                MoveToEx(hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr);
-                LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);							//	down
-                LineTo(hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs);			//	left
-
-                RECT rcProgress;
-                SetRect(&rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs);
-                DrawText(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE);
-
-                SelectObject(hDC, hBkup);
-                nProgressYOffs -= 26;
-            }
-
-            iter++;
-        }
-    }
-    break;
-
-    case State_ShowingScoreboard:
-    {
-        if (!g_bLBDisplayScoreboard)
-            break;
-
-        const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(m_vScoreboardQueue.front());
-        if (pLB != nullptr)
-        {
-            char buffer[1024];
-            sprintf_s(buffer, 1024, " Results: %s ", pLB->Title().c_str());
-            RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
-            DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
-
-            //	Show scoreboard
-            RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
-            for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
-            {
-                const LB_Entry& lbInfo = pLB->GetRankInfo(i);
-
-                if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)
-                {
-                    SetBkMode(hDC, OPAQUE);
-                    SetTextColor(hDC, COL_POPUP);
-                }
-                else
-                {
-                    SetBkMode(hDC, TRANSPARENT);
-                    SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
-                }
-
                 char buffer[1024];
-                sprintf_s(buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
-                DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                sprintf_s(buffer, 1024, " Results: %s ", pLB->Title().c_str());
+                RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
+                DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
-                std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
-                DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
+                //	Show scoreboard
+                RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
+                for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
+                {
+                    const LB_Entry& lbInfo = pLB->GetRankInfo(i);
 
-                rcScoreboard.top += 24;
+                    if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)
+                    {
+                        SetBkMode(hDC, OPAQUE);
+                        SetTextColor(hDC, COL_POPUP);
+                    }
+                    else
+                    {
+                        SetBkMode(hDC, TRANSPARENT);
+                        SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
+                    }
 
-                //	If we're about to draw the local, outranked player, offset a little more
-                if (i == 5)
-                    rcScoreboard.top += 4;
+                    char buffer[1024];
+                    sprintf_s(buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
+                    DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+
+                    std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
+                    DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
+
+                    rcScoreboard.top += 24;
+
+                    //	If we're about to draw the local, outranked player, offset a little more
+                    if (i == 5)
+                        rcScoreboard.top += 4;
+                }
             }
+
+            //	Restore
+            //SetBkMode( hDC, nOldBkMode );
         }
-
-        //	Restore
-        //SetBkMode( hDC, nOldBkMode );
-    }
-    break;
-
-    default:
         break;
+
+        default:
+            break;
     }
 
     //	Restore old obj

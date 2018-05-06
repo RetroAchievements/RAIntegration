@@ -114,76 +114,76 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     switch (g_EmulatorID)
     {
-    case RA_Gens:
-        g_ConsoleID = MegaDrive;
-        g_sGetLatestClientPage = "LatestRAGensVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RAGens_REWiND";
-        g_sClientDownloadURL = "RAGens.zip";
-        g_sClientEXEName = "RAGens.exe";
-        break;
-    case RA_Project64:
-        g_ConsoleID = N64;
-        g_sGetLatestClientPage = "LatestRAP64Version.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RAP64";
-        g_sClientDownloadURL = "RAP64.zip";
-        g_sClientEXEName = "RAP64.exe";
-        break;
-    case RA_Snes9x:
-        g_ConsoleID = SNES;
-        g_sGetLatestClientPage = "LatestRASnesVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RASnes9X";
-        g_sClientDownloadURL = "RASnes9X.zip";
-        g_sClientEXEName = "RASnes9X.exe";
-        break;
-    case RA_VisualboyAdvance:
-        g_ConsoleID = GB;
-        g_sGetLatestClientPage = "LatestRAVBAVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RAVisualBoyAdvance";
-        g_sClientDownloadURL = "RAVBA.zip";
-        g_sClientEXEName = "RAVisualBoyAdvance.exe";
-        break;
-    case RA_Nester:
-    case RA_FCEUX:
-        g_ConsoleID = NES;
-        g_sGetLatestClientPage = "LatestRANESVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RANes";
-        g_sClientDownloadURL = "RANes.zip";
-        g_sClientEXEName = "RANes.exe";
-        break;
-    case RA_PCE:
-        g_ConsoleID = PCEngine;
-        g_sGetLatestClientPage = "LatestRAPCEVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RAPCE";
-        g_sClientDownloadURL = "RAPCE.zip";
-        g_sClientEXEName = "RAPCE.exe";
-        break;
-    case RA_Libretro:
-        g_ConsoleID = Atari2600;
-        g_sGetLatestClientPage = "LatestRALibretroVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RALibretro";
-        g_sClientDownloadURL = "RALibretro.zip";
-        g_sClientEXEName = "RALibretro.exe";
-        break;
-    case RA_Meka:
-        g_ConsoleID = MasterSystem;
-        g_sGetLatestClientPage = "LatestRAMekaVersion.html";
-        g_sClientVersion = sClientVer;
-        g_sClientName = "RAMeka";
-        g_sClientDownloadURL = "RAMeka.zip";
-        g_sClientEXEName = "RAMeka.exe";
-        break;
-    default:
-        g_ConsoleID = UnknownConsoleID;
-        g_sClientVersion = sClientVer;
-        g_sClientName = "";
-        break;
+        case RA_Gens:
+            g_ConsoleID = MegaDrive;
+            g_sGetLatestClientPage = "LatestRAGensVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAGens_REWiND";
+            g_sClientDownloadURL = "RAGens.zip";
+            g_sClientEXEName = "RAGens.exe";
+            break;
+        case RA_Project64:
+            g_ConsoleID = N64;
+            g_sGetLatestClientPage = "LatestRAP64Version.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAP64";
+            g_sClientDownloadURL = "RAP64.zip";
+            g_sClientEXEName = "RAP64.exe";
+            break;
+        case RA_Snes9x:
+            g_ConsoleID = SNES;
+            g_sGetLatestClientPage = "LatestRASnesVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RASnes9X";
+            g_sClientDownloadURL = "RASnes9X.zip";
+            g_sClientEXEName = "RASnes9X.exe";
+            break;
+        case RA_VisualboyAdvance:
+            g_ConsoleID = GB;
+            g_sGetLatestClientPage = "LatestRAVBAVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAVisualBoyAdvance";
+            g_sClientDownloadURL = "RAVBA.zip";
+            g_sClientEXEName = "RAVisualBoyAdvance.exe";
+            break;
+        case RA_Nester:
+        case RA_FCEUX:
+            g_ConsoleID = NES;
+            g_sGetLatestClientPage = "LatestRANESVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RANes";
+            g_sClientDownloadURL = "RANes.zip";
+            g_sClientEXEName = "RANes.exe";
+            break;
+        case RA_PCE:
+            g_ConsoleID = PCEngine;
+            g_sGetLatestClientPage = "LatestRAPCEVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAPCE";
+            g_sClientDownloadURL = "RAPCE.zip";
+            g_sClientEXEName = "RAPCE.exe";
+            break;
+        case RA_Libretro:
+            g_ConsoleID = Atari2600;
+            g_sGetLatestClientPage = "LatestRALibretroVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RALibretro";
+            g_sClientDownloadURL = "RALibretro.zip";
+            g_sClientEXEName = "RALibretro.exe";
+            break;
+        case RA_Meka:
+            g_ConsoleID = MasterSystem;
+            g_sGetLatestClientPage = "LatestRAMekaVersion.html";
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAMeka";
+            g_sClientDownloadURL = "RAMeka.zip";
+            g_sClientEXEName = "RAMeka.exe";
+            break;
+        default:
+            g_ConsoleID = UnknownConsoleID;
+            g_sClientVersion = sClientVer;
+            g_sClientName = "";
+            break;
     }
 
     if (g_sClientName != nullptr)
@@ -577,170 +577,170 @@ API int CCONV _RA_HandleHTTPResults()
 
             switch (pObj->GetRequestType())
             {
-            case RequestLogin:
-                RAUsers::LocalUser().HandleSilentLoginResponse(doc);
-                break;
+                case RequestLogin:
+                    RAUsers::LocalUser().HandleSilentLoginResponse(doc);
+                    break;
 
-            case RequestBadge:
-            {
-                SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                const std::string& sBadgeURI = pObj->GetData();
-                _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
-
-                /* This block seems unnecessary. --GD
-                for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
+                case RequestBadge:
                 {
-                    Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-                    if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
+                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                    const std::string& sBadgeURI = pObj->GetData();
+                    _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
+
+                    /* This block seems unnecessary. --GD
+                    for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
                     {
-                        //	Re-set this badge image
-                        //	NB. This is already a non-modifying op
-                        ach.SetBadgeImage( sBadgeURI );
-                    }
-                }*/
-
-                g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
-            }
-            break;
-
-            case RequestBadgeIter:
-                g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
-                break;
-
-            case RequestUserPic:
-                RAUsers::OnUserPicDownloaded(*pObj);
-                break;
-
-            case RequestScore:
-            {
-                ASSERT(doc["Success"].GetBool());
-                if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
-                {
-                    const std::string& sUser = doc["User"].GetString();
-                    unsigned int nScore = doc["Score"].GetUint();
-                    RA_LOG("%s's score: %d", sUser.c_str(), nScore);
-
-                    if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
-                    {
-                        RAUsers::LocalUser().SetScore(nScore);
-                    }
-                    else
-                    {
-                        //	Find friend? Update this information?
-                        RAUsers::GetUser(sUser)->SetScore(nScore);
-                    }
-                }
-                else
-                {
-                    ASSERT(!"RequestScore bad response!?");
-                    RA_LOG("RequestScore bad response!?");
-                }
-            }
-            break;
-
-            case RequestLatestClientPage:
-            {
-                if (doc.HasMember("LatestVersion"))
-                {
-                    const std::string& sReply = doc["LatestVersion"].GetString();
-                    if (sReply.substr(0, 2).compare("0.") == 0)
-                    {
-                        long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
-                        long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
-                        long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
-
-                        if (nValKnown < nValServer && nValCurrent < nValServer)
+                        Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+                        if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
                         {
-                            //	Update available:
-                            _RA_OfferNewRAUpdate(sReply.c_str());
+                            //	Re-set this badge image
+                            //	NB. This is already a non-modifying op
+                            ach.SetBadgeImage( sBadgeURI );
+                        }
+                    }*/
 
-                            //	Update the last version I've heard of:
-                            g_sKnownRAVersion = sReply;
+                    g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
+                }
+                break;
+
+                case RequestBadgeIter:
+                    g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
+                    break;
+
+                case RequestUserPic:
+                    RAUsers::OnUserPicDownloaded(*pObj);
+                    break;
+
+                case RequestScore:
+                {
+                    ASSERT(doc["Success"].GetBool());
+                    if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
+                    {
+                        const std::string& sUser = doc["User"].GetString();
+                        unsigned int nScore = doc["Score"].GetUint();
+                        RA_LOG("%s's score: %d", sUser.c_str(), nScore);
+
+                        if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
+                        {
+                            RAUsers::LocalUser().SetScore(nScore);
                         }
                         else
                         {
-                            RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                            //	Find friend? Update this information?
+                            RAUsers::GetUser(sUser)->SetScore(nScore);
                         }
-                    }
-                }
-                else
-                {
-                    ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
-                    RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
-                }
-            }
-            break;
-
-            case RequestSubmitAwardAchievement:
-            {
-                //	Response to an achievement being awarded:
-                AchievementID nAchID = static_cast<AchievementID>(doc["AchievementID"].GetUint());
-                const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
-                if (pAch == nullptr)
-                    pAch = g_pUnofficialAchievements->Find(nAchID);
-                if (pAch != nullptr)
-                {
-                    if (!doc.HasMember("Error"))
-                    {
-                        g_PopupWindows.AchievementPopups().AddMessage(
-                            MessagePopup("Achievement Unlocked",
-                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                PopupMessageType::PopupAchievementUnlocked,
-                                pAch->BadgeImage()));
-                        g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                        RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
                     }
                     else
                     {
-                        g_PopupWindows.AchievementPopups().AddMessage(
-                            MessagePopup("Achievement Unlocked (Error)",
-                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                PopupMessageType::PopupAchievementError,
-                                pAch->BadgeImage()));
-                        g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                        g_PopupWindows.AchievementPopups().AddMessage(
-                            MessagePopup("Error submitting achievement:",
-                                doc["Error"].GetString())); //?
-
-              //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+                        ASSERT(!"RequestScore bad response!?");
+                        RA_LOG("RequestScore bad response!?");
                     }
                 }
-                else
+                break;
+
+                case RequestLatestClientPage:
                 {
-                    ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                    RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                    if (doc.HasMember("LatestVersion"))
+                    {
+                        const std::string& sReply = doc["LatestVersion"].GetString();
+                        if (sReply.substr(0, 2).compare("0.") == 0)
+                        {
+                            long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
+                            long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
+                            long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
+
+                            if (nValKnown < nValServer && nValCurrent < nValServer)
+                            {
+                                //	Update available:
+                                _RA_OfferNewRAUpdate(sReply.c_str());
+
+                                //	Update the last version I've heard of:
+                                g_sKnownRAVersion = sReply;
+                            }
+                            else
+                            {
+                                RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
+                        RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
+                    }
                 }
-            }
-            break;
-
-            case RequestNews:
-                SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                _WriteBufferToFile(RA_NEWS_FILENAME, doc);
-                g_AchievementOverlay.InstallNewsArticlesFromFile();
                 break;
 
-            case RequestAchievementInfo:
-                g_AchExamine.OnReceiveData(doc);
+                case RequestSubmitAwardAchievement:
+                {
+                    //	Response to an achievement being awarded:
+                    AchievementID nAchID = static_cast<AchievementID>(doc["AchievementID"].GetUint());
+                    const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
+                    if (pAch == nullptr)
+                        pAch = g_pUnofficialAchievements->Find(nAchID);
+                    if (pAch != nullptr)
+                    {
+                        if (!doc.HasMember("Error"))
+                        {
+                            g_PopupWindows.AchievementPopups().AddMessage(
+                                MessagePopup("Achievement Unlocked",
+                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                    PopupMessageType::PopupAchievementUnlocked,
+                                    pAch->BadgeImage()));
+                            g_AchievementsDialog.OnGet_Achievement(*pAch);
+
+                            RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
+                        }
+                        else
+                        {
+                            g_PopupWindows.AchievementPopups().AddMessage(
+                                MessagePopup("Achievement Unlocked (Error)",
+                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                    PopupMessageType::PopupAchievementError,
+                                    pAch->BadgeImage()));
+                            g_AchievementsDialog.OnGet_Achievement(*pAch);
+
+                            g_PopupWindows.AchievementPopups().AddMessage(
+                                MessagePopup("Error submitting achievement:",
+                                    doc["Error"].GetString())); //?
+
+                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+                        }
+                    }
+                    else
+                    {
+                        ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
+                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                    }
+                }
                 break;
 
-            case RequestCodeNotes:
-                CodeNotes::OnCodeNotesResponse(doc);
-                break;
+                case RequestNews:
+                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                    _WriteBufferToFile(RA_NEWS_FILENAME, doc);
+                    g_AchievementOverlay.InstallNewsArticlesFromFile();
+                    break;
 
-            case RequestSubmitLeaderboardEntry:
-                RA_LeaderboardManager::OnSubmitEntry(doc);
-                break;
+                case RequestAchievementInfo:
+                    g_AchExamine.OnReceiveData(doc);
+                    break;
 
-            case RequestLeaderboardInfo:
-                g_LBExamine.OnReceiveData(doc);
-                break;
+                case RequestCodeNotes:
+                    CodeNotes::OnCodeNotesResponse(doc);
+                    break;
 
-            case RequestUnlocks:
-                AchievementSet::OnRequestUnlocks(doc);
-                //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
-                break;
+                case RequestSubmitLeaderboardEntry:
+                    RA_LeaderboardManager::OnSubmitEntry(doc);
+                    break;
+
+                case RequestLeaderboardInfo:
+                    g_LBExamine.OnReceiveData(doc);
+                    break;
+
+                case RequestUnlocks:
+                    AchievementSet::OnRequestUnlocks(doc);
+                    //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
+                    break;
             }
         }
 
@@ -1186,201 +1186,201 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 {
     switch (nID)
     {
-    case IDM_RA_FILES_ACHIEVEMENTS:
-        if (g_AchievementsDialog.GetHWND() == nullptr)
-            g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
-        if (g_AchievementsDialog.GetHWND() != nullptr)
-            ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
-        break;
+        case IDM_RA_FILES_ACHIEVEMENTS:
+            if (g_AchievementsDialog.GetHWND() == nullptr)
+                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
+            if (g_AchievementsDialog.GetHWND() != nullptr)
+                ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
+            break;
 
-    case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-        if (g_AchievementEditorDialog.GetHWND() == nullptr)
-            g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
-        if (g_AchievementEditorDialog.GetHWND() != nullptr)
-            ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
-        break;
+        case IDM_RA_FILES_ACHIEVEMENTEDITOR:
+            if (g_AchievementEditorDialog.GetHWND() == nullptr)
+                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
+            if (g_AchievementEditorDialog.GetHWND() != nullptr)
+                ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
+            break;
 
-    case IDM_RA_FILES_MEMORYFINDER:
-        if (g_MemoryDialog.GetHWND() == nullptr)
-            g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
-        if (g_MemoryDialog.GetHWND() != nullptr)
-            ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
-        break;
+        case IDM_RA_FILES_MEMORYFINDER:
+            if (g_MemoryDialog.GetHWND() == nullptr)
+                g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
+            if (g_MemoryDialog.GetHWND() != nullptr)
+                ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
+            break;
 
-    case IDM_RA_FILES_LOGIN:
-        RA_Dlg_Login::DoModalLogin();
-        _RA_SavePreferences();
-        break;
+        case IDM_RA_FILES_LOGIN:
+            RA_Dlg_Login::DoModalLogin();
+            _RA_SavePreferences();
+            break;
 
-    case IDM_RA_FILES_LOGOUT:
-        RAUsers::LocalUser().Clear();
-        g_PopupWindows.Clear();
-        _RA_SavePreferences();
-        _RA_UpdateAppTitle();
+        case IDM_RA_FILES_LOGOUT:
+            RAUsers::LocalUser().Clear();
+            g_PopupWindows.Clear();
+            _RA_SavePreferences();
+            _RA_UpdateAppTitle();
 
-        MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
-        _RA_RebuildMenu();
-        break;
+            MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
+            _RA_RebuildMenu();
+            break;
 
-    case IDM_RA_FILES_CHECKFORUPDATE:
+        case IDM_RA_FILES_CHECKFORUPDATE:
 
-        _RA_CheckForUpdate();
-        break;
+            _RA_CheckForUpdate();
+            break;
 
-    case IDM_RA_HARDCORE_MODE:
-    {
-        g_bHardcoreModeActive = !g_bHardcoreModeActive;
-        _RA_ResetEmulation();
-
-        g_PopupWindows.Clear();
-
-        GameID nGameID = g_pCurrentGameData->GetGameID();
-        if (nGameID != 0)
+        case IDM_RA_HARDCORE_MODE:
         {
-            //	Delete Core and Unofficial Achievements so it is redownloaded every time:
-            g_pCoreAchievements->DeletePatchFile(nGameID);
-            g_pUnofficialAchievements->DeletePatchFile(nGameID);
+            g_bHardcoreModeActive = !g_bHardcoreModeActive;
+            _RA_ResetEmulation();
 
-            g_pCoreAchievements->Clear();
-            g_pUnofficialAchievements->Clear();
-            g_pLocalAchievements->Clear();
+            g_PopupWindows.Clear();
 
-            //	Fetch remotely then load again from file
-            AchievementSet::FetchFromWebBlocking(nGameID);
-
-            g_pCoreAchievements->LoadFromFile(nGameID);
-            g_pUnofficialAchievements->LoadFromFile(nGameID);
-            g_pLocalAchievements->LoadFromFile(nGameID);
-        }
-
-        _RA_RebuildMenu();
-    }
-    break;
-
-    case IDM_RA_REPORTBROKENACHIEVEMENTS:
-        Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
-        break;
-
-    case IDM_RA_GETROMCHECKSUM:
-    {
-        RA_Dlg_RomChecksum::DoModalDialog();
-        //MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
-        break;
-    }
-    //if( g_pActiveAchievements->NumAchievements() == 0 )
-    //	MessageBox( nullptr, "No ROM loaded!", "Error", MB_OK );
-    //else
-    //	MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
-    //break;
-
-    case IDM_RA_OPENUSERPAGE:
-        if (RAUsers::LocalUser().IsLoggedIn())
-        {
-            std::string sTarget = "http://" RA_HOST_URL + std::string("/User/") + RAUsers::LocalUser().Username();
-            ShellExecute(nullptr,
-                TEXT("open"),
-                NativeStr(sTarget).c_str(),
-                nullptr,
-                nullptr,
-                SW_SHOWNORMAL);
-        }
-        break;
-
-    case IDM_RA_OPENGAMEPAGE:
-        if (g_pCurrentGameData->GetGameID() != 0)
-        {
-            std::string sTarget = "http://" RA_HOST_URL + std::string("/Game/") + std::to_string(g_pCurrentGameData->GetGameID());
-            ShellExecute(nullptr,
-                TEXT("open"),
-                NativeStr(sTarget).c_str(),
-                nullptr,
-                nullptr,
-                SW_SHOWNORMAL);
-        }
-        else
-        {
-            MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
-        }
-        break;
-
-    case IDM_RA_SCANFORGAMES:
-
-        if (g_sROMDirLocation.length() == 0)
-        {
-            g_sROMDirLocation = GetFolderFromDialog();
-        }
-
-        if (g_sROMDirLocation.length() > 0)
-        {
-            if (g_GameLibrary.GetHWND() == nullptr)
+            GameID nGameID = g_pCurrentGameData->GetGameID();
+            if (nGameID != 0)
             {
-                _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
-                _FetchGameTitlesFromWeb();			//	##BLOCKING##
-                _FetchMyProgressFromWeb();			//	##BLOCKING##
+                //	Delete Core and Unofficial Achievements so it is redownloaded every time:
+                g_pCoreAchievements->DeletePatchFile(nGameID);
+                g_pUnofficialAchievements->DeletePatchFile(nGameID);
 
-                g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
+                g_pCoreAchievements->Clear();
+                g_pUnofficialAchievements->Clear();
+                g_pLocalAchievements->Clear();
+
+                //	Fetch remotely then load again from file
+                AchievementSet::FetchFromWebBlocking(nGameID);
+
+                g_pCoreAchievements->LoadFromFile(nGameID);
+                g_pUnofficialAchievements->LoadFromFile(nGameID);
+                g_pLocalAchievements->LoadFromFile(nGameID);
             }
 
-            if (g_GameLibrary.GetHWND() != nullptr)
-                ShowWindow(g_GameLibrary.GetHWND(), SW_SHOW);
+            _RA_RebuildMenu();
         }
         break;
 
-    case IDM_RA_PARSERICHPRESENCE:
-        if (g_pCurrentGameData->GetGameID() != 0)
+        case IDM_RA_REPORTBROKENACHIEVEMENTS:
+            Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
+            break;
+
+        case IDM_RA_GETROMCHECKSUM:
         {
-            char sRichPresenceFile[1024];
-            sprintf_s(sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
-
-            //	Then install it
-            g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
-
-            if (g_RichPresenceDialog.GetHWND() == nullptr)
-                g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
-            if (g_RichPresenceDialog.GetHWND() != nullptr)
-                ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
-
-            g_RichPresenceDialog.StartMonitoring();
+            RA_Dlg_RomChecksum::DoModalDialog();
+            //MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
+            break;
         }
-        else
+        //if( g_pActiveAchievements->NumAchievements() == 0 )
+        //	MessageBox( nullptr, "No ROM loaded!", "Error", MB_OK );
+        //else
+        //	MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
+        //break;
+
+        case IDM_RA_OPENUSERPAGE:
+            if (RAUsers::LocalUser().IsLoggedIn())
+            {
+                std::string sTarget = "http://" RA_HOST_URL + std::string("/User/") + RAUsers::LocalUser().Username();
+                ShellExecute(nullptr,
+                    TEXT("open"),
+                    NativeStr(sTarget).c_str(),
+                    nullptr,
+                    nullptr,
+                    SW_SHOWNORMAL);
+            }
+            break;
+
+        case IDM_RA_OPENGAMEPAGE:
+            if (g_pCurrentGameData->GetGameID() != 0)
+            {
+                std::string sTarget = "http://" RA_HOST_URL + std::string("/Game/") + std::to_string(g_pCurrentGameData->GetGameID());
+                ShellExecute(nullptr,
+                    TEXT("open"),
+                    NativeStr(sTarget).c_str(),
+                    nullptr,
+                    nullptr,
+                    SW_SHOWNORMAL);
+            }
+            else
+            {
+                MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
+            }
+            break;
+
+        case IDM_RA_SCANFORGAMES:
+
+            if (g_sROMDirLocation.length() == 0)
+            {
+                g_sROMDirLocation = GetFolderFromDialog();
+            }
+
+            if (g_sROMDirLocation.length() > 0)
+            {
+                if (g_GameLibrary.GetHWND() == nullptr)
+                {
+                    _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
+                    _FetchGameTitlesFromWeb();			//	##BLOCKING##
+                    _FetchMyProgressFromWeb();			//	##BLOCKING##
+
+                    g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
+                }
+
+                if (g_GameLibrary.GetHWND() != nullptr)
+                    ShowWindow(g_GameLibrary.GetHWND(), SW_SHOW);
+            }
+            break;
+
+        case IDM_RA_PARSERICHPRESENCE:
+            if (g_pCurrentGameData->GetGameID() != 0)
+            {
+                char sRichPresenceFile[1024];
+                sprintf_s(sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+
+                //	Then install it
+                g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
+
+                if (g_RichPresenceDialog.GetHWND() == nullptr)
+                    g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
+                if (g_RichPresenceDialog.GetHWND() != nullptr)
+                    ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
+
+                g_RichPresenceDialog.StartMonitoring();
+            }
+            else
+            {
+                MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
+            }
+            break;
+
+        case IDM_RA_TOGGLELEADERBOARDS:
         {
-            MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
+            g_bLeaderboardsActive = !g_bLeaderboardsActive;
+
+            std::string msg;
+            msg += "Leaderboards are now ";
+            msg += (g_bLeaderboardsActive ? "enabled." : "disabled.");
+            msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
+
+            MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
+
+            if (!g_bLeaderboardsActive)
+                g_PopupWindows.LeaderboardPopups().Reset();
+
+            _RA_RebuildMenu();
         }
         break;
+        case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
+            g_bLBDisplayNotification = !g_bLBDisplayNotification;
+            _RA_RebuildMenu();
+            break;
+        case IDM_RA_TOGGLE_LB_COUNTER:
+            g_bLBDisplayCounter = !g_bLBDisplayCounter;
+            _RA_RebuildMenu();
+            break;
+        case IDM_RA_TOGGLE_LB_SCOREBOARD:
+            g_bLBDisplayScoreboard = !g_bLBDisplayScoreboard;
+            _RA_RebuildMenu();
+            break;
 
-    case IDM_RA_TOGGLELEADERBOARDS:
-    {
-        g_bLeaderboardsActive = !g_bLeaderboardsActive;
-
-        std::string msg;
-        msg += "Leaderboards are now ";
-        msg += (g_bLeaderboardsActive ? "enabled." : "disabled.");
-        msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
-
-        MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
-
-        if (!g_bLeaderboardsActive)
-            g_PopupWindows.LeaderboardPopups().Reset();
-
-        _RA_RebuildMenu();
-    }
-    break;
-    case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
-        g_bLBDisplayNotification = !g_bLBDisplayNotification;
-        _RA_RebuildMenu();
-        break;
-    case IDM_RA_TOGGLE_LB_COUNTER:
-        g_bLBDisplayCounter = !g_bLBDisplayCounter;
-        _RA_RebuildMenu();
-        break;
-    case IDM_RA_TOGGLE_LB_SCOREBOARD:
-        g_bLBDisplayScoreboard = !g_bLBDisplayScoreboard;
-        _RA_RebuildMenu();
-        break;
-
-    default:
-        //	Unknown!
-        break;
+        default:
+            //	Unknown!
+            break;
     }
 }
 

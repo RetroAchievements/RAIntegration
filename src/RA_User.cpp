@@ -251,22 +251,22 @@ void LocalRAUser::PostActivity(ActivityType nActivityType)
 {
     switch (nActivityType)
     {
-    case PlayerStartedPlaying:
-    {
-        PostArgs args;
-        args['u'] = Username();
-        args['t'] = Token();
-        args['a'] = std::to_string(nActivityType);
-        args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
+        case PlayerStartedPlaying:
+        {
+            PostArgs args;
+            args['u'] = Username();
+            args['t'] = Token();
+            args['a'] = std::to_string(nActivityType);
+            args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
 
-        RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
-        break;
-    }
+            RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
+            break;
+        }
 
-    default:
-        //	unhandled
-        ASSERT(!"User isn't designed to handle posting this activity!");
-        break;
+        default:
+            //	unhandled
+            ASSERT(!"User isn't designed to handle posting this activity!");
+            break;
     }
 }
 

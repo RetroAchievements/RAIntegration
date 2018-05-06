@@ -269,14 +269,14 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, DataS
 
     switch (nType)
     {
-    case RequestUserPic:
-        return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), ResponseOut, false);	//	UserPic needs migrating to S3...
-    case RequestBadge:
-        return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), ResponseOut, true);
-    case RequestLogin:
-        return DoBlockingHttpPost("login_app.php", PostArgsToString(args), ResponseOut);
-    default:
-        return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), ResponseOut);
+        case RequestUserPic:
+            return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), ResponseOut, false);	//	UserPic needs migrating to S3...
+        case RequestBadge:
+            return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), ResponseOut, true);
+        case RequestLogin:
+            return DoBlockingHttpPost("login_app.php", PostArgsToString(args), ResponseOut);
+        default:
+            return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), ResponseOut);
     }
 }
 
@@ -714,14 +714,14 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
             DataStream Response;
             switch (pObj->GetRequestType())
             {
-            case StopThread:	//	Exception:
-                bThreadActive = false;
-                bDoPingKeepAlive = false;
-                break;
+                case StopThread:	//	Exception:
+                    bThreadActive = false;
+                    bDoPingKeepAlive = false;
+                    break;
 
-            default:
-                DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
-                break;
+                default:
+                    DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
+                    break;
             }
 
             pObj->SetResponse(Response);

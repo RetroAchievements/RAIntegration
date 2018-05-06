@@ -15,20 +15,20 @@ static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
     //	Careful not to use ABCDEF here, this denotes part of an actual variable!
     switch (cPrefix)
     {
-    case 'M':	return Bit_0;
-    case 'N':	return Bit_1;
-    case 'O':	return Bit_2;
-    case 'P':	return Bit_3;
-    case 'Q':	return Bit_4;
-    case 'R':	return Bit_5;
-    case 'S':	return Bit_6;
-    case 'T':	return Bit_7;
-    case 'L':	return Nibble_Lower;
-    case 'U':	return Nibble_Upper;
-    case 'H':	return EightBit;
-    case 'X':	return ThirtyTwoBit;
-    default:
-    case ' ':	return SixteenBit;
+        case 'M':	return Bit_0;
+        case 'N':	return Bit_1;
+        case 'O':	return Bit_2;
+        case 'P':	return Bit_3;
+        case 'Q':	return Bit_4;
+        case 'R':	return Bit_5;
+        case 'S':	return Bit_6;
+        case 'T':	return Bit_7;
+        case 'L':	return Nibble_Lower;
+        case 'U':	return Nibble_Upper;
+        case 'H':	return EightBit;
+        case 'X':	return ThirtyTwoBit;
+        default:
+        case ' ':	return SixteenBit;
     }
 }
 
@@ -36,20 +36,20 @@ static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
 {
     switch (nSize)
     {
-    case Bit_0:			return "M";
-    case Bit_1:			return "N";
-    case Bit_2:			return "O";
-    case Bit_3:			return "P";
-    case Bit_4:			return "Q";
-    case Bit_5:			return "R";
-    case Bit_6:			return "S";
-    case Bit_7:			return "T";
-    case Nibble_Lower:	return "L";
-    case Nibble_Upper:	return "U";
-    case EightBit:		return "H";
-    case ThirtyTwoBit:	return "X";
-    default:
-    case SixteenBit:	return " ";
+        case Bit_0:			return "M";
+        case Bit_1:			return "N";
+        case Bit_2:			return "O";
+        case Bit_3:			return "P";
+        case Bit_4:			return "Q";
+        case Bit_5:			return "R";
+        case Bit_6:			return "S";
+        case Bit_7:			return "T";
+        case Nibble_Lower:	return "L";
+        case Nibble_Upper:	return "U";
+        case EightBit:		return "H";
+        case ThirtyTwoBit:	return "X";
+        default:
+        case SixteenBit:	return " ";
     }
 }
 
@@ -57,13 +57,13 @@ static const char* ComparisonTypeToStr(ComparisonType nType)
 {
     switch (nType)
     {
-    case Equals:				return "=";
-    case GreaterThan:			return ">";
-    case GreaterThanOrEqual:	return ">=";
-    case LessThan:				return "<";
-    case LessThanOrEqual:		return "<=";
-    case NotEqualTo:			return "!=";
-    default:					return "";
+        case Equals:				return "=";
+        case GreaterThan:			return ">";
+        case GreaterThanOrEqual:	return ">=";
+        case LessThan:				return "<";
+        case LessThanOrEqual:		return "<=";
+        case NotEqualTo:			return "!=";
+        default:					return "";
     }
 }
 
@@ -71,42 +71,42 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
 {
     switch (pBufferInOut[0])
     {
-    case '=':
-        if (pBufferInOut[1] == '=')
+        case '=':
+            if (pBufferInOut[1] == '=')
+                ++pBufferInOut;
             ++pBufferInOut;
-        ++pBufferInOut;
-        return ComparisonType::Equals;
+            return ComparisonType::Equals;
 
-    case '!':
-        if (pBufferInOut[1] == '=')
-        {
-            pBufferInOut += 2;
-            return ComparisonType::NotEqualTo;
-        }
-        break;
+        case '!':
+            if (pBufferInOut[1] == '=')
+            {
+                pBufferInOut += 2;
+                return ComparisonType::NotEqualTo;
+            }
+            break;
 
-    case '<':
-        if (pBufferInOut[1] == '=')
-        {
-            pBufferInOut += 2;
-            return ComparisonType::LessThanOrEqual;
-        }
+        case '<':
+            if (pBufferInOut[1] == '=')
+            {
+                pBufferInOut += 2;
+                return ComparisonType::LessThanOrEqual;
+            }
 
-        ++pBufferInOut;
-        return ComparisonType::LessThan;
+            ++pBufferInOut;
+            return ComparisonType::LessThan;
 
-    case '>':
-        if (pBufferInOut[1] == '=')
-        {
-            pBufferInOut += 2;
-            return ComparisonType::GreaterThanOrEqual;
-        }
+        case '>':
+            if (pBufferInOut[1] == '=')
+            {
+                pBufferInOut += 2;
+                return ComparisonType::GreaterThanOrEqual;
+            }
 
-        ++pBufferInOut;
-        return ComparisonType::GreaterThan;
+            ++pBufferInOut;
+            return ComparisonType::GreaterThan;
 
-    default:
-        break;
+        default:
+            break;
     }
 
     ASSERT(!"Could not parse?!");
@@ -176,23 +176,23 @@ void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-    case Condition::ResetIf:
-        buffer.append("R:");
-        break;
-    case Condition::PauseIf:
-        buffer.append("P:");
-        break;
-    case Condition::AddSource:
-        buffer.append("A:");
-        break;
-    case Condition::SubSource:
-        buffer.append("B:");
-        break;
-    case Condition::AddHits:
-        buffer.append("C:");
-        break;
-    default:
-        break;
+        case Condition::ResetIf:
+            buffer.append("R:");
+            break;
+        case Condition::PauseIf:
+            buffer.append("P:");
+            break;
+        case Condition::AddSource:
+            buffer.append("A:");
+            break;
+        case Condition::SubSource:
+            buffer.append("B:");
+            break;
+        case Condition::AddHits:
+            buffer.append("C:");
+            break;
+        default:
+            break;
     }
 
     m_nCompSource.SerializeAppend(buffer);
@@ -280,30 +280,30 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     char valueBuffer[20];
     switch (m_nVarType)
     {
-    case ValueComparison:
-        sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
-        buffer.append(valueBuffer);
-        break;
+        case ValueComparison:
+            sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
+            buffer.append(valueBuffer);
+            break;
 
-    case DeltaMem:
-        buffer.append(1, 'd');
-        // explicit fallthrough to Address
+        case DeltaMem:
+            buffer.append(1, 'd');
+            // explicit fallthrough to Address
 
-    case Address:
-        buffer.append("0x");
+        case Address:
+            buffer.append("0x");
 
-        buffer.append(ComparisonSizeToPrefix(m_nVarSize));
+            buffer.append(ComparisonSizeToPrefix(m_nVarSize));
 
-        if (m_nVal >= 0x10000)
-            sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
-        else
-            sprintf_s(valueBuffer, sizeof(valueBuffer), "%04x", m_nVal);
-        buffer.append(valueBuffer);
-        break;
+            if (m_nVal >= 0x10000)
+                sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
+            else
+                sprintf_s(valueBuffer, sizeof(valueBuffer), "%04x", m_nVal);
+            buffer.append(valueBuffer);
+            break;
 
-    default:
-        ASSERT(!"Unknown type? (DynMem)?");
-        break;
+        default:
+            ASSERT(!"Unknown type? (DynMem)?");
+            break;
     }
 }
 
@@ -314,24 +314,24 @@ unsigned int CompVariable::GetValue()
 
     switch (m_nVarType)
     {
-    case ValueComparison:
-        //	It's a raw value. Return it.
-        return m_nVal;
+        case ValueComparison:
+            //	It's a raw value. Return it.
+            return m_nVal;
 
-    case Address:
-        //	It's an address in memory. Return it!
-        return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
+        case Address:
+            //	It's an address in memory. Return it!
+            return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
-    case DeltaMem:
-        //	Return the backed up (last frame) value, but store the new one for the next frame!
-        nPreviousVal = m_nPreviousVal;
-        m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
-        return nPreviousVal;
+        case DeltaMem:
+            //	Return the backed up (last frame) value, but store the new one for the next frame!
+            nPreviousVal = m_nPreviousVal;
+            m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
+            return nPreviousVal;
 
-    default:
-        //	Panic!
-        ASSERT(!"Undefined mem type!");
-        return 0;
+        default:
+            //	Panic!
+            ASSERT(!"Undefined mem type!");
+            return 0;
     }
 }
 
@@ -339,20 +339,20 @@ bool Condition::Compare(unsigned int nAddBuffer)
 {
     switch (m_nCompareType)
     {
-    case Equals:
-        return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
-    case LessThan:
-        return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
-    case LessThanOrEqual:
-        return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
-    case GreaterThan:
-        return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
-    case GreaterThanOrEqual:
-        return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
-    case NotEqualTo:
-        return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
-    default:
-        return true;	//?
+        case Equals:
+            return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
+        case LessThan:
+            return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
+        case LessThanOrEqual:
+            return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
+        case GreaterThan:
+            return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
+        case GreaterThanOrEqual:
+            return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
+        case NotEqualTo:
+            return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
+        default:
+            return true;	//?
     }
 }
 
@@ -393,33 +393,33 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
 
         switch (pNextCond->GetConditionType())
         {
-        case Condition::PauseIf:
-        case Condition::ResetIf:
-            continue;
+            case Condition::PauseIf:
+            case Condition::ResetIf:
+                continue;
 
-        case Condition::AddSource:
-            nAddBuffer += pNextCond->CompSource().GetValue();
-            continue;
+            case Condition::AddSource:
+                nAddBuffer += pNextCond->CompSource().GetValue();
+                continue;
 
-        case Condition::SubSource:
-            nAddBuffer -= pNextCond->CompSource().GetValue();
-            continue;
+            case Condition::SubSource:
+                nAddBuffer -= pNextCond->CompSource().GetValue();
+                continue;
 
-        case Condition::AddHits:
-            if (pNextCond->Compare())
-            {
-                if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
+            case Condition::AddHits:
+                if (pNextCond->Compare())
                 {
-                    pNextCond->IncrHits();
-                    bDirtyConditions = true;
+                    if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
+                    {
+                        pNextCond->IncrHits();
+                        bDirtyConditions = true;
+                    }
                 }
-            }
 
-            nAddHits += pNextCond->CurrentHits();
-            continue;
+                nAddHits += pNextCond->CurrentHits();
+                continue;
 
-        default:
-            break;
+            default:
+                break;
         }
 
         // if the condition has a target hit count that has already been met, ignore it.

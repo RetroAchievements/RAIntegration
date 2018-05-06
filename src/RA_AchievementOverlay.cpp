@@ -76,25 +76,25 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 {
     switch (m_Pages[m_nPageStackPointer])
     {
-    case OP_ACHIEVEMENTS:
-        m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_FRIENDS : OP_LEADERBOARDS);
-        break;
-    case OP_FRIENDS:
-        m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_MESSAGES : OP_ACHIEVEMENTS);
-        break;
-    case OP_MESSAGES:
-        m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_NEWS : OP_FRIENDS);
-        break;
-    case OP_NEWS:
-        m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_LEADERBOARDS : OP_MESSAGES);
-        break;
-    case OP_LEADERBOARDS:
-        m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_ACHIEVEMENTS : OP_NEWS);
-        break;
-    default:
-        //	Not on a toplevel page: cannot do anything!
-        //assert(0);
-        break;
+        case OP_ACHIEVEMENTS:
+            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_FRIENDS : OP_LEADERBOARDS);
+            break;
+        case OP_FRIENDS:
+            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_MESSAGES : OP_ACHIEVEMENTS);
+            break;
+        case OP_MESSAGES:
+            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_NEWS : OP_FRIENDS);
+            break;
+        case OP_NEWS:
+            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_LEADERBOARDS : OP_MESSAGES);
+            break;
+        case OP_LEADERBOARDS:
+            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_ACHIEVEMENTS : OP_NEWS);
+            break;
+        default:
+            //	Not on a toplevel page: cannot do anything!
+            //assert(0);
+            break;
     }
 }
 
@@ -256,227 +256,227 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
     {
         switch (m_Pages[m_nPageStackPointer])
         {
-        case OP_ACHIEVEMENTS:
-        {
-            if (input.m_bDownPressed)
+            case OP_ACHIEVEMENTS:
             {
-                if ((*pnSelectedItem) < (nAchCount - 1))
+                if (input.m_bDownPressed)
                 {
-                    (*pnSelectedItem)++;
-                    m_bInputLock = TRUE;
+                    if ((*pnSelectedItem) < (nAchCount - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        m_bInputLock = TRUE;
+                    }
                 }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
+                else if (input.m_bUpPressed)
                 {
-                    (*pnSelectedItem)--;
-                    m_bInputLock = TRUE;
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        m_bInputLock = TRUE;
+                    }
                 }
-            }
-            else if (input.m_bConfirmPressed)
-            {
-                if ((*pnSelectedItem) < nAchCount)
+                else if (input.m_bConfirmPressed)
                 {
-                    AddPage(OP_ACHIEVEMENT_EXAMINE);
-                    g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
+                    if ((*pnSelectedItem) < nAchCount)
+                    {
+                        AddPage(OP_ACHIEVEMENT_EXAMINE);
+                        g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
+                    }
                 }
-            }
 
-            //	Move page to match selection
-            if ((*pnScrollOffset) > (*pnSelectedItem))
-                (*pnScrollOffset) = (*pnSelectedItem);
-            else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
-                (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
+                //	Move page to match selection
+                if ((*pnScrollOffset) > (*pnSelectedItem))
+                    (*pnScrollOffset) = (*pnSelectedItem);
+                else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
+                    (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
 
-        }
-        break;
-        case OP_ACHIEVEMENT_EXAMINE:
-        {
-            //	Overload:
-            pnScrollOffset = &m_nAchievementsScrollOffset;
-            pnSelectedItem = &m_nAchievementsSelectedItem;
-
-            if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) < (nAchCount - 1))
-                {
-                    (*pnSelectedItem)++;
-                    g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
-                    m_bInputLock = TRUE;
-                }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
-                {
-                    (*pnSelectedItem)--;
-                    g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
-                    m_bInputLock = TRUE;
-                }
-            }
-
-            //	Move page to match selection
-            if ((*pnScrollOffset) > (*pnSelectedItem))
-                (*pnScrollOffset) = (*pnSelectedItem);
-            else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
-                (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
-        }
-        break;
-        case OP_FRIENDS:
-        {
-            if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) < (nNumFriends - 1))
-                {
-                    (*pnSelectedItem)++;
-                    m_bInputLock = TRUE;
-                }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
-                {
-                    (*pnSelectedItem)--;
-                    m_bInputLock = TRUE;
-                }
-            }
-
-            //	Move page to match selection
-            if ((*pnScrollOffset) > (*pnSelectedItem))
-                (*pnScrollOffset) = (*pnSelectedItem);
-            else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumFriendsBeingRendered - 1))
-                (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumFriendsBeingRendered - 1);
-
-            // 				//	Lim the selected item to a valid range
-            // 				while( nSelectedItem > nNumElements )
-            // 					nSelectedItem--;
-            // 
-            // 				if( nSelectedItem < nScrollOffset )
-            // 					nScrollOffset--;
-            // 				if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
-            // 					nScrollOffset++;
-        }
-        break;
-        case OP_MESSAGES:
-        {
-            //	Select message
-            if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) < (nAchCount - 1))
-                {
-                    (*pnSelectedItem)++;
-                    m_bInputLock = TRUE;
-                }
-            }
-            else if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) > 0)
-                {
-                    (*pnSelectedItem)--;
-                    m_bInputLock = TRUE;
-                }
-            }
-
-            //	Move page to match selection
-            //if( (*pnScrollOffset) > (*pnSelectedItem) )
-            //	(*pnScrollOffset) = (*pnSelectedItem);
-            //else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
-            //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
-        }
-        break;
-        case OP_MESSAGE_VIEWER:
-        {
-            //RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
-
-            break;
-        }
-        case OP_NEWS:
-            //	Scroll news
-            if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) < static_cast<int>(m_LatestNews.size()))
-                {
-                    (*pnSelectedItem)++;
-                    m_bInputLock = TRUE;
-                }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
-                {
-                    (*pnSelectedItem)--;
-                    m_bInputLock = TRUE;
-                }
             }
             break;
-        case OP_LEADERBOARDS:
-            //	Scroll news
-            if (input.m_bDownPressed)
+            case OP_ACHIEVEMENT_EXAMINE:
             {
-                if ((*pnSelectedItem) < (nNumLBs - 1))
-                {
-                    (*pnSelectedItem)++;
-                    m_bInputLock = TRUE;
-                }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
-                {
-                    (*pnSelectedItem)--;
-                    m_bInputLock = TRUE;
-                }
-            }
-            if (input.m_bConfirmPressed)
-            {
-                if ((*pnSelectedItem) < nNumLBs)
-                {
-                    AddPage(OP_LEADERBOARD_EXAMINE);
-                    g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
-                }
-            }
-            //	Move page to match selection
-            if ((*pnScrollOffset) > (*pnSelectedItem))
-                (*pnScrollOffset) = (*pnSelectedItem);
-            else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
-                (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
-            break;
-        case OP_LEADERBOARD_EXAMINE:
-            //	Overload from previous
-            //	Overload:
-            pnScrollOffset = &m_nLeaderboardScrollOffset;
-            pnSelectedItem = &m_nLeaderboardSelectedItem;
+                //	Overload:
+                pnScrollOffset = &m_nAchievementsScrollOffset;
+                pnSelectedItem = &m_nAchievementsSelectedItem;
 
-            if (input.m_bDownPressed)
-            {
-                if ((*pnSelectedItem) < (nNumLBs - 1))
+                if (input.m_bDownPressed)
                 {
-                    (*pnSelectedItem)++;
-                    g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
-                    m_bInputLock = TRUE;
+                    if ((*pnSelectedItem) < (nAchCount - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
+                        m_bInputLock = TRUE;
+                    }
                 }
-            }
-            else if (input.m_bUpPressed)
-            {
-                if ((*pnSelectedItem) > 0)
+                else if (input.m_bUpPressed)
                 {
-                    (*pnSelectedItem)--;
-                    g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
-                    m_bInputLock = TRUE;
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
+                        m_bInputLock = TRUE;
+                    }
                 }
+
+                //	Move page to match selection
+                if ((*pnScrollOffset) > (*pnSelectedItem))
+                    (*pnScrollOffset) = (*pnSelectedItem);
+                else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
+                    (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
             }
-
-            //	Move page to match selection
-            //if( (*pnScrollOffset) > (*pnSelectedItem) )
-            //	(*pnScrollOffset) = (*pnSelectedItem);
-            //else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
-            //	(*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
-
             break;
-        default:
-            assert(0);	//	Unknown page!
+            case OP_FRIENDS:
+            {
+                if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) < (nNumFriends - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                else if (input.m_bUpPressed)
+                {
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        m_bInputLock = TRUE;
+                    }
+                }
+
+                //	Move page to match selection
+                if ((*pnScrollOffset) > (*pnSelectedItem))
+                    (*pnScrollOffset) = (*pnSelectedItem);
+                else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumFriendsBeingRendered - 1))
+                    (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumFriendsBeingRendered - 1);
+
+                // 				//	Lim the selected item to a valid range
+                // 				while( nSelectedItem > nNumElements )
+                // 					nSelectedItem--;
+                // 
+                // 				if( nSelectedItem < nScrollOffset )
+                // 					nScrollOffset--;
+                // 				if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
+                // 					nScrollOffset++;
+            }
             break;
+            case OP_MESSAGES:
+            {
+                //	Select message
+                if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) < (nAchCount - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                else if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        m_bInputLock = TRUE;
+                    }
+                }
+
+                //	Move page to match selection
+                //if( (*pnScrollOffset) > (*pnSelectedItem) )
+                //	(*pnScrollOffset) = (*pnSelectedItem);
+                //else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
+                //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
+            }
+            break;
+            case OP_MESSAGE_VIEWER:
+            {
+                //RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
+
+                break;
+            }
+            case OP_NEWS:
+                //	Scroll news
+                if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) < static_cast<int>(m_LatestNews.size()))
+                    {
+                        (*pnSelectedItem)++;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                else if (input.m_bUpPressed)
+                {
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                break;
+            case OP_LEADERBOARDS:
+                //	Scroll news
+                if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) < (nNumLBs - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                else if (input.m_bUpPressed)
+                {
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        m_bInputLock = TRUE;
+                    }
+                }
+                if (input.m_bConfirmPressed)
+                {
+                    if ((*pnSelectedItem) < nNumLBs)
+                    {
+                        AddPage(OP_LEADERBOARD_EXAMINE);
+                        g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
+                    }
+                }
+                //	Move page to match selection
+                if ((*pnScrollOffset) > (*pnSelectedItem))
+                    (*pnScrollOffset) = (*pnSelectedItem);
+                else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
+                    (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
+                break;
+            case OP_LEADERBOARD_EXAMINE:
+                //	Overload from previous
+                //	Overload:
+                pnScrollOffset = &m_nLeaderboardScrollOffset;
+                pnSelectedItem = &m_nLeaderboardSelectedItem;
+
+                if (input.m_bDownPressed)
+                {
+                    if ((*pnSelectedItem) < (nNumLBs - 1))
+                    {
+                        (*pnSelectedItem)++;
+                        g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
+                        m_bInputLock = TRUE;
+                    }
+                }
+                else if (input.m_bUpPressed)
+                {
+                    if ((*pnSelectedItem) > 0)
+                    {
+                        (*pnSelectedItem)--;
+                        g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
+                        m_bInputLock = TRUE;
+                    }
+                }
+
+                //	Move page to match selection
+                //if( (*pnScrollOffset) > (*pnSelectedItem) )
+                //	(*pnScrollOffset) = (*pnSelectedItem);
+                //else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
+                //	(*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
+
+                break;
+            default:
+                assert(0);	//	Unknown page!
+                break;
         }
 
 
@@ -1213,38 +1213,38 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     const OverlayPage nCurrentPage = m_Pages[m_nPageStackPointer];
     switch (nCurrentPage)
     {
-    case OP_ACHIEVEMENTS:
-        DrawAchievementsPage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_ACHIEVEMENTS:
+            DrawAchievementsPage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_MESSAGES:
-        DrawMessagesPage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_MESSAGES:
+            DrawMessagesPage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_FRIENDS:
-        DrawFriendsPage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_FRIENDS:
+            DrawFriendsPage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_ACHIEVEMENT_EXAMINE:
-        DrawAchievementExaminePage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_ACHIEVEMENT_EXAMINE:
+            DrawAchievementExaminePage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_NEWS:
-        DrawNewsPage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_NEWS:
+            DrawNewsPage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_LEADERBOARDS:
-        DrawLeaderboardPage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_LEADERBOARDS:
+            DrawLeaderboardPage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    case OP_LEADERBOARD_EXAMINE:
-        DrawLeaderboardExaminePage(hDC, nDX, nDY, rcTarget);
-        break;
+        case OP_LEADERBOARD_EXAMINE:
+            DrawLeaderboardExaminePage(hDC, nDX, nDY, rcTarget);
+            break;
 
-    default:
-        //	Not implemented!
-        ASSERT(!"Attempting to render an undefined overlay page!");
-        break;
+        default:
+            //	Not implemented!
+            ASSERT(!"Attempting to render an undefined overlay page!");
+            break;
     }
 
     const int* pnScrollOffset = GetActiveScrollOffset();
@@ -1438,24 +1438,24 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
 {
     switch (m_Pages[m_nPageStackPointer])
     {
-    case OP_ACHIEVEMENTS:
-        return &m_nAchievementsScrollOffset;
-    case OP_FRIENDS:
-        return &m_nFriendsScrollOffset;
-    case OP_MESSAGES:
-        return &m_nMessagesScrollOffset;
-    case OP_NEWS:
-        return &m_nNewsScrollOffset;
-    case OP_LEADERBOARDS:
-        return &m_nLeaderboardScrollOffset;
+        case OP_ACHIEVEMENTS:
+            return &m_nAchievementsScrollOffset;
+        case OP_FRIENDS:
+            return &m_nFriendsScrollOffset;
+        case OP_MESSAGES:
+            return &m_nMessagesScrollOffset;
+        case OP_NEWS:
+            return &m_nNewsScrollOffset;
+        case OP_LEADERBOARDS:
+            return &m_nLeaderboardScrollOffset;
 
-    case OP_LEADERBOARD_EXAMINE:
-    case OP_ACHIEVEMENT_EXAMINE:
-        return 0;
+        case OP_LEADERBOARD_EXAMINE:
+        case OP_ACHIEVEMENT_EXAMINE:
+            return 0;
 
-    default:
-        ASSERT(!"Unknown page");
-        return &m_nAchievementsScrollOffset;
+        default:
+            ASSERT(!"Unknown page");
+            return &m_nAchievementsScrollOffset;
     }
 }
 
@@ -1463,24 +1463,24 @@ const int* AchievementOverlay::GetActiveSelectedItem() const
 {
     switch (m_Pages[m_nPageStackPointer])
     {
-    case OP_ACHIEVEMENTS:
-        return &m_nAchievementsSelectedItem;	//	?
-    case OP_FRIENDS:
-        return &m_nFriendsSelectedItem;
-    case OP_MESSAGES:
-        return &m_nMessagesSelectedItem;
-    case OP_NEWS:
-        return &m_nNewsSelectedItem;
-    case OP_LEADERBOARDS:
-        return &m_nLeaderboardSelectedItem;
+        case OP_ACHIEVEMENTS:
+            return &m_nAchievementsSelectedItem;	//	?
+        case OP_FRIENDS:
+            return &m_nFriendsSelectedItem;
+        case OP_MESSAGES:
+            return &m_nMessagesSelectedItem;
+        case OP_NEWS:
+            return &m_nNewsSelectedItem;
+        case OP_LEADERBOARDS:
+            return &m_nLeaderboardSelectedItem;
 
-    case OP_ACHIEVEMENT_EXAMINE:
-    case OP_LEADERBOARD_EXAMINE:
-        return 0;
+        case OP_ACHIEVEMENT_EXAMINE:
+        case OP_LEADERBOARD_EXAMINE:
+            return 0;
 
-    default:
-        ASSERT(!"Unknown page");
-        return &m_nAchievementsSelectedItem;
+        default:
+            ASSERT(!"Unknown page");
+            return &m_nAchievementsSelectedItem;
     }
 }
 

@@ -219,15 +219,15 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
         unsigned int nQueryValue = (m_bUseLastKnownValue ? m_Candidates[i].m_nLastKnownValue : nTestValue);
         switch (nCompareType)
         {
-        case Equals:				bValid = (nLiveValue == nQueryValue);	break;
-        case LessThan:				bValid = (nLiveValue < nQueryValue);	break;
-        case LessThanOrEqual:		bValid = (nLiveValue <= nQueryValue);	break;
-        case GreaterThan:			bValid = (nLiveValue > nQueryValue);	break;
-        case GreaterThanOrEqual:	bValid = (nLiveValue >= nQueryValue);	break;
-        case NotEqualTo:			bValid = (nLiveValue != nQueryValue);	break;
-        default:
-            ASSERT(!"Unknown comparison type?!");
-            break;
+            case Equals:				bValid = (nLiveValue == nQueryValue);	break;
+            case LessThan:				bValid = (nLiveValue < nQueryValue);	break;
+            case LessThanOrEqual:		bValid = (nLiveValue <= nQueryValue);	break;
+            case GreaterThan:			bValid = (nLiveValue > nQueryValue);	break;
+            case GreaterThanOrEqual:	bValid = (nLiveValue >= nQueryValue);	break;
+            case NotEqualTo:			bValid = (nLiveValue != nQueryValue);	break;
+            default:
+                ASSERT(!"Unknown comparison type?!");
+                break;
         }
 
         //	If the current address in ram still matches the query, store in result[]
@@ -286,35 +286,35 @@ unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariable
     unsigned char buffer[4];
     switch (size)
     {
-    case Bit_0:
-        return (ActiveBankRAMByteRead(nOffs) & 0x01);
-    case Bit_1:
-        return (ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0;
-    case Bit_2:
-        return (ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0;
-    case Bit_3:
-        return (ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0;
-    case Bit_4:
-        return (ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0;
-    case Bit_5:
-        return (ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0;
-    case Bit_6:
-        return (ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0;
-    case Bit_7:
-        return (ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0;
-    case Nibble_Lower:
-        return (ActiveBankRAMByteRead(nOffs) & 0x0F);
-    case Nibble_Upper:
-        return ((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
-    case EightBit:
-        return ActiveBankRAMByteRead(nOffs);
-    default:
-    case SixteenBit:
-        ActiveBankRAMRead(buffer, nOffs, 2);
-        return buffer[0] | (buffer[1] << 8);
-    case ThirtyTwoBit:
-        ActiveBankRAMRead(buffer, nOffs, 4);
-        return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+        case Bit_0:
+            return (ActiveBankRAMByteRead(nOffs) & 0x01);
+        case Bit_1:
+            return (ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0;
+        case Bit_2:
+            return (ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0;
+        case Bit_3:
+            return (ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0;
+        case Bit_4:
+            return (ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0;
+        case Bit_5:
+            return (ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0;
+        case Bit_6:
+            return (ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0;
+        case Bit_7:
+            return (ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0;
+        case Nibble_Lower:
+            return (ActiveBankRAMByteRead(nOffs) & 0x0F);
+        case Nibble_Upper:
+            return ((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
+        case EightBit:
+            return ActiveBankRAMByteRead(nOffs);
+        default:
+        case SixteenBit:
+            ActiveBankRAMRead(buffer, nOffs, 2);
+            return buffer[0] | (buffer[1] << 8);
+        case ThirtyTwoBit:
+            ActiveBankRAMRead(buffer, nOffs, 4);
+            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
     }
 }
 

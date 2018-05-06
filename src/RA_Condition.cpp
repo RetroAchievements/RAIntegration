@@ -394,7 +394,6 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
         switch (pNextCond->GetConditionType())
         {
             case Condition::PauseIf:
-            case Condition::ResetIf:
                 continue;
 
             case Condition::AddSource:
@@ -422,28 +421,26 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
                 break;
         }
 
-        // if the condition has a target hit count that has already been met, ignore it.
+        // always evaluate the condition to ensure delta values get tracked correctly
+        bConditionValid = pNextCond->Compare(nAddBuffer);
+
+        // if the condition has a target hit count that has already been met, it's automatically true, even if not currently true.
         if (pNextCond->RequiredHits() != 0 && (pNextCond->CurrentHits() + nAddHits >= pNextCond->RequiredHits()))
         {
-            nAddBuffer = 0;
-            nAddHits = 0;
-            continue;
+            bConditionValid = true;
         }
-
-        bConditionValid = pNextCond->Compare(nAddBuffer);
-        if (bConditionValid)
+        else if (bConditionValid)
         {
             pNextCond->IncrHits();
             bDirtyConditions = true;
 
-            //	Process this logic, if this condition is true:
             if (pNextCond->RequiredHits() == 0)
             {
-                //	Not a hit-based requirement: ignore any additional logic!
+                // not a hit-based requirement: ignore any additional logic!
             }
             else if (pNextCond->CurrentHits() + nAddHits < pNextCond->RequiredHits())
             {
-                //	Not entirely valid yet!
+                // HitCount target has not yet been met, condition is not yet valid
                 bConditionValid = false;
             }
         }
@@ -451,23 +448,19 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
         nAddBuffer = 0;
         nAddHits = 0;
 
-        //	Sequential or non-sequential?
-        bSetValid &= bConditionValid;
-    }
-
-    //	Now, ONLY read reset conditions!
-    for (i = 0; i < nNumConditions; ++i)
-    {
-        Condition* pNextCond = &m_Conditions[i];
-        if (pNextCond->IsResetCondition())
+        switch (pNextCond->GetConditionType())
         {
-            bConditionValid = pNextCond->Compare();
-            if (bConditionValid)
-            {
-                bResetAll = true;			//	Resets all hits found so far
-                bSetValid = false;			//	Cannot be valid if we've hit a reset condition.
-                break;						//	No point processing any further reset conditions.
-            }
+            case Condition::ResetIf:
+                if (bConditionValid)
+                {
+                    bResetAll = true;  // let caller know to reset all hit counts
+                    bSetValid = false; // cannot be valid if we've hit a reset condition
+                }
+                break;
+
+            default:
+                bSetValid &= bConditionValid;
+                break;
         }
     }
 

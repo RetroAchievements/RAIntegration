@@ -10,68 +10,68 @@ typedef unsigned int DataPos;
 class RA_Lookup
 {
 public:
-	RA_Lookup( const std::string& sDesc );
-	
-public:
-	void AddLookupData( DataPos nValue, const std::string& sLookupData )	{ m_lookupData[ nValue ] = sLookupData; }
-	const std::string& Lookup( DataPos nValue ) const;
+    RA_Lookup(const std::string& sDesc);
 
-	const std::string& Description() const									{ return m_sLookupDescription; }
+public:
+    void AddLookupData(DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
+    const std::string& Lookup(DataPos nValue) const;
+
+    const std::string& Description() const { return m_sLookupDescription; }
 
 private:
-	std::string m_sLookupDescription;
-	std::map<DataPos, std::string> m_lookupData;
+    std::string m_sLookupDescription;
+    std::map<DataPos, std::string> m_lookupData;
 };
 
 class RA_ConditionalDisplayString
 {
 public:
-	RA_ConditionalDisplayString( const char* pLine );
+    RA_ConditionalDisplayString(const char* pLine);
 
-	bool Test();
-	const std::string& GetDisplayString() const { return m_sDisplayString; }
+    bool Test();
+    const std::string& GetDisplayString() const { return m_sDisplayString; }
 
 private:
-	std::string m_sDisplayString;
-	ConditionSet m_conditions;
+    std::string m_sDisplayString;
+    ConditionSet m_conditions;
 };
 
 class RA_Formattable
 {
 public:
-	RA_Formattable( const std::string& sDesc, RA_Leaderboard::FormatType nType );
+    RA_Formattable(const std::string& sDesc, RA_Leaderboard::FormatType nType);
 
-	std::string Lookup( DataPos nValue ) const;
+    std::string Lookup(DataPos nValue) const;
 
-	const std::string& Description() const									{ return m_sLookupDescription; }
+    const std::string& Description() const { return m_sLookupDescription; }
 
 private:
-	std::string m_sLookupDescription;
-	RA_Leaderboard::FormatType m_nFormatType;
+    std::string m_sLookupDescription;
+    RA_Leaderboard::FormatType m_nFormatType;
 };
 
 class RA_RichPresenceInterpretter
 {
 public:
-	static void PersistAndParseScript( GameID nGameID, const std::string& sScript );
+    static void PersistAndParseScript(GameID nGameID, const std::string& sScript);
 
 public:
-	RA_RichPresenceInterpretter() {}
+    RA_RichPresenceInterpretter() {}
 
 public:
-	void ParseRichPresenceFile( const std::string& sFilename );
+    void ParseRichPresenceFile(const std::string& sFilename);
 
-	const std::string& GetRichPresenceString();
-	const std::string& Lookup( const std::string& sLookupName, const std::string& sMemString ) const;
+    const std::string& GetRichPresenceString();
+    const std::string& Lookup(const std::string& sLookupName, const std::string& sMemString) const;
 
-	bool Enabled() const;
+    bool Enabled() const;
 
 private:
-	std::vector<RA_Lookup> m_lookups;
-	std::vector<RA_Formattable> m_formats;
+    std::vector<RA_Lookup> m_lookups;
+    std::vector<RA_Formattable> m_formats;
 
-	std::vector<RA_ConditionalDisplayString> m_conditionalDisplayStrings;
-	std::string m_sDisplay;
+    std::vector<RA_ConditionalDisplayString> m_conditionalDisplayStrings;
+    std::string m_sDisplay;
 };
 
 extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;

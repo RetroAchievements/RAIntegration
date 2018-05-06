@@ -5,31 +5,34 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
+#include <array>
+
 namespace
 {
-	const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-	const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
-	const TCHAR* FONT_TO_USE = _T( "Tahoma" );
+constexpr auto POPUP_DIST_Y_TO_PCT   = 0.856f;		//	Where on screen to end up
+constexpr auto POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
+constexpr auto FONT_TO_USE           = _T( "Tahoma" );
 	
-	const int FONT_SIZE_TITLE = 32;
-	const int FONT_SIZE_SUBTITLE = 28;
+constexpr auto FONT_SIZE_TITLE    = 32;
+constexpr auto FONT_SIZE_SUBTITLE = 28;
 
-	const float START_AT = 0.0f;
-	const float APPEAR_AT = 0.8f;
-	const float FADEOUT_AT = 4.2f;
-	const float FINISH_AT = 5.0f;
+constexpr auto START_AT   = 0.0f;
+constexpr auto APPEAR_AT  = 0.8f;
+constexpr auto FADEOUT_AT = 4.2f;
+constexpr auto FINISH_AT  = 5.0f;
 
-	const TCHAR* MSG_SOUND[] =
-	{
-		_T( "./Overlay/login.wav" ),
-		_T( "./Overlay/info.wav" ),
-		_T( "./Overlay/unlock.wav" ),
-		_T( "./Overlay/acherror.wav" ),
-		_T( "./Overlay/lb.wav" ),
-		_T( "./Overlay/lbcancel.wav" ),
-		_T( "./Overlay/message.wav" ),
-	};
-	static_assert( SIZEOF_ARRAY( MSG_SOUND ) == NumMessageTypes, "Must match!" );
+using MessageSounds = std::array<LPCTSTR, PopupMessageType::NumMessageTypes>;
+
+constexpr MessageSounds MSG_SOUND
+{
+	_T( "./Overlay/login.wav" ),
+	_T( "./Overlay/info.wav" ),
+	_T( "./Overlay/unlock.wav" ),
+	_T( "./Overlay/acherror.wav" ),
+	_T( "./Overlay/lb.wav" ),
+	_T( "./Overlay/lbcancel.wav" ),
+	_T( "./Overlay/message.wav" ),
+};
 }
 
 AchievementPopup::AchievementPopup() :

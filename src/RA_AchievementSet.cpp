@@ -11,21 +11,26 @@
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
 
+#include <array>
+
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert( SIZEOF_ARRAY( ACH_SETS ) == NumAchievementSetTypes, "Must match!" );
+using AchievementSets = std::array<AchievementSet**, AchievementSetType::NumAchievementSetTypes>;
+constexpr AchievementSets ACH_SETS{ 
+	&g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements 
+};
 
-AchievementSetType g_nActiveAchievementSet = Core;
+
+AchievementSetType g_nActiveAchievementSet = AchievementSetType::Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
 
 void RASetAchievementCollection( AchievementSetType Type )
 {
 	g_nActiveAchievementSet = Type;
-	g_pActiveAchievements = *ACH_SETS[ Type ];
+	g_pActiveAchievements = *ACH_SETS.at(Type);
 }
 
 std::string AchievementSet::GetAchievementSetFilename( GameID nGameID )

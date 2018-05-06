@@ -11,6 +11,8 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#include <array>
+
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif
@@ -20,16 +22,17 @@
 
 namespace
 {
-	const size_t MIN_RESULTS_TO_DUMP = 500000;
-	const size_t MIN_SEARCH_PAGE_SIZE = 50;
+constexpr auto MIN_RESULTS_TO_DUMP  = 500000U;
+constexpr auto MIN_SEARCH_PAGE_SIZE = 50U;
 
-	const char* COMP_STR[] = {
-		{ "EQUAL" },
-		{ "LESS THAN" },
-		{ "LESS THAN/EQUAL" },
-		{ "GREATER THAN" },
-		{ "GREATER THAN/EQUAL" },
-		{ "NOT EQUAL" } };
+constexpr std::array<const char*, 6> COMP_STR{
+	"EQUAL",
+	"LESS THAN",
+	"LESS THAN/EQUAL",
+	"GREATER THAN",
+	"GREATER THAN/EQUAL",
+	"NOT EQUAL"
+};
 }
 
 Dlg_Memory g_MemoryDialog;

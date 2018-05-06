@@ -7,6 +7,9 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <array>
+
+
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,15 +22,13 @@ int nSelSubItemBM;
 
 namespace
 {
-	const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-	const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-	static_assert( SIZEOF_ARRAY( COLUMN_TITLE ) == SIZEOF_ARRAY( COLUMN_WIDTH ), "Must match!" );
+
+constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+constexpr std::array<int, COLUMN_TITLE.size()> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+
 }
 
-const COMDLG_FILTERSPEC c_rgFileTypes[] =
-{
-	{ L"Text Document (*.txt)",       L"*.txt" }
-};
+constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
 
 enum BookmarkSubItems
 {
@@ -709,7 +710,7 @@ void Dlg_MemBookmark::ExportJSON()
 	HRESULT hr = CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
+        hr = pDlg->SetFileTypes( c_rgFileTypes.size(), &c_rgFileTypes.front());
 		if ( hr == S_OK )
 		{
 			char defaultFileName[ 512 ];
@@ -836,7 +837,7 @@ std::string Dlg_MemBookmark::ImportDialog()
 	HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>( &pDlg ) );
 	if ( hr == S_OK )
 	{
-		hr = pDlg->SetFileTypes( ARRAYSIZE( c_rgFileTypes ), c_rgFileTypes );
+		hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front());
 		if ( hr == S_OK )
 		{
 			hr = pDlg->Show( nullptr );

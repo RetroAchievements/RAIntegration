@@ -4,3 +4,7 @@
 /src/RA_BuildVer.h
 *.user
 /RetroAchievementsKey
+src/*_REMOTE_*.cpp
+src/*_BACKUP_*.cpp
+src/*_BASE_*.cpp
+src/*_LOCAL_*.cpp

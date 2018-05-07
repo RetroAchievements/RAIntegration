@@ -5,8 +5,8 @@
 class RA_Dlg_RomChecksum
 {
 public:
-	static BOOL DoModalDialog();
+    static BOOL DoModalDialog();
 
 public:
-	static INT_PTR CALLBACK RA_Dlg_RomChecksumProc( HWND, UINT, WPARAM, LPARAM );
+    static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, LPARAM);
 };

@@ -13,71 +13,71 @@
 class AchievementSet
 {
 public:
-	AchievementSet(AchievementSetType nType) :
-		m_nSetType(nType),
-		m_bProcessingActive(TRUE)
-	{
-		Clear();
-	}
+    AchievementSet(AchievementSetType nType) :
+        m_nSetType(nType),
+        m_bProcessingActive(TRUE)
+    {
+        Clear();
+    }
 
 public:
-	static BOOL FetchFromWebBlocking(GameID nGameID);
-	static void OnRequestUnlocks(const Document& doc);
+    static BOOL FetchFromWebBlocking(GameID nGameID);
+    static void OnRequestUnlocks(const Document& doc);
 
 public:
-	void Clear();
-	void Test();
+    void Clear();
+    void Test();
 
-	BOOL Serialize(FileStream& Stream);
-	BOOL LoadFromFile(GameID nGameID);
-	BOOL SaveToFile();
+    BOOL Serialize(FileStream& Stream);
+    BOOL LoadFromFile(GameID nGameID);
+    BOOL SaveToFile();
 
-	BOOL DeletePatchFile(GameID nGameID);
+    BOOL DeletePatchFile(GameID nGameID);
 
-	std::string GetAchievementSetFilename(GameID nGameID);
+    std::string GetAchievementSetFilename(GameID nGameID);
 
-	//	Get Achievement at offset
-	Achievement& GetAchievement(size_t nIter)	{ return m_Achievements[nIter]; }
-	inline size_t NumAchievements() const		{ return m_Achievements.size(); }
+    //	Get Achievement at offset
+    Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
+    inline size_t NumAchievements() const { return m_Achievements.size(); }
 
-	// Get Points Total
-	inline unsigned int PointTotal()
-	{
-		unsigned int total = 0;
-		for ( Achievement ach : m_Achievements ) total += ach.Points();
-		return total;
-	}
+    // Get Points Total
+    inline unsigned int PointTotal()
+    {
+        unsigned int total = 0;
+        for (Achievement ach : m_Achievements) total += ach.Points();
+        return total;
+    }
 
-	//	Add a new achievement to the list, and return a reference to it.
-	Achievement& AddAchievement();
+    //	Add a new achievement to the list, and return a reference to it.
+    Achievement& AddAchievement();
 
-	//	Take a copy of the achievement at nIter, add it and return a reference to it.
-	Achievement& Clone(unsigned int nIter);
+    //	Take a copy of the achievement at nIter, add it and return a reference to it.
+    Achievement& Clone(unsigned int nIter);
 
-	//	Find achievement with ID, or nullptr if it can't be found.
-	Achievement* Find(AchievementID nID);
+    //	Find achievement with ID, or nullptr if it can't be found.
+    Achievement* Find(AchievementID nID);
 
-	//	Find index of the given achievement in the array list (useful for LBX lookups)
-	size_t GetAchievementIndex(const Achievement& Ach);
+    //	Find index of the given achievement in the array list (useful for LBX lookups)
+    size_t GetAchievementIndex(const Achievement& Ach);
 
-	BOOL RemoveAchievement(size_t nIter);
+    BOOL RemoveAchievement(size_t nIter);
 
-	void SaveProgress(const char* sRomName);
-	void LoadProgress(const char* sRomName);
+    void SaveProgress(const char* sRomName);
+    void LoadProgress(const char* sRomName);
 
-	BOOL Unlock(AchievementID nAchievementID);
+    BOOL Unlock(AchievementID nAchievementID);
 
-	unsigned int NumActive() const;
+    unsigned int NumActive() const;
 
-	BOOL ProcessingActive() const { return m_bProcessingActive; }
-	void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
+    BOOL ProcessingActive() const { return m_bProcessingActive; }
+    void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
 
-	BOOL HasUnsavedChanges();
+    BOOL HasUnsavedChanges();
 
 private:
-	const AchievementSetType m_nSetType;
-	std::vector<Achievement> m_Achievements;
-	BOOL m_bProcessingActive;
+    const AchievementSetType m_nSetType;
+    std::vector<Achievement> m_Achievements;
+    BOOL m_bProcessingActive;
 };
 
 
@@ -89,5 +89,5 @@ extern AchievementSet* g_pLocalAchievements;
 
 extern AchievementSet* g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
-	
-extern void RASetAchievementCollection( enum AchievementSetType Type );
+
+extern void RASetAchievementCollection(enum AchievementSetType Type);

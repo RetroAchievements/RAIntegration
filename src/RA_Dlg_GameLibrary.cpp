@@ -170,25 +170,25 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
 
 		const auto& List = doc["Response"];
 		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
+        {
 			auto nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
 			const auto nNumAchievements = iter->value["NumAch"].GetUint();
 			const auto nEarned = iter->value["Earned"].GetUint();
 			const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
 
-                std::stringstream sstr;
-                sstr << nEarned;
-                if (nEarnedHardcore > 0)
-                    sstr << " (" << std::to_string(nEarnedHardcore) << ")";
+            std::stringstream sstr;
+            sstr << nEarned;
+            if (nEarnedHardcore > 0)
+                sstr << " (" << std::to_string(nEarnedHardcore) << ")";
 
 
 			if (sstr << " / " << nNumAchievements; nNumAchievements > 0)
-                {
-                    const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-                    char bufPct[256];
-                    sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
-                    sstr << bufPct;
-                }
+            {
+                const int nNumEarnedTotal = nEarned + nEarnedHardcore;
+                char bufPct[256];
+                sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
+                sstr << bufPct;
+            }
 			GameProgressOut.emplace(nID, sstr.str());
         }
     }

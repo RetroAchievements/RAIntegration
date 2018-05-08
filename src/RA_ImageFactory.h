@@ -31,6 +31,6 @@ HBITMAP LoadLocalPNG(_In_ const std::string& sPath, _In_ const RASize& nSZ );
 
 extern UserImageFactoryVars g_UserImageFactoryInst;
 
-extern void DrawImage( HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH );
-extern void DrawImageTiled( HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest );
-extern void DrawImageStretched( HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest );
+extern void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH);
+extern void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest);
+extern void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest);

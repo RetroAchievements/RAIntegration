@@ -26,7 +26,7 @@ static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must ma
 
 // If it's only going to be one we could make it a unique_ptr
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
-    { L"Text Document (*.txt)",       L"*.txt" }
+
 
 enum BookmarkSubItems
 {
@@ -712,21 +712,29 @@ void Dlg_MemBookmark::ExportJSON()
 		
 		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
         {
-            // Does this really need a limit?
-            std::string defaultFileName;
-            defaultFileName.reserve(512); // gives it a cap of 512+16 to prevent overflows but deallocates
-            // for now
-			sprintf_s ( defaultFileName.data(), 512, "%s-Bookmarks.txt",
-                std::to_string( g_pCurrentGameData->GetGameID() ).c_str() );
-			
+            std::ostringstream oss;
+            oss.str().reserve(512); // storage on the heap really shouldn't matter but keeping relativelty the same
+            oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+
+            auto defaultFileName{ oss.str() };
+            // get in the habit of reseting the stringbuffer inside the
+            // stringstream if you wish to use it more than once (you will get
+            // garabage characters in the end)
+            oss.str(""); 
+
+
+
 			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
             {
-                PIDLIST_ABSOLUTE pidl;
+                // nullptr is a literal for pointers, just like "s" is for string or "ULL" is for (unsigned long long)
+                // Since every pointer can be converted to std::nullptr_t, every pointer is a NullablePointer
+                // http://en.cppreference.com/w/cpp/concept/NullablePointer
+                PIDLIST_ABSOLUTE pidl{ nullptr };
         
-				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), NULL, &pidl, SFGAO_FOLDER, 0); SUCCEEDED(hr))
+				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr); SUCCEEDED(hr))
                 {
 					CComPtr<IShellItem> pItem;
-					SHCreateShellItem( NULL, NULL, pidl, &pItem );
+					SHCreateShellItem(nullptr, nullptr, pidl, &pItem );
 					
 					if (hr = pDlg->SetDefaultFolder(pItem); SUCCEEDED(hr))
                     {
@@ -735,9 +743,17 @@ void Dlg_MemBookmark::ExportJSON()
 						if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
                         {
 
-							
+                            // Exception got thrown here (didn't before), -sbs
+                            // Expression: p==0; where p is pItem.p
+                            // Solution: reset the owned pointer
+                            auto pItem2 = std::move(pItem); // let's see if that'll do it
+
 							if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
-                            {
+                            {                              
+                                // looks strange but the pItem still had to exist
+                                // before this block, but nullified in the
+                                // selection statement.
+                                pItem2.Release(); 
                                 LPWSTR pStr = nullptr;
 								
 								if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
@@ -770,6 +786,7 @@ void Dlg_MemBookmark::ExportJSON()
                                     pStr = nullptr;
                                 }
 
+                                // CComPtr doesn't appear to have a destructor, so we have to release
 								pItem.Release();
                                 ILFree(pidl);
                             }

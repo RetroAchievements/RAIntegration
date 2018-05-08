@@ -18,6 +18,7 @@
 
 
 
+
 #ifndef RA_EXPORTS
 
 //	Version Information is integrated into tags
@@ -272,6 +273,9 @@ extern std::string Narrow(const char* str);
 extern std::string Narrow(const std::string& wstr);
 
 typedef std::basic_string<TCHAR> tstring;
+
+
+
 
 
 #ifdef UNICODE

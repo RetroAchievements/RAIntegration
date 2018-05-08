@@ -204,28 +204,28 @@ public:
 
         switch (nAlignType)
         {
-        case ResizeContent::ALIGN_RIGHT:
-            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
-            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
-            break;
-        case ResizeContent::ALIGN_BOTTOM:
-            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
-            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
-            break;
-        case ResizeContent::ALIGN_BOTTOM_RIGHT:
-            xPos = width - nDistanceX - (bResize ? pLT.x : 0);
-            yPos = height - nDistanceY - (bResize ? pLT.y : 0);
-            break;
-        default:
-            xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
-            yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
-            break;
+            case ResizeContent::ALIGN_RIGHT:
+                xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+                yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+                break;
+            case ResizeContent::ALIGN_BOTTOM:
+                xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+                yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+                break;
+            case ResizeContent::ALIGN_BOTTOM_RIGHT:
+                xPos = width - nDistanceX - (bResize ? pLT.x : 0);
+                yPos = height - nDistanceY - (bResize ? pLT.y : 0);
+                break;
+            default:
+                xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
+                yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+                break;
         }
 
         if (!bResize)
-            SetWindowPos(hwnd, NULL, xPos, yPos, NULL, NULL, SWP_NOSIZE | SWP_NOZORDER);
+            SetWindowPos(hwnd, nullptr, xPos, yPos, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         else
-            SetWindowPos(hwnd, NULL, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
+            SetWindowPos(hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
     }
 };
 

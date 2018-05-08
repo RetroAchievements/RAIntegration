@@ -11,6 +11,8 @@ Achievement::Achievement(AchievementSetType nType) :
     m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
 {
     Clear();
+
+    m_vConditions.AddGroup();
 }
 
 void Achievement::Parse(const Value& element)

@@ -5,3 +5,4 @@
 *.user
 /RetroAchievementsKey
 test_app/
+src/*_REMOTE_*.cpp

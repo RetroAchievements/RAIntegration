@@ -26,7 +26,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <PostBuildEvent>
-      <Command>copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)$(TargetFileName)</Command>
+      <Command>copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)$(TargetFileName)
+copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)$(TargetName).pdb</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copies the compiled binary from the output directory to the working directory in "Debugging". Same command applies to release mode.</Message>

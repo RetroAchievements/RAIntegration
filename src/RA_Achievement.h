@@ -84,7 +84,7 @@ public:
     void RemoveConditionGroup();
 
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
-    inline size_t NumConditions(size_t nGroup) const { return m_vConditions.GetGroup(nGroup).Count(); }
+    inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
 
     inline HBITMAP BadgeImage() const { return m_hBadgeImage; }
     inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }

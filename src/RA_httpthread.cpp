@@ -116,7 +116,7 @@ BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
     rDocOut.Parse(DataStreamAsString(GetResponse()));
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, % (%)\n", GetJSONParseErrorStr(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
 
     return !rDocOut.HasParseError();
 }
@@ -280,11 +280,27 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, DataS
     }
 }
 
+namespace ra {
+
+// Noticed a huge pattern, not sure if other files will need it, this could be in a utitly header or something
+// noticed a few inconistencies but w/e
+// fill_size is how many digits you want appearing with the rest being 0; i.e.,
+// if fill_size = 5; 0x23 -> 0x00023
+// 4 is the default since almost all the functions had %04x
+std::string CurrentThreadIdToString(std::streamsize fill_size = 4) noexcept {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0') << std::setw(fill_size) << std::showbase << GetCurrentThreadId();
+    return oss.str();
+} // end function CurrentThreadIdToString
+
+} // namespace ra
+
+
 BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& ResponseOut, bool bIsImageRequest)
 {
     BOOL bSuccess = FALSE;
 
-    RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
+    RA_LOG(__FUNCTION__ ": (%) GET to %...\n", ra::CurrentThreadIdToString(), sRequestedPage.c_str());
     ResponseOut.clear();
 
     std::string sClientName = "Retro Achievements Client " + std::string(g_sClientName) + " " + g_sClientVersion;
@@ -363,7 +379,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');	//	EOS for parsing
 
-                    RA_LOG(__FUNCTION__ ": success! %s Returned %d bytes.", sRequestedPage.c_str(), ResponseOut.size());
+                    RA_LOG(__FUNCTION__ ": success! % Returned % bytes.", sRequestedPage.c_str(), ResponseOut.size());
                 }
 
             }
@@ -390,11 +406,12 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     if (sRequestedPage.compare("login_app.php") == 0)
     {
         //	Special case: DO NOT LOG raw user credentials!
-        RA_LOG(__FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str());
+        RA_LOG(__FUNCTION__ ": (%) POST to % (LOGIN)...\n", ra::CurrentThreadIdToString(), sRequestedPage.c_str());
     }
     else
     {
-        RA_LOG(__FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str());
+        // TODO: observe, change %04x to %%%% (first 3 are stream flags, last one is the number)
+        RA_LOG(__FUNCTION__ ": (%) POST to %?%...\n", ra::CurrentThreadIdToString(), sRequestedPage.c_str(), sPostString.c_str());
     }
 
     HINTERNET hSession = WinHttpOpen(Widen(std::string("Retro Achievements Client ") + g_sClientName + " " + g_sClientVersion).c_str(),
@@ -455,14 +472,18 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');	//	EOS for parsing
 
+                    std::ostringstream oss;
                     if (sPostString.find("r=login") != std::string::npos)
                     {
                         //	Special case: DO NOT LOG raw user credentials!
-                        RA_LOG("... " __FUNCTION__ ": (%04x) LOGIN Success: %d bytes read\n", GetCurrentThreadId(), ResponseOut.size());
+                        RA_LOG("... " __FUNCTION__ ": (%) LOGIN Success: % bytes read\n", ra::CurrentThreadIdToString(), ResponseOut.size());
                     }
                     else
                     {
-                        RA_LOG("-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %d bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size());
+                        // TODO: Observe
+                        RA_LOG("... " __FUNCTION__ ": (%) POST to %?% Success: % bytes read\n",
+                            ra::CurrentThreadIdToString(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size());
+
                     }
                 }
 
@@ -483,9 +504,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
 
         if (doc.HasParseError())
         {
-            RA_LOG("Cannot parse JSON!\n");
-            RA_LOG(DataStreamAsString(ResponseOut));
-            RA_LOG("\n");
+            RA_LOG("Cannot parse JSON!\n%\n", DataStreamAsString(ResponseOut));
         }
         else
         {
@@ -494,7 +513,8 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     }
     else
     {
-        RA_LOG(__FUNCTION__ ": (%04x) Empty JSON Response\n", GetCurrentThreadId());
+        // TODO: observe
+        RA_LOG(__FUNCTION__ ": (%) Empty JSON Response\n", ra::CurrentThreadIdToString());
     }
 
     return bSuccess;
@@ -505,22 +525,21 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
     ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
 
     const std::string sRequestedPage = "doupload.php";
-    const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
-
-    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str());
+    //"uploadbadgeimage";
+    const std::string sRTarget = UploadTypeToPost[nType]; 
+    // TODO: Observe                                                      
+    RA_LOG(__FUNCTION__ ": (%) uploading \"%\" to %...\n", ra::CurrentThreadIdToString(), sFilename.c_str(), sRequestedPage.c_str());
 
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    char sClientName[1024];
-    sprintf_s(sClientName, 1024, "Retro Achievements Client %s %s", g_sClientName, g_sClientVersion);
+    auto sClientName{ ra::tsprintf("Retro Achievements Client % %", g_sClientName, g_sClientVersion) };
 
-    size_t nTemp;
-    WCHAR wClientNameBuffer[1024];
-    mbstowcs_s(&nTemp, wClientNameBuffer, 1024, sClientName, strlen(sClientName) + 1);
+    auto wClientNameBuffer{ Widen(sClientName) };
+    // isn't this what widen is for? What was here is similar in #23
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(wClientNameBuffer,
+    HINTERNET hSession = WinHttpOpen(wClientNameBuffer.c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);
@@ -533,12 +552,11 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
 
     if (hConnect != nullptr)
     {
-        WCHAR wBuffer[1024];
-        mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
+        auto wBuffer{ Widen(sRequestedPage) };
 
         hRequest = WinHttpOpenRequest(hConnect,
             L"POST",
-            wBuffer,
+            wBuffer.c_str(),
             nullptr,
             WINHTTP_NO_REFERER,
             WINHTTP_DEFAULT_ACCEPT_TYPES,
@@ -624,7 +642,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
             if (ResponseOut.size() > 0)
                 ResponseOut.push_back('\0');	//	EOS for parsing
 
-            RA_LOG(__FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size());
+            RA_LOG(__FUNCTION__ ": success! Returned % bytes.", ResponseOut.size());
         }
     }
 
@@ -643,13 +661,13 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
         }
         else
         {
-            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
+            RA_LOG(__FUNCTION__ " (%, %) has parse error: %\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
             return FALSE;
         }
     }
     else
     {
-        RA_LOG(__FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str());
+        RA_LOG(__FUNCTION__ " (%, %) could not connect?\n", nType, sFilename.c_str());
         return FALSE;
     }
 }
@@ -673,7 +691,7 @@ BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
     HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
-    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
+    RA_LOG(__FUNCTION__ " added '%', ('%'), queue (%)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -691,7 +709,19 @@ void RAWeb::RA_InitializeHTTPThreads()
         if (hThread != nullptr)
         {
             g_vhHTTPThread.push_back(hThread);
-            RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread);
+
+            // Ok, this works for sure, on to the next hex
+
+            // it can't do hex yet
+            std::ostringstream oss;
+
+            // TODO: Figure out a way to set the flags so they work in RA_LOG (tried and they had no effect)
+            RA_LOG(__FUNCTION__ " Adding HTTP thread % ", i);
+            oss << "(0x" << std::hex << std::setfill('0') << std::setw(8)  << dwThread << ", 0x"
+                << std::hex << std::showbase << hThread << ")\n";
+
+            RA_LOG(oss.str().c_str());
+
         }
     }
 }
@@ -799,8 +829,9 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
             }
         }
 
+        // TODO: Observe
         if (HttpRequestQueue.Count() > 0)
-            RA_LOG(__FUNCTION__ " (%08x) request queue is at %d\n", GetCurrentThreadId(), HttpRequestQueue.Count());
+            RA_LOG(__FUNCTION__ " (%) request queue is at %\n", ra::CurrentThreadIdToString(8), HttpRequestQueue.Count());
 
         Sleep(100);
     }
@@ -824,7 +855,7 @@ void RAWeb::RA_KillHTTPThreads()
     {
         //	Wait for n responses:
         DWORD nResult = WaitForSingleObject(g_vhHTTPThread[i], INFINITE);
-        RA_LOG(__FUNCTION__ " ended, result %d\n", nResult);
+        RA_LOG(__FUNCTION__ " ended, result %\n", nResult);
     }
 }
 

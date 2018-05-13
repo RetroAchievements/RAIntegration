@@ -186,9 +186,10 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
                 if (nNumAchievements > 0)
                 {
                     const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-                    char bufPct[256];
-                    sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
-                    sstr << bufPct;
+                    // might as well
+                    auto fPercent{ (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f };
+                    // wait need to adjust the float-field, it's showing 4
+                    sstr << ra::tsprintf(" (%%) ", ra::AdjustFloatField(fPercent, 1, 1), ra::spercent);
                 }
 
                 GameProgressOut[nID] = sstr.str();
@@ -319,8 +320,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
 void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 {
-    char sSearchDir[2048];
-    sprintf_s(sSearchDir, 2048, "%s\\*.*", sBaseDir.c_str());
+    auto sSearchDir = ra::tsprintf("%\\*.*", sBaseDir);
 
     WIN32_FIND_DATA ffd;
     HANDLE hFind = FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd);
@@ -344,7 +344,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
             }
             else if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                RA_LOG("Directory found: %s\n", ffd.cFileName);
+                RA_LOG("Directory found: %\n", ffd.cFileName);
                 std::string sRecurseDir = sBaseDir + "\\" + sFilename.c_str();
                 ScanAndAddRomsRecursive(sRecurseDir);
             }
@@ -356,15 +356,14 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                 if (filesize.QuadPart < 2048 || filesize.QuadPart > ROM_MAX_SIZE)
                 {
                     //	Ignore: wrong size
-                    RA_LOG("Ignoring %s, wrong size\n", sFilename.c_str());
+                    RA_LOG("Ignoring %, wrong size\n", sFilename.c_str());
                 }
                 else
                 {
                     //	Parse as ROM!
-                    RA_LOG("%s looks good: parsing!\n", sFilename.c_str());
+                    RA_LOG("% looks good: parsing!\n", sFilename.c_str());
 
-                    char sAbsFileDir[2048];
-                    sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
+                    auto sAbsFileDir = ra::tsprintf("%\\%", sBaseDir, sFilename);
 
                     HANDLE hROMReader = CreateFile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
                         nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -383,7 +382,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
                         {
                             const unsigned int nGameID = m_GameHashLibrary[std::string(sHashOut)];
-                            RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                            RA_LOG("Found one! Game ID % (%)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                             const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                             AddTitle(sGameTitle, sAbsFileDir, nGameID);
@@ -443,7 +442,7 @@ void Dlg_GameLibrary::RefreshList()
             {
                 //	Found in our hash library!
                 const GameID nGameID = m_GameHashLibrary[md5];
-                RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                RA_LOG("Found one! Game ID % (%)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                 AddTitle(sGameTitle, filepath, nGameID);
@@ -625,7 +624,13 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 return FALSE;
 
                 default:
-                    RA_LOG("%08x, %08x\n", wParam, lParam);
+                {
+                    // TODO: make a function that can do most of this for us
+                    std::ostringstream oss;
+                    oss << std::hex << std::setfill('0') << std::setw(8) << std::showbase << wParam
+                        << std::hex << std::setfill('0') << std::setw(8) << std::showbase << lParam << '\n';
+                    RA_LOG(oss.str().c_str());
+                }
                     return FALSE;
             }
 
@@ -653,7 +658,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 
                 case IDC_RA_PICKROMDIR:
                     g_sROMDirLocation = GetFolderFromDialog();
-                    RA_LOG("Selected Folder: %s\n", g_sROMDirLocation.c_str());
+                    RA_LOG("Selected Folder: %\n", g_sROMDirLocation.c_str());
                     SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
                     return FALSE;
 

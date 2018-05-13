@@ -3,6 +3,8 @@
 #include "RA_Core.h"
 #include "RA_GameData.h"
 
+// TODO: Look at this class later, text got messed up reverted the files - sbs
+
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
 RA_Lookup::RA_Lookup(const std::string& sDesc)
@@ -10,13 +12,15 @@ RA_Lookup::RA_Lookup(const std::string& sDesc)
 {
 }
 
-const std::string& RA_Lookup::Lookup(DataPos nValue) const
+// Gonna try it again, noticed a huge oversight, still leaving complicated stuff alone for now though - sbs
+
+const std::string RA_Lookup::Lookup(DataPos nValue) const
 {
     if (m_lookupData.find(nValue) != m_lookupData.end())
         return m_lookupData.find(nValue)->second;
 
-    static const std::string sUnknown = "";
-    return sUnknown;
+    // not sure why an address is returned but w/e
+    return std::string{};
 }
 
 RA_Formattable::RA_Formattable(const std::string& sDesc, RA_Leaderboard::FormatType nType)
@@ -176,44 +180,46 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
     }
 }
 
-const std::string& RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
+const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
 {
-    static std::string sReturnVal;
-    sReturnVal.clear();
+    // if you're clearing it everytime there's no point in it being static
+    std::string sReturnVal;
 
     //	check lookups
-    for (size_t i = 0; i < m_lookups.size(); ++i)
+    for (auto& i : m_lookups)
     {
-        if (m_lookups.at(i).Description().compare(sName) == 0)
+        if (i.Description() == sName)
         {
             //	This lookup! (ugh must be non-const)
-            char buffer[1024];
-            sprintf_s(buffer, 1024, (char*)sMemString.c_str());
+            auto buffer = sMemString;
 
             ValueSet nValue;
-            nValue.ParseMemString(buffer);
-            sReturnVal = m_lookups.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
+            nValue.ParseMemString(buffer.c_str());
+            // Need to check it's actually empty so we don't freak out
+            auto test_str = i.Lookup(static_cast<DataPos>(nValue.GetValue()));
+            sReturnVal = i.Lookup(static_cast<DataPos>(nValue.GetValue()));
 
+            // time to check if that oversight was the cause... and it was...
             return sReturnVal;
         }
     }
 
     //	check formatters
-    for (size_t i = 0; i < m_formats.size(); ++i)
+    for (auto& i : m_formats)
     {
-        if (m_formats.at(i).Description().compare(sName) == 0)
+        if (i.Description() == sName)
         {
             //	This lookup! (ugh must be non-const)
-            char buffer[1024];
-            sprintf_s(buffer, 1024, (char*)sMemString.c_str());
+            auto buffer = sMemString; // does it?
 
             ValueSet nValue;
-            nValue.ParseMemString(buffer);
-            sReturnVal = m_formats.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
+            nValue.ParseMemString(buffer.c_str());
+            sReturnVal = i.Lookup(static_cast<DataPos>(nValue.GetValue()));
 
             return sReturnVal;
         }
     }
+
 
     return sReturnVal;
 }

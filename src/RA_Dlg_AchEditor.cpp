@@ -193,6 +193,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
         sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
     }
 
+    // TODO: Look at this later when refactoring this class, would have to change the array - sbs
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
     sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
@@ -781,8 +782,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                     const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                    char buffer[256];
-                    sprintf_s(buffer, 256, "%d", Cond.RequiredHits());
+                    auto buffer = std::to_string(Cond.RequiredHits());
                     SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
                 }
             }
@@ -1194,8 +1194,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
-                            char buffer[256];
-                            sprintf_s(buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
+                            auto buffer = ra::tsprintf("Are you sure you wish to delete % condition(s)?", uSelectedCount);
                             if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
@@ -1553,8 +1552,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 //	Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().RawValue());
+                                auto buffer = ra::tsprintf("0x%",
+                                    ra::AdjustHexField(rCond.CompSource().RawValue(), 6));
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1569,8 +1568,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 //	Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().RawValue());
+                                auto buffer = ra::tsprintf("0x%",
+                                    ra::AdjustHexField(rCond.CompTarget().RawValue(), 6));
+                                
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1843,8 +1843,6 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
 
 void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptKeepSelected)
 {
-    char buffer[1024];
-
     if (pCheevo == nullptr)
     {
         m_pSelectedAchievement = pCheevo;
@@ -1895,10 +1893,11 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->ID());
+        // Maybe you should make a restriction that IDs and Point values cant be higher than 1024 bytes
+       auto buffer = std::to_string(m_pSelectedAchievement->ID());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->Points());
+        buffer = std::to_string(m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
 
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());

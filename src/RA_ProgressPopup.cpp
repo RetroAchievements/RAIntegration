@@ -43,6 +43,7 @@ void ProgressPopup::AddMessage(const char* sTitle, const char* sDesc, int nMessa
     {
         if (m_sMessageTitleQueue[i][0] == '\0')
         {
+            // TODO: will have to refactor the data members later, it won't work with ra::tsprintf now
             sprintf_s(m_sMessageTitleQueue[i], 1024, "%s", sTitle);
 
             if (sDesc != nullptr)

@@ -142,8 +142,7 @@ BOOL Achievement::Test()
     {
         RA_CausePause();
 
-        char buffer[256];
-        sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
+        auto buffer = ra::tsprintf("Pause on Reset: %", Title());
         MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
     }
 
@@ -232,12 +231,16 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
     SetDirtyFlag(Dirty_Badge);
     ClearBadgeImage();
 
-    char chars[] = "_lock";
+    using namespace std::string_literals;
+
+    auto chars = "_lock"s;
 
     std::string sNewBadgeURI = sBadgeURI;
 
-    for (unsigned int i = 0; i < strlen(chars); ++i)
-        sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
+    for (auto& i : chars)
+    {
+        sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), i), sNewBadgeURI.end());
+    }
 
     m_sBadgeImageURI = sNewBadgeURI;
     m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);

@@ -118,7 +118,7 @@ BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
         iter++;
     }
 
-    RA_LOG("Could not deactivate leaderboard %d", nLBID);
+    RA_LOG("Could not deactivate leaderboard %", nLBID);
 
     return FALSE;
 }
@@ -265,10 +265,9 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
             const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(m_vScoreboardQueue.front());
             if (pLB != nullptr)
             {
-                char buffer[1024];
-                sprintf_s(buffer, 1024, " Results: %s ", pLB->Title().c_str());
+                auto buffer = ra::tsprintf(" Results: % ", pLB->Title());
                 RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
-                DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                DrawText(hDC, NativeStr(buffer).c_str(), buffer.length(), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
                 //	Show scoreboard
                 RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
@@ -276,7 +275,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                 {
                     const LB_Entry& lbInfo = pLB->GetRankInfo(i);
 
-                    if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)
+                    if (lbInfo.m_sUsername == RAUsers::LocalUser().Username())
                     {
                         SetBkMode(hDC, OPAQUE);
                         SetTextColor(hDC, COL_POPUP);
@@ -287,11 +286,10 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                         SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
                     }
 
-                    char buffer[1024];
-                    sprintf_s(buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
-                    DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                    auto buffer = ra::tsprintf(" % % ", lbInfo.m_nRank, lbInfo.m_sUsername);
+                    DrawText(hDC, NativeStr(buffer).c_str(), buffer.length(), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
-                    std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
+                    auto sScore = ra::tsprintf(" % ", pLB->FormatScore(lbInfo.m_nScore));
                     DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
 
                     rcScoreboard.top += 24;

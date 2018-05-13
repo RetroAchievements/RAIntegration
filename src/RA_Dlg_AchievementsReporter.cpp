@@ -61,6 +61,7 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     {
         switch (i)
         {
+            // TODO: Come back to this later when refactoring the class - sbs
             case Checked:
                 sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, "");
                 break;
@@ -143,9 +144,9 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     int nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2 : 0;	// 0==?
                     const char* sProblemTypeNice = PROBLEM_STR[nProblemType];
 
-                    char sBuggedIDs[1024];
-                    sprintf_s(sBuggedIDs, 1024, "");
-
+                    using namespace std::string_literals;
+                    auto sBuggedIDs = ""s;
+                    sBuggedIDs.reserve(1024); // something was not right
                     int nReportCount = 0;
 
                     const size_t nListSize = ListView_GetItemCount(hList);
@@ -154,37 +155,42 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         if (ListView_GetCheckState(hList, i) != 0)
                         {
                             //	NASTY big assumption here...
-                            char buffer[1024];
-                            sprintf_s(buffer, 1024, "%d,", g_pActiveAchievements->GetAchievement(i).ID());
-                            strcat_s(sBuggedIDs, 1024, buffer);
+                            // It does leave an extra "," at the end, figured adding a space would be a good touch
+                            auto buffer = ra::tsprintf("%, ", g_pActiveAchievements->GetAchievement(i).ID());
+                            sBuggedIDs += std::move(buffer); // might as well empty it ahead of time
 
                             //ListView_GetItem( hList );	
                             nReportCount++;
                         }
                     }
-
+                    // removes the extra comma
+                    sBuggedIDs.erase(std::prev(sBuggedIDs.end(), 2), sBuggedIDs.end());
                     if (nReportCount > 5)
                     {
                         if (MessageBox(nullptr, TEXT("You have over 5 achievements selected. Is this OK?"), TEXT("Warning"), MB_YESNO) == IDNO)
                             return FALSE;
                     }
 
-                    TCHAR sBugReportCommentIn[4096];
-                    GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
-                    std::string sBugReportComment = Narrow(sBugReportCommentIn);
+                    // could do this, had something simplier in the RASuite fork
+                    auto len = GetWindowTextLength(GetDlgItem(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT)) + 1;
+                    tstring sBugReportCommentIn;
+                    sBugReportCommentIn.reserve(len);
+                    GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn.data(), len);
+
+                    // of course... forgot something simple
+                    std::string sBugReportComment = Narrow(sBugReportCommentIn.data());
 
                     //	Intentionally MBCS
-                    char sBugReportInFull[8192];
-                    sprintf_s(sBugReportInFull, 8192,
+                    auto sBugReportInFull = ra::tsprintf(
                         "--New Bug Report--\n"
                         "\n"
-                        "Game: %s\n"
-                        "Achievement IDs: %s\n"
-                        "Problem: %s\n"
-                        "Reporter: %s\n"
-                        "ROM Checksum: %s\n"
+                        "Game: %\n"
+                        "Achievement IDs: %\n"
+                        "Problem: %\n"
+                        "Reporter: %\n"
+                        "ROM Checksum: %\n"
                         "\n"
-                        "Comment: %s\n"
+                        "Comment: %\n"
                         "\n"
                         "Is this OK?",
                         g_pCurrentGameData->GameTitle().c_str(),
@@ -210,16 +216,16 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     {
                         if (doc["Success"].GetBool())
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048, "Submitted OK!\n"
-                                "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-                                "\n"
-                                "The development team will investigate this bug as soon as possible\n"
-                                "and we will send you a message on RetroAchievements.org\n"
-                                "as soon as we have a solution.\n"
-                                "\n"
-                                "Thanks again!");
+                            // this wasn't even a format string
+                            auto buffer = "Submitted OK!\n"s
+                                "\n"s
+                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"s
+                                "\n"s
+                                "The development team will investigate this bug as soon as possible\n"s
+                                "and we will send you a message on RetroAchievements.org\n"s
+                                "as soon as we have a solution.\n"s
+                                "\n"s
+                                "Thanks again!"s;
 
                             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
                             EndDialog(hDlg, TRUE);
@@ -227,13 +233,12 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         }
                         else
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
+                            auto buffer = ra::tsprintf(
                                 "Failed!\n"
                                 "\n"
                                 "Response From Server:\n"
                                 "\n"
-                                "Error code: %d", doc.GetParseError());
+                                "Error code: %", doc.GetParseError());
                             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
                             return FALSE;
                         }
@@ -270,7 +275,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent)
 {
     if (g_pActiveAchievements->NumAchievements() == 0)
-        MessageBox(hParent, TEXT("No ROM loaded!"), TEXT("Error"), MB_OK);
+        ra::ShowError(TEXT("No ROM loaded!"), hParent);
     else
         DialogBox(hInst, MAKEINTRESOURCE(IDD_RA_REPORTBROKENACHIEVEMENTS), hParent, AchievementsReporterProc);
 }

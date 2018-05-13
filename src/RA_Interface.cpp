@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+// leaving this file alone - sbs
+
 //	Exposed, shared
 //	App-level:
 bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
@@ -251,6 +253,7 @@ int RA_HTTPRequestExists(const char* sPageName)
     return (_RA_HTTPGetRequestExists != nullptr) ? _RA_HTTPGetRequestExists(sPageName) : 0;
 }
 
+// here's the callback! Not sure I wanna mess with it
 
 BOOL DoBlockingHttpGet(const char* sRequestedPage, char* pBufferOut, const unsigned int /*nBufferOutSize*/, DWORD* pBytesRead)
 {

@@ -14,7 +14,7 @@ public:
 
 public:
     void AddLookupData(DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
-    const std::string& Lookup(DataPos nValue) const;
+    const std::string Lookup(DataPos nValue) const;
 
     const std::string& Description() const { return m_sLookupDescription; }
 
@@ -62,7 +62,7 @@ public:
     void ParseRichPresenceFile(const std::string& sFilename);
 
     const std::string& GetRichPresenceString();
-    const std::string& Lookup(const std::string& sLookupName, const std::string& sMemString) const;
+    const std::string Lookup(const std::string& sLookupName, const std::string& sMemString) const;
 
     bool Enabled() const;
 

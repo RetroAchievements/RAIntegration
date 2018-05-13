@@ -265,7 +265,7 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
     ASSERT(_FileExists(sPath));
     if (!_FileExists(sPath))
     {
-        RA_LOG("File could not be found: %s\n", sPath.c_str());
+        RA_LOG("File could not be found: %\n", sPath.c_str());
         return nullptr;
     }
 

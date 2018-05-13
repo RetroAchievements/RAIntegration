@@ -203,8 +203,7 @@ void Condition::SerializeAppend(std::string& buffer) const
 
     if (m_nRequiredHits > 0)
     {
-        char reqHitsBuffer[24];
-        snprintf(reqHitsBuffer, sizeof(reqHitsBuffer), ".%zu.", m_nRequiredHits);
+        auto reqHitsBuffer = ra::tsprintf(".%.", m_nRequiredHits);
         buffer.append(reqHitsBuffer);
     }
 }
@@ -277,11 +276,12 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
 
 void CompVariable::SerializeAppend(std::string& buffer) const
 {
-    char valueBuffer[20];
+    std::string valueBuffer;
+    valueBuffer.reserve(20); // does the size matter?
     switch (m_nVarType)
     {
         case ValueComparison:
-            sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
+            valueBuffer = ra::tsprintf("%", m_nVal);
             buffer.append(valueBuffer);
             break;
 
@@ -295,9 +295,9 @@ void CompVariable::SerializeAppend(std::string& buffer) const
             buffer.append(ComparisonSizeToPrefix(m_nVarSize));
 
             if (m_nVal >= 0x10000)
-                sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
+                valueBuffer = ra::tsprintf("%", ra::AdjustHexField(m_nVal, 6));
             else
-                sprintf_s(valueBuffer, sizeof(valueBuffer), "%04x", m_nVal);
+                valueBuffer = ra::tsprintf("%", ra::AdjustHexField(m_nVal)); 
             buffer.append(valueBuffer);
             break;
 

@@ -9,8 +9,6 @@
 namespace {
 
 
-
-
 constexpr auto FONT_SIZE_MAIN     = 32;
 constexpr auto FONT_SIZE_SUBTITLE = 28;
 
@@ -21,7 +19,6 @@ constexpr auto FINISH_AT  = 5.0f;
 constexpr auto POPUP_DIST_Y_TO_PCT   = 0.856f;	//	Where on screen to end up
 constexpr auto POPUP_DIST_Y_FROM_PCT = 0.4f;	//	Amount of screens to travel
 constexpr auto FONT_TO_USE           = "Tahoma";
-
 
 }
 

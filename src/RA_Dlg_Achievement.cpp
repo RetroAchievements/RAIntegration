@@ -5,7 +5,7 @@
 #include "RA_Core.h"
 #include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Resource.h" // Seems to give off errors if it's included any lower
+#include "RA_Resource.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"

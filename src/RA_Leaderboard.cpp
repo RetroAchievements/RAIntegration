@@ -10,13 +10,14 @@
 RA_LeaderboardManager g_LeaderboardManager;
 
 namespace {
-	constexpr std::array<const char*, RA_Leaderboard::FormatType::Format__MAX> FormatTypeToString {
-    "TIME",			//	TimeFrames
-    "TIMESECS",		//	TimeSecs
-    "MILLISECS",	//	TimeMillisecs
-    "SCORE",		//	Score	/POINTS
-    "VALUE",		//	Value
-    "OTHER",		//	Other
+
+constexpr std::array<const char*, RA_Leaderboard::FormatType::Format__MAX> FormatTypeToString{ 
+    "TIME",      // TimeFrames
+    "TIMESECS",  // TimeSecs
+    "MILLISECS", //	TimeMillisecs
+    "SCORE",	 //	Score	/POINTS
+    "VALUE",	 //	Value
+    "OTHER",	 //	Other
 };
 
 }
@@ -78,13 +79,13 @@ const char* MemValue::ParseFromString(const char* pBuffer)
 
     CompVariable varTemp;
     varTemp.ParseVariable(pIter);
-    m_nAddress = varTemp.RawValue();	//	Fetch value ('address') as parsed. Note RawValue! Do not parse memory!
+    m_nAddress = varTemp.RawValue(); //	Fetch value ('address') as parsed. Note RawValue! Do not parse memory!
     m_nVarSize = varTemp.Size();
 
     m_fModifier = 1.0;
     if (*pIter == '*')
     {
-        pIter++;						//	Skip over modifier type.. assume mult( '*' );
+        pIter++; //	Skip over modifier type.. assume mult( '*' );
 
         // Invert bit flag results
         if (*pIter == '~')
@@ -374,7 +375,7 @@ void RA_Leaderboard::ParseLBData(const char* pChar)
 void RA_Leaderboard::ParseLine(char* sBuffer)
 {
     char* pChar = &sBuffer[0];
-    pChar++;											//	Skip over 'L' character
+    pChar++;										//	Skip over 'L' character
     ASSERT(m_nID == strtol(pChar, &pChar, 10));		//	Skip over Leaderboard ID
     ParseLBData(pChar);
 }
@@ -412,15 +413,16 @@ void RA_Leaderboard::Test()
 {
     bool bUnused;
 
-    //	Ensure these are always tested once every frame, to ensure delta
-    //	 variables work properly :)
+    // Ensure these are always tested once every frame, to ensure delta variables
+    // work properly :)
     BOOL bStartOK = m_startCond.Test(bUnused, bUnused);
     BOOL bCancelOK = m_cancelCond.Test(bUnused, bUnused);
     BOOL bSubmitOK = m_submitCond.Test(bUnused, bUnused);
 
     if (m_bSubmitted)
     {
-        // if we've already submitted or canceled the leaderboard, don't reactivate it until it becomes unactive.
+        // if we've already submitted or canceled the leaderboard, don't
+        // reactivate it until it becomes unactive.
         if (!bStartOK)
             m_bSubmitted = false;
     }
@@ -624,14 +626,13 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     }
 
     const Value& Response = doc["Response"];
+    const Value& LBData   = Response["LBData"];
 
-    const Value& LBData = Response["LBData"];
-
-    const std::string& sFormat = LBData["Format"].GetString();
-    const LeaderboardID nLBID = static_cast<LeaderboardID>(LBData["LeaderboardID"].GetUint());
-    const GameID nGameID = static_cast<GameID>(LBData["GameID"].GetUint());
+    const std::string& sFormat  = LBData["Format"].GetString();
+    const LeaderboardID nLBID   = static_cast<LeaderboardID>(LBData["LeaderboardID"].GetUint());
+    const GameID nGameID        = static_cast<GameID>(LBData["GameID"].GetUint());
     const std::string& sLBTitle = LBData["Title"].GetString();
-    const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
+    const bool bLowerIsBetter   = (LBData["LowerIsBetter"].GetUint() == 1);
 
     RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
 
@@ -649,8 +650,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
         const unsigned int nRank = NextEntry["Rank"].GetUint();
         const std::string& sUser = NextEntry["User"].GetString();
-        const int nUserScore = NextEntry["Score"].GetInt();
-        time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
+        const int nUserScore     = NextEntry["Score"].GetInt();
+        time_t nSubmitted        = NextEntry["DateSubmitted"].GetUint();
 
         RA_LOG(std::string("(" + std::to_string(nRank) + ") " + sUser + ": " + pLB->FormatScore(nUserScore)).c_str());
 

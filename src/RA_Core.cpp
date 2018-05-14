@@ -874,7 +874,6 @@ API void CCONV _RA_LoadPreferences()
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     std::ifstream ifile{ ra::PrefsFilename(), std::ios::binary };
 
-    // This isn't even be possible, most of it was already commented out
 #pragma region Comments
     /*if (pf == nullptr)
     {*/
@@ -997,44 +996,48 @@ API void CCONV _RA_SavePreferences()
     }
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	std::ofstream ofile{ ra::PrefsFilename(), std::ios::binary };
+    std::ofstream ofile{ ra::PrefsFilename(), std::ios::binary };
 
-	using namespace rapidjson;
-	OStreamWrapper osw{ ofile };
-	Writer<OStreamWrapper> writer{ osw };
+    using namespace rapidjson;
+    OStreamWrapper osw{ ofile };
+    Writer<OStreamWrapper> writer{ osw };
 
-        Document doc;
-        doc.SetObject();
+    Document doc;
+    doc.SetObject();
 
-        Document::AllocatorType& a = doc.GetAllocator();
-        doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-        doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
-        doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-        doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-        doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-        doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-        doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-        doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-        doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
+    Document::AllocatorType& a = doc.GetAllocator();
+    doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
+    doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
+    doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
+    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
+    doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
+    doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
+    doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
+    doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
+    doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
 
-        Value positions(kObjectType);
+    Value positions(kObjectType);
 
+    for (auto& i : g_mWindowPositions)
+    {
+        Value rect{ kObjectType };
+        if (i.second.nLeft != WindowPosition::nUnset)
+            rect.AddMember("X", i.second.nLeft, a);
+        if (i.second.nTop != WindowPosition::nUnset)
+            rect.AddMember("Y", i.second.nTop, a);
+        if (i.second.nWidth != WindowPosition::nUnset)
+            rect.AddMember("Width", i.second.nWidth, a);
+        if (i.second.nHeight != WindowPosition::nUnset)
+            rect.AddMember("Height", i.second.nHeight, a);
 
-	// range for seems more appropriate here
-	for (auto& i : g_mWindowPositions) {
-		Value rect{ kObjectType };
-		if (i.second.nLeft != WindowPosition::nUnset)
-			rect.AddMember("X", i.second.nLeft, a);
-		if (i.second.nTop != WindowPosition::nUnset)
-			rect.AddMember("Y", i.second.nTop, a);
-		if (i.second.nWidth != WindowPosition::nUnset)
-			rect.AddMember("Width", i.second.nWidth, a);
-		if (i.second.nHeight != WindowPosition::nUnset)
-			rect.AddMember("Height", i.second.nHeight, a);
-
-		if (rect.MemberCount() > 0)
-			positions.AddMember(StringRef(i.first.c_str()), rect, a);
+        if (rect.MemberCount() > 0)
+            positions.AddMember(StringRef(i.first.c_str()), rect, a);
     }
+
+    if (positions.MemberCount() > 0)
+        doc.AddMember("Window Positions", positions.Move(), a);
+
+    doc.Accept(writer);
 
     //TBD:
     //g_GameLibrary.SaveAll();
@@ -1529,12 +1532,12 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	std::ofstream ofile{ sFileName, std::ios::binary };
+    std::ofstream ofile{ sFileName, std::ios::binary };
 
 
-	OStreamWrapper osw{ ofile };
-	Writer<OStreamWrapper> writer{ osw };
-        doc.Accept(writer);
+    OStreamWrapper osw{ ofile };
+    Writer<OStreamWrapper> writer{ osw };
+    doc.Accept(writer);
 }
 
 void _WriteBufferToFile(const std::string& sFileName, const DataStream& raw)
@@ -1689,24 +1692,24 @@ namespace ra {
 _Use_decl_annotations_
 std::string GameJSONFilename(GameID game_id) noexcept
 {
-	std::ostringstream oss;
-	oss << RA_DIR_DATA << game_id << ".txt";
-	return oss.str();
+    std::ostringstream oss;
+    oss << RA_DIR_DATA << game_id << ".txt";
+    return oss.str();
 } // end function GameJSONFilename
 
 
 _Use_decl_annotations_
-int CALLBACK ShowError(const tstring& str, HWND hwnd) noexcept {
-	return MessageBox(hwnd, str.c_str(), TEXT("Error!"), MB_ICONERROR);
+int CALLBACK ShowError(const tstring& str, HWND hwnd) noexcept
+{
+    return MessageBox(hwnd, str.c_str(), TEXT("Error!"), MB_ICONERROR);
 } // end function ShowError
 
-std::string PrefsFilename() noexcept {
-	// tinyformat would make this look cleaner, but pretty much does this
-	std::ostringstream oss;
+std::string PrefsFilename() noexcept
+{
+    std::ostringstream oss;
 
-	// might throw, highly unlikely
-	oss << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << ".cfg";
-	return oss.str();
+    oss << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << ".cfg";
+    return oss.str();
 } // end function PrefsFilename
 
 

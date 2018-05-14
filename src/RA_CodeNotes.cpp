@@ -23,44 +23,38 @@ size_t CodeNotes::Load(const std::string& sFile)
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-	std::ifstream ifile{ sFile, std::ios::binary };
+    std::ifstream ifile{ sFile, std::ios::binary };
 
-	// constructor calls open automatically and throws an exception, should rarely if not ever happen
+    Document doc;
+    IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
-	doc.ParseStream(isw);
-        if (!doc.HasParseError())
+    if (!doc.HasParseError())
 
+    {
+        ASSERT(doc["CodeNotes"].IsArray());
+
+        // use auto when you can to prevent implicit conversions (you get warnings on higher levels)
+        const auto& NoteArray = doc["CodeNotes"];
+
+        for (auto& i : NoteArray.GetArray())
         {
-		// You know that assert gets compiled out in release mode right?
-            ASSERT(doc["CodeNotes"].IsArray());
+            if (i["Note"].IsNull())
+                continue;
 
-		// use auto when you can to prevent implicit conversions (you get warnings on higher levels)
-		const auto& NoteArray = doc["CodeNotes"];
+            const std::string& sNote = i["Note"].GetString();
+            if (sNote.length() < 2)
+                continue;
 
-		for (auto& i : NoteArray.GetArray())
-            {
-			// what? that's the first I ever heard that
-			if (i["Note"].IsNull())
-                    continue;
+            const std::string& sAddr = i["Address"].GetString();
+            auto nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
 
-			const std::string& sNote = i["Note"].GetString();
-                if (sNote.length() < 2)
-                    continue;
+            // Author?
+            const std::string& sAuthor = i["User"].GetString();
 
-			const std::string& sAddr = i["Address"].GetString();
-			auto nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
-
-            // Moved comments to the top becaue of indentation complaints
-			//	Author?
-			const std::string& sAuthor = i["User"].GetString();	
-
-			// Your CodeNoteObj would need a move constructor for this to work properly, here's a better approach
-			auto code_pair{ std::make_pair(nAddr, CodeNoteObj{ sAuthor, sNote }) };
-			m_CodeNotes.insert(code_pair);
-		} // end for
-
+            auto code_pair{ std::make_pair(nAddr, CodeNoteObj{ sAuthor, sNote }) };
+            m_CodeNotes.insert(code_pair);
+        }
     }
 
     return m_CodeNotes.size();

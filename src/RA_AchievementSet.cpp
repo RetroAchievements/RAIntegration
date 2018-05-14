@@ -17,7 +17,7 @@ AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
@@ -387,20 +387,20 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     {
         const Value& PatchData = doc["PatchData"];
         SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-		std::ofstream ofile{ ra::GameJSONFilename(nGameID), std::ios::binary };
+        std::ofstream ofile{ ra::GameJSONFilename(nGameID), std::ios::binary };
 
         // just incase...
-		if(!ofile.is_open())
+        if (!ofile.is_open())
         {
             ASSERT(!"Could not open patch file for writing?");
             RA_LOG("Could not open patch file for writing?");
             return FALSE;
         }
 
-		OStreamWrapper osw{ ofile };
-		Writer<OStreamWrapper> writer{ osw };
-		PatchData.Accept(writer);
-		return TRUE;
+        OStreamWrapper osw{ ofile };
+        Writer<OStreamWrapper> writer{ osw };
+        PatchData.Accept(writer);
+        return TRUE;
     }
     else
     {
@@ -423,158 +423,142 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
     const std::string sFilename = GetAchievementSetFilename(nGameID);
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	std::ifstream ifile{ sFilename };
+    std::ifstream ifile{ sFilename };
 
-	// in this case we do have to check
-	if (!ifile.is_open())
-		return FALSE;
+    // in this case we do have to check
+    if (!ifile.is_open())
+        return FALSE;
 
 
-        //	Store this: we are now assuming this is the correct checksum if we have a file for it
-        g_pCurrentGameData->SetGameID(nGameID);
+    //	Store this: we are now assuming this is the correct checksum if we have a file for it
+    g_pCurrentGameData->SetGameID(nGameID);
 
-        if (m_nSetType == Local)
+    if (m_nSetType == Local)
+    {
+        std::string buffer;
+        buffer.reserve(4096); 
+
+        //	Get min ver:
+        ifile.getline(buffer.data(), buffer.capacity());
+        auto nCharsRead{ ifile.gcount() };  //	UNUSED at this point? TBD 
+                  
+        //	Get game title:
+        ifile.getline(buffer.data(), buffer.capacity());
+        nCharsRead = ifile.gcount();
+        //	Loading Local from file...?
+        if (nCharsRead > 0)
+            g_pCurrentGameData->SetGameTitle(buffer.data());
+
+        while (!ifile.eof())
         {
-		std::string buffer;
-		buffer.reserve(4096); // this part might be redundant but I'm not sure how much storage you need
-
-
-            //	Get min ver:
-							  // heard of getline?
-		ifile.getline(buffer.data(), buffer.capacity());
-		auto nCharsRead{ ifile.gcount() }; // This was 0, I guess it's unused
-            //	UNUSED at this point? TBD
-
-            //	Get game title:
-		ifile.getline(buffer.data(), buffer.capacity());
-
-            if (nCharsRead > 0)
+            ifile.getline(buffer.data(), buffer.capacity());
+            if (nCharsRead = ifile.gcount(); nCharsRead > 0)
             {
-			/*buffer[nCharsRead - 1] = '\0';*/	//	Turn that endline into an end-string
-
-                //	Loading Local from file...?
-												// an alternative would be: buffer = buffer.data(); then put buffer in the parameter
-			g_pCurrentGameData->SetGameTitle(buffer.data());
-            }
-
-		while (!ifile.eof())
-            {
-			buffer = std::string{};
-			ifile.getline(buffer.data(), buffer.capacity());
-			if (nCharsRead = ifile.gcount(); nCharsRead > 0)
+                buffer = buffer.data(); 
+                if (buffer.front() == 'L')
                 {
-				if (buffer.front() == 'L')
-                    {
-                        //SKIP
-                        //RA_Leaderboard lb;
-                        //lb.ParseLine(buffer);
+                    //SKIP
+                    //RA_Leaderboard lb;
+                    //lb.ParseLine(buffer);
 
-                        //g_LeaderboardManager.AddLeaderboard(lb);
-                    }
-				else if (isdigit(buffer.front()))
-                    {
-					// It seems to me you need a move assignment for Achievement
-                        Achievement& newAch = g_pLocalAchievements->AddAchievement();
-					// Already is boss
-					/*buffer[nCharsRead - 1] = '\0';*/	//	Turn that endline into an end-string
+                    //g_LeaderboardManager.AddLeaderboard(lb);
+                }
+                else if (isdigit(buffer.front()))
+                {
+                    Achievement& newAch = g_pLocalAchievements->AddAchievement();
+                    newAch.ParseLine(buffer.data());
+                }
+            }
+        }
 
-					newAch.ParseLine(buffer.data());
-                    }
+        return TRUE;
+    }
+    else
+    {
+        Document doc;
+        IStreamWrapper isw{ ifile };
+        doc.ParseStream(isw);
+        if (!doc.HasParseError())
+        {
+            //ASSERT( doc["Success"].GetBool() );
+            g_pCurrentGameData->ParseData(doc);
+            GameID nGameID = g_pCurrentGameData->GetGameID();
+
+            RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
+
+            const auto& AchievementsData = doc["Achievements"];
+
+            // This could use ranged for
+            for (auto& i : AchievementsData.GetArray())
+            {
+                //	Parse into correct boxes
+                auto nFlags = i["Flags"].GetUint();
+                if (nFlags == 3 && m_nSetType == Core)
+                {
+                    auto& newAch = AddAchievement();
+                    newAch.Parse(i);
+                }
+                else if (nFlags == 5 && m_nSetType == Unofficial)
+                {
+                    auto& newAch = AddAchievement();
+                    newAch.Parse(i);
                 }
             }
 
-            return TRUE;
+
+            if (m_nSetType != Core)
+            {
+                return TRUE;
+            }
+
+            const auto& LeaderboardsData = doc["Leaderboards"];
+            for (auto& i : LeaderboardsData.GetArray())
+            {
+                //"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
+
+                RA_Leaderboard lb{ i["ID"].GetUint() };
+                lb.LoadFromJSON(i);
+
+                g_LeaderboardManager.AddLeaderboard(lb);
+            }
+
         }
         else
         {
-            Document doc;
-		IStreamWrapper isw{ ifile };
-		doc.ParseStream(isw);
-            if (!doc.HasParseError())
-            {
-                //ASSERT( doc["Success"].GetBool() );
-                g_pCurrentGameData->ParseData(doc);
-                GameID nGameID = g_pCurrentGameData->GetGameID();
-
-                RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
-
-			const auto& AchievementsData = doc["Achievements"];
-
-			// This could use ranged for
-			for (auto& i : AchievementsData.GetArray())
-                {
-                    //	Parse into correct boxes
-				auto nFlags = i["Flags"].GetUint();
-                    if (nFlags == 3 && m_nSetType == Core)
-                    {
-					auto& newAch = AddAchievement();
-					newAch.Parse(i);
-                    }
-                    else if (nFlags == 5 && m_nSetType == Unofficial)
-                    {
-					auto& newAch = AddAchievement();
-					newAch.Parse(i);
-                    }
-			} // end for
-
-
-                if (m_nSetType != Core)
-                {
-                    return TRUE;
-                }
-
-			const auto& LeaderboardsData = doc["Leaderboards"];
-			for (auto& i : LeaderboardsData.GetArray())
-                {
-                    //"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
-
-				RA_Leaderboard lb{ i["ID"].GetUint() };
-				lb.LoadFromJSON(i);
-
-                    g_LeaderboardManager.AddLeaderboard(lb);
-			} // end for
-
-            }
-            else
-            {
-                ASSERT(!"Could not parse file?!");
-                return FALSE;
-            }
-
-		// It should close automatically
-
-            unsigned int nTotalPoints = 0;
-            for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
-                nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
-
-            if (RAUsers::LocalUser().IsLoggedIn())
-            {
-                //	Loaded OK: post a request for unlocks
-                PostArgs args;
-                args['u'] = RAUsers::LocalUser().Username();
-                args['t'] = RAUsers::LocalUser().Token();
-                args['g'] = std::to_string(nGameID);
-                args['h'] = g_bHardcoreModeActive ? "1" : "0";
-
-                RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
-
-                std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
-
-                g_PopupWindows.AchievementPopups().AddMessage(
-                    MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
-            }
-
-            return TRUE;
+            ASSERT(!"Could not parse file?!");
+            return FALSE;
         }
 
+        unsigned int nTotalPoints = 0;
+        for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
+            nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
 
-        //	Cannot open file
-        RA_LOG("Cannot open file %s\n", sFilename.c_str());
-	//	Cannot open file
-	RA_LOG("Cannot open file %s\n", sFilename.c_str());
+        if (RAUsers::LocalUser().IsLoggedIn())
+        {
+            //	Loaded OK: post a request for unlocks
+            PostArgs args;
+            args['u'] = RAUsers::LocalUser().Username();
+            args['t'] = RAUsers::LocalUser().Token();
+            args['g'] = std::to_string(nGameID);
+            args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
-	// TODO: Put in system error message formatter from the RASuite fork in RA_Defs later
-	throw std::system_error{ static_cast<int>(GetLastError()), std::system_category() };
+            RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
+
+            std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
+
+            g_PopupWindows.AchievementPopups().AddMessage(
+                MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
+        }
+
+        return TRUE;
+    }
+
+
+    //	Cannot open file
+    RA_LOG("Cannot open file %s\n", sFilename.c_str());
+
+    // TODO: Put in system error message formatter from the RASuite fork in RA_Defs later
+    throw std::system_error{ static_cast<int>(GetLastError()), std::system_category() };
 }
 
 void AchievementSet::SaveProgress(const char* sSaveStateFilename)
@@ -627,7 +611,8 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         //	Generate a slightly different key to md5ify:
         char sCheevoProgressMangled[4096];
         sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%d",
-            RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
+            RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(),
+            pAch->ID());
 
         std::string sMD5Progress = RAGenerateMD5(std::string(sCheevoProgressMangled));
         std::string sMD5Achievement = RAGenerateMD5(pAch->CreateMemString());
@@ -717,7 +702,8 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
             //	Regenerate the md5 and see if it sticks:
             sprintf_s(cheevoMD5TestMangled, 4096, "%s%s%s%d",
-                RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID);
+                RAUsers::LocalUser().Username().c_str(), cheevoProgressString,
+                RAUsers::LocalUser().Username().c_str(), nID);
 
             std::string sRecalculatedProgressMD5 = RAGenerateMD5(cheevoMD5TestMangled);
 

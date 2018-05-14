@@ -26,8 +26,8 @@
 
 namespace {
 
-const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-const int COL_SIZE[] = { 30, 230, 110, 170 };
+const char* COL_TITLE[] ={ "ID", "Game Title", "Completion", "File Path" };
+const int COL_SIZE[] ={ 30, 230, 110, 170 };
 static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
 const bool bCancelScan = false;
 
@@ -105,76 +105,74 @@ void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibrary
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-	std::ifstream ifile{ RA_GAME_HASH_FILENAME, std::ios::binary };
+    std::ifstream ifile{ RA_GAME_HASH_FILENAME, std::ios::binary };
 
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
-	doc.ParseStream(isw);
+    Document doc;
+    IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
 
-        if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
+    if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
+    {
+        const auto& List = doc["MD5List"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-		const auto& List = doc["MD5List"];
-		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-			// Ok, in this case it needs iterators
-                if (iter->name.IsNull() || iter->value.IsNull())
-                    continue;
+            // Ok, in this case it needs iterators
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-                const std::string sMD5 = iter->name.GetString();
-			auto nID = static_cast<GameID>(iter->value.GetUint()); //	MUST BE STRING, then converted to uint. Keys are strings ONLY
+            const std::string sMD5 = iter->name.GetString();
+            auto nID = static_cast<GameID>(iter->value.GetUint()); //	MUST BE STRING, then converted to uint. Keys are strings ONLY
 
-			GameHashLibraryOut.emplace(sMD5, nID);
-		}
+            GameHashLibraryOut.emplace(sMD5, nID);
+        }
     }
 }
 
 void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-	std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
+    std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
+    Document doc;
+    IStreamWrapper isw{ ifile };
 
 
-	if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() &&
-		doc.HasMember("Response"))
+    if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() &&
+        doc.HasMember("Response"))
+    {
+        const auto& List = doc["Response"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-		const auto& List = doc["Response"];
-		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-                if (iter->name.IsNull() || iter->value.IsNull())
-                    continue;
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-            // Moved the comments up here because Visual Studio is auto indenting them
-			//	KEYS ARE STRINGS, must convert afterwards!
-			GameID nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	
-			// Didn't think a const char* could move, so it's wrapped in a string
-			GameTitlesListOut.emplace(nID, std::string{ iter->value.GetString() });
+            //	KEYS ARE STRINGS, must convert afterwards!
+            GameID nID = static_cast<GameID>(std::stoul(iter->name.GetString()));
+            GameTitlesListOut.emplace(nID, std::string{ iter->value.GetString() });
         }
     }
 }
 
 void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
 {
-	std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
+    std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
+    Document doc;
+    IStreamWrapper isw{ ifile };
 
 
-	if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+    if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+    {
+        //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
+
+        const auto& List = doc["Response"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
-
-		const auto& List = doc["Response"];
-		for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-        {
-			auto nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
-			const auto nNumAchievements = iter->value["NumAch"].GetUint();
-			const auto nEarned = iter->value["Earned"].GetUint();
-			const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
+            auto nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
+            const auto nNumAchievements = iter->value["NumAch"].GetUint();
+            const auto nEarned = iter->value["Earned"].GetUint();
+            const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
 
             std::stringstream sstr;
             sstr << nEarned;
@@ -182,14 +180,14 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
                 sstr << " (" << std::to_string(nEarnedHardcore) << ")";
 
 
-			if (sstr << " / " << nNumAchievements; nNumAchievements > 0)
+            if (sstr << " / " << nNumAchievements; nNumAchievements > 0)
             {
                 const int nNumEarnedTotal = nEarned + nEarnedHardcore;
                 char bufPct[256];
                 sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
                 sstr << bufPct;
             }
-			GameProgressOut.emplace(nID, sstr.str());
+            GameProgressOut.emplace(nID, sstr.str());
         }
     }
 }
@@ -296,8 +294,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
                 fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
                 Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
 
-                // TODO: Use the the appropriate literals when PR 23 is accepted
-                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, WPARAM{}, LPARAM{});
+                FORWARD_WM_TIMER(g_GameLibrary.GetHWND(), 0U, SendMessage);
             }
 
             fclose(pf);

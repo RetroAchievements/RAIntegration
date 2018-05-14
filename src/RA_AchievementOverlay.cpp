@@ -22,7 +22,7 @@ const float PAGE_TRANSITION_OUT = (0.2f);
 const int NUM_MESSAGES_TO_DRAW = 4;
 const char* FONT_TO_USE = "Tahoma";
 
-const char* PAGE_TITLES[] = {
+const char* PAGE_TITLES[] ={
     " Achievements ",
     " Friends ",
     " Messages ",
@@ -587,7 +587,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     const int nSelBoxWidth = nWidth - nAchSpacing - 24;
                     const int nSelBoxHeight = nAchSpacing - 8;
 
-                    RECT rcSelected = { (nDX + nSelBoxXOffs),
+                    RECT rcSelected ={ (nDX + nSelBoxXOffs),
                                         (nAchTopEdge + (i * nAchSpacing)),
                                         (nDX + nSelBoxXOffs + nSelBoxWidth),
                                         (nAchTopEdge + (i * nAchSpacing)) + nSelBoxHeight };
@@ -962,7 +962,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RE
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
 
-                RECT rcSelected = { nDX + nSelBoxXOffs,
+                RECT rcSelected ={ nDX + nSelBoxXOffs,
                                     static_cast<LONG>(nYOffset),
                                     nDX + nSelBoxXOffs + nSelBoxWidth,
                                     static_cast<LONG>(nYOffset + nSelBoxHeight) };
@@ -1584,40 +1584,39 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
 
-	// Those files are clearly *.json, not *.txt
-	std::ifstream ifile{ RA_NEWS_FILENAME, std::ios::binary };
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
-	doc.ParseStream(isw);
+    std::ifstream ifile{ RA_NEWS_FILENAME, std::ios::binary };
 
-        if (doc.HasMember("Success") && doc["Success"].GetBool())
+    Document doc;
+    IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasMember("Success") && doc["Success"].GetBool())
+    {
+        const auto& News = doc["News"];
+        for (auto& i : News.GetArray())
         {
-		const auto& News = doc["News"];
-		for (auto& i : News.GetArray())
-            {
-			NewsItem nNewsItem{
-				i["ID"].GetUint(),
-				i["Title"].GetString(),
-				i["Payload"].GetString(),
-				i["TimePosted"].GetUint(),
-				std::to_string(i["TimePosted"].GetUint()), // does the format really matter?
-				i["Author"].GetString(),
-				i["Link"].GetString(),
-				i["Image"].GetString()
-			};
+            NewsItem nNewsItem{
+                i["ID"].GetUint(),
+                i["Title"].GetString(),
+                i["Payload"].GetString(),
+                i["TimePosted"].GetUint(),
+                std::to_string(i["TimePosted"].GetUint()), // does the format really matter?
+                i["Author"].GetString(),
+                i["Link"].GetString(),
+                i["Image"].GetString()
+            };
 
-			// Commented out just incase
-			//tm destTime;
-			//localtime_s(&destTime, &nNewsItem.m_nPostedAt);
+            //tm destTime;
+            //localtime_s(&destTime, &nNewsItem.m_nPostedAt);
 
-			//char buffer[256];
-			//strftime(buffer, 256, "%b %d", &destTime);
-			//nNewsItem.m_sPostedAt = buffer;
+            //char buffer[256];
+            //strftime(buffer, 256, "%b %d", &destTime);
+            //nNewsItem.m_sPostedAt = buffer;
 
-                m_LatestNews.push_back(nNewsItem);
-            }
+            m_LatestNews.push_back(nNewsItem);
         }
+    }
 }
 
 AchievementExamine::AchievementExamine() :
@@ -1672,15 +1671,15 @@ void AchievementExamine::Initialize(const Achievement* pAch)
 void AchievementExamine::OnReceiveData(Document& doc)
 {
     ASSERT(doc["Success"].GetBool());
-    const unsigned int nOffset = doc["Offset"].GetUint();
-    const unsigned int nCount = doc["Count"].GetUint();
-    const unsigned int nFriendsOnly = doc["FriendsOnly"].GetUint();
+    const unsigned int nOffset        = doc["Offset"].GetUint();
+    const unsigned int nCount         = doc["Count"].GetUint();
+    const unsigned int nFriendsOnly   = doc["FriendsOnly"].GetUint();
     const unsigned int nAchievementID = doc["AchievementID"].GetUint();
-    const Value& ResponseData = doc["Response"];
+    const Value& ResponseData         = doc["Response"];
 
-    const unsigned int nGameID = ResponseData["GameID"].GetUint();
+    const unsigned int nGameID    = ResponseData["GameID"].GetUint();
 
-    m_nTotalWinners = ResponseData["NumEarned"].GetUint();
+    m_nTotalWinners    = ResponseData["NumEarned"].GetUint();
     m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
     const Value& RecentWinnerData = ResponseData["RecentWinner"];
@@ -1688,10 +1687,10 @@ void AchievementExamine::OnReceiveData(Document& doc)
 
     for (SizeType i = 0; i < RecentWinnerData.Size(); ++i)
     {
-        const Value& NextWinner = RecentWinnerData[i];
+        const Value& NextWinner        = RecentWinnerData[i];
         const std::string& sNextWinner = NextWinner["User"].GetString();
-        const unsigned int nPoints = NextWinner["RAPoints"].GetUint();
-        const time_t nDateAwarded = static_cast<time_t>(NextWinner["DateAwarded"].GetUint());
+        const unsigned int nPoints     = NextWinner["RAPoints"].GetUint();
+        const time_t nDateAwarded      = static_cast<time_t>(NextWinner["DateAwarded"].GetUint());
 
         RecentWinners.push_back(AchievementExamine::RecentWinnerData(sNextWinner + " (" + std::to_string(nPoints) + ")", _TimeStampToString(nDateAwarded)));
     }
@@ -1713,7 +1712,7 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
     m_nLBID = nLBIDIn;
 
     unsigned int nOffset = 0;		//	TBD
-    unsigned int nCount = 10;
+    unsigned int nCount  = 10;
 
     PostArgs args;
     args['i'] = std::to_string(m_nLBID);
@@ -1729,19 +1728,19 @@ void LeaderboardExamine::OnReceiveData(const Document& doc)
     ASSERT(doc.HasMember("LeaderboardData"));
     const Value& LBData = doc["LeaderboardData"];
 
-    unsigned int nLBID = LBData["LBID"].GetUint();
-    unsigned int nGameID = LBData["GameID"].GetUint();
-    const std::string& sGameTitle = LBData["GameTitle"].GetString();
-    unsigned int sConsoleID = LBData["ConsoleID"].GetUint();
+    unsigned int nLBID              = LBData["LBID"].GetUint();
+    unsigned int nGameID            = LBData["GameID"].GetUint();
+    const std::string& sGameTitle   = LBData["GameTitle"].GetString();
+    unsigned int sConsoleID         = LBData["ConsoleID"].GetUint();
     const std::string& sConsoleName = LBData["ConsoleName"].GetString();
-    const std::string& sGameIcon = LBData["GameIcon"].GetString();
+    const std::string& sGameIcon    = LBData["GameIcon"].GetString();
     //unsigned int sForumTopicID = LBData["ForumTopicID"].GetUint();
 
-    unsigned int nLowerIsBetter = LBData["LowerIsBetter"].GetUint();
-    const std::string& sLBTitle = LBData["LBTitle"].GetString();
-    const std::string& sLBDesc = LBData["LBDesc"].GetString();
+    unsigned int nLowerIsBetter  = LBData["LowerIsBetter"].GetUint();
+    const std::string& sLBTitle  = LBData["LBTitle"].GetString();
+    const std::string& sLBDesc   = LBData["LBDesc"].GetString();
     const std::string& sLBFormat = LBData["LBFormat"].GetString();
-    const std::string& sLBMem = LBData["LBMem"].GetString();
+    const std::string& sLBMem    = LBData["LBMem"].GetString();
 
     const Value& Entries = LBData["Entries"];
     ASSERT(Entries.IsArray());
@@ -1752,10 +1751,10 @@ void LeaderboardExamine::OnReceiveData(const Document& doc)
 
     for (SizeType i = 0; i < Entries.Size(); ++i)
     {
-        const Value& NextLBData = Entries[i];
+        const Value& NextLBData  = Entries[i];
         const unsigned int nRank = NextLBData["Rank"].GetUint();
         const std::string& sUser = NextLBData["User"].GetString();
-        const int nScore = NextLBData["Score"].GetInt();
+        const int nScore         = NextLBData["Score"].GetInt();
         const unsigned int nDate = NextLBData["DateSubmitted"].GetUint();
 
         RA_LOG("LB Entry: %d: %s earned %d at %d\n", nRank, sUser.c_str(), nScore, nDate);

@@ -20,8 +20,8 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
+const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
+const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
@@ -776,59 +776,48 @@ void Dlg_MemBookmark::ExportJSON()
 
 void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
 {
-	std::ifstream ifile{ sFilename };
+    std::ifstream ifile{ sFilename };
 
-        Document doc;
-	IStreamWrapper isw{ ifile };
+    Document doc;
+    IStreamWrapper isw{ ifile };
 
-	if (doc.ParseStream(isw); !doc.HasParseError())
+    if (doc.ParseStream(isw); !doc.HasParseError())
+    {
+        if (doc.HasMember("Bookmarks"))
         {
-            if (doc.HasMember("Bookmarks"))
+            ClearAllBookmarks();
+
+            const auto& BookmarksData = doc["Bookmarks"];
+            for (auto& i : BookmarksData.GetArray())
             {
-                ClearAllBookmarks();
+                wchar_t buffer[256];
+                swprintf_s(buffer, 256, L"%s", Widen(i["Description"].GetString()).c_str());
 
-			const auto& BookmarksData = doc["Bookmarks"];
-			for (auto& i : BookmarksData.GetArray())
-                {
+                auto NewBookmark = std::make_unique<MemBookmark>();
+                NewBookmark->SetDescription(buffer);
 
+                NewBookmark->SetAddress(i["Address"].GetUint());
+                NewBookmark->SetType(i["Type"].GetInt());
+                NewBookmark->SetDecimal(i["Decimal"].GetBool());
 
-				// You've gotta be kidding me, there wasn't even a delete here...
+                NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
+                NewBookmark->SetPrevious(NewBookmark->Value());
 
-
-				// I'll leave this alone for now until tinyformat get's accepted
-                    wchar_t buffer[256];
-				swprintf_s(buffer, 256, L"%s", Widen(i["Description"].GetString()).c_str());
-				// oh no!
-				// Do you shared ownership or unique?
-				auto NewBookmark = std::make_unique<MemBookmark>();
-                    NewBookmark->SetDescription(buffer);
-
-				NewBookmark->SetAddress(i["Address"].GetUint());
-				NewBookmark->SetType(i["Type"].GetInt());
-				NewBookmark->SetDecimal(i["Decimal"].GetBool());
-
-                    NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
-                    NewBookmark->SetPrevious(NewBookmark->Value());
-
-				AddBookmark(NewBookmark.get());
-				AddBookmarkMap(NewBookmark.get());
-
-				// Unlike to COM pointers, the standard versions release automatically, unless you want to and over
-				// ownership
-			} // end for
-
-
-                if (m_vBookmarks.size() > 0)
-                    PopulateList();
+                AddBookmark(NewBookmark.get());
+                AddBookmarkMap(NewBookmark.get());
             }
-            else
-            {
-                ASSERT(" !Invalid Bookmark File...");
-			// lets put to use..
-			ra::ShowError(_T("Could not load properly. Invalid Bookmark file."));
-                return;
-            }
+
+
+            if (m_vBookmarks.size() > 0)
+                PopulateList();
         }
+        else
+        {
+            ASSERT(" !Invalid Bookmark File...");
+            ra::ShowError(_T("Could not load properly. Invalid Bookmark file."));
+            return;
+        }
+    }
 }
 
 std::string Dlg_MemBookmark::ImportDialog()

@@ -14,10 +14,10 @@ namespace {
 constexpr std::array<const char*, RA_Leaderboard::FormatType::Format__MAX> FormatTypeToString{ 
     "TIME",      // TimeFrames
     "TIMESECS",  // TimeSecs
-    "MILLISECS", //	TimeMillisecs
-    "SCORE",	 //	Score	/POINTS
-    "VALUE",	 //	Value
-    "OTHER",	 //	Other
+    "MILLISECS", // TimeMillisecs
+    "SCORE",     // Score /POINTS
+    "VALUE",     //	Value
+    "OTHER",     // Other
 };
 
 }

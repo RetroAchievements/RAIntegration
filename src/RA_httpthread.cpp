@@ -18,7 +18,6 @@
 	
 
 using RequestTypes = std::array<const char*, RequestType::NumRequestTypes>;
-// we'll keep these here if they aren't used anywhere else
 
 constexpr RequestTypes RequestTypeToString
 {

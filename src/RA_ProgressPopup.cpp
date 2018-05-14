@@ -9,9 +9,7 @@
 namespace {
 
 
-// A lot of these look identical, with include guards we can set the constants
-// depending on the file that includes it in a sepreate header file. Such as
-// ui_constants/popup_constants/etc.
+
 
 constexpr auto FONT_SIZE_MAIN     = 32;
 constexpr auto FONT_SIZE_SUBTITLE = 28;

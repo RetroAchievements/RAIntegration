@@ -28,12 +28,12 @@
 
 // Maybe an extra check just in-case
 
+#define _NORETURN            [[noreturn]]
+
 #if _HAS_CXX17
 #define _DEPRECATED          [[deprecated]]
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
 #define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _NODISCARD           [[nodiscard]]
-#define _NORETURN            [[noreturn]]
 #define _UNUSED              [[maybe_unused]]
 
 

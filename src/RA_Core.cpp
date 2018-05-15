@@ -1634,33 +1634,25 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-
-
 	CComPtr<IFileOpenDialog> pDlg;
-	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
-		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
-    {
-        pDlg->SetOptions(FOS_PICKFOLDERS);
 
-		if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
+	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
+    {
+		if (pDlg->SetOptions(FOS_PICKFOLDERS); SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
-			CComPtr<IShellItem> pItem;
-			if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
+			if (CComPtr<IShellItem> pItem; SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
-				auto pStr = LPWSTR{};
-				// Microsoft's tripping, primitives and typedefs don't have constructors
-				// static_assert(std::is_default_constructible_v<LPWSTR>);
-				if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
+				if (LPWSTR pStr{ nullptr }; SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
-                    pStr = LPWSTR{}; // we didn't use new, so just reset it
+                    pStr = nullptr;
                 }
 				pItem.Release();
             }
         }
-		pDlg.Release(); // Ok, everythings nullified except the return
+		pDlg.Release();
     }
     return sRetVal;
 }

@@ -8,6 +8,7 @@
 
 #include <strsafe.h>
 #include <atlbase.h> // CComPtr
+#include <comip.h> //
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,12 +20,11 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
+const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
+const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
-// If it's only going to be one we could make it a unique_ptr
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
 
 
@@ -704,74 +704,43 @@ void Dlg_MemBookmark::ExportJSON()
     defaultDir.erase(0, 2); // Removes the characters (".\\")
     defaultDir = g_sHomeDir + defaultDir;
 
-	CComPtr<IFileSaveDialog> pDlg;
-	
-	if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
+    CComPtr<IFileSaveDialog> pDlg;
+
+    if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
         reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
     {
-		
-		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
             std::ostringstream oss;
-            oss.str().reserve(512); // storage on the heap really shouldn't matter but keeping relativelty the same
             oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
 
-            auto defaultFileName{ oss.str() };
-            // get in the habit of reseting the stringbuffer inside the
-            // stringstream if you wish to use it more than once (you will get
-            // garabage characters in the end)
-            oss.str(""); 
-
-
-
-			if (hr = pDlg->SetFileName(Widen(defaultFileName).c_str()); SUCCEEDED(hr))
+            if (auto defaultFileName{ oss.str() }; SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
             {
-                // nullptr is a literal for pointers, just like "s" is for string or "ULL" is for (unsigned long long)
-                // Since every pointer can be converted to std::nullptr_t, every pointer is a NullablePointer
-                // http://en.cppreference.com/w/cpp/concept/NullablePointer
-                PIDLIST_ABSOLUTE pidl{ nullptr };
-        
-				if (hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr); SUCCEEDED(hr))
+                if (PIDLIST_ABSOLUTE pidl{ nullptr }; SUCCEEDED(hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
-					CComPtr<IShellItem> pItem;
-					SHCreateShellItem(nullptr, nullptr, pidl, &pItem );
-					
-					if (hr = pDlg->SetDefaultFolder(pItem); SUCCEEDED(hr))
+                    CComPtr<IShellItem> pItem;
+
+                    if (SHCreateShellItem(nullptr, nullptr, pidl, &pItem); SUCCEEDED(hr = pDlg->SetDefaultFolder(pItem)))
                     {
-                        pDlg->SetDefaultExtension(L"txt");
-						
-						if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
+                        if (pDlg->SetDefaultExtension(L"txt"); SUCCEEDED(hr = pDlg->Show(nullptr)))
                         {
-
-                            // Exception got thrown here (didn't before), -sbs
-                            // Expression: p==0; where p is pItem.p
-                            // Solution: reset the owned pointer
-                            auto pItem2 = std::move(pItem); // let's see if that'll do it
-
-							if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
-                            {                              
-                                // looks strange but the pItem still had to exist
-                                // before this block, but nullified in the
-                                // selection statement.
-                                pItem2.Release(); 
-                                LPWSTR pStr = nullptr;
-								
-								if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
+                            if (SUCCEEDED(hr = pDlg->GetResult(&pItem.p)))
+                            {
+                                if (LPWSTR pStr = nullptr; SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
                                     Document doc;
                                     auto& allocator = doc.GetAllocator();
                                     doc.SetObject();
 
                                     Value bookmarks(kArrayType);
-                                    // We really shouldn't use pointers if we don't have too
-                                    // This will still use the pointer however, but that's for another time
-									for (auto bookmark : m_vBookmarks )
+
+                                    for (auto bookmark : m_vBookmarks)
                                     {
                                         Value item(kObjectType);
-										std::string buffer;
-                                        buffer.reserve(256);
-										sprintf_s( buffer.data(), 256, Narrow( bookmark->Description() ).c_str(), buffer.length() );
-                                        Value s{ buffer.c_str(), allocator };
+
+                                        oss.str("");
+                                        oss << Narrow(bookmark->Description());
+                                        Value s{ oss.str().c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -786,8 +755,7 @@ void Dlg_MemBookmark::ExportJSON()
                                     pStr = nullptr;
                                 }
 
-                                // CComPtr doesn't appear to have a destructor, so we have to release
-								pItem.Release();
+                                pItem.Release();
                                 ILFree(pidl);
                             }
                         }
@@ -795,7 +763,7 @@ void Dlg_MemBookmark::ExportJSON()
                 }
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
 }
 
@@ -852,45 +820,34 @@ std::string Dlg_MemBookmark::ImportDialog()
 {
     std::string str;
 
-	// With how repetive this is, it should be it's own function
     if (g_pCurrentGameData->GetGameID() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
         return str;
     }
 
-	// Never noticed this, nearly identical to the on in RA_Core
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
-
-	
-	if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, 
-		reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
+    if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog,
+        reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
     {
-		// N.B. If you want to do more than one at a time it needs to be in a loop
-		
-		if (hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front()); SUCCEEDED(hr))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
-			
-			if (hr = pDlg->Show(nullptr); SUCCEEDED(hr))
+            if (SUCCEEDED(hr = pDlg->Show(nullptr)))
             {
-				CComPtr<IShellItem> pItem;
-				
-				if (hr = pDlg->GetResult(&pItem); SUCCEEDED(hr))
+                if (CComPtr<IShellItem> pItem; SUCCEEDED(hr = pDlg->GetResult(&pItem)))
                 {
-                    LPWSTR pStr = nullptr;
-					
-					if (hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr); SUCCEEDED(hr))
+                    if (LPWSTR pStr = nullptr; SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
                         str = Narrow(pStr);
-						CoTaskMemFree(static_cast<LPVOID>(pStr));
-						pStr = nullptr;
+                        CoTaskMemFree(static_cast<LPVOID>(pStr));
+                        pStr = nullptr;
                     }
-					pItem.Release();
+                    pItem.Release();
                 }
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
 
     return str;

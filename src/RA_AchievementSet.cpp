@@ -10,12 +10,13 @@
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
+#include <fstream>
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
@@ -241,73 +242,46 @@ void AchievementSet::Test()
     }
 }
 
-// TODO: Leaving this alone for now, I'm not sure what this does exactly. Could
-//       probably just change them once I do the FILE* to i/ofstream
-
 BOOL AchievementSet::SaveToFile()
 {
     //	Takes all achievements in this group and dumps them in the filename provided.
-    FILE* pFile = nullptr;
-    unsigned int i = 0;
 
-    const std::string sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
+    std::ofstream ofile{ GetAchievementSetFilename(g_pCurrentGameData->GetGameID()), std::ios::binary };
 
-    fopen_s(&pFile, sFilename.c_str(), "w");
-    if (pFile != nullptr)
+    if(!ofile.is_open())
+        return FALSE;
+
+    using namespace std::string_literals;
+    auto sNextLine = "0.030\n"s; // Min ver
+    ofile.write(sNextLine.c_str(), sNextLine.length());
+
+    sNextLine = ra::tsprintf("%\n", g_pCurrentGameData->GameTitle());
+    ofile.write(sNextLine.c_str(), sNextLine.length());
+
+    for (auto& i : m_Achievements)
     {
-        using namespace std::string_literals;
-        auto sNextLine = "0.030\n"s;						//	Min ver
-        fwrite(sNextLine.c_str(), sizeof(char), sNextLine.length(), pFile);
+        i.CreateMemString();
 
-        sNextLine = ra::tsprintf("%\n", g_pCurrentGameData->GameTitle());
-        fwrite(sNextLine.c_str(), sizeof(char), sNextLine.length(), pFile);
+        sNextLine = ra::tsprintf("%:%:%:%:%:%:%:%:%:%:%:%:%:%\n",
+            i.ID(),
+            i.CreateMemString(),
+            i.Title(),
+            i.Description(),
+            " ", //Ach.ProgressIndicator()=="" ? " " : Ach.ProgressIndicator(),
+            " ", //Ach.ProgressIndicatorMax()=="" ? " " : Ach.ProgressIndicatorMax(),
+            " ", //Ach.ProgressIndicatorFormat()=="" ? " " : Ach.ProgressIndicatorFormat(),
+            i.Author(),
+            i.Points(),
+            i.CreatedDate(),
+            i.ModifiedDate(),
+            i.Upvotes(),   // Fix values
+            i.Downvotes(), // Fix values
+            i.BadgeImageURI());
 
-        //std::vector<Achievement>::const_iterator iter = g_pActiveAchievements->m_Achievements.begin();
-        //while (iter != g_pActiveAchievements->m_Achievements.end())
-        for (i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
-        {
-            Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
-
-
-            pAch->CreateMemString();
-
-            sNextLine = ra::tsprintf("%:%:%:%:%:%:%:%:%:%:%:%:%:%\n",
-                pAch->ID(),
-                pAch->CreateMemString().c_str(),
-                pAch->Title().c_str(),
-                pAch->Description().c_str(),
-                " ", //Ach.ProgressIndicator()=="" ? " " : Ach.ProgressIndicator(),
-                " ", //Ach.ProgressIndicatorMax()=="" ? " " : Ach.ProgressIndicatorMax(),
-                " ", //Ach.ProgressIndicatorFormat()=="" ? " " : Ach.ProgressIndicatorFormat(),
-                pAch->Author().c_str(),
-                pAch->Points(),
-                pAch->CreatedDate(),
-                pAch->ModifiedDate(),
-                pAch->Upvotes(), // Fix values
-                pAch->Downvotes(), // Fix values
-                pAch->BadgeImageURI().c_str());
-
-            fwrite(sNextLine.c_str(), sizeof(char), sNextLine.length(), pFile);
-        }
-
-        fclose(pFile);
-        return TRUE;
+        ofile.write(sNextLine.c_str(), sNextLine.length());
     }
 
-    return FALSE;
-
-    //FILE* pf = nullptr;
-    //const std::string sFilename = GetAchievementSetFilename( m_nGameID );
-    //if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
-    //{
-    //	FileStream fs( pf );
-    //	
-    //	CoreAchievements->Serialize( fs );
-    //	UnofficialAchievements->Serialize( fs );
-    //	LocalAchievements->Serialize( fs );
-
-    //	fclose( pf );
-    //}
+    return TRUE;
 }
 
 BOOL AchievementSet::Serialize(FileStream& Stream)
@@ -558,8 +532,8 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
         //	Cannot open file
         RA_LOG("Cannot open file %\n", sFilename.c_str());
 
-        // alright this is annoying me about deprecation gonna get my system error formatters from RASuite - sbs
-        RA_LOG("Error %\n", ra::GetLastErrorMsg());
+        
+        RA_LOG("Error: %\n", ra::GetLastErrorMsg());
         return FALSE;
     }
 }
@@ -582,6 +556,8 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         return;
     }
 
+
+    // TODO: fix this up later - sbs
     for (size_t i = 0; i < NumAchievements(); ++i)
     {
         Achievement* pAch = &m_Achievements[i];
@@ -590,9 +566,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         //	Write ID of achievement and num conditions:
         std::string cheevoProgressString;
-        // does it matter? What this means is that the capacity is capped at 4096+16, if it goes higher than that
-        // an out_of_range exception will be thrown. A regualr one would just cause the app to crash.
-        cheevoProgressString.reserve(4096); 
+        cheevoProgressString.reserve(4096);
 
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
@@ -603,7 +577,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
             {
                 Condition& cond = pAch->GetCondition(nGrp, j);
-                // ok, tsprintf overwrites
+                
                 buffer = ra::tsprintf("%:%:%:%:%:",
                     cond.CurrentHits(),
                     cond.CompSource().RawValue(),

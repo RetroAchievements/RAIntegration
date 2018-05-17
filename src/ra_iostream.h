@@ -9,12 +9,10 @@
 // copy and pasted from my test project
 
 // based from here: http://en.cppreference.com/w/cpp/language/parameter_pack
-// C++17 has fold expressions we can make it simplier later, just learning how to do this
+// C++17 has fold expressions we can make it simpler later, just learning how to do this
 
 
 namespace ra {
-
-// will put this in another file in RA_Integration
 
 // we need this since '%' for us is a specifier, we need to make it a percent sign
 template<
@@ -37,8 +35,6 @@ template<
 >
 void StreamByCharType(const CharT* format) {
     // we are only considering char and wchar_t for now
-
-    // can't use switch
     if (std::is_same_v<CharT, char>)
         std::cout << format;
     else if (std::is_same_v<CharT, wchar_t>)
@@ -87,7 +83,6 @@ void printf_line(const CharT* format)
 
 inline constexpr auto wprintf_line = printf_line<wchar_t>;
 
-// TODO: figure out how to get this to work via perfect forwarding
 template<typename CharT, typename ...Args>
 void CheckNumFormatSpecs(const CharT*& format, Args&&... args);
 
@@ -144,12 +139,9 @@ void CheckNumFormatSpecs(const CharT*& format, Args&&... args)
     temp.clear();
 
 #if _DEBUG
-    // that is bizzare lets check something
-    // auto num_args{ sizeof...(args) };
-    // Ok forgot args doesn't include the first value_type
     assert(sizeof...(args) == (count - 1));
 #else
-    throw std::invalid_argument{ "ra::printf: There are more specifiers than arguments!" };
+    throw std::invalid_argument{ __FUNCTION__": There are more specifiers than arguments!" };
 #endif // _DEBUG
 }
 
@@ -177,11 +169,8 @@ _NODISCARD std::basic_string<CharT> tsprintf(const CharT* format) {
     return format;
 }
 
-//#undef wsprintf
-// Should the aliases be used and put the actual implementation in detail?
-inline constexpr auto wsprintf = tsprintf<wchar_t>;
 
-// despite this not being in namespace std it was still flagged as deprecated so we added a t at the beginning
+inline constexpr auto wsprintf = tsprintf<wchar_t>;
 
 template<
     typename CharT,
@@ -226,7 +215,7 @@ template<
 >
 void tsprintf(OStreamType& oss, const CharT* format, ValueType value, Args... args)
 {
-    CheckNumFormatSpecs(format, args...);
+    CheckNumFormatSpecs(format, std::forward<Args>(args)...);
     auto spec{ static_cast<CharT>('%') };
     auto nul{ static_cast<CharT>('\0') };
 
@@ -234,7 +223,7 @@ void tsprintf(OStreamType& oss, const CharT* format, ValueType value, Args... ar
     {
         if (*format == spec)
         {
-            oss << value << tsprintf(format + 1, args...); // recursive call
+            oss << value << tsprintf(format + 1, std::forward<Args>(args)...); // recursive call
             return;
         }
         oss << *format;
@@ -244,8 +233,7 @@ void tsprintf(OStreamType& oss, const CharT* format, ValueType value, Args... ar
 }
 
 // Default precision will be 3 because that's the default precision of float
-// was going to make an ostream version but figured no one would use it
-// Flags give regular behavior, in fixed decimal notation, by default it's scientic notation,
+// Flags give expected behavior, in fixed decimal notation, by default it's scientific notation,
 // Change the flags using the std::ios flags as needed
 template<
     typename CharT = char,
@@ -266,19 +254,16 @@ template<
 }
 
 
-// charconv is useless
-// Lets just return a string, there's a lot of overloads for sto* already, because of this we are only returning string,
-// use widen or something if you need a wide string (UTF-16)
-// "i" must be an integral type, flags are for expected behavior, change them them if you need something different
+
+// use Widen if you need a wide string (UTF-16)
+// "i" must be an integral type, flags are for expected behavior, change them if you need something different
 template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>>
 std::string AdjustHexField(Integral i, std::streamsize new_width = 4,
     int flags = std::ios::uppercase | std::ios::hex)
 {
     std::ostringstream oss;
-    // Show base makes it look weird, those functions made no sense, doing it old school
     oss.flags(flags);
 
-    // Noticed some functions did not prefix with 0x, so it's not here
     oss << std::setfill('0') << std::setw(new_width) << i;
     return oss.str();
 }
@@ -287,10 +272,11 @@ template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral
 std::string AdjustIntField(Integral i, std::streamsize new_width = 4,
     int flags = std::ios::dec)
 {
-    // Will leave this here just in case we do want to prefix with 0x everywhere
-    //temp.erase(0, 2); // I'm such an IDIOT! Forgot I removed the appended 0x!
+    //temp.erase(0, 2);
     return AdjustHexField(i, new_width, flags);;
 }
+
+
 
 } // namespace ra
 

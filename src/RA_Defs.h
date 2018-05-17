@@ -212,14 +212,17 @@ typedef unsigned int GameID;
 
 char* DataStreamAsString(DataStream& stream);
 
-extern void RADebugLogNoFormat(const char* data);
+void RADebugLogNoFormat(const std::string& data);
 
 template<typename... Args>
-void RADebugLog(const char* format, Args... args)
+void RADebugLog(const char* format, Args&&... args)
 {
-    // this could be nested directly but we need to see the value immediately
-    auto str = ra::tsprintf(format, args...);
-    RADebugLogNoFormat(str.c_str());
+#if _DEBUG
+    [[maybe_unused]] auto str = ra::tsprintf(format, std::forward<Args>(args)...);
+#endif // _DEBUG
+
+    RADebugLogNoFormat(ra::tsprintf(format, std::forward<Args>(args)...));
+    format = nullptr;
 }
 
 

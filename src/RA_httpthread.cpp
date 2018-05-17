@@ -282,15 +282,12 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, DataS
 
 namespace ra {
 
-// Noticed a huge pattern, not sure if other files will need it, this could be in a utitly header or something
-// noticed a few inconistencies but w/e
 // fill_size is how many digits you want appearing with the rest being 0; i.e.,
 // if fill_size = 5; 0x23 -> 0x00023
-// 4 is the default since almost all the functions had %04x
-std::string CurrentThreadIdToString(std::streamsize fill_size = 4) noexcept {
-    std::ostringstream oss;
-    oss << std::hex << std::setfill('0') << std::setw(fill_size) << std::showbase << GetCurrentThreadId();
-    return oss.str();
+// Sometimes the fill_size was different so it's a parameter.
+std::string CurrentThreadIdToString(std::streamsize fill_size = 4) noexcept
+{
+    return ra::tsprintf("0x%", ra::AdjustHexField(GetCurrentThreadId(), fill_size));
 } // end function CurrentThreadIdToString
 
 } // namespace ra
@@ -300,34 +297,28 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
 {
     BOOL bSuccess = FALSE;
 
-    RA_LOG(__FUNCTION__ ": (%) GET to %...\n", ra::CurrentThreadIdToString(), sRequestedPage.c_str());
+    RA_LOG(__FUNCTION__ ": (%) GET to %...\n", ra::CurrentThreadIdToString(), sRequestedPage);
     ResponseOut.clear();
 
-    std::string sClientName = "Retro Achievements Client " + std::string(g_sClientName) + " " + g_sClientVersion;
-    WCHAR wClientNameBuffer[1024];
-    size_t nTemp;
-    mbstowcs_s(&nTemp, wClientNameBuffer, 1024, sClientName.c_str(), sClientName.length() + 1);
+    auto sClientName = ra::tsprintf("Retro Achievements Client % %", g_sClientName, g_sClientVersion);
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(wClientNameBuffer,
+    HINTERNET hSession = WinHttpOpen(Widen(sClientName).c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        WINHTTP_NO_PROXY_BYPASS, DWORD{ 0 });
 
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, Widen(bIsImageRequest ? RA_HOST_IMG_URL : RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, Widen(bIsImageRequest ? RA_HOST_IMG_URL : RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, DWORD{ 0 });
 
         // Create an HTTP Request handle.
         if (hConnect != nullptr)
         {
-            WCHAR wBuffer[1024];
-            mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
-
             HINTERNET hRequest = WinHttpOpenRequest(hConnect,
                 L"GET",
-                wBuffer,
+                Widen(sRequestedPage).c_str(),
                 nullptr,
                 WINHTTP_NO_REFERER,
                 WINHTTP_DEFAULT_ACCEPT_TYPES,
@@ -379,7 +370,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');	//	EOS for parsing
 
-                    RA_LOG(__FUNCTION__ ": success! % Returned % bytes.", sRequestedPage.c_str(), ResponseOut.size());
+                    RA_LOG(__FUNCTION__ ": success! % Returned % bytes.", sRequestedPage, ResponseOut.size());
                 }
 
             }
@@ -413,11 +404,11 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
         // TODO: observe, change %04x to %%%% (first 3 are stream flags, last one is the number)
         RA_LOG(__FUNCTION__ ": (%) POST to %?%...\n", ra::CurrentThreadIdToString(), sRequestedPage.c_str(), sPostString.c_str());
     }
-
-    HINTERNET hSession = WinHttpOpen(Widen(std::string("Retro Achievements Client ") + g_sClientName + " " + g_sClientVersion).c_str(),
+    auto sClientName = ra::tsprintf("Retro Achievements Client % %", g_sClientName, g_sClientVersion);
+    HINTERNET hSession = WinHttpOpen(Widen(sClientName).c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        WINHTTP_NO_PROXY_BYPASS, DWORD{ 0 });
     if (hSession != nullptr)
     {
         HINTERNET hConnect = WinHttpConnect(hSession, Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
@@ -435,7 +426,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                 BOOL bSendSuccess = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
                     0,
-                    reinterpret_cast<LPVOID>(const_cast<char*>(sPostString.data())), //WINHTTP_NO_REQUEST_DATA,
+                    static_cast<LPVOID>(std::remove_const_t<char*>(sPostString.data())), //WINHTTP_NO_REQUEST_DATA,
                     strlen(sPostString.c_str()),
                     strlen(sPostString.c_str()),
                     0);
@@ -710,18 +701,13 @@ void RAWeb::RA_InitializeHTTPThreads()
         {
             g_vhHTTPThread.push_back(hThread);
 
-            // Ok, this works for sure, on to the next hex
-
-            // it can't do hex yet
-            std::ostringstream oss;
-
-            // TODO: Figure out a way to set the flags so they work in RA_LOG (tried and they had no effect)
             RA_LOG(__FUNCTION__ " Adding HTTP thread % ", i);
-            oss << "(0x" << std::hex << std::setfill('0') << std::setw(8)  << dwThread << ", 0x"
-                << std::hex << std::showbase << hThread << ")\n";
+
+            std::ostringstream oss;
+            oss.flags(std::ios::hex | std::ios::uppercase);
+            oss << ra::tsprintf("(0x%, ", ra::AdjustHexField(dwThread, 8)) << "0x" << hThread << ")\n";
 
             RA_LOG(oss.str().c_str());
-
         }
     }
 }

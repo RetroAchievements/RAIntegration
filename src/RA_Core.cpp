@@ -192,7 +192,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     }
 
     tstring buffer;
-    // Crap forgot to reserve storage for it
     buffer.reserve(2048);
     GetCurrentDirectory(2048, buffer.data());
     g_sHomeDir = Narrow(buffer.data());
@@ -200,7 +199,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     RA_LOG(__FUNCTION__ " - storing \"%\" as home dir\n", g_sHomeDir.c_str());
 
-    // what was here made no sense
     if (!g_sROMDirLocation.empty())
         g_sROMDirLocation.clear();
 
@@ -498,7 +496,6 @@ API void CCONV _RA_ClearMemoryBanks()
 
 API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 {
-    // not too sure of the macro just sitting there
     auto buffer = ra::tsprintf("Update available!\n"
         "A new version of % is available for download at %.\n\n"
         "Would you like to update?\n\n"

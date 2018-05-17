@@ -58,13 +58,12 @@ std::string Narrow(const std::string& str)
     return str;
 }
 
-void RADebugLogNoFormat(const char* data)
+void RADebugLogNoFormat(const std::string& data)
 {
 #if _DEBUG
     OutputDebugString(NativeStr(data).c_str());
 #endif
 
-    // if it won't work with ofstream there's another approach.
     std::ofstream ofile{ RA_LOG_FILENAME, std::ios::app | std::ios::ate };
     ofile << data;
 }

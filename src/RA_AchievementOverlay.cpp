@@ -774,21 +774,9 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
 
     // gonna go out on limb and say these are timestamps, much better way to do this
 
-    // N.B: The "safe" functions in MSVC are not the same as in ISO C11 (C equivalent to C++17), hell it doesn't even fully support C99 (the C equivalent to C++11)
-    // This works for GCC but not MSVC
-    // #define __STDC_WANT_LIB_EXT1__ 1 - VS has no equivalent
-    // http://en.cppreference.com/w/c/chrono/ctime
-    // From my understanding you are trying to get the local time, we can mix and
-    // match old and new to make it safe and efficient, we aren't using clock types from chrono so it can't be helped.
-
     // this is why I strongly recommend C++17
     using namespace std::string_literals;
     auto bufTime{ ""s };
-    // this writes to the pointer not the object
-    // equivalent to auto str = new char[256]; but since it's owned by std::string it gets deallocated
-    // You must either assign the pointer back to the object or use the pointer
-    // use .data() if you need to write to it, the string must be non const to begin with however
-    // i.e; str = str.data/c_str(); or just str.data/c_str();
     bufTime.reserve(256);
     ctime_s(bufTime.data(), 256, &tCreated);
     bufTime = bufTime.data(); // this is required
@@ -805,13 +793,6 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
 
     if (g_AchExamine.HasData())
     {
-        // these are just for reference if you prefer these not be here I can just leave them in my test app
-        // http://en.cppreference.com/w/cpp/io/c/fprintf
-        // http://www.cplusplus.com/reference/cstdio/printf/
-        // Need to test this out and a new function for float fields, it's getting too annoying
-
-        // Alright tested this under many different senariaos it should work here as well.
-        // This can be nested but it'll look message
         auto fPercent{
             ra::AdjustFloatField(static_cast<float>(g_AchExamine.TotalWinners() * 100) /
             static_cast<float>(g_AchExamine.PossibleWinners()), 1, 0)
@@ -1274,7 +1255,6 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     //	Title:
     SelectObject(hDC, g_hFontTitle);
     SetTextColor(hDC, COL_TEXT);
-    // don't know why you even needed this
 
     //sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ], (*pnScrollOffset)+1 );
     TextOut(hDC,
@@ -1317,7 +1297,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
             //	Genesis wouldn't use 'A' for select
             cSelectChar = 'C';
         }
-        // .. it's not understanding the string literal....
+
         buffer = ra::tsprintf(" %:% ", cBackChar, "Back");
         TextOut(hDC, nRightPx - nControlsX2, nControlsY1, NativeStr(buffer).c_str(), buffer.length());
 
@@ -1340,8 +1320,8 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
 
 void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const
 {
-    HBRUSH hBarBack = static_cast<HBRUSH>(GetStockObject(DKGRAY_BRUSH));
-    HBRUSH hBarFront = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
+    HBRUSH hBarBack = GetStockBrush(DKGRAY_BRUSH);
+    HBRUSH hBarFront = GetStockBrush(LTGRAY_BRUSH);
     float fNumMax = (float)(nMax);
     const float fInnerBarMaxSizePx = (float)nH - 4.0f;
 
@@ -1434,8 +1414,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     SetTextColor(hDC, COL_TEXT);
     SelectObject(hDC, g_hFontDesc);
 
-    // You should probably put a restriction before hand, the GSL has a similar
-    // Contracts implementation like .NET
+
     auto buffer = ra::tsprintf(" % ", pUser->Username());
     TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), buffer.length());
 
@@ -1633,7 +1612,7 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
                 localtime_s(&destTime, &nNewsItem.m_nPostedAt);
 
 
-                // I think this was done in another pr
+                
                 char buffer[256];
                 strftime(buffer, 256, "%b %d", &destTime);
                 nNewsItem.m_sPostedAt = buffer;
@@ -1719,16 +1698,10 @@ void AchievementExamine::OnReceiveData(Document& doc)
         const unsigned int nPoints = NextWinner["RAPoints"].GetUint();
         const time_t nDateAwarded = static_cast<time_t>(NextWinner["DateAwarded"].GetUint());
 
-        // you could do this, anyway you're trying to use RecentWinnerData as an
-        // rvalue reference when it has const data members and no move
-        // constructor and assignement (program wouldn't compile if you tried
-        // because of the const string). Unique structures should just have
-        // copying deleted, copying is usually expensive anyway.
-
         auto sUser{ ra::tsprintf("% (%)", sNextWinner, nPoints) };
 
         RecentWinners.push_back(AchievementExamine::RecentWinnerData(sUser,
-            _TimeStampToString(nDateAwarded))); // starting with C++11 you can use to_string on time_t
+            std::to_string(nDateAwarded)));
     }
 
     m_bHasData = true;

@@ -2,18 +2,18 @@
 #define RA_DEFS_H
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ShlObj.h>
 #include <tchar.h>
-#include <assert.h>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <queue>
-#include <deque>
+#include <cassert>
+#include <sstream> // has string
+#include <queue> // has deque, vector, algorithm
 #include <map>
-
+#include <ciso646>  // barely takes any space, words instead of symbols (&&->and, ^->xor, ||->or, !->not, etc.)
+#include <iostream> // std::wcout.narrow/widen
 
 #ifndef RA_EXPORTS
 
@@ -34,13 +34,13 @@
 // This is not needed the most recent version
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 //	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
-#include "rapidjson/include/rapidjson/error/en.h"
+#include <rapidjson/document.h> // has reader.h
+#include <rapidjson/writer.h> // has stringbuffer.h
+#include <rapidjson/filestream.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/error/en.h>
 #pragma warning(pop)
+
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 
@@ -377,11 +377,12 @@ _NODISCARD _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
 
 
 _NODISCARD std::string DataStreamAsString(const DataStream& stream);
-_NODISCARD std::string CALLBACK Narrow(const std::wstring& wstr);
-_NODISCARD std::string CALLBACK Narrow(const wchar_t* wstr);
-_NODISCARD std::wstring CALLBACK Widen(const std::string& str);
-_NODISCARD std::wstring CALLBACK Widen(const char* str);
-
+_NODISCARD std::string Narrow(const std::wstring& wstr);
+_NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
+_NODISCARD std::string Narrow(const wchar_t* wstr);
+_NODISCARD std::wstring Widen(const std::string& str);
+_NODISCARD std::wstring Widen(std::string&& str) noexcept;
+_NODISCARD std::wstring Widen(const char* str);
 
 
 
@@ -427,7 +428,7 @@ _NODISCARD _CONSTANT_VAR to_signed(_In_ UnsignedType ust) noexcept -> std::make_
 
 
 // Stuff in the detail namespace are things people using the RA_Integration API
-// shouldn't use
+// shouldn't use directly.
 namespace detail {
 
 // There helper variable templates that are much easier to use, using these
@@ -441,7 +442,7 @@ namespace detail {
 ///   function was reached, <typeparamref name="CharT" /> is a known character
 ///   type.
 /// </summary>
-/// <typeparam name="CharT">A type to be evalualted</typeparam>
+/// <typeparam name="CharT">A type to be evaluated</typeparam>
 template<typename CharT>
 struct is_char :
     std::bool_constant<std::is_integral_v<CharT> &&
@@ -528,7 +529,70 @@ template<typename LessThanComparable>
 _NODISCARD _CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail
 ::is_nothrow_lessthan_comparable<LessThanComparable>::value;
 
-// We probably don't need this now but it'll be useful later when using STL filestreams instead of C filestreams
+namespace detail {
+
+/// <summary>
+///   Casts <typeparamref name="InputString" /> into an
+///   <typeparamref name="OutputString" />. This won't work with multi-byte
+///   strings, only byte strings. It can be used to convert <c>std::string</c> to
+///   and from <c>std::wstring</c> but that's only if they are byte strings.
+/// </summary>
+/// <typeparam name="OutputString">
+///   The string type specified for conversion.
+/// </typeparam>
+/// <typeparam name="InputString">
+///   The string type to be converted to, as long as an intellisense error
+///   doesn't occur, it should be fine.
+/// </typeparam>
+/// <param name="str">The string to be converted.</param>
+/// <returns>
+///   <typeparamref name="InputString" /> as an
+///   <typeparamref name="OutputString" />.
+/// </returns>
+/// <exception cref="std::ios_base::failure">
+///   If this exception is thrown, this operation as no effect and the
+///   <typeparamref name="InputString" /> is in a valid state.
+/// </exception>
+/// <remarks>
+///   At least <typeparamref name="OutputString" /> needs to be specified and
+///   <typeparamref name="InputString" /> must not be the same as
+///   <typeparamref name="OutputString" />. Use <see cref="ra::Widen" /> or
+///   <see cref="ra::Narrow" /> if you need a Multi-byte to Unicode string
+///   conversion.
+/// </remarks>
+template<
+    typename OutputString,
+    typename InputString,
+    class = std::enable_if_t<(not std::is_same_v<OutputString, InputString>) and
+    (is_string_v<OutputString> and is_string_v<InputString>) and
+    (!std::is_same_v<OutputString, std::u16string> and !std::is_same_v<InputString, std::u16string>) and
+    (!std::is_same_v<OutputString, std::u32string> and !std::is_same_v<InputString, std::u32string>)>
+>
+_NODISCARD OutputString string_cast(const InputString& str) noexcept
+{
+    if (str.empty())
+        return OutputString{};
+
+    using out_ostringstream = std::basic_ostringstream<typename OutputString::value_type>;
+    out_ostringstream oss;
+
+    for (auto& i : str)
+    {
+        if (std::is_same_v<OutputString, std::string> and std::is_same_v<InputString, DataStream>)
+            oss << static_cast<std::string::value_type>(i); 
+        else if (std::is_same_v<OutputString, DataStream> and std::is_same_v<InputString, std::string>)
+            oss << static_cast<DataStream::value_type>(i);
+        else if (std::is_same_v<OutputString, std::wstring> and std::is_same_v<InputString, std::string>)
+            oss << std::wcout.widen(i);
+        else if (std::is_same_v<OutputString, std::string> and std::is_same_v<InputString, std::wstring>)
+            oss << std::wcout.narrow(i);
+    }
+    return oss.str();
+} // end function string_cast
+
+} // namespace detail
+
+
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
 /// <typeparam name="CharT">

@@ -11,6 +11,11 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif

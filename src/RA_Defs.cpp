@@ -8,81 +8,80 @@ namespace ra {
 
 
 
-std::string DataStreamAsString(const DataStream& stream) {
-	std::ostringstream oss;
-
-	for (auto& i : stream)
-		oss << to_signed(i);
-
-    auto str{ oss.str() };
+std::string DataStreamAsString(const DataStream& stream)
+{
+    auto str{ detail::string_cast<std::string>(stream) };
 
     // pesky null character
-    if (!str.empty()) {
+    if (!str.empty())
         str.pop_back();
-    }
 
     return str;
 }
 
 
-std::string CALLBACK Narrow(const std::wstring& wstr) {
+std::string Narrow(const std::wstring& wstr)
+{
     return Narrow(wstr.c_str());
 }
 
-
-std::string CALLBACK Narrow(const wchar_t* wstr)
+std::string Narrow(std::wstring&& wstr) noexcept
 {
-	auto state{ std::mbstate_t{}};
-	auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0, &state) };
-	auto str{ ""s };
-
-	str.reserve(len);
-	WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len, str.data(), to_signed(str.capacity()),
-		nullptr, nullptr);
-
-	return str.data();
+    auto wwstr{ std::move_if_noexcept(wstr) };
+    return Narrow(wwstr);
 }
 
-std::wstring CALLBACK Widen(const std::string& str)
+
+std::string Narrow(const wchar_t* wstr)
+{
+    std::string str;
+    auto state{ std::mbstate_t{} };
+    auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0_z, &state) };
+    str.reserve(len);
+
+    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, to_signed(len), str.data(),
+        to_signed(str.capacity()), nullptr, nullptr);
+    return str;
+}
+
+std::wstring Widen(const std::string& str)
 {
     return Widen(str.c_str());
 }
 
-std::wstring CALLBACK Widen(const char* str)
+std::wstring Widen(std::string&& str) noexcept
 {
-	auto state{ std::mbstate_t{} };
-	auto len{ 1 + std::mbsrtowcs(nullptr, &str, 0, &state) };
-    auto wstr{ L""s };
+    auto sstr{ std::move_if_noexcept(str) };
+    return Widen(sstr);
+}
 
+std::wstring Widen(const char* str)
+{
+    std::wstring wstr;
+    auto len{ 1_z + std::mbstowcs(nullptr, str, 0_z) };
     wstr.reserve(len);
-    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len, wstr.data(), to_signed(wstr.capacity()));
 
-    return wstr.data();
+    ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, to_signed(len), wstr.data(),
+        to_signed(len));
+    return wstr;
 }
 
 std::string ByteAddressToString(ByteAddress nAddr)
 {
-	std::ostringstream oss;
-	oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
-	return oss.str();
+    std::ostringstream oss;
+    oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
+    return oss.str();
 }
 
 // We'll just force it to be a regular byte string.
 DataStream to_datastream(const std::string& str) noexcept
 {
-	using uostringstream = std::basic_stringstream<DataStream::value_type>;
-	uostringstream oss;
-
-	for (auto& i : str)
-		oss << to_unsigned(i);
-
-	return oss.str();
+    return detail::string_cast<DataStream>(str);
 } // end function to_datastream
 
-
-std::wstring Widen(const wchar_t* wstr){return std::wstring{ wstr }; }
+std::wstring Widen(const wchar_t* wstr) { return std::remove_reference_t<std::wstring&&>(std::wstring{ wstr }); }
 std::wstring Widen(const std::wstring& wstr) { return wstr; }
-std::string Narrow(const char* str) { return std::string{ str }; }
+std::string Narrow(const char* str) { return std::remove_reference_t<std::string&&>(std::string{ str });}
 std::string Narrow(const std::string& str) { return str; }
 
 

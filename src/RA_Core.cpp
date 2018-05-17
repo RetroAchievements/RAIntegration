@@ -34,6 +34,9 @@
 #include <direct.h>
 #include <io.h>		//	_access()
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;

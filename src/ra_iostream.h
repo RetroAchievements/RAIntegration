@@ -141,7 +141,8 @@ void CheckNumFormatSpecs(const CharT*& format, Args&&... args)
 #if _DEBUG
     assert(sizeof...(args) == (count - 1));
 #else
-    throw std::invalid_argument{ __FUNCTION__": There are more specifiers than arguments!" };
+    if(sizeof...(args) > (count - 1))
+        throw std::invalid_argument{ __FUNCTION__": There are more specifiers than arguments!" };
 #endif // _DEBUG
 }
 
@@ -213,7 +214,7 @@ template<
     (std::is_same_v<OStreamType, std::basic_ostream<CharT>> ||
         std::is_same_v<OStreamType, std::basic_ostringstream<CharT>>)>
 >
-void tsprintf(OStreamType& oss, const CharT* format, ValueType value, Args... args)
+void tsprintf(OStreamType& oss, const CharT* format, ValueType value, Args&&... args)
 {
     CheckNumFormatSpecs(format, std::forward<Args>(args)...);
     auto spec{ static_cast<CharT>('%') };

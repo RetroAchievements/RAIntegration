@@ -571,7 +571,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
             // uses the move assignment to drain the right side
-            buffer = ra::tsprintf("%d:%d:", pAch->ID(), pAch->NumConditions(nGrp));
+            buffer = ra::tsprintf("%:%:", pAch->ID(), pAch->NumConditions(nGrp));
             cheevoProgressString += buffer;
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)

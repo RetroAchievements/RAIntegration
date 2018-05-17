@@ -2,8 +2,8 @@
 
 #include <iomanip>
 
-
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+
 namespace ra {
 
 
@@ -25,12 +25,12 @@ std::string DataStreamAsString(const DataStream& stream) {
 }
 
 
-std::string Narrow(const std::wstring& wstr) {
+std::string CALLBACK Narrow(const std::wstring& wstr) {
     return Narrow(wstr.c_str());
 }
 
 
-std::string Narrow(const wchar_t* wstr)
+std::string CALLBACK Narrow(const wchar_t* wstr)
 {
 	auto state{ std::mbstate_t{}};
 	auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0, &state) };
@@ -43,12 +43,12 @@ std::string Narrow(const wchar_t* wstr)
 	return str.data();
 }
 
-std::wstring Widen(const std::string& str)
+std::wstring CALLBACK Widen(const std::string& str)
 {
     return Widen(str.c_str());
 }
 
-std::wstring Widen(const char* str)
+std::wstring CALLBACK Widen(const char* str)
 {
 	auto state{ std::mbstate_t{} };
 	auto len{ 1 + std::mbsrtowcs(nullptr, &str, 0, &state) };

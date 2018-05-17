@@ -52,25 +52,21 @@ namespace ra {}
 using namespace ra;
 
 #endif	//RA_EXPORTS
+#define _NORETURN            [[noreturn]]
 
 #if _HAS_CXX17
 #define _DEPRECATED          [[deprecated]]
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
 #define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _NODISCARD           [[nodiscard]]
-#define _NORETURN            [[noreturn]]
 #define _UNUSED              [[maybe_unused]]
-
-#define _CONSTANT_VAR inline constexpr auto
-#define _CONSTANT     inline constexpr
+#define _CONSTANT_VAR        inline constexpr auto
+#define _CONSTANT            inline constexpr
 #else
 #define _DEPRECATED          
 #define _DEPRECATEDR(reason) 
 #define _FALLTHROUGH         
 #define _NODISCARD           
-#define _NORETURN            
 #define _UNUSED              
-
 #define _CONSTANT_VAR constexpr auto
 #define _CONSTANT     constexpr
 #endif // _HAS_CXX17
@@ -381,10 +377,10 @@ _NODISCARD _CONSTANT_VAR operator""_gameid(unsigned long long n) noexcept {
 
 
 _NODISCARD std::string DataStreamAsString(const DataStream& stream);
-_NODISCARD std::string Narrow(const std::wstring& wstr);
-_NODISCARD std::string Narrow(const wchar_t* wstr);
-_NODISCARD std::wstring Widen(const std::string& str);
-_NODISCARD std::wstring Widen(const char* str);
+_NODISCARD std::string CALLBACK Narrow(const std::wstring& wstr);
+_NODISCARD std::string CALLBACK Narrow(const wchar_t* wstr);
+_NODISCARD std::wstring CALLBACK Widen(const std::string& str);
+_NODISCARD std::wstring CALLBACK Widen(const char* str);
 
 
 

@@ -362,10 +362,8 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
     if (nNumConditions == 0)
         return true; // important: empty group must evaluate true
 
-    // TODO: calculate once, instead of every frame
-    std::vector<bool> vPauseConditions(nNumConditions, false);
-
     // identify any Pause conditions and their dependent AddSource/AddHits
+    std::vector<bool> vPauseConditions(nNumConditions, false);
     bool bInPause = false;
     bool bHasPause = false;
     for (int i = nNumConditions - 1; i >= 0; --i)
@@ -386,7 +384,6 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
 
             default:
                 bInPause = false;
-                //vPauseConditions[i] = false;
                 break;
         }
     }
@@ -475,7 +472,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
                 if (bConditionValid)
                     return true;
                 
-                // if we make it to the end of the function, make sure we indicating nothing matched. if we do find
+                // if we make it to the end of the function, make sure we indicate that nothing matched. if we do find
                 // a later PauseIf match, it'll automatically return true via the previous condition.
                 bSetValid = false; 
 

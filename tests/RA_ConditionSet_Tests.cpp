@@ -132,6 +132,90 @@ public:
         Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits()); // PauseIf goes to 0 when false
     }
 
+
+    TEST_METHOD(TestPauseIfHitCountOne)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        ConditionSet set;
+        const char* ptr;
+        set.ParseFromString(ptr = "0xH0001=18_P:0xH0002=52.1.");
+        AssertSetTest(set, false, true, false);
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits());
+
+        memory[2] = 0;
+        AssertSetTest(set, false, false, false);
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits()); // PauseIf with HitCount doesn't automatically go back to 0
+    }
+
+    TEST_METHOD(TestPauseIfHitCountTwo)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        ConditionSet set;
+        const char* ptr;
+        set.ParseFromString(ptr = "0xH0001=18_P:0xH0002=52.2.");
+        AssertSetTest(set, true, true, false);                        // PauseIf counter hasn't reached HitCount target, non-PauseIf condition still true
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits());
+
+        AssertSetTest(set, false, true, false);                        // PauseIf counter has reached HitCount target, non-PauseIf conditions ignored
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(2U, set.GetGroup(0).GetAt(1).CurrentHits());
+
+        memory[2] = 0;
+        AssertSetTest(set, false, false, false);
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(2U, set.GetGroup(0).GetAt(1).CurrentHits()); // PauseIf with HitCount doesn't automatically go back to 0
+    }
+
+    TEST_METHOD(TestPauseIfHitReset)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        ConditionSet set;
+        const char* ptr;
+        set.ParseFromString(ptr = "0xH0001=18_P:0xH0002=52.1._R:0xH0003=1SR:0xH0003=2");
+        AssertSetTest(set, false, true, false);                        // Trigger PauseIf, non-PauseIf conditions ignored
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(1).GetAt(0).CurrentHits());
+
+        memory[2] = 0;
+        AssertSetTest(set, false, false, false);
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits()); // PauseIf with HitCount doesn't automatically go back to 0
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(1).GetAt(0).CurrentHits());
+
+        memory[3] = 1;
+        AssertSetTest(set, false, false, false);                      // ResetIf in Paused group is ignored
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(1).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(1).GetAt(0).CurrentHits());
+
+        memory[3] = 2;
+        AssertSetTest(set, false, true, true);                        // ResetIf in alternate group is honored, PauseIf does not retrigger and non-PauseIf condition is true
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits()); // ResetIf causes entire achievement to fail
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(1).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(1).GetAt(0).CurrentHits());
+
+        memory[3] = 3;
+        AssertSetTest(set, true, true, false);                         // ResetIf no longer true, achievement allowed to trigger
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(1).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(2).CurrentHits());
+        Assert::AreEqual(0U, set.GetGroup(1).GetAt(0).CurrentHits());
+    }
+
     TEST_METHOD(TestResetIf)
     {
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };

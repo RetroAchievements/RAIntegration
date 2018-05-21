@@ -3,6 +3,7 @@
 #include "RA_Defs.h"
 #include "RA_CodeNotes.h"
 #include "RA_MemManager.h"
+#include "services/SearchResults.h"
 
 class MemoryViewerControl
 {
@@ -45,18 +46,19 @@ private:
     static unsigned int m_nCaretHeight;
 };
 
-class SearchResult
+struct SearchResult
 {
-public:
-    SearchResult() {}
-public:
-    std::vector<MemCandidate> m_ResultCandidate;
-    unsigned int m_nCount = 0;
-    unsigned int m_nLastQueryVal = 0;
+    ra::services::SearchResults m_results;
+
+    std::vector<unsigned int> m_modifiedAddresses;
     bool m_bUseLastValue;
-    tstring m_sFirstLine;
-    tstring m_sSecondLine;
+    unsigned int m_nLastQueryVal;
     ComparisonType m_nCompareType;
+
+    bool WasModified(unsigned int nAddress)
+    {
+        return std::find(m_modifiedAddresses.begin(), m_modifiedAddresses.end(), nAddress) != m_modifiedAddresses.end();
+    }
 };
 
 class Dlg_Memory
@@ -97,7 +99,7 @@ private:
 
     bool GetSelectedMemoryRange(ByteAddress& start, ByteAddress& end);
 
-    void UpdateSearchResult(unsigned int index, unsigned int &nMemVal, TCHAR(&buffer)[1024]);
+    void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, TCHAR(&buffer)[1024]);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
     static CodeNotes m_CodeNotes;

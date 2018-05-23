@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include "RA_Defs.h"
 
 class GameData
@@ -25,5 +24,7 @@ private:
     //unsigned int m_nConsoleID;
     //std::string m_sConsoleName;
 };
+
+
 
 extern GameData* g_pCurrentGameData;

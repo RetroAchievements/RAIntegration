@@ -13,8 +13,8 @@
 #include <queue> // has deque, vector, algorithm
 #include <map>
 #include <array>
-
-
+#include <ciso646>
+#include <iostream>
 
 
 #ifndef RA_EXPORTS
@@ -22,20 +22,6 @@
 //	Version Information is integrated into tags
 
 #else
-
-
-// Maybe an extra check just in-case
-
-#define _NORETURN            [[noreturn]]
-
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-
-
-#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 

@@ -9,6 +9,7 @@
 #include <strsafe.h>
 #include <memory>
 #include <fstream>
+#include <atlbase.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;

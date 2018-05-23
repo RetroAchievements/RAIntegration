@@ -8,7 +8,6 @@
 
 #include <strsafe.h>
 #include <atlbase.h> // CComPtr
-#include <comip.h> //
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -20,8 +19,8 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
+const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
+const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
@@ -706,27 +705,32 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    if (auto hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog,
-        reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
+    HRESULT hr;
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
             std::ostringstream oss;
             oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+            auto defaultFileName{ oss.str() };
 
-            if (auto defaultFileName{ oss.str() }; SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
+            if (SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
             {
-                if (PIDLIST_ABSOLUTE pidl{ nullptr }; SUCCEEDED(hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
+                PIDLIST_ABSOLUTE pidl{ nullptr };
+                if (SUCCEEDED(hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
                     CComPtr<IShellItem> pItem;
+                    SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
 
-                    if (SHCreateShellItem(nullptr, nullptr, pidl, &pItem); SUCCEEDED(hr = pDlg->SetDefaultFolder(pItem)))
+                    if (SUCCEEDED(hr = pDlg->SetDefaultFolder(pItem)))
                     {
-                        if (pDlg->SetDefaultExtension(L"txt"); SUCCEEDED(hr = pDlg->Show(nullptr)))
+                        pDlg->SetDefaultExtension(L"txt");
+                        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
                         {
                             if (SUCCEEDED(hr = pDlg->GetResult(&pItem.p)))
                             {
-                                if (LPWSTR pStr = nullptr; SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                                LPWSTR pStr = nullptr;
+                                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
                                     Document doc;
                                     auto& allocator = doc.GetAllocator();
@@ -828,16 +832,18 @@ std::string Dlg_MemBookmark::ImportDialog()
 
     CComPtr<IFileOpenDialog> pDlg;
 
-    if (auto hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog,
-        reinterpret_cast<void**>(&pDlg)); SUCCEEDED(hr))
+    HRESULT hr;
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
             if (SUCCEEDED(hr = pDlg->Show(nullptr)))
             {
-                if (CComPtr<IShellItem> pItem; SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+                CComPtr<IShellItem> pItem;
+                if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
                 {
-                    if (LPWSTR pStr = nullptr; SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                    LPWSTR pStr = nullptr;
+                    if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
                         str = Narrow(pStr);
                         CoTaskMemFree(static_cast<LPVOID>(pStr));
@@ -851,7 +857,7 @@ std::string Dlg_MemBookmark::ImportDialog()
     }
 
     return str;
-} // end function ImportDialog
+}
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {

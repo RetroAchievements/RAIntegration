@@ -27,7 +27,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     _Out_ HBITMAP& hBitmapInOut)
 {
 
-    UINT nWidth  = 0U;
+    UINT nWidth = 0U;
     UINT nHeight = 0U;
 
     void *pvImageBits = nullptr;
@@ -35,7 +35,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     auto pixelFormat = WICPixelFormatGUID{};
 
     UINT cbStride = 0U;
-    UINT cbImage  = 0U;
+    UINT cbImage = 0U;
 
 
     // Check BitmapSource format
@@ -72,11 +72,9 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
 
         // Get a DC for the full screen
         auto hdcScreen = GetDC(hWindow);
-
-
-        // Release the previously allocated bitmap 
-        if (hr = hdcScreen ? S_OK : E_FAIL; SUCCEEDED(hr))
+        if (hdcScreen)
         {
+            // Release the previously allocated bitmap 
             if (hBitmapInOut)
                 DeleteBitmap(hBitmapInOut);
 
@@ -120,9 +118,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     }
 
     return hr;
-} // end function UserImageFactory_CreateDIBSectionFromBitmapSource
-
-
+}
 
 _Use_decl_annotations_
 BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
@@ -153,7 +149,7 @@ BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
     );
 
     return(hr == S_OK);
-} // end function InitializeUserImageFactory
+}
 
 _Use_decl_annotations_
 _Success_(return != FAILED(std::declval<HRESULT&>()))

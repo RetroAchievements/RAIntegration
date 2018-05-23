@@ -1634,7 +1634,7 @@ std::string GetFolderFromDialog()
     std::string sRetVal;
 	CComPtr<IFileOpenDialog> pDlg;
 
-    HRESULT hr;
+    HRESULT hr{ S_OK };
 	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);

@@ -8,6 +8,8 @@
 
 #include <strsafe.h>
 #include <atlbase.h> // CComPtr
+#include <array>
+
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -715,13 +717,12 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    HRESULT hr;
+    HRESULT hr{ S_OK };
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
             auto defaultFileName = ra::tsprintf("%-Bookmarks.txt", std::to_string(g_pCurrentGameData->GetGameID()).c_str());
-            auto defaultFileName{ oss.str() };
 
             if (SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
             {
@@ -752,7 +753,6 @@ void Dlg_MemBookmark::ExportJSON()
                                         Value item(kObjectType);
                                         auto buffer = Narrow(bookmark->Description());
                                         Value s{ buffer.c_str(), allocator };
-                                        Value s{ oss.str().c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);

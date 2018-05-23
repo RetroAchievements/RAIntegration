@@ -406,8 +406,7 @@ void MemoryViewerControl::SetCaretPos()
     }
 
     g_MemoryDialog.SetWatchingAddress(m_nEditAddress);
-
-    //int nTopLeft = m_nAddressOffset - 0x40;
+    setWatchedAddress(m_nEditAddress);
 
     int subAddress = (m_nEditAddress - m_nAddressOffset);
 
@@ -962,7 +961,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
-                    if (((LPNMHDR)lParam)->code == NM_CLICK)
+                    if (((LPNMHDR)lParam)->code == LVN_ITEMCHANGED || ((LPNMHDR)lParam)->code == NM_CLICK)
                     {
                         int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 

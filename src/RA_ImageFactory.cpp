@@ -21,27 +21,26 @@ UserImageFactoryVars g_UserImageFactoryInst;
 /******************************************************************
 *  Creates a DIB Section from the converted IWICBitmapSource      *
 ******************************************************************/
-HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(IWICBitmapSource *pToRenderBitmapSource, HBITMAP& hBitmapInOut)
-{
-    HRESULT hr = S_OK;
 
-    UINT nWidth = 0;
-    UINT nHeight = 0;
+_Success_(return == S_OK)
+HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource,
+    _Out_ HBITMAP& hBitmapInOut)
+{
+
+    UINT nWidth  = 0U;
+    UINT nHeight = 0U;
 
     void *pvImageBits = nullptr;
-    BITMAPINFO bminfo;
-    HWND hWindow = nullptr;
-    HDC hdcScreen = nullptr;
 
-    WICPixelFormatGUID pixelFormat;
+    auto pixelFormat = WICPixelFormatGUID{};
 
-    UINT cbStride = 0;
-    UINT cbImage = 0;
+    UINT cbStride = 0U;
+    UINT cbImage  = 0U;
 
 
     // Check BitmapSource format
     //hr = IWICBitmapSource_GetPixelFormat( pToRenderBitmapSource, &pixelFormat );
-    hr = pToRenderBitmapSource->GetPixelFormat(&pixelFormat);
+    auto hr = pToRenderBitmapSource->GetPixelFormat(&pixelFormat);
 
     if (SUCCEEDED(hr))
     {
@@ -54,32 +53,35 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(IWICBitmapSource *pToR
     // Note that the height is negative for top-down bitmaps
     if (SUCCEEDED(hr))
     {
-        ZeroMemory(&bminfo, sizeof(bminfo));
-        bminfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bminfo.bmiHeader.biWidth = nWidth;
-        bminfo.bmiHeader.biHeight = -(LONG)nHeight;
-        bminfo.bmiHeader.biPlanes = 1;
-        bminfo.bmiHeader.biBitCount = 32;
-        bminfo.bmiHeader.biCompression = BI_RGB;
 
-        hWindow = GetActiveWindow();
+
+        // TODO: Maybe replace some of these with literals
+        BITMAPINFOHEADER info_header{
+            sizeof(BITMAPINFOHEADER),    // biSize
+            static_cast<LONG>(nWidth),
+            -static_cast<LONG>(nHeight),
+            WORD{1},                     // biPlanes
+            WORD{32},                    // biBitCount
+            static_cast<DWORD>(BI_RGB)
+        };
+        BITMAPINFO bminfo{ info_header };
+
+        auto hWindow = GetActiveWindow();
         while (GetParent(hWindow) != nullptr)
             hWindow = GetParent(hWindow);
 
         // Get a DC for the full screen
-        hdcScreen = GetDC(hWindow);
-        hr = hdcScreen ? S_OK : E_FAIL;
+        auto hdcScreen = GetDC(hWindow);
+
 
         // Release the previously allocated bitmap 
-        if (SUCCEEDED(hr))
+        if (hr = hdcScreen ? S_OK : E_FAIL; SUCCEEDED(hr))
         {
             if (hBitmapInOut)
-            {
-                DeleteObject(hBitmapInOut);
-            }
+                DeleteBitmap(hBitmapInOut);
 
             //	TBD: check this. As a handle this should just be as-is, right?
-            hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, 0);
+            hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, DWORD{});
 
             ReleaseDC(nullptr, hdcScreen);
 
@@ -107,32 +109,30 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(IWICBitmapSource *pToR
             nullptr,
             cbStride,
             cbImage,
-            (BYTE*)pvImageBits);
+            static_cast<BYTE*>(pvImageBits));
     }
 
     // Image Extraction failed, clear allocated memory
     if (FAILED(hr))
     {
-        DeleteObject(hBitmapInOut);
+        DeleteBitmap(hBitmapInOut);
         hBitmapInOut = nullptr;
     }
 
     return hr;
-}
+} // end function UserImageFactory_CreateDIBSectionFromBitmapSource
 
-BOOL InitializeUserImageFactory(HINSTANCE hInst)
+
+
+_Use_decl_annotations_
+BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
 {
-    HRESULT hr = S_OK;;
+    HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, SIZE_T{});
 
-    g_UserImageFactoryInst.m_pIWICFactory = nullptr;
-    g_UserImageFactoryInst.m_pOriginalBitmapSource = nullptr;
+    auto hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
 
-    HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
-
-    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
 
     // Create WIC factory
-    //#define IID_PPV_ARGS(ppType) ((LPVOID*)(ppType))
     hr = CoCreateInstance(
 
 #if defined (__cplusplus)
@@ -140,7 +140,6 @@ BOOL InitializeUserImageFactory(HINSTANCE hInst)
 #else
         &CLSID_WICImagingFactory,
 #endif
-
         nullptr,
         CLSCTX_INPROC_SERVER,
 
@@ -150,19 +149,20 @@ BOOL InitializeUserImageFactory(HINSTANCE hInst)
         &IID_IWICImagingFactory,
 #endif
 
-        //IID_PPV_ARGS( &g_UserImageFactoryInst.m_pIWICFactory )
-        (LPVOID*)(&g_UserImageFactoryInst.m_pIWICFactory)
+        reinterpret_cast<LPVOID*>(&g_UserImageFactoryInst.m_pIWICFactory)
     );
 
     return(hr == S_OK);
-}
+} // end function InitializeUserImageFactory
 
-HRESULT ConvertBitmapSource(RECT rcDest, IWICBitmapSource*& pToRenderBitmapSource)
+_Use_decl_annotations_
+_Success_(return != FAILED(std::declval<HRESULT&>()))
+HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRenderBitmapSource)
 {
-    HRESULT hr = S_OK;
-    IWICBitmapScaler* pScaler = nullptr;
+    CComPtr<IWICBitmapScaler> pScaler;
+    CComPtr<IWICFormatConverter> pConverter;
     WICPixelFormatGUID pxformat;
-    IWICFormatConverter* pConverter = nullptr;
+
 
     pToRenderBitmapSource = nullptr;
 
@@ -170,54 +170,53 @@ HRESULT ConvertBitmapSource(RECT rcDest, IWICBitmapSource*& pToRenderBitmapSourc
     //RECT rcClient = rcDest;
     //hr = GetClientRect(hWnd, &rcClient) ? S_OK: E_FAIL;
 
+    // Create a BitmapScaler
+    auto hr = g_UserImageFactoryInst.m_pIWICFactory->CreateBitmapScaler(&pScaler);
+    //hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
+
+    // Initialize the bitmap scaler from the original bitmap map bits
     if (SUCCEEDED(hr))
     {
-        // Create a BitmapScaler
-        hr = g_UserImageFactoryInst.m_pIWICFactory->CreateBitmapScaler(&pScaler);
-        //hr = IWICImagingFactory_CreateBitmapScaler( g_UserImageFactoryInst.m_pIWICFactory, &pScaler );
-
-        // Initialize the bitmap scaler from the original bitmap map bits
-        if (SUCCEEDED(hr))
-        {
-            pScaler->Initialize(g_UserImageFactoryInst.m_pOriginalBitmapSource,
-                rcDest.right - rcDest.left,
-                rcDest.bottom - rcDest.top,
-                WICBitmapInterpolationModeFant);
-        }
-
-        //hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
-        hr = pScaler->GetPixelFormat(&pxformat);
-
-        // Format convert the bitmap into 32bppBGR, a convenient 
-        // pixel format for GDI rendering 
-        if (SUCCEEDED(hr))
-        {
-            //hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
-            hr = g_UserImageFactoryInst.m_pIWICFactory->CreateFormatConverter(&pConverter);
-
-            // Format convert to 32bppBGR
-            if (SUCCEEDED(hr))
-            {
-                hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler),	// Input bitmap to convert
-                    GUID_WICPixelFormat32bppBGR,				//	&GUID_WICPixelFormat32bppBGR,
-                    WICBitmapDitherTypeNone,					// Specified dither patterm
-                    nullptr,										// Specify a particular palette 
-                    0.f,										// Alpha threshold
-                    WICBitmapPaletteTypeCustom);				// Palette translation type
-
-// Store the converted bitmap as ppToRenderBitmapSource 
-                if (SUCCEEDED(hr))
-                    pConverter->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pToRenderBitmapSource));
-            }
-            SAFE_RELEASE(pConverter);
-        }
-
-        SAFE_RELEASE(pScaler);
+        pScaler->Initialize(g_UserImageFactoryInst.m_pOriginalBitmapSource,
+            rcDest.right - rcDest.left,
+            rcDest.bottom - rcDest.top,
+            WICBitmapInterpolationModeFant);
     }
+
+    //hr = IWICBitmapScaler_GetPixelFormat( pScaler, &pxformat );
+    hr = pScaler->GetPixelFormat(&pxformat);
+
+    // Format convert the bitmap into 32bppBGR, a convenient 
+    // pixel format for GDI rendering 
+    if (SUCCEEDED(hr))
+    {
+        //hr = IWICImagingFactory_CreateFormatConverter( g_UserImageFactoryInst.m_pIWICFactory, &pConverter );
+        hr = g_UserImageFactoryInst.m_pIWICFactory->CreateFormatConverter(&pConverter);
+
+        // Format convert to 32bppBGR
+        if (SUCCEEDED(hr))
+        {
+            hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler), // Input bitmap to convert
+                GUID_WICPixelFormat32bppBGR,				// &GUID_WICPixelFormat32bppBGR,
+                WICBitmapDitherTypeNone,					// Specified dither patterm
+                nullptr,									// Specify a particular palette 
+                0.f,										// Alpha threshold
+                WICBitmapPaletteTypeCustom);				// Palette translation type
+
+            // Store the converted bitmap as ppToRenderBitmapSource 
+            if (SUCCEEDED(hr))
+                pConverter->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pToRenderBitmapSource));
+        }
+        pConverter.Release();
+    }
+
+    pScaler.Release();
+
 
     return hr;
 }
 
+_Use_decl_annotations_
 HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
@@ -238,6 +237,7 @@ HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
     }
 }
 
+_Use_decl_annotations_
 HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
@@ -250,6 +250,7 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
         if (!RAWeb::HTTPRequestExists(RequestUserPic, sUserName) && !RAWeb::HTTPResponseExists(RequestUserPic, sUserName))
             RAWeb::CreateThreadedHTTPRequest(RequestUserPic, args, sUserName);
 
+        // This really should be handled
         return nullptr;
     }
     else
@@ -258,6 +259,7 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
     }
 }
 
+_Use_decl_annotations_
 HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
@@ -271,39 +273,39 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 
     HBITMAP hRetVal = nullptr;
     // Step 2: Decode the source image to IWICBitmapSource
-    IWICBitmapDecoder* pDecoder = nullptr;
+    CComPtr<IWICBitmapDecoder> pDecoder;
     HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(Widen(sPath).c_str(),			// Image to be decoded
-        nullptr,							// Do not prefer a particular vendor
-        GENERIC_READ,					// Desired read access to the file
-        WICDecodeMetadataCacheOnDemand,	// Cache metadata when needed
-        &pDecoder);						// Pointer to the decoder
+        nullptr,						// Do not prefer a particular vendor
+        GENERIC_READ,                   // Desired read access to the file
+        WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
+        &pDecoder);                     // Pointer to the decoder
 
 // Retrieve the first frame of the image from the decoder
-    IWICBitmapFrameDecode* pFrame = nullptr;
+    CComPtr<IWICBitmapFrameDecode>  pFrame;
     if (SUCCEEDED(hr))
         hr = pDecoder->GetFrame(0, &pFrame);
 
     // Retrieve IWICBitmapSource from the frame
     if (SUCCEEDED(hr))
     {
-        SAFE_RELEASE(g_UserImageFactoryInst.m_pOriginalBitmapSource);	//##SD ???
+        g_UserImageFactoryInst.m_pOriginalBitmapSource.Release();	//##SD ???
         pFrame->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&g_UserImageFactoryInst.m_pOriginalBitmapSource));
     }
 
     // Step 3: Scale the original IWICBitmapSource to the client rect size
     // and convert the pixel format
-    IWICBitmapSource* pToRenderBitmapSource = nullptr;
+    CComPtr<IWICBitmapSource> pToRenderBitmapSource;
     if (SUCCEEDED(hr))
-        hr = ConvertBitmapSource({ 0, 0, sz.Width(), sz.Height() }, pToRenderBitmapSource);
+        hr = ConvertBitmapSource({ 0, 0, sz.Width(), sz.Height() }, *&pToRenderBitmapSource);
 
     // Step 4: Create a DIB from the converted IWICBitmapSource
     if (SUCCEEDED(hr))
         hr = UserImageFactory_CreateDIBSectionFromBitmapSource(pToRenderBitmapSource, hRetVal);
 
-    SAFE_RELEASE(pToRenderBitmapSource);
-    SAFE_RELEASE(pDecoder);
-    SAFE_RELEASE(pFrame);
-    SAFE_RELEASE(g_UserImageFactoryInst.m_pOriginalBitmapSource);
+    pToRenderBitmapSource.Release();
+    pDecoder.Release();
+    pFrame.Release();
+    g_UserImageFactoryInst.m_pOriginalBitmapSource.Release();
 
     return hRetVal;
 }

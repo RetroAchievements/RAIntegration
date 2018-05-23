@@ -349,45 +349,61 @@ bool Condition::Compare(unsigned int nAddBuffer)
 
 bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
 {
-    unsigned int nAddBuffer = 0;
-    unsigned int nAddHits = 0;
-    bool bConditionValid = false;
-    bool bSetValid = true; // important: empty group should evaluate true
-    unsigned int i = 0;
-
     const unsigned int nNumConditions = m_Conditions.size();
+    if (nNumConditions == 0)
+        return true; // important: empty group must evaluate true
 
-    //	Now, read all Pause conditions, and if any are true, do not process further (retain old state)
-    for (i = 0; i < nNumConditions; ++i)
+    // identify any Pause conditions and their dependent AddSource/AddHits
+    std::vector<bool> vPauseConditions(nNumConditions, false);
+    bool bInPause = false;
+    bool bHasPause = false;
+    for (int i = nNumConditions - 1; i >= 0; --i)
     {
-        Condition* pNextCond = &m_Conditions[i];
-        if (pNextCond->IsPauseCondition())
+        switch (m_Conditions[i].GetConditionType())
         {
-            //	Reset by default, set to 1 if hit!
-            pNextCond->ResetHits();
+            case Condition::PauseIf:
+                bHasPause = true;
+                bInPause = true;
+                vPauseConditions[i] = true;
+                break;
 
-            if (pNextCond->Compare())
-            {
-                pNextCond->OverrideCurrentHits(1);
-                bDirtyConditions = TRUE;
+            case Condition::AddSource:
+            case Condition::SubSource:
+            case Condition::AddHits:
+                vPauseConditions[i] = bInPause;
+                break;
 
-                //	Early out: this achievement is paused, do not process any further!
-                return FALSE;
-            }
+            default:
+                bInPause = false;
+                break;
         }
     }
 
-    //	Read all standard conditions, and process as normal:
-    for (i = 0; i < nNumConditions; ++i)
+    if (bHasPause)
     {
-        Condition* pNextCond = &m_Conditions[i];
+        // one or more Pause conditions exists, if any of them are true, stop processing this group
+        if (Test(bDirtyConditions, bResetAll, vPauseConditions, true))
+            return false;
+    }
 
+    // process the non-Pause conditions to see if the group is true
+    return Test(bDirtyConditions, bResetAll, vPauseConditions, false);
+}
+
+bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs)
+{
+    unsigned int nAddBuffer = 0;
+    unsigned int nAddHits = 0;
+    bool bSetValid = true; // must start true so AND logic works
+                          
+    for (size_t i = 0; i < m_Conditions.size(); ++i)
+    {
+        if (vPauseConditions[i] != bProcessingPauseIfs)
+            continue;
+
+        Condition* pNextCond = &m_Conditions[i];
         switch (pNextCond->GetConditionType())
         {
-            case Condition::PauseIf:
-            case Condition::ResetIf:
-                continue;
-
             case Condition::AddSource:
                 nAddBuffer += pNextCond->CompSource().GetValue();
                 continue;
@@ -413,28 +429,26 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
                 break;
         }
 
-        // if the condition has a target hit count that has already been met, ignore it.
+        // always evaluate the condition to ensure delta values get tracked correctly
+        bool bConditionValid = pNextCond->Compare(nAddBuffer);
+
+        // if the condition has a target hit count that has already been met, it's automatically true, even if not currently true.
         if (pNextCond->RequiredHits() != 0 && (pNextCond->CurrentHits() + nAddHits >= pNextCond->RequiredHits()))
         {
-            nAddBuffer = 0;
-            nAddHits = 0;
-            continue;
+            bConditionValid = true;
         }
-
-        bConditionValid = pNextCond->Compare(nAddBuffer);
-        if (bConditionValid)
+        else if (bConditionValid)
         {
             pNextCond->IncrHits();
             bDirtyConditions = true;
 
-            //	Process this logic, if this condition is true:
             if (pNextCond->RequiredHits() == 0)
             {
-                //	Not a hit-based requirement: ignore any additional logic!
+                // not a hit-based requirement: ignore any additional logic!
             }
             else if (pNextCond->CurrentHits() + nAddHits < pNextCond->RequiredHits())
             {
-                //	Not entirely valid yet!
+                // HitCount target has not yet been met, condition is not yet valid
                 bConditionValid = false;
             }
         }
@@ -442,23 +456,40 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
         nAddBuffer = 0;
         nAddHits = 0;
 
-        //	Sequential or non-sequential?
-        bSetValid &= bConditionValid;
-    }
-
-    //	Now, ONLY read reset conditions!
-    for (i = 0; i < nNumConditions; ++i)
-    {
-        Condition* pNextCond = &m_Conditions[i];
-        if (pNextCond->IsResetCondition())
+        switch (pNextCond->GetConditionType())
         {
-            bConditionValid = pNextCond->Compare();
-            if (bConditionValid)
-            {
-                bResetAll = true;			//	Resets all hits found so far
-                bSetValid = false;			//	Cannot be valid if we've hit a reset condition.
-                break;						//	No point processing any further reset conditions.
-            }
+            case Condition::PauseIf:
+                // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
+                if (bConditionValid)
+                    return true;
+                
+                // if we make it to the end of the function, make sure we indicate that nothing matched. if we do find
+                // a later PauseIf match, it'll automatically return true via the previous condition.
+                bSetValid = false; 
+
+                if (pNextCond->RequiredHits() == 0)
+                {
+                    // PauseIf didn't evaluate true, and doesn't have a HitCount, reset the HitCount to indicate the condition didn't match
+                    if (pNextCond->ResetHits())
+                        bDirtyConditions = true;
+                }
+                else
+                {
+                    // PauseIf has a HitCount that hasn't been met, ignore it for now.
+                }
+                break;
+
+            case Condition::ResetIf:
+                if (bConditionValid)
+                {
+                    bResetAll = true;  // let caller know to reset all hit counts
+                    bSetValid = false; // cannot be valid if we've hit a reset condition
+                }
+                break;
+
+            default:
+                bSetValid &= bConditionValid;
+                break;
         }
     }
 

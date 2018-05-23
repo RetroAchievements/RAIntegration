@@ -8,6 +8,7 @@
 
 #include <strsafe.h>
 #include <array>
+#include <atlbase.h> // CComPtr
 
 
 
@@ -27,7 +28,8 @@ constexpr std::array<int, COLUMN_TITLE.size()> COLUMN_WIDTH{ 112, 64, 64, 64, 54
 
 }
 
-constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+
 
 enum BookmarkSubItems
 {
@@ -705,50 +707,48 @@ void Dlg_MemBookmark::ExportJSON()
     defaultDir.erase(0, 2); // Removes the characters (".\\")
     defaultDir = g_sHomeDir + defaultDir;
 
-    IFileSaveDialog* pDlg = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg));
-    if (hr == S_OK)
+    CComPtr<IFileSaveDialog> pDlg;
+
+    HRESULT hr;
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
-        hr = pDlg->SetFileTypes( c_rgFileTypes.size(), &c_rgFileTypes.front());
-        if (hr == S_OK)
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
-            char defaultFileName[512];
-            sprintf_s(defaultFileName, 512, "%s-Bookmarks.txt", std::to_string(g_pCurrentGameData->GetGameID()).c_str());
-            hr = pDlg->SetFileName(Widen(defaultFileName).c_str());
-            if (hr == S_OK)
+            std::ostringstream oss;
+            oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+            auto defaultFileName{ oss.str() };
+
+            if (SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
             {
-                PIDLIST_ABSOLUTE pidl;
-                hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, 0);
-                if (hr == S_OK)
+                PIDLIST_ABSOLUTE pidl{ nullptr };
+                if (SUCCEEDED(hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
-                    IShellItem* pItem = nullptr;
+                    CComPtr<IShellItem> pItem;
                     SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
-                    hr = pDlg->SetDefaultFolder(pItem);
-                    if (hr == S_OK)
+
+                    if (SUCCEEDED(hr = pDlg->SetDefaultFolder(pItem)))
                     {
                         pDlg->SetDefaultExtension(L"txt");
-                        hr = pDlg->Show(nullptr);
-                        if (hr == S_OK)
+                        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
                         {
-
-                            hr = pDlg->GetResult(&pItem);
-                            if (hr == S_OK)
+                            if (SUCCEEDED(hr = pDlg->GetResult(&pItem.p)))
                             {
                                 LPWSTR pStr = nullptr;
-                                hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
-                                if (hr == S_OK)
+                                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
                                     Document doc;
-                                    Document::AllocatorType& allocator = doc.GetAllocator();
+                                    auto& allocator = doc.GetAllocator();
                                     doc.SetObject();
 
                                     Value bookmarks(kArrayType);
-                                    for (MemBookmark* bookmark : m_vBookmarks)
+
+                                    for (auto bookmark : m_vBookmarks)
                                     {
                                         Value item(kObjectType);
-                                        char buffer[256];
-                                        sprintf_s(buffer, Narrow(bookmark->Description()).c_str(), sizeof(buffer));
-                                        Value s(buffer, allocator);
+
+                                        oss.str("");
+                                        oss << Narrow(bookmark->Description());
+                                        Value s{ oss.str().c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -759,9 +759,11 @@ void Dlg_MemBookmark::ExportJSON()
                                     doc.AddMember("Bookmarks", bookmarks, allocator);
 
                                     _WriteBufferToFile(Narrow(pStr), doc);
+                                    CoTaskMemFree(static_cast<LPVOID>(pStr));
+                                    pStr = nullptr;
                                 }
 
-                                pItem->Release();
+                                pItem.Release();
                                 ILFree(pidl);
                             }
                         }
@@ -769,7 +771,7 @@ void Dlg_MemBookmark::ExportJSON()
                 }
             }
         }
-        pDlg->Release();
+        pDlg.Release();
     }
 }
 
@@ -832,32 +834,30 @@ std::string Dlg_MemBookmark::ImportDialog()
         return str;
     }
 
-    IFileOpenDialog* pDlg = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-    if (hr == S_OK)
+    CComPtr<IFileOpenDialog> pDlg;
+
+    HRESULT hr;
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
-		hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front());
-        if (hr == S_OK)
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
-            hr = pDlg->Show(nullptr);
-            if (hr == S_OK)
+            if (SUCCEEDED(hr = pDlg->Show(nullptr)))
             {
-                IShellItem* pItem = nullptr;
-                hr = pDlg->GetResult(&pItem);
-                if (hr == S_OK)
+                CComPtr<IShellItem> pItem;
+                if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
                 {
                     LPWSTR pStr = nullptr;
-                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
-                    if (hr == S_OK)
+                    if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
                         str = Narrow(pStr);
+                        CoTaskMemFree(static_cast<LPVOID>(pStr));
+                        pStr = nullptr;
                     }
-
-                    pItem->Release();
+                    pItem.Release();
                 }
             }
         }
-        pDlg->Release();
+        pDlg.Release();
     }
 
     return str;

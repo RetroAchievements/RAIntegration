@@ -192,7 +192,6 @@ class ConditionGroup
 public:
     void SerializeAppend(std::string& buffer) const;
 
-    //	Final param indicates 'or'
     bool Test(bool& bDirtyConditions, bool& bResetRead);
     size_t Count() const { return m_Conditions.size(); }
 
@@ -205,6 +204,8 @@ public:
     bool Reset(bool bIncludingDeltas);	//	Returns dirty
 
 protected:
+    bool Test(bool& bDirtyConditions, bool& bResetRead, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs);
+
     std::vector<Condition> m_Conditions;
 };
 

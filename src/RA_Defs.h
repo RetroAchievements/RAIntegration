@@ -1,3 +1,5 @@
+#ifndef RA_DEFS_H
+#define RA_DEFS_H
 #pragma once
 
 #include <Windows.h>
@@ -11,6 +13,10 @@
 #include <queue>
 #include <deque>
 #include <map>
+#include <array>
+
+
+
 
 
 #ifndef RA_EXPORTS
@@ -19,8 +25,31 @@
 
 #else
 
+
+// Maybe an extra check just in-case
+
+#define _NORETURN            [[noreturn]]
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _UNUSED              [[maybe_unused]]
+
+
+#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
+
+
+
+
+//	RA-Only
+#define RAPIDJSON_HAS_STDSTRING 1
+
+// This is not needed the most recent version
+#pragma warning(push, 1)
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h" // has reader.h
@@ -30,7 +59,7 @@
 #include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
-
+#pragma warning(pop)
 #endif	//RA_EXPORTS
 
 
@@ -245,6 +274,9 @@ extern std::string Narrow(const std::string& wstr);
 typedef std::basic_string<TCHAR> tstring;
 
 
+
+
+
 #ifdef UNICODE
 #define NativeStr(x) Widen(x)
 #define NativeStrType std::wstring
@@ -252,3 +284,5 @@ typedef std::basic_string<TCHAR> tstring;
 #define NativeStr(x) Narrow(x)
 #define NativeStrType std::string
 #endif
+
+#endif // !RA_DEFS_H

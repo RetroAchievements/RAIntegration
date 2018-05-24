@@ -26,18 +26,7 @@
 #else
 
 
-// Maybe an extra check just in-case
 
-#define _NORETURN            [[noreturn]]
-
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-
-
-#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
@@ -62,6 +51,23 @@ using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 #pragma warning(pop)
 #endif	//RA_EXPORTS
+
+// Maybe an extra check just in-case
+
+#define _NORETURN            [[noreturn]]
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _UNUSED              [[maybe_unused]]
+#else
+#define _NODISCARD           _Check_return_
+#define _DEPRECATED          __pragma("This feature is deprecated") 
+#define _DEPRECATEDR(reason) __pragma(reason)
+#define _FALLTHROUGH         __fallthrough//; you need ';' at the end
+#define _UNUSED              
+#endif // _HAS_CXX17
 
 
 #define RA_KEYS_DLL						"RA_Keys.dll"

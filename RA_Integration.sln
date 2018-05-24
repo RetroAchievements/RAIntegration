@@ -15,16 +15,22 @@ Global
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 		ReleaseWithDebug|Win32 = ReleaseWithDebug|Win32
+		ReleaseWithDebugUnicode|Win32 = ReleaseWithDebugUnicode|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Debug|Win32.Build.0 = Debug|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|Win32.ActiveCfg = Release|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|Win32.Build.0 = Release|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = ReleaseWithDebug|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = ReleaseWithDebug|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebugUnicode|Win32.ActiveCfg = ReleaseWithDebugUnicode|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebugUnicode|Win32.Build.0 = ReleaseWithDebugUnicode|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74CC3A34-07E7-4ECC-BC3C-96C5D09BBBA5}
 	EndGlobalSection
 EndGlobal

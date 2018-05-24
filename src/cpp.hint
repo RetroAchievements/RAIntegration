@@ -1,0 +1,19 @@
+// This file is needed to workaround some of the buggy intellisense
+#define API __declspec(dllexport)
+#define API __declspec(dllimport)
+
+#define CCONV __cdecl
+#define CCONV __stdcall
+
+#define _NODISCARD _Check_return_ // not defined if not on C++17
+/* 
+	_Noreturn is in C11 (C equivalent to C++14/17) but Microsoft hasn't even implemented C99 yet 
+	(C equivalent to C++11).
+*/
+#define _NORETURN  // _Noreturn
+#define _NORETURN [[noreturn]]
+
+#define _DEPRECATED
+#define _DEPRECATEDR(reason) 
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]

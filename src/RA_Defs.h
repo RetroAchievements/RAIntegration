@@ -64,7 +64,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #pragma warning(pop)
 #endif	//RA_EXPORTS
 
-// Let's put TEXT for good measure
+
 inline constexpr auto RA_KEYS_DLL                    = TEXT("RA_Keys.dll");
 inline constexpr auto RA_PREFERENCES_FILENAME_PREFIX = TEXT("RAPrefs_");
 inline constexpr auto RA_UNKNOWN_BADGE_IMAGE_URI	 = TEXT("00000");
@@ -72,7 +72,6 @@ inline constexpr auto RA_UNKNOWN_BADGE_IMAGE_URI	 = TEXT("00000");
 inline constexpr auto RA_DIR_OVERLAY                 = TEXT(".\\Overlay\\");
 inline constexpr auto RA_DIR_BASE	                 = TEXT(".\\RACache\\");
 
-// We can make them constant expressions but not like before
 inline constexpr auto RA_DIR_DATA                    = TEXT(".\\RACache\\Data\\");
 inline constexpr auto RA_DIR_BADGE                   = TEXT(".\\RACache\\Badge\\");
 inline constexpr auto RA_DIR_USERPIC                 = TEXT(".\\RACache\\UserPic\\");
@@ -91,8 +90,7 @@ inline constexpr auto RA_LOG_FILENAME                = TEXT(".\\RACache\\Data\\R
 inline constexpr auto RA_HOST_URL                    = TEXT("retroachievements.org");
 inline constexpr auto RA_HOST_IMG_URL                = TEXT("i.retroachievements.org");
 
-// Not sure we even need this but here goes
-// Looks kind of weird (parameter) but it doesn't work any other way
+
 template<typename Array, class = std::enable_if_t<std::is_array_v<Array>>>
 inline constexpr auto SIZEOF_ARRAY(const Array& ar) noexcept->decltype(sizeof(ar) / sizeof(ar[0]))
 {

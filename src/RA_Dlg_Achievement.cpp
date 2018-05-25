@@ -515,7 +515,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    // can't think of another way
                     else if (auto msg = []() noexcept {
                         tstring tstr{ TEXT("Are you sure that you want to download fresh achievements from ") };
                         tstr.append(RA_HOST_URL);

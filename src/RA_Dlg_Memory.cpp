@@ -12,10 +12,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #ifndef ID_OK
-inline constexpr auto ID_OK{ 1024 };
+#define ID_OK     1024
 #endif
 #ifndef ID_CANCEL
-inline constexpr auto ID_CANCEL{ 1025 };
+#define ID_CANCEL 1025
 #endif
 
 namespace {

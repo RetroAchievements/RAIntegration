@@ -515,11 +515,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    else if (MessageBox(hDlg,
-                        TEXT("Are you sure that you want to download fresh achievements from ") RA_HOST_URL TEXT("?\n")
-                        TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"),
-                        TEXT("Refresh from Server"),
-                        MB_YESNO | MB_ICONWARNING) == IDYES)
+                    // can't think of another way
+                    else if (auto msg = []() noexcept {
+                        tstring tstr{ TEXT("Are you sure that you want to download fresh achievements from ") };
+                        tstr.append(RA_HOST_URL);
+                        tstr.append(TEXT("?\n"));
+                        tstr.append(TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"));
+                        return tstr;
+                    }; MessageBox(hDlg, msg().c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                     {
                         GameID nGameID = g_pCurrentGameData->GetGameID();
                         if (nGameID != 0)
@@ -560,7 +563,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //	Add a new achievement with default params
                     Achievement& Cheevo = g_pActiveAchievements->AddAchievement();
                     Cheevo.SetAuthor(RAUsers::LocalUser().Username());
-                    Cheevo.SetBadgeImage("00000");
+                    Cheevo.SetBadgeImage(RA_UNKNOWN_BADGE_IMAGE_URI);
 
                     //	Reverse find where I am in the list:
                     unsigned int nOffset = 0;
@@ -655,14 +658,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         }
                         else
                         {
+                            tstring tstr{ TEXT("This achievement exists on ") };
+                            tstr.append(RA_HOST_URL);
+                            tstr.append(TEXT(".\n\n*Removing it will affect other gamers*\n\n")
+                                TEXT("Are you absolutely sure you want to delete this??"));
+
                             //	This achievement exists on the server: must call SQL to remove!
                             //	Note: this is probably going to affect other users: frown on this D:
-                            MessageBox(hDlg,
-                                TEXT("This achievement exists on ") RA_HOST_URL TEXT(".\n")
-                                TEXT("\n")
-                                TEXT("*Removing it will affect other gamers*\n")
-                                TEXT("\n")
-                                TEXT("Are you absolutely sure you want to delete this??"), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
+                            MessageBox(hDlg, tstr.c_str(), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
                         }
                     }
                 }

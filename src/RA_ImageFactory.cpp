@@ -14,9 +14,6 @@
 
 UserImageFactoryVars g_UserImageFactoryInst;
 
-#ifndef SAFE_RELEASE
-#define SAFE_RELEASE( p ) { if ( (p) != nullptr ) { (p)->Release(); (p) = nullptr; } }
-#endif
 
 /******************************************************************
 *  Creates a DIB Section from the converted IWICBitmapSource      *

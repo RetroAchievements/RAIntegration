@@ -1258,7 +1258,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     TextOut(hDC,
         nDX + nBorder,
         4 + nBorder,
-        NativeStr(buffer).c_str(), strlen(buffer));
+        NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
 
     //int nNextPage = (int)(m_nCurrentPage+1);
@@ -1281,10 +1281,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
 
         //	Draw control text:
         sprintf_s(buffer, 1024, " ->:%s ", "Next");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY1, NativeStr(buffer).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX1, nControlsY1, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
         sprintf_s(buffer, 1024, " <-:%s ", "Prev");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY2, NativeStr(buffer).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX1, nControlsY2, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
         char cBackChar = 'B';
         char cSelectChar = 'A';
@@ -1296,10 +1296,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         }
 
         sprintf_s(buffer, 1024, " %c:%s ", cBackChar, "Back");
-        TextOut(hDC, nRightPx - nControlsX2, nControlsY1, NativeStr(buffer).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX2, nControlsY1, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
         sprintf_s(buffer, 1024, " %c:%s ", cSelectChar, "Select");
-        TextOut(hDC, nRightPx - nControlsX2, nControlsY2, NativeStr(buffer).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX2, nControlsY2, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
     }
 
     DeleteObject(g_hBrushBG);
@@ -1381,11 +1381,11 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
 
     sprintf_s(buffer, 1024, " %s ", pAch->Description().c_str());
     SelectObject(hDC, g_hFontDesc2);
-    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
     sprintf_s(buffer, 1024, " %s (%d Points) ", pAch->Title().c_str(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
-    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 }
 
 void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const
@@ -1414,10 +1414,10 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     SelectObject(hDC, g_hFontDesc);
 
     sprintf_s(buffer, 256, " %s ", pUser->Username().c_str());
-    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nTextX, nTextY1, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
     sprintf_s(buffer, 256, " %d Points ", pUser->GetScore());
-    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nTextX, nTextY2, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
     if (g_bHardcoreModeActive)
     {
@@ -1425,7 +1425,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
         COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
 
         sprintf_s(buffer, 256, " HARDCORE ");
-        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), strlen(buffer));
+        TextOut(hDC, nX + 180, nY + 70, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
 
         SetTextColor(hDC, nLastColor);
         SetBkColor(hDC, nLastColorBk);

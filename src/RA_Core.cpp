@@ -401,8 +401,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         {
             //	Some other fatal error... panic?
             ASSERT(!"Unknown error from requestgameid.php");
-
-            MessageBox(g_RAMainWnd, NativeStr("Error from " RA_HOST_URL "!\n").c_str(), TEXT("Error returned!"), MB_OK);
+            tstring tstr{TEXT("Error from ")};
+            tstr.append(RA_HOST_URL);
+            tstr.append(TEXT("!\n"));
+            MessageBox(g_RAMainWnd, tstr.c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
         }
     }
 
@@ -498,10 +500,11 @@ API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 {
     char buffer[1024];
     sprintf_s(buffer, 1024, "Update available!\n"
-        "A new version of %s is available for download at " RA_HOST_URL ".\n\n"
+        "A new version of %s is available for download at %s.\n\n"
         "Would you like to update?\n\n"
         "Current version:%s\n"
         "New version:%s\n",
+        Narrow(RA_HOST_URL).data(),
         g_sClientName,
         g_sClientVersion,
         sNewVer);
@@ -850,20 +853,25 @@ API void CCONV _RA_CheckForUpdate()
         }
         else
         {
+            // basic_ostringstream would seem overkill here
+            tstring tstr{ TEXT("Error in download from ") };
+            tstr.append(RA_HOST_URL);
+            tstr.append(TEXT("...\n"));
+            tstr.append(TEXT("Please check your connection settings or RA forums!\n"));
+
             //	Error in download
-            MessageBox(g_RAMainWnd,
-                TEXT("Error in download from ") RA_HOST_URL TEXT("...\n")
-                TEXT("Please check your connection settings or RA forums!"),
-                TEXT("Error!"), MB_OK);
+            MessageBox(g_RAMainWnd, tstr.c_str(), TEXT("Error!"), MB_OK);
         }
     }
     else
     {
+        tstring tstr{ TEXT("Could not connect to ") };
+        tstr.append(RA_HOST_URL);
+        tstr.append(TEXT("...\n"));
+        tstr.append(TEXT("Please check your connection settings or RA forums!\n"));
+
         //	Could not connect
-        MessageBox(g_RAMainWnd,
-            TEXT("Could not connect to ") RA_HOST_URL TEXT("...\n")
-            TEXT("Please check your connection settings or RA forums!"),
-            TEXT("Error!"), MB_OK);
+        MessageBox(g_RAMainWnd, tstr.c_str(), TEXT("Error!"), MB_OK);
     }
 }
 
@@ -1182,6 +1190,9 @@ void RememberWindowSize(HWND hDlg, const char* sDlgKey)
     iter->second.nHeight = rc.bottom - rc.top;
 }
 
+_Use_decl_annotations_
+BOOL CALLBACK SetDirectory() { return SetCurrentDirectory(NativeStr(g_sHomeDir).c_str()); }
+
 API void CCONV _RA_InvokeDialog(LPARAM nID)
 {
     switch (nID)
@@ -1276,7 +1287,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_OPENUSERPAGE:
             if (RAUsers::LocalUser().IsLoggedIn())
             {
-                std::string sTarget = "http://" RA_HOST_URL + std::string("/User/") + RAUsers::LocalUser().Username();
+                auto sTarget{
+                    "http://" +
+                    std::string{ Narrow(RA_HOST_URL) } +
+                    std::string("/User/") +
+                    RAUsers::LocalUser().Username()
+                };
                 ShellExecute(nullptr,
                     TEXT("open"),
                     NativeStr(sTarget).c_str(),
@@ -1289,7 +1305,13 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_OPENGAMEPAGE:
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string sTarget = "http://" RA_HOST_URL + std::string("/Game/") + std::to_string(g_pCurrentGameData->GetGameID());
+                auto sTarget{
+                    "http://" +
+                    std::string{ Narrow(RA_HOST_URL) } +
+                    std::string{"/Game/"} +
+                    std::to_string(g_pCurrentGameData->GetGameID())
+                };
+
                 ShellExecute(nullptr,
                     TEXT("open"),
                     NativeStr(sTarget).c_str(),

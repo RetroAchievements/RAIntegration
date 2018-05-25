@@ -57,6 +57,52 @@ std::string Narrow(const std::string& str)
     return str;
 }
 
+
+NativeString NativeStr(NonNativeCString str) noexcept
+{
+#ifdef UNICODE
+	return Widen(str);
+#else
+	return Narrow(str);
+#endif // UNICODE
+}
+
+NativeString NativeStr(const NonNativeString& str) noexcept
+{
+#ifdef UNICODE
+    return Widen(str);
+#else
+    return Narrow(str);
+#endif // UNICODE
+}
+
+NativeString NativeStr(NonNativeString&& str) noexcept
+{
+#ifdef UNICODE
+    return Widen(std::move(str));
+#else
+    return Narrow(std::move(str));
+#endif // UNICODE
+}
+
+NativeString NativeStr(const NativeString& str) noexcept
+{
+#ifdef UNICODE
+    return Widen(str);
+#else
+    return Narrow(str);
+#endif // UNICODE
+}
+
+NativeString NativeStr(NativeCString str) noexcept
+{
+#ifdef UNICODE
+    return Widen(str);
+#else
+    return Narrow(str);
+#endif // UNICODE
+}
+
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
@@ -89,15 +135,7 @@ void RADebugLog(const char* format, ...)
     *p++ = '\n';
     *p = '\0';
 
-    OutputDebugString(NativeStr(buf).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(buf, sizeof(char), strlen(buf), pf);
-        fclose(pf);
-    }
+    RADebugLogNoFormat(buf);
 }
 
 BOOL DirectoryExists(const char* sPath)
@@ -105,3 +143,5 @@ BOOL DirectoryExists(const char* sPath)
     DWORD dwAttrib = GetFileAttributes(NativeStr(sPath).c_str());
     return(dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
+
+

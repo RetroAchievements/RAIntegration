@@ -15,7 +15,7 @@ AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+AchievementSet** ACH_SETS[]{ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
@@ -67,8 +67,7 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
 {
     if (!doc.HasMember("Success") || doc["Success"].GetBool() == false)
     {
-        ASSERT(!"Invalid unlocks packet!");
-        return;
+        throw std::invalid_argument{"Invalid unlocks packet!"};
     }
 
     const GameID nGameID = static_cast<GameID>(doc["GameID"].GetUint());
@@ -99,11 +98,8 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
         m_Achievements.erase(m_Achievements.begin() + nIter);
         return TRUE;
     }
-    else
-    {
-        ASSERT(!"There are no achievements to remove...");
-        return FALSE;
-    }
+
+    throw std::out_of_range{ "There are no achievements to remove..." };
 }
 
 Achievement* AchievementSet::Find(AchievementID nAchievementID)
@@ -403,7 +399,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     {
         //	Could not connect...
         PopupWindows::AchievementPopups().AddMessage(
-            MessagePopup(std::string("Could not connect to " RA_HOST_URL "..."), "Working offline...", PopupInfo)
+            MessagePopup(std::string{ "Could not connect to " } + RA_HOST_URL + " ...", "Working offline...", PopupInfo)
         );
 
         return FALSE;

@@ -21,7 +21,13 @@
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
-#define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
+
+inline constexpr auto CALLBACK KEYDOWN(int vk)->decltype((GetAsyncKeyState(vk) & 0x8000) ? true : false)
+{
+    return { (GetAsyncKeyState(vk) & 0x8000) ? true
+                                             : false };
+}
+
 
 namespace {
 

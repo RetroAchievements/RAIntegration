@@ -12,10 +12,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #ifndef ID_OK
-#define ID_OK                           1024
+inline constexpr auto ID_OK{ 1024 };
 #endif
 #ifndef ID_CANCEL
-#define ID_CANCEL                       1025
+inline constexpr auto ID_CANCEL{ 1025 };
 #endif
 
 namespace {
@@ -1267,7 +1267,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (g_pCurrentGameData->GetGameID() != 0)
                     {
-                        tstring sTarget = "http://" RA_HOST_URL + tstring("/codenotes.php?g=") + std::to_string(g_pCurrentGameData->GetGameID());
+                        // TODO: Put this alias as a function in ra_utility so it can be more generic
+                        const auto& to_tstring{ std::_Integral_to_string<TCHAR, GameID>};
+
+                        tstring sTarget{TEXT("http://")};
+                        sTarget.append(RA_HOST_URL);
+                        sTarget.append(TEXT("/codenotes.php?g=") + to_tstring(g_pCurrentGameData->GetGameID()));
+
                         ShellExecute(nullptr,
                             _T("open"),
                             NativeStr(sTarget).c_str(),

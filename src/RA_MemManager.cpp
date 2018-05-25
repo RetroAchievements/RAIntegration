@@ -251,8 +251,7 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
 
 void MemManager::ChangeActiveMemBank(unsigned short nMemBank)
 {
-    ASSERT(!"Not Implemented!");
-    return;
+    throw std::runtime_error{ "Not Implemented!" };
 
     //if( m_Banks.find( nMemBank ) == m_Banks.end() )
     //{

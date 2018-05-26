@@ -1609,6 +1609,7 @@ void Dlg_Memory::Invalidate()
 
     // Update Memory Viewer
     MemoryViewerControl::Invalidate();
+    UpdateBits();
 
     // Update Search Results
     HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);

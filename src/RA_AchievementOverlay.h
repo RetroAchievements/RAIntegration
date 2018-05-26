@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_ACHIEVEMENTOVERLAY_H
+#define RA_ACHIEVEMENTOVERLAY_H
+//#pragma once
 
 #include <WTypes.h>
 #include "RA_Achievement.h"
@@ -214,3 +216,6 @@ extern const COLORREF COL_BLACK;
 extern const COLORREF COL_POPUP;
 extern const COLORREF COL_POPUP_BG;
 extern const COLORREF COL_POPUP_SHADOW;
+
+
+#endif // !RA_ACHIEVEMENTOVERLAY_H

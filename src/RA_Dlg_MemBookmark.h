@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_DLG_MEMBOOKMARK_H
+#define RA_DLG_MEMBOOKMARK_H
+//#pragma once
 
 #include <wtypes.h>
 #include <vector>
@@ -98,3 +100,5 @@ private:
 };
 
 extern Dlg_MemBookmark g_MemBookmarkDialog;
+
+#endif // !RA_DLG_MEMBOOKMARK_H

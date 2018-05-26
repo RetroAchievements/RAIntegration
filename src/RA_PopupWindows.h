@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_POPUPWINDOWS_H
+#define RA_POPUPWINDOWS_H
+//#pragma once
 
 #include "RA_PopupWindows.h"
 
@@ -49,3 +51,6 @@ extern "C"
 }
 
 extern PopupWindows g_PopupWindows;
+
+
+#endif // !RA_POPUPWINDOWS_H

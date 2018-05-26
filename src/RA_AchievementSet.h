@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_ACHIEVEMENTSET_H
+#define RA_ACHIEVEMENTSET_H
+//#pragma once
 
 #include <vector>
 #include "RA_Condition.h"
@@ -91,3 +93,6 @@ extern AchievementSet* g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
 
 extern void RASetAchievementCollection(enum AchievementSetType Type);
+
+
+#endif // !RA_ACHIEVEMENTSET_H

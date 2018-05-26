@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_DLG_ACHEDITOR_H
+#define RA_DLG_ACHEDITOR_H
+//#pragma once
 
 #include <wtypes.h>
 #include <vector>
@@ -93,3 +95,6 @@ private:
 void GenerateResizes(HWND hDlg);
 
 extern Dlg_AchievementEditor g_AchievementEditorDialog;
+
+
+#endif // !RA_DLG_ACHEDITOR_H

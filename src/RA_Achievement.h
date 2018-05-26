@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_ACHIEVEMENT_H
+#define RA_ACHIEVEMENT_H
+//#pragma once
 
 #include "RA_Condition.h"
 #include "RA_Defs.h"
@@ -149,3 +151,6 @@ private:
     HBITMAP m_hBadgeImageLocked;
 };
 
+
+
+#endif // !RA_ACHIEVEMENT_H

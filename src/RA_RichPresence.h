@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_RICHPRESENCE_H
+#define RA_RICHPRESENCE_H
+//#pragma once
 #include <vector>
 #include <map>
 #include "RA_Leaderboard.h"
@@ -75,3 +77,5 @@ private:
 };
 
 extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+
+#endif // !RA_RICHPRESENCE_H

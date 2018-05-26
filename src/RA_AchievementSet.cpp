@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"

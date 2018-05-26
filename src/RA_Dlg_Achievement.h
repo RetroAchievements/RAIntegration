@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_DLG_ACHIEVEMENT_H
+#define RA_DLG_ACHIEVEMENT_H
+//#pragma once
 
 #include "RA_Achievement.h"
 
@@ -68,3 +70,6 @@ private:
 };
 
 extern Dlg_Achievements g_AchievementsDialog;
+
+
+#endif // !RA_DLG_ACHIEVEMENT_H

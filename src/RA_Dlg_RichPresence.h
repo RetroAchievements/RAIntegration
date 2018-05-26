@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_DLG_RICHPRESENCE_H
+#define RA_DLG_RICHPRESENCE_H
+//#pragma once
 
 #include <WTypes.h>
 
@@ -28,3 +30,6 @@ private:
 extern Dlg_RichPresence g_RichPresenceDialog;
 
 
+
+
+#endif // !RA_DLG_RICHPRESENCE_H

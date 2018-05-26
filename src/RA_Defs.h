@@ -1,6 +1,6 @@
 #ifndef RA_DEFS_H
 #define RA_DEFS_H
-#pragma once
+//#pragma once
 
 #include <Windows.h>
 #include <WindowsX.h>

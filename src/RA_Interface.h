@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_INTERFACE_H
+#define RA_INTERFACE_H
+//#pragma once
 
 //	NB. Shared between RA_Integration and emulator
 
@@ -209,3 +211,6 @@ extern int RA_HardcoreModeIsActive();
 extern int RA_HTTPRequestExists(const char* sPageName);
 
 #endif //RA_EXPORTS
+
+
+#endif // !RA_INTERFACE_H

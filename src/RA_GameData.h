@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_GAMEDATA_H
+#define RA_GAMEDATA_H
+//#pragma once
 
 #include "RA_Defs.h"
 
@@ -28,3 +30,6 @@ private:
 
 
 extern GameData* g_pCurrentGameData;
+
+
+#endif // !RA_GAMEDATA_H

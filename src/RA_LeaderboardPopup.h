@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_LEADERBOARDPOPUP_H
+#define RA_LEADERBOARDPOPUP_H
+//#pragma once
 
 #include <wtypes.h>
 #include "RA_AchievementOverlay.h"
@@ -38,3 +40,6 @@ private:
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 };
+
+
+#endif // !RA_LEADERBOARDPOPUP_H

@@ -1,5 +1,5 @@
-#ifndef _PROGRESSPOPUP_H_
-#define _PROGRESSPOPUP_H_
+#ifndef RA_PROGRESSPOPUP_H
+#define RA_PROGRESSPOPUP_H
 
 #include <wtypes.h>
 #include "RA_AchievementOverlay.h"
@@ -44,4 +44,4 @@ private:
 
 //extern ProgressPopup g_ProgressPopup;
 
-#endif // _PROGRESSPOPUP_H_
+#endif // RA_PROGRESSPOPUP_H

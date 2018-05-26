@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RA_USER_H
+#define RA_USER_H
+//#pragma once
 
 #include "RA_Defs.h"
 
@@ -117,3 +119,6 @@ private:
     static LocalRAUser ms_LocalUser;
     static std::map<std::string, RAUser*> UserDatabase;
 };
+
+
+#endif // !RA_USER_H

@@ -1,9 +1,6 @@
 #ifndef RA_DLG_MEMBOOKMARK_H
 #define RA_DLG_MEMBOOKMARK_H
-//#pragma once
-
-#include <wtypes.h>
-#include <vector>
+#pragma once
 
 #include "RA_Defs.h"
 

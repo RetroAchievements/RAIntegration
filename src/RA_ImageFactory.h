@@ -1,12 +1,12 @@
 #ifndef RA_IMAGEFACTORY_H
 #define RA_IMAGEFACTORY_H
-//#pragma once
+#pragma once
 
+#include <atlbase.h>
 #include <wincodec.h>
-#include <WTypes.h>
 
 #include "RA_Defs.h"
-#include <atlbase.h>
+
 //////////////////////////////////////////////////////////////////////////
 //	Image Factory
 

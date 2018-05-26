@@ -1,6 +1,6 @@
 #ifndef RA_GAMEDATA_H
 #define RA_GAMEDATA_H
-//#pragma once
+#pragma once
 
 #include "RA_Defs.h"
 

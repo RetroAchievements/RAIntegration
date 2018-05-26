@@ -1,8 +1,7 @@
 #ifndef RA_LEADERBOARD_H
 #define RA_LEADERBOARD_H
-//#pragma once
-#include <vector>
-#include "RA_Defs.h"
+#pragma once
+
 #include "RA_Condition.h"
 
 

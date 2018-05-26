@@ -1,9 +1,6 @@
 #ifndef RA_DLG_GAMETITLE_H
 #define RA_DLG_GAMETITLE_H
-//#pragma once
-
-#include <wtypes.h>
-#include <map>
+#pragma once
 
 #include "RA_Defs.h"
 

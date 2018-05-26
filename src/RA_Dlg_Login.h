@@ -1,6 +1,6 @@
 #ifndef RA_DLG_LOGIN_H
 #define RA_DLG_LOGIN_H
-//#pragma once
+#pragma once
 
 #include <wtypes.h>
 

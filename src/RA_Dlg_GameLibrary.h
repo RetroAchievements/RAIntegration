@@ -1,12 +1,8 @@
 #ifndef RA_DLG_GAMELIBRARY_H
 #define RA_DLG_GAMELIBRARY_H
-//#pragma once
+#pragma once
 
-#include <wtypes.h>
-#include <vector>
-#include <deque>
-#include <map>
-//#include <string>
+
 #include "RA_Defs.h"
 
 class GameEntry

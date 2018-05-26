@@ -1,6 +1,6 @@
 #ifndef RA_DLG_ROMCHECKSUM_H
 #define RA_DLG_ROMCHECKSUM_H
-//#pragma once
+#pragma once
 
 #include <wtypes.h>
 

@@ -1,11 +1,8 @@
 #ifndef RA_DLG_ACHIEVEMENT_H
 #define RA_DLG_ACHIEVEMENT_H
-//#pragma once
+#pragma once
 
 #include "RA_Achievement.h"
-
-#include <wtypes.h>
-#include <assert.h>
 
 const int MAX_TEXT_ITEM_SIZE = 80;
 

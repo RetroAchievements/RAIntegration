@@ -1,6 +1,6 @@
 #ifndef RA_ACHIEVEMENTPOPUP_H
 #define RA_ACHIEVEMENTPOPUP_H
-//#pragma once
+#pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"

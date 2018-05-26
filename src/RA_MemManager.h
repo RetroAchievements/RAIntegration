@@ -1,6 +1,6 @@
 #ifndef RA_MEMMANAGER_H
 #define RA_MEMMANAGER_H
-//#pragma once
+#pragma once
 
 #include "RA_Condition.h"
 

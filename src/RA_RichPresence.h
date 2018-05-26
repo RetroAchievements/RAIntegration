@@ -1,8 +1,7 @@
 #ifndef RA_RICHPRESENCE_H
 #define RA_RICHPRESENCE_H
-//#pragma once
-#include <vector>
-#include <map>
+#pragma once
+
 #include "RA_Leaderboard.h"
 #include "RA_Defs.h"
 

@@ -1,6 +1,6 @@
 #ifndef RA_INTERFACE_H
 #define RA_INTERFACE_H
-//#pragma once
+#pragma once
 
 //	NB. Shared between RA_Integration and emulator
 

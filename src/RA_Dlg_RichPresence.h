@@ -1,6 +1,6 @@
 #ifndef RA_DLG_RICHPRESENCE_H
 #define RA_DLG_RICHPRESENCE_H
-//#pragma once
+#pragma once
 
 #include <WTypes.h>
 

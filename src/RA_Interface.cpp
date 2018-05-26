@@ -1,6 +1,5 @@
 #include "RA_Interface.h"
 
-#include <stdio.h>
 
 //	Exposed, shared
 //	App-level:

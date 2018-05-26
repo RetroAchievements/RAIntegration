@@ -1,6 +1,6 @@
 #ifndef RA_HTTPTHREAD_H
 #define RA_HTTPTHREAD_H
-//#pragma once
+#pragma once
 
 #include "RA_Defs.h"
 

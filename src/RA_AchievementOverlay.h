@@ -1,14 +1,14 @@
 #ifndef RA_ACHIEVEMENTOVERLAY_H
 #define RA_ACHIEVEMENTOVERLAY_H
-//#pragma once
+#pragma once
 
-#include <WTypes.h>
+#include <ddraw.h>
+
 #include "RA_Achievement.h"
 #include "RA_User.h"
 #include "RA_Core.h"
 #include "RA_Interface.h"
 
-#include <ddraw.h>
 
 enum OverlayPage
 {

@@ -1,6 +1,6 @@
 #ifndef RA_CODENOTES_H
 #define RA_CODENOTES_H
-//#pragma once
+#pragma once
 
 #include "RA_Defs.h"
 

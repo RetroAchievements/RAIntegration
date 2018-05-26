@@ -1,9 +1,9 @@
 #ifndef RA_ACHIEVEMENT_H
 #define RA_ACHIEVEMENT_H
-//#pragma once
+#pragma once
 
 #include "RA_Condition.h"
-#include "RA_Defs.h"
+
 
 
 //////////////////////////////////////////////////////////////////////////

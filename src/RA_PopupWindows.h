@@ -1,8 +1,6 @@
 #ifndef RA_POPUPWINDOWS_H
 #define RA_POPUPWINDOWS_H
-//#pragma once
-
-#include "RA_PopupWindows.h"
+#pragma once
 
 #include "RA_ProgressPopup.h"
 #include "RA_AchievementPopup.h"

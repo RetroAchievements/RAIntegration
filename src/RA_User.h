@@ -1,6 +1,6 @@
 #ifndef RA_USER_H
 #define RA_USER_H
-//#pragma once
+#pragma once
 
 #include "RA_Defs.h"
 

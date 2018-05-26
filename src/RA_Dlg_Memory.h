@@ -1,9 +1,8 @@
 #ifndef RA_DLG_MEMORY_H
 #define RA_DLG_MEMORY_H
-//#pragma once
+#pragma once
 
-#include "RA_Defs.h"
-#include "RA_CodeNotes.h"
+#include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 
 class MemoryViewerControl

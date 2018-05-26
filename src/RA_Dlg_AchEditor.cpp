@@ -1,9 +1,8 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include "RA_Achievement.h"
+#include <Commdlg.h>
 #include "RA_AchievementSet.h"
 #include "RA_Resource.h"
-#include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
@@ -11,8 +10,6 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_User.h"
-
-#pragma comment(lib, "comctl32.lib")
 
 namespace {
 const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };

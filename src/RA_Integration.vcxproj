@@ -98,9 +98,6 @@
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>

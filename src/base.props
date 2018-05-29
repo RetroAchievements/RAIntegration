@@ -26,11 +26,13 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <PostBuildEvent>
-      <Command>copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)</Message>
+      <Command>
+         IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
+         IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
+         echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
+         copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
+         :done
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -2,7 +2,12 @@
 
 #include <iomanip>
 
+
+#ifdef RA_EXPORTS
+
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+
+#endif
 
 namespace ra {
 

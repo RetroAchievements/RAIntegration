@@ -79,9 +79,8 @@ static unsigned int GetMaxNibble(ComparisonVariableSize size)
 
 std::string ByteAddressToString(ByteAddress nAddr)
 {
-    static char buffer[16];
-    sprintf_s(buffer, "0x%06x", nAddr);
-    return std::string(buffer);
+    // prints 0x for us
+    return ra::tsprintf("0x%", ra::AdjustHexField(nAddr, 6));
 }
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -634,6 +633,11 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 }
 
                 g_MemManager.ActiveBankRAMRead(data, addr, 16);
+                // TODO: Leaving these sprintfs alone for now, not exactly sure
+                //       what's happening here. It seems to me that you're trying
+                //       to add the number of characters written to a pointer
+                //       doesn't seem very logical or type safe to me but w/e
+                //       we'll look at later after understanding it better - sbs
 
                 TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
@@ -1202,17 +1206,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
                     {
-                        if (pSavedNote->Note().compare(sNewNote) != 0)	//	New note is different
+                        if (pSavedNote->Note() != sNewNote)	//	New note is different
                         {
-                            char sWarning[4096];
-                            sprintf_s(sWarning, 4096,
-                                "Address 0x%04x already stored with note:\n\n"
-                                "%s\n"
-                                "by %s\n"
+                            auto sWarning = ra::tsprintf(
+                                "Address 0x% already stored with note:\n\n"
+                                "%\n"
+                                "by %\n"
                                 "\n\n"
                                 "Would you like to overwrite with\n\n"
-                                "%s",
-                                nAddr,
+                                "%",
+                                ra::AdjustHexField(nAddr), // default field width is 4
                                 pSavedNote->Note().c_str(),
                                 pSavedNote->Author().c_str(),
                                 sNewNote.c_str());
@@ -1508,8 +1511,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
         GameID nGameID = g_pCurrentGameData->GetGameID();
         if (nGameID != 0)
         {
-            char sNotesFilename[1024];
-            sprintf_s(sNotesFilename, 1024, "%s%d-Notes2.txt", RA_DIR_DATA, nGameID);
+            auto sNotesFilename = ra::tsprintf("%%-Notes2.txt", RA_DIR_DATA, nGameID);
             size_t nSize = m_CodeNotes.Load(sNotesFilename);
 
             //	Issue a fetch instead!
@@ -1651,9 +1653,6 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
     MemoryViewerControl::setWatchedAddress(nAddr);
 
-    char buffer[32];
-    sprintf_s(buffer, 32, "0x%06x", nAddr);
-    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
     UpdateBits();
 
     OnWatchingMemChange();

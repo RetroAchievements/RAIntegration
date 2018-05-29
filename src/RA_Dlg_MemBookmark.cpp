@@ -8,6 +8,8 @@
 
 #include <strsafe.h>
 #include <atlbase.h> // CComPtr
+#include <array>
+
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -168,7 +170,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             {
                 case ODA_SELECT:
                 case ODA_DRAWENTIRE:
-
+                {
                     hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
                     ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
@@ -177,11 +179,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
 
                     // Draw Item Label - Column 0
-                    wchar_t buffer[512];
+                    std::wstring buffer;
                     if (m_vBookmarks[pdis->itemID]->Decimal())
-                        swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                        buffer = ra::tsprintf(L"(D)%", m_vBookmarks[pdis->itemID]->Description().c_str());
                     else
-                        swprintf_s(buffer, 512, L"%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                        buffer = ra::tsprintf(L"%", m_vBookmarks[pdis->itemID]->Description().c_str());
 
                     if (pdis->itemState & ODS_SELECTED)
                     {
@@ -206,12 +208,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         DeleteObject(hBrush);
                     }
 
-                    if (wcslen(buffer) > 0)
+                    if (!buffer.empty())
                     {
                         rcLabel.left += (offset / 2);
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer.c_str(), buffer.length(), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
                     // Draw Item Label for remaining columns
@@ -226,43 +228,45 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         switch (i)
                         {
                             case CSI_ADDRESS:
-                                swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
+                                buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(m_vBookmarks[pdis->itemID]->Address(), 6)));
                                 break;
                             case CSI_VALUE:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
+                                    buffer = ra::tsprintf(L"%", m_vBookmarks[pdis->itemID]->Value());
                                 else
                                 {
+                                    auto current_val{ m_vBookmarks[pdis->itemID]->Value() };
                                     switch (m_vBookmarks[pdis->itemID]->Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                        case 1: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(current_val, 2))); break;
+                                        case 2: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(current_val, 4))); break;
+                                        case 3: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(current_val, 8))); break;
                                     }
                                 }
                                 break;
                             case CSI_PREVIOUS:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
+                                    buffer = ra::tsprintf(L"%", m_vBookmarks[pdis->itemID]->Previous());
                                 else
                                 {
+                                    auto prev_val{ m_vBookmarks[pdis->itemID]->Previous() };
                                     switch (m_vBookmarks[pdis->itemID]->Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                        case 1: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(prev_val, 2))); break;
+                                        case 2: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(prev_val, 4))); break;
+                                        case 3: buffer = ra::tsprintf(L"%", Widen(ra::AdjustHexField(prev_val, 8))); break;
                                     }
                                 }
                                 break;
                             case CSI_CHANGES:
-                                swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
+                                buffer = ra::tsprintf(L"%", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
-                                swprintf_s(buffer, 512, L"");
+                                buffer = L"";
                                 break;
                         }
 
-                        if (wcslen(buffer) == 0)
+                        if (buffer.empty())
                             continue;
 
                         UINT nJustify = DT_LEFT;
@@ -282,12 +286,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcLabel.left += offset;
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer.c_str(), buffer.length(), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
                     //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
                     //	DrawFocusRect(pdis->hDC, &rcBounds);
-
+                    }
                     break;
 
                 case ODA_FOCUS:
@@ -651,17 +655,25 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
             break;
     }
 
-    char buffer[32];
-    sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
+    // alright putting "new char" in the constructor just messes things up
+    std::string buffer;
+    // normally not needed but there's sprintf_s below
+    buffer.reserve(32);
+    // Found out what's this for, the "width" trick, not sure how to simulate though so it's still in sprintf_s
+    sprintf_s(buffer.data(), buffer.capacity(), "%0*x", width, Bookmark.Value());
 
-    for (unsigned int i = 0; i < strlen(buffer); i++)
+    auto pos{ 0 };
+    buffer = buffer.data(); // required or nothing will show up
+    for (auto& i : buffer)
     {
-        c = buffer[i];
+        c = i;
         n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
-        MemoryViewerControl::editData(addr, (i % 2 != 0), n);
+        // we could just make is_even/odd
+        MemoryViewerControl::editData(addr, (pos % 2 != 0), n);
 
-        if (i % 2 != 0)
+        if (pos % 2 != 0)
             addr--;
+        pos++;
     }
 }
 
@@ -705,14 +717,12 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    HRESULT hr;
+    HRESULT hr{ S_OK };
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
         {
-            std::ostringstream oss;
-            oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
-            auto defaultFileName{ oss.str() };
+            auto defaultFileName = ra::tsprintf("%-Bookmarks.txt", std::to_string(g_pCurrentGameData->GetGameID()).c_str());
 
             if (SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
             {
@@ -741,10 +751,8 @@ void Dlg_MemBookmark::ExportJSON()
                                     for (auto bookmark : m_vBookmarks)
                                     {
                                         Value item(kObjectType);
-
-                                        oss.str("");
-                                        oss << Narrow(bookmark->Description());
-                                        Value s{ oss.str().c_str(), allocator };
+                                        auto buffer = Narrow(bookmark->Description());
+                                        Value s{ buffer.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);

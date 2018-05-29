@@ -12,6 +12,7 @@ const static unsigned int MD5_STRING_LEN = 32;
 
 std::string RAGenerateMD5(const std::string& sStringToMD5)
 {
+
     static char buffer[33];
 
     md5_state_t pms;

@@ -205,9 +205,8 @@ void RA_Leaderboard::LoadFromJSON(const Value& element)
     ASSERT(nID == m_nID);	//	Must match!
 
     const std::string sMem = element["Mem"].GetString();
-    char buffer[4096];
-    strcpy_s(buffer, 4096, sMem.c_str());
-    ParseLBData(buffer);
+    std::string buffer = sMem;
+    ParseLBData(sMem.c_str());
 
     m_sTitle = element["Title"].GetString();
     m_sDescription = element["Description"].GetString();
@@ -476,15 +475,15 @@ void RA_Leaderboard::Test()
             else if (g_bHardcoreModeActive)
             {
                 //	TBD: move to keys!
-                char sValidationSig[50];
-                sprintf_s(sValidationSig, 50, "%d%s%d", m_nID, RAUsers::LocalUser().Username().c_str(), m_nID);
+                // We're gonna guess these buffer sizes are arbitrary
+                std::string sValidationSig = ra::tsprintf("%%%", m_nID, RAUsers::LocalUser().Username().c_str(), m_nID);
                 std::string sValidationMD5 = RAGenerateMD5(sValidationSig);
 
                 PostArgs args;
                 args['u'] = RAUsers::LocalUser().Username();
                 args['t'] = RAUsers::LocalUser().Token();
                 args['i'] = std::to_string(m_nID);
-                args['v'] = sValidationMD5;
+                args['v'] = sValidationMD5.c_str();
                 args['s'] = std::to_string(static_cast<int>(m_value.GetOperationsValue(m_sOperations)));	//	Concern about rounding?
 
                 RAWeb::CreateThreadedHTTPRequest(RequestSubmitLeaderboardEntry, args);
@@ -549,15 +548,18 @@ void RA_Leaderboard::SortRankInfo()
 std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
 {
     //	NB. This is accessed by RA_Formattable... ought to be refactored really
-    char buffer[256];
+    std::string buffer;
     switch (nType)
     {
         case Format_TimeFrames:
         {
+            // woudn't be better to use a clock type?
             int nMins = nScoreIn / 3600;
             int nSecs = (nScoreIn % 3600) / 60;
             int nMilli = static_cast<int>(((nScoreIn % 3600) % 60) * (100.0 / 60.0));	//	Convert from frames to 'millisecs'
-            sprintf_s(buffer, 256, "%02d:%02d.%02d", nMins, nSecs, nMilli);
+            // Need to see how it looks with a normal printf, alright it's the same as hex
+            buffer = ra::tsprintf("%:%.%", ra::AdjustIntField(nMins, 2), ra::AdjustIntField(nSecs, 2),
+                ra::AdjustIntField(nMilli, 2));
         }
         break;
 
@@ -565,7 +567,7 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
         {
             int nMins = nScoreIn / 60;
             int nSecs = nScoreIn % 60;
-            sprintf_s(buffer, 256, "%02d:%02d", nMins, nSecs);
+            buffer = ra::tsprintf("%:%", ra::AdjustIntField(nMins, 2), ra::AdjustIntField(nSecs, 2));
         }
         break;
 
@@ -574,20 +576,21 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
             int nMins = nScoreIn / 6000;
             int nSecs = (nScoreIn % 6000) / 100;
             int nMilli = static_cast<int>(nScoreIn % 100);
-            sprintf_s(buffer, 256, "%02d:%02d.%02d", nMins, nSecs, nMilli);
+            buffer = ra::tsprintf("%:%.%", ra::AdjustIntField(nMins, 2), ra::AdjustIntField(nSecs, 2),
+                ra::AdjustIntField(nMilli, 2));
         }
         break;
 
         case Format_Score:
-            sprintf_s(buffer, 256, "%06d Points", nScoreIn);
+            buffer = ra::tsprintf("% Points", ra::AdjustIntField(nScoreIn, 6));
             break;
 
         case Format_Value:
-            sprintf_s(buffer, 256, "%01d", nScoreIn);
+            buffer = ra::tsprintf("%", ra::AdjustIntField(nScoreIn, 1));
             break;
 
         default:
-            sprintf_s(buffer, 256, "%06d", nScoreIn);
+            buffer = ra::tsprintf("% Points", ra::AdjustIntField(nScoreIn, 6));
             break;
     }
     return buffer;
@@ -652,8 +655,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
         const int nUserScore = NextEntry["Score"].GetInt();
         time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
 
-        RA_LOG(std::string("(" + std::to_string(nRank) + ") " + sUser + ": " + pLB->FormatScore(nUserScore)).c_str());
-
+        // despite this looking like printf it's actually safe
+        RA_LOG("(%) %: %", nRank, sUser, pLB->FormatScore(nUserScore));
         pLB->SubmitRankInfo(nRank, sUser, nUserScore, nSubmitted);
     }
 

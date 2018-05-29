@@ -86,6 +86,7 @@ public:
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
 
+
     inline HBITMAP BadgeImage() const { return m_hBadgeImage; }
     inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }

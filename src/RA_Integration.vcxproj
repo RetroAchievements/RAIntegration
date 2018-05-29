@@ -38,6 +38,7 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="ra_errors.cpp" />
     <ClCompile Include="RA_GameData.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
@@ -72,10 +73,12 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="ra_errors.h" />
     <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
+    <ClInclude Include="ra_iostream.h" />
     <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_LeaderboardPopup.h" />
     <ClInclude Include="RA_md5factory.h" />
@@ -143,8 +146,6 @@
     <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>..\bin\$(Configuration)\</OutDir>
-    <IntDir>..\obj\$(Configuration)\</IntDir>
     <TargetName>RA_Integration</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
@@ -171,7 +172,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>

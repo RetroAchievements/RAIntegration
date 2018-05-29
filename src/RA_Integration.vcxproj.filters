@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{c825e8fb-2618-48db-b9ed-40dbbe7c83c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -110,6 +113,9 @@
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ra_errors.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -211,6 +217,12 @@
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="ra_iostream.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ra_errors.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

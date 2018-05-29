@@ -110,7 +110,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     g_RAMainWnd = hMainHWND;
     //g_hThisDLLInst
 
-    RA_LOG(__FUNCTION__ " Init called! ID: %d, ClientVer: %s\n", nEmulatorID, sClientVer);
+    RA_LOG(__FUNCTION__ " Init called! ID: %, ClientVer: %\n", nEmulatorID, sClientVer);
 
     switch (g_EmulatorID)
     {
@@ -188,17 +188,19 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     if (g_sClientName != nullptr)
     {
-        RA_LOG("(found as: %s)\n", g_sClientName);
+        RA_LOG("(found as: %)\n", g_sClientName);
     }
 
-    TCHAR buffer[2048];
-    GetCurrentDirectory(2048, buffer);
-    g_sHomeDir = Narrow(buffer);
+    tstring buffer;
+    buffer.reserve(2048);
+    GetCurrentDirectory(2048, buffer.data());
+    g_sHomeDir = Narrow(buffer.data());
     g_sHomeDir.append("\\");
 
-    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str());
+    RA_LOG(__FUNCTION__ " - storing \"%\" as home dir\n", g_sHomeDir.c_str());
 
-    g_sROMDirLocation[0] = '\0';
+    if (!g_sROMDirLocation.empty())
+        g_sROMDirLocation.clear();
 
     _RA_LoadPreferences();
 
@@ -311,31 +313,28 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 
     if (g_pCoreAchievements->HasUnsavedChanges())
     {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
+        auto buffer = ra::tsprintf(
             "You have unsaved changes in the Core Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+            "If you % you will lose these changes.\n"
+            "%", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pUnofficialAchievements->HasUnsavedChanges())
     {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
+        auto buffer = ra::tsprintf(
             "You have unsaved changes in the Unofficial Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+            "If you % you will lose these changes.\n"
+            "%", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pLocalAchievements->HasUnsavedChanges())
     {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
+        auto buffer = ra::tsprintf(
             "You have unsaved changes in the Local Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+            "If you % you will lose these changes.\n"
+            "%", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -364,7 +363,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
 
     g_sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
-    RA_LOG("Loading new ROM... MD5 is %s\n", (g_sCurrentROMMD5 == sMD5NULL) ? "Null" : g_sCurrentROMMD5.c_str());
+    RA_LOG("Loading new ROM... MD5 is %\n", (g_sCurrentROMMD5 == sMD5NULL) ? "Null" : g_sCurrentROMMD5.c_str());
 
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
 
@@ -385,16 +384,17 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             nGameID = static_cast<GameID>(doc["GameID"].GetUint());
             if (nGameID == 0)	//	Unknown
             {
-                RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());
-                char buffer[64];
-                ZeroMemory(buffer, 64);
-                RA_GetEstimatedGameTitle(buffer);
-                std::string sEstimatedGameTitle(buffer);
+                RA_LOG("Could not recognise game with MD5 %\n", g_sCurrentROMMD5.c_str());
+                std::string buffer;
+                buffer.reserve(64);
+
+                RA_GetEstimatedGameTitle(buffer.data());
+                std::string sEstimatedGameTitle(buffer.data());
                 Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle, nGameID);
             }
             else
             {
-                RA_LOG("Successfully looked up game with ID %d\n", nGameID);
+                RA_LOG("Successfully looked up game with ID %\n", nGameID);
             }
         }
         else
@@ -498,12 +498,12 @@ API void CCONV _RA_ClearMemoryBanks()
 
 API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 {
-    char buffer[1024];
-    sprintf_s(buffer, 1024, "Update available!\n"
-        "A new version of %s is available for download at " RA_HOST_URL ".\n\n"
+    auto buffer = ra::tsprintf("Update available!\n"
+        "A new version of % is available for download at %.\n\n"
         "Would you like to update?\n\n"
-        "Current version:%s\n"
-        "New version:%s\n",
+        "Current version:%\n"
+        "New version:%\n",
+        RA_HOST_URL,
         g_sClientName,
         g_sClientVersion,
         sNewVer);
@@ -620,7 +620,7 @@ API int CCONV _RA_HandleHTTPResults()
                     {
                         const std::string& sUser = doc["User"].GetString();
                         unsigned int nScore = doc["Score"].GetUint();
-                        RA_LOG("%s's score: %d", sUser.c_str(), nScore);
+                        RA_LOG("%'s score: %", sUser.c_str(), nScore);
 
                         if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
                         {
@@ -661,7 +661,7 @@ API int CCONV _RA_HandleHTTPResults()
                             }
                             else
                             {
-                                RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                                RA_LOG("Latest Client already up to date: server 0.%, current 0.%\n", nValServer, nValCurrent);
                             }
                         }
                     }
@@ -712,7 +712,7 @@ API int CCONV _RA_HandleHTTPResults()
                     else
                     {
                         ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %", nAchID);
                     }
                 }
                 break;
@@ -845,8 +845,9 @@ API void CCONV _RA_CheckForUpdate()
             else
             {
                 //	Up to date
-                char buffer[1024];
-                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
+                std::ostringstream oss;
+                oss << std::setfill('0') << std::setw(2) << nServerVersion;
+                auto buffer = ra::tsprintf("You have the latest version of %: 0.%", g_sClientEXEName, oss.str());
                 MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
             }
         }
@@ -1291,7 +1292,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_OPENGAMEPAGE:
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string sTarget = "http://" RA_HOST_URL + std::string("/Game/") + std::to_string(g_pCurrentGameData->GetGameID());
+                auto sTarget = ra::tsprintf("http://%/Game/%", RA_HOST_URL, g_pCurrentGameData->GetGameID());
                 ShellExecute(nullptr,
                     TEXT("open"),
                     NativeStr(sTarget).c_str(),
@@ -1331,8 +1332,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_PARSERICHPRESENCE:
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                char sRichPresenceFile[1024];
-                sprintf_s(sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+                auto sRichPresenceFile = ra::tsprintf("%%-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
                 //	Then install it
                 g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
@@ -1636,7 +1636,7 @@ std::string GetFolderFromDialog()
     std::string sRetVal;
 	CComPtr<IFileOpenDialog> pDlg;
 
-    HRESULT hr;
+    HRESULT hr{ S_OK };
 	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);

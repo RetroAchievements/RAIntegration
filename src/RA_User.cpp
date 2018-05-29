@@ -33,8 +33,9 @@ void RAUsers::OnUserPicDownloaded(const RequestObject& obj)
     RAUser* pUser = GetUser(sUsername);
     pUser->FlushBitmap();
 
+    auto sUserPic{ ra::tsprintf("%%.png", RA_DIR_USERPIC, sUsername) };
     //	Write this image to local, then signal overlay that new data has arrived.
-    _WriteBufferToFile(RA_DIR_USERPIC + sUsername + ".png", obj.GetResponse());
+    _WriteBufferToFile(sUserPic, obj.GetResponse());
     g_AchievementOverlay.OnUserPicDownloaded(sUsername.c_str());
 
     pUser->LoadOrFetchUserImage();

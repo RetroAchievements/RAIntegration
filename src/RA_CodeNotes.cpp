@@ -78,7 +78,8 @@ void CodeNotes::OnCodeNotesResponse(Document& doc)
     const GameID nGameID = doc["GameID"].GetUint();
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    _WriteBufferToFile(std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
+    auto notes_file{ ra::tsprintf("%%-Notes2.txt", RA_DIR_DATA, nGameID) };
+    _WriteBufferToFile(notes_file, doc);
 
     g_MemoryDialog.RepopulateMemNotesFromFile();
 }
@@ -116,7 +117,7 @@ BOOL CodeNotes::Remove(const ByteAddress& nAddr)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
     {
-        RA_LOG("Already deleted this code note? (%d), nAddr ");
+        RA_LOG("Already deleted this code note? (%), nAddr ");
         return FALSE;
     }
 

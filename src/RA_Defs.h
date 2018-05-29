@@ -13,9 +13,9 @@
 #include <queue>
 #include <deque>
 #include <map>
-#include <array>
-
-
+#include "ra_iostream.h" // this will be used everywhere
+#include "ra_errors.h" // could move some stuff here, could possible be used everywhere
+// TODO: remove "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS" from project defines
 
 
 
@@ -238,8 +238,21 @@ typedef unsigned int GameID;
 
 char* DataStreamAsString(DataStream& stream);
 
-extern void RADebugLogNoFormat(const char* data);
-extern void RADebugLog(const char* sFormat, ...);
+void RADebugLogNoFormat(const std::string& data);
+
+template<typename... Args>
+void RADebugLog(const char* format, Args&&... args)
+{
+#if _DEBUG
+    [[maybe_unused]] auto str = ra::tsprintf(format, std::forward<Args>(args)...);
+#endif // _DEBUG
+
+    RADebugLogNoFormat(ra::tsprintf(format, std::forward<Args>(args)...));
+    format = nullptr;
+}
+
+
+
 extern BOOL DirectoryExists(const char* sPath);
 
 const int SERVER_PING_DURATION = 2 * 60;

@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration.Tests", "tests\RA_Integration.Tests.vcxproj", "{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -28,13 +30,17 @@ Global
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|x64.ActiveCfg = Release|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|x64.ActiveCfg = ReleaseUnicode|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|x64.Build.0 = ReleaseUnicode|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Debug|Win32.Build.0 = Debug|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|Win32.ActiveCfg = Release|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|Win32.Build.0 = Release|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {9EB3F9E9-3AD2-448E-A430-1D5A6008DA37}
+		SolutionGuid = {220AB67D-0EDC-4B55-B737-54BDB6CDACDD}
 	EndGlobalSection
 EndGlobal

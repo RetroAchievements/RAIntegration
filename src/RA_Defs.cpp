@@ -5,7 +5,12 @@
 #include <locale>
 #include <codecvt>
 
+
+#ifdef RA_EXPORTS
+
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
+
+#endif
 
 static_assert(sizeof(BYTE*) == sizeof(char*), "dangerous cast ahead");
 char* DataStreamAsString(DataStream& stream)

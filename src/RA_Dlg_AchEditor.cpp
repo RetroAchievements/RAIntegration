@@ -12,12 +12,16 @@
 #include "RA_MemManager.h"
 #include "RA_User.h"
 
+#include <array>
+
 #pragma comment(lib, "comctl32.lib")
 
 namespace {
-const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
+
+constexpr std::array<const char*, 10> COLUMN_TITLE{
+	"ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits"
+};
+constexpr std::array<int, 10> COLUMN_WIDTH{ 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
 }
 
 enum CondSubItems

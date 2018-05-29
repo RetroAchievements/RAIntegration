@@ -9,14 +9,13 @@
 #include "RA_Resource.h"
 #include "RA_User.h"
 
+#include <array>
 
 namespace {
 
-const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
-const int COL_SIZE[] = { 19, 105, 205, 75, 62 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-
-const char* PROBLEM_STR[] = { "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
+constexpr std::array<const char*, 5> COL_TITLE{ "", "Title", "Description", "Author", "Achieved?" };
+constexpr std::array<int, COL_TITLE.size()> COL_SIZE{ 19, 105, 205, 75, 62 };
+constexpr std::array<const char*, 3> PROBLEM_STR{ "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
 
 }
 

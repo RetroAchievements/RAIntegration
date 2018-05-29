@@ -21,14 +21,16 @@
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
+#include <array>
+
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 
 namespace {
 
-const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-const int COL_SIZE[] = { 30, 230, 110, 170 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-const bool bCancelScan = false;
+
+constexpr std::array<const char*, 4> COL_TITLE{ "ID", "Game Title", "Completion", "File Path" };
+constexpr std::array<int, COL_TITLE.size()>  COL_SIZE{ 30, 230, 110, 170 };
+constexpr auto bCancelScan{ false };
 
 std::mutex mtx;
 

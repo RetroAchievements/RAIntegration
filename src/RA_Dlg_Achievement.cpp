@@ -5,25 +5,27 @@
 #include "RA_Core.h"
 #include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
+#include "RA_Resource.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_GameData.h"
 
+#include <array>
 
 namespace {
 
-const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
-const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
+using ColumnTitles = std::array<const char*, 6>;
+constexpr ColumnTitles COLUMN_TITLES_CORE{ "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
+constexpr ColumnTitles COLUMN_TITLES_UNOFFICIAL{ "ID", "Title", "Points", "Author", "Active", "Votes" };
+constexpr ColumnTitles COLUMN_TITLES_LOCAL{ "ID", "Title", "Points", "Author", "Active", "Votes" };
+constexpr std::array<int, COLUMN_TITLES_CORE.size()> COLUMN_SIZE{ 45, 200, 45, 80, 65, 65 };
 
-const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+constexpr auto NUM_COLS{ COLUMN_SIZE.size() };
 
-int iSelect = -1;
+auto iSelect{ -1 };
 
 }
 

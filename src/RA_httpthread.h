@@ -64,7 +64,7 @@ enum UploadType
     NumUploadTypes
 };
 
-extern const char* RequestTypeToString[];
+
 
 typedef std::map<char, std::string> PostArgs;
 

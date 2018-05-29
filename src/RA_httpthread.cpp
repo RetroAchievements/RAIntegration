@@ -14,10 +14,12 @@
 #include <winhttp.h>
 #include <fstream>
 #include <time.h>
-#include <algorithm>	//	std::replace
+#include <array> // algorithm (std::replace)
+	
 
+using RequestTypes = std::array<const char*, RequestType::NumRequestTypes>;
 
-const char* RequestTypeToString[] =
+constexpr RequestTypes RequestTypeToString
 {
     "RequestLogin",
 
@@ -51,9 +53,8 @@ const char* RequestTypeToString[] =
 
     "STOP_THREAD",
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
-const char* RequestTypeToPost[] =
+constexpr RequestTypes RequestTypeToPost
 {
     "login",
     "score",
@@ -86,19 +87,18 @@ const char* RequestTypeToPost[] =
 
     "_stopthread_",			//	STOP_THREAD
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
-const char* UploadTypeToString[] =
+using UploadTypes = std::array<const char*, UploadType::NumUploadTypes>;
+
+constexpr UploadTypes UploadTypeToString
 {
     "RequestUploadBadgeImage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
 
-const char* UploadTypeToPost[] =
+constexpr UploadTypes UploadTypeToPost
 {
     "uploadbadgeimage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
 
 //	No game-specific code here please!
 

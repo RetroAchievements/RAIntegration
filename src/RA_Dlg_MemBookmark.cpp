@@ -7,7 +7,10 @@
 #include "RA_MemManager.h"
 
 #include <strsafe.h>
+#include <array>
 #include <atlbase.h> // CComPtr
+
+
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,9 +22,10 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
+
+constexpr std::array<const char*, 5> COLUMN_TITLE{ "Description", "Address", "Value", "Prev.", "Changes" };
+constexpr std::array<int, COLUMN_TITLE.size()> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+
 }
 
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };

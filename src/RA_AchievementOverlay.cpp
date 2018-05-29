@@ -13,15 +13,17 @@
 #include "RA_GameData.h"
 
 #include <time.h>
+#include <array>
 
 namespace {
 
-const float PAGE_TRANSITION_IN = (-0.2f);
-const float PAGE_TRANSITION_OUT = (0.2f);
-const int NUM_MESSAGES_TO_DRAW = 4;
-const char* FONT_TO_USE = "Tahoma";
+	constexpr auto PAGE_TRANSITION_IN   = -0.2f;
+	constexpr auto PAGE_TRANSITION_OUT  = 0.2f;
+	constexpr auto NUM_MESSAGES_TO_DRAW = 4;
+	constexpr auto FONT_TO_USE          = "Tahoma";
 
-const char* PAGE_TITLES[] = {
+	using PageTitles = std::array<const char*, OverlayPage::NumOverlayPages>;
+	constexpr PageTitles PAGE_TITLES {
     " Achievements ",
     " Friends ",
     " Messages ",
@@ -35,8 +37,6 @@ const char* PAGE_TITLES[] = {
     " Message Viewer "
 
 };
-static_assert(SIZEOF_ARRAY(PAGE_TITLES) == NumOverlayPages, "Must match!");
-
 }
 
 
@@ -51,25 +51,19 @@ AchievementOverlay g_AchievementOverlay;
 AchievementExamine g_AchExamine;
 LeaderboardExamine g_LBExamine;
 
-const COLORREF COL_TEXT = RGB(17, 102, 221);
-const COLORREF COL_TEXT_HIGHLIGHT = RGB(251, 102, 0);
-const COLORREF COL_SELECTED = RGB(255, 255, 255);
-const COLORREF COL_TEXT_LOCKED = RGB(137, 137, 137);
-const COLORREF COL_SELECTED_LOCKED = RGB(202, 202, 202);
-const COLORREF COL_BLACK = RGB(0, 0, 0);
-const COLORREF COL_WHITE = RGB(255, 255, 255);
-const COLORREF COL_BAR = RGB(0, 40, 0);
-const COLORREF COL_BAR_BG = RGB(0, 212, 0);
-const COLORREF COL_POPUP = RGB(0, 0, 40);
-const COLORREF COL_POPUP_BG = RGB(212, 212, 212);
-const COLORREF COL_POPUP_SHADOW = RGB(0, 0, 0);
-const COLORREF COL_USER_FRAME_BG = RGB(32, 32, 32);
-const COLORREF COL_SELECTED_BOX_BG = RGB(22, 22, 60);
-const COLORREF COL_WARNING = RGB(255, 0, 0);
-const COLORREF COL_WARNING_BG = RGB(80, 0, 0);
 
-const unsigned int OVERLAY_WIDTH = 1024;
-const unsigned int OVERLAY_HEIGHT = 1024;
+
+constexpr auto COL_TEXT_LOCKED     = RGB( 137, 137, 137 );
+constexpr auto COL_SELECTED_LOCKED = RGB( 202, 202, 202 );
+constexpr auto COL_BAR             = RGB( 0, 40, 0 );
+constexpr auto COL_BAR_BG          = RGB( 0, 212, 0 );
+constexpr auto COL_USER_FRAME_BG   = RGB( 32, 32, 32 );
+constexpr auto COL_SELECTED_BOX_BG = RGB( 22, 22, 60 );
+constexpr auto COL_WARNING         = RGB( 255, 0, 0 );
+constexpr auto COL_WARNING_BG      = RGB( 80, 0, 0 );
+
+constexpr auto OVERLAY_WIDTH  = 1024U;
+constexpr auto OVERLAY_HEIGHT = 1024U;
 
 
 void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)

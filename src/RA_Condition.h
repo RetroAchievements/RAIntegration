@@ -1,5 +1,6 @@
 #pragma once
 #include "RA_Defs.h"
+#include <array>
 
 enum ComparisonVariableSize
 {
@@ -20,7 +21,9 @@ enum ComparisonVariableSize
 
     NumComparisonVariableSizeTypes
 };
-extern const char* COMPARISONVARIABLESIZE_STR[];
+constexpr std::array<const char*, ComparisonVariableSize::NumComparisonVariableSizeTypes> COMPARISONVARIABLESIZE_STR{
+	"Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit"
+};
 
 enum ComparisonVariableType
 {
@@ -31,7 +34,9 @@ enum ComparisonVariableType
 
     NumComparisonVariableTypes
 };
-extern const char* COMPARISONVARIABLETYPE_STR[];
+constexpr std::array<const char*, ComparisonVariableType::NumComparisonVariableTypes> COMPARISONVARIABLETYPE_STR{
+	"Memory", "Value", "Delta", "DynVar"
+};
 
 enum ComparisonType
 {
@@ -44,9 +49,11 @@ enum ComparisonType
 
     NumComparisonTypes
 };
-extern const char* COMPARISONTYPE_STR[];
+constexpr std::array<const char*, ComparisonType::NumComparisonTypes> COMPARISONTYPE_STR{
+	"=", "<", "<=", ">", ">=", "!="
+};
 
-extern const char* CONDITIONTYPE_STR[];
+
 
 class CompVariable
 {
@@ -174,6 +181,11 @@ private:
     unsigned int	m_nRequiredHits;
     unsigned int	m_nCurrentHits;
 };
+
+constexpr std::array<const char*, Condition::NumConditionTypes> CONDITIONTYPE_STR{
+	"", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits"
+};
+
 
 class ConditionGroup
 {

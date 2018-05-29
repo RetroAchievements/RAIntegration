@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{da7095d2-a217-48b5-9d38-7b0e58de5210}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Code">
+      <UniqueIdentifier>{c09a9464-e27a-4721-8467-626c7f5e3ab0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\RA_Condition.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_MemManager.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClInclude Include="..\src\RA_Condition.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_MemManager.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClCompile Include="..\src\RA_Defs.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClInclude Include="..\src\RA_Defs.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RA_Condition_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_UnitTestHelpers.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_CompVariable_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_ConditionSet_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClInclude Include="RA_UnitTestHelpers.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClCompile Include="RA_Defs_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

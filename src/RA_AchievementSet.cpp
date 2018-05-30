@@ -194,7 +194,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (ach.ID() == 0)
+                if (g_nActiveAchievementSet != Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",

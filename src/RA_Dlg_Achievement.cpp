@@ -320,7 +320,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSetType nAchievementSet)
 
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE); // Cannot add direct to Unofficial
 
-        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), FALSE);
+        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), TRUE);
 
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, FALSE);
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, TRUE);

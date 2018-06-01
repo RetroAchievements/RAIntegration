@@ -38,7 +38,9 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="ra_errors.cpp" />
     <ClCompile Include="RA_GameData.cpp" />
+    <ClCompile Include="ra_handles.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Interface.cpp" />
@@ -72,7 +74,9 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="ra_errors.h" />
     <ClInclude Include="RA_GameData.h" />
+    <ClInclude Include="ra_handles.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
@@ -89,6 +93,10 @@
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ra_type_traits" />
+    <None Include="ra_utility" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>

@@ -261,22 +261,21 @@ struct NTKernelDeleter final : public IDeleter<HANDLE> {
         if (p and ValidHandle(p))
         {
             if (handle == NTKernelType::FileSearch)
-            {
                 ::FindClose(p);
-                p = pointer{};
-            }
+            // Seems to cause access violations in release mode, the
+            // documentation says that a Windows mutex is closed
+            // automatically as long it's released so it's ok
             else if (handle == NTKernelType::Mutex)
             {
-                // It should have been release already
+
                 ::ReleaseMutex(p);
                 ::CloseHandle(p);
-                p = pointer{};
+
             }
+
             else
-            {
                 ::CloseHandle(p);
-                p = pointer{};
-            }
+
         }
     }
 };
@@ -301,6 +300,18 @@ struct NTKernelH final : public IHandle<HANDLE, NTKernelDeleter<handle>>
 
     // We are using all of the base constructors
     using base_type::IHandle;
+
+    ~NTKernelH() noexcept
+    {
+        if (ihandle_)
+            reset();
+    }
+
+    NTKernelH(const NTKernelH&) = delete;
+    NTKernelH& operator=(const NTKernelH&) = delete;
+    NTKernelH(NTKernelH&&) noexcept = default;
+    NTKernelH& operator=(NTKernelH&&) noexcept = default;
+
 
     explicit operator base_type() const noexcept { return dynamic_cast<base_type*>(this); }
 

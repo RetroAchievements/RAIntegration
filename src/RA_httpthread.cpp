@@ -671,7 +671,7 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
 void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
-    RAWeb::ms_hHTTPMutex = ra::make_mutex(FALSE);
+
     for (auto i = 0U; i < g_nNumHTTPThreads; i++)
     {
         DWORD dwThread{ DWORD{} };

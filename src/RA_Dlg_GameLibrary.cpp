@@ -56,6 +56,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
         directories.pop();
 
         WIN32_FIND_DATA ffd = WIN32_FIND_DATA{};
+        // how is this a deleted function?
         auto hFind{ ra::make_find_file(NativeStr(spec).c_str(), &ffd) };
         do
         {

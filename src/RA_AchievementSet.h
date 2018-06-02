@@ -83,11 +83,14 @@ private:
 
 //	Externals:
 
-extern AchievementSet* g_pCoreAchievements;
-extern AchievementSet* g_pUnofficialAchievements;
-extern AchievementSet* g_pLocalAchievements;
+using AchSetOwner = std::unique_ptr<AchievementSet>;
+extern AchSetOwner g_pCoreAchievements;
+extern AchSetOwner g_pUnofficialAchievements;
+extern AchSetOwner g_pLocalAchievements;
 
-extern AchievementSet* g_pActiveAchievements;
+// This has to be a reference since unique_ptr is not copy
+// constructible/assignable unless you feel like dealing with reference counts.
+extern AchSetOwner& g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
 
 extern void RASetAchievementCollection(enum AchievementSetType Type);

@@ -72,6 +72,7 @@ template<typename HandleType, typename DeleterType>
 class IHandle
 {
 public:
+    
 #pragma region Traits
     using pointer      = HandleType;
     using element_type = std::remove_pointer_t<pointer>;
@@ -81,7 +82,7 @@ public:
 
 #pragma region Converting Constructors
     explicit operator bool() const noexcept { return { this->get() != pointer{} }; }
-    explicit operator pointer() const noexcept { return static_cast<pointer>(this); }
+    explicit operator pointer() const noexcept { return this->get(); }
     explicit operator std::nullptr_t() const noexcept
     {
         if (!this->get())
@@ -90,15 +91,17 @@ public:
 #pragma endregion
 
 #pragma region Operators
-    _NODISCARD auto operator*() const { return { *this->get() }; }
-    _NODISCARD auto operator->() const noexcept { return { this->get()) }; }
+    _NODISCARD std::add_lvalue_reference_t<element_type> operator*() const { return { *this->get() }; }
+    _NODISCARD pointer operator->() const noexcept { return { this->get() }; }
 #pragma endregion
 
 #pragma region Constructors
+    // Visual Studio is tripping.... constructors aren't supposed to return anything, just assignments
+#pragma warning (disable : 4508)
     virtual ~IHandle() noexcept
     {
         if (ihandle_)
-            this->reset();
+            this->get_deleter()(this->get());
     } // end destructor
 
 
@@ -109,6 +112,7 @@ public:
     /// <param name="">The <c>nullptr</c> constant.</param>
     IHandle(std::nullptr_t) noexcept : ihandle_{ pointer{} } {}
 
+#pragma warning (default : 4508)
     /// <summary>
     /// Assigns <see cref="ihandle_"/> a <c>nullptr</c>.
     /// </summary>
@@ -117,7 +121,7 @@ public:
     IHandle& operator=(std::nullptr_t) noexcept
     {
         reset();
-        return (*this);
+        return *this;
     } // end copy assignment
 
     explicit IHandle(pointer p) noexcept : ihandle_{ p } {}
@@ -145,6 +149,7 @@ public:
 protected:
     handle_type ihandle_;
 };
+
 
 // Only these comparisons operators are needed, if you need to compare anything other than == or < type in
 // "using namespace std::rel_ops;" before making the comparison
@@ -253,17 +258,25 @@ struct NTKernelDeleter final : public IDeleter<HANDLE> {
     [[noreturn]]
     _Use_decl_annotations_ void operator()(_In_ pointer p) const noexcept override
     {
-        if (p)
+        if (p and ValidHandle(p))
         {
             if (handle == NTKernelType::FileSearch)
+            {
                 ::FindClose(p);
+                p = pointer{};
+            }
             else if (handle == NTKernelType::Mutex)
             {
+                // It should have been release already
                 ::ReleaseMutex(p);
                 ::CloseHandle(p);
+                p = pointer{};
             }
             else
+            {
                 ::CloseHandle(p);
+                p = pointer{};
+            }
         }
     }
 };
@@ -288,6 +301,8 @@ struct NTKernelH final : public IHandle<HANDLE, NTKernelDeleter<handle>>
 
     // We are using all of the base constructors
     using base_type::IHandle;
+
+    explicit operator base_type() const noexcept { return dynamic_cast<base_type*>(this); }
 
     // Params will be rearranged a little to make optional params actually optional
     template<class = std::enable_if_t<(handle == NTKernelType::Mutex)>>
@@ -337,6 +352,56 @@ struct NTKernelH final : public IHandle<HANDLE, NTKernelDeleter<handle>>
 
     NTKernelH() noexcept = default;
 };
+
+// Inheritors with more templates need operator overloading
+#pragma region NTKernelH Comparison Operators
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator==(const NTKernelH<handle>& a, std::nullptr_t) noexcept->decltype(!a) { return !a; }
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator==(std::nullptr_t, const NTKernelH<handle>& b) noexcept->decltype(!b) { return !b; }
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator!=(const NTKernelH<handle>& a, std::nullptr_t) noexcept
+->decltype(!(a == nullptr)) { return !(a == nullptr); }
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator!=(std::nullptr_t, const NTKernelH<handle>& b) noexcept
+->decltype(!(nullptr == b)) { return !(nullptr == b); }
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator==(const NTKernelH<handle>& a, const NTKernelH<handle>& b)
+->decltype(a.get() == b.get()){ return { a.get() == b.get() }; }
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator<(const NTKernelH<handle>& a, std::nullptr_t) noexcept
+    ->decltype(std::less<typename decltype(a)::pointer>()(a.get(), nullptr))
+{
+    using pointer = typename decltype(a)::pointer;
+    return std::less<pointer>()(a.get(), nullptr);
+}
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator<(std::nullptr_t, const NTKernelH<handle>& b) noexcept
+    ->decltype(std::less<typename decltype(b)::pointer>()(nullptr, b.get()))
+{
+    using pointer = typename decltype(b)::pointer;
+    return std::less<pointer>()(nullptr, b.get());
+}
+
+template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
+operator<(
+    const NTKernelH<handle>& a,
+    const NTKernelH<handle>& b)
+    ->decltype(std::less<std::common_type_t<typename decltype(a)::pointer,
+        typename decltype(b)::pointer>>()(a.get(), b.get()))
+{
+    using pointer1    = typename decltype(a)::pointer;
+    using pointer2    = typename decltype(b)::pointer;
+    using common_type = std::common_type_t<pointer1, pointer2>;
+    return std::less<common_type>()(a.get(), b.get());
+}
+#pragma endregion
 
 } // namespace detail
 

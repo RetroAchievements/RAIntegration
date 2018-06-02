@@ -210,10 +210,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     //////////////////////////////////////////////////////////////////////////
     //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet(Core);
-    g_pUnofficialAchievements = new AchievementSet(Unofficial);
-    g_pLocalAchievements = new AchievementSet(Local);
-    g_pActiveAchievements = g_pCoreAchievements;
+    // They're initialized already
 
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
@@ -251,10 +248,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 API int CCONV _RA_Shutdown()
 {
     _RA_SavePreferences();
-
-    SAFE_DELETE(g_pCoreAchievements);
-    SAFE_DELETE(g_pUnofficialAchievements);
-    SAFE_DELETE(g_pLocalAchievements);
 
     RAWeb::RA_KillHTTPThreads();
 
@@ -590,13 +583,13 @@ API int CCONV _RA_HandleHTTPResults()
                     /* This block seems unnecessary. --GD
                     for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
                     {
-                        Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-                        if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
-                        {
-                            //	Re-set this badge image
-                            //	NB. This is already a non-modifying op
-                            ach.SetBadgeImage( sBadgeURI );
-                        }
+                    Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+                    if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
+                    {
+                    //	Re-set this badge image
+                    //	NB. This is already a non-modifying op
+                    ach.SetBadgeImage( sBadgeURI );
+                    }
                     }*/
 
                     g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
@@ -704,7 +697,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Error submitting achievement:",
                                     doc["Error"].GetString())); //?
 
-                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+                                                                //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
                         }
                     }
                     else
@@ -1632,29 +1625,29 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
     HRESULT hr;
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
+        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
             CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+            if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
                 LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;
                 }
-				pItem.Release();
+                pItem.Release();
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
     return sRetVal;
 }

@@ -569,7 +569,7 @@ void Dlg_MemBookmark::AddAddress()
     if (g_pCurrentGameData->GetGameID() == 0)
         return;
 
-    MemBookmark* NewBookmark = new MemBookmark();
+    auto NewBookmark{ std::make_unique<MemBookmark>() };
 
     // Fetch Memory Address from Memory Inspector
     TCHAR buffer[256];
@@ -595,8 +595,8 @@ void Dlg_MemBookmark::AddAddress()
         NewBookmark->SetDescription(Widen(pSavedNote->Note()).c_str());
 
     // Add Bookmark to vector and map
-    AddBookmark(NewBookmark);
-    AddBookmarkMap(NewBookmark);
+    AddBookmark(NewBookmark.get());
+    AddBookmarkMap(NewBookmark.get());
 
     PopulateList();
 }
@@ -788,7 +788,7 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                 const Value& BookmarksData = doc["Bookmarks"];
                 for (SizeType i = 0; i < BookmarksData.Size(); ++i)
                 {
-                    MemBookmark* NewBookmark = new MemBookmark();
+                    auto NewBookmark = std::make_unique<MemBookmark>();
 
                     wchar_t buffer[256];
                     swprintf_s(buffer, 256, L"%s", Widen(BookmarksData[i]["Description"].GetString()).c_str());
@@ -801,8 +801,8 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                     NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
                     NewBookmark->SetPrevious(NewBookmark->Value());
 
-                    AddBookmark(NewBookmark);
-                    AddBookmarkMap(NewBookmark);
+                    AddBookmark(NewBookmark.get());
+                    AddBookmarkMap(NewBookmark.get());
                 }
 
                 if (m_vBookmarks.size() > 0)

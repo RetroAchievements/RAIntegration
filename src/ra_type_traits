@@ -82,12 +82,11 @@ is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
 namespace detail { 
 
 template<typename NullablePointer>
-struct is_nullable_pointer : std::bool_constant<
+struct is_nullable_pointer : std::bool_constant<(
 	(is_nothrow_equality_comparable<NullablePointer>::value and std::is_nothrow_default_constructible_v<NullablePointer>) and
 	(std::is_pointer_v<NullablePointer> or std::is_pointer_v<std::add_pointer_t<NullablePointer>>) and
 	(std::is_nothrow_copy_constructible_v<NullablePointer> and std::is_nothrow_copy_assignable_v<NullablePointer>) and
-	(std::is_nothrow_copy_assignable_v<NullablePointer> and std::is_nothrow_destructible_v<NullablePointer>>)	
-> {};
+	(std::is_nothrow_copy_assignable_v<NullablePointer> and std::is_nothrow_destructible_v<NullablePointer>))> {};
 
 template<typename FunctionObject, typename ...Args>
 struct is_function_object :

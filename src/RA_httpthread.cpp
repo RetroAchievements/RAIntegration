@@ -102,10 +102,10 @@ static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!"
 
 //	No game-specific code here please!
 
-std::vector<HANDLE> g_vhHTTPThread;
+std::vector<ra::ThreadH> g_vhHTTPThread;
 HttpResults HttpRequestQueue;
 
-HANDLE RAWeb::ms_hHTTPMutex = nullptr;
+ra::MutexH RAWeb::ms_hHTTPMutex{ ra::make_mutex(FALSE) };
 HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
@@ -339,24 +339,19 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
 
                     while (nBytesToRead > 0)
                     {
-                        BYTE* pData = new BYTE[nBytesToRead];
-                        //if( nBytesToRead <= 32 )
+                        DWORD nBytesFetched = DWORD{};
+                        if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                            }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                         {
-                            DWORD nBytesFetched = 0;
-                            if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
-                            {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
-                                //ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;	//Timed out?
-                            }
+                            ASSERT(nBytesToRead == nBytesFetched);
+                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                            // pData will be destroyed here or in the else
                         }
-
-                        delete[] pData;
+                        else
+                        {
+                            RA_LOG("Assumed timed out connection?!");
+                            break;	//Timed out?
+                        }
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
@@ -433,22 +428,20 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     while (nBytesToRead > 0)
                     {
-                        BYTE* pData = new BYTE[nBytesToRead];
+                        DWORD nBytesFetched = DWORD{};
+                        if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                            }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                         {
-                            DWORD nBytesFetched = 0;
-                            if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
-                            {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;	//Timed out?
-                            }
+                            ASSERT(nBytesToRead == nBytesFetched);
+                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                            // pData will be destroyed here or in the else
+                        }
+                        else
+                        {
+                            RA_LOG("Assumed timed out connection?!");
+                            break;	//Timed out?
                         }
 
-                        delete[] pData;
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
@@ -602,22 +595,18 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
 
             while (nBytesToRead > 0)
             {
-                BYTE* pData = new BYTE[nBytesToRead];
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
                 ASSERT(nBytesToRead <= 8192);
                 if (nBytesToRead <= 8192)
                 {
-                    DWORD nBytesFetched = 0;
-                    if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
+                    DWORD nBytesFetched = DWORD{};
+                    if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                        }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
                         ASSERT(nBytesToRead == nBytesFetched);
-                        ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
+                        ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                        // pData will be destroyed here
                     }
                 }
-
-                delete[] pData;
                 WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
             }
 
@@ -672,7 +661,8 @@ BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 //	Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
-    HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
+    auto tmp{ std::make_unique<RequestObject>(nType, PostData, sData) };
+    HttpRequestQueue.PushItem(tmp.release());
     RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
 }
 
@@ -681,20 +671,24 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
 void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
-
-    RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
-    for (size_t i = 0; i < g_nNumHTTPThreads; ++i)
+    RAWeb::ms_hHTTPMutex = ra::make_mutex(FALSE);
+    for (auto i = 0U; i < g_nNumHTTPThreads; i++)
     {
-        DWORD dwThread;
-        HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
-        ASSERT(hThread != nullptr);
-        if (hThread != nullptr)
+        DWORD dwThread{ DWORD{} };
+
+        static_assert(ra::is_equality_comparable_v<ra::ThreadH>);
+        static_assert(ra::is_nullable_pointer_v<ra::ThreadH::pointer>);
+
+        if (auto hThread = ra::make_thread(SIZE_T{}, RAWeb::HTTPWorkerThread, DWORD{}, nullptr,
+            static_cast<LPVOID>(&i), &dwThread); hThread != nullptr)
         {
-            g_vhHTTPThread.push_back(hThread);
-            RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread);
+            RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread.get());
+            g_vhHTTPThread.push_back(std::move(hThread));
         }
     }
 }
+
+// TODO: Look at "RAWeb::HTTPWorkerThread" later, optimizing it is taking too long.
 
 //	Takes items from the http request queue, and posts them to the last http results queue.
 DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
@@ -706,9 +700,17 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
 
     while (bThreadActive)
     {
-        WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-        RequestObject* pObj = HttpRequestQueue.PopNextItem();
-        ReleaseMutex(RAWeb::Mutex());
+        RequestObject* pObj{ nullptr };
+        {
+            auto result = WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+            if (result == WAIT_OBJECT_0)
+            {
+                if (!HttpRequestQueue.Empty())
+                    pObj = HttpRequestQueue.PopNextItem();
+
+            }
+            ReleaseMutex(RAWeb::Mutex());
+        }
         if (pObj != nullptr)
         {
             DataStream Response;
@@ -814,16 +816,14 @@ void RAWeb::RA_KillHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
-    {
-        //	Create n of these:
+    //	Create n of these:
+    for (auto& i : g_vhHTTPThread)
         RAWeb::CreateThreadedHTTPRequest(RequestType::StopThread);
-    }
 
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
+    for (auto& i : g_vhHTTPThread)
     {
         //	Wait for n responses:
-        DWORD nResult = WaitForSingleObject(g_vhHTTPThread[i], INFINITE);
+        const auto nResult{ WaitForSingleObject(i.get(), INFINITE) };
         RA_LOG(__FUNCTION__ " ended, result %d\n", nResult);
     }
 }
@@ -832,89 +832,99 @@ void RAWeb::RA_KillHTTPThreads()
 
 RequestObject* HttpResults::PopNextItem()
 {
-    RequestObject* pRetVal = nullptr;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-    {
-        if (m_aRequests.size() > 0)
-        {
-            pRetVal = m_aRequests.front();
-            m_aRequests.pop_front();
-        }
-    }
-    ReleaseMutex(RAWeb::Mutex());
+    // Now I don't think we need to worry about it being empty or not
 
-    return pRetVal;
+    if ((WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0) and (!m_aRequests.empty()))
+    {
+        auto pRetVal = m_aRequests.front();
+        m_aRequests.pop_front();
+        ReleaseMutex(RAWeb::Mutex());
+        return pRetVal;
+    }
+
+    // Almost always throws an exception we'll just return a null pointer for now
+    return std::add_pointer_t<RequestObject>{};
 }
 
 const RequestObject* HttpResults::PeekNextItem() const
 {
-    RequestObject* pRetVal = nullptr;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        pRetVal = m_aRequests.front();
+        auto pRetVal{ m_aRequests.front() };
+        ReleaseMutex(RAWeb::Mutex());
+        return pRetVal;
     }
-    ReleaseMutex(RAWeb::Mutex());
 
-    return pRetVal;
+    ra::ThrowLastError();
 }
 
-void HttpResults::PushItem(RequestObject* pObj)
+void HttpResults::PushItem(RequestObject* pObj) noexcept
 {
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
         m_aRequests.push_front(pObj);
+        ReleaseMutex(RAWeb::Mutex());
     }
-    ReleaseMutex(RAWeb::Mutex());
 }
 
-void HttpResults::Clear()
+void HttpResults::Clear() noexcept
 {
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
         while (!m_aRequests.empty())
         {
-            RequestObject* pObj = m_aRequests.front();
+            std::unique_ptr<RequestObject> pObj{ std::move(m_aRequests.front()) };
             m_aRequests.pop_front();
-            SAFE_DELETE(pObj);
         }
+        ReleaseMutex(RAWeb::Mutex());
     }
-    ReleaseMutex(RAWeb::Mutex());
 }
 
-size_t HttpResults::Count() const
+size_t HttpResults::Count() const noexcept
 {
-    size_t nCount = 0;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        nCount = m_aRequests.size();
+        auto nCount{ m_aRequests.size() };
+        ReleaseMutex(RAWeb::Mutex());
+        return nCount;
     }
-    ReleaseMutex(RAWeb::Mutex());
 
-    return nCount;
+    return WAIT_FAILED;
+}
+
+
+// compile-time methods do not need a mutex
+
+
+
+bool HttpResults::Empty() const noexcept
+{
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    {
+        ReleaseMutex(RAWeb::Mutex());
+        return std::empty(m_aRequests);
+    }
+    ra::ThrowLastError();
 }
 
 BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData) const
 {
-    BOOL bRetVal = FALSE;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        std::deque<RequestObject*>::const_iterator iter = m_aRequests.begin();
-        while (iter != m_aRequests.end())
+        auto bRetVal{ FALSE };
+        for (auto& i : m_aRequests)
         {
-            const RequestObject* pObj = (*iter);
-            if (pObj->GetRequestType() == nType &&
-                pObj->GetData().compare(sData) == 0)
+            if ((i->GetRequestType()) == nType and (i->GetData() == sData))
             {
                 bRetVal = TRUE;
                 break;
             }
-
-            iter++;
         }
+        ReleaseMutex(RAWeb::Mutex());
+        return bRetVal;
     }
-    ReleaseMutex(RAWeb::Mutex());
 
-    return bRetVal;
+    return WAIT_FAILED;
 }
 
 std::string PostArgsToString(const PostArgs& args)

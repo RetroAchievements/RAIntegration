@@ -695,7 +695,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             else
                 SetTextColor(hDC, COL_TEXT);
 
-            HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
+            
+            auto hOldObj = SelectObject(hDC, g_hFontDesc);
 
             sprintf_s(buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), strlen(buffer));

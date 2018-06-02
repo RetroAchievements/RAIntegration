@@ -71,7 +71,10 @@ public:
     inline size_t BankSize(unsigned short nBank) const { return m_Banks.at(nBank).BankSize; }
     //inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
     //inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
-    inline size_t TotalBankSize() const { return m_nTotalBankSize; }
+    inline size_t TotalBankSize() const
+    {
+        return m_nTotalBankSize;
+    }
 
     std::vector<size_t> GetBankIDs() const;
 
@@ -79,7 +82,7 @@ public:
     const MemCandidate& GetCandidate(size_t nAt) const { return m_Candidates[nAt]; }
 
     inline void ChangeNumCandidates(unsigned int size) { m_nNumCandidates = size; }
-    MemCandidate* GetCandidatePointer() { return m_Candidates; }
+    MemCandidate* GetCandidatePointer() { return m_Candidates.get(); }
 
     void ChangeActiveMemBank(unsigned short nMemBank);
 
@@ -94,7 +97,8 @@ private:
     std::map<size_t, BankData> m_Banks;
     unsigned short m_nActiveMemBank;
 
-    MemCandidate* m_Candidates;		//	Pointer to an array
+    //	Pointer to an array
+    std::unique_ptr<MemCandidate[]> m_Candidates;
     size_t m_nNumCandidates;		//	Actual quantity of legal candidates
 
     ComparisonVariableSize m_nComparisonSizeMode;

@@ -27,4 +27,4 @@ private:
 
 
 
-extern GameData* g_pCurrentGameData;
+extern std::unique_ptr<GameData> g_pCurrentGameData;

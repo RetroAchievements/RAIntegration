@@ -22,12 +22,6 @@ void MemManager::ClearMemoryBanks()
 {
     m_Banks.clear();
     m_nTotalBankSize = 0;
-    if (m_Candidates != nullptr)
-    {
-        delete[] m_Candidates;
-        m_Candidates = nullptr;
-    }
-
     g_MemoryDialog.ClearBanks();
 }
 
@@ -60,8 +54,8 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
     const size_t RAM_SIZE = TotalBankSize();
 
     if (m_Candidates == nullptr)
-        m_Candidates = new MemCandidate[RAM_SIZE * 2];	//	To allow for upper and lower nibbles
-    MemCandidate* pCandidate = &m_Candidates[0];
+        m_Candidates = std::make_unique<MemCandidate[]>(RAM_SIZE * 2U);	//	To allow for upper and lower nibbles
+    auto pCandidate = &m_Candidates[0];
 
     if (end >= RAM_SIZE)
         end = RAM_SIZE - 1;
@@ -140,7 +134,7 @@ void MemManager::Reset(unsigned short nSelectedMemBank, ComparisonVariableSize n
     const size_t RAM_SIZE = m_Banks[m_nActiveMemBank].BankSize;
 
     if (m_Candidates == nullptr)
-        m_Candidates = new MemCandidate[RAM_SIZE * 2];	//	To allow for upper and lower nibbles
+        m_Candidates = std::make_unique<MemCandidate[]>(RAM_SIZE * 2U);	//	To allow for upper and lower nibbles
 
     //	Initialize the memory cache: i.e. every memory address is valid!
     if ((m_nComparisonSizeMode == Nibble_Lower) ||

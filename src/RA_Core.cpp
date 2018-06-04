@@ -34,6 +34,7 @@
 #include <direct.h>
 #include <io.h>		//	_access()
 #include <atlbase.h> // CComPtr
+#include <fstream> // to eliminate the need of malloc
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
@@ -93,17 +94,17 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 {
     //	Ensure all required directories are created:
     if (DirectoryExists(RA_DIR_BASE) == FALSE)
-        _mkdir(RA_DIR_BASE);
+        CreateDirectory(TEXT(RA_DIR_BASE), nullptr);
     if (DirectoryExists(RA_DIR_BADGE) == FALSE)
-        _mkdir(RA_DIR_BADGE);
+        CreateDirectory(TEXT(RA_DIR_BADGE), nullptr);
     if (DirectoryExists(RA_DIR_DATA) == FALSE)
-        _mkdir(RA_DIR_DATA);
+        CreateDirectory(TEXT(RA_DIR_DATA), nullptr);
     if (DirectoryExists(RA_DIR_USERPIC) == FALSE)
-        _mkdir(RA_DIR_USERPIC);
+        CreateDirectory(TEXT(RA_DIR_USERPIC), nullptr);
     if (DirectoryExists(RA_DIR_OVERLAY) == FALSE)	//	It should already, really...
-        _mkdir(RA_DIR_OVERLAY);
+        CreateDirectory(TEXT(RA_DIR_OVERLAY), nullptr);
     if (DirectoryExists(RA_DIR_BOOKMARKS) == FALSE)
-        _mkdir(RA_DIR_BOOKMARKS);
+        CreateDirectory(TEXT(RA_DIR_BOOKMARKS), nullptr);
 
 
     g_EmulatorID = static_cast<EmulatorID>(nEmulatorID);
@@ -277,11 +278,7 @@ API int CCONV _RA_Shutdown()
 
     g_GameLibrary.KillThread();
 
-    if (g_RichPresenceDialog.GetHWND() != nullptr)
-    {
-        DestroyWindow(g_RichPresenceDialog.GetHWND());
-        g_RichPresenceDialog.InstallHWND(nullptr);
-    }
+
 
     if (g_MemBookmarkDialog.GetHWND() != nullptr)
     {
@@ -549,200 +546,208 @@ API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-
-    RequestObject* pObj = RAWeb::PopNextHttpResult();
-    while (pObj != nullptr)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
-        if (pObj->GetResponse().size() > 0)
+        RequestObject* pObj = RAWeb::PopNextHttpResult();
+        while (pObj != nullptr)
         {
-            Document doc;
-            BOOL bJSONParsedOK = FALSE;
-
-            if (pObj->GetRequestType() == RequestBadge)
+            if (pObj->GetResponse().size() > 0)
             {
-                //	Ignore...
-            }
-            else
-            {
-                bJSONParsedOK = pObj->ParseResponseToJSON(doc);
-            }
+                Document doc;
+                BOOL bJSONParsedOK = FALSE;
 
-            switch (pObj->GetRequestType())
-            {
-                case RequestLogin:
-                    RAUsers::LocalUser().HandleSilentLoginResponse(doc);
-                    break;
-
-                case RequestBadge:
+                if (pObj->GetRequestType() == RequestBadge)
                 {
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                    const std::string& sBadgeURI = pObj->GetData();
-                    _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
-
-                    /* This block seems unnecessary. --GD
-                    for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
-                    {
-                    Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-                    if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
-                    {
-                    //	Re-set this badge image
-                    //	NB. This is already a non-modifying op
-                    ach.SetBadgeImage( sBadgeURI );
-                    }
-                    }*/
-
-                    g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
+                    //	Ignore...
                 }
-                break;
-
-                case RequestBadgeIter:
-                    g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
-                    break;
-
-                case RequestUserPic:
-                    RAUsers::OnUserPicDownloaded(*pObj);
-                    break;
-
-                case RequestScore:
+                else
                 {
-                    ASSERT(doc["Success"].GetBool());
-                    if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
-                    {
-                        const std::string& sUser = doc["User"].GetString();
-                        unsigned int nScore = doc["Score"].GetUint();
-                        RA_LOG("%s's score: %d", sUser.c_str(), nScore);
-
-                        if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
-                        {
-                            RAUsers::LocalUser().SetScore(nScore);
-                        }
-                        else
-                        {
-                            //	Find friend? Update this information?
-                            RAUsers::GetUser(sUser)->SetScore(nScore);
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"RequestScore bad response!?");
-                        RA_LOG("RequestScore bad response!?");
-                    }
+                    bJSONParsedOK = pObj->ParseResponseToJSON(doc);
                 }
-                break;
 
-                case RequestLatestClientPage:
+                switch (pObj->GetRequestType())
                 {
-                    if (doc.HasMember("LatestVersion"))
-                    {
-                        const std::string& sReply = doc["LatestVersion"].GetString();
-                        if (sReply.substr(0, 2).compare("0.") == 0)
-                        {
-                            long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
-                            long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
-                            long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
+                    case RequestLogin:
+                        RAUsers::LocalUser().HandleSilentLoginResponse(doc);
+                        break;
 
-                            if (nValKnown < nValServer && nValCurrent < nValServer)
+                    case RequestBadge:
+                    {
+                        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                        const std::string& sBadgeURI = pObj->GetData();
+                        _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
+
+                        /* This block seems unnecessary. --GD
+                        for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
+                        {
+                        Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+                        if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
+                        {
+                        //	Re-set this badge image
+                        //	NB. This is already a non-modifying op
+                        ach.SetBadgeImage( sBadgeURI );
+                        }
+                        }*/
+
+                        g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
+                    }
+                    break;
+
+                    case RequestBadgeIter:
+                        g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
+                        break;
+
+                    case RequestUserPic:
+                        RAUsers::OnUserPicDownloaded(*pObj);
+                        break;
+
+                    case RequestScore:
+                    {
+                        ASSERT(doc["Success"].GetBool());
+                        if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
+                        {
+                            const std::string& sUser = doc["User"].GetString();
+                            unsigned int nScore = doc["Score"].GetUint();
+                            RA_LOG("%s's score: %d", sUser.c_str(), nScore);
+
+                            if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
                             {
-                                //	Update available:
-                                _RA_OfferNewRAUpdate(sReply.c_str());
-
-                                //	Update the last version I've heard of:
-                                g_sKnownRAVersion = sReply;
+                                RAUsers::LocalUser().SetScore(nScore);
                             }
                             else
                             {
-                                RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                                //	Find friend? Update this information?
+                                RAUsers::GetUser(sUser)->SetScore(nScore);
                             }
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
-                        RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
-                    }
-                }
-                break;
-
-                case RequestSubmitAwardAchievement:
-                {
-                    //	Response to an achievement being awarded:
-                    AchievementID nAchID = static_cast<AchievementID>(doc["AchievementID"].GetUint());
-                    const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
-                    if (pAch == nullptr)
-                        pAch = g_pUnofficialAchievements->Find(nAchID);
-                    if (pAch != nullptr)
-                    {
-                        if (!doc.HasMember("Error"))
-                        {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementUnlocked,
-                                    pAch->BadgeImage()));
-                            g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                            RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
                         }
                         else
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked (Error)",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementError,
-                                    pAch->BadgeImage()));
-                            g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Error submitting achievement:",
-                                    doc["Error"].GetString())); //?
-
-                                                                //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+                            ASSERT(!"RequestScore bad response!?");
+                            RA_LOG("RequestScore bad response!?");
                         }
                     }
-                    else
+                    break;
+
+                    case RequestLatestClientPage:
                     {
-                        ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                        if (doc.HasMember("LatestVersion"))
+                        {
+                            const std::string& sReply = doc["LatestVersion"].GetString();
+                            if (sReply.substr(0, 2).compare("0.") == 0)
+                            {
+                                long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
+                                long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
+                                long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
+
+                                if (nValKnown < nValServer && nValCurrent < nValServer)
+                                {
+                                    //	Update available:
+                                    _RA_OfferNewRAUpdate(sReply.c_str());
+
+                                    //	Update the last version I've heard of:
+                                    g_sKnownRAVersion = sReply;
+                                }
+                                else
+                                {
+                                    RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
+                            RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
+                        }
                     }
+                    break;
+
+                    case RequestSubmitAwardAchievement:
+                    {
+                        //	Response to an achievement being awarded:
+                        AchievementID nAchID = static_cast<AchievementID>(doc["AchievementID"].GetUint());
+                        const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
+                        if (pAch == nullptr)
+                            pAch = g_pUnofficialAchievements->Find(nAchID);
+                        if (pAch != nullptr)
+                        {
+                            if (!doc.HasMember("Error"))
+                            {
+                                g_PopupWindows.AchievementPopups().AddMessage(
+                                    MessagePopup("Achievement Unlocked",
+                                        pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                        PopupMessageType::PopupAchievementUnlocked,
+                                        pAch->BadgeImage()));
+                                g_AchievementsDialog.OnGet_Achievement(*pAch);
+
+                                RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
+                            }
+                            else
+                            {
+                                g_PopupWindows.AchievementPopups().AddMessage(
+                                    MessagePopup("Achievement Unlocked (Error)",
+                                        pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                        PopupMessageType::PopupAchievementError,
+                                        pAch->BadgeImage()));
+                                g_AchievementsDialog.OnGet_Achievement(*pAch);
+
+                                g_PopupWindows.AchievementPopups().AddMessage(
+                                    MessagePopup("Error submitting achievement:",
+                                        doc["Error"].GetString())); //?
+
+                                                                    //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+                            }
+                        }
+                        else
+                        {
+                            ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
+                            RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                        }
+                    }
+                    break;
+
+                    case RequestNews:
+                        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                        _WriteBufferToFile(RA_NEWS_FILENAME, doc);
+                        g_AchievementOverlay.InstallNewsArticlesFromFile();
+                        break;
+
+                    case RequestAchievementInfo:
+                        g_AchExamine.OnReceiveData(doc);
+                        break;
+
+                    case RequestCodeNotes:
+                        CodeNotes::OnCodeNotesResponse(doc);
+                        break;
+
+                    case RequestSubmitLeaderboardEntry:
+                        RA_LeaderboardManager::OnSubmitEntry(doc);
+                        break;
+
+                    case RequestLeaderboardInfo:
+                        g_LBExamine.OnReceiveData(doc);
+                        break;
+
+                    case RequestUnlocks:
+                        AchievementSet::OnRequestUnlocks(doc);
+                        //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
+                        break;
+
                 }
-                break;
 
-                case RequestNews:
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                    _WriteBufferToFile(RA_NEWS_FILENAME, doc);
-                    g_AchievementOverlay.InstallNewsArticlesFromFile();
-                    break;
-
-                case RequestAchievementInfo:
-                    g_AchExamine.OnReceiveData(doc);
-                    break;
-
-                case RequestCodeNotes:
-                    CodeNotes::OnCodeNotesResponse(doc);
-                    break;
-
-                case RequestSubmitLeaderboardEntry:
-                    RA_LeaderboardManager::OnSubmitEntry(doc);
-                    break;
-
-                case RequestLeaderboardInfo:
-                    g_LBExamine.OnReceiveData(doc);
-                    break;
-
-                case RequestUnlocks:
-                    AchievementSet::OnRequestUnlocks(doc);
-                    //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
-                    break;
             }
+
+            SAFE_DELETE(pObj);
+            pObj = RAWeb::PopNextHttpResult();
+
         }
-
-        SAFE_DELETE(pObj);
-        pObj = RAWeb::PopNextHttpResult();
+        // Since it's static we have to call it explicitly or it will never
+        // unlock, unlike std::lock_guard which only works with std::mutex or
+        // something that satisfy the BasicMutex concept
+        ::ReleaseMutex(hHTTPMutex.get());
     }
-
-    ReleaseMutex(RAWeb::Mutex());
     return 0;
+
 }
 
 //	Following this function, an app should call AppendMenu to associate this submenu.
@@ -1526,78 +1531,84 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
-        doc.Accept(writer);
-        fclose(pf);
-    }
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+    FileH pf{ std::fopen(sFileName.c_str(), "wb"), &std::fclose };
+
+    if (!pf)
+        ra::ThrowLastError();
+
+    FileStream fs{ pf.get() };
+    Writer<FileStream> writer(fs);
+    // OK this worked too
+    doc.Accept(writer);
 }
 
 void _WriteBufferToFile(const std::string& sFileName, const DataStream& raw)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        fwrite(raw.data(), 1, raw.size(), pf);
-        fclose(pf);
-    }
+    // FILE* is not allowed to nullptr
+    // Just don't use std::endl and you'll be fine
+    std::ofstream ofile{ sFileName };
+
+    std::ostringstream oss;
+    for (auto& c : raw)
+        oss << ra::to_signed(c);
+    ofile << oss.str();
 }
 
 void _WriteBufferToFile(const std::string& sFileName, const std::string& sData)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        fwrite(sData.data(), 1, sData.length(), pf);
-        fclose(pf);
-    }
+    // Didn't seem to write in formatted mode so doing it in unformatted mode
+    std::ofstream ofile{ sFileName, std::ios::binary };
+    // OK, it definitely wrote to the file this time
+    ofile.write(sData.c_str(), std::distance(sData.begin(), sData.end()));
 }
 
 void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFile, "wb") == 0)
-    {
-        fwrite(sBuffer, 1, nBytes, pf);
-        fclose(pf);
-    }
+    std::ofstream ofile{ sFile, std::ios::binary };
+    std::ostringstream oss;
+    std::basic_string<BYTE> ustring{ sBuffer };
+
+    for (auto& c : ustring)
+        oss << ra::to_signed(c);
+
+    auto str = oss.str();
+    ofile.write(str.c_str(), nBytes);
 }
 
+_Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
 {
+    nFileSizeOut = 0L;
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, sFilename, "r");
-    if (pf == nullptr)
+    std::ifstream ifile{ sFilename, std::ios::binary | std::ios::ate };
+
+    if (!ifile.is_open())
         return nullptr;
 
+    // std::streamsize is "long-long" so it needs a narrowing conversion
     //	Calculate filesize
-    fseek(pf, 0L, SEEK_END);
-    nFileSizeOut = ftell(pf);
-    fseek(pf, 0L, SEEK_SET);
+    nFileSizeOut = static_cast<long>(ifile.gcount());
+
 
     if (nFileSizeOut <= 0)
     {
         //	No good content in this file.
-        fclose(pf);
+        // How did it even open?
+        ifile.close();
         return nullptr;
     }
 
-    //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
-    char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
-    ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+    auto pRawFileOut{ std::make_unique<char[]>(nFileSizeOut + 1L) };
 
-    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
-    fclose(pf);
+    ifile.read(pRawFileOut.get(), nFileSizeOut);
 
-    return pRawFileOut;
+    // caller should handle it, if we used get() here there would be heap corruption
+    return pRawFileOut.get();
 }
 
 std::string _TimeStampToString(time_t nTime)

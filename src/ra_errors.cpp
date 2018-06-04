@@ -9,7 +9,7 @@ auto CALLBACK
 GetLastErrorCode() noexcept
 ->std::error_code{ return { static_cast<int>(::GetLastError()), std::system_category() };}
 
-int CALLBACK
+_Use_decl_annotations_ int CALLBACK
 ShowError(const tstring& message, HWND hwnd) noexcept
 {
     return ::MessageBox(hwnd, message.c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);

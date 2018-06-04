@@ -136,7 +136,6 @@ public:
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
 
-    static HANDLE Mutex() { return ms_hHTTPMutex.get(); }
     static RequestObject* PopNextHttpResult()
     {
         if(!ms_LastHttpResults.Empty())
@@ -145,6 +144,7 @@ public:
     }
 
 private:
-    static ra::MutexH ms_hHTTPMutex;
+    // Sure we can make the mutex static but not as a class member
+    
     static HttpResults ms_LastHttpResults;
 };

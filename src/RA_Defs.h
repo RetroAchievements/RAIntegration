@@ -2,6 +2,10 @@
 #define RA_DEFS_H
 #pragma once
 
+// This macro has no effect, Windows.h is probably included more than once, there was a PR that did make it work though
+// #define NOMINMAX
+#undef max
+
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ShlObj.h>
@@ -108,7 +112,7 @@ static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
 class RARect : public RECT
 {
 public:
-    RARect() {}
+    RARect() noexcept {}
     RARect(LONG nX, LONG nY, LONG nW, LONG nH)
     {
         left = nX;
@@ -125,7 +129,7 @@ public:
 class RASize
 {
 public:
-    RASize() : m_nWidth(0), m_nHeight(0) {}
+    RASize() noexcept : m_nWidth(0), m_nHeight(0) {}
     RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
     RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
 

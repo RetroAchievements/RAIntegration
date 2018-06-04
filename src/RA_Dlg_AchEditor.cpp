@@ -12,6 +12,9 @@
 #include "RA_MemManager.h"
 #include "RA_User.h"
 
+// Windows must be included more than once...
+//#define NOMINMAX
+
 #pragma comment(lib, "comctl32.lib")
 
 namespace {
@@ -81,7 +84,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPa
 
 
 
-Dlg_AchievementEditor::Dlg_AchievementEditor()
+Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
     : m_hAchievementEditorDlg(nullptr),
     m_hICEControl(nullptr),
     m_pSelectedAchievement(nullptr),
@@ -333,7 +336,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            lvDispinfo.hdr.code = std::numeric_limits<UINT>::max();
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -390,7 +393,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            lvDispinfo.hdr.code = std::numeric_limits<UINT>::max();
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -421,7 +424,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            lvDispinfo.hdr.code = std::numeric_limits<UINT>::max();
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1477,7 +1480,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
                         lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                         lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
-                        lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+                        lvDispinfo.hdr.code = std::numeric_limits<UINT>::max();
                         lvDispinfo.item.mask = LVIF_TEXT;
                         lvDispinfo.item.iItem = nSelItem;
                         lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1809,6 +1812,7 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
 
     while (ListBox_DeleteString(hGroupList, 0) >= 0) {}
 
+    // Got warning that this could be nullptr, which dereference a null pointer is undefined
     if (pCheevo != nullptr)
     {
         for (size_t i = 0; i < pCheevo->NumConditionGroups(); ++i)
@@ -1818,7 +1822,7 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
     }
 
     //	Try and restore selection
-    if (nSel < 0 || nSel >= (int)pCheevo->NumConditionGroups())
+    if (pCheevo and ((nSel < 0) or (nSel >= ra::to_signed(pCheevo->NumConditionGroups()))))
         nSel = 0;	//	Reset to core if unsure
 
     ListBox_SetCurSel(hGroupList, nSel);

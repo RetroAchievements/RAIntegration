@@ -26,14 +26,27 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
 
                 case IDC_RA_COPYCHECKSUMCLIPBOARD:
                 {
+                    // https://msdn.microsoft.com/en-us/library/windows/desktop/aa366574(v=vs.85).aspx
+                    // Decided to use HeapCreate instead of HeapAlloc because previously the memory needed to be movable
                     //	Allocate memory to be managed by the clipboard
-                    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, g_sCurrentROMMD5.length() + 1);
-                    memcpy(GlobalLock(hMem), g_sCurrentROMMD5.c_str(), g_sCurrentROMMD5.length() + 1);
-                    GlobalUnlock(hMem);
+                    using HeapH = std::unique_ptr<
+                        std::remove_pointer_t<HANDLE>,
+                        decltype(&::HeapDestroy)
+                    >;
+                    HeapH hMem{
+                        HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0U, g_sCurrentROMMD5.length() + 1U),
+                        &::HeapDestroy
+                    };
+
+                    {
+                        HeapLock(hMem.get());
+                        memcpy(hMem.get(), g_sCurrentROMMD5.c_str(), g_sCurrentROMMD5.length() + 1);
+                        HeapUnlock(hMem.get());
+                    }
 
                     OpenClipboard(nullptr);
                     EmptyClipboard();
-                    SetClipboardData(CF_TEXT, hMem);
+                    SetClipboardData(CF_TEXT, hMem.get());
                     CloseClipboard();
 
                     //MessageBeep( 0xffffffff );

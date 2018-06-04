@@ -69,22 +69,16 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 }
 
                 {
-                    std::map<std::string, GameID>::const_iterator iter = m_aGameTitles.begin();
-                    while (iter != m_aGameTitles.end())
+                    for (auto& myPair : m_aGameTitles)
                     {
-                        const std::string& sTitle = iter->first;
+                        auto sTitle = myPair.first;
 
                         nSel = ComboBox_AddString(hKnownGamesCbo, NativeStr(sTitle).c_str());
 
                         //	Attempt to find this game and select it by default: case insensitive comparison
-                        if (sGameTitleTidy.compare(sTitle) == 0)
-                        {
+                        if (sGameTitleTidy == sTitle)
                             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
-                        }
-
-                        iter++;
                     }
-
                 }
             }
 

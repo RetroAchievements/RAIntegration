@@ -100,6 +100,7 @@ public:
 #pragma warning (disable : 4508)
     virtual ~IHandle() noexcept
     {
+        // Alright window handles seem like they can only be invalidated and not reset
         if (ihandle_)
             this->get_deleter()(this->get());
     } // end destructor
@@ -255,27 +256,35 @@ struct NTKernelDeleter final : public IDeleter<HANDLE> {
     // You don't have to nullify it here, unique_ptr will do it once it's
     // destroyed we just need to supply the deleter
 
-    [[noreturn]]
-    _Use_decl_annotations_ void operator()(_In_ pointer p) const noexcept override
+    void operator()(pointer p) const noexcept override
     {
-        if (p and ValidHandle(p))
+        // I'm pretty sure it's because the mutex is static
+        if (p != INVALID_HANDLE_VALUE)
         {
-            if (handle == NTKernelType::FileSearch)
-                ::FindClose(p);
-            // Seems to cause access violations in release mode, the
-            // documentation says that a Windows mutex is closed
-            // automatically as long it's released so it's ok
-            else if (handle == NTKernelType::Mutex)
+            switch (handle)
             {
+                case NTKernelType::File:
+                    ::CloseHandle(p);
+                    break;
 
-                ::ReleaseMutex(p);
-                ::CloseHandle(p);
+                case NTKernelType::FileSearch:
+                    ::FindClose(p);
+                    break;
 
+                case NTKernelType::Mutex:
+                    ::ReleaseMutex(p);
+                    break;
+
+                case NTKernelType::Thread:
+                {
+                    // This might need a mutex, this one cannot be static or it will cause a deadlock
+                    if(auto tmp{ make_mutex(FALSE)
+                        }; WaitForSingleObject(tmp.get(), INFINITE) == WAIT_OBJECT_0)
+                    {
+                        ::CloseHandle(p);
+                    }
+                }
             }
-
-            else
-                ::CloseHandle(p);
-
         }
     }
 };
@@ -301,12 +310,7 @@ struct NTKernelH final : public IHandle<HANDLE, NTKernelDeleter<handle>>
     // We are using all of the base constructors
     using base_type::IHandle;
 
-    ~NTKernelH() noexcept
-    {
-        if (ihandle_)
-            reset();
-    }
-
+    ~NTKernelH() noexcept = default;
     NTKernelH(const NTKernelH&) = delete;
     NTKernelH& operator=(const NTKernelH&) = delete;
     NTKernelH(NTKernelH&&) noexcept = default;

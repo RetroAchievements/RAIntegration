@@ -13,7 +13,7 @@ _NODISCARD inline constexpr auto to_unsigned(SignedType st) noexcept { return st
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
 _NODISCARD inline constexpr auto to_signed(UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
-#if _WIN32
+#ifdef _WIN32
 using float_type = float;
 #elif _WIN64
 using float_type = double;
@@ -21,7 +21,7 @@ using float_type = double;
 using float_type = long double; // should we even care bout this?
 #endif // _WIN32
 
-#if UNICODE
+#ifdef UNICODE
 using TCHAR = wchar_t;
 #else
 using TCHAR = char;

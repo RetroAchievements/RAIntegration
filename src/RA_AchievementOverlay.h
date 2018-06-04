@@ -6,6 +6,7 @@
 #include "RA_Core.h"
 #include "RA_Interface.h"
 
+#include <atlbase.h>
 #include <ddraw.h>
 
 enum OverlayPage
@@ -70,7 +71,7 @@ public:
     };
 
 public:
-    AchievementExamine();
+    AchievementExamine() noexcept;
 
 public:
     void Initialize(const Achievement* pAchIn);
@@ -102,12 +103,10 @@ private:
 extern AchievementExamine g_AchExamine;
 
 
+
 class AchievementOverlay
 {
 public:
-    AchievementOverlay();
-    ~AchievementOverlay();
-
     void Initialize(HINSTANCE hInst);
 
     void Activate();
@@ -152,10 +151,10 @@ public:
 public:
     struct NewsItem
     {
-        unsigned int m_nID;
+        unsigned int m_nID{ 0U };
         std::string m_sTitle;
         std::string m_sPayload;
-        time_t m_nPostedAt;
+        time_t m_nPostedAt{ time_t{} };
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
@@ -163,35 +162,43 @@ public:
     };
 
 private:
-    int	m_nAchievementsScrollOffset;
-    int	m_nFriendsScrollOffset;
-    int	m_nMessagesScrollOffset;
-    int	m_nNewsScrollOffset;
-    int	m_nLeaderboardScrollOffset;
+    int	m_nAchievementsScrollOffset{ 0 };
+    int	m_nFriendsScrollOffset{ 0 };
+    int	m_nMessagesScrollOffset{ 0 };
+    int	m_nNewsScrollOffset{ 0 };
+    int	m_nLeaderboardScrollOffset{ 0 };
 
-    int	m_nAchievementsSelectedItem;
-    int	m_nFriendsSelectedItem;
-    int	m_nMessagesSelectedItem;
-    int	m_nNewsSelectedItem;
-    int	m_nLeaderboardSelectedItem;
+    int	m_nAchievementsSelectedItem{ 0 };
+    int	m_nFriendsSelectedItem{ 0 };
+    int	m_nMessagesSelectedItem{ 0 };
+    int	m_nNewsSelectedItem{ 0 };
+    int	m_nLeaderboardSelectedItem{ 0 };
 
-    mutable int m_nNumAchievementsBeingRendered;
-    mutable int m_nNumFriendsBeingRendered;
-    mutable int m_nNumLeaderboardsBeingRendered;
+    mutable int m_nNumAchievementsBeingRendered{ 0 };
+    mutable int m_nNumFriendsBeingRendered{ 0 };
+    mutable int m_nNumLeaderboardsBeingRendered{ 0 };
 
-    BOOL					m_bInputLock;	//	Waiting for pad release
+    BOOL					m_bInputLock{ FALSE };	//	Waiting for pad release
     std::vector<NewsItem>	m_LatestNews;
-    TransitionState			m_nTransitionState;
-    float					m_fTransitionTimer;
+    TransitionState			m_nTransitionState = TransitionState{};
+    float					m_fTransitionTimer{ 0.0F };
 
-    OverlayPage				m_Pages[5];
-    unsigned int			m_nPageStackPointer;
+    OverlayPage				m_Pages[5]{ OP_ACHIEVEMENTS };
+    unsigned int			m_nPageStackPointer{ 0U };
 
-    //HBITMAP m_hLockedBitmap;	//	Cached	
-    HBITMAP m_hOverlayBackground;
+    //HBITMAP m_hLockedBitmap;	//	Cached
+    using BitmapDeleterType = BOOL(CALLBACK*)(HBITMAP);
+    using BitmapDeleter = decltype(reinterpret_cast<BitmapDeleterType>(&::DeleteObject));
+    using BitmapH = std::unique_ptr<std::remove_pointer_t<HBITMAP>, BitmapDeleter>;
 
-    LPDIRECTDRAW4 m_lpDD;
-    LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay;
+    // initializing this seems to throw errors since the COM objects haven't been initialized yet
+    BitmapH m_hOverlayBackground{ nullptr, reinterpret_cast<BitmapDeleterType>(&::DeleteObject) }; 
+
+    // Though these aren't used they are basically the same as COM interfaces
+    // This may have caused a data race, now this class does not need
+    // constructors defined. We can do a copy epsilon optimization later.
+    CComPtr<IDirectDraw4> m_lpDD;
+    CComPtr<IDirectDrawSurface4> m_lpDDS_Overlay;
 };
 extern AchievementOverlay g_AchievementOverlay;
 

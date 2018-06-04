@@ -58,7 +58,13 @@ private:
 
     HBITMAP					m_hUserImage;
     BOOL					m_bFetchingUserImage;
+
+    friend auto operator==(const RAUser& a, const RAUser& b) noexcept->decltype(a.m_sUsername == b.m_sUsername);
 };
+
+// Needed for some RAII adjustment
+
+
 
 class LocalRAUser : public RAUser
 {

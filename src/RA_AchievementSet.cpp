@@ -120,7 +120,8 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
 {
     if (nIter < m_Achievements.size())
     {
-        m_Achievements.erase(m_Achievements.begin() + nIter);
+        auto myIter{ std::next(m_Achievements.begin(), nIter) };
+        const auto _ = m_Achievements.erase(myIter);
         return TRUE;
     }
     else
@@ -132,12 +133,10 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
 
 Achievement* AchievementSet::Find(AchievementID nAchievementID)
 {
-    std::vector<Achievement>::iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
+    for (auto& ach : m_Achievements)
     {
-        if ((*iter).ID() == nAchievementID)
-            return &(*iter);
-        iter++;
+        if (ach.ID() == nAchievementID)
+            return &ach;
     }
 
     return nullptr;
@@ -157,25 +156,20 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
 
 unsigned int AchievementSet::NumActive() const
 {
-    unsigned int nNumActive = 0;
-    std::vector<Achievement>::const_iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
+    unsigned int nNumActive = 0U;
+    for (auto& ach : m_Achievements)
     {
-        if ((*iter).Active())
+        if (ach.Active())
             nNumActive++;
-        iter++;
     }
+
     return nNumActive;
 }
 
 void AchievementSet::Clear()
 {
-    std::vector<Achievement>::iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
-    {
-        iter->Clear();
-        iter++;
-    }
+    for (auto& ach : m_Achievements)
+        ach.Clear();
 
     m_Achievements.clear();
     m_bProcessingActive = TRUE;
@@ -292,7 +286,7 @@ BOOL AchievementSet::SaveToFile()
             Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
 
             ZeroMemory(sMem, 2048);
-            pAch->CreateMemString();
+            auto myMemString = pAch->CreateMemString();
 
             ZeroMemory(sNextLine, 2048);
             sprintf_s(sNextLine, 2048, "%d:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",

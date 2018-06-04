@@ -105,7 +105,7 @@ static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!"
 std::vector<ra::ThreadH> g_vhHTTPThread;
 HttpResults HttpRequestQueue;
 
-ra::MutexH RAWeb::ms_hHTTPMutex{ ra::make_mutex(FALSE) };
+ra::MutexH ms_hHTTPMutex{ ra::make_mutex(FALSE) };
 HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
@@ -344,7 +344,10 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
                             }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                         {
                             ASSERT(nBytesToRead == nBytesFetched);
-                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                            // Got a avoid unnamed objects with custom construction and destruction (RAII, C26444)
+
+                            const auto _ = ResponseOut
+                                .insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
                             // pData will be destroyed here or in the else
                         }
                         else
@@ -433,7 +436,8 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                             }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                         {
                             ASSERT(nBytesToRead == nBytesFetched);
-                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                            const auto _ = ResponseOut
+                                .insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
                             // pData will be destroyed here or in the else
                         }
                         else
@@ -603,7 +607,8 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
                         }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
                         ASSERT(nBytesToRead == nBytesFetched);
-                        ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                        const auto _ = ResponseOut
+                            .insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
                         // pData will be destroyed here
                     }
                 }
@@ -701,15 +706,23 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
     while (bThreadActive)
     {
         RequestObject* pObj{ nullptr };
-        {
-            auto result = WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-            if (result == WAIT_OBJECT_0)
+        {          
+            if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+                }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
             {
+                // curious to see if it's the same size as HANDLE
+                // The class is a bit larger, 12 bytes but that's because of the abstraction
+                // If you don't care about copy and pasting non-stop it can be smaller but it's still fast
+                const auto a = sizeof(HANDLE); // 4
+                const auto b = sizeof(ra::MutexH); // 12 (Abstraction)
+                // 8 (Needed a custom deleter, HANDLE's element_type (void) doesn't have a destructor)
+                const auto c = sizeof(ra::MutexH::handle_type); 
+
                 if (!HttpRequestQueue.Empty())
                     pObj = HttpRequestQueue.PopNextItem();
 
+                ::ReleaseMutex(hHTTPMutex.get());
             }
-            ReleaseMutex(RAWeb::Mutex());
         }
         if (pObj != nullptr)
         {
@@ -833,12 +846,12 @@ void RAWeb::RA_KillHTTPThreads()
 RequestObject* HttpResults::PopNextItem()
 {
     // Now I don't think we need to worry about it being empty or not
-
-    if ((WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0) and (!m_aRequests.empty()))
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; (WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0) and (not Empty()))
     {
         auto pRetVal = m_aRequests.front();
         m_aRequests.pop_front();
-        ReleaseMutex(RAWeb::Mutex());
+        ReleaseMutex(hHTTPMutex.get());
         return pRetVal;
     }
 
@@ -848,10 +861,11 @@ RequestObject* HttpResults::PopNextItem()
 
 const RequestObject* HttpResults::PeekNextItem() const
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
         auto pRetVal{ m_aRequests.front() };
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
         return pRetVal;
     }
 
@@ -860,32 +874,35 @@ const RequestObject* HttpResults::PeekNextItem() const
 
 void HttpResults::PushItem(RequestObject* pObj) noexcept
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
         m_aRequests.push_front(pObj);
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
     }
 }
 
 void HttpResults::Clear() noexcept
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
         while (!m_aRequests.empty())
         {
             std::unique_ptr<RequestObject> pObj{ std::move(m_aRequests.front()) };
             m_aRequests.pop_front();
         }
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
     }
 }
 
 size_t HttpResults::Count() const noexcept
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
         auto nCount{ m_aRequests.size() };
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
         return nCount;
     }
 
@@ -899,9 +916,10 @@ size_t HttpResults::Count() const noexcept
 
 bool HttpResults::Empty() const noexcept
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
         return std::empty(m_aRequests);
     }
     ra::ThrowLastError();
@@ -909,7 +927,8 @@ bool HttpResults::Empty() const noexcept
 
 BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData) const
 {
-    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (static auto hHTTPMutex{ ra::make_mutex(FALSE)
+        }; WaitForSingleObject(hHTTPMutex.get(), INFINITE) == WAIT_OBJECT_0)
     {
         auto bRetVal{ FALSE };
         for (auto& i : m_aRequests)
@@ -920,7 +939,7 @@ BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData)
                 break;
             }
         }
-        ReleaseMutex(RAWeb::Mutex());
+        ::ReleaseMutex(hHTTPMutex.get());
         return bRetVal;
     }
 
@@ -930,19 +949,16 @@ BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData)
 std::string PostArgsToString(const PostArgs& args)
 {
     std::string str = "";
-    PostArgs::const_iterator iter = args.begin();
-    while (iter != args.end())
+    for (auto it = args.begin(); it != args.end(); ++it)
     {
-        if (iter == args.begin())
+        if (it == args.begin())
             str += "";//?
         else
             str += "&";
 
-        str += (*iter).first;
+        str += it->first;
         str += "=";
-        str += (*iter).second;
-
-        iter++;
+        str += it->second;
     }
 
     //	Replace all spaces with '+' (RFC 1738)

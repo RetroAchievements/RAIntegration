@@ -2,22 +2,12 @@
 
 #include "RA_Condition.h"
 
-class MemCandidate
+struct MemCandidate
 {
-public:
-    MemCandidate()
-        : m_nAddr(0),
-        m_nLastKnownValue(0),
-        m_bUpperNibble(FALSE),
-        m_bHasChanged(FALSE)
-    {
-    }
-
-public:
-    unsigned int m_nAddr;
-    unsigned int m_nLastKnownValue;		//	A Candidate MAY be a 32-bit candidate!
-    bool m_bUpperNibble;				//	Used only for 4-bit comparisons
-    bool m_bHasChanged;
+    unsigned int m_nAddr{ 0U };
+    unsigned int m_nLastKnownValue{ 0U };		//	A Candidate MAY be a 32-bit candidate!
+    bool m_bUpperNibble{ false };				//	Used only for 4-bit comparisons
+    bool m_bHasChanged{ false };
 };
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
@@ -29,31 +19,44 @@ private:
     class BankData
     {
     public:
-        BankData()
-            : Reader(nullptr), Writer(nullptr), BankSize(0)
+        // This should give NRVO ("named return value optimization"), since not
+        // all constructors are defaulted you have to mark them constexpr
+        // explicitly
+        inline constexpr BankData() noexcept = default;
+        ~BankData() noexcept = default;
+
+        inline constexpr BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize) noexcept :
+            Reader{ pReadFn },
+            Writer{ pWriteFn },
+            BankSize{ nBankSize }
         {
         }
+        
+        // If you are trying to use copy epsilon technique we should delete
+        // moving as well but we may need it for unique_ptr later. Deleting
+        // copying should give it sufficient optimization.
 
-        BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize)
-            : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
-        {
-        }
-
-    private:
-        //	Copying disabled
-        BankData(const BankData&);
-        BankData& operator=(BankData&);
+        //	Copying deleted
+        BankData(const BankData&) = delete;
+        BankData& operator=(BankData&) = delete;
+        inline constexpr BankData(BankData&&) noexcept = default;
+        inline constexpr BankData& operator=(BankData&&) noexcept = default;
 
     public:
-        _RAMByteReadFn * Reader;
-        _RAMByteWriteFn* Writer;
-        size_t BankSize;
+        _RAMByteReadFn* Reader{ nullptr };
+        _RAMByteWriteFn* Writer{ nullptr };
+        size_t BankSize{ std::size_t{} };
     };
 
 public:
-    MemManager();
-    virtual ~MemManager();
+    // Default constructors aren't allowed to throw but the default does so we have to define it
+    MemManager() noexcept; 
 
+    MemManager(const MemManager&) = delete;
+    MemManager& operator=(MemManager&) = delete;
+    MemManager(MemManager&&) = delete;  // might throw but there's a global so moving is unnecessary for now
+    MemManager& operator=(MemManager&&) noexcept = delete;
+    ~MemManager() noexcept;
 public:
     void ClearMemoryBanks();
     void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
@@ -95,15 +98,15 @@ public:
 
 private:
     std::map<size_t, BankData> m_Banks;
-    unsigned short m_nActiveMemBank;
+    unsigned short m_nActiveMemBank = unsigned short{};
 
     //	Pointer to an array
     std::unique_ptr<MemCandidate[]> m_Candidates;
-    size_t m_nNumCandidates;		//	Actual quantity of legal candidates
+    size_t m_nNumCandidates = std::size_t{};		//	Actual quantity of legal candidates
 
-    ComparisonVariableSize m_nComparisonSizeMode;
-    bool m_bUseLastKnownValue;
-    size_t m_nTotalBankSize;
+    ComparisonVariableSize m_nComparisonSizeMode{ ComparisonVariableSize::SixteenBit };
+    bool m_bUseLastKnownValue{ true };
+    size_t m_nTotalBankSize = std::size_t{};
 };
 
 extern MemManager g_MemManager;

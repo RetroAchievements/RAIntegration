@@ -12,6 +12,7 @@
 #include <stack>
 #include <thread>
 #include <shlobj.h>
+#include <fstream>
 
 #include "RA_Defs.h"
 #include "RA_Core.h"
@@ -79,14 +80,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 //std::map<std::string, unsigned int> Dlg_GameLibrary::m_GameHashLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_GameTitlesLibrary;
 //std::map<unsigned int, std::string> Dlg_GameLibrary::m_ProgressLibrary;
-Dlg_GameLibrary::Dlg_GameLibrary()
-    : m_hDialogBox(nullptr)
-{
-}
 
-Dlg_GameLibrary::~Dlg_GameLibrary()
-{
-}
 
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {
@@ -175,7 +169,12 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
                 {
                     const int nNumEarnedTotal = nEarned + nEarnedHardcore;
                     char bufPct[256];
-                    sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
+                    auto fPercent{
+                        ra::to_floating(
+                            ra::to_unsigned(nNumEarnedTotal) / nNumAchievements
+                        )
+                    };
+                    sprintf_s(bufPct, 256, " (%1.1f%%)", static_cast<double>(fPercent) * 100.0);
                     sstr << bufPct;
                 }
 
@@ -263,34 +262,46 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
     while (FilesToScan.size() > 0)
     {
-        if (std::scoped_lock{ mtx }; !Dlg_GameLibrary::ThreadProcessingAllowed)
+        if (std::scoped_lock lock{ mtx }; !Dlg_GameLibrary::ThreadProcessingAllowed)
             break;
 
-        FILE* pf = nullptr;
-        if (fopen_s(&pf, FilesToScan.front().c_str(), "rb") == 0)
-        {
-            // obtain file size:
-            fseek(pf, 0, SEEK_END);
-            DWORD nSize = ftell(pf);
-            rewind(pf);
+        std::ifstream ifile{ FilesToScan.front(), std::ios::app, std::ios::ate };
+        if (std::scoped_lock lock{ mtx }; !ifile.is_open())
+            break;
 
-            // making it explicitly static does not optimize anything
-            auto pBuf = std::make_unique<BYTE[]>(ra::to_unsigned(6 * 1024 * 1024));
 
-            fread(pBuf.get(), sizeof(BYTE), nSize, pf);	//Check
-            Results[FilesToScan.front()] = RAGenerateMD5(pBuf.get(), nSize);
+        // obtain file size:
 
-            // https://msdn.microsoft.com/en-us/library/windows/desktop/ms644902(v=vs.85).aspx
-            FORWARD_WM_TIMER(g_GameLibrary.GetHWND(), 0U, PostMessage);
+        auto nSize = ifile.gcount();
+        // This clears the state bit not the file
+        ifile.clear();
+        ifile.seekg(0LL);
 
-            fclose(pf);
-            // pBuf destroyed here
-        }
+        // making it explicitly static does not optimize anything
+        auto pBuf = std::make_unique<char[]>(ra::to_unsigned(6 * 1024 * 1024));
+        ifile.read(pBuf.get(), nSize); //Check
 
-        mtx.lock();
-        FilesToScan.pop_front();
-        mtx.unlock();
+        std::basic_ostringstream<BYTE> oss;
+        std::string tmp{ pBuf.get() };
+        pBuf.reset(); // don't need it no more
+
+        for (auto& i : tmp)
+            oss << ra::to_unsigned(i);
+
+        auto ustr{ oss.str() };
+        Results.try_emplace(FilesToScan.front(), RAGenerateMD5(ustr.c_str(), nSize));
+
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms644902(v=vs.85).aspx
+        FORWARD_WM_TIMER(g_GameLibrary.GetHWND(), 0U, PostMessage);
+
+        // pBuf destroyed here
     }
+
+    {
+        std::scoped_lock myLock{ mtx };
+        FilesToScan.pop_front();
+    }
+
 
     Dlg_GameLibrary::ThreadProcessingActive = false;
     ExitThread(0);
@@ -355,7 +366,11 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                     nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
 
                 DWORD nBytes = 0UL;
-                BOOL bResult = ReadFile(hROMReader.get(), sROMRawData.get(), nSize, &nBytes, nullptr);
+
+                if (BOOL bResult = ReadFile(hROMReader.get(), sROMRawData.get(), nSize, &nBytes, nullptr
+                ); (bResult == ERROR_INVALID_USER_BUFFER) or (bResult == ERROR_NOT_ENOUGH_MEMORY))
+                    ra::ThrowLastError();
+
                 const std::string sHashOut = RAGenerateMD5(sROMRawData.get(), nSize);
 
                 if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
@@ -383,7 +398,7 @@ void Dlg_GameLibrary::ReloadGameListData()
     GetDlgItemText(m_hDialogBox, IDC_RA_ROMDIR, sROMDir, 1024);
 
     {
-        std::scoped_lock{ mtx };
+        std::scoped_lock lock{ mtx };
         while (FilesToScan.size() > 0)
             FilesToScan.pop_front();
     }
@@ -400,43 +415,46 @@ void Dlg_GameLibrary::ReloadGameListData()
 
 void Dlg_GameLibrary::RefreshList()
 {
-    std::map<std::string, std::string>::iterator iter = Results.begin();
-    while (iter != Results.end())
+    for (auto& resultPair : Results)
     {
-        const std::string& filepath = iter->first;
-        const std::string& md5 = iter->second;
+        auto filepath = resultPair.first;
+        auto md5      = resultPair.second;
 
-        if (VisibleResults.find(filepath) == VisibleResults.end())
+        for (auto& i : VisibleResults)
         {
             //	Not yet added,
             if (m_GameHashLibrary.find(md5) != m_GameHashLibrary.end())
             {
                 //	Found in our hash library!
-                const GameID nGameID = m_GameHashLibrary[md5];
+                auto nGameID = m_GameHashLibrary.at(md5);
                 RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
-                const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
+                auto sGameTitle = m_GameTitlesLibrary.at(nGameID);
                 AddTitle(sGameTitle, filepath, nGameID);
 
                 SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, NativeStr(sGameTitle).c_str());
-                VisibleResults[filepath] = md5;	//	Copy to VisibleResults
+                const auto _ = VisibleResults.try_emplace(filepath, md5);	//	Copy to VisibleResults
             }
         }
-        iter++;
     }
 }
 
 BOOL Dlg_GameLibrary::LaunchSelected()
 {
-    HWND hList = GetDlgItem(m_hDialogBox, IDC_RA_LBX_GAMELIST);
-    const int nSel = ListView_GetSelectionMark(hList);
-    if (nSel != -1)
-    {
-        TCHAR buffer[1024];
-        ListView_GetItemText(hList, nSel, 1, buffer, 1024);
-        SetWindowText(GetDlgItem(m_hDialogBox, IDC_RA_GLIB_NAME), buffer);
 
-        ListView_GetItemText(hList, nSel, 3, buffer, 1024);
+
+    WindowH hList{ GetDlgItem(m_hDialogBox, IDC_RA_LBX_GAMELIST), &::DestroyWindow };
+
+    if (const auto nSel = ListView_GetSelectionMark(hList.get()); nSel != -1)
+    {
+        auto len{ ::GetWindowTextLength(hList.get()) + 1 };
+        tstring buffer;
+        buffer.reserve(ra::to_unsigned(len));
+
+        ListView_GetItemText(hList.get(), nSel, 1, buffer.data(), len);
+        SetWindowText(GetDlgItem(m_hDialogBox, IDC_RA_GLIB_NAME), buffer.data());
+
+        ListView_GetItemText(hList.get(), nSel, 3, buffer.data(), len);
         _RA_LoadROM(Narrow(buffer).c_str());
 
         return TRUE;
@@ -491,28 +509,23 @@ void Dlg_GameLibrary::LoadAll()
 
 void Dlg_GameLibrary::SaveAll()
 {
-    mtx.lock();
     FILE* pf = nullptr;
     fopen_s(&pf, RA_MY_GAME_LIBRARY_FILENAME, "wb");
-    if (pf != nullptr)
+    if (std::scoped_lock myLock{ mtx }; pf != nullptr)
     {
-        std::map<std::string, std::string>::iterator iter = Results.begin();
-        while (iter != Results.end())
+        for (auto& myPair : Results)
         {
-            const std::string& sFilepath = iter->first;
-            const std::string& sMD5 = iter->second;
+            auto sFilepath = myPair.first;
+            auto sMD5 = myPair.second;
 
             fwrite(sFilepath.c_str(), sizeof(char), strlen(sFilepath.c_str()), pf);
             fwrite("\n", sizeof(char), 1, pf);
             fwrite(sMD5.c_str(), sizeof(char), strlen(sMD5.c_str()), pf);
             fwrite("\n", sizeof(char), 1, pf);
-
-            iter++;
         }
 
         fclose(pf);
     }
-    mtx.unlock();
 }
 
 //static 
@@ -527,10 +540,11 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
     {
         case WM_INITDIALOG:
         {
-            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-            SetupColumns(hList);
+            WindowH myWindow{ ::GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST), &::DestroyWindow };
+            hList.swap(myWindow);
+            SetupColumns(hList.get());
 
-            ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+            ListView_SetExtendedListViewStyle(hList.get(), LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
             SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(g_sROMDirLocation).c_str());
             SetDlgItemText(hDlg, IDC_RA_GLIB_NAME, TEXT(""));
@@ -565,13 +579,14 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                         case LVN_ITEMCHANGED:
                         {
                             //RA_LOG( "Item Changed\n" );
-                            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-                            const int nSel = ListView_GetSelectionMark(hList);
-                            if (nSel != -1)
+
+                            if (const auto nSel = ListView_GetSelectionMark(hList.get()); nSel != -1)
                             {
-                                TCHAR buffer[1024];
-                                ListView_GetItemText(hList, nSel, 1, buffer, 1024);
-                                SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), buffer);
+                                auto len{ ::GetWindowTextLength(::GetDlgItem(hDlg, IDC_RA_GLIB_NAME)) + 1 };
+                                tstring buffer;
+                                buffer.reserve(ra::to_unsigned(len));
+                                ListView_GetItemText(hList.get(), nSel, 1, buffer.data(), len);
+                                SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), buffer.data());
                             }
                         }
                         break;
@@ -629,13 +644,14 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 
                 case IDC_RA_LBX_GAMELIST:
                 {
-                    HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
-                    const int nSel = ListView_GetSelectionMark(hList);
-                    if (nSel != -1)
+
+                    if (const auto nSel = ListView_GetSelectionMark(hList.get()); nSel != -1)
                     {
-                        TCHAR sGameTitle[1024];
-                        ListView_GetItemText(hList, nSel, 1, sGameTitle, 1024);
-                        SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), sGameTitle);
+                        auto len{ ::GetWindowTextLength(GetDlgItem(hDlg, IDC_RA_GLIB_NAME)) + 1 };
+                        tstring sGameTitle;
+                        sGameTitle.reserve(ra::to_unsigned(len));
+                        ListView_GetItemText(hList.get(), nSel, 1, sGameTitle.data(), len);
+                        SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), sGameTitle.data());
                     }
                 }
                 return FALSE;

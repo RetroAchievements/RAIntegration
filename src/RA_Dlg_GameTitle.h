@@ -14,7 +14,7 @@ public:
     INT_PTR GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-    GameID m_nReturnedGameID;
+    GameID m_nReturnedGameID{ GameID{} };
     std::string m_sMD5;
     std::string m_sEstimatedGameTitle;
 

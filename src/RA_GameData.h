@@ -17,7 +17,7 @@ public:
     void ParseData(const Document& doc);
 
 private:
-    GameID m_nGameID;
+    GameID m_nGameID{};
     std::string m_sGameTitle;
     std::string m_sRichPresencePatch;
 

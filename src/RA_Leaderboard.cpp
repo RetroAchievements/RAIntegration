@@ -115,12 +115,10 @@ const char* MemValue::ParseFromString(const char* pBuffer)
 double ValueSet::GetValue() const
 {
     double fVal = 0.0;
-    std::vector<MemValue>::const_iterator iter = m_Values.begin();
-    while (iter != m_Values.end())
-    {
-        fVal += (*iter).GetValue();
-        iter++;
-    }
+
+    for (auto& myMemValue : m_Values)
+        fVal += myMemValue.GetValue();
+
 
     return fVal;
 }
@@ -131,10 +129,11 @@ double ValueSet::GetOperationsValue(std::vector<OperationType> sOperations) cons
     std::vector<MemValue>::const_iterator iter = m_Values.begin();
     std::vector<OperationType>::const_iterator sOp = sOperations.begin();
 
+    
     if (iter != m_Values.end())
     {
         fVal += (*iter).GetValue();
-        iter++;
+        std::advance(iter, 1);
     }
 
     while (iter != m_Values.end())
@@ -142,7 +141,7 @@ double ValueSet::GetOperationsValue(std::vector<OperationType> sOperations) cons
         if (sOp != sOperations.end() && *sOp == Operation_Maximum)
         {
             double maxValue = (*iter).GetValue();
-            iter++;
+            std::advance(iter, 1);
             maxValue = (maxValue < (*iter).GetValue()) ? (*iter).GetValue() : maxValue;
             fVal = (fVal < maxValue) ? maxValue : fVal;
         }
@@ -152,8 +151,8 @@ double ValueSet::GetOperationsValue(std::vector<OperationType> sOperations) cons
         if (sOp == sOperations.end())
             break;
 
-        iter++;
-        sOp++;
+        std::advance(iter, 1);
+        std::advance(sOp, 1);
     }
 
     return fVal;
@@ -511,15 +510,13 @@ void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUser
     newEntry.m_nScore = nScore;
     newEntry.m_TimeAchieved = nAchieved;
 
-    std::vector<LB_Entry>::iterator iter = m_RankInfo.begin();
-    while (iter != m_RankInfo.end())
+    for (auto& lbEntry : m_RankInfo)
     {
-        if ((*iter).m_nRank == nRank)
+        if (lbEntry.m_nRank == nRank)
         {
-            (*iter) = newEntry;
+            lbEntry = newEntry;
             return;
         }
-        iter++;
     }
 
     //	If not found, add new entry.
@@ -528,21 +525,7 @@ void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUser
 
 void RA_Leaderboard::SortRankInfo()
 {
-    for (size_t i = 0; i < m_RankInfo.size(); ++i)
-    {
-        for (size_t j = i; j < m_RankInfo.size(); ++j)
-        {
-            if (i == j)
-                continue;
-
-            if (m_RankInfo.at(i).m_nRank > m_RankInfo.at(j).m_nRank)
-            {
-                LB_Entry temp = m_RankInfo[i];
-                m_RankInfo[i] = m_RankInfo[j];
-                m_RankInfo[j] = temp;
-            }
-        }
-    }
+    std::sort(m_RankInfo.begin(), m_RankInfo.end());
 }
 
 //	static
@@ -600,15 +583,14 @@ std::string RA_Leaderboard::FormatScore(int nScoreIn) const
 
 RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
 {
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
+    for (auto& lb : m_Leaderboards)
     {
-        if ((*iter).ID() == nID)
-            return &(*iter);
-
-        iter++;
+        if (lb.ID() == nID)
+            return &lb;
     }
 
+    // I think you should have a condition where it can't be null, if you used
+    // iterators the result would be undefined
     return nullptr;
 }
 
@@ -689,21 +671,13 @@ void RA_LeaderboardManager::Test()
 {
     if (g_bLeaderboardsActive)
     {
-        std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-        while (iter != m_Leaderboards.end())
-        {
-            (*iter).Test();
-            iter++;
-        }
+        for (auto& lb : m_Leaderboards)
+            lb.Test();
     }
 }
 
 void RA_LeaderboardManager::Reset()
 {
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        (*iter).Reset();
-        iter++;
-    }
+    for (auto& lb : m_Leaderboards)
+        lb.Reset();
 }

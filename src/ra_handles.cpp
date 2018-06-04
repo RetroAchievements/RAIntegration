@@ -34,7 +34,7 @@ _NODISCARD MutexH CALLBACK make_mutex(BOOL bInitialOwner, LPSECURITY_ATTRIBUTES 
 
 _Use_decl_annotations_
 ThreadH CALLBACK make_thread(SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, DWORD dwCreationFlags,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes, __deref __drv_aliasesMem LPVOID lpParameter,
+    LPSECURITY_ATTRIBUTES lpThreadAttributes,LPVOID lpParameter,
     LPDWORD lpThreadId) noexcept
 {
     return { dwStackSize, lpStartAddress, dwCreationFlags, lpThreadAttributes, lpParameter, lpThreadId };

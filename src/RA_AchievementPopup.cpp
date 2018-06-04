@@ -31,12 +31,9 @@ const TCHAR* MSG_SOUND[] =
 static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
 }
 
-AchievementPopup::AchievementPopup() :
-    m_fTimer(0.0f)
-{
-}
 
-void AchievementPopup::PlayAudio()
+
+void AchievementPopup::PlayAudio() 
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
     PlaySound(MSG_SOUND[ActiveMessage().Type()], nullptr, SND_FILENAME | SND_ASYNC);

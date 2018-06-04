@@ -48,22 +48,17 @@ private:
 class SearchResult
 {
 public:
-    SearchResult() {}
-public:
     std::vector<MemCandidate> m_ResultCandidate;
-    unsigned int m_nCount = 0;
-    unsigned int m_nLastQueryVal = 0;
-    bool m_bUseLastValue;
+    unsigned int m_nCount{ 0U };
+    unsigned int m_nLastQueryVal{ 0U };
+    bool m_bUseLastValue{ false };
     tstring m_sFirstLine;
     tstring m_sSecondLine;
-    ComparisonType m_nCompareType;
+    ComparisonType m_nCompareType{};
 };
 
 class Dlg_Memory
 {
-public:
-    Dlg_Memory() {}
-
 public:
     void Init();
 
@@ -103,9 +98,9 @@ private:
     static CodeNotes m_CodeNotes;
     static HWND m_hWnd;
 
-    unsigned int m_nStart = 0;
-    unsigned int m_nEnd = 0;
-    ComparisonVariableSize m_nCompareSize;
+    unsigned int m_nStart = 0U;
+    unsigned int m_nEnd = 0U;
+    ComparisonVariableSize m_nCompareSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

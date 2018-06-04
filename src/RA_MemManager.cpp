@@ -4,11 +4,7 @@
 
 MemManager g_MemManager;
 
-MemManager::MemManager()
-    : m_nComparisonSizeMode(ComparisonVariableSize::SixteenBit),
-    m_bUseLastKnownValue(true),
-    m_Candidates(nullptr),
-    m_nTotalBankSize(0)
+MemManager::MemManager() noexcept
 {
 }
 
@@ -266,12 +262,10 @@ void MemManager::ChangeActiveMemBank(unsigned short nMemBank)
 std::vector<size_t> MemManager::GetBankIDs() const
 {
     std::vector<size_t> bankIDs;
-    std::map<size_t, BankData>::const_iterator iter = m_Banks.begin();
-    while (iter != m_Banks.end())
-    {
-        bankIDs.push_back(iter->first);
-        iter++;
-    }
+
+    for (auto& bank : m_Banks)
+        bankIDs.emplace_back(bank.first);
+
     return bankIDs;
 }
 

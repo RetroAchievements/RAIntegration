@@ -14,7 +14,7 @@ const size_t MEM_STRING_TEXT_LEN = 80;
 class BadgeNames
 {
 public:
-    BadgeNames()
+    BadgeNames() noexcept
         : m_hDestComboBox(nullptr)
     {
     }
@@ -32,7 +32,7 @@ private:
 class Dlg_AchievementEditor
 {
 public:
-    Dlg_AchievementEditor();
+    Dlg_AchievementEditor() noexcept;
     ~Dlg_AchievementEditor();
 
 public:
@@ -79,7 +79,8 @@ private:
     HWND m_hAchievementEditorDlg;
     HWND m_hICEControl;
 
-    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN];
+    // No idea what type it is
+    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN]{}; // not sure if this works on primitives
     TCHAR m_lbxGroupNames[MAX_CONDITIONS][MEM_STRING_TEXT_LEN];
     int m_nNumOccupiedRows;
 

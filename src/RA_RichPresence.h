@@ -56,7 +56,7 @@ public:
     static void PersistAndParseScript(GameID nGameID, const std::string& sScript);
 
 public:
-    RA_RichPresenceInterpretter() {}
+    RA_RichPresenceInterpretter() noexcept {}
 
 public:
     void ParseRichPresenceFile(const std::string& sFilename);

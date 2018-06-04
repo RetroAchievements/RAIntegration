@@ -359,19 +359,18 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     {
                         while (nSel >= 0)
                         {
-                            MemBookmark* pBookmark = m_vBookmarks[nSel];
+                            // can't use make_unique because it wasn't initialized with new
+                            std::unique_ptr<MemBookmark> pBookmark{ m_vBookmarks.at(nSel) };
 
                             // Remove from vector
-                            m_vBookmarks.erase(m_vBookmarks.begin() + nSel);
+                            const auto _ = m_vBookmarks.erase(std::next(m_vBookmarks.begin(), nSel));
 
                             // Remove from map
                             std::vector<const MemBookmark*> *pVector;
                             pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
-                            pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
+                            const auto __ = pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark.get()));
                             if (pVector->size() == 0)
                                 m_BookmarkMap.erase(pBookmark->Address());
-
-                            delete pBookmark;
 
                             ListView_DeleteItem(hList, nSel);
 
@@ -605,19 +604,18 @@ void Dlg_MemBookmark::ClearAllBookmarks()
 {
     while (m_vBookmarks.size() > 0)
     {
-        MemBookmark* pBookmark = m_vBookmarks[0];
+        std::unique_ptr<MemBookmark> pBookmark{ m_vBookmarks.front() };
 
         // Remove from vector
-        m_vBookmarks.erase(m_vBookmarks.begin());
+        const auto _ = m_vBookmarks.erase(m_vBookmarks.begin());
 
         // Remove from map
         std::vector<const MemBookmark*> *pVector;
         pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
-        pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
+
+        const auto __ = pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark.get()));
         if (pVector->size() == 0)
             m_BookmarkMap.erase(pBookmark->Address());
-
-        delete pBookmark;
     }
 
     ListView_DeleteAllItems(GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES));
@@ -628,8 +626,8 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{ 0U };
+    unsigned int width{ 0U };
     int n;
     char c;
 
@@ -667,7 +665,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{ 0U };
 
     switch (type)
     {

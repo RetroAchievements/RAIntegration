@@ -169,13 +169,21 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                             return FALSE;
                     }
 
-                    TCHAR sBugReportCommentIn[4096];
-                    GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
-                    std::string sBugReportComment = Narrow(sBugReportCommentIn);
+                    using WindowH = std::unique_ptr<std::remove_pointer_t<HWND>, decltype(&::DestroyWindow)>;
+                    WindowH hComment{::GetDlgItem(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT), &::DestroyWindow };
+                    auto len{ GetWindowTextLength(hComment.get()) + 1};
+
+                    tstring sBugReportCommentIn;
+                    sBugReportCommentIn.reserve(len);
+                    ::GetWindowText(hComment.get(), sBugReportCommentIn.data(), len);
+
+                    std::string sBugReportComment = Narrow(sBugReportCommentIn.data());
 
                     //	Intentionally MBCS
-                    char sBugReportInFull[8192];
-                    sprintf_s(sBugReportInFull, 8192,
+                    std::string sBugReportInFull;
+                    sBugReportInFull.reserve(8192U);
+
+                    sprintf_s(sBugReportInFull.data(), 8192,
                         "--New Bug Report--\n"
                         "\n"
                         "Game: %s\n"
@@ -194,7 +202,8 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         g_sCurrentROMMD5.c_str(),
                         sBugReportComment.c_str());
 
-                    if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
+                    if (MessageBox(nullptr, NativeStr(sBugReportInFull.data()).c_str(), TEXT("Summary"),
+                        MB_YESNO) == IDNO)
                         return FALSE;
 
                     PostArgs args;
@@ -210,10 +219,11 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     {
                         if (doc["Success"].GetBool())
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048, "Submitted OK!\n"
+                            std::string buffer;
+                            buffer.reserve(2048U);
+                            sprintf_s(buffer.data(), 2048, "Submitted OK!\n"
                                 "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n"
                                 "\n"
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"
@@ -221,7 +231,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                                 "\n"
                                 "Thanks again!");
 
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
+                            MessageBox(hDlg, NativeStr(buffer.data()).c_str(), TEXT("Success!"), MB_OK);
                             EndDialog(hDlg, TRUE);
                             return TRUE;
                         }

@@ -8,7 +8,7 @@
 class MemValue
 {
 public:
-    MemValue()
+    MemValue() noexcept
         : m_nAddress(0), m_fModifier(1.0f), m_nVarSize(EightBit), m_bBCDParse(false), m_bParseVal(false)
     {
     }
@@ -29,7 +29,7 @@ public:
     bool					m_bParseVal;				//	Parse as a value
     bool					m_bInvertBit = false;
     unsigned int			m_nSecondAddress = 0;
-    ComparisonVariableSize	m_nSecondVarSize;
+    ComparisonVariableSize	m_nSecondVarSize{};
 };
 
 
@@ -59,11 +59,24 @@ protected:
 
 struct LB_Entry
 {
-    unsigned int m_nRank;
+    unsigned int m_nRank{};
     std::string	 m_sUsername;
-    int m_nScore;
-    time_t m_TimeAchieved;
+    int m_nScore{};
+    time_t m_TimeAchieved{};
 };
+
+// These operator overloads are needed for std::sort to work
+_CONSTANT_VAR operator==(const LB_Entry& a, const LB_Entry& b) noexcept
+->decltype(a.m_nRank == b.m_nRank)
+{
+    return { a.m_nRank == b.m_nRank };
+}
+
+_CONSTANT_VAR operator<(const LB_Entry& a, const LB_Entry& b) noexcept
+    ->decltype(a.m_nRank < b.m_nRank)
+{
+    return { a.m_nRank < b.m_nRank };
+}
 
 class RA_Leaderboard
 {
@@ -95,7 +108,7 @@ public:
     void Clear();
 
     //	Helper: tbd; refactor *into* RA_Formattable
-    static std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn);
+    static std::string FormatScore(FormatType nType, int nScoreIn);
     std::string FormatScore(int nScoreIn) const;
     void Reset();
 
@@ -146,7 +159,7 @@ public:
     size_t Count() const { return m_Leaderboards.size(); }
     inline RA_Leaderboard& GetLB(size_t iter) { return m_Leaderboards[iter]; }
 
-    RA_Leaderboard* FindLB(unsigned int nID);
+    RA_Leaderboard* FindLB(LeaderboardID nID);
 
 public:
     std::vector<RA_Leaderboard> m_Leaderboards;

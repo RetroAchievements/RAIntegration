@@ -23,9 +23,9 @@ const char* FONT_TO_USE = "Tahoma";
 
 //ProgressPopup g_ProgressPopup;
 
-ProgressPopup::ProgressPopup()
+ProgressPopup::ProgressPopup() noexcept
 {
-    m_fTimer = 0.0f;
+    m_fTimer = 0.0F;
     m_bSuppressDeltaUpdate = false;
     for (size_t i = 0; i < OVERLAY_MESSAGE_QUEUE_SIZE; ++i)
     {

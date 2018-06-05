@@ -1,4 +1,6 @@
 #include "RA_Leaderboard.h"
+
+#include "RA_LeaderboardManager.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_md5factory.h"
@@ -6,7 +8,6 @@
 
 #include <time.h>
 
-RA_LeaderboardManager g_LeaderboardManager;
 
 namespace {
 const char* FormatTypeToString[] =
@@ -21,171 +22,7 @@ const char* FormatTypeToString[] =
 static_assert(SIZEOF_ARRAY(FormatTypeToString) == RA_Leaderboard::Format__MAX, "These must match!");
 }
 
-//////////////////////////////////////////////////////////////////////////
-double MemValue::GetValue() const
-{
-    int nRetVal = 0;
-    if (m_bParseVal)
-    {
-        nRetVal = m_nAddress;	//	insert address as value.
-    }
-    else
-    {
-        nRetVal = g_MemManager.ActiveBankRAMRead(m_nAddress, m_nVarSize);
-
-        if (m_bInvertBit && (m_nVarSize >= ComparisonVariableSize::Bit_0) && (m_nVarSize <= ComparisonVariableSize::Bit_7))
-        {
-            nRetVal = (nRetVal == 1) ? 0 : 1;
-        }
-
-        if (m_bBCDParse)
-        {
-            //	Reparse this value as a binary coded decimal.
-            nRetVal = (((nRetVal >> 4) & 0xf) * 10) + (nRetVal & 0xf);
-        }
-    }
-
-    if (m_nSecondAddress > 0)
-    {
-        MemValue tempMem;
-        tempMem.m_bInvertBit = m_bInvertBit;
-        tempMem.m_nAddress = m_nSecondAddress;
-        tempMem.m_nVarSize = m_nSecondVarSize;
-
-        return nRetVal * tempMem.GetValue();
-    }
-
-    return nRetVal * m_fModifier;
-}
-
-const char* MemValue::ParseFromString(const char* pBuffer)
-{
-    const char* pIter = &pBuffer[0];
-
-    //	Borrow parsing from CompVariable
-
-    m_bBCDParse = false;
-    if (toupper(*pIter) == 'B')
-    {
-        m_bBCDParse = true;
-        pIter++;
-    }
-    else if (toupper(*pIter) == 'V')
-    {
-        m_bParseVal = true;
-        pIter++;
-    }
-
-    CompVariable varTemp;
-    varTemp.ParseVariable(pIter);
-    m_nAddress = varTemp.RawValue();	//	Fetch value ('address') as parsed. Note RawValue! Do not parse memory!
-    m_nVarSize = varTemp.Size();
-
-    m_fModifier = 1.0;
-    if (*pIter == '*')
-    {
-        pIter++;						//	Skip over modifier type.. assume mult( '*' );
-
-        // Invert bit flag results
-        if (*pIter == '~')
-        {
-            m_bInvertBit = true;
-            pIter++;
-        }
-
-        // Multiply by addresses
-        if (strncmp(pIter, "0x", sizeof("0x") - 1) == 0)
-        {
-            varTemp.ParseVariable(pIter);
-            m_nSecondAddress = varTemp.RawValue();
-            m_nSecondVarSize = varTemp.Size();
-        }
-        else
-        {
-            char* pOut;
-            m_fModifier = strtod(pIter, &pOut);
-            pIter = pOut;
-        }
-    }
-
-    return pIter;
-}
-
-//////////////////////////////////////////////////////////////////////////
-double ValueSet::GetValue() const
-{
-    double fVal = 0.0;
-    std::vector<MemValue>::const_iterator iter = m_Values.begin();
-    while (iter != m_Values.end())
-    {
-        fVal += (*iter).GetValue();
-        iter++;
-    }
-
-    return fVal;
-}
-
-double ValueSet::GetOperationsValue(std::vector<OperationType> sOperations) const
-{
-    double fVal = 0.0;
-    std::vector<MemValue>::const_iterator iter = m_Values.begin();
-    std::vector<OperationType>::const_iterator sOp = sOperations.begin();
-
-    if (iter != m_Values.end())
-    {
-        fVal += (*iter).GetValue();
-        iter++;
-    }
-
-    while (iter != m_Values.end())
-    {
-        if (sOp != sOperations.end() && *sOp == Operation_Maximum)
-        {
-            double maxValue = (*iter).GetValue();
-            iter++;
-            maxValue = (maxValue < (*iter).GetValue()) ? (*iter).GetValue() : maxValue;
-            fVal = (fVal < maxValue) ? maxValue : fVal;
-        }
-        else
-            fVal += (*iter).GetValue();
-
-        if (sOp == sOperations.end())
-            break;
-
-        iter++;
-        sOp++;
-    }
-
-    return fVal;
-}
-
-void ValueSet::AddNewValue(MemValue nMemVal)
-{
-    m_Values.push_back(nMemVal);
-}
-
-void ValueSet::ParseMemString(const char* pChar)
-{
-    do
-    {
-        {
-            while ((*pChar) == ' ' || (*pChar) == '_' || (*pChar) == '|')
-                pChar++; // Skip any chars up til this point :S
-        }
-
-        MemValue newMemVal;
-        pChar = newMemVal.ParseFromString(pChar);
-        AddNewValue(newMemVal);
-    } while (*pChar == '_');
-}
-
-void ValueSet::Clear()
-{
-    m_Values.clear();
-}
-
-//////////////////////////////////////////////////////////////////////////
-RA_Leaderboard::RA_Leaderboard(const unsigned nLeaderboardID) :
+RA_Leaderboard::RA_Leaderboard(const LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),
     m_bStarted(false),
     m_bSubmitted(false),
@@ -274,8 +111,8 @@ void RA_Leaderboard::ParseLBData(const char* pChar)
 
                 switch (*pChar)
                 {
-                    case ('$'): m_sOperations.push_back(ValueSet::Operation_Maximum); break;
-                    case ('_'): m_sOperations.push_back(ValueSet::Operation_Addition); break;
+                    case ('$'): m_sOperations.push_back(MemValueSet::Operation_Maximum); break;
+                    case ('_'): m_sOperations.push_back(MemValueSet::Operation_Addition); break;
                 }
             } while (*pChar == '_' || (*pChar) == '$');
         }
@@ -596,114 +433,4 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
 std::string RA_Leaderboard::FormatScore(int nScoreIn) const
 {
     return FormatScore(m_format, nScoreIn);
-}
-
-RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
-{
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        if ((*iter).ID() == nID)
-            return &(*iter);
-
-        iter++;
-    }
-
-    return nullptr;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-//static
-void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
-{
-    if (!doc.HasMember("Response"))
-    {
-        ASSERT(!"Cannot process this LB Response!");
-        return;
-    }
-
-    const Value& Response = doc["Response"];
-
-    const Value& LBData = Response["LBData"];
-
-    const std::string& sFormat = LBData["Format"].GetString();
-    const LeaderboardID nLBID = static_cast<LeaderboardID>(LBData["LeaderboardID"].GetUint());
-    const GameID nGameID = static_cast<GameID>(LBData["GameID"].GetUint());
-    const std::string& sLBTitle = LBData["Title"].GetString();
-    const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
-
-    RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
-
-    const int nSubmittedScore = Response["Score"].GetInt();
-    const int nBestScore = Response["BestScore"].GetInt();
-    const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
-
-    pLB->ClearRankInfo();
-
-    RA_LOG("LB Data, Top Entries:\n");
-    const Value& TopEntries = Response["TopEntries"];
-    for (SizeType i = 0; i < TopEntries.Size(); ++i)
-    {
-        const Value& NextEntry = TopEntries[i];
-
-        const unsigned int nRank = NextEntry["Rank"].GetUint();
-        const std::string& sUser = NextEntry["User"].GetString();
-        const int nUserScore = NextEntry["Score"].GetInt();
-        time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
-
-        RA_LOG(std::string("(" + std::to_string(nRank) + ") " + sUser + ": " + pLB->FormatScore(nUserScore)).c_str());
-
-        pLB->SubmitRankInfo(nRank, sUser, nUserScore, nSubmitted);
-    }
-
-    pLB->SortRankInfo();
-
-    const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-    const Value& RankData = Response["RankInfo"];
-
-    //	TBD!
-    //char sTestData[ 4096 ];
-    //sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pLB->Title().c_str(), pLB->Description().c_str() );
-    //for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
-    //{
-    //	const LB_Entry& NextScore = pLB->GetRankInfo( i );
-
-    //	std::string sScoreFormatted = pLB->FormatScore( NextScore.m_nScore );
-
-    //	char bufferMessage[ 512 ];
-    //	sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
-    //	strcat_s( sTestData, 4096, bufferMessage );
-    //}
-
-    g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
-}
-
-void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
-{
-    if (g_bLeaderboardsActive)	//	If not, simply ignore them.
-        m_Leaderboards.push_back(lb);
-}
-
-void RA_LeaderboardManager::Test()
-{
-    if (g_bLeaderboardsActive)
-    {
-        std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-        while (iter != m_Leaderboards.end())
-        {
-            (*iter).Test();
-            iter++;
-        }
-    }
-}
-
-void RA_LeaderboardManager::Reset()
-{
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        (*iter).Reset();
-        iter++;
-    }
 }

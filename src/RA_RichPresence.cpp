@@ -2,6 +2,7 @@
 
 #include "RA_Core.h"
 #include "RA_GameData.h"
+#include "RA_MemValue.h"
 
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
@@ -190,7 +191,7 @@ const std::string& RA_RichPresenceInterpretter::Lookup(const std::string& sName,
             char buffer[1024];
             sprintf_s(buffer, 1024, (char*)sMemString.c_str());
 
-            ValueSet nValue;
+            MemValueSet nValue;
             nValue.ParseMemString(buffer);
             sReturnVal = m_lookups.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
 
@@ -207,7 +208,7 @@ const std::string& RA_RichPresenceInterpretter::Lookup(const std::string& sName,
             char buffer[1024];
             sprintf_s(buffer, 1024, (char*)sMemString.c_str());
 
-            ValueSet nValue;
+            MemValueSet nValue;
             nValue.ParseMemString(buffer);
             sReturnVal = m_formats.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
 

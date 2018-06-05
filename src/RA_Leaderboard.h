@@ -1,61 +1,8 @@
 #pragma once
+
+#include "RA_MemValue.h"
+
 #include <vector>
-#include "RA_Defs.h"
-#include "RA_Condition.h"
-
-
-
-class MemValue
-{
-public:
-    MemValue()
-        : m_nAddress(0), m_fModifier(1.0f), m_nVarSize(EightBit), m_bBCDParse(false), m_bParseVal(false)
-    {
-    }
-    MemValue(unsigned int nAddr, double fMod, ComparisonVariableSize nSize, bool bBCDParse, bool bParseVal)
-        : m_nAddress(nAddr), m_fModifier(fMod), m_nVarSize(nSize), m_bBCDParse(bBCDParse), m_bParseVal(bParseVal)
-    {
-    }
-
-public:
-    const char* ParseFromString(const char* pBuffer);		//	Parse string into values, returns end of string
-    double GetValue() const;					//	Get the value in-memory with modifiers
-
-public:
-    unsigned int			m_nAddress;					//	Raw address of an 8-bit, or value.
-    ComparisonVariableSize	m_nVarSize;
-    double					m_fModifier;				//	* 60 etc
-    bool					m_bBCDParse;				//	Parse as a binary coded decimal.
-    bool					m_bParseVal;				//	Parse as a value
-    bool					m_bInvertBit = false;
-    unsigned int			m_nSecondAddress = 0;
-    ComparisonVariableSize	m_nSecondVarSize;
-};
-
-
-//	Encapsulates a vector of MemValues
-class ValueSet
-{
-public:
-    enum OperationType
-    {
-        Operation_None,
-        Operation_Addition,
-        Operation_Maximum
-    };
-
-public:
-    void ParseMemString(const char* sBuffer);
-    double GetValue() const;
-    double GetOperationsValue(std::vector<OperationType>) const;
-    void AddNewValue(MemValue nVal);
-    void Clear();
-
-    size_t NumValues() const { return m_Values.size(); }
-
-protected:
-    std::vector<MemValue> m_Values;
-};
 
 struct LB_Entry
 {
@@ -110,7 +57,6 @@ public:
     void SortRankInfo();
 
     FormatType GetFormatType() const { return m_format; }
-    std::vector< ValueSet::OperationType > m_sOperations;
 
 private:
     const LeaderboardID		m_nID;			//	DB ID for this LB
@@ -118,11 +64,13 @@ private:
     ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
     ConditionSet			m_submitCond;	//	Submit new score if this is true
 
+    std::vector<MemValueSet::OperationType> m_sOperations;
+
     bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
     bool                    m_bSubmitted;   //  True if already submitted.
 
-    ValueSet				m_value;		//	A collection of memory addresses and values to produce one value.
-    ValueSet				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
+    MemValueSet				m_value;		//	A collection of memory addresses and values to produce one value.
+    MemValueSet				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
     FormatType				m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
     std::string				m_sTitle;		//	
@@ -130,26 +78,3 @@ private:
 
     std::vector<LB_Entry>	m_RankInfo;		//	Recent users ranks
 };
-
-
-class RA_LeaderboardManager
-{
-public:
-    static void OnSubmitEntry(const Document& doc);
-
-public:
-    void Reset();
-
-    void AddLeaderboard(const RA_Leaderboard& lb);
-    void Test();
-    void Clear() { m_Leaderboards.clear(); }
-    size_t Count() const { return m_Leaderboards.size(); }
-    inline RA_Leaderboard& GetLB(size_t iter) { return m_Leaderboards[iter]; }
-
-    RA_Leaderboard* FindLB(unsigned int nID);
-
-public:
-    std::vector<RA_Leaderboard> m_Leaderboards;
-};
-
-extern RA_LeaderboardManager g_LeaderboardManager;

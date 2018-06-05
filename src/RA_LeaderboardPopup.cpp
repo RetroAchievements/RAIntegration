@@ -6,7 +6,7 @@
 #include "RA_Achievement.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 
 //	No emulator-specific code here please!
 

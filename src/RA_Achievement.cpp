@@ -232,12 +232,15 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
     SetDirtyFlag(Dirty_Badge);
     ClearBadgeImage();
 
-    char chars[] = "_lock";
+    using namespace std::string_literals;
+    auto chars{ "_lock"s };
 
     std::string sNewBadgeURI = sBadgeURI;
 
-    for (unsigned int i = 0; i < strlen(chars); ++i)
-        sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
+    for (auto& c : chars)
+    {
+        const auto _ = sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), c), sNewBadgeURI.end());
+    }
 
     m_sBadgeImageURI = sNewBadgeURI;
     m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);

@@ -51,15 +51,6 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    CompVariable()
-        : m_nVal(0),
-        m_nPreviousVal(0),
-        m_nVarSize(ComparisonVariableSize::EightBit),
-        m_nVarType(ComparisonVariableType::Address)
-    {
-    }
-
-public:
     void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
     {
         m_nVarSize = nSize;
@@ -93,10 +84,10 @@ public:
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize;
-    ComparisonVariableType m_nVarType;
-    unsigned int m_nVal;
-    unsigned int m_nPreviousVal;
+    ComparisonVariableSize m_nVarSize{ ComparisonVariableSize::EightBit };
+    ComparisonVariableType m_nVarType{ ComparisonVariableType::Address };
+    unsigned int m_nVal{ 0U };
+    unsigned int m_nPreviousVal{ 0U };
 };
 
 
@@ -114,15 +105,6 @@ public:
 
         NumConditionTypes
     };
-
-public:
-    Condition()
-        : m_nConditionType(Standard),
-        m_nCompareType(Equals),
-        m_nRequiredHits(0),
-        m_nCurrentHits(0)
-    {
-    }
 
 public:
     //	Parse a Condition from a string of characters
@@ -165,14 +147,14 @@ public:
 
 
 private:
-    ConditionType	m_nConditionType;
+    ConditionType	m_nConditionType{ ConditionType::Standard };
 
     CompVariable	m_nCompSource;
-    ComparisonType	m_nCompareType;
+    ComparisonType	m_nCompareType{ ComparisonType::Equals };
     CompVariable	m_nCompTarget;
 
-    unsigned int	m_nRequiredHits;
-    unsigned int	m_nCurrentHits;
+    unsigned int	m_nRequiredHits{ 0U };
+    unsigned int	m_nCurrentHits{ 0U };
 };
 
 class ConditionGroup
@@ -184,7 +166,10 @@ public:
     size_t Count() const { return m_Conditions.size(); }
 
     void Add(const Condition& newCond) { m_Conditions.push_back(newCond); }
-    void Insert(size_t i, const Condition& newCond) { m_Conditions.insert(m_Conditions.begin() + i, newCond); }
+    void Insert(size_t i, const Condition& newCond) {
+        const auto _ = m_Conditions.insert(std::next(m_Conditions.begin(),
+            ra::to_signed(i)), newCond);
+    }
     Condition& GetAt(size_t i) { return m_Conditions[i]; }
     const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
     void Clear() { m_Conditions.clear(); }

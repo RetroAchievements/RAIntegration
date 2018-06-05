@@ -11,21 +11,45 @@
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
 
-AchievementSet* g_pCoreAchievements = nullptr;
-AchievementSet* g_pUnofficialAchievements = nullptr;
-AchievementSet* g_pLocalAchievements = nullptr;
+AchSetOwner g_pCoreAchievements{ std::make_unique<AchievementSet>(AchievementSetType::Core) };
+AchSetOwner g_pUnofficialAchievements{ std::make_unique<AchievementSet>(AchievementSetType::Unofficial) };
+AchSetOwner g_pLocalAchievements{ std::make_unique<AchievementSet>(AchievementSetType::Local) };
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
+// the standard .get() won't work because it's const
+// The below may or may not work, keeping just incase but revised the function that used it
+//AchievementSet** ACH_SETS[] = { &g_pCoreAchievements._Myptr(), &g_pUnofficialAchievements._Myptr(), &g_pLocalAchievements._Myptr() };
+//static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
-AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
+AchSetOwner& g_pActiveAchievements{ g_pCoreAchievements };
 
 
 void RASetAchievementCollection(AchievementSetType Type)
 {
-    g_nActiveAchievementSet = Type;
-    g_pActiveAchievements = *ACH_SETS[Type];
+    switch (g_nActiveAchievementSet = Type; g_nActiveAchievementSet)
+    {
+        case AchievementSetType::NumAchievementSetTypes:
+            _FALLTHROUGH;
+        case AchievementSetType::Core:
+        {
+            // This will temporarily nullify the right hand side and the pointer
+            // owned will be reset to how it was without moving it
+            g_pActiveAchievements = std::move(g_pCoreAchievements);
+            g_pCoreAchievements.reset(g_pActiveAchievements.get());
+        }
+        break;
+        case AchievementSetType::Unofficial:
+        {
+            g_pActiveAchievements = std::move(g_pUnofficialAchievements);
+            g_pCoreAchievements.reset(g_pActiveAchievements.get());
+        }
+        break;
+        case AchievementSetType::Local:
+        {
+            g_pActiveAchievements = std::move(g_pLocalAchievements);
+            g_pCoreAchievements.reset(g_pActiveAchievements.get());
+        }
+    }
 }
 
 std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
@@ -96,7 +120,8 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
 {
     if (nIter < m_Achievements.size())
     {
-        m_Achievements.erase(m_Achievements.begin() + nIter);
+        auto myIter{ std::next(m_Achievements.begin(), nIter) };
+        const auto _ = m_Achievements.erase(myIter);
         return TRUE;
     }
     else
@@ -108,12 +133,10 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
 
 Achievement* AchievementSet::Find(AchievementID nAchievementID)
 {
-    std::vector<Achievement>::iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
+    for (auto& ach : m_Achievements)
     {
-        if ((*iter).ID() == nAchievementID)
-            return &(*iter);
-        iter++;
+        if (ach.ID() == nAchievementID)
+            return &ach;
     }
 
     return nullptr;
@@ -133,25 +156,20 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
 
 unsigned int AchievementSet::NumActive() const
 {
-    unsigned int nNumActive = 0;
-    std::vector<Achievement>::const_iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
+    unsigned int nNumActive = 0U;
+    for (auto& ach : m_Achievements)
     {
-        if ((*iter).Active())
+        if (ach.Active())
             nNumActive++;
-        iter++;
     }
+
     return nNumActive;
 }
 
 void AchievementSet::Clear()
 {
-    std::vector<Achievement>::iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
-    {
-        iter->Clear();
-        iter++;
-    }
+    for (auto& ach : m_Achievements)
+        ach.Clear();
 
     m_Achievements.clear();
     m_bProcessingActive = TRUE;
@@ -268,7 +286,7 @@ BOOL AchievementSet::SaveToFile()
             Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
 
             ZeroMemory(sMem, 2048);
-            pAch->CreateMemString();
+            auto myMemString = pAch->CreateMemString();
 
             ZeroMemory(sNextLine, 2048);
             sprintf_s(sNextLine, 2048, "%d:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",

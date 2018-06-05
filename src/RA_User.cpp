@@ -233,12 +233,13 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
     pUser->LoadOrFetchUserImage();	//	May as well
 
     std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
+
     while (iter != m_aFriends.end())
     {
         if ((*iter) == pUser)
             break;
 
-        iter++;
+        std::advance(iter, 1);
     }
 
     if (iter == m_aFriends.end())
@@ -285,4 +286,9 @@ RAUser* LocalRAUser::FindFriend(const std::string& sName)
             return *iter;
     }
     return nullptr;
+}
+
+auto operator==(const RAUser& a, const RAUser& b) noexcept-> decltype(a.m_sUsername == b.m_sUsername)
+{
+    return a.m_sUsername == b.m_sUsername;
 }

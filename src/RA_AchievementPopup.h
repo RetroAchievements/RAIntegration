@@ -44,9 +44,6 @@ class AchievementPopup
 {
 public:
 
-public:
-    AchievementPopup();
-
     void Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
@@ -62,7 +59,7 @@ public:
 
 private:
     std::queue<MessagePopup> m_vMessages;
-    float m_fTimer;
+    float m_fTimer{ float{} };
 };
 
 //extern AchievementPopup g_PopupWindow;

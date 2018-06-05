@@ -11,6 +11,10 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif
@@ -658,7 +662,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride = size_t{};
                     switch (m_nDataSize)
                     {
                         case EightBit:
@@ -709,7 +713,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride = size_t{};
                             switch (m_nDataSize)
                             {
                                 case EightBit:
@@ -943,8 +947,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         HBRUSH hBrush = CreateSolidBrush(color);
                         FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
                         DeleteObject(hBrush);
-
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        tstring zeroTerm{ buffer };
+                        DrawText(pDIS->hDC, zeroTerm.c_str(), _tcslen(buffer), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
                 }
             }
@@ -1000,7 +1004,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RARect winRect;
             GetWindowRect(hDlg, &winRect);
 
-            for (ResizeContent content : vDlgMemoryResize)
+            for (ResizeContent& content : vDlgMemoryResize)
                 content.Resize(winRect.Width(), winRect.Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
@@ -1036,7 +1040,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     if (m_SearchResults.size() > MIN_SEARCH_PAGE_SIZE)
                     {
-                        m_SearchResults.erase(m_SearchResults.begin());
+                        const auto _ = m_SearchResults.erase(m_SearchResults.begin());
                         m_nPage--;
                     }
 
@@ -1368,10 +1372,15 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                         while (nSel >= 0)
                         {
-                            m_SearchResults[m_nPage].m_ResultCandidate.erase(
-                                m_SearchResults[m_nPage].m_ResultCandidate.begin() + (nSel - 2));
+                            const auto _ = m_SearchResults
+                                .at(m_nPage)
+                                .m_ResultCandidate
+                                .erase(std::next(m_SearchResults
+                                    .at(m_nPage)
+                                    .m_ResultCandidate
+                                    .begin(), nSel - 2));
 
-                            m_SearchResults[m_nPage].m_nCount--;
+                            m_SearchResults.at(m_nPage).m_nCount--;
                             ListView_DeleteItem(hList, nSel);
                             nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                         }
@@ -1513,12 +1522,10 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             size_t nSize = m_CodeNotes.Load(sNotesFilename);
 
             //	Issue a fetch instead!
-            std::map<ByteAddress, CodeNotes::CodeNoteObj>::const_iterator iter = m_CodeNotes.FirstNote();
-            while (iter != m_CodeNotes.EndOfNotes())
+            for (auto& myPair : m_CodeNotes)
             {
-                const std::string sAddr = ByteAddressToString(iter->first);
+                auto sAddr = ByteAddressToString(myPair.first);
                 ComboBox_AddString(hMemWatch, NativeStr(sAddr).c_str());
-                iter++;
             }
 
             if (nSize > 0)

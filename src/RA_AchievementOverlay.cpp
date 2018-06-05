@@ -68,8 +68,8 @@ const COLORREF COL_SELECTED_BOX_BG = RGB(22, 22, 60);
 const COLORREF COL_WARNING = RGB(255, 0, 0);
 const COLORREF COL_WARNING_BG = RGB(80, 0, 0);
 
-const unsigned int OVERLAY_WIDTH = 1024;
-const unsigned int OVERLAY_HEIGHT = 1024;
+inline constexpr auto OVERLAY_WIDTH = 1024;
+inline constexpr auto OVERLAY_HEIGHT = 1024;
 
 
 void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
@@ -98,25 +98,6 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
     }
 }
 
-AchievementOverlay::AchievementOverlay()
-{
-    m_hOverlayBackground = nullptr;
-    m_nAchievementsSelectedItem = 0;
-    m_nFriendsSelectedItem = 0;
-    m_nMessagesSelectedItem = 0;
-    m_nNewsSelectedItem = 0;
-    m_nLeaderboardSelectedItem = 0;
-}
-
-AchievementOverlay::~AchievementOverlay()
-{
-    if (m_hOverlayBackground != nullptr)
-    {
-        DeleteObject(m_hOverlayBackground);
-        m_hOverlayBackground = nullptr;
-    }
-}
-
 void AchievementOverlay::Initialize(HINSTANCE hInst)
 {
     m_nAchievementsScrollOffset = 0;
@@ -139,7 +120,12 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground = LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RASize(OVERLAY_WIDTH, OVERLAY_HEIGHT));
+    BitmapH tmp{
+    LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RASize{ OVERLAY_WIDTH, OVERLAY_HEIGHT }),
+        reinterpret_cast<BitmapDeleterType>(&::DeleteObject) };
+    m_hOverlayBackground.swap(tmp); // you can't copy only move
+
+
     //if( m_hOverlayBackground == nullptr )
     //{
     //	//	Backup
@@ -695,7 +681,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             else
                 SetTextColor(hDC, COL_TEXT);
 
-            HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
+            
+            auto hOldObj = SelectObject(hDC, g_hFontDesc);
 
             sprintf_s(buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), strlen(buffer));
@@ -1189,7 +1176,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     RECT rcBGSize;
     SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
     OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
-    DrawImageTiled(hDC, m_hOverlayBackground, rcBGSize, rc);
+    DrawImageTiled(hDC, m_hOverlayBackground.get(), rcBGSize, rc);
 
     g_hBrushBG = CreateSolidBrush(COL_USER_FRAME_BG);
     g_hBrushSelectedBG = CreateSolidBrush(COL_SELECTED_BOX_BG);
@@ -1621,7 +1608,7 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
     }
 }
 
-AchievementExamine::AchievementExamine() :
+AchievementExamine::AchievementExamine() noexcept :
     m_pSelectedAchievement(nullptr),
     m_bHasData(false),
     m_nTotalWinners(0),

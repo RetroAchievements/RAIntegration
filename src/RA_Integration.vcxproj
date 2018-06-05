@@ -38,7 +38,9 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="ra_errors.cpp" />
     <ClCompile Include="RA_GameData.cpp" />
+    <ClCompile Include="ra_handles.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Interface.cpp" />
@@ -72,7 +74,9 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="ra_errors.h" />
     <ClInclude Include="RA_GameData.h" />
+    <ClInclude Include="ra_handles.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
@@ -90,11 +94,14 @@
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ra_type_traits" />
+    <None Include="ra_utility" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>
     <RootNamespace>RA_Integration</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -146,6 +153,8 @@
     <OutDir>..\bin\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(Configuration)\</IntDir>
     <TargetName>RA_Integration</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <OutDir>..\bin\$(Configuration)\</OutDir>
@@ -174,11 +183,13 @@
       <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ControlFlowGuard>false</ControlFlowGuard>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -194,6 +205,16 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
+   IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
+   echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
+   copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
+   copy /y $(OutDir)$(TargetName).pdb $(LocalDebuggerWorkingDirectory)\$(TargetName).pdb
+:done
+
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <ClCompile>
@@ -230,17 +251,19 @@
       <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration />
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
       <Command>..\MakeBuildVer.bat</Command>

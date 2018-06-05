@@ -29,10 +29,7 @@ int iSelect = -1;
 
 Dlg_Achievements g_AchievementsDialog;
 
-Dlg_Achievements::Dlg_Achievements()
-    : m_hAchievementsDlg(nullptr)
-{
-}
+
 
 void Dlg_Achievements::SetupColumns(HWND hList)
 {
@@ -136,7 +133,9 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 {
     ASSERT(nIter < ListView_GetItemCount(hList));
     ListView_DeleteItem(hList, nIter);
-    m_lbxData.erase(m_lbxData.begin() + nIter);
+
+    auto myIter{std::next(m_lbxData.begin(), nIter)};
+    const auto _ =  m_lbxData.erase(myIter);
 
     char buffer[16];
     sprintf_s(buffer, 16, " %d", g_pActiveAchievements->NumAchievements());

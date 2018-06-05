@@ -123,7 +123,8 @@ extern bool g_bLBDisplayScoreboard;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut);
+_Success_(return != nullptr)
+_NODISCARD extern char* _MallocAndBulkReadFileToBuffer(_In_ const char* sFilename, _Out_ long& nFileSizeOut);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);

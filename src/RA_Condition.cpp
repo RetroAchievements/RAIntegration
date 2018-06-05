@@ -521,18 +521,16 @@ bool ConditionGroup::Reset(bool bIncludingDeltas)
 
 void ConditionGroup::RemoveAt(size_t nID)
 {
-    size_t nCount = 0;
-    std::vector<Condition>::iterator iter = m_Conditions.begin();
-    while (iter != m_Conditions.end())
+    size_t nCount = size_t{};
+    for (auto& cond : m_Conditions)
     {
         if (nCount == nID)
         {
-            iter = m_Conditions.erase(iter);
+            // weird as hell but whatever
+            const auto _ = m_Conditions.erase(std::next(m_Conditions.begin(), nCount));
             break;
         }
-
         nCount++;
-        iter++;
     }
 }
 

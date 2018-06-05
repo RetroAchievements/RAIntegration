@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "RA_Achievement.h"
-#include "RA_AchievementOverlay.h"
+
 #include "RA_ImageFactory.h"
 #include "RA_Leaderboard.h"
 
@@ -27,7 +27,7 @@ const int FONT_SIZE_TEXT = 16;
 }
 
 
-LeaderboardPopup::LeaderboardPopup()
+LeaderboardPopup::LeaderboardPopup() noexcept
 {
     Reset();
 }
@@ -91,31 +91,27 @@ void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScr
     }
 }
 
-BOOL LeaderboardPopup::Activate(unsigned int nLBID)
+BOOL LeaderboardPopup::Activate(LeaderboardID nLBID)
 {
-    std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
-    while (iter != m_vActiveLBIDs.end())
+    for (auto& id : m_vActiveLBIDs)
     {
-        if ((*iter) == nLBID)
+        if(id == nLBID)
             return FALSE;
-        iter++;
     }
 
-    m_vActiveLBIDs.push_back(nLBID);
+    const auto _ = m_vActiveLBIDs.emplace(nLBID);
     return TRUE;
 }
 
-BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
+BOOL LeaderboardPopup::Deactivate(LeaderboardID nLBID)
 {
-    std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
-    while (iter != m_vActiveLBIDs.end())
+    for (auto& id : m_vActiveLBIDs)
     {
-        if ((*iter) == nLBID)
+        if (id == nLBID)
         {
-            m_vActiveLBIDs.erase(iter);
+            m_vActiveLBIDs.erase(id);
             return TRUE;
         }
-        iter++;
     }
 
     RA_LOG("Could not deactivate leaderboard %d", nLBID);
@@ -226,33 +222,38 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                 break;
 
             int nProgressYOffs = 0;
-            std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
-            while (iter != m_vActiveLBIDs.end())
-            {
-                const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(*iter);
-                if (pLB != nullptr)
+            for (auto& id : m_vActiveLBIDs)
+            {              
+                if (auto pLB = g_LeaderboardManager.FindLB(id); pLB != nullptr)
                 {
                     //	Show current progress:
                     std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValueProgress())) + std::string(" ");
 
+                    // OK we don't have to move initialize it
+                    static_assert(std::is_nothrow_default_constructible_v <::SIZE>);
                     SIZE szProgress;
                     GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
 
-                    HGDIOBJ hBkup = SelectObject(hDC, hPen);
+                    auto hBkup = SelectPen(hDC, hPen);
 
                     MoveToEx(hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr);
                     LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);							//	down
                     LineTo(hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs);			//	left
 
-                    RECT rcProgress;
-                    SetRect(&rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs);
-                    DrawText(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE);
+                    static_assert(std::is_nothrow_default_constructible_v <::RECT>);
+                    // We have constructors in C++, SetRect does not check for stuff since it is in C
+                    RECT rcProgress{ 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs };
 
-                    SelectObject(hDC, hBkup);
+                    //static_assert(std::is_same_v<UINT, decltype(DT_BOTTOM | DT_RIGHT | DT_SINGLELINE)>);
+
+                    static_assert(std::is_same_v<UINT,
+                        decltype(ra::to_unsigned(DT_BOTTOM | DT_RIGHT | DT_SINGLELINE))>);
+                    DrawText(hDC, NativeStr(sScoreSoFar).c_str(), ra::to_signed(sScoreSoFar.length()), &rcProgress,
+                        ra::to_unsigned(DT_BOTTOM | DT_RIGHT | DT_SINGLELINE));
+                    
+                    SelectPen(hDC, hBkup);
                     nProgressYOffs -= 26;
                 }
-
-                iter++;
             }
         }
         break;
@@ -267,7 +268,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
             {
                 char buffer[1024];
                 sprintf_s(buffer, 1024, " Results: %s ", pLB->Title().c_str());
-                RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
+                RECT rcTitle{ nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
                 DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
                 //	Show scoreboard

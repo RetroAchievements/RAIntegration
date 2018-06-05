@@ -112,9 +112,9 @@ public:
     void ClearDirtyFlag() { m_nDirtyFlags = 0; }
 
 private:
-    /*const*/ AchievementSetType m_nSetType;
+    /*const*/ AchievementSetType m_nSetType{ AchievementSetType{} };
 
-    AchievementID m_nAchievementID;
+    AchievementID m_nAchievementID{ AchievementID{} };
     ConditionSet m_vConditions;
 
     std::string m_sTitle;
@@ -122,30 +122,30 @@ private:
     std::string m_sAuthor;
     std::string m_sBadgeImageURI;
 
-    unsigned int m_nPointValue;
-    BOOL m_bActive;
-    BOOL m_bModified;
-    BOOL m_bPauseOnTrigger;
-    BOOL m_bPauseOnReset;
+    unsigned int m_nPointValue{ 0U };
+    BOOL m_bActive{ FALSE };
+    BOOL m_bModified{ FALSE };
+    BOOL m_bPauseOnTrigger{ FALSE };
+    BOOL m_bPauseOnReset{ FALSE };
 
     //	Progress:
-    BOOL m_bProgressEnabled;	//	on/off
+    BOOL m_bProgressEnabled{ FALSE };	//	on/off
 
     std::string m_sProgress;	//	How to calculate the progress so far (syntactical)
     std::string m_sProgressMax;	//	Upper limit of the progress (syntactical? value?)
     std::string m_sProgressFmt;	//	Format of the progress to be shown (currency? step?)
 
-    float m_fProgressLastShown;	//	The last shown progress
+    float m_fProgressLastShown{ 0.0F };	//	The last shown progress
 
-    unsigned int m_nDirtyFlags;	//	Use for rendering when editing.
+    unsigned int m_nDirtyFlags{ 0U };	//	Use for rendering when editing.
 
-    time_t m_nTimestampCreated;
-    time_t m_nTimestampModified;
+    time_t m_nTimestampCreated{ time_t{} };
+    time_t m_nTimestampModified{ time_t{} };
 
-    unsigned short m_nUpvotes;
-    unsigned short m_nDownvotes;
+    unsigned short m_nUpvotes{ unsigned short{} };
+    unsigned short m_nDownvotes{ unsigned short{} };
 
-    HBITMAP m_hBadgeImage;
-    HBITMAP m_hBadgeImageLocked;
+    HBITMAP m_hBadgeImage{ nullptr };
+    HBITMAP m_hBadgeImageLocked{ nullptr };
 };
 

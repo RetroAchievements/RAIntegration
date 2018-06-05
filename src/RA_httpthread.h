@@ -100,12 +100,14 @@ private:
 class HttpResults
 {
 public:
+
     //	Caller must manage: SAFE_DELETE when finished
-    RequestObject * PopNextItem();
+    RequestObject* PopNextItem();
     const RequestObject* PeekNextItem() const;
-    void PushItem(RequestObject* pObj);
-    void Clear();
-    size_t Count() const;
+    void PushItem(RequestObject* pObj) noexcept;
+    void Clear() noexcept;
+    size_t Count() const noexcept;
+    bool Empty() const noexcept;
     BOOL PageRequestExists(RequestType nType, const std::string& sData) const;
 
 private:
@@ -134,10 +136,15 @@ public:
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
 
-    static HANDLE Mutex() { return ms_hHTTPMutex; }
-    static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
+    static RequestObject* PopNextHttpResult()
+    {
+        if(!ms_LastHttpResults.Empty())
+            return ms_LastHttpResults.PopNextItem();
+        return std::add_pointer_t<RequestObject>{};
+    }
 
 private:
-    static HANDLE ms_hHTTPMutex;
+    // Sure we can make the mutex static but not as a class member
+    
     static HttpResults ms_LastHttpResults;
 };

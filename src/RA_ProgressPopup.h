@@ -11,8 +11,13 @@
 
 class ProgressPopup
 {
-public:
-    ProgressPopup();
+public:  
+    ~ProgressPopup() noexcept = default;
+    ProgressPopup(const ProgressPopup&) noexcept = delete;
+    ProgressPopup& operator=(const ProgressPopup&) noexcept = delete;
+    ProgressPopup(ProgressPopup&&) noexcept = delete;
+    ProgressPopup& operator=(ProgressPopup&&) noexcept = delete;
+    ProgressPopup() noexcept;
 
     void Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused);
     void Render(HDC hDC, RECT& rcDest);
@@ -34,12 +39,12 @@ private:
     void NextMessage();
 
 private:
-    float m_fTimer;
+    float m_fTimer = float{};
     char m_sMessageTitleQueue[OVERLAY_MESSAGE_QUEUE_SIZE][1024];
     char m_sMessageDescQueue[OVERLAY_MESSAGE_QUEUE_SIZE][1024];
     HBITMAP m_hMessageImage[OVERLAY_MESSAGE_QUEUE_SIZE];
-    int m_nMessageType[OVERLAY_MESSAGE_QUEUE_SIZE];
-    BOOL m_bSuppressDeltaUpdate;
+    int m_nMessageType[OVERLAY_MESSAGE_QUEUE_SIZE]{};
+    BOOL m_bSuppressDeltaUpdate = BOOL{};
 };
 
 //extern ProgressPopup g_ProgressPopup;

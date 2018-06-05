@@ -30,7 +30,7 @@ public:
     };
 
 public:
-    Dlg_Achievements();
+
 
 public:
     static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);
@@ -57,12 +57,12 @@ private:
     void RemoveAchievement(HWND hList, int nIter);
     size_t AddAchievement(HWND hList, const Achievement& Ach);
 
-    INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg);
+    INT_PTR CommitAchievements(HWND hDlg);
 
     void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
 
 private:
-    HWND m_hAchievementsDlg;
+    HWND m_hAchievementsDlg{ nullptr };
     typedef std::vector< std::string > AchievementDlgRow;
     std::vector< AchievementDlgRow > m_lbxData;
 };

@@ -1,5 +1,6 @@
 #include "RA_CodeNotes.h"
 
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include "RA_Core.h"
@@ -20,36 +21,43 @@ size_t CodeNotes::Load(const std::string& sFile)
     Clear();
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFile.c_str(), "rb") == 0)
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+    FileH pf{ std::fopen(sFile.c_str(), "rb"), &std::fclose };
+
+    if (!pf)
+        return size_t{}; // throw instead?
+
+    Document doc;
+    FileStream myStream{ pf.get() };
+
+    doc.ParseStream(myStream);
+    if (doc.HasParseError())
+        return size_t{}; // it's a lot more efficient to fail-fast than test for success
+
+
+    ASSERT(doc["CodeNotes"].IsArray());
+
+    const Value& NoteArray = doc["CodeNotes"];
+
+    // can't use ranged for with this version of rapidjson
+    for (SizeType i = 0; i < NoteArray.Size(); ++i)
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-        if (!doc.HasParseError())
-        {
-            ASSERT(doc["CodeNotes"].IsArray());
+        const Value& NextNote = NoteArray[i];
+        if (NextNote["Note"].IsNull())
+            continue;
 
-            const Value& NoteArray = doc["CodeNotes"];
+        const std::string& sNote = NextNote["Note"].GetString();
+        if (sNote.length() < 2)
+            continue;
 
-            for (SizeType i = 0; i < NoteArray.Size(); ++i)
-            {
-                const Value& NextNote = NoteArray[i];
-                if (NextNote["Note"].IsNull())
-                    continue;
+        const std::string& sAddr = NextNote["Address"].GetString();
+        ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
+        const std::string& sAuthor = NextNote["User"].GetString();	//	Author?
 
-                const std::string& sNote = NextNote["Note"].GetString();
-                if (sNote.length() < 2)
-                    continue;
-
-                const std::string& sAddr = NextNote["Address"].GetString();
-                ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
-                const std::string& sAuthor = NextNote["User"].GetString();	//	Author?
-
-                m_CodeNotes.insert(std::map<ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
-            }
-        }
-        fclose(pf);
+        const auto _ = m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
     }
+
+
 
     return m_CodeNotes.size();
 }
@@ -86,7 +94,7 @@ void CodeNotes::OnCodeNotesResponse(Document& doc)
 void CodeNotes::Add(const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
-        m_CodeNotes.insert(std::map<ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
+        const auto _ = m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
     else
         m_CodeNotes.at(nAddr).SetNote(sNote);
 

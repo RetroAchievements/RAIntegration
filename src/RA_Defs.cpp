@@ -1,9 +1,8 @@
 #include "RA_Defs.h"
 
-#include <stdio.h>
-#include <Windows.h>
-#include <locale>
+
 #include <codecvt>
+#include <fstream>
 
 
 #ifdef RA_EXPORTS
@@ -65,14 +64,8 @@ std::string Narrow(const std::string& str)
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(data, sizeof(char), strlen(data), pf);
-        fclose(pf);
-    }
+    std::ofstream ofile{ RA_LOG_FILENAME, std::ios::app | std::ios::ate };
+    ofile << data;
 }
 
 void RADebugLog(const char* format, ...)
@@ -97,12 +90,7 @@ void RADebugLog(const char* format, ...)
     OutputDebugString(NativeStr(buf).c_str());
 
     //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(buf, sizeof(char), strlen(buf), pf);
-        fclose(pf);
-    }
+    RADebugLogNoFormat(buf);
 }
 
 BOOL DirectoryExists(const char* sPath)

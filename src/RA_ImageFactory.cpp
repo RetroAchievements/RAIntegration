@@ -26,7 +26,7 @@ _Success_(return == S_OK)
 HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource,
     _Out_ HBITMAP& hBitmapInOut)
 {
-
+    hBitmapInOut = nullptr;
     UINT nWidth = 0U;
     UINT nHeight = 0U;
 
@@ -100,7 +100,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     }
 
     // Extract the image into the HBITMAP    
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) and pvImageBits)
     {
         hr = pToRenderBitmapSource->CopyPixels(
             //hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
@@ -111,7 +111,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     }
 
     // Image Extraction failed, clear allocated memory
-    if (FAILED(hr))
+    if (FAILED(hr) and (hBitmapInOut != nullptr))
     {
         DeleteBitmap(hBitmapInOut);
         hBitmapInOut = nullptr;
@@ -151,8 +151,7 @@ BOOL InitializeUserImageFactory([[maybe_unused]] HINSTANCE hInst)
     return(hr == S_OK);
 }
 
-_Use_decl_annotations_
-_Success_(return != FAILED(std::declval<HRESULT&>()))
+_Success_(return == S_OK)
 HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRenderBitmapSource)
 {
     CComPtr<IWICBitmapScaler> pScaler;
@@ -274,7 +273,7 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
         nullptr,						// Do not prefer a particular vendor
         GENERIC_READ,                   // Desired read access to the file
         WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
-        &pDecoder);                     // Pointer to the decoder
+        &pDecoder.p);                     // Pointer to the decoder
 
 // Retrieve the first frame of the image from the decoder
     CComPtr<IWICBitmapFrameDecode>  pFrame;

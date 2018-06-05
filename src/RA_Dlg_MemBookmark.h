@@ -31,13 +31,13 @@ public:
 
 private:
     std::wstring m_sDescription;
-    unsigned int m_nAddress;
-    unsigned int m_nType;
-    unsigned int m_sValue;
-    unsigned int m_sPrevious;
-    unsigned int m_nCount = 0;
-    bool m_bFrozen = FALSE;
-    bool m_bDecimal = FALSE;
+    unsigned int m_nAddress{ 0U };
+    unsigned int m_nType{ 0U };
+    unsigned int m_sValue{ 0U };
+    unsigned int m_sPrevious{ 0U };
+    unsigned int m_nCount{ 0U };
+    bool m_bFrozen{ false };
+    bool m_bDecimal{ false };
 };
 
 class Dlg_MemBookmark
@@ -61,7 +61,7 @@ public:
     void OnLoad_NewRom();
 
 private:
-    int m_nNumOccupiedRows;
+    int m_nNumOccupiedRows{ 0 };
 
     void PopulateList();
     void SetupColumns(HWND hList);
@@ -78,7 +78,9 @@ private:
     void AddBookmarkMap(MemBookmark* bookmark)
     {
         if (m_BookmarkMap.find(bookmark->Address()) == m_BookmarkMap.end())
-            m_BookmarkMap.insert(std::map<ByteAddress, std::vector<const MemBookmark*>>::value_type(bookmark->Address(), std::vector<const MemBookmark*>()));
+        {
+            const auto _ = m_BookmarkMap.try_emplace(bookmark->Address(), std::vector<const MemBookmark*>{});
+        }
 
         std::vector<const MemBookmark*> *v = &m_BookmarkMap[bookmark->Address()];
         v->push_back(bookmark);
@@ -92,7 +94,7 @@ public:
     }
 
 private:
-    HWND m_hMemBookmarkDialog;
+    HWND m_hMemBookmarkDialog{ nullptr };
     std::map<ByteAddress, std::vector<const MemBookmark*>> m_BookmarkMap;
     std::vector<MemBookmark*> m_vBookmarks;
 };

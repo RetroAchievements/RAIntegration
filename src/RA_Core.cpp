@@ -459,11 +459,13 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
     g_MemManager.AddMemoryBank(static_cast<size_t>(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>(nBankSize));
+    g_MemoryDialog.AddBank(nBankID);
 }
 
 API void CCONV _RA_ClearMemoryBanks()
 {
     g_MemManager.ClearMemoryBanks();
+    g_MemoryDialog.ClearBanks();
 }
 
 

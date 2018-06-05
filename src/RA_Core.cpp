@@ -29,12 +29,16 @@
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#include <locale>
 #include <codecvt>
 #include <direct.h>
 #include <io.h>		//	_access()
 #include <atlbase.h> // CComPtr
 #include <fstream> // to eliminate the need of malloc
+
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;

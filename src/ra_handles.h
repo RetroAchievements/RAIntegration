@@ -2,20 +2,20 @@
 #define RA_HANDLES_H
 #pragma once
 
+#pragma warning(push, 1)
+#pragma warning(disable : 4365 4514)
 #include <memory>
-#include <WTypes.h>
-#include <winhttp.h>
-#include <WindowsX.h>
 
-// w/e
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
+#include <winhttp.h>
+#include <WindowsX.h>
 
 #include "ra_type_traits"
 #include "ra_utility"
 #include "ra_errors.h"
-
+#pragma warning(pop)
 
 // Some notes, the most important thing is that parameters in calling functions should be pointers.
 // Usually with std::unique_ptr, the pointer type is T* but window handles are already pointers
@@ -72,7 +72,7 @@ template<typename HandleType, typename DeleterType>
 class IHandle
 {
 public:
-    
+
 #pragma region Traits
     using pointer      = HandleType;
     using element_type = std::remove_pointer_t<pointer>;
@@ -251,14 +251,10 @@ namespace detail {
 enum class NTKernelType { File, FileSearch, Mutex, Thread };
 
 template<NTKernelType handle = NTKernelType{}>
-struct NTKernelDeleter final : public IDeleter<HANDLE> {
-
-    // You don't have to nullify it here, unique_ptr will do it once it's
-    // destroyed we just need to supply the deleter
-
+struct NTKernelDeleter final : public IDeleter<HANDLE>
+{
     void operator()(pointer p) const noexcept override
     {
-        // I'm pretty sure it's because the mutex is static
         if (p != INVALID_HANDLE_VALUE)
         {
             switch (handle)
@@ -278,7 +274,7 @@ struct NTKernelDeleter final : public IDeleter<HANDLE> {
                 case NTKernelType::Thread:
                 {
                     // This might need a mutex, this one cannot be static or it will cause a deadlock
-                    if(auto tmp{ make_mutex(FALSE)
+                    if (auto tmp{ make_mutex(FALSE)
                         }; WaitForSingleObject(tmp.get(), INFINITE) == WAIT_OBJECT_0)
                     {
                         ::CloseHandle(p);
@@ -378,15 +374,21 @@ operator==(std::nullptr_t, const NTKernelH<handle>& b) noexcept->decltype(!b) { 
 
 template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
 operator!=(const NTKernelH<handle>& a, std::nullptr_t) noexcept
-->decltype(!(a == nullptr)) { return !(a == nullptr); }
+->decltype(!(a == nullptr)) {
+    return !(a == nullptr);
+}
 
 template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
 operator!=(std::nullptr_t, const NTKernelH<handle>& b) noexcept
-->decltype(!(nullptr == b)) { return !(nullptr == b); }
+->decltype(!(nullptr == b)) {
+    return !(nullptr == b);
+}
 
 template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
 operator==(const NTKernelH<handle>& a, const NTKernelH<handle>& b)
-->decltype(a.get() == b.get()){ return { a.get() == b.get() }; }
+->decltype(a.get() == b.get()) {
+    return { a.get() == b.get() };
+}
 
 template<NTKernelType handle = NTKernelType{}> _CONSTANT_VAR
 operator<(const NTKernelH<handle>& a, std::nullptr_t) noexcept

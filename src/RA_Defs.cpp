@@ -1,8 +1,6 @@
 #include "RA_Defs.h"
 
-#include <stdio.h>
-#include <Windows.h>
-#include <locale>
+
 #include <codecvt>
 #include <fstream>
 

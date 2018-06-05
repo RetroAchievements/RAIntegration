@@ -139,7 +139,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             RARect winRect;
             GetWindowRect(hDlg, &winRect);
 
-            for (ResizeContent content : vDlgMemBookmarkResize)
+            for (ResizeContent& content : vDlgMemBookmarkResize)
                 content.Resize(winRect.Width(), winRect.Height());
 
             //InvalidateRect( hDlg, nullptr, TRUE );

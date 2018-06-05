@@ -6,16 +6,15 @@
 // #define NOMINMAX
 #undef max
 
+#pragma warning(push, 1)
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <WindowsX.h>
+
+
 #include <ShlObj.h>
 #include <tchar.h>
-#include <assert.h>
-#include <string>
 #include <sstream>
-#include <vector>
 #include <queue>
-#include <deque>
 #include <map>
 #include <array>
 
@@ -50,18 +49,14 @@
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-
-// This is not needed the most recent version
-#pragma warning(push, 1)
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 
 //	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
-#include "rapidjson/include/rapidjson/error/en.h"
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/filestream.h>
+#include <rapidjson/error/en.h>
+
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 #pragma warning(pop)
@@ -104,48 +99,59 @@ typedef DWORD			ARGB;
 //namespace RA
 //{
 template<typename T>
-static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
+inline constexpr auto RAClamp(const T& val, const T& lower, const T& upper) noexcept
+->decltype(std::clamp(val, lower, upper))
 {
-    return(val < lower) ? lower : ((val > upper) ? upper : val);
+    static_assert(ra::is_nothrow_comparable_v<T>, __FUNCTION__ "Type must be comparable!");
+    return std::clamp(val, lower, upper);
 }
 
 class RARect : public RECT
 {
 public:
-    RARect() noexcept {}
-    RARect(LONG nX, LONG nY, LONG nW, LONG nH)
+    RARect() noexcept = default;
+    inline constexpr RARect(LONG nX, LONG nY, LONG nW, LONG nH) noexcept :
+        RECT{ left   = nX ,
+              top    = nY,
+              right  = nX + nW,
+              bottom = nY + nH }
     {
-        left = nX;
-        right = nX + nW;
-        top = nY;
-        bottom = nY + nH;
-    }
+    } // end constructor
 
+    RARect(const RARect&) = delete;
+    RARect& operator=(const RARect&) = delete;
+    inline constexpr RARect(RARect&&) noexcept = default;
+    inline constexpr RARect& operator=(RARect&&) noexcept = default;
+    ~RARect() noexcept = default;
 public:
-    inline int Width() const { return(right - left); }
-    inline int Height() const { return(bottom - top); }
+    inline constexpr auto Width() const noexcept->decltype(right - left) { return{ right - left }; }
+    inline constexpr auto Height() const noexcept->decltype(right - left) { return{ bottom - top }; }
 };
 
 class RASize
 {
 public:
-    RASize() noexcept : m_nWidth(0), m_nHeight(0) {}
-    RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
-    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
+    inline constexpr RASize() noexcept = default;
+    inline constexpr RASize(int nW, int nH) noexcept : m_nWidth(nW), m_nHeight(nH) {}
+    RASize(const RASize& rhs) = delete;
+    RASize& operator=(const RASize& rhs) = delete;
+    inline constexpr RASize(RASize&&) noexcept = default;
+    inline constexpr RASize& operator=(RASize&&) noexcept = default;
+    ~RASize() noexcept = default;
 
 public:
-    inline int Width() const { return m_nWidth; }
-    inline int Height() const { return m_nHeight; }
-    inline void SetWidth(int nW) { m_nWidth = nW; }
-    inline void SetHeight(int nH) { m_nHeight = nH; }
+    inline constexpr auto Width() const { return m_nWidth; }
+    inline constexpr auto Height() const { return m_nHeight; }
+    inline constexpr auto SetWidth(int nW) noexcept { m_nWidth = nW; }
+    inline constexpr auto SetHeight(int nH) noexcept { m_nHeight = nH; }
 
 private:
-    int m_nWidth;
-    int m_nHeight;
+    int m_nWidth{ 0 };
+    int m_nHeight{ 0 };
 };
 
-const RASize RA_BADGE_PX(64, 64);
-const RASize RA_USERPIC_PX(64, 64);
+inline constexpr RASize RA_BADGE_PX{ 64, 64 };
+inline constexpr RASize RA_USERPIC_PX{ 64, 64 };
 
 class ResizeContent
 {
@@ -159,15 +165,22 @@ public:
     };
 
 public:
-    HWND hwnd;
-    POINT pLT;
-    POINT pRB;
-    AlignType nAlignType;
-    int nDistanceX;
-    int nDistanceY;
-    bool bResize;
+    HWND hwnd{ nullptr };
+    POINT pLT = POINT{};
+    POINT pRB = POINT{};
+    AlignType nAlignType = AlignType{};
+    int nDistanceX{ 0 };
+    int nDistanceY{ 0 };
+    bool bResize{ false };
 
-    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
+    inline constexpr ResizeContent() noexcept = default;
+    ResizeContent(const ResizeContent& rhs) = delete;
+    ResizeContent& operator=(const ResizeContent& rhs) = delete;
+    inline constexpr ResizeContent(ResizeContent&&) noexcept = default;
+    inline constexpr ResizeContent& operator=(ResizeContent&&) noexcept = default;
+    ~ResizeContent() noexcept = default;
+
+    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize) noexcept
     {
         hwnd = contentHwnd;
         nAlignType = newAlignType;

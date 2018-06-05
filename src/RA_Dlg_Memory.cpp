@@ -11,6 +11,10 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif
@@ -659,7 +663,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride = size_t{};
                     switch (m_nDataSize)
                     {
                         case 0:
@@ -710,7 +714,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride = size_t{};
                             switch (m_nDataSize)
                             {
                                 case 0:
@@ -1002,7 +1006,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RARect winRect;
             GetWindowRect(hDlg, &winRect);
 
-            for (ResizeContent content : vDlgMemoryResize)
+            for (ResizeContent& content : vDlgMemoryResize)
                 content.Resize(winRect.Width(), winRect.Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");

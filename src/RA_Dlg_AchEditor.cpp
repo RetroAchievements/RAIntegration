@@ -875,7 +875,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             RARect winRect;
             GetWindowRect(hDlg, &winRect);
 
-            for (ResizeContent content : vDlgAchEditorResize)
+            for (ResizeContent& content : vDlgAchEditorResize)
                 content.Resize(winRect.Width(), winRect.Height());
 
             InvalidateRect(hDlg, nullptr, TRUE);

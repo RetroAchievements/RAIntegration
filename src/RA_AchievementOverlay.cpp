@@ -1071,7 +1071,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
         {
             for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
             {
-                const LB_Entry& rEntry = pLB->GetRankInfo(i);
+                const RA_Leaderboard::Entry& rEntry = pLB->GetRankInfo(i);
                 std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
 
                 char sRankText[256];

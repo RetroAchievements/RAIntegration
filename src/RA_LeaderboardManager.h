@@ -2,12 +2,13 @@
 
 #include "RA_Leaderboard.h"
 
+#include <rapidjson\include\rapidjson\document.h>
 #include <vector>
 
 class RA_LeaderboardManager
 {
 public:
-    static void OnSubmitEntry(const Document& doc);
+    static void OnSubmitEntry(const rapidjson::Document& doc);
 
 public:
     void Reset();
@@ -18,9 +19,13 @@ public:
     size_t Count() const { return m_Leaderboards.size(); }
     inline RA_Leaderboard& GetLB(size_t iter) { return m_Leaderboards[iter]; }
 
-    RA_Leaderboard* FindLB(unsigned int nID);
+    RA_Leaderboard* FindLB(LeaderboardID nID);
 
-public:
+    void ActivateLeaderboard(const RA_Leaderboard& lb) const;
+    void DeactivateLeaderboard(const RA_Leaderboard& lb) const;
+    void SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const;
+
+private:
     std::vector<RA_Leaderboard> m_Leaderboards;
 };
 

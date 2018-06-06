@@ -22,6 +22,69 @@ RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
     return nullptr;
 }
 
+void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
+{
+    if (g_bLBDisplayNotification)
+    {
+        g_PopupWindows.AchievementPopups().AddMessage(
+            MessagePopup("Challenge Available: " + lb.Title(),
+                lb.Description(),
+                PopupLeaderboardInfo,
+                nullptr));
+    }
+
+    g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
+}
+
+void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
+{
+    g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
+
+    if (g_bLBDisplayNotification)
+    {
+        g_PopupWindows.AchievementPopups().AddMessage(
+            MessagePopup("Leaderboard attempt cancelled!",
+                lb.Title(),
+                PopupLeaderboardCancel,
+                nullptr));
+    }
+}
+
+void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const
+{
+    g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
+
+    if (g_bRAMTamperedWith)
+    {
+        g_PopupWindows.AchievementPopups().AddMessage(
+            MessagePopup("Not posting to leaderboard: memory tamper detected!",
+                "Reset game to reenable posting.",
+                PopupInfo));
+    }
+    else if (!g_bHardcoreModeActive)
+    {
+        g_PopupWindows.AchievementPopups().AddMessage(
+            MessagePopup("Leaderboard submission post cancelled.",
+                "Enable Hardcore Mode to enable posting.",
+                PopupInfo));
+    }
+    else
+    {
+        char sValidationSig[50];
+        sprintf_s(sValidationSig, 50, "%d%s%d", lb.ID(), RAUsers::LocalUser().Username().c_str(), lb.ID());
+        std::string sValidationMD5 = RAGenerateMD5(sValidationSig);
+
+        PostArgs args;
+        args['u'] = RAUsers::LocalUser().Username();
+        args['t'] = RAUsers::LocalUser().Token();
+        args['i'] = std::to_string(lb.ID());
+        args['v'] = sValidationMD5;
+        args['s'] = std::to_string(nValue);
+
+        RAWeb::CreateThreadedHTTPRequest(RequestSubmitLeaderboardEntry, args);
+    }
+}
+
 void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 {
     if (!doc.HasMember("Response"))

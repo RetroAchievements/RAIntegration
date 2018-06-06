@@ -339,15 +339,17 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
 
                     while (nBytesToRead > 0)
                     {
-                        BYTE* pData = new BYTE[nBytesToRead];
                         //if( nBytesToRead <= 32 )
                         {
-                            DWORD nBytesFetched = 0;
-                            if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
+
+                            DWORD nBytesFetched = DWORD{};
+                            if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                                }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
                                 ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
-                                //ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
+                                ResponseOut.insert(ResponseOut.end(), pData.get(),
+                                    pData.get() + nBytesFetched);
+                                // pData is either destroyed here or in the else
                             }
                             else
                             {
@@ -355,8 +357,6 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
                                 break;	//Timed out?
                             }
                         }
-
-                        delete[] pData;
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
@@ -429,26 +429,24 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     //	i.e. fetch achievements for new game will return 0 bytes.
                     bSuccess = TRUE;
 
-                    DWORD nBytesToRead = 0;
+                    DWORD nBytesToRead = DWORD{};
                     WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     while (nBytesToRead > 0)
                     {
-                        BYTE* pData = new BYTE[nBytesToRead];
+                        DWORD nBytesFetched = DWORD{};
+                        if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                            }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                         {
-                            DWORD nBytesFetched = 0;
-                            if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
-                            {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;	//Timed out?
-                            }
+                            ASSERT(nBytesToRead == nBytesFetched);
+                            ResponseOut.insert(ResponseOut.end(), pData.get(),
+                                pData.get() + nBytesFetched);
+                            // pData is either destroyed here or in the else
                         }
-
-                        delete[] pData;
+                        else
+                        {
+                            RA_LOG("Assumed timed out connection?!");
+                            break;	//Timed out?
+                        }
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
@@ -593,35 +591,33 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
         {
             //BYTE* sDataDestOffset = &pBufferOut[0];
 
-            DWORD nBytesToRead = 0;
+            DWORD nBytesToRead = DWORD{};
             WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
 
             //	Note: success is much earlier, as 0 bytes read is VALID
             //	i.e. fetch achievements for new game will return 0 bytes.
-            bSuccess = nBytesToRead > 0;
+            bSuccess = nBytesToRead > DWORD{};
 
-            while (nBytesToRead > 0)
+            while (nBytesToRead > DWORD{})
             {
-                BYTE* pData = new BYTE[nBytesToRead];
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
                 ASSERT(nBytesToRead <= 8192);
                 if (nBytesToRead <= 8192)
                 {
-                    DWORD nBytesFetched = 0;
-                    if (WinHttpReadData(hRequest, pData, nBytesToRead, &nBytesFetched))
+                    DWORD nBytesFetched = DWORD{};
+                    if (auto pData{ std::make_unique<BYTE[]>(nBytesToRead)
+                        }; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
                         ASSERT(nBytesToRead == nBytesFetched);
-                        ResponseOut.insert(ResponseOut.end(), pData, pData + nBytesFetched);
+                        ResponseOut.insert(ResponseOut.end(), pData.get(),
+                            pData.get() + nBytesFetched);
+                        // pData is either destroyed here or in the else
                     }
                 }
 
-                delete[] pData;
                 WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
             }
 
-            if (ResponseOut.size() > 0)
+            if (!ResponseOut.empty())
                 ResponseOut.push_back('\0');	//	EOS for parsing
 
             RA_LOG(__FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size());

@@ -14,18 +14,18 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
 {
     static char buffer[33];
 
-    md5_state_t pms;
+    md5_state_t pms = md5_state_t{};
     md5_byte_t digest[16];
 
-    md5_byte_t* pDataBuffer = new md5_byte_t[sStringToMD5.length()];
+    auto pDataBuffer{ std::make_unique<md5_byte_t[]>(sStringToMD5.length()) };
     ASSERT(pDataBuffer != nullptr);
     if (pDataBuffer == nullptr)
         return "";
 
-    memcpy(pDataBuffer, sStringToMD5.c_str(), sStringToMD5.length());
+    memcpy(pDataBuffer.get(), sStringToMD5.c_str(), sStringToMD5.length());
 
     md5_init(&pms);
-    md5_append(&pms, pDataBuffer, sStringToMD5.length());
+    md5_append(&pms, pDataBuffer.get(), sStringToMD5.length());
     md5_finish(&pms, digest);
 
     memset(buffer, 0, MD5_STRING_LEN + 1);
@@ -34,9 +34,6 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
         "%02x%02x%02x%02x%02x%02x%02x%02x",
         digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
         digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-
-    delete[] pDataBuffer;
-    pDataBuffer = nullptr;
 
     return buffer;
 }

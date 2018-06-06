@@ -63,6 +63,7 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 #include <winhttp.h>
 #include <assert.h>
 #include <string>
+#include <memory>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit
 
@@ -366,15 +367,13 @@ void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
 void FetchIntegrationFromWeb()
 {
     const int MAX_SIZE = 2 * 1024 * 1024;
-    char* buffer = new char[MAX_SIZE];
-    if (buffer != nullptr)
+
+    if (auto buffer{ std::make_unique<char[]>(MAX_SIZE) }; buffer != nullptr)
     {
-        DWORD nBytesRead = 0;
+        DWORD nBytesRead = DWORD{};
         if (DoBlockingHttpGet("bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead))
             WriteBufferToFile("RA_Integration.dll", buffer, nBytesRead);
 
-        delete[](buffer);
-        buffer = nullptr;
     }
 }
 

@@ -43,10 +43,10 @@ void RAUsers::OnUserPicDownloaded(const RequestObject& obj)
 //static 
 RAUser* RAUsers::GetUser(const std::string& sUser)
 {
-    if (DatabaseContainsUser(sUser) == FALSE)
-        UserDatabase[sUser] = new RAUser(sUser);
+    if (auto myUser{ std::make_unique<RAUser>(sUser) }; DatabaseContainsUser(sUser) == FALSE)
+        UserDatabase.try_emplace(sUser, myUser.get());
 
-    return UserDatabase[sUser];
+    return UserDatabase.at(sUser);
 }
 
 

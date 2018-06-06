@@ -291,22 +291,19 @@ void Dlg_GameLibrary::ThreadedScanProc()
             DWORD nSize = ftell(pf);
             rewind(pf);
 
-            static BYTE* pBuf = nullptr;	//	static (optimisation)
-            if (pBuf == nullptr)
-                pBuf = new BYTE[6 * 1024 * 1024];
+            auto pBuf = std::make_unique<BYTE[]>(6 * 1024 * 1024);
 
-            //BYTE* pBuf = new BYTE[ nSize ];	//	Do we really need to load this into memory?
             if (pBuf != nullptr)
             {
-                fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
-                Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
+                fread(pBuf.get(), sizeof(BYTE), nSize, pf);	//Check
+                Results.try_emplace(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
 
-                // TODO: Use the the appropriate literals when PR 23 is accepted
-                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, WPARAM{}, LPARAM{});
+                FORWARD_WM_TIMER(g_GameLibrary.GetHWND(), 0U, PostMessage);
             }
 
             fclose(pf);
         }
+
 
         mtx.lock();
         FilesToScan.pop_front();
@@ -327,14 +324,15 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
     if (hFind != INVALID_HANDLE_VALUE)
     {
         unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
-        unsigned char* sROMRawData = new unsigned char[ROM_MAX_SIZE];
+        auto sROMRawData = std::make_unique<unsigned char[]>(ROM_MAX_SIZE);
 
         do
         {
             if (KEYDOWN(VK_ESCAPE))
                 break;
 
-            memset(sROMRawData, 0, ROM_MAX_SIZE);	//?!??
+            // This probably isn't necessary - Samer
+            // memset(sROMRawData.get(), 0, ROM_MAX_SIZE);	//?!??
 
             const std::string sFilename = Narrow(ffd.cFileName);
             if (strcmp(sFilename.c_str(), ".") == 0 ||
@@ -376,9 +374,9 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                         if (GetFileInformationByHandle(hROMReader, &File_Inf))
                             nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
 
-                        DWORD nBytes = 0;
-                        BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr);
-                        const std::string sHashOut = RAGenerateMD5(sROMRawData, nSize);
+                        DWORD nBytes = DWORD{};
+                        BOOL bResult = ReadFile(hROMReader, sROMRawData.get(), nSize, &nBytes, nullptr);
+                        const std::string sHashOut = RAGenerateMD5(sROMRawData.get(), nSize);
 
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
                         {
@@ -397,8 +395,6 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
             }
         } while (FindNextFile(hFind, &ffd) != 0);
 
-        delete[](sROMRawData);
-        sROMRawData = nullptr;
 
         FindClose(hFind);
     }

@@ -4,3 +4,5 @@
 /src/RA_BuildVer.h
 *.user
 /RetroAchievementsKey
+test_app/
+packages/

@@ -8,6 +8,7 @@
 
 #include <strsafe.h>
 #include <atlbase.h> // CComPtr
+#include <mutex>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -19,8 +20,8 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] = { "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] = { 112, 64, 64, 64, 54 };
+const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
+const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
@@ -38,12 +39,15 @@ enum BookmarkSubItems
     NumColumns
 };
 
+// This macro helps me identify that params are used as intended during code
+// analysis, function behavior is mostly handled in the STL
+_Use_decl_annotations_
 INT_PTR CALLBACK Dlg_MemBookmark::s_MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return g_MemBookmarkDialog.MemBookmarkDialogProc(hDlg, uMsg, wParam, lParam);
 }
 
-long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
+_NODISCARD LRESULT CALLBACK EditProcBM(_In_ HWND hwnd, _In_ UINT nMsg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
     switch (nMsg)
     {
@@ -57,7 +61,14 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+            // warning C26454: Arithmetic overflow: '-' operation produces a
+            // negative unsigned result at compile time (io.5).
+
+            // Not really sure if these codes even have any effect
+#pragma warning(disable : 26454)
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(default : 26454)
+
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItemBM;
             lvDispinfo.item.iSubItem = nSelSubItemBM;
@@ -65,7 +76,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             wchar_t sEditText[256];
             GetWindowTextW(hwnd, sEditText, 256);
-            g_MemBookmarkDialog.Bookmarks()[nSelItemBM]->SetDescription(sEditText);
+            g_MemBookmarkDialog.Bookmarks().at(nSelItemBM).SetDescription(sEditText);
 
             HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
 
@@ -95,6 +106,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     return CallWindowProc(EOldProcBM, hwnd, nMsg, wParam, lParam);
 }
 
+_Use_decl_annotations_
 INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     PMEASUREITEMSTRUCT pmis;
@@ -109,8 +121,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
     {
         case WM_INITDIALOG:
         {
-            GenerateResizes(hDlg);
+            // "in" parameters do not leave functions
 
+            GenerateResizes(hDlg);
             m_hMemBookmarkDialog = hDlg;
             hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
 
@@ -119,8 +132,14 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             // Auto-import bookmark file when opening dialog
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
-                ImportFromFile(file);
+                // Why is SAL complaining about this? 
+                // Well RAII does require named return optimization, resource is acquired at initialization
+
+                // It doesn't like the to_string
+                std::ostringstream file;
+                file << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+                auto myStr{ file.str() };
+                ImportFromFile(std::move(myStr));
             }
 
             RestoreWindowPosition(hDlg, "Memory Bookmarks", true, false);
@@ -164,10 +183,14 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             if (pdis->itemID == -1)
                 break;
 
+
             switch (pdis->itemAction)
             {
                 case ODA_SELECT:
+                    _FALLTHROUGH;
+                    // no wonder
                 case ODA_DRAWENTIRE:
+                {
 
                     hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
@@ -177,11 +200,25 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
 
                     // Draw Item Label - Column 0
-                    wchar_t buffer[512];
-                    if (m_vBookmarks[pdis->itemID]->Decimal())
-                        swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks[pdis->itemID]->Description().c_str());
-                    else
-                        swprintf_s(buffer, 512, L"%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                    // It's not understanding wchar_t[]
+                    std::wstring buffer;
+                    buffer.reserve(512);
+
+                    // I'm almost certain it's because it's a pointer
+                    if (!m_vBookmarks.at(pdis->itemID).Description().empty())
+                    {
+                        if (m_vBookmarks.at(pdis->itemID).Decimal())
+                        {
+                            auto temp = m_vBookmarks.at(pdis->itemID).Description();
+                            swprintf_s(buffer.data(), 512, L"(D)%s",
+                                m_vBookmarks.at(pdis->itemID).Description().c_str());
+                        }
+                        else
+                        {
+                            // I can actually see what it is now! - Samer
+                            swprintf_s(buffer.data(), 512, L"%s", m_vBookmarks.at(pdis->itemID).Description().c_str());
+                        }
+                    }
 
                     if (pdis->itemState & ODS_SELECTED)
                     {
@@ -195,7 +232,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         COLORREF color;
 
-                        if (m_vBookmarks[pdis->itemID]->Frozen())
+                        if (m_vBookmarks.at(pdis->itemID).Frozen())
                             color = RGB(255, 255, 160);
                         else
                             color = GetSysColor(COLOR_WINDOW);
@@ -206,12 +243,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         DeleteObject(hBrush);
                     }
 
-                    if (wcslen(buffer) > 0)
+                    if (wcslen(buffer.data()) > 0)
                     {
                         rcLabel.left += (offset / 2);
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer.data(), wcslen(buffer.data()), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
                     // Draw Item Label for remaining columns
@@ -226,43 +263,43 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         switch (i)
                         {
                             case CSI_ADDRESS:
-                                swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
+                                swprintf_s(buffer.data(), 512, L"%06x", m_vBookmarks.at(pdis->itemID).Address());
                                 break;
                             case CSI_VALUE:
-                                if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
+                                if (m_vBookmarks.at(pdis->itemID).Decimal())
+                                    swprintf_s(buffer.data(), 512, L"%u", m_vBookmarks.at(pdis->itemID).Value());
                                 else
                                 {
-                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    switch (m_vBookmarks.at(pdis->itemID).Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                        case 1: swprintf_s(buffer.data(), 512, L"%02x", m_vBookmarks.at(pdis->itemID).Value()); break;
+                                        case 2: swprintf_s(buffer.data(), 512, L"%04x", m_vBookmarks.at(pdis->itemID).Value()); break;
+                                        case 3: swprintf_s(buffer.data(), 512, L"%08x", m_vBookmarks.at(pdis->itemID).Value()); break;
                                     }
                                 }
                                 break;
                             case CSI_PREVIOUS:
-                                if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
+                                if (m_vBookmarks.at(pdis->itemID).Decimal())
+                                    swprintf_s(buffer.data(), 512, L"%u", m_vBookmarks.at(pdis->itemID).Previous());
                                 else
                                 {
-                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    switch (m_vBookmarks.at(pdis->itemID).Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                        case 1: swprintf_s(buffer.data(), 512, L"%02x", m_vBookmarks.at(pdis->itemID).Previous()); break;
+                                        case 2: swprintf_s(buffer.data(), 512, L"%04x", m_vBookmarks.at(pdis->itemID).Previous()); break;
+                                        case 3: swprintf_s(buffer.data(), 512, L"%08x", m_vBookmarks.at(pdis->itemID).Previous()); break;
                                     }
                                 }
                                 break;
                             case CSI_CHANGES:
-                                swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
+                                swprintf_s(buffer.data(), 512, L"%d", m_vBookmarks.at(pdis->itemID).Count());
                                 break;
                             default:
-                                swprintf_s(buffer, 512, L"");
+                                swprintf_s(buffer.data(), 512, L"");
                                 break;
                         }
 
-                        if (wcslen(buffer) == 0)
+                        if (wcslen(buffer.data()) == 0)
                             continue;
 
                         UINT nJustify = DT_LEFT;
@@ -282,13 +319,14 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcLabel.left += offset;
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer.data(), wcslen(buffer.data()), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
                     //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
                     //	DrawFocusRect(pdis->hDC, &rcBounds);
+                }
 
-                    break;
+                break;
 
                 case ODA_FOCUS:
                     break;
@@ -301,7 +339,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             switch (LOWORD(wParam))
             {
                 case IDC_RA_LBX_ADDRESSES:
+#pragma warning(disable : 26454)
                     if (((LPNMHDR)lParam)->code == NM_CLICK)
+#pragma warning(default : 26454)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
@@ -310,7 +350,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (nSelect == -1)
                             break;
                     }
-                    else if (((LPNMHDR)lParam)->code == NM_DBLCLK)
+#pragma warning(disable : 26454)
+                    if (((LPNMHDR)lParam)->code == NM_DBLCLK)
+#pragma warning(default : 26454)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
@@ -321,12 +363,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                             nSelItemBM = pOnClick->iItem;
                             nSelSubItemBM = pOnClick->iSubItem;
 
-                            EditLabel(pOnClick->iItem, pOnClick->iSubItem);
+                            const auto myResult = EditLabel(pOnClick->iItem, pOnClick->iSubItem);
                         }
                         else if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_ADDRESS)
                         {
-                            g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
-                            MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
+                            g_MemoryDialog.SetWatchingAddress(m_vBookmarks.at(pOnClick->iItem).Address());
+                            MemoryViewerControl::setAddress((m_vBookmarks.at(pOnClick->iItem).Address() &
                                 ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                         }
                     }
@@ -359,19 +401,17 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     {
                         while (nSel >= 0)
                         {
-                            MemBookmark* pBookmark = m_vBookmarks[nSel];
+                            const auto& bookmark{ m_vBookmarks.at(nSel) };
 
                             // Remove from vector
-                            m_vBookmarks.erase(m_vBookmarks.begin() + nSel);
+                            const auto _ = m_vBookmarks.erase(std::next(m_vBookmarks.begin(), nSel));
 
                             // Remove from map
-                            std::vector<const MemBookmark*> *pVector;
-                            pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
-                            pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
-                            if (pVector->size() == 0)
-                                m_BookmarkMap.erase(pBookmark->Address());
 
-                            delete pBookmark;
+                            auto& pVector = m_BookmarkMap.find(bookmark.Address())->second;
+                            const auto __ = pVector.erase(std::find(pVector.begin(), pVector.end(), bookmark));
+                            if (pVector.size() == 0)
+                                m_BookmarkMap.erase(bookmark.Address());
 
                             ListView_DeleteItem(hList, nSel);
 
@@ -393,7 +433,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (uSelectedCount > 0)
                         {
                             for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                                m_vBookmarks[i]->SetFrozen(!m_vBookmarks[i]->Frozen());
+                                m_vBookmarks.at(i).SetFrozen(!m_vBookmarks.at(i).Frozen());
                         }
                         ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                     }
@@ -405,11 +445,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
                         int idx = -1;
-                        for (MemBookmark* bookmark : m_vBookmarks)
+                        for (auto& bookmark : m_vBookmarks)
                         {
                             idx++;
 
-                            bookmark->ResetCount();
+                            bookmark.ResetCount();
                         }
 
                         InvalidateRect(hList, nullptr, FALSE);
@@ -427,7 +467,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (uSelectedCount > 0)
                         {
                             for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                                m_vBookmarks[i]->SetDecimal(!m_vBookmarks[i]->Decimal());
+                                m_vBookmarks.at(i).SetDecimal(!m_vBookmarks.at(i).Decimal());
                         }
                         ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                     }
@@ -440,9 +480,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 case IDC_RA_LOADBOOKMARK:
                 {
-                    std::string file = ImportDialog();
-                    if (file.length() > 0)
-                        ImportFromFile(file);
+                    if (auto file = ImportDialog(); !file.empty())
+                        ImportFromFile(std::move(file));
                     return TRUE;
                 }
                 default:
@@ -461,6 +500,7 @@ BOOL Dlg_MemBookmark::IsActive() const
     return(g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }
 
+_Use_decl_annotations_
 void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
 {
     if (!IsWindowVisible(m_hMemBookmarkDialog))
@@ -472,22 +512,22 @@ void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
     HWND hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
 
     int index = 0;
-    for (MemBookmark* bookmark : m_vBookmarks)
+    for (auto& bookmark : m_vBookmarks)
     {
-        if (bookmark->Frozen() && !bForceWrite)
+        if (bookmark.Frozen() && !bForceWrite)
         {
-            WriteFrozenValue(*bookmark);
+            WriteFrozenValue(bookmark);
             index++;
             continue;
         }
 
-        unsigned int mem_value = GetMemory(bookmark->Address(), bookmark->Type());
+        unsigned int mem_value = GetMemory(bookmark.Address(), bookmark.Type());
 
-        if (bookmark->Value() != mem_value)
+        if (bookmark.Value() != mem_value)
         {
-            bookmark->SetPrevious(bookmark->Value());
-            bookmark->SetValue(mem_value);
-            bookmark->IncreaseCount();
+            bookmark.SetPrevious(bookmark.Value());
+            bookmark.SetValue(mem_value);
+            bookmark.IncreaseCount();
 
             RECT rcBounds;
             ListView_GetItemRect(hList, index, &rcBounds, LVIR_BOUNDS);
@@ -511,7 +551,7 @@ void Dlg_MemBookmark::PopulateList()
     ListView_DeleteAllItems(hList);
     m_nNumOccupiedRows = 0;
 
-    for (MemBookmark* bookmark : m_vBookmarks)
+    for (auto& bookmark : m_vBookmarks)
     {
         LV_ITEM item;
         ZeroMemory(&item, sizeof(item));
@@ -530,16 +570,20 @@ void Dlg_MemBookmark::PopulateList()
     //ListView_EnsureVisible( hList, topIndex, TRUE ); // return to last position.
 }
 
+_Use_decl_annotations_
 void Dlg_MemBookmark::SetupColumns(HWND hList)
 {
+    // Some of these functions return values so we have to make sure they don't leave the function
+
     //	Remove all columns,
     while (ListView_DeleteColumn(hList, 0)) {}
 
     //	Remove all data.
-    ListView_DeleteAllItems(hList);
+    const auto a = ListView_DeleteAllItems(hList);
 
     LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
+    auto b = ZeroMemory(&col, sizeof(col));
+    b = nullptr;
 
     for (size_t i = 0; i < NumColumns; ++i)
     {
@@ -554,7 +598,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
         if (i == NumColumns - 1)
             col.fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, (LPARAM)&col);
+        const auto c = ListView_InsertColumn(hList, i, (LPARAM)&col);
     }
 
     m_nNumOccupiedRows = 0;
@@ -569,7 +613,7 @@ void Dlg_MemBookmark::AddAddress()
     if (g_pCurrentGameData->GetGameID() == 0)
         return;
 
-    MemBookmark* NewBookmark = new MemBookmark();
+    auto NewBookmark = std::make_unique<MemBookmark>();
 
     // Fetch Memory Address from Memory Inspector
     TCHAR buffer[256];
@@ -592,44 +636,46 @@ void Dlg_MemBookmark::AddAddress()
     // Get Code Note and add as description
     const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-        NewBookmark->SetDescription(Widen(pSavedNote->Note()).c_str());
+    {
+        const auto wstr = Widen(pSavedNote->Note());
+        NewBookmark->SetDescription(wstr);
+    }
 
     // Add Bookmark to vector and map
-    AddBookmark(NewBookmark);
-    AddBookmarkMap(NewBookmark);
+    MemBookmark myClone;
+    NewBookmark->Clone(myClone);
+
+    AddBookmark(std::move(*NewBookmark.release()));
+    AddBookmarkMap(std::move(myClone));
 
     PopulateList();
 }
 
-void Dlg_MemBookmark::ClearAllBookmarks()
+void Dlg_MemBookmark::ClearAllBookmarks() noexcept
 {
-    while (m_vBookmarks.size() > 0)
+    // no pointers no more, RAII style, still fast
+    // If the bookmark map isn't empty then surely the vectors placed in them can't be empty, otherwise it's undefined
+    if (!m_BookmarkMap.empty())
     {
-        MemBookmark* pBookmark = m_vBookmarks[0];
+        // Let vector destroy them, they aren't pointers no more
+        m_vBookmarks.clear();
 
-        // Remove from vector
-        m_vBookmarks.erase(m_vBookmarks.begin());
+        // Clear the map
+        m_BookmarkMap.clear();
 
-        // Remove from map
-        std::vector<const MemBookmark*> *pVector;
-        pVector = &m_BookmarkMap.find(pBookmark->Address())->second;
-        pVector->erase(std::find(pVector->begin(), pVector->end(), pBookmark));
-        if (pVector->size() == 0)
-            m_BookmarkMap.erase(pBookmark->Address());
-
-        delete pBookmark;
     }
 
     ListView_DeleteAllItems(GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES));
 }
 
-void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
+_Use_decl_annotations_
+void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark& Bookmark)
 {
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{ 0U };
+    unsigned int width{ 0U };
     int n;
     char c;
 
@@ -665,9 +711,10 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     }
 }
 
+_Use_decl_annotations_
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{ 0U };
 
     switch (type)
     {
@@ -738,18 +785,20 @@ void Dlg_MemBookmark::ExportJSON()
 
                                     Value bookmarks(kArrayType);
 
-                                    for (auto bookmark : m_vBookmarks)
+                                    for (auto& bookmark : m_vBookmarks)
                                     {
                                         Value item(kObjectType);
 
                                         oss.str("");
-                                        oss << Narrow(bookmark->Description());
-                                        Value s{ oss.str().c_str(), allocator };
+                                        oss << Narrow(bookmark.Description());
+                                        // I may have done this, this needs to get fixed
+                                        auto myStr{ oss.str() };
+                                        Value s{ myStr.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
-                                        item.AddMember("Address", bookmark->Address(), allocator);
-                                        item.AddMember("Type", bookmark->Type(), allocator);
-                                        item.AddMember("Decimal", bookmark->Decimal(), allocator);
+                                        item.AddMember("Address", bookmark.Address(), allocator);
+                                        item.AddMember("Type", bookmark.Type(), allocator);
+                                        item.AddMember("Decimal", bookmark.Decimal(), allocator);
                                         bookmarks.PushBack(item, allocator);
                                     }
                                     doc.AddMember("Bookmarks", bookmarks, allocator);
@@ -771,54 +820,65 @@ void Dlg_MemBookmark::ExportJSON()
     }
 }
 
-void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
+_Use_decl_annotations_
+void Dlg_MemBookmark::ImportFromFile(std::string&& sFilename)
 {
-    FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
-    if (pFile != nullptr)
+    // mf'er
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+
+    if (FileH pFile{ std::fopen(sFilename.c_str(), "rb"), &std::fclose }; pFile == nullptr)
+        return;
+    else
     {
         Document doc;
-        doc.ParseStream(FileStream(pFile));
-        if (!doc.HasParseError())
+        FileStream myStream{ pFile.get() };
+        doc.ParseStream(myStream);
+
+        if (doc.HasParseError())
+            return;
+
+
+        if (!doc.HasMember("Bookmarks"))
         {
-            if (doc.HasMember("Bookmarks"))
-            {
-                ClearAllBookmarks();
-
-                const Value& BookmarksData = doc["Bookmarks"];
-                for (SizeType i = 0; i < BookmarksData.Size(); ++i)
-                {
-                    MemBookmark* NewBookmark = new MemBookmark();
-
-                    wchar_t buffer[256];
-                    swprintf_s(buffer, 256, L"%s", Widen(BookmarksData[i]["Description"].GetString()).c_str());
-                    NewBookmark->SetDescription(buffer);
-
-                    NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());
-                    NewBookmark->SetType(BookmarksData[i]["Type"].GetInt());
-                    NewBookmark->SetDecimal(BookmarksData[i]["Decimal"].GetBool());
-
-                    NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
-                    NewBookmark->SetPrevious(NewBookmark->Value());
-
-                    AddBookmark(NewBookmark);
-                    AddBookmarkMap(NewBookmark);
-                }
-
-                if (m_vBookmarks.size() > 0)
-                    PopulateList();
-            }
-            else
-            {
-                ASSERT(" !Invalid Bookmark File...");
-                MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
-                return;
-            }
+            ASSERT(" !Invalid Bookmark File...");
+            MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
+            return;
         }
 
-        fclose(pFile);
+        ClearAllBookmarks();
+
+        const Value& BookmarksData = doc["Bookmarks"];
+        for (SizeType i = 0; i < BookmarksData.Size(); ++i)
+        {
+            auto NewBookmark = std::make_unique<MemBookmark>();
+
+            wchar_t buffer[256];
+            auto myStr{ Widen(BookmarksData[i]["Description"].GetString()) };
+            swprintf_s(buffer, 256, L"%s", myStr.c_str());
+            myStr = std::move(buffer); // it will invalidate it but not nullify
+            NewBookmark->SetDescription(myStr);
+
+            NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());
+            NewBookmark->SetType(BookmarksData[i]["Type"].GetInt());
+            NewBookmark->SetDecimal(BookmarksData[i]["Decimal"].GetBool());
+
+            NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
+            NewBookmark->SetPrevious(NewBookmark->Value());
+
+            MemBookmark myClone;
+            NewBookmark->Clone(myClone);
+
+            AddBookmark(std::move(myClone));
+            // It refuses to come here, makes sense though
+            
+        }
+
+        if (m_vBookmarks.size() > 0)
+            PopulateList();
     }
 }
+
+
 
 std::string Dlg_MemBookmark::ImportDialog()
 {
@@ -859,19 +919,32 @@ std::string Dlg_MemBookmark::ImportDialog()
     return str;
 }
 
+void Dlg_MemBookmark::AddBookmarkMap(MemBookmark&& bookmark) noexcept
+{
+    if (FindBookmark(bookmark.Address()) == end())
+    {
+        const auto _ = m_BookmarkMap.try_emplace(bookmark.Address(),
+            MyBookmarks{});
+    }
+
+    auto& v = m_BookmarkMap.at(bookmark.Address());
+    v.push_back(std::move(bookmark));
+}
+
 void Dlg_MemBookmark::OnLoad_NewRom()
 {
-    HWND hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
-    if (hList != nullptr)
+    if (HWND hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES); hList != nullptr)
     {
         ClearAllBookmarks();
-
-        std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
-        ImportFromFile(file);
+        std::ostringstream file;
+        file << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+        auto myStr{ file.str() };
+        ImportFromFile(std::move(myStr));
     }
 }
 
-void Dlg_MemBookmark::GenerateResizes(HWND hDlg)
+_Use_decl_annotations_
+void Dlg_MemBookmark::GenerateResizes(HWND& hDlg)
 {
     RARect windowRect;
     GetWindowRect(hDlg, &windowRect);
@@ -898,6 +971,7 @@ void Dlg_MemBookmark::GenerateResizes(HWND hDlg)
         GetDlgItem(hDlg, IDC_RA_LOADBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
 }
 
+_Use_decl_annotations_
 BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
 {
     HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
@@ -933,14 +1007,30 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
         ASSERT(!"Could not create edit box!");
         MessageBox(nullptr, _T("Could not create edit box."), _T("Error"), MB_OK | MB_ICONERROR);
         return FALSE;
-    };
+    }
 
-    SendMessage(g_hIPEEditBM, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks[nItem]->Description()).c_str());
+    SetWindowFont(g_hIPEEditBM, GetStockFont(DEFAULT_GUI_FONT), TRUE);
+    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks.at(nItem).Description()).c_str());
 
-    SendMessage(g_hIPEEditBM, EM_SETSEL, 0, -1);
+
+    Edit_SetSel(g_hIPEEditBM, 0, -1);
     SetFocus(g_hIPEEditBM);
-    EOldProcBM = (WNDPROC)SetWindowLong(g_hIPEEditBM, GWL_WNDPROC, (LONG)EditProcBM);
+
+    // LRESULT is a typedef of LONG_PTR
+    EOldProcBM = reinterpret_cast<WNDPROC>(SetWindowLongPtr(g_hIPEEditBM, GWLP_WNDPROC,
+        reinterpret_cast<LONG_PTR>(EditProcBM)));
 
     return TRUE;
+}
+
+auto swap(MemBookmark& a, MemBookmark& b) noexcept->decltype(std::swap(a.m_nAddress, b.m_nAddress))
+{
+    std::swap(a.m_sDescription, b.m_sDescription);
+    std::swap(a.m_nAddress, b.m_nAddress);
+    std::swap(a.m_nType, b.m_nType);
+    std::swap(a.m_sValue, b.m_sValue);
+    std::swap(a.m_sPrevious, b.m_sPrevious);
+    std::swap(a.m_nCount, b.m_nCount);
+    std::swap(a.m_bFrozen, b.m_bFrozen);
+    std::swap(a.m_bDecimal, b.m_bDecimal);
 }

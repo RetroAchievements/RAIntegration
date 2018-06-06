@@ -1,7 +1,8 @@
 #include "RA_GameData.h"
 
-GameData* g_pCurrentGameData = new GameData();
+std::unique_ptr<GameData> g_pCurrentGameData{ std::make_unique<GameData>() };
 
+_Use_decl_annotations_
 void GameData::ParseData(const Document& doc)
 {
     m_nGameID = doc["ID"].GetUint();

@@ -5,19 +5,19 @@
 class GameData
 {
 public:
-    inline GameID GetGameID() { return m_nGameID; }
-    void SetGameID(GameID nGameID) { m_nGameID = nGameID; }
+    _NODISCARD _CONSTANT_FN GetGameID() const noexcept { return m_nGameID; }
+    _CONSTANT_FN SetGameID(_In_ GameID nGameID) noexcept { m_nGameID = nGameID; }
 
-    const std::string& GameTitle() { return m_sGameTitle; }
-    void SetGameTitle(const std::string& str) { m_sGameTitle = str; }
+    _NODISCARD auto& GameTitle() const noexcept { return m_sGameTitle; }
+    _NORETURN auto SetGameTitle(_In_ const std::string& str) { m_sGameTitle = str; }
 
-    const std::string& RichPresencePatch() { return m_sRichPresencePatch; }
-    void SetRichPresencePatch(const std::string& str) { m_sRichPresencePatch = str; }
+    _NODISCARD auto& RichPresencePatch() const noexcept { return m_sRichPresencePatch; }
+    _NORETURN auto SetRichPresencePatch(_In_ const std::string& str) noexcept { m_sRichPresencePatch = str; }
 
-    void ParseData(const Document& doc);
+    void ParseData(_In_ const Document& doc);
 
 private:
-    GameID m_nGameID;
+    GameID m_nGameID = GameID{};
     std::string m_sGameTitle;
     std::string m_sRichPresencePatch;
 
@@ -26,5 +26,4 @@ private:
 };
 
 
-
-extern GameData* g_pCurrentGameData;
+extern std::unique_ptr<GameData> g_pCurrentGameData;

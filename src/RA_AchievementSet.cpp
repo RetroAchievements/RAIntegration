@@ -11,21 +11,40 @@
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
 
-AchievementSet* g_pCoreAchievements = nullptr;
-AchievementSet* g_pUnofficialAchievements = nullptr;
-AchievementSet* g_pLocalAchievements = nullptr;
-
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
-
-AchievementSetType g_nActiveAchievementSet = Core;
-AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
+std::unique_ptr<AchievementSet> g_pCoreAchievements = std::make_unique<AchievementSet>(AchievementSetType::Core);
+std::unique_ptr<AchievementSet> g_pUnofficialAchievements = std::make_unique<AchievementSet>(AchievementSetType::Unofficial);
+std::unique_ptr<AchievementSet> g_pLocalAchievements = std::make_unique<AchievementSet>(AchievementSetType::Local);
 
 
-void RASetAchievementCollection(AchievementSetType Type)
-{
-    g_nActiveAchievementSet = Type;
-    g_pActiveAchievements = *ACH_SETS[Type];
+AchievementSetType g_nActiveAchievementSet = AchievementSetType::Core;
+std::unique_ptr<AchievementSet>& g_pActiveAchievements = g_pCoreAchievements;
+
+
+_Use_decl_annotations_
+void RASetAchievementCollection(AchievementSetType Type) noexcept
+{   
+    switch (g_nActiveAchievementSet = Type; g_nActiveAchievementSet)
+    {
+        case AchievementSetType::NumAchievementSetTypes:
+            _FALLTHROUGH;
+        case AchievementSetType::Core:
+        {
+            g_pActiveAchievements = std::move_if_noexcept(g_pCoreAchievements);
+            g_pCoreAchievements.reset(g_pActiveAchievements.get());
+        }
+        break;
+        case AchievementSetType::Unofficial:
+        {
+            g_pActiveAchievements = std::move_if_noexcept(g_pUnofficialAchievements);
+            g_pUnofficialAchievements.reset(g_pActiveAchievements.get());
+        }
+        break;
+        case AchievementSetType::Local:
+        {
+            g_pActiveAchievements = std::move_if_noexcept(g_pLocalAchievements);
+            g_pLocalAchievements.reset(g_pActiveAchievements.get());
+        }   
+    }
 }
 
 std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
@@ -419,38 +438,43 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
 
     const std::string sFilename = GetAchievementSetFilename(nGameID);
 
+
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
-    if (pFile != nullptr)
+    // I really don't want to jump the gun but this function is too stack heavy
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+    
+    // This is killing me
+    if (FileH pFile{ std::fopen(sFilename.c_str(), "r"), &std::fclose }; pFile.get() == nullptr)
+        return TRUE;
+    else if (pFile != nullptr)
     {
         //	Store this: we are now assuming this is the correct checksum if we have a file for it
         g_pCurrentGameData->SetGameID(nGameID);
 
         if (m_nSetType == Local)
         {
-            const char EndLine = '\n';
-            char buffer[4096];
-            unsigned long nCharsRead = 0;
+            const auto EndLine = '\n';
+            auto buffer{ std::make_unique<char[]>(4096) };
+            unsigned long nCharsRead = unsigned long{};
 
             //	Get min ver:
-            _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
+            _ReadTil(EndLine, buffer.get(), 4096, &nCharsRead, pFile.get());
             //	UNUSED at this point? TBD
 
             //	Get game title:
-            _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
+            _ReadTil(EndLine, buffer.get(), 4096, &nCharsRead, pFile.get());
             if (nCharsRead > 0)
             {
                 buffer[nCharsRead - 1] = '\0';	//	Turn that endline into an end-string
 
                 //	Loading Local from file...?
-                g_pCurrentGameData->SetGameTitle(buffer);
+                g_pCurrentGameData->SetGameTitle(buffer.get());
             }
 
-            while (!feof(pFile))
+            while (!feof(pFile.get()))
             {
-                ZeroMemory(buffer, 4096);
-                _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
+                buffer.reset();
+                _ReadTil(EndLine, buffer.get(), 4096, &nCharsRead, pFile.get());
                 if (nCharsRead > 0)
                 {
                     if (buffer[0] == 'L')
@@ -466,18 +490,18 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                         Achievement& newAch = g_pLocalAchievements->AddAchievement();
                         buffer[nCharsRead - 1] = '\0';	//	Turn that endline into an end-string
 
-                        newAch.ParseLine(buffer);
+                        newAch.ParseLine(buffer.get());
                     }
                 }
             }
 
-            fclose(pFile);
             return TRUE;
         }
         else
         {
             Document doc;
-            doc.ParseStream(FileStream(pFile));
+            FileStream myFileStream{ pFile.get() };
+            doc.ParseStream(myFileStream);
             if (!doc.HasParseError())
             {
                 //ASSERT( doc["Success"].GetBool() );
@@ -490,8 +514,9 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                 for (SizeType i = 0; i < AchievementsData.Size(); ++i)
                 {
                     //	Parse into correct boxes
-                    unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
-                    if (nFlags == 3 && m_nSetType == Core)
+                    
+                    if (unsigned int nFlags = AchievementsData[i]["Flags"].GetUint()
+                        ; nFlags == 3 && m_nSetType == Core)
                     {
                         Achievement& newAch = AddAchievement();
                         newAch.Parse(AchievementsData[i]);
@@ -505,7 +530,6 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
 
                 if (m_nSetType != Core)
                 {
-                    fclose(pFile);
                     return TRUE;
                 }
 
@@ -522,12 +546,10 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
             }
             else
             {
-                fclose(pFile);
                 ASSERT(!"Could not parse file?!");
                 return FALSE;
             }
 
-            fclose(pFile);
 
             unsigned int nTotalPoints = 0;
             for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
@@ -557,9 +579,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
     {
         //	Cannot open file
         RA_LOG("Cannot open file %s\n", sFilename.c_str());
-        char sErrMsg[2048];
-        strerror_s(sErrMsg, nErr);
-        RA_LOG("Error %s\n", sErrMsg);
+        RA_LOG("Error %s\n", strerror(::GetLastError()));
         return FALSE;
     }
 }

@@ -35,6 +35,11 @@
 #include <io.h>		//	_access()
 #include <atlbase.h> // CComPtr
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -210,10 +215,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     //////////////////////////////////////////////////////////////////////////
     //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet(Core);
-    g_pUnofficialAchievements = new AchievementSet(Unofficial);
-    g_pLocalAchievements = new AchievementSet(Local);
-    g_pActiveAchievements = g_pCoreAchievements;
+    // Achievements are already initialized via RAII
 
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
@@ -251,10 +253,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 API int CCONV _RA_Shutdown()
 {
     _RA_SavePreferences();
-
-    SAFE_DELETE(g_pCoreAchievements);
-    SAFE_DELETE(g_pUnofficialAchievements);
-    SAFE_DELETE(g_pLocalAchievements);
 
     RAWeb::RA_KillHTTPThreads();
 

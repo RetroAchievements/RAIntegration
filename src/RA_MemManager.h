@@ -2,22 +2,12 @@
 
 #include "RA_Condition.h"
 
-class MemCandidate
+struct MemCandidate
 {
-public:
-    MemCandidate()
-        : m_nAddr(0),
-        m_nLastKnownValue(0),
-        m_bUpperNibble(FALSE),
-        m_bHasChanged(FALSE)
-    {
-    }
-
-public:
-    unsigned int m_nAddr;
-    unsigned int m_nLastKnownValue;		//	A Candidate MAY be a 32-bit candidate!
-    bool m_bUpperNibble;				//	Used only for 4-bit comparisons
-    bool m_bHasChanged;
+    unsigned int m_nAddr{ 0U };
+    unsigned int m_nLastKnownValue{ 0U };		//	A Candidate MAY be a 32-bit candidate!
+    bool m_bUpperNibble{ false };				//	Used only for 4-bit comparisons
+    bool m_bHasChanged{ false };
 };
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
@@ -29,25 +19,25 @@ private:
     class BankData
     {
     public:
-        BankData()
-            : Reader(nullptr), Writer(nullptr), BankSize(0)
-        {
-        }
+        inline constexpr BankData() noexcept = default;
 
-        BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize)
+        inline constexpr BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn,
+            size_t nBankSize) noexcept
             : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
         {
         }
 
+        inline constexpr BankData(BankData&&) noexcept = default;
+        inline constexpr BankData& operator=(BankData&&) noexcept = default;
     private:
         //	Copying disabled
-        BankData(const BankData&);
-        BankData& operator=(BankData&);
+        BankData(const BankData&) = delete;
+        BankData& operator=(const BankData&) = delete;
 
     public:
-        _RAMByteReadFn * Reader;
-        _RAMByteWriteFn* Writer;
-        size_t BankSize;
+        _RAMByteReadFn * Reader{ nullptr };
+        _RAMByteWriteFn* Writer{ nullptr };
+        size_t BankSize{ size_t{} };
     };
 
 public:
@@ -79,7 +69,7 @@ public:
     const MemCandidate& GetCandidate(size_t nAt) const { return m_Candidates[nAt]; }
 
     inline void ChangeNumCandidates(unsigned int size) { m_nNumCandidates = size; }
-    MemCandidate* GetCandidatePointer() { return m_Candidates; }
+    MemCandidate* GetCandidatePointer() { return m_Candidates.get(); }
 
     void ChangeActiveMemBank(unsigned short nMemBank);
 
@@ -92,14 +82,14 @@ public:
 
 private:
     std::map<size_t, BankData> m_Banks;
-    unsigned short m_nActiveMemBank;
+    unsigned short m_nActiveMemBank = unsigned short{};
 
-    MemCandidate* m_Candidates;		//	Pointer to an array
-    size_t m_nNumCandidates;		//	Actual quantity of legal candidates
+    std::unique_ptr<MemCandidate[]> m_Candidates;		//	Pointer to an array
+    size_t m_nNumCandidates = size_t{};		//	Actual quantity of legal candidates
 
-    ComparisonVariableSize m_nComparisonSizeMode;
-    bool m_bUseLastKnownValue;
-    size_t m_nTotalBankSize;
+    ComparisonVariableSize m_nComparisonSizeMode = ComparisonVariableSize{};
+    bool m_bUseLastKnownValue{ true };
+    size_t m_nTotalBankSize = size_t{};
 };
 
 extern MemManager g_MemManager;

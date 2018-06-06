@@ -83,11 +83,11 @@ private:
 
 //	Externals:
 
-extern AchievementSet* g_pCoreAchievements;
-extern AchievementSet* g_pUnofficialAchievements;
-extern AchievementSet* g_pLocalAchievements;
+extern std::unique_ptr<AchievementSet> g_pCoreAchievements;
+extern std::unique_ptr<AchievementSet> g_pUnofficialAchievements;
+extern std::unique_ptr<AchievementSet> g_pLocalAchievements;
 
-extern AchievementSet* g_pActiveAchievements;
+extern std::unique_ptr<AchievementSet>& g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
 
-extern void RASetAchievementCollection(enum AchievementSetType Type);
+_NORETURN void RASetAchievementCollection(_In_ AchievementSetType Type) noexcept;

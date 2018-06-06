@@ -23,7 +23,7 @@ namespace {
 const size_t MIN_RESULTS_TO_DUMP = 500000;
 const size_t MIN_SEARCH_PAGE_SIZE = 50;
 
-const char* COMP_STR[] = {
+const char* COMP_STR[] ={
     { "EQUAL" },
     { "LESS THAN" },
     { "LESS THAN/EQUAL" },
@@ -226,7 +226,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
         if (offset < 0)
         {
 
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
+            if (m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
             {
                 m_nEditAddress -= offset;
                 MessageBeep((UINT)-1);
@@ -341,9 +341,9 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
         if (g_MemBookmarkDialog.GetHWND() != nullptr)
         {
-            const MemBookmark* Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
-            if (Bookmark != nullptr)
-                g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
+            auto Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
+            if (Bookmark != std::end(g_MemBookmarkDialog))
+                g_MemBookmarkDialog.WriteFrozenValue(ra::at(nByteAddress, Bookmark->second));
         }
 
         if (m_nDataSize == EightBit)
@@ -622,14 +622,21 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 for (int j = 0; j < 16; ++j)
                 {
                     notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
-                    const MemBookmark* bm = g_MemBookmarkDialog.FindBookmark(addr + j);
-                    bookmarks |= (bm != nullptr) ? (1 << j) : 0;
-                    freeze |= (bm != nullptr && bm->Frozen()) ? (1 << j) : 0;
-
-                    if (bm != nullptr && bm->Frozen())
+                    if (auto myIter = g_MemBookmarkDialog.FindBookmark(addr + j)
+                        ; myIter == std::end(g_MemBookmarkDialog))
                     {
-                        if (g_MemBookmarkDialog.GetHWND() != nullptr)
-                            g_MemBookmarkDialog.WriteFrozenValue(*bm);
+                        break;
+                    }
+                    else {
+                        auto& bm = ra::at(addr + j, myIter->second);
+                        bookmarks |= (1 << j);
+                        freeze |= (bm.Frozen()) ? (1 << j) : 0;
+
+                        if (bm.Frozen())
+                        {
+                            if (g_MemBookmarkDialog.GetHWND() != nullptr)
+                                g_MemBookmarkDialog.WriteFrozenValue(bm);
+                        }
                     }
                 }
 
@@ -928,7 +935,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 color = RGB(255, 215, 215); // Red if search result doesn't match comparison.
                                 currentResult.m_bHasChanged = true;
                             }
-                            else if (g_MemBookmarkDialog.FindBookmark(currentResult.m_nAddr) != nullptr)
+                            else if (g_MemBookmarkDialog.FindBookmark(currentResult.m_nAddr) != g_MemBookmarkDialog.end())
                                 color = RGB(220, 255, 220); // Green if Bookmark is found.
                             else if (g_MemoryDialog.Notes().FindCodeNote(currentResult.m_nAddr) != nullptr)
                                 color = RGB(220, 240, 255); // Blue if Code Note is found.
@@ -1470,8 +1477,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         }
 
         case WM_CLOSE:
-            EndDialog(hDlg, 0);
-            return TRUE;
+        {
+            // hDlg was invalid sometimes
+            if (hDlg)
+                EndDialog(hDlg, IDCLOSE);
+        }
+        return TRUE;
 
         default:
             return FALSE;	//	unhandled

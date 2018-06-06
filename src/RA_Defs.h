@@ -2,25 +2,21 @@
 #define RA_DEFS_H
 #pragma once
 
-#include <Windows.h>
+
+
+#include <Windows.h>  
 #include <WindowsX.h>
 #include <ShlObj.h>
 #include <tchar.h>
-#include <assert.h>
-#include <string>
 #include <sstream>
-#include <vector>
 #include <queue>
-#include <deque>
-#include <map>
+#include <map>  
 #include <array>
-
-
-
-
+#include <memory> // too many files need this right now
+#include <type_traits> // std::enable_if_t
 
 #ifndef RA_EXPORTS
-
+#include <cassert> // RapidJSON has cassert
 //	Version Information is integrated into tags
 
 #else
@@ -35,9 +31,27 @@
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
 #define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
 #define _UNUSED              [[maybe_unused]]
-
+#define _CONSTANT_VAR        inline constexpr auto
+#else
+// The SAL annotations for pre/post conditions are kind of complicated So we aren't going to use them here, but the GSL has stuff for expressing Contracts - Samer
+#define _NODISCARD           _Check_return_
+#define _DEPRECATED          __declspec(deprecated)
+#define _DEPRECATEDR(reason) __declspec(deprecated(reason))
+#define _FALLTHROUGH         __fallthrough//; you need ';' at the end
+#define _CONSTANT_VAR        constexpr auto
+#ifndef GSL_GSL_H
+#define _UNUSED              [[gsl::suppress(ES.20)]]
+#else
+#define _UNUSED // couldn't find any declspec equivalents - Samer
+#endif // DEBUG
 
 #endif // _HAS_CXX17
+
+#ifndef _CONSTANT_FN
+#define _CONSTANT_FN _CONSTANT_VAR
+#endif // !_CONSTANT_FN
+
+
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
@@ -52,12 +66,10 @@
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 
 //	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
-#include "rapidjson/include/rapidjson/error/en.h"
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/filestream.h>
+#include <rapidjson/error/en.h>
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 #pragma warning(pop)
@@ -276,8 +288,6 @@ typedef std::basic_string<TCHAR> tstring;
 
 
 
-
-
 #ifdef UNICODE
 #define NativeStr(x) Widen(x)
 #define NativeStrType std::wstring
@@ -285,5 +295,19 @@ typedef std::basic_string<TCHAR> tstring;
 #define NativeStr(x) Narrow(x)
 #define NativeStrType std::string
 #endif
+
+namespace ra {
+
+// temp, something similar is in the GSL but need to fix up the Memory Bookmarker - Samer
+// Didn't include my type_traits here for fear people would be scared of lots of lines
+template<typename Container>
+_NODISCARD auto at(typename Container::size_type pos, Container& myContainer) noexcept
+->decltype(std::declval<Container&>().at(pos))
+{
+    return myContainer.at(pos);
+}
+
+} // namespace ra 
+
 
 #endif // !RA_DEFS_H

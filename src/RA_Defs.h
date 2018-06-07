@@ -28,16 +28,7 @@
 
 // Maybe an extra check just in-case
 
-#define _NORETURN            [[noreturn]]
 
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-
-
-#endif // _HAS_CXX17
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
@@ -108,7 +99,7 @@ static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
 class RARect : public RECT
 {
 public:
-    RARect() {}
+    RARect() noexcept {}
     RARect(LONG nX, LONG nY, LONG nW, LONG nH)
     {
         left = nX;
@@ -125,7 +116,7 @@ public:
 class RASize
 {
 public:
-    RASize() : m_nWidth(0), m_nHeight(0) {}
+    RASize() noexcept : m_nWidth(0), m_nHeight(0) {}
     RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
     RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
 

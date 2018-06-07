@@ -1,0 +1,133 @@
+#ifndef RA_FWD_H
+#define RA_FWD_H
+#pragma once
+
+
+// We are assuming C++
+#ifndef __cplusplus
+#error C++ is a requirement!
+#endif // !__cplusplus
+
+// yvals.h is kinda big (48 KB) and we only need _HAS_CXX17 and the _EXTERN_C
+
+#define _NORETURN [[noreturn]]
+
+#ifndef _HAS_CXX17
+#ifdef _MSVC_LANG
+#if _MSVC_LANG > 201402
+#define _HAS_CXX17	1
+#else // _MSVC_LANG > 201402
+#define _HAS_CXX17	0
+#endif // _MSVC_LANG > 201402
+#else // _MSVC_LANG
+#if __cplusplus > 201402
+#define _HAS_CXX17	1
+#else // __cplusplus > 201402
+#define _HAS_CXX17	0
+#endif // __cplusplus > 201402
+#endif // _MSVC_LANG
+#endif // _HAS_CXX17
+
+#if _HAS_CXX17
+#define _DEPRECATED          [[deprecated]]
+#define _DEPRECATEDR(reason) [[deprecated(reason)]]
+#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
+#define _UNUSED              [[maybe_unused]]
+#ifndef _CONSTANT_VAR
+#define _CONSTANT_VAR inline constexpr auto
+#endif // !_CONSTANT_VAR
+#else
+#define _NODISCARD           _Check_return_
+#define _DEPRECATED          __declspec(deprecated)
+#define _DEPRECATEDR(reason) __declspec(deprecated(reason))
+#define _FALLTHROUGH         /*[[fallthrough]]/*
+#define _UNUSED              /*[[maybe_unused]]*/
+#ifndef _CONSTANT_VAR
+#define _CONSTANT_VAR constexpr auto
+#endif // !_CONSTANT_VAR
+#endif // _HAS_CXX17
+
+#ifndef _CONSTANT_FN
+#define _CONSTANT_FN _CONSTANT_VAR
+#endif // !_CONSTANT_FN
+
+// if ones not defined the other one surely isn't
+#ifndef _EXTERN_C
+#define _EXTERN_C			extern "C" {
+#define _END_EXTERN_C		}
+#endif // !_EXTERN_C
+
+
+
+struct HWND__;
+struct HINSTANCE__;
+using HWND      = HWND__*;
+using HINSTANCE = HINSTANCE__*;
+using HMODULE   = HINSTANCE;
+using HANDLE    = void*;
+
+// Windows is a requirement for now so we are assuming we're on Windows
+#ifndef _WINDEF_
+#define CALLBACK    __stdcall
+#define WINAPI      __stdcall
+#define WINAPIV     __cdecl
+#define APIENTRY    WINAPI
+#define APIPRIVATE  __stdcall
+#define PASCAL      __stdcall
+#endif // !WINAPI
+
+#ifndef _TCHAR_DEFINED
+#if _MBCS
+using TCHAR  = char;
+using TBYTE  = unsigned char;
+using PTCHAR = char*;
+using PTBYTE = unsigned char*;
+#elif _UNICODE
+using TCHAR = wchar_t;
+using TBYTE = TCHAR;
+using PTCHAR = wchar_t*;
+using PTBYTE = PTCHAR;
+#endif // _MBCS
+#define _TCHAR_DEFINED
+#endif // !_TCHAR_DEFINED
+
+#ifndef _INC_VADEFS
+#if _WIN64
+using INT_PTR    = long long;
+using UINT_PTR   = unsigned long long;
+using LONG_PTR   = INT_PTR;
+using ULONG_PTR  = UINT_PTR;
+using PINT_PTR   = INT_PTR*;
+using PINT_PTR   = UINT_PTR*;
+using PLONG_PTR  = PINT_PTR;
+using PULONG_PTR = PLONG_PTR;
+#ifndef __int3264
+using __int3264  = long long;
+#endif // !__int3264
+#elif _WIN32
+using INT_PTR    = int;
+using UINT_PTR   = unsigned int;
+using LONG_PTR   = long;
+using ULONG_PTR  = unsigned long;
+using PINT_PTR   = INT_PTR*;
+using PINT_PTR   = UINT_PTR*;
+using PLONG_PTR  = PINT_PTR;
+using PULONG_PTR = PLONG_PTR;
+#ifndef __int3264
+using __int3264 = int;
+#endif // !__int3264
+#endif // // _WIN64
+#endif // !_INC_VADEFS
+
+#ifndef INVALID_HANDLE_VALUE
+// reinterpret_cast isn't a constant expression
+const auto INVALID_HANDLE_VALUE{ reinterpret_cast<HANDLE>(-1) };
+#endif // !INVALID_HANDLE_VALUE
+
+
+// forward declarations, you won't get a compiler error or even a warning but it will say it's not defined despite being extern
+_EXTERN_C
+extern __declspec(dllimport) HWND __stdcall GetActiveWindow(void);
+_END_EXTERN_C
+
+#endif // !RA_FWD_H

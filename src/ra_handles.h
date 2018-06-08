@@ -72,7 +72,6 @@ template<typename HandleType, typename DeleterType>
 class IHandle
 {
 public:
-
 #pragma region Traits
     using pointer      = HandleType;
     using element_type = std::remove_pointer_t<pointer>;
@@ -111,7 +110,7 @@ public:
     ///   <c>nullptr</c>.
     /// </summary>
     /// <param name="">The <c>nullptr</c> constant.</param>
-    IHandle(std::nullptr_t) noexcept : ihandle_{ pointer{} } {}
+    IHandle(_In_ std::nullptr_t) noexcept : ihandle_{ pointer{} } {}
 
 #pragma warning (default : 4508)
     /// <summary>
@@ -119,7 +118,7 @@ public:
     /// </summary>
     /// <param name="">The <c>nullptr</c> constant.</param>
     /// <returns></returns>
-    IHandle& operator=(std::nullptr_t) noexcept
+    _NODISCARD IHandle& operator=(_In_ std::nullptr_t) noexcept
     {
         reset();
         return *this;
@@ -130,7 +129,7 @@ public:
 
     IHandle(const IHandle&) = delete;
     IHandle& operator=(const IHandle&) = delete;
-    IHandle(_In_ IHandle&&) noexcept = default;
+    IHandle(IHandle&&) noexcept = default;
     _NODISCARD IHandle& operator=(_In_ IHandle&&) noexcept = default;
 
 #pragma endregion
@@ -266,27 +265,31 @@ struct NTKernelDeleter final : public IDeleter<HANDLE>
     using IDeleter<HANDLE>::IDeleter;
     _NORETURN inline void operator()(_In_ pointer p) const noexcept
     {
-        switch (handle)
+        if (ValidHandle(p) && (p != nullptr))
         {
-            case NTKernelType::File:
-                ::CloseHandle(p);
-                break;
-
-            case NTKernelType::FileSearch:
-                ::FindClose(p);
-                break;
-
-            case NTKernelType::Mutex:
-                ::ReleaseMutex(p);
-                break;
-
-            case NTKernelType::Thread:
+            switch (handle)
             {
-                // This might need a mutex, this one cannot be static or it will cause a deadlock
-                if (auto tmp{ make_mutex(FALSE)
-                    }; WaitForSingleObject(tmp.get(), INFINITE) == WAIT_OBJECT_0)
-                {
+                case NTKernelType::File:
                     ::CloseHandle(p);
+                    break;
+
+                case NTKernelType::FileSearch:
+                    ::FindClose(p);
+                    break;
+
+                case NTKernelType::Mutex:
+                    ::ReleaseMutex(p);
+                    break;
+
+                case NTKernelType::Thread:
+                {
+                    // This might need a mutex, this one cannot be static or it will cause a deadlock
+                    // It just needs a few extra milliseconds to synchronize
+                    if (auto tmp{ make_mutex(FALSE)
+                        }; WaitForSingleObject(tmp.get(), INFINITE) == WAIT_OBJECT_0)
+                    {
+                        ::CloseHandle(p);
+                    }
                 }
             }
         }

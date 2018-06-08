@@ -102,10 +102,10 @@ static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!"
 
 //	No game-specific code here please!
 
-std::vector<HANDLE> g_vhHTTPThread;
+std::vector<ra::ThreadH> g_vhHTTPThread;
 HttpResults HttpRequestQueue;
 
-HANDLE RAWeb::ms_hHTTPMutex = nullptr;
+ra::MutexH RAWeb::ms_hHTTPMutex{ ra::make_mutex(FALSE) };
 HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
@@ -682,33 +682,38 @@ void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
-    RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
-    for (size_t i = 0; i < g_nNumHTTPThreads; ++i)
+    for (size_t i = size_t{}; i < g_nNumHTTPThreads; i++)
     {
-        DWORD dwThread;
-        HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
-        ASSERT(hThread != nullptr);
-        if (hThread != nullptr)
-        {
-            g_vhHTTPThread.push_back(hThread);
-            RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread);
-        }
+        auto lpDwThread = std::make_unique<DWORD>();
+        auto hThread{
+            ra::make_thread(SIZE_T{}, RAWeb::HTTPWorkerThread, DWORD{}, nullptr, static_cast<LPVOID>(&i),
+            lpDwThread.get())
+        };
+
+        // having it null is undefined
+        g_vhHTTPThread.push_back(std::move(hThread));
+        RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, lpDwThread.get(), hThread.get());
     }
 }
 
 //	Takes items from the http request queue, and posts them to the last http results queue.
 DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
 {
-    time_t nSendNextKeepAliveAt = time(nullptr) + SERVER_PING_DURATION;
+    auto nSendNextKeepAliveAt = time(nullptr) + SERVER_PING_DURATION;
 
     bool bThreadActive = true;
-    bool bDoPingKeepAlive = (reinterpret_cast<int>(lpParameter) == 0);	//	Cause this only on first thread
+    // void* differs across architectures
+    bool bDoPingKeepAlive = (reinterpret_cast<std::intptr_t>(lpParameter) == std::intptr_t{});	//	Cause this only on first thread
 
     while (bThreadActive)
     {
-        WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-        RequestObject* pObj = HttpRequestQueue.PopNextItem();
-        ReleaseMutex(RAWeb::Mutex());
+        RequestObject* pObj = nullptr;
+        if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+        {
+            if (!std::empty(HttpRequestQueue))
+                pObj = HttpRequestQueue.PopNextItem();
+            ReleaseMutex(RAWeb::Mutex());
+        }
         if (pObj != nullptr)
         {
             DataStream Response;
@@ -726,6 +731,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
 
             pObj->SetResponse(Response);
 
+            // Isn't a precondition for the tread to be active?
             if (bThreadActive)
             {
                 //	Push object over to results queue - let app deal with them now.
@@ -814,16 +820,14 @@ void RAWeb::RA_KillHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
-    {
-        //	Create n of these:
+    //	Create n of these:
+    for (auto& thread : g_vhHTTPThread)
         RAWeb::CreateThreadedHTTPRequest(RequestType::StopThread);
-    }
 
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
+    //	Wait for n responses:
+    for (auto& thread : g_vhHTTPThread)
     {
-        //	Wait for n responses:
-        DWORD nResult = WaitForSingleObject(g_vhHTTPThread[i], INFINITE);
+        auto nResult = WaitForSingleObject(thread.get(), INFINITE);
         RA_LOG(__FUNCTION__ " ended, result %d\n", nResult);
     }
 }
@@ -832,89 +836,83 @@ void RAWeb::RA_KillHTTPThreads()
 
 RequestObject* HttpResults::PopNextItem()
 {
-    RequestObject* pRetVal = nullptr;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        if (m_aRequests.size() > 0)
+        if (!m_aRequests.empty())
         {
-            pRetVal = m_aRequests.front();
+            auto pRetVal = m_aRequests.front();
             m_aRequests.pop_front();
+            ReleaseMutex(RAWeb::Mutex());
+            return pRetVal;
         }
     }
-    ReleaseMutex(RAWeb::Mutex());
-
-    return pRetVal;
+    // expecting a null pointer is undefined, plus the mutex should be
+    // synchronizing the execution anyway
+    ra::ThrowLastError();
 }
 
 const RequestObject* HttpResults::PeekNextItem() const
 {
-    RequestObject* pRetVal = nullptr;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        pRetVal = m_aRequests.front();
+        auto pRetVal = m_aRequests.front();
+        ReleaseMutex(RAWeb::Mutex());
+        return pRetVal;
     }
-    ReleaseMutex(RAWeb::Mutex());
-
-    return pRetVal;
+    ra::ThrowLastError();
 }
 
 void HttpResults::PushItem(RequestObject* pObj)
 {
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
         m_aRequests.push_front(pObj);
+        ReleaseMutex(RAWeb::Mutex());
     }
-    ReleaseMutex(RAWeb::Mutex());
 }
 
 void HttpResults::Clear()
 {
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        while (!m_aRequests.empty())
+        // If it's empty it will have no effect
+        for (auto& pObj : m_aRequests)
         {
-            RequestObject* pObj = m_aRequests.front();
             m_aRequests.pop_front();
             SAFE_DELETE(pObj);
         }
+        ReleaseMutex(RAWeb::Mutex());
     }
-    ReleaseMutex(RAWeb::Mutex());
 }
 
 size_t HttpResults::Count() const
 {
-    size_t nCount = 0;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (size_t nCount = size_t{}; WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
         nCount = m_aRequests.size();
+        ReleaseMutex(RAWeb::Mutex());
+        return nCount;
     }
-    ReleaseMutex(RAWeb::Mutex());
 
-    return nCount;
+    return WAIT_FAILED;
 }
 
 BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData) const
 {
-    BOOL bRetVal = FALSE;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        std::deque<RequestObject*>::const_iterator iter = m_aRequests.begin();
-        while (iter != m_aRequests.end())
+        for (auto& pObj : m_aRequests)
         {
-            const RequestObject* pObj = (*iter);
-            if (pObj->GetRequestType() == nType &&
-                pObj->GetData().compare(sData) == 0)
+            if (BOOL bRetVal = FALSE; ((pObj->GetRequestType() == nType) and (pObj->GetData() == sData)))
             {
                 bRetVal = TRUE;
                 break;
             }
-
-            iter++;
         }
+        ReleaseMutex(RAWeb::Mutex()); // Since it's static it won't unlock by itself
     }
-    ReleaseMutex(RAWeb::Mutex());
 
-    return bRetVal;
+    return WAIT_FAILED;
 }
 
 std::string PostArgsToString(const PostArgs& args)

@@ -40,7 +40,7 @@
 #define _NODISCARD           _Check_return_
 #define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) __declspec(deprecated(reason))
-#define _FALLTHROUGH         /*[[fallthrough]]/*
+#define _FALLTHROUGH         /*[[fallthrough]]*/
 #define _UNUSED              /*[[maybe_unused]]*/
 #ifndef _CONSTANT_VAR
 #define _CONSTANT_VAR constexpr auto
@@ -53,8 +53,8 @@
 
 // if ones not defined the other one surely isn't
 #ifndef _EXTERN_C
-#define _EXTERN_C			extern "C" {
-#define _END_EXTERN_C		}
+#define _EXTERN_C	  extern "C" {
+#define _END_EXTERN_C }
 #endif // !_EXTERN_C
 
 
@@ -98,7 +98,7 @@ using UINT_PTR   = unsigned long long;
 using LONG_PTR   = INT_PTR;
 using ULONG_PTR  = UINT_PTR;
 using PINT_PTR   = INT_PTR*;
-using PINT_PTR   = UINT_PTR*;
+using PUINT_PTR  = UINT_PTR*;
 using PLONG_PTR  = PINT_PTR;
 using PULONG_PTR = PLONG_PTR;
 #ifndef __int3264
@@ -110,7 +110,7 @@ using UINT_PTR   = unsigned int;
 using LONG_PTR   = long;
 using ULONG_PTR  = unsigned long;
 using PINT_PTR   = INT_PTR*;
-using PINT_PTR   = UINT_PTR*;
+using PUINT_PTR  = UINT_PTR*;
 using PLONG_PTR  = PINT_PTR;
 using PULONG_PTR = PLONG_PTR;
 #ifndef __int3264

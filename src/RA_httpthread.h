@@ -1,9 +1,9 @@
 #pragma once
 
 #include "RA_Defs.h"
+#include "ra_handles.h"
 
-typedef void* HANDLE;
-typedef void* LPVOID;
+
 
 enum HTTPRequestMethod
 {
@@ -99,6 +99,7 @@ private:
 
 class HttpResults
 {
+    using Requests = std::deque<RequestObject*>;
 public:
     //	Caller must manage: SAFE_DELETE when finished
     RequestObject * PopNextItem();
@@ -107,6 +108,18 @@ public:
     void Clear();
     size_t Count() const;
     BOOL PageRequestExists(RequestType nType, const std::string& sData) const;
+
+
+    _NODISCARD _CONSTANT_FN empty() const noexcept
+        ->decltype(std::begin(std::declval<Requests&>()) == std::end(std::declval<Requests&>()))
+    {
+        return{ std::empty(m_aRequests) };
+    }
+    _NODISCARD _CONSTANT_FN size /*CountAsync*/() const noexcept
+        ->decltype(std::size(std::declval<Requests&>()))
+    {
+        return{ std::size(m_aRequests) };
+    }
 
 private:
     std::deque<RequestObject*> m_aRequests;
@@ -134,10 +147,17 @@ public:
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
 
-    static HANDLE Mutex() { return ms_hHTTPMutex; }
-    static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
+    static auto Mutex() { return ms_hHTTPMutex.get(); }
+    static _CONSTANT_FN empty() noexcept { return std::empty(ms_LastHttpResults); }
+    static RequestObject* PopNextHttpResult()
+    {
+        if (!empty())
+            return ms_LastHttpResults.PopNextItem();
+        // TODO: find out when this was called and put back the exception
+        ra::ThrowLastError();
+    }
 
 private:
-    static HANDLE ms_hHTTPMutex;
+    static ra::MutexH ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;
 };

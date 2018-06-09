@@ -1,3 +1,5 @@
+#ifndef RA_HTTPTHREAD_H
+#define RA_HTTPTHREAD_H
 #pragma once
 
 #include "RA_Defs.h"
@@ -141,3 +143,6 @@ private:
     static HANDLE ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;
 };
+
+
+#endif // !RA_HTTPTHREAD_H

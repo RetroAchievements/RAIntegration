@@ -1,10 +1,6 @@
 #include "RA_md5factory.h"
-
-#include <string.h>
-#include <stdio.h>
-
 #include "md5.h"
-#include "RA_Defs.h"
+
 
 namespace {
 const static unsigned int MD5_STRING_LEN = 32;

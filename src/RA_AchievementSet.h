@@ -1,9 +1,8 @@
+#ifndef RA_ACHIEVEMENTSET_H
+#define RA_ACHIEVEMENTSET_H
 #pragma once
 
-#include <vector>
-#include "RA_Condition.h"
-#include "RA_Defs.h"
-#include "RA_Achievement.h"
+#include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -91,3 +90,6 @@ extern AchievementSet* g_pActiveAchievements;
 extern AchievementSetType g_nActiveAchievementSet;
 
 extern void RASetAchievementCollection(enum AchievementSetType Type);
+
+
+#endif // !RA_ACHIEVEMENTSET_H

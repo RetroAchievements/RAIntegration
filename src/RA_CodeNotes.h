@@ -1,3 +1,5 @@
+#ifndef RA_CODENOTES_H
+#define RA_CODENOTES_H
 #pragma once
 
 #include "RA_Defs.h"
@@ -48,3 +50,5 @@ public:
 private:
     std::map<ByteAddress, CodeNoteObj> m_CodeNotes;
 };
+
+#endif // !RA_CODENOTES_H

@@ -2,8 +2,8 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Achievement.h" // RA_httpthread.h
+#include "RA_Dlg_AchEditor.h" // RA_httpthread.h
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
@@ -194,7 +194,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (ach.ID() == 0)
+                if (g_nActiveAchievementSet != Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",

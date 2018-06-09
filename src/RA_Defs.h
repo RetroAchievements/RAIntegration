@@ -2,29 +2,76 @@
 #define RA_DEFS_H
 #pragma once
 
+// Windows stuff we DO need, they are commented out to show we need them, if for
+// some reason you get a compiler error put the offending NO* define here
+/*
+    #define NOUSER
+    #define NOCTLMGR
+    #define NOMB
+    #define NOWINMESSAGES
+    #define NONLS
+    #define NOVIRTUALKEYCODES
+    #define NOGDI
+    #define NOMSG
+    #define NOMENUS
+    #define NOCOLOR
+    #define NOWINSTYLES
+    #define NODRAWTEXT
+    #define NOSHOWWINDOW
+    #define NOTEXTMETRIC
+    #define NOWINOFFSETS
+    #define NORASTEROPS
+    #define NOOPENFILE
+*/
+
+
+// Windows stuff we don't need
+#define WIN32_LEAN_AND_MEAN
+#define NOGDICAPMASKS
+#define NOSYSMETRICS
+#define NOICONS
+#define NOKEYSTATES
+#define NOSYSCOMMANDS
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOKERNEL
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOMINMAX
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX  
+
+
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ShlObj.h>
 #include <tchar.h>
-#include <assert.h>
-#include <string>
+
+#ifdef WIN32_LEAN_AND_MEAN
+#include <MMSystem.h>
+#include <ShellAPI.h>
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 #include <sstream>
-#include <vector>
 #include <queue>
-#include <deque>
 #include <map>
 #include <array>
 
-
-
-
-
 #ifndef RA_EXPORTS
-
+#include <cassert> 
 //	Version Information is integrated into tags
 
 #else
-
 
 
 //NB. These must NOT be accessible from the emulator!
@@ -42,10 +89,8 @@
 
 //	RA-Only
 #include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/reader.h"
 #include "rapidjson/include/rapidjson/writer.h"
 #include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/stringbuffer.h"
 #include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
@@ -63,8 +108,8 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define _UNUSED              [[maybe_unused]]
 #else
 #define _NODISCARD           _Check_return_
-#define _DEPRECATED          __pragma("This feature is deprecated") 
-#define _DEPRECATEDR(reason) __pragma(reason)
+#define _DEPRECATED          __declspec(deprecated)
+#define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
 #define _UNUSED              
 #endif // _HAS_CXX17

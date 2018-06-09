@@ -1,8 +1,10 @@
+#ifndef RA_CORE_H
+#define RA_CORE_H
 #pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
-#include <stdio.h>
+
 
 #if defined RA_EXPORTS
 #define API __declspec(dllexport)
@@ -154,3 +156,6 @@ BOOL CanCausePause();
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
+
+
+#endif // !RA_CORE_H

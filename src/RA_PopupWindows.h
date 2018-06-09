@@ -1,6 +1,6 @@
+#ifndef RA_POPUPWINDOWS_H
+#define RA_POPUPWINDOWS_H
 #pragma once
-
-#include "RA_PopupWindows.h"
 
 #include "RA_ProgressPopup.h"
 #include "RA_AchievementPopup.h"
@@ -49,3 +49,6 @@ extern "C"
 }
 
 extern PopupWindows g_PopupWindows;
+
+
+#endif // !RA_POPUPWINDOWS_H

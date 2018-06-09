@@ -26,14 +26,15 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <PostBuildEvent>
-      <Command>
-         IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
-         IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
-         echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
-         copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-         :done
-      </Command>
+      <Command>IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
+    IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
+    echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
+    copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
+:done</Command>
     </PostBuildEvent>
+    <Link>
+      <ProgramDatabaseFile>$(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="RA_DIR">

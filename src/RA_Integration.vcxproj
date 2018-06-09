@@ -231,7 +231,6 @@
     IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
     echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
     copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-    copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetName).pdb
 :done</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -264,7 +263,6 @@
     IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
     echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
     copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-    copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetName).pdb
 :done</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -284,9 +282,10 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration />
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <ProgramDatabaseFile />
     </Link>
     <PreBuildEvent>
       <Command>..\MakeBuildVer.bat</Command>
@@ -321,7 +320,6 @@
     IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
     echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
     copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-    copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetName).pdb
 :done</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -366,10 +364,10 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration>
-      </LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <ProgramDatabaseFile />
     </Link>
     <PreBuildEvent>
       <Command>..\MakeBuildVer.bat</Command>

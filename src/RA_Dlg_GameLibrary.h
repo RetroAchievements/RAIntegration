@@ -1,10 +1,8 @@
+#ifndef RA_DLG_GAMELIBRARY_H
+#define RA_DLG_GAMELIBRARY_H
 #pragma once
 
-#include <wtypes.h>
-#include <vector>
-#include <deque>
-#include <map>
-//#include <string>
+
 #include "RA_Defs.h"
 #include <ra_fwd>
 
@@ -74,3 +72,6 @@ private:
     std::vector<GameEntry> m_vGameEntries;
 };
 extern Dlg_GameLibrary g_GameLibrary;
+
+
+#endif // !RA_DLG_GAMELIBRARY_H

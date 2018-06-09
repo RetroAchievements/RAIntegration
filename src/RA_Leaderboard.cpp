@@ -4,6 +4,8 @@
 #include "RA_LeaderboardManager.h"
 #endif
 
+#include <ctime>
+
 RA_Leaderboard::RA_Leaderboard(const LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),
     m_bStarted(false),

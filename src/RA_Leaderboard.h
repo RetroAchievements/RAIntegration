@@ -1,3 +1,5 @@
+#ifndef RA_LEADERBOARD_H
+#define RA_LEADERBOARD_H
 #pragma once
 
 #include "RA_MemValue.h"
@@ -68,3 +70,5 @@ private:
 
     std::vector<Entry>	    m_RankInfo;		//	Recent users ranks
 };
+
+#endif // !RA_LEADERBOARD_H

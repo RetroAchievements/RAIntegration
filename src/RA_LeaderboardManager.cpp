@@ -4,7 +4,7 @@
 #include "RA_md5factory.h"
 #include "RA_httpthread.h"
 
-#include <time.h>
+#include <ctime>
 
 RA_LeaderboardManager g_LeaderboardManager;
 

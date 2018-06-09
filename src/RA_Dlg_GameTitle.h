@@ -1,7 +1,6 @@
+#ifndef RA_DLG_GAMETITLE_H
+#define RA_DLG_GAMETITLE_H
 #pragma once
-
-#include <wtypes.h>
-#include <map>
 
 #include "RA_Defs.h"
 
@@ -22,3 +21,6 @@ private:
 };
 
 extern Dlg_GameTitle g_GameTitleDialog;
+
+
+#endif // !RA_DLG_GAMETITLE_H

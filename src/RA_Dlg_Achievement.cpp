@@ -1,15 +1,13 @@
 #include "RA_Dlg_Achievement.h"
 
-#include "RA_Achievement.h"
+#include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_GameData.h"
 
@@ -320,7 +318,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSetType nAchievementSet)
 
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE); // Cannot add direct to Unofficial
 
-        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), FALSE);
+        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), TRUE);
 
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, FALSE);
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, TRUE);

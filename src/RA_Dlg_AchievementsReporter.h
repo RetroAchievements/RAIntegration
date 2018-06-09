@@ -1,3 +1,5 @@
+#ifndef RA_DLG_ACHIEVEMENTSREPORTER_H
+#define RA_DLG_ACHIEVEMENTSREPORTER_H
 #pragma once
 #include "RA_Defs.h"
 
@@ -40,3 +42,6 @@ extern Dlg_AchievementsReporter g_AchievementsReporterDialog;
 
 
 
+
+
+#endif // !RA_DLG_ACHIEVEMENTSREPORTER_H

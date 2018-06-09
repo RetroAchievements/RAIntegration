@@ -1,3 +1,5 @@
+#ifndef RA_MEMVALUE_H
+#define RA_MEMVALUE_H
 #pragma once
 
 #include "RA_Condition.h"
@@ -62,3 +64,5 @@ protected:
 
     std::vector<Clause> m_vClauses;
 };
+
+#endif !RA_MEMVALUE_H

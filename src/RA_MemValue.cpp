@@ -2,7 +2,7 @@
 
 #include "RA_MemManager.h"
 
-#include <time.h>
+#include <algorithm>
 
 double MemValue::Clause::GetValue() const
 {
@@ -98,7 +98,7 @@ unsigned int MemValue::GetValue() const
         switch (clause.GetOperation())
         {
             case ClauseOperation::Maximum:
-                fVal = max(fVal, fNextVal);
+                fVal = std::max(fVal, fNextVal);
                 break;
 
             case ClauseOperation::Addition:

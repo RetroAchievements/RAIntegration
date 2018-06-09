@@ -1,3 +1,5 @@
+#ifndef RA_LEADERBOARD_MANAGER_H
+#define RA_LEADERBOARD_MANAGER_H
 #pragma once
 
 #include "RA_Leaderboard.h"
@@ -30,3 +32,5 @@ private:
 };
 
 extern RA_LeaderboardManager g_LeaderboardManager;
+
+#endif !RA_LEADERBOARD_MANAGER_H

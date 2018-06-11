@@ -1,9 +1,11 @@
 #include "RA_AchievementPopup.h"
 
-#include "RA_Achievement.h"
-#include "RA_Defs.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
+
+#ifdef WIN32_LEAN_AND_MEAN
+#include <MMSystem.h>
+#endif // WIN32_LEAN_AND_MEAN
 
 namespace {
 const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
@@ -52,7 +54,7 @@ void AchievementPopup::Update(ControllerInput input, float fDelta, bool bFullScr
 {
     if (bPaused)
         fDelta = 0.0f;
-    fDelta = RAClamp<float>(fDelta, 0.0f, 0.3f);	//	Limit this!
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
     if (m_vMessages.size() > 0)
     {
         m_fTimer += fDelta;

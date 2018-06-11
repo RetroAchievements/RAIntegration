@@ -1,14 +1,11 @@
 #include "RA_AchievementOverlay.h"
 
 #include "RA_Interface.h"
-#include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
-#include "RA_Core.h"
 #include "RA_Leaderboard.h"
 #include "RA_GameData.h"
 
@@ -1281,10 +1278,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
 
         //	Draw control text:
         sprintf_s(buffer, 1024, " ->:%s ", "Next");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY1, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX1, nControlsY1, NativeStr(buffer).c_str(), strlen(buffer));
 
         sprintf_s(buffer, 1024, " <-:%s ", "Prev");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY2, NativeStr(std::string{ buffer }).c_str(), strlen(buffer));
+        TextOut(hDC, nRightPx - nControlsX1, nControlsY2, NativeStr(buffer).c_str(), strlen(buffer));
 
         char cBackChar = 'B';
         char cSelectChar = 'A';

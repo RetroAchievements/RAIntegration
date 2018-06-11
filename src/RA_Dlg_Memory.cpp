@@ -1,12 +1,14 @@
 #include "RA_Dlg_Memory.h"
 
-#include "RA_Achievement.h"
+#if WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+
 #include "RA_AchievementSet.h"
-#include "RA_CodeNotes.h"
 #include "RA_Core.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
-#include "RA_MemManager.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
@@ -997,11 +999,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_SIZE:
         {
-            RARect winRect;
-            GetWindowRect(hDlg, &winRect);
+            auto windowRect{ std::make_unique<RARect>() };
+            GetWindowRect(hDlg, LPRECT{ *windowRect });
 
-            for (ResizeContent content : vDlgMemoryResize)
-                content.Resize(winRect.Width(), winRect.Height());
+            for (ResizeContent& content : vDlgMemoryResize)
+                content.Resize(windowRect->Width(), windowRect->Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
         }
@@ -1947,10 +1949,11 @@ bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal
 
 void Dlg_Memory::GenerateResizes(HWND hDlg)
 {
-    RARect windowRect;
-    GetWindowRect(hDlg, &windowRect);
-    pDlgMemoryMin.x = windowRect.Width();
-    pDlgMemoryMin.y = windowRect.Height();
+    auto windowRect{ std::make_unique<RARect>() };
+    GetWindowRect(hDlg, LPRECT{ *windowRect });
+
+    pDlgMemoryMin.x = windowRect->Width();
+    pDlgMemoryMin.y = windowRect->Height();
 
     vDlgMemoryResize.push_back(ResizeContent(hDlg,
         GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ResizeContent::ALIGN_BOTTOM, TRUE));

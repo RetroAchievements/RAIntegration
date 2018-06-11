@@ -1,22 +1,18 @@
 #include "RA_Core.h"
 
-#include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_AchievementOverlay.h"
 #include "RA_BuildVer.h"
 #include "RA_CodeNotes.h"
-#include "RA_Defs.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
-#include "RA_ImageFactory.h"
-#include "RA_Interface.h"
+#include "RA_ImageFactory.h" // atlbase.h
 #include "RA_Leaderboard.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
-#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Achievement.h"
@@ -33,48 +29,52 @@
 #include <codecvt>
 #include <direct.h>
 #include <io.h>		//	_access()
-#include <atlbase.h> // CComPtr
+
+
+#ifdef WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
 std::string g_sROMDirLocation;
 std::string g_sCurrentROMMD5;	//	Internal
 
-HMODULE g_hThisDLLInst = nullptr;
-HINSTANCE g_hRAKeysDLL = nullptr;
-HWND g_RAMainWnd = nullptr;
-EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+HMODULE g_hThisDLLInst             = nullptr;
+HINSTANCE g_hRAKeysDLL             = nullptr;
+HWND g_RAMainWnd                   = nullptr;
+EmulatorID g_EmulatorID            = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
+ConsoleID g_ConsoleID              = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 const char* g_sGetLatestClientPage = nullptr;
-const char* g_sClientVersion = nullptr;
-const char* g_sClientName = nullptr;
-const char* g_sClientDownloadURL = nullptr;
-const char* g_sClientEXEName = nullptr;
-bool g_bRAMTamperedWith = false;
-bool g_bHardcoreModeActive = true;
-bool g_bLeaderboardsActive = true;
-bool g_bLBDisplayNotification = true;
-bool g_bLBDisplayCounter = true;
-bool g_bLBDisplayScoreboard = true;
-unsigned int g_nNumHTTPThreads = 15;
+const char* g_sClientVersion       = nullptr;
+const char* g_sClientName          = nullptr;
+const char* g_sClientDownloadURL   = nullptr;
+const char* g_sClientEXEName       = nullptr;
+bool g_bRAMTamperedWith            = false;
+bool g_bHardcoreModeActive         = true;
+bool g_bLeaderboardsActive         = true;
+bool g_bLBDisplayNotification      = true;
+bool g_bLBDisplayCounter           = true;
+bool g_bLBDisplayScoreboard        = true;
+unsigned int g_nNumHTTPThreads     = 15;
 
-typedef struct WindowPosition
+struct WindowPosition
 {
-    int nLeft;
-    int nTop;
-    int nWidth;
-    int nHeight;
-    bool bLoaded;
+    int nLeft{ 0 };
+    int nTop{ 0 };
+    int nWidth{ 0 };
+    int nHeight{ 0 };
+    bool bLoaded{ false };
 
-    static const int nUnset = -99999;
-} WindowPosition;
+    static const int nUnset{ -99999 };
+};
 
 typedef std::map<std::string, WindowPosition> WindowPositionMap;
 WindowPositionMap g_mWindowPositions;
 
 namespace {
-const unsigned int PROCESS_WAIT_TIME = 100;
-unsigned int g_nProcessTimer = 0;
+_CONSTANT_VAR PROCESS_WAIT_TIME = 100U;
+unsigned int g_nProcessTimer    = 0U;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -222,7 +222,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     //////////////////////////////////////////////////////////////////////////
     //	Setup min required directories:
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     //////////////////////////////////////////////////////////////////////////
     //	Update news:
@@ -500,13 +500,20 @@ API void CCONV _RA_ClearMemoryBanks()
 
 API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
 {
-    char buffer[1024];
-    sprintf_s(buffer, 1024, "Update available!\n"
+    // since we're already here, transforms it from a static buffer to a managed
+    // dynamic buffer but has the same size as char*
+
+    //sizeof(char*); // 4
+    //sizeof(std::unique_ptr<char[]>); // 4, without [] it's just a pointer
+    // It's important because c arrays (auto arr = new char[some_size]) have to
+    // be deleted with "delete[]" and regular pointers with just "delete",
+    auto buffer{ std::make_unique<char[]>(1024) };
+    sprintf_s(buffer.get(), 1024, "Update available!\n"
         "A new version of %s is available for download at %s.\n\n"
         "Would you like to update?\n\n"
         "Current version:%s\n"
         "New version:%s\n",
-        Narrow(RA_HOST_URL).data(),
+        Narrow(RA_HOST_URL).c_str(),
         g_sClientName,
         g_sClientVersion,
         sNewVer);
@@ -514,7 +521,7 @@ API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer)
     //	Update last known version:
     //strcpy_s( g_sKnownRAVersion, 50, sNewVer );
 
-    if (MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Update available!"), MB_YESNO) == IDYES)
+    if (MessageBox(g_RAMainWnd, NativeStr(buffer.get()).c_str(), TEXT("Update available!"), MB_YESNO) == IDYES)
     {
         //SetCurrentDirectory( g_sHomeDir );
         //FetchBinaryFromWeb( g_sClientEXEName );
@@ -588,7 +595,7 @@ API int CCONV _RA_HandleHTTPResults()
 
                 case RequestBadge:
                 {
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                    ChangeToHomeDirectory();
                     const std::string& sBadgeURI = pObj->GetData();
                     _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
 
@@ -721,7 +728,7 @@ API int CCONV _RA_HandleHTTPResults()
                 break;
 
                 case RequestNews:
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                    ChangeToHomeDirectory();
                     _WriteBufferToFile(RA_NEWS_FILENAME, doc);
                     g_AchievementOverlay.InstallNewsArticlesFromFile();
                     break;
@@ -856,13 +863,25 @@ API void CCONV _RA_CheckForUpdate()
         else
         {
             // basic_ostringstream would seem overkill here
-            tstring tstr{ TEXT("Error in download from ") };
-            tstr.append(RA_HOST_URL);
-            tstr.append(TEXT("...\n"));
-            tstr.append(TEXT("Please check your connection settings or RA forums!\n"));
 
+            // stringstream is around 500 bytes (i/o variants are a bit smaller)
+            // and string is around 28 bytes
+
+            // The solution is string_view, it's only 8 bytes and guarantees
+            // compile time string building (immutable/constexpr/read-only)
+
+            // NB: It cannot be static or built with std::string because either a
+            //     data race (deadlock) or pointer dangling (could be leak,
+            //     access violoation, etc.) will occur
+            constexpr tstring_view view{
+                TEXT("Error in download from retroachievements.org...\nPlease check your connection"
+                " settings or RA forums!\n")
+            };
+            static_assert(view.find(RA_HOST_URL)); // just incase it changed
+
+            // string_view doesn't have a c_str() function
             //	Error in download
-            MessageBox(g_RAMainWnd, tstr.c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(g_RAMainWnd, view.data(), TEXT("Error!"), MB_OK);
         }
     }
     else
@@ -881,7 +900,7 @@ API void CCONV _RA_LoadPreferences()
 {
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "rb");
     if (pf == nullptr)
@@ -1003,7 +1022,7 @@ API void CCONV _RA_SavePreferences()
         return;
     }
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
     if (pf != nullptr)
@@ -1193,7 +1212,7 @@ void RememberWindowSize(HWND hDlg, const char* sDlgKey)
 }
 
 _Use_decl_annotations_
-BOOL CALLBACK SetDirectory() { return SetCurrentDirectory(NativeStr(g_sHomeDir).c_str()); }
+BOOL CALLBACK ChangeToHomeDirectory() { return SetCurrentDirectory(NativeStr(g_sHomeDir).c_str()); }
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)
 {
@@ -1556,7 +1575,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
     {
@@ -1569,7 +1588,7 @@ void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 
 void _WriteBufferToFile(const std::string& sFileName, const DataStream& raw)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
     {
@@ -1580,7 +1599,7 @@ void _WriteBufferToFile(const std::string& sFileName, const DataStream& raw)
 
 void _WriteBufferToFile(const std::string& sFileName, const std::string& sData)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
     {
@@ -1591,7 +1610,7 @@ void _WriteBufferToFile(const std::string& sFileName, const std::string& sData)
 
 void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFile, "wb") == 0)
     {
@@ -1602,7 +1621,7 @@ void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes)
 
 char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, sFilename, "r");
     if (pf == nullptr)
@@ -1685,7 +1704,7 @@ std::string GetFolderFromDialog()
 
 BOOL RemoveFileIfExists(const std::string& sFilePath)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     if (_access(sFilePath.c_str(), 06) != -1)	//	06= Read/write permission
     {

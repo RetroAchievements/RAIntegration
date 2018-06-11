@@ -1,4 +1,7 @@
+#ifndef RA_CONDITION_H
+#define RA_CONDITION_H
 #pragma once
+
 #include "RA_Defs.h"
 
 enum ComparisonVariableSize
@@ -216,3 +219,6 @@ public:
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;
 };
+
+
+#endif // !RA_CONDITION_H

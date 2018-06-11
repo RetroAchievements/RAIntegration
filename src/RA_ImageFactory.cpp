@@ -1,14 +1,13 @@
-#include <wincodec.h>
-#include <WTypes.h>
-#include <windows.h>
-#include <windowsx.h>
-#include <commdlg.h>
-#include <stdio.h>
+#include "RA_ImageFactory.h"
 
-#include "RA_Defs.h"
+#if WIN32_LEAN_AND_MEAN
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+#include <wincodec.h>
+
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_ImageFactory.h"
 #include "RA_Achievement.h"
 #include "RA_httpthread.h"
 
@@ -212,7 +211,7 @@ HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRend
 _Use_decl_annotations_
 HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     if (!_FileExists(RA_DIR_BADGE + sBadgeURI + ".png"))
     {
@@ -233,7 +232,7 @@ HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 _Use_decl_annotations_
 HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     if (!_FileExists(RA_DIR_USERPIC + sUserName + ".png"))
     {
@@ -255,7 +254,7 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 _Use_decl_annotations_
 HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     ASSERT(_FileExists(sPath));
     if (!_FileExists(sPath))

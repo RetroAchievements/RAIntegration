@@ -1,19 +1,8 @@
 #include "RA_Dlg_GameLibrary.h"
 
-#include <windowsx.h>
-#include <stdio.h>
-#include <commctrl.h>
-#include <string>
-#include <sstream>
 #include <mutex>
-#include <vector>
-#include <queue>
-#include <deque>
 #include <stack>
-#include <thread>
-#include <shlobj.h>
 
-#include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
@@ -22,7 +11,7 @@
 #include "RA_md5factory.h"
 
 
-inline constexpr auto CALLBACK KEYDOWN(int vk)->decltype((GetAsyncKeyState(vk) & 0x8000) ? true : false)
+inline constexpr bool CALLBACK KEYDOWN(int vk) noexcept
 {
     return { (GetAsyncKeyState(vk) & 0x8000) ? true
                                              : false };
@@ -108,7 +97,7 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, RA_GAME_HASH_FILENAME, "rb");
     if (pf != nullptr)
@@ -137,7 +126,7 @@ void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibrary
 
 void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, RA_TITLES_FILENAME, "rb");
     if (pf != nullptr)

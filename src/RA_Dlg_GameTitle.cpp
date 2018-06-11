@@ -1,14 +1,9 @@
 #include "RA_Dlg_GameTitle.h"
 
-//#include <windowsx.h>
-//#include <stdio.h>
-//#include <sstream>
-
 #include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
-#include "RA_Achievement.h"
 #include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
 #include "RA_GameData.h"

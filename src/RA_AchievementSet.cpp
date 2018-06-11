@@ -2,8 +2,8 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Achievement.h" // RA_httpthread.h
+#include "RA_Dlg_AchEditor.h" // RA_httpthread.h
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
@@ -67,7 +67,8 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
 {
     if (!doc.HasMember("Success") || doc["Success"].GetBool() == false)
     {
-        throw std::invalid_argument{"Invalid unlocks packet!"};
+        // TODO: Replace asserts with exception handling for releases
+        ASSERT(!"Invalid unlocks packet!");
     }
 
     const GameID nGameID = static_cast<GameID>(doc["GameID"].GetUint());
@@ -99,7 +100,8 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
         return TRUE;
     }
 
-    throw std::out_of_range{ "There are no achievements to remove..." };
+    ASSERT(!"There are no achievements to remove...");
+    return TRUE;
 }
 
 Achievement* AchievementSet::Find(AchievementID nAchievementID)
@@ -190,7 +192,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (ach.ID() == 0)
+                if (g_nActiveAchievementSet != Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
@@ -377,7 +379,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
         doc.HasMember("PatchData"))
     {
         const Value& PatchData = doc["PatchData"];
-        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+        ChangeToHomeDirectory();
         FILE* pf = nullptr;
         fopen_s(&pf, std::string(RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
         if (pf != nullptr)
@@ -415,7 +417,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
 
     const std::string sFilename = GetAchievementSetFilename(nGameID);
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pFile = nullptr;
     errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
     if (pFile != nullptr)
@@ -568,7 +570,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     char buffer[4096];
     sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
     FILE* pf = nullptr;

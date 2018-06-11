@@ -1,13 +1,10 @@
 #include "RA_CodeNotes.h"
 
-#include <Windows.h>
-
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_User.h"
-#include "RA_Achievement.h"
-#include "RA_AchievementSet.h"
+#include "RA_AchievementSet.h" // RA_Achievement
 #include "RA_GameData.h"
 
 void CodeNotes::Clear()
@@ -19,7 +16,7 @@ size_t CodeNotes::Load(const std::string& sFile)
 {
     Clear();
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFile.c_str(), "rb") == 0)
     {
@@ -77,7 +74,7 @@ void CodeNotes::OnCodeNotesResponse(Document& doc)
     //	Persist then reload
     const GameID nGameID = doc["GameID"].GetUint();
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     _WriteBufferToFile(std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
 
     g_MemoryDialog.RepopulateMemNotesFromFile();

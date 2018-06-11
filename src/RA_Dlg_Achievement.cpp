@@ -1,17 +1,18 @@
 #include "RA_Dlg_Achievement.h"
 
-#include "RA_Achievement.h"
+
+
+#include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"
+#include "RA_httpthread.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
-#include "RA_GameData.h"
+
 
 
 namespace {
@@ -320,7 +321,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSetType nAchievementSet)
 
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE); // Cannot add direct to Unofficial
 
-        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), FALSE);
+        ShowWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), TRUE);
 
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_CORE, FALSE);
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_UNOFFICIAL, TRUE);
@@ -515,13 +516,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    else if (auto msg = []() noexcept {
-                        tstring tstr{ TEXT("Are you sure that you want to download fresh achievements from ") };
-                        tstr.append(RA_HOST_URL);
-                        tstr.append(TEXT("?\n"));
-                        tstr.append(TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"));
-                        return tstr;
-                    }; MessageBox(hDlg, msg().c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
+                    else if (auto msg = []() constexpr noexcept {
+                        constexpr tstring_view view{ TEXT("Are you sure that you want to download fresh achievements from retroachievements.org?\nThis will overwrite any changes that you have made with fresh achievements from the server.\n") };
+                        static_assert(view.find(RA_HOST_URL));
+                        return view;
+                    }; MessageBox(hDlg, msg().data(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                     {
                         GameID nGameID = g_pCurrentGameData->GetGameID();
                         if (nGameID != 0)

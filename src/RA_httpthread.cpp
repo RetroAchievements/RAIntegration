@@ -12,7 +12,7 @@
 
 #include <winhttp.h>
 #include <fstream>
-#include <time.h>
+#include <ctime>
 
 
 const char* RequestTypeToString[] =
@@ -670,7 +670,7 @@ BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 //	Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
-    HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
+    HttpRequestQueue.PushItem(std::make_unique<RequestObject>(nType, PostData, sData));
     RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
 }
 
@@ -697,19 +697,21 @@ void RAWeb::RA_InitializeHTTPThreads()
 //	Takes items from the http request queue, and posts them to the last http results queue.
 DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
 {
-    auto nSendNextKeepAliveAt = time(nullptr) + SERVER_PING_DURATION;
+    // time_t is a typedef of long-long
+    auto nSendNextKeepAliveAt{ ::time(nullptr) + SERVER_PING_DURATION };
 
-    bool bThreadActive = true;
+    auto bThreadActive{ true };
     // void* differs across architectures
-    bool bDoPingKeepAlive = (reinterpret_cast<std::intptr_t>(lpParameter) == std::intptr_t{});	//	Cause this only on first thread
+    // Cause this only on first thread
+    auto bDoPingKeepAlive{ static_cast<std::intptr_t*>(lpParameter) == std::intptr_t{} };
 
     while (bThreadActive)
     {
-        RequestObject* pObj = nullptr;
-        if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+        std::unique_ptr<RequestObject> pObj;
+        if ((WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0))
         {
             if (!std::empty(HttpRequestQueue))
-                pObj = HttpRequestQueue.PopNextItem();
+                pObj.reset(HttpRequestQueue.PopNextItem());
             ReleaseMutex(RAWeb::Mutex());
         }
         if (pObj != nullptr)
@@ -733,13 +735,14 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
             if (bThreadActive)
             {
                 //	Push object over to results queue - let app deal with them now.
-                ms_LastHttpResults.PushItem(pObj);
+                ms_LastHttpResults.PushItem(std::move(pObj));
             }
             else
             {
                 //	Take ownership and delete(): we caused the 'pop' earlier, so we have responsibility to
                 //	 either pass to LastHttpResults, or deal with it here.
-                SAFE_DELETE(pObj);
+                // should delete itself we'll reset it just incase
+                pObj.reset();
             }
         }
 
@@ -838,7 +841,7 @@ RequestObject* HttpResults::PopNextItem()
     {
         if (!m_aRequests.empty())
         {
-            auto pRetVal = m_aRequests.front();
+            auto pRetVal = m_aRequests.front().release();
             m_aRequests.pop_front();
             ReleaseMutex(RAWeb::Mutex());
             return pRetVal;
@@ -853,18 +856,17 @@ const RequestObject* HttpResults::PeekNextItem() const
 {
     if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        auto pRetVal = m_aRequests.front();
         ReleaseMutex(RAWeb::Mutex());
-        return pRetVal;
+        return m_aRequests.front().get();
     }
     ra::ThrowLastError();
 }
 
-void HttpResults::PushItem(RequestObject* pObj)
+void HttpResults::PushItem(RequestOwner pObj)
 {
     if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        m_aRequests.push_front(pObj);
+        m_aRequests.push_front(std::move(pObj));
         ReleaseMutex(RAWeb::Mutex());
     }
 }
@@ -873,21 +875,16 @@ void HttpResults::Clear()
 {
     if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        // If it's empty it will have no effect
-        for (auto& pObj : m_aRequests)
-        {
-            m_aRequests.pop_front();
-            SAFE_DELETE(pObj);
-        }
+        m_aRequests.clear();
         ReleaseMutex(RAWeb::Mutex());
     }
 }
 
 size_t HttpResults::Count() const
 {
-    if (size_t nCount = size_t{}; WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
+    if (WaitForSingleObject(RAWeb::Mutex(), INFINITE) == WAIT_OBJECT_0)
     {
-        nCount = m_aRequests.size();
+        auto nCount{ m_aRequests.size() };
         ReleaseMutex(RAWeb::Mutex());
         return nCount;
     }

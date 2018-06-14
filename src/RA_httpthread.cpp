@@ -901,13 +901,14 @@ BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData)
     {
         for (auto& pObj : m_aRequests)
         {
-            if (BOOL bRetVal = FALSE; ((pObj->GetRequestType() == nType) and (pObj->GetData() == sData)))
+            if (((pObj->GetRequestType() == nType) and (pObj->GetData() == sData)))
             {
-                bRetVal = TRUE;
-                break;
+                ReleaseMutex(RAWeb::Mutex());
+                return TRUE;
             }
         }
         ReleaseMutex(RAWeb::Mutex()); // Since it's static it won't unlock by itself
+        return FALSE;
     }
 
     return WAIT_FAILED;

@@ -4,6 +4,7 @@
 #include "RA_User.h"
 
 #include "RA_AchievementSet.h"
+#include "RA_BuildVer.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
@@ -13,7 +14,6 @@
 #include <winhttp.h>
 #include <fstream>
 #include <time.h>
-
 
 const char* RequestTypeToString[] =
 {
@@ -108,6 +108,7 @@ HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
 
+std::wstring RAWeb::sUserAgent = Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
 BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
 {
@@ -227,6 +228,57 @@ BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
 //	return bSuccess;
 //}
 
+void RAWeb::SetUserAgentString()
+{
+    std::string sUserAgent;
+    sUserAgent.reserve(128U);
+
+    if (g_sClientName != nullptr)
+    {
+        sUserAgent.append(g_sClientName);
+        sUserAgent.append("/");
+    }
+    else
+    {
+        sUserAgent.append("UnknownClient/");
+    }
+    sUserAgent.append(g_sClientVersion);
+    sUserAgent.append(" (");
+
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    #define NTSTATUS long
+#endif
+    using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
+    auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion");
+    if (RtlGetVersion)
+    {
+        RTL_OSVERSIONINFOEXW osVersion = {};
+        RtlGetVersion(&osVersion);
+        if (osVersion.dwMajorVersion > 0)
+        {
+            sUserAgent.append("WindowsNT ");
+            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
+            sUserAgent.append(".");
+            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
+        }
+    }
+
+    sUserAgent.append(") Integration/");
+
+    char buffer[64];
+    sprintf(buffer, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
+    sUserAgent.append(buffer);
+
+    const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
+    if (ptr != nullptr)
+        sUserAgent.append(ptr);
+
+    SetUserAgent(sUserAgent);
+}
+
 void RAWeb::LogJSON(const Document& doc)
 {
     //	DebugLog:
@@ -285,13 +337,10 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
     RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
     ResponseOut.clear();
 
-    std::string sClientName = "Retro Achievements Client " + std::string(g_sClientName) + " " + g_sClientVersion;
-    WCHAR wClientNameBuffer[1024];
     size_t nTemp;
-    mbstowcs_s(&nTemp, wClientNameBuffer, 1024, sClientName.c_str(), sClientName.length() + 1);
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(wClientNameBuffer,
+    HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);
@@ -395,7 +444,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
         RA_LOG(__FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str());
     }
 
-    HINTERNET hSession = WinHttpOpen(Widen(std::string("Retro Achievements Client ") + g_sClientName + " " + g_sClientVersion).c_str(),
+    HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);
@@ -510,15 +559,10 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    char sClientName[1024];
-    sprintf_s(sClientName, 1024, "Retro Achievements Client %s %s", g_sClientName, g_sClientVersion);
-
     size_t nTemp;
-    WCHAR wClientNameBuffer[1024];
-    mbstowcs_s(&nTemp, wClientNameBuffer, 1024, sClientName, strlen(sClientName) + 1);
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(wClientNameBuffer,
+    HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);

@@ -2,8 +2,6 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
-#include <WTypes.h>
-
 class Dlg_RichPresence
 {
 public:

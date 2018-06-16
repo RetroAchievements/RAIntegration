@@ -1,5 +1,3 @@
-#pragma once
-
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
@@ -686,7 +684,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                 CondSourceLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
                 CondTargetVal[i] = strtol(pIter, &pIter, 10); pIter++;
                 CondTargetLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
-
+#pragma warning(disable : 5045) // spectre
                 //	Concurrently build the md5 checkstring
                 sprintf_s(buffer, 4096, "%d:%d:%d:%d:%d:",
                     CondNumHits[i],
@@ -694,7 +692,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                     CondSourceLastVal[i],
                     CondTargetVal[i],
                     CondTargetLastVal[i]);
-
+#pragma warning(default : 5045)
                 strcat_s(cheevoProgressString, 4096, buffer);
             }
 
@@ -728,8 +726,9 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
                                 cond.OverrideCurrentHits(CondNumHits[j]);
                                 cond.CompSource().SetValues(CondSourceVal[j], CondSourceLastVal[j]);
+#pragma warning(disable : 5045) // spectre
                                 cond.CompTarget().SetValues(CondTargetVal[j], CondTargetLastVal[j]);
-
+#pragma warning(default : 5045)
                                 pAch->SetDirtyFlag(Dirty_Conditions);
                             }
                         }

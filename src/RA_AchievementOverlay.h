@@ -2,7 +2,7 @@
 #define RA_ACHIEVEMENTOVERLAY_H
 #pragma once
 
-#include <ddraw.h>
+
 
 #include "RA_Achievement.h"
 #include "RA_User.h"

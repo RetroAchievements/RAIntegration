@@ -1,9 +1,6 @@
 #include "RA_ImageFactory.h"
 
-#include <commdlg.h>
-
 #include "RA_Core.h"
-#include "RA_Resource.h"
 #include "RA_Achievement.h"
 #include "RA_httpthread.h"
 

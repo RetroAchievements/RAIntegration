@@ -60,7 +60,7 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 
 #include <wtypes.h>
 #include <winhttp.h>
-#include <assert.h>
+#include <cassert>
 #include <string>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit

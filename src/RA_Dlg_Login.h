@@ -2,8 +2,6 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
-#include <wtypes.h>
-
 class RA_Dlg_Login
 {
 public:

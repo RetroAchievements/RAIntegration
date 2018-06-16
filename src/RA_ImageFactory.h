@@ -2,8 +2,7 @@
 #define RA_IMAGEFACTORY_H
 #pragma once
 
-#include <atlbase.h>
-#include <wincodec.h>
+
 
 #include "RA_Defs.h"
 

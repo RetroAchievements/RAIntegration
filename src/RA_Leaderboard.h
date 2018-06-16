@@ -96,7 +96,8 @@ public:
     void Clear();
 
     //	Helper: tbd; refactor *into* RA_Formattable
-    static std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn);
+    // Error C4596
+    static std::string FormatScore(FormatType nType, int nScoreIn);
     std::string FormatScore(int nScoreIn) const;
     void Reset();
 

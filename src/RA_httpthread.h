@@ -66,21 +66,43 @@ enum UploadType
     NumUploadTypes
 };
 
-extern const char* RequestTypeToString[];
+const char* RequestTypeToString[];
 
-typedef std::map<char, std::string> PostArgs;
+using PostArgs = std::map<char, std::string>;
 
 extern std::string PostArgsToString(const PostArgs& args);
 
 class RequestObject
 {
 public:
-    RequestObject(RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "") :
-        m_nType(nType), m_PostArgs(PostArgs), m_sData(sData)
+#pragma warning(push)
+#pragma warning(disable : 4514) // unused inline functions, weird
+    RequestObject() noexcept {}; // default will throw, but default constructors aren't allowed to throw
+    RequestObject(_In_ RequestType nType, _In_ const PostArgs& PostArgs = PostArgs{},
+        _In_ const std::string& sData ={}) noexcept :
+        m_nType{ nType }, m_PostArgs{ PostArgs }, m_sData{ sData }, m_sResponse{}
     {
     }
 
+    // default will throw
+    RequestObject(RequestObject&& b) noexcept :
+        m_nType{ std::move_if_noexcept(b.m_nType) },
+        m_PostArgs{ std::move_if_noexcept(b.m_PostArgs) },
+        m_sData{ std::move_if_noexcept(b.m_sData) },
+        m_sResponse{ std::move_if_noexcept(b.m_sResponse) }
+    {
+        if (b.m_nType != RequestType{})
+            b.m_nType = RequestType{};
+    }
+#pragma warning(pop)
+    ~RequestObject() noexcept = default;
+    
+    RequestObject(const RequestObject&) = delete;
+    RequestObject& operator=(const RequestObject&) = delete;
+    RequestObject& operator=(RequestObject&&) noexcept = default;
 public:
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions, weird did see them unreferenced
     const RequestType GetRequestType() const { return m_nType; }
     const PostArgs& GetPostArgs() const { return m_PostArgs; }
     const std::string& GetData() const { return m_sData; }
@@ -88,13 +110,15 @@ public:
     DataStream& GetResponse() { return m_sResponse; }
     const DataStream& GetResponse() const { return m_sResponse; }
     void SetResponse(const DataStream& sResponse) { m_sResponse = sResponse; }
+#pragma warning(pop)
 
     BOOL ParseResponseToJSON(Document& rDocOut);
 
 private:
-    const RequestType m_nType;
-    const PostArgs m_PostArgs;
-    const std::string m_sData;
+    // these can't be const
+    RequestType m_nType ={};
+    PostArgs m_PostArgs;
+    std::string m_sData;
 
     DataStream m_sResponse;
 };
@@ -135,10 +159,11 @@ public:
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut);
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
-
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     static HANDLE Mutex() { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
-
+#pragma warning(pop)
 private:
     static HANDLE ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;

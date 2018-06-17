@@ -13,7 +13,7 @@ AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
@@ -30,6 +30,8 @@ std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
 {
     switch (m_nSetType)
     {
+        case NumAchievementSetTypes:
+            _FALLTHROUGH;
         case Core:
             return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
         case Unofficial:
@@ -37,7 +39,7 @@ std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
         case Local:
             return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
         default:
-            return "";
+            return std::string{};
     }
 }
 
@@ -90,11 +92,11 @@ Achievement& AchievementSet::AddAchievement()
     return m_Achievements.back();
 }
 
-BOOL AchievementSet::RemoveAchievement(size_t nIter)
+BOOL AchievementSet::RemoveAchievement(size_t nOffset)
 {
-    if (nIter < m_Achievements.size())
+    if (nOffset < m_Achievements.size())
     {
-        m_Achievements.erase(m_Achievements.begin() + nIter);
+        m_Achievements.erase(std::next(m_Achievements.begin(), ra::to_signed(nOffset)));
         return TRUE;
     }
     else
@@ -126,7 +128,7 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
     }
 
     //	Not found
-    return -1;
+    return NOT_FOUND;
 }
 
 unsigned int AchievementSet::NumActive() const
@@ -182,7 +184,7 @@ void AchievementSet::Test()
             ASSERT(nOffset < NumAchievements());
             if (nOffset < NumAchievements())
             {
-                g_AchievementsDialog.ReloadLBXData(nOffset);
+                g_AchievementsDialog.ReloadLBXData(std::make_signed_t<unsigned>(nOffset));
 
                 if (g_AchievementEditorDialog.ActiveAchievement() == &ach)
                     g_AchievementEditorDialog.LoadAchievement(&ach, TRUE);
@@ -308,7 +310,7 @@ BOOL AchievementSet::SaveToFile()
     //}
 }
 
-BOOL AchievementSet::Serialize(FileStream& Stream)
+BOOL AchievementSet::Serialize(_UNUSED FileStream& Stream)
 {
     //	Why not submit each ach straight to cloud?
     return FALSE;
@@ -475,12 +477,13 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
         else
         {
             Document doc;
-            doc.ParseStream(FileStream(pFile));
+            FileStream myStream{ pFile };
+            doc.ParseStream(myStream);
             if (!doc.HasParseError())
             {
                 //ASSERT( doc["Success"].GetBool() );
                 g_pCurrentGameData->ParseData(doc);
-                GameID nGameID = g_pCurrentGameData->GetGameID();
+                nGameID = g_pCurrentGameData->GetGameID();
 
                 RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
 
@@ -515,7 +518,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                     RA_Leaderboard lb(LeaderboardsData[i]["ID"].GetUint());
                     lb.LoadFromJSON(LeaderboardsData[i]);
 
-                    g_LeaderboardManager.AddLeaderboard(lb);
+                    g_LeaderboardManager.AddLeaderboard(std::move(lb));
                 }
             }
             else
@@ -593,7 +596,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
-            sprintf_s(buffer, "%d:%d:", pAch->ID(), pAch->NumConditions(nGrp));
+            sprintf_s(buffer, "%zu:%zu:", pAch->ID(), pAch->NumConditions(nGrp));
             strcat_s(cheevoProgressString, 4096, buffer);
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
@@ -644,7 +647,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     char* pGivenProgressMD5 = nullptr;
     char* pGivenCheevoMD5 = nullptr;
     char cheevoMD5TestMangled[4096];
-    int nMemStringLen = 0;
+    _UNUSED int nMemStringLen = 0;
 
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;
@@ -664,8 +667,8 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             char* pIter = &pRawFile[nOffs];
 
             //	Parse achievement id and num conditions
-            nID = strtol(pIter, &pIter, 10); pIter++;
-            nNumCond = strtol(pIter, &pIter, 10);	pIter++;
+            nID = strtoul(pIter, &pIter, 10); pIter++;
+            nNumCond = strtoul(pIter, &pIter, 10);	pIter++;
 
             //	Concurrently build the md5 checkstring
             sprintf_s(cheevoProgressString, 4096, "%d:%d:", nID, nNumCond);
@@ -679,12 +682,18 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             for (i = 0; i < nNumCond && i < 50; ++i)
             {
                 //	Parse next condition state
-                CondNumHits[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondSourceVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondSourceLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondTargetVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondTargetLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
-#pragma warning(disable : 5045) // spectre
+                CondNumHits[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondSourceVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondSourceLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondTargetVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondTargetLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+
+                /*
+                    Message
+                    note: index 'i' range checked by comparison on this line
+                    note: feeds call on this line
+                */
+                // spectre
                 //	Concurrently build the md5 checkstring
                 sprintf_s(buffer, 4096, "%d:%d:%d:%d:%d:",
                     CondNumHits[i],
@@ -692,7 +701,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                     CondSourceLastVal[i],
                     CondTargetVal[i],
                     CondTargetLastVal[i]);
-#pragma warning(default : 5045)
+
                 strcat_s(cheevoProgressString, 4096, buffer);
             }
 
@@ -726,9 +735,14 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
                                 cond.OverrideCurrentHits(CondNumHits[j]);
                                 cond.CompSource().SetValues(CondSourceVal[j], CondSourceLastVal[j]);
-#pragma warning(disable : 5045) // spectre
+
+                                /*
+                                    Message
+                                    note: index 'j' range checked by comparison on this line
+                                    note: feeds call on this line
+                                */
+                                // spectre
                                 cond.CompTarget().SetValues(CondTargetVal[j], CondTargetLastVal[j]);
-#pragma warning(default : 5045)
                                 pAch->SetDirtyFlag(Dirty_Conditions);
                             }
                         }
@@ -750,7 +764,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                 //assert(!"MD5 invalid... what to do... maybe they're trying to hack achievements?");
             }
 
-            nOffs = (pIter - pRawFile);
+            nOffs = std::make_unsigned_t<decltype(pIter - pRawFile)>(pIter - pRawFile);
         }
 
         free(pRawFile);

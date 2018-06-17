@@ -1,0 +1,79 @@
+#ifndef RA_UTILITY_H
+#define RA_UTILITY_H
+#pragma once
+
+#include <utility>
+#include <string>
+
+namespace ra {
+
+template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
+_NODISCARD inline constexpr auto 
+to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
+
+template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
+_NODISCARD inline constexpr auto 
+to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
+
+#if _WIN32
+using float_type = float;
+#elif _WIN64
+using float_type = double;
+#else
+using float_type = long double; // should we even care bout this?
+#endif // _WIN32
+
+#if _MBCS
+using TCHAR = char;
+#elif _UNICODE
+using TCHAR = wchar_t;
+#else
+#error Unsupported character set!
+#endif // _MBCS
+
+
+
+using tstring = std::basic_string<TCHAR>;
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
+_NODISCARD tstring to_tstring(_In_ Arithmetic a) noexcept
+{
+#if _MBCS
+	return std::to_string(a);
+#elif _UNICODE
+	return std::to_wstring(a);
+#else
+#error Unsupported character set!
+#endif // _MBCS
+} // end function to_tstring
+
+
+
+// testing to see if it will return float if deduced to double
+template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>>
+_NODISCARD constexpr auto to_floating(_In_ Integral i) noexcept
+{
+#if _WIN32
+	return static_cast<float>(i);
+#elif _WIN64
+	return static_cast<double>(i);
+#else
+	return static_cast<long double>(i);
+#endif // _WIN32
+}
+
+template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
+_NODISCARD constexpr auto ftoi(_In_ FloatingPoint fp) noexcept
+{
+	if (std::signbit(fp))
+		return std::lround(fp);
+	return ra::to_unsigned(std::lround(fp));
+}
+
+
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
+_NODISCARD constexpr auto sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
+
+} // namespace ra
+
+
+#endif // !RA_UTILITY_H

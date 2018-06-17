@@ -3,6 +3,7 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
+
 namespace {
 
 const int FONT_SIZE_MAIN = 32;
@@ -73,7 +74,7 @@ void ProgressPopup::NextMessage()
     m_hMessageImage[OVERLAY_MESSAGE_QUEUE_SIZE - 1] = nullptr;
 }
 
-void ProgressPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
+void ProgressPopup::Update(ControllerInput& input, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
     if (!IsActive())
         return;

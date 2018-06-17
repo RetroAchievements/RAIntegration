@@ -5,6 +5,9 @@
 #include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 
+// this doesn't need to be static but we'll work on that later (static == hang
+// unless you can guarantee compile time speed/constexpr)
+
 class MemoryViewerControl
 {
 public:
@@ -23,13 +26,19 @@ public:
 
     static void setAddress(unsigned int nAddr);
     static void setWatchedAddress(unsigned int nAddr);
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     static unsigned int getWatchedAddress() { return m_nWatchedAddress; }
+    static void SetDataSize(ComparisonVariableSize value) { m_nDataSize = value; Invalidate(); }
+    static ComparisonVariableSize GetDataSize() { return m_nDataSize; }
+#pragma warning(pop)
+
+    
     static void moveAddress(int offset, int nibbleOff);
     static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
 
-    static void SetDataSize(ComparisonVariableSize value) { m_nDataSize = value; Invalidate(); }
-    static ComparisonVariableSize GetDataSize() { return m_nDataSize; }
+    
 
 public:
     static unsigned short m_nActiveMemBank;
@@ -50,24 +59,23 @@ private:
     static unsigned int m_nCaretHeight;
 };
 
-class SearchResult
+#pragma pack(push, 1)
+struct SearchResult
 {
-public:
-    SearchResult() {}
-public:
     std::vector<MemCandidate> m_ResultCandidate;
-    unsigned int m_nCount = 0;
-    unsigned int m_nLastQueryVal = 0;
-    bool m_bUseLastValue;
+    unsigned int m_nCount ={};
+    unsigned int m_nLastQueryVal ={};
+    bool m_bUseLastValue ={};
     tstring m_sFirstLine;
     tstring m_sSecondLine;
-    ComparisonType m_nCompareType;
+    ComparisonType m_nCompareType ={};
 };
+#pragma pack(pop)
 
 class Dlg_Memory
 {
 public:
-    Dlg_Memory() {}
+
 
 public:
     void Init();
@@ -77,8 +85,20 @@ public:
     static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
 
+#pragma warning(push)
+    // unreferenced inline functions, do you see the pattern boss? What do all of these have in common? -Samer
+#pragma warning(disable : 4514)
     void InstallHWND(HWND hWnd) { m_hWnd = hWnd; }
     HWND GetHWND() const { return m_hWnd; }
+
+    // here's an alternative that won't trigger it (it will now since it's not
+    // used), much better in an helper class though
+    _NODISCARD inline constexpr auto operator()() const noexcept { return m_hWnd; } // get hwnd
+    inline constexpr auto operator()(_In_ HWND hwnd) noexcept { m_hWnd = hwnd; } // set hwnd
+
+    const CodeNotes& Notes() const { return m_CodeNotes; }
+#pragma warning(pop)
+
 
     void OnLoad_NewRom();
 
@@ -91,7 +111,7 @@ public:
     void UpdateBits() const;
     BOOL IsActive() const;
 
-    const CodeNotes& Notes() const { return m_CodeNotes; }
+    
 
     void ClearBanks();
     void AddBank(size_t nBankID);

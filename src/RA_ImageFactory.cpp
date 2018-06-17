@@ -4,7 +4,6 @@
 #include "RA_Achievement.h"
 #include "RA_httpthread.h"
 
-UserImageFactoryVars g_UserImageFactoryInst;
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE( p ) { if ( (p) != nullptr ) { (p)->Release(); (p) = nullptr; } }
@@ -166,8 +165,8 @@ HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRend
     if (SUCCEEDED(hr))
     {
         pScaler->Initialize(g_UserImageFactoryInst.m_pOriginalBitmapSource,
-            rcDest.right - rcDest.left,
-            rcDest.bottom - rcDest.top,
+            ra::to_unsigned(rcDest.right - rcDest.left),
+            ra::to_unsigned(rcDest.bottom - rcDest.top),
             WICBitmapInterpolationModeFant);
     }
 
@@ -205,7 +204,7 @@ HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRend
 }
 
 _Use_decl_annotations_
-HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
+HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize<int>& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
@@ -226,7 +225,7 @@ HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 }
 
 _Use_decl_annotations_
-HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
+HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize<int>& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
@@ -248,7 +247,7 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 }
 
 _Use_decl_annotations_
-HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
+HBITMAP LoadLocalPNG(const std::string& sPath, const RASize<int>& sz)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
@@ -377,9 +376,9 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
             int nSourceHeight = rcSource.bottom - rcSource.top;
 
             int nTargetWidth = rcDest.right - rcDest.left;
-            int nTargetHeight = rcDest.bottom - rcDest.top;
+            _UNUSED int nTargetHeight = rcDest.bottom - rcDest.top;
 
-            int nWidthRemaining = nTargetWidth;
+            _UNUSED int nWidthRemaining = nTargetWidth;
             for (int nXOffs = rcDest.left; nXOffs < rcDest.right; nXOffs += nSourceWidth)
             {
                 for (int nYOffs = rcDest.top; nYOffs < rcDest.bottom; nYOffs += nSourceHeight)

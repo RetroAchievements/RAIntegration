@@ -37,38 +37,48 @@ enum TransitionState
 
     TS__MAX
 };
-
+#pragma pack(push, 1)
 class LeaderboardExamine
 {
 public:
-    void Initialize(const unsigned int nLBIDIn);
-    //static void CB_OnReceiveData( void* pRequestObject );
+    void Initialize(const LeaderboardID nLBIDIn);
     void OnReceiveData(const Document& doc);
 
-public:
-    unsigned int m_nLBID;
-    //	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
-    bool m_bHasData;
+private:
+    LeaderboardID m_nLBID ={};
+
+    /// <summary>
+        /// Refer to <see cref="RA_Leaderboard"/> entry rank info via <c>g_LeaderboardManager.FindLB(m_nLBID)</c>
+        /// </summary>
+    bool m_bHasData ={};
+
 };
+#pragma pack(pop)
 extern LeaderboardExamine g_LBExamine;
 
-
+#pragma pack(push, 1)
 class AchievementExamine
 {
 public:
     class RecentWinnerData
     {
     public:
-        RecentWinnerData(const std::string& sUser, const std::string& sWonAt) :
-            m_sUser(sUser), m_sWonAt(sWonAt)
-        {
-        }
+        RecentWinnerData() noexcept = default;
+        ~RecentWinnerData() noexcept = default;
+        RecentWinnerData(const RecentWinnerData&) = delete;
+        RecentWinnerData& operator=(const RecentWinnerData&) = delete;
+        RecentWinnerData(RecentWinnerData&&) noexcept = default;
+        RecentWinnerData& operator=(RecentWinnerData&&) noexcept = default;
+
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
         const std::string& User() const { return m_sUser; }
         const std::string& WonAt() const { return m_sWonAt; }
+#pragma warning(pop)
 
     private:
-        const std::string m_sUser;
-        const std::string m_sWonAt;
+        std::string m_sUser;
+        std::string m_sWonAt;
     };
 
 public:
@@ -79,6 +89,8 @@ public:
     void Clear();
     void OnReceiveData(Document& doc);
 
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     bool HasData() const { return m_bHasData; }
     const std::string& CreatedDate() const { return m_CreatedDate; }
     const std::string& ModifiedDate() const { return m_LastModifiedDate; }
@@ -87,6 +99,10 @@ public:
 
     unsigned int TotalWinners() const { return m_nTotalWinners; }
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
+#pragma warning(pop)
+
+    
+
 
 private:
     const Achievement* m_pSelectedAchievement;
@@ -101,6 +117,7 @@ private:
 
     std::vector<RecentWinnerData> RecentWinners;
 };
+#pragma pack(pop)
 extern AchievementExamine g_AchExamine;
 
 
@@ -118,8 +135,14 @@ public:
     void Render(HDC hDC, RECT* rcDest) const;
     BOOL Update(ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused);
 
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     BOOL IsActive() const { return(m_nTransitionState != TS_OFF); }
     BOOL IsFullyVisible() const { return (m_nTransitionState == TS_HOLD); }
+    OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
+#pragma warning(pop)
+
+    
 
     const int* GetActiveScrollOffset() const;
     const int* GetActiveSelectedItem() const;
@@ -139,7 +162,7 @@ public:
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
-    OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
+    
     void AddPage(OverlayPage NewPage);
     BOOL GoBack();
 
@@ -152,18 +175,20 @@ public:
     void InstallNewsArticlesFromFile();
 
 public:
+    // Does this really need to be nested?
+#pragma pack(push, 4)
     struct NewsItem
     {
-        unsigned int m_nID;
+        unsigned int m_nID ={};
         std::string m_sTitle;
         std::string m_sPayload;
-        time_t m_nPostedAt;
+        time_t m_nPostedAt ={};
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
         std::string m_sImage;
     };
-
+#pragma pack(pop)
 private:
     int	m_nAchievementsScrollOffset;
     int	m_nFriendsScrollOffset;

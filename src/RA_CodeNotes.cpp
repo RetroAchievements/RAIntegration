@@ -21,7 +21,8 @@ size_t CodeNotes::Load(const std::string& sFile)
     if (fopen_s(&pf, sFile.c_str(), "rb") == 0)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs); // it did not have an overload for rvalue references (this version of rj doesn't support it)
         if (!doc.HasParseError())
         {
             ASSERT(doc["CodeNotes"].IsArray());
@@ -51,7 +52,7 @@ size_t CodeNotes::Load(const std::string& sFile)
     return m_CodeNotes.size();
 }
 
-BOOL CodeNotes::Save(const std::string& sFile)
+BOOL CodeNotes::Save(_UNUSED const std::string& sFile)
 {
     return FALSE;
     //	All saving should be cloud-based!

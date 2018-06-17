@@ -95,6 +95,13 @@
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="clipboard.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RA_Defs.h.vsspell" />
+    <None Include="ra_utility" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>
@@ -185,6 +192,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ControlFlowGuard>false</ControlFlowGuard>
       <ShowIncludes>false</ShowIncludes>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>

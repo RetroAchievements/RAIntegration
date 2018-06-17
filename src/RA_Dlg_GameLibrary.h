@@ -5,21 +5,34 @@
 
 #include "RA_Defs.h"
 
-class GameEntry
+struct GameEntry
 {
-public:
-    GameEntry(const std::string& sTitle, const std::string& sFile, unsigned int nGameID) :
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
+    GameEntry(const std::string& sTitle, const std::string& sFile, unsigned int nGameID) noexcept :
         m_sTitle(sTitle), m_sFilename(sFile), m_nGameID(nGameID)
     {
     }
+#pragma warning(pop)
 
+    ~GameEntry() noexcept = default;
+    GameEntry(const GameEntry&) = delete;
+    GameEntry& operator=(const GameEntry&) = delete;
+    GameEntry(GameEntry&&) noexcept = delete;
+    GameEntry& operator=(GameEntry&&) noexcept = delete;
+
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     const std::string& Title() const { return m_sTitle; }
     const std::string& Filename() const { return m_sFilename; }
     unsigned int GameID() const { return m_nGameID; }
+#pragma warning(pop)
 
-    const std::string m_sTitle;
-    const std::string m_sFilename;
-    const unsigned int m_nGameID;
+    // do you want to delete moving too? -Samer
+    // Compiler is going crazy
+    std::string m_sTitle;
+    std::string m_sFilename;
+    unsigned int m_nGameID ={};
 };
 
 class Dlg_GameLibrary

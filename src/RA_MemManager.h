@@ -4,68 +4,69 @@
 
 #include "RA_Condition.h"
 
-class MemCandidate
+#pragma pack(push, 1)
+struct MemCandidate
 {
-public:
-    MemCandidate()
-        : m_nAddr(0),
-        m_nLastKnownValue(0),
-        m_bUpperNibble(FALSE),
-        m_bHasChanged(FALSE)
-    {
-    }
+    // These are move assigned instead of default constructed so we can see the default values
 
-public:
-    unsigned int m_nAddr;
-    unsigned int m_nLastKnownValue;		//	A Candidate MAY be a 32-bit candidate!
-    bool m_bUpperNibble;				//	Used only for 4-bit comparisons
-    bool m_bHasChanged;
+    unsigned int m_nAddr ={};
+
+    /// <summary>
+    ///   A <see cref="MemCandidate" /> MAY be a 32-bit candidate!
+    /// </summary>
+    unsigned int m_nLastKnownValue ={};
+
+
+    /// <summary>Used only for 4-bit comparisons</summary>
+    bool m_bUpperNibble ={};
+    bool m_bHasChanged ={};
+
 };
+#pragma pack(pop)
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
 typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
 
+#pragma pack(push, 2)
+#pragma pack(push, 1)
 class MemManager
 {
 private:
-    class BankData
+    struct BankData
     {
-    public:
-        BankData()
-            : Reader(nullptr), Writer(nullptr), BankSize(0)
-        {
-        }
+        // This is literally the same thing as the default constructor
+#pragma warning(push)
+        // these will be used, the current structure didn't follow RAII so the compiler things they weren't used
+#pragma warning(disable : 4514) // unreferenced inline functions
+        inline constexpr BankData() noexcept = default;
+        inline constexpr BankData(BankData&&) noexcept = default;
+        inline constexpr BankData& operator=(BankData&&) noexcept = default;
+#pragma warning(pop)
 
-        BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize)
-            : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
-        {
-        }
-
-    private:
+        ~BankData() noexcept = default;
+        // this made no sense, how were you storing the data? - Samer
         //	Copying disabled
-        BankData(const BankData&);
-        BankData& operator=(BankData&);
+        BankData(const BankData&) = delete;
+        BankData& operator=(const BankData&) = delete;
+        
+        
 
-    public:
-        _RAMByteReadFn * Reader;
-        _RAMByteWriteFn* Writer;
-        size_t BankSize;
+        _RAMByteReadFn * Reader{ nullptr };
+        _RAMByteWriteFn* Writer{ nullptr };
+        size_t BankSize ={};
     };
 
 public:
-    MemManager();
     virtual ~MemManager();
 
 public:
     void ClearMemoryBanks();
     void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
+
+    // Getters and setters are useless
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     size_t NumMemoryBanks() const { return m_Banks.size(); }
-
-    void Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize);
-    void ResetAll(ComparisonVariableSize nNewComparisonVariableSize, ByteAddress start, ByteAddress end);
-
-    size_t Compare(ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound);
-
     inline DWORD ValidMemAddrFound(size_t iter) const { return m_Candidates[iter].m_nAddr; }
     inline ComparisonVariableSize MemoryComparisonSize() const { return m_nComparisonSizeMode; }
     inline bool UseLastKnownValue() const { return m_bUseLastKnownValue; }
@@ -74,14 +75,25 @@ public:
     //inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
     //inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
     inline size_t TotalBankSize() const { return m_nTotalBankSize; }
-
-    std::vector<size_t> GetBankIDs() const;
-
     size_t NumCandidates() const { return m_nNumCandidates; }
     const MemCandidate& GetCandidate(size_t nAt) const { return m_Candidates[nAt]; }
 
     inline void ChangeNumCandidates(unsigned int size) { m_nNumCandidates = size; }
     MemCandidate* GetCandidatePointer() { return m_Candidates; }
+#pragma warning(pop)
+
+    
+
+    void Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize);
+    void ResetAll(ComparisonVariableSize nNewComparisonVariableSize, ByteAddress start, ByteAddress end);
+
+    size_t Compare(ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound);
+
+
+
+    std::vector<size_t> GetBankIDs() const;
+
+
 
     void ChangeActiveMemBank(unsigned short nMemBank);
 
@@ -90,21 +102,30 @@ public:
 
     unsigned int ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const;
 
+    // this is asking for a hang
+
     void ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const;
 
 private:
+
     std::map<size_t, BankData> m_Banks;
-    unsigned short m_nActiveMemBank;
 
-    MemCandidate* m_Candidates;		//	Pointer to an array
-    size_t m_nNumCandidates;		//	Actual quantity of legal candidates
+    unsigned short m_nActiveMemBank ={};
+    MemCandidate* m_Candidates ={};		//	Pointer to an array
+    size_t m_nNumCandidates ={};		//	Actual quantity of legal candidates
 
-    ComparisonVariableSize m_nComparisonSizeMode;
-    bool m_bUseLastKnownValue;
-    size_t m_nTotalBankSize;
+    ComparisonVariableSize m_nComparisonSizeMode{ComparisonVariableSize::SixteenBit};
+
+    bool m_bUseLastKnownValue{true};
+
+    size_t m_nTotalBankSize ={};
+
+
 };
+#pragma pack(pop)
+#pragma pack(pop)
 
-extern MemManager g_MemManager;
+MemManager g_MemManager;
 
 
 #endif // !RA_MEMMANAGER_H

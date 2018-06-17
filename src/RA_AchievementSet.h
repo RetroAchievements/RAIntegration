@@ -12,13 +12,23 @@
 class AchievementSet
 {
 public:
-    AchievementSet(AchievementSetType nType) :
-        m_nSetType(nType),
-        m_bProcessingActive(TRUE)
+    AchievementSet() noexcept = default;
+#pragma warning(push)
+    // I think this is because you are initializing it as a pointer instead of an object
+#pragma warning(disable : 4514) // unreferenced inline functions
+    AchievementSet(AchievementSetType nType) noexcept :
+        AchievementSet{}
     {
+        m_nSetType = nType;
         Clear();
     }
+#pragma warning(pop)
 
+    ~AchievementSet() noexcept = default;
+    AchievementSet(const AchievementSet&) = delete;
+    AchievementSet& operator=(const AchievementSet&) = delete;
+    AchievementSet(AchievementSet&&) noexcept = default;
+    AchievementSet& operator=(AchievementSet&&) noexcept = default;
 public:
     static BOOL FetchFromWebBlocking(GameID nGameID);
     static void OnRequestUnlocks(const Document& doc);
@@ -35,17 +45,28 @@ public:
 
     std::string GetAchievementSetFilename(GameID nGameID);
 
+
+
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
     inline size_t NumAchievements() const { return m_Achievements.size(); }
 
+
     // Get Points Total
     inline unsigned int PointTotal()
     {
-        unsigned int total = 0;
-        for (Achievement ach : m_Achievements) total += ach.Points();
+        unsigned int total = 0u;
+        for (Achievement& ach : m_Achievements) total += ach.Points();
         return total;
     }
+
+    BOOL ProcessingActive() const { return m_bProcessingActive; }
+    void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
+#pragma warning(pop)
+
+    
 
     //	Add a new achievement to the list, and return a reference to it.
     Achievement& AddAchievement();
@@ -68,15 +89,13 @@ public:
 
     unsigned int NumActive() const;
 
-    BOOL ProcessingActive() const { return m_bProcessingActive; }
-    void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
-
     BOOL HasUnsavedChanges();
 
 private:
-    const AchievementSetType m_nSetType;
+    // delete copying
+    AchievementSetType m_nSetType ={};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive;
+    BOOL m_bProcessingActive ={};
 };
 
 

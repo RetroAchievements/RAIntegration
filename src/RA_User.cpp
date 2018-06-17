@@ -120,8 +120,11 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     else
     {
         //	Push dialog to get them to login!
-        DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-        _RA_SavePreferences();
+        if (DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd,
+            RA_Dlg_Login::RA_Dlg_LoginProc) != 0)
+        {
+            _RA_SavePreferences();
+        }
     }
 
 }
@@ -258,11 +261,15 @@ void LocalRAUser::PostActivity(ActivityType nActivityType)
             RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
             break;
         }
-
+        case ActivityType::ActivityTypeUnknown:
+        case ActivityType::PlayerEarnedAchievement:
+        case ActivityType::PlayerLoggedIn:
+        case ActivityType::UserUploadedAchievement:
+        case ActivityType::UserModifiedAchievement:
+            _FALLTHROUGH;
         default:
             //	unhandled
             ASSERT(!"User isn't designed to handle posting this activity!");
-            break;
     }
 }
 

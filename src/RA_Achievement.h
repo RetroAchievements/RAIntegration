@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
-enum Achievement_DirtyFlags
+enum Achievement_DirtyFlags : unsigned int
 {
     Dirty_Title = 1 << 0,
     Dirty_Desc = 1 << 1,
@@ -21,9 +21,11 @@ enum Achievement_DirtyFlags
     Dirty_Votes = 1 << 7,
     Dirty_Description = 1 << 8,
 
-    Dirty__All = (unsigned int)(-1)
+    Dirty__All = std::make_unsigned_t<int>(-1)
 };
 
+// alignment, alignas doesn't seem to work
+#pragma pack(push, 4)
 class Achievement
 {
 public:
@@ -40,11 +42,18 @@ public:
 
     void Set(const Achievement& rRHS);
 
-    inline BOOL Active() const { return m_bActive; }
+    
     void SetActive(BOOL bActive);
 
-    inline BOOL Modified() const { return m_bModified; }
+    
     void SetModified(BOOL bModified);
+
+    
+
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
+    inline BOOL Active() const { return m_bActive; }
+    inline BOOL Modified() const { return m_bModified; }
 
     inline BOOL GetPauseOnTrigger() const { return m_bPauseOnTrigger; }
     void SetPauseOnTrigger(BOOL bPause) { m_bPauseOnTrigger = bPause; }
@@ -54,25 +63,25 @@ public:
 
     BOOL IsCoreAchievement() const { return m_nSetType == Core; }
 
-    void SetID(AchievementID nID);
     inline AchievementID ID() const { return m_nAchievementID; }
 
     inline const std::string& Title() const { return m_sTitle; }
-    void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
     inline const std::string& Description() const { return m_sDescription; }
-    void SetDescription(const std::string& sDescription) { m_sDescription = sDescription; }
     inline const std::string& Author() const { return m_sAuthor; }
-    void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     inline unsigned int Points() const { return m_nPointValue; }
-    void SetPoints(unsigned int nPoints) { m_nPointValue = nPoints; }
 
     inline time_t CreatedDate() const { return m_nTimestampCreated; }
-    void SetCreatedDate(time_t nTimeCreated) { m_nTimestampCreated = nTimeCreated; }
     inline time_t ModifiedDate() const { return m_nTimestampModified; }
-    void SetModifiedDate(time_t nTimeModified) { m_nTimestampModified = nTimeModified; }
 
     inline unsigned short Upvotes() const { return m_nUpvotes; }
     inline unsigned short Downvotes() const { return m_nDownvotes; }
+
+    void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
+    void SetDescription(const std::string& sDescription) { m_sDescription = sDescription; }
+    void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
+    void SetPoints(unsigned int nPoints) { m_nPointValue = nPoints; }
+    void SetCreatedDate(time_t nTimeCreated) { m_nTimestampCreated = nTimeCreated; }
+    void SetModifiedDate(time_t nTimeModified) { m_nTimestampModified = nTimeModified; }
 
     inline const std::string& Progress() const { return m_sProgress; }
     void SetProgressIndicator(const std::string& sProgress) { m_sProgress = sProgress; }
@@ -81,21 +90,35 @@ public:
     inline const std::string& ProgressFmt() const { return m_sProgressFmt; }
     void SetProgressIndicatorFormat(const std::string& sProgressFmt) { m_sProgressFmt = sProgressFmt; }
 
+    inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }
 
-    void AddConditionGroup();
-    void RemoveConditionGroup();
+    //	Used for rendering updates when editing achievements. Usually always false.
+    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
+    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
+    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
 
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
 
     inline HBITMAP BadgeImage() const { return m_hBadgeImage; }
-    inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }
+
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }
+    auto& GetCondition(size_t nCondGroup, size_t i) const { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
+#pragma warning(pop)
+
+    void SetID(AchievementID nID);
+    
+
+    void AddConditionGroup();
+    void RemoveConditionGroup();
+
+
 
     void SetBadgeImage(const std::string& sFilename);
     void ClearBadgeImage();
 
-    Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
+    
 
     std::string CreateMemString() const;
 
@@ -107,11 +130,10 @@ public:
     //	Parse from json element
     void Parse(const Value& element);
 
-    //	Used for rendering updates when editing achievements. Usually always false.
-    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
-    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
-    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
-    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    
+    
+    
+    
 
 private:
     /*const*/ AchievementSetType m_nSetType;
@@ -150,7 +172,7 @@ private:
     HBITMAP m_hBadgeImage;
     HBITMAP m_hBadgeImageLocked;
 };
-
+#pragma pack(pop)
 
 
 #endif // !RA_ACHIEVEMENT_H

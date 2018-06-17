@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{0ef7eac1-21f9-4784-892e-68c133aaa617}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -222,5 +225,14 @@
     <ResourceCompile Include="RA_Version.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="clipboard.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RA_Defs.h.vsspell" />
+    <None Include="ra_utility">
+      <Filter>Helpers</Filter>
+    </None>
   </ItemGroup>
 </Project>

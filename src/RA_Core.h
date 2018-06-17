@@ -12,94 +12,88 @@
 #define API
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+_EXTERN_C
+//	Fetch the version number of this integration version.
+API const char* CCONV _RA_IntegrationVersion();
 
-    //	Fetch the version number of this integration version.
-    API const char* CCONV _RA_IntegrationVersion();
+//	Initialize all data related to RA Engine. Call as early as possible.
+API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 
-    //	Initialize all data related to RA Engine. Call as early as possible.
-    API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+//	Call for a tidy exit at end of app.
+API int CCONV _RA_Shutdown();
 
-    //	Call for a tidy exit at end of app.
-    API int CCONV _RA_Shutdown();
+//	Allocates and configures a popup menu, to be called, embedded and managed by the app.
+API HMENU CCONV _RA_CreatePopupMenu();
 
-    //	Allocates and configures a popup menu, to be called, embedded and managed by the app.
-    API HMENU CCONV _RA_CreatePopupMenu();
+//	Check all achievement sets for changes, and displays a dlg box to warn lost changes.
+API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp);
 
-    //	Check all achievement sets for changes, and displays a dlg box to warn lost changes.
-    API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp);
+//	On or immediately after a new ROM is loaded, including if the ROM is reset.
+API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize);
 
-    //	On or immediately after a new ROM is loaded, including if the ROM is reset.
-    API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize);
+//	On or immediately after a new ROM is loaded, for each memory bank found
+//	NB:
+//pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
+//pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize);
 
-    //	On or immediately after a new ROM is loaded, for each memory bank found
-    //	NB:
-    //pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
-    //pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
-    API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize);
+//	Call before installing any memory banks
+API void CCONV _RA_ClearMemoryBanks();
 
-    //	Call before installing any memory banks
-    API void CCONV _RA_ClearMemoryBanks();
+//	Immediately after loading a new state.
+API void CCONV _RA_OnLoadState(const char* sFileName);
 
-    //	Immediately after loading a new state.
-    API void CCONV _RA_OnLoadState(const char* sFileName);
-
-    //	Immediately after saving a new state.
-    API void CCONV _RA_OnSaveState(const char* sFileName);
+//	Immediately after saving a new state.
+API void CCONV _RA_OnSaveState(const char* sFileName);
 
 
-    //	Perform one test for all achievements in the current set. Call this once per frame/cycle.
-    API void CCONV _RA_DoAchievementsFrame();
+//	Perform one test for all achievements in the current set. Call this once per frame/cycle.
+API void CCONV _RA_DoAchievementsFrame();
 
 
-    //	Use in special cases where the emulator contains more than one console ID.
-    API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
+//	Use in special cases where the emulator contains more than one console ID.
+API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 
-    //	Display a dialog helping the user get the latest RA client version
-    API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer);
+//	Display a dialog helping the user get the latest RA client version
+API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer);
 
-    //	Deal with any HTTP results that come along. Call per-cycle from main thread.
-    API int CCONV _RA_HandleHTTPResults();
+//	Deal with any HTTP results that come along. Call per-cycle from main thread.
+API int CCONV _RA_HandleHTTPResults();
 
-    //	Execute a blocking check to see if this client is out of date.
-    API void CCONV _RA_CheckForUpdate();
+//	Execute a blocking check to see if this client is out of date.
+API void CCONV _RA_CheckForUpdate();
 
-    //	Update the title of the app
-    API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
+//	Update the title of the app
+API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
 
-    //	Load preferences from ra_prefs.cfg
-    API void CCONV _RA_LoadPreferences();
+//	Load preferences from ra_prefs.cfg
+API void CCONV _RA_LoadPreferences();
 
-    //	Save preferences to ra_prefs.cfg
-    API void CCONV _RA_SavePreferences();
+//	Save preferences to ra_prefs.cfg
+API void CCONV _RA_SavePreferences();
 
-    //	Display or unhide an RA dialog.
-    API void CCONV _RA_InvokeDialog(LPARAM nID);
+//	Display or unhide an RA dialog.
+API void CCONV _RA_InvokeDialog(LPARAM nID);
 
-    //	Call this when the pause state changes, to update RA with the new state.
-    API void CCONV _RA_SetPaused(bool bIsPaused);
+//	Call this when the pause state changes, to update RA with the new state.
+API void CCONV _RA_SetPaused(bool bIsPaused);
 
-    //	Returns the currently active user
-    API const char* CCONV _RA_Username();
+//	Returns the currently active user
+API const char* CCONV _RA_Username();
 
-    //	Attempt to login, or present login dialog.
-    API void CCONV _RA_AttemptLogin(bool bBlocking);
+//	Attempt to login, or present login dialog.
+API void CCONV _RA_AttemptLogin(bool bBlocking);
 
-    //	Return whether or not the hardcore mode is active.
-    API int CCONV _RA_HardcoreModeIsActive();
+//	Return whether or not the hardcore mode is active.
+API int CCONV _RA_HardcoreModeIsActive();
 
-    //	Return whether a HTTPGetRequest already exists
-    API int CCONV _RA_HTTPGetRequestExists(const char* sPageName);
+//	Return whether a HTTPGetRequest already exists
+API int CCONV _RA_HTTPGetRequestExists(const char* sPageName);
 
-    //	Install user-side functions that can be called from the DLL
-    API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
-    API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
-
-#ifdef __cplusplus
-}
-#endif
+//	Install user-side functions that can be called from the DLL
+API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
+API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
+_END_EXTERN_C
 
 
 //	Non-exposed:

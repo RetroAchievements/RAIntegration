@@ -98,23 +98,29 @@ enum ConsoleID
     NumConsoleIDs
 };
 
+// These are meant to be used the client-code (emulators) right?
+#ifndef DECLSPEC_EXPORT
+#define DECLSPEC_EXPORT __declspec(dllexport)
+#endif // !DECLSPEC_EXPORT
 
-extern bool(*_RA_GameIsActive)();
-extern void(*_RA_CauseUnpause)();
-extern void(*_RA_CausePause)();
-extern void(*_RA_RebuildMenu)();
-extern void(*_RA_GetEstimatedGameTitle)(char* sNameOut);
-extern void(*_RA_ResetEmulation)();
-extern void(*_RA_LoadROM)(const char* sFullPath);
+
+
+bool(__cdecl* _RA_GameIsActive)();
+void(__cdecl* _RA_CauseUnpause)();
+void(__cdecl* _RA_CausePause)();
+void(__cdecl* _RA_RebuildMenu)();
+void(__cdecl* _RA_GetEstimatedGameTitle)(char* sNameOut);
+void(__cdecl* _RA_ResetEmulation)();
+void(__cdecl* _RA_LoadROM)(const char* sFullPath);
 
 //	Shared funcs, should be implemented by emulator.
-extern bool RA_GameIsActive();
-extern void RA_CauseUnpause();
-extern void RA_CausePause();
-extern void RA_RebuildMenu();
-extern void RA_GetEstimatedGameTitle(char* sNameOut);
-extern void RA_ResetEmulation();
-extern void RA_LoadROM(const char* sFullPath);
+bool __cdecl RA_GameIsActive();
+void __cdecl RA_CauseUnpause();
+void __cdecl RA_CausePause();
+void __cdecl RA_RebuildMenu();
+void __cdecl RA_GetEstimatedGameTitle(char* sNameOut);
+void __cdecl RA_ResetEmulation();
+void __cdecl RA_LoadROM(const char* sFullPath);
 
 #ifndef RA_EXPORTS
 

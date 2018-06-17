@@ -46,6 +46,7 @@ bool g_bLBDisplayCounter = true;
 bool g_bLBDisplayScoreboard = true;
 unsigned int g_nNumHTTPThreads = 15;
 
+#pragma pack(push, 1)
 typedef struct WindowPosition
 {
     int nLeft;
@@ -54,8 +55,9 @@ typedef struct WindowPosition
     int nHeight;
     bool bLoaded;
 
-    static const int nUnset = -99999;
+    static constexpr int nUnset = -99999;
 } WindowPosition;
+#pragma pack(pop)
 
 typedef std::map<std::string, WindowPosition> WindowPositionMap;
 WindowPositionMap g_mWindowPositions;
@@ -65,7 +67,7 @@ const unsigned int PROCESS_WAIT_TIME = 100;
 unsigned int g_nProcessTimer = 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
@@ -167,6 +169,8 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
             g_sClientDownloadURL = "RAMeka.zip";
             g_sClientEXEName = "RAMeka.exe";
             break;
+        case EmulatorID::UnknownEmulator:
+            _FALLTHROUGH;
         default:
             g_ConsoleID = UnknownConsoleID;
             g_sClientVersion = sClientVer;
@@ -341,7 +345,8 @@ API int CCONV _RA_HardcoreModeIsActive()
     return g_bHardcoreModeActive;
 }
 
-API int CCONV _RA_HTTPGetRequestExists(const char* sPageName)
+_DEPRECATED
+API int CCONV _RA_HTTPGetRequestExists(_UNUSED const char* sPageName)
 {
     //return RAWeb::HTTPRequestExists( sPageName );	//	Deprecated
     return 0;
@@ -453,7 +458,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
     g_MemManager.AddMemoryBank(static_cast<size_t>(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>(nBankSize));
-    g_MemoryDialog.AddBank(nBankID);
+    g_MemoryDialog.AddBank(ra::to_unsigned(nBankID));
 }
 
 API void CCONV _RA_ClearMemoryBanks()
@@ -731,6 +736,24 @@ API int CCONV _RA_HandleHTTPResults()
                     AchievementSet::OnRequestUnlocks(doc);
                     //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
                     break;
+                
+                case RequestType::RequestFriendList:
+                case RequestType::RequestPatch:
+                case RequestType::RequestRichPresence:
+                case RequestType::RequestHashLibrary:
+                case RequestType::RequestGamesList:
+                case RequestType::RequestAllProgress:
+                case RequestType::RequestGameID:
+                case RequestType::RequestPing:
+                case RequestType::RequestPostActivity:
+                case RequestType::RequestSubmitCodeNote:
+                case RequestType::RequestSubmitAchievementData:
+                case RequestType::RequestSubmitTicket:
+                case RequestType::RequestSubmitNewTitle:
+                case RequestType::StopThread:
+                case RequestType::NumRequestTypes:
+                    _FALLTHROUGH;
+                default: break;
             }
         }
 
@@ -762,15 +785,15 @@ API HMENU CCONV _RA_CreatePopupMenu()
         // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA, ra::to_unsigned(g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED), IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 
         AppendMenu(hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards");
-        AppendMenu(hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA_LB, ra::to_unsigned(g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED), IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
+        AppendMenu(hRA_LB, ra::to_unsigned(g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED), IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
+        AppendMenu(hRA_LB, ra::to_unsigned(g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED), IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
+        AppendMenu(hRA_LB, ra::to_unsigned(g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED), IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
 
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
@@ -834,7 +857,7 @@ API void CCONV _RA_CheckForUpdate()
             {
                 //	Up to date
                 char buffer[1024];
-                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
+                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02lu", g_sClientEXEName, nServerVersion);
                 MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
             }
         }
@@ -912,7 +935,8 @@ API void CCONV _RA_LoadPreferences()
     else
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream myStream{ pf };
+        doc.ParseStream(myStream);
 
         if (doc.HasParseError())
         {
@@ -1516,7 +1540,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     while (*pSource != '\0' && *pSource != nChar)
         pSource++;
 
-    value.assign(pStartString, pSource - pStartString);
+    value.assign(pStartString, ra::to_unsigned(pSource - pStartString));
     pSource++;
 }
 
@@ -1561,7 +1585,7 @@ void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes)
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFile, "wb") == 0)
     {
-        fwrite(sBuffer, 1, nBytes, pf);
+        fwrite(sBuffer, 1U, ra::to_unsigned(nBytes), pf);
         fclose(pf);
     }
 }
@@ -1589,9 +1613,9 @@ char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
     //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
     char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
-    ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+    ZeroMemory(pRawFileOut, ra::to_unsigned(nFileSizeOut + 1));
 
-    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
+    fread(pRawFileOut, ra::to_unsigned(nFileSizeOut), sizeof(char), pf);
     fclose(pf);
 
     return pRawFileOut;

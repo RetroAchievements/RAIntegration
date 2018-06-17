@@ -22,6 +22,8 @@ enum PopupMessageType
 class MessagePopup
 {
 public:
+    MessagePopup() noexcept = default;
+    ~MessagePopup() noexcept { DeleteBitmap(m_hMessageImage); }
     MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = nullptr) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
@@ -29,17 +31,28 @@ public:
         m_hMessageImage(hImg)
     {
     }
+    MessagePopup(const MessagePopup&) = delete;
+    MessagePopup& operator=(const MessagePopup&) = delete;
+    MessagePopup(MessagePopup&&) noexcept = default;
+    MessagePopup& operator=(MessagePopup&&) noexcept = default;
 public:
-    const std::string& Title() const { return m_sMessageTitle; }
-    const std::string& Subtitle() const { return m_sMessageSubtitle; }
-    PopupMessageType Type() const { return m_nMessageType; }
-    HBITMAP Image() const { return m_hMessageImage; }
+    // This class may as well be a struct
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
+    // Just return references
+    auto& Title() const { return m_sMessageTitle; }
+    auto& Subtitle() const { return m_sMessageSubtitle; }
+    auto& Type() const { return m_nMessageType; }
+    auto& Image() const { return m_hMessageImage; }
+#pragma warning(pop)
 
 private:
-    const std::string m_sMessageTitle;
-    const std::string m_sMessageSubtitle;
-    const PopupMessageType m_nMessageType;
-    const HBITMAP m_hMessageImage;
+    // This was wrong in so many ways, you can't use move semantics on const!
+    // Have you ever seen "const class_type&&" before? No, of course not, it's undefined.
+    std::string m_sMessageTitle;
+    std::string m_sMessageSubtitle;
+    PopupMessageType m_nMessageType ={};
+    HBITMAP m_hMessageImage ={};
 };
 
 class AchievementPopup
@@ -49,15 +62,18 @@ public:
 public:
     AchievementPopup();
 
-    void Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused);
+    void Update(ControllerInput& input, float fDelta, bool bFullScreen, bool bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
     void AddMessage(const MessagePopup& msg);
     float GetYOffsetPct() const;
 
     //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
+#pragma warning(push)
+#pragma warning(disable : 4514) // unreferenced inline functions
     bool MessagesPresent() const { return(m_vMessages.size() > 0); }
     const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
+#pragma warning(pop)
 
     void Clear();
     void PlayAudio();

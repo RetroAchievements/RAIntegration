@@ -49,7 +49,7 @@ void LeaderboardPopup::Reset()
     m_nState = State_ShowingProgress;
 }
 
-void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
+void LeaderboardPopup::Update(ControllerInput& input, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
     if (!g_bLeaderboardsActive)	//	If not, simply ignore them.
         return;

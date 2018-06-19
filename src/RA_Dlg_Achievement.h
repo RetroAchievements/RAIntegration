@@ -44,12 +44,10 @@ public:
     void OnEditAchievement(const Achievement& ach);
     void OnClickAchievementSet(AchievementSetType nAchievementSet);
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
+
     inline HWND GetHWND() const { return m_hAchievementsDlg; }
     void InstallHWND(HWND hWnd) { m_hAchievementsDlg = hWnd; }
-#pragma warning(pop)
 
 private:
     void SetupColumns(HWND hList);

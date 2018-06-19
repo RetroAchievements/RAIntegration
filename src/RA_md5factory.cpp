@@ -21,7 +21,7 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
     memcpy(pDataBuffer, sStringToMD5.c_str(), sStringToMD5.length());
 
     md5_init(&pms);
-    md5_append(&pms, pDataBuffer, ra::to_signed(sStringToMD5.length()));
+    md5_append(&pms, pDataBuffer, sStringToMD5.length());
     md5_finish(&pms, digest);
 
     memset(buffer, 0, MD5_STRING_LEN + 1);
@@ -47,7 +47,7 @@ std::string RAGenerateMD5(const BYTE* pRawData, size_t nDataLen)
     static_assert(sizeof(md5_byte_t) == sizeof(BYTE), "Must be equivalent for the MD5 to work!");
 
     md5_init(&pms);
-    md5_append(&pms, static_cast<const md5_byte_t*>(pRawData), ra::to_signed(nDataLen));
+    md5_append(&pms, static_cast<const md5_byte_t*>(pRawData), nDataLen);
     md5_finish(&pms, digest);
 
     memset(buffer, 0, MD5_STRING_LEN + 1);

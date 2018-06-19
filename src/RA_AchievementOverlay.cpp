@@ -134,7 +134,7 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground = LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RA_OVERLAY_EXTENT);
+    m_hOverlayBackground = LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RASize(OVERLAY_WIDTH, OVERLAY_HEIGHT));
     //if( m_hOverlayBackground == nullptr )
     //{
     //	//	Backup

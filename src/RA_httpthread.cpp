@@ -264,38 +264,12 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, DataS
 
     switch (nType)
     {
-        case RequestType::RequestUserPic:
+        case RequestUserPic:
             return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), ResponseOut, false);	//	UserPic needs migrating to S3...
-        case RequestType::RequestBadge:
+        case RequestBadge:
             return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), ResponseOut, true);
-        case RequestType::RequestLogin:
+        case RequestLogin:
             return DoBlockingHttpPost("login_app.php", PostArgsToString(args), ResponseOut);
-        case RequestType::RequestNews:
-        case RequestType::RequestLatestClientPage:
-        case RequestType::RequestAchievementInfo:
-        case RequestType::RequestLeaderboardInfo:
-        case RequestType::RequestCodeNotes:
-        case RequestType::RequestBadgeIter:
-        case RequestType::RequestUnlocks:
-        case RequestType::RequestSubmitAwardAchievement:
-        case RequestType::RequestSubmitLeaderboardEntry:
-        case RequestType::RequestScore:
-        case RequestType::RequestFriendList:
-        case RequestType::RequestPatch:
-        case RequestType::RequestRichPresence:
-        case RequestType::RequestHashLibrary:
-        case RequestType::RequestGamesList:
-        case RequestType::RequestAllProgress:
-        case RequestType::RequestGameID:
-        case RequestType::RequestPing:
-        case RequestType::RequestPostActivity:
-        case RequestType::RequestSubmitCodeNote:
-        case RequestType::RequestSubmitAchievementData:
-        case RequestType::RequestSubmitTicket:
-        case RequestType::RequestSubmitNewTitle:
-        case RequestType::StopThread:
-        case RequestType::NumRequestTypes:
-            _FALLTHROUGH;
         default:
             return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), ResponseOut);
     }
@@ -341,7 +315,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
             // Send a Request.
             if (hRequest != nullptr)
             {
-                _UNUSED BOOL bResults = WinHttpSendRequest(hRequest,
+                BOOL bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
                     0,
                     WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
@@ -735,38 +709,11 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
             DataStream Response;
             switch (pObj->GetRequestType())
             {
-                case RequestType::StopThread:	//	Exception:
+                case StopThread:	//	Exception:
                     bThreadActive = false;
                     bDoPingKeepAlive = false;
                     break;
-                case RequestType::RequestNews:
-                case RequestType::RequestLogin:
-                case RequestType::RequestUserPic:
-                case RequestType::RequestBadge:
-                case RequestType::RequestLatestClientPage:
-                case RequestType::RequestAchievementInfo:
-                case RequestType::RequestLeaderboardInfo:
-                case RequestType::RequestCodeNotes:
-                case RequestType::RequestBadgeIter:
-                case RequestType::RequestUnlocks:
-                case RequestType::RequestSubmitAwardAchievement:
-                case RequestType::RequestSubmitLeaderboardEntry:
-                case RequestType::RequestScore:
-                case RequestType::RequestFriendList:
-                case RequestType::RequestPatch:
-                case RequestType::RequestRichPresence:
-                case RequestType::RequestHashLibrary:
-                case RequestType::RequestGamesList:
-                case RequestType::RequestAllProgress:
-                case RequestType::RequestGameID:
-                case RequestType::RequestPing:
-                case RequestType::RequestPostActivity:
-                case RequestType::RequestSubmitCodeNote:
-                case RequestType::RequestSubmitAchievementData:
-                case RequestType::RequestSubmitTicket:
-                case RequestType::RequestSubmitNewTitle:
-                case RequestType::NumRequestTypes:
-                    _FALLTHROUGH;
+
                 default:
                     DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
                     break;

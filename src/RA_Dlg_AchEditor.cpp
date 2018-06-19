@@ -2041,7 +2041,7 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
     RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
 }
 
-void BadgeNames::OnNewBadgeNames(const Document& data) const
+void BadgeNames::OnNewBadgeNames(const Document& data)
 {
     unsigned int nLowerLimit = data["FirstBadge"].GetUint();
     unsigned int nUpperLimit = data["NextBadge"].GetUint();
@@ -2060,7 +2060,7 @@ void BadgeNames::OnNewBadgeNames(const Document& data) const
         ComboBox_AddString(m_hDestComboBox, buffer);
     }
 
-    SetWindowRedraw(m_hDestComboBox, TRUE);
+    SendMessage(m_hDestComboBox, WM_SETREDRAW, TRUE, LPARAM{});
     RedrawWindow(m_hDestComboBox, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
     //	Find buffer in the dropdown list

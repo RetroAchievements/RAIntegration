@@ -39,22 +39,19 @@ public:
     void FlushBitmap();
     void LoadOrFetchUserImage();
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     unsigned int GetScore() const { return m_nScore; }
     void SetScore(unsigned int nScore) { m_nScore = nScore; }
 
     void SetUsername(const std::string& sUser) { m_sUsername = sUser; }
-
-    HBITMAP GetUserImage() const { return m_hUserImage; }
-    void InstallUserImage(HBITMAP hImg) { m_hUserImage = hImg; }
-    BOOL IsFetchingUserImage() const { return m_bFetchingUserImage; }
+    const std::string& Username() const { return m_sUsername; }
 
     void UpdateActivity(const std::string& sAct) { m_sActivity = sAct; }
     const std::string& Activity() const { return m_sActivity; }
-#pragma warning(pop)
 
-    const std::string& Username() const { return m_sUsername; }
+    HBITMAP GetUserImage() const { return m_hUserImage; }
+    void InstallUserImage(HBITMAP hImg) { m_hUserImage = hImg; }
+
+    BOOL IsFetchingUserImage() const { return m_bFetchingUserImage; }
 
 private:
     /*const*/std::string	m_sUsername;
@@ -85,20 +82,15 @@ public:
     RAUser* AddFriend(const std::string& sFriend, unsigned int nScore);
     RAUser* FindFriend(const std::string& sName);
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends[nOffs] : nullptr; }
     const size_t NumFriends() const { return m_aFriends.size(); }
 
     void SetStoreToken(BOOL bStoreToken) { bStoreToken = bStoreToken; }
 
     void SetToken(const std::string& sToken) { m_sToken = sToken; }
-    BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
-#pragma warning(pop)
-
     const std::string& Token() const { return m_sToken; }
 
-    
+    BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
 
     void PostActivity(ActivityType nActivityType);
 
@@ -115,22 +107,12 @@ private:
 class RAUsers
 {
 public:
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
-    static constexpr LocalRAUser& LocalUser() { return ms_LocalUser; }
-#pragma warning(pop)
-
+    static LocalRAUser& LocalUser() { return ms_LocalUser; }
     static BOOL DatabaseContainsUser(const std::string& sUser);
     static void OnUserPicDownloaded(const RequestObject& obj);
-#pragma warning(push)
-    // unreferenced inline functions. NB: The way you inserted it is undefined,
-    // though it will "work" it will crash during a bounds check (out_of_range exception
-    // Why not use rvalue refs?
-#pragma warning(disable : 4514) 
-    static void RegisterUser(_In_ const std::string& sUsername, _In_ RAUser* pUser) {
-        UserDatabase.try_emplace(sUsername, pUser);
-    }
-#pragma warning(pop)
+
+    static void RegisterUser(const std::string& sUsername, RAUser* pUser) { UserDatabase[sUsername] = pUser; }
+
     static RAUser* GetUser(const std::string& sUser);
 
 private:

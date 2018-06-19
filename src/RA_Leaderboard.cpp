@@ -9,7 +9,7 @@
 RA_LeaderboardManager g_LeaderboardManager;
 
 namespace {
-inline constexpr std::array<const char*, 6> FormatTypeToString
+const char* FormatTypeToString[] =
 {
     "TIME",			//	TimeFrames
     "TIMESECS",		//	TimeSecs
@@ -27,11 +27,11 @@ double MemValue::GetValue() const
     int nRetVal = 0;
     if (m_bParseVal)
     {
-        nRetVal = ra::to_signed(m_nAddress);	//	insert address as value.
+        nRetVal = m_nAddress;	//	insert address as value.
     }
     else
     {
-        nRetVal = ra::to_signed(g_MemManager.ActiveBankRAMRead(m_nAddress, m_nVarSize));
+        nRetVal = g_MemManager.ActiveBankRAMRead(m_nAddress, m_nVarSize);
 
         if (m_bInvertBit && (m_nVarSize >= ComparisonVariableSize::Bit_0) && (m_nVarSize <= ComparisonVariableSize::Bit_7))
         {
@@ -185,12 +185,17 @@ void ValueSet::Clear()
 }
 
 //////////////////////////////////////////////////////////////////////////
-RA_Leaderboard::RA_Leaderboard(const LeaderboardID nID) noexcept :
-    RA_Leaderboard{}
+RA_Leaderboard::RA_Leaderboard(const unsigned nLeaderboardID) :
+    m_nID(nLeaderboardID),
+    m_bStarted(false),
+    m_bSubmitted(false),
+    m_format(Format_Value)
 {
-    this->m_nID = nID;
 }
 
+RA_Leaderboard::~RA_Leaderboard()
+{
+}
 
 //{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 2","Description":"Complete this act in the fastest time!"},
 
@@ -208,17 +213,13 @@ void RA_Leaderboard::LoadFromJSON(const Value& element)
     m_sDescription = element["Description"].GetString();
 
     const std::string sFmt = element["Format"].GetString();
-
-    auto count{ 0 };
-    for (auto& i : FormatTypeToString)
+    for (size_t i = 0; i < Format__MAX; ++i)
     {
-        // (before) Spectre security risk, this is why c arrays suck
-        if (i == sFmt)
+        if (sFmt.compare(FormatTypeToString[i]) == 0)
         {
-            m_format = static_cast<FormatType>(count);
+            m_format = (FormatType)i;
             break;
         }
-        count++;
     }
 }
 
@@ -374,7 +375,7 @@ void RA_Leaderboard::ParseLine(char* sBuffer)
 {
     char* pChar = &sBuffer[0];
     pChar++;											//	Skip over 'L' character
-    ASSERT(m_nID == strtoul(pChar, &pChar, 10));		//	Skip over Leaderboard ID
+    ASSERT(m_nID == strtol(pChar, &pChar, 10));		//	Skip over Leaderboard ID
     ParseLBData(pChar);
 }
 
@@ -551,7 +552,7 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
     char buffer[256];
     switch (nType)
     {
-        case FormatType::Format_TimeFrames:
+        case Format_TimeFrames:
         {
             int nMins = nScoreIn / 3600;
             int nSecs = (nScoreIn % 3600) / 60;
@@ -560,7 +561,7 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
         }
         break;
 
-        case FormatType::Format_TimeSecs:
+        case Format_TimeSecs:
         {
             int nMins = nScoreIn / 60;
             int nSecs = nScoreIn % 60;
@@ -568,7 +569,7 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
         }
         break;
 
-        case FormatType::Format_TimeMillisecs:
+        case Format_TimeMillisecs:
         {
             int nMins = nScoreIn / 6000;
             int nSecs = (nScoreIn % 6000) / 100;
@@ -577,18 +578,17 @@ std::string RA_Leaderboard::FormatScore(FormatType nType, int nScoreIn)
         }
         break;
 
-        case FormatType::Format_Score:
+        case Format_Score:
             sprintf_s(buffer, 256, "%06d Points", nScoreIn);
             break;
 
-        case FormatType::Format_Value:
+        case Format_Value:
             sprintf_s(buffer, 256, "%01d", nScoreIn);
             break;
-        case FormatType::Format_Other:
-        case FormatType::Format__MAX:
-            _FALLTHROUGH;
+
         default:
             sprintf_s(buffer, 256, "%06d", nScoreIn);
+            break;
     }
     return buffer;
 }
@@ -627,17 +627,17 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     const Value& LBData = Response["LBData"];
 
-    _UNUSED const std::string& sFormat = LBData["Format"].GetString();
+    const std::string& sFormat = LBData["Format"].GetString();
     const LeaderboardID nLBID = static_cast<LeaderboardID>(LBData["LeaderboardID"].GetUint());
     const GameID nGameID = static_cast<GameID>(LBData["GameID"].GetUint());
-    _UNUSED const std::string& sLBTitle = LBData["Title"].GetString();
+    const std::string& sLBTitle = LBData["Title"].GetString();
     const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
 
     RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
 
     const int nSubmittedScore = Response["Score"].GetInt();
     const int nBestScore = Response["BestScore"].GetInt();
-    _UNUSED const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
+    const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
 
     pLB->ClearRankInfo();
 
@@ -659,8 +659,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     pLB->SortRankInfo();
 
-    _UNUSED const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-    _UNUSED const Value& RankData = Response["RankInfo"];
+    const Value& TopEntriesFriends = Response["TopEntriesFriends"];
+    const Value& RankData = Response["RankInfo"];
 
     //	TBD!
     //char sTestData[ 4096 ];
@@ -679,10 +679,10 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
 
-void RA_LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb)
+void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
 {
     if (g_bLeaderboardsActive)	//	If not, simply ignore them.
-        m_Leaderboards.push_back(std::move(lb));
+        m_Leaderboards.push_back(lb);
 }
 
 void RA_LeaderboardManager::Test()

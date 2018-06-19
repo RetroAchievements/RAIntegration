@@ -36,40 +36,34 @@ static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
 {
     switch (nSize)
     {
-        case ComparisonVariableSize::NumComparisonVariableSizeTypes:
-            _FALLTHROUGH;
-        case ComparisonVariableSize::Bit_0:			return "M";
-        case ComparisonVariableSize::Bit_1:			return "N";
-        case ComparisonVariableSize::Bit_2:			return "O";
-        case ComparisonVariableSize::Bit_3:			return "P";
-        case ComparisonVariableSize::Bit_4:			return "Q";
-        case ComparisonVariableSize::Bit_5:			return "R";
-        case ComparisonVariableSize::Bit_6:			return "S";
-        case ComparisonVariableSize::Bit_7:			return "T";
-        case ComparisonVariableSize::Nibble_Lower:	return "L";
-        case ComparisonVariableSize::Nibble_Upper:	return "U";
-        case ComparisonVariableSize::EightBit:		return "H";
-        case ComparisonVariableSize::ThirtyTwoBit:	return "X";
+        case Bit_0:			return "M";
+        case Bit_1:			return "N";
+        case Bit_2:			return "O";
+        case Bit_3:			return "P";
+        case Bit_4:			return "Q";
+        case Bit_5:			return "R";
+        case Bit_6:			return "S";
+        case Bit_7:			return "T";
+        case Nibble_Lower:	return "L";
+        case Nibble_Upper:	return "U";
+        case EightBit:		return "H";
+        case ThirtyTwoBit:	return "X";
         default:
-        case ComparisonVariableSize::SixteenBit:	return " ";
+        case SixteenBit:	return " ";
     }
 }
 
-
-constexpr const char* ComparisonTypeToStr(ComparisonType nType)
+static const char* ComparisonTypeToStr(ComparisonType nType)
 {
     switch (nType)
     {
-        // these "num" enums don't make sense
-        case ComparisonType::NumComparisonTypes:
-            _FALLTHROUGH;
-        case ComparisonType::Equals:                return "=";
-        case ComparisonType::GreaterThan:           return ">";
-        case ComparisonType::GreaterThanOrEqual:    return ">=";
-        case ComparisonType::LessThan:              return "<";
-        case ComparisonType::LessThanOrEqual:       return "<=";
-        case ComparisonType::NotEqualTo:            return "!=";
-        default:                                    return "";
+        case Equals:				return "=";
+        case GreaterThan:			return ">";
+        case GreaterThanOrEqual:	return ">=";
+        case LessThan:				return "<";
+        case LessThanOrEqual:		return "<=";
+        case NotEqualTo:			return "!=";
+        default:					return "";
     }
 }
 
@@ -119,18 +113,17 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
     return ComparisonType::Equals;
 }
 
-// i don't thing strtoul is a constant expression, plus global functions have static lifetime anyway
-static unsigned int ReadHits(_Inout_ const char*& pBuffer)
+static unsigned int ReadHits(const char*& pBufferInOut)
 {
-    if (pBuffer[0] == '(' || pBuffer[0] == '.')
+    if (pBufferInOut[0] == '(' || pBufferInOut[0] == '.')
     {
-        unsigned int nNumHits = strtoul(pBuffer + 1, (char**)&pBuffer, 10);	//	dirty!
-        pBuffer++;
+        unsigned int nNumHits = strtol(pBufferInOut + 1, (char**)&pBufferInOut, 10);	//	dirty!
+        pBufferInOut++;
         return nNumHits;
     }
 
     //	0 by default: disable hit-tracking!
-    return 0U;
+    return 0;
 }
 
 bool Condition::ParseFromString(const char*& pBuffer)
@@ -179,27 +172,27 @@ bool Condition::ParseFromString(const char*& pBuffer)
     return true;
 }
 
-void Condition::SerializeAppend(_Out_ std::string& buffer) const
+void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-        case Condition::ConditionType::Standard:
-        case Condition::ConditionType::NumConditionTypes:
-            _FALLTHROUGH;
-        case Condition::ConditionType::ResetIf:
+        case Condition::ResetIf:
             buffer.append("R:");
             break;
-        case Condition::ConditionType::PauseIf:
+        case Condition::PauseIf:
             buffer.append("P:");
             break;
-        case Condition::ConditionType::AddSource:
+        case Condition::AddSource:
             buffer.append("A:");
             break;
-        case Condition::ConditionType::SubSource:
+        case Condition::SubSource:
             buffer.append("B:");
             break;
-        case Condition::ConditionType::AddHits:
+        case Condition::AddHits:
             buffer.append("C:");
+            break;
+        default:
+            break;
     }
 
     m_nCompSource.SerializeAppend(buffer);
@@ -271,19 +264,12 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     }
     else
     {
-        // This is a bit overkill but C sucks
-        std::ios::sync_with_stdio(false);
-        std::ostringstream oss;
-        oss << std::uppercase << pBufferInOut[0];
-        auto myStr = oss.str();
-        oss.str("");
-
-        m_nVarSize = PrefixToComparisonSize(myStr.front());
+        m_nVarSize = PrefixToComparisonSize(toupper(pBufferInOut[0]));
         if (m_nVarSize != ComparisonVariableSize::SixteenBit)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }
 
-    m_nVal = strtoul(pBufferInOut, &nNextChar, ra::to_signed(nBase));
+    m_nVal = strtol(pBufferInOut, &nNextChar, nBase);
     pBufferInOut = nNextChar;
 
     return true;
@@ -294,19 +280,16 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     char valueBuffer[20];
     switch (m_nVarType)
     {
-        case ComparisonVariableType::DynamicVariable:
-        case ComparisonVariableType::NumComparisonVariableTypes:
-            _FALLTHROUGH;
-        case ComparisonVariableType::ValueComparison:
+        case ValueComparison:
             sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
             buffer.append(valueBuffer);
             break;
 
-        case ComparisonVariableType::DeltaMem:
+        case DeltaMem:
             buffer.append(1, 'd');
             // explicit fallthrough to Address
 
-        case ComparisonVariableType::Address:
+        case Address:
             buffer.append("0x");
 
             buffer.append(ComparisonSizeToPrefix(m_nVarSize));
@@ -320,6 +303,7 @@ void CompVariable::SerializeAppend(std::string& buffer) const
 
         default:
             ASSERT(!"Unknown type? (DynMem)?");
+            break;
     }
 }
 
@@ -330,18 +314,15 @@ unsigned int CompVariable::GetValue()
 
     switch (m_nVarType)
     {
-        case ComparisonVariableType::DynamicVariable:
-        case ComparisonVariableType::NumComparisonVariableTypes:
-            _FALLTHROUGH;
-        case ComparisonVariableType::ValueComparison:
+        case ValueComparison:
             //	It's a raw value. Return it.
             return m_nVal;
 
-        case ComparisonVariableType::Address:
+        case Address:
             //	It's an address in memory. Return it!
             return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
-        case ComparisonVariableType::DeltaMem:
+        case DeltaMem:
             //	Return the backed up (last frame) value, but store the new one for the next frame!
             nPreviousVal = m_nPreviousVal;
             m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
@@ -350,7 +331,7 @@ unsigned int CompVariable::GetValue()
         default:
             //	Panic!
             ASSERT(!"Undefined mem type!");
-            return 0U;
+            return 0;
     }
 }
 
@@ -358,22 +339,21 @@ bool Condition::Compare(unsigned int nAddBuffer)
 {
     switch (m_nCompareType)
     {
-        case ComparisonType::NumComparisonTypes:
-        _FALLTHROUGH;
-        case ComparisonType::Equals:
+        case Equals:
             return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
-        case ComparisonType::LessThan:
+        case LessThan:
             return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
-        case ComparisonType::LessThanOrEqual:
+        case LessThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
-        case ComparisonType::GreaterThan:
+        case GreaterThan:
             return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
-        case ComparisonType::GreaterThanOrEqual:
+        case GreaterThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
-        case ComparisonType::NotEqualTo:
+        case NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
+        default:
+            return true;	//?
     }
-    return true; // ?
 }
 
 bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
@@ -386,28 +366,25 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
     std::vector<bool> vPauseConditions(nNumConditions, false);
     bool bInPause = false;
     bool bHasPause = false;
-    for (auto i = nNumConditions - 1; i > 0; i--)
+    for (int i = nNumConditions - 1; i >= 0; --i)
     {
         switch (m_Conditions[i].GetConditionType())
         {
-            case Condition::ConditionType::Standard:
-                _FALLTHROUGH;
             case Condition::PauseIf:
                 bHasPause = true;
                 bInPause = true;
                 vPauseConditions[i] = true;
                 break;
-            case Condition::ConditionType::ResetIf:
+
             case Condition::AddSource:
             case Condition::SubSource:
-                _FALLTHROUGH;
             case Condition::AddHits:
                 vPauseConditions[i] = bInPause;
                 break;
-            case Condition::ConditionType::NumConditionTypes:
-                _FALLTHROUGH;
+
             default:
                 bInPause = false;
+                break;
         }
     }
 
@@ -436,19 +413,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
         Condition* pNextCond = &m_Conditions[i];
         switch (pNextCond->GetConditionType())
         {
-            case Condition::ConditionType::Standard:
-            case Condition::ConditionType::PauseIf:
-            case Condition::ConditionType::ResetIf:
-                _FALLTHROUGH;
-            case Condition::ConditionType::AddSource:
+            case Condition::AddSource:
                 nAddBuffer += pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::ConditionType::SubSource:
+            case Condition::SubSource:
                 nAddBuffer -= pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::ConditionType::AddHits:
+            case Condition::AddHits:
                 if (pNextCond->Compare())
                 {
                     if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
@@ -460,8 +433,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
 
                 nAddHits += pNextCond->CurrentHits();
                 continue;
-            case Condition::ConditionType::NumConditionTypes:
-                _FALLTHROUGH;
+
             default:
                 break;
         }
@@ -495,12 +467,6 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
 
         switch (pNextCond->GetConditionType())
         {
-            case Condition::ConditionType::Standard:
-            case Condition::ConditionType::AddSource:
-            case Condition::ConditionType::SubSource:
-            case Condition::ConditionType::AddHits:
-            case Condition::ConditionType::NumConditionTypes:
-                _FALLTHROUGH;
             case Condition::PauseIf:
                 // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
                 if (bConditionValid)
@@ -643,7 +609,7 @@ void ConditionSet::Serialize(std::string& buffer) const
         conditions += group.Count();
 
     // estimate 16 bytes per condition: "R:0xH0001=12" is only 12, so we give ourselves a little leeway
-    buffer.reserve(ra::to_unsigned(conditions * 16));
+    buffer.reserve(conditions * 16);
 
     m_vConditionGroups[0].SerializeAppend(buffer);
     for (size_t i = 1; i < m_vConditionGroups.size(); ++i)

@@ -46,7 +46,7 @@ void AchievementPopup::AddMessage(const MessagePopup& msg)
     PlayAudio();
 }
 
-void AchievementPopup::Update(ControllerInput& input, float fDelta, bool bFullScreen, bool bPaused)
+void AchievementPopup::Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused)
 {
     if (bPaused)
         fDelta = 0.0f;

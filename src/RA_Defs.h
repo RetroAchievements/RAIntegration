@@ -2,9 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-// doesn't change that much but not sure if it should be in the pch
-#include <ra_utility>
-
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -25,7 +22,6 @@
     #define NOWINOFFSETS
     #define NORASTEROPS
     #define NOOPENFILE
-    #define NOCLIPBOARD
 */
 
 #ifndef RA_EXPORTS
@@ -38,6 +34,7 @@
 #define NOSYSCOMMANDS
 #define OEMRESOURCE
 #define NOATOM
+#define NOCLIPBOARD
 #define NOKERNEL
 #define NOMEMMGR
 #define NOMETAFILE
@@ -140,45 +137,41 @@ static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
 class RARect : public RECT
 {
 public:
-    //RARect() {}
-    //RARect(LONG nX, LONG nY, LONG nW, LONG nH)
-    //{
-    //    left = nX;
-    //    right = nX + nW;
-    //    top = nY;
-    //    bottom = nY + nH;
-    //}
+    RARect() {}
+    RARect(LONG nX, LONG nY, LONG nW, LONG nH)
+    {
+        left = nX;
+        right = nX + nW;
+        top = nY;
+        bottom = nY + nH;
+    }
 
 public:
     inline int Width() const { return(right - left); }
     inline int Height() const { return(bottom - top); }
 };
 
-// should it be a requirement to be integral or any arithmetic type? Noticed using unsigned, this will prevent casting.
-// We'll use int as the default
-template<typename Integral = int, typename = std::enable_if_t<std::is_integral_v<Integral>>>
-struct RASize
+class RASize
 {
-    /*inline constexpr RASize() noexcept = default;
+public:
+    RASize() : m_nWidth(0), m_nHeight(0) {}
     RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
-    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}*/
+    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
 
-    inline constexpr auto Width() const { return m_nWidth; }
-    inline constexpr auto Height() const { return m_nHeight; }
-    //inline void SetWidth(int nW) { m_nWidth = nW; }
-    //inline void SetHeight(int nH) { m_nHeight = nH; }
+public:
+    inline int Width() const { return m_nWidth; }
+    inline int Height() const { return m_nHeight; }
+    inline void SetWidth(int nW) { m_nWidth = nW; }
+    inline void SetHeight(int nH) { m_nHeight = nH; }
 
-
-    Integral m_nWidth{};
-    Integral m_nHeight{};
+private:
+    int m_nWidth;
+    int m_nHeight;
 };
 
-inline constexpr RASize<int> RA_BADGE_PX{ 64, 64 };
-inline constexpr RASize<int> RA_USERPIC_PX{ 64, 64 };
-inline constexpr RASize<int> RA_OVERLAY_EXTENT{ 1024, 1024 };
+const RASize RA_BADGE_PX(64, 64);
+const RASize RA_USERPIC_PX(64, 64);
 
-
-#pragma pack(push, 1) // alignment
 class ResizeContent
 {
 public:
@@ -189,14 +182,17 @@ public:
         ALIGN_BOTTOM,
         ALIGN_BOTTOM_RIGHT
     };
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
-    // Since you are using an rvalue reference it's marking this as unused since
-    // that needs a move constructor, i.e., -> ResizeContent{hwnd, point, ...}
-    // This one is expect an lvalue reference (default) constructor i.e, ->
-    // ResizeContent rc{hwnd, hwnd, newAlignType, bool};
-    inline ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType,
-        bool isResize)
+
+public:
+    HWND hwnd;
+    POINT pLT;
+    POINT pRB;
+    AlignType nAlignType;
+    int nDistanceX;
+    int nDistanceY;
+    bool bResize;
+
+    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
     {
         hwnd = contentHwnd;
         nAlignType = newAlignType;
@@ -214,6 +210,7 @@ public:
         GetWindowRect(parentHwnd, &rect);
         nDistanceX = rect.Width() - pLT.x;
         nDistanceY = rect.Height() - pLT.y;
+
         if (bResize)
         {
             nDistanceX -= (pRB.x - pLT.x);
@@ -221,25 +218,21 @@ public:
         }
     }
 
-
-    /*void Resize(int width, int height)
+    void Resize(int width, int height)
     {
-        int xPos{};
-        int yPos{};
+        int xPos, yPos;
 
         switch (nAlignType)
         {
-            case ResizeContent::AlignType::NO_ALIGN:
-                _FALLTHROUGH;
-            case ResizeContent::AlignType::ALIGN_RIGHT:
+            case ResizeContent::ALIGN_RIGHT:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
                 break;
-            case ResizeContent::AlignType::ALIGN_BOTTOM:
+            case ResizeContent::ALIGN_BOTTOM:
                 xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
-            case ResizeContent::AlignType::ALIGN_BOTTOM_RIGHT:
+            case ResizeContent::ALIGN_BOTTOM_RIGHT:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
@@ -253,22 +246,8 @@ public:
             SetWindowPos(hwnd, nullptr, xPos, yPos, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         else
             SetWindowPos(hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
-    }*/
-#pragma warning(pop) 
-private:
-    // smallest to largest
-    
-    int nDistanceX{};
-    int nDistanceY{};
-    bool bResize ={}; // alignment
-
-    AlignType nAlignType ={};
-    POINT pLT = POINT{};
-    POINT pRB = POINT{};
-    HWND hwnd ={};
-
+    }
 };
-#pragma pack(pop)
 
 enum AchievementSetType
 {
@@ -335,7 +314,5 @@ typedef std::basic_string<TCHAR> tstring;
 #define NativeStr(x) Narrow(x)
 #define NativeStrType std::string
 #endif
-
-inline constexpr auto NOT_FOUND{ std::numeric_limits<std::size_t>::max() };
 
 #endif // !RA_DEFS_H

@@ -1,8 +1,14 @@
 #include "RA_MemManager.h"
 
-//MemManager g_MemManager;
+MemManager g_MemManager;
 
-
+MemManager::MemManager()
+    : m_nComparisonSizeMode(ComparisonVariableSize::SixteenBit),
+    m_bUseLastKnownValue(true),
+    m_Candidates(nullptr),
+    m_nTotalBankSize(0)
+{
+}
 
 //	virtual
 MemManager::~MemManager()
@@ -88,7 +94,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
         {
             unsigned char high = ActiveBankRAMByteRead(i);
             pCandidate->m_nAddr = i - 1;
-            pCandidate->m_nLastKnownValue = ra::to_unsigned(low | (high << 8));
+            pCandidate->m_nLastKnownValue = low | (high << 8);
             ++pCandidate;
             low = high;
         }
@@ -97,8 +103,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
     {
         if (end - start > 3)
         {
-            auto value = ra::to_unsigned(ActiveBankRAMByteRead(start) |
-                (ActiveBankRAMByteRead(start + 1) << 8) | (ActiveBankRAMByteRead(start + 2) << 16));
+            unsigned long value = ActiveBankRAMByteRead(start) | (ActiveBankRAMByteRead(start + 1) << 8) | (ActiveBankRAMByteRead(start + 2) << 16);
 
             for (ByteAddress i = start + 3; i <= end; ++i)
             {
@@ -111,7 +116,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
         }
     }
 
-    m_nNumCandidates = ra::to_unsigned(pCandidate - &m_Candidates[0]);
+    m_nNumCandidates = pCandidate - &m_Candidates[0];
 }
 
 void MemManager::Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewVarSize)
@@ -162,8 +167,8 @@ void MemManager::Reset(unsigned short nSelectedMemBank, ComparisonVariableSize n
         {
             m_Candidates[i].m_nAddr = (i * 2);
             m_Candidates[i].m_nLastKnownValue =
-                ra::to_unsigned((ActiveBankRAMByteRead((i * 2))) |
-                (ActiveBankRAMByteRead((i * 2) + 1) << 8));
+                (ActiveBankRAMByteRead((i * 2))) |
+                (ActiveBankRAMByteRead((i * 2) + 1) << 8);
         }
         m_nNumCandidates = RAM_SIZE / 2;
     }
@@ -174,12 +179,10 @@ void MemManager::Reset(unsigned short nSelectedMemBank, ComparisonVariableSize n
         {
             m_Candidates[i].m_nAddr = (i * 4);
             m_Candidates[i].m_nLastKnownValue =
-                ra::to_unsigned(
                 (ActiveBankRAMByteRead((i * 4))) |
-                    (ActiveBankRAMByteRead((i * 4) + 1) << 8) |
-                    (ActiveBankRAMByteRead((i * 4) + 2) << 16) |
-                    (ActiveBankRAMByteRead((i * 4) + 3) << 24)
-                );
+                (ActiveBankRAMByteRead((i * 4) + 1) << 8) |
+                (ActiveBankRAMByteRead((i * 4) + 2) << 16) |
+                (ActiveBankRAMByteRead((i * 4) + 3) << 24);
         }
         m_nNumCandidates = RAM_SIZE / 4;
     }
@@ -190,21 +193,16 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
     size_t nGoodResults = 0;
     for (size_t i = 0; i < m_nNumCandidates; ++i)
     {
-        // Spectre security risk
-        auto myCandiate{
-            std::make_unique<MemCandidate>(MemCandidate{m_Candidates[i].m_nAddr, m_Candidates[i].m_nLastKnownValue,
-            m_Candidates[i].m_bUpperNibble, m_Candidates[i].m_bHasChanged })
-        };
-        unsigned int nAddr = myCandiate->m_nAddr;
+        unsigned int nAddr = m_Candidates[i].m_nAddr;
         unsigned int nLiveValue = 0;
 
         if ((m_nComparisonSizeMode == Nibble_Lower) ||
             (m_nComparisonSizeMode == Nibble_Upper))
         {
-            if (myCandiate->m_bUpperNibble)
-                nLiveValue = ra::to_unsigned((ActiveBankRAMByteRead(nAddr) >> 4) & 0xf);
+            if (m_Candidates[i].m_bUpperNibble)
+                nLiveValue = (ActiveBankRAMByteRead(nAddr) >> 4) & 0xf;
             else
-                nLiveValue = ra::to_unsigned(ActiveBankRAMByteRead(nAddr) & 0xf);
+                nLiveValue = ActiveBankRAMByteRead(nAddr) & 0xf;
         }
         else
         {
@@ -212,26 +210,24 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
         }
 
         bool bValid = false;
-        unsigned int nQueryValue = (m_bUseLastKnownValue ? myCandiate->m_nLastKnownValue : nTestValue);
+        unsigned int nQueryValue = (m_bUseLastKnownValue ? m_Candidates[i].m_nLastKnownValue : nTestValue);
         switch (nCompareType)
         {
-            case ComparisonType::Equals:             bValid = (nLiveValue == nQueryValue);	break;
-            case ComparisonType::LessThan:           bValid = (nLiveValue < nQueryValue);	break;
-            case ComparisonType::LessThanOrEqual:    bValid = (nLiveValue <= nQueryValue);	break;
-            case ComparisonType::GreaterThan:        bValid = (nLiveValue > nQueryValue);	break;
-            case ComparisonType::GreaterThanOrEqual: bValid = (nLiveValue >= nQueryValue);	break;
-            case ComparisonType::NotEqualTo:         bValid = (nLiveValue != nQueryValue);	break;
-            case ComparisonType::NumComparisonTypes:
-                _FALLTHROUGH;
+            case Equals:				bValid = (nLiveValue == nQueryValue);	break;
+            case LessThan:				bValid = (nLiveValue < nQueryValue);	break;
+            case LessThanOrEqual:		bValid = (nLiveValue <= nQueryValue);	break;
+            case GreaterThan:			bValid = (nLiveValue > nQueryValue);	break;
+            case GreaterThanOrEqual:	bValid = (nLiveValue >= nQueryValue);	break;
+            case NotEqualTo:			bValid = (nLiveValue != nQueryValue);	break;
             default:
                 ASSERT(!"Unknown comparison type?!");
+                break;
         }
-        m_Candidates[i] = *myCandiate;
 
         //	If the current address in ram still matches the query, store in result[]
         if (bValid)
         {
-            //	Optimization: just store it back in m_Candidates
+            //	Optimisation: just store it back in m_Candidates
             m_Candidates[nGoodResults].m_nLastKnownValue = nLiveValue;
             m_Candidates[nGoodResults].m_nAddr = m_Candidates[i].m_nAddr;
             m_Candidates[nGoodResults].m_bUpperNibble = m_Candidates[i].m_bUpperNibble;
@@ -247,7 +243,7 @@ size_t MemManager::Compare(ComparisonType nCompareType, unsigned int nTestValue,
     return m_nNumCandidates;
 }
 
-void MemManager::ChangeActiveMemBank(_UNUSED unsigned short nMemBank)
+void MemManager::ChangeActiveMemBank(unsigned short nMemBank)
 {
     ASSERT(!"Not Implemented!");
     return;
@@ -284,37 +280,35 @@ unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariable
     unsigned char buffer[4];
     switch (size)
     {
-        case ComparisonVariableSize::Bit_0:
-            return ra::to_unsigned(ActiveBankRAMByteRead(nOffs) & 0x01);
-        case ComparisonVariableSize::Bit_1:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0);
-        case ComparisonVariableSize::Bit_2:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0);
-        case ComparisonVariableSize::Bit_3:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0);
-        case ComparisonVariableSize::Bit_4:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0);
-        case ComparisonVariableSize::Bit_5:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0);
-        case ComparisonVariableSize::Bit_6:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0);
-        case ComparisonVariableSize::Bit_7:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0);
-        case ComparisonVariableSize::Nibble_Lower:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) & 0x0F));
-        case ComparisonVariableSize::Nibble_Upper:
-            return ra::to_unsigned((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
-        case ComparisonVariableSize::EightBit:
+        case Bit_0:
+            return (ActiveBankRAMByteRead(nOffs) & 0x01);
+        case Bit_1:
+            return (ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0;
+        case Bit_2:
+            return (ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0;
+        case Bit_3:
+            return (ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0;
+        case Bit_4:
+            return (ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0;
+        case Bit_5:
+            return (ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0;
+        case Bit_6:
+            return (ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0;
+        case Bit_7:
+            return (ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0;
+        case Nibble_Lower:
+            return (ActiveBankRAMByteRead(nOffs) & 0x0F);
+        case Nibble_Upper:
+            return ((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
+        case EightBit:
             return ActiveBankRAMByteRead(nOffs);
-        case ComparisonVariableSize::NumComparisonVariableSizeTypes:
-            _FALLTHROUGH;
         default:
-        case ComparisonVariableSize::SixteenBit:
+        case SixteenBit:
             ActiveBankRAMRead(buffer, nOffs, 2);
-            return ra::to_unsigned(buffer[0] | (buffer[1] << 8));
-        case ComparisonVariableSize::ThirtyTwoBit:
+            return buffer[0] | (buffer[1] << 8);
+        case ThirtyTwoBit:
             ActiveBankRAMRead(buffer, nOffs, 4);
-            return ra::to_unsigned(buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24));
+            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
     }
 }
 
@@ -323,10 +317,10 @@ unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
     const BankData* bank = nullptr;
 
     int bankID = 0;
-    int numBanks = ra::to_signed(m_Banks.size());
+    int numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
-        bank = &m_Banks.at(ra::to_unsigned(bankID));
+        bank = &m_Banks.at(bankID);
         if (nOffs < bank->BankSize)
             return bank->Reader(nOffs);
 
@@ -342,10 +336,10 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
     const BankData* bank = nullptr;
 
     int bankID = 0;
-    int numBanks = ra::to_signed(m_Banks.size());
+    int numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
-        bank = &m_Banks.at(ra::to_unsigned(bankID));
+        bank = &m_Banks.at(bankID);
         if (nOffs < bank->BankSize)
             break;
 
@@ -375,7 +369,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
             return;
         }
 
-        bank = &m_Banks.at(ra::to_unsigned(bankID));
+        bank = &m_Banks.at(bankID);
         reader = bank->Reader;
     }
 
@@ -386,18 +380,15 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
 void MemManager::ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal)
 {
     int bankID = 0;
-    /*int numBanks = ra::to_signed(m_Banks.size());*/
-    // if you really want a signed int you could do this instead
-    // difference_type (signed) instead of size_type (unsigned), it's a constant expression so it's fast
-    auto numBanks{ std::distance(m_Banks.begin(), m_Banks.end()) };
-    while ((bankID < numBanks) && (nOffs >= m_Banks.at(ra::to_unsigned(bankID)).BankSize))
+    int numBanks = m_Banks.size();
+    while (bankID < numBanks && nOffs >= m_Banks.at(bankID).BankSize)
     {
-        nOffs -= m_Banks.at(ra::to_unsigned(bankID)).BankSize;
+        nOffs -= m_Banks.at(bankID).BankSize;
         bankID++;
     }
 
     if (bankID < numBanks)
     {
-        m_Banks.at(ra::to_unsigned(bankID)).Writer(nOffs, nVal);
+        m_Banks.at(bankID).Writer(nOffs, nVal);
     }
 }

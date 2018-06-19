@@ -11,9 +11,6 @@
 class PopupWindows
 {
 public:
-#pragma warning(push)
-    // unused inline functions
-#pragma warning(disable : 4514)
     static void Update(ControllerInput* pInput, float fDelta, bool bFullscreen, bool bPaused)
     {
         m_ProgressPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
@@ -35,11 +32,8 @@ public:
     }
 
     static ProgressPopup& ProgressPopups() { return m_ProgressPopups; }
-    static LeaderboardPopup& LeaderboardPopups() { return m_LeaderboardPopups; }
-
-#pragma warning(pop)   
     static AchievementPopup& AchievementPopups() { return m_AchievementPopups; }
-    
+    static LeaderboardPopup& LeaderboardPopups() { return m_LeaderboardPopups; }
 
 private:
     static ProgressPopup m_ProgressPopups;
@@ -48,12 +42,13 @@ private:
 };
 
 //	Exposed to DLL
-_EXTERN_C
-extern API int _RA_UpdatePopups(ControllerInput* input, float fDTime, bool Full_Screen, bool Paused);
-extern API int _RA_RenderPopups(HDC hDC, RECT* rcSize);
-_END_EXTERN_C
+extern "C"
+{
+    API extern int _RA_UpdatePopups(ControllerInput* input, float fDTime, bool Full_Screen, bool Paused);
+    API extern int _RA_RenderPopups(HDC hDC, RECT* rcSize);
+}
 
-PopupWindows g_PopupWindows;
+extern PopupWindows g_PopupWindows;
 
 
 #endif // !RA_POPUPWINDOWS_H

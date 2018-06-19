@@ -4,12 +4,9 @@
 
 #include "RA_Defs.h"
 
-#pragma pack(push, 1)
 class MemBookmark
 {
 public:
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     void SetDescription(const std::wstring& string) { m_sDescription = string; }
     void SetAddress(unsigned int nVal) { m_nAddress = nVal; }
     void SetType(unsigned int nVal) { m_nType = nVal; }
@@ -30,20 +27,17 @@ public:
 
     bool Frozen() const { return m_bFrozen; }
     bool Decimal() const { return m_bDecimal; }
-#pragma warning(pop)
-
 
 private:
     std::wstring m_sDescription;
-    unsigned int m_nAddress ={};
-    unsigned int m_nType ={};
-    unsigned int m_sValue ={};
-    unsigned int m_sPrevious ={};
-    unsigned int m_nCount ={};
-    bool m_bFrozen ={};
-    bool m_bDecimal ={};
+    unsigned int m_nAddress;
+    unsigned int m_nType;
+    unsigned int m_sValue;
+    unsigned int m_sPrevious;
+    unsigned int m_nCount = 0;
+    bool m_bFrozen = FALSE;
+    bool m_bDecimal = FALSE;
 };
-#pragma pack(pop)
 
 class Dlg_MemBookmark
 {
@@ -54,22 +48,15 @@ public:
     static INT_PTR CALLBACK s_MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     void InstallHWND(HWND hWnd) { m_hMemBookmarkDialog = hWnd; }
     HWND GetHWND() const { return m_hMemBookmarkDialog; }
-#pragma warning(pop)
-
     BOOL IsActive() const;
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     std::vector<MemBookmark*> Bookmarks() { return m_vBookmarks; }
-    void AddBookmark(MemBookmark* newBookmark) { m_vBookmarks.push_back(newBookmark); }
-#pragma warning(pop)
-
     void UpdateBookmarks(bool bForceWrite);
+    void AddBookmark(MemBookmark* newBookmark) { m_vBookmarks.push_back(newBookmark); }
     void WriteFrozenValue(const MemBookmark& Bookmark);
+
     void OnLoad_NewRom();
 
 private:
@@ -87,8 +74,6 @@ private:
     void GenerateResizes(HWND hDlg);
     std::string ImportDialog();
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     void AddBookmarkMap(MemBookmark* bookmark)
     {
         if (m_BookmarkMap.find(bookmark->Address()) == m_BookmarkMap.end())
@@ -97,19 +82,13 @@ private:
         std::vector<const MemBookmark*> *v = &m_BookmarkMap[bookmark->Address()];
         v->push_back(bookmark);
     }
-#pragma warning(pop)
-
 
 public:
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     const MemBookmark* FindBookmark(const ByteAddress& nAddr) const
     {
         std::map<ByteAddress, std::vector<const MemBookmark*>>::const_iterator iter = m_BookmarkMap.find(nAddr);
         return(iter != m_BookmarkMap.end() && iter->second.size() > 0) ? iter->second.back() : nullptr;
     }
-#pragma warning(pop)
-
 
 private:
     HWND m_hMemBookmarkDialog;

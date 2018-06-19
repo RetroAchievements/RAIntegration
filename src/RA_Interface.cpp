@@ -3,53 +3,53 @@
 
 //	Exposed, shared
 //	App-level:
-//bool	(CCONV *_RA_GameIsActive) () = nullptr;
-//void	(CCONV *_RA_CauseUnpause) () = nullptr;
-//void	(CCONV *_RA_CausePause) () = nullptr;
-//void	(CCONV *_RA_RebuildMenu) () = nullptr;
-//void	(CCONV *_RA_ResetEmulation) () = nullptr;
-//void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
-//void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
+bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
+void	(CCONV *_RA_CauseUnpause) (void) = nullptr;
+void	(CCONV *_RA_CausePause) (void) = nullptr;
+void	(CCONV *_RA_RebuildMenu) (void) = nullptr;
+void	(CCONV *_RA_ResetEmulation) (void) = nullptr;
+void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
+void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
 
 
- bool __cdecl RA_GameIsActive()
+bool RA_GameIsActive()
 {
     if (_RA_GameIsActive != nullptr)
         return _RA_GameIsActive();
     return false;
 }
 
-void __cdecl RA_CauseUnpause()
+void RA_CauseUnpause()
 {
     if (_RA_CauseUnpause != nullptr)
         _RA_CauseUnpause();
 }
 
-void __cdecl RA_CausePause()
+void RA_CausePause()
 {
     if (_RA_CausePause != nullptr)
         _RA_CausePause();
 }
 
-void __cdecl RA_RebuildMenu()
+void RA_RebuildMenu()
 {
     if (_RA_RebuildMenu != nullptr)
         _RA_RebuildMenu();
 }
 
-void __cdecl RA_ResetEmulation()
+void RA_ResetEmulation()
 {
     if (_RA_ResetEmulation != nullptr)
         _RA_ResetEmulation();
 }
 
-void __cdecl RA_LoadROM(const char* sFullPath)
+void RA_LoadROM(const char* sFullPath)
 {
     if (_RA_LoadROM != nullptr)
         _RA_LoadROM(sFullPath);
 }
 
-void __cdecl RA_GetEstimatedGameTitle(char* sNameOut)
+void RA_GetEstimatedGameTitle(char* sNameOut)
 {
     if (_RA_GetEstimatedGameTitle != nullptr)
         _RA_GetEstimatedGameTitle(sNameOut);

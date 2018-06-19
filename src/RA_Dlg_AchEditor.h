@@ -15,17 +15,18 @@ const size_t MEM_STRING_TEXT_LEN = 80;
 class BadgeNames
 {
 public:
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
+    BadgeNames()
+        : m_hDestComboBox(nullptr)
+    {
+    }
     void InstallAchEditorCombo(HWND hCombo) { m_hDestComboBox = hCombo; }
-#pragma warning(pop)
 
     void FetchNewBadgeNamesThreaded();
     void AddNewBadgeName(const char* pStr, bool bAndSelect);
-    void OnNewBadgeNames(const Document& data) const;
+    void OnNewBadgeNames(const Document& data);
 
 private:
-    HWND m_hDestComboBox{ nullptr };
+    HWND m_hDestComboBox;
 };
 
 
@@ -42,8 +43,6 @@ public:
     void OnLoad_NewRom();
     void LoadAchievement(Achievement* pCheevo, BOOL bAttemptKeepScrollbar);
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     inline void SetICEControl(HWND hIce) { m_hICEControl = hIce; }
     inline char* LbxDataAt(unsigned int nRow, unsigned int nCol) { return m_lbxData[nRow][nCol]; }
 
@@ -51,21 +50,16 @@ public:
 
     void InstallHWND(HWND hWnd) { m_hAchievementEditorDlg = hWnd; }
     HWND GetHWND() const { return m_hAchievementEditorDlg; }
+    BOOL IsActive() const;
 
+    Achievement* ActiveAchievement() const { return m_pSelectedAchievement; }
     BOOL IsPopulatingAchievementEditorData() const { return m_bPopulatingAchievementEditorData; }
     void SetIgnoreEdits(BOOL bIgnore) { m_bPopulatingAchievementEditorData = bIgnore; }
 
-    auto& GetBadgeNames() const { return m_BadgeNames; }
-    auto ActiveAchievement() const { return m_pSelectedAchievement; }
-#pragma warning(pop)
-
-    BOOL IsActive() const;
-
-    
-    
-
     void UpdateBadge(const std::string& sNewName);							//	Call to set/update data
     void UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse = "");	//	Call to just update the badge image/bitmap
+
+    BadgeNames& GetBadgeNames() { return m_BadgeNames; }
 
     size_t GetSelectedConditionGroup() const;
     void SetSelectedConditionGroup(size_t nGrp) const;

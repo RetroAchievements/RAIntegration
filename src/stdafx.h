@@ -26,9 +26,6 @@
 #define NODEFERWINDOWPOS
 #define NOMCX
 
-// spectre, can't be disabled inline, comment this out if you want to know where the security risks are.
-//#pragma warning(disable : 5045) 
-
 // Disables most warnings for libs when compiling with /Wall (0 don't work)
 #pragma warning(push)
 #pragma warning(disable : 4191 4365 4571 4623 4625 4626 4701 4768 4774 4996 5026 5027 5031 5032 5039 5045)
@@ -53,7 +50,6 @@
 #include <array>
 #include <codecvt> // we need to get rid of this
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <mutex>
 #include <queue>
@@ -65,7 +61,6 @@
 // This is not needed the most recent version
 
 #define RAPIDJSON_HAS_STDSTRING 1
-#pragma warning(disable : 4061)
 //	RA-Only
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
@@ -76,7 +71,6 @@
 
 
 // Other RA Stuff that almost never changes
-#pragma warning(disable : 4365)
 #include <md5.h>
 #include "RA_Resource.h"
 #pragma warning(pop)

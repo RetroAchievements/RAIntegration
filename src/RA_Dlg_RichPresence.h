@@ -2,7 +2,6 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
-#pragma pack(push, 1)
 class Dlg_RichPresence
 {
 public:
@@ -21,11 +20,10 @@ private:
     void StartTimer();
     void StopTimer();
 
-    HFONT m_hFont{ nullptr };
-    HWND m_hRichPresenceDialog{ nullptr };
-    bool m_bTimerActive{ false };
+    HFONT m_hFont;
+    HWND m_hRichPresenceDialog;
+    bool m_bTimerActive;
 };
-#pragma pack(pop)
 
 extern Dlg_RichPresence g_RichPresenceDialog;
 

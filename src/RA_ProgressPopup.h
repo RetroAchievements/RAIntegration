@@ -8,28 +8,24 @@
 
 #define OVERLAY_MESSAGE_QUEUE_SIZE (5)
 
-struct ControllerInput;
 class ProgressPopup
 {
 public:
     ProgressPopup();
 
-    void Update(ControllerInput& input, float fDelta, BOOL bFullScreen, BOOL bPaused);
+    void Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
     void AddMessage(const char* sTitle, const char* sMessage, int nMessageType = 0, HBITMAP hImage = nullptr);
     float GetYOffsetPct() const;
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     BOOL IsActive() const { return m_sMessageTitleQueue[0][0] != '\0'; }
     const char* GetTitle() const { return m_sMessageTitleQueue[0]; }
     const char* GetDesc() const { return m_sMessageDescQueue[0]; }
-    int GetMessageType() const { return m_nMessageType[0]; }
+    unsigned int GetMessageType() const { return m_nMessageType[0]; }
     HBITMAP GetImage() const { return m_hMessageImage[0]; }
 
     void SuppressNextDeltaUpdate() { m_bSuppressDeltaUpdate = true; }
-#pragma warning(pop)
 
     void Clear();
 

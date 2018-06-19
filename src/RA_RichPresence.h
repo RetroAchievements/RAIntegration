@@ -10,22 +10,14 @@ typedef unsigned int DataPos;
 class RA_Lookup
 {
 public:
-    explicit RA_Lookup(_In_ const std::string& sDesc);
+    RA_Lookup(const std::string& sDesc);
 
 public:
-    // couldn't we just make a generic get function? - Samer
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
-    // I think you have it backwards boss, the key is unique where the value is not  - Samer
-
-    void AddLookupData(_In_ DataPos nValue, _In_ const std::string& sLookupData)
-    { m_lookupData.try_emplace(nValue, sLookupData); }
+    void AddLookupData(DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
+    const std::string& Lookup(DataPos nValue) const;
 
     const std::string& Description() const { return m_sLookupDescription; }
-#pragma warning(pop)
 
-   const std::string& Lookup(DataPos nValue) const;
- 
 private:
     std::string m_sLookupDescription;
     std::map<DataPos, std::string> m_lookupData;
@@ -37,12 +29,7 @@ public:
     RA_ConditionalDisplayString(const char* pLine);
 
     bool Test();
-
-    // These getters seem useless to me, the compiler does too - Sam
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     const std::string& GetDisplayString() const { return m_sDisplayString; }
-#pragma warning(pop)
 
 private:
     std::string m_sDisplayString;
@@ -56,10 +43,7 @@ public:
 
     std::string Lookup(DataPos nValue) const;
 
-#pragma warning(push)
-#pragma warning(disable : 4514) // unreferenced inline functions
     const std::string& Description() const { return m_sLookupDescription; }
-#pragma warning(pop)
 
 private:
     std::string m_sLookupDescription;
@@ -90,7 +74,6 @@ private:
     std::string m_sDisplay;
 };
 
-// you're not supposed to put extern on an auto unless you want to export it (which seems to be the case)
-RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
 #endif // !RA_RICHPRESENCE_H

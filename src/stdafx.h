@@ -82,7 +82,7 @@
 // Unreferenced inline function has been removed (might seem confusing)
 // This could mean two things, either the function isn't used or it can't be inline.
 
-// It's safe to assume if something cannot result in a constant expression (std::string) it can't be inline either
+// It's safe to assume if something cannot result in a constant expression (std::string) it can't be inline eithe
 // The majority of cases are the latter. Results that could be constant
 // expressions but are retrieved by runtime expressions can't be inline either
 // (std::vector::begin is NOT constexpr but std::begin is).

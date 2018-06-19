@@ -654,13 +654,15 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     sprintf_s(buffer.data(), 32, "%0*x", width, Bookmark.Value());
     buffer = buffer.data();
 
-    for (auto& i : buffer)
+    auto count{ 0 };
+    for (auto& c : buffer)
     {
         n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
-        MemoryViewerControl::editData(addr, (i % 2 != 0), n);
+        MemoryViewerControl::editData(addr, (count % 2 != 0), n);
 
-        if (i % 2 != 0)
+        if (count % 2 != 0)
             addr--;
+        count++;
     }
 }
 

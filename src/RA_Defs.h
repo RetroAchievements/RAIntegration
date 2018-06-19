@@ -24,6 +24,8 @@
     #define NOOPENFILE
 */
 
+// Not totally sure what clients need so everything that was included in this
+// file is in the ifndef block -Samer
 #ifndef RA_EXPORTS
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
@@ -34,7 +36,6 @@
 #define NOSYSCOMMANDS
 #define OEMRESOURCE
 #define NOATOM
-#define NOCLIPBOARD
 #define NOKERNEL
 #define NOMEMMGR
 #define NOMETAFILE
@@ -71,6 +72,7 @@
 
 #else
 //	RA-Only
+
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 #endif	//RA_EXPORTS
@@ -86,7 +88,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define _UNUSED              [[maybe_unused]]
 #else
 #define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecate)
+#define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
 #define _UNUSED              

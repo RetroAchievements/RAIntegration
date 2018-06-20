@@ -1,9 +1,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
-#include <atlbase.h> // CComPtr
 
 #include "RA_Core.h"
-#include "RA_Resource.h"
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
 
@@ -545,8 +543,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
-        col.pszText = const_cast<LPTSTR>(colTitle.c_str());
+        col.pszText = NativeStr(COLUMN_TITLE[i]).data();
         col.cchTextMax = 255;
         col.iSubItem = i;
 
@@ -651,17 +648,21 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
             break;
     }
 
-    char buffer[32];
-    sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
+    // spectre stuff, needs to be a string
+    std::string buffer;
+    buffer.reserve(32);
+    sprintf_s(buffer.data(), 32, "%0*x", width, Bookmark.Value());
+    buffer = buffer.data();
 
-    for (unsigned int i = 0; i < strlen(buffer); i++)
+    auto count{ 0 };
+    for (auto& c : buffer)
     {
-        c = buffer[i];
         n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
-        MemoryViewerControl::editData(addr, (i % 2 != 0), n);
+        MemoryViewerControl::editData(addr, (count % 2 != 0), n);
 
-        if (i % 2 != 0)
+        if (count % 2 != 0)
             addr--;
+        count++;
     }
 }
 

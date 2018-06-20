@@ -3,7 +3,6 @@
 #pragma once
 
 #include "RA_Leaderboard.h"
-#include "RA_Defs.h"
 
 typedef unsigned int DataPos;
 

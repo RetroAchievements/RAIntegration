@@ -3,13 +3,11 @@
 #include "RA_Interface.h"
 #include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
-#include "RA_Resource.h"
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
 #include "RA_Leaderboard.h"
 #include "RA_GameData.h"
 
-#include <time.h>
 
 namespace {
 

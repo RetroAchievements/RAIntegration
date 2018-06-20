@@ -4,7 +4,6 @@
 #include "RA_Core.h"
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
 
 
@@ -39,8 +38,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COL_SIZE[i];
         col.cchTextMax = 255;
-        tstring str = COL_TITLE[i];	//	Hold the temporary object
-        col.pszText = const_cast<LPTSTR>(str.c_str());
+        col.pszText = NativeStr(COL_TITLE[i]).data();
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;

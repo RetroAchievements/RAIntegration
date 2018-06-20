@@ -1,14 +1,11 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include <Commdlg.h>
 #include "RA_AchievementSet.h"
-#include "RA_Resource.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
 #include "RA_User.h"
 
 namespace {
@@ -118,8 +115,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        tstring colTitle = COLUMN_TITLE[i];	//	Take non-const copy
-        col.pszText = const_cast<LPTSTR>(colTitle.c_str());
+        col.pszText = NativeStr(COLUMN_TITLE[i]).data();
         col.cchTextMax = 255;
         col.iSubItem = i;
 
@@ -553,7 +549,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
             {
                 ComboBox_AddString(g_hIPEEdit, NativeStr(CONDITIONTYPE_STR[i]).c_str());
 
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), CONDITIONTYPE_STR[i]) == 0)
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == std::string{ CONDITIONTYPE_STR[i] })
                     ComboBox_SetCurSel(g_hIPEEdit, i);
             }
 
@@ -720,7 +716,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
             {
                 ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
 
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONTYPE_STR[i]) == 0)
+                if (std::string{ g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) } == COMPARISONTYPE_STR[i])
                     ComboBox_SetCurSel(g_hIPEEdit, i);
             }
 
@@ -1631,7 +1627,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             for (int i = 0; i < Condition::NumConditionTypes; ++i)
                             {
-                                if (strcmp(sData, CONDITIONTYPE_STR[i]) == 0)
+                                if (std::string{ sData } == CONDITIONTYPE_STR[i])
                                     rCond.SetConditionType(static_cast<Condition::ConditionType>(i));
                             }
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
@@ -1664,7 +1660,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
+                                if (std::string{ sData } == COMPARISONVARIABLESIZE_STR[i])
                                     rCond.CompSource().SetSize(static_cast<ComparisonVariableSize>(i));
                             }
                             //	TBD: Limit validation
@@ -1674,7 +1670,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
+                                if (std::string{ sData } == COMPARISONVARIABLESIZE_STR[i])
                                     rCond.CompTarget().SetSize(static_cast<ComparisonVariableSize>(i));
                             }
                             //	TBD: Limit validation
@@ -1684,7 +1680,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             for (int i = 0; i < NumComparisonTypes; ++i)
                             {
-                                if (strcmp(sData, COMPARISONTYPE_STR[i]) == 0)
+                                if (std::string{ sData } == COMPARISONTYPE_STR[i])
                                     rCond.SetCompareType(static_cast<ComparisonType>(i));
                             }
                             break;

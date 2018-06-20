@@ -10,9 +10,6 @@
 #include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
-#include <winhttp.h>
-#include <fstream>
-#include <time.h>
 
 
 const char* RequestTypeToString[] =

@@ -2,8 +2,6 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
-#include <wtypes.h>
-
 class RA_Dlg_RomChecksum
 {
 public:

@@ -24,7 +24,9 @@
     #define NOOPENFILE
 */
 
-
+// Not totally sure what clients need so everything that was included in this
+// file is in the ifndef block -Samer
+#ifndef RA_EXPORTS
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
 #define NOGDICAPMASKS
@@ -34,7 +36,6 @@
 #define NOSYSCOMMANDS
 #define OEMRESOURCE
 #define NOATOM
-#define NOCLIPBOARD
 #define NOKERNEL
 #define NOMEMMGR
 #define NOMETAFILE
@@ -66,36 +67,14 @@
 #include <queue>
 #include <map>
 #include <array>
-
-#ifndef RA_EXPORTS
 #include <cassert> 
 //	Version Information is integrated into tags
 
 #else
-
-
-
-//NB. These must NOT be accessible from the emulator!
-//#define RA_INTEGRATION_VERSION	"0.053"
-
-
-
-
 //	RA-Only
-#define RAPIDJSON_HAS_STDSTRING 1
 
-// This is not needed the most recent version
-#pragma warning(push, 1)
-#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
-
-//	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/error/en.h"
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
-#pragma warning(pop)
 #endif	//RA_EXPORTS
 
 // Maybe an extra check just in-case
@@ -109,7 +88,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define _UNUSED              [[maybe_unused]]
 #else
 #define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecate)
+#define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
 #define _UNUSED              

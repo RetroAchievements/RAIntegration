@@ -1,8 +1,5 @@
 #include "RA_Defs.h"
 
-#include <codecvt>
-
-
 #ifdef RA_EXPORTS
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;

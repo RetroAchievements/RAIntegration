@@ -1,10 +1,6 @@
 #include "RA_Dlg_GameLibrary.h"
 
-#include <mutex>
-#include <stack>
-
 #include "RA_Core.h"
-#include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_Achievement.h"
 #include "RA_httpthread.h"
@@ -203,8 +199,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
-        tstring sCol = COL_TITLE[i];	//	scoped cache
-        col.pszText = const_cast<LPTSTR>(sCol.c_str());
+        col.pszText = NativeStr(COL_TITLE[i]).data();
         col.cx = COL_SIZE[i];
         col.iSubItem = i;
 

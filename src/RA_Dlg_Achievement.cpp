@@ -1,9 +1,7 @@
 #include "RA_Dlg_Achievement.h"
 
-#include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
@@ -40,7 +38,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
     for (int i = 0; i < NUM_COLS; ++i)
     {
-        const char* sColTitle = nullptr;
+        std::string sColTitle;
         if (g_nActiveAchievementSet == Core)
             sColTitle = COLUMN_TITLES_CORE[i];
         else if (g_nActiveAchievementSet == Unofficial)
@@ -55,8 +53,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         if (i == (NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
         newColumn.cx = COLUMN_SIZE[i];
-        tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
-        newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
+        newColumn.pszText = sColTitle.data();
         newColumn.cchTextMax = 255;
         newColumn.iSubItem = i;
 
@@ -194,13 +191,12 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     return static_cast<size_t>(item.iItem);
 }
 
-BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
+BOOL LocalValidateAchievementsBeforeCommit(std::array<int, 1> nLbxItems)
 {
     char buffer[2048];
-    for (size_t i = 0; i < 1; ++i)
+    for (auto& i : nLbxItems)
     {
-        int nIter = nLbxItems[i];
-        const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
+        const Achievement& Ach = g_pActiveAchievements->GetAchievement(i);
         if (Ach.Title().length() < 2)
         {
             sprintf_s(buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title().c_str());
@@ -227,22 +223,19 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
             return FALSE;
         }
 
-        char sIllegalChars[] = { '&', ':' };
+        std::array<char, 2> sIllegalChars{ '&', ':' };
 
-        const size_t nNumIllegalChars = sizeof(sIllegalChars) / sizeof(sIllegalChars[0]);
-        for (size_t i = 0; i < nNumIllegalChars; ++i)
+        for (auto& c : sIllegalChars)
         {
-            char cNextChar = sIllegalChars[i];
-
-            if (strchr(Ach.Title().c_str(), cNextChar) != nullptr)
+            if (Ach.Title().find_first_of(c) != std::string::npos)
             {
-                sprintf_s(buffer, 2048, "Achievement title contains an illegal character: '%c'\nPlease remove and try again", cNextChar);
+                sprintf_s(buffer, 2048, "Achievement title contains an illegal character: '%c'\nPlease remove and try again", c);
                 MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
                 return FALSE;
             }
-            if (strchr(Ach.Description().c_str(), cNextChar) != nullptr)
+            if (Ach.Description().find_first_of(c) != std::string::npos)
             {
-                sprintf_s(buffer, 2048, "Achievement description contains an illegal character: '%c'\nPlease remove and try again", cNextChar);
+                sprintf_s(buffer, 2048, "Achievement description contains an illegal character: '%c'\nPlease remove and try again", c);
                 MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
                 return FALSE;
             }
@@ -928,14 +921,14 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     size_t nNumChecked = 0;
     int nIDsChecked[nMaxUploadLimit];
-    int nLbxItemsChecked[nMaxUploadLimit];
+    std::array<int, nMaxUploadLimit> nLbxItemsChecked;
 
     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
     int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
     if (nSel != -1)
     {
         Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
-        nLbxItemsChecked[0] = nSel;
+        nLbxItemsChecked.front() = nSel;
         nIDsChecked[0] = Ach.ID();
 
         nNumChecked++;

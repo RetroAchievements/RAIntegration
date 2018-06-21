@@ -6,7 +6,7 @@
 #include "RA_Resource.h"
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 #include "RA_GameData.h"
 
 #include <time.h>
@@ -1068,7 +1068,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
         {
             for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
             {
-                const LB_Entry& rEntry = pLB->GetRankInfo(i);
+                const RA_Leaderboard::Entry& rEntry = pLB->GetRankInfo(i);
                 std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
 
                 char sRankText[256];

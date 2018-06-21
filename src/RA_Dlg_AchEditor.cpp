@@ -797,6 +797,45 @@ BOOL CreateIPE(int nItem, int nSubItem)
     return bSuccess;
 }
 
+// static
+LRESULT CALLBACK Dlg_AchievementEditor::ListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_MOUSEMOVE:
+            LVHITTESTINFO lvHitTestInfo;
+            GetCursorPos(&lvHitTestInfo.pt);
+            ScreenToClient(hWnd, &lvHitTestInfo.pt);
+
+            int nTooltipLocation = -1;
+            if (ListView_SubItemHitTest(hWnd, &lvHitTestInfo) != -1)
+                nTooltipLocation = lvHitTestInfo.iItem * 256 + lvHitTestInfo.iSubItem;
+
+            // if the mouse has moved to a new grid cell, hide the toolip
+            if (nTooltipLocation != g_AchievementEditorDialog.m_nTooltipLocation)
+            {
+                g_AchievementEditorDialog.m_nTooltipLocation = nTooltipLocation;
+
+                if (IsWindowVisible(g_AchievementEditorDialog.m_hTooltip))
+                {
+                    // tooltip is visible, just hide it
+                    SendMessage(g_AchievementEditorDialog.m_hTooltip, TTM_POP, 0, 0);
+                }
+                else
+                {
+                    // tooltip is not visible. if we told the tooltip to not display in the TTM_GETDISPINFO handler by
+                    // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so now
+                    SendMessage(g_AchievementEditorDialog.m_hTooltip, TTM_POPUP, 0, 0);
+                    // but we don't want the tooltip to immediately display when entering a new cell, so immediately
+                    // hide it. the normal hover behavior will make it display as expected after a normal hover wait time.
+                    SendMessage(g_AchievementEditorDialog.m_hTooltip, TTM_POP, 0, 0);
+                }
+            }
+            break;
+    }
+
+    return CallWindowProc(g_AchievementEditorDialog.m_pListViewWndProc, hWnd, uMsg, wParam, lParam);
+}
 
 //static
 INT_PTR CALLBACK Dlg_AchievementEditor::s_AchievementEditorProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -851,6 +890,28 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             {
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);
+            }
+
+            // set up the list view tooltip
+            m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
+                CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
+                hDlg, nullptr, GetInstanceModule(g_hThisDLLInst), nullptr);
+            if (m_hTooltip)
+            {
+                TOOLINFO toolInfo;
+                memset(&toolInfo, 0, sizeof(toolInfo));
+                toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
+                toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+                toolInfo.hwnd = hDlg;
+                toolInfo.uId = reinterpret_cast<UINT_PTR>(hList);
+                toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+                SendMessage(m_hTooltip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+                SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
+                SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, 320);
+                SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000); // show for 30 seconds
+
+                // install a mouse hook so we can show different tooltips per cell within the list view
+                m_pListViewWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(hList, GWL_WNDPROC, reinterpret_cast<LONG_PTR>(&ListViewWndProc)));
             }
 
             RestoreWindowPosition(hDlg, "Achievement Editor", true, true);
@@ -1726,9 +1787,25 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 }
                 break;
+
+                case TTN_GETDISPINFO:
+                {
+                    LPNMTTDISPINFO lpDispInfo = reinterpret_cast<LPNMTTDISPINFO>(lParam);
+                    GetListViewTooltip();
+                    if (!m_sTooltip.empty())
+                    {
+                        lpDispInfo->lpszText = const_cast<char*>(m_sTooltip.c_str());
+                        return TRUE;
+                    }
+
+                    lpDispInfo->szText[0] = '\0';
+                    lpDispInfo->lpszText = lpDispInfo->szText;
+                    return FALSE;
+                }
             }
         }
         break;
+
         case WM_CLOSE:
             EndDialog(hDlg, true);
             bHandled = TRUE;
@@ -1741,6 +1818,59 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
     return !bHandled;
     //return DefWindowProc( hDlg, uMsg, wParam, lParam );
+}
+
+void Dlg_AchievementEditor::GetListViewTooltip()
+{
+    m_sTooltip.clear();
+
+    Achievement* pActiveAch = ActiveAchievement();
+    if (pActiveAch == nullptr)
+        return;
+
+    HWND hList = GetDlgItem(GetHWND(), IDC_RA_LBX_CONDITIONS);
+
+    LVHITTESTINFO lvHitTestInfo;
+    GetCursorPos(&lvHitTestInfo.pt);
+    ScreenToClient(hList, &lvHitTestInfo.pt);
+
+    if (ListView_SubItemHitTest(hList, &lvHitTestInfo) == -1)
+        return;
+
+    m_nTooltipLocation = lvHitTestInfo.iItem * 256 + lvHitTestInfo.iSubItem;
+
+    Condition& rCond = pActiveAch->GetCondition(GetSelectedConditionGroup(), lvHitTestInfo.iItem);
+    unsigned int nAddr = 0;
+    switch (lvHitTestInfo.iSubItem)
+    {
+        case CSI_VALUE_SRC:
+            if (rCond.CompSource().Type() != Address && rCond.CompSource().Type() != DeltaMem)
+                return;
+
+            nAddr = rCond.CompSource().RawValue();
+            break;
+
+        case CSI_VALUE_TGT:
+            if (rCond.CompTarget().Type() != Address && rCond.CompTarget().Type() != DeltaMem)
+                return;
+
+            nAddr = rCond.CompTarget().RawValue();
+            break;
+
+        default:
+            return;
+    }
+
+    static char buffer[16];
+    sprintf_s(buffer, "0x%06x", nAddr);
+
+    m_sTooltip = buffer;
+
+    const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
+    if (pNote != nullptr)
+        m_sTooltip += "\r\n" + pNote->Note();
+    else
+        m_sTooltip += "\r\n[no notes]";
 }
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)

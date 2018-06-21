@@ -1,3 +1,5 @@
+#ifndef RA_DLG_ROMCHECKSUM_H
+#define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
 #include <wtypes.h>
@@ -10,3 +12,6 @@ public:
 public:
     static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, LPARAM);
 };
+
+
+#endif // !RA_DLG_ROMCHECKSUM_H

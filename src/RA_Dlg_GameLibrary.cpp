@@ -1,20 +1,9 @@
 #include "RA_Dlg_GameLibrary.h"
 
-#include <windowsx.h>
-#include <stdio.h>
-#include <commctrl.h>
-#include <string>
-#include <sstream>
 #include <mutex>
-#include <vector>
-#include <queue>
-#include <deque>
 #include <stack>
-#include <thread>
-#include <shlobj.h>
 #include <fstream>
 
-#include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"

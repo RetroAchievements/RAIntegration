@@ -1,8 +1,10 @@
+#ifndef RA_CORE_H
+#define RA_CORE_H
 #pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
-#include <stdio.h>
+
 
 #if defined RA_EXPORTS
 #define API __declspec(dllexport)
@@ -160,9 +162,8 @@ void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
 
 namespace ra {
-std::string GameJSONFilename(_In_ GameID game_id) noexcept;
-std::string PrefsFilename() noexcept;
-
-_Success_(return != 0)
-int CALLBACK ShowError(_In_ const tstring& str, _In_ HWND hwnd = GetActiveWindow()) noexcept;
+_NODISCARD std::string GameJSONFilename(_In_ GameID game_id) noexcept;
+_NODISCARD std::string PrefsFilename() noexcept;
 } // namespace ra
+
+#endif // !RA_CORE_H

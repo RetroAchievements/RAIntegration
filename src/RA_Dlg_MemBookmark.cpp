@@ -1,15 +1,13 @@
 #include "RA_Dlg_MemBookmark.h"
 
+#include <atlbase.h> // CComPtr
+#include <fstream>
+
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_MemManager.h"
-
-#include <strsafe.h>
-#include <memory>
-#include <fstream>
-#include <atlbase.h>
+#include "ra_errors.h"
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -746,7 +744,8 @@ void Dlg_MemBookmark::ExportJSON()
 
                                         oss.str("");
                                         oss << Narrow(bookmark->Description());
-                                        Value s{ oss.str().c_str(), allocator };
+                                        auto str{ oss.str() }; 
+                                        Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -812,7 +811,7 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
         }
         else
         {
-            ASSERT(" !Invalid Bookmark File...");
+            ASSERT(!" Invalid Bookmark File...");
             ra::ShowError(_T("Could not load properly. Invalid Bookmark file."));
             return;
         }

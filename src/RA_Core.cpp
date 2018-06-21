@@ -10,7 +10,7 @@
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
@@ -1697,13 +1697,6 @@ std::string GameJSONFilename(GameID game_id) noexcept
     oss << RA_DIR_DATA << game_id << ".txt";
     return oss.str();
 } // end function GameJSONFilename
-
-
-_Use_decl_annotations_
-int CALLBACK ShowError(const tstring& str, HWND hwnd) noexcept
-{
-    return MessageBox(hwnd, str.c_str(), TEXT("Error!"), MB_ICONERROR);
-} // end function ShowError
 
 std::string PrefsFilename() noexcept
 {

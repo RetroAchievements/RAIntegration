@@ -1,3 +1,5 @@
+#ifndef RA_ACHIEVEMENTPOPUP_H
+#define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
 #include "RA_Defs.h"
@@ -66,3 +68,6 @@ private:
 };
 
 //extern AchievementPopup g_PopupWindow;
+
+
+#endif // !RA_ACHIEVEMENTPOPUP_H

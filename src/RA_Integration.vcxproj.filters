@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{95c8f888-3f34-439c-b948-66fece399bab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -110,6 +113,15 @@
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_LeaderboardManager.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_MemValue.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="ra_errors.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -211,6 +223,15 @@
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_LeaderboardManager.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_MemValue.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ra_errors.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

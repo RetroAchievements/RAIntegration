@@ -27,6 +27,18 @@
     <ClInclude Include="..\src\RA_Defs.h">
       <Filter>Code</Filter>
     </ClInclude>
+    <ClCompile Include="..\src\RA_MemValue.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_MemValue_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_Leaderboard.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Leaderboard_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -47,5 +59,13 @@
     <ClCompile Include="RA_Defs_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\RA_MemValue.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_Leaderboard.h">
+      <Filter>Code</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

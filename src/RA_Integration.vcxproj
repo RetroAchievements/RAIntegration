@@ -43,9 +43,11 @@
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Interface.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
+    <ClCompile Include="RA_LeaderboardManager.cpp" />
     <ClCompile Include="RA_LeaderboardPopup.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
+    <ClCompile Include="RA_MemValue.cpp" />
     <ClCompile Include="RA_PopupWindows.cpp" />
     <ClCompile Include="RA_ProgressPopup.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
@@ -72,14 +74,17 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="ra_fwd" />
     <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
     <ClInclude Include="RA_Leaderboard.h" />
+    <ClInclude Include="RA_LeaderboardManager.h" />
     <ClInclude Include="RA_LeaderboardPopup.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
+    <ClInclude Include="RA_MemValue.h" />
     <ClInclude Include="RA_PopupWindows.h" />
     <ClInclude Include="RA_ProgressPopup.h" />
     <ClInclude Include="RA_Resource.h" />
@@ -89,6 +94,10 @@
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ra_type_traits" />
+    <None Include="ra_utility" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
@@ -177,9 +186,10 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ControlFlowGuard>false</ControlFlowGuard>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>

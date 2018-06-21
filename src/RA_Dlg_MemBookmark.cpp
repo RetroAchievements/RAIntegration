@@ -1,13 +1,13 @@
 #include "RA_Dlg_MemBookmark.h"
 
+#include <atlbase.h> // CComPtr
+
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_MemManager.h"
 
-#include <strsafe.h>
-#include <atlbase.h> // CComPtr
+
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;

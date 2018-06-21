@@ -1,7 +1,8 @@
+#ifndef RA_DLG_MEMORY_H
+#define RA_DLG_MEMORY_H
 #pragma once
 
-#include "RA_Defs.h"
-#include "RA_CodeNotes.h"
+#include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 
 class MemoryViewerControl
@@ -116,3 +117,6 @@ private:
 };
 
 extern Dlg_Memory g_MemoryDialog;
+
+
+#endif // !RA_DLG_MEMORY_H

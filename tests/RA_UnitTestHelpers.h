@@ -4,6 +4,7 @@
 
 #include "RA_Condition.h"
 #include "RA_Defs.h"
+#include "RA_MemValue.h"
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -29,6 +30,11 @@ template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
 template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
 {
     return Widen(CONDITIONTYPE_STR[(int)t]);
+}
+
+template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)
+{
+    return Widen(MemValue::GetFormatString(format));
 }
 
 } // namespace CppUnitTestFramework

@@ -37,20 +37,6 @@ private:
     ConditionSet m_conditions;
 };
 
-class RA_Formattable
-{
-public:
-    RA_Formattable(const std::string& sDesc, RA_Leaderboard::FormatType nType);
-
-    std::string Lookup(DataPos nValue) const;
-
-    const std::string& Description() const { return m_sLookupDescription; }
-
-private:
-    std::string m_sLookupDescription;
-    RA_Leaderboard::FormatType m_nFormatType;
-};
-
 class RA_RichPresenceInterpretter
 {
 public:
@@ -63,13 +49,13 @@ public:
     void ParseRichPresenceFile(const std::string& sFilename);
 
     const std::string& GetRichPresenceString();
-    const std::string& Lookup(const std::string& sLookupName, const std::string& sMemString) const;
+    const std::string Lookup(const std::string& sLookupName, const std::string& sMemString) const;
 
     bool Enabled() const;
 
 private:
     std::vector<RA_Lookup> m_lookups;
-    std::vector<RA_Formattable> m_formats;
+    std::map<std::string, MemValue::Format> m_formats;
 
     std::vector<RA_ConditionalDisplayString> m_conditionalDisplayStrings;
     std::string m_sDisplay;

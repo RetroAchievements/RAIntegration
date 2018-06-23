@@ -473,12 +473,6 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
             }
 
             fclose(pFile);
-
-            std::string sLuaFilename = sFilename;
-            sLuaFilename.resize(sFilename.length() - 9);
-            sLuaFilename.append(".lua");
-            m_LuaScript.Load(sLuaFilename);
-
             return TRUE;
         }
         else

@@ -30,6 +30,7 @@ enum ComparisonVariableType
     ValueComparison,	//	a number. assume 32 bit 
     DeltaMem,			//	the value last known at this address.
     DynamicVariable,	//	a custom user-set variable
+    LuaCall,            //  a call to a lua function
 
     NumComparisonVariableTypes
 };
@@ -91,6 +92,9 @@ public:
     inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
     inline ComparisonVariableType Type() const { return m_nVarType; }
 
+    inline void SetString(const std::string& sValue) { m_sString = sValue; }
+    inline const std::string& GetString() const { return m_sString; }
+
     inline unsigned int RawValue() const { return m_nVal; }
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
@@ -99,6 +103,7 @@ private:
     ComparisonVariableType m_nVarType;
     unsigned int m_nVal;
     unsigned int m_nPreviousVal;
+    std::string m_sString;
 };
 
 
@@ -149,12 +154,6 @@ public:
 
     inline unsigned int RequiredHits() const { return m_nRequiredHits; }
     inline unsigned int CurrentHits() const { return m_nCurrentHits; }
-
-    inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
-    inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
-    inline bool IsAddCondition() const { return(m_nConditionType == AddSource); }
-    inline bool IsSubCondition() const { return(m_nConditionType == SubSource); }
-    inline bool IsAddHitsCondition() const { return(m_nConditionType == AddHits); }
 
     inline ConditionType GetConditionType() const { return m_nConditionType; }
     void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }

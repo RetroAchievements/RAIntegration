@@ -14,14 +14,16 @@ class LuaScript
 {
 public:
     LuaScript();
-    ~LuaScript();
+    virtual ~LuaScript();
 
     bool Load(const std::string& sFilename);
+    void Close();
 
-    bool Invoke(const char* sFunctionName);
+    bool Invoke(const char* sFunctionName) const;
 
 private:
     lua_State* state = nullptr;
+    int nScriptTableRef = 0;
 };
 
 } // namespace data

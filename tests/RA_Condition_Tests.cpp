@@ -172,11 +172,7 @@ public:
             Condition cond;
             cond.SetConditionType(type);
 
-            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::ResetIf));
-            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::PauseIf));
-            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::AddSource));
-            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::SubSource));
-            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::AddHits));
+            Assert::AreEqual(cond.GetConditionType(), type);
         }
     }
 

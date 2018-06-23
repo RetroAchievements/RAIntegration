@@ -21,4 +21,8 @@ void GameData::ParseData(const Document& doc)
     //const std::string& sGenre = doc["Genre"].IsNull() ? "Unknown" : doc["Genre"].GetString();
     //const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
     //const bool bIsFinal = doc["IsFinal"].GetBool();
+
+    std::string sLuaFilename = RA_DIR_DATA + std::to_string(m_nGameID) + ".lua";
+    m_LuaScript.Load(sLuaFilename);
 }
+

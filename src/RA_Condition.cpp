@@ -1,9 +1,10 @@
 #include "RA_Condition.h"
+#include "RA_GameData.h"
 #include "RA_MemManager.h"
 
 const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
-const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
+const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar", "Lua Call" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
 const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
 static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
@@ -226,7 +227,7 @@ void Condition::ResetDeltas()
 
 bool CompVariable::ParseVariable(const char*& pBufferInOut)
 {
-    char* nNextChar = nullptr;
+    char* pNextChar = nullptr;
     unsigned int nBase = 16;	//	Assume hex address
 
     if (toupper(pBufferInOut[0]) == 'D' && pBufferInOut[1] == '0' && toupper(pBufferInOut[2]) == 'X')
@@ -240,6 +241,21 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
         //	Assume '0x' and four hex following it.
         pBufferInOut += 2;
         m_nVarType = ComparisonVariableType::Address;
+    }
+    else if (pBufferInOut[0] == '@')
+    {
+        //  read until equal sign
+        ++pBufferInOut;
+        m_nVarType = ComparisonVariableType::LuaCall;
+        
+        size_t len = 0;
+        while (pBufferInOut[len] && pBufferInOut[len] != '=')
+            ++len;
+
+        m_sString.assign(pBufferInOut, len);
+
+        pBufferInOut += len;
+        return (*pBufferInOut == '=');
     }
     else
     {
@@ -257,7 +273,6 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
         }
     }
 
-
     if (m_nVarType == ComparisonVariableType::ValueComparison)
     {
         //	Values don't have a size!
@@ -269,8 +284,8 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }
 
-    m_nVal = strtol(pBufferInOut, &nNextChar, nBase);
-    pBufferInOut = nNextChar;
+    m_nVal = strtol(pBufferInOut, &pNextChar, nBase);
+    pBufferInOut = pNextChar;
 
     return true;
 }
@@ -301,6 +316,11 @@ void CompVariable::SerializeAppend(std::string& buffer) const
             buffer.append(valueBuffer);
             break;
 
+        case LuaCall:
+            buffer.append("@");
+            buffer.append(m_sString);
+            break;
+
         default:
             ASSERT(!"Unknown type? (DynMem)?");
             break;
@@ -328,6 +348,13 @@ unsigned int CompVariable::GetValue()
             m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
             return nPreviousVal;
 
+        case LuaCall:
+#ifdef RA_UTEST
+            return 0;
+#else
+            return g_pCurrentGameData->LuaScript().Invoke(m_sString.c_str()) ? 1 : 0;
+#endif
+            
         default:
             //	Panic!
             ASSERT(!"Undefined mem type!");
@@ -352,7 +379,7 @@ bool Condition::Compare(unsigned int nAddBuffer)
         case NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
         default:
-            return true;	//?
+            return m_nCompSource.GetValue() != 0; // assume boolean (zero/non-zero) if no compare type
     }
 }
 

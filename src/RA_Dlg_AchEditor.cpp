@@ -33,6 +33,34 @@ enum CondSubItems
     NumColumns
 };
 
+static bool HasRightHandSide(const Condition& Cond)
+{
+    switch (Cond.GetConditionType())
+    {
+        case Condition::AddSource:
+        case Condition::SubSource:
+            // when these flags are present, only the CSI_GROUP, CSI_TYPE_SRC, CSI_SIZE_SRC, and CSI_VALUE_SRC fields are used.
+            return false;
+            
+        default:
+            return Cond.CompSource().Type() != ComparisonVariableType::LuaCall;
+    }
+}
+
+static bool HasHitCount(const Condition& Cond)
+{
+    switch (Cond.GetConditionType())
+    {
+        case Condition::AddSource:
+        case Condition::SubSource:
+            // when these flags are present, only the CSI_GROUP, CSI_TYPE_SRC, CSI_SIZE_SRC, and CSI_VALUE_SRC fields are used.
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
@@ -174,47 +202,87 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     int nRow = item.iItem;
 
     //	Update our local array:
-    const char* sMemTypStrSrc = "Value";
-    const char* sMemSizeStrSrc = "";
-    if (Cond.CompSource().Type() != ValueComparison)
+    const char* sMemTypStrSrc;
+    const char* sMemSizeStrSrc;
+
+    switch (Cond.CompSource().Type())
     {
-        sMemTypStrSrc = (Cond.CompSource().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
+        default:
+        case ComparisonVariableType::ValueComparison:
+            sMemTypStrSrc = "Value";
+            sMemSizeStrSrc = "";
+            break;
+
+        case ComparisonVariableType::Address:
+            sMemTypStrSrc = "Mem";
+            sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
+            break;
+
+        case ComparisonVariableType::DeltaMem:
+            sMemTypStrSrc = "Delta";
+            sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
+            break;
+
+        case ComparisonVariableType::LuaCall:
+            sMemTypStrSrc = "Lua";
+            sMemSizeStrSrc = "";
+            break;
     }
 
-    const char* sMemTypStrDst = "Value";
-    const char* sMemSizeStrDst = "";
-    if (Cond.CompTarget().Type() != ValueComparison)
+    const char* sMemTypStrDst;
+    const char* sMemSizeStrDst;
+    switch (Cond.CompSource().Type())
     {
-        sMemTypStrDst = (Cond.CompTarget().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
+        default:
+        case ComparisonVariableType::ValueComparison:
+            sMemTypStrDst = "Value";
+            sMemSizeStrDst = "";
+            break;
+
+        case ComparisonVariableType::Address:
+            sMemTypStrDst = "Mem";
+            sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
+            break;
+
+        case ComparisonVariableType::DeltaMem:
+            sMemTypStrDst = "Delta";
+            sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
+            break;
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
     sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
-    sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
-    sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
 
-    if (g_bPreferDecimalVal)
+    if (Cond.CompSource().Type() == ComparisonVariableType::LuaCall)
+        sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "%s", Cond.CompSource().GetString().c_str());
+    else
+        sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
+
+    if (HasRightHandSide(Cond))
     {
-        if (Cond.CompTarget().Type() == ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
-    }
+        sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
+        sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
+        sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
 
-    if (Cond.IsAddCondition() || Cond.IsSubCondition())
+        if (g_bPreferDecimalVal && Cond.CompTarget().Type() == ValueComparison)
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
+        else
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
+    }
+    else
     {
         sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "");
         sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "");
         sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "");
         sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "");
-        sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "");
     }
+
+    if (HasHitCount(Cond))
+        sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
+    else
+        sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "");
 
     for (size_t i = 0; i < NumColumns; ++i)
     {
@@ -336,8 +404,8 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             lvDispinfo.item.iSubItem = nSelSubItem;
             lvDispinfo.item.pszText = nullptr;
 
-            TCHAR sEditText[12];
-            GetWindowText(hwnd, sEditText, 12);
+            TCHAR sEditText[MEM_STRING_TEXT_LEN];
+            GetWindowText(hwnd, sEditText, MEM_STRING_TEXT_LEN);
             lvDispinfo.item.pszText = sEditText;
             lvDispinfo.item.cchTextMax = lstrlen(sEditText);
 
@@ -493,6 +561,9 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL CreateIPE(int nItem, int nSubItem)
 {
+    if (g_AchievementEditorDialog.ActiveAchievement() == nullptr)
+        return FALSE;
+
     BOOL bSuccess = FALSE;
 
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
@@ -517,6 +588,9 @@ BOOL CreateIPE(int nItem, int nSubItem)
                             because for items (not subitems) the
                             width returned is that of the whole row.*/
 
+
+    const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
+    const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
     switch (nSubItem)
     {
@@ -564,24 +638,20 @@ BOOL CreateIPE(int nItem, int nSubItem)
         }
         break;
 
-        case CSI_TYPE_SRC:
         case CSI_TYPE_TGT:
+            if (!HasRightHandSide(Cond))
+                break;
+
+            _FALLTHROUGH; // to CSI_TYPE_SRC
+
+        case CSI_TYPE_SRC:
         {
             //	Type: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            if (nSubItem == CSI_TYPE_TGT)
-            {
-                const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-                const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
-                    break;
-            }
-
-            const int nNumItems = 3;	//	"Mem", "Delta" or "Value"
+            const int nNumItems = 4;	//	"Mem", "Delta", "Value", or "Lua"
 
             g_hIPEEdit = CreateWindowEx(
                 WS_EX_CLIENTEDGE,
@@ -610,17 +680,20 @@ BOOL CreateIPE(int nItem, int nSubItem)
             // 			}
 
                         /*CB_ERRSPACE*/
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
+            ComboBox_AddString(g_hIPEEdit, TEXT("Mem"));
+            ComboBox_AddString(g_hIPEEdit, TEXT("Delta"));
+            ComboBox_AddString(g_hIPEEdit, TEXT("Value"));
+            ComboBox_AddString(g_hIPEEdit, TEXT("Lua"));
 
             int nSel;
             if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Mem") == 0)
                 nSel = 0;
             else if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Delta") == 0)
                 nSel = 1;
-            else
+            else if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Value") == 0)
                 nSel = 2;
+            else
+                nSel = 3;
 
             ComboBox_SetCurSel(g_hIPEEdit, nSel);
 
@@ -630,28 +703,25 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
-        case CSI_SIZE_SRC:
+
         case CSI_SIZE_TGT:
+            if (!HasRightHandSide(Cond))
+                break;
+
+            _FALLTHROUGH; // to CSI_SIZE_SRC
+
+        case CSI_SIZE_SRC:
         {
             //	Size: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            //	Note: this relies on column order :S
-            if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem - 1), "Value") == 0)
+            if (Cond.CompSource().Type() == ComparisonVariableType::ValueComparison ||
+                Cond.CompSource().Type() == ComparisonVariableType::LuaCall)
             {
-                //	Values have no size.
+                //	Values and Lua Calls have no size.
                 break;
-            }
-
-            if (nSubItem == CSI_SIZE_TGT)
-            {
-                const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-                const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
-                    break;
             }
 
             g_hIPEEdit = CreateWindowEx(
@@ -686,16 +756,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
+
         case CSI_COMPARISON:
         {
+            if (!HasRightHandSide(Cond))
+                break;
+
             //	Compare: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
-                break;
-
-            const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-            const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-            if (Cond.IsAddCondition() || Cond.IsSubCondition())
                 break;
 
             g_hIPEEdit = CreateWindowEx(
@@ -730,22 +799,30 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
+
         case CSI_HITCOUNT:
-        case CSI_VALUE_SRC:	//	Mem/Val: edit
         case CSI_VALUE_TGT: //	Mem/Val: edit
+            if (nSubItem == CSI_HITCOUNT)
+            {
+                if (!HasHitCount(Cond))
+                    break;
+            }
+            else
+            {
+                if (!HasRightHandSide(Cond))
+                    break;
+            }
+
+            _FALLTHROUGH; // to CSI_VALUE_SRC
+
+        case CSI_VALUE_SRC:	//	Mem/Val: edit
         {
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            if (nSubItem != CSI_VALUE_SRC)
-            {
-                const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-                const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
-                    break;
-            }
+            if (nSubItem == CSI_VALUE_SRC && Cond.CompSource().Type() == ComparisonVariableType::LuaCall)
+                nWidth *= 2;
 
             g_hIPEEdit = CreateWindowEx(
                 WS_EX_CLIENTEDGE,
@@ -773,15 +850,9 @@ BOOL CreateIPE(int nItem, int nSubItem)
             //	Special case, hitcounts
             if (nSubItem == CSI_HITCOUNT)
             {
-                if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
-                {
-                    const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
-                    const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-
-                    char buffer[256];
-                    sprintf_s(buffer, 256, "%d", Cond.RequiredHits());
-                    SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
-                }
+                char buffer[64];
+                sprintf_s(buffer, sizeof(buffer), "%d", Cond.RequiredHits());
+                SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
             }
 
             SendMessage(g_hIPEEdit, EM_SETSEL, 0, -1);
@@ -1605,7 +1676,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         //HWND hMem = GetDlgItem( HWndMemoryDlg, IDC_RA_WATCHING );
                         if (pOnClick->iSubItem == CSI_VALUE_SRC)
                         {
-                            if (rCond.CompSource().Type() != ValueComparison)
+                            if (rCond.CompSource().Type() == ComparisonVariableType::Address || 
+                                rCond.CompSource().Type() == ComparisonVariableType::DeltaMem)
                             {
                                 //	Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
@@ -1621,7 +1693,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         else if (pOnClick->iSubItem == CSI_VALUE_TGT)
                         {
-                            if (rCond.CompTarget().Type() != ValueComparison)
+                            if (rCond.CompTarget().Type() == ComparisonVariableType::Address ||
+                                rCond.CompTarget().Type() == ComparisonVariableType::DeltaMem)
                             {
                                 //	Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
@@ -1698,17 +1771,21 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
                             break;
                         }
+
                         case CSI_TYPE_SRC:
                         {
                             if (strcmp(sData, "Mem") == 0)
                                 rCond.CompSource().SetType(Address);
                             else if (strcmp(sData, "Delta") == 0)
                                 rCond.CompSource().SetType(DeltaMem);
+                            else if (strcmp(sData, "Lua") == 0)
+                                rCond.CompSource().SetType(LuaCall);
                             else
                                 rCond.CompSource().SetType(ValueComparison);
 
                             break;
                         }
+
                         case CSI_TYPE_TGT:
                         {
                             if (strcmp(sData, "Mem") == 0)
@@ -1731,6 +1808,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //	TBD: Limit validation
                             break;
                         }
+
                         case CSI_SIZE_TGT:
                         {
                             for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
@@ -1741,6 +1819,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //	TBD: Limit validation
                             break;
                         }
+
                         case CSI_COMPARISON:
                         {
                             for (int i = 0; i < NumComparisonTypes; ++i)
@@ -1753,14 +1832,22 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         case CSI_VALUE_SRC:
                         {
-                            int nBase = 16;
-                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
-                                nBase = 10;
+                            if (rCond.CompSource().Type() == ComparisonVariableType::LuaCall)
+                            {
+                                rCond.CompSource().SetString(sData);
+                            }
+                            else
+                            {
+                                int nBase = 16;
+                                if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
+                                    nBase = 10;
 
-                            unsigned int nVal = strtol(sData, nullptr, nBase);
-                            rCond.CompSource().SetValues(nVal, nVal);
+                                unsigned int nVal = strtol(sData, nullptr, nBase);
+                                rCond.CompSource().SetValues(nVal, nVal);
+                            }
                             break;
                         }
+
                         case CSI_VALUE_TGT:
                         {
                             int nBase = 16;
@@ -1771,12 +1858,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             rCond.CompTarget().SetValues(nVal, nVal);
                             break;
                         }
+
                         case CSI_HITCOUNT:
                         {
                             //	Always decimal
                             rCond.SetRequiredHits(strtol(sData, nullptr, 10));
                             break;
                         }
+
                         default:
                             ASSERT(!"Unhandled!");
                             break;

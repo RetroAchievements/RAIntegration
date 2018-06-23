@@ -4,8 +4,9 @@
   <PropertyGroup Label="UserMacros">
     <RA_DIR>$(SolutionDir)</RA_DIR>
     <RapidJSON_IncludeDir>$(RA_DIR)rapidjson/include/</RapidJSON_IncludeDir>
+    <Lua_Dir>$(RA_DIR)/lua/</Lua_Dir>
     <RA_SourceDir>$(RA_DIR)src/</RA_SourceDir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir)</RA_IncludePath>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(Lua_Dir)</RA_IncludePath>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -50,6 +51,10 @@
     </BuildMacro>
     <BuildMacro Include="RA_IncludePath">
       <Value>$(RA_IncludePath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="Lua_Dir">
+      <Value>$(Lua_Dir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

@@ -4,6 +4,7 @@
 
 #include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
 
+#include "data/LuaScript.h"
 
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet
@@ -77,6 +78,8 @@ private:
     const AchievementSetType m_nSetType;
     std::vector<Achievement> m_Achievements;
     BOOL m_bProcessingActive;
+
+    ra::data::LuaScript m_LuaScript;
 };
 
 

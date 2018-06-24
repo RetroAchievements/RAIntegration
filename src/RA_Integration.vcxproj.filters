@@ -111,6 +111,12 @@
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="RA_LeaderboardManager.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_MemValue.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -211,6 +217,12 @@
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_LeaderboardManager.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_MemValue.h">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

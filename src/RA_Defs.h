@@ -74,7 +74,6 @@
 #else
 
 
-
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
@@ -109,7 +108,7 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define _UNUSED              [[maybe_unused]]
 #else
 #define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecate)
+#define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
 #define _UNUSED              

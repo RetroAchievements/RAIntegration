@@ -4,6 +4,7 @@
 
 
 #include "RA_Defs.h"
+#include <ra_fwd>
 
 class GameEntry
 {
@@ -34,21 +35,21 @@ public:
     INT_PTR CALLBACK GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
 
 public:
-    void InstallHWND(HWND hWnd) { m_hDialogBox = hWnd; }
+    void InstallHWND(_In_ HWND hWnd) { m_hDialogBox = hWnd; }
     HWND GetHWND() const { return m_hDialogBox; }
 
     void AddTitle(const std::string& sTitle, const std::string& sFilename, unsigned int nGameID);
     void ClearTitles();
 
-    void LoadAll();
-    void SaveAll();
+    _NORETURN void LoadAll();
+    _NORETURN void SaveAll();
 
     void KillThread();
 
 private:
-    void SetupColumns(HWND hList);
-    void ReloadGameListData();
-    void ScanAndAddRomsRecursive(const std::string& sBaseDir);
+    _NORETURN void SetupColumns(HWND hList);
+    _NORETURN void ReloadGameListData();
+    _NORETURN void ScanAndAddRomsRecursive(_In_ const std::string& sBaseDir);
     BOOL LaunchSelected();
     void RefreshList();
 

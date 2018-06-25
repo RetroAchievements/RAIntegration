@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{3a8fa4df-e5ba-445a-ae08-db9391c1c3db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -111,11 +114,18 @@
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="ra_handles.cpp">
+      <Filter>Interface</Filter>
     <ClCompile Include="RA_LeaderboardManager.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="ra_errors.cpp">
+      <Filter>Helpers</Filter>
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="ra_fwd">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,6 +234,12 @@
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="ra_handles.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ra_errors.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">
@@ -232,5 +248,13 @@
     <ResourceCompile Include="RA_Version.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ra_type_traits">
+      <Filter>Helpers</Filter>
+    </None>
+    <None Include="ra_utility">
+      <Filter>Helpers</Filter>
+    </None>
   </ItemGroup>
 </Project>

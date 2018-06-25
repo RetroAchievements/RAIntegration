@@ -300,15 +300,18 @@ const int SERVER_PING_DURATION = 2 * 60;
 
 #define RA_LOG RADebugLog
 
-#if _DEBUG
+#ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
 #define ASSERT( x ) assert( x )
 #else
 #undef ASSERT
 #define ASSERT( x ) {}
-#endif // !RA_UTEST
-#endif // _DEBUG
+#endif
+#else
+#undef ASSERT
+#define ASSERT( x ) {}
+#endif
 
 #ifndef UNUSED
 #define UNUSED( x ) ( x );

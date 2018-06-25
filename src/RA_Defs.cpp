@@ -33,7 +33,7 @@ std::string Narrow(const wchar_t* wstr)
     str.reserve(len);
 
     ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, to_signed(len), str.data(),
-        to_signed(str.length()), nullptr, nullptr);
+        to_signed(len), nullptr, nullptr);
     return str.data(); // the .data() part is required
 }
 

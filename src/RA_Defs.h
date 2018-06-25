@@ -301,8 +301,13 @@ inline constexpr auto SERVER_PING_DURATION{ time_t{2 * 60} };
 #define RA_LOG RADebugLog
 
 #ifdef _DEBUG
+#ifndef RA_UTEST
 #undef ASSERT
 #define ASSERT( x ) assert( x )
+#else
+#undef ASSERT
+#define ASSERT( x ) {}
+#endif
 #else
 #undef ASSERT
 #define ASSERT( x ) {}

@@ -2,7 +2,7 @@
 
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 
 //	No emulator-specific code here please!
 
@@ -270,7 +270,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                 RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
                 for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
                 {
-                    const LB_Entry& lbInfo = pLB->GetRankInfo(i);
+                    const RA_Leaderboard::Entry& lbInfo = pLB->GetRankInfo(i);
 
                     if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)
                     {

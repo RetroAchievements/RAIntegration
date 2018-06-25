@@ -116,9 +116,13 @@
     </ClCompile>
     <ClCompile Include="ra_handles.cpp">
       <Filter>Interface</Filter>
+    <ClCompile Include="RA_LeaderboardManager.cpp">
+      <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="ra_errors.cpp">
       <Filter>Helpers</Filter>
+    <ClCompile Include="RA_MemValue.cpp">
+      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="ra_fwd">
       <Filter>Helpers</Filter>
@@ -223,6 +227,12 @@
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_LeaderboardManager.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_MemValue.h">
+      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="ra_handles.h">
       <Filter>Interface</Filter>

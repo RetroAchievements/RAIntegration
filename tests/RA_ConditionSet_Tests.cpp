@@ -703,11 +703,40 @@ public:
         Assert::AreEqual(3U, set.GetGroup(1).GetAt(0).CurrentHits());
         Assert::AreEqual(3U, set.GetGroup(2).GetAt(0).CurrentHits());
 
-        memory[0] = 2; // reset in alt group only pauses alt group
+        memory[0] = 2; // pause in alt group only pauses alt group
         AssertSetTest(set, true, true, false);
         Assert::AreEqual(3U, set.GetGroup(0).GetAt(0).CurrentHits());
         Assert::AreEqual(4U, set.GetGroup(1).GetAt(0).CurrentHits());
         Assert::AreEqual(3U, set.GetGroup(2).GetAt(0).CurrentHits());
+    }
+
+    TEST_METHOD(TestPauseIfResetIfAltGroup)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        ConditionSet set;
+        const char* ptr;
+        set.ParseFromString(ptr = "0xH0000=0.1._0xH0000=2SP:0xH0001=18_R:0xH0002=52");
+
+        AssertSetTest(set, false, true, false);
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+
+        memory[0] = 1; // move off HitCount
+        AssertSetTest(set, false, true, false);
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+
+        memory[1] = 16; // unpause alt group, HitCount should be reset
+        AssertSetTest(set, false, true, true);
+        Assert::AreEqual(0U, set.GetGroup(0).GetAt(0).CurrentHits());
+
+        memory[0] = 0;
+        memory[1] = 18; // repause alt group, reset hitcount target, hitcount should be set
+        AssertSetTest(set, false, true, false);
+        Assert::AreEqual(1U, set.GetGroup(0).GetAt(0).CurrentHits());
+
+        memory[0] = 2; // trigger win condition. alt group has no normal conditions, it should be considered false
+        AssertSetTest(set, false, true, false);
     }
 };
 

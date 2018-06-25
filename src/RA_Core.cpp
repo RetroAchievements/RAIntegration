@@ -1210,9 +1210,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGIN:
-            RA_Dlg_Login::DoModalLogin();
+        {
+            ra::Dlg_Login myLogin; // calls DoModal automatically
             _RA_SavePreferences();
-            break;
+        }
+        break;
 
         case IDM_RA_FILES_LOGOUT:
             RAUsers::LocalUser().Clear();
@@ -1634,29 +1636,29 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
     HRESULT hr;
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
+        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
             CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+            if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
                 LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;
                 }
-				pItem.Release();
+                pItem.Release();
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
     return sRetVal;
 }

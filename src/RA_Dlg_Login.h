@@ -2,16 +2,34 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
-#include <wtypes.h>
+#include "ira_dialog.h"
 
-class RA_Dlg_Login
+namespace ra {
+
+class Dlg_Login :
+    public IRA_Dialog
 {
 public:
-    static BOOL DoModalLogin();
+    using IRA_Dialog::IRA_Dialog;
+    Dlg_Login() noexcept;
+    BOOL InitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) noexcept override;
+    
+protected:
+    _NORETURN void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify) noexcept override;
+    _NORETURN void NCDestroy(HWND hwnd) noexcept override;
+    /* it should throw but not sure how to deal with it so it's not marked [[noreturn]]*/
+    void OnOK(HWND hwnd) noexcept override; 
+    _NODISCARD INT_PTR DialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept override;
 
-public:
-    static INT_PTR CALLBACK RA_Dlg_LoginProc(HWND, UINT, WPARAM, LPARAM);
-};
+private:
+    // Don't initialize controls in constructors, do it in WM_INITDIALOG
+    HWND m_hUsername{ nullptr };
+    HWND m_hPassword{ nullptr };
+    HWND m_hSavePassword{ nullptr };
+    IRA_WndClass m_WndClass{ TEXT("Login") };
+}; 
+
+} // namespace ra
 
 
 #endif // !RA_DLG_LOGIN_H

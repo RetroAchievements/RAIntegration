@@ -117,6 +117,8 @@
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ira_dialog.cpp" />
+    <ClCompile Include="IRA_WndClass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -224,6 +226,8 @@
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="ira_dialog.h" />
+    <ClInclude Include="IRA_WndClass.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

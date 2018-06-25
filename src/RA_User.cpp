@@ -124,7 +124,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     else
     {
         //	Push dialog to get them to login!
-        DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
+        ra::Dlg_Login myLogin; // calls DoModal automatically
         _RA_SavePreferences();
     }
 

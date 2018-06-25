@@ -2,20 +2,8 @@
 #define RA_UTILITY_H
 #pragma once
 
-#include <utility>
-#include <string>
-#include <ra_fwd>
-
-#ifndef _CONSTANT_VAR
-#if _HAS_CXX17
-#define _CONSTANT_VAR inline constexpr auto
-#else
-#define _CONSTANT_VAR constexpr auto
-#endif // _HAS_CXX17 
-#ifndef _CONSTANT_FN
-#define _CONSTANT_FN  _CONSTANT_VAR
-#endif // !_CONSTANT_FN
-#endif // !_CONSTANT_VAR
+#include "ra_fwd.h"
+#include "ra_type_traits.h"
 
 namespace ra {
 
@@ -61,7 +49,7 @@ _NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept {
 
   // We need one for DWORD, because it doesn't match LPDWORD for some stuff
 _NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept {
-	return static_cast<::DWORD>(n);
+	return static_cast<DWORD>(n);
 } // end operator""_dw
 
   // streamsize varies as well
@@ -76,7 +64,7 @@ _NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept {
 
 
 _NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept {
-	return static_cast<DataPos>(n);
+	return static_cast<ra::DataPos>(n);
 } // end operator""_dp
 
   // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
@@ -120,7 +108,7 @@ using float_type = long double; // should we even care bout this?
 #endif // _WIN32
 
 
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD tstring 
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD ra::tstring 
 to_tstring(_In_ Arithmetic a) noexcept
 {
 #if _MBCS
@@ -151,69 +139,6 @@ etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e)
 
 // function alias template for etoi (EnumToIntegral)
 template<typename Enum> _NODISCARD _CONSTANT_VAR to_integral = etoi<Enum>;
-
-namespace detail {
-
-/// <summary>
-///   Casts <typeparamref name="InputString" /> into an
-///   <typeparamref name="OutputString" />. This won't work with multi-byte
-///   strings, only byte strings. It can be used to convert <c>std::string</c> to
-///   and from <c>std::wstring</c> but that's only if they are byte strings.
-/// </summary>
-/// <typeparam name="OutputString">
-///   The string type specified for conversion.
-/// </typeparam>
-/// <typeparam name="InputString">
-///   The string type to be converted to, as long as an intellisense error
-///   doesn't occur, it should be fine.
-/// </typeparam>
-/// <param name="str">The string to be converted.</param>
-/// <returns>
-///   <typeparamref name="InputString" /> as an
-///   <typeparamref name="OutputString" />.
-/// </returns>
-/// <exception cref="std::ios_base::failure">
-///   If this exception is thrown, this operation as no effect and the
-///   <typeparamref name="InputString" /> is in a valid state.
-/// </exception>
-/// <remarks>
-///   At least <typeparamref name="OutputString" /> needs to be specified and
-///   <typeparamref name="InputString" /> must not be the same as
-///   <typeparamref name="OutputString" />. Use <see cref="ra::Widen" /> or
-///   <see cref="ra::Narrow" /> if you need a Multi-byte to Unicode string
-///   conversion.
-/// </remarks>
-template<
-	typename OutputString,
-	typename InputString,
-	class = std::enable_if_t<(not std::is_same_v<OutputString, InputString>) and
-	(is_char_v<typename OutputString::value_type> and is_char_v<typename InputString::value_type>) and
-	(is_same_size_v<typename OutputString::value_type, typename InputString::value_type>)>
->
-_NODISCARD OutputString string_cast(const InputString& str) noexcept
-{
-	if (str.empty())
-		return OutputString{}; // an alternative to throwing an exception
-
-	using out_ostringstream = std::basic_ostringstream<typename OutputString::value_type>;
-	out_ostringstream oss;
-	std::ios::sync_with_stdio(false);
-	for (auto& i : str)
-	{
-		if (std::is_same_v<OutputString, std::string> and std::is_same_v<InputString, DataStream>)
-			oss << static_cast<std::string::value_type>(i);
-		else if (std::is_same_v<OutputString, DataStream> and std::is_same_v<InputString, std::string>)
-			oss << static_cast<DataStream::value_type>(i);
-		else if (std::is_same_v<OutputString, std::wstring> and std::is_same_v<InputString, std::string>)
-			oss << std::wcout.widen(i);
-		else if (std::is_same_v<OutputString, std::string> and std::is_same_v<InputString, std::wstring>)
-			oss << std::wcout.narrow(i);
-	}
-	return oss.str();
-} // end function string_cast
-
-} // namespace detail
-
 
 /// <summary>Calculates the size of any standard fstream.</summary>
   /// <param name="filename">The filename.</param>

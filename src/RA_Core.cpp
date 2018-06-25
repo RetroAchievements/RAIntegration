@@ -196,7 +196,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     TCHAR buffer[2048];
     GetCurrentDirectory(2048, buffer);
-    g_sHomeDir = Narrow(buffer);
+    g_sHomeDir = ra::Narrow(buffer);
     g_sHomeDir.append("\\");
 
     RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str());
@@ -372,8 +372,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
 
     //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
-    //	TBD: local DB of MD5 to GameIDs here
-    GameID nGameID = 0;
+    //	TBD: local DB of MD5 to ra::GameIDs here
+    ra::GameID nGameID = 0;
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
@@ -385,7 +385,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
-            nGameID = static_cast<GameID>(doc["GameID"].GetUint());
+            nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
             if (nGameID == 0)	//	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());
@@ -679,7 +679,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestSubmitAwardAchievement:
                 {
                     //	Response to an achievement being awarded:
-                    AchievementID nAchID = static_cast<AchievementID>(doc["AchievementID"].GetUint());
+                    ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
                     const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
                     if (pAch == nullptr)
                         pAch = g_pUnofficialAchievements->Find(nAchID);
@@ -770,7 +770,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
         UINT nGameFlags = MF_STRING;
-        //if( g_pActiveAchievements->GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
+        //if( g_pActiveAchievements->ra::GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
 
@@ -831,10 +831,10 @@ API void CCONV _RA_CheckForUpdate()
     PostArgs args;
     args['c'] = std::to_string(g_ConsoleID);
 
-    DataStream Response;
+    std::string Response;
     if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
     {
-        std::string sReply = DataStreamAsString(Response);
+        std::string sReply = std::move(Response);
         if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
         {
             //	Ignore g_sKnownRAVersion: check against g_sRAVersion
@@ -1055,7 +1055,7 @@ void _FetchGameHashLibraryFromWeb()
     args['c'] = std::to_string(g_ConsoleID);
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    DataStream Response;
+    std::string Response;
     if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
         _WriteBufferToFile(RA_GAME_HASH_FILENAME, Response);
 }
@@ -1066,7 +1066,7 @@ void _FetchGameTitlesFromWeb()
     args['c'] = std::to_string(g_ConsoleID);
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    DataStream Response;
+    std::string Response;
     if (RAWeb::DoBlockingRequest(RequestGamesList, args, Response))
         _WriteBufferToFile(RA_GAME_LIST_FILENAME, Response);
 }
@@ -1077,7 +1077,7 @@ void _FetchMyProgressFromWeb()
     args['c'] = std::to_string(g_ConsoleID);
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    DataStream Response;
+    std::string Response;
     if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
         _WriteBufferToFile(RA_MY_PROGRESS_FILENAME, Response);
 }
@@ -1239,7 +1239,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
             g_PopupWindows.Clear();
 
-            GameID nGameID = g_pCurrentGameData->GetGameID();
+            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
             if (nGameID != 0)
             {
                 //	Delete Core and Unofficial Achievements so it is redownloaded every time:
@@ -1548,37 +1548,24 @@ void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
     }
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const DataStream& raw)
+void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        fwrite(raw.data(), 1, raw.size(), pf);
-        fclose(pf);
-    }
+
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+    FileH myFile{ std::fopen(sFileName.c_str(), "wb"), std::fclose };
+    std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const std::string& sData)
-{
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        fwrite(sData.data(), 1, sData.length(), pf);
-        fclose(pf);
-    }
-}
 
-void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes)
+void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFile, "wb") == 0)
-    {
-        fwrite(sBuffer, 1, nBytes, pf);
-        fclose(pf);
-    }
+
+    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+    FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
+    auto sBuffer{ std::make_unique<char[]>(ra::to_unsigned(nBytes)) };
+    std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
 }
 
 char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
@@ -1639,7 +1626,7 @@ std::string GetFolderFromDialog()
     std::string sRetVal;
 	CComPtr<IFileOpenDialog> pDlg;
 
-    HRESULT hr;
+    HRESULT hr = HRESULT{};
 	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
@@ -1651,7 +1638,7 @@ std::string GetFolderFromDialog()
                 LPWSTR pStr{ nullptr };
 				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
-                    sRetVal = Narrow(pStr);
+                    sRetVal = ra::Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;

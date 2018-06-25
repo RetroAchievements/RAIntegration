@@ -32,23 +32,23 @@ public:
     BOOL Save(const std::string& sFile);
     size_t Load(const std::string& sFile);
 
-    BOOL ReloadFromWeb(GameID nID);
+    BOOL ReloadFromWeb(ra::GameID nID);
     static void OnCodeNotesResponse(Document& doc);
 
-    void Add(const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);
-    BOOL Remove(const ByteAddress& nAddr);
+    void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);
+    BOOL Remove(const ra::ByteAddress& nAddr);
 
-    const CodeNoteObj* FindCodeNote(const ByteAddress& nAddr) const
+    const CodeNoteObj* FindCodeNote(const ra::ByteAddress& nAddr) const
     {
-        std::map<ByteAddress, CodeNoteObj>::const_iterator iter = m_CodeNotes.find(nAddr);
+        std::map<ra::ByteAddress, CodeNoteObj>::const_iterator iter = m_CodeNotes.find(nAddr);
         return(iter != m_CodeNotes.end()) ? &iter->second : nullptr;
     }
 
-    std::map<ByteAddress, CodeNoteObj>::const_iterator FirstNote() const { return m_CodeNotes.begin(); }
-    std::map<ByteAddress, CodeNoteObj>::const_iterator EndOfNotes() const { return m_CodeNotes.end(); }
+    std::map<ra::ByteAddress, CodeNoteObj>::const_iterator FirstNote() const { return m_CodeNotes.begin(); }
+    std::map<ra::ByteAddress, CodeNoteObj>::const_iterator EndOfNotes() const { return m_CodeNotes.end(); }
 
 private:
-    std::map<ByteAddress, CodeNoteObj> m_CodeNotes;
+    std::map<ra::ByteAddress, CodeNoteObj> m_CodeNotes;
 };
 
 #endif // !RA_CODENOTES_H

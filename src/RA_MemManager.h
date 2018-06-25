@@ -62,7 +62,7 @@ public:
     size_t NumMemoryBanks() const { return m_Banks.size(); }
 
     void Reset(unsigned short nSelectedMemBank, ComparisonVariableSize nNewComparisonVariableSize);
-    void ResetAll(ComparisonVariableSize nNewComparisonVariableSize, ByteAddress start, ByteAddress end);
+    void ResetAll(ComparisonVariableSize nNewComparisonVariableSize, ra::ByteAddress start, ra::ByteAddress end);
 
     size_t Compare(ComparisonType nCompareType, unsigned int nTestValue, bool& bResultsFound);
 
@@ -85,12 +85,12 @@ public:
 
     void ChangeActiveMemBank(unsigned short nMemBank);
 
-    unsigned char ActiveBankRAMByteRead(ByteAddress nOffs) const;
-    void ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal);
+    unsigned char ActiveBankRAMByteRead(ra::ByteAddress nOffs) const;
+    void ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal);
 
-    unsigned int ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const;
+    unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const;
 
-    void ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const;
+    void ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const;
 
 private:
     std::map<size_t, BankData> m_Banks;

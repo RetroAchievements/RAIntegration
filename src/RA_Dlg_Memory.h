@@ -59,8 +59,8 @@ public:
     unsigned int m_nCount = 0;
     unsigned int m_nLastQueryVal = 0;
     bool m_bUseLastValue;
-    tstring m_sFirstLine;
-    tstring m_sSecondLine;
+    ra::tstring m_sFirstLine;
+    ra::tstring m_sSecondLine;
     ComparisonType m_nCompareType;
 };
 
@@ -98,10 +98,10 @@ public:
     void GenerateResizes(HWND hDlg);
 
 private:
-    bool GetSystemMemoryRange(ByteAddress& start, ByteAddress& end);
-    bool GetGameMemoryRange(ByteAddress& start, ByteAddress& end);
+    bool GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
+    bool GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
-    bool GetSelectedMemoryRange(ByteAddress& start, ByteAddress& end);
+    bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
     void UpdateSearchResult(unsigned int index, unsigned int &nMemVal, TCHAR(&buffer)[1024]);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);

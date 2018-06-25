@@ -545,7 +545,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
+        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
         col.pszText = const_cast<LPTSTR>(colTitle.c_str());
         col.cchTextMax = 255;
         col.iSubItem = i;
@@ -592,7 +592,7 @@ void Dlg_MemBookmark::AddAddress()
     // Get Code Note and add as description
     const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-        NewBookmark->SetDescription(Widen(pSavedNote->Note()).c_str());
+        NewBookmark->SetDescription(ra::Widen(pSavedNote->Note()).c_str());
 
     // Add Bookmark to vector and map
     AddBookmark(NewBookmark);
@@ -714,10 +714,10 @@ void Dlg_MemBookmark::ExportJSON()
             oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
             auto defaultFileName{ oss.str() };
 
-            if (SUCCEEDED(hr = pDlg->SetFileName(Widen(defaultFileName).c_str())))
+            if (SUCCEEDED(hr = pDlg->SetFileName(ra::Widen(defaultFileName).c_str())))
             {
                 PIDLIST_ABSOLUTE pidl{ nullptr };
-                if (SUCCEEDED(hr = SHParseDisplayName(Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
+                if (SUCCEEDED(hr = SHParseDisplayName(ra::Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
                     CComPtr<IShellItem> pItem;
                     SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
@@ -743,8 +743,9 @@ void Dlg_MemBookmark::ExportJSON()
                                         Value item(kObjectType);
 
                                         oss.str("");
-                                        oss << Narrow(bookmark->Description());
-                                        Value s{ oss.str().c_str(), allocator };
+                                        oss << ra::Narrow(bookmark->Description());
+                                        auto str{ oss.str() };
+                                        Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -791,7 +792,7 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                     MemBookmark* NewBookmark = new MemBookmark();
 
                     wchar_t buffer[256];
-                    swprintf_s(buffer, 256, L"%s", Widen(BookmarksData[i]["Description"].GetString()).c_str());
+                    swprintf_s(buffer, 256, L"%s", ra::Widen(BookmarksData[i]["Description"].GetString()).c_str());
                     NewBookmark->SetDescription(buffer);
 
                     NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());

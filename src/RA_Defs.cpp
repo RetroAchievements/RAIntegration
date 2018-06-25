@@ -11,20 +11,6 @@ GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 
 namespace ra {
 
-
-
-std::string DataStreamAsString(const DataStream& stream)
-{
-    auto str{ detail::string_cast<std::string>(stream) };
-
-    // pesky null character
-    if (!str.empty())
-        str.pop_back();
-
-    return str;
-}
-
-
 std::string Narrow(const std::wstring& wstr)
 {
     return Narrow(wstr.c_str());
@@ -39,14 +25,16 @@ std::string Narrow(std::wstring&& wstr) noexcept
 
 std::string Narrow(const wchar_t* wstr)
 {
-    std::string str;
     auto state{ std::mbstate_t{} };
     auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0_z, &state) };
+
+    // doesn't work with unique_ptr, though it works with sprintf and the functions in RAWeb
+    std::string str;
     str.reserve(len);
 
     ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, to_signed(len), str.data(),
-        to_signed(str.capacity()), nullptr, nullptr);
-    return str;
+        to_signed(str.length()), nullptr, nullptr);
+    return str.data(); // the .data() part is required
 }
 
 std::wstring Widen(const std::string& str)
@@ -62,27 +50,22 @@ std::wstring Widen(std::string&& str) noexcept
 
 std::wstring Widen(const char* str)
 {
-    std::wstring wstr;
     auto len{ 1_z + std::mbstowcs(nullptr, str, 0_z) };
+    // doesn't work with unique_ptr
+    std::wstring wstr;
     wstr.reserve(len);
 
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, to_signed(len), wstr.data(),
         to_signed(len));
-    return wstr;
+    return wstr.data();
 }
 
-std::string ByteAddressToString(ByteAddress nAddr)
+std::string ByteAddressToString(ra::ByteAddress nAddr)
 {
     std::ostringstream oss;
     oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
     return oss.str();
 }
-
-// We'll just force it to be a regular byte string.
-DataStream to_datastream(const std::string& str) noexcept
-{
-    return detail::string_cast<DataStream>(str);
-} // end function to_datastream
 
 std::wstring Widen(const wchar_t* wstr) { return std::remove_reference_t<std::wstring&&>(std::wstring{ wstr }); }
 std::wstring Widen(const std::wstring& wstr) { return wstr; }

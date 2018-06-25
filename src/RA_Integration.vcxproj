@@ -74,7 +74,7 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
-    <ClInclude Include="ra_fwd" />
+    <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
@@ -96,8 +96,8 @@
     <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ra_type_traits" />
-    <None Include="ra_utility" />
+    <None Include="ra_type_traits.h" />
+    <None Include="ra_utility.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>

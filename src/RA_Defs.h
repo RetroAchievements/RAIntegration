@@ -64,12 +64,10 @@
 
 #include <map>
 #include <array>
-#include <ciso646>
 #include <sstream>
 #include <queue>
-#include <iostream>
-#include <ra_utility>
-#include <ra_type_traits>
+#include "ra_utility.h"
+
 
 #ifndef RA_EXPORTS
 #include <cassert> 
@@ -109,8 +107,6 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 
 using namespace std::string_literals;
 //using namespace std::chrono_literals; we could use this later
-namespace ra {}
-using namespace ra;
 
 #endif	//RA_EXPORTS
 
@@ -130,7 +126,7 @@ using namespace ra;
 #define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
-#define _UNUSED
+#define _UNUSED              
 #define _CONSTANT_VAR        constexpr auto
 #endif // _HAS_CXX17        
 
@@ -159,6 +155,7 @@ using namespace ra;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
+// It can't seem to do macros anymore?
 #define RA_HOST_URL						"retroachievements.org"
 #define RA_HOST_IMG_URL					"i.retroachievements.org"
 
@@ -169,13 +166,6 @@ using namespace ra;
 
 //namespace RA
 //{
-template<typename T>
-_DEPRECATEDR("Replaced with std::clamp")
-static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
-{
-    return(val < lower) ? lower : ((val > upper) ? upper : val);
-}
-
 class RARect : public RECT
 {
 public:
@@ -326,7 +316,6 @@ const int SERVER_PING_DURATION = 2 * 60;
 
 namespace ra {
 
-_NODISCARD std::string DataStreamAsString(_In_ const DataStream& stream);
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
 _NODISCARD std::string Narrow(_In_ const wchar_t* wstr);
@@ -339,13 +328,7 @@ _NODISCARD std::wstring Widen(_In_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-
-
-
-
-// We'll just force it to be a regular byte string.
-_NODISCARD DataStream to_datastream(_In_ const std::string& str) noexcept;
+_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
 
 } // namespace ra
 

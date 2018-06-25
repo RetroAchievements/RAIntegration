@@ -42,7 +42,7 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
     m_Banks[nBankID].Writer = pWriter;
 }
 
-void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start, ByteAddress end)
+void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ra::ByteAddress start, ra::ByteAddress end)
 {
     //	RAM must be installed for this to work!
     if (m_Banks.size() == 0)
@@ -63,7 +63,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
     if ((m_nComparisonSizeMode == Nibble_Lower) ||
         (m_nComparisonSizeMode == Nibble_Upper))
     {
-        for (ByteAddress i = start; i <= end; ++i)
+        for (ra::ByteAddress i = start; i <= end; ++i)
         {
             unsigned char byte = ActiveBankRAMByteRead(i);
 
@@ -80,7 +80,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
     }
     else if (m_nComparisonSizeMode == EightBit)
     {
-        for (ByteAddress i = start; i <= end; ++i)
+        for (ra::ByteAddress i = start; i <= end; ++i)
         {
             pCandidate->m_nAddr = i;
             pCandidate->m_nLastKnownValue = ActiveBankRAMByteRead(i);
@@ -90,7 +90,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
     else if (m_nComparisonSizeMode == SixteenBit)
     {
         unsigned char low = ActiveBankRAMByteRead(start);
-        for (ByteAddress i = start + 1; i <= end; ++i)
+        for (ra::ByteAddress i = start + 1; i <= end; ++i)
         {
             unsigned char high = ActiveBankRAMByteRead(i);
             pCandidate->m_nAddr = i - 1;
@@ -105,7 +105,7 @@ void MemManager::ResetAll(ComparisonVariableSize nNewVarSize, ByteAddress start,
         {
             unsigned long value = ActiveBankRAMByteRead(start) | (ActiveBankRAMByteRead(start + 1) << 8) | (ActiveBankRAMByteRead(start + 2) << 16);
 
-            for (ByteAddress i = start + 3; i <= end; ++i)
+            for (ra::ByteAddress i = start + 3; i <= end; ++i)
             {
                 value |= (ActiveBankRAMByteRead(i) << 24);
                 pCandidate->m_nAddr = i - 3;
@@ -275,7 +275,7 @@ std::vector<size_t> MemManager::GetBankIDs() const
     return bankIDs;
 }
 
-unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const
+unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const
 {
     unsigned char buffer[4];
     switch (size)
@@ -312,7 +312,7 @@ unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariable
     }
 }
 
-unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
+unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 {
     const BankData* bank = nullptr;
 
@@ -331,7 +331,7 @@ unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
     return 0;
 }
 
-void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const
+void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const
 {
     const BankData* bank = nullptr;
 
@@ -377,7 +377,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
         *buffer++ = reader(nOffs++);
 }
 
-void MemManager::ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal)
+void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal)
 {
     int bankID = 0;
     int numBanks = m_Banks.size();

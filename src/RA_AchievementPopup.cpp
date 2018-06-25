@@ -55,15 +55,15 @@ void AchievementPopup::AddMessage(const MessagePopup& msg)
 void AchievementPopup::Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused)
 {
     if (bPaused)
-        fDelta = 0.0f;
-    fDelta = RAClamp<float>(fDelta, 0.0f, 0.3f);	//	Limit this!
+        fDelta = 0.0F;
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
     if (m_vMessages.size() > 0)
     {
         m_fTimer += fDelta;
         if (m_fTimer >= FINISH_AT)
         {
             m_vMessages.pop();
-            m_fTimer = 0.0f;
+            m_fTimer = 0.0F;
         }
     }
 }

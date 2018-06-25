@@ -19,12 +19,11 @@ using TCHAR = wchar_t;
 #define _TCHAR_DEFINED
 #endif // !_TCHAR_DEFINED
 
-using DWORD = unsigned long;
-using BYTE  = unsigned char;
 
-using tstring       = std::basic_string<TCHAR>;
-using DataStream    = std::basic_string<BYTE>;
 
+using tstring = std::basic_string<TCHAR>;
+
+using DWORD         = unsigned long;
 using ARGB          = DWORD;
 using ByteAddress   = std::size_t;
 using DataPos       = std::size_t;

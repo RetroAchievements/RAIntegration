@@ -227,7 +227,7 @@
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="ra_fwd">
+    <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -240,10 +240,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ra_type_traits">
+    <None Include="ra_type_traits.h">
       <Filter>Helpers</Filter>
     </None>
-    <None Include="ra_utility">
+    <None Include="ra_utility.h">
       <Filter>Helpers</Filter>
     </None>
   </ItemGroup>

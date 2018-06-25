@@ -55,7 +55,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         if (i == (NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
         newColumn.cx = COLUMN_SIZE[i];
-        tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
+        ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
         newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
         newColumn.cchTextMax = 255;
         newColumn.iSubItem = i;
@@ -181,7 +181,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
-        tstring sTextData = m_lbxData.back()[item.iSubItem].data();
+        ra::tstring sTextData = m_lbxData.back()[item.iSubItem].data();
         item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
 
         if (item.iSubItem == 0)
@@ -499,7 +499,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             TEXT("Refresh from Disk"),
                             MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            GameID nGameID = g_pCurrentGameData->GetGameID();
+                            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                             if (nGameID != 0)
                             {
                                 g_pLocalAchievements->Clear();
@@ -519,7 +519,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         TEXT("Refresh from Server"),
                         MB_YESNO | MB_ICONWARNING) == IDYES)
                     {
-                        GameID nGameID = g_pCurrentGameData->GetGameID();
+                        ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                         if (nGameID != 0)
                         {
                             g_pCoreAchievements->DeletePatchFile(nGameID);
@@ -987,7 +987,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             {
                 if (response["Success"].GetBool())
                 {
-                    const AchievementID nAchID = response["AchievementID"].GetUint();
+                    const ra::AchievementID nAchID = response["AchievementID"].GetUint();
                     NextAch.SetID(nAchID);
 
                     //	Update listbox on achievements dlg
@@ -1096,7 +1096,7 @@ void Dlg_Achievements::LoadAchievements(HWND hList)
         AddAchievement(hList, g_pActiveAchievements->GetAchievement(i));
 }
 
-void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
+void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
 {
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), FALSE);
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE);
@@ -1207,7 +1207,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         item.iItem = nItem;
         item.iSubItem = nColumn;
         item.cchTextMax = 256;
-        tstring sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
+        ra::tstring sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
         item.pszText = const_cast<LPTSTR>(sStr.c_str());
         if (ListView_SetItem(hList, &item) == FALSE)
         {

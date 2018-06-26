@@ -22,16 +22,12 @@
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <PostBuildEvent>
       <Command>
-         IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
-         IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
-         echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
-         copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-         :done
       </Command>
     </PostBuildEvent>
     <Link>

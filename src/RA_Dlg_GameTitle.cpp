@@ -47,6 +47,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 //	For all data responses to this request, populate our m_aGameTitles map
                 {
                     Value::ConstMemberIterator iter = Data.MemberBegin();
+
                     while (iter != Data.MemberEnd())
                     {
                         if (iter->name.IsNull() || iter->value.IsNull())

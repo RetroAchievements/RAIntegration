@@ -138,7 +138,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
 
         case VK_LEFT:
             if (bShiftHeld)
-                moveAddress(-((maxNibble + 1) >> 1), 0);
+                moveAddress(-(static_cast<int>(maxNibble + 1) >> 1), 0);
             else
                 moveAddress(0, -1);
             return true;

@@ -113,14 +113,12 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     RA_LOG("LB Data, Top Entries:\n");
     const Value& TopEntries = Response["TopEntries"];
-    for (SizeType i = 0; i < TopEntries.Size(); ++i)
+    for (auto& NextEntry : TopEntries.GetArray())
     {
-        const Value& NextEntry = TopEntries[i];
-
         const unsigned int nRank = NextEntry["Rank"].GetUint();
         const std::string& sUser = NextEntry["User"].GetString();
-        const int nUserScore = NextEntry["Score"].GetInt();
-        time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
+        const int nUserScore     = NextEntry["Score"].GetInt();
+        time_t nSubmitted        = NextEntry["DateSubmitted"].GetUint();
 
         RA_LOG(std::string("(" + std::to_string(nRank) + ") " + sUser + ": " + pLB->FormatScore(nUserScore)).c_str());
 

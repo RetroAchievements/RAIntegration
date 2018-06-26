@@ -26,7 +26,7 @@ extern const char* COMPARISONVARIABLESIZE_STR[];
 
 enum ComparisonVariableType
 {
-    Address,			//	compare to the value of a live address in RAM
+    Address,			//	compare to the  of a live address in RAM
     ValueComparison,	//	a number. assume 32 bit 
     DeltaMem,			//	the value last known at this address.
     DynamicVariable,	//	a custom user-set variable

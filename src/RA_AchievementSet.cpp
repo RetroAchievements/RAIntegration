@@ -77,9 +77,9 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
     const bool bHardcoreMode = doc["HardcoreMode"].GetBool();
     const Value& UserUnlocks = doc["UserUnlocks"];
 
-    for (SizeType i = 0; i < UserUnlocks.Size(); ++i)
+    for (auto& val : UserUnlocks.GetArray())
     {
-        AchievementID nNextAchID = static_cast<AchievementID>(UserUnlocks[i].GetUint());
+        auto nNextAchID = static_cast<AchievementID>(val.GetUint());
         //	IDs could be present in either core or unofficial:
         if (g_pCoreAchievements->Find(nNextAchID) != nullptr)
             g_pCoreAchievements->Unlock(nNextAchID);

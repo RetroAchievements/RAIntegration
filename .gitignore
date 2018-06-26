@@ -9,3 +9,4 @@ src/*_BACKUP_*.cpp
 src/*_BASE_*.cpp
 src/*_LOCAL_*.cpp
 src/clipboard.txt
+src/cpp.hint

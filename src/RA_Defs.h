@@ -53,7 +53,11 @@
 
 #include <Windows.h>
 #include <WindowsX.h>
+#pragma warning(push)
+#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
 #include <ShlObj.h>
+#pragma warning(pop)
+
 #include <tchar.h>
 
 #ifdef WIN32_LEAN_AND_MEAN

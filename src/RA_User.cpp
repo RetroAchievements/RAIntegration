@@ -207,10 +207,8 @@ void LocalRAUser::OnFriendListResponse(const Document& doc)
 
     const Value& FriendData = doc["Friends"];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
 
-    for (SizeType i = 0; i < FriendData.Size(); ++i)
+    for (auto& NextFriend : FriendData.GetArray())
     {
-        const Value& NextFriend = FriendData[i];
-
         RAUser* pUser = RAUsers::GetUser(NextFriend["Friend"].GetString());
         pUser->SetScore(NextFriend["RAPoints"].GetUint());
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());

@@ -15,6 +15,8 @@ char* DataStreamAsString(DataStream& stream)
     return reinterpret_cast<char*>(stream.data());
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4996) // codecvt deprecation
 std::string Narrow(const wchar_t* wstr)
 {
     static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
@@ -38,6 +40,8 @@ std::wstring Widen(const std::string& str)
     static std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
     return converter.from_bytes(str);
 }
+#pragma warning(pop)
+
 
 std::wstring Widen(const wchar_t* wstr)
 {

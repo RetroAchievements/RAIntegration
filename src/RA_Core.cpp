@@ -7,7 +7,7 @@
 #include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h" // atlbase.h
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"

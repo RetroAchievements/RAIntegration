@@ -52,7 +52,11 @@
 
 #include <Windows.h>
 #include <WindowsX.h>
+#pragma warning(push)
+#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
 #include <ShlObj.h>
+#pragma warning(pop)
+
 #include <tchar.h>
 
 #include <sstream>
@@ -370,11 +374,16 @@ _CONSTANT_VAR SERVER_PING_DURATION{ 2 * 60 };
 _CONSTANT_VAR& RA_LOG = RADebugLog;
 
 #ifdef _DEBUG
+#ifndef RA_UTEST
 #undef ASSERT
 inline auto ASSERT(_In_ bool x) noexcept->decltype(assert(x)) { assert(x); }
 #else
 #undef ASSERT
 inline auto ASSERT(_UNUSED _In_ bool x) noexcept->void {}
+#endif
+#else
+#undef ASSERT
+#define ASSERT( x ) {}
 #endif
 
 

@@ -660,7 +660,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride{};
                     switch (m_nDataSize)
                     {
                         case EightBit:
@@ -711,7 +711,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride{};
                             switch (m_nDataSize)
                             {
                                 case EightBit:
@@ -1505,6 +1505,16 @@ void Dlg_Memory::OnWatchingMemChange()
 
 void Dlg_Memory::RepopulateMemNotesFromFile()
 {
+    size_t nSize = 0;
+
+    GameID nGameID = g_pCurrentGameData->GetGameID();
+    if (nGameID != 0)
+    {
+        char sNotesFilename[1024];
+        sprintf_s(sNotesFilename, 1024, "%s%d-Notes2.txt", RA_DIR_DATA, nGameID);
+        nSize = m_CodeNotes.Load(sNotesFilename);
+    }
+
     HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
     if (hMemWatch != nullptr)
     {
@@ -1513,40 +1523,32 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
         while (ComboBox_DeleteString(hMemWatch, 0) != CB_ERR) {}
 
-        GameID nGameID = g_pCurrentGameData->GetGameID();
-        if (nGameID != 0)
+        //	Issue a fetch instead!
+        std::map<ByteAddress, CodeNotes::CodeNoteObj>::const_iterator iter = m_CodeNotes.FirstNote();
+        while (iter != m_CodeNotes.EndOfNotes())
         {
-            char sNotesFilename[1024];
-            sprintf_s(sNotesFilename, 1024, "%s%d-Notes2.txt", RA_DIR_DATA, nGameID);
-            size_t nSize = m_CodeNotes.Load(sNotesFilename);
+            const std::string sAddr = ByteAddressToString(iter->first);
+            ComboBox_AddString(hMemWatch, NativeStr(sAddr).c_str());
+            iter++;
+        }
 
-            //	Issue a fetch instead!
-            std::map<ByteAddress, CodeNotes::CodeNoteObj>::const_iterator iter = m_CodeNotes.FirstNote();
-            while (iter != m_CodeNotes.EndOfNotes())
+        if (nSize > 0)
+        {
+            //	Select the first one.
+            ComboBox_SetCurSel(hMemWatch, 0);
+
+            //	Note: as this is sorted, we should grab the desc again
+            TCHAR sAddrBuffer[64];
+            ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
+            const std::string sAddr = Narrow(sAddrBuffer);
+
+            ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
+            const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
+            if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {
-                const std::string sAddr = ByteAddressToString(iter->first);
-                ComboBox_AddString(hMemWatch, NativeStr(sAddr).c_str());
-                iter++;
-            }
-
-            if (nSize > 0)
-            {
-                //	Select the first one.
-                ComboBox_SetCurSel(hMemWatch, 0);
-
-                //	Note: as this is sorted, we should grab the desc again
-                TCHAR sAddrBuffer[64];
-                ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
-                const std::string sAddr = Narrow(sAddrBuffer);
-
-                ByteAddress nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
-                const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
-                if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                {
-                    SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
-                    MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-                    MemoryViewerControl::setWatchedAddress(nAddr);
-                }
+                SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
+                MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+                MemoryViewerControl::setWatchedAddress(nAddr);
             }
         }
     }

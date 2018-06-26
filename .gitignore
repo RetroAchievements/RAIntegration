@@ -6,3 +6,6 @@
 /RetroAchievementsKey
 test_app/
 packages/
+src/clipboard.txt
+.*_BACKUP_*
+src/*_REMOTE_*.cpp

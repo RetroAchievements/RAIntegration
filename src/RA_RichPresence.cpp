@@ -2,6 +2,7 @@
 
 #include "RA_Core.h"
 #include "RA_GameData.h"
+#include "RA_MemValue.h"
 
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
@@ -17,17 +18,6 @@ const std::string& RA_Lookup::Lookup(DataPos nValue) const
 
     static const std::string sUnknown = "";
     return sUnknown;
-}
-
-RA_Formattable::RA_Formattable(const std::string& sDesc, RA_Leaderboard::FormatType nType)
-    : m_sLookupDescription(sDesc),
-    m_nFormatType(nType)
-{
-}
-
-std::string RA_Formattable::Lookup(DataPos nValue) const
-{
-    return RA_Leaderboard::FormatScore(m_nFormatType, nValue);
 }
 
 RA_ConditionalDisplayString::RA_ConditionalDisplayString(const char* pBuffer)
@@ -120,35 +110,10 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
                     const char* pUnused = _ReadStringTil('=', pBuf, TRUE);
                     const char* pType = _ReadStringTil(EndLine, pBuf, TRUE);
 
-                    RA_Leaderboard::FormatType nType;
-
-                    if (strcmp(pType, "SCORE") == 0 || strcmp(pType, "POINTS") == 0)
-                    {
-                        nType = RA_Leaderboard::Format_Score;
-                    }
-                    else if (strcmp(pType, "TIME") == 0 || strcmp(pType, "FRAMES") == 0)
-                    {
-                        nType = RA_Leaderboard::Format_TimeFrames;
-                    }
-                    else if (strcmp(pType, "SECS") == 0)
-                    {
-                        nType = RA_Leaderboard::Format_TimeSecs;
-                    }
-                    else if (strcmp(pType, "MILLISECS") == 0)
-                    {
-                        nType = RA_Leaderboard::Format_TimeMillisecs;
-                    }
-                    else if (strcmp(pType, "VALUE") == 0)
-                    {
-                        nType = RA_Leaderboard::Format_Value;
-                    }
-                    else
-                    {
-                        nType = RA_Leaderboard::Format_Other;
-                    }
+                    MemValue::Format nType = MemValue::ParseFormat(pType);
 
                     RA_LOG("RP: Adding Formatter %s (%s)\n", sDesc.c_str(), pType);
-                    m_formats.push_back(RA_Formattable(sDesc, nType));
+                    m_formats[sDesc] = nType;
                 }
             }
             else if (strncmp(DisplayableStr, buffer, strlen(DisplayableStr)) == 0)
@@ -176,46 +141,29 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
     }
 }
 
-const std::string& RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
+const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
 {
-    static std::string sReturnVal;
-    sReturnVal.clear();
-
     //	check lookups
     for (size_t i = 0; i < m_lookups.size(); ++i)
     {
         if (m_lookups.at(i).Description().compare(sName) == 0)
         {
-            //	This lookup! (ugh must be non-const)
-            char buffer[1024];
-            sprintf_s(buffer, 1024, (char*)sMemString.c_str());
-
-            ValueSet nValue;
-            nValue.ParseMemString(buffer);
-            sReturnVal = m_lookups.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
-
-            return sReturnVal;
+            MemValue nValue;
+            nValue.ParseFromString(sMemString.c_str());
+            return m_lookups.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
         }
     }
 
     //	check formatters
-    for (size_t i = 0; i < m_formats.size(); ++i)
+    auto iter = m_formats.find(sName);
+    if (iter != m_formats.end())
     {
-        if (m_formats.at(i).Description().compare(sName) == 0)
-        {
-            //	This lookup! (ugh must be non-const)
-            char buffer[1024];
-            sprintf_s(buffer, 1024, (char*)sMemString.c_str());
-
-            ValueSet nValue;
-            nValue.ParseMemString(buffer);
-            sReturnVal = m_formats.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
-
-            return sReturnVal;
-        }
+        MemValue nValue;
+        nValue.ParseFromString(sMemString.c_str());
+        return nValue.GetFormattedValue(iter->second);
     }
 
-    return sReturnVal;
+    return "";
 }
 
 bool RA_RichPresenceInterpretter::Enabled() const

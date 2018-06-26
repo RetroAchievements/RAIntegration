@@ -629,8 +629,8 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{};
+    unsigned int width{};
     int n;
     char c;
 
@@ -668,7 +668,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{};
 
     switch (type)
     {

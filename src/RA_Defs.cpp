@@ -1,7 +1,7 @@
 #include "RA_Defs.h"
 
 #include <codecvt>
-
+#include <fstream>
 
 #ifdef RA_EXPORTS
 
@@ -17,7 +17,8 @@ char* DataStreamAsString(DataStream& stream)
     return reinterpret_cast<char*>(stream.data());
 }
 
-_Use_decl_annotations_
+#pragma warning(push)
+#pragma warning(disable : 4996) // codecvt header deprecation
 std::string Narrow(const wchar_t* wstr)
 {
     std::wstring_convert< std::codecvt_utf8_utf16< wchar_t >, wchar_t > converter;
@@ -44,6 +45,8 @@ std::wstring Widen(const std::string& str)
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
     return converter.from_bytes(str);
 }
+#pragma warning(pop)
+
 
 _Use_decl_annotations_
 std::wstring Widen(const wchar_t* wstr)
@@ -145,11 +148,8 @@ _Use_decl_annotations_
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    // SAL didn't like this
-    std::unique_ptr<FILE, decltype(&std::fclose)> fp{ std::fopen(RA_LOG_FILENAME, "a"), std::fclose };
-    fwrite(data, sizeof(char), strlen(data), fp.get());
+    std::ofstream ofile{ Narrow(RA_LOG_FILENAME), std::ios::app | std::ios::ate };
+    ofile << data;
 }
 
 

@@ -2,6 +2,9 @@
 #define RA_DEFS_H
 #pragma once
 
+
+
+
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -53,7 +56,12 @@
 
 #include <Windows.h>
 #include <WindowsX.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
 #include <ShlObj.h>
+#pragma warning(pop)
+
 #include <tchar.h>
 
 #ifdef WIN32_LEAN_AND_MEAN

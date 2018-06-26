@@ -25,15 +25,11 @@ std::string Narrow(std::wstring&& wstr) noexcept
 
 std::string Narrow(const wchar_t* wstr)
 {
-    auto state{ std::mbstate_t{} };
-    auto len{ 1 + std::wcsrtombs(nullptr, &wstr, 0_z, &state) };
-
-    // doesn't work with unique_ptr, though it works with sprintf and the functions in RAWeb
     std::string str;
-    str.reserve(len);
+    str.reserve(lstrlenW(wstr) * 4U); // read somewhere I Unicode charter could be 4 bytes.
 
-    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, to_signed(len), str.data(),
-        to_signed(len), nullptr, nullptr);
+    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, lstrlenW(wstr), str.data(),
+        lstrlenW(wstr) * 4U, nullptr, nullptr);
     return str.data(); // the .data() part is required
 }
 
@@ -50,8 +46,11 @@ std::wstring Widen(std::string&& str) noexcept
 
 std::wstring Widen(const char* str)
 {
+#pragma warning(push)
+#pragma warning(disable : 4996) // unreferenced inline functions
     auto len{ 1_z + std::mbstowcs(nullptr, str, 0_z) };
-    // doesn't work with unique_ptr
+#pragma warning(pop)
+    
     std::wstring wstr;
     wstr.reserve(len);
 

@@ -139,9 +139,15 @@ public:
     static HANDLE Mutex() { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
 
+    static void SetUserAgentString();
+    static void SetUserAgent(const std::string& sValue) { sUserAgent = Widen(sValue); }
+    static const std::wstring& GetUserAgent() { return sUserAgent; }
+
 private:
     static HANDLE ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;
+
+    static std::wstring sUserAgent;
 };
 
 

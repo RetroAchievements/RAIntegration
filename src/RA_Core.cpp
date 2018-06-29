@@ -202,6 +202,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     _RA_LoadPreferences();
 
+    RAWeb::SetUserAgentString();
     RAWeb::RA_InitializeHTTPThreads();
 
     //////////////////////////////////////////////////////////////////////////

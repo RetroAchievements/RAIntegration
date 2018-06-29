@@ -16,7 +16,9 @@ public:
     bool Load(const std::string& sFilename);
 
     const std::string& GetUsername() const override { return m_sUsername; }
+    void SetUsername(const std::string& sValue) override { m_sUsername = sValue; }
     const std::string& GetApiToken() const override { return m_sApiToken; }
+    void SetApiToken(const std::string& sValue) override { m_sApiToken = sValue; }
 
     bool IsFeatureEnabled(Feature nFeature) const override;
     void SetFeatureEnabled(Feature nFeature, bool bEnabled) override;

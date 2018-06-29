@@ -1,8 +1,7 @@
 #include "RA_Leaderboard.h"
 
-#ifndef RA_UTEST
-#include "services\impl\LeaderboardManager.hh"
-#endif
+#include "services\ILeaderboardManager.hh"
+#include "services\ServiceLocator.hh"
 
 #include <ctime>
 
@@ -154,23 +153,23 @@ void RA_Leaderboard::Test()
 
 void RA_Leaderboard::Start()
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.ActivateLeaderboard(*this);
-#endif
+    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    if (pLeaderboardManager)
+        pLeaderboardManager->ActivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Cancel()
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.DeactivateLeaderboard(*this);
-#endif
+    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    if (pLeaderboardManager)
+        pLeaderboardManager->DeactivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Submit(unsigned int nScore)
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.SubmitLeaderboardEntry(*this, nScore);
-#endif
+    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    if (pLeaderboardManager)
+        pLeaderboardManager->SubmitLeaderboardEntry(*this, nScore);
 }
 
 void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)

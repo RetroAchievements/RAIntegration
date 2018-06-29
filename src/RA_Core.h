@@ -69,12 +69,6 @@ extern "C" {
     //	Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
 
-    //	Load preferences from ra_prefs.cfg
-    API void CCONV _RA_LoadPreferences();
-
-    //	Save preferences to ra_prefs.cfg
-    API void CCONV _RA_SavePreferences();
-
     //	Display or unhide an RA dialog.
     API void CCONV _RA_InvokeDialog(LPARAM nID);
 

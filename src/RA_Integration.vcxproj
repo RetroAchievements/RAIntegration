@@ -53,6 +53,7 @@
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
+    <ClCompile Include="services\Initialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />
@@ -90,8 +91,10 @@
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\IConfiguration.hh" />
+    <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
+    <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
   </ItemGroup>

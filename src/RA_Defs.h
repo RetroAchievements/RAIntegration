@@ -117,7 +117,6 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
-#define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
 #define RA_UNKNOWN_BADGE_IMAGE_URI		"00000"
 
 #define RA_DIR_OVERLAY					".\\Overlay\\"

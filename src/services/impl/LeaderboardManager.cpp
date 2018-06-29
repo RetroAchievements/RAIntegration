@@ -9,19 +9,21 @@
 
 #include <ctime>
 
-RA_LeaderboardManager g_LeaderboardManager;
+namespace ra {
+namespace services {
+namespace impl {
 
-RA_LeaderboardManager::RA_LeaderboardManager()
-    : RA_LeaderboardManager(ra::services::ServiceLocator::Get<ra::services::IConfiguration>())
+LeaderboardManager::LeaderboardManager()
+    : LeaderboardManager(ra::services::ServiceLocator::Get<ra::services::IConfiguration>())
 {
 }
 
-RA_LeaderboardManager::RA_LeaderboardManager(const ra::services::IConfiguration* pConfiguration)
+LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration* pConfiguration)
     : m_pConfiguration(pConfiguration)
 {
 }
 
-RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
+RA_Leaderboard* LeaderboardManager::FindLB(LeaderboardID nID)
 {
     std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
     while (iter != m_Leaderboards.end())
@@ -35,7 +37,7 @@ RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
     return nullptr;
 }
 
-void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
+void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
     if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
@@ -49,7 +51,7 @@ void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
 }
 
-void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
+void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
 {
     g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
 
@@ -63,7 +65,7 @@ void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) cons
     }
 }
 
-void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const
+void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const
 {
     g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
 
@@ -98,7 +100,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
     }
 }
 
-void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
+void LeaderboardManager::OnSubmitEntry(const Document& doc)
 {
     if (!doc.HasMember("Response"))
     {
@@ -116,7 +118,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     const std::string& sLBTitle = LBData["Title"].GetString();
     const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
 
-    RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
+    auto* pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+    RA_Leaderboard* pLB = pLeaderboardManager->FindLB(nLBID);
 
     const int nSubmittedScore = Response["Score"].GetInt();
     const int nBestScore = Response["BestScore"].GetInt();
@@ -162,19 +165,14 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
 
-void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
+void LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
 {
     if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         m_Leaderboards.push_back(lb);
 }
 
-void RA_LeaderboardManager::Test()
+void LeaderboardManager::Test()
 {
-    // redundant lookup required because service hasn't been registered when globals are evaluated
-    // it will be removed once this class is turned into a service
-    if (m_pConfiguration == nullptr)
-        m_pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-
     if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
@@ -186,7 +184,7 @@ void RA_LeaderboardManager::Test()
     }
 }
 
-void RA_LeaderboardManager::Reset()
+void LeaderboardManager::Reset()
 {
     std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
     while (iter != m_Leaderboards.end())
@@ -195,3 +193,7 @@ void RA_LeaderboardManager::Reset()
         iter++;
     }
 }
+
+} // namespace impl
+} // namespace services
+} // namespace ra

@@ -8,8 +8,22 @@ namespace impl {
 
 bool JsonFileConfiguration::Load(const std::string& sFilename)
 {
-    RA_LOG(__FUNCTION__ " - loading preferences...\n");
     m_sFilename = sFilename;
+
+    // default values
+    m_sUsername.clear();
+    m_sApiToken.clear();
+    m_sRomDirectory.clear();
+    m_mWindowPositions.clear();
+    m_nBackgroundThreads = 8;
+    m_vEnabledFeatures =
+        (1 << static_cast<int>(Feature::Hardcore)) |
+        (1 << static_cast<int>(Feature::Leaderboards)) |
+        (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
+        (1 << static_cast<int>(Feature::LeaderboardCounters)) |
+        (1 << static_cast<int>(Feature::LeaderboardScoreboards));
+
+    RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
     FILE* pf = nullptr;
     fopen_s(&pf, sFilename.c_str(), "rb");
@@ -18,27 +32,29 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
 
     Document doc;
     doc.ParseStream(FileStream(pf));
-
-    if (doc.HasParseError()) {
+    if (doc.HasParseError())
+    {
         fclose(pf);
         return false;
     }
+
+    m_vEnabledFeatures = 0;
 
     if (doc.HasMember("Username"))
         m_sUsername = doc["Username"].GetString();
     if (doc.HasMember("Token"))
         m_sApiToken = doc["Token"].GetString();
-    if (doc.HasMember("Hardcore Active") && doc["Hardcore Active"].GetBool())
-        m_vEnabledFeatures |= 1 << static_cast<int>(Feature::Hardcore);
+    if (doc.HasMember("Hardcore Active"))
+        SetFeatureEnabled(Feature::Hardcore, doc["Hardcore Active"].GetBool());
 
-    if (doc.HasMember("Leaderboards Active") && doc["Leaderboards Active"].GetBool())
-        m_vEnabledFeatures |= 1 << static_cast<int>(Feature::Leaderboards);
-    if (doc.HasMember("Leaderboard Notification Display") && doc["Leaderboard Notification Display"].GetBool())
-        m_vEnabledFeatures |= 1 << static_cast<int>(Feature::LeaderboardNotifications);
-    if (doc.HasMember("Leaderboard Counter Display") && doc["Leaderboard Counter Display"].GetBool())
-        m_vEnabledFeatures |= 1 << static_cast<int>(Feature::LeaderboardCounters);
-    if (doc.HasMember("Leaderboard Scoreboard Display") && doc["Leaderboard Scoreboard Display"].GetBool())
-        m_vEnabledFeatures |= 1 << static_cast<int>(Feature::LeaderboardScoreboards);
+    if (doc.HasMember("Leaderboards Active"))
+        SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
+    if (doc.HasMember("Leaderboard Notification Display"))
+        SetFeatureEnabled(Feature::LeaderboardNotifications, doc["Leaderboard Notification Display"].GetBool());
+    if (doc.HasMember("Leaderboard Counter Display"))
+        SetFeatureEnabled(Feature::LeaderboardCounters, doc["Leaderboard Counter Display"].GetBool());
+    if (doc.HasMember("Leaderboard Scoreboard Display"))
+        SetFeatureEnabled(Feature::LeaderboardScoreboards, doc["Leaderboard Scoreboard Display"].GetBool());
 
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();

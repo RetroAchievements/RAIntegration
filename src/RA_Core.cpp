@@ -10,7 +10,6 @@
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
-#include "services\impl\LeaderboardManager.hh"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
@@ -30,8 +29,11 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include "services\IConfiguration.hh"
+#include "services\ILeaderboardManager.hh"
+#include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
-#include "services\impl\JsonFileConfiguration.hh"
+
+#include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
 #include <locale>
 #include <codecvt>
@@ -184,7 +186,11 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     g_sROMDirLocation[0] = '\0';
 
-    _RA_LoadPreferences();
+    ra::services::Initialization::RegisterServices(g_sHomeDir, g_sClientName);
+
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    RAUsers::LocalUser().SetUsername(pConfiguration->GetUsername());
+    RAUsers::LocalUser().SetToken(pConfiguration->GetApiToken());
 
     RAWeb::RA_InitializeHTTPThreads();
 
@@ -234,7 +240,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
-    _RA_SavePreferences();
+    ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
 
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
@@ -394,7 +400,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     //g_PopupWindows.Clear(); //TBD
 
     g_bRAMTamperedWith = false;
-    g_LeaderboardManager.Clear();
+    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Clear();
     g_PopupWindows.LeaderboardPopups().Reset();
 
     if (nGameID != 0)
@@ -721,7 +727,7 @@ API int CCONV _RA_HandleHTTPResults()
                     break;
 
                 case RequestSubmitLeaderboardEntry:
-                    RA_LeaderboardManager::OnSubmitEntry(doc);
+                    ra::services::impl::LeaderboardManager::OnSubmitEntry(doc);
                     break;
 
                 case RequestLeaderboardInfo:
@@ -858,32 +864,6 @@ API void CCONV _RA_CheckForUpdate()
             TEXT("Please check your connection settings or RA forums!"),
             TEXT("Error!"), MB_OK);
     }
-}
-
-API void CCONV _RA_LoadPreferences()
-{
-    std::string sFilename = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
-
-    auto* configuration = new ra::services::impl::JsonFileConfiguration();
-    if (configuration->Load(sFilename))
-    {
-        RAUsers::LocalUser().SetUsername(configuration->GetUsername());
-        RAUsers::LocalUser().SetToken(configuration->GetApiToken());
-    }
-    ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(configuration);
-
-    //TBD:
-    //g_GameLibrary.LoadAll();
-}
-
-API void CCONV _RA_SavePreferences()
-{
-    auto* configuration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (configuration)
-        configuration->Save();
-
-    //TBD:
-    //g_GameLibrary.SaveAll();
 }
 
 void _FetchGameHashLibraryFromWeb()
@@ -1032,13 +1012,13 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_FILES_LOGIN:
             RA_Dlg_Login::DoModalLogin();
-            _RA_SavePreferences();
+            ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
             break;
 
         case IDM_RA_FILES_LOGOUT:
             RAUsers::LocalUser().Clear();
             g_PopupWindows.Clear();
-            _RA_SavePreferences();
+            ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
             _RA_UpdateAppTitle();
 
             MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
@@ -1286,7 +1266,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         g_pCoreAchievements->LoadProgress(sFilename);
-        g_LeaderboardManager.Reset();
+        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Reset();
         g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
@@ -1300,7 +1280,7 @@ API void CCONV _RA_DoAchievementsFrame()
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {
             g_pActiveAchievements->Test();
-            g_LeaderboardManager.Test();
+            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Test();
         }
         else
             g_nProcessTimer++;

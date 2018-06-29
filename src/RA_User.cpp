@@ -15,6 +15,9 @@
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 //static 
 LocalRAUser RAUsers::ms_LocalUser("");
 std::map<std::string, RAUser*> RAUsers::UserDatabase;
@@ -85,8 +88,7 @@ void RAUser::LoadOrFetchUserImage()
 
 LocalRAUser::LocalRAUser(const std::string& sUser) :
     RAUser(sUser),
-    m_bIsLoggedIn(FALSE),
-    m_bStoreToken(FALSE)
+    m_bIsLoggedIn(FALSE)
 {
 }
 
@@ -94,26 +96,18 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
 {
     m_bIsLoggedIn = FALSE;
 
-    if (Username().length() > 0)
+    if (!Username().empty() && !Token().empty())
     {
         if (bBlocking)
         {
             PostArgs args;
             args['u'] = Username();
-            args['t'] = Token();		//	Plaintext password(!)
+            args['t'] = Token();
 
             Document doc;
             if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
             {
-                if (doc["Success"].GetBool())
-                {
-                    const std::string& sUser = doc["User"].GetString();
-                    const std::string& sToken = doc["Token"].GetString();
-                    const unsigned int nPoints = doc["Score"].GetUint();
-                    const unsigned int nUnreadMessages = doc["Messages"].GetUint();
-
-                    ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, true);
-                }
+                HandleSilentLoginResponse(doc);
             }
         }
         else
@@ -125,7 +119,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     {
         //	Push dialog to get them to login!
         DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-        _RA_SavePreferences();
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
     }
 
 }
@@ -137,8 +131,6 @@ void LocalRAUser::AttemptSilentLogin()
     args['u'] = Username();
     args['t'] = Token();
     RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
-
-    m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
 void LocalRAUser::HandleSilentLoginResponse(Document& doc)
@@ -151,9 +143,13 @@ void LocalRAUser::HandleSilentLoginResponse(Document& doc)
         const unsigned int nUnreadMessages = doc["Messages"].GetUint();
         ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, TRUE);
     }
+    else if (doc.HasMember("Error"))
+    {
+        MessageBox(nullptr, NativeStr(doc["Error"].GetString()).c_str(), TEXT("Login Failed"), MB_OK);
+    }
     else
     {
-        MessageBox(nullptr, TEXT("Silent login failed, please login again!"), TEXT("Sorry!"), MB_OK);
+        MessageBox(nullptr, TEXT("Login failed, please login again."), TEXT("Login Failed"), MB_OK);
     }
 }
 
@@ -166,8 +162,10 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     SetScore(nPoints);
     //SetUnreadMessageCount( nMessages );
 
-    //	Used only for persistence: always store in memory (we need it!)
-    SetStoreToken(bRememberLogin);
+    auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    pConfiguration->SetUsername(sUser);
+    if (bRememberLogin)
+        pConfiguration->SetApiToken(sToken);
 
     m_aFriends.clear();
 

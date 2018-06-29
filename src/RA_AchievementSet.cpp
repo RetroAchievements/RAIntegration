@@ -4,13 +4,15 @@
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
-#include "services\impl\LeaderboardManager.hh"
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
+
+#include "services\ILeaderboardManager.hh"
+#include "services\ServiceLocator.hh"
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -524,7 +526,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                     auto nFormat = MemValue::ParseFormat(lbData["Format"].GetString());
                     lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
 
-                    g_LeaderboardManager.AddLeaderboard(lb);
+                    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->AddLeaderboard(lb);
                 }
             }
             else

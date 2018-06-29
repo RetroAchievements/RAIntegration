@@ -22,7 +22,9 @@ enum class Feature
 class IConfiguration {
 public:
     virtual const std::string& GetUsername() const = 0;
+    virtual void SetUsername(const std::string& sValue) = 0;
     virtual const std::string& GetApiToken() const = 0;
+    virtual void SetApiToken(const std::string& sValue) = 0;
 
     virtual bool IsFeatureEnabled(Feature nFeature) const = 0;
     virtual void SetFeatureEnabled(Feature nFeature, bool bEnabled) = 0;

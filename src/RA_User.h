@@ -85,8 +85,6 @@ public:
     RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends[nOffs] : nullptr; }
     const size_t NumFriends() const { return m_aFriends.size(); }
 
-    void SetStoreToken(BOOL bStoreToken) { bStoreToken = bStoreToken; }
-
     void SetToken(const std::string& sToken) { m_sToken = sToken; }
     const std::string& Token() const { return m_sToken; }
 
@@ -99,7 +97,6 @@ public:
 private:
     std::string				m_sToken;		//	AppToken Issued by server
     BOOL					m_bIsLoggedIn;
-    BOOL					m_bStoreToken;	//	Preference: Store the token/'password' for next time
     std::vector<RAUser*>	m_aFriends;
     std::vector<RAMessage>	m_aMessages;
 };

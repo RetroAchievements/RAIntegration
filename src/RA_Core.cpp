@@ -29,6 +29,10 @@
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+#include "services\impl\JsonFileConfiguration.hh"
+
 #include <locale>
 #include <codecvt>
 #include <direct.h>
@@ -51,26 +55,6 @@ const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
-bool g_bHardcoreModeActive = true;
-bool g_bLeaderboardsActive = true;
-bool g_bLBDisplayNotification = true;
-bool g_bLBDisplayCounter = true;
-bool g_bLBDisplayScoreboard = true;
-unsigned int g_nNumHTTPThreads = 15;
-
-typedef struct WindowPosition
-{
-    int nLeft;
-    int nTop;
-    int nWidth;
-    int nHeight;
-    bool bLoaded;
-
-    static const int nUnset = -99999;
-} WindowPosition;
-
-typedef std::map<std::string, WindowPosition> WindowPositionMap;
-WindowPositionMap g_mWindowPositions;
 
 namespace {
 const unsigned int PROCESS_WAIT_TIME = 100;
@@ -350,7 +334,8 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
 
 API int CCONV _RA_HardcoreModeIsActive()
 {
-    return g_bHardcoreModeActive;
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    return pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore);
 }
 
 API int CCONV _RA_HTTPGetRequestExists(const char* sPageName)
@@ -440,15 +425,19 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         g_pLocalAchievements->Clear();
     }
 
-    if (!g_bHardcoreModeActive && g_bLeaderboardsActive)
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo));
-    }
-    else if (!g_bHardcoreModeActive)
-    {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Playing in Softcore Mode", "", PopupInfo));
+        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))
+        {
+            g_PopupWindows.AchievementPopups().AddMessage(
+                MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo));
+        }
+        else
+        {
+            g_PopupWindows.AchievementPopups().AddMessage(
+                MessagePopup("Playing in Softcore Mode", "", PopupInfo));
+        }
     }
 
     g_AchievementsDialog.OnLoad_NewRom(nGameID);
@@ -771,18 +760,20 @@ API HMENU CCONV _RA_CreatePopupMenu()
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
 
+        auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
         // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA, pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 
         AppendMenu(hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards");
-        AppendMenu(hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
+        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
+        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
+        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
 
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
@@ -871,115 +862,15 @@ API void CCONV _RA_CheckForUpdate()
 
 API void CCONV _RA_LoadPreferences()
 {
-    RA_LOG(__FUNCTION__ " - loading preferences...\n");
+    std::string sFilename = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "rb");
-    if (pf == nullptr)
+    auto* configuration = new ra::services::impl::JsonFileConfiguration();
+    if (configuration->Load(sFilename))
     {
-        //	Test for first-time use:
-        //RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
-        //
-        //char sWelcomeMessage[4096];
-
-        //sprintf_s( sWelcomeMessage, 4096, 
-        //	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
-        //	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
-
-        //switch( g_EmulatorID )
-        //{
-        //case RA_Gens:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
-        //	break;
-        //case RA_VisualboyAdvance:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
-        //	break;
-        //case RA_Snes9x:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
-        //	break;
-        //case RA_FCEUX:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
-        //	break;
-        //case RA_PCE:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
-        //	break;
-        //}
-
-        //strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
-        //	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
-
-        //MessageBox( g_RAMainWnd, 
-        //	sWelcomeMessage,
-        //	"Welcome to RetroAchievements!", MB_OK );
-
-        //	TBD: setup some decent default variables:
-        _RA_SavePreferences();
+        RAUsers::LocalUser().SetUsername(configuration->GetUsername());
+        RAUsers::LocalUser().SetToken(configuration->GetApiToken());
     }
-    else
-    {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-
-        if (doc.HasParseError())
-        {
-            //MessageBox( nullptr, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
-            _RA_SavePreferences();
-        }
-        else
-        {
-            if (doc.HasMember("Username"))
-                RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-            if (doc.HasMember("Token"))
-                RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-            if (doc.HasMember("Hardcore Active"))
-                g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-
-            if (doc.HasMember("Leaderboards Active"))
-                g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-            if (doc.HasMember("Leaderboard Notification Display"))
-                g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
-            if (doc.HasMember("Leaderboard Counter Display"))
-                g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
-            if (doc.HasMember("Leaderboard Scoreboard Display"))
-                g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
-
-            if (doc.HasMember("Num Background Threads"))
-                g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-            if (doc.HasMember("ROM Directory"))
-                g_sROMDirLocation = doc["ROM Directory"].GetString();
-
-            if (doc.HasMember("Window Positions"))
-            {
-                const Value& positions = doc["Window Positions"];
-                if (positions.IsObject())
-                {
-                    for (Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
-                    {
-                        WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
-                        pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
-                        pos.bLoaded = false;
-
-                        if (iter->value.HasMember("X"))
-                            pos.nLeft = iter->value["X"].GetInt();
-                        if (iter->value.HasMember("Y"))
-                            pos.nTop = iter->value["Y"].GetInt();
-                        if (iter->value.HasMember("Width"))
-                            pos.nWidth = iter->value["Width"].GetInt();
-                        if (iter->value.HasMember("Height"))
-                            pos.nHeight = iter->value["Height"].GetInt();
-                    }
-                }
-            }
-        }
-
-        fclose(pf);
-    }
+    ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(configuration);
 
     //TBD:
     //g_GameLibrary.LoadAll();
@@ -987,60 +878,9 @@ API void CCONV _RA_LoadPreferences()
 
 API void CCONV _RA_SavePreferences()
 {
-    RA_LOG(__FUNCTION__ " - saving preferences...\n");
-
-    if (g_sClientName == nullptr)
-    {
-        RA_LOG(__FUNCTION__ " - aborting save, we don't even know who we are...\n");
-        return;
-    }
-
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
-    if (pf != nullptr)
-    {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
-
-        Document doc;
-        doc.SetObject();
-
-        Document::AllocatorType& a = doc.GetAllocator();
-        doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-        doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
-        doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-        doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-        doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-        doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-        doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-        doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-        doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
-
-        Value positions(kObjectType);
-        for (WindowPositionMap::const_iterator iter = g_mWindowPositions.begin(); iter != g_mWindowPositions.end(); ++iter)
-        {
-            Value rect(kObjectType);
-            if (iter->second.nLeft != WindowPosition::nUnset)
-                rect.AddMember("X", iter->second.nLeft, a);
-            if (iter->second.nTop != WindowPosition::nUnset)
-                rect.AddMember("Y", iter->second.nTop, a);
-            if (iter->second.nWidth != WindowPosition::nUnset)
-                rect.AddMember("Width", iter->second.nWidth, a);
-            if (iter->second.nHeight != WindowPosition::nUnset)
-                rect.AddMember("Height", iter->second.nHeight, a);
-
-            if (rect.MemberCount() > 0)
-                positions.AddMember(StringRef(iter->first.c_str()), rect, a);
-        }
-
-        if (positions.MemberCount() > 0)
-            doc.AddMember("Window Positions", positions.Move(), a);
-
-        doc.Accept(writer);	//	Save
-
-        fclose(pf);
-    }
+    auto* configuration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (configuration)
+        configuration->Save();
 
     //TBD:
     //g_GameLibrary.SaveAll();
@@ -1081,36 +921,30 @@ void _FetchMyProgressFromWeb()
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
 {
-    WindowPosition new_pos;
-    WindowPosition* pos;
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter != g_mWindowPositions.end())
-    {
-        pos = &iter->second;
-    }
-    else
-    {
-        pos = &new_pos;
-        pos->nLeft = pos->nTop = pos->nWidth = pos->nHeight = WindowPosition::nUnset;
-    }
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    ra::ui::Position oPosition = pConfiguration->GetWindowPosition(std::string(sDlgKey));
+    ra::ui::Size oSize = pConfiguration->GetWindowSize(std::string(sDlgKey));
 
+    // if the remembered size is less than the default size, reset it
     RECT rc;
     GetWindowRect(hDlg, &rc);
     const int nDlgWidth = rc.right - rc.left;
-    if (pos->nWidth != WindowPosition::nUnset && pos->nWidth < nDlgWidth)
-        pos->nWidth = WindowPosition::nUnset;
+    if (oSize.Width != INT32_MIN && oSize.Width < nDlgWidth)
+        oSize.Width = INT32_MIN;
     const int nDlgHeight = rc.bottom - rc.top;
-    if (pos->nHeight != WindowPosition::nUnset && pos->nHeight < nDlgHeight)
-        pos->nHeight = WindowPosition::nUnset;
+    if (oSize.Height != INT32_MIN && oSize.Height < nDlgHeight)
+        oSize.Height = INT32_MIN;
 
     RECT rcMainWindow;
     GetWindowRect(g_RAMainWnd, &rcMainWindow);
 
-    rc.left = (pos->nLeft != WindowPosition::nUnset) ? (rcMainWindow.left + pos->nLeft) : bToRight ? rcMainWindow.right : rcMainWindow.left;
-    rc.right = (pos->nWidth != WindowPosition::nUnset) ? (rc.left + pos->nWidth) : (rc.left + nDlgWidth);
-    rc.top = (pos->nTop != WindowPosition::nUnset) ? (rcMainWindow.top + pos->nTop) : bToBottom ? rcMainWindow.bottom : rcMainWindow.top;
-    rc.bottom = (pos->nHeight != WindowPosition::nUnset) ? (rc.top + pos->nHeight) : (rc.top + nDlgHeight);
+    // determine where the window should be placed
+    rc.left = (oPosition.X != INT32_MIN) ? (rcMainWindow.left + oPosition.X) : bToRight ? rcMainWindow.right : rcMainWindow.left;
+    rc.right = (oSize.Width != INT32_MIN) ? (rc.left + oSize.Width) : (rc.left + nDlgWidth);
+    rc.top = (oPosition.Y != INT32_MIN) ? (rcMainWindow.top + oPosition.Y) : bToBottom ? rcMainWindow.bottom : rcMainWindow.top;
+    rc.bottom = (oSize.Height != INT32_MIN) ? (rc.top + oSize.Height) : (rc.top + nDlgHeight);
 
+    // make sure the window is on screen
     RECT rcWorkArea;
     if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0))
     {
@@ -1142,46 +976,33 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
     }
 
     SetWindowPos(hDlg, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0);
-
-    pos->bLoaded = true;
-
-    if (pos == &new_pos)
-        g_mWindowPositions[std::string(sDlgKey)] = new_pos;
 }
 
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rcMainWindow;
     GetWindowRect(g_RAMainWnd, &rcMainWindow);
 
     RECT rc;
     GetWindowRect(hDlg, &rc);
 
-    iter->second.nLeft = rc.left - rcMainWindow.left;
-    iter->second.nTop = rc.top - rcMainWindow.top;
+    ra::ui::Position oPosition;
+    oPosition.X = rc.left - rcMainWindow.left;
+    oPosition.Y = rc.top - rcMainWindow.top;
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()->SetWindowPosition(std::string(sDlgKey), oPosition);
 }
 
 void RememberWindowSize(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rc;
     GetWindowRect(hDlg, &rc);
 
-    iter->second.nWidth = rc.right - rc.left;
-    iter->second.nHeight = rc.bottom - rc.top;
+    ra::ui::Size oSize;
+    oSize.Width = rc.right - rc.left;
+    oSize.Height = rc.bottom - rc.top;
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()->SetWindowSize(std::string(sDlgKey), oSize);
 }
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)
@@ -1231,7 +1052,10 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_HARDCORE_MODE:
         {
-            g_bHardcoreModeActive = !g_bHardcoreModeActive;
+            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore,
+                !pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore));
+
             _RA_ResetEmulation();
 
             g_PopupWindows.Clear();
@@ -1352,33 +1176,53 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_TOGGLELEADERBOARDS:
         {
-            g_bLeaderboardsActive = !g_bLeaderboardsActive;
+            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            bool bLeaderboardsActive = !pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards);
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
             std::string msg;
             msg += "Leaderboards are now ";
-            msg += (g_bLeaderboardsActive ? "enabled." : "disabled.");
+            msg += (bLeaderboardsActive ? "enabled." : "disabled.");
             msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
 
             MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
 
-            if (!g_bLeaderboardsActive)
+            if (!bLeaderboardsActive)
                 g_PopupWindows.LeaderboardPopups().Reset();
 
             _RA_RebuildMenu();
         }
         break;
+
         case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
-            g_bLBDisplayNotification = !g_bLBDisplayNotification;
+        {
+            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
+                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
+
             _RA_RebuildMenu();
-            break;
+        }
+        break;
+
         case IDM_RA_TOGGLE_LB_COUNTER:
-            g_bLBDisplayCounter = !g_bLBDisplayCounter;
+        {
+            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
+                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
+
             _RA_RebuildMenu();
-            break;
+        }
+        break;
+
         case IDM_RA_TOGGLE_LB_SCOREBOARD:
-            g_bLBDisplayScoreboard = !g_bLBDisplayScoreboard;
+        {
+            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
+                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
+
             _RA_RebuildMenu();
-            break;
+        }
+        break;
 
         default:
             //	Unknown!
@@ -1410,9 +1254,10 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
     //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        if (g_bHardcoreModeActive)
+        auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            g_bHardcoreModeActive = false;
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore, false);
             RA_RebuildMenu();
             //RA_ResetEmulation();
         }
@@ -1429,10 +1274,13 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
     //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        if (g_bHardcoreModeActive)
+        auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
+            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
             MessageBox(nullptr, TEXT("Savestates are not allowed during Hardcore Mode!"), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
-            g_bHardcoreModeActive = false;
+
             RA_RebuildMenu();
             RA_ResetEmulation();
         }

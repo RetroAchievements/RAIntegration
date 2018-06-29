@@ -225,7 +225,7 @@ void AchievementSet::Test()
                     args['u'] = RAUsers::LocalUser().Username();
                     args['t'] = RAUsers::LocalUser().Token();
                     args['a'] = std::to_string(ach.ID());
-                    args['h'] = std::to_string(static_cast<int>(g_bHardcoreModeActive));
+                    args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
                     RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
                 }
@@ -373,7 +373,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     args['g'] = std::to_string(nGameID);
-    args['h'] = g_bHardcoreModeActive ? "1" : "0";
+    args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
     Document doc;
     if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
@@ -547,7 +547,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                 args['u'] = RAUsers::LocalUser().Username();
                 args['t'] = RAUsers::LocalUser().Token();
                 args['g'] = std::to_string(nGameID);
-                args['h'] = g_bHardcoreModeActive ? "1" : "0";
+                args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
                 RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
 

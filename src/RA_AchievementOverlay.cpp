@@ -1416,7 +1416,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     sprintf_s(buffer, 256, " %d Points ", pUser->GetScore());
     TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
 
-    if (g_bHardcoreModeActive)
+    if (_RA_HardcoreModeIsActive())
     {
         COLORREF nLastColor = SetTextColor(hDC, COL_WARNING);
         COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);

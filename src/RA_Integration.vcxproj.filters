@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Services\Impl">
+      <UniqueIdentifier>{3b94374b-a06e-4994-b6f8-3a2f5e215803}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -116,6 +119,9 @@
     </ClCompile>
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
+      <Filter>Services\Impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -223,6 +229,16 @@
     </ClInclude>
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IConfiguration.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\JsonFileConfiguration.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ServiceLocator.hh" />
+    <ClInclude Include="ui\WindowViewModelBase.hh">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

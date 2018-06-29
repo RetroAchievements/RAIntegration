@@ -4,9 +4,21 @@
 #include "RA_md5factory.h"
 #include "RA_httpthread.h"
 
+#include "services\ServiceLocator.hh"
+
 #include <ctime>
 
 RA_LeaderboardManager g_LeaderboardManager;
+
+RA_LeaderboardManager::RA_LeaderboardManager()
+    : RA_LeaderboardManager(ra::services::ServiceLocator::Get<ra::services::IConfiguration>())
+{
+}
+
+RA_LeaderboardManager::RA_LeaderboardManager(const ra::services::IConfiguration* pConfiguration)
+    : m_pConfiguration(pConfiguration)
+{
+}
 
 RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
 {
@@ -24,7 +36,7 @@ RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
 
 void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
-    if (g_bLBDisplayNotification)
+    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
@@ -40,7 +52,7 @@ void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) cons
 {
     g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
 
-    if (g_bLBDisplayNotification)
+    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard attempt cancelled!",
@@ -61,7 +73,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
                 "Reset game to reenable posting.",
                 PopupInfo));
     }
-    else if (!g_bHardcoreModeActive)
+    else if (!m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard submission post cancelled.",
@@ -151,13 +163,18 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
 void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
 {
-    if (g_bLeaderboardsActive)	//	If not, simply ignore them.
+    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         m_Leaderboards.push_back(lb);
 }
 
 void RA_LeaderboardManager::Test()
 {
-    if (g_bLeaderboardsActive)
+    // redundant lookup required because service hasn't been registered when globals are evaluated
+    // it will be removed once this class is turned into a service
+    if (m_pConfiguration == nullptr)
+        m_pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
+    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
         while (iter != m_Leaderboards.end())

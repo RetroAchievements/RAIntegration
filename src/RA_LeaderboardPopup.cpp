@@ -4,6 +4,9 @@
 #include "RA_ImageFactory.h"
 #include "RA_LeaderboardManager.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 //	No emulator-specific code here please!
 
 namespace {
@@ -51,7 +54,8 @@ void LeaderboardPopup::Reset()
 
 void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
-    if (!g_bLeaderboardsActive)	//	If not, simply ignore them.
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         return;
 
     if (bPaused)
@@ -157,7 +161,8 @@ float LeaderboardPopup::GetOffsetPct() const
 
 void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 {
-    if (!g_bLeaderboardsActive)	//	If not, simply ignore them.
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         return;
 
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
@@ -203,7 +208,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     HBRUSH hBrushBG = CreateSolidBrush(g_ColBG);
 
     RECT rcScoreboardFrame;
-    if (g_bLBDisplayScoreboard)
+    if (pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
     {
         SetRect(&rcScoreboardFrame, nScoreboardX, nScoreboardY, nRightLim, nHeight - 8);
         InflateRect(&rcScoreboardFrame, 2, 2);
@@ -218,7 +223,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     {
         case State_ShowingProgress:
         {
-            if (!g_bLBDisplayCounter)
+            if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
                 break;
 
             int nProgressYOffs = 0;
@@ -255,7 +260,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
         case State_ShowingScoreboard:
         {
-            if (!g_bLBDisplayScoreboard)
+            if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
                 break;
 
             const RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(m_vScoreboardQueue.front());

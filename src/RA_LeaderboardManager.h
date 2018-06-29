@@ -4,12 +4,17 @@
 
 #include "RA_Leaderboard.h"
 
+#include "services\IConfiguration.hh"
+
 #include <rapidjson\include\rapidjson\document.h>
 #include <vector>
 
 class RA_LeaderboardManager
 {
 public:
+    RA_LeaderboardManager();
+    RA_LeaderboardManager(const ra::services::IConfiguration* pConfiguration);
+
     static void OnSubmitEntry(const rapidjson::Document& doc);
 
 public:
@@ -29,6 +34,8 @@ public:
 
 private:
     std::vector<RA_Leaderboard> m_Leaderboards;
+
+    const ra::services::IConfiguration* m_pConfiguration = nullptr;
 };
 
 extern RA_LeaderboardManager g_LeaderboardManager;

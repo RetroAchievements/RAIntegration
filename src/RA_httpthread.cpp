@@ -10,10 +10,12 @@
 #include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
+#include "services/IConfiguration.hh"
+#include "services/ServiceLocator.hh"
+
 #include <winhttp.h>
 #include <fstream>
 #include <time.h>
-
 
 const char* RequestTypeToString[] =
 {
@@ -680,8 +682,11 @@ void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
+    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    unsigned int nNumHTTPThreads = pConfiguration->GetNumBackgroundThreads();
+
     RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
-    for (size_t i = 0; i < g_nNumHTTPThreads; ++i)
+    for (size_t i = 0; i < nNumHTTPThreads; ++i)
     {
         DWORD dwThread;
         HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
@@ -758,7 +763,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                         {
                             if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
                                 args['m'] = "Developing Achievements";
-                            else if (g_bHardcoreModeActive)
+                            else if (_RA_HardcoreModeIsActive())
                                 args['m'] = "Inspecting Memory in Hardcore mode";
                             else if (g_nActiveAchievementSet == Core)
                                 args['m'] = "Fixing Achievements";

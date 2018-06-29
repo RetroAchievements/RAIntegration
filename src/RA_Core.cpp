@@ -10,7 +10,7 @@
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
-#include "RA_LeaderboardManager.h"
+#include "services\impl\LeaderboardManager.hh"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"

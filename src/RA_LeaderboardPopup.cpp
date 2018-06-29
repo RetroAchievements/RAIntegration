@@ -2,7 +2,7 @@
 
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
-#include "RA_LeaderboardManager.h"
+#include "services\impl\LeaderboardManager.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"

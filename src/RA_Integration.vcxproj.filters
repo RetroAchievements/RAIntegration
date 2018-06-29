@@ -114,13 +114,13 @@
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_LeaderboardManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\LeaderboardManager.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
   </ItemGroup>
@@ -224,9 +224,6 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_LeaderboardManager.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
     </ClInclude>
@@ -239,6 +236,9 @@
     <ClInclude Include="services\ServiceLocator.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\LeaderboardManager.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,7 +4,7 @@
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
-#include "RA_LeaderboardManager.h"
+#include "services\impl\LeaderboardManager.hh"
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"

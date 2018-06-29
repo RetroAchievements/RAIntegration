@@ -1,4 +1,5 @@
-#include "RA_LeaderboardManager.h"
+#include "LeaderboardManager.hh"
+
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_md5factory.h"

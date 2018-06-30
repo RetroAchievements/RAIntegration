@@ -14,7 +14,7 @@ void Initialization::RegisterServices(const std::string& sHomeDir, const std::st
     pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
 
-    auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(pConfiguration);
+    auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
 }
 

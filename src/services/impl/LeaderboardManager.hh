@@ -16,7 +16,7 @@ class LeaderboardManager : public ILeaderboardManager
 {
 public:
     LeaderboardManager();
-    LeaderboardManager(const ra::services::IConfiguration* pConfiguration);
+    LeaderboardManager(const ra::services::IConfiguration& pConfiguration);
 
     static void OnSubmitEntry(const rapidjson::Document& doc);
 
@@ -37,7 +37,7 @@ public:
 private:
     std::vector<RA_Leaderboard> m_Leaderboards;
 
-    const ra::services::IConfiguration* m_pConfiguration = nullptr;
+    const ra::services::IConfiguration& m_pConfiguration;
 };
 
 } // namespace impl

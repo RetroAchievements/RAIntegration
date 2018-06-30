@@ -682,8 +682,8 @@ void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    unsigned int nNumHTTPThreads = pConfiguration->GetNumBackgroundThreads();
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    unsigned int nNumHTTPThreads = pConfiguration.GetNumBackgroundThreads();
 
     RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
     for (size_t i = 0; i < nNumHTTPThreads; ++i)

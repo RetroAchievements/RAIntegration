@@ -153,23 +153,17 @@ void RA_Leaderboard::Test()
 
 void RA_Leaderboard::Start()
 {
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    if (pLeaderboardManager)
-        pLeaderboardManager->ActivateLeaderboard(*this);
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().ActivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Cancel()
 {
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    if (pLeaderboardManager)
-        pLeaderboardManager->DeactivateLeaderboard(*this);
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().DeactivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Submit(unsigned int nScore)
 {
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    if (pLeaderboardManager)
-        pLeaderboardManager->SubmitLeaderboardEntry(*this, nScore);
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().SubmitLeaderboardEntry(*this, nScore);
 }
 
 void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)

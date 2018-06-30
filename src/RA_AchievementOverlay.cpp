@@ -189,11 +189,11 @@ BOOL AchievementOverlay::GoBack()
 
 BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
 
     const int nAchCount = (const int)(g_pActiveAchievements->NumAchievements());
     const int nNumFriends = (const int)(RAUsers::LocalUser().NumFriends());
-    const int nNumLBs = (const int)(pLeaderboardManager->Count());
+    const int nNumLBs = (const int)(pLeaderboardManager.Count());
     //const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
     const int nMsgCount = 0;
     int* pnScrollOffset = const_cast<int*>(GetActiveScrollOffset());	//	Dirty!
@@ -434,8 +434,8 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                     if ((*pnSelectedItem) < nNumLBs)
                     {
                         AddPage(OP_LEADERBOARD_EXAMINE);
-                        auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                        g_LBExamine.Initialize(pLeaderboardManager->GetLB((*pnSelectedItem)).ID());
+                        auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
                     }
                 }
                 //	Move page to match selection
@@ -455,8 +455,8 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                     if ((*pnSelectedItem) < (nNumLBs - 1))
                     {
                         (*pnSelectedItem)++;
-                        auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                        g_LBExamine.Initialize(pLeaderboardManager->GetLB((*pnSelectedItem)).ID());
+                        auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
                         m_bInputLock = TRUE;
                     }
                 }
@@ -465,8 +465,8 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                     if ((*pnSelectedItem) > 0)
                     {
                         (*pnSelectedItem)--;
-                        auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                        g_LBExamine.Initialize(pLeaderboardManager->GetLB((*pnSelectedItem)).ID());
+                        auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
                         m_bInputLock = TRUE;
                     }
                 }
@@ -939,9 +939,9 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RE
 
     m_nNumLeaderboardsBeingRendered = 0;
 
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
     unsigned int nNumLBsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nItemSpacing;
-    unsigned int nNumLBs = pLeaderboardManager->Count();
+    unsigned int nNumLBs = pLeaderboardManager.Count();
 
     if (nNumLBsToDraw > nNumLBs)
         nNumLBsToDraw = nNumLBs;
@@ -953,7 +953,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RE
             if (i >= nNumLBs)
                 continue;
 
-            const RA_Leaderboard& nextLB = pLeaderboardManager->GetLB(i);
+            const RA_Leaderboard& nextLB = pLeaderboardManager.GetLB(i);
 
             std::string sTitle(" " + nextLB.Title() + " ");
             const std::string& sPayload = nextLB.Description();
@@ -1055,8 +1055,8 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
     const int nWonByPlayerUserX = 100;
     const int nWonByPlayerScoreX = 320;
 
-    auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    const RA_Leaderboard* pLB = pLeaderboardManager->FindLB(g_LBExamine.m_nLBID);
+    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(g_LBExamine.m_nLBID);
     if (pLB == nullptr)
     {
         const std::string sMsg(" No leaderboard found ");
@@ -1753,8 +1753,8 @@ void LeaderboardExamine::OnReceiveData(const Document& doc)
     const Value& Entries = LBData["Entries"];
     ASSERT(Entries.IsArray());
 
-    auto* pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-    RA_Leaderboard* pLB = pLeaderboardManager->FindLB(nLBID);
+    auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+    RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
     if (!pLB)
         return;
 

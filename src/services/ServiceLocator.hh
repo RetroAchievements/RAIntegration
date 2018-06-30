@@ -11,26 +11,32 @@ namespace services {
 class ServiceLocator
 {
 public:
-    /* returns a pointer to the requested service, or nullptr if not found
+    /* returns a referece to a service implementing the requested interface
+     * 
+     * @throw std::runtime_error if no service is provided for the requested interface
      */
     template <class TClass>
-    static const TClass* Get()
+    static const TClass& Get()
     {
         return Service<TClass>::Get();
     }
 
-    /* returns a pointer to the requested service, or nullptr if not found
+    /* returns a referece to a service implementing the requested interface
+     *
+     * @throw std::runtime_error if no service is provided for the requested interface
      *
      * WARNING: mutable services are not guaranteed to be thread-safe. prefer using non-mutable
      *          services whenever possible.
      */
     template <class TClass>
-    static TClass* GetMutable()
+    static TClass& GetMutable()
     {
         return Service<TClass>::Get();
     }
     
-    /* registers a service
+    /* registers a service implementation for an interface
+     *
+     * @param pInstance    externally allocated instance (via new operator). ServiceLocator will delete at end of execution or when replaced.
      */
     template <class TClass>
     static void Provide(TClass* pInstance)
@@ -38,7 +44,7 @@ public:
         Service<TClass>::s_pInstance.reset(pInstance);
     }
     
-    /* temporarily overrides a service registration - primarily used in unit tests
+    /* temporarily overrides a service implementation - primarily used in unit tests
      */
     template <class TClass>
     class ServiceOverride
@@ -77,13 +83,40 @@ private:
     class Service
     {
     public:
-        static TClass* Get() 
+        static TClass& Get() 
         {
-            assert(s_pInstance != nullptr);
-            return s_pInstance.get();
+            if (s_pInstance == nullptr)
+                ThrowNoServiceProvidedException();
+
+            return *s_pInstance.get();
         }
         
         static std::unique_ptr<TClass> s_pInstance;
+
+    private:
+        static void ThrowNoServiceProvidedException()
+        {
+#if defined(__PRETTY_FUNCTION__)
+            std::string sMessage = __PRETTY_FUNCTION__;
+#elif defined (__FUNCTION__)
+            std::string sMessage = __FUNCTION__;
+#else
+            std::string sMessage = __FUNC__;
+#endif
+            size_t index = sMessage.find('<');
+            size_t index2 = sMessage.rfind('>');
+            if (index >= 0 && index2 > index)
+            {
+                sMessage.erase(index2);
+                sMessage.erase(0, index + 1);
+            }
+            sMessage.insert(0, "No service provided for ");
+
+            OutputDebugStringA("ERROR: ");
+            OutputDebugStringA(sMessage.c_str());
+            OutputDebugStringA("\n");
+            throw new std::runtime_error(sMessage);
+        }
     };
 };
 

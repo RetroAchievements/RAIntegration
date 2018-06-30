@@ -119,7 +119,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     {
         //	Push dialog to get them to login!
         DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-        ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
     }
 
 }
@@ -162,10 +162,10 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     SetScore(nPoints);
     //SetUnreadMessageCount( nMessages );
 
-    auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-    pConfiguration->SetUsername(sUser);
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    pConfiguration.SetUsername(sUser);
     if (bRememberLogin)
-        pConfiguration->SetApiToken(sToken);
+        pConfiguration.SetApiToken(sToken);
 
     m_aFriends.clear();
 

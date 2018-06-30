@@ -54,8 +54,8 @@ void LeaderboardPopup::Reset()
 
 void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         return;
 
     if (bPaused)
@@ -161,8 +161,8 @@ float LeaderboardPopup::GetOffsetPct() const
 
 void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 {
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         return;
 
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
@@ -208,7 +208,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     HBRUSH hBrushBG = CreateSolidBrush(g_ColBG);
 
     RECT rcScoreboardFrame;
-    if (pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
     {
         SetRect(&rcScoreboardFrame, nScoreboardX, nScoreboardY, nRightLim, nHeight - 8);
         InflateRect(&rcScoreboardFrame, 2, 2);
@@ -223,15 +223,15 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     {
         case State_ShowingProgress:
         {
-            if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
+            if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
                 break;
 
-            auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+            auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
             int nProgressYOffs = 0;
             std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
             while (iter != m_vActiveLBIDs.end())
             {
-                const RA_Leaderboard* pLB = pLeaderboardManager->FindLB(*iter);
+                const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(*iter);
                 if (pLB != nullptr)
                 {
                     //	Show current progress:
@@ -261,11 +261,11 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
         case State_ShowingScoreboard:
         {
-            if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
+            if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
                 break;
 
-            auto* pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-            const RA_Leaderboard* pLB = pLeaderboardManager->FindLB(m_vScoreboardQueue.front());
+            auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+            const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(m_vScoreboardQueue.front());
             if (pLB != nullptr)
             {
                 char buffer[1024];

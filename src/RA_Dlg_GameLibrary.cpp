@@ -554,8 +554,8 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
-            auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(pConfiguration->GetRomDirectory()).c_str());
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(pConfiguration.GetRomDirectory()).c_str());
             SetDlgItemText(hDlg, IDC_RA_GLIB_NAME, TEXT(""));
 
             m_GameHashLibrary.clear();
@@ -647,8 +647,8 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 case IDC_RA_PICKROMDIR:
                 {
                     std::string sROMDirLocation = GetFolderFromDialog();
-                    auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-                    pConfiguration->SetRomDirectory(sROMDirLocation);
+                    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                    pConfiguration.SetRomDirectory(sROMDirLocation);
                     RA_LOG("Selected Folder: %s\n", sROMDirLocation.c_str());
                     SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(sROMDirLocation).c_str());
                     return FALSE;

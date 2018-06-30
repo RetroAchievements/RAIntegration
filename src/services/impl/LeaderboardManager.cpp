@@ -18,7 +18,7 @@ LeaderboardManager::LeaderboardManager()
 {
 }
 
-LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration* pConfiguration)
+LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConfiguration)
     : m_pConfiguration(pConfiguration)
 {
 }
@@ -39,7 +39,7 @@ RA_Leaderboard* LeaderboardManager::FindLB(LeaderboardID nID)
 
 void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
-    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
@@ -55,7 +55,7 @@ void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
 {
     g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
 
-    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard attempt cancelled!",
@@ -76,7 +76,7 @@ void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsign
                 "Reset game to reenable posting.",
                 PopupInfo));
     }
-    else if (!m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
+    else if (!m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard submission post cancelled.",
@@ -118,8 +118,8 @@ void LeaderboardManager::OnSubmitEntry(const Document& doc)
     const std::string& sLBTitle = LBData["Title"].GetString();
     const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
 
-    auto* pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-    RA_Leaderboard* pLB = pLeaderboardManager->FindLB(nLBID);
+    auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+    RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
 
     const int nSubmittedScore = Response["Score"].GetInt();
     const int nBestScore = Response["BestScore"].GetInt();
@@ -167,13 +167,13 @@ void LeaderboardManager::OnSubmitEntry(const Document& doc)
 
 void LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
 {
-    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
         m_Leaderboards.push_back(lb);
 }
 
 void LeaderboardManager::Test()
 {
-    if (m_pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))
+    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
         while (iter != m_Leaderboards.end())

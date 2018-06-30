@@ -188,9 +188,9 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     ra::services::Initialization::RegisterServices(g_sHomeDir, g_sClientName);
 
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    RAUsers::LocalUser().SetUsername(pConfiguration->GetUsername());
-    RAUsers::LocalUser().SetToken(pConfiguration->GetApiToken());
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    RAUsers::LocalUser().SetUsername(pConfiguration.GetUsername());
+    RAUsers::LocalUser().SetToken(pConfiguration.GetApiToken());
 
     RAWeb::RA_InitializeHTTPThreads();
 
@@ -240,7 +240,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
-    ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
+    ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
@@ -340,8 +340,8 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
 
 API int CCONV _RA_HardcoreModeIsActive()
 {
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    return pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore);
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 }
 
 API int CCONV _RA_HTTPGetRequestExists(const char* sPageName)
@@ -400,7 +400,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     //g_PopupWindows.Clear(); //TBD
 
     g_bRAMTamperedWith = false;
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Clear();
+    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
     g_PopupWindows.LeaderboardPopups().Reset();
 
     if (nGameID != 0)
@@ -431,10 +431,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         g_pLocalAchievements->Clear();
     }
 
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards))
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
         {
             g_PopupWindows.AchievementPopups().AddMessage(
                 MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo));
@@ -766,20 +766,20 @@ API HMENU CCONV _RA_CreatePopupMenu()
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
 
-        auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
         // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA, pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 
         AppendMenu(hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards");
-        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr);
-        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
 
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
@@ -901,9 +901,9 @@ void _FetchMyProgressFromWeb()
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
 {
-    auto* pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    ra::ui::Position oPosition = pConfiguration->GetWindowPosition(std::string(sDlgKey));
-    ra::ui::Size oSize = pConfiguration->GetWindowSize(std::string(sDlgKey));
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    ra::ui::Position oPosition = pConfiguration.GetWindowPosition(std::string(sDlgKey));
+    ra::ui::Size oSize = pConfiguration.GetWindowSize(std::string(sDlgKey));
 
     // if the remembered size is less than the default size, reset it
     RECT rc;
@@ -970,7 +970,7 @@ void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
     oPosition.X = rc.left - rcMainWindow.left;
     oPosition.Y = rc.top - rcMainWindow.top;
 
-    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()->SetWindowPosition(std::string(sDlgKey), oPosition);
+    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(std::string(sDlgKey), oPosition);
 }
 
 void RememberWindowSize(HWND hDlg, const char* sDlgKey)
@@ -982,7 +982,7 @@ void RememberWindowSize(HWND hDlg, const char* sDlgKey)
     oSize.Width = rc.right - rc.left;
     oSize.Height = rc.bottom - rc.top;
 
-    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()->SetWindowSize(std::string(sDlgKey), oSize);
+    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowSize(std::string(sDlgKey), oSize);
 }
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)
@@ -1012,13 +1012,13 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_FILES_LOGIN:
             RA_Dlg_Login::DoModalLogin();
-            ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
+            ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
             break;
 
         case IDM_RA_FILES_LOGOUT:
             RAUsers::LocalUser().Clear();
             g_PopupWindows.Clear();
-            ra::services::ServiceLocator::Get<ra::services::IConfiguration>()->Save();
+            ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
             _RA_UpdateAppTitle();
 
             MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
@@ -1032,9 +1032,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_HARDCORE_MODE:
         {
-            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore,
-                !pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore));
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
 
             _RA_ResetEmulation();
 
@@ -1156,9 +1156,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_TOGGLELEADERBOARDS:
         {
-            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            bool bLeaderboardsActive = !pConfiguration->IsFeatureEnabled(ra::services::Feature::Leaderboards);
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
             std::string msg;
             msg += "Leaderboards are now ";
@@ -1176,9 +1176,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
         {
-            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
-                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
 
             _RA_RebuildMenu();
         }
@@ -1186,9 +1186,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_TOGGLE_LB_COUNTER:
         {
-            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
-                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
 
             _RA_RebuildMenu();
         }
@@ -1196,9 +1196,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_TOGGLE_LB_SCOREBOARD:
         {
-            auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
-                !pConfiguration->IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
 
             _RA_RebuildMenu();
         }
@@ -1234,10 +1234,10 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
     //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
             RA_RebuildMenu();
             //RA_ResetEmulation();
         }
@@ -1254,10 +1254,10 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
     //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        auto* pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-        if (pConfiguration->IsFeatureEnabled(ra::services::Feature::Hardcore))
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            pConfiguration->SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
 
             MessageBox(nullptr, TEXT("Savestates are not allowed during Hardcore Mode!"), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
 
@@ -1266,7 +1266,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         g_pCoreAchievements->LoadProgress(sFilename);
-        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Reset();
+        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
@@ -1280,7 +1280,7 @@ API void CCONV _RA_DoAchievementsFrame()
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {
             g_pActiveAchievements->Test();
-            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()->Test();
+            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Test();
         }
         else
             g_nProcessTimer++;

@@ -1,15 +1,18 @@
 #include "RA_Dlg_Achievement.h"
 
+
+
 #include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"
+#include "RA_httpthread.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_GameData.h"
 #include "RA_md5factory.h"
 #include "RA_User.h"
-#include "RA_GameData.h"
+
 
 
 namespace {
@@ -513,11 +516,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    else if (MessageBox(hDlg,
-                        TEXT("Are you sure that you want to download fresh achievements from ") RA_HOST_URL TEXT("?\n")
-                        TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"),
-                        TEXT("Refresh from Server"),
-                        MB_YESNO | MB_ICONWARNING) == IDYES)
+                    else if (auto msg = []() constexpr noexcept {
+                        constexpr tstring_view view{ TEXT("Are you sure that you want to download fresh achievements from retroachievements.org?\nThis will overwrite any changes that you have made with fresh achievements from the server.\n") };
+                        static_assert(view.find(RA_HOST_URL));
+                        return view;
+                    }; MessageBox(hDlg, msg().data(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                     {
                         GameID nGameID = g_pCurrentGameData->GetGameID();
                         if (nGameID != 0)
@@ -558,7 +561,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //	Add a new achievement with default params
                     Achievement& Cheevo = g_pActiveAchievements->AddAchievement();
                     Cheevo.SetAuthor(RAUsers::LocalUser().Username());
-                    Cheevo.SetBadgeImage("00000");
+                    Cheevo.SetBadgeImage(RA_UNKNOWN_BADGE_IMAGE_URI);
 
                     //	Reverse find where I am in the list:
                     unsigned int nOffset = 0;
@@ -653,14 +656,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         }
                         else
                         {
+                            tstring tstr{ TEXT("This achievement exists on ") };
+                            tstr.append(RA_HOST_URL);
+                            tstr.append(TEXT(".\n\n*Removing it will affect other gamers*\n\n")
+                                TEXT("Are you absolutely sure you want to delete this??"));
+
                             //	This achievement exists on the server: must call SQL to remove!
                             //	Note: this is probably going to affect other users: frown on this D:
-                            MessageBox(hDlg,
-                                TEXT("This achievement exists on ") RA_HOST_URL TEXT(".\n")
-                                TEXT("\n")
-                                TEXT("*Removing it will affect other gamers*\n")
-                                TEXT("\n")
-                                TEXT("Are you absolutely sure you want to delete this??"), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
+                            MessageBox(hDlg, tstr.c_str(), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
                         }
                     }
                 }

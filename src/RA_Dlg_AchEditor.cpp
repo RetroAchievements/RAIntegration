@@ -1,6 +1,9 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include <Commdlg.h>
+#if WIN32_LEAN_AND_MEAN
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 #include "RA_AchievementSet.h"
 #include "RA_Resource.h"
 #include "RA_Core.h"
@@ -927,11 +930,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
         case WM_SIZE:
         {
-            RARect winRect;
-            GetWindowRect(hDlg, &winRect);
-
-            for (ResizeContent content : vDlgAchEditorResize)
-                content.Resize(winRect.Width(), winRect.Height());
+            auto lpRect{ std::make_unique<RARect>() };
+            GetWindowRect(hDlg, LPRECT{ *lpRect });
+            for (ResizeContent& content : vDlgAchEditorResize)
+                content.Resize(lpRect->Width(), lpRect->Height());
 
             InvalidateRect(hDlg, nullptr, TRUE);
 
@@ -2219,42 +2221,42 @@ void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 
 void GenerateResizes(HWND hDlg)
 {
-    RARect windowRect;
-    GetWindowRect(hDlg, &windowRect);
-    pDlgAchEditorMin.x = windowRect.Width();
-    pDlgAchEditorMin.y = windowRect.Height();
+    auto windowRect{ std::make_unique<RARect>() };
+    GetWindowRect(hDlg, LPRECT{ *windowRect });
+    pDlgAchEditorMin.x = windowRect->Width();
+    pDlgAchEditorMin.y = windowRect->Height();
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ResizeContent::ALIGN_BOTTOM, TRUE));
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ResizeContent::ALIGN_BOTTOM_RIGHT, true });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ResizeContent::ALIGN_BOTTOM, true });
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ResizeContent::ALIGN_RIGHT, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ResizeContent::ALIGN_RIGHT, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ResizeContent::ALIGN_RIGHT, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ResizeContent::ALIGN_BOTTOM_RIGHT, false });
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADDCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DELETECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_COPYCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_PASTECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, FALSE));
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_ADDCOND), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_DELETECOND), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_COPYCOND), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_PASTECOND), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, false });
+    vDlgAchEditorResize.push_back(ResizeContent{ hDlg,
+        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, false });
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDCLOSE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.push_back(ResizeContent{hDlg,
+        GetDlgItem(hDlg, IDCLOSE), ResizeContent::ALIGN_BOTTOM_RIGHT, false});
 }

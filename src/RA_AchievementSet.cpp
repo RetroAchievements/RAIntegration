@@ -16,7 +16,7 @@ AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
+AchievementSet** ACH_SETS[]{ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
 static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
@@ -68,8 +68,8 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
 {
     if (!doc.HasMember("Success") || doc["Success"].GetBool() == false)
     {
+        // TODO: Replace asserts with exception handling for releases
         ASSERT(!"Invalid unlocks packet!");
-        return;
     }
 
     const GameID nGameID = static_cast<GameID>(doc["GameID"].GetUint());
@@ -100,11 +100,9 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
         m_Achievements.erase(m_Achievements.begin() + nIter);
         return TRUE;
     }
-    else
-    {
-        ASSERT(!"There are no achievements to remove...");
-        return FALSE;
-    }
+
+    ASSERT(!"There are no achievements to remove...");
+    return TRUE;
 }
 
 Achievement* AchievementSet::Find(AchievementID nAchievementID)
@@ -382,7 +380,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
         doc.HasMember("PatchData"))
     {
         const Value& PatchData = doc["PatchData"];
-        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+        ChangeToHomeDirectory();
         FILE* pf = nullptr;
         fopen_s(&pf, std::string(RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
         if (pf != nullptr)
@@ -404,7 +402,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     {
         //	Could not connect...
         PopupWindows::AchievementPopups().AddMessage(
-            MessagePopup(std::string("Could not connect to " RA_HOST_URL "..."), "Working offline...", PopupInfo)
+            MessagePopup(std::string{ "Could not connect to " } + RA_HOST_URL + " ...", "Working offline...", PopupInfo)
         );
 
         return FALSE;
@@ -420,7 +418,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
 
     const std::string sFilename = GetAchievementSetFilename(nGameID);
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pFile = nullptr;
     errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
     if (pFile != nullptr)
@@ -579,7 +577,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     char buffer[4096];
     sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
     FILE* pf = nullptr;

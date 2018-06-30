@@ -10,7 +10,13 @@
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
-#define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
+
+inline constexpr bool CALLBACK KEYDOWN(int vk) noexcept
+{
+    return { (GetAsyncKeyState(vk) & 0x8000) ? true
+                                             : false };
+}
+
 
 namespace {
 
@@ -91,7 +97,7 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 
 void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, RA_GAME_HASH_FILENAME, "rb");
     if (pf != nullptr)
@@ -120,7 +126,7 @@ void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibrary
 
 void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
     FILE* pf = nullptr;
     fopen_s(&pf, RA_TITLES_FILENAME, "rb");
     if (pf != nullptr)

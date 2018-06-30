@@ -2,9 +2,6 @@
 #define RA_DLG_ACHEDITOR_H
 #pragma once
 
-
-
-#include "RA_httpthread.h"
 #include "RA_Achievement.h"
 
 namespace {
@@ -29,6 +26,7 @@ private:
     HWND m_hDestComboBox;
 };
 
+class Achievement;
 
 class Dlg_AchievementEditor
 {

@@ -1,6 +1,10 @@
 #include "RA_ImageFactory.h"
 
-#include <commdlg.h>
+#if WIN32_LEAN_AND_MEAN
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+#include <wincodec.h>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -9,9 +13,6 @@
 
 UserImageFactoryVars g_UserImageFactoryInst;
 
-#ifndef SAFE_RELEASE
-#define SAFE_RELEASE( p ) { if ( (p) != nullptr ) { (p)->Release(); (p) = nullptr; } }
-#endif
 
 /******************************************************************
 *  Creates a DIB Section from the converted IWICBitmapSource      *
@@ -210,7 +211,7 @@ HRESULT ConvertBitmapSource(_In_ RECT rcDest, _Inout_ IWICBitmapSource*& pToRend
 _Use_decl_annotations_
 HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     if (!_FileExists(RA_DIR_BADGE + sBadgeURI + ".png"))
     {
@@ -231,7 +232,7 @@ HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
 _Use_decl_annotations_
 HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     if (!_FileExists(RA_DIR_USERPIC + sUserName + ".png"))
     {
@@ -253,7 +254,7 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
 _Use_decl_annotations_
 HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    ChangeToHomeDirectory();
 
     ASSERT(_FileExists(sPath));
     if (!_FileExists(sPath))

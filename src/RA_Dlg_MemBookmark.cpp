@@ -1,5 +1,6 @@
 #include "RA_Dlg_MemBookmark.h"
 
+#include <array>
 #include <atlbase.h> // CComPtr
 
 #include "RA_Core.h"
@@ -136,11 +137,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
         case WM_SIZE:
         {
-            RARect winRect;
-            GetWindowRect(hDlg, &winRect);
+            auto winRect{ std::make_unique<RARect>() };
+            GetWindowRect(hDlg, LPRECT{ *winRect });
 
-            for (ResizeContent content : vDlgMemBookmarkResize)
-                content.Resize(winRect.Width(), winRect.Height());
+            for (ResizeContent& content : vDlgMemBookmarkResize)
+                content.Resize(winRect->Width(), winRect->Height());
 
             //InvalidateRect( hDlg, nullptr, TRUE );
             RememberWindowSize(hDlg, "Memory Bookmarks");
@@ -628,8 +629,8 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{};
+    unsigned int width{};
     int n;
     char c;
 
@@ -667,7 +668,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{};
 
     switch (type)
     {
@@ -873,10 +874,10 @@ void Dlg_MemBookmark::OnLoad_NewRom()
 
 void Dlg_MemBookmark::GenerateResizes(HWND hDlg)
 {
-    RARect windowRect;
-    GetWindowRect(hDlg, &windowRect);
-    pDlgMemBookmarkMin.x = windowRect.Width();
-    pDlgMemBookmarkMin.y = windowRect.Height();
+    auto windowRect{ std::make_unique<RARect>() };
+    GetWindowRect(hDlg, LPRECT{ *windowRect });
+    pDlgMemBookmarkMin.x = windowRect->Width();
+    pDlgMemBookmarkMin.y = windowRect->Height();
 
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
         GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));

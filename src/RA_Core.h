@@ -162,4 +162,7 @@ void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
 
 
+_Success_(return != 0)
+/*_NODISCARD */BOOL CALLBACK ChangeToHomeDirectory();
+
 #endif // !RA_CORE_H

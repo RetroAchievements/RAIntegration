@@ -1,5 +1,10 @@
 #include "RA_Dlg_Memory.h"
 
+#if WIN32_LEAN_AND_MEAN
+#include <ShellAPI.h>
+#endif // WIN32_LEAN_AND_MEAN
+
+
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_GameData.h"
@@ -9,10 +14,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #ifndef ID_OK
-#define ID_OK                           1024
+#define ID_OK     1024
 #endif
 #ifndef ID_CANCEL
-#define ID_CANCEL                       1025
+#define ID_CANCEL 1025
 #endif
 
 namespace {
@@ -655,7 +660,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride{};
                     switch (m_nDataSize)
                     {
                         case EightBit:
@@ -706,7 +711,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride{};
                             switch (m_nDataSize)
                             {
                                 case EightBit:
@@ -994,11 +999,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_SIZE:
         {
-            RARect winRect;
-            GetWindowRect(hDlg, &winRect);
+            auto windowRect{ std::make_unique<RARect>() };
+            GetWindowRect(hDlg, LPRECT{ *windowRect });
 
-            for (ResizeContent content : vDlgMemoryResize)
-                content.Resize(winRect.Width(), winRect.Height());
+            for (ResizeContent& content : vDlgMemoryResize)
+                content.Resize(windowRect->Width(), windowRect->Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
         }
@@ -1264,7 +1269,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (g_pCurrentGameData->GetGameID() != 0)
                     {
-                        tstring sTarget = "http://" RA_HOST_URL + tstring("/codenotes.php?g=") + std::to_string(g_pCurrentGameData->GetGameID());
+                        // TODO: Put this alias as a function in ra_utility so it can be more generic
+                        const auto& to_tstring{ std::_Integral_to_string<TCHAR, GameID>};
+
+                        tstring sTarget{TEXT("http://")};
+                        sTarget.append(RA_HOST_URL);
+                        sTarget.append(TEXT("/codenotes.php?g=") + to_tstring(g_pCurrentGameData->GetGameID()));
+
                         ShellExecute(nullptr,
                             _T("open"),
                             NativeStr(sTarget).c_str(),
@@ -1940,10 +1951,11 @@ bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal
 
 void Dlg_Memory::GenerateResizes(HWND hDlg)
 {
-    RARect windowRect;
-    GetWindowRect(hDlg, &windowRect);
-    pDlgMemoryMin.x = windowRect.Width();
-    pDlgMemoryMin.y = windowRect.Height();
+    auto windowRect{ std::make_unique<RARect>() };
+    GetWindowRect(hDlg, LPRECT{ *windowRect });
+
+    pDlgMemoryMin.x = windowRect->Width();
+    pDlgMemoryMin.y = windowRect->Height();
 
     vDlgMemoryResize.push_back(ResizeContent(hDlg,
         GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ResizeContent::ALIGN_BOTTOM, TRUE));

@@ -5,7 +5,6 @@
 #include "RA_ProgressPopup.h"
 #include "RA_AchievementPopup.h"
 #include "RA_LeaderboardPopup.h"
-#include "RA_Core.h"
 
 
 class PopupWindows

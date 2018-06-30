@@ -127,8 +127,8 @@ extern void RA_LoadROM(const char* sFullPath);
 
 // resource values for menu items - needed by MFC ON_COMMAND_RANGE macros
 // they're not all currently used, allowing additional items without forcing recompilation of the emulators
-#define IDM_RA_MENUSTART                1700
-#define IDM_RA_MENUEND                  1739
+#define IDM_RA_MENUSTART 1700 
+#define IDM_RA_MENUEND   1739                 
 
 
 //	Captures the RA_DLL and installs/allocs all required information.

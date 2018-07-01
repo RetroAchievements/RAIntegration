@@ -1,8 +1,10 @@
+#ifndef RA_CORE_H
+#define RA_CORE_H
 #pragma once
 
 #include "RA_Defs.h"
 #include "RA_Interface.h"
-#include <stdio.h>
+
 
 #if defined RA_EXPORTS
 #define API __declspec(dllexport)
@@ -143,9 +145,11 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
+
 extern BOOL _FileExists(const std::string& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
+
 
 extern std::string GetFolderFromDialog();
 
@@ -156,3 +160,6 @@ BOOL CanCausePause();
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
+
+
+#endif // !RA_CORE_H

@@ -1,3 +1,5 @@
+#ifndef RA_CONDITION_H
+#define RA_CONDITION_H
 #pragma once
 #include "RA_Defs.h"
 
@@ -180,7 +182,6 @@ class ConditionGroup
 public:
     void SerializeAppend(std::string& buffer) const;
 
-    //	Final param indicates 'or'
     bool Test(bool& bDirtyConditions, bool& bResetRead);
     size_t Count() const { return m_Conditions.size(); }
 
@@ -193,6 +194,8 @@ public:
     bool Reset(bool bIncludingDeltas);	//	Returns dirty
 
 protected:
+    bool Test(bool& bDirtyConditions, bool& bResetRead, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs);
+
     std::vector<Condition> m_Conditions;
 };
 
@@ -215,3 +218,6 @@ public:
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;
 };
+
+
+#endif // !RA_CONDITION_H

@@ -1,7 +1,8 @@
+#ifndef RA_DLG_MEMORY_H
+#define RA_DLG_MEMORY_H
 #pragma once
 
-#include "RA_Defs.h"
-#include "RA_CodeNotes.h"
+#include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 #include "services/SearchResults.h"
 
@@ -23,9 +24,13 @@ public:
 
     static void setAddress(unsigned int nAddr);
     static void setWatchedAddress(unsigned int nAddr);
+    static unsigned int getWatchedAddress() { return m_nWatchedAddress; }
     static void moveAddress(int offset, int nibbleOff);
     static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
+
+    static void SetDataSize(ComparisonVariableSize value) { m_nDataSize = value; Invalidate(); }
+    static ComparisonVariableSize GetDataSize() { return m_nDataSize; }
 
 public:
     static unsigned short m_nActiveMemBank;
@@ -37,7 +42,7 @@ private:
     static unsigned int m_nDataStartXOffset;
     static unsigned int m_nAddressOffset;
     static unsigned int m_nWatchedAddress;
-    static unsigned int m_nDataSize;
+    static ComparisonVariableSize m_nDataSize;
     static unsigned int m_nEditAddress;
     static unsigned int m_nEditNibble;
 
@@ -85,6 +90,7 @@ public:
     void Invalidate();
 
     void SetWatchingAddress(unsigned int nAddr);
+    void UpdateBits() const;
     BOOL IsActive() const;
 
     const CodeNotes& Notes() const { return m_CodeNotes; }
@@ -113,3 +119,6 @@ private:
 };
 
 extern Dlg_Memory g_MemoryDialog;
+
+
+#endif // !RA_DLG_MEMORY_H

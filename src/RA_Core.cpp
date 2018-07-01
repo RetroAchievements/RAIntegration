@@ -10,7 +10,7 @@
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
-#include "RA_Leaderboard.h"
+#include "RA_LeaderboardManager.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
@@ -33,7 +33,7 @@
 #include <codecvt>
 #include <direct.h>
 #include <io.h>		//	_access()
-
+#include <atlbase.h> // CComPtr
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
@@ -465,11 +465,13 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
     g_MemManager.AddMemoryBank(static_cast<size_t>(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>(nBankSize));
+    g_MemoryDialog.AddBank(nBankID);
 }
 
 API void CCONV _RA_ClearMemoryBanks()
 {
     g_MemManager.ClearMemoryBanks();
+    g_MemoryDialog.ClearBanks();
 }
 
 
@@ -1632,32 +1634,30 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-    //HRESULT hr = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE );
-    IFileOpenDialog* pDlg = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
-    if (hr == S_OK)
+	CComPtr<IFileOpenDialog> pDlg;
+
+    HRESULT hr;
+	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-        hr = pDlg->Show(nullptr);
-        if (hr == S_OK)
+		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
-            IShellItem* pItem = nullptr;
-            hr = pDlg->GetResult(&pItem);
-            if (hr == S_OK)
+            CComPtr<IShellItem> pItem;
+			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
-                LPWSTR pStr = nullptr;
-                hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr);
-                if (hr == S_OK)
+                LPWSTR pStr{ nullptr };
+				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = Narrow(pStr);
+                    // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
+                    CoTaskMemFree(static_cast<LPVOID>(pStr));
+                    pStr = nullptr;
                 }
-
-                pItem->Release();
+				pItem.Release();
             }
         }
-        pDlg->Release();
+		pDlg.Release();
     }
-    //CoUninitialize();
     return sRetVal;
 }
 

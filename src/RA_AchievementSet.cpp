@@ -2,8 +2,9 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Achievement.h" // RA_httpthread.h
+#include "RA_Dlg_AchEditor.h" // RA_httpthread.h
+#include "RA_LeaderboardManager.h"
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
@@ -194,7 +195,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (ach.ID() == 0)
+                if (g_nActiveAchievementSet != Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
@@ -514,8 +515,14 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
                 {
                     //"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
 
-                    RA_Leaderboard lb(LeaderboardsData[i]["ID"].GetUint());
-                    lb.LoadFromJSON(LeaderboardsData[i]);
+                    auto& lbData = LeaderboardsData[i];
+                    RA_Leaderboard lb(lbData["ID"].GetUint());
+
+                    lb.SetTitle(lbData["Title"].GetString());
+                    lb.SetDescription(lbData["Description"].GetString());
+
+                    auto nFormat = MemValue::ParseFormat(lbData["Format"].GetString());
+                    lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
 
                     g_LeaderboardManager.AddLeaderboard(lb);
                 }

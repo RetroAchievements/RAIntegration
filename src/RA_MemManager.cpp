@@ -1,7 +1,5 @@
 #include "RA_MemManager.h"
 
-#include "RA_Dlg_Memory.h"
-
 MemManager g_MemManager;
 
 MemManager::MemManager()
@@ -19,8 +17,6 @@ void MemManager::ClearMemoryBanks()
 {
     m_Banks.clear();
     m_nTotalBankSize = 0;
-
-    g_MemoryDialog.ClearBanks();
 }
 
 void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize)
@@ -36,8 +32,6 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
     m_Banks[nBankID].BankSize = nBankSize;
     m_Banks[nBankID].Reader = pReader;
     m_Banks[nBankID].Writer = pWriter;
-
-    g_MemoryDialog.AddBank(nBankID);
 }
 
 void MemManager::ChangeActiveMemBank(unsigned short nMemBank)

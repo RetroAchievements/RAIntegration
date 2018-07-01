@@ -1,6 +1,7 @@
+#ifndef RA_GAMEDATA_H
+#define RA_GAMEDATA_H
 #pragma once
 
-#include <string>
 #include "RA_Defs.h"
 
 class GameData
@@ -26,4 +27,9 @@ private:
     //std::string m_sConsoleName;
 };
 
+
+
 extern GameData* g_pCurrentGameData;
+
+
+#endif // !RA_GAMEDATA_H

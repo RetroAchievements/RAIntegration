@@ -28,8 +28,8 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, Compa
     m_nSize = nSize;
     m_bUnfiltered = true;
 
-    if (nBytes > g_MemManager.TotalBankSize())
-        nBytes = g_MemManager.TotalBankSize();
+    if (nBytes + nAddress > g_MemManager.TotalBankSize())
+        nBytes = g_MemManager.TotalBankSize() - nAddress;
 
     unsigned int nPadding = Padding(nSize);
     nBytes -= nPadding;
@@ -113,6 +113,10 @@ static unsigned int GetValue(const unsigned char* pBuffer, unsigned int nOffset,
         case SixteenBit:
             return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8);
 
+        case ThirtyTwoBit:
+            return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8) |
+                (pBuffer[nOffset + 2] << 16) | (pBuffer[nOffset + 3] << 24);
+
         case Nibble_Upper:
             return pBuffer[nOffset] >> 4;
 
@@ -126,7 +130,26 @@ static unsigned int GetValue(const unsigned char* pBuffer, unsigned int nOffset,
 
 bool SearchResults::ContainsAddress(unsigned int nAddress) const
 {
-    return m_bUnfiltered || std::binary_search(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
+    if (!m_bUnfiltered)
+    {
+        if (m_nSize != Nibble_Lower)
+            return std::binary_search(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
+
+        nAddress <<= 1;
+        const auto iter = std::lower_bound(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
+        return (iter != m_vMatchingAddresses.end() && (*iter == nAddress || *iter == (nAddress | 1)));
+    }
+
+    unsigned int nPadding = Padding(m_nSize);
+    for (const auto& block : m_vBlocks)
+    {
+        if (block.GetAddress() > nAddress)
+            return false;
+        if (nAddress < block.GetAddress() + block.GetSize() - nPadding)
+            return true;
+    }
+
+    return false;
 }
 
 void SearchResults::AddMatches(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches)
@@ -184,7 +207,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
 void SearchResults::AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches)
 {
     unsigned int nBlockSize = (vMatches.back() >> 1) - (vMatches.front() >> 1) + Padding(m_nSize) + 1;
-    auto& block = AddBlock(nAddressBase + (vMatches.front() >> 1), nBlockSize);
+    auto& block = AddBlock((nAddressBase + vMatches.front()) >> 1, nBlockSize);
     memcpy(block.GetBytes(), pMemory + (vMatches.front() >> 1), nBlockSize);
 
     for (auto nMatch : vMatches)
@@ -215,11 +238,11 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
                 unsigned int nAddress = (block.GetAddress() + i) << 1;
-                if (srSource.ContainsAddress(nAddress))
+                if (srSource.ContainsAddress(nAddress >> 1))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress(), pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
                         vMatches.clear();
                     }
 
@@ -233,11 +256,11 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {
                 unsigned int nAddress = ((block.GetAddress() + i) << 1) | 1;
-                if (srSource.ContainsAddress(nAddress))
+                if (srSource.ContainsAddress(nAddress >> 1))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress(), pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
                         vMatches.clear();
                     }
 
@@ -248,7 +271,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
         if (!vMatches.empty())
         {
-            AddMatchesNibbles(block.GetAddress(), pMemory, vMatches);
+            AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
             vMatches.clear();
         }
     }
@@ -276,7 +299,16 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         case SixteenBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
             {
-                auto nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
+                unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
+                return Compare(nValue, nTestValue, nCompareType);
+            });
+            break;
+
+        case ThirtyTwoBit:
+            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
+            {
+                unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
+                    (pMemory[nIndex + 2] << 16) | (pMemory[nIndex + 3] << 24);
                 return Compare(nValue, nTestValue, nCompareType);
             });
             break;
@@ -296,6 +328,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 
     if (m_nSize == EightBit)
     {
+        // efficient comparisons for 8-bit
         switch (nCompareType)
         {
             case Equals:
@@ -322,10 +355,12 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     }
     else if (m_nSize == Nibble_Lower)
     {
+        // special logic for nibbles
         ProcessBlocksNibbles(srSource, 0xFFFF, nCompareType);
     }
     else
     {
+        // generic handling for 16-bit and 32-bit
         ProcessBlocks(srSource, [nCompareType, nSize = m_nSize](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
         {
             auto nValue = GetValue(pMemory, nIndex, nSize);
@@ -345,44 +380,48 @@ unsigned int SearchResults::MatchingAddressCount()
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();
 
-    unsigned int count = 0;
+    unsigned int nPadding = Padding(m_nSize);
+    unsigned int nCount = 0;
     for (auto& block : m_vBlocks)
-        count += block.GetSize();
+        nCount += block.GetSize() - nPadding;
 
     if (m_nSize == Nibble_Lower)
-        count *= 2;
-    else
-        count -= Padding(m_nSize);
+        nCount *= 2;
 
-    return count;
+    return nCount;
 }
 
 void SearchResults::ExcludeAddress(unsigned int nAddress)
 {
-    m_vMatchingAddresses.erase(std::remove(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress), m_vMatchingAddresses.end());
+    if (!m_bUnfiltered)
+        m_vMatchingAddresses.erase(std::remove(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress), m_vMatchingAddresses.end());
 }
 
 void SearchResults::ExcludeMatchingAddress(unsigned int nIndex)
 {
-    m_vMatchingAddresses.erase(m_vMatchingAddresses.begin() + nIndex);
+    if (!m_bUnfiltered)
+        m_vMatchingAddresses.erase(m_vMatchingAddresses.begin() + nIndex);
 }
 
 bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults::Result& result)
 {
     result.nSize = m_nSize;
 
+    if (m_vBlocks.empty())
+        return false;
+
     unsigned int nPadding = 0;
     if (m_bUnfiltered)
     {
         if (m_nSize == Nibble_Lower)
         {
-            result.nAddress = nIndex >> 1;
+            result.nAddress = (nIndex >> 1) + m_vBlocks[0].GetAddress();
             if (nIndex & 1)
                 result.nSize = Nibble_Upper;
         }
         else
         {
-            result.nAddress = nIndex;
+            result.nAddress = nIndex + m_vBlocks[0].GetAddress();
         }
 
         // in unfiltered mode, blocks are padded so we don't have to cross blocks to read multi-byte values

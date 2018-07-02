@@ -1078,6 +1078,22 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     }
 
                     unsigned int nMatches = sr.m_results.MatchingAddressCount();
+                    if (nMatches == srPrevious.m_results.MatchingAddressCount())
+                    {
+                        // same number of matches, if the same query was used, don't double up on the search results
+                        if (sr.m_bUseLastValue == srPrevious.m_bUseLastValue &&
+                            sr.m_nCompareType == srPrevious.m_nCompareType &&
+                            sr.m_nLastQueryVal == srPrevious.m_nLastQueryVal)
+                        {
+                            // comparing against last value for non-equals case may result in different match highlights, keep it.
+                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ComparisonType::Equals)
+                            {
+                                m_SearchResults.erase(m_SearchResults.end() - 1);
+                                m_nPage--;
+                            }
+                        }
+                    }
+
                     if (nMatches > MIN_RESULTS_TO_DUMP)
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), MIN_RESULTS_TO_DUMP + 2);
                     else

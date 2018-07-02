@@ -56,9 +56,9 @@ struct SearchResult
     ra::services::SearchResults m_results;
 
     std::vector<unsigned int> m_modifiedAddresses;
-    bool m_bUseLastValue;
-    unsigned int m_nLastQueryVal;
-    ComparisonType m_nCompareType;
+    bool m_bUseLastValue = false;
+    unsigned int m_nLastQueryVal = 0;
+    ComparisonType m_nCompareType = Equals;
 
     bool WasModified(unsigned int nAddress)
     {

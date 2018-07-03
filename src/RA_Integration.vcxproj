@@ -80,8 +80,10 @@
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
+    <ClInclude Include="RA_Json.h" />
     <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_LeaderboardPopup.h" />
+    <ClInclude Include="RA_Log.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_MemValue.h" />

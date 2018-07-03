@@ -91,15 +91,7 @@ void RADebugLog(const char* format, ...)
     *p++ = '\n';
     *p = '\0';
 
-    OutputDebugString(NativeStr(buf).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(buf, sizeof(char), strlen(buf), pf);
-        fclose(pf);
-    }
+    RADebugLogNoFormat(buf);
 }
 
 BOOL DirectoryExists(const char* sPath)

@@ -236,7 +236,6 @@
     <ClInclude Include="services\impl\JsonFileConfiguration.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="services\ServiceLocator.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh">
       <Filter>UI</Filter>
     </ClInclude>
@@ -247,6 +246,15 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\Initialization.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ServiceLocator.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_Log.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_Json.h">
       <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>

@@ -68,34 +68,16 @@
 #include <array>
 
 #ifndef RA_EXPORTS
-#include <cassert> 
-//	Version Information is integrated into tags
+
+  #include <cassert> 
 
 #else
 
+  #include "RA_Log.h"
 
+  #include "RA_Json.h"
+  using namespace rapidjson;
 
-//NB. These must NOT be accessible from the emulator!
-//#define RA_INTEGRATION_VERSION	"0.053"
-
-
-
-
-//	RA-Only
-#define RAPIDJSON_HAS_STDSTRING 1
-
-// This is not needed the most recent version
-#pragma warning(push, 1)
-#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
-
-//	RA-Only
-#include "rapidjson/include/rapidjson/document.h"
-#include "rapidjson/include/rapidjson/writer.h"
-#include "rapidjson/include/rapidjson/filestream.h"
-#include "rapidjson/include/rapidjson/error/en.h"
-using namespace rapidjson;
-extern GetParseErrorFunc GetJSONParseErrorStr;
-#pragma warning(pop)
 #endif	//RA_EXPORTS
 
 // Maybe an extra check just in-case
@@ -289,15 +271,11 @@ typedef unsigned int GameID;
 
 char* DataStreamAsString(DataStream& stream);
 
-extern void RADebugLogNoFormat(const char* data);
-extern void RADebugLog(const char* sFormat, ...);
 extern BOOL DirectoryExists(const char* sPath);
 
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
-
-#define RA_LOG RADebugLog
 
 #ifdef _DEBUG
 #ifndef RA_UTEST

@@ -2,6 +2,8 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
+#include "RA_Log.h"
+
 #include <assert.h>
 #include <memory>
 
@@ -11,60 +13,74 @@ namespace services {
 class ServiceLocator
 {
 public:
-    /* returns a referece to a service implementing the requested interface
-     * 
-     * @throw std::runtime_error if no service is provided for the requested interface
-     */
+    /// <summary>
+    /// Returns a reference to a service implementing the requested interface.
+    /// </summary>
+    /// <returns>Reference to an implementation of the interface</returns>
+    /// <exception cref="std::runtime_error">No service is provided for the requested interface.</exception>
     template <class TClass>
     static const TClass& Get()
     {
         return Service<TClass>::Get();
     }
 
-    /* returns a referece to a service implementing the requested interface
-     *
-     * @throw std::runtime_error if no service is provided for the requested interface
-     *
-     * WARNING: mutable services are not guaranteed to be thread-safe. prefer using non-mutable
-     *          services whenever possible.
-     */
+    /// <summary>
+    /// Returns a non-const reference to a service implementing the requested interface.
+    /// </summary>
+    /// <returns>Reference to an implementation of the interface</returns>
+    /// <exception cref="std::runtime_error">No service is provided for the requested interface.</exception>
+    /// <remarks>
+    /// WARNING: mutable services are not guaranteed to be thread-safe. Prefer using non-mutable 
+    /// services whenever possible.
+    /// </remarks>
     template <class TClass>
     static TClass& GetMutable()
     {
         return Service<TClass>::Get();
     }
     
-    /* registers a service implementation for an interface
-     *
-     * @param pInstance    externally allocated instance (via new operator). ServiceLocator will delete at end of execution or when replaced.
-     */
+    /// <summary>
+    /// Registers a service implementation for an interface
+    /// </summary>
+    /// <param name="pInstance">
+    /// A pointer to an allocated instance of a service implementation. ServiceLocator will own the 
+    /// pointer and delete it at the end of execution or when a different implementation is provided.
+    /// </param>
     template <class TClass>
     static void Provide(TClass* pInstance)
     {
         Service<TClass>::s_pInstance.reset(pInstance);
     }
     
-    /* temporarily overrides a service implementation - primarily used in unit tests
-     */
+    /// <summary>
+    /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
+    /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
+    /// </summary>
+    /// <remarks>
+    /// Primarily used in unit tests.
+    /// </remarks>
     template <class TClass>
     class ServiceOverride
     {
     public:
-        /*  provides a temporary implementation for a service
-         *
-         *  @param pOverride - the temporary implementation
-         *  @param bDestroy  - true to delete the object when the ServiceOverride goes out of scope.
-         *                     typically false as the temporary implementation is normally a 'this' pointer 
-         *                     or a stack variable
-         */
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceOverride"/> class.
+        /// </summary>
+        /// <param name="pOverride">A pointer to the temporary implementation.</param>
+        /// <param name="bDestroy">
+        /// If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride"/> and deleted 
+        /// when the <see cref="ServiceOverride"/> goes out of scope. This should normally be false, as 
+        /// <paramref name="pOverride"/> will typically be a this pointer to the subclass, or the address of a 
+        /// stack variable.
+        /// </param>
         ServiceOverride(TClass* pOverride, bool bDestroy = false)
+            : m_pPrevious(Service<TClass>::s_pInstance.release()), m_bDestroy(bDestroy)
         {
-            m_pPrevious = Service<TClass>::s_pInstance.release();
             Service<TClass>::s_pInstance.reset(pOverride);
-            
-            m_bDestroy = bDestroy;
         }
-        
+
+        ServiceOverride() = delete;
+
         ~ServiceOverride()
         {
             if (!m_bDestroy)
@@ -112,10 +128,9 @@ private:
             }
             sMessage.insert(0, "No service provided for ");
 
-            OutputDebugStringA("ERROR: ");
-            OutputDebugStringA(sMessage.c_str());
-            OutputDebugStringA("\n");
-            throw new std::runtime_error(sMessage);
+            RA_LOG("ERROR: %s\n", sMessage.c_str());
+
+            throw std::runtime_error(sMessage);
         }
     };
 };

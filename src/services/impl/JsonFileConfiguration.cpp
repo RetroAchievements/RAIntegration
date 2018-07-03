@@ -1,6 +1,7 @@
-#include "services\impl/JsonFileConfiguration.hh"
+#include "JsonFileConfiguration.hh"
 
-#include "RA_Defs.h" // RA_LOG
+#include "RA_Json.h"
+#include "RA_Log.h"
 
 namespace ra {
 namespace services {
@@ -30,8 +31,9 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
     if (pf == nullptr)
         return false;
 
-    Document doc;
-    doc.ParseStream(FileStream(pf));
+    rapidjson::FileStream fs(pf);
+    rapidjson::Document doc;
+    doc.ParseStream(fs);
     if (doc.HasParseError())
     {
         fclose(pf);
@@ -63,10 +65,10 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
 
     if (doc.HasMember("Window Positions"))
     {
-        const Value& positions = doc["Window Positions"];
+        const rapidjson::Value& positions = doc["Window Positions"];
         if (positions.IsObject())
         {
-            for (Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
+            for (rapidjson::Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
             {
                 WindowPosition& pos = m_mWindowPositions[iter->name.GetString()];
                 pos.oPosition.X = pos.oPosition.Y = pos.oSize.Width = pos.oSize.Height = INT32_MIN;
@@ -102,15 +104,15 @@ void JsonFileConfiguration::Save() const
     if (pf == nullptr)
         return;
 
-    FileStream fs(pf);
-    Writer<FileStream> writer(fs);
+    rapidjson::FileStream fs(pf);
+    rapidjson::Writer<rapidjson::FileStream> writer(fs);
 
-    Document doc;
+    rapidjson::Document doc;
     doc.SetObject();
 
-    Document::AllocatorType& a = doc.GetAllocator();
-    doc.AddMember("Username", StringRef(m_sUsername), a);
-    doc.AddMember("Token", StringRef(m_sApiToken), a);
+    rapidjson::Document::AllocatorType& a = doc.GetAllocator();
+    doc.AddMember("Username", rapidjson::StringRef(m_sUsername), a);
+    doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
@@ -119,12 +121,12 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
     if (!m_sRomDirectory.empty())
-        doc.AddMember("ROM Directory", StringRef(m_sRomDirectory), a);
+        doc.AddMember("ROM Directory", rapidjson::StringRef(m_sRomDirectory), a);
 
-    Value positions(kObjectType);
+    rapidjson::Value positions(rapidjson::kObjectType);
     for (WindowPositionMap::const_iterator iter = m_mWindowPositions.begin(); iter != m_mWindowPositions.end(); ++iter)
     {
-        Value rect(kObjectType);
+        rapidjson::Value rect(rapidjson::kObjectType);
         if (iter->second.oPosition.X != INT32_MIN)
             rect.AddMember("X", iter->second.oPosition.X, a);
         if (iter->second.oPosition.Y != INT32_MIN)
@@ -135,7 +137,7 @@ void JsonFileConfiguration::Save() const
             rect.AddMember("Height", iter->second.oSize.Height, a);
 
         if (rect.MemberCount() > 0)
-            positions.AddMember(StringRef(iter->first), rect, a);
+            positions.AddMember(rapidjson::StringRef(iter->first), rect, a);
     }
 
     if (positions.MemberCount() > 0)

@@ -225,6 +225,9 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //	Setup min required directories:
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
+    if (strcmp(sClientVer, "OFFLINE"))
+        return FALSE;
+
     //////////////////////////////////////////////////////////////////////////
     //	Update news:
     PostArgs args;
@@ -354,12 +357,6 @@ API int CCONV _RA_HardcoreModeIsActive()
     return g_bHardcoreModeActive;
 }
 
-API int CCONV _RA_HTTPGetRequestExists(const char* sPageName)
-{
-    //return RAWeb::HTTPRequestExists( sPageName );	//	Deprecated
-    return 0;
-}
-
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
@@ -461,6 +458,14 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_nProcessTimer = 0;
 
     return 0;
+}
+
+API void CCONV _RA_OnReset()
+{
+    g_LeaderboardManager.Reset();
+    g_PopupWindows.LeaderboardPopups().Reset();
+
+    g_nProcessTimer = 0;
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -809,7 +814,19 @@ API HMENU CCONV _RA_CreatePopupMenu()
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
     std::stringstream sstr;
-    sstr << std::string(g_sClientName) << " - " << std::string(g_sClientVersion);
+    sstr << std::string(g_sClientName) << " - ";
+
+    // only copy the first two parts of the version string to the title bar: 0.12.7.1 => 0.12
+    const char* ptr = g_sClientVersion;
+    while (*ptr && *ptr != '.')
+        sstr << *ptr++;
+    if (*ptr)
+    {
+        do
+        {
+            sstr << *ptr++;
+        } while (*ptr && *ptr != '.');
+    }
 
     if (sMessage != nullptr)
         sstr << " - " << sMessage;
@@ -1234,6 +1251,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         {
             g_bHardcoreModeActive = !g_bHardcoreModeActive;
             _RA_ResetEmulation();
+            _RA_OnReset();
 
             g_PopupWindows.Clear();
 
@@ -1394,11 +1412,6 @@ API void CCONV _RA_SetPaused(bool bIsPaused)
         g_AchievementOverlay.Activate();
     else
         g_AchievementOverlay.Deactivate();
-}
-
-API const char* CCONV _RA_Username()
-{
-    return RAUsers::LocalUser().Username().c_str();
 }
 
 API void CCONV _RA_AttemptLogin(bool bBlocking)

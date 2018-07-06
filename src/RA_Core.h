@@ -19,8 +19,14 @@ extern "C" {
     //	Fetch the version number of this integration version.
     API const char* CCONV _RA_IntegrationVersion();
 
+    //	Fetch the name of the host to connect to.
+    API const char* CCONV _RA_HostName();
+
     //	Initialize all data related to RA Engine. Call as early as possible.
     API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+
+    //	Initialize all data related to RA Engine for offline mode. Call as early as possible.
+    API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 
     //	Call for a tidy exit at end of app.
     API int CCONV _RA_Shutdown();
@@ -57,14 +63,8 @@ extern "C" {
     //	Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 
-    //	Display a dialog helping the user get the latest RA client version
-    API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer);
-
     //	Deal with any HTTP results that come along. Call per-cycle from main thread.
     API int CCONV _RA_HandleHTTPResults();
-
-    //	Execute a blocking check to see if this client is out of date.
-    API void CCONV _RA_CheckForUpdate();
 
     //	Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);

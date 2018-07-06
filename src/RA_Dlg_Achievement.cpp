@@ -513,35 +513,37 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    else if (MessageBox(hDlg,
-                        TEXT("Are you sure that you want to download fresh achievements from ") RA_HOST_URL TEXT("?\n")
-                        TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"),
-                        TEXT("Refresh from Server"),
-                        MB_YESNO | MB_ICONWARNING) == IDYES)
+                    else
                     {
-                        GameID nGameID = g_pCurrentGameData->GetGameID();
-                        if (nGameID != 0)
+                        std::ostringstream oss;
+                        oss << "Are you sure that you want to download fresh achievements from " << _RA_HostName() << "?\n" <<
+                            "This will overwrite any changes that you have made with fresh achievements from the server";
+                        if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            g_pCoreAchievements->DeletePatchFile(nGameID);
-                            g_pUnofficialAchievements->DeletePatchFile(nGameID);
+                            GameID nGameID = g_pCurrentGameData->GetGameID();
+                            if (nGameID != 0)
+                            {
+                                g_pCoreAchievements->DeletePatchFile(nGameID);
+                                g_pUnofficialAchievements->DeletePatchFile(nGameID);
 
-                            g_pCoreAchievements->Clear();
-                            g_pUnofficialAchievements->Clear();
-                            g_pLocalAchievements->Clear();
+                                g_pCoreAchievements->Clear();
+                                g_pUnofficialAchievements->Clear();
+                                g_pLocalAchievements->Clear();
 
-                            //	Reload the achievements file (fetch from server fresh)
+                                //	Reload the achievements file (fetch from server fresh)
 
-                            AchievementSet::FetchFromWebBlocking(nGameID);
+                                AchievementSet::FetchFromWebBlocking(nGameID);
 
-                            g_pLocalAchievements->LoadFromFile(nGameID);
-                            g_pUnofficialAchievements->LoadFromFile(nGameID);
-                            g_pCoreAchievements->LoadFromFile(nGameID);
+                                g_pLocalAchievements->LoadFromFile(nGameID);
+                                g_pUnofficialAchievements->LoadFromFile(nGameID);
+                                g_pCoreAchievements->LoadFromFile(nGameID);
 
-                            //	Refresh dialog contents:
-                            OnLoad_NewRom(nGameID);
+                                //	Refresh dialog contents:
+                                OnLoad_NewRom(nGameID);
 
-                            //	Cause it to reload!
-                            OnClickAchievementSet(g_nActiveAchievementSet);
+                                //	Cause it to reload!
+                                OnClickAchievementSet(g_nActiveAchievementSet);
+                            }
                         }
                     }
                 }
@@ -655,12 +657,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         {
                             //	This achievement exists on the server: must call SQL to remove!
                             //	Note: this is probably going to affect other users: frown on this D:
-                            MessageBox(hDlg,
-                                TEXT("This achievement exists on ") RA_HOST_URL TEXT(".\n")
-                                TEXT("\n")
-                                TEXT("*Removing it will affect other gamers*\n")
-                                TEXT("\n")
-                                TEXT("Are you absolutely sure you want to delete this??"), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
+                            std::ostringstream oss;
+                            oss << "This achievement exists on " << _RA_HostName() << ".\n\n"
+                                << "*Removing it will affect other games*\n\n"
+                                << "Are you absolutely sure you want to delete this?";
+                            MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Confirm Delete"), MB_YESNO | MB_ICONWARNING);
                         }
                     }
                 }

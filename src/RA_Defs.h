@@ -138,9 +138,6 @@ extern GetParseErrorFunc GetJSONParseErrorStr;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
-#define RA_HOST_URL						"retroachievements.org"
-#define RA_HOST_IMG_URL					"i.retroachievements.org"
-
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
 

@@ -94,7 +94,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
 {
     m_bIsLoggedIn = FALSE;
 
-    if (Username().length() > 0)
+    if (!Username().empty() && !Token().empty())
     {
         if (bBlocking)
         {
@@ -105,15 +105,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
             Document doc;
             if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
             {
-                if (doc["Success"].GetBool())
-                {
-                    const std::string& sUser = doc["User"].GetString();
-                    const std::string& sToken = doc["Token"].GetString();
-                    const unsigned int nPoints = doc["Score"].GetUint();
-                    const unsigned int nUnreadMessages = doc["Messages"].GetUint();
-
-                    ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, true);
-                }
+                HandleSilentLoginResponse(doc);
             }
         }
         else
@@ -151,9 +143,13 @@ void LocalRAUser::HandleSilentLoginResponse(Document& doc)
         const unsigned int nUnreadMessages = doc["Messages"].GetUint();
         ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, TRUE);
     }
+    else if (doc.HasMember("Error"))
+    {
+        MessageBox(nullptr, NativeStr(doc["Error"].GetString()).c_str(), TEXT("Login Failed"), MB_OK);
+    }
     else
     {
-        MessageBox(nullptr, TEXT("Silent login failed, please login again!"), TEXT("Sorry!"), MB_OK);
+        MessageBox(nullptr, TEXT("Login failed, please login again."), TEXT("Login Failed"), MB_OK);
     }
 }
 

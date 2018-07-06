@@ -69,7 +69,9 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 
 //	Generic:
 const char* (CCONV *_RA_IntegrationVersion) () = nullptr;
+const char* (CCONV *_RA_HostName) () = nullptr;
 int		(CCONV *_RA_InitI) (HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+int		(CCONV *_RA_InitOffline) (HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
 int		(CCONV *_RA_Shutdown) () = nullptr;
 //	Load/Save
 bool	(CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
@@ -251,24 +253,19 @@ int RA_HTTPRequestExists(const char* sPageName)
 }
 
 
-BOOL DoBlockingHttpGet(const char* sRequestedPage, char* pBufferOut, const unsigned int /*nBufferOutSize*/, DWORD* pBytesRead)
+static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage, char* pBufferOut, unsigned int nBufferOutSize, DWORD* pBytesRead, DWORD* pStatusCode)
 {
     BOOL bResults = FALSE, bSuccess = FALSE;
     HINTERNET hSession = nullptr, hConnect = nullptr, hRequest = nullptr;
 
     WCHAR wBuffer[1024];
     size_t nTemp;
-    char* sDataDestOffset = &pBufferOut[0];
     DWORD nBytesToRead = 0;
     DWORD nBytesFetched = 0;
-
-    char sClientName[1024];
-    sprintf_s(sClientName, 1024, "Retro Achievements Client");
-    WCHAR wClientNameBuffer[1024];
-    mbstowcs_s(&nTemp, wClientNameBuffer, 1024, sClientName, strlen(sClientName) + 1);
+    (*pBytesRead) = 0;
 
     // Use WinHttpOpen to obtain a session handle.
-    hSession = WinHttpOpen(wClientNameBuffer,
+    hSession = WinHttpOpen(L"RetroAchievements Client Bootstrap",
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);
@@ -276,12 +273,13 @@ BOOL DoBlockingHttpGet(const char* sRequestedPage, char* pBufferOut, const unsig
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        hConnect = WinHttpConnect(hSession, L"www.retroachievements.org", INTERNET_DEFAULT_HTTP_PORT, 0);
+        mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer) / sizeof(wBuffer[0]), sHostName, strlen(sHostName) + 1);
+        hConnect = WinHttpConnect(hSession, wBuffer, INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
         if (hConnect != nullptr)
         {
-            mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage, strlen(sRequestedPage) + 1);
+            mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer)/sizeof(wBuffer[0]), sRequestedPage, strlen(sRequestedPage) + 1);
 
             hRequest = WinHttpOpenRequest(hConnect,
                 L"GET",
@@ -304,50 +302,53 @@ BOOL DoBlockingHttpGet(const char* sRequestedPage, char* pBufferOut, const unsig
 
                 if (WinHttpReceiveResponse(hRequest, nullptr))
                 {
+                    DWORD dwSize = sizeof(DWORD);
+                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, pStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
+
                     nBytesToRead = 0;
-                    (*pBytesRead) = 0;
                     WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
 
+                    bSuccess = TRUE;
                     while (nBytesToRead > 0)
                     {
-                        char sHttpReadData[8192];
-                        ZeroMemory(sHttpReadData, 8192 * sizeof(char));
-
-                        assert(nBytesToRead <= 8192);
-                        if (nBytesToRead <= 8192)
+                        if (nBytesToRead > nBufferOutSize)
                         {
-                            nBytesFetched = 0;
-                            if (WinHttpReadData(hRequest, &sHttpReadData, nBytesToRead, &nBytesFetched))
-                            {
-                                assert(nBytesToRead == nBytesFetched);
+                            if (*pStatusCode == 200)
+                                *pStatusCode = 998;
 
-                                //Read: parse buffer
-                                memcpy(sDataDestOffset, sHttpReadData, nBytesFetched);
-
-                                sDataDestOffset += nBytesFetched;
-                                (*pBytesRead) += nBytesFetched;
-                            }
+                            bSuccess = FALSE;
+                            break;
                         }
 
-                        bSuccess = TRUE;
+                        nBytesFetched = 0;
+                        if (WinHttpReadData(hRequest, pBufferOut, nBytesToRead, &nBytesFetched))
+                        {
+                            pBufferOut += nBytesFetched;
+                            nBufferOutSize -= nBytesFetched;
+                            (*pBytesRead) += nBytesFetched;
+                        }
+                        else
+                        {
+                            bSuccess = FALSE;
+                        }
 
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
                 }
+
+                WinHttpCloseHandle(hRequest);
             }
+
+            WinHttpCloseHandle(hConnect);
         }
+
+        WinHttpCloseHandle(hSession);
     }
-
-
-    // Close open handles.
-    if (hRequest) WinHttpCloseHandle(hRequest);
-    if (hConnect) WinHttpCloseHandle(hConnect);
-    if (hSession) WinHttpCloseHandle(hSession);
 
     return bSuccess;
 }
 
-void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
+static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
 {
     FILE* pf;
     fopen_s(&pf, sFile, "wb");
@@ -362,14 +363,18 @@ void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
     }
 }
 
-void FetchIntegrationFromWeb()
+static void FetchIntegrationFromWeb(const char* sHostName, DWORD* pStatusCode)
 {
-    const int MAX_SIZE = 2 * 1024 * 1024;
+    const int MAX_SIZE = 3 * 1024 * 1024;
     char* buffer = new char[MAX_SIZE];
-    if (buffer != nullptr)
+    if (buffer == nullptr)
+    {
+        *pStatusCode = 999;
+    }
+    else
     {
         DWORD nBytesRead = 0;
-        if (DoBlockingHttpGet("bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead))
+        if (DoBlockingHttpGet(sHostName, "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead, pStatusCode))
             WriteBufferToFile("RA_Integration.dll", buffer, nBytesRead);
 
         delete[](buffer);
@@ -378,7 +383,7 @@ void FetchIntegrationFromWeb()
 }
 
 //Returns the last Win32 error, in string format. Returns an empty string if there is no error.
-std::string GetLastErrorAsString()
+static std::string GetLastErrorAsString()
 {
     //Get the error message, if any.
     DWORD errorMessageID = ::GetLastError();
@@ -397,7 +402,7 @@ std::string GetLastErrorAsString()
     return message;
 }
 
-const char* CCONV _RA_InstallIntegration()
+static const char* CCONV _RA_InstallIntegration()
 {
     SetErrorMode(0);
 
@@ -409,8 +414,8 @@ const char* CCONV _RA_InstallIntegration()
     if (g_hRADLL == nullptr)
     {
         char buffer[1024];
-        sprintf_s(buffer, 1024, "LoadLibrary failed: %d : %s\n", ::GetLastError(), GetLastErrorAsString().c_str());
-        MessageBoxA(nullptr, buffer, "Sorry!", MB_OK);
+        sprintf_s(buffer, 1024, "LoadLibrary failed: %d\n%s\n", ::GetLastError(), GetLastErrorAsString().c_str());
+        MessageBoxA(nullptr, buffer, "Sorry!", MB_OK | MB_ICONWARNING);
 
         return "0.000";
     }
@@ -418,7 +423,9 @@ const char* CCONV _RA_InstallIntegration()
     //	Install function pointers one by one
 
     _RA_IntegrationVersion = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_IntegrationVersion");
+    _RA_HostName = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_HostName");
     _RA_InitI = (int(CCONV *)(HWND, int, const char*))				GetProcAddress(g_hRADLL, "_RA_InitI");
+    _RA_InitOffline = (int(CCONV *)(HWND, int, const char*))				GetProcAddress(g_hRADLL, "_RA_InitOffline");
     _RA_Shutdown = (int(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_Shutdown");
     _RA_UserLoggedIn = (bool(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_UserLoggedIn");
     _RA_Username = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_Username");
@@ -454,55 +461,92 @@ const char* CCONV _RA_InstallIntegration()
 //	Console IDs: see enum EmulatorID in header
 void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 {
-    DWORD nBytesRead = 0;
-    char buffer[1024];
-    ZeroMemory(buffer, 1024);
-    if (DoBlockingHttpGet("LatestIntegration.html", buffer, 1024, &nBytesRead) == FALSE)
+    const char* sVerInstalled = _RA_InstallIntegration();
+
+    const char* sHostName = nullptr;
+    if (_RA_HostName != nullptr)
+        sHostName = _RA_HostName();
+
+    if (sHostName == nullptr)
     {
-        MessageBoxA(nullptr, "Cannot access www.retroachievements.org - working offline.", "Warning", MB_OK | MB_ICONEXCLAMATION);
+        sHostName = "www.retroachievements.org";
+    }
+    else if (_RA_InitOffline != nullptr && strcmp(sHostName, "OFFLINE") == 0)
+    {
+        _RA_InitOffline(hMainHWND, nConsoleID, sClientVersion);
         return;
     }
 
-    const unsigned int nLatestDLLVer = strtol(buffer + 2, nullptr, 10);
-
-    BOOL bInstalled = FALSE;
-    int nMBReply = IDNO;
-    do
+    DWORD nBytesRead = 0;
+    DWORD nStatusCode = 0;
+    char buffer[1024];
+    ZeroMemory(buffer, 1024);
+    if (DoBlockingHttpGet(sHostName, "LatestIntegration.html", buffer, 1024, &nBytesRead, &nStatusCode) == FALSE)
     {
-        const char* sVerInstalled = _RA_InstallIntegration();
-        const unsigned int nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
-        if (nVerInstalled < nLatestDLLVer)
+        if (_RA_InitOffline != nullptr)
         {
-            RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite the DLL, so unhook it.%
+            sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nWorking offline.", sHostName, nStatusCode);
+            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
 
-            char sErrorMsg[2048];
-            sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: 0.%03d\n%s",
-                nVerInstalled == 0 ?
-                "Cannot find or load RA_Integration.dll" :
-                "A new version of the RetroAchievements Toolset is available!",
-                nLatestDLLVer,
-                "Automatically update your RetroAchievements Toolset file?");
-
-            nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO);
-
-            if (nMBReply == IDYES)
-            {
-                FetchIntegrationFromWeb();
-            }
+            _RA_InitOffline(hMainHWND, nConsoleID, sClientVersion);
         }
         else
         {
-            bInstalled = TRUE;
-            break;
+            sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nPlease try again later.", sHostName, nStatusCode);
+            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+
+            RA_Shutdown();
         }
+        return;
+    }
 
-    } while (nMBReply == IDYES);
+    // expected response is "0.XXX" where XXX is the most recent version of the integration DLL available.
+    const unsigned int nLatestDLLVer = strtol(buffer + 2, nullptr, 10);
 
-    if (bInstalled)
-        _RA_InitI(hMainHWND, nConsoleID, sClientVersion);
-    else
+    unsigned int nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+    if (nVerInstalled < nLatestDLLVer)
+    {
+        RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite it.
+
+        char sErrorMsg[2048];
+        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: 0.%03d\n%s",
+            nVerInstalled == 0 ?
+            "Cannot find or load RA_Integration.dll" :
+            "A new version of the RetroAchievements Toolset is available!",
+            nLatestDLLVer,
+            "Automatically update your RetroAchievements Toolset file?");
+
+        int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
+        if (nMBReply == IDYES)
+        {
+            FetchIntegrationFromWeb(sHostName, &nStatusCode);
+
+            if (nStatusCode == 200)
+            {
+                sVerInstalled = _RA_InstallIntegration();
+                nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+            }
+
+            if (nVerInstalled < nLatestDLLVer)
+            {
+                sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Failed to update Toolset (status code %u).", nStatusCode);
+                MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
+            }
+        }
+    }
+
+    if (nVerInstalled < nLatestDLLVer)
+    {
         RA_Shutdown();
 
+        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.", sHostName, nStatusCode);
+        MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+    }
+    else
+    {
+        if (!_RA_InitI(hMainHWND, nConsoleID, sClientVersion))
+            RA_Shutdown();
+    }
 }
 
 void RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
@@ -565,7 +609,11 @@ void RA_Shutdown()
     _RA_AttemptLogin = nullptr;
 
     //	Uninstall DLL
-    FreeLibrary(g_hRADLL);
+    if (g_hRADLL)
+    {
+        FreeLibrary(g_hRADLL);
+        g_hRADLL = nullptr;
+    }
 }
 
 

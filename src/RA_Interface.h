@@ -130,7 +130,6 @@ extern void RA_LoadROM(const char* sFullPath);
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_MENUEND                  1739
 
-
 //	Captures the RA_DLL and installs/allocs all required information.
 //	Populates all function pointers so they can be used by the app.
 extern void RA_Init(HWND hMainHWND, /*enum ConsoleType*/int console, const char* sClientVersion);

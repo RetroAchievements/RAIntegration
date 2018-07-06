@@ -337,6 +337,8 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
     RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
     ResponseOut.clear();
 
+    const char* sHostName = bIsImageRequest ? _RA_HostName() : "i.retroachievements.org";
+
     size_t nTemp;
 
     // Use WinHttpOpen to obtain a session handle.
@@ -348,7 +350,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, DataStream& Res
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, Widen(bIsImageRequest ? RA_HOST_IMG_URL : RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, Widen(sHostName).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
         if (hConnect != nullptr)
@@ -450,7 +452,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
         WINHTTP_NO_PROXY_BYPASS, 0);
     if (hSession != nullptr)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
         if (hConnect != nullptr)
         {
             HINTERNET hRequest = WinHttpOpenRequest(hConnect,
@@ -570,7 +572,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, DataS
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        hConnect = WinHttpConnect(hSession, Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        hConnect = WinHttpConnect(hSession, Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
     }
 
     if (hConnect != nullptr)

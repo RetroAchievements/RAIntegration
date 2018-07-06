@@ -225,9 +225,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //	Setup min required directories:
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-    if (strcmp(sClientVer, "OFFLINE"))
-        return FALSE;
-
     //////////////////////////////////////////////////////////////////////////
     //	Update news:
     PostArgs args;

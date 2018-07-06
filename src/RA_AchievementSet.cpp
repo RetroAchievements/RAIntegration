@@ -243,6 +243,14 @@ void AchievementSet::Test()
     }
 }
 
+void AchievementSet::Reset()
+{
+    for (Achievement& ach : m_Achievements)
+        ach.Reset();
+
+    m_bProcessingActive = TRUE;
+}
+
 BOOL AchievementSet::SaveToFile()
 {
     //	Takes all achievements in this group and dumps them in the filename provided.

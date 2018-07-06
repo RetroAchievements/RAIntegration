@@ -462,6 +462,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
 API void CCONV _RA_OnReset()
 {
+    g_pActiveAchievements->Reset();
     g_LeaderboardManager.Reset();
     g_PopupWindows.LeaderboardPopups().Reset();
 

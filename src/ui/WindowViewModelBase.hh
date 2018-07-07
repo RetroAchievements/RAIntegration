@@ -5,17 +5,17 @@
 namespace ra {
 namespace ui {
 
-typedef struct Position
+struct Position
 {
-    int X;
-    int Y;
-} Position;
+    int X{};
+    int Y{};
+};
 
-typedef struct Size
+struct Size
 {
-    int Width;
-    int Height;
-} Size;
+    int Width{};
+    int Height{};
+};
 
 } // namespace ui
 } // namespace ra

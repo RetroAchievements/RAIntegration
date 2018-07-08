@@ -781,7 +781,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
 
-        AppendMenu(hRA, MF_POPUP, (UINT_PTR)hRA_LB, "Leaderboards");
+        AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));

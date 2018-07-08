@@ -118,7 +118,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = COLUMN_TITLE[i];	//	Take non-const copy
+        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
         col.pszText = const_cast<LPTSTR>(colTitle.c_str());
         col.cchTextMax = 255;
         col.iSubItem = i;
@@ -157,7 +157,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     item.cchTextMax = 256;
     item.iItem = m_nNumOccupiedRows;
     item.iSubItem = 0;
-    ra::tstring sData = m_lbxData[m_nNumOccupiedRows][CSI_ID];
+    ra::tstring sData = NativeStr(m_lbxData[m_nNumOccupiedRows][CSI_ID]);
     item.pszText = const_cast<LPTSTR>(sData.c_str());
     item.iItem = ListView_InsertItem(hList, &item);
 
@@ -219,7 +219,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     for (size_t i = 0; i < NumColumns; ++i)
     {
         item.iSubItem = i;
-        ra::tstring sData = m_lbxData[nRow][i];
+        ra::tstring sData = NativeStr(m_lbxData[nRow][i]);
         item.pszText = const_cast<LPTSTR>(sData.c_str());
         ListView_SetItem(hList, &item);
     }
@@ -1066,7 +1066,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 TCHAR buffer[1024];
                                 if (GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
                                 {
-                                    pActiveAch->SetTitle(NativeStr(buffer));
+                                    pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     //	Persist/Update/Inject local LBX data back into LBX (?)
                                     g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Title, pActiveAch->Title());
@@ -1127,7 +1127,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             TCHAR buffer[16];
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer, 16))
                             {
-                                int nVal = strtol(NativeStr(buffer).c_str(), nullptr, 10);
+                                
+                                int nVal = std::stoi(NativeStr(buffer));
                                 if (nVal < 0 || nVal > 100)
                                     return FALSE;
 
@@ -1794,7 +1795,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     GetListViewTooltip();
                     if (!m_sTooltip.empty())
                     {
-                        lpDispInfo->lpszText = const_cast<char*>(m_sTooltip.c_str());
+                        lpDispInfo->lpszText = NativeStr(m_sTooltip).data();
                         return TRUE;
                     }
 

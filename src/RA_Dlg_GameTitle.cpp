@@ -98,7 +98,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     ra::tstring sSelectedTitle = sSelectedTitleBuffer;
 
                     ra::GameID nGameID = 0;
-                    if (strcmp(sSelectedTitle.c_str(), "<New Title>") == 0)
+                    if (sSelectedTitle == _T("<New Title>"))
                     {
                         //	Add a new title!
                         GetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitleBuffer, 512);
@@ -115,7 +115,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     args['u'] = RAUsers::LocalUser().Username();
                     args['t'] = RAUsers::LocalUser().Token();
                     args['m'] = m_sMD5;
-                    args['i'] = sSelectedTitle;
+                    args['i'] = ra::Narrow(sSelectedTitle);
                     args['c'] = std::to_string(g_ConsoleID);
 
                     Document doc;

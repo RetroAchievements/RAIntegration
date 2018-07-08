@@ -203,8 +203,8 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
-        ra::tstring sCol = COL_TITLE[i];	//	scoped cache
-        col.pszText = const_cast<LPTSTR>(sCol.c_str());
+        ra::tstring sCol = NativeStr(COL_TITLE[i]);	//	scoped cache
+        col.pszText = sCol.data();
         col.cx = COL_SIZE[i];
         col.iSubItem = i;
 
@@ -231,15 +231,15 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 
     //	id:
     item.iSubItem = 0;
-    ra::tstring sID = std::to_string(nGameID);	//scoped cache!
-    item.pszText = const_cast<LPTSTR>(sID.c_str());
+    ra::tstring sID = ra::to_tstring(nGameID);	//scoped cache!
+    item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
     item.iSubItem = 1;
-    ListView_SetItemText(hList, item.iItem, 1, const_cast<LPTSTR>(NativeStr(sTitle).c_str()));
+    ListView_SetItemText(hList, item.iItem, 1, NativeStr(sTitle).data());
 
     item.iSubItem = 2;
-    ListView_SetItemText(hList, item.iItem, 2, const_cast<LPTSTR>(NativeStr(m_ProgressLibrary[nGameID]).c_str()));
+    ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
 
     item.iSubItem = 3;
     ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));

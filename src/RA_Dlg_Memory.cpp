@@ -25,13 +25,13 @@ namespace {
 const size_t MIN_RESULTS_TO_DUMP = 500000;
 const size_t MIN_SEARCH_PAGE_SIZE = 50;
 
-const char* COMP_STR[] = {
-    { "EQUAL" },
-    { "LESS THAN" },
-    { "LESS THAN/EQUAL" },
-    { "GREATER THAN" },
-    { "GREATER THAN/EQUAL" },
-    { "NOT EQUAL" }
+LPCTSTR COMP_STR[] = {
+    { _T("EQUAL") },
+    { _T("LESS THAN") },
+    { _T("LESS THAN/EQUAL") },
+    { _T("GREATER THAN") },
+    { _T("GREATER THAN/EQUAL") },
+    { _T("NOT EQUAL") }
 };
 
 }
@@ -905,9 +905,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         MemCandidate& currentResult = m_SearchResults[m_nPage].m_ResultCandidate[pDIS->itemID - 2];
                         UpdateSearchResult(pDIS->itemID, nVal, buffer);
 
+                        using tostringstream = std::basic_ostringstream<TCHAR>;
+                        
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(currentResult.m_nAddr);
-                        if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                            _tcscat_s(buffer, ra::tstring("   (" + pSavedNote->Note() + ")").c_str());
+
+                        tostringstream oss;
+                        oss << _T("   (") << ra::Widen(pSavedNote->Note()) << _T(")");
+                        
+
+                        if (auto tstr{ oss.str() }; (pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
+                            _tcscat_s(buffer, tstr.c_str());
 
                         COLORREF color;
 
@@ -962,14 +969,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             TCHAR nString[1024];
                             ra::ByteAddress nAddr = m_SearchResults[m_nPage].m_ResultCandidate[nSelect - 2].m_nAddr;
-                            _stprintf_s(nString, 1024, "0x%06x", nAddr);
+                            _stprintf_s(nString, 1024, _T("0x%06x"), nAddr);
                             ComboBox_SetText(GetDlgItem(hDlg, IDC_RA_WATCHING), nString);
 
                             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, pSavedNote->Note().c_str());
+                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
                             else
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, "");
+                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
 
                             MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                             MemoryViewerControl::setWatchedAddress(nAddr);
@@ -1048,15 +1055,18 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             ra::tstring buffer = nativeBuffer;
                             //	Read hex or dec
                             if (buffer[0] == '0' && buffer[1] == 'x')
-                                nValueQuery = static_cast<unsigned int>(std::strtoul(buffer.c_str() + 2, nullptr, 16));
+                                nValueQuery = ra::tstrtoul(buffer.c_str() + 2, nullptr, 16);
                             else
-                                nValueQuery = static_cast<unsigned int>(std::strtoul(buffer.c_str(), nullptr, 10));
+                                nValueQuery = ra::tstrtoul(buffer.c_str());
                         }
                     }
 
-                    ra::tstring str(
-                        "Filtering for " + ra::tstring(COMP_STR[nCmpType]) +
-                        ((g_MemManager.UseLastKnownValue()) ? " last known value..." : std::to_string(nValueQuery)));
+                    auto str
+                    {
+                        _T("Filtering for ") + ra::tstring(COMP_STR[nCmpType]) +
+                        ((g_MemManager.UseLastKnownValue()) ? _T(" last known value...")
+                                                            : ra::to_tstring(nValueQuery))
+                    };
 
                     m_SearchResults[m_nPage].m_sFirstLine = str;
 
@@ -1083,7 +1093,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         m_SearchResults[m_nPage].m_ResultCandidate.push_back(g_MemManager.GetCandidate(i));
                         if (i >= MIN_RESULTS_TO_DUMP - 1)
                         {
-                            m_SearchResults[m_nPage].m_sSecondLine += " (Displaying first " + std::to_string(MIN_RESULTS_TO_DUMP) + " results)";
+                            m_SearchResults[m_nPage].m_sSecondLine += _T(" (Displaying first ") +
+                                                                      ra::to_tstring(MIN_RESULTS_TO_DUMP) +
+                                                                      _T(" results)");
                             break;
                         }
                     }
@@ -1151,8 +1163,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         m_SearchResults.push_back(sr);
                         m_SearchResults[m_nPage].m_nCount = g_MemManager.NumCandidates();
                         m_SearchResults[m_nPage].m_sFirstLine =
-                            "Cleared: (" + NativeStr(std::string(COMPARISONVARIABLESIZE_STR[nCompSize])) +
-                            ") mode. Aware of " + NativeStr(std::to_string(g_MemManager.NumCandidates())) + " RAM locations.";
+                            _T("Cleared: (") + NativeStr(std::string(COMPARISONVARIABLESIZE_STR[nCompSize])) +
+                            _T(") mode. Aware of ") + NativeStr(std::to_string(g_MemManager.NumCandidates())) +
+                            _T(" RAM locations.");
                         EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), g_MemManager.NumCandidates() > 0);
                     }
                     else
@@ -1162,7 +1175,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         m_SearchResults.clear();
                         SearchResult sr;
                         m_SearchResults.push_back(sr);
-                        m_SearchResults[m_nPage].m_sFirstLine = "Invalid Range";
+                        m_SearchResults[m_nPage].m_sFirstLine = _T("Invalid Range");
                     }
 
                     return FALSE;
@@ -1263,7 +1276,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (g_pCurrentGameData->GetGameID() != 0)
                     {
-                        ra::tstring sTarget = "http://" RA_HOST_URL + ra::tstring("/codenotes.php?g=") + std::to_string(g_pCurrentGameData->GetGameID());
+                        auto sTarget{
+                            _T("http://" RA_HOST_URL) + ra::tstring(_T("/codenotes.php?g="))
+                            + ra::to_tstring(g_pCurrentGameData->GetGameID())
+                        };
                         ShellExecute(nullptr,
                             _T("open"),
                             NativeStr(sTarget).c_str(),
@@ -1621,7 +1637,7 @@ void Dlg_Memory::Invalidate()
 
 void Dlg_Memory::UpdateBits() const
 {
-    TCHAR sNewValue[64] = "";
+    TCHAR sNewValue[64] = _T("");
 
     if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == EightBit)
     {

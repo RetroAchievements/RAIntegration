@@ -169,6 +169,23 @@ filesize(_In_ std::basic_string<CharT>& filename) noexcept
     return file.tellg();
 } // end function filesize
 
+// More functions to be Unicode compatible w/o sacrificing MBCS (lots of errors)
+
+_NODISCARD inline auto __cdecl
+tstrtoul(_In_z_ LPCTSTR _String,
+         _Out_opt_ _Deref_post_z_ LPTSTR* _EndPtr = nullptr,
+         _In_ int _Radix = 10) // calling functions might throw
+{
+#if _MBCS
+    return std::strtoul(_String, _EndPtr, _Radix);
+#elif _UNICODE
+    return std::wcstoul(_String, _EndPtr, _Radix);
+#else
+#error Unsupported character set detected.
+#endif // _MBCS
+}
+
+
 // Don't depend on std::rel_ops for stuff here because they assume the types are the same
 namespace rel_ops {
 

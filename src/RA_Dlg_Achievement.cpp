@@ -181,7 +181,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
-        ra::tstring sTextData = m_lbxData.back()[item.iSubItem].data();
+        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
         item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
 
         if (item.iSubItem == 0)
@@ -1110,7 +1110,7 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
         LoadAchievements(hList);
 
         TCHAR buffer[256];
-        sprintf_s(buffer, 256, " %d", nGameID);
+        _stprintf_s(buffer, 256, _T(" %d"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)
@@ -1121,7 +1121,7 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
             EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
         }
 
-        sprintf_s(buffer, " %d", g_pActiveAchievements->NumAchievements());
+        _stprintf_s(buffer, _T(" %d"), g_pActiveAchievements->NumAchievements());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
     }
@@ -1207,8 +1207,8 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         item.iItem = nItem;
         item.iSubItem = nColumn;
         item.cchTextMax = 256;
-        ra::tstring sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
-        item.pszText = const_cast<LPTSTR>(sStr.c_str());
+        ra::tstring sStr = NativeStr(m_lbxData[nItem][nColumn]);	//	scoped cache
+        item.pszText = sStr.data();
         if (ListView_SetItem(hList, &item) == FALSE)
         {
             ASSERT(!"Failed to ListView_SetItem!");

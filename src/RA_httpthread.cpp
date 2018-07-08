@@ -108,7 +108,7 @@ HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
 
-std::wstring RAWeb::sUserAgent = Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
+std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
 BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
 {
@@ -268,9 +268,10 @@ void RAWeb::SetUserAgentString()
 
     sUserAgent.append(") Integration/");
 
-    char buffer[64];
-    sprintf(buffer, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer);
+    auto buffer{ std::make_unique<char[]>(64U) };
+    sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
+              RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
+    sUserAgent.append(buffer.release());
 
     const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
     if (ptr != nullptr)
@@ -807,7 +808,8 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                                 args['m'] = "Inspecting Memory in Hardcore mode";
                             else if (g_nActiveAchievementSet == Core)
                                 args['m'] = "Fixing Achievements";
-                            else
+
+                        else
                                 args['m'] = "Developing Achievements";
                         }
                         else

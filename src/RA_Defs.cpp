@@ -3,7 +3,7 @@
 #include <iomanip>
 
 
-#ifdef RA_EXPORTS
+#if RA_EXPORTS
 
 GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 
@@ -11,52 +11,56 @@ GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
 
 namespace ra {
 
+_Use_decl_annotations_
 std::string Narrow(const std::wstring& wstr)
 {
     return Narrow(wstr.c_str());
 }
-
+_Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
     auto wwstr{ std::move_if_noexcept(wstr) };
     return Narrow(wwstr);
 }
 
-
+_Use_decl_annotations_
 std::string Narrow(const wchar_t* wstr)
 {
-    std::string str;
-    str.reserve(lstrlenW(wstr) * 4U); // read somewhere I Unicode charter could be 4 bytes.
+    auto len{ ra::to_signed(std::wcslen(wstr)) };
 
-    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, lstrlenW(wstr), str.data(),
-        lstrlenW(wstr) * 4U, nullptr, nullptr);
-    return str.data(); // the .data() part is required
+    auto needed{
+        ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, nullptr, 0, nullptr, nullptr)
+    };
+
+    std::string str(ra::to_unsigned(needed), '\000'); // allocate required space (including terminator)
+    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
+                          nullptr, nullptr);
+    str.resize(ra::to_unsigned(needed - 1)); // terminator is not actually part of the string
+    return str;
 }
 
-std::wstring Widen(const std::string& str)
+_Use_decl_annotations_ std::wstring Widen(const std::string& str)
 {
     return Widen(str.c_str());
 }
 
-std::wstring Widen(std::string&& str) noexcept
+_Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
 {
     auto sstr{ std::move_if_noexcept(str) };
     return Widen(sstr);
 }
 
-std::wstring Widen(const char* str)
+_Use_decl_annotations_ std::wstring Widen(const char* str)
 {
-#pragma warning(push)
-#pragma warning(disable : 4996) // unreferenced inline functions
-    auto len{ 1_z + std::mbstowcs(nullptr, str, 0_z) };
-#pragma warning(pop)
-    
-    std::wstring wstr;
-    wstr.reserve(len);
+    auto len{ ra::to_signed(std::strlen(str)) };
+    auto needed{::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0)};
+    // doesn't seem wchar_t is treated like a character type by default
+    std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
+    ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
+                          ra::to_signed(wstr.capacity()));
+    wstr.resize(ra::to_unsigned(needed - 1));
 
-    ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, to_signed(len), wstr.data(),
-        to_signed(len));
-    return wstr.data();
+    return wstr;
 }
 
 std::string ByteAddressToString(ra::ByteAddress nAddr)
@@ -66,10 +70,21 @@ std::string ByteAddressToString(ra::ByteAddress nAddr)
     return oss.str();
 }
 
-std::wstring Widen(const wchar_t* wstr) { return std::remove_reference_t<std::wstring&&>(std::wstring{ wstr }); }
-std::wstring Widen(const std::wstring& wstr) { return wstr; }
-std::string Narrow(const char* str) { return std::remove_reference_t<std::string&&>(std::string{ str });}
-std::string Narrow(const std::string& str) { return str; }
+_Use_decl_annotations_ std::wstring Widen(const wchar_t* wstr)
+{
+    // remove reference might seem confusing
+    std::wstring _wstr{ wstr };
+    return _wstr;
+}
+_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
+_Use_decl_annotations_ std::string Narrow(const char* str)
+{
+    std::string _str{ str };
+    return _str;
+}
+
+
+_Use_decl_annotations_ std::string Narrow(const std::string& str) { return str; }
 
 
 } // namespace ra

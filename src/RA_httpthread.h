@@ -140,7 +140,7 @@ public:
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
 
     static void SetUserAgentString();
-    static void SetUserAgent(const std::string& sValue) { sUserAgent = Widen(sValue); }
+    static void SetUserAgent(const std::string& sValue) { sUserAgent = ra::Widen(sValue); }
     static const std::wstring& GetUserAgent() { return sUserAgent; }
 
 private:

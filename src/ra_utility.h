@@ -26,8 +26,9 @@ inline namespace int_literals {
 /// </summary>
 /// <param name="n">The integer.</param>
 /// <returns>The integer as <c>std::size_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept {
-	return static_cast<std::size_t>(n);
+_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept
+{
+    return static_cast<std::size_t>(n);
 } // end operator""_z
 
 
@@ -43,28 +44,33 @@ _NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept {
   /// </summary>
   /// <param name="n">The integer.</param>
   /// <returns>The integer as <c>std::intptr_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept {
-	return static_cast<std::intptr_t>(n);
+_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept
+{
+    return static_cast<std::intptr_t>(n);
 } // end operator""_i
 
   // We need one for DWORD, because it doesn't match LPDWORD for some stuff
-_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept {
-	return static_cast<DWORD>(n);
+_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept
+{
+    return static_cast<DWORD>(n);
 } // end operator""_dw
 
   // streamsize varies as well
-_NODISCARD _CONSTANT_VAR operator""_ss(_In_ unsigned long long n) noexcept {
-	return static_cast<std::streamsize>(n);
+_NODISCARD _CONSTANT_VAR operator""_ss(_In_ unsigned long long n) noexcept
+{
+    return static_cast<std::streamsize>(n);
 } // end operator""_ss
 
   // Literal for unsigned short
-_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept {
-	return static_cast<std::uint16_t>(n);
+_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept
+{
+    return static_cast<std::uint16_t>(n);
 } // end operator""_hu
 
 
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept {
-	return static_cast<ra::DataPos>(n);
+_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept
+{
+    return static_cast<ra::DataPos>(n);
 } // end operator""_dp
 
   // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
@@ -73,22 +79,25 @@ _NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept {
 
 _NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept
 {
-	return static_cast<ByteAddress>(n);
+    return static_cast<ByteAddress>(n);
 } // end operator""_ba
 
 
-_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept {
-	return static_cast<AchievementID>(n);
+_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept
+{
+    return static_cast<AchievementID>(n);
 } // end operator""_achid
 
 
-_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept {
-	return static_cast<LeaderboardID>(n);
+_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept
+{
+    return static_cast<LeaderboardID>(n);
 } // end operator""_lbid
 
 
-_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept {
-	return static_cast<GameID>(n);
+_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept
+{
+    return static_cast<GameID>(n);
 } // end operator""_gameid
 
 } // inline namespace int_literals
@@ -108,13 +117,13 @@ using float_type = long double; // should we even care bout this?
 #endif // _WIN32
 
 
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD ra::tstring 
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD ra::tstring
 to_tstring(_In_ Arithmetic a) noexcept
 {
 #if _MBCS
-	return std::to_string(a);
+    return std::to_string(a);
 #elif _UNICODE
-	return std::to_wstring(a);
+    return std::to_wstring(a);
 #else
 #error Unknown character set detected, only MultiByte and Unicode character sets are supported!
 #endif // UNICODE
@@ -125,10 +134,10 @@ to_floating(_In_ Integral i) noexcept { return static_cast<float_type>(i); }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
 _NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept
-{ 
-	if(std::signbit(fp))
-		return std::lround(fp); 
-	return to_unsigned(std::lround(fp));
+{
+    if (std::signbit(fp))
+        return std::lround(fp);
+    return to_unsigned(std::lround(fp));
 }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
@@ -150,15 +159,92 @@ template<typename Enum> _NODISCARD _CONSTANT_VAR to_integral = etoi<Enum>;
   ///   The character traits of <typeparamref name="CharT" />.
   /// </typeparam>
   /// <returns>The size of the file stream.</returns>
-template<typename CharT,class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
 filesize(_In_ std::basic_string<CharT>& filename) noexcept
 ->decltype(std::declval<std::basic_fstream<CharT>&>().tellg())
 {
-	// It's always the little things...
-	using file_type = std::basic_fstream<CharT>;
-	file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
-	return file.tellg();
+    // It's always the little things...
+    using file_type = std::basic_fstream<CharT>;
+    file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
+    return file.tellg();
 } // end function filesize
+
+// Don't depend on std::rel_ops for stuff here because they assume the types are the same
+namespace rel_ops {
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator==(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (etoi(a) == b);
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator==(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (a == etoi(b));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator!=(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (!(etoi(a) == b));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator!=(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (!(a == etoi(b)));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator<(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (etoi(a) < b);
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator<(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (a < etoi(b));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator>(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (b < etoi(a));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator>(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (etoi(b) < a);
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator<=(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (!(b < etoi(a)));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator<=(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (!(etoi(b) < a));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator>=(_In_ const decltype(etoi(std::declval<Enum&>())) a, _In_ const Enum b) noexcept
+{
+    return (!(a < etoi(b)));
+}
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+operator>=(_In_ const Enum a, _In_ const decltype(etoi(std::declval<Enum&>())) b) noexcept
+{
+    return (!(etoi(a) < b));
+}
+
+} // namespace rel_ops
 
 } // namespace ra
 

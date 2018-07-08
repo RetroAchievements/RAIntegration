@@ -3,6 +3,7 @@
 #include "RA_MemManager.h"
 
 #include <algorithm>
+#include "ra_utility.h"
 
 double MemValue::Clause::GetValue() const
 {

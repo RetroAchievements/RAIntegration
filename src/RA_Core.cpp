@@ -1554,7 +1554,11 @@ void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
     using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+#pragma warning(push)
+#pragma warning(disable : 4996) // Deprecation from Microsoft
     FileH myFile{ std::fopen(sFileName.c_str(), "wb"), std::fclose };
+#pragma warning(pop)
+
     std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
 }
 
@@ -1564,8 +1568,12 @@ void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
     using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
+#pragma warning(push)
+#pragma warning(disable : 4996) // Deprecation from Microsoft
     FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
-    auto sBuffer{ std::make_unique<char[]>(ra::to_unsigned(nBytes)) };
+#pragma warning(pop)
+    
+    auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
     std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
 }
 

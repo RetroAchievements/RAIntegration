@@ -89,11 +89,7 @@
 
 
 //	RA-Only
-#define RAPIDJSON_HAS_STDSTRING 1
 
-// This is not needed the most recent version
-#pragma warning(push, 1)
-#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
@@ -329,15 +325,15 @@ namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
-_NODISCARD std::string Narrow(_In_ const wchar_t* wstr);
+_NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
 _NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
-_NODISCARD std::wstring Widen(_In_ const char* str);
+_NODISCARD std::wstring Widen(_In_z_ const char* str);
 
 //	No-ops to help convert:
-_NODISCARD std::wstring Widen(_In_ const wchar_t* wstr);
+_NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_In_ const char* str);
+_NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 _NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
 

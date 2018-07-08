@@ -910,7 +910,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(currentResult.m_nAddr);
 
                         tostringstream oss;
-                        oss << _T("   (") << ra::Widen(pSavedNote->Note()) << _T(")");
+                        oss << _T("   (") << NativeStr(pSavedNote->Note()) << _T(")");
                         
 
                         if (auto tstr{ oss.str() }; (pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
@@ -974,7 +974,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
+                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
                             else
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
 

@@ -21,7 +21,7 @@ public:
     size_t Count() const { return m_Leaderboards.size(); }
     inline RA_Leaderboard& GetLB(size_t iter) { return m_Leaderboards[iter]; }
 
-    RA_Leaderboard* FindLB(LeaderboardID nID);
+    RA_Leaderboard* FindLB(ra::LeaderboardID nID);
 
     void ActivateLeaderboard(const RA_Leaderboard& lb) const;
     void DeactivateLeaderboard(const RA_Leaderboard& lb) const;

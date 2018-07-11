@@ -135,10 +135,9 @@ extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
 extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 //	Write out the buffer to a file
-extern void _WriteBufferToFile(const std::string& sFileName, const DataStream& rawData);
-extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
 extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes);
+extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
+extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

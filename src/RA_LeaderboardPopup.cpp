@@ -28,7 +28,7 @@ LeaderboardPopup::LeaderboardPopup()
     Reset();
 }
 
-void LeaderboardPopup::ShowScoreboard(LeaderboardID nID)
+void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
     m_vScoreboardQueue.push(nID);
 

@@ -100,10 +100,10 @@ public:
     void GenerateResizes(HWND hDlg);
 
 private:
-    bool GetSystemMemoryRange(ByteAddress& start, ByteAddress& end);
-    bool GetGameMemoryRange(ByteAddress& start, ByteAddress& end);
+    bool GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
+    bool GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
-    bool GetSelectedMemoryRange(ByteAddress& start, ByteAddress& end);
+    bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
     void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, TCHAR(&buffer)[1024]);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);

@@ -5,23 +5,20 @@
 #include "RA_Leaderboard.h"
 #include "RA_Defs.h"
 
-typedef unsigned int DataPos;
-
-
 class RA_Lookup
 {
 public:
     RA_Lookup(const std::string& sDesc);
 
 public:
-    void AddLookupData(DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
-    const std::string& Lookup(DataPos nValue) const;
+    void AddLookupData(ra::DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
+    const std::string& Lookup(ra::DataPos nValue) const;
 
     const std::string& Description() const { return m_sLookupDescription; }
 
 private:
     std::string m_sLookupDescription;
-    std::map<DataPos, std::string> m_lookupData;
+    std::map<ra::DataPos, std::string> m_lookupData;
 };
 
 class RA_ConditionalDisplayString
@@ -40,7 +37,7 @@ private:
 class RA_RichPresenceInterpretter
 {
 public:
-    static void PersistAndParseScript(GameID nGameID, const std::string& sScript);
+    static void PersistAndParseScript(ra::GameID nGameID, const std::string& sScript);
 
 public:
     RA_RichPresenceInterpretter() {}

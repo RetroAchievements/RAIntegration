@@ -66,7 +66,7 @@ std::vector<size_t> MemManager::GetBankIDs() const
     return bankIDs;
 }
 
-unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariableSize size) const
+unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const
 {
     unsigned char buffer[4];
     switch (size)
@@ -103,7 +103,7 @@ unsigned int MemManager::ActiveBankRAMRead(ByteAddress nOffs, ComparisonVariable
     }
 }
 
-unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
+unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 {
     const BankData* bank = nullptr;
 
@@ -122,7 +122,7 @@ unsigned char MemManager::ActiveBankRAMByteRead(ByteAddress nOffs) const
     return 0;
 }
 
-void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, size_t count) const
+void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const
 {
     const BankData* bank = nullptr;
 
@@ -168,7 +168,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ByteAddress nOffs, si
         *buffer++ = reader(nOffs++);
 }
 
-void MemManager::ActiveBankRAMByteWrite(ByteAddress nOffs, unsigned int nVal)
+void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal)
 {
     int bankID = 0;
     int numBanks = m_Banks.size();

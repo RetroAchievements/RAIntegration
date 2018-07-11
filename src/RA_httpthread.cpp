@@ -12,6 +12,7 @@
 #include "RA_RichPresence.h"
 
 #include <winhttp.h>
+#include <memory>
 #include <fstream>
 #include <time.h>
 

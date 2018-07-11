@@ -76,7 +76,12 @@ _Use_decl_annotations_ std::wstring Widen(const wchar_t* wstr)
     std::wstring _wstr{ wstr };
     return _wstr;
 }
-_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
+
+_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr)
+{
+    return wstr;
+}
+
 _Use_decl_annotations_ std::string Narrow(const char* str)
 {
     std::string _str{ str };
@@ -84,12 +89,12 @@ _Use_decl_annotations_ std::string Narrow(const char* str)
 }
 
 
-_Use_decl_annotations_ std::string Narrow(const std::string& str) { return str; }
-
+_Use_decl_annotations_ std::string Narrow(const std::string& str)
+{
+    return str;
+}
 
 } // namespace ra
-
-
 
 
 void RADebugLogNoFormat(const char* data)

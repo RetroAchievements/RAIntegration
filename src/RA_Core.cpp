@@ -30,7 +30,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <locale>
-#include <codecvt>
+#include <memory>
 #include <direct.h>
 #include <io.h>		//	_access()
 #include <atlbase.h> // CComPtr

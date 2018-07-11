@@ -916,8 +916,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
                         {
                             std::ostringstream oss;
-                            oss << _T("   (") << NativeStr(pSavedNote->Note()) << _T(")");
-                            _tcscat_s(buffer, oss.str().c_str());
+                            oss << "   (" << pSavedNote->Note() << ")";
+                            _tcscat_s(buffer, NativeStr(oss.str()).c_str());
                         }
 
                         COLORREF color;

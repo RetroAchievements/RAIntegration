@@ -839,7 +839,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
-    std::stringstream sstr;
+    std::ostringstream sstr;
     sstr << std::string(g_sClientName) << " - ";
 
     // only copy the first two parts of the version string to the title bar: 0.12.7.1 => 0.12

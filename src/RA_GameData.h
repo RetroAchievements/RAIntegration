@@ -7,8 +7,8 @@
 class GameData
 {
 public:
-    inline GameID GetGameID() { return m_nGameID; }
-    void SetGameID(GameID nGameID) { m_nGameID = nGameID; }
+    inline ra::GameID GetGameID() { return m_nGameID; }
+    void SetGameID(ra::GameID nGameID) { m_nGameID = nGameID; }
 
     const std::string& GameTitle() { return m_sGameTitle; }
     void SetGameTitle(const std::string& str) { m_sGameTitle = str; }
@@ -19,7 +19,7 @@ public:
     void ParseData(const Document& doc);
 
 private:
-    GameID m_nGameID;
+    ra::GameID m_nGameID;
     std::string m_sGameTitle;
     std::string m_sRichPresencePatch;
 

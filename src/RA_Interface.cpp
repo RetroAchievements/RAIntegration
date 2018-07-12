@@ -68,61 +68,42 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 //	Expose to app:
 
 //	Generic:
-const char* (CCONV *_RA_IntegrationVersion) () = nullptr;
-const char* (CCONV *_RA_HostName) () = nullptr;
-int		(CCONV *_RA_InitI) (HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
-int		(CCONV *_RA_InitOffline) (HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
-int		(CCONV *_RA_Shutdown) () = nullptr;
+const char* (CCONV *_RA_IntegrationVersion)() = nullptr;
+const char* (CCONV *_RA_HostName)() = nullptr;
+int		(CCONV *_RA_InitI)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+int		(CCONV *_RA_InitOffline)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+int		(CCONV *_RA_Shutdown)() = nullptr;
 //	Load/Save
-bool	(CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
-int		(CCONV *_RA_OnLoadNewRom)(const BYTE* pROM, unsigned int nROMSize) = nullptr;
-void	(CCONV *_RA_InstallMemoryBank)(int nBankID, void* pReader, void* pWriter, int nBankSize) = nullptr;
-void	(CCONV *_RA_ClearMemoryBanks)() = nullptr;
-void	(CCONV *_RA_OnLoadState)(const char* sFilename) = nullptr;
-void	(CCONV *_RA_OnSaveState)(const char* sFilename) = nullptr;
+bool    (CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
+int     (CCONV *_RA_OnLoadNewRom)(const BYTE* pROM, unsigned int nROMSize) = nullptr;
+void    (CCONV *_RA_InstallMemoryBank)(int nBankID, void* pReader, void* pWriter, int nBankSize) = nullptr;
+void    (CCONV *_RA_ClearMemoryBanks)() = nullptr;
+void    (CCONV *_RA_OnLoadState)(const char* sFilename) = nullptr;
+void    (CCONV *_RA_OnSaveState)(const char* sFilename) = nullptr;
+void    (CCONV *_RA_OnReset)() = nullptr;
 //	Achievements:
-void	(CCONV *_RA_DoAchievementsFrame)() = nullptr;
+void    (CCONV *_RA_DoAchievementsFrame)() = nullptr;
 //	User:
-bool	(CCONV *_RA_UserLoggedIn)() = nullptr;
-const char*	(CCONV *_RA_Username)() = nullptr;
-void	(CCONV *_RA_AttemptLogin)(bool bBlocking) = nullptr;
-//	Graphics:
-void	(CCONV *_RA_InitDirectX) (void) = nullptr;
-void	(CCONV *_RA_OnPaint)(HWND hWnd) = nullptr;
+void    (CCONV *_RA_AttemptLogin)(bool bBlocking) = nullptr;
 //	Tools:
-void	(CCONV *_RA_SetPaused)(bool bIsPaused) = nullptr;
-HMENU(CCONV *_RA_CreatePopupMenu)() = nullptr;
-void	(CCONV *_RA_UpdateAppTitle) (const char* pMessage) = nullptr;
-void	(CCONV *_RA_HandleHTTPResults) (void) = nullptr;
-void	(CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
-void	(CCONV *_RA_InstallSharedFunctions)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*)) = nullptr;
-int		(CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
-int		(CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
-int		(CCONV *_RA_HTTPGetRequestExists)(const char* sPageName) = nullptr;
+void    (CCONV *_RA_SetPaused)(bool bIsPaused) = nullptr;
+HMENU   (CCONV *_RA_CreatePopupMenu)() = nullptr;
+void    (CCONV *_RA_UpdateAppTitle)(const char* pMessage) = nullptr;
+void    (CCONV *_RA_HandleHTTPResults)(void) = nullptr;
+void    (CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
+void    (CCONV *_RA_InstallSharedFunctions)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*)) = nullptr;
+int     (CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
+int     (CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
+//  Overlay:
+int     (CCONV *_RA_UpdateOverlay)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
+int     (CCONV *_RA_UpdatePopups)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
+void    (CCONV *_RA_RenderOverlay)(HDC hDC, RECT* prcSize) = nullptr;
+void    (CCONV *_RA_RenderPopups)(HDC hDC, RECT* prcSize) = nullptr;
+bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
+
 
 //	Don't expose to app
 HINSTANCE g_hRADLL = nullptr;
-
-
-int		(CCONV *_RA_UpdateOverlay) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
-int		(CCONV *_RA_UpdatePopups) (ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
-void	(CCONV *_RA_RenderOverlay) (HDC hDC, RECT* prcSize) = nullptr;
-void	(CCONV *_RA_RenderPopups) (HDC hDC, RECT* prcSize) = nullptr;
-bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
-
-//	Helpers:
-bool RA_UserLoggedIn()
-{
-    if (_RA_UserLoggedIn != nullptr)
-        return _RA_UserLoggedIn();
-
-    return false;
-}
-
-const char* RA_Username()
-{
-    return _RA_Username ? _RA_Username() : "";
-}
 
 void RA_AttemptLogin(bool bBlocking)
 {
@@ -194,18 +175,6 @@ bool RA_ConfirmLoadNewRom(bool bIsQuitting)
     return _RA_ConfirmLoadNewRom ? _RA_ConfirmLoadNewRom(bIsQuitting) : true;
 }
 
-void RA_InitDirectX()
-{
-    if (_RA_InitDirectX != nullptr)
-        _RA_InitDirectX();
-}
-
-void RA_OnPaint(HWND hWnd)
-{
-    if (_RA_OnPaint != nullptr)
-        _RA_OnPaint(hWnd);
-}
-
 void RA_InvokeDialog(LPARAM nID)
 {
     if (_RA_InvokeDialog != nullptr)
@@ -230,6 +199,12 @@ void RA_OnSaveState(const char* sFilename)
         _RA_OnSaveState(sFilename);
 }
 
+void RA_OnReset()
+{
+    if (_RA_OnReset != nullptr)
+        _RA_OnReset();
+}
+
 void RA_DoAchievementsFrame()
 {
     if (_RA_DoAchievementsFrame != nullptr)
@@ -246,12 +221,6 @@ int RA_HardcoreModeIsActive()
 {
     return (_RA_HardcoreModeIsActive != nullptr) ? _RA_HardcoreModeIsActive() : 0;
 }
-
-int RA_HTTPRequestExists(const char* sPageName)
-{
-    return (_RA_HTTPGetRequestExists != nullptr) ? _RA_HTTPGetRequestExists(sPageName) : 0;
-}
-
 
 static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage, char* pBufferOut, unsigned int nBufferOutSize, DWORD* pBytesRead, DWORD* pStatusCode)
 {
@@ -365,7 +334,7 @@ static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes
 
 static void FetchIntegrationFromWeb(const char* sHostName, DWORD* pStatusCode)
 {
-    const int MAX_SIZE = 3 * 1024 * 1024;
+    const int MAX_SIZE = 2 * 1024 * 1024;
     char* buffer = new char[MAX_SIZE];
     if (buffer == nullptr)
     {
@@ -422,36 +391,32 @@ static const char* CCONV _RA_InstallIntegration()
 
     //	Install function pointers one by one
 
-    _RA_IntegrationVersion = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_IntegrationVersion");
-    _RA_HostName = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_HostName");
-    _RA_InitI = (int(CCONV *)(HWND, int, const char*))				GetProcAddress(g_hRADLL, "_RA_InitI");
-    _RA_InitOffline = (int(CCONV *)(HWND, int, const char*))				GetProcAddress(g_hRADLL, "_RA_InitOffline");
-    _RA_Shutdown = (int(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_Shutdown");
-    _RA_UserLoggedIn = (bool(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_UserLoggedIn");
-    _RA_Username = (const char*(CCONV *)())								GetProcAddress(g_hRADLL, "_RA_Username");
-    _RA_AttemptLogin = (void(CCONV *)(bool))									GetProcAddress(g_hRADLL, "_RA_AttemptLogin");
-    _RA_UpdateOverlay = (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress(g_hRADLL, "_RA_UpdateOverlay");
-    _RA_UpdatePopups = (int(CCONV *)(ControllerInput*, float, bool, bool))	GetProcAddress(g_hRADLL, "_RA_UpdatePopups");
-    _RA_RenderOverlay = (void(CCONV *)(HDC, RECT*))							GetProcAddress(g_hRADLL, "_RA_RenderOverlay");
+    _RA_IntegrationVersion = (const char*(CCONV *)())                                 GetProcAddress(g_hRADLL, "_RA_IntegrationVersion");
+    _RA_HostName = (const char*(CCONV *)())                                           GetProcAddress(g_hRADLL, "_RA_HostName");
+    _RA_InitI = (int(CCONV *)(HWND, int, const char*))                                GetProcAddress(g_hRADLL, "_RA_InitI");
+    _RA_InitOffline = (int(CCONV *)(HWND, int, const char*))                          GetProcAddress(g_hRADLL, "_RA_InitOffline");
+    _RA_Shutdown = (int(CCONV *)())                                                   GetProcAddress(g_hRADLL, "_RA_Shutdown");
+    _RA_AttemptLogin = (void(CCONV *)(bool))                                          GetProcAddress(g_hRADLL, "_RA_AttemptLogin");
+    _RA_UpdateOverlay = (int(CCONV *)(ControllerInput*, float, bool, bool))           GetProcAddress(g_hRADLL, "_RA_UpdateOverlay");
+    _RA_UpdatePopups = (int(CCONV *)(ControllerInput*, float, bool, bool))            GetProcAddress(g_hRADLL, "_RA_UpdatePopups");
+    _RA_RenderOverlay = (void(CCONV *)(HDC, RECT*))                                   GetProcAddress(g_hRADLL, "_RA_RenderOverlay");
     _RA_IsOverlayFullyVisible = (bool(CCONV *)())                                     GetProcAddress(g_hRADLL, "_RA_IsOverlayFullyVisible");
-    _RA_RenderPopups = (void(CCONV *)(HDC, RECT*))							GetProcAddress(g_hRADLL, "_RA_RenderPopups");
-    _RA_OnLoadNewRom = (int(CCONV *)(const BYTE*, unsigned int))				GetProcAddress(g_hRADLL, "_RA_OnLoadNewRom");
-    _RA_InstallMemoryBank = (void(CCONV *)(int, void*, void*, int))				GetProcAddress(g_hRADLL, "_RA_InstallMemoryBank");
-    _RA_ClearMemoryBanks = (void(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_ClearMemoryBanks");
-    _RA_UpdateAppTitle = (void(CCONV *)(const char*))							GetProcAddress(g_hRADLL, "_RA_UpdateAppTitle");
-    _RA_HandleHTTPResults = (void(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_HandleHTTPResults");
-    _RA_ConfirmLoadNewRom = (bool(CCONV *)(bool))									GetProcAddress(g_hRADLL, "_RA_ConfirmLoadNewRom");
-    _RA_CreatePopupMenu = (HMENU(CCONV *)(void))								GetProcAddress(g_hRADLL, "_RA_CreatePopupMenu");
-    _RA_InitDirectX = (void(CCONV *)(void))									GetProcAddress(g_hRADLL, "_RA_InitDirectX");
-    _RA_OnPaint = (void(CCONV *)(HWND))									GetProcAddress(g_hRADLL, "_RA_OnPaint");
-    _RA_InvokeDialog = (void(CCONV *)(LPARAM))								GetProcAddress(g_hRADLL, "_RA_InvokeDialog");
-    _RA_SetPaused = (void(CCONV *)(bool))									GetProcAddress(g_hRADLL, "_RA_SetPaused");
-    _RA_OnLoadState = (void(CCONV *)(const char*))							GetProcAddress(g_hRADLL, "_RA_OnLoadState");
-    _RA_OnSaveState = (void(CCONV *)(const char*))							GetProcAddress(g_hRADLL, "_RA_OnSaveState");
-    _RA_DoAchievementsFrame = (void(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_DoAchievementsFrame");
-    _RA_SetConsoleID = (int(CCONV *)(unsigned int))							GetProcAddress(g_hRADLL, "_RA_SetConsoleID");
-    _RA_HardcoreModeIsActive = (int(CCONV *)())										GetProcAddress(g_hRADLL, "_RA_HardcoreModeIsActive");
-    _RA_HTTPGetRequestExists = (int(CCONV *)(const char*))							GetProcAddress(g_hRADLL, "_RA_HTTPGetRequestExists");
+    _RA_RenderPopups = (void(CCONV *)(HDC, RECT*))                                    GetProcAddress(g_hRADLL, "_RA_RenderPopups");
+    _RA_OnLoadNewRom = (int(CCONV *)(const BYTE*, unsigned int))                      GetProcAddress(g_hRADLL, "_RA_OnLoadNewRom");
+    _RA_InstallMemoryBank = (void(CCONV *)(int, void*, void*, int))                   GetProcAddress(g_hRADLL, "_RA_InstallMemoryBank");
+    _RA_ClearMemoryBanks = (void(CCONV *)())                                          GetProcAddress(g_hRADLL, "_RA_ClearMemoryBanks");
+    _RA_UpdateAppTitle = (void(CCONV *)(const char*))                                 GetProcAddress(g_hRADLL, "_RA_UpdateAppTitle");
+    _RA_HandleHTTPResults = (void(CCONV *)())                                         GetProcAddress(g_hRADLL, "_RA_HandleHTTPResults");
+    _RA_ConfirmLoadNewRom = (bool(CCONV *)(bool))                                     GetProcAddress(g_hRADLL, "_RA_ConfirmLoadNewRom");
+    _RA_CreatePopupMenu = (HMENU(CCONV *)(void))                                      GetProcAddress(g_hRADLL, "_RA_CreatePopupMenu");
+    _RA_InvokeDialog = (void(CCONV *)(LPARAM))                                        GetProcAddress(g_hRADLL, "_RA_InvokeDialog");
+    _RA_SetPaused = (void(CCONV *)(bool))                                             GetProcAddress(g_hRADLL, "_RA_SetPaused");
+    _RA_OnLoadState = (void(CCONV *)(const char*))                                    GetProcAddress(g_hRADLL, "_RA_OnLoadState");
+    _RA_OnSaveState = (void(CCONV *)(const char*))                                    GetProcAddress(g_hRADLL, "_RA_OnSaveState");
+    _RA_OnReset = (void(CCONV *)())                                                   GetProcAddress(g_hRADLL, "_RA_OnReset");
+    _RA_DoAchievementsFrame = (void(CCONV *)())                                       GetProcAddress(g_hRADLL, "_RA_DoAchievementsFrame");
+    _RA_SetConsoleID = (int(CCONV *)(unsigned int))                                   GetProcAddress(g_hRADLL, "_RA_SetConsoleID");
+    _RA_HardcoreModeIsActive = (int(CCONV *)())                                       GetProcAddress(g_hRADLL, "_RA_HardcoreModeIsActive");
 
     _RA_InstallSharedFunctions = (void(CCONV *)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*))) GetProcAddress(g_hRADLL, "_RA_InstallSharedFunctionsExt");
 
@@ -574,8 +539,6 @@ void RA_Shutdown()
     _RA_IntegrationVersion = nullptr;
     _RA_InitI = nullptr;
     _RA_Shutdown = nullptr;
-    _RA_UserLoggedIn = nullptr;
-    _RA_Username = nullptr;
     _RA_UpdateOverlay = nullptr;
     _RA_UpdatePopups = nullptr;
     _RA_RenderOverlay = nullptr;
@@ -587,12 +550,11 @@ void RA_Shutdown()
     _RA_HandleHTTPResults = nullptr;
     _RA_ConfirmLoadNewRom = nullptr;
     _RA_CreatePopupMenu = nullptr;
-    _RA_InitDirectX = nullptr;
-    _RA_OnPaint = nullptr;
     _RA_InvokeDialog = nullptr;
     _RA_SetPaused = nullptr;
     _RA_OnLoadState = nullptr;
     _RA_OnSaveState = nullptr;
+    _RA_OnReset = nullptr;
     _RA_DoAchievementsFrame = nullptr;
     _RA_InstallSharedFunctions = nullptr;
 
@@ -605,7 +567,6 @@ void RA_Shutdown()
     _RA_LoadROM = nullptr;
     _RA_SetConsoleID = nullptr;
     _RA_HardcoreModeIsActive = nullptr;
-    _RA_HTTPGetRequestExists = nullptr;
     _RA_AttemptLogin = nullptr;
 
     //	Uninstall DLL
@@ -615,6 +576,5 @@ void RA_Shutdown()
         g_hRADLL = nullptr;
     }
 }
-
 
 #endif //RA_EXPORTS

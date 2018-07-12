@@ -24,10 +24,10 @@ public:
     void Render(HDC hDC, RECT& rcDest);
 
     void Reset();
-    BOOL Activate(LeaderboardID nLBID);
-    BOOL Deactivate(LeaderboardID nLBID);
+    BOOL Activate(ra::LeaderboardID nLBID);
+    BOOL Deactivate(ra::LeaderboardID nLBID);
 
-    void ShowScoreboard(LeaderboardID nLBID);
+    void ShowScoreboard(ra::LeaderboardID nLBID);
 
 private:
     float GetOffsetPct() const;

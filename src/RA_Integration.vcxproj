@@ -60,6 +60,7 @@
     <ClCompile Include="RA_ProgressPopup.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_User.cpp" />
+    <ClCompile Include="services\SearchResults.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />
@@ -98,6 +99,7 @@
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\SearchResults.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc" />

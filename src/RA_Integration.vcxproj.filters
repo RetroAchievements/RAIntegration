@@ -90,9 +90,6 @@
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_MemManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_LeaderboardPopup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -112,6 +109,12 @@
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_MemManager.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="RA_LeaderboardManager.cpp">
@@ -194,9 +197,6 @@
     <ClInclude Include="RA_md5factory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_MemManager.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="RA_LeaderboardPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -219,6 +219,12 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_MemManager.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\SearchResults.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_LeaderboardManager.h">

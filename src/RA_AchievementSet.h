@@ -26,6 +26,7 @@ public:
 public:
     void Clear();
     void Test();
+    void Reset();
 
     BOOL Serialize(FileStream& Stream);
     BOOL LoadFromFile(ra::GameID nGameID);

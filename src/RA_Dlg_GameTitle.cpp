@@ -56,7 +56,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                             continue;
                         }
 
-                        const GameID nGameID = std::strtoul(iter->name.GetString(), nullptr, 10);	//	Keys cannot be anything but strings
+                        const ra::GameID nGameID = std::strtoul(iter->name.GetString(), nullptr, 10);	//	Keys cannot be anything but strings
                         const std::string& sTitle = iter->value.GetString();
                         m_aGameTitles[sTitle] = nGameID;
 
@@ -65,7 +65,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 }
 
                 {
-                    std::map<std::string, GameID>::const_iterator iter = m_aGameTitles.begin();
+                    std::map<std::string, ra::GameID>::const_iterator iter = m_aGameTitles.begin();
                     while (iter != m_aGameTitles.end())
                     {
                         const std::string& sTitle = iter->first;
@@ -96,10 +96,10 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     //	Fetch input data:
                     TCHAR sSelectedTitleBuffer[512];
                     ComboBox_GetText(GetDlgItem(hDlg, IDC_RA_KNOWNGAMES), sSelectedTitleBuffer, 512);
-                    tstring sSelectedTitle = sSelectedTitleBuffer;
+                    ra::tstring sSelectedTitle = sSelectedTitleBuffer;
 
-                    GameID nGameID = 0;
-                    if (strcmp(sSelectedTitle.c_str(), "<New Title>") == 0)
+                    ra::GameID nGameID = 0;
+                    if (sSelectedTitle == _T("<New Title>"))
                     {
                         //	Add a new title!
                         GetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitleBuffer, 512);
@@ -109,14 +109,14 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     {
                         //	Existing title
                         ASSERT(m_aGameTitles.find(std::string(sSelectedTitle)) != m_aGameTitles.end());
-                        nGameID = m_aGameTitles[std::string(Narrow(sSelectedTitle))];
+                        nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
                     }
 
                     PostArgs args;
                     args['u'] = RAUsers::LocalUser().Username();
                     args['t'] = RAUsers::LocalUser().Token();
                     args['m'] = m_sMD5;
-                    args['i'] = sSelectedTitle;
+                    args['i'] = ra::Narrow(sSelectedTitle);
                     args['c'] = std::to_string(g_ConsoleID);
 
                     Document doc;
@@ -124,7 +124,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     {
                         const Value& Response = doc["Response"];
 
-                        const GameID nGameID = static_cast<GameID>(Response["GameID"].GetUint());
+                        const ra::GameID nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
                         const std::string& sGameTitle = Response["GameTitle"].GetString();
 
                         //	If we're setting the game title here...
@@ -210,7 +210,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
     return FALSE;
 }
 
-void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, GameID& nGameIDOut)
+void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, ra::GameID& nGameIDOut)
 {
     if (sMD5InOut.length() == 0)
         return;

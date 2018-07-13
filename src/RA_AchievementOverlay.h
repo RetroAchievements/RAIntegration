@@ -145,10 +145,6 @@ public:
 
     void SelectNextTopLevelPage(BOOL bPressedRight);
 
-    void InitDirectX();
-    void ResetDirectX();
-    void Flip(HWND hWnd);
-
     void InstallNewsArticlesFromFile();
 
 public:

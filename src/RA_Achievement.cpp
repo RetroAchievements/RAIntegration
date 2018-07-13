@@ -191,7 +191,7 @@ void Achievement::RemoveConditionGroup()
     m_vConditions.RemoveLastGroup();
 }
 
-void Achievement::SetID(AchievementID nID)
+void Achievement::SetID(ra::AchievementID nID)
 {
     m_nAchievementID = nID;
     SetDirtyFlag(Dirty_ID);

@@ -17,7 +17,7 @@
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
     <Filter Include="Helpers">
-      <UniqueIdentifier>{95c8f888-3f34-439c-b948-66fece399bab}</UniqueIdentifier>
+      <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -90,9 +90,6 @@
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_MemManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_LeaderboardPopup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -112,6 +109,12 @@
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_MemManager.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="RA_LeaderboardManager.cpp">
@@ -197,9 +200,6 @@
     <ClInclude Include="RA_md5factory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_MemManager.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="RA_LeaderboardPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -224,11 +224,20 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="RA_MemManager.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\SearchResults.h">
+      <Filter>Services</Filter>
+    </ClInclude>
     <ClInclude Include="RA_LeaderboardManager.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_MemValue.h">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ra_fwd.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="ra_errors.h">
       <Filter>Helpers</Filter>
@@ -241,5 +250,13 @@
     <ResourceCompile Include="RA_Version.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ra_type_traits.h">
+      <Filter>Helpers</Filter>
+    </None>
+    <None Include="ra_utility.h">
+      <Filter>Helpers</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -39,8 +39,8 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COL_SIZE[i];
         col.cchTextMax = 255;
-        tstring str = COL_TITLE[i];	//	Hold the temporary object
-        col.pszText = const_cast<LPTSTR>(str.c_str());
+        ra::tstring str = NativeStr(COL_TITLE[i]);	//	Hold the temporary object
+        col.pszText = str.data();
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
@@ -90,8 +90,8 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     for (size_t i = 0; i < NumReporterColumns; ++i)
     {
         item.iSubItem = i;
-        tstring sStr = ms_lbxData[ms_nNumOccupiedRows][i];	//Scoped cache
-        item.pszText = const_cast<LPTSTR>(sStr.c_str());
+        ra::tstring sStr = NativeStr(ms_lbxData[ms_nNumOccupiedRows][i]);	//Scoped cache
+        item.pszText = sStr.data();
 
         if (i == 0)
             item.iItem = ListView_InsertItem(hList, &item);
@@ -169,7 +169,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 
                     TCHAR sBugReportCommentIn[4096];
                     GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
-                    std::string sBugReportComment = Narrow(sBugReportCommentIn);
+                    std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
                     char sBugReportInFull[8192];

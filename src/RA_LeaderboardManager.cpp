@@ -8,7 +8,7 @@
 
 RA_LeaderboardManager g_LeaderboardManager;
 
-RA_Leaderboard* RA_LeaderboardManager::FindLB(LeaderboardID nID)
+RA_Leaderboard* RA_LeaderboardManager::FindLB(ra::LeaderboardID nID)
 {
     std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
     while (iter != m_Leaderboards.end())
@@ -98,8 +98,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     const Value& LBData = Response["LBData"];
 
     const std::string& sFormat = LBData["Format"].GetString();
-    const LeaderboardID nLBID = static_cast<LeaderboardID>(LBData["LeaderboardID"].GetUint());
-    const GameID nGameID = static_cast<GameID>(LBData["GameID"].GetUint());
+    const ra::LeaderboardID nLBID = static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint());
+    const ra::GameID nGameID = static_cast<ra::GameID>(LBData["GameID"].GetUint());
     const std::string& sLBTitle = LBData["Title"].GetString();
     const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
 

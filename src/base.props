@@ -34,6 +34,9 @@
          :done
       </Command>
     </PostBuildEvent>
+    <Link>
+      <ProgramDatabaseFile>$(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="RA_DIR">

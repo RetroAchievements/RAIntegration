@@ -52,7 +52,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 
         do
         {
-            std::string sFilename = Narrow(ffd.cFileName);
+            std::string sFilename = ra::Narrow(ffd.cFileName);
             if ((strcmp(sFilename.c_str(), ".") == 0) ||
                 (strcmp(sFilename.c_str(), "..") == 0))
                 continue;
@@ -90,7 +90,7 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 {
 }
 
-void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibraryOut)
+void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
@@ -111,14 +111,14 @@ void ParseGameHashLibraryFromFile(std::map<std::string, GameID>& GameHashLibrary
                 continue;
 
             const std::string sMD5 = iter->name.GetString();
-            auto nID = static_cast<GameID>(iter->value.GetUint()); //	MUST BE STRING, then converted to uint. Keys are strings ONLY
+            auto nID = static_cast<ra::GameID>(iter->value.GetUint()); //	MUST BE STRING, then converted to uint. Keys are strings ONLY
 
-            GameHashLibraryOut.emplace(sMD5, nID);
+            GameHashLibraryOut.try_emplace(sMD5, nID);
         }
     }
 }
 
-void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
+void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
@@ -137,13 +137,13 @@ void ParseGameTitlesFromFile(std::map<GameID, std::string>& GameTitlesListOut)
                 continue;
 
             //	KEYS ARE STRINGS, must convert afterwards!
-            GameID nID = static_cast<GameID>(std::stoul(iter->name.GetString()));
-            GameTitlesListOut.emplace(nID, std::string{ iter->value.GetString() });
+            auto nID = static_cast<ra::GameID>(std::stoul(iter->name.GetString()));
+            GameTitlesListOut.try_emplace(nID, std::string{ iter->value.GetString() });
         }
     }
 }
 
-void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
+void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
     std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
 
@@ -158,7 +158,7 @@ void ParseMyProgressFromFile(std::map<GameID, std::string>& GameProgressOut)
         const auto& List = doc["Response"];
         for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            auto nID = static_cast<GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
+            auto nID = static_cast<ra::GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
             const auto nNumAchievements = iter->value["NumAch"].GetUint();
             const auto nEarned = iter->value["Earned"].GetUint();
             const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
@@ -196,8 +196,8 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
-        tstring sCol = COL_TITLE[i];	//	scoped cache
-        col.pszText = const_cast<LPTSTR>(sCol.c_str());
+        ra::tstring sCol = NativeStr(COL_TITLE[i]);	//	scoped cache
+        col.pszText = sCol.data();
         col.cx = COL_SIZE[i];
         col.iSubItem = i;
 
@@ -212,7 +212,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
 }
 
 //static
-void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, GameID nGameID)
+void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, ra::GameID nGameID)
 {
     LV_ITEM item;
     ZeroMemory(&item, sizeof(item));
@@ -224,15 +224,15 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 
     //	id:
     item.iSubItem = 0;
-    tstring sID = std::to_string(nGameID);	//scoped cache!
-    item.pszText = const_cast<LPTSTR>(sID.c_str());
+    ra::tstring sID = ra::to_tstring(nGameID);	//scoped cache!
+    item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
     item.iSubItem = 1;
-    ListView_SetItemText(hList, item.iItem, 1, const_cast<LPTSTR>(NativeStr(sTitle).c_str()));
+    ListView_SetItemText(hList, item.iItem, 1, NativeStr(sTitle).data());
 
     item.iSubItem = 2;
-    ListView_SetItemText(hList, item.iItem, 2, const_cast<LPTSTR>(NativeStr(m_ProgressLibrary[nGameID]).c_str()));
+    ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
 
     item.iSubItem = 3;
     ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));
@@ -317,7 +317,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
             memset(sROMRawData, 0, ROM_MAX_SIZE);	//?!??
 
-            const std::string sFilename = Narrow(ffd.cFileName);
+            const std::string sFilename = ra::Narrow(ffd.cFileName);
             if (strcmp(sFilename.c_str(), ".") == 0 ||
                 strcmp(sFilename.c_str(), "..") == 0)
             {
@@ -399,8 +399,8 @@ void Dlg_GameLibrary::ReloadGameListData()
         FilesToScan.pop_front();
     mtx.unlock();
 
-    bool bOK = ListFiles(Narrow(sROMDir), "*.bin", FilesToScan);
-    bOK |= ListFiles(Narrow(sROMDir), "*.gen", FilesToScan);
+    bool bOK = ListFiles(ra::Narrow(sROMDir), "*.bin", FilesToScan);
+    bOK |= ListFiles(ra::Narrow(sROMDir), "*.gen", FilesToScan);
 
     if (bOK)
     {
@@ -423,7 +423,7 @@ void Dlg_GameLibrary::RefreshList()
             if (m_GameHashLibrary.find(md5) != m_GameHashLibrary.end())
             {
                 //	Found in our hash library!
-                const GameID nGameID = m_GameHashLibrary[md5];
+                const ra::GameID nGameID = m_GameHashLibrary[md5];
                 RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
@@ -448,7 +448,7 @@ BOOL Dlg_GameLibrary::LaunchSelected()
         SetWindowText(GetDlgItem(m_hDialogBox, IDC_RA_GLIB_NAME), buffer);
 
         ListView_GetItemText(hList, nSel, 3, buffer, 1024);
-        _RA_LoadROM(Narrow(buffer).c_str());
+        _RA_LoadROM(ra::Narrow(buffer).c_str());
 
         return TRUE;
     }

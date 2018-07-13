@@ -1498,85 +1498,6 @@ void AchievementOverlay::OnUserPicDownloaded(const char* sUsername)
     RA_LOG("Overlay detected Userpic downloaded (%s)", sUsername);		//##SD unhandled?
 }
 
-void AchievementOverlay::InitDirectX()
-{
-    if (g_RAMainWnd == nullptr)
-    {
-        MessageBox(g_RAMainWnd, TEXT("InitDirectX failed: g_RAMainWnd invalid (check RA_Init has a valid HWND!)"), TEXT("Error!"), MB_OK);
-        return;
-    }
-
-    //LPDIRECTDRAW lpDD_Init;
-    //if (DirectDrawCreate(nullptr, &lpDD_Init, nullptr) != DD_OK)
-    //{
-    //	MessageBox( g_RAMainWnd, "DirectDrawCreate failed!", "Error!", MB_OK );
-    //	return;
-    //}
-    //
-    //if (lpDD_Init->QueryInterface(IID_IDirectDraw4, (LPVOID *) &m_lpDD) != DD_OK)
-    //{
-    //	MessageBox( g_RAMainWnd, "Error with QueryInterface!", "Error!", MB_OK );
-    //	return;
-    //}
-
-    //lpDD_Init->Release();
-    //lpDD_Init = nullptr;
-
-    //m_lpDD->SetCooperativeLevel( g_RAMainWnd, DDSCL_NORMAL );
-
-    ResetDirectX();
-}
-
-void AchievementOverlay::ResetDirectX()
-{
-    //if( m_lpDD == nullptr )
-    //	return;
-
-    //RECT rcTgtSize;
-    //SetRect( &rcTgtSize, 0, 0, 640, 480 );
-
-    //if( m_lpDDS_Overlay != nullptr )
-    //{
-    //	m_lpDDS_Overlay->Release();
-    //	m_lpDDS_Overlay = nullptr;
-    //}
-
-    //DDSURFACEDESC2 ddsd;
-    //memset(&ddsd, 0, sizeof(ddsd));
-    //ddsd.dwSize = sizeof(ddsd);
-    //ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
-    //
-    //ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
-    //ddsd.dwWidth = rcTgtSize.right - rcTgtSize.left;
-    //ddsd.dwHeight = rcTgtSize.bottom - rcTgtSize.top;
-
-    //HRESULT hr = m_lpDD->CreateSurface(&ddsd, &m_lpDDS_Overlay, nullptr);
-    //if( hr != DD_OK )
-    //{
-    //	assert(!"Cannot create overlay surface!");
-    //	return;
-    //}
-
-}
-
-void AchievementOverlay::Flip(HWND hWnd)
-{
-    //if( m_lpDDS_Overlay == nullptr )
-    //	return;
-
-    //RECT rcDest;
-    //GetWindowRect( g_RAMainWnd, &rcDest );
-    //OffsetRect( &rcDest, -rcDest.left, -rcDest.top);
-
-    //HDC hDC;
-    //if( m_lpDDS_Overlay->GetDC( &hDC )== DD_OK )
-    //{
-    //	g_AchievementOverlay.Render( hDC, &rcDest );
-
-    //	m_lpDDS_Overlay->ReleaseDC( hDC );
-    //}
-}
-
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
@@ -1775,14 +1696,4 @@ API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
 API bool _RA_IsOverlayFullyVisible()
 {
     return g_AchievementOverlay.IsFullyVisible();
-}
-
-API void _RA_InitDirectX()
-{
-    g_AchievementOverlay.InitDirectX();
-}
-
-API void _RA_OnPaint(HWND hWnd)
-{
-    g_AchievementOverlay.Flip(hWnd);
 }

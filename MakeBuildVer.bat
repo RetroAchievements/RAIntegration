@@ -11,6 +11,8 @@ if "%VERSION_REVISION%"=="" set VERSION_REVISION=0
 
 set VERSION_PRODUCT=%VERSION_MAJOR%.%VERSION_MINOR%
 
+if "%VERSION_MINOR:~0,1%"=="0" set VERSION_MINOR=%ACTIVE_TAG:~15,2%
+
 setlocal
 git diff HEAD > Temp.txt
 for /F "usebackq" %%A in ('"Temp.txt"') do set DIFF_FILE_SIZE=%%~zA

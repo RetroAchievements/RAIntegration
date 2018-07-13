@@ -129,6 +129,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="SearchResults_Tests.cpp" />
     <ClInclude Include="..\src\RA_Condition.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />

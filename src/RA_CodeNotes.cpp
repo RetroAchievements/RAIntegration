@@ -44,7 +44,7 @@ size_t CodeNotes::Load(const std::string& sFile)
                 continue;
 
             const std::string& sAddr = i["Address"].GetString();
-            auto nAddr = static_cast<ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
+                ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
 
             // Author?
             const std::string& sAuthor = i["User"].GetString();
@@ -63,7 +63,7 @@ BOOL CodeNotes::Save(const std::string& sFile)
     //	All saving should be cloud-based!
 }
 
-BOOL CodeNotes::ReloadFromWeb(GameID nID)
+BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 {
     if (nID == 0)
         return FALSE;
@@ -78,7 +78,7 @@ BOOL CodeNotes::ReloadFromWeb(GameID nID)
 void CodeNotes::OnCodeNotesResponse(Document& doc)
 {
     //	Persist then reload
-    const GameID nGameID = doc["GameID"].GetUint();
+    const ra::GameID nGameID = doc["GameID"].GetUint();
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     _WriteBufferToFile(std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
@@ -86,10 +86,10 @@ void CodeNotes::OnCodeNotesResponse(Document& doc)
     g_MemoryDialog.RepopulateMemNotesFromFile();
 }
 
-void CodeNotes::Add(const ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote)
+void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
-        m_CodeNotes.insert(std::map<ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
+        m_CodeNotes.insert(std::map<ra::ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
     else
         m_CodeNotes.at(nAddr).SetNote(sNote);
 
@@ -115,7 +115,7 @@ void CodeNotes::Add(const ByteAddress& nAddr, const std::string& sAuthor, const 
     }
 }
 
-BOOL CodeNotes::Remove(const ByteAddress& nAddr)
+BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
     {

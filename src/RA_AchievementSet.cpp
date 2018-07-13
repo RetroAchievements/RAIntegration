@@ -30,7 +30,7 @@ void RASetAchievementCollection(AchievementSetType Type)
     g_pActiveAchievements = *ACH_SETS[Type];
 }
 
-std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
+std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
@@ -45,7 +45,7 @@ std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
     }
 }
 
-BOOL AchievementSet::DeletePatchFile(GameID nGameID)
+BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
@@ -73,13 +73,13 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
         return;
     }
 
-    const GameID nGameID = static_cast<GameID>(doc["GameID"].GetUint());
+    const ra::GameID nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
     const bool bHardcoreMode = doc["HardcoreMode"].GetBool();
     const Value& UserUnlocks = doc["UserUnlocks"];
 
     for (auto& val : UserUnlocks.GetArray())
     {
-        auto nNextAchID = static_cast<AchievementID>(val.GetUint());
+        auto nNextAchID = static_cast<ra::AchievementID>(val.GetUint());
         //	IDs could be present in either core or unofficial:
         if (g_pCoreAchievements->Find(nNextAchID) != nullptr)
             g_pCoreAchievements->Unlock(nNextAchID);
@@ -108,7 +108,7 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
     }
 }
 
-Achievement* AchievementSet::Find(AchievementID nAchievementID)
+Achievement* AchievementSet::Find(ra::AchievementID nAchievementID)
 {
     std::vector<Achievement>::iterator iter = m_Achievements.begin();
     while (iter != m_Achievements.end())
@@ -244,6 +244,14 @@ void AchievementSet::Test()
     }
 }
 
+void AchievementSet::Reset()
+{
+    for (Achievement& ach : m_Achievements)
+        ach.Reset();
+
+    m_bProcessingActive = TRUE;
+}
+
 BOOL AchievementSet::SaveToFile()
 {
     //	Takes all achievements in this group and dumps them in the filename provided.
@@ -312,62 +320,8 @@ BOOL AchievementSet::SaveToFile()
     //}
 }
 
-BOOL AchievementSet::Serialize(_UNUSED std::iostream& Stream)
-{
-    //	Why not submit each ach straight to cloud?
-    return FALSE;
-
-    //FILE* pf = nullptr;
-    //const std::string sFilename = GetAchievementSetFilename( m_nGameID );
-    //if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
-    //{
-    //	FileStream fs( pf );
-    //	Writer<FileStream> writer( fs );
-    //	
-    //	Document doc;
-    //	doc.AddMember( "MinVer", "0.050", doc.GetAllocator() );
-    //	doc.AddMember( "GameTitle", m_sPreferredGameTitle, doc.GetAllocator() );
-    //	
-    //	Value achElements;
-    //	achElements.SetArray();
-
-    //	std::vector<Achievement>::const_iterator iter = m_Achievements.begin();
-    //	while( iter != m_Achievements.end() )
-    //	{
-    //		Value nextElement;
-
-    //		const Achievement& ach = (*iter);
-    //		nextElement.AddMember( "ID", ach.ID(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Mem", ach.CreateMemString(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Title", ach.Title(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Description", ach.Description(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Author", ach.Author(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Points", ach.Points(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Created", ach.CreatedDate(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Modified", ach.ModifiedDate(), doc.GetAllocator() );
-    //		nextElement.AddMember( "Badge", ach.BadgeImageFilename(), doc.GetAllocator() );
-
-    //		achElements.PushBack( nextElement, doc.GetAllocator() );
-    //		iter++;
-    //	}
-
-    //	doc.AddMember( "Achievements", achElements, doc.GetAllocator() );
-
-    //	//	Build a document to persist, then pass to doc.Accept();
-    //	doc.Accept( writer );
-
-    //	fclose( pf );
-    //	return TRUE;
-    //}
-    //else
-    //{
-    //	//	Could not write to file?
-    //	return FALSE;
-    //}
-}
-
 //	static: fetches both core and unofficial
-BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
+BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
 {
     //	Can't open file: attempt to find it on SQL server!
     PostArgs args;
@@ -411,7 +365,7 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     }
 }
 
-BOOL AchievementSet::LoadFromFile(GameID nGameID)
+BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
@@ -766,7 +720,7 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
     return newAch;
 }
 
-BOOL AchievementSet::Unlock(AchievementID nAchID)
+BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
 {
     for (size_t i = 0; i < NumAchievements(); ++i)
     {

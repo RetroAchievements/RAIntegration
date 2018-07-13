@@ -430,7 +430,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
             std::ostringstream oss;
             oss << "Game not loaded.\nError from " << _RA_HostName() << "!";
-            MessageBox(g_RAMainWnd, oss.str().c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
+            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
         }
     }
 

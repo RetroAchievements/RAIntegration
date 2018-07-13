@@ -118,7 +118,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        tstring colTitle = COLUMN_TITLE[i];	//	Take non-const copy
+        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
         col.pszText = const_cast<LPTSTR>(colTitle.c_str());
         col.cchTextMax = 255;
         col.iSubItem = i;
@@ -157,7 +157,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     item.cchTextMax = 256;
     item.iItem = m_nNumOccupiedRows;
     item.iSubItem = 0;
-    tstring sData = m_lbxData[m_nNumOccupiedRows][CSI_ID];
+    ra::tstring sData = NativeStr(m_lbxData[m_nNumOccupiedRows][CSI_ID]);
     item.pszText = const_cast<LPTSTR>(sData.c_str());
     item.iItem = ListView_InsertItem(hList, &item);
 
@@ -219,7 +219,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     for (size_t i = 0; i < NumColumns; ++i)
     {
         item.iSubItem = i;
-        tstring sData = m_lbxData[nRow][i];
+        ra::tstring sData = NativeStr(m_lbxData[nRow][i]);
         item.pszText = const_cast<LPTSTR>(sData.c_str());
         ListView_SetItem(hList, &item);
     }
@@ -1017,7 +1017,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             TCHAR buffer[16];
                             GetWindowText(hBadgeNameCtrl, buffer, 16);
-                            UpdateBadge(Narrow(buffer));
+                            UpdateBadge(ra::Narrow(buffer));
                         }
                         break;
                         case CBN_SELENDCANCEL:
@@ -1066,7 +1066,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 TCHAR buffer[1024];
                                 if (GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
                                 {
-                                    pActiveAch->SetTitle(NativeStr(buffer));
+                                    pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     //	Persist/Update/Inject local LBX data back into LBX (?)
                                     g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Title, pActiveAch->Title());
@@ -1106,7 +1106,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //char* psDesc = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements:: );
                             TCHAR buffer[128];
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_DESC, buffer, 128))
-                                pActiveAch->SetDescription(Narrow(buffer));
+                                pActiveAch->SetDescription(ra::Narrow(buffer));
                         }
                         break;
                     }
@@ -1127,7 +1127,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             TCHAR buffer[16];
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer, 16))
                             {
-                                int nVal = strtol(NativeStr(buffer).c_str(), nullptr, 10);
+                                
+                                int nVal = std::stoi(NativeStr(buffer));
                                 if (nVal < 0 || nVal > 100)
                                     return FALSE;
 
@@ -1158,7 +1159,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-                        unsigned int nVal = strtol(Narrow(buffer).c_str(), nullptr, 16);
+                        unsigned int nVal = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValues(nVal, nVal);
                     }
 
@@ -1425,7 +1426,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     if (ofn.lpstrFile != nullptr)
                     {
                         Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, Narrow(ofn.lpstrFile), Response))
+                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
                             //TBD: ensure that:
                             //	The image is copied to the cache/badge dir
@@ -1667,7 +1668,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     char* sData = LbxDataAt(pDispInfo->item.iItem, pDispInfo->item.iSubItem);
 
                     //	Update modified flag:
-                    if (strcmp(Narrow(lvItem.pszText).c_str(), sData) != 0)
+                    if (strcmp(ra::Narrow(lvItem.pszText).c_str(), sData) != 0)
                     {
                         //	Disable all achievement tracking:
                         //g_pActiveAchievements->SetPaused( true );
@@ -1682,7 +1683,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     SendDlgItemMessage(hDlg, IDC_RA_LBX_CONDITIONS, LVM_SETITEMTEXT, (WPARAM)lvItem.iItem, (LPARAM)&lvItem); // put new text
 
                     //	Update the cached data:
-                    strcpy_s(sData, MEM_STRING_TEXT_LEN, Narrow(pDispInfo->item.pszText).c_str());
+                    strcpy_s(sData, MEM_STRING_TEXT_LEN, ra::Narrow( pDispInfo->item.pszText).c_str());
 
                     //	Update the achievement data:
                     Condition& rCond = pActiveAch->GetCondition(GetSelectedConditionGroup(), pDispInfo->item.iItem);
@@ -1794,7 +1795,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     GetListViewTooltip();
                     if (!m_sTooltip.empty())
                     {
-                        lpDispInfo->lpszText = const_cast<char*>(m_sTooltip.c_str());
+                        lpDispInfo->lpszText = NativeStr(m_sTooltip).data();
                         return TRUE;
                     }
 

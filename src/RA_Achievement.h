@@ -54,8 +54,8 @@ public:
 
     BOOL IsCoreAchievement() const { return m_nSetType == Core; }
 
-    void SetID(AchievementID nID);
-    inline AchievementID ID() const { return m_nAchievementID; }
+    void SetID(ra::AchievementID nID);
+    inline ra::AchievementID ID() const { return m_nAchievementID; }
 
     inline const std::string& Title() const { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -116,7 +116,7 @@ public:
 private:
     /*const*/ AchievementSetType m_nSetType;
 
-    AchievementID m_nAchievementID;
+    ra::AchievementID m_nAchievementID;
     ConditionSet m_vConditions;
 
     std::string m_sTitle;

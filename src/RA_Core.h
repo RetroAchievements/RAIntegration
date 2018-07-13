@@ -49,6 +49,8 @@ extern "C" {
     //	Immediately after saving a new state.
     API void CCONV _RA_OnSaveState(const char* sFileName);
 
+    //	Immediately after resetting the system.
+    API void CCONV _RA_OnReset();
 
     //	Perform one test for all achievements in the current set. Call this once per frame/cycle.
     API void CCONV _RA_DoAchievementsFrame();
@@ -81,17 +83,11 @@ extern "C" {
     //	Call this when the pause state changes, to update RA with the new state.
     API void CCONV _RA_SetPaused(bool bIsPaused);
 
-    //	Returns the currently active user
-    API const char* CCONV _RA_Username();
-
     //	Attempt to login, or present login dialog.
     API void CCONV _RA_AttemptLogin(bool bBlocking);
 
     //	Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
-
-    //	Return whether a HTTPGetRequest already exists
-    API int CCONV _RA_HTTPGetRequestExists(const char* sPageName);
 
     //	Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
@@ -135,10 +131,9 @@ extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
 extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 //	Write out the buffer to a file
-extern void _WriteBufferToFile(const std::string& sFileName, const DataStream& rawData);
-extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
 extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes);
+extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
+extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

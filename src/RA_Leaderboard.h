@@ -9,7 +9,7 @@
 class RA_Leaderboard
 {
 public:
-    RA_Leaderboard(const LeaderboardID nLBID);
+    RA_Leaderboard(const ra::LeaderboardID nLBID);
     ~RA_Leaderboard();
 
     void ParseFromString(const char* sBuffer, MemValue::Format format);
@@ -20,7 +20,7 @@ public:
     unsigned int GetCurrentValue() const { return m_value.GetValue(); } // Gets the final value for submission
     unsigned int GetCurrentValueProgress() const;	                    // Gets the value to display while the leaderboard is active
 
-    LeaderboardID ID() const { return m_nID; }
+    ra::LeaderboardID ID() const { return m_nID; }
 
     const std::string& Title() const { return m_sTitle; }
     void SetTitle(const std::string& sValue) { m_sTitle = sValue; }
@@ -53,7 +53,7 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    const LeaderboardID		m_nID;			//	DB ID for this LB
+    const ra::LeaderboardID		m_nID;			//	DB ID for this LB
     ConditionSet			m_startCond;	//	Start monitoring if this is true
     ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
     ConditionSet			m_submitCond;	//	Submit new score if this is true

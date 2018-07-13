@@ -85,7 +85,7 @@ HRESULT UserImageFactory_CreateDIBSectionFromBitmapSource(_In_ IWICBitmapSource 
     if (SUCCEEDED(hr))
     {
         // Size of a scan line represented in bytes: 4 bytes each pixel
-        hr = UIntMult(nWidth, sizeof(ARGB), &cbStride);
+        hr = UIntMult(nWidth, sizeof(ra::ARGB), &cbStride);
     }
 
     if (SUCCEEDED(hr))
@@ -265,7 +265,7 @@ HBITMAP LoadLocalPNG(const std::string& sPath, const RASize& sz)
     HBITMAP hRetVal = nullptr;
     // Step 2: Decode the source image to IWICBitmapSource
     CComPtr<IWICBitmapDecoder> pDecoder;
-    HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(Widen(sPath).c_str(),			// Image to be decoded
+    HRESULT hr = g_UserImageFactoryInst.m_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sPath).c_str(),			// Image to be decoded
         nullptr,						// Do not prefer a particular vendor
         GENERIC_READ,                   // Desired read access to the file
         WICDecodeMetadataCacheOnDemand, // Cache metadata when needed

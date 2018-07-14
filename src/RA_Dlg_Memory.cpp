@@ -1258,13 +1258,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (g_pCurrentGameData->GetGameID() != 0)
                     {
-                        auto sTarget{
-                            _T("http://" RA_HOST_URL) + ra::tstring(_T("/codenotes.php?g="))
-                            + ra::to_tstring(g_pCurrentGameData->GetGameID())
-                        };
+                        std::ostringstream oss;
+                        oss << "http://" << _RA_HostName() << "/codenotes.php?g=" << g_pCurrentGameData->GetGameID();
                         ShellExecute(nullptr,
                             _T("open"),
-                            NativeStr(sTarget).c_str(),
+                            NativeStr(oss.str()).c_str(),
                             nullptr,
                             nullptr,
                             SW_SHOWNORMAL);

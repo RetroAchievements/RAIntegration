@@ -113,7 +113,7 @@ BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
     {
-        RA_LOG("Already deleted this code note? (%d), nAddr ");
+        RA_LOG("Already deleted this code note? (%u)", nAddr);
         return FALSE;
     }
 

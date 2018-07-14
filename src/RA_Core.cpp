@@ -420,7 +420,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             }
             else
             {
-                RA_LOG("Successfully looked up game with ID %d\n", nGameID);
+                RA_LOG("Successfully looked up game with ID %u\n", nGameID);
             }
         }
         else
@@ -652,7 +652,7 @@ API int CCONV _RA_HandleHTTPResults()
                     {
                         const std::string& sUser = doc["User"].GetString();
                         unsigned int nScore = doc["Score"].GetUint();
-                        RA_LOG("%s's score: %d", sUser.c_str(), nScore);
+                        RA_LOG("%s's score: %u", sUser.c_str(), nScore);
 
                         if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
                         {
@@ -744,7 +744,7 @@ API int CCONV _RA_HandleHTTPResults()
                     else
                     {
                         ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %d", nAchID);
+                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
                     }
                 }
                 break;
@@ -773,7 +773,6 @@ API int CCONV _RA_HandleHTTPResults()
 
                 case RequestUnlocks:
                     AchievementSet::OnRequestUnlocks(doc);
-                    //sprintf_s( sMessage, 512, " You have %d of %d achievements unlocked. ", nNumUnlocked, m_nNumAchievements );
                     break;
             }
         }
@@ -1377,7 +1376,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (g_pCurrentGameData->GetGameID() != 0)
             {
                 char sRichPresenceFile[1024];
-                sprintf_s(sRichPresenceFile, 1024, "%s%d-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+                sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
                 //	Then install it
                 g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);

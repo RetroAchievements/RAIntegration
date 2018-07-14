@@ -199,12 +199,12 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
+    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), Cond.CurrentHits());
 
     if (g_bPreferDecimalVal)
     {
         if (Cond.CompTarget().Type() == ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().RawValue());
     }
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
@@ -355,7 +355,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             }
 
             DestroyWindow(hwnd);
-            break;
+            return 0;
         }
 
         case WM_KEYDOWN:
@@ -436,6 +436,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             //DestroyWindow(hwnd);
             DestroyWindow(hwnd);
+            return 0;
         }
         break;
 
@@ -779,7 +780,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
                     char buffer[256];
-                    sprintf_s(buffer, 256, "%d", Cond.RequiredHits());
+                    sprintf_s(buffer, 256, "%u", Cond.RequiredHits());
                     SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
                 }
             }
@@ -1159,7 +1160,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-                        unsigned int nVal = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
+                        unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValues(nVal, nVal);
                     }
 
@@ -1254,7 +1255,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                             char buffer[256];
-                            sprintf_s(buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
+                            sprintf_s(buffer, 256, "Are you sure you wish to delete %u condition(s)?", uSelectedCount);
                             if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
@@ -1758,7 +1759,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
                                 nBase = 10;
 
-                            unsigned int nVal = strtol(sData, nullptr, nBase);
+                            unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompSource().SetValues(nVal, nVal);
                             break;
                         }
@@ -1768,14 +1769,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
                                 nBase = 10;
 
-                            unsigned int nVal = strtol(sData, nullptr, nBase);
+                            unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompTarget().SetValues(nVal, nVal);
                             break;
                         }
                         case CSI_HITCOUNT:
                         {
                             //	Always decimal
-                            rCond.SetRequiredHits(strtol(sData, nullptr, 10));
+                            rCond.SetRequiredHits(strtoul(sData, nullptr, 10));
                             break;
                         }
                         default:
@@ -2023,10 +2024,10 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->ID());
+        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->ID());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->Points());
+        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
 
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());

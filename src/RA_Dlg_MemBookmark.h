@@ -77,22 +77,22 @@ private:
     void AddBookmarkMap(MemBookmark* bookmark)
     {
         if (m_BookmarkMap.find(bookmark->Address()) == m_BookmarkMap.end())
-            m_BookmarkMap.insert(std::map<ByteAddress, std::vector<const MemBookmark*>>::value_type(bookmark->Address(), std::vector<const MemBookmark*>()));
+            m_BookmarkMap.insert(std::map<ra::ByteAddress, std::vector<const MemBookmark*>>::value_type(bookmark->Address(), std::vector<const MemBookmark*>()));
 
         std::vector<const MemBookmark*> *v = &m_BookmarkMap[bookmark->Address()];
         v->push_back(bookmark);
     }
 
 public:
-    const MemBookmark* FindBookmark(const ByteAddress& nAddr) const
+    const MemBookmark* FindBookmark(const ra::ByteAddress& nAddr) const
     {
-        std::map<ByteAddress, std::vector<const MemBookmark*>>::const_iterator iter = m_BookmarkMap.find(nAddr);
+        std::map<ra::ByteAddress, std::vector<const MemBookmark*>>::const_iterator iter = m_BookmarkMap.find(nAddr);
         return(iter != m_BookmarkMap.end() && iter->second.size() > 0) ? iter->second.back() : nullptr;
     }
 
 private:
     HWND m_hMemBookmarkDialog;
-    std::map<ByteAddress, std::vector<const MemBookmark*>> m_BookmarkMap;
+    std::map<ra::ByteAddress, std::vector<const MemBookmark*>> m_BookmarkMap;
     std::vector<MemBookmark*> m_vBookmarks;
 };
 

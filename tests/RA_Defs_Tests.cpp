@@ -40,12 +40,6 @@ public:
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen(std::string("\xF0\x9F\x8C\x8F")));
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen(std::wstring(L"\xD83C\xDF0F")));
     }
-
-    TEST_METHOD(TestDataStreamAsString)
-    {
-        DataStream s1{ 'A', 'p', 'p', 'l', 'e', '\0' };
-        Assert::AreEqual("Apple", DataStreamAsString(s1));
-    }
 };
 
 } // namespace tests

@@ -31,7 +31,7 @@ public:
     void AddLeaderboard(const RA_Leaderboard& lb) override;
     size_t Count() const override { return m_Leaderboards.size(); }
     const RA_Leaderboard& GetLB(size_t iter) const override { return m_Leaderboards[iter]; }
-    RA_Leaderboard* FindLB(LeaderboardID nID) override;
+    RA_Leaderboard* FindLB(ra::LeaderboardID nID) override;
     void Clear() override { m_Leaderboards.clear(); }
 
 private:

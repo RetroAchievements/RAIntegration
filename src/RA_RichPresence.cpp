@@ -11,7 +11,7 @@ RA_Lookup::RA_Lookup(const std::string& sDesc)
 {
 }
 
-const std::string& RA_Lookup::Lookup(DataPos nValue) const
+const std::string& RA_Lookup::Lookup(ra::DataPos nValue) const
 {
     if (m_lookupData.find(nValue) != m_lookupData.end())
         return m_lookupData.find(nValue)->second;
@@ -86,7 +86,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
                         if (pValue[0] == '0' && pValue[1] == 'x')
                             nBase = 16;
 
-                        DataPos nVal = static_cast<DataPos>(strtol(pValue, nullptr, nBase));
+                        ra::DataPos nVal = static_cast<ra::DataPos>(strtol(pValue, nullptr, nBase));
 
                         newLookup.AddLookupData(nVal, pName);
                     }
@@ -150,7 +150,7 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
         {
             MemValue nValue;
             nValue.ParseFromString(sMemString.c_str());
-            return m_lookups.at(i).Lookup(static_cast<DataPos>(nValue.GetValue()));
+            return m_lookups.at(i).Lookup(static_cast<ra::DataPos>(nValue.GetValue()));
         }
     }
 
@@ -254,7 +254,7 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 }
 
 //	static
-void RA_RichPresenceInterpretter::PersistAndParseScript(GameID nGameID, const std::string& str)
+void RA_RichPresenceInterpretter::PersistAndParseScript(ra::GameID nGameID, const std::string& str)
 {
     //	Read to file:
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());

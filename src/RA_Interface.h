@@ -130,7 +130,6 @@ extern void RA_LoadROM(const char* sFullPath);
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_MENUEND                  1739
 
-
 //	Captures the RA_DLL and installs/allocs all required information.
 //	Populates all function pointers so they can be used by the app.
 extern void RA_Init(HWND hMainHWND, /*enum ConsoleType*/int console, const char* sClientVersion);
@@ -151,12 +150,6 @@ extern void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDelt
 
 //  Determines if the overlay is completely covering the screen.
 extern bool RA_IsOverlayFullyVisible();
-
-//	Returns true if the user has successfully logged in.
-extern bool RA_UserLoggedIn();
-
-//	Returns the currently logged in user.
-extern const char* RA_Username();
 
 //	Attempts to login, or show login dialog.
 extern void RA_AttemptLogin(bool bBlocking);
@@ -194,21 +187,14 @@ extern void RA_SetConsoleID(unsigned int nConsoleID);
 extern void RA_OnLoadState(const char* sFilename);
 extern void RA_OnSaveState(const char* sFilename);
 
-
-//	Call this when initializing DirectX. TBD: clarify this.
-extern void RA_InitDirectX();
-
-//	Call this onpaint (TBD)
-extern void	RA_OnPaint(HWND hWnd);
+//  Should be called immediately after resetting the system.
+extern void RA_OnReset();
 
 //	Call this on response to a menu selection for any RA ID:
 extern void RA_InvokeDialog(LPARAM nID);
 
 //	Returns TRUE if HC mode is ongoing
 extern int RA_HardcoreModeIsActive();
-
-//	Returns TRUE if the page requested is currently being parsed.
-extern int RA_HTTPRequestExists(const char* sPageName);
 
 #endif //RA_EXPORTS
 

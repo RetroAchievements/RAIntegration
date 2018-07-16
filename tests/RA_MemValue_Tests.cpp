@@ -115,12 +115,12 @@ public:
         AssertParseFromString("B0xX1234", ThirtyTwoBit, 0x1234U, true);
         AssertParseFromString("b0xH1234", EightBit, 0x1234U, true);
 
-        // Value
-        AssertParseFromString("V0xH1234", EightBit, 0x1234U, false, true);
-        AssertParseFromString("V0x1234", SixteenBit, 0x1234U, false, true);
-        AssertParseFromString("V0xX12345678", ThirtyTwoBit, 0x12345678U, false, true);
+        // Value (values don't actually have size, EightBit is the default)
+        AssertParseFromString("V0x1234", SixteenBit, 0x1234, false, true); // hex is indirectly supported through using CompVariable to parse the value/address
         AssertParseFromString("V1234", EightBit, 1234, false, true);
-        AssertParseFromString("v0x1234", SixteenBit, 0x1234U, false, true);
+        AssertParseFromString("V+1", EightBit, 1, false, true);
+        AssertParseFromString("V-1", EightBit, 0xFFFFFFFFU, false, true);
+        AssertParseFromString("V-2", EightBit, 0xFFFFFFFEU, false, true); // twos compliment still works for addition
     }
 
     TEST_METHOD(TestClauseParseFromStringMultiply)
@@ -200,6 +200,32 @@ public:
         Assert::AreEqual(false, set.IsMaximum(2));
 
         Assert::AreEqual(0x12U * 100 + 0x34U / 2 + 0x0B, set.GetValue());
+    }
+
+    TEST_METHOD(TestAdditionValue)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        MemValueHarness set;
+        Assert::AreEqual("", set.ParseFromString("0xH0001_v1"));
+        Assert::AreEqual(2U, set.NumValues());
+        Assert::AreEqual(false, set.IsAddition(0));
+        Assert::AreEqual(false, set.IsMaximum(0));
+        Assert::AreEqual(true, set.IsAddition(1));
+        Assert::AreEqual(false, set.IsMaximum(1));
+
+        Assert::AreEqual(0x12U + 1U, set.GetValue());
+
+        MemValueHarness set2;
+        Assert::AreEqual("", set2.ParseFromString("0xH0001_v-1"));
+        Assert::AreEqual(2U, set2.NumValues());
+        Assert::AreEqual(false, set2.IsAddition(0));
+        Assert::AreEqual(false, set2.IsMaximum(0));
+        Assert::AreEqual(true, set2.IsAddition(1));
+        Assert::AreEqual(false, set2.IsMaximum(1));
+
+        Assert::AreEqual(0x12U - 1U, set2.GetValue());
     }
 
     TEST_METHOD(TestMaximumSimple)

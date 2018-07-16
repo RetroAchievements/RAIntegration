@@ -20,20 +20,21 @@ public:
     }
 
 public:
-    static BOOL FetchFromWebBlocking(GameID nGameID);
+    static BOOL FetchFromWebBlocking(ra::GameID nGameID);
     static void OnRequestUnlocks(const Document& doc);
 
 public:
     void Clear();
     void Test();
+    void Reset();
 
     BOOL Serialize(FileStream& Stream);
-    BOOL LoadFromFile(GameID nGameID);
+    BOOL LoadFromFile(ra::GameID nGameID);
     BOOL SaveToFile();
 
-    BOOL DeletePatchFile(GameID nGameID);
+    BOOL DeletePatchFile(ra::GameID nGameID);
 
-    std::string GetAchievementSetFilename(GameID nGameID);
+    std::string GetAchievementSetFilename(ra::GameID nGameID);
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
@@ -54,7 +55,7 @@ public:
     Achievement& Clone(unsigned int nIter);
 
     //	Find achievement with ID, or nullptr if it can't be found.
-    Achievement* Find(AchievementID nID);
+    Achievement* Find(ra::AchievementID nID);
 
     //	Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
@@ -64,7 +65,7 @@ public:
     void SaveProgress(const char* sRomName);
     void LoadProgress(const char* sRomName);
 
-    BOOL Unlock(AchievementID nAchievementID);
+    BOOL Unlock(ra::AchievementID nAchievementID);
 
     unsigned int NumActive() const;
 

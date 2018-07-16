@@ -31,7 +31,7 @@ void RASetAchievementCollection(AchievementSetType Type)
     g_pActiveAchievements = *ACH_SETS[Type];
 }
 
-std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
+std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
@@ -46,7 +46,7 @@ std::string AchievementSet::GetAchievementSetFilename(GameID nGameID)
     }
 }
 
-BOOL AchievementSet::DeletePatchFile(GameID nGameID)
+BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
@@ -74,13 +74,13 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
         return;
     }
 
-    const GameID nGameID = static_cast<GameID>(doc["GameID"].GetUint());
+    const ra::GameID nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
     const bool bHardcoreMode = doc["HardcoreMode"].GetBool();
     const Value& UserUnlocks = doc["UserUnlocks"];
 
     for (SizeType i = 0; i < UserUnlocks.Size(); ++i)
     {
-        AchievementID nNextAchID = static_cast<AchievementID>(UserUnlocks[i].GetUint());
+        ra::AchievementID nNextAchID = static_cast<ra::AchievementID>(UserUnlocks[i].GetUint());
         //	IDs could be present in either core or unofficial:
         if (g_pCoreAchievements->Find(nNextAchID) != nullptr)
             g_pCoreAchievements->Unlock(nNextAchID);
@@ -109,7 +109,7 @@ BOOL AchievementSet::RemoveAchievement(size_t nIter)
     }
 }
 
-Achievement* AchievementSet::Find(AchievementID nAchievementID)
+Achievement* AchievementSet::Find(ra::AchievementID nAchievementID)
 {
     std::vector<Achievement>::iterator iter = m_Achievements.begin();
     while (iter != m_Achievements.end())
@@ -245,6 +245,14 @@ void AchievementSet::Test()
     }
 }
 
+void AchievementSet::Reset()
+{
+    for (Achievement& ach : m_Achievements)
+        ach.Reset();
+
+    m_bProcessingActive = TRUE;
+}
+
 BOOL AchievementSet::SaveToFile()
 {
     //	Takes all achievements in this group and dumps them in the filename provided.
@@ -368,7 +376,7 @@ BOOL AchievementSet::Serialize(FileStream& Stream)
 }
 
 //	static: fetches both core and unofficial
-BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
+BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
 {
     //	Can't open file: attempt to find it on SQL server!
     PostArgs args;
@@ -405,15 +413,17 @@ BOOL AchievementSet::FetchFromWebBlocking(GameID nGameID)
     else
     {
         //	Could not connect...
+        std::ostringstream oss;
+        oss << "Could not connect to " << _RA_HostName();
         PopupWindows::AchievementPopups().AddMessage(
-            MessagePopup(std::string("Could not connect to " RA_HOST_URL "..."), "Working offline...", PopupInfo)
+            MessagePopup(oss.str(), "Working offline...", PopupInfo)
         );
 
         return FALSE;
     }
 }
 
-BOOL AchievementSet::LoadFromFile(GameID nGameID)
+BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
@@ -485,7 +495,7 @@ BOOL AchievementSet::LoadFromFile(GameID nGameID)
             {
                 //ASSERT( doc["Success"].GetBool() );
                 g_pCurrentGameData->ParseData(doc);
-                GameID nGameID = g_pCurrentGameData->GetGameID();
+                ra::GameID nGameID = g_pCurrentGameData->GetGameID();
 
                 RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
 
@@ -779,7 +789,7 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
     return newAch;
 }
 
-BOOL AchievementSet::Unlock(AchievementID nAchID)
+BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
 {
     for (size_t i = 0; i < NumAchievements(); ++i)
     {

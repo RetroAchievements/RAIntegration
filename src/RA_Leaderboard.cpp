@@ -5,7 +5,7 @@
 
 #include <ctime>
 
-RA_Leaderboard::RA_Leaderboard(const LeaderboardID nLeaderboardID) :
+RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),
     m_bStarted(false),
     m_bSubmitted(false),

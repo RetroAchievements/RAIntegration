@@ -2,26 +2,30 @@
 #define RA_DEFS_H
 #pragma once
 
+
+
+
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
-    #define NOUSER
-    #define NOCTLMGR
-    #define NOMB
-    #define NOWINMESSAGES
-    #define NONLS
-    #define NOVIRTUALKEYCODES
-    #define NOGDI
-    #define NOMSG
-    #define NOMENUS
     #define NOCOLOR
-    #define NOWINSTYLES
+    #define NOCLIPBOARD - gave an error when put in the pch
+    #define NOCTLMGR
     #define NODRAWTEXT
+    #define NOGDI
+    #define NOMB
+    #define NOMENUS
+    #define NOMSG
+    #define NONLS
+    #define NOOPENFILE
+    #define NORASTEROPS
     #define NOSHOWWINDOW
     #define NOTEXTMETRIC
+    #define NOUSER
+    #define NOVIRTUALKEYCODES
+    #define NOWINMESSAGES
     #define NOWINOFFSETS
-    #define NORASTEROPS
-    #define NOOPENFILE
+    #define NOWINSTYLES
 */
 
 
@@ -34,7 +38,6 @@
 #define NOSYSCOMMANDS
 #define OEMRESOURCE
 #define NOATOM
-#define NOCLIPBOARD
 #define NOKERNEL
 #define NOMEMMGR
 #define NOMETAFILE
@@ -53,7 +56,12 @@
 
 #include <Windows.h>
 #include <WindowsX.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
 #include <ShlObj.h>
+#pragma warning(pop)
+
 #include <tchar.h>
 
 #ifdef WIN32_LEAN_AND_MEAN
@@ -62,23 +70,48 @@
 #include <CommDlg.h>
 #endif // WIN32_LEAN_AND_MEAN
 
-#include <sstream>
-#include <queue>
 #include <map>
 #include <array>
+#include <sstream>
+#include <queue>
+#include "ra_utility.h"
+
 
 #ifndef RA_EXPORTS
-
-  #include <cassert> 
+#include <cassert> 
+//	Version Information is integrated into tags
 
 #else
 
-  #include "RA_Log.h"
+#include "RA_Log.h"
 
-  #include "RA_Json.h"
-  using namespace rapidjson;
+#include "RA_Json.h"
+using namespace rapidjson;
+
+
+//	RA-Only
+#define RAPIDJSON_HAS_STDSTRING 1
+#pragma warning(push, 1)
+// This is not needed the most recent version
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+//	RA-Only
+#include <rapidjson/document.h> // has reader.h
+#include <rapidjson/writer.h> // has stringbuffer.h
+#include <rapidjson/filestream.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/error/en.h>
+#pragma warning(pop)
+
+using namespace rapidjson;
+extern GetParseErrorFunc GetJSONParseErrorStr;
+#pragma warning(pop)
+
+
+using namespace std::string_literals;
+//using namespace std::chrono_literals; we could use this later
 
 #endif	//RA_EXPORTS
+
 
 // Maybe an extra check just in-case
 
@@ -89,14 +122,18 @@
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
 #define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
 #define _UNUSED              [[maybe_unused]]
+#define _CONSTANT_VAR        inline constexpr auto
 #else
 #define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecate)
+#define _DEPRECATED          __declspec(deprecated)
 #define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
 #define _FALLTHROUGH         __fallthrough//; you need ';' at the end
 #define _UNUSED              
-#endif // _HAS_CXX17
+#define _CONSTANT_VAR        constexpr auto
+#endif // _HAS_CXX17        
 
+#define _CONSTANT_LOC constexpr // local vars can't be inline
+#define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_UNKNOWN_BADGE_IMAGE_URI		"00000"
@@ -119,25 +156,13 @@
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
-#define RA_HOST_URL						"retroachievements.org"
-#define RA_HOST_IMG_URL					"i.retroachievements.org"
-
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
 
-typedef unsigned char	BYTE;
-typedef unsigned long	DWORD;
-typedef int				BOOL;
-typedef DWORD			ARGB;
+
 
 //namespace RA
 //{
-template<typename T>
-static inline const T& RAClamp(const T& val, const T& lower, const T& upper)
-{
-    return(val < lower) ? lower : ((val > upper) ? upper : val);
-}
-
 class RARect : public RECT
 {
 public:
@@ -262,15 +287,6 @@ enum AchievementSetType
     NumAchievementSetTypes
 };
 
-typedef std::vector<BYTE> DataStream;
-typedef unsigned long ByteAddress;
-
-typedef unsigned int AchievementID;
-typedef unsigned int LeaderboardID;
-typedef unsigned int GameID;
-
-char* DataStreamAsString(DataStream& stream);
-
 extern BOOL DirectoryExists(const char* sPath);
 
 const int SERVER_PING_DURATION = 2 * 60;
@@ -294,29 +310,32 @@ const int SERVER_PING_DURATION = 2 * 60;
 #define UNUSED( x ) ( x );
 #endif
 
-extern std::string Narrow(const wchar_t* wstr);
-extern std::string Narrow(const std::wstring& wstr);
-extern std::wstring Widen(const char* str);
-extern std::wstring Widen(const std::string& str);
+namespace ra {
+
+_NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
+_NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
+_NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
+_NODISCARD std::wstring Widen(_In_ const std::string& str);
+_NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
+_NODISCARD std::wstring Widen(_In_z_ const char* str);
 
 //	No-ops to help convert:
-//	No-ops to help convert:
-extern std::wstring Widen(const wchar_t* wstr);
-extern std::wstring Widen(const std::wstring& wstr);
-extern std::string Narrow(const char* str);
-extern std::string Narrow(const std::string& wstr);
+_NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
+_NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
+_NODISCARD std::string Narrow(_In_z_ const char* str);
+_NODISCARD std::string Narrow(_In_ const std::string& wstr);
+_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
 
-typedef std::basic_string<TCHAR> tstring;
-
+} // namespace ra
 
 
 
 
 #ifdef UNICODE
-#define NativeStr(x) Widen(x)
+#define NativeStr(x) ra::Widen(x)
 #define NativeStrType std::wstring
 #else
-#define NativeStr(x) Narrow(x)
+#define NativeStr(x) ra::Narrow(x)
 #define NativeStrType std::string
 #endif
 

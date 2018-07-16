@@ -55,7 +55,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         if (i == (NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
         newColumn.cx = COLUMN_SIZE[i];
-        tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
+        ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
         newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
         newColumn.cchTextMax = 255;
         newColumn.iSubItem = i;
@@ -181,7 +181,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
-        tstring sTextData = m_lbxData.back()[item.iSubItem].data();
+        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
         item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
 
         if (item.iSubItem == 0)
@@ -499,7 +499,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             TEXT("Refresh from Disk"),
                             MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            GameID nGameID = g_pCurrentGameData->GetGameID();
+                            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                             if (nGameID != 0)
                             {
                                 g_pLocalAchievements->Clear();
@@ -513,35 +513,37 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                         }
                     }
-                    else if (MessageBox(hDlg,
-                        TEXT("Are you sure that you want to download fresh achievements from ") RA_HOST_URL TEXT("?\n")
-                        TEXT("This will overwrite any changes that you have made with fresh achievements from the server.\n"),
-                        TEXT("Refresh from Server"),
-                        MB_YESNO | MB_ICONWARNING) == IDYES)
+                    else
                     {
-                        GameID nGameID = g_pCurrentGameData->GetGameID();
-                        if (nGameID != 0)
+                        std::ostringstream oss;
+                        oss << "Are you sure that you want to download fresh achievements from " << _RA_HostName() << "?\n" <<
+                            "This will overwrite any changes that you have made with fresh achievements from the server";
+                        if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            g_pCoreAchievements->DeletePatchFile(nGameID);
-                            g_pUnofficialAchievements->DeletePatchFile(nGameID);
+                            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                            if (nGameID != 0)
+                            {
+                                g_pCoreAchievements->DeletePatchFile(nGameID);
+                                g_pUnofficialAchievements->DeletePatchFile(nGameID);
 
-                            g_pCoreAchievements->Clear();
-                            g_pUnofficialAchievements->Clear();
-                            g_pLocalAchievements->Clear();
+                                g_pCoreAchievements->Clear();
+                                g_pUnofficialAchievements->Clear();
+                                g_pLocalAchievements->Clear();
 
-                            //	Reload the achievements file (fetch from server fresh)
+                                //	Reload the achievements file (fetch from server fresh)
 
-                            AchievementSet::FetchFromWebBlocking(nGameID);
+                                AchievementSet::FetchFromWebBlocking(nGameID);
 
-                            g_pLocalAchievements->LoadFromFile(nGameID);
-                            g_pUnofficialAchievements->LoadFromFile(nGameID);
-                            g_pCoreAchievements->LoadFromFile(nGameID);
+                                g_pLocalAchievements->LoadFromFile(nGameID);
+                                g_pUnofficialAchievements->LoadFromFile(nGameID);
+                                g_pCoreAchievements->LoadFromFile(nGameID);
 
-                            //	Refresh dialog contents:
-                            OnLoad_NewRom(nGameID);
+                                //	Refresh dialog contents:
+                                OnLoad_NewRom(nGameID);
 
-                            //	Cause it to reload!
-                            OnClickAchievementSet(g_nActiveAchievementSet);
+                                //	Cause it to reload!
+                                OnClickAchievementSet(g_nActiveAchievementSet);
+                            }
                         }
                     }
                 }
@@ -655,12 +657,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         {
                             //	This achievement exists on the server: must call SQL to remove!
                             //	Note: this is probably going to affect other users: frown on this D:
-                            MessageBox(hDlg,
-                                TEXT("This achievement exists on ") RA_HOST_URL TEXT(".\n")
-                                TEXT("\n")
-                                TEXT("*Removing it will affect other gamers*\n")
-                                TEXT("\n")
-                                TEXT("Are you absolutely sure you want to delete this??"), TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING);
+                            std::ostringstream oss;
+                            oss << "This achievement exists on " << _RA_HostName() << ".\n\n"
+                                << "*Removing it will affect other games*\n\n"
+                                << "Are you absolutely sure you want to delete this?";
+                            MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Confirm Delete"), MB_YESNO | MB_ICONWARNING);
                         }
                     }
                 }
@@ -987,7 +988,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             {
                 if (response["Success"].GetBool())
                 {
-                    const AchievementID nAchID = response["AchievementID"].GetUint();
+                    const ra::AchievementID nAchID = response["AchievementID"].GetUint();
                     NextAch.SetID(nAchID);
 
                     //	Update listbox on achievements dlg
@@ -1096,7 +1097,7 @@ void Dlg_Achievements::LoadAchievements(HWND hList)
         AddAchievement(hList, g_pActiveAchievements->GetAchievement(i));
 }
 
-void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
+void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
 {
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), FALSE);
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE);
@@ -1110,7 +1111,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
         LoadAchievements(hList);
 
         TCHAR buffer[256];
-        sprintf_s(buffer, 256, " %d", nGameID);
+        _stprintf_s(buffer, 256, _T(" %d"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)
@@ -1121,7 +1122,7 @@ void Dlg_Achievements::OnLoad_NewRom(GameID nGameID)
             EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
         }
 
-        sprintf_s(buffer, " %d", g_pActiveAchievements->NumAchievements());
+        _stprintf_s(buffer, _T(" %d"), g_pActiveAchievements->NumAchievements());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
     }
@@ -1207,8 +1208,8 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         item.iItem = nItem;
         item.iSubItem = nColumn;
         item.cchTextMax = 256;
-        tstring sStr = m_lbxData[nItem][nColumn].data();	//	scoped cache
-        item.pszText = const_cast<LPTSTR>(sStr.c_str());
+        ra::tstring sStr = NativeStr(m_lbxData[nItem][nColumn]);	//	scoped cache
+        item.pszText = sStr.data();
         if (ListView_SetItem(hList, &item) == FALSE)
         {
             ASSERT(!"Failed to ListView_SetItem!");

@@ -19,8 +19,14 @@ extern "C" {
     //	Fetch the version number of this integration version.
     API const char* CCONV _RA_IntegrationVersion();
 
+    //	Fetch the name of the host to connect to.
+    API const char* CCONV _RA_HostName();
+
     //	Initialize all data related to RA Engine. Call as early as possible.
     API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+
+    //	Initialize all data related to RA Engine for offline mode. Call as early as possible.
+    API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 
     //	Call for a tidy exit at end of app.
     API int CCONV _RA_Shutdown();
@@ -49,6 +55,8 @@ extern "C" {
     //	Immediately after saving a new state.
     API void CCONV _RA_OnSaveState(const char* sFileName);
 
+    //	Immediately after resetting the system.
+    API void CCONV _RA_OnReset();
 
     //	Perform one test for all achievements in the current set. Call this once per frame/cycle.
     API void CCONV _RA_DoAchievementsFrame();
@@ -57,14 +65,8 @@ extern "C" {
     //	Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 
-    //	Display a dialog helping the user get the latest RA client version
-    API BOOL CCONV _RA_OfferNewRAUpdate(const char* sNewVer);
-
     //	Deal with any HTTP results that come along. Call per-cycle from main thread.
     API int CCONV _RA_HandleHTTPResults();
-
-    //	Execute a blocking check to see if this client is out of date.
-    API void CCONV _RA_CheckForUpdate();
 
     //	Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
@@ -75,17 +77,11 @@ extern "C" {
     //	Call this when the pause state changes, to update RA with the new state.
     API void CCONV _RA_SetPaused(bool bIsPaused);
 
-    //	Returns the currently active user
-    API const char* CCONV _RA_Username();
-
     //	Attempt to login, or present login dialog.
     API void CCONV _RA_AttemptLogin(bool bBlocking);
 
     //	Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
-
-    //	Return whether a HTTPGetRequest already exists
-    API int CCONV _RA_HTTPGetRequestExists(const char* sPageName);
 
     //	Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
@@ -122,10 +118,9 @@ extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
 extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 //	Write out the buffer to a file
-extern void _WriteBufferToFile(const std::string& sFileName, const DataStream& rawData);
-extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
 extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const char* sFile, const BYTE* sBuffer, int nBytes);
+extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
+extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

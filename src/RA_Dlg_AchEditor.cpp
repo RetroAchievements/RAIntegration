@@ -1795,7 +1795,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     GetListViewTooltip();
                     if (!m_sTooltip.empty())
                     {
-                        lpDispInfo->lpszText = NativeStr(m_sTooltip).data();
+                        lpDispInfo->lpszText = m_sTooltip.data();
                         return TRUE;
                     }
 
@@ -1862,16 +1862,16 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             return;
     }
 
-    static char buffer[16];
-    sprintf_s(buffer, "0x%06x", nAddr);
-
-    m_sTooltip = buffer;
+    std::ostringstream oss;
+    oss << ra::ByteAddressToString(nAddr) << "\r\n";
 
     const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
     if (pNote != nullptr)
-        m_sTooltip += "\r\n" + pNote->Note();
+        oss << pNote->Note();
     else
-        m_sTooltip += "\r\n[no notes]";
+        oss << "[no notes]";
+
+    m_sTooltip = NativeStr(oss.str());
 }
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)

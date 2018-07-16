@@ -159,10 +159,6 @@ using namespace std::string_literals;
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
 
-// It can't seem to do macros anymore?
-#define RA_HOST_URL						"retroachievements.org"
-#define RA_HOST_IMG_URL					"i.retroachievements.org"
-
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
 

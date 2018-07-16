@@ -85,7 +85,7 @@ private:
 
     HWND m_hTooltip;
     int m_nTooltipLocation;
-    std::string m_sTooltip;
+    ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc;
 
     char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN];

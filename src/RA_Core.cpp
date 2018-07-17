@@ -1253,9 +1253,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGIN:
-            RA_Dlg_Login::DoModalLogin();
+        {
+            auto myLogin{ std::make_unique<ra::ui::Dlg_Login>() };
+            myLogin->DoModal();
             _RA_SavePreferences();
-            break;
+        }break;
+            
 
         case IDM_RA_FILES_LOGOUT:
             RAUsers::LocalUser().Clear();

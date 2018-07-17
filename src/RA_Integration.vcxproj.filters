@@ -123,6 +123,7 @@
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ra_wm_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -236,6 +237,7 @@
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="ra_wm_handler.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

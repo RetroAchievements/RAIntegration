@@ -105,7 +105,7 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     return item.iItem;
 }
 
-INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM lParam)
 {
     switch (uMsg)
     {

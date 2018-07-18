@@ -202,7 +202,8 @@ void Achievement::SetActive(BOOL bActive)
     if (m_bActive != bActive)
     {
         m_bActive = bActive;
-        SetDirtyFlag(Dirty__All);
+        // Strangely it only affects Dirty__All and not the other ones
+        SetDirtyFlag(ra::etoi(Dirty__All));
     }
 }
 
@@ -223,7 +224,7 @@ void Achievement::SetModified(BOOL bModified)
     if (m_bModified != bModified)
     {
         m_bModified = bModified;
-        SetDirtyFlag(Dirty__All);	//	TBD? questionable...
+        SetDirtyFlag(ra::etoi(Dirty__All));	//	TBD? questionable...
     }
 }
 
@@ -259,7 +260,7 @@ size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCo
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
     group.Add(rNewCond);	//	NB. Copy by value	
-    SetDirtyFlag(Dirty__All);
+    SetDirtyFlag(ra::etoi(Dirty__All));
 
     return group.Count();
 }
@@ -271,7 +272,7 @@ size_t Achievement::InsertCondition(size_t nConditionGroup, size_t nIndex, const
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
     group.Insert(nIndex, rNewCond);	//	NB. Copy by value	
-    SetDirtyFlag(Dirty__All);
+    SetDirtyFlag(ra::etoi(Dirty__All));
 
     return group.Count();
 }
@@ -281,7 +282,7 @@ BOOL Achievement::RemoveCondition(size_t nConditionGroup, unsigned int nID)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).RemoveAt(nID);
-        SetDirtyFlag(Dirty__All);	//	Not Conditions: 
+        SetDirtyFlag(ra::etoi(Dirty__All));	//	Not Conditions: 
         return TRUE;
     }
 
@@ -293,7 +294,7 @@ void Achievement::RemoveAllConditions(size_t nConditionGroup)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).Clear();
-        SetDirtyFlag(Dirty__All);	//	All - not just conditions
+        SetDirtyFlag(ra::etoi(Dirty__All));	//	All - not just conditions
     }
 }
 
@@ -347,7 +348,7 @@ void Achievement::Set(const Achievement& rRHS)
             AddCondition(nGrp, group.GetAt(i));
     }
 
-    SetDirtyFlag(Dirty__All);
+    SetDirtyFlag(ra::etoi(Dirty__All));
 }
 
 //int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )

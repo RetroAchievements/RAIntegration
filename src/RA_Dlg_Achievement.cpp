@@ -230,9 +230,9 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
         char sIllegalChars[] = { '&', ':' };
 
         const size_t nNumIllegalChars = sizeof(sIllegalChars) / sizeof(sIllegalChars[0]);
-        for (size_t i = 0; i < nNumIllegalChars; ++i)
+        for (size_t j = 0; j < nNumIllegalChars; ++j)
         {
-            char cNextChar = sIllegalChars[i];
+            char cNextChar = sIllegalChars[j];
 
             if (strchr(Ach.Title().c_str(), cNextChar) != nullptr)
             {
@@ -575,7 +575,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
                     int nNewID = AddAchievement(hList, Cheevo);
-                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
                     char buffer[16];
@@ -615,7 +615,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     OnClickAchievementSet(Local);
 
-                    ListView_SetItemState(hList, g_pLocalAchievements->NumAchievements() - 1, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                    ListView_SetItemState(hList, g_pLocalAchievements->NumAchievements() - 1, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, g_pLocalAchievements->NumAchievements() - 1, FALSE);
 
                     char buffer2[16];
@@ -851,7 +851,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 else
                                     OnEditData(nIndex, Dlg_Achievements::Active, "Yes");
 
-                                if (nIndex == nSel)
+                                if (ra::to_signed(nIndex) == nSel)
                                     UpdateSelectedAchievementButtons(&Cheevo);
                             }
                         }

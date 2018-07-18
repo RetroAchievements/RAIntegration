@@ -97,7 +97,8 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
         {
@@ -126,7 +127,8 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
         {
@@ -153,7 +155,8 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
         {
@@ -366,7 +369,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                             nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
 
                         DWORD nBytes = 0;
-                        BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr);
+                        _UNUSED BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr);
                         const std::string sHashOut = RAGenerateMD5(sROMRawData, nSize);
 
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())

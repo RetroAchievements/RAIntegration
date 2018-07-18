@@ -22,9 +22,11 @@ void WM_Handler::OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify) noe
 }
 
 _Use_decl_annotations_
+// Used on most window types, use OnCloseModal for modal dialogs
 void WM_Handler::OnClose(HWND hwnd) noexcept
 {
-    ::EndDialog(hwnd, IDCLOSE);
+    ::DestroyWindow(hwnd);
+    hwnd = nullptr;
 }
 
 _Use_decl_annotations_
@@ -57,31 +59,21 @@ _Use_decl_annotations_
 void WM_Handler::OnDestroy(HWND hwnd) noexcept
 {
     // Might as well use it, though it should be 0 always
-    auto result = ::GetWindowLongPtr(hwnd, DWLP_MSGRESULT);
-    ::PostQuitMessage(result);
+    ::PostQuitMessage(::GetWindowLongPtr(hwnd, DWLP_MSGRESULT));
 }
 
 _Use_decl_annotations_
 void WM_Handler::OnNCDestroy(HWND hwnd) noexcept
 {
-    if (GetWindowFont(hwnd) != nullptr)
-        DeleteFont(GetWindowFont(hwnd));
+    // Destroy/Delete any Fonts/Brushes w/e (not shared) in the actual class or from a child of WM_Handler
+    // since we can't assume what a window actually has
 
-    ::DestroyCaret();
-
-    if (::GetClassLongPtr(hwnd, GCLP_HCURSOR) == GCLP_HCURSOR)
-        ::DestroyCursor(::GetCursor());
-    ::DestroyWindow(hwnd);
-
-    // Check if its a window or dialog
-    // Check if it's a dialog window first since GWLP_USERDATA has info on the window class
-    if (::GetWindowLongPtr(hwnd, DWLP_USER) == DWLP_USER)
-        ::SetWindowLongPtr(hwnd, DWLP_USER, 0);
-    else if (::GetWindowLongPtr(hwnd, GWLP_USERDATA) == GWLP_USERDATA)
-        ::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-
-
-    hwnd = nullptr;
+    // This can be used for Modals too but not in WM_CLOSE
+    if (hwnd != nullptr)
+    {
+        ::DestroyWindow(hwnd);
+        hwnd = nullptr;
+    }
 }
 
 _Use_decl_annotations_
@@ -129,6 +121,8 @@ INT WM_Handler::OnGetTextLength(HWND hwnd) noexcept { return ::GetWindowTextLeng
 _Use_decl_annotations_
 void WM_Handler::OnSetFocus(HWND hwnd, HWND hwndOldFocus) noexcept
 {
+    // Just for the sake of using it (compiler warning)
+    ::SetFocus(hwndOldFocus);
     ::SetFocus(hwnd);
 }
 
@@ -172,9 +166,9 @@ void WM_Handler::OnEnterIdle(HWND hwnd, UINT source, HWND hwndSource) noexcept
 _Use_decl_annotations_
 void WM_Handler::OnNCPaint(HWND hwnd, HRGN hrgn) noexcept
 {
-    auto hdc = GetDCEx(hwnd, hrgn, DCX_WINDOW | DCX_INTERSECTRGN);
-    // Paint into this DC 
-    ReleaseDC(hwnd, hdc);
+    using WindowDC = std::unique_ptr<HDC__ , decltype(&::DeleteDC)>;
+    WindowDC hdc{ GetDCEx(hwnd, hrgn, DCX_WINDOW | DCX_INTERSECTRGN), ::DeleteDC };
+    ReleaseDC(hwnd, hdc.release());
 }
 
 _Use_decl_annotations_
@@ -184,6 +178,33 @@ BOOL WM_Handler::OnEraseBkgnd(HWND hwnd, [[maybe_unused]] HDC hdc) noexcept
     return ::GetClassLongPtr(hwnd, GCLP_HBRBACKGROUND);
 }
 
+
+#pragma region Common Button Handlers
+void WM_Handler::OnCloseModal(HWND hDlg) noexcept { ::EndDialog(hDlg, IDCLOSE); }
+
+_Use_decl_annotations_
+void WM_Handler::OnOK(HWND hDlg) noexcept { ::EndDialog(hDlg, IDOK); }
+
+_Use_decl_annotations_
+void WM_Handler::OnCancel(HWND hDlg) noexcept { ::EndDialog(hDlg, IDCANCEL); }
+
+_Use_decl_annotations_
+void WM_Handler::OnAbort(HWND hDlg) noexcept { ::EndDialog(hDlg, IDABORT); }
+
+_Use_decl_annotations_
+void WM_Handler::OnRetry(HWND hDlg) noexcept { ::EndDialog(hDlg, IDRETRY); }
+
+_Use_decl_annotations_
+void WM_Handler::ButtonCheck(HWND hwnd) noexcept { Button_SetCheck(hwnd, BST_CHECKED); }
+
+_Use_decl_annotations_
+void WM_Handler::ButtonUncheck(HWND hwnd) noexcept { Button_SetCheck(hwnd, BST_UNCHECKED); }
+
+_Use_decl_annotations_
+void WM_Handler::DisableButtonCheck(HWND hwnd) noexcept { Button_SetCheck(hwnd, BST_INDETERMINATE); }
+#pragma endregion
+
+
 _Use_decl_annotations_
 LPCTSTR CALLBACK GetCaption(HWND hwnd) noexcept
 {
@@ -192,6 +213,15 @@ LPCTSTR CALLBACK GetCaption(HWND hwnd) noexcept
     ::GetWindowText(hwnd, buffer.get(), len);
     return buffer.release();
 }
+
+_Use_decl_annotations_
+LPCTSTR CALLBACK GetActiveWindowCaption() noexcept
+{
+    return GetCaption(::GetActiveWindow());
+}
+
+
+
 
 } // namespace ui
 } // namespace ra

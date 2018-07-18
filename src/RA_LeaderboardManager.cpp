@@ -97,17 +97,17 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     const Value& LBData = Response["LBData"];
 
-    const std::string& sFormat = LBData["Format"].GetString();
+    _UNUSED const std::string& sFormat = LBData["Format"].GetString();
     const ra::LeaderboardID nLBID = static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint());
     const ra::GameID nGameID = static_cast<ra::GameID>(LBData["GameID"].GetUint());
-    const std::string& sLBTitle = LBData["Title"].GetString();
+    _UNUSED const std::string& sLBTitle = LBData["Title"].GetString();
     const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
 
     RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
 
     const int nSubmittedScore = Response["Score"].GetInt();
     const int nBestScore = Response["BestScore"].GetInt();
-    const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
+    _UNUSED const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
 
     pLB->ClearRankInfo();
 
@@ -129,8 +129,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     pLB->SortRankInfo();
 
-    const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-    const Value& RankData = Response["RankInfo"];
+    _UNUSED const Value& TopEntriesFriends = Response["TopEntriesFriends"];
+    _UNUSED const Value& RankData = Response["RankInfo"];
 
     //	TBD!
     //char sTestData[ 4096 ];

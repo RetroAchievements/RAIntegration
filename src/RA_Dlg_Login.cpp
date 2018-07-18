@@ -13,6 +13,13 @@ namespace ui {
 // This class probably doesn't need to be used anywhere else
 struct LoginHelper : public WM_Handler
 {
+    inline constexpr LoginHelper() noexcept = default;
+    ~LoginHelper() noexcept = default;
+    LoginHelper(const LoginHelper&) = delete;
+    LoginHelper& operator=(const LoginHelper&) = delete;
+    inline constexpr LoginHelper(LoginHelper&&) noexcept = default;
+    inline constexpr LoginHelper& operator=(LoginHelper&&) noexcept = default;
+
     BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, _UNUSED LPARAM lParam) noexcept override
     {
         // want to check what the originally are

@@ -254,5 +254,6 @@
     <None Include="ra_utility.h">
       <Filter>Helpers</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

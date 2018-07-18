@@ -78,9 +78,9 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
                     _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
                     if (nCharsRead > 2)
                     {
-                        char* pBuf = &buffer[0];
-                        const char* pValue = _ReadStringTil('=', pBuf, TRUE);
-                        const char* pName = _ReadStringTil(EndLine, pBuf, TRUE);
+                        char* pBuf2 = &buffer[0];
+                        const char* pValue = _ReadStringTil('=', pBuf2, TRUE);
+                        const char* pName = _ReadStringTil(EndLine, pBuf2, TRUE);
 
                         int nBase = 10;
                         if (pValue[0] == '0' && pValue[1] == 'x')
@@ -100,15 +100,15 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
             {
                 //	
                 char* pBuf = &buffer[0];
-                const char* pUnused = _ReadStringTil(':', pBuf, TRUE);
+                _UNUSED const char* pUnused = _ReadStringTil(':', pBuf, TRUE);
                 std::string sDesc = _ReadStringTil(EndLine, pBuf, TRUE);
 
                 _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
                 if (nCharsRead > 0 && strncmp(FormatTypeStr, buffer, strlen(FormatTypeStr)) == 0)
                 {
-                    char* pBuf = &buffer[0];
-                    const char* pUnused = _ReadStringTil('=', pBuf, TRUE);
-                    const char* pType = _ReadStringTil(EndLine, pBuf, TRUE);
+                    char* pBuf2 = &buffer[0];
+                    _UNUSED const char* pUnused2 = _ReadStringTil('=', pBuf2, TRUE);
+                    const char* pType = _ReadStringTil(EndLine, pBuf2, TRUE);
 
                     MemValue::Format nType = MemValue::ParseFormat(pType);
 

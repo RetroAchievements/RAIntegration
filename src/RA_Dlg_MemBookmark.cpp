@@ -352,8 +352,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 case IDC_RA_DEL_BOOKMARK:
                 {
-                    HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    HWND hList2 = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                    int nSel = ListView_GetNextItem(hList2, -1, LVNI_SELECTED);
 
                     if (nSel != -1)
                     {
@@ -373,12 +373,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                             delete pBookmark;
 
-                            ListView_DeleteItem(hList, nSel);
+                            ListView_DeleteItem(hList2, nSel);
 
-                            nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                            nSel = ListView_GetNextItem(hList2, -1, LVNI_SELECTED);
                         }
 
-                        InvalidateRect(hList, nullptr, FALSE);
+                        InvalidateRect(hList2, nullptr, FALSE);
                     }
 
                     return TRUE;
@@ -503,26 +503,26 @@ void Dlg_MemBookmark::PopulateList()
     if (m_vBookmarks.size() == 0)
         return;
 
+    // TBD: Make control handles wrapped in unique_ptr as data members for member functions
     HWND hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
     if (hList == nullptr)
         return;
 
-    int topIndex = ListView_GetTopIndex(hList);
+    _UNUSED int topIndex = ListView_GetTopIndex(hList);
     ListView_DeleteAllItems(hList);
     m_nNumOccupiedRows = 0;
 
-    for (MemBookmark* bookmark : m_vBookmarks)
+    // bookmark isn't used so let's use iterators
+    for (auto it = m_vBookmarks.cbegin(); it != m_vBookmarks.cend(); ++it)
     {
-        LV_ITEM item;
-        ZeroMemory(&item, sizeof(item));
-        item.mask = LVIF_TEXT;
-        item.cchTextMax = 256;
-        item.iItem = m_nNumOccupiedRows;
-        item.iSubItem = 0;
-        item.iItem = ListView_InsertItem(hList, &item);
+        // kind of like zero memory
+        auto lpItem{ std::make_unique<LV_ITEM>() }; 
+        lpItem->mask       = LVIF_TEXT;
+        lpItem->iItem      = m_nNumOccupiedRows;
+        lpItem->cchTextMax = 256;        
 
-        ASSERT(item.iItem == m_nNumOccupiedRows);
-
+        lpItem->iItem = ListView_InsertItem(hList, lpItem.get());
+        ASSERT(lpItem->iItem == m_nNumOccupiedRows);
         m_nNumOccupiedRows++;
     }
 
@@ -775,11 +775,13 @@ void Dlg_MemBookmark::ExportJSON()
 void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
 {
     FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
+    _UNUSED errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
     if (pFile != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pFile));
+        FileStream fs{ pFile };
+        doc.ParseStream(fs);
+
         if (!doc.HasParseError())
         {
             if (doc.HasMember("Bookmarks"))

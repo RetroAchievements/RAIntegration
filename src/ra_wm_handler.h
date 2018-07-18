@@ -35,21 +35,19 @@ struct WM_Handler
     // Basic rule: Messages with pointers (the first hwnd is not part of it) are
     //             sent, otherwise they are posted. If you don't want it to processed immediate post it the message queue, but make sure it has no pointers.
 #pragma region Event Handlers
-    // These should be overridden
-
     // This base method should only be used in the dialogs message queue and not it's procedure 
     _NODISCARD virtual BOOL OnInitDialog(_In_ HWND hwnd, _In_ HWND hwndFocus, _In_ LPARAM lParam) noexcept;
     _NORETURN virtual void OnCommand(_In_ HWND hwnd, _In_ int id, _In_ HWND hwndCtl, _In_ UINT codeNotify) noexcept;
-    _NORETURN virtual void OnClose(_In_ HWND hwnd) noexcept;
     _NODISCARD virtual BOOL OnNCCreate(_In_ HWND hwnd, _In_ LPCREATESTRUCT lpCreateStruct) noexcept;
     _NODISCARD virtual BOOL OnCreate(_In_ HWND hwnd, _In_ LPCREATESTRUCT lpCreateStruct) noexcept;
+    _NORETURN virtual void OnClose(_In_ HWND hwnd) noexcept;
     _NORETURN virtual void OnDestroy(_In_ HWND hwnd) noexcept;
     _NORETURN virtual void OnNCDestroy(_In_ HWND hwnd) noexcept;
     _NODISCARD virtual LRESULT OnNotify(_In_ HWND hwnd, _In_ int idFrom, _In_ NMHDR* pnmdr) noexcept;
     _NORETURN virtual void OnTimer(_In_ HWND hwnd, _In_ UINT id) noexcept;
 
     // Stuff that probably shouldn't be overridden
-    // You could use ::EnableWindow Directly but the default window proc might pass invalid input
+    // You could use ::EnableWindow Directly in HANDLE_MSG but the default window proc might pass invalid input
     _NORETURN void OnEnable(_In_ HWND hwnd, _In_ BOOL fEnable = TRUE) noexcept;
     _NORETURN void OnCancelMode(_In_ HWND hwnd) noexcept;
 
@@ -67,17 +65,64 @@ struct WM_Handler
     _NORETURN void OnShowWindow(_In_ HWND hwnd, _In_ BOOL fShow, _In_ UINT status) noexcept;
 #pragma endregion
 
-    // Do you want to process dialog messages too?
     _NODISCARD UINT OnGetDlgCode(_In_ HWND hwnd, _In_ LPMSG lpmsg) noexcept;
     _NODISCARD HWND OnNextDlgCtl(_In_ HWND hwnd, _In_ HWND hwndSetFocus, _In_ BOOL fNext) noexcept;
     _NORETURN void OnEnterIdle(_In_ HWND hwnd, _In_ UINT source, _In_ HWND hwndSource) noexcept;
 
     _NORETURN void OnNCPaint(_In_ HWND hwnd, _In_ HRGN hrgn) noexcept;
     _NODISCARD BOOL OnEraseBkgnd(_In_ HWND hwnd, _In_ [[maybe_unused]] HDC hdc) noexcept;
+
+
+    // These normally should throw if the result is 0, but we aren't doing that right now
+#pragma region Common Button Handlers
+    // For non-modal dialogs and other window types, use OnClose
+    _NORETURN virtual void OnCloseModal(_In_ HWND hDlg) noexcept;
+    _NORETURN virtual void OnOK(_In_ HWND hDlg) noexcept;
+    _NORETURN virtual void OnCancel(_In_ HWND hDlg) noexcept;
+    _NORETURN virtual void OnAbort(_In_ HWND hDlg) noexcept;
+    _NORETURN virtual void OnRetry(_In_ HWND hDlg) noexcept;
+    _NORETURN virtual void ButtonCheck(_In_ HWND hwnd) noexcept;
+    _NORETURN virtual void ButtonUncheck(_In_ HWND hwnd) noexcept;
+
+    // This function will gray-out a check box or radio-button
+    _NORETURN virtual void DisableButtonCheck(_In_ HWND hwnd) noexcept;
+#pragma endregion
+
+
 };
 
-// Mostly for debugging but could be used
+// Might be useful later, but don't understand it well enough yet -SBS
+#pragma region ClipboardHelper
+//struct ClipboardHelper : public WM_Handler
+//{
+//#pragma region Constructors
+//    ClipboardHelper() noexcept = default;
+//    virtual ~ClipboardHelper() noexcept = default;
+//    ClipboardHelper(const ClipboardHelper&) = delete;
+//    ClipboardHelper& operator=(const ClipboardHelper&) = delete;
+//    inline constexpr ClipboardHelper(ClipboardHelper&&) noexcept = default;
+//    inline constexpr ClipboardHelper& operator=(ClipboardHelper&&) noexcept = default;
+//#pragma endregion
+//    // https://docs.microsoft.com/en-us/windows/desktop/dataxchg/clipboard-overviews
+//#pragma region Methods
+//    _NORETURN virtual void OnCut(_In_ HWND hwnd) noexcept;
+//    _NORETURN virtual void OnCopy(_In_ HWND hwnd) noexcept;
+//    _NORETURN virtual void OnPaste(_In_ HWND hwnd) noexcept;
+//    _NORETURN virtual void OnClear(_In_ HWND hwnd) noexcept;
+//    _NORETURN virtual void OnDestroyClipboard(_In_ HWND hwnd) noexcept;
+//    _NORETURN virtual void OnDrawClipboard(_In_ HWND hwnd) noexcept;
+//#pragma endregion
+//
+//};  
+#pragma endregion
+
+// Mostly for identifying what the window/control is for debugging but could be used normally
+// These can't be used in the WindowProc user callbacks though
+_Success_(return != nullptr)
 _NODISCARD LPCTSTR CALLBACK GetCaption(_In_ HWND hwnd) noexcept;
+
+_Success_(return != nullptr)
+_NODISCARD LPCTSTR CALLBACK GetActiveWindowCaption() noexcept;
 
 } // namespace ui
 } // namespace ra

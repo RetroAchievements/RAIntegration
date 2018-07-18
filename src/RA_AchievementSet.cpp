@@ -129,7 +129,7 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
     }
 
     //	Not found
-    return -1;
+    return ra::to_unsigned(-1);
 }
 
 unsigned int AchievementSet::NumActive() const
@@ -319,7 +319,7 @@ BOOL AchievementSet::SaveToFile()
     //}
 }
 
-BOOL AchievementSet::Serialize(FileStream& Stream)
+BOOL AchievementSet::Serialize(_UNUSED FileStream& Stream)
 {
     //	Why not submit each ach straight to cloud?
     return FALSE;
@@ -488,14 +488,16 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         else
         {
             Document doc;
-            doc.ParseStream(FileStream(pFile));
+            FileStream fs{ pFile };
+            doc.ParseStream(fs);
+
             if (!doc.HasParseError())
             {
                 //ASSERT( doc["Success"].GetBool() );
                 g_pCurrentGameData->ParseData(doc);
-                ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                ra::GameID nGameID2 = g_pCurrentGameData->GetGameID();
 
-                RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
+                RA_RichPresenceInterpretter::PersistAndParseScript(nGameID2, g_pCurrentGameData->RichPresencePatch());
 
                 const Value& AchievementsData = doc["Achievements"];
                 for (SizeType i = 0; i < AchievementsData.Size(); ++i)
@@ -663,7 +665,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     char* pGivenProgressMD5 = nullptr;
     char* pGivenCheevoMD5 = nullptr;
     char cheevoMD5TestMangled[4096];
-    int nMemStringLen = 0;
+    _UNUSED int nMemStringLen = 0;
 
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;

@@ -18,6 +18,8 @@ public:
     inline constexpr Dlg_Login& operator=(Dlg_Login&&) noexcept = default;
 
     INT_PTR DoModal();
+
+private:
     friend INT_PTR CALLBACK Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 

@@ -49,7 +49,7 @@ void LeaderboardPopup::Reset()
     m_nState = State_ShowingProgress;
 }
 
-void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
+void LeaderboardPopup::Update(_UNUSED ControllerInput input, float fDelta, _UNUSED BOOL bFullScreen, BOOL bPaused)
 {
     if (!g_bLeaderboardsActive)	//	If not, simply ignore them.
         return;
@@ -283,9 +283,9 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                         SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
                     }
 
-                    char buffer[1024];
-                    sprintf_s(buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
-                    DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                    char buffer2[1024];
+                    sprintf_s(buffer2, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
+                    DrawText(hDC, NativeStr(buffer2).c_str(), strlen(buffer2), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
                     DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);

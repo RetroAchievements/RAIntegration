@@ -38,20 +38,18 @@ RA_ConditionalDisplayString::RA_ConditionalDisplayString(const char* pBuffer)
     }
 
     // call with nullptr to determine space required
-    int nResult;
-    rc_parse_trigger(&nResult, nullptr, pTrigger, nullptr, 0);
-
-    if (nResult < 0)
+    int nSize = rc_trigger_size(pTrigger);
+    if (nSize < 0)
     {
         // parse error occurred
-        RA_LOG("rc_parse_trigger returned %d", nResult);
+        RA_LOG("rc_parse_trigger returned %d", nSize);
         m_pTrigger = nullptr;
     }
     else
     {
         // allocate space and parse again
-        m_pTriggerBuffer.reset(new unsigned char[nResult]);
-        m_pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.get()), pTrigger, nullptr, 0);
+        m_pTriggerBuffer.reset(new unsigned char[nSize]);
+        m_pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), pTrigger, nullptr, 0);
 
         // valid condition
         m_sDisplayString = ++pBuffer; // skip second question mark
@@ -172,12 +170,8 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
         if (m_lookups.at(i).Description().compare(sName) == 0)
         {
             char buffer[2048];
-            rc_value_t value;
-            int nResult = 0;
-            const char* ptr = sMemString.c_str();
-            rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
-
-            unsigned int nValue = rc_evaluate_value(&value, rc_peek_callback, nullptr, nullptr);
+            rc_value_t* pValue = rc_parse_value(buffer, sMemString.c_str(), nullptr, 0);
+            unsigned int nValue = pValue ? rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr) : 0U;
             return m_lookups.at(i).Lookup(static_cast<ra::DataPos>(nValue));
         }
     }
@@ -187,12 +181,8 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
     if (iter != m_formats.end())
     {
         char buffer[2048];
-        rc_value_t value;
-        int nResult = 0;
-        const char* ptr = sMemString.c_str();
-        rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
-
-        unsigned int nValue = rc_evaluate_value(&value, rc_peek_callback, nullptr, nullptr);
+        rc_value_t* pValue = rc_parse_value(buffer, sMemString.c_str(), nullptr, 0);
+        unsigned int nValue = pValue ? rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr) : 0U;
         rc_format_value(buffer, sizeof(buffer), nValue, iter->second);
         return std::string(buffer);
     }

@@ -25,20 +25,18 @@ RA_Leaderboard::~RA_Leaderboard()
 void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
 {
     // call with nullptr to determine space required
-    int nResult;
-    rc_parse_lboard(&nResult, nullptr, sBuffer, nullptr, 0);
-
-    if (nResult < 0)
+    int nSize = rc_lboard_size(sBuffer);
+    if (nSize < 0)
     {
         // parse error occurred
-        RA_LOG("rc_parse_lboard returned %d", nResult);
+        RA_LOG("rc_parse_lboard returned %d", nSize);
         m_pLeaderboard = nullptr;
     }
     else
     {
         // allocate space and parse again
-        m_pLeaderboardBuffer.reset(new unsigned char[nResult]);
-        m_pLeaderboard = rc_parse_lboard(&nResult, static_cast<void*>(m_pLeaderboardBuffer.get()), sBuffer, nullptr, 0);
+        m_pLeaderboardBuffer.reset(new unsigned char[nSize]);
+        m_pLeaderboard = rc_parse_lboard(static_cast<void*>(m_pLeaderboardBuffer.get()), sBuffer, nullptr, 0);
 
         m_nFormat = rc_parse_format(sFormat);
     }

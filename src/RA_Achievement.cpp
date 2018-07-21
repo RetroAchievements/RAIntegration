@@ -155,21 +155,18 @@ void Achievement::ParseTrigger(const char* sTrigger)
 {
     m_vConditions.Clear();
 
-    // call with nullptr to determine space required
-    int nResult;
-    rc_parse_trigger(&nResult, nullptr, sTrigger, nullptr, 0);
-
-    if (nResult < 0)
+    int nSize = rc_trigger_size(sTrigger);
+    if (nSize < 0)
     {
         // parse error occurred
-        RA_LOG("rc_parse_trigger returned %d", nResult);
+        RA_LOG("rc_parse_trigger returned %d", nSize);
         m_pTrigger = nullptr;
     }
     else
     {
         // allocate space and parse again
-        m_pTriggerBuffer.reset(new unsigned char[nResult]);
-        auto* pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.get()), sTrigger, nullptr, 0);
+        m_pTriggerBuffer.reset(new unsigned char[nSize]);
+        auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sTrigger, nullptr, 0);
         m_pTrigger = pTrigger;
 
         // wrap rc_trigger_t in a ConditionSet for the UI

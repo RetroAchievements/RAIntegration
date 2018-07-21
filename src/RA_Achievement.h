@@ -5,6 +5,8 @@
 #include "RA_Condition.h"
 #include "RA_Defs.h"
 
+#include <memory>
+
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
@@ -137,10 +139,10 @@ private:
 
     ra::AchievementID m_nAchievementID;
 
-    ConditionSet                m_vConditions;        //  UI wrappers for trigger
+    ConditionSet                      m_vConditions;        //  UI wrappers for trigger
 
-    void*                       m_pTrigger = nullptr; //  rc_trigger_t
-    std::vector<unsigned char>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
+    void*                             m_pTrigger = nullptr; //  rc_trigger_t
+    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 
     std::string m_sTitle;
     std::string m_sDescription;

@@ -282,6 +282,8 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
+    g_pActiveAchievements = nullptr;
+
     _RA_SavePreferences();
 
     SAFE_DELETE(g_pCoreAchievements);
@@ -1487,7 +1489,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (RAUsers::LocalUser().IsLoggedIn() && g_pActiveAchievements != nullptr)
     {
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {

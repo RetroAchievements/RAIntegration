@@ -5,6 +5,8 @@
 #include "RA_Leaderboard.h"
 #include "RA_Defs.h"
 
+#include <memory>
+
 class RA_Lookup
 {
 public:
@@ -30,10 +32,10 @@ public:
     const std::string& GetDisplayString() const { return m_sDisplayString; }
 
 private:
-    std::string                 m_sDisplayString;     //  display string
+    std::string                       m_sDisplayString;     //  display string
 
-    void*                       m_pTrigger = nullptr; //  rc_trigger_t
-    std::vector<unsigned char>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
+    void*                             m_pTrigger = nullptr; //  rc_trigger_t
+    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 };
 
 class RA_RichPresenceInterpretter

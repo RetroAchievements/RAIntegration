@@ -50,8 +50,8 @@ RA_ConditionalDisplayString::RA_ConditionalDisplayString(const char* pBuffer)
     else
     {
         // allocate space and parse again
-        m_pTriggerBuffer.resize(nResult);
-        m_pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.data()), pTrigger, nullptr, 0);
+        m_pTriggerBuffer.reset(new unsigned char[nResult]);
+        m_pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.get()), pTrigger, nullptr, 0);
 
         // valid condition
         m_sDisplayString = ++pBuffer; // skip second question mark
@@ -173,7 +173,7 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
         {
             char buffer[2048];
             rc_value_t value;
-            int nResult;
+            int nResult = 0;
             const char* ptr = sMemString.c_str();
             rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
 
@@ -188,7 +188,7 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
     {
         char buffer[2048];
         rc_value_t value;
-        int nResult;
+        int nResult = 0;
         const char* ptr = sMemString.c_str();
         rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
 

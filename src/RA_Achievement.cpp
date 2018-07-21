@@ -168,8 +168,8 @@ void Achievement::ParseTrigger(const char* sTrigger)
     else
     {
         // allocate space and parse again
-        m_pTriggerBuffer.resize(nResult);
-        auto* pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.data()), sTrigger, nullptr, 0);
+        m_pTriggerBuffer.reset(new unsigned char[nResult]);
+        auto* pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.get()), sTrigger, nullptr, 0);
         m_pTrigger = pTrigger;
 
         // wrap rc_trigger_t in a ConditionSet for the UI
@@ -383,7 +383,7 @@ void Achievement::Clear()
     m_vConditions.Clear();
 
     m_nAchievementID = 0;
-    m_pTriggerBuffer.clear();
+    m_pTriggerBuffer.reset();
     m_pTrigger = nullptr;
 
     m_sTitle.clear();

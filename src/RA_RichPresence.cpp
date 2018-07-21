@@ -165,8 +165,8 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
     }
 }
 
-extern void rc_parse_value(rc_value_t* self, int* ret, void* buffer, const char** memaddr, lua_State* L, int funcs_ndx);
-extern unsigned rc_evaluate_value(rc_value_t* self, rc_peek_t peek, void* ud, lua_State* L);
+extern "C" void rc_parse_value(rc_value_t* self, int* ret, void* buffer, const char** memaddr, lua_State* L, int funcs_ndx);
+extern "C" unsigned rc_evaluate_value(rc_value_t* self, rc_peek_t peek, void* ud, lua_State* L);
 
 const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
 {

@@ -27,16 +27,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\rcheevos\src\alloc.c" />
-    <ClCompile Include="..\rcheevos\src\condition.c" />
-    <ClCompile Include="..\rcheevos\src\condset.c" />
-    <ClCompile Include="..\rcheevos\src\expression.c" />
-    <ClCompile Include="..\rcheevos\src\format.c" />
-    <ClCompile Include="..\rcheevos\src\lboard.c" />
-    <ClCompile Include="..\rcheevos\src\operand.c" />
-    <ClCompile Include="..\rcheevos\src\term.c" />
-    <ClCompile Include="..\rcheevos\src\trigger.c" />
-    <ClCompile Include="..\rcheevos\src\value.c" />
+    <ClCompile Include="..\rcheevos\src\alloc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\condition.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\condset.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\expression.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\format.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\lboard.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\operand.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\term.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\trigger.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\value.c" CompileAs="CompileAsC" />
     <ClCompile Include="md5.c" />
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />

@@ -1,7 +1,9 @@
 #ifndef RA_CONDITION_H
 #define RA_CONDITION_H
 #pragma once
-#include "RA_Defs.h"
+
+#include <string>
+#include <vector>
 
 enum ComparisonVariableSize
 {
@@ -53,24 +55,13 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    CompVariable()
-        : m_nVal(0),
-        m_nVarSize(ComparisonVariableSize::EightBit),
-        m_nVarType(ComparisonVariableType::Address)
-    {
-    }
+    CompVariable() {}
 
-public:
-    void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nValue)
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
-        m_nVal = nInitialValue;
-    }
-
-    void SetValues(unsigned int nVal, unsigned int nPrevVal)
-    {
-        m_nVal = nVal;
+        m_nVal = nValue;
     }
 
     void SerializeAppend(std::string& buffer) const;
@@ -81,12 +72,13 @@ public:
     inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
     inline ComparisonVariableType Type() const { return m_nVarType; }
 
-    inline unsigned int RawValue() const { return m_nVal; }
+    inline void SetValue(unsigned int nValue) { m_nVal = nValue; }
+    inline unsigned int Value() const { return m_nVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize;
-    ComparisonVariableType m_nVarType;
-    unsigned int m_nVal;
+    ComparisonVariableSize m_nVarSize = ComparisonVariableSize::ThirtyTwoBit;
+    ComparisonVariableType m_nVarType = ComparisonVariableType::Address;
+    unsigned int m_nVal = 0;
 };
 
 
@@ -112,12 +104,15 @@ public:
 
     inline CompVariable& CompSource() { return m_nCompSource; }	//	NB both required!!
     inline const CompVariable& CompSource() const { return m_nCompSource; }
+    
     inline CompVariable& CompTarget() { return m_nCompTarget; }
     inline const CompVariable& CompTarget() const { return m_nCompTarget; }
-    void SetCompareType(ComparisonType nType) { m_nCompareType = nType; }
+
     inline ComparisonType CompareType() const { return m_nCompareType; }
+    inline void SetCompareType(ComparisonType nType) { m_nCompareType = nType; }
 
     inline unsigned int RequiredHits() const { return m_nRequiredHits; }
+    void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
 
     inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
     inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
@@ -127,8 +122,6 @@ public:
 
     inline ConditionType GetConditionType() const { return m_nConditionType; }
     void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }
-
-    void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
 
 private:
     CompVariable	m_nCompSource;
@@ -172,6 +165,5 @@ public:
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;
 };
-
 
 #endif // !RA_CONDITION_H

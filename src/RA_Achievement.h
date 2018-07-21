@@ -3,10 +3,21 @@
 #pragma once
 
 #include "RA_Condition.h"
+#include "RA_Defs.h"
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
+
+enum AchievementSetType
+{
+    Core,
+    Unofficial,
+    Local,
+
+    NumAchievementSetTypes
+};
+
 enum Achievement_DirtyFlags
 {
     Dirty_Title = 1 << 0,

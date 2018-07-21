@@ -93,6 +93,7 @@
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
+#define RAPIDJSON_NOMEMBERITERATORCLASS 1
 #pragma warning(push, 1)
 // This is not needed the most recent version
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
@@ -279,15 +280,6 @@ public:
         else
             SetWindowPos(hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
     }
-};
-
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
 };
 
 extern void RADebugLogNoFormat(const char* data);

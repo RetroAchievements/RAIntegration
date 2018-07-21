@@ -2,6 +2,8 @@
 
 #include "RA_MemManager.h"
 
+#include <algorithm>
+
 namespace ra {
 namespace services {
 

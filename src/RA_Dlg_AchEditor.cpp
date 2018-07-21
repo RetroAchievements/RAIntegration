@@ -194,17 +194,17 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
+    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().Value());
     sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
+    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().Value());
     sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), nCurrentHits);
 
     if (g_bPreferDecimalVal)
     {
         if (Cond.CompTarget().Type() == ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().Value());
     }
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
@@ -1160,7 +1160,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
                         unsigned int nVal = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
-                        NewCondition.CompSource().SetValues(nVal, nVal);
+                        NewCondition.CompSource().SetValue(nVal);
                     }
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;
@@ -1619,7 +1619,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Update the text to match
                                 char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().RawValue());
+                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().Value());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1635,7 +1635,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Update the text to match
                                 char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().RawValue());
+                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().Value());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1765,7 +1765,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 nBase = 10;
 
                             unsigned int nVal = strtol(sData, nullptr, nBase);
-                            rCond.CompSource().SetValues(nVal, nVal);
+                            rCond.CompSource().SetValue(nVal);
                             break;
                         }
                         case CSI_VALUE_TGT:
@@ -1775,7 +1775,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 nBase = 10;
 
                             unsigned int nVal = strtol(sData, nullptr, nBase);
-                            rCond.CompTarget().SetValues(nVal, nVal);
+                            rCond.CompTarget().SetValue(nVal);
                             break;
                         }
                         case CSI_HITCOUNT:
@@ -1855,14 +1855,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             if (rCond.CompSource().Type() != Address && rCond.CompSource().Type() != DeltaMem)
                 return;
 
-            nAddr = rCond.CompSource().RawValue();
+            nAddr = rCond.CompSource().Value();
             break;
 
         case CSI_VALUE_TGT:
             if (rCond.CompTarget().Type() != Address && rCond.CompTarget().Type() != DeltaMem)
                 return;
 
-            nAddr = rCond.CompTarget().RawValue();
+            nAddr = rCond.CompTarget().Value();
             break;
 
         default:

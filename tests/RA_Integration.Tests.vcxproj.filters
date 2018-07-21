@@ -86,9 +86,6 @@
     <ClCompile Include="RA_UnitTestHelpers.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="RA_CompVariable_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>

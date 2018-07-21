@@ -1,5 +1,7 @@
 #include "RA_MemManager.h"
 
+#include "RA_Defs.h"
+
 MemManager g_MemManager;
 
 MemManager::MemManager()
@@ -184,7 +186,7 @@ void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal
     }
 }
 
-unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData)
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData)
 {
     switch (nBytes)
     {

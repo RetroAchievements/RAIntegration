@@ -3,6 +3,9 @@
 #pragma once
 
 #include "RA_Condition.h" // ComparisonVariableSize
+#include "ra_fwd.h"
+
+#include <map>
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
 typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
@@ -68,6 +71,6 @@ private:
 
 extern MemManager g_MemManager;
 
-EXTERN_C unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData);
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData);
 
 #endif // !RA_MEMMANAGER_H

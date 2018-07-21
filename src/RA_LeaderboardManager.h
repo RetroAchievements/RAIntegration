@@ -2,10 +2,8 @@
 #define RA_LEADERBOARD_MANAGER_H
 #pragma once
 
+#include "RA_Defs.h"
 #include "RA_Leaderboard.h"
-
-#include <rapidjson\include\rapidjson\document.h>
-#include <vector>
 
 class RA_LeaderboardManager
 {

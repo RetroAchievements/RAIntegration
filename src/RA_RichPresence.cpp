@@ -63,9 +63,8 @@ bool RA_ConditionalDisplayString::Test()
     if (m_pTrigger == nullptr)
         return false;
 
-    int bUnused;
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    return rc_test_trigger(pTrigger, &bUnused, &bUnused, rc_peek_callback, nullptr, nullptr);
+    return rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
 }
 
 void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFilename)
@@ -164,9 +163,6 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
         fclose(pFile);
     }
 }
-
-extern "C" void rc_parse_value(rc_value_t* self, int* ret, void* buffer, const char** memaddr, lua_State* L, int funcs_ndx);
-extern "C" unsigned rc_evaluate_value(rc_value_t* self, rc_peek_t peek, void* ud, lua_State* L);
 
 const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
 {

@@ -292,8 +292,7 @@ bool Achievement::Test()
 
     bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
 
-    int bReset, bDirty;
-    bool bRetVal = rc_test_trigger(pTrigger, &bReset, &bDirty, rc_peek_callback, nullptr, nullptr);
+    bool bRetVal = rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
 
     if (bNotifyOnReset && !HasHitCounts(pTrigger))
     {

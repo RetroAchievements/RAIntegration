@@ -179,8 +179,7 @@ public:
         lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", MemValue::Format::Value);
         lb.Test();
         Assert::IsTrue(lb.IsActive());
-        Assert::AreEqual(0x34U, lb.GetCurrentValue());
-        Assert::AreEqual(0x56U, lb.GetCurrentValueProgress());
+        Assert::AreEqual(0x56U, lb.GetCurrentValue());
 
         // if PRO: mapping is not available, use VAL: for GetCurrentValueProgress
         LeaderboardHarness lb2;
@@ -188,7 +187,6 @@ public:
         lb2.Test();
         Assert::IsTrue(lb2.IsActive());
         Assert::AreEqual(0x34U, lb2.GetCurrentValue());
-        Assert::AreEqual(0x34U, lb2.GetCurrentValueProgress());
     }
 
     TEST_METHOD(TestStartAndCondition)

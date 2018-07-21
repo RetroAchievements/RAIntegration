@@ -17,8 +17,7 @@ public:
     void Test();
     virtual void Reset();
 
-    unsigned int GetCurrentValue() const { return m_value.GetValue(); } // Gets the final value for submission
-    unsigned int GetCurrentValueProgress() const;	                    // Gets the value to display while the leaderboard is active
+    unsigned int GetCurrentValue() const { return m_nCurrentValue; }
 
     ra::LeaderboardID ID() const { return m_nID; }
 
@@ -53,22 +52,18 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    const ra::LeaderboardID		m_nID;			//	DB ID for this LB
-    ConditionSet			m_startCond;	//	Start monitoring if this is true
-    ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
-    ConditionSet			m_submitCond;	//	Submit new score if this is true
+    const ra::LeaderboardID     m_nID;                 //  DB ID for this LB
 
-    bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
-    bool                    m_bSubmitted;   //  True if already submitted.
+    void*                       m_pLeaderboard;        //  rc_lboard_t
+    std::vector<unsigned char>  m_pLeaderboardBuffer;  //  buffer for rc_lboard_t
+    unsigned int                m_nCurrentValue = 0;
 
-    MemValue				m_value;		//	A collection of memory addresses and values to produce one value.
-    MemValue				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
-    MemValue::Format        m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    MemValue::Format            m_format = MemValue::Format::Value; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
-    std::string				m_sTitle;		//	The title of the leaderboard
-    std::string				m_sDescription;	//	
+    std::string                 m_sTitle;              //  The title of the leaderboard
+    std::string                 m_sDescription;        //  A brief description of the leaderboard
 
-    std::vector<Entry>	    m_RankInfo;		//	Recent users ranks
+    std::vector<Entry>          m_RankInfo;            //  Recent users ranks
 };
 
 #endif // !RA_LEADERBOARD_H

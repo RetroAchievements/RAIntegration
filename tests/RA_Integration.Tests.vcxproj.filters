@@ -7,6 +7,9 @@
     <Filter Include="Code">
       <UniqueIdentifier>{c09a9464-e27a-4721-8467-626c7f5e3ab0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Code\rcheevos">
+      <UniqueIdentifier>{633c15ff-4743-416b-9e0b-fa7493d6d969}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -45,6 +48,36 @@
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\alloc.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\condition.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\condset.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\expression.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\format.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\lboard.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\operand.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\term.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\trigger.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\value.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -73,5 +106,11 @@
     <ClInclude Include="..\src\RA_Leaderboard.h">
       <Filter>Code</Filter>
     </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rcheevos.h">
+      <Filter>Code\rcheevos</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="base.props" />
   </ItemGroup>
 </Project>

@@ -229,7 +229,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                 if (pLB != nullptr)
                 {
                     //	Show current progress:
-                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValueProgress())) + std::string(" ");
+                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())) + std::string(" ");
 
                     SIZE szProgress;
                     GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);

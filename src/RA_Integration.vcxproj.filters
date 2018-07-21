@@ -19,6 +19,9 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\rcheevos">
+      <UniqueIdentifier>{22424437-af0c-41fb-99ff-d5883c57b62a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -122,6 +125,36 @@
     </ClCompile>
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\alloc.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\condition.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\condset.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\expression.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\format.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\lboard.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\operand.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\term.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\trigger.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\value.c">
+      <Filter>Data\rcheevos</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,6 +269,9 @@
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rcheevos.h">
+      <Filter>Data\rcheevos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">
@@ -252,5 +288,6 @@
     <None Include="ra_utility.h">
       <Filter>Helpers</Filter>
     </None>
+    <None Include="base.props" />
   </ItemGroup>
 </Project>

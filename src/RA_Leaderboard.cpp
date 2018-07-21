@@ -1,16 +1,17 @@
 #include "RA_Leaderboard.h"
 
+#include "RA_MemManager.h"
+
 #ifndef RA_UTEST
 #include "RA_LeaderboardManager.h"
 #endif
 
+#include "rcheevos/include/rcheevos.h"
+
 #include <ctime>
 
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
-    m_nID(nLeaderboardID),
-    m_bStarted(false),
-    m_bSubmitted(false),
-    m_format(MemValue::Format::Value)
+    m_nID(nLeaderboardID)
 {
 }
 
@@ -22,132 +23,73 @@ RA_Leaderboard::~RA_Leaderboard()
 
 void RA_Leaderboard::ParseFromString(const char* pChar, MemValue::Format nFormat)
 {
-    while (*pChar != '\n' && *pChar != '\0')
+    // call with nullptr to determine space required
+    int nResult;
+    rc_parse_lboard(&nResult, nullptr, pChar, nullptr, 0);
+
+    if (nResult < 0)
     {
-        if (pChar[0] == ':' && pChar[1] == ':')	//	New Phrase (double colon)
-            pChar += 2;
-
-        if (std::string("STA:").compare(0, 4, pChar, 0, 4) == 0)
-        {
-            pChar += 4;
-            m_startCond.ParseFromString(pChar);
-        }
-        else if (std::string("CAN:").compare(0, 4, pChar, 0, 4) == 0)
-        {
-            pChar += 4;
-            m_cancelCond.ParseFromString(pChar);
-
-            // temporary backwards compatibility support: all conditions in CANCEL should be OR'd:
-            if (m_cancelCond.GroupCount() == 1 && m_cancelCond.GetGroup(0).Count() > 1)
-            {
-                for (size_t i = 0; i < m_cancelCond.GetGroup(0).Count(); ++i)
-                {
-                    m_cancelCond.AddGroup();
-                    m_cancelCond.GetGroup(i + 1).Add(m_cancelCond.GetGroup(0).GetAt(i));
-                }
-
-                m_cancelCond.GetGroup(0).Clear();
-            }
-            // end backwards compatibility conversion
-        }
-        else if (std::string("SUB:").compare(0, 4, pChar, 0, 4) == 0)
-        {
-            pChar += 4;
-            m_submitCond.ParseFromString(pChar);
-        }
-        else if (std::string("VAL:").compare(0, 4, pChar, 0, 4) == 0)
-        {
-            pChar += 4;
-            pChar = m_value.ParseFromString(pChar);
-        }
-        else if (std::string("PRO:").compare(0, 4, pChar, 0, 4) == 0)
-        {
-            pChar += 4;
-            pChar = m_progress.ParseFromString(pChar);
-        }
-        else
-        {
-            //	badly formatted... cannot progress!
-            m_startCond.Clear();
-            ASSERT(!"Badly formatted: this leaderboard makes no sense!");
-            break;
-        }
+        // parse error occurred
+        RA_LOG("rc_parse_lboard returned %d", nResult);
+        m_pLeaderboard = nullptr;
     }
-}
-
-unsigned int RA_Leaderboard::GetCurrentValueProgress() const
-{
-    if (!m_progress.IsEmpty())
-        return m_progress.GetValue();
     else
-        return m_value.GetValue();
+    {
+        // allocate space and parse again
+        m_pLeaderboardBuffer.resize(nResult);
+        m_pLeaderboard = rc_parse_lboard(&nResult, static_cast<void*>(m_pLeaderboardBuffer.data()), pChar, nullptr, 0);
+    }
 }
 
 void RA_Leaderboard::Reset()
 {
-    m_bStarted = false;
-    m_bSubmitted = false;
+    if (m_pLeaderboard != nullptr)
+    {
+        rc_lboard_t* pLboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
+        rc_reset_lboard(pLboard);
+    }
+}
 
-    m_startCond.Reset();
-    m_cancelCond.Reset();
-    m_submitCond.Reset();
+static unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData)
+{
+    switch (nBytes)
+    {
+        case 1:
+            return g_MemManager.ActiveBankRAMRead(nAddress, EightBit);
+        case 2:
+            return g_MemManager.ActiveBankRAMRead(nAddress, SixteenBit);
+        case 4:
+            return g_MemManager.ActiveBankRAMRead(nAddress, ThirtyTwoBit);
+        default:
+            return 0;
+    }
 }
 
 void RA_Leaderboard::Test()
 {
-    bool bUnused;
-
-    //	ASSERT: these are always tested once every frame, to ensure delta variables work properly
-    bool bStartOK = m_startCond.Test(bUnused, bUnused);
-    bool bCancelOK = m_cancelCond.Test(bUnused, bUnused);
-    bool bSubmitOK = m_submitCond.Test(bUnused, bUnused);
-
-    if (m_bSubmitted)
+    if (m_pLeaderboard != nullptr)
     {
-        // if we've already submitted or canceled the leaderboard, don't reactivate it until it becomes inactive.
-        if (!bStartOK)
-            m_bSubmitted = false;
-    }
-    else if (!m_bStarted)
-    {
-        // leaderboard is not active, if the start condition is true, activate it
-        if (bStartOK && !bCancelOK)
+        rc_lboard_t* pLboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
+        int nResult = rc_evaluate_lboard(pLboard, &m_nCurrentValue, rc_peek_callback, nullptr, nullptr);
+        switch (nResult)
         {
-            if (bSubmitOK)
-            {
-                // start and submit both true in the same frame, just submit without announcing the leaderboard is available
-                Submit(GetCurrentValue());
+            default:
+            case RC_LBOARD_INACTIVE:
+            case RC_LBOARD_ACTIVE:
+                // no change, do nothing
+                break;
 
-                // prevent multiple submissions/notifications
-                m_bSubmitted = true;
-            }
-            else if (m_startCond.GroupCount() > 0)
-            {
-                m_bStarted = true;
+            case RC_LBOARD_STARTED:
                 Start();
-            }
-        }
-    }
-    else
-    {
-        // leaderboard is active
-        if (bCancelOK)
-        {
-            // cancel condition is true, deactivate the leaderboard
-            m_bStarted = false;
-            Cancel();
+                break;
 
-            // prevent multiple cancel notifications
-            m_bSubmitted = true;
-        }
-        else if (bSubmitOK)
-        {
-            // submit condition is true, submit the current value
-            m_bStarted = false;
-            Submit(GetCurrentValue());
+            case RC_LBOARD_CANCELED:
+                Cancel();
+                break;
 
-            // prevent multiple submissions/notifications
-            m_bSubmitted = true;
+            case RC_LBOARD_TRIGGERED:
+                Submit(m_nCurrentValue);
+                break;
         }
     }
 }

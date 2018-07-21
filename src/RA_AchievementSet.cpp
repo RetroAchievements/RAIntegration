@@ -531,8 +531,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                     lb.SetTitle(lbData["Title"].GetString());
                     lb.SetDescription(lbData["Description"].GetString());
 
-                    auto nFormat = MemValue::ParseFormat(lbData["Format"].GetString());
-                    lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
+                    lb.ParseFromString(lbData["Mem"].GetString(), lbData["Format"].GetString());
 
                     g_LeaderboardManager.AddLeaderboard(lb);
                 }
@@ -617,13 +616,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
             {
-                Condition& cond = pAch->GetCondition(nGrp, j);
-                sprintf_s(buffer, 4096, "%d:%d:%d:%d:%d:",
-                    cond.CurrentHits(),
-                    cond.CompSource().RawValue(),
-                    cond.CompSource().RawPreviousValue(),
-                    cond.CompTarget().RawValue(),
-                    cond.CompTarget().RawPreviousValue());
+                pAch->StoreConditionState(nGrp, j, buffer);
                 strcat_s(cheevoProgressString, 4096, buffer);
             }
         }
@@ -741,12 +734,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                         {
                             for (j = 0; j < pAch->NumConditions(nGrp); ++j)
                             {
-                                Condition& cond = pAch->GetCondition(nGrp, j);
-
-                                cond.OverrideCurrentHits(CondNumHits[j]);
-                                cond.CompSource().SetValues(CondSourceVal[j], CondSourceLastVal[j]);
-                                cond.CompTarget().SetValues(CondTargetVal[j], CondTargetLastVal[j]);
-
+                                pAch->RestoreConditionState(nGrp, j, CondNumHits[j], CondSourceVal[j], CondSourceLastVal[j]);
                                 pAch->SetDirtyFlag(Dirty_Conditions);
                             }
                         }

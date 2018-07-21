@@ -30,8 +30,10 @@ public:
     const std::string& GetDisplayString() const { return m_sDisplayString; }
 
 private:
-    std::string m_sDisplayString;
-    ConditionSet m_conditions;
+    std::string                 m_sDisplayString;     //  display string
+
+    void*                       m_pTrigger = nullptr; //  rc_trigger_t
+    std::vector<unsigned char>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 };
 
 class RA_RichPresenceInterpretter
@@ -52,7 +54,7 @@ public:
 
 private:
     std::vector<RA_Lookup> m_lookups;
-    std::map<std::string, MemValue::Format> m_formats;
+    std::map<std::string, int> m_formats;
 
     std::vector<RA_ConditionalDisplayString> m_conditionalDisplayStrings;
     std::string m_sDisplay;

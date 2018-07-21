@@ -2,7 +2,7 @@
 #define RA_LEADERBOARD_H
 #pragma once
 
-#include "RA_MemValue.h"
+#include "ra_fwd.h"
 
 #include <vector>
 
@@ -12,7 +12,7 @@ public:
     RA_Leaderboard(const ra::LeaderboardID nLBID);
     ~RA_Leaderboard();
 
-    void ParseFromString(const char* sBuffer, MemValue::Format format);
+    void ParseFromString(const char* sBuffer, const char* sFormat);
 
     void Test();
     virtual void Reset();
@@ -27,10 +27,7 @@ public:
     const std::string& Description() const { return m_sDescription; }
     void SetDescription(const std::string& sValue) { m_sDescription = sValue; }
 
-    std::string FormatScore(unsigned int nValue) const
-    {
-        return MemValue::FormatValue(nValue, m_format);
-    }
+    std::string FormatScore(unsigned int nValue) const;
 
     struct Entry
     {
@@ -52,18 +49,18 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    const ra::LeaderboardID     m_nID;                 //  DB ID for this LB
+    const ra::LeaderboardID     m_nID;                    //  DB ID for this LB
 
-    void*                       m_pLeaderboard;        //  rc_lboard_t
-    std::vector<unsigned char>  m_pLeaderboardBuffer;  //  buffer for rc_lboard_t
+    void*                       m_pLeaderboard = nullptr; //  rc_lboard_t
+    std::vector<unsigned char>  m_pLeaderboardBuffer;     //  buffer for rc_lboard_t
     unsigned int                m_nCurrentValue = 0;
 
-    MemValue::Format            m_format = MemValue::Format::Value; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    int                         m_nFormat = 0;            // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
-    std::string                 m_sTitle;              //  The title of the leaderboard
-    std::string                 m_sDescription;        //  A brief description of the leaderboard
+    std::string                 m_sTitle;                 //  The title of the leaderboard
+    std::string                 m_sDescription;           //  A brief description of the leaderboard
 
-    std::vector<Entry>          m_RankInfo;            //  Recent users ranks
+    std::vector<Entry>          m_RankInfo;               //  Recent users ranks
 };
 
 #endif // !RA_LEADERBOARD_H

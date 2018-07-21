@@ -68,5 +68,6 @@ private:
 
 extern MemManager g_MemManager;
 
+EXTERN_C unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData);
 
 #endif // !RA_MEMMANAGER_H

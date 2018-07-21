@@ -2,7 +2,9 @@
 
 #include "RA_Core.h"
 #include "RA_GameData.h"
-#include "RA_MemValue.h"
+#include "RA_MemManager.h"
+
+#include "rcheevos\include\rcheevos.h"
 
 RA_RichPresenceInterpretter g_RichPresenceInterpretter;
 
@@ -22,26 +24,48 @@ const std::string& RA_Lookup::Lookup(ra::DataPos nValue) const
 
 RA_ConditionalDisplayString::RA_ConditionalDisplayString(const char* pBuffer)
 {
-    ++pBuffer; // skip first question mark
-    m_conditions.ParseFromString(pBuffer);
-
-    if (*pBuffer == '?')
+    const char* pTrigger = ++pBuffer; // skip first question mark
+    while (*pBuffer != '?')
     {
-        // valid condition
-        *pBuffer++;
-        m_sDisplayString = pBuffer;
+        if (*pBuffer == '\0')
+        {
+            // not a valid condition, ensure Test() never returns true
+            m_pTrigger = nullptr;
+            return;
+        }
+
+        ++pBuffer;
+    }
+
+    // call with nullptr to determine space required
+    int nResult;
+    rc_parse_trigger(&nResult, nullptr, pTrigger, nullptr, 0);
+
+    if (nResult < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_parse_trigger returned %d", nResult);
+        m_pTrigger = nullptr;
     }
     else
     {
-        // not a valid condition, ensure Test() never returns true
-        m_conditions.Clear();
+        // allocate space and parse again
+        m_pTriggerBuffer.resize(nResult);
+        m_pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.data()), pTrigger, nullptr, 0);
+
+        // valid condition
+        m_sDisplayString = ++pBuffer; // skip second question mark
     }
 }
 
 bool RA_ConditionalDisplayString::Test()
 {
-    bool bDirtyConditions, bResetRead; // for HitCounts - not supported in RichPresence
-    return m_conditions.Test(bDirtyConditions, bResetRead);
+    if (m_pTrigger == nullptr)
+        return false;
+
+    int bUnused;
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    return rc_test_trigger(pTrigger, &bUnused, &bUnused, rc_peek_callback, nullptr, nullptr);
 }
 
 void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFilename)
@@ -110,7 +134,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
                     const char* pUnused = _ReadStringTil('=', pBuf, TRUE);
                     const char* pType = _ReadStringTil(EndLine, pBuf, TRUE);
 
-                    MemValue::Format nType = MemValue::ParseFormat(pType);
+                    int nType = rc_parse_format(pType);
 
                     RA_LOG("RP: Adding Formatter %s (%s)\n", sDesc.c_str(), pType);
                     m_formats[sDesc] = nType;
@@ -141,6 +165,9 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
     }
 }
 
+extern void rc_parse_value(rc_value_t* self, int* ret, void* buffer, const char** memaddr, lua_State* L, int funcs_ndx);
+extern unsigned rc_evaluate_value(rc_value_t* self, rc_peek_t peek, void* ud, lua_State* L);
+
 const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
 {
     //	check lookups
@@ -148,9 +175,14 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
     {
         if (m_lookups.at(i).Description().compare(sName) == 0)
         {
-            MemValue nValue;
-            nValue.ParseFromString(sMemString.c_str());
-            return m_lookups.at(i).Lookup(static_cast<ra::DataPos>(nValue.GetValue()));
+            char buffer[2048];
+            rc_value_t value;
+            int nResult;
+            const char* ptr = sMemString.c_str();
+            rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
+
+            unsigned int nValue = rc_evaluate_value(&value, rc_peek_callback, nullptr, nullptr);
+            return m_lookups.at(i).Lookup(static_cast<ra::DataPos>(nValue));
         }
     }
 
@@ -158,9 +190,15 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
     auto iter = m_formats.find(sName);
     if (iter != m_formats.end())
     {
-        MemValue nValue;
-        nValue.ParseFromString(sMemString.c_str());
-        return nValue.GetFormattedValue(iter->second);
+        char buffer[2048];
+        rc_value_t value;
+        int nResult;
+        const char* ptr = sMemString.c_str();
+        rc_parse_value(&value, &nResult, buffer, &ptr, nullptr, 0);
+
+        unsigned int nValue = rc_evaluate_value(&value, rc_peek_callback, nullptr, nullptr);
+        rc_format_value(buffer, sizeof(buffer), nValue, iter->second);
+        return std::string(buffer);
     }
 
     return "";

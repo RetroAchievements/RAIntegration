@@ -1,7 +1,13 @@
 #include "RA_Achievement.h"
 
+#include "RA_MemManager.h"
+
+#ifndef RA_UTEST
 #include "RA_Core.h"
 #include "RA_ImageFactory.h"
+#endif
+
+#include "rcheevos\include\rcheevos.h"
 
 //	No game-specific code here please!
 
@@ -15,6 +21,7 @@ Achievement::Achievement(AchievementSetType nType) :
     m_vConditions.AddGroup();
 }
 
+#ifndef RA_UTEST
 void Achievement::Parse(const Value& element)
 {
     //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50 rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
@@ -29,22 +36,156 @@ void Achievement::Parse(const Value& element)
     SetBadgeImage(element["BadgeName"].GetString());
     //unsigned int nFlags = element["Flags"].GetUint();
 
-
     if (element["MemAddr"].IsString())
     {
         const char* sMem = element["MemAddr"].GetString();
-        if (!m_vConditions.ParseFromString(sMem) || *sMem != '\0')
-        {
-            ASSERT(!"Invalid MemAddr");
-            m_vConditions.Clear();
-        }
+        ParseTrigger(sMem);
     }
 
-    SetActive(IsCoreAchievement());	//	Activate core by default
+    SetActive(m_pTrigger && IsCoreAchievement());	//	Activate core by default
+}
+#endif
+
+void Achievement::RebuildTrigger()
+{
+    std::string sTrigger;
+    m_vConditions.Serialize(sTrigger);
+
+    ParseTrigger(sTrigger.c_str());
+    SetDirtyFlag(Dirty_Conditions);
+}
+
+static ComparisonVariableSize GetCompVariableSize(char nOperandSize)
+{
+    switch (nOperandSize)
+    {
+        case RC_OPERAND_BIT_0: return ComparisonVariableSize::Bit_0;
+        case RC_OPERAND_BIT_1: return ComparisonVariableSize::Bit_1;
+        case RC_OPERAND_BIT_2: return ComparisonVariableSize::Bit_2;
+        case RC_OPERAND_BIT_3: return ComparisonVariableSize::Bit_3;
+        case RC_OPERAND_BIT_4: return ComparisonVariableSize::Bit_4;
+        case RC_OPERAND_BIT_5: return ComparisonVariableSize::Bit_5;
+        case RC_OPERAND_BIT_6: return ComparisonVariableSize::Bit_6;
+        case RC_OPERAND_BIT_7: return ComparisonVariableSize::Bit_7;
+        case RC_OPERAND_LOW: return ComparisonVariableSize::Nibble_Lower;
+        case RC_OPERAND_HIGH: return ComparisonVariableSize::Nibble_Upper;
+        case RC_OPERAND_8_BITS: return ComparisonVariableSize::EightBit;
+        case RC_OPERAND_16_BITS: return ComparisonVariableSize::SixteenBit;
+        case RC_OPERAND_32_BITS: return ComparisonVariableSize::ThirtyTwoBit;
+        default:
+            ASSERT(!"Unsupported operand size");
+            return ComparisonVariableSize::EightBit;
+    }
+}
+
+static void SetOperand(CompVariable& var, rc_operand_t& operand)
+{
+    switch (operand.type)
+    {
+        case RC_OPERAND_ADDRESS:
+            var.Set(GetCompVariableSize(operand.size), ComparisonVariableType::Address, operand.value);
+            break;
+            
+        case RC_OPERAND_DELTA:
+            var.Set(GetCompVariableSize(operand.size), ComparisonVariableType::DeltaMem, operand.value);
+            break;
+
+        case RC_OPERAND_CONST:
+            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, operand.value);
+            break;
+
+        case RC_OPERAND_FP:
+            ASSERT(!"Floating point operand not supported");
+            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, 0U);
+            break;
+
+        case RC_OPERAND_LUA:
+            ASSERT(!"Lua operand not supported");
+            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, 0U);
+            break;
+    }
+}
+
+static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet)
+{
+    vConditions.AddGroup();
+    ConditionGroup& group = vConditions.GetGroup(vConditions.GroupCount() - 1);
+
+    rc_condition_t* pCondition = pCondSet->conditions;
+    while (pCondition != nullptr)
+    {
+        Condition cond;
+        SetOperand(cond.CompSource(), pCondition->operand1);
+        SetOperand(cond.CompTarget(), pCondition->operand2);
+
+        switch (pCondition->oper)
+        {
+            default:
+                ASSERT(!"Unsupported operator");
+                _FALLTHROUGH;
+            case RC_CONDITION_EQ: cond.SetCompareType(ComparisonType::Equals); break;
+            case RC_CONDITION_NE: cond.SetCompareType(ComparisonType::NotEqualTo); break;
+            case RC_CONDITION_LT: cond.SetCompareType(ComparisonType::LessThan); break;
+            case RC_CONDITION_LE: cond.SetCompareType(ComparisonType::LessThanOrEqual); break;
+            case RC_CONDITION_GT: cond.SetCompareType(ComparisonType::GreaterThan); break;
+            case RC_CONDITION_GE: cond.SetCompareType(ComparisonType::GreaterThanOrEqual); break;
+        }
+
+        switch (pCondition->type)
+        {
+            default:
+                ASSERT(!"Unsupported condition type");
+                _FALLTHROUGH;
+            case RC_CONDITION_STANDARD: cond.SetConditionType(Condition::ConditionType::Standard); break;
+            case RC_CONDITION_RESET_IF: cond.SetConditionType(Condition::ConditionType::ResetIf); break;
+            case RC_CONDITION_PAUSE_IF: cond.SetConditionType(Condition::ConditionType::PauseIf); break;
+            case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::ConditionType::AddSource); break;
+            case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::ConditionType::SubSource); break;
+            case RC_CONDITION_ADD_HITS: cond.SetConditionType(Condition::ConditionType::AddHits); break;
+        }
+
+        cond.SetRequiredHits(pCondition->required_hits);
+
+        group.Add(cond);
+        pCondition = pCondition->next;
+    }
+}
+
+void Achievement::ParseTrigger(const char* sTrigger)
+{
+    m_vConditions.Clear();
+
+    // call with nullptr to determine space required
+    int nResult;
+    rc_parse_trigger(&nResult, nullptr, sTrigger, nullptr, 0);
+
+    if (nResult < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_parse_trigger returned %d", nResult);
+        m_pTrigger = nullptr;
+    }
+    else
+    {
+        // allocate space and parse again
+        m_pTriggerBuffer.resize(nResult);
+        auto* pTrigger = rc_parse_trigger(&nResult, static_cast<void*>(m_pTriggerBuffer.data()), sTrigger, nullptr, 0);
+        m_pTrigger = pTrigger;
+
+        // wrap rc_trigger_t in a ConditionSet for the UI
+        MakeConditionGroup(m_vConditions, pTrigger->requirement);
+        rc_condset_t* alternative = pTrigger->alternative;
+        while (alternative != nullptr)
+        {
+            MakeConditionGroup(m_vConditions, alternative);
+            alternative = alternative->next;
+        }
+    }
 }
 
 const char* Achievement::ParseLine(const char* pBuffer)
 {
+#ifndef RA_UTEST
     std::string sTemp;
 
     if (pBuffer == nullptr || pBuffer[0] == '\0')
@@ -58,7 +199,10 @@ const char* Achievement::ParseLine(const char* pBuffer)
     SetID((unsigned int)atol(sTemp.c_str()));
 
     //	parse conditions
-    m_vConditions.ParseFromString(pBuffer);
+    const char* pTrigger = pBuffer;
+    while (pBuffer[0] != ':' && pBuffer[1] != ' ' && pBuffer[1] != '\0')
+        pBuffer++;
+    ParseTrigger(pTrigger);
 
     // Skip any whitespace/colons
     while (*pBuffer == ' ' || *pBuffer == ':')
@@ -104,50 +248,135 @@ const char* Achievement::ParseLine(const char* pBuffer)
 
     _ReadStringTil(sTemp, ':', pBuffer);
     SetBadgeImage(sTemp);
-
+#endif
     return pBuffer;
 }
 
-static bool HasHitCounts(const ConditionSet& set)
+static bool HasHitCounts(const rc_condset_t* pCondSet)
 {
-    for (size_t i = 0; i < set.GroupCount(); i++)
+    rc_condition_t* condition = pCondSet->conditions;
+    while (condition != nullptr)
     {
-        const ConditionGroup& group = set.GetGroup(i);
-        for (size_t j = 0; j < group.Count(); j++)
-        {
-            const Condition& condition = group.GetAt(j);
-            if (condition.CurrentHits() > 0)
-                return true;
-        }
+        if (condition->current_hits)
+            return true;
+
+        condition = condition->next;
     }
 
     return false;
 }
 
-BOOL Achievement::Test()
+static bool HasHitCounts(const rc_trigger_t* pTrigger)
 {
-    bool bDirtyConditions = FALSE;
-    bool bResetConditions = FALSE;
+    if (HasHitCounts(pTrigger->requirement))
+        return true;
 
-    bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(m_vConditions);
-
-    bool bRetVal = m_vConditions.Test(bDirtyConditions, bResetConditions);
-
-    if (bDirtyConditions)
+    rc_condset_t* pAlternate = pTrigger->alternative;
+    while (pAlternate != nullptr)
     {
-        SetDirtyFlag(Dirty_Conditions);
+        if (HasHitCounts(pAlternate))
+            return true;
+
+        pAlternate = pAlternate->next;
     }
 
-    if (bResetConditions && bNotifyOnReset)
+    return false;
+}
+
+bool Achievement::Test()
+{
+    if (m_pTrigger == nullptr)
+        return false;
+
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+
+    bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
+
+    int bReset, bDirty;
+    bool bRetVal = rc_test_trigger(pTrigger, &bReset, &bDirty, rc_peek_callback, nullptr, nullptr);
+
+    if (bNotifyOnReset && !HasHitCounts(pTrigger))
     {
+#ifndef RA_UTEST
         RA_CausePause();
 
         char buffer[256];
         sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
         MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
+#endif
     }
 
+    SetDirtyFlag(Dirty_Conditions);
     return bRetVal;
+}
+
+static rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex)
+{
+    rc_condset_t* pGroup = pTrigger->requirement;
+    if (nGroup > 0)
+    {
+        pGroup = pTrigger->alternative;
+        --nGroup;
+
+        while (pGroup && nGroup > 0)
+        {
+            pGroup = pGroup->next;
+            --nGroup;
+        }
+    }
+
+    if (!pGroup)
+        return nullptr;
+
+    rc_condition_t* pCondition = pGroup->conditions;
+    while (pCondition && nIndex > 0)
+    {
+        --nIndex;
+        pCondition = pCondition->next;
+    }
+
+    return pCondition;
+}
+
+unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const
+{
+    if (m_pTrigger == nullptr)
+        return 0U;
+
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+    return pCondition ? pCondition->current_hits : 0U;
+}
+
+int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer) const
+{
+    if (m_pTrigger != nullptr)
+    {
+        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+        rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+        if (pCondition)
+        {
+            return snprintf(pBuffer, 128, "%d:%d:%d:%d:%d:", pCondition->current_hits, pCondition->operand1.value, pCondition->operand1.previous,
+                pCondition->operand2.value, pCondition->operand2.previous);
+        }
+    }
+
+    return snprintf(pBuffer, 128, "0:0:0:0:0:");
+}
+
+void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPreviousValue)
+{
+    if (m_pTrigger == nullptr)
+        return;
+
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+    if (!pCondition)
+        return;
+
+    pCondition->current_hits = nCurrentHits;
+    pCondition->operand2.value = nValue;
+    pCondition->operand2.previous = nPreviousValue;
 }
 
 void Achievement::Clear()
@@ -155,6 +384,8 @@ void Achievement::Clear()
     m_vConditions.Clear();
 
     m_nAchievementID = 0;
+    m_pTriggerBuffer.clear();
+    m_pTrigger = nullptr;
 
     m_sTitle.clear();
     m_sDescription.clear();
@@ -240,16 +471,24 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
         sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
 
     m_sBadgeImageURI = sNewBadgeURI;
+
+#ifndef RA_UTEST
     m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);
 
     if (sNewBadgeURI.find("_lock") == std::string::npos)	//	Ensure we're not going to look for _lock_lock
         m_hBadgeImageLocked = LoadOrFetchBadge(sNewBadgeURI + "_lock", RA_BADGE_PX);
+#endif
 }
 
 void Achievement::Reset()
 {
-    if (m_vConditions.Reset())
+    if (m_pTrigger)
+    {
+        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+        rc_reset_trigger(pTrigger);
+
         SetDirtyFlag(Dirty_Conditions);
+    }
 }
 
 size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCond)

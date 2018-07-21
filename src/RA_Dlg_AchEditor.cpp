@@ -149,7 +149,7 @@ BOOL Dlg_AchievementEditor::IsActive() const
     return(g_AchievementEditorDialog.GetHWND() != nullptr) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
 }
 
-const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
+const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
     LV_ITEM item;
     ZeroMemory(&item, sizeof(item));
@@ -161,7 +161,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     item.pszText = const_cast<LPTSTR>(sData.c_str());
     item.iItem = ListView_InsertItem(hList, &item);
 
-    UpdateCondition(hList, item, Cond);
+    UpdateCondition(hList, item, Cond, nCurrentHits);
 
     ASSERT(item.iItem == m_nNumOccupiedRows);
 
@@ -169,7 +169,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     return item.iItem;
 }
 
-void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond)
+void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits)
 {
     int nRow = item.iItem;
 
@@ -199,7 +199,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
+    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), nCurrentHits);
 
     if (g_bPreferDecimalVal)
     {
@@ -1175,6 +1175,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     LoadAchievement(pActiveAch, FALSE);
                     pActiveAch->ClearDirtyFlag();
+                    pActiveAch->RebuildTrigger();
 
                     //	Select last item
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
@@ -1234,6 +1235,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             LoadAchievement(pActiveAch, FALSE);
                             pActiveAch->ClearDirtyFlag();
+                            pActiveAch->RebuildTrigger();
                         }
                         else
                             return FALSE;
@@ -1277,6 +1279,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Refresh:
                                 LoadAchievement(pActiveAch, TRUE);
+                                pActiveAch->ClearDirtyFlag();
+                                pActiveAch->RebuildTrigger();
                             }
                         }
                     }
@@ -1484,6 +1488,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
 
                     RepopulateGroupList(ActiveAchievement());
+                    ActiveAchievement()->RebuildTrigger();
                 }
                 break;
                 case IDC_RA_ACH_DELGROUP:
@@ -1506,6 +1511,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
 
                     RepopulateGroupList(ActiveAchievement());
+                    ActiveAchievement()->RebuildTrigger();
                 }
                 break;
                 case IDC_RA_ACH_GROUP:
@@ -1696,7 +1702,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 if (strcmp(sData, CONDITIONTYPE_STR[i]) == 0)
                                     rCond.SetConditionType(static_cast<Condition::ConditionType>(i));
                             }
-                            UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
+                            UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond, pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
                             break;
                         }
                         case CSI_TYPE_SRC:
@@ -1786,6 +1792,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     nSelItem = -1;
                     nSelSubItem = -1;
 
+                    pActiveAch->RebuildTrigger();
                 }
                 break;
 
@@ -1965,7 +1972,7 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
     {
         unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
-            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i));
+            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i), m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
     }
 }
 
@@ -2104,7 +2111,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
                     {
                         const Condition& Cond = m_pSelectedAchievement->GetCondition(nGrp, i);
                         item.iItem = i;
-                        UpdateCondition(hCondList, item, Cond);
+                        UpdateCondition(hCondList, item, Cond, m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
                     }
                 }
             }

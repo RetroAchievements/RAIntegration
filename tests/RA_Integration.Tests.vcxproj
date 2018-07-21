@@ -139,9 +139,11 @@
     <ClCompile Include="..\rcheevos\src\term.c" />
     <ClCompile Include="..\rcheevos\src\trigger.c" />
     <ClCompile Include="..\rcheevos\src\value.c" />
+    <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="SearchResults_Tests.cpp" />
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
+    <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Condition.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />
@@ -150,15 +152,12 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="..\src\RA_MemManager.cpp" />
-    <ClInclude Include="..\src\RA_MemValue.h" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
-    <ClCompile Include="..\src\RA_MemValue.cpp" />
     <ClCompile Include="RA_CompVariable_Tests.cpp" />
-    <ClCompile Include="RA_ConditionSet_Tests.cpp" />
+    <ClCompile Include="RA_Achievement_Tests.cpp" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Defs_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
-    <ClCompile Include="RA_MemValue_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>

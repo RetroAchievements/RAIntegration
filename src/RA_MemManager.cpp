@@ -183,3 +183,18 @@ void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal
         m_Banks.at(bankID).Writer(nOffs, nVal);
     }
 }
+
+unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData)
+{
+    switch (nBytes)
+    {
+        case 1:
+            return g_MemManager.ActiveBankRAMRead(nAddress, EightBit);
+        case 2:
+            return g_MemManager.ActiveBankRAMRead(nAddress, SixteenBit);
+        case 4:
+            return g_MemManager.ActiveBankRAMRead(nAddress, ThirtyTwoBit);
+        default:
+            return 0;
+    }
+}

@@ -4,8 +4,6 @@
 
 #include "RA_Condition.h"
 
-
-
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
@@ -31,7 +29,7 @@ public:
 
 public:
     void Clear();
-    BOOL Test();
+    bool Test();
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -96,6 +94,9 @@ public:
     void ClearBadgeImage();
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
+    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
+    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const;
+    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPrevValue);
 
     std::string CreateMemString() const;
 
@@ -105,7 +106,9 @@ public:
     const char* ParseLine(const char* buffer);
 
     //	Parse from json element
+#ifndef RA_UTEST
     void Parse(const Value& element);
+#endif
 
     //	Used for rendering updates when editing achievements. Usually always false.
     unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
@@ -113,11 +116,20 @@ public:
     void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
     void ClearDirtyFlag() { m_nDirtyFlags = 0; }
 
+    void RebuildTrigger();
+
+protected:
+    void ParseTrigger(const char* pTrigger);
+
 private:
     /*const*/ AchievementSetType m_nSetType;
 
     ra::AchievementID m_nAchievementID;
-    ConditionSet m_vConditions;
+
+    ConditionSet                m_vConditions;        //  UI wrappers for trigger
+
+    void*                       m_pTrigger = nullptr; //  rc_trigger_t
+    std::vector<unsigned char>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 
     std::string m_sTitle;
     std::string m_sDescription;

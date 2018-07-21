@@ -123,9 +123,6 @@
     <ClCompile Include="RA_LeaderboardManager.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_MemValue.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="..\rcheevos\src\alloc.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
@@ -262,9 +259,6 @@
     </ClInclude>
     <ClInclude Include="RA_LeaderboardManager.h">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_MemValue.h">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>

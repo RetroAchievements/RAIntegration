@@ -30,12 +30,6 @@
     <ClInclude Include="..\src\RA_Defs.h">
       <Filter>Code</Filter>
     </ClInclude>
-    <ClCompile Include="..\src\RA_MemValue.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_MemValue_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Leaderboard.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -78,6 +72,12 @@
     <ClCompile Include="..\rcheevos\src\value.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
+    <ClCompile Include="RA_Achievement_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_Achievement.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -89,9 +89,6 @@
     <ClCompile Include="RA_CompVariable_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="RA_ConditionSet_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -100,14 +97,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\RA_MemValue.h">
-      <Filter>Code</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\RA_Leaderboard.h">
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">
       <Filter>Code\rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_Achievement.h">
+      <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

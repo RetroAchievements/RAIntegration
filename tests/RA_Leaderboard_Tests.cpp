@@ -60,7 +60,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
@@ -111,7 +111,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -149,7 +149,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -176,14 +176,14 @@ public:
 
         // if PRO: mapping is available, use that for GetCurrentValueProgress
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", "VALUE");
         lb.Test();
         Assert::IsTrue(lb.IsActive());
         Assert::AreEqual(0x56U, lb.GetCurrentValue());
 
         // if PRO: mapping is not available, use VAL: for GetCurrentValueProgress
         LeaderboardHarness lb2;
-        lb2.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb2.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         lb2.Test();
         Assert::IsTrue(lb2.IsActive());
         Assert::AreEqual(0x34U, lb2.GetCurrentValue());
@@ -195,7 +195,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -211,7 +211,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -254,7 +254,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -279,7 +279,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -296,7 +296,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -323,7 +323,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());

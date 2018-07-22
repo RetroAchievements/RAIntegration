@@ -280,7 +280,7 @@ BOOL AchievementSet::SaveToFile()
             pAch->CreateMemString();
 
             ZeroMemory(sNextLine, 2048);
-            sprintf_s(sNextLine, 2048, "%d:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
+            sprintf_s(sNextLine, 2048, "%u:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
                 pAch->ID(),
                 pAch->CreateMemString().c_str(),
                 pAch->Title().c_str(),
@@ -612,13 +612,13 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
-            sprintf_s(buffer, "%d:%d:", pAch->ID(), pAch->NumConditions(nGrp));
+            sprintf_s(buffer, "%u:%u:", pAch->ID(), pAch->NumConditions(nGrp));
             strcat_s(cheevoProgressString, 4096, buffer);
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
             {
                 Condition& cond = pAch->GetCondition(nGrp, j);
-                sprintf_s(buffer, 4096, "%d:%d:%d:%d:%d:",
+                sprintf_s(buffer, 4096, "%u:%u:%u:%u:%u:",
                     cond.CurrentHits(),
                     cond.CompSource().RawValue(),
                     cond.CompSource().RawPreviousValue(),
@@ -630,7 +630,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         //	Generate a slightly different key to md5ify:
         char sCheevoProgressMangled[4096];
-        sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%d",
+        sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%u",
             RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
 
         std::string sMD5Progress = RAGenerateMD5(std::string(sCheevoProgressMangled));
@@ -683,11 +683,11 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             char* pIter = &pRawFile[nOffs];
 
             //	Parse achievement id and num conditions
-            nID = strtol(pIter, &pIter, 10); pIter++;
-            nNumCond = strtol(pIter, &pIter, 10);	pIter++;
+            nID = strtoul(pIter, &pIter, 10); pIter++;
+            nNumCond = strtoul(pIter, &pIter, 10);	pIter++;
 
             //	Concurrently build the md5 checkstring
-            sprintf_s(cheevoProgressString, 4096, "%d:%d:", nID, nNumCond);
+            sprintf_s(cheevoProgressString, 4096, "%u:%u:", nID, nNumCond);
 
             ZeroMemory(CondNumHits, 50 * sizeof(unsigned int));
             ZeroMemory(CondSourceVal, 50 * sizeof(unsigned int));
@@ -698,14 +698,14 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             for (i = 0; i < nNumCond && i < 50; ++i)
             {
                 //	Parse next condition state
-                CondNumHits[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondSourceVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondSourceLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondTargetVal[i] = strtol(pIter, &pIter, 10); pIter++;
-                CondTargetLastVal[i] = strtol(pIter, &pIter, 10); pIter++;
+                CondNumHits[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondSourceVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondSourceLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondTargetVal[i] = strtoul(pIter, &pIter, 10); pIter++;
+                CondTargetLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
 
                 //	Concurrently build the md5 checkstring
-                sprintf_s(buffer, 4096, "%d:%d:%d:%d:%d:",
+                sprintf_s(buffer, 4096, "%u:%u:%u:%u:%u:",
                     CondNumHits[i],
                     CondSourceVal[i],
                     CondSourceLastVal[i],
@@ -720,7 +720,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             pGivenCheevoMD5 = strtok_s(pIter, ":", &pIter);
 
             //	Regenerate the md5 and see if it sticks:
-            sprintf_s(cheevoMD5TestMangled, 4096, "%s%s%s%d",
+            sprintf_s(cheevoMD5TestMangled, 4096, "%s%s%s%u",
                 RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID);
 
             std::string sRecalculatedProgressMD5 = RAGenerateMD5(cheevoMD5TestMangled);
@@ -798,7 +798,7 @@ BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
         }
     }
 
-    RA_LOG("Attempted to unlock achievement %d but failed!\n", nAchID);
+    RA_LOG("Attempted to unlock achievement %u but failed!\n", nAchID);
     return FALSE;//??
 }
 

@@ -117,7 +117,7 @@ static unsigned int ReadHits(const char*& pBufferInOut)
 {
     if (pBufferInOut[0] == '(' || pBufferInOut[0] == '.')
     {
-        unsigned int nNumHits = strtol(pBufferInOut + 1, (char**)&pBufferInOut, 10);	//	dirty!
+        unsigned int nNumHits = strtoul(pBufferInOut + 1, (char**)&pBufferInOut, 10);	//	dirty!
         pBufferInOut++;
         return nNumHits;
     }
@@ -269,7 +269,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }
 
-    m_nVal = strtol(pBufferInOut, &nNextChar, nBase);
+    m_nVal = strtoul(pBufferInOut, &nNextChar, nBase);
     pBufferInOut = nNextChar;
 
     return true;

@@ -129,18 +129,26 @@ public:
         AssertParseCompVariable("123456", ValueComparison, EightBit, 123456U);
         AssertParseCompVariable("0", ValueComparison, EightBit, 0U);
         AssertParseCompVariable("0000000000", ValueComparison, EightBit, 0U);
+        AssertParseCompVariable("4294967295", ValueComparison, EightBit, 4294967295U);
 
         // hex - 'H' prefix, not '0x'!
         AssertParseCompVariable("H123", ValueComparison, EightBit, 0x123U);
         AssertParseCompVariable("HABCD", ValueComparison, EightBit, 0xABCDU);
         AssertParseCompVariable("h123", ValueComparison, EightBit, 0x123U);
         AssertParseCompVariable("habcd", ValueComparison, EightBit, 0xABCDU);
+        AssertParseCompVariable("HFFFFFFFF", ValueComparison, EightBit, 4294967295U);
 
         // '0x' is an address
         AssertParseCompVariable("0x123", Address, SixteenBit, 0x123U);
 
-        // hex without prefix
+        // hex without prefix (error)
         AssertParseErrorCompVariable("ABCD", ValueComparison, EightBit, 0, 0);
+
+        // more than 32-bits (error), will be constrained to 32-bits
+        AssertParseErrorCompVariable("4294967296", ValueComparison, EightBit, 4294967295U, 10);
+
+        // negative value (error), will be "wrapped around": -1 = 0x100000000 - 1 = 0xFFFFFFFF = 4294967295
+        AssertParseErrorCompVariable("-1", ValueComparison, EightBit, 4294967295U, 2);
     }
 
     TEST_METHOD(TestSerializeVariable)
@@ -167,6 +175,7 @@ public:
         // value
         AssertSerialize("123");
         AssertSerialize("H80", "128");
+        AssertSerialize("4294967295");
     }
 
     TEST_METHOD(TestVariableSet)

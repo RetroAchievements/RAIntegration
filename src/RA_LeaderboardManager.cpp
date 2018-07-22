@@ -71,7 +71,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
     else
     {
         char sValidationSig[50];
-        sprintf_s(sValidationSig, 50, "%d%s%d", lb.ID(), RAUsers::LocalUser().Username().c_str(), lb.ID());
+        sprintf_s(sValidationSig, 50, "%u%s%u", lb.ID(), RAUsers::LocalUser().Username().c_str(), lb.ID());
         std::string sValidationMD5 = RAGenerateMD5(sValidationSig);
 
         PostArgs args;

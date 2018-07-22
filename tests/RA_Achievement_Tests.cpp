@@ -69,6 +69,8 @@ public:
         AssertSerialize("A:0xH0001=0_B:0xL0002=0_0xL0004=14");
 
         AssertSerialize("0xH0001=18.1._R:0xH0000=1S0xH0002=52.1.S0xL0004=6.1._P:0xH0000=2");
+
+        AssertSerialize("0xH0001=4294967295"); // INT_MAX (32-bit max)
     }
 
     TEST_METHOD(TestSimpleSets) // Only standard conditions, no alt groups

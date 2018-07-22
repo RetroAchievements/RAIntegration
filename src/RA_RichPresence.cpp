@@ -107,7 +107,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
                         if (pValue[0] == '0' && pValue[1] == 'x')
                             nBase = 16;
 
-                        ra::DataPos nVal = static_cast<ra::DataPos>(strtol(pValue, nullptr, nBase));
+                        ra::DataPos nVal = static_cast<ra::DataPos>(strtoul(pValue, nullptr, nBase));
 
                         newLookup.AddLookupData(nVal, pName);
                     }

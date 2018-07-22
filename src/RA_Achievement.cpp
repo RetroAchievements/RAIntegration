@@ -352,7 +352,7 @@ int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer
         rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
         if (pCondition)
         {
-            return snprintf(pBuffer, 128, "%d:%d:%d:%d:%d:", pCondition->current_hits, pCondition->operand1.value, pCondition->operand1.previous,
+            return snprintf(pBuffer, 128, "%u:%u:%u:%u:%u:", pCondition->current_hits, pCondition->operand1.value, pCondition->operand1.previous,
                 pCondition->operand2.value, pCondition->operand2.previous);
         }
     }

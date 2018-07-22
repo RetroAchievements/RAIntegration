@@ -141,6 +141,7 @@
     <ClCompile Include="..\rcheevos\src\value.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="SearchResults_Tests.cpp" />
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
     <ClInclude Include="..\src\RA_Achievement.h" />
@@ -154,7 +155,6 @@
     <ClCompile Include="..\src\RA_MemManager.cpp" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Achievement_Tests.cpp" />
-    <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Defs_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />

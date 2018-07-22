@@ -78,11 +78,11 @@
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="RA_UnitTestHelpers.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

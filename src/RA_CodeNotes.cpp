@@ -31,7 +31,6 @@ size_t CodeNotes::Load(const std::string& sFile)
     {
         ASSERT(doc["CodeNotes"].IsArray());
 
-        // use auto when you can to prevent implicit conversions (you get warnings on higher levels)
         const auto& NoteArray = doc["CodeNotes"];
 
         for (auto& i : NoteArray.GetArray())
@@ -57,11 +56,7 @@ size_t CodeNotes::Load(const std::string& sFile)
     return m_CodeNotes.size();
 }
 
-BOOL CodeNotes::Save(const std::string& sFile)
-{
-    return FALSE;
-    //	All saving should be cloud-based!
-}
+
 
 BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 {

@@ -305,19 +305,6 @@ BOOL AchievementSet::SaveToFile()
     }
 
     return FALSE;
-
-    //FILE* pf = nullptr;
-    //const std::string sFilename = GetAchievementSetFilename( m_nGameID );
-    //if( fopen_s( &pf, sFilename.c_str(), "wb" ) == 0 )
-    //{
-    //	FileStream fs( pf );
-    //	
-    //	CoreAchievements->Serialize( fs );
-    //	UnofficialAchievements->Serialize( fs );
-    //	LocalAchievements->Serialize( fs );
-
-    //	fclose( pf );
-    //}
 }
 
 //	static: fetches both core and unofficial

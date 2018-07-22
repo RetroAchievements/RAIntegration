@@ -791,7 +791,7 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                 wchar_t buffer[256];
                 swprintf_s(buffer, 256, L"%s", ra::Widen(i["Description"].GetString()).c_str());
 
-                auto NewBookmark = std::make_unique<MemBookmark>();
+                auto NewBookmark = new MemBookmark();
                 NewBookmark->SetDescription(buffer);
 
                 NewBookmark->SetAddress(i["Address"].GetUint());
@@ -801,8 +801,10 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                 NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
                 NewBookmark->SetPrevious(NewBookmark->Value());
 
-                AddBookmark(NewBookmark.get());
-                AddBookmarkMap(NewBookmark.get());
+                AddBookmark(NewBookmark);
+                AddBookmarkMap(NewBookmark);
+
+                delete NewBookmark;
             }
 
 

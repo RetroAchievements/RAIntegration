@@ -29,7 +29,6 @@ public:
 public:
     void Clear();
 
-    BOOL Save(const std::string& sFile);
     size_t Load(const std::string& sFile);
 
     BOOL ReloadFromWeb(ra::GameID nID);

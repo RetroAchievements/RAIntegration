@@ -114,7 +114,7 @@ BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
         iter++;
     }
 
-    RA_LOG("Could not deactivate leaderboard %d", nLBID);
+    RA_LOG("Could not deactivate leaderboard %u", nLBID);
 
     return FALSE;
 }
@@ -284,7 +284,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                     }
 
                     char buffer[1024];
-                    sprintf_s(buffer, 1024, " %d %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
+                    sprintf_s(buffer, 1024, " %u %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str());
                     DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");

@@ -561,7 +561,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         {
             SetTextColor(hDC, COL_TEXT_LOCKED);
             char buffer[256];
-            sprintf_s(buffer, 256, " %d of %d won (%d/%d) ",
+            sprintf_s(buffer, 256, " %u of %u won (%u/%u) ",
                 nUserCompleted, nNumberOfAchievements,
                 nUserPts, nMaxPts);
             TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(buffer).c_str(), strlen(buffer));
@@ -695,7 +695,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
 
             HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
 
-            sprintf_s(buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore());
+            sprintf_s(buffer, 256, " %s (%u) ", pFriend->Username().c_str(), pFriend->GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), strlen(buffer));
 
             SelectObject(hDC, g_hFontTiny);
@@ -787,7 +787,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
 
     if (g_AchExamine.HasData())
     {
-        sprintf_s(buffer, 256, " Won by %d of %d (%1.0f%%)",
+        sprintf_s(buffer, 256, " Won by %u of %u (%1.0f%%)",
             g_AchExamine.TotalWinners(),
             g_AchExamine.PossibleWinners(),
             static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
@@ -1073,7 +1073,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
                 std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
 
                 char sRankText[256];
-                sprintf_s(sRankText, 256, " %d ", rEntry.m_nRank);
+                sprintf_s(sRankText, 256, " %u ", rEntry.m_nRank);
 
                 char sNameText[256];
                 sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername.c_str());
@@ -1381,7 +1381,7 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     SelectObject(hDC, g_hFontDesc2);
     TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), strlen(buffer));
 
-    sprintf_s(buffer, 1024, " %s (%d Points) ", pAch->Title().c_str(), pAch->Points());
+    sprintf_s(buffer, 1024, " %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
     TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
 }
@@ -1414,7 +1414,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     sprintf_s(buffer, 256, " %s ", pUser->Username().c_str());
     TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
 
-    sprintf_s(buffer, 256, " %d Points ", pUser->GetScore());
+    sprintf_s(buffer, 256, " %u Points ", pUser->GetScore());
     TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
 
     if (g_bHardcoreModeActive)
@@ -1675,7 +1675,7 @@ void LeaderboardExamine::OnReceiveData(const Document& doc)
         const int nScore         = NextLBData["Score"].GetInt();
         const unsigned int nDate = NextLBData["DateSubmitted"].GetUint();
 
-        RA_LOG("LB Entry: %d: %s earned %d at %d\n", nRank, sUser.c_str(), nScore, nDate);
+        RA_LOG("LB Entry: %u: %s earned %u at %u\n", nRank, sUser.c_str(), nScore, nDate);
         pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, nDate);
     }
 

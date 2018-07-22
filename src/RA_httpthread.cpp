@@ -339,6 +339,8 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
     RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
     ResponseOut.clear();
 
+    const char* sHostName = bIsImageRequest ? _RA_HostName() : "i.retroachievements.org";
+
     size_t nTemp;
 
     // Use WinHttpOpen to obtain a session handle.
@@ -350,7 +352,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(bIsImageRequest ? RA_HOST_IMG_URL : RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(sHostName).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
         if (hConnect != nullptr)
@@ -413,7 +415,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');    //  EOS for parsing
 
-                    RA_LOG(__FUNCTION__ ": success! %s Returned %d bytes.", sRequestedPage.c_str(), ResponseOut.size());
+                    RA_LOG(__FUNCTION__ ": success! %s Returned %u bytes.", sRequestedPage.c_str(), ResponseOut.size());
                 }
 
             }
@@ -453,7 +455,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
         WINHTTP_NO_PROXY_BYPASS, 0);
     if (hSession != nullptr)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, DWORD{});
+        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
         if (hConnect != nullptr)
         {
             HINTERNET hRequest = WinHttpOpenRequest(hConnect,
@@ -507,11 +509,11 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     if (sPostString.find("r=login") != std::string::npos)
                     {
                         //  Special case: DO NOT LOG raw user credentials!
-                        RA_LOG("... " __FUNCTION__ ": (%04x) LOGIN Success: %d bytes read\n", GetCurrentThreadId(), ResponseOut.size());
+                        RA_LOG("... " __FUNCTION__ ": (%04x) LOGIN Success: %u bytes read\n", GetCurrentThreadId(), ResponseOut.size());
                     }
                     else
                     {
-                        RA_LOG("-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %d bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size());
+                        RA_LOG("-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %u bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size());
                     }
                 }
 
@@ -572,7 +574,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        hConnect = WinHttpConnect(hSession, ra::Widen(RA_HOST_URL).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
     }
 
     if (hConnect != nullptr)
@@ -671,7 +673,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
             if (ResponseOut.size() > 0)
                 ResponseOut.push_back('\0');    //  EOS for parsing
 
-            RA_LOG(__FUNCTION__ ": success! Returned %d bytes.", ResponseOut.size());
+            RA_LOG(__FUNCTION__ ": success! Returned %u bytes.", ResponseOut.size());
         }
     }
 
@@ -720,7 +722,7 @@ BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
     HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
-    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%d)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
+    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%u)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -848,7 +850,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
         }
 
         if (HttpRequestQueue.Count() > 0)
-            RA_LOG(__FUNCTION__ " (%08x) request queue is at %d\n", GetCurrentThreadId(), HttpRequestQueue.Count());
+            RA_LOG(__FUNCTION__ " (%08x) request queue is at %u\n", GetCurrentThreadId(), HttpRequestQueue.Count());
 
         Sleep(100);
     }

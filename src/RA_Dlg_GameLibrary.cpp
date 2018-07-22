@@ -364,7 +364,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
                         {
                             const unsigned int nGameID = m_GameHashLibrary[std::string(sHashOut)];
-                            RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                            RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                             const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                             AddTitle(sGameTitle, sAbsFileDir, nGameID);
@@ -424,7 +424,7 @@ void Dlg_GameLibrary::RefreshList()
             {
                 //	Found in our hash library!
                 const ra::GameID nGameID = m_GameHashLibrary[md5];
-                RA_LOG("Found one! Game ID %d (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                 AddTitle(sGameTitle, filepath, nGameID);

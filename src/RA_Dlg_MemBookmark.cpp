@@ -654,14 +654,17 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     char buffer[32];
     sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
 
-    for (unsigned int i = 0; i < strlen(buffer); i++)
+    if(std::strlen(buffer) > 0)
     {
-        c = buffer[i];
-        n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
-        MemoryViewerControl::editData(addr, (i % 2 != 0), n);
+        for (unsigned int i = 0; i < strlen(buffer); i++)
+        {
+            c = buffer[i];
+            n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
+            MemoryViewerControl::editData(addr, (i % 2 != 0), n);
 
-        if (i % 2 != 0)
-            addr--;
+            if (i % 2 != 0)
+                addr--;
+        }
     }
 }
 
@@ -803,8 +806,6 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
 
                 AddBookmark(NewBookmark);
                 AddBookmarkMap(NewBookmark);
-
-                delete NewBookmark;
             }
 
 

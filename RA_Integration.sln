@@ -23,8 +23,8 @@ Global
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Debug|Win32.Build.0 = Debug|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|Win32.ActiveCfg = Release|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|Win32.Build.0 = Release|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
-		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = ReleaseWithDebug|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = ReleaseWithDebug|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Debug|Win32.Build.0 = Debug|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|Win32.ActiveCfg = Release|Win32
@@ -34,9 +34,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {220AB67D-0EDC-4B55-B737-54BDB6CDACDD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DD1A0623-724F-4AA3-B594-07F2ACDCBA51}

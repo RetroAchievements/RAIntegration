@@ -114,7 +114,7 @@ BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
         iter++;
     }
 
-    RA_LOG("Could not deactivate leaderboard %d", nLBID);
+    RA_LOG("Could not deactivate leaderboard %u", nLBID);
 
     return FALSE;
 }

@@ -1448,7 +1448,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     if (nGameID != 0)
     {
         char sNotesFilename[1024];
-        sprintf_s(sNotesFilename, 1024, "%s%d-Notes2.txt", RA_DIR_DATA, nGameID);
+        sprintf_s(sNotesFilename, 1024, "%s%u-Notes2.txt", RA_DIR_DATA, nGameID);
         nSize = m_CodeNotes.Load(sNotesFilename);
     }
 

@@ -255,7 +255,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                 }
                                 break;
                             case CSI_CHANGES:
-                                swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
+                                swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
                                 swprintf_s(buffer, 512, L"");
@@ -574,7 +574,7 @@ void Dlg_MemBookmark::AddAddress()
     // Fetch Memory Address from Memory Inspector
     TCHAR buffer[256];
     GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-    unsigned int nAddr = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
+    unsigned int nAddr = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
     NewBookmark->SetAddress(nAddr);
 
     // Check Data Type

@@ -378,7 +378,6 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-    std::ios::sync_with_stdio(false);
 
     if (std::ifstream ifile{ sFilename }; !ifile.is_open())
     {

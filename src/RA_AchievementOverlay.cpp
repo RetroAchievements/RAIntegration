@@ -1519,20 +1519,20 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
                 i["Title"].GetString(),
                 i["Payload"].GetString(),
                 i["TimePosted"].GetUint(),
-                std::to_string(i["TimePosted"].GetUint()), // does the format really matter?
+                std::string{},
                 i["Author"].GetString(),
                 i["Link"].GetString(),
                 i["Image"].GetString()
             };
 
-            //tm destTime;
-            //localtime_s(&destTime, &nNewsItem.m_nPostedAt);
+            auto pDestTime{std::make_unique<std::tm>()};
+            localtime_s(pDestTime.get(), &nNewsItem.m_nPostedAt);
 
-            //char buffer[256];
-            //strftime(buffer, 256, "%b %d", &destTime);
-            //nNewsItem.m_sPostedAt = buffer;
+            auto buffer{std::make_unique<char[]>(256U)};
+            strftime(buffer.get(), 256U, "%b %d", pDestTime.get());
+            nNewsItem.m_sPostedAt = buffer.release();
 
-            m_LatestNews.push_back(nNewsItem);
+            m_LatestNews.push_back(std::move(nNewsItem));
         }
     }
 }

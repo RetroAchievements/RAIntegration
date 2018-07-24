@@ -197,7 +197,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
 
     //	parse conditions
     const char* pTrigger = pBuffer;
-    while (pBuffer[0] != ':' && pBuffer[1] != ' ' && pBuffer[1] != '\0')
+    while (*pBuffer && (pBuffer[0] != ':' || strchr("ABCPRabcpr", pBuffer[-1]) != nullptr))
         pBuffer++;
     ParseTrigger(pTrigger);
 

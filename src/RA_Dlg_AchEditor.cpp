@@ -884,8 +884,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
             m_BadgeNames.FetchNewBadgeNamesThreaded();
 
+            // achievement loaded before UI was created won't have populated the UI. reload it.
             if (m_pSelectedAchievement != nullptr)
-                RepopulateGroupList(m_pSelectedAchievement);
+            {
+                auto* pAchievement = m_pSelectedAchievement;
+                m_pSelectedAchievement = nullptr;
+                LoadAchievement(pAchievement, false);
+            }
 
             if (!CanCausePause())
             {

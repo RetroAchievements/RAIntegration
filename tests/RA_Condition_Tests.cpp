@@ -264,6 +264,23 @@ public:
         memory[1] = 0x12;
         Assert::AreEqual(cond.Compare(), true); // delta value is now 0x13, 0x12 > 0x11
     }
+
+    TEST_METHOD(TestConditionCompare32Bits)
+    {
+        unsigned char memory[] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
+        InitializeMemory(memory, 6);
+
+        // values
+        AssertConditionCompare("0xX0000=4294967295", false);
+        AssertConditionCompare("0xX0001=4294967295", true);
+        AssertConditionCompare("0xX0002=4294967295", false);
+
+        // memory
+        AssertConditionCompare("0xX0000<0xX0001", true);
+        AssertConditionCompare("0xX0001>0xX0002", true);
+        AssertConditionCompare("0xX0001=0xX0002", false);
+        AssertConditionCompare("0xX0000!=0xH0002", true);
+    }
 };
 
 } // namespace tests

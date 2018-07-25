@@ -30,7 +30,7 @@ public:
 
     std::string FormatScore(unsigned int nValue) const
     {
-        return MemValue::FormatValue(nValue, m_format);
+        return MemValue::FormatValue(nValue, m_nFormat);
     }
 
     struct Entry
@@ -63,7 +63,7 @@ private:
 
     MemValue				m_value;		//	A collection of memory addresses and values to produce one value.
     MemValue				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
-    MemValue::Format        m_format;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    MemValue::Format        m_nFormat;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
     std::string				m_sTitle;		//	The title of the leaderboard
     std::string				m_sDescription;	//	

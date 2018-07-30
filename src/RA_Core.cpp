@@ -1379,7 +1379,18 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
                 //	Then install it
-                g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
+                std::string sRichPresence;
+                std::ifstream file(sRichPresenceFile);
+                if (!file.fail())
+                {
+                    file.seekg(0, std::ios::end);
+                    sRichPresence.reserve(static_cast<size_t>(file.tellg()));
+                    file.seekg(0, std::ios::beg);
+
+                    sRichPresence.assign((std::istreambuf_iterator<char>(file)),
+                        (std::istreambuf_iterator<char>()));
+                }
+                g_RichPresenceInterpretter.ParseFromString(sRichPresence.c_str());
 
                 if (g_RichPresenceDialog.GetHWND() == nullptr)
                     g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));

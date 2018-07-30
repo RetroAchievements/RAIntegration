@@ -2,60 +2,68 @@
 #define RA_RICHPRESENCE_H
 #pragma once
 
-#include "RA_Leaderboard.h"
-#include "RA_Defs.h"
-
-class RA_Lookup
-{
-public:
-    RA_Lookup(const std::string& sDesc);
-
-public:
-    void AddLookupData(ra::DataPos nValue, const std::string& sLookupData) { m_lookupData[nValue] = sLookupData; }
-    const std::string& Lookup(ra::DataPos nValue) const;
-
-    const std::string& Description() const { return m_sLookupDescription; }
-
-private:
-    std::string m_sLookupDescription;
-    std::map<ra::DataPos, std::string> m_lookupData;
-};
-
-class RA_ConditionalDisplayString
-{
-public:
-    RA_ConditionalDisplayString(const char* pLine);
-
-    bool Test();
-    const std::string& GetDisplayString() const { return m_sDisplayString; }
-
-private:
-    std::string m_sDisplayString;
-    ConditionSet m_conditions;
-};
+#include "RA_Condition.h"
+#include "RA_MemValue.h"
 
 class RA_RichPresenceInterpretter
 {
 public:
-    static void PersistAndParseScript(ra::GameID nGameID, const std::string& sScript);
-
-public:
     RA_RichPresenceInterpretter() {}
 
-public:
-    void ParseRichPresenceFile(const std::string& sFilename);
+    void ParseFromString(const char* sRichPresence);
 
-    const std::string& GetRichPresenceString();
-    const std::string Lookup(const std::string& sLookupName, const std::string& sMemString) const;
+    std::string GetRichPresenceString();
+    
+    bool Enabled() const { return !m_vDisplayStrings.empty(); }
 
-    bool Enabled() const;
+protected:
+    class Lookup
+    {
+    public:
+        Lookup(const std::string& sDesc);
+
+        const std::string& Description() const { return m_sLookupDescription; }
+        const std::string& GetText(unsigned int nValue) const;
+
+        void AddLookupData(unsigned int nValue, const std::string& sLookupData) { m_mLookupData[nValue] = sLookupData; }
+        void SetDefault(const std::string& sDefault) { m_sDefault = sDefault; }
+        size_t NumItems() const { return m_mLookupData.size(); }
+
+    private:
+        std::string m_sDefault;
+        std::string m_sLookupDescription;
+        std::map<unsigned int, std::string> m_mLookupData;
+    };
+
+    class DisplayString
+    {
+    public:
+        DisplayString();
+        DisplayString(const std::string& sCondition);
+        void InitializeParts(const std::string& sDisplayString,
+            std::map<std::string, MemValue::Format>& mFormats, std::vector<Lookup>& vLookups);
+
+        bool Test();
+        std::string GetDisplayString() const;
+
+    protected:
+        struct Part
+        {
+            std::string m_sDisplayString;
+            MemValue m_memValue;
+            const Lookup* m_pLookup = nullptr;
+            MemValue::Format m_nFormat = MemValue::Format::Value;
+        };
+
+    private:
+
+        std::vector<Part> m_vParts;
+        ConditionSet m_conditions;
+    };
 
 private:
-    std::vector<RA_Lookup> m_lookups;
-    std::map<std::string, MemValue::Format> m_formats;
-
-    std::vector<RA_ConditionalDisplayString> m_conditionalDisplayStrings;
-    std::string m_sDisplay;
+    std::vector<Lookup> m_vLookups;
+    std::vector<DisplayString> m_vDisplayStrings;
 };
 
 extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;

@@ -1,6 +1,7 @@
 #include "RA_Dlg_RichPresence.h"
 
 #include "RA_Core.h"
+#include "RA_GameData.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 
@@ -20,7 +21,12 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 
         case WM_TIMER:
         {
-            std::wstring sRP = ra::Widen(g_RichPresenceInterpretter.GetRichPresenceString());
+            std::wstring sRP;
+            if (g_pCurrentGameData->GetGameID() != 0)
+                sRP = ra::Widen(g_RichPresenceInterpretter.GetRichPresenceString());
+            else
+                sRP = L"No game loaded";
+
             SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, sRP.c_str());
             return TRUE;
         }

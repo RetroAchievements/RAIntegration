@@ -1246,7 +1246,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (::GetWindowTextLength(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
                     IDC_RA_ACH_TITLE)) == 0)
                 {
-
+                    ::SetWindowText(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
+                                    IDC_RA_ACH_TITLE), _T("<<New Achievement>>"));
                 }
                 ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
             }

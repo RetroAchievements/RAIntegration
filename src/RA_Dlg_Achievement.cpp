@@ -153,7 +153,12 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 
     //	Add to our local array:
     newRow[ID] = std::to_string(Ach.ID());
-    newRow[Title] = Ach.Title();
+
+    if (!Ach.Title().empty())
+        newRow[Title] = Ach.Title();
+    else
+        newRow[Title] = "<<New Achievement>>";
+
     newRow[Points] = std::to_string(Ach.Points());
     newRow[Author] = Ach.Author();
 

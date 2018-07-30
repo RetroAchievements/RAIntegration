@@ -47,7 +47,7 @@ tstring CALLBACK GetLastErrorMsg() noexcept
     return message;
 }
 
-void ThrowLastError() { throw std::system_error{ GetLastErrorCode(), GetLastErrorMsg() }; }
+void ThrowLastError() { throw std::system_error{ GetLastErrorCode(), Narrow(GetLastErrorMsg()) }; }
 
 
 } // namespace ra

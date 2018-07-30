@@ -100,6 +100,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
     // SetUpvotes( (unsigned short)atol( sTemp.c_str() ) );
 
     _ReadStringTil(sTemp, ':', pBuffer);
+
     // SetDownvotes( (unsigned short)atol( sTemp.c_str() ) );
 
     _ReadStringTil(sTemp, ':', pBuffer);

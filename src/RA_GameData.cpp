@@ -1,6 +1,6 @@
 #include "RA_GameData.h"
 
-GameData* g_pCurrentGameData = new GameData();
+std::unique_ptr<GameData> g_pCurrentGameData = std::make_unique<GameData>();
 
 void GameData::ParseData(const Document& doc)
 {

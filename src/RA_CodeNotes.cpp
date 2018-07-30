@@ -33,20 +33,20 @@ size_t CodeNotes::Load(const std::string& sFile)
 
         const auto& NoteArray = doc["CodeNotes"];
 
-        for (auto& i : NoteArray.GetArray())
+        for (auto& note : NoteArray.GetArray())
         {
-            if (i["Note"].IsNull())
+            if (note["Note"].IsNull())
                 continue;
 
-            const std::string& sNote = i["Note"].GetString();
+            const std::string& sNote = note["Note"].GetString();
             if (sNote.length() < 2)
                 continue;
 
-            const std::string& sAddr = i["Address"].GetString();
+            const std::string& sAddr = note["Address"].GetString();
                 ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
 
             // Author?
-            const std::string& sAuthor = i["User"].GetString();
+            const std::string& sAuthor = note["User"].GetString();
 
             auto code_pair{ std::make_pair(nAddr, CodeNoteObj{ sAuthor, sNote }) };
             m_CodeNotes.insert(code_pair);

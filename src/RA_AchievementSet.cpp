@@ -365,12 +365,11 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-
     if (std::ifstream ifile{ sFilename }; !ifile.is_open())
     {
         //	Cannot open file
         RA_LOG("Cannot open file %s\n", sFilename.c_str());
-        RA_LOG("Error %s\n", ra::GetLastErrorMsg());
+        RA_LOG("Error %s\n", NativeStr(ra::GetLastErrorMsg()).c_str());
         return FALSE;
     }
     else
@@ -396,10 +395,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             while (!ifile.eof())
             {
-                buffer.reset();
-                buffer = std::make_unique<char[]>(4096);
                 ifile.getline(buffer.get(), 4096);
-                if (nCharsRead = ifile.gcount(); nCharsRead > 0)
+                if (nCharsRead = ifile.gcount() - 1; nCharsRead > 0)
                 {
                     if (buffer[0] == 'L')
                     {
@@ -432,18 +429,18 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
 
                 const auto& AchievementsData = doc["Achievements"];
-                for (auto& i : AchievementsData.GetArray())
+                for (auto& achData : AchievementsData.GetArray())
                 {
                     //	Parse into correct boxes
-                    if (auto nFlags = i["Flags"].GetUint(); (nFlags == 3) && (m_nSetType == Core))
+                    if (auto nFlags = achData["Flags"].GetUint(); (nFlags == 3) && (m_nSetType == Core))
                     {
                         auto& newAch{ AddAchievement() };
-                        newAch.Parse(i);
+                        newAch.Parse(achData);
                     }
                     else if ((nFlags == 5) && (m_nSetType == Unofficial))
                     {
                         auto& newAch{ AddAchievement() };
-                        newAch.Parse(i);
+                        newAch.Parse(achData);
                     }
                 }
 

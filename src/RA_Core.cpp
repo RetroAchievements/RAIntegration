@@ -1239,10 +1239,17 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-            if (g_AchievementEditorDialog.GetHWND() == nullptr)
+            if (::FindWindow(nullptr, _T("Achievement Editor")) == nullptr)
                 g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
-            if (g_AchievementEditorDialog.GetHWND() != nullptr)
+            if (::FindWindow(nullptr, _T("Achievement Editor")) != nullptr)
+            {
+                if (::GetWindowTextLength(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
+                    IDC_RA_ACH_TITLE)) == 0)
+                {
+
+                }
                 ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
+            }
             break;
 
         case IDM_RA_FILES_MEMORYFINDER:

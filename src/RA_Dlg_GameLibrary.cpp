@@ -149,9 +149,9 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 
     Document doc;
     IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
 
-
-    if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+    if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
     {
         //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
 
@@ -166,12 +166,12 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
             std::stringstream sstr;
             sstr << nEarned;
             if (nEarnedHardcore > 0)
-                sstr << " (" << std::to_string(nEarnedHardcore) << ")";
+                sstr << " (" << nEarnedHardcore << ")";
 
-
-            if (sstr << " / " << nNumAchievements; nNumAchievements > 0)
+            sstr << " / " << nNumAchievements;
+            if (nNumAchievements > 0)
             {
-                const int nNumEarnedTotal = nEarned + nEarnedHardcore;
+                const auto nNumEarnedTotal = nEarned + nEarnedHardcore;
                 char bufPct[256];
                 sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
                 sstr << bufPct;
@@ -273,7 +273,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
             DWORD nSize = ftell(pf);
             rewind(pf);
 
-            static BYTE* pBuf = nullptr;	//	static (optimisation)
+            static BYTE* pBuf = nullptr;	//	static (optimization)
             if (pBuf == nullptr)
                 pBuf = new BYTE[6 * 1024 * 1024];
 
@@ -283,7 +283,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
                 fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
                 Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
 
-                FORWARD_WM_TIMER(g_GameLibrary.GetHWND(), 0U, SendMessage);
+                FORWARD_WM_TIMER(::FindWindow(nullptr, _T("Game Library")), 0U, SendMessage);
             }
 
             fclose(pf);

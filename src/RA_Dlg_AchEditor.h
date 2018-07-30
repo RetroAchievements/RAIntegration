@@ -97,6 +97,8 @@ private:
     HBITMAP m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;
+
+    
 };
 
 void GenerateResizes(HWND hDlg);

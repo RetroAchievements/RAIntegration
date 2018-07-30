@@ -19,7 +19,7 @@ public:
     void ParseData(const Document& doc);
 
 private:
-    ra::GameID m_nGameID;
+    ra::GameID m_nGameID{};
     std::string m_sGameTitle;
     std::string m_sRichPresencePatch;
 
@@ -29,7 +29,7 @@ private:
 
 
 
-extern GameData* g_pCurrentGameData;
+extern std::unique_ptr<GameData> g_pCurrentGameData;
 
 
 #endif // !RA_GAMEDATA_H

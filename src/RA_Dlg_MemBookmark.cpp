@@ -73,7 +73,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
 
             DestroyWindow(hwnd);
-            break;
+            return 0;
         }
 
         case WM_KEYDOWN:

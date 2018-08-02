@@ -159,6 +159,20 @@ public:
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
+    TEST_METHOD(TestLookupWhitespace)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpretter rp;
+        rp.ParseFromString("Lookup:Location\n0= Zero \n1= One \n\nDisplay:\nAt '@Location(0xH0000)' ");
+
+        Assert::AreEqual("At ' Zero ' ", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("At ' One ' ", rp.GetRichPresenceString().c_str());
+    }
+
     TEST_METHOD(TestRandomText)
     {
         // anything that doesn't begin with "Format:" "Lookup:" or "Display:" is ignored. people sometimes
@@ -168,6 +182,24 @@ public:
 
         RA_RichPresenceInterpretter rp;
         rp.ParseFromString("Locations are fun!\nLookup:Location\n0=Zero\n1=One\n\nDisplay goes here\nDisplay:\nAt @Location(0xH0000)\n\nWritten by User3");
+
+        Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 2; // no entry
+        Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestComments)
+    {
+        // double slash indicates the remaining portion of the line is a comment
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpretter rp;
+        rp.ParseFromString("// Locations are fun!\nLookup:Location // lookup\n0=Zero // 0\n1=One // 1\n\n//Display goes here\nDisplay: // display\nAt @Location(0xH0000) // text\n\n//Written by User3");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 

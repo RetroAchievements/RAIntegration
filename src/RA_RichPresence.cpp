@@ -133,8 +133,21 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
     if (!std::getline(stream, sLine, '\n'))
         return false;
 
-    if (sLine.length() > 0 && sLine[sLine.length() - 1] == '\r')
-        sLine.resize(sLine.length() - 1);
+    if (!sLine.empty())
+    {
+        size_t index = sLine.find("//");
+        if (index != std::string::npos)
+        {
+            while (index > 0 && isspace(sLine[index - 1]))
+                index--;
+
+            sLine.resize(index);
+        }
+        else if (sLine[sLine.length() - 1] == '\r')
+        {
+            sLine.resize(sLine.length() - 1);
+        }
+    }
 
     return true;
 }

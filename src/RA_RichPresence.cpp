@@ -4,7 +4,7 @@
 #include "RA_GameData.h"
 #include "RA_MemValue.h"
 
-RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
 RA_Lookup::RA_Lookup(const std::string& sDesc)
     : m_sLookupDescription(sDesc)
@@ -44,7 +44,7 @@ bool RA_ConditionalDisplayString::Test()
     return m_conditions.Test(bDirtyConditions, bResetRead);
 }
 
-void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFilename)
+void RA_RichPresenceInterpreter::ParseRichPresenceFile(const std::string& sFilename)
 {
     m_formats.clear();
     m_lookups.clear();
@@ -141,7 +141,7 @@ void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFile
     }
 }
 
-const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
+const std::string RA_RichPresenceInterpreter::Lookup(const std::string& sName, const std::string& sMemString) const
 {
     //	check lookups
     for (size_t i = 0; i < m_lookups.size(); ++i)
@@ -166,12 +166,12 @@ const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, 
     return "";
 }
 
-bool RA_RichPresenceInterpretter::Enabled() const
+bool RA_RichPresenceInterpreter::Enabled() const
 {
     return !m_sDisplay.empty();
 }
 
-const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
+const std::string& RA_RichPresenceInterpreter::GetRichPresenceString()
 {
     static std::string sReturnVal;
     sReturnVal.clear();
@@ -254,13 +254,13 @@ const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
 }
 
 //	static
-void RA_RichPresenceInterpretter::PersistAndParseScript(ra::GameID nGameID, const std::string& str)
+void RA_RichPresenceInterpreter::PersistAndParseScript(ra::GameID nGameID, const std::string& str)
 {
     //	Read to file:
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", str);
 
     //	Then install it
-    g_RichPresenceInterpretter.ParseRichPresenceFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt");
+    g_RichPresenceInterpreter.ParseRichPresenceFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt");
 }
 

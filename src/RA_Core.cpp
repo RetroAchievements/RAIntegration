@@ -1390,7 +1390,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     sRichPresence.assign((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()));
                 }
-                g_RichPresenceInterpretter.ParseFromString(sRichPresence.c_str());
+                g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
 
                 if (g_RichPresenceDialog.GetHWND() == nullptr)
                     g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));

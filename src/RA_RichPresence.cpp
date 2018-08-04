@@ -3,17 +3,14 @@
 #include "RA_Defs.h"
 #include "RA_MemValue.h"
 
-#include <fstream>
-#include <streambuf>
+RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
-RA_RichPresenceInterpretter g_RichPresenceInterpretter;
-
-RA_RichPresenceInterpretter::Lookup::Lookup(const std::string& sDesc)
+RA_RichPresenceInterpreter::Lookup::Lookup(const std::string& sDesc)
     : m_sLookupDescription(sDesc)
 {
 }
 
-const std::string& RA_RichPresenceInterpretter::Lookup::GetText(unsigned int nValue) const
+const std::string& RA_RichPresenceInterpreter::Lookup::GetText(unsigned int nValue) const
 {
     auto iter = m_mLookupData.find(nValue);
     if (iter != m_mLookupData.end())
@@ -22,13 +19,13 @@ const std::string& RA_RichPresenceInterpretter::Lookup::GetText(unsigned int nVa
     return m_sDefault;
 }
 
-RA_RichPresenceInterpretter::DisplayString::DisplayString()
+RA_RichPresenceInterpreter::DisplayString::DisplayString()
 {
     // add an empty core group to ensure Test() always returns true
     m_conditions.AddGroup(); 
 }
 
-RA_RichPresenceInterpretter::DisplayString::DisplayString(const std::string& sCondition)
+RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
 {
     const char* pBuffer = sCondition.data();
     m_conditions.ParseFromString(pBuffer);
@@ -40,7 +37,7 @@ RA_RichPresenceInterpretter::DisplayString::DisplayString(const std::string& sCo
     }
 }
 
-void RA_RichPresenceInterpretter::DisplayString::InitializeParts(const std::string& sDisplayString,
+void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::string& sDisplayString,
     std::map<std::string, MemValue::Format>& mFormats, std::vector<Lookup>& vLookups)
 {
     size_t nIndex = 0;
@@ -100,13 +97,13 @@ void RA_RichPresenceInterpretter::DisplayString::InitializeParts(const std::stri
     } while (true);
 }
 
-bool RA_RichPresenceInterpretter::DisplayString::Test()
+bool RA_RichPresenceInterpreter::DisplayString::Test()
 {
     bool bDirtyConditions, bResetRead; // for HitCounts - not supported in RichPresence
     return m_conditions.Test(bDirtyConditions, bResetRead);
 }
 
-std::string RA_RichPresenceInterpretter::DisplayString::GetDisplayString() const
+std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
 {
     std::string sResult;
     for (const auto& part : m_vParts)
@@ -138,6 +135,7 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
         size_t index = sLine.find("//");
         if (index != std::string::npos)
         {
+            // if a comment marker was found, remove it and any trailing whitespace
             while (index > 0 && isspace(sLine[index - 1]))
                 index--;
 
@@ -145,6 +143,7 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
         }
         else if (sLine[sLine.length() - 1] == '\r')
         {
+            // also remove CR, not just LF
             sLine.resize(sLine.length() - 1);
         }
     }
@@ -152,7 +151,7 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
     return true;
 }
 
-void RA_RichPresenceInterpretter::ParseFromString(const char* sRichPresence)
+void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
 {
     m_vLookups.clear();
     m_vDisplayStrings.clear();
@@ -249,7 +248,7 @@ void RA_RichPresenceInterpretter::ParseFromString(const char* sRichPresence)
     }
 }
 
-std::string RA_RichPresenceInterpretter::GetRichPresenceString()
+std::string RA_RichPresenceInterpreter::GetRichPresenceString()
 {
     for (auto& displayString : m_vDisplayStrings)
     {
@@ -259,4 +258,3 @@ std::string RA_RichPresenceInterpretter::GetRichPresenceString()
 
     return std::string();
 }
-

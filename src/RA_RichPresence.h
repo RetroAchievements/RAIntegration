@@ -5,10 +5,10 @@
 #include "RA_Condition.h"
 #include "RA_MemValue.h"
 
-class RA_RichPresenceInterpretter
+class RA_RichPresenceInterpreter
 {
 public:
-    RA_RichPresenceInterpretter() {}
+    RA_RichPresenceInterpreter() {}
 
     void ParseFromString(const char* sRichPresence);
 
@@ -66,6 +66,6 @@ private:
     std::vector<DisplayString> m_vDisplayStrings;
 };
 
-extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+extern RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
 #endif // !RA_RICHPRESENCE_H

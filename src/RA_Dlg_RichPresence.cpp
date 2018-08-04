@@ -23,7 +23,7 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
         {
             std::wstring sRP;
             if (g_pCurrentGameData->GetGameID() != 0)
-                sRP = ra::Widen(g_RichPresenceInterpretter.GetRichPresenceString());
+                sRP = ra::Widen(g_RichPresenceInterpreter.GetRichPresenceString());
             else
                 sRP = L"No game loaded";
 
@@ -84,7 +84,7 @@ Dlg_RichPresence::~Dlg_RichPresence()
 
 void Dlg_RichPresence::StartMonitoring()
 {
-    if (g_RichPresenceInterpretter.Enabled())
+    if (g_RichPresenceInterpreter.Enabled())
     {
         StartTimer();
     }

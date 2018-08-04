@@ -17,7 +17,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0x 0001) Points");
 
         Assert::AreEqual("13330 Points", rp.GetRichPresenceString().c_str());
@@ -31,7 +31,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0xH0001*100_0xH0002) Points");
 
         Assert::AreEqual("1852 Points", rp.GetRichPresenceString().c_str());
@@ -45,7 +45,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -62,7 +62,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000*0.5)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -79,7 +79,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000), Near @Location(0xH0001)");
 
         Assert::AreEqual("At Zero, Near ", rp.GetRichPresenceString().c_str());
@@ -96,7 +96,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -113,7 +113,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0=Zero\n1=One\n*=Star\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -130,7 +130,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\r\n0=Zero\r\n1=One\r\n\r\nDisplay:\r\nAt @Location(0xH0000)\r\n");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -147,7 +147,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Display:\nAt @Location(0xH0000)\n\nLookup:Location\n0=Zero\n1=One");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -164,7 +164,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0= Zero \n1= One \n\nDisplay:\nAt '@Location(0xH0000)' ");
 
         Assert::AreEqual("At ' Zero ' ", rp.GetRichPresenceString().c_str());
@@ -173,14 +173,14 @@ public:
         Assert::AreEqual("At ' One ' ", rp.GetRichPresenceString().c_str());
     }
 
-    TEST_METHOD(TestRandomText)
+    TEST_METHOD(TestRandomTextBetweenSections)
     {
-        // anything that doesn't begin with "Format:" "Lookup:" or "Display:" is ignored. people sometimes
+        // Anything that doesn't begin with "Format:" "Lookup:" or "Display:" is ignored. People sometimes
         // use this logic to add comments to the Rich Presence script - particularly author comments
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Locations are fun!\nLookup:Location\n0=Zero\n1=One\n\nDisplay goes here\nDisplay:\nAt @Location(0xH0000)\n\nWritten by User3");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -194,11 +194,11 @@ public:
 
     TEST_METHOD(TestComments)
     {
-        // double slash indicates the remaining portion of the line is a comment
+        // Double slash indicates the remaining portion of the line is a comment
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("// Locations are fun!\nLookup:Location // lookup\n0=Zero // 0\n1=One // 1\n\n//Display goes here\nDisplay: // display\nAt @Location(0xH0000) // text\n\n//Written by User3");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -215,7 +215,7 @@ public:
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Display:\n?0xH0000=0?Zero\n?0xH0000=1?One\nOther");
 
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
@@ -226,13 +226,37 @@ public:
         memory[0] = 2; // no entry
         Assert::AreEqual("Other", rp.GetRichPresenceString().c_str());
     }
+
+    TEST_METHOD(TestConditionalDisplayOutOfOrder)
+    {
+        // Display section ends immediately after the non-conditional string is found. Other strings are ignored as between-section garbage
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\nOther\n?0xH0000=0?Zero\n?0xH0000=1?One");
+
+        Assert::AreEqual("Other", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestConditionalDisplayNoDefault)
+    {
+        // A non-conditional string must be present
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\n?0xH0000=0?Zero");
+
+        Assert::AreEqual(false, rp.Enabled());
+    }
         
     TEST_METHOD(TestConditionalDisplaySharedLookup)
     {
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?0xH0001=18?At @Location(0xH0000)\nNear @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
@@ -249,10 +273,11 @@ public:
     
     TEST_METHOD(TestUndefinedTag)
     {
+        // An "@XXXX" tag that cannot be resolved is just ignored
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
         InitializeMemory(memory, 5);
 
-        RA_RichPresenceInterpretter rp;
+        RA_RichPresenceInterpreter rp;
         rp.ParseFromString("Display:\n@Points(0x 0001) Points");
 
         Assert::AreEqual(" Points", rp.GetRichPresenceString().c_str());

@@ -347,9 +347,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Core Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Core Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -357,9 +357,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Unofficial Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Unofficial Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -367,9 +367,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Local Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Local Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -576,11 +576,11 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
         std::ostringstream oss2;
         oss2 << "http://" << _RA_HostName() << "/download.php";
         ShellExecute(nullptr,
-            TEXT("open"),
-            NativeStr(oss2.str()).c_str(),
-            nullptr,
-            nullptr,
-            SW_SHOWNORMAL);
+                     TEXT("open"),
+                     NativeStr(oss2.str()).c_str(),
+                     nullptr,
+                     nullptr,
+                     SW_SHOWNORMAL);
 
         return TRUE;
     }
@@ -720,9 +720,9 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementUnlocked,
-                                    pAch->BadgeImage()));
+                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                PopupMessageType::PopupAchievementUnlocked,
+                                pAch->BadgeImage()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
@@ -731,16 +731,16 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked (Error)",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementError,
-                                    pAch->BadgeImage()));
+                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                PopupMessageType::PopupAchievementError,
+                                pAch->BadgeImage()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Error submitting achievement:",
-                                    doc["Error"].GetString())); //?
+                                doc["Error"].GetString())); //?
 
-                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+              //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
                         }
                     }
                     else
@@ -1239,8 +1239,14 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
+        {
             if (::FindWindow(nullptr, _T("Achievement Editor")) == nullptr)
-                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
+            {
+                g_AchievementEditorDialog.InstallHWND(CreateDialog(::GetModuleHandle(_T("RA_Integration.dll")),
+                                                      MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR),
+                                                      ::GetAncestor(::GetActiveWindow(), GA_ROOT),
+                                                      g_AchievementEditorDialog.s_AchievementEditorProc));
+            }
             if (::FindWindow(nullptr, _T("Achievement Editor")) != nullptr)
             {
                 if (::GetWindowTextLength(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
@@ -1249,9 +1255,10 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     ::SetWindowText(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
                                     IDC_RA_ACH_TITLE), _T("<<New Achievement>>"));
                 }
-                ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
+                ShowWindow(::FindWindow(nullptr, _T("Achievement Editor")), SW_SHOW);
             }
-            break;
+        }
+        break;
 
         case IDM_RA_FILES_MEMORYFINDER:
             if (g_MemoryDialog.GetHWND() == nullptr)
@@ -1332,11 +1339,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 std::ostringstream oss;
                 oss << "http://" << _RA_HostName() << "/User/" << RAUsers::LocalUser().Username();
                 ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                             TEXT("open"),
+                             NativeStr(oss.str()).c_str(),
+                             nullptr,
+                             nullptr,
+                             SW_SHOWNORMAL);
             }
             break;
 
@@ -1346,11 +1353,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 std::ostringstream oss;
                 oss << "http://" << _RA_HostName() << "/Game/" << g_pCurrentGameData->GetGameID();
                 ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                             TEXT("open"),
+                             NativeStr(oss.str()).c_str(),
+                             nullptr,
+                             nullptr,
+                             SW_SHOWNORMAL);
             }
             else
             {
@@ -1614,7 +1621,7 @@ void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
 #pragma warning(disable : 4996) // Deprecation from Microsoft
     FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
 #pragma warning(pop)
-    
+
     auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
     std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
 }
@@ -1675,29 +1682,29 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
     HRESULT hr = HRESULT{};
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
+        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
             CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+            if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
                 LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = ra::Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;
                 }
-				pItem.Release();
+                pItem.Release();
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
     return sRetVal;
 }

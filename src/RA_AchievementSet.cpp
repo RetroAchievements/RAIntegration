@@ -369,7 +369,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
     {
         //	Cannot open file
         RA_LOG("Cannot open file %s\n", sFilename.c_str());
-        RA_LOG("Error %s\n", NativeStr(ra::GetLastErrorMsg()).c_str());
+        RA_LOG("Error %s\n", ra::Narrow(ra::GetLastErrorMsg()).c_str());
         return FALSE;
     }
     else

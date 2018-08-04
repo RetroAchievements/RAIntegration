@@ -32,7 +32,7 @@ tstring CALLBACK GetLastErrorMsg() noexcept
     // Get the error message, if any.
     auto errorID{ ::GetLastError() };
     if (errorID == 0_dw)
-        return TEXT("No error message has been recorded");
+        return tstring{};
 
     LPTSTR lpBuffer{ nullptr };
     auto size{ FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |

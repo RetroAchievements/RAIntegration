@@ -88,11 +88,19 @@
 
 
 //	RA-Only
+#pragma warning(push)
+// Seems version 1.1.0 still uses deprecated stuff.
+#pragma warning(disable : 4996) // STL4015 deprecation: uses iterator as a base class instead of usings from iterator_traits.
+// NOMINMAX doesn't seem to have an effect on rapidjson
+#undef min
+#undef max
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/error/en.h>
+#pragma warning(pop)
+
 
 
 using namespace rapidjson;

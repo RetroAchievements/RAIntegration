@@ -654,7 +654,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     char buffer[32];
     sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
 
-    if(std::strlen(buffer) > 0)
+    if(*buffer)
     {
         for (unsigned int i = 0; i < strlen(buffer); i++)
         {

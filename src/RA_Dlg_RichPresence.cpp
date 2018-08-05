@@ -113,7 +113,7 @@ void Dlg_RichPresence::ClearMessage()
 
 void Dlg_RichPresence::StartTimer()
 {
-    if (!m_bTimerActive)
+    if (!m_bTimerActive && m_hRichPresenceDialog != nullptr)
     {
         SetTimer(m_hRichPresenceDialog, 1, 1000, nullptr);
         m_bTimerActive = true;

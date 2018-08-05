@@ -21,8 +21,7 @@ const std::string& RA_RichPresenceInterpreter::Lookup::GetText(unsigned int nVal
 
 RA_RichPresenceInterpreter::DisplayString::DisplayString()
 {
-    // add an empty core group to ensure Test() always returns true
-    m_conditions.AddGroup(); 
+    m_conditions.SetAlwaysTrue();
 }
 
 RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
@@ -31,28 +30,51 @@ RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCon
     m_conditions.ParseFromString(pBuffer);
 
     if (*pBuffer != '\0')
-    {
-        // not a valid condition, ensure Test() never returns true
-        m_conditions.Clear();
-    }
+        m_conditions.SetAlwaysFalse();
 }
 
 void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::string& sDisplayString,
     std::map<std::string, MemValue::Format>& mFormats, std::vector<Lookup>& vLookups)
 {
+    bool bHasEscapes = false;
     size_t nIndex = 0;
     size_t nStart = 0;
     do
     {
         if (nIndex < sDisplayString.length() && sDisplayString[nIndex] != '@')
         {
-            nIndex++;
+            if (sDisplayString[nIndex] == '\\')
+            {
+                bHasEscapes = true;
+                if (nIndex + 1 < sDisplayString.length())
+                    ++nIndex;
+            }
+
+            ++nIndex;
             continue;
         }
 
         Part& part = m_vParts.emplace_back();
         if (nIndex > nStart)
-            part.m_sDisplayString.assign(sDisplayString, nStart, nIndex - nStart);
+        {
+            if (bHasEscapes)
+            {
+                do
+                {
+                    if (sDisplayString[nStart] == '\\')
+                        ++nStart;
+
+                    part.m_sDisplayString.push_back(sDisplayString[nStart]);
+                    ++nStart;
+                } while (nStart < nIndex);
+
+                bHasEscapes = false;
+            }
+            else
+            {
+                part.m_sDisplayString.assign(sDisplayString, nStart, nIndex - nStart);
+            }
+        }
 
         if (nIndex == sDisplayString.length())
             break;
@@ -133,6 +155,9 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
     if (!sLine.empty())
     {
         size_t index = sLine.find("//");
+        while (index != std::string::npos && index > 0 && sLine[index - 1] == '\\')
+            index = sLine.find("//", index + 1);
+
         if (index != std::string::npos)
         {
             // if a comment marker was found, remove it and any trailing whitespace

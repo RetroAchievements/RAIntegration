@@ -270,6 +270,27 @@ public:
         memory[0] = 0;
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
     }
+
+    TEST_METHOD(TestConditionalDisplayInvalid)
+    {
+        // invalid condition is ignored
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)");
+
+        Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("Near One", rp.GetRichPresenceString().c_str());
+
+        memory[1] = 17;
+        Assert::AreEqual("Near One", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 0;
+        Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
+    }
     
     TEST_METHOD(TestUndefinedTag)
     {
@@ -281,6 +302,55 @@ public:
         rp.ParseFromString("Display:\n@Points(0x 0001) Points");
 
         Assert::AreEqual(" Points", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestEscapedComment)
+    {
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\nWhat \\// Where");
+
+        Assert::AreEqual("What // Where", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestEscapedBackslash)
+    {
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\nWhat \\\\ Where");
+
+        Assert::AreEqual("What \\ Where", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestPartiallyEscapedComment)
+    {
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\nWhat \\/// Where");
+
+        Assert::AreEqual("What /", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestTrailingBackslash)
+    {
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\nWhat \\");
+
+        Assert::AreEqual("What ", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestEscapedLookup)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\n\\@@Location(0xH0000)");
+
+        Assert::AreEqual("@Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("@One", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 2; // no entry
+        Assert::AreEqual("@", rp.GetRichPresenceString().c_str());
     }
 };
 

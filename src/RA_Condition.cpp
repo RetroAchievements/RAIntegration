@@ -663,6 +663,19 @@ bool ConditionSet::Test(bool& bDirtyConditions, bool& bResetConditions)
     return bResult;
 }
 
+void ConditionSet::SetAlwaysTrue()
+{
+    // a single empty core group always evaluates true
+    m_vConditionGroups.clear();
+    AddGroup();
+}
+
+void ConditionSet::SetAlwaysFalse()
+{
+    // an empty condition set always evaluates false
+    Clear();
+}
+
 bool ConditionSet::Reset()
 {
     bool bWasReset = false;

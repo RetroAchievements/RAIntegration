@@ -1502,11 +1502,6 @@ void AchievementOverlay::OnLoad_NewRom()
         Deactivate();
 }
 
-void AchievementOverlay::OnUserPicDownloaded(const char* sUsername)
-{
-    RA_LOG("Overlay detected Userpic downloaded (%s)", sUsername);		//##SD unhandled?
-}
-
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();

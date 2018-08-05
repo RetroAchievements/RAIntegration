@@ -127,7 +127,6 @@ public:
     const int* GetActiveSelectedItem() const;
 
     void OnLoad_NewRom();
-    void OnUserPicDownloaded(const char* sUsername);
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
     void DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;

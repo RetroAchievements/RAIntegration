@@ -1,3 +1,6 @@
 [submodule "rapidjson"]
 	path = rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "lua"]
+	path = lua
+	url = https://github.com/lua/lua.git

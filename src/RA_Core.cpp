@@ -318,6 +318,7 @@ API int CCONV _RA_Shutdown()
 
     if (g_RichPresenceDialog.GetHWND() != nullptr)
     {
+        g_RichPresenceDialog.ClearMessage();
         DestroyWindow(g_RichPresenceDialog.GetHWND());
         g_RichPresenceDialog.InstallHWND(nullptr);
     }
@@ -484,6 +485,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemoryDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
     g_MemBookmarkDialog.OnLoad_NewRom();
+    g_RichPresenceDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
 
@@ -1373,37 +1375,26 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_PARSERICHPRESENCE:
-            if (g_pCurrentGameData->GetGameID() != 0)
-            {
-                char sRichPresenceFile[1024];
-                sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+        {
+            char sRichPresenceFile[1024];
+            sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
-                //	Then install it
-                std::string sRichPresence;
-                std::ifstream file(sRichPresenceFile);
-                if (!file.fail())
-                {
-                    file.seekg(0, std::ios::end);
-                    sRichPresence.reserve(static_cast<size_t>(file.tellg()));
-                    file.seekg(0, std::ios::beg);
+            std::string sRichPresence;
+            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile);
+            g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
 
-                    sRichPresence.assign((std::istreambuf_iterator<char>(file)),
-                        (std::istreambuf_iterator<char>()));
-                }
-                g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
+            if (g_RichPresenceDialog.GetHWND() == nullptr)
+                g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
+            if (g_RichPresenceDialog.GetHWND() != nullptr)
+                ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
 
-                if (g_RichPresenceDialog.GetHWND() == nullptr)
-                    g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
-                if (g_RichPresenceDialog.GetHWND() != nullptr)
-                    ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
-
+            if (bRichPresenceExists)
                 g_RichPresenceDialog.StartMonitoring();
-            }
             else
-            {
-                MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
-            }
+                g_RichPresenceDialog.ClearMessage();
+
             break;
+        }
 
         case IDM_RA_TOGGLELEADERBOARDS:
         {
@@ -1621,6 +1612,21 @@ void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
     
     auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
     std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
+}
+
+bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
+{
+    std::ifstream file(sFile);
+    if (file.fail())
+        return false;
+
+    file.seekg(0, std::ios::end);
+    buffer.reserve(static_cast<size_t>(file.tellg()));
+    file.seekg(0, std::ios::beg);
+
+    buffer.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+
+    return true;
 }
 
 char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)

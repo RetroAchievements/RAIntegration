@@ -123,6 +123,9 @@ extern unsigned int g_nNumHTTPThreads;
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
 extern char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut);
 
+//  Read a file to a std::string. Returns empty string on error.
+bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile);
+
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
 

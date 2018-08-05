@@ -18,6 +18,8 @@
 #include "RA_RichPresence.h"
 #include "RA_User.h"
 
+#include "services\ImageRepository.h"
+
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchievementsReporter.h"
@@ -238,7 +240,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
-    InitializeUserImageFactory(g_hThisDLLInst);
+    ra::services::g_ImageRepository.Initialize();
     g_AchievementOverlay.Initialize(g_hThisDLLInst);
 
     //////////////////////////////////////////////////////////////////////////
@@ -642,7 +644,14 @@ API int CCONV _RA_HandleHTTPResults()
                     break;
 
                 case RequestUserPic:
-                    RAUsers::OnUserPicDownloaded(*pObj);
+                {
+                    const std::string& sUsername = pObj->GetData();
+                    _WriteBufferToFile(RA_DIR_USERPIC + sUsername + ".png", pObj->GetResponse());
+                    break;
+                }
+
+                case RequestFriendList:
+                    RAUsers::LocalUser().OnFriendListResponse(doc);
                     break;
 
                 case RequestScore:
@@ -720,7 +729,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementUnlocked,
-                                    pAch->BadgeImage()));
+                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
@@ -731,7 +740,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked (Error)",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementError,
-                                    pAch->BadgeImage()));
+                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             g_PopupWindows.AchievementPopups().AddMessage(

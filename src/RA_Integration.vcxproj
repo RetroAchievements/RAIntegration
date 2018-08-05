@@ -27,6 +27,27 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\alloc.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\condition.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\condset.c" CompileAs="CompileAsC" />
@@ -247,8 +268,8 @@
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
@@ -273,8 +294,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
@@ -301,8 +322,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -326,8 +347,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -351,8 +372,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
@@ -377,8 +398,8 @@
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Lua_Dir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>

@@ -4,3 +4,6 @@
 [submodule "rcheevos"]
 	path = rcheevos
 	url = https://github.com/RetroAchievements/rcheevos.git
+[submodule "lua"]
+	path = lua
+	url = https://github.com/lua/lua.git

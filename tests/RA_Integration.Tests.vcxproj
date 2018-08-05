@@ -72,8 +72,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(Lua_Dir);$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;kernel32.lib;user32.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -106,8 +106,8 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(Lua_Dir);$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;kernel32.lib;user32.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,6 +129,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\alloc.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\condition.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\rcheevos\src\condset.c" CompileAs="CompileAsC" />

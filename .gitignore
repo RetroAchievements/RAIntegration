@@ -1,5 +1,3 @@
-/obj
-/bin
 /.vs
 /src/RA_BuildVer.h
 *.user
@@ -7,3 +5,10 @@
 test_app/
 packages/
 src/clipboard.txt
+
+# Output files
+/obj
+/bin
+*.pdb
+*.dll
+Error lists/

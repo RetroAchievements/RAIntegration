@@ -105,6 +105,22 @@ public:
         Assert::AreEqual(0x34U, lb.SubmittedScore());
     }
 
+    TEST_METHOD(TestSimpleLeaderboardFormatted)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        LeaderboardHarness lb;
+        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Score);
+        lb.Test();
+
+        memory[0] = 1; // start value
+        lb.Test();
+        Assert::IsTrue(lb.IsActive());
+
+        Assert::AreEqual("000018 Points", lb.FormatScore(18).c_str());
+    }
+
     TEST_METHOD(TestStartAndCancelSameFrame)
     {
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };

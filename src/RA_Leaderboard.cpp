@@ -10,7 +10,7 @@ RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),
     m_bStarted(false),
     m_bSubmitted(false),
-    m_format(MemValue::Format::Value)
+    m_nFormat(MemValue::Format::Value)
 {
 }
 
@@ -22,6 +22,8 @@ RA_Leaderboard::~RA_Leaderboard()
 
 void RA_Leaderboard::ParseFromString(const char* pChar, _UNUSED MemValue::Format nFormat)
 {
+    m_nFormat = nFormat;
+
     while (*pChar != '\n' && *pChar != '\0')
     {
         if (pChar[0] == ':' && pChar[1] == ':')	//	New Phrase (double colon)

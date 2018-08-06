@@ -815,7 +815,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                         }
                         else
                         {
-                            const std::string& sRPResponse = g_RichPresenceInterpretter.GetRichPresenceString();
+                            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
                             if (!sRPResponse.empty())
                             {
                                 args['m'] = sRPResponse;

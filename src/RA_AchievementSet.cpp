@@ -426,7 +426,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 g_pCurrentGameData->ParseData(doc);
                 auto nGameID = g_pCurrentGameData->GetGameID();
 
-                RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
+                RA_RichPresenceInterpreter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
 
                 const auto& AchievementsData = doc["Achievements"];
                 for (auto& achData : AchievementsData.GetArray())

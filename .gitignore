@@ -1,5 +1,3 @@
-/obj
-/bin
 /.vs
 /src/RA_BuildVer.h
 *.user
@@ -9,5 +7,12 @@ src/*_BACKUP_*.cpp
 src/*_BASE_*.cpp
 src/*_LOCAL_*.cpp
 src/clipboard.txt
-src/cpp.hint
+
+# Output files
+/obj
+/bin
+*.pdb
+*.dll
+
+# Misc. Folders
 Error lists/

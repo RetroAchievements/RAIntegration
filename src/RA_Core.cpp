@@ -1395,7 +1395,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
                 //	Then install it
-                g_RichPresenceInterpretter.ParseRichPresenceFile(sRichPresenceFile);
+                g_RichPresenceInterpreter.ParseRichPresenceFile(sRichPresenceFile);
 
                 if (g_RichPresenceDialog.GetHWND() == nullptr)
                     g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));

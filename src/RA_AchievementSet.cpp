@@ -86,12 +86,12 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
             g_pUnofficialAchievements->Unlock(nNextAchID);
     }
 
-    // pre-fetch images for any achievements the player hasn't earned
+    // pre-fetch locked images for any achievements the player hasn't earned
     for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
     {
         Achievement& ach = g_pCoreAchievements->GetAchievement(i);
         if (ach.Active())
-            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI());
+            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
     }
 }
 
@@ -554,9 +554,14 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             fclose(pFile);
 
+            // calculate the total number of points for the core set, and pre-fetch badge images
             unsigned int nTotalPoints = 0;
             for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
-                nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
+            {
+                Achievement& ach = g_pCoreAchievements->GetAchievement(i);
+                ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI());
+                nTotalPoints += ach.Points();
+            }
 
             if (RAUsers::LocalUser().IsLoggedIn())
             {

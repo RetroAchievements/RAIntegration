@@ -3,7 +3,6 @@
 *.user
 /RetroAchievementsKey
 test_app/
-packages/
 src/clipboard.txt
 
 # Output files
@@ -11,4 +10,4 @@ src/clipboard.txt
 /bin
 *.pdb
 *.dll
-Error lists/
+

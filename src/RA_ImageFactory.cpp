@@ -1,6 +1,7 @@
 #include "RA_ImageFactory.h"
 
 #include <commdlg.h>
+#include <wincodec.h>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"

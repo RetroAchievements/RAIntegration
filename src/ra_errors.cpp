@@ -1,7 +1,6 @@
 #include "ra_errors.h"
 #include "RA_Core.h"
   
-
 namespace ra {
 
 auto CALLBACK GetLastErrorCode() noexcept -> std::error_code
@@ -12,6 +11,9 @@ auto CALLBACK GetLastErrorCode() noexcept -> std::error_code
 _Use_decl_annotations_
 int CALLBACK ShowError(const tstring& message, HWND hwnd) noexcept
 {
+    if (hwnd == nullptr)
+        hwnd = ::GetActiveWindow();
+
     return ::MessageBox(hwnd, message.c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
 }
 

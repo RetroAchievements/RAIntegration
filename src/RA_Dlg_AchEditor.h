@@ -23,7 +23,7 @@ public:
 
     void FetchNewBadgeNamesThreaded();
     void AddNewBadgeName(const char* pStr, bool bAndSelect);
-    void OnNewBadgeNames(const Document& data);
+    void OnNewBadgeNames(const rapidjson::Document& data);
 
 private:
     HWND m_hDestComboBox;

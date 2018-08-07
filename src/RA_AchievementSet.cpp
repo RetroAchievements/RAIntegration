@@ -17,28 +17,29 @@ AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
+inline constexpr std::array<AchievementSet**, 3> ACH_SETS{
+    &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements
+};
 
-AchievementSetType g_nActiveAchievementSet = Core;
+AchievementSetType g_nActiveAchievementSet = AchievementSetType::Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
 
 void RASetAchievementCollection(AchievementSetType Type)
 {
     g_nActiveAchievementSet = Type;
-    g_pActiveAchievements = *ACH_SETS[Type];
+    g_pActiveAchievements = *ACH_SETS.at(ra::etoi(Type));
 }
 
 std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
-        case Core:
+        case AchievementSetType::Core:
             return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
-        case Unofficial:
+        case AchievementSetType::Unofficial:
             return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
-        case Local:
+        case AchievementSetType::Local:
             return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
         default:
             return "";
@@ -53,7 +54,7 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
         return TRUE;
     }
 
-    if (m_nSetType == Local)
+    if (m_nSetType == AchievementSetType::Local)
     {
         //	We do not automatically delete Local patch files
         return TRUE;
@@ -65,7 +66,7 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
 }
 
 //static 
-void AchievementSet::OnRequestUnlocks(const Document& doc)
+void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
 {
     if (!doc.HasMember("Success") || doc["Success"].GetBool() == false)
     {
@@ -75,7 +76,7 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
 
     const ra::GameID nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
     const bool bHardcoreMode = doc["HardcoreMode"].GetBool();
-    const Value& UserUnlocks = doc["UserUnlocks"];
+    const auto& UserUnlocks = doc["UserUnlocks"];
 
     for (auto& val : UserUnlocks.GetArray())
     {
@@ -196,7 +197,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (g_nActiveAchievementSet != Core)
+                if (g_nActiveAchievementSet != AchievementSetType::Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
@@ -317,13 +318,13 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     args['g'] = std::to_string(nGameID);
     args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
-    Document doc;
+    rapidjson::Document doc;
     if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
         doc.HasMember("Success") &&
         doc["Success"].GetBool() &&
         doc.HasMember("PatchData"))
     {
-        const Value& PatchData = doc["PatchData"];
+        const auto& PatchData = doc["PatchData"];
         SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
 
@@ -335,8 +336,8 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         }
         else
         {
-            OStreamWrapper osw{ ofile };
-            Writer<OStreamWrapper> writer{ osw };
+            rapidjson::OStreamWrapper osw{ ofile };
+            rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
             PatchData.Accept(writer);
             return TRUE;
         }
@@ -369,7 +370,10 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
     {
         //	Cannot open file
         RA_LOG("Cannot open file %s\n", sFilename.c_str());
-        RA_LOG("Error %s\n", ra::Narrow(ra::GetLastErrorMsg()).c_str());
+        auto errBuf{ std::make_unique<char[]>(1024) };
+        strerror_s(errBuf.get(), 1024, errno);
+        RA_LOG("Error %s\n", errBuf.get());
+        ra::ShowError(errBuf.get());
         return FALSE;
     }
     else
@@ -377,14 +381,15 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         //	Store this: we are now assuming this is the correct checksum if we have a file for it
         g_pCurrentGameData->SetGameID(nGameID);
 
-        if (m_nSetType == Local)
+        if (m_nSetType == AchievementSetType::Local)
         {
             auto buffer{ std::make_unique<char[]>(4096) };
 
             //	Get min ver:
             ifile.getline(buffer.get(), 4096);
-            auto nCharsRead{ ifile.gcount() };
             //	UNUSED at this point? TBD
+            auto nCharsRead{ ifile.gcount() };
+            
 
             //	Get game title:
             ifile.getline(buffer.get(), 4096);
@@ -417,8 +422,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         }
         else
         {
-            Document doc;
-            IStreamWrapper isw{ ifile };
+            rapidjson::Document doc;
+            rapidjson::IStreamWrapper isw{ ifile };
             doc.ParseStream(isw);
             if (!doc.HasParseError())
             {
@@ -432,22 +437,22 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 for (auto& achData : AchievementsData.GetArray())
                 {
                     //	Parse into correct boxes
-                    if (auto nFlags = achData["Flags"].GetUint(); (nFlags == 3) && (m_nSetType == Core))
+                    if (auto nFlags = achData["Flags"].GetUint(); (nFlags == 3) && (m_nSetType == AchievementSetType::Core))
                     {
                         auto& newAch{ AddAchievement() };
                         newAch.Parse(achData);
                     }
-                    else if ((nFlags == 5) && (m_nSetType == Unofficial))
+                    else if ((nFlags == 5) && (m_nSetType == AchievementSetType::Unofficial))
                     {
                         auto& newAch{ AddAchievement() };
                         newAch.Parse(achData);
                     }
                 }
 
-                if (m_nSetType != Core)
+                if (m_nSetType != AchievementSetType::Core)
                     return TRUE;
 
-                const Value& LeaderboardsData = doc["Leaderboards"];
+                const auto& LeaderboardsData = doc["Leaderboards"];
                 /*
                     Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!
                     =h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!

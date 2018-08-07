@@ -5,7 +5,6 @@
 // Forward declaring namespace std caused problems
 #include <xstring>
 
-
 namespace ra {
 
 #ifndef _TCHAR_DEFINED
@@ -19,8 +18,6 @@ using TCHAR = wchar_t;
 #define _TCHAR_DEFINED
 #endif // !_TCHAR_DEFINED
 
-
-
 using tstring = std::basic_string<TCHAR>;
 
 using DWORD         = unsigned long;
@@ -30,6 +27,9 @@ using DataPos       = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 using GameID        = std::size_t;
+
+using HANDLE = void*;
+using LPVOID = void*;
 
 } // namespace ra
 

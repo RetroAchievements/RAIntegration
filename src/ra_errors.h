@@ -2,10 +2,9 @@
 #define RA_ERRORS_H
 #pragma once
 
-// TODO: Make a pch for repetitive includes
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>    
+#define NOMINMAX
+#include <WTypes.h>    
 #include <system_error>
 
 namespace ra {
@@ -15,7 +14,7 @@ using tstring = std::basic_string<TCHAR>;
 _EXTERN_C
 
 _Success_(return != 0)
-int CALLBACK ShowError(_In_ const tstring& message, _In_ HWND hwnd = ::GetActiveWindow()) noexcept;
+int CALLBACK ShowError(_In_ const tstring& message, _In_opt_ HWND hwnd = nullptr) noexcept;
 _NODISCARD bool CALLBACK InvalidModule() noexcept;
 
 // Shows the last system error with a message without throwing

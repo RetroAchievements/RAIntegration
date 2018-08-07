@@ -30,6 +30,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <locale>
+#include <chrono> // for testing execution time
 #include <memory>
 #include <direct.h>
 #include <fstream>
@@ -233,9 +234,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     //////////////////////////////////////////////////////////////////////////
     //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet(Core);
-    g_pUnofficialAchievements = new AchievementSet(Unofficial);
-    g_pLocalAchievements = new AchievementSet(Local);
+    g_pCoreAchievements = new AchievementSet(AchievementSetType::Core);
+    g_pUnofficialAchievements = new AchievementSet(AchievementSetType::Unofficial);
+    g_pLocalAchievements = new AchievementSet(AchievementSetType::Local);
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////
@@ -317,7 +318,7 @@ API int CCONV _RA_Shutdown()
     }
 
     g_GameLibrary.KillThread();
-
+    
     if (g_RichPresenceDialog.GetHWND() != nullptr)
     {
         DestroyWindow(g_RichPresenceDialog.GetHWND());
@@ -337,7 +338,7 @@ API int CCONV _RA_Shutdown()
 
 API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 {
-    //	Returns true if we can go ahead and load the new rom.
+    //	Returns true if we can go ahead and load the new ROM.
     int nResult = IDYES;
 
     const char* sCurrentAction = bQuittingApp ? "quit now" : "load a new ROM";
@@ -407,7 +408,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = g_sCurrentROMMD5;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
@@ -599,7 +600,7 @@ API int CCONV _RA_HandleHTTPResults()
     {
         if (pObj->GetResponse().size() > 0)
         {
-            Document doc;
+            rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
             if (pObj->GetRequestType() == RequestBadge)
@@ -969,8 +970,8 @@ API void CCONV _RA_LoadPreferences()
 #pragma endregion
 
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
     doc.ParseStream(isw);
 
     if (doc.HasParseError())
@@ -1240,22 +1241,19 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
         {
-            if (::FindWindow(nullptr, _T("Achievement Editor")) == nullptr)
+            if (g_AchievementEditorDialog.GetHWND() == nullptr)
             {
                 g_AchievementEditorDialog.InstallHWND(CreateDialog(::GetModuleHandle(_T("RA_Integration.dll")),
                                                       MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR),
                                                       ::GetAncestor(::GetActiveWindow(), GA_ROOT),
                                                       g_AchievementEditorDialog.s_AchievementEditorProc));
             }
-            if (::FindWindow(nullptr, _T("Achievement Editor")) != nullptr)
+            if (g_AchievementEditorDialog.GetHWND() != nullptr)
             {
-                if (::GetWindowTextLength(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
-                    IDC_RA_ACH_TITLE)) == 0)
-                {
-                    ::SetWindowText(::GetDlgItem(::FindWindow(nullptr, _T("Achievement Editor")),
-                                    IDC_RA_ACH_TITLE), _T("<<New Achievement>>"));
-                }
-                ShowWindow(::FindWindow(nullptr, _T("Achievement Editor")), SW_SHOW);
+                if (::GetWindowTextLength(::GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_TITLE)) == 0)
+                    ::SetWindowText(::GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_TITLE), _T("<<New Achievement>>"));
+
+                ::ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
             }
         }
         break;
@@ -1587,14 +1585,14 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     pSource++;
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
+void _WriteBufferToFile(const std::string& sFileName, const rapidjson::Document& doc)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     std::ofstream ofile{ sFileName, std::ios::binary };
 
 
-    OStreamWrapper osw{ ofile };
-    Writer<OStreamWrapper> writer{ osw };
+    rapidjson::OStreamWrapper osw{ ofile };
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
     doc.Accept(writer);
 }
 

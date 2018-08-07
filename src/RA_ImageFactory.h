@@ -2,9 +2,10 @@
 #define RA_IMAGEFACTORY_H
 #pragma once
 
-#include <atlbase.h>
-#include <wincodec.h>
-
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#define COM_NO_WINDOWS_H // prevents atl from including windows more than once
+#include <atlcomcli.h> // It also includes Windows.h
 #include "RA_Defs.h"
 
 //////////////////////////////////////////////////////////////////////////

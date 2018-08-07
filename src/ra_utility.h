@@ -108,15 +108,6 @@ to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
-#if _WIN32
-using float_type = float;
-#elif _WIN64
-using float_type = double;
-#else
-using float_type = long double; // should we even care bout this?
-#endif // _WIN32
-
-
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD ra::tstring
 to_tstring(_In_ Arithmetic a) noexcept
 {
@@ -130,18 +121,53 @@ to_tstring(_In_ Arithmetic a) noexcept
 } // end function to_tstring
 
 template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
-to_floating(_In_ Integral i) noexcept { return static_cast<float_type>(i); }
+to_floating(_In_ Integral i) noexcept { return static_cast<double>(i); }
 
-template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
-_NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept
+template<
+    typename Arithmetic,
+    typename Arithmetic2 = Arithmetic,
+    class = std::enable_if_t<std::is_arithmetic_v<Arithmetic> and std::is_arithmetic_v<Arithmetic2>>
+> _NODISCARD _CONSTANT_FN
+divide(_In_ Arithmetic a, _In_ Arithmetic2 b) noexcept
 {
-    if (std::signbit(fp))
-        return std::lround(fp);
-    return to_unsigned(std::lround(fp));
+    // These are all constant expressions so it should be relatively fast
+    // Was originally going to do a division operator but it would have to be a member function
+    if (b == Arithmetic2{})
+        return double{}; // return an empty double (0.0) if b is an empty Arithmetic2 (depends)
+    return std::divides<double>()(to_floating(a), to_floating(b));
 }
+
+template<
+    typename FloatingPoint,
+    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_signed_v<FloatingPoint>>
+>
+_NODISCARD _CONSTANT_FN ftol(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
+
+template<
+    typename FloatingPoint,
+    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_unsigned_v<FloatingPoint>>
+>
+_NODISCARD _CONSTANT_FN ftoul(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
 sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
+
+template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
+is_even(_In_ Integral i) noexcept { return ((i % 2) == Integral{}); }
+
+template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
+is_odd(_In_ Integral i) noexcept { return !(is_even(i)); }
+
+// Requires: NarrowType is smaller than WideType and both are Arithmetic types (Integral or FloatingPoint)
+template<
+    typename NarrowType,
+    typename WideType,
+    class = std::enable_if_t<
+    (is_smaller_type_v<NarrowType, WideType>) and
+    (std::is_arithmetic_v<NarrowType> and std::is_arithmetic_v<WideType>)
+    >
+> _NODISCARD _CONSTANT_FN
+narrow_cast(_In_ WideType wt) noexcept { return static_cast<NarrowType>(wt); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
@@ -150,20 +176,22 @@ etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e)
 template<typename Enum> _NODISCARD _CONSTANT_VAR to_integral = etoi<Enum>;
 
 /// <summary>Calculates the size of any standard fstream.</summary>
-  /// <param name="filename">The filename.</param>
-  /// <typeparam name="CharT">
-  ///   The character type, it should be auto deduced if valid. Otherwise you'll
-  ///   get an intellisense error.
-  /// </typeparam>
-  /// <typeparam name="Traits">
-  ///   The character traits of <typeparamref name="CharT" />.
-  /// </typeparam>
-  /// <returns>The size of the file stream.</returns>
+/// <param name="filename">The filename.</param>
+/// <typeparam name="CharT">
+///   The character type, it should be auto deduced if valid. Otherwise you'll
+///   get an intellisense error.
+/// </typeparam>
+/// <typeparam name="Traits">
+///   The character traits of <typeparamref name="CharT" />.
+/// </typeparam>
+/// <returns>The size of the file stream.</returns>
+/// <remarks>
+///   <paramref name="filename" /> must be a <c>std::basic_string</c>.
+/// </remarks>
 template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
 filesize(_In_ std::basic_string<CharT>& filename) noexcept
 ->decltype(std::declval<std::basic_fstream<CharT>&>().tellg())
 {
-    // It's always the little things...
     using file_type = std::basic_fstream<CharT>;
     file_type file{ filename, std::ios::in | std::ios::ate | std::ios::binary };
     return file.tellg();

@@ -97,8 +97,8 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
     std::ifstream ifile{ RA_GAME_HASH_FILENAME, std::ios::binary };
 
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
     doc.ParseStream(isw);
 
     if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
@@ -123,8 +123,8 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
 
 
     if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() &&
@@ -147,8 +147,8 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
     std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
     doc.ParseStream(isw);
 
     if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))

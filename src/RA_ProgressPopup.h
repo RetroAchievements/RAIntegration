@@ -1,6 +1,8 @@
 #ifndef RA_PROGRESSPOPUP_H
 #define RA_PROGRESSPOPUP_H
 
+#define NOMINMAX
+
 #include "RA_AchievementOverlay.h"
 
 //	Graphic to display an progress towards an achievement

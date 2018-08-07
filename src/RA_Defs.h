@@ -53,6 +53,22 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
+// It's a bit strange, if we don't wrap around an "#ifndef" it will be disabled
+// What these do is automatically use the secured version of C function if the buffer is statically allocated
+// Dynamic buffers will still need (via make_unique, new, or malloc) will still need the _s appended
+// You can't use the ones namespace std however as those will still be the ISO pre-C11 functions (C11 isn't implemented in MSVC but is in clang/gcc)
+// https://docs.microsoft.com/en-us/cpp/c-runtime-library/secure-template-overloads
+#ifndef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT 1
+#endif // !_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT
+
+#ifndef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+#endif // !_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
+
+#ifndef _CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+#endif // !_CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES
 
 #include <Windows.h>
 #include <WindowsX.h>
@@ -63,12 +79,6 @@
 #pragma warning(pop)
 
 #include <tchar.h>
-
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
 
 #include <map>
 #include <array>
@@ -85,27 +95,17 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-
+#define RAPIDJSON_NOMEMBERITERATORCLASS
+#define RAPIDJSON_HAS_STDSTRING 1
 
 //	RA-Only
-#pragma warning(push)
-// Seems version 1.1.0 still uses deprecated stuff.
-#pragma warning(disable : 4996) // STL4015 deprecation: uses iterator as a base class instead of usings from iterator_traits.
-// NOMINMAX doesn't seem to have an effect on rapidjson
-#undef min
-#undef max
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/error/en.h>
-#pragma warning(pop)
 
-
-
-using namespace rapidjson;
-extern GetParseErrorFunc GetJSONParseErrorStr;
-
+extern rapidjson::GetParseErrorFunc GetJSONParseErrorStr;
 
 using namespace std::string_literals;
 //using namespace std::chrono_literals; we could use this later
@@ -132,7 +132,7 @@ using namespace std::string_literals;
 #define _CONSTANT_VAR        constexpr auto
 #endif // _HAS_CXX17        
 
-#define _CONSTANT_LOC constexpr // local vars can't be inline
+#define _CONSTANT_LOC constexpr auto // local vars can't be inline
 #define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
@@ -279,14 +279,7 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
+enum class AchievementSetType { Core, Unofficial, Local };
 
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);

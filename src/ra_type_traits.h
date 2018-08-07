@@ -38,6 +38,11 @@ struct is_char : std::bool_constant<(std::_Is_character<CharT>::value or std::is
 template<typename T, typename U>
 struct is_same_size : std::bool_constant<sizeof(T) == sizeof(U)> {};
 
+/// <summary>
+///   This should only be used to compare the sizes of data types and not objects.
+/// </summary>
+template<typename T, typename U>
+struct is_smaller_type : std::bool_constant<sizeof(T) < sizeof(U)> {};
 
 } // namespace detail
 
@@ -47,6 +52,9 @@ is_char_v{ detail::is_char<CharacterType>::value };
 
 template<typename ValueType, typename TestType> _NODISCARD _CONSTANT_VAR
 is_same_size_v{ detail::is_same_size<ValueType, TestType>::value };
+
+template<typename NarrowType, typename WideType> _NODISCARD _CONSTANT_VAR
+is_smaller_type_v{ detail::is_smaller_type<NarrowType, WideType>::value };
 
 namespace detail {
 

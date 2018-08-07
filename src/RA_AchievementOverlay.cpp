@@ -544,7 +544,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     }
 
     SelectObject(hDC, g_hFontDesc);
-    if (g_nActiveAchievementSet == Core)
+    if (g_nActiveAchievementSet == AchievementSetType::Core)
     {
         for (size_t i = 0; i < nNumberOfAchievements; ++i)
         {
@@ -1357,7 +1357,7 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
 
     if (bCanLock)
     {
-        if (g_nActiveAchievementSet == Core)
+        if (g_nActiveAchievementSet == AchievementSetType::Core)
             bLocked = pAch->Active();
     }
 
@@ -1502,11 +1502,10 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
 
-
     std::ifstream ifile{ RA_NEWS_FILENAME, std::ios::binary };
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
     doc.ParseStream(isw);
 
     if (doc.HasMember("Success") && doc["Success"].GetBool())
@@ -1586,8 +1585,11 @@ void AchievementExamine::Initialize(const Achievement* pAch)
     }
 }
 
-void AchievementExamine::OnReceiveData(Document& doc)
+void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
 {
+    using rapidjson::Value;
+    using rapidjson::SizeType;
+
     ASSERT(doc["Success"].GetBool());
     const unsigned int nOffset        = doc["Offset"].GetUint();
     const unsigned int nCount         = doc["Count"].GetUint();
@@ -1641,8 +1643,11 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 }
 
 //static 
-void LeaderboardExamine::OnReceiveData(const Document& doc)
+void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 {
+    using rapidjson::Value;
+    using rapidjson::SizeType;
+
     ASSERT(doc.HasMember("LeaderboardData"));
     const Value& LBData = doc["LeaderboardData"];
 

@@ -2,6 +2,8 @@
 #define RA_POPUPWINDOWS_H
 #pragma once
 
+#define NOMINMAX
+
 #include "RA_ProgressPopup.h"
 #include "RA_AchievementPopup.h"
 #include "RA_LeaderboardPopup.h"

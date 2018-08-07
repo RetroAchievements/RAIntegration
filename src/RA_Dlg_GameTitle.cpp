@@ -39,14 +39,14 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             PostArgs args;
             args['c'] = std::to_string(g_ConsoleID);
 
-            Document doc;
+            rapidjson::Document doc;
             if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
             {
-                const Value& Data = doc["Response"];
+                const auto& Data = doc["Response"];
 
                 //	For all data responses to this request, populate our m_aGameTitles map
                 {
-                    Value::ConstMemberIterator iter = Data.MemberBegin();
+                    auto iter = Data.MemberBegin();
 
                     while (iter != Data.MemberEnd())
                     {
@@ -119,10 +119,10 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     args['i'] = ra::Narrow(sSelectedTitle);
                     args['c'] = std::to_string(g_ConsoleID);
 
-                    Document doc;
+                    rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
                     {
-                        const Value& Response = doc["Response"];
+                        const auto& Response = doc["Response"];
 
                         const ra::GameID nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
                         const std::string& sGameTitle = Response["GameTitle"].GetString();

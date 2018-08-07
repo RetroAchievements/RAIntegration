@@ -32,7 +32,7 @@ public:
     size_t Load(const std::string& sFile);
 
     BOOL ReloadFromWeb(ra::GameID nID);
-    static void OnCodeNotesResponse(Document& doc);
+    static void OnCodeNotesResponse(rapidjson::Document& doc);
 
     void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);
     BOOL Remove(const ra::ByteAddress& nAddr);

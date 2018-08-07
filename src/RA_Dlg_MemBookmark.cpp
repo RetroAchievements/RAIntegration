@@ -1,7 +1,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
+#include <chrono> // execution time testing
 #include <fstream>
+#include <iomanip> // setw,setfill
+#include <memory>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -507,21 +510,19 @@ void Dlg_MemBookmark::PopulateList()
     if (hList == nullptr)
         return;
 
-    int topIndex = ListView_GetTopIndex(hList);
+    _UNUSED int topIndex = ListView_GetTopIndex(hList);
     ListView_DeleteAllItems(hList);
     m_nNumOccupiedRows = 0;
 
-    for (MemBookmark* bookmark : m_vBookmarks)
+    for(auto it = m_vBookmarks.cbegin(); it != m_vBookmarks.cend(); ++it)
     {
-        LV_ITEM item;
-        ZeroMemory(&item, sizeof(item));
-        item.mask = LVIF_TEXT;
-        item.cchTextMax = 256;
-        item.iItem = m_nNumOccupiedRows;
-        item.iSubItem = 0;
-        item.iItem = ListView_InsertItem(hList, &item);
+        auto lpItem{ std::make_unique<LV_ITEM>() };
+        lpItem->mask = LVIF_TEXT;
+        lpItem->cchTextMax = 256;
+        lpItem->iItem = m_nNumOccupiedRows;
+        lpItem->iItem = ListView_InsertItem(hList, lpItem.get());
 
-        ASSERT(item.iItem == m_nNumOccupiedRows);
+        ASSERT(lpItem->iItem == m_nNumOccupiedRows);
 
         m_nNumOccupiedRows++;
     }
@@ -623,15 +624,13 @@ void Dlg_MemBookmark::ClearAllBookmarks()
     ListView_DeleteAllItems(GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES));
 }
 
-void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
+void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark& Bookmark)
 {
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
-    int n;
-    char c;
+    unsigned int addr{};
+    unsigned int width{};
 
     switch (Bookmark.Type())
     {
@@ -651,20 +650,18 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
             break;
     }
 
-    char buffer[32];
-    sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(width) << std::hex << Bookmark.Value();
+    auto str{ oss.str() };
 
-    if(*buffer)
+    auto count{ 0 };
+    for (auto& ch : str)
     {
-        for (unsigned int i = 0; i < strlen(buffer); i++)
-        {
-            c = buffer[i];
-            n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
-            MemoryViewerControl::editData(addr, (i % 2 != 0), n);
+        auto n = (ch >= 'a') ? (ch - 'a' + 10) : (ch - '0');
+        MemoryViewerControl::editData(addr, ra::is_odd(count), n);
 
-            if (i % 2 != 0)
-                addr--;
-        }
+        if (ra::is_odd(count))
+            addr--;
     }
 }
 
@@ -735,20 +732,20 @@ void Dlg_MemBookmark::ExportJSON()
                                 LPWSTR pStr = nullptr;
                                 if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
-                                    Document doc;
+                                    rapidjson::Document doc;
                                     auto& allocator = doc.GetAllocator();
                                     doc.SetObject();
 
-                                    Value bookmarks(kArrayType);
+                                    rapidjson::Value bookmarks{ rapidjson::kArrayType };
 
                                     for (auto bookmark : m_vBookmarks)
                                     {
-                                        Value item(kObjectType);
+                                        rapidjson::Value item{ rapidjson::kObjectType };
 
                                         oss.str("");
                                         oss << ra::Narrow(bookmark->Description());
                                         auto str{ oss.str() }; 
-                                        Value s{ str.c_str(), allocator };
+                                        rapidjson::Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -779,8 +776,8 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
 {
     std::ifstream ifile{ sFilename };
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
 
     if (doc.ParseStream(isw); !doc.HasParseError())
     {

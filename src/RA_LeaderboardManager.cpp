@@ -85,7 +85,8 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
     }
 }
 
-void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
+#if RA_EXPORTS
+void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
 {
     if (!doc.HasMember("Response"))
     {
@@ -93,9 +94,9 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
         return;
     }
 
-    const Value& Response = doc["Response"];
+    const auto& Response = doc["Response"];
 
-    const Value& LBData = Response["LBData"];
+    const auto& LBData = Response["LBData"];
 
     const std::string& sFormat = LBData["Format"].GetString();
     const ra::LeaderboardID nLBID = static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint());
@@ -112,7 +113,7 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     pLB->ClearRankInfo();
 
     RA_LOG("LB Data, Top Entries:\n");
-    const Value& TopEntries = Response["TopEntries"];
+    const auto& TopEntries = Response["TopEntries"];
     for (auto& NextEntry : TopEntries.GetArray())
     {
         const unsigned int nRank = NextEntry["Rank"].GetUint();
@@ -127,8 +128,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     pLB->SortRankInfo();
 
-    const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-    const Value& RankData = Response["RankInfo"];
+    const auto& TopEntriesFriends = Response["TopEntriesFriends"];
+    const auto& RankData = Response["RankInfo"];
 
     //	TBD!
     //char sTestData[ 4096 ];
@@ -146,6 +147,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
 
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
+#endif // RA_EXPORTS
+
 
 void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
 {

@@ -2,6 +2,7 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
+#define NOMINMAX
 #include <WTypes.h>
 
 class Dlg_RichPresence

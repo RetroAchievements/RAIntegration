@@ -22,8 +22,8 @@ size_t CodeNotes::Load(const std::string& sFile)
 
     std::ifstream ifile{ sFile, std::ios::binary };
 
-    Document doc;
-    IStreamWrapper isw{ ifile };
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
     doc.ParseStream(isw);
 
     if (!doc.HasParseError())
@@ -70,7 +70,7 @@ BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 }
 
 //	static
-void CodeNotes::OnCodeNotesResponse(Document& doc)
+void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
 {
     //	Persist then reload
     const ra::GameID nGameID = doc["GameID"].GetUint();
@@ -97,7 +97,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         args['m'] = std::to_string(nAddr);
         args['n'] = sNote;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestSubmitCodeNote, args, doc))
         {
             //	OK!

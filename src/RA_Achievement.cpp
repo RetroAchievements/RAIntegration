@@ -153,8 +153,7 @@ BOOL Achievement::Test()
 
 void Achievement::Clear()
 {
-    if(!std::empty(m_vConditions))
-        m_vConditions.Clear();
+    m_vConditions.Clear();
 
     m_nAchievementID = 0;
 
@@ -175,12 +174,9 @@ void Achievement::Clear()
 
     m_bProgressEnabled = FALSE;
 
-    if (!std::empty(m_sProgress))
-        m_sProgressMax.clear();
-    if(!std::empty(m_sProgressMax))
-        m_sProgressMax.clear();
-    if (!std::empty(m_sProgressFmt))
-        m_sProgressMax.clear();
+    m_sProgressMax = "";
+    m_sProgressMax = "";
+    m_sProgressMax = "";
 
     m_fProgressLastShown = 0.0f;
 

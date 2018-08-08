@@ -30,7 +30,6 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <locale>
-#include <chrono> // for testing execution time
 #include <memory>
 #include <direct.h>
 #include <fstream>

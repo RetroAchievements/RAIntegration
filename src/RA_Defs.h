@@ -2,9 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-
-
-
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -27,7 +24,6 @@
     #define NOWINOFFSETS
     #define NOWINSTYLES
 */
-
 
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
@@ -52,23 +48,6 @@
 #define NOPROFILER
 #define NODEFERWINDOWPOS
 #define NOMCX  
-
-// It's a bit strange, if we don't wrap around an "#ifndef" it will be disabled
-// What these do is automatically use the secured version of C function if the buffer is statically allocated
-// Dynamic buffers will still need (via make_unique, new, or malloc) will still need the _s appended
-// You can't use the ones namespace std however as those will still be the ISO pre-C11 functions (C11 isn't implemented in MSVC but is in clang/gcc)
-// https://docs.microsoft.com/en-us/cpp/c-runtime-library/secure-template-overloads
-#ifndef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT 1
-#endif // !_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT
-
-#ifndef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-#endif // !_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-
-#ifndef _CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-#endif // !_CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES
 
 #include <Windows.h>
 #include <WindowsX.h>

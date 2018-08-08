@@ -1,7 +1,6 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
-#include <chrono> // execution time testing
 #include <fstream>
 #include <iomanip> // setw,setfill
 #include <memory>

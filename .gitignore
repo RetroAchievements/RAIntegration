@@ -2,11 +2,6 @@
 /src/RA_BuildVer.h
 *.user
 /RetroAchievementsKey
-src/*_REMOTE_*.cpp
-src/*_BACKUP_*.cpp
-src/*_BASE_*.cpp
-src/*_LOCAL_*.cpp
-src/clipboard.txt
 
 # Output files
 /obj
@@ -14,5 +9,3 @@ src/clipboard.txt
 *.pdb
 *.dll
 
-# Misc. Folders
-Error lists/

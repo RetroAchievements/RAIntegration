@@ -161,8 +161,7 @@ void Achievement::Clear()
     m_sDescription.clear();
     m_sAuthor.clear();
 
-    if(!m_sBadgeImageURI.empty())
-        m_sBadgeImageURI.clear();
+    m_sBadgeImageURI.clear();
 
     m_nPointValue = 0;
     m_bActive = FALSE;

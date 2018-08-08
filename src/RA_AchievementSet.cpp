@@ -382,15 +382,15 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         if (m_nSetType == AchievementSetType::Local)
         {
-            auto buffer{ std::make_unique<char[]>(2048) };
+            auto buffer{ std::make_unique<char[]>(4096) };
 
             //	Get min ver:
-            ifile.getline(buffer.get(), 2048);
+            ifile.getline(buffer.get(), 4096);
             //	UNUSED at this point? TBD
             auto nCharsRead{ ifile.gcount() };
             
             //	Get game title:
-            ifile.getline(buffer.get(), 2048);
+            ifile.getline(buffer.get(), 4096);
 
             //	Loading Local from file...?
             if (nCharsRead = ifile.gcount(); nCharsRead > 0)
@@ -398,7 +398,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             while (!ifile.eof())
             {
-                ifile.getline(buffer.get(), 2048);
+                ifile.getline(buffer.get(), 4096);
                 if (nCharsRead = ifile.gcount() - 1; nCharsRead > 0)
                 {
                     if (buffer[0] == 'L')

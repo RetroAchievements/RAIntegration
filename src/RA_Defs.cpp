@@ -53,7 +53,7 @@ _Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
 _Use_decl_annotations_ std::wstring Widen(const char* str)
 {
     auto len{ ra::to_signed(std::strlen(str)) };
-    auto needed{::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0)};
+    auto needed{::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0)};
     // doesn't seem wchar_t is treated like a character type by default
     std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),

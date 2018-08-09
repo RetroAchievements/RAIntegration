@@ -143,20 +143,20 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
         //	meh
     }
 
-    const std::string sTitle = std::string(" " + ActiveMessage().Title() + " ");
-    const std::string sSubTitle = std::string(" " + ActiveMessage().Subtitle() + " ");
+    const std::wstring sTitle = L" " + ActiveMessage().Title() + L" ";
+    const std::wstring sSubTitle = L" " + ActiveMessage().Subtitle() + L" ";
 
     SelectObject(hDC, hFontTitle);
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), sTitle.length());
+    TextOutW(hDC, nTitleX, nTitleY, sTitle.c_str(), sTitle.length());
     SIZE szTitle = { 0, 0 };
-    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &szTitle);
+    GetTextExtentPoint32W(hDC, sTitle.c_str(), sTitle.length(), &szTitle);
 
     SIZE szAchievement = { 0, 0 };
     if (ActiveMessage().Subtitle().length() > 0)
     {
         SelectObject(hDC, hFontDesc);
-        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), sSubTitle.length());
-        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), &szAchievement);
+        TextOutW(hDC, nDescX, nDescY, sSubTitle.c_str(), sSubTitle.length());
+        GetTextExtentPoint32W(hDC, sSubTitle.c_str(), sSubTitle.length(), &szAchievement);
     }
 
     HGDIOBJ hPen = CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);

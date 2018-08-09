@@ -39,6 +39,9 @@ public:
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen(L"\xD83C\xDF0F"));
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen(std::string("\xF0\x9F\x8C\x8F")));
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen(std::wstring(L"\xD83C\xDF0F")));
+
+        // LATIN-1 - non-UTF-8 sequences converted to unicode placeholder character
+        Assert::AreEqual(std::wstring(L"D\xFFFDj\xFFFD vu"), Widen("D\xE9j\xE0 vu"));
     }
 };
 

@@ -34,13 +34,13 @@ private:
     ConditionSet m_conditions;
 };
 
-class RA_RichPresenceInterpretter
+class RA_RichPresenceInterpreter
 {
 public:
     static void PersistAndParseScript(ra::GameID nGameID, const std::string& sScript);
 
 public:
-    RA_RichPresenceInterpretter() {}
+    RA_RichPresenceInterpreter() {}
 
 public:
     void ParseRichPresenceFile(const std::string& sFilename);
@@ -58,6 +58,6 @@ private:
     std::string m_sDisplay;
 };
 
-extern RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+extern RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
 #endif // !RA_RICHPRESENCE_H

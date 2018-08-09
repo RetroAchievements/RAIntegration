@@ -23,21 +23,21 @@ class MessagePopup
 {
 public:
     MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo, HBITMAP hImg = nullptr) :
-        m_sMessageTitle(sTitle),
-        m_sMessageSubtitle(sSubtitle),
+        m_sMessageTitle(ra::Widen(sTitle)),
+        m_sMessageSubtitle(ra::Widen(sSubtitle)),
         m_nMessageType(nMsgType),
         m_hMessageImage(hImg)
     {
     }
 public:
-    const std::string& Title() const { return m_sMessageTitle; }
-    const std::string& Subtitle() const { return m_sMessageSubtitle; }
+    const std::wstring& Title() const { return m_sMessageTitle; }
+    const std::wstring& Subtitle() const { return m_sMessageSubtitle; }
     PopupMessageType Type() const { return m_nMessageType; }
     HBITMAP Image() const { return m_hMessageImage; }
 
 private:
-    const std::string m_sMessageTitle;
-    const std::string m_sMessageSubtitle;
+    const std::wstring m_sMessageTitle;
+    const std::wstring m_sMessageSubtitle;
     const PopupMessageType m_nMessageType;
     const HBITMAP m_hMessageImage;
 };

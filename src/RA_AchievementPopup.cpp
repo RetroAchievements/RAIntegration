@@ -143,8 +143,8 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
         //	meh
     }
 
-    const std::wstring sTitle = L" " + ra::Widen(ActiveMessage().Title()) + L" ";
-    const std::wstring sSubTitle = L" " + ra::Widen(ActiveMessage().Subtitle()) + L" ";
+    const std::wstring sTitle = L" " + ActiveMessage().Title() + L" ";
+    const std::wstring sSubTitle = L" " + ActiveMessage().Subtitle() + L" ";
 
     SelectObject(hDC, hFontTitle);
     TextOutW(hDC, nTitleX, nTitleY, sTitle.c_str(), sTitle.length());

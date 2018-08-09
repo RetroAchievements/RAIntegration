@@ -258,7 +258,7 @@ public:
     }
 };
 
-enum class AchievementSetType { Core, Unofficial, Local };
+enum AchievementSetType { Core, Unofficial, Local };
 
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);

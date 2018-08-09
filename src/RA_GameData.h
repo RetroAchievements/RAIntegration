@@ -23,7 +23,10 @@ public:
     const std::string& RichPresencePatch() { return m_sRichPresencePatch; }
     void SetRichPresencePatch(const std::string& str) { m_sRichPresencePatch = str; }
 
+#if RA_EXPORTS
     void ParseData(const rapidjson::Document& doc);
+#endif // RA_EXPORTS
+
 
 private:
     ra::GameID m_nGameID{};

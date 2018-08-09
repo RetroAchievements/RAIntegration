@@ -2,6 +2,7 @@
 
 std::unique_ptr<GameData> g_pCurrentGameData = std::make_unique<GameData>();
 
+#if RA_EXPORTS
 void GameData::ParseData(const rapidjson::Document& doc)
 {
     m_nGameID = doc["ID"].GetUint();
@@ -22,3 +23,5 @@ void GameData::ParseData(const rapidjson::Document& doc)
     //const std::string& sReleased = doc["Released"].IsNull() ? "Unknown" : doc["Released"].GetString();
     //const bool bIsFinal = doc["IsFinal"].GetBool();
 }
+#endif // RA_EXPORTS
+

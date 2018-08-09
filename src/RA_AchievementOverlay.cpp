@@ -544,7 +544,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     }
 
     SelectObject(hDC, g_hFontDesc);
-    if (g_nActiveAchievementSet == AchievementSetType::Core)
+    if (g_nActiveAchievementSet == Core)
     {
         for (size_t i = 0; i < nNumberOfAchievements; ++i)
         {
@@ -1357,7 +1357,7 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
 
     if (bCanLock)
     {
-        if (g_nActiveAchievementSet == AchievementSetType::Core)
+        if (g_nActiveAchievementSet == Core)
             bLocked = pAch->Active();
     }
 

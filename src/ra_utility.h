@@ -120,8 +120,8 @@ to_tstring(_In_ Arithmetic a) noexcept
 #endif // UNICODE
 } // end function to_tstring
 
-template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
-to_floating(_In_ Integral i) noexcept { return static_cast<double>(i); }
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
+to_floating(_In_ Arithmetic a) noexcept { return static_cast<double>(a); }
 
 template<
     typename Arithmetic,

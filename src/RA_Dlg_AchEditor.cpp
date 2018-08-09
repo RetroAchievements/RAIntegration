@@ -1921,7 +1921,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             m_pSelectedAchievement->SetBadgeImage(sNewName);
             m_pSelectedAchievement->SetModified(TRUE);
 
-            if (g_nActiveAchievementSet == AchievementSetType::Core)
+            if (g_nActiveAchievementSet == Core)
             {
                 int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
                 g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Modified, "Yes");

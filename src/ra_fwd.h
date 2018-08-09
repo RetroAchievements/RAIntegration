@@ -23,6 +23,7 @@ using PTBYTE = wchar_t*;
 #endif // !_TCHAR_DEFINED
 
 #ifndef _WINDEF_
+using BOOL   = int;
 using DWORD  = unsigned long;
 using LPVOID = void*;
 #endif // !_WINDEF_

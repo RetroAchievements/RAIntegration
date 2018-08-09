@@ -2,7 +2,6 @@
 
 #include <atlbase.h> // CComPtr
 #include <fstream>
-#include <iomanip> // setw,setfill
 #include <memory>
 
 #include "RA_Core.h"
@@ -648,20 +647,22 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark& Bookmark)
         default:
             break;
     }
-
-    std::ostringstream oss;
-    oss << std::setfill('0') << std::setw(width) << std::hex << Bookmark.Value();
-    auto str{ oss.str() };
-
-    auto count{ 0 };
-    for (auto& ch : str)
+    
+    if (auto buffer{ std::make_unique<char[]>(32) }; sprintf_s(buffer.get(), 32, "%0*x", width, Bookmark.Value()) != -1)
     {
-        auto n = (ch >= 'a') ? (ch - 'a' + 10) : (ch - '0');
-        MemoryViewerControl::editData(addr, ra::is_odd(count), n);
+        std::string str{ buffer.release() };
+        auto count{ 0 };
+        for (auto& ch : str)
+        {
+            auto n{ (ch >= 'a') ? (ch - 'a' + 10)
+                                : (ch - '0') };
+            MemoryViewerControl::editData(addr, ra::is_odd(count), n);
 
-        if (ra::is_odd(count))
-            addr--;
-    }
+            if (ra::is_odd(count))
+                addr--;
+            count++;
+        }
+    }  
 }
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)

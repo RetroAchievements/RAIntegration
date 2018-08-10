@@ -40,7 +40,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             args['c'] = std::to_string(g_ConsoleID);
 
             Document doc;
-            if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
+            if (RAWeb::DoBlockingRequest(ra::RequestType::GamesList, args, doc))
             {
                 const Value& Data = doc["Response"];
 
@@ -119,7 +119,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     args['c'] = std::to_string(g_ConsoleID);
 
                     Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
+                    if (RAWeb::DoBlockingRequest(ra::RequestType::SubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
                     {
                         const Value& Response = doc["Response"];
 

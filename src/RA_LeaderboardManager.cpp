@@ -81,7 +81,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
         args['v'] = sValidationMD5;
         args['s'] = std::to_string(nValue);
 
-        RAWeb::CreateThreadedHTTPRequest(RequestSubmitLeaderboardEntry, args);
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::SubmitLeaderboardEntry, args);
     }
 }
 

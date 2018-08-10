@@ -103,7 +103,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
             args['t'] = Token();		//	Plaintext password(!)
 
             Document doc;
-            if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
+            if (RAWeb::DoBlockingRequest(ra::RequestType::Login, args, doc))
             {
                 HandleSilentLoginResponse(doc);
             }
@@ -128,7 +128,7 @@ void LocalRAUser::AttemptSilentLogin()
     PostArgs args;
     args['u'] = Username();
     args['t'] = Token();
-    RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::Login, args);
 
     m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
@@ -168,7 +168,7 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     m_aFriends.clear();
 
     LoadOrFetchUserImage();
-    RequestFriendList();
+   FriendList();
 
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
@@ -213,13 +213,13 @@ void LocalRAUser::OnFriendListResponse(const Document& doc)
     }
 }
 
-void LocalRAUser::RequestFriendList()
+void LocalRAUser::FriendList()
 {
     PostArgs args;
     args['u'] = Username();
     args['t'] = Token();
 
-    RAWeb::CreateThreadedHTTPRequest(RequestType::RequestFriendList, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::FriendList, args);
 }
 
 RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
@@ -255,7 +255,7 @@ void LocalRAUser::PostActivity(ActivityType nActivityType)
             args['a'] = std::to_string(nActivityType);
             args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
 
-            RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
+            RAWeb::CreateThreadedHTTPRequest(ra::RequestType::PostActivity, args);
             break;
         }
 

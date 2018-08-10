@@ -217,8 +217,8 @@ HBITMAP LoadOrFetchBadge(const std::string& sBadgeURI, const RASize& sz)
         PostArgs args;
         args['b'] = sBadgeURI;
         //	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
-        if (!RAWeb::HTTPRequestExists(RequestBadge, sBadgeURI) && !RAWeb::HTTPResponseExists(RequestBadge, sBadgeURI))
-            RAWeb::CreateThreadedHTTPRequest(RequestBadge, args, sBadgeURI);
+        if (!RAWeb::HTTPRequestExists(ra::RequestType::Badge, sBadgeURI) && !RAWeb::HTTPResponseExists(ra::RequestType::Badge, sBadgeURI))
+            RAWeb::CreateThreadedHTTPRequest(ra::RequestType::Badge, args, sBadgeURI);
 
         return nullptr;
     }
@@ -238,8 +238,8 @@ HBITMAP LoadOrFetchUserPic(const std::string& sUserName, const RASize& sz)
         PostArgs args;
         args['u'] = sUserName;
         //	Ensure it's not in the queue to be processed or has been processed, waiting for handling:
-        if (!RAWeb::HTTPRequestExists(RequestUserPic, sUserName) && !RAWeb::HTTPResponseExists(RequestUserPic, sUserName))
-            RAWeb::CreateThreadedHTTPRequest(RequestUserPic, args, sUserName);
+        if (!RAWeb::HTTPRequestExists(ra::RequestType::UserPic, sUserName) && !RAWeb::HTTPResponseExists(ra::RequestType::UserPic, sUserName))
+            RAWeb::CreateThreadedHTTPRequest(ra::RequestType::UserPic, args, sUserName);
 
         // This really should be handled
         return nullptr;

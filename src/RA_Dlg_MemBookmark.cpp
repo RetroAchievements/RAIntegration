@@ -26,19 +26,19 @@ enum class BookmarkSubItems { CSI_DESC, CSI_ADDRESS, CSI_VALUE, CSI_PREVIOUS, CS
 
 namespace enum_sizes {
 
-_CONSTANT_VAR NumBookmarkSubColumns{ 5 };
+_CONSTANT_VAR NUM_BOOKMARK_SUBCOLUMNS{ 5 };
 
 } // namespace enum_sizes
 
-inline constexpr std::array<BookmarkSubItems, enum_sizes::NumBookmarkSubColumns> aBookmarkSubItems{
+inline constexpr std::array<BookmarkSubItems, enum_sizes::NUM_BOOKMARK_SUBCOLUMNS> aBookmarkSubItems{
     BookmarkSubItems::CSI_DESC, BookmarkSubItems::CSI_ADDRESS, BookmarkSubItems::CSI_VALUE,
     BookmarkSubItems::CSI_PREVIOUS, BookmarkSubItems::CSI_CHANGES
 };
 
-inline constexpr std::array<LPCTSTR, enum_sizes::NumBookmarkSubColumns> COLUMN_TITLE{
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_BOOKMARK_SUBCOLUMNS> COLUMN_TITLE{
     _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes")
 };
-inline constexpr std::array<int, enum_sizes::NumBookmarkSubColumns> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+inline constexpr std::array<int, enum_sizes::NUM_BOOKMARK_SUBCOLUMNS> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 
 } // namespace ra
 
@@ -559,7 +559,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
         lplvColumn->cchTextMax = 255;
         lplvColumn->iSubItem   = i;
 
-        if (i == (ra::enum_sizes::NumBookmarkSubColumns - 1))
+        if (i == (ra::enum_sizes::NUM_BOOKMARK_SUBCOLUMNS - 1))
             lplvColumn->fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, i, lplvColumn.get());

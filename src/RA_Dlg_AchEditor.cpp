@@ -1432,7 +1432,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     if (ofn.lpstrFile != nullptr)
                     {
                         Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
+                        if (RAWeb::DoBlockingImageUpload(ra::UploadType::RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
                             //TBD: ensure that:
                             //	The image is copied to the cache/badge dir
@@ -2179,7 +2179,7 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const
 
 void BadgeNames::FetchNewBadgeNamesThreaded()
 {
-    RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::BadgeIter);
 }
 
 void BadgeNames::OnNewBadgeNames(const Document& data)

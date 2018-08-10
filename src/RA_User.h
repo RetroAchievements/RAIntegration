@@ -76,7 +76,7 @@ public:
     void ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin);
     void Logout();
 
-    void RequestFriendList();
+    void FriendList();
     void OnFriendListResponse(const Document& doc);
 
     RAUser* AddFriend(const std::string& sFriend, unsigned int nScore);

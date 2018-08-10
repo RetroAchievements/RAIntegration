@@ -64,7 +64,7 @@ BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 
     PostArgs args;
     args['g'] = std::to_string(nID);
-    RAWeb::CreateThreadedHTTPRequest(RequestCodeNotes, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::CodeNotes, args);
     return TRUE;
 }
 
@@ -97,7 +97,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         args['n'] = sNote;
 
         Document doc;
-        if (RAWeb::DoBlockingRequest(RequestSubmitCodeNote, args, doc))
+        if (RAWeb::DoBlockingRequest(ra::RequestType::SubmitCodeNote, args, doc))
         {
             //	OK!
             MessageBeep(0xFFFFFFFF);
@@ -129,7 +129,7 @@ BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
         args['n'] = "";
 
         //	faf
-        RAWeb::CreateThreadedHTTPRequest(RequestSubmitCodeNote, args);
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::SubmitCodeNote, args);
     }
 
     return TRUE;

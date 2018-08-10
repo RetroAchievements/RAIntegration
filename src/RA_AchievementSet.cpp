@@ -227,7 +227,7 @@ void AchievementSet::Test()
                     args['a'] = std::to_string(ach.ID());
                     args['h'] = std::to_string(static_cast<int>(g_bHardcoreModeActive));
 
-                    RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
+                    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::SubmitAwardAchievement, args);
                 }
             }
 
@@ -384,7 +384,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
     Document doc;
-    if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
+    if (RAWeb::DoBlockingRequest(ra::RequestType::Patch, args, doc) &&
         doc.HasMember("Success") &&
         doc["Success"].GetBool() &&
         doc.HasMember("PatchData"))
@@ -559,7 +559,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 args['g'] = std::to_string(nGameID);
                 args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
-                RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
+                RAWeb::CreateThreadedHTTPRequest(ra::RequestType::Unlocks, args);
 
                 std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
 

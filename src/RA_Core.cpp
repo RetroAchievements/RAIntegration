@@ -260,13 +260,13 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //	Update news:
     PostArgs args;
     args['c'] = std::to_string(6);
-    RAWeb::CreateThreadedHTTPRequest(RequestNews, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::News, args);
 
     //////////////////////////////////////////////////////////////////////////
     //	Attempt to fetch latest client version:
     args.clear();
     args['c'] = std::to_string(g_ConsoleID);
-    RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args);	//	g_sGetLatestClientPage
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::LatestClientPage, args);	//	g_sGetLatestClientPage
 
     //	TBD:
     //if( RAUsers::LocalUser().Username().length() > 0 )
@@ -274,7 +274,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //	args.clear();
     //	args[ 'u' ] = RAUsers::LocalUser().Username();
     //	args[ 't' ] = RAUsers::LocalUser().Token();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
+    //	RAWeb::CreateThreadedHTTPRequest( ra::RequestType::RequestScore, args );
     //}
 
     return TRUE;
@@ -406,7 +406,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['m'] = g_sCurrentROMMD5;
 
         Document doc;
-        if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
+        if (RAWeb::DoBlockingRequest(ra::RequestType::GameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
             if (nGameID == 0)	//	Unknown
@@ -600,7 +600,7 @@ API int CCONV _RA_HandleHTTPResults()
             Document doc;
             BOOL bJSONParsedOK = FALSE;
 
-            if (pObj->GetRequestType() == RequestBadge)
+            if (pObj->GetRequestType() == ra::RequestType::Badge)
             {
                 //	Ignore...
             }
@@ -611,11 +611,11 @@ API int CCONV _RA_HandleHTTPResults()
 
             switch (pObj->GetRequestType())
             {
-                case RequestLogin:
+                case ra::RequestType::Login:
                     RAUsers::LocalUser().HandleSilentLoginResponse(doc);
                     break;
 
-                case RequestBadge:
+                case ra::RequestType::Badge:
                 {
                     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
                     const std::string& sBadgeURI = pObj->GetData();
@@ -637,15 +637,15 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestBadgeIter:
+                case ra::RequestType::BadgeIter:
                     g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
                     break;
 
-                case RequestUserPic:
+                case ra::RequestType::UserPic:
                     RAUsers::OnUserPicDownloaded(*pObj);
                     break;
 
-                case RequestScore:
+                case ra::RequestType::Score:
                 {
                     ASSERT(doc["Success"].GetBool());
                     if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
@@ -666,13 +666,13 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"RequestScore bad response!?");
-                        RA_LOG("RequestScore bad response!?");
+                        ASSERT(!"ra::RequestType::RequestScore bad response!?");
+                        RA_LOG("ra::RequestType::RequestScore bad response!?");
                     }
                 }
                 break;
 
-                case RequestLatestClientPage:
+                case ra::RequestType::LatestClientPage:
                 {
                     if (doc.HasMember("LatestVersion"))
                     {
@@ -699,13 +699,13 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
-                        RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
+                        ASSERT(!"ra::RequestType::RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
+                        RA_LOG("ra::RequestType::RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
                     }
                 }
                 break;
 
-                case RequestSubmitAwardAchievement:
+                case ra::RequestType::SubmitAwardAchievement:
                 {
                     //	Response to an achievement being awarded:
                     ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
@@ -743,35 +743,35 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
+                        ASSERT(!"ra::RequestType::RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
+                        RA_LOG("ra::RequestType::RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
                     }
                 }
                 break;
 
-                case RequestNews:
+                case ra::RequestType::News:
                     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
                     _WriteBufferToFile(RA_NEWS_FILENAME, doc);
                     g_AchievementOverlay.InstallNewsArticlesFromFile();
                     break;
 
-                case RequestAchievementInfo:
+                case ra::RequestType::AchievementInfo:
                     g_AchExamine.OnReceiveData(doc);
                     break;
 
-                case RequestCodeNotes:
+                case ra::RequestType::CodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
                     break;
 
-                case RequestSubmitLeaderboardEntry:
+                case ra::RequestType::SubmitLeaderboardEntry:
                     RA_LeaderboardManager::OnSubmitEntry(doc);
                     break;
 
-                case RequestLeaderboardInfo:
+                case ra::RequestType::LeaderboardInfo:
                     g_LBExamine.OnReceiveData(doc);
                     break;
 
-                case RequestUnlocks:
+                case ra::RequestType::Unlocks:
                     AchievementSet::OnRequestUnlocks(doc);
                     break;
             }
@@ -872,7 +872,7 @@ static void RA_CheckForUpdate()
     args['c'] = std::to_string(g_ConsoleID);
 
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
+    if (RAWeb::DoBlockingRequest(ra::RequestType::LatestClientPage, args, Response))
     {
         std::string sReply = std::move(Response);
         if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
@@ -1095,7 +1095,7 @@ void _FetchGameHashLibraryFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
+    if (RAWeb::DoBlockingRequest(ra::RequestType::HashLibrary, args, Response))
         _WriteBufferToFile(RA_GAME_HASH_FILENAME, Response);
 }
 
@@ -1106,7 +1106,7 @@ void _FetchGameTitlesFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestGamesList, args, Response))
+    if (RAWeb::DoBlockingRequest(ra::RequestType::GamesList, args, Response))
         _WriteBufferToFile(RA_GAME_LIST_FILENAME, Response);
 }
 
@@ -1117,7 +1117,7 @@ void _FetchMyProgressFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
+    if (RAWeb::DoBlockingRequest(ra::RequestType::AllProgress, args, Response))
         _WriteBufferToFile(RA_MY_PROGRESS_FILENAME, Response);
 }
 

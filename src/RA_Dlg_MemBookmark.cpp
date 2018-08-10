@@ -1,6 +1,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
+#include <memory>    // std::make_unique
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -19,24 +20,33 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
+
+
 }
 
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+enum class BookmarkSubItems { CSI_DESC, CSI_ADDRESS, CSI_VALUE, CSI_PREVIOUS, CSI_CHANGES };
 
+namespace ra {
+namespace enum_sizes {
 
-enum BookmarkSubItems
-{
-    CSI_DESC,
-    CSI_ADDRESS,
-    CSI_VALUE,
-    CSI_PREVIOUS,
-    CSI_CHANGES,
+_CONSTANT_VAR NumBookmarkSubColumns{ 5 };
 
-    NumColumns
+} // namespace enum_sizes
+
+inline constexpr std::array<BookmarkSubItems, enum_sizes::NumBookmarkSubColumns> aBookmarkSubItems{
+    BookmarkSubItems::CSI_DESC, BookmarkSubItems::CSI_ADDRESS, BookmarkSubItems::CSI_VALUE,
+    BookmarkSubItems::CSI_PREVIOUS, BookmarkSubItems::CSI_CHANGES
 };
+
+inline constexpr std::array<LPCTSTR, enum_sizes::NumBookmarkSubColumns> COLUMN_TITLE{
+    _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes")
+};
+inline constexpr std::array<int, enum_sizes::NumBookmarkSubColumns> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+
+} // namespace ra
+
+
 
 INT_PTR CALLBACK Dlg_MemBookmark::s_MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -225,10 +235,10 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         switch (i)
                         {
-                            case CSI_ADDRESS:
+                            case ra::etoi(BookmarkSubItems::CSI_ADDRESS):
                                 swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
                                 break;
-                            case CSI_VALUE:
+                            case ra::etoi(BookmarkSubItems::CSI_VALUE):
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
                                 else
@@ -241,7 +251,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case CSI_PREVIOUS:
+                            case ra::etoi(BookmarkSubItems::CSI_PREVIOUS):
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
                                 else
@@ -254,7 +264,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case CSI_CHANGES:
+                            case ra::etoi(BookmarkSubItems::CSI_CHANGES):
                                 swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
@@ -316,14 +326,15 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
 
-                        if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_DESC)
+                        using namespace ra::rel_ops;
+                        if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == BookmarkSubItems::CSI_DESC))
                         {
                             nSelItemBM = pOnClick->iItem;
                             nSelSubItemBM = pOnClick->iSubItem;
 
                             EditLabel(pOnClick->iItem, pOnClick->iSubItem);
                         }
-                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_ADDRESS)
+                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == BookmarkSubItems::CSI_ADDRESS)
                         {
                             g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
                             MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
@@ -538,30 +549,36 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < NumColumns; ++i)
+    auto lplvColumn{ std::make_unique<LV_COLUMN>() };
+    for (auto& col : ra::aBookmarkSubItems)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
-        col.pszText = const_cast<LPTSTR>(colTitle.c_str());
-        col.cchTextMax = 255;
-        col.iSubItem = i;
+        const auto i{ ra::to_unsigned(ra::etoi(col)) };
+        lplvColumn->mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
+        lplvColumn->fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
+        lplvColumn->cx         = ra::COLUMN_WIDTH.at(i);
 
-        col.fmt = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
-        if (i == NumColumns - 1)
-            col.fmt |= LVCFMT_FILL;
+        // NB: The column title has to cached before hand or we won't see it. -SBS
+        ra::tstring tszText{ ra::COLUMN_TITLE.at(i) };
+        lplvColumn->pszText    = tszText.data();
+        lplvColumn->cchTextMax = 255;
+        lplvColumn->iSubItem   = i;
 
-        ListView_InsertColumn(hList, i, (LPARAM)&col);
+        if (i == (ra::enum_sizes::NumBookmarkSubColumns - 1))
+            lplvColumn->fmt |= LVCFMT_FILL;
+
+        ListView_InsertColumn(hList, i, lplvColumn.get());
     }
 
     m_nNumOccupiedRows = 0;
 
-    BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
-    bSuccess = ListView_EnableGroupView(hList, FALSE);
-
+    auto bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
+#if _WIN32
+    bSuccess = ra::to_unsigned(ListView_EnableGroupView(hList, FALSE));
+#elif _WIN64
+    bSuccess = static_cast<DWORD>(ra::to_unsigned(ListView_EnableGroupView(hList, FALSE)));
+#else
+#error Unknown platform, Windows is currently the only supported platform!
+#endif // _WIN32
 }
 
 void Dlg_MemBookmark::AddAddress()

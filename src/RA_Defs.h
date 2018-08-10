@@ -134,7 +134,7 @@ using namespace std::string_literals;
 #define _CONSTANT_VAR        constexpr auto
 #endif // _HAS_CXX17        
 
-#define _CONSTANT_LOC constexpr // local vars can't be inline
+#define _CONSTANT_LOC constexpr auto // local vars can't be inline
 #define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"

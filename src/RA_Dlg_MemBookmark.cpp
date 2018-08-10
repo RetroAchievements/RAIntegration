@@ -19,15 +19,11 @@ HWND g_hIPEEditBM;
 int nSelItemBM;
 int nSelSubItemBM;
 
-namespace {
+namespace ra {
 
-
-}
-
-inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ { L"Text Document (*.txt)", L"*.txt" } };
 enum class BookmarkSubItems { CSI_DESC, CSI_ADDRESS, CSI_VALUE, CSI_PREVIOUS, CSI_CHANGES };
 
-namespace ra {
 namespace enum_sizes {
 
 _CONSTANT_VAR NumBookmarkSubColumns{ 5 };
@@ -235,10 +231,10 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         switch (i)
                         {
-                            case ra::etoi(BookmarkSubItems::CSI_ADDRESS):
+                            case ra::etoi(ra::BookmarkSubItems::CSI_ADDRESS):
                                 swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_VALUE):
+                            case ra::etoi(ra::BookmarkSubItems::CSI_VALUE):
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
                                 else
@@ -251,7 +247,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_PREVIOUS):
+                            case ra::etoi(ra::BookmarkSubItems::CSI_PREVIOUS):
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
                                 else
@@ -264,7 +260,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_CHANGES):
+                            case ra::etoi(ra::BookmarkSubItems::CSI_CHANGES):
                                 swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
@@ -327,14 +323,14 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
 
                         using namespace ra::rel_ops;
-                        if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == BookmarkSubItems::CSI_DESC))
+                        if ((pOnClick->iItem != -1) and (pOnClick->iSubItem == ra::BookmarkSubItems::CSI_DESC))
                         {
                             nSelItemBM = pOnClick->iItem;
                             nSelSubItemBM = pOnClick->iSubItem;
 
                             EditLabel(pOnClick->iItem, pOnClick->iSubItem);
                         }
-                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == BookmarkSubItems::CSI_ADDRESS)
+                        else if ((pOnClick->iItem != -1) and (pOnClick->iSubItem == ra::BookmarkSubItems::CSI_ADDRESS))
                         {
                             g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
                             MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
@@ -725,7 +721,7 @@ void Dlg_MemBookmark::ExportJSON()
     HRESULT hr;
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))
         {
             std::ostringstream oss;
             oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
@@ -853,7 +849,7 @@ std::string Dlg_MemBookmark::ImportDialog()
     HRESULT hr;
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))
         {
             if (SUCCEEDED(hr = pDlg->Show(nullptr)))
             {

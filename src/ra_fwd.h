@@ -3,7 +3,9 @@
 #pragma once
 
 // Forward declaring namespace std caused problems
+#ifndef _XSTRING_
 #include <xstring>
+#endif // !_XSTRING_
 
 #ifndef _TCHAR_DEFINED
 #if _MBCS

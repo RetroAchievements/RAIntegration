@@ -8,6 +8,10 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#ifndef _MEMORY_
+#include <memory>
+#endif // !_MEMORY_
+
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
 #endif // WIN32_LEAN_AND_MEAN
@@ -22,8 +26,9 @@
 
 namespace {
 
-const size_t MIN_RESULTS_TO_DUMP = 500000;
-const size_t MIN_SEARCH_PAGE_SIZE = 50;
+using namespace ra::int_literals;
+_CONSTANT_VAR MIN_RESULTS_TO_DUMP{ 500000_z };
+_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE{ 50_z };
 
 }
 
@@ -873,34 +878,46 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 if (pDIS->itemID == -1)
                     break;
 
-                if (m_SearchResults.size() > 0)
+                if (!m_SearchResults.empty())
                 {
-                    TCHAR buffer[1024];
-
-                    if (pDIS->itemID < 2)
+                    // TBD: Make a dynamic overload for UpdateSearchResult and/or makes this message be processed by
+                    //      it's own delegate/callback. -Samer
+                    if (TCHAR buffer[1024]; pDIS->itemID < 2U)
                     {
-                        if (pDIS->itemID == 0)
+                        if (pDIS->itemID == 0U)
                         {
-                            const std::string& sFirstLine = m_SearchResults[m_nPage].m_results.Summary();
-                            if (sFirstLine.empty())
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), "Invalid Range");
+                            if (const auto& sFirstLine{ m_SearchResults[m_nPage].m_results.Summary()
+                                }; sFirstLine.empty())
+                            {
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), _T("Invalid Range"));
+                            }
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), sFirstLine.c_str());
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), NativeStr(sFirstLine).c_str());
                         }
                         else
                         {
-                            SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            unsigned int nMatches = m_SearchResults[m_nPage].m_results.MatchingAddressCount();
-                            if (nMatches > MIN_RESULTS_TO_DUMP)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches! (Displaying first %u results)"), nMatches, MIN_RESULTS_TO_DUMP);
-                            else if (nMatches == 0)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found *ZERO* matches!"));
+                            // https://docs.microsoft.com/en-us/windows/desktop/api/wingdi/nf-wingdi-settextcolor
+                            // https://docs.microsoft.com/en-us/windows/desktop/controls/wm-drawitem
+                            if (::SetTextColor(pDIS->hDC, RGB(0, 100, 150)) == CLR_INVALID)
+                                return 0;
+                            
+                            if (const auto nMatches{ m_SearchResults[m_nPage].m_results.MatchingAddressCount()
+                                }; nMatches > MIN_RESULTS_TO_DUMP)
+                            {
+                                _stprintf_s(buffer, sizeof(buffer),
+                                            _T("Found %u matches! (Displaying first %zu results)"), nMatches,
+                                            MIN_RESULTS_TO_DUMP);
+                            }
+                            else if (nMatches == 0U)
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), _T("Found *ZERO* matches!"));
                             else
                                 _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches!"), nMatches);
                         }
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-                        SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
+                                 DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        if (::SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT)) == CLR_INVALID)
+                            return 0;
                     }
                     else
                     {
@@ -909,7 +926,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if (!currentSearch.m_results.GetMatchingAddress(pDIS->itemID - 2, result))
                             break;
 
-                        unsigned int nVal = 0;
+                        auto nVal{ 0U };
                         UpdateSearchResult(result, nVal, buffer);
 
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);

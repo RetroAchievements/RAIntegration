@@ -64,12 +64,6 @@
 
 #include <tchar.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
-
 #include <map>
 #include <array>
 #include <sstream>

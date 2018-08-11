@@ -108,15 +108,6 @@ to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
-#if _WIN32
-using float_type = float;
-#elif _WIN64
-using float_type = double;
-#else
-using float_type = long double; // should we even care bout this?
-#endif // _WIN32
-
-
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD ra::tstring
 to_tstring(_In_ Arithmetic a) noexcept
 {
@@ -129,16 +120,20 @@ to_tstring(_In_ Arithmetic a) noexcept
 #endif // UNICODE
 } // end function to_tstring
 
-template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
-to_floating(_In_ Integral i) noexcept { return static_cast<float_type>(i); }
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
+to_floating(_In_ Arithmetic a) noexcept { return static_cast<double>(a); }
 
-template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
-_NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept
-{
-    if (std::signbit(fp))
-        return std::lround(fp);
-    return to_unsigned(std::lround(fp));
-}
+template<
+    typename FloatingPoint,
+    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_signed_v<FloatingPoint>>
+>
+_NODISCARD _CONSTANT_FN ftol(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
+
+template<
+    typename FloatingPoint,
+    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_unsigned_v<FloatingPoint>>
+>
+_NODISCARD _CONSTANT_FN ftoul(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
 sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
@@ -184,7 +179,6 @@ tstrtoul(_In_z_ LPCTSTR _String,
 #error Unsupported character set detected.
 #endif // _MBCS
 }
-
 
 // Don't depend on std::rel_ops for stuff here because they assume the types are the same
 namespace rel_ops {

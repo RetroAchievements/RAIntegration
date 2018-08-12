@@ -738,6 +738,20 @@ public:
         memory[0] = 2; // trigger win condition. alt group has no normal conditions, it should be considered false
         AssertSetTest(set, false, true, false);
     }
+
+    TEST_METHOD(TestAlwaysTrue)
+    {
+        ConditionSet set;
+        set.SetAlwaysTrue();
+        AssertSetTest(set, true, false, false);
+    }
+
+    TEST_METHOD(TestAlwaysFalse)
+    {
+        ConditionSet set;
+        set.SetAlwaysFalse();
+        AssertSetTest(set, false, false, false);
+    }
 };
 
 } // namespace tests

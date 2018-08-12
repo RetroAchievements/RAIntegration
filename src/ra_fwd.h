@@ -26,7 +26,6 @@ using tstring = std::basic_string<TCHAR>;
 using DWORD         = unsigned long;
 using ARGB          = DWORD;
 using ByteAddress   = std::size_t;
-using DataPos       = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 using GameID        = std::size_t;

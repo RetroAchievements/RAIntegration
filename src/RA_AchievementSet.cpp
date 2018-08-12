@@ -495,7 +495,10 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 g_pCurrentGameData->ParseData(doc);
                 ra::GameID nGameID = g_pCurrentGameData->GetGameID();
 
-                RA_RichPresenceInterpreter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
+                //	Rich Presence
+                SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+                _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
+                g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
                 const Value& AchievementsData = doc["Achievements"];
                 for (SizeType i = 0; i < AchievementsData.Size(); ++i)

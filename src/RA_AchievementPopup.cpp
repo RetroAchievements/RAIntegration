@@ -130,17 +130,13 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     const int nTitleY = static_cast<int>(fFadeInY);
     const int nDescY = nTitleY + 32;
 
-    if (ActiveMessage().Type() == PopupAchievementUnlocked || ActiveMessage().Type() == PopupAchievementError)
-    {
-        if (ActiveMessage().Image() != nullptr)
-            DrawImage(hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64);
+    HBITMAP hBitmap = ActiveMessage().Image();
+    if (hBitmap != nullptr)
+    { 
+        DrawImage(hDC, hBitmap, nTitleX, nTitleY, 64, 64);
 
         nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
         nDescX += 64 + 4;
-    }
-    else if (ActiveMessage().Type() == PopupLeaderboardInfo)
-    {
-        //	meh
     }
 
     const std::string sTitle = std::string(" " + ActiveMessage().Title() + " ");

@@ -85,6 +85,14 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
         else if (g_pUnofficialAchievements->Find(nNextAchID) != nullptr)
             g_pUnofficialAchievements->Unlock(nNextAchID);
     }
+
+    // pre-fetch locked images for any achievements the player hasn't earned
+    for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
+    {
+        Achievement& ach = g_pCoreAchievements->GetAchievement(i);
+        if (ach.Active())
+            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
+    }
 }
 
 Achievement& AchievementSet::AddAchievement()
@@ -201,7 +209,7 @@ void AchievementSet::Test()
                         MessagePopup("Test: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
                 {
@@ -209,7 +217,7 @@ void AchievementSet::Test()
                         MessagePopup("Modified: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
                 {
@@ -217,7 +225,7 @@ void AchievementSet::Test()
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementError,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else
                 {
@@ -549,9 +557,14 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             fclose(pFile);
 
+            // calculate the total number of points for the core set, and pre-fetch badge images
             unsigned int nTotalPoints = 0;
             for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
-                nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
+            {
+                Achievement& ach = g_pCoreAchievements->GetAchievement(i);
+                ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI());
+                nTotalPoints += ach.Points();
+            }
 
             if (RAUsers::LocalUser().IsLoggedIn())
             {
@@ -567,7 +580,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
 
                 g_PopupWindows.AchievementPopups().AddMessage(
-                    MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
+                    MessagePopup("Loaded " + g_pCurrentGameData->GameTitle(),
+                        sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), PopupInfo));
             }
 
             return TRUE;

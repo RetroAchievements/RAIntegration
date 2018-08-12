@@ -113,7 +113,7 @@
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>
     <RootNamespace>RA_Integration</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -183,6 +183,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>RA_Integration</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <OutDir>..\bin\$(Configuration)\</OutDir>
@@ -212,6 +214,8 @@
     <LibraryPath>C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>RA_Integration</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugUnicode|Win32'">
     <OutDir>..\bin\$(Configuration)\</OutDir>
@@ -233,6 +237,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ControlFlowGuard>false</ControlFlowGuard>
       <ShowIncludes>false</ShowIncludes>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -334,6 +339,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4091</DisableSpecificWarnings>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>

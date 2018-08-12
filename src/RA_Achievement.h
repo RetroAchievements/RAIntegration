@@ -4,25 +4,36 @@
 
 #include "RA_Condition.h"
 
-
+// just in-case
+#ifndef _ARRAY_
+#include <array>
+#endif // !_ARRAY_
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
-enum Achievement_DirtyFlags
-{
-    Dirty_Title = 1 << 0,
-    Dirty_Desc = 1 << 1,
-    Dirty_Points = 1 << 2,
-    Dirty_Author = 1 << 3,
-    Dirty_ID = 1 << 4,
-    Dirty_Badge = 1 << 5,
-    Dirty_Conditions = 1 << 6,
-    Dirty_Votes = 1 << 7,
-    Dirty_Description = 1 << 8,
 
-    Dirty__All = (unsigned int)(-1)
+namespace ra {
+
+// TBD: either use the max value of a signed int for Achievement_DirtyFlags::All or make it's underlying_type
+//      a size_type (such as std::size_t, std::uintptr_t).
+enum class Achievement_DirtyFlags : std::size_t
+{
+    NotDirty    = 0,
+    Title       = 1 << 0,
+    Desc        = 1 << 1,
+    Points      = 1 << 2,
+    Author      = 1 << 3,
+    ID          = 1 << 4,
+    Badge       = 1 << 5,
+    Conditions  = 1 << 6,
+    Votes       = 1 << 7,
+    Description = 1 << 8,
+
+    All = to_unsigned(-1)
 };
+
+} // namespace ra
 
 class Achievement
 {
@@ -108,10 +119,14 @@ public:
     void Parse(const Value& element);
 
     //	Used for rendering updates when editing achievements. Usually always false.
-    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
-    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
-    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
-    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
+    _CONSTANT_FN IsDirty() const noexcept { return (m_nDirtyFlags != ra::Achievement_DirtyFlags{}); }
+    _CONSTANT_FN SetDirtyFlag(_In_ ra::Achievement_DirtyFlags nFlags) noexcept
+    {
+        using namespace ra::bitwise_ops;
+        const auto _{ m_nDirtyFlags |= nFlags };
+    }
+    _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = ra::Achievement_DirtyFlags{}; }
 
 private:
     /*const*/ AchievementSetType m_nSetType;
@@ -139,7 +154,7 @@ private:
 
     float m_fProgressLastShown;	//	The last shown progress
 
-    unsigned int m_nDirtyFlags;	//	Use for rendering when editing.
+    ra::Achievement_DirtyFlags m_nDirtyFlags = ra::Achievement_DirtyFlags{}; // Use for rendering when editing.
 
     time_t m_nTimestampCreated;
     time_t m_nTimestampModified;

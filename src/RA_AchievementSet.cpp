@@ -747,7 +747,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                                 cond.CompSource().SetValues(CondSourceVal[j], CondSourceLastVal[j]);
                                 cond.CompTarget().SetValues(CondTargetVal[j], CondTargetLastVal[j]);
 
-                                pAch->SetDirtyFlag(Dirty_Conditions);
+                                pAch->SetDirtyFlag(ra::Achievement_DirtyFlags::Conditions);
                             }
                         }
                     }

@@ -96,18 +96,23 @@ _Use_decl_annotations_ std::string Narrow(const std::string& str)
 
 } // namespace ra
 
+#ifndef RA_UTEST
+extern std::string g_sHomeDir;
+#endif
 
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
 
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
+#ifndef RA_UTEST
+    std::string sLogFile = g_sHomeDir + RA_LOG_FILENAME;
     FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
+    if (fopen_s(&pf, sLogFile.c_str(), "a") == 0)
     {
         fwrite(data, sizeof(char), strlen(data), pf);
         fclose(pf);
     }
+#endif
 }
 
 void RADebugLog(const char* format, ...)
@@ -129,15 +134,7 @@ void RADebugLog(const char* format, ...)
     *p++ = '\n';
     *p = '\0';
 
-    OutputDebugString(NativeStr(buf).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(buf, sizeof(char), strlen(buf), pf);
-        fclose(pf);
-    }
+    RADebugLogNoFormat(buf);
 }
 
 BOOL DirectoryExists(const char* sPath)

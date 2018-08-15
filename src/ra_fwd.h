@@ -23,9 +23,17 @@ using PTBYTE = wchar_t*;
 #endif // !_TCHAR_DEFINED
 
 #ifndef _WINDEF_
+struct HDC__;
+struct HBITMAP__;
+struct tagRECT;
+
 using BOOL   = int;
 using DWORD  = unsigned long;
 using LPVOID = void*;
+
+using HDC     = HDC__*;
+using HBITMAP = HBITMAP__*;
+using RECT    = tagRECT;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
@@ -37,8 +45,8 @@ namespace ra {
 using tstring = std::basic_string<TCHAR>;
 
 using ARGB          = DWORD;
-using ByteAddress   = std::size_t;
 using DataPos       = std::size_t;
+using ByteAddress   = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 using GameID        = std::size_t;

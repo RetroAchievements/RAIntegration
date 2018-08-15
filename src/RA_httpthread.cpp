@@ -339,7 +339,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
     RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
     ResponseOut.clear();
 
-    const char* sHostName = bIsImageRequest ? _RA_HostName() : "i.retroachievements.org";
+    const char* sHostName = bIsImageRequest ? "i.retroachievements.org" : _RA_HostName();
     using namespace ra::int_literals;
 
     size_t nTemp{ 0_z };

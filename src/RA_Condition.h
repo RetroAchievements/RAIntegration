@@ -208,6 +208,9 @@ public:
     bool Test(bool& bDirtyConditions, bool& bWasReset);
     bool Reset();
 
+    void SetAlwaysTrue();
+    void SetAlwaysFalse();
+
     void Clear() { m_vConditionGroups.clear(); }
     size_t GroupCount() const { return m_vConditionGroups.size(); }
     void AddGroup() { m_vConditionGroups.emplace_back(); }

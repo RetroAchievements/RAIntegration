@@ -7,6 +7,17 @@
 
 namespace ra {
 
+// Requires: NarrowType is smaller than WideType and both are Arithmetic types (Integral or FloatingPoint)
+template<
+    typename NarrowType,
+    typename WideType,
+    class = std::enable_if_t<
+    (is_smaller_type_v<NarrowType, WideType>) and
+    (std::is_arithmetic_v<NarrowType> and std::is_arithmetic_v<WideType>)
+    >
+> _NODISCARD _CONSTANT_FN
+narrow_cast(_In_ WideType wt) noexcept { return static_cast<NarrowType>(wt); }
+
 // "using namespace ra::int_literals;" must be typed before using if not in namespace ra.
 inline namespace int_literals {
 
@@ -97,17 +108,6 @@ is_even(_In_ Integral i) noexcept { return ((i % 2) == Integral{}); }
 
 template<typename Integral, class = std::enable_if_t<std::is_integral_v<Integral>>> _NODISCARD _CONSTANT_FN
 is_odd(_In_ Integral i) noexcept { return !(is_even(i)); }
-
-// Requires: NarrowType is smaller than WideType and both are Arithmetic types (Integral or FloatingPoint)
-template<
-    typename NarrowType,
-    typename WideType,
-    class = std::enable_if_t<
-    (is_smaller_type_v<NarrowType, WideType>) and
-    (std::is_arithmetic_v<NarrowType> and std::is_arithmetic_v<WideType>)
-    >
-> _NODISCARD _CONSTANT_FN
-narrow_cast(_In_ WideType wt) noexcept { return static_cast<NarrowType>(wt); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }

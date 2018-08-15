@@ -2,13 +2,14 @@
 #define RA_GAMEDATA_H
 #pragma once
 
-#if RA_EXPORTS
 #define RAPIDJSON_NOMEMBERITERATORCLASS
 #define RAPIDJSON_HAS_STDSTRING 1
-#include <rapidjson/document.h>
-#endif // RA_EXPORTS
+#include <rapidjson/document.h>  
 
-#include <memory>
+#ifndef _MEMORY_
+#include <memory>  
+#endif // !_MEMORY_
+
 #include "ra_fwd.h"
 
 class GameData
@@ -23,10 +24,7 @@ public:
     const std::string& RichPresencePatch() { return m_sRichPresencePatch; }
     void SetRichPresencePatch(const std::string& str) { m_sRichPresencePatch = str; }
 
-#if RA_EXPORTS
     void ParseData(const rapidjson::Document& doc);
-#endif // RA_EXPORTS
-
 
 private:
     ra::GameID m_nGameID{};

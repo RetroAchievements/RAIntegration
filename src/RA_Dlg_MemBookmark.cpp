@@ -650,7 +650,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark& Bookmark)
     
     if (auto buffer{ std::make_unique<char[]>(32) }; sprintf_s(buffer.get(), 32, "%0*x", width, Bookmark.Value()) != -1)
     {
-        std::string str{ buffer.release() };
+        std::string str{ buffer.get() };
         auto count{ 0 };
         for (auto& ch : str)
         {

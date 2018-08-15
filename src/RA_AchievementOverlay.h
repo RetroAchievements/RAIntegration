@@ -3,7 +3,6 @@
 #pragma once
 
 #define NOMINMAX
-
 #include <ddraw.h>
 
 #include "RA_Achievement.h"

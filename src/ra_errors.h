@@ -12,10 +12,8 @@ namespace ra {
 using tstring = std::basic_string<TCHAR>;
 
 _EXTERN_C
-
 _Success_(return != 0)
 int CALLBACK ShowError(_In_ const tstring& message, _In_opt_ HWND hwnd = nullptr) noexcept;
-_NODISCARD bool CALLBACK InvalidModule() noexcept;
 
 // Shows the last system error with a message without throwing
 int CALLBACK ShowLastError() noexcept;
@@ -28,7 +26,7 @@ _END_EXTERN_C
 /// </summary>
 [[noreturn]] void ThrowLastError();
 // returns the last system error as an std::error_code, used when throwing system_error exceptions
-_NODISCARD auto CALLBACK GetLastErrorCode() noexcept->std::error_code;
+_NODISCARD std::error_code CALLBACK GetLastErrorCode() noexcept;
 
 // Returns the last Win32 error, in string format. Returns an empty string if there
 // is no error. This is mainly for throwing std::system_error

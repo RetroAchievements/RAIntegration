@@ -3,7 +3,6 @@
 #pragma once
 
 #define NOMINMAX
-
 #include <wtypes.h>
 
 class RA_Dlg_Login

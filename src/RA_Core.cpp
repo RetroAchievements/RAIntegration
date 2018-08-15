@@ -1242,9 +1242,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         {
             if (g_AchievementEditorDialog.GetHWND() == nullptr)
             {
-                g_AchievementEditorDialog.InstallHWND(CreateDialog(::GetModuleHandle(_T("RA_Integration.dll")),
-                                                      MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR),
-                                                      ::GetAncestor(::GetActiveWindow(), GA_ROOT),
+                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst,
+                                                      MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd,
                                                       g_AchievementEditorDialog.s_AchievementEditorProc));
             }
             if (g_AchievementEditorDialog.GetHWND() != nullptr)

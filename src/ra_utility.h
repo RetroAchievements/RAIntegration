@@ -7,98 +7,38 @@
 
 namespace ra {
 
+// "using namespace ra::int_literals;" must be typed before using if not in namespace ra.
 inline namespace int_literals {
 
-// Don't feel like casting non-stop
+// Used to prevent implicit narrowing conversions, most of these are based off of the format specs in printf
+
+// Example: 0 is an int (4 bytes on x86, x86_64, and AMD64 based processors) short has no such literal which is
+//          usually two bytes. So "short s = 0;" is already an implicit narrowing conversion.
+//
+//          Some types are "polymorphic" most notably (u)intptr_t, size_t, and ptrdiff_t
+//          (as well as aliases for them like LRESULT, WPARAM, LPARAM).
+//
+//          Therefore two literals "_z" and "_i" have been made for unsigned and signed integral values,
+//          respectively, without need for explicit narrowing conversion.
+//
+//          Literals that already exist are not included (L, LL, U, UL, ULL, s, ms, etc.)
+
 // There's also standard literals for strings and clock types
 
 // N.B.: The parameter can only be either "unsigned long-long", char16_t, or char32_t
 
-/// <summary>
-///   <para>
-///     Use it if you need an unsigned integer without the need for explicit
-///     narrowing conversions.
-///   </para>
-///   <para>
-///     usage: <c>auto some_int{21_z};</c> where <c>21</c> is
-///            <paramref name="n" />.
-///   </para>
-/// </summary>
-/// <param name="n">The integer.</param>
-/// <returns>The integer as <c>std::size_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::size_t>(n);
-} // end operator""_z
-
-
-/// <summary>
-  ///   <para>
-  ///     Use it if you need an integer without the need for explicit narrowing
-  ///     conversions.
-  ///   </para>
-  ///   <para>
-  ///     usage: <c>auto some_int{1_i};</c> where <c>1</c> is
-  ///            <paramref name="n" />.
-  ///   </para>
-  /// </summary>
-  /// <param name="n">The integer.</param>
-  /// <returns>The integer as <c>std::intptr_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::intptr_t>(n);
-} // end operator""_i
-
-  // We need one for DWORD, because it doesn't match LPDWORD for some stuff
-_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept
-{
-    return static_cast<DWORD>(n);
-} // end operator""_dw
-
-  // streamsize varies as well
-_NODISCARD _CONSTANT_VAR operator""_ss(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::streamsize>(n);
-} // end operator""_ss
-
-  // Literal for unsigned short
-_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::uint16_t>(n);
-} // end operator""_hu
-
-
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept
-{
-    return static_cast<ra::DataPos>(n);
-} // end operator""_dp
-
-  // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
-  // These are here if you follow the standards (starts with ISO C++11/C11) rvalue conversions
-
-
-_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept
-{
-    return static_cast<ByteAddress>(n);
-} // end operator""_ba
-
-
-_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<AchievementID>(n);
-} // end operator""_achid
-
-
-_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<LeaderboardID>(n);
-} // end operator""_lbid
-
-
-_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<GameID>(n);
-} // end operator""_gameid
+_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept { return static_cast<std::size_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept { return static_cast<std::intptr_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept { return narrow_cast<DWORD>(n); }
+_NODISCARD _CONSTANT_FN operator""_ss(_In_ unsigned long long n) noexcept { return static_cast<std::streamsize>(n); }
+_NODISCARD _CONSTANT_FN operator""_h(_In_ unsigned long long n) noexcept { return narrow_cast<std::int16_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept { return narrow_cast<std::uint16_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_hhu(_In_ unsigned long long n) noexcept { return narrow_cast<std::uint8_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept { return static_cast<DataPos>(n); }
+_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept { return static_cast<ByteAddress>(n); }
+_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept { return static_cast<AchievementID>(n); }
+_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept { return static_cast<LeaderboardID>(n); }
+_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept { return static_cast<GameID>(n); }
 
 } // inline namespace int_literals
 

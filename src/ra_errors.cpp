@@ -3,9 +3,9 @@
   
 namespace ra {
 
-auto CALLBACK GetLastErrorCode() noexcept -> std::error_code
+std::error_code CALLBACK GetLastErrorCode() noexcept
 {
-    return { static_cast<int>(::GetLastError()), std::system_category() };
+    return { to_signed(::GetLastError()), std::system_category() };
 }
 
 _Use_decl_annotations_
@@ -16,8 +16,6 @@ int CALLBACK ShowError(const tstring& message, HWND hwnd) noexcept
 
     return ::MessageBox(hwnd, message.c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
 }
-
-bool CALLBACK InvalidModule() noexcept { return(::GetModuleHandle(_T("RA_Integration.dll")) == nullptr); }
 
 int CALLBACK ShowLastError() noexcept
 {

@@ -33,7 +33,6 @@ enum CondSubItems
     NumColumns
 };
 
-BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing

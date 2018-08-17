@@ -118,6 +118,7 @@ extern bool g_bLeaderboardsActive;
 extern bool g_bLBDisplayNotification;
 extern bool g_bLBDisplayCounter;
 extern bool g_bLBDisplayScoreboard;
+extern bool g_bPreferDecimalVal;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.

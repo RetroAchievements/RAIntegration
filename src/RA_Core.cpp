@@ -459,7 +459,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             g_pUnofficialAchievements->LoadFromFile(nGameID);
             g_pLocalAchievements->LoadFromFile(nGameID);
 
-            RAUsers::LocalUser().PostActivity(PlayerStartedPlaying);
+            RAUsers::LocalUser().PostActivity(ra::ActivityType::PlayerStartedPlaying);
         }
     }
     else

@@ -156,7 +156,7 @@ template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
 
-/// <summary>Converts the integral representation of an <typeparamref name="Enum" /> as a string.</summary>
+/// <summary>Converts the integral representation of an <c>enum</c> to a string.</summary>
 /// <param name="e">The Enum.</param>
 /// <returns>Number as string.</returns>
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>

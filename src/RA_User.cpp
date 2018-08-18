@@ -243,27 +243,20 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
     return pUser;
 }
 
-void LocalRAUser::PostActivity(ActivityType nActivityType)
+void LocalRAUser::PostActivity(ra::ActivityType eActivityType)
 {
-    switch (nActivityType)
+    if (eActivityType == ra::ActivityType::PlayerStartedPlaying)
     {
-        case PlayerStartedPlaying:
-        {
-            PostArgs args;
-            args['u'] = Username();
-            args['t'] = Token();
-            args['a'] = std::to_string(nActivityType);
-            args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
+        PostArgs args;
+        args['u'] = Username();
+        args['t'] = Token();
+        args['a'] = ra::etos(eActivityType);
+        args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
 
-            RAWeb::CreateThreadedHTTPRequest(ra::RequestType::PostActivity, args);
-            break;
-        }
-
-        default:
-            //	unhandled
-            ASSERT(!"User isn't designed to handle posting this activity!");
-            break;
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::PostActivity, args);
     }
+    else //	unhandled
+        ASSERT(!"User isn't designed to handle posting this activity!");
 }
 
 void LocalRAUser::Clear()

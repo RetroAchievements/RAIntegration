@@ -116,7 +116,7 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
     m_nLeaderboardScrollOffset = 0;
 
     m_bInputLock = FALSE;
-    m_nTransitionState = TS_OFF;
+    m_nTransitionState = ra::TransitionState::Off;
     m_fTransitionTimer = ra::PAGE_TRANSITION_IN;
 
     m_nPageStackPointer = 0;
@@ -139,18 +139,18 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
 void AchievementOverlay::Activate()
 {
-    if (m_nTransitionState != TS_HOLD)
+    if (m_nTransitionState != ra::TransitionState::Hold)
     {
-        m_nTransitionState = TS_IN;
+        m_nTransitionState = ra::TransitionState::In;
         m_fTransitionTimer = ra::PAGE_TRANSITION_IN;
     }
 }
 
 void AchievementOverlay::Deactivate()
 {
-    if (m_nTransitionState != TS_OFF && m_nTransitionState != TS_OUT)
+    if (m_nTransitionState != ra::TransitionState::Off && m_nTransitionState != ra::TransitionState::Out)
     {
-        m_nTransitionState = TS_OUT;
+        m_nTransitionState = ra::TransitionState::Out;
         m_fTransitionTimer = 0.0f;
 
         RA_CauseUnpause();
@@ -195,24 +195,24 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
     //	FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
     {
-        if (m_nTransitionState == TS_OUT && !bPaused)
+        if (m_nTransitionState == ra::TransitionState::Out && !bPaused)
         {
             //	Skip to 'out' if we are full-screen
             m_fTransitionTimer = ra::PAGE_TRANSITION_OUT;
         }
     }
 
-    if (m_nTransitionState == TS_IN)
+    if (m_nTransitionState == ra::TransitionState::In)
     {
         m_fTransitionTimer += fDelta;
 
         if (m_fTransitionTimer >= 0.0f)
         {
             m_fTransitionTimer = 0.0f;
-            m_nTransitionState = TS_HOLD;
+            m_nTransitionState = ra::TransitionState::Hold;
         }
     }
-    else if (m_nTransitionState == TS_OUT)
+    else if (m_nTransitionState == ra::TransitionState::Out)
     {
         m_fTransitionTimer += fDelta;
         if (m_fTransitionTimer >= ra::PAGE_TRANSITION_OUT)
@@ -228,17 +228,17 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 // 				if( m_nCurrentPage == OP__MAX )
 // 					m_nCurrentPage = OverlayPage::Achievements;
 
-                m_nTransitionState = TS_IN;
+                m_nTransitionState = ra::TransitionState::In;
                 m_fTransitionTimer = ra::PAGE_TRANSITION_IN;
             }
             else
             {
-                m_nTransitionState = TS_OFF;
+                m_nTransitionState = ra::TransitionState::Off;
             }
         }
     }
 
-    if (m_nTransitionState == TS_OFF)
+    if (m_nTransitionState == ra::TransitionState::Off)
         return FALSE;
 
     //	Inputs! Restrict to ABCULDR+Start
@@ -480,7 +480,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 
         if (input.m_bLeftPressed || input.m_bRightPressed)
         {
-            if (m_nTransitionState == TS_HOLD)
+            if (m_nTransitionState == ra::TransitionState::Hold)
             {
                 SelectNextTopLevelPage(input.m_bRightPressed);
                 m_bInputLock = TRUE;
@@ -1118,7 +1118,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;	//	Not available!
 
-    if (m_nTransitionState == TS_OFF)
+    if (m_nTransitionState == ra::TransitionState::Off)
         return;
 
     const int nOuterBorder = 4;
@@ -1152,7 +1152,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     g_hFontTiny = CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, ra::FONT_TO_USE);
 
-    float fPctOffScreen = (m_nTransitionState == TS_IN) ?
+    float fPctOffScreen = (m_nTransitionState == ra::TransitionState::In) ?
         (m_fTransitionTimer / ra::PAGE_TRANSITION_IN) :
         (m_fTransitionTimer / ra::PAGE_TRANSITION_OUT);
 
@@ -1312,7 +1312,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
     HBRUSH hBarBack = GetStockBrush(DKGRAY_BRUSH);
     HBRUSH hBarFront = GetStockBrush(LTGRAY_BRUSH);
     auto fNumMax = ra::to_floating(nMax);
-    long long int nigger = 0;
+
     const float fInnerBarMaxSizePx = ra::to_floating(nH) - 4.0F;
 
     const float fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);

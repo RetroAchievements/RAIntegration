@@ -27,24 +27,15 @@ enum class OverlayPage
     Message_Viewer
 };
 
+enum TransitionState { Off, In, Hold, Out };
+
 namespace enum_sizes {
 
-_CONSTANT_VAR NUM_OVERLAY_PAGES{11U};
+_CONSTANT_VAR NUM_OVERLAY_PAGES{ 11U };
+_CONSTANT_VAR TS__MAX{ 4U };
 
 } // namespace enum_sizes
-
 } // namespace ra
-
-
-enum TransitionState
-{
-    TS_OFF = 0,
-    TS_IN,
-    TS_HOLD,
-    TS_OUT,
-
-    TS__MAX
-};
 
 class LeaderboardExamine
 {
@@ -122,8 +113,8 @@ public:
     void Render(HDC hDC, RECT* rcDest) const;
     BOOL Update(ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused);
 
-    BOOL IsActive() const { return(m_nTransitionState != TS_OFF); }
-    BOOL IsFullyVisible() const { return (m_nTransitionState == TS_HOLD); }
+    BOOL IsActive() const { return(m_nTransitionState != ra::TransitionState::Off); }
+    BOOL IsFullyVisible() const { return (m_nTransitionState == ra::TransitionState::Hold); }
 
     const int* GetActiveScrollOffset() const;
     const int* GetActiveSelectedItem() const;
@@ -183,7 +174,7 @@ private:
 
     BOOL					m_bInputLock{};	//	Waiting for pad release
     std::vector<NewsItem>	m_LatestNews;
-    TransitionState			m_nTransitionState{};
+    ra::TransitionState		m_nTransitionState{};
     float					m_fTransitionTimer{};
 
     ra::OverlayPage			m_Pages[5]{};
@@ -204,8 +195,8 @@ extern "C"
     API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
     API extern bool _RA_IsOverlayFullyVisible();
 
-    API extern void _RA_InitDirectX();
-    API extern void _RA_OnPaint(HWND hWnd);
+    //API extern void _RA_InitDirectX();
+    //API extern void _RA_OnPaint(HWND hWnd);
 }
 
 extern const COLORREF COL_TEXT;

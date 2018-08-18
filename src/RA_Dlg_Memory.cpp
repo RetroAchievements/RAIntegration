@@ -882,7 +882,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     // TBD: Make a dynamic overload for UpdateSearchResult and/or makes this message be processed by
                     //      it's own delegate/callback. -Samer
-                    if (TCHAR buffer[1024]; pDIS->itemID < 2U)
+                    if (TCHAR buffer[1024]{}; pDIS->itemID < 2U)
                     {
                         if (pDIS->itemID == 0U)
                         {
@@ -1911,5 +1911,5 @@ void Dlg_Memory::GenerateResizes(HWND hDlg)
     pDlgMemoryMin.y = windowRect.Height();
 
     vDlgMemoryResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ResizeContent::ALIGN_BOTTOM, TRUE));
+        GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ra::AlignType::BOTTOM, TRUE));
 }

@@ -34,6 +34,14 @@ using DWORD  = unsigned long;
 using LPVOID = void*;
 #endif // !_WINDEF_
 
+#ifndef _CTIME_
+namespace std {
+
+using ::time_t;
+
+} // namespace std
+#endif // !_CTIME_
+
 namespace ra {
 
 using tstring = std::basic_string<TCHAR>;

@@ -42,7 +42,7 @@ public:
     void ReloadLBXData(int nOffset);
     void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
     void OnEditAchievement(const Achievement& ach);
-    void OnClickAchievementSet(AchievementSetType nAchievementSet);
+    void OnClickAchievementSet(_In_ ra::AchievementSetType nAchievementSet);
 
     inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
 

@@ -1948,7 +1948,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             m_pSelectedAchievement->SetBadgeImage(sNewName);
             m_pSelectedAchievement->SetModified(TRUE);
 
-            if (g_nActiveAchievementSet == Core)
+            if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
             {
                 int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
                 g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Modified, "Yes");
@@ -2260,36 +2260,36 @@ void GenerateResizes(HWND hDlg)
     pDlgAchEditorMin.y = windowRect.Height();
 
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
+        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ra::AlignType::BOTTOM_RIGHT, TRUE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ResizeContent::ALIGN_BOTTOM, TRUE));
+        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ra::AlignType::BOTTOM, TRUE));
 
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ra::AlignType::RIGHT, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ra::AlignType::RIGHT, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ra::AlignType::RIGHT, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ra::AlignType::BOTTOM_RIGHT, FALSE));
 
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADDCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_ADDCOND), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DELETECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_DELETECOND), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_COPYCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_COPYCOND), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_PASTECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_PASTECOND), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ra::AlignType::BOTTOM, FALSE));
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, FALSE));
+        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ra::AlignType::BOTTOM, FALSE));
 
     vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDCLOSE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDCLOSE), ra::AlignType::BOTTOM_RIGHT, FALSE));
 }

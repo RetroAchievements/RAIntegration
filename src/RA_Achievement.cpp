@@ -7,7 +7,8 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-Achievement::Achievement(AchievementSetType nType) :
+_Use_decl_annotations_
+Achievement::Achievement(ra::AchievementSetType nType) noexcept :
     m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
 {
     Clear();
@@ -150,18 +151,19 @@ BOOL Achievement::Test()
     return bRetVal;
 }
 
-void Achievement::Clear()
+void Achievement::Clear() noexcept
 {
     m_vConditions.Clear();
 
-    m_nAchievementID = 0;
+    using namespace ra::int_literals;
+    m_nAchievementID = 0_achid;
 
     m_sTitle.clear();
     m_sDescription.clear();
     m_sAuthor.clear();
     m_sBadgeImageURI.clear();
 
-    m_nPointValue = 0;
+    m_nPointValue = 0U;
     m_bActive = FALSE;
     m_bModified = FALSE;
     m_bPauseOnTrigger = FALSE;
@@ -170,13 +172,13 @@ void Achievement::Clear()
     ClearBadgeImage();
 
     m_bProgressEnabled = FALSE;
-    m_sProgress[0] = '\0';
-    m_sProgressMax[0] = '\0';
-    m_sProgressFmt[0] = '\0';
-    m_fProgressLastShown = 0.0f;
+    m_sProgress = "";
+    m_sProgressMax = "";;
+    m_sProgressFmt = "";;
+    m_fProgressLastShown = 0.0F;
 
-    m_nTimestampCreated = 0;
-    m_nTimestampModified = 0;
+    m_nTimestampCreated = 0_tt;
+    m_nTimestampModified = 0_tt;
     //m_nUpvotes = 0;
     //m_nDownvotes = 0;
 }
@@ -304,18 +306,19 @@ std::string Achievement::CreateMemString() const
     return buffer;
 }
 
-void Achievement::ClearBadgeImage()
+void Achievement::ClearBadgeImage() noexcept
 {
-    if (m_hBadgeImage != nullptr)
+    // local callback
+    auto deleter =[](HBITMAP hbm) noexcept
     {
-        DeleteObject(m_hBadgeImage);
-        m_hBadgeImage = nullptr;
-    }
-    if (m_hBadgeImageLocked != nullptr)
-    {
-        DeleteObject(m_hBadgeImageLocked);
-        m_hBadgeImageLocked = nullptr;
-    }
+        if (hbm)
+        {
+            DeleteBitmap(hbm);
+            hbm = nullptr;
+        }
+    };
+    deleter(m_hBadgeImage);
+    deleter(m_hBadgeImageLocked);
 }
 
 void Achievement::Set(const Achievement& rRHS)

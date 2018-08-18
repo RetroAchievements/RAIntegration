@@ -38,10 +38,10 @@ enum class Achievement_DirtyFlags : std::size_t
 class Achievement
 {
 public:
-    Achievement(AchievementSetType nType);
+    explicit Achievement(_In_ ra::AchievementSetType nType) noexcept;
 
 public:
-    void Clear();
+    void Clear() noexcept;
     BOOL Test();
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
@@ -63,10 +63,10 @@ public:
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
 
-    BOOL IsCoreAchievement() const { return m_nSetType == Core; }
+    _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == ra::AchievementSetType::Core); }
 
     void SetID(ra::AchievementID nID);
-    inline ra::AchievementID ID() const { return m_nAchievementID; }
+    _NODISCARD _CONSTANT_FN ID() const noexcept { return m_nAchievementID; }
 
     inline const std::string& Title() const { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -104,7 +104,7 @@ public:
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }
 
     void SetBadgeImage(const std::string& sFilename);
-    void ClearBadgeImage();
+    void ClearBadgeImage() noexcept;
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
 
@@ -129,7 +129,7 @@ public:
     _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = ra::Achievement_DirtyFlags{}; }
 
 private:
-    /*const*/ AchievementSetType m_nSetType;
+    /*const*/ ra::AchievementSetType m_nSetType;
 
     ra::AchievementID m_nAchievementID;
     ConditionSet m_vConditions;

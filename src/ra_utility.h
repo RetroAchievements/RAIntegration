@@ -7,9 +7,6 @@
 
 namespace ra {
 
-// for x86_64 (or x64) calling conventions don't matter but there is a slight performance boost and size reduction
-// using __stdcall unless something explicitly define a function with __cdecl. These can't be exported as is anyway.
-
 inline namespace int_literals {
 
 // Don't feel like casting non-stop
@@ -17,91 +14,19 @@ inline namespace int_literals {
 
 // N.B.: The parameter can only be either "unsigned long-long", char16_t, or char32_t
 
-/// <summary>
-///   <para>
-///     Use it if you need an unsigned integer without the need for explicit
-///     narrowing conversions.
-///   </para>
-///   <para>
-///     usage: <c>auto some_int{21_z};</c> where <c>21</c> is
-///            <paramref name="n" />.
-///   </para>
-/// </summary>
-/// <param name="n">The integer.</param>
-/// <returns>The integer as <c>std::size_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::size_t>(n);
-} // end operator""_z
-
-
-/// <summary>
-  ///   <para>
-  ///     Use it if you need an integer without the need for explicit narrowing
-  ///     conversions.
-  ///   </para>
-  ///   <para>
-  ///     usage: <c>auto some_int{1_i};</c> where <c>1</c> is
-  ///            <paramref name="n" />.
-  ///   </para>
-  /// </summary>
-  /// <param name="n">The integer.</param>
-  /// <returns>The integer as <c>std::intptr_t</c>.</returns>
-_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::intptr_t>(n);
-} // end operator""_i
-
-  // We need one for DWORD, because it doesn't match LPDWORD for some stuff
-_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept
-{
-    return static_cast<DWORD>(n);
-} // end operator""_dw
-
-  // streamsize varies as well
-_NODISCARD _CONSTANT_VAR operator""_ss(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::streamsize>(n);
-} // end operator""_ss
-
-  // Literal for unsigned short
-_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept
-{
-    return static_cast<std::uint16_t>(n);
-} // end operator""_hu
-
-
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept
-{
-    return static_cast<ra::DataPos>(n);
-} // end operator""_dp
-
-  // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
-  // These are here if you follow the standards (starts with ISO C++11/C11) rvalue conversions
-
-
-_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept
-{
-    return static_cast<ByteAddress>(n);
-} // end operator""_ba
-
-
-_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<AchievementID>(n);
-} // end operator""_achid
-
-
-_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<LeaderboardID>(n);
-} // end operator""_lbid
-
-
-_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept
-{
-    return static_cast<GameID>(n);
-} // end operator""_gameid
+_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept { return static_cast<std::size_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept { return static_cast<std::intptr_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_tt(_In_ unsigned long long n) noexcept { return static_cast<std::time_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept { return static_cast<::DWORD>(n); }
+_NODISCARD _CONSTANT_FN operator""_ss(_In_ unsigned long long n) noexcept { return static_cast<std::streamsize>(n); }
+_NODISCARD _CONSTANT_FN operator""_h(_In_ unsigned long long n) noexcept { return static_cast<std::int16_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept { return static_cast<std::uint16_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_hhu(_In_ unsigned long long n) noexcept { return static_cast<std::uint8_t>(n); }
+_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept { return static_cast<DataPos>(n); }
+_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept { return static_cast<ByteAddress>(n); }
+_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept { return static_cast<AchievementID>(n); }
+_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept { return static_cast<LeaderboardID>(n); }
+_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept { return static_cast<GameID>(n); }
 
 } // inline namespace int_literals
 
@@ -318,7 +243,7 @@ operator<<(const Enum a, const std::underlying_type_t<Enum> b) noexcept
 {
     // too many risks of using signed numbers with bitwise shit, so we will make them unsigned no matter what
     using underlying_type = std::underlying_type_t<Enum>;
-    if constexpr(std::is_signed_v<underlying_type>)
+    if constexpr (std::is_signed_v<underlying_type>)
         return (itoe<Enum>(to_unsigned(etoi(a)) << to_unsigned(b)));
     else
         return (itoe<Enum>((etoi(a)) << b));
@@ -332,7 +257,7 @@ operator>>(const Enum a, const std::underlying_type_t<Enum> b) noexcept
 {
     // too many risks of using signed numbers with bitwise shift, so we will make them unsigned no matter what
     using underlying_type = std::underlying_type_t<Enum>;
-    if constexpr(std::is_signed_v<underlying_type>)
+    if constexpr (std::is_signed_v<underlying_type>)
         return (itoe<Enum>(to_unsigned(etoi(a)) >> to_unsigned(b)));
     else
         return (itoe<Enum>((etoi(a)) >> b));

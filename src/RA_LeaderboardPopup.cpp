@@ -6,21 +6,18 @@
 
 //	No emulator-specific code here please!
 
-namespace {
+namespace ra {
 
-const float SCOREBOARD_APPEAR_AT = 0.8f;
-const float SCOREBOARD_FADEOUT_AT = 6.2f;
-const float SCOREBOARD_FINISH_AT = 7.0f;
+_CONSTANT_VAR SCOREBOARD_APPEAR_AT  = 0.8f;
+_CONSTANT_VAR SCOREBOARD_FADEOUT_AT = 6.2f;
+_CONSTANT_VAR SCOREBOARD_FINISH_AT  = 7.0f;
+_CONSTANT_VAR FONT_TO_USE           = _T("Tahoma");
+_CONSTANT_VAR g_ColBG               = RGB(32, 32, 32);
+_CONSTANT_VAR FONT_SIZE_TITLE       = 28;
+_CONSTANT_VAR FONT_SIZE_SUBTITLE    = 22;
+_CONSTANT_VAR FONT_SIZE_TEXT        = 16;
 
-const char* FONT_TO_USE = "Tahoma";
-
-const COLORREF g_ColBG = RGB(32, 32, 32);
-
-const int FONT_SIZE_TITLE = 28;
-const int FONT_SIZE_SUBTITLE = 22;
-const int FONT_SIZE_TEXT = 16;
-
-}
+} // namespace ra 
 
 
 LeaderboardPopup::LeaderboardPopup()
@@ -32,21 +29,21 @@ void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
     m_vScoreboardQueue.push(nID);
 
-    if (m_fScoreboardShowTimer == SCOREBOARD_FINISH_AT)
+    if (m_fScoreboardShowTimer == ra::SCOREBOARD_FINISH_AT)
     {
         m_fScoreboardShowTimer = 0.0f;
-        m_nState = State_ShowingScoreboard;
+        m_nState = ra::PopupState::ShowingScoreboard;
     }
 }
 
 void LeaderboardPopup::Reset()
 {
-    m_fScoreboardShowTimer = SCOREBOARD_FINISH_AT;
+    m_fScoreboardShowTimer = ra::SCOREBOARD_FINISH_AT;
     while (!m_vScoreboardQueue.empty())
         m_vScoreboardQueue.pop();
 
     m_vActiveLBIDs.clear();
-    m_nState = State_ShowingProgress;
+    m_nState = ra::PopupState::ShowingProgress;
 }
 
 void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
@@ -57,7 +54,7 @@ void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScr
     if (bPaused)
         fDelta = 0.0f;
 
-    if (m_fScoreboardShowTimer >= SCOREBOARD_FINISH_AT)
+    if (m_fScoreboardShowTimer >= ra::SCOREBOARD_FINISH_AT)
     {
         //	No longer showing the scoreboard
         if (!m_vScoreboardQueue.empty())
@@ -71,14 +68,14 @@ void LeaderboardPopup::Update(ControllerInput input, float fDelta, BOOL bFullScr
             }
             else
             {
-                m_fScoreboardShowTimer = SCOREBOARD_FINISH_AT;
-                m_nState = State_ShowingProgress;
+                m_fScoreboardShowTimer = ra::SCOREBOARD_FINISH_AT;
+                m_nState = ra::PopupState::ShowingProgress;
             }
         }
         else
         {
-            m_fScoreboardShowTimer = SCOREBOARD_FINISH_AT;
-            m_nState = State_ShowingProgress;
+            m_fScoreboardShowTimer = ra::SCOREBOARD_FINISH_AT;
+            m_nState = ra::PopupState::ShowingProgress;
         }
     }
     else
@@ -123,24 +120,24 @@ float LeaderboardPopup::GetOffsetPct() const
 {
     float fVal = 0.0f;
 
-    if (m_fScoreboardShowTimer < SCOREBOARD_APPEAR_AT)
+    if (m_fScoreboardShowTimer < ra::SCOREBOARD_APPEAR_AT)
     {
         //	Fading in.
-        float fDelta = (SCOREBOARD_APPEAR_AT - m_fScoreboardShowTimer);
+        float fDelta = (ra::SCOREBOARD_APPEAR_AT - m_fScoreboardShowTimer);
 
         fDelta *= fDelta;	//	Quadratic
 
         fVal = fDelta;
     }
-    else if (m_fScoreboardShowTimer < (SCOREBOARD_FADEOUT_AT))
+    else if (m_fScoreboardShowTimer < (ra::SCOREBOARD_FADEOUT_AT))
     {
         //	Faded in - held
         fVal = 0.0f;
     }
-    else if (m_fScoreboardShowTimer < (SCOREBOARD_FINISH_AT))
+    else if (m_fScoreboardShowTimer < (ra::SCOREBOARD_FINISH_AT))
     {
         //	Fading out
-        float fDelta = (SCOREBOARD_FADEOUT_AT - m_fScoreboardShowTimer);
+        float fDelta = (ra::SCOREBOARD_FADEOUT_AT - m_fScoreboardShowTimer);
 
         fDelta *= fDelta;	//	Quadratic
 
@@ -163,17 +160,17 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
     SetTextColor(hDC, COL_POPUP);
 
-    HFONT hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    HFONT hFontTitle = CreateFont(ra::FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+        DEFAULT_PITCH, ra::FONT_TO_USE);
 
-    HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    HFONT hFontDesc = CreateFont(ra::FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+        DEFAULT_PITCH, ra::FONT_TO_USE);
 
-    HFONT hFontText = CreateFont(FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    HFONT hFontText = CreateFont(ra::FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+        DEFAULT_PITCH, ra::FONT_TO_USE);
 
 
     const int nWidth = rcDest.right - rcDest.left;
@@ -200,7 +197,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
     HGDIOBJ hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
 
-    HBRUSH hBrushBG = CreateSolidBrush(g_ColBG);
+    HBRUSH hBrushBG = CreateSolidBrush(ra::g_ColBG);
 
     RECT rcScoreboardFrame;
     if (g_bLBDisplayScoreboard)
@@ -216,7 +213,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
     switch (m_nState)
     {
-        case State_ShowingProgress:
+        case ra::PopupState::ShowingProgress:
         {
             if (!g_bLBDisplayCounter)
                 break;
@@ -253,7 +250,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
         }
         break;
 
-        case State_ShowingScoreboard:
+        case ra::PopupState::ShowingScoreboard:
         {
             if (!g_bLBDisplayScoreboard)
                 break;

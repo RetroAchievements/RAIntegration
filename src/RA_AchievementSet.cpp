@@ -17,27 +17,27 @@ AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
 AchievementSet** ACH_SETS[] = { &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
+static_assert(SIZEOF_ARRAY(ACH_SETS) == ra::enum_sizes::NUM_ACHIEVEMENTSET_TYPES, "Must match!");
 
-AchievementSetType g_nActiveAchievementSet = Core;
+ra::AchievementSetType g_nActiveAchievementSet = ra::AchievementSetType::Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
-
-void RASetAchievementCollection(AchievementSetType Type)
+_Use_decl_annotations_
+void RASetAchievementCollection(ra::AchievementSetType Type) noexcept
 {
     g_nActiveAchievementSet = Type;
-    g_pActiveAchievements = *ACH_SETS[Type];
+    g_pActiveAchievements = *ACH_SETS[ra::etoi(Type)];
 }
 
 std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
-        case Core:
+        case ra::AchievementSetType::Core:
             return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
-        case Unofficial:
+        case ra::AchievementSetType::Unofficial:
             return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
-        case Local:
+        case ra::AchievementSetType::Local:
             return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
         default:
             return "";
@@ -52,7 +52,7 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
         return TRUE;
     }
 
-    if (m_nSetType == Local)
+    if (m_nSetType == ra::AchievementSetType::Local)
     {
         //	We do not automatically delete Local patch files
         return TRUE;
@@ -145,7 +145,7 @@ unsigned int AchievementSet::NumActive() const
     return nNumActive;
 }
 
-void AchievementSet::Clear()
+void AchievementSet::Clear() noexcept
 {
     std::vector<Achievement>::iterator iter = m_Achievements.begin();
     while (iter != m_Achievements.end())
@@ -195,7 +195,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (g_nActiveAchievementSet != Core)
+                if (g_nActiveAchievementSet != ra::AchievementSetType::Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
@@ -438,7 +438,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         //	Store this: we are now assuming this is the correct checksum if we have a file for it
         g_pCurrentGameData->SetGameID(nGameID);
 
-        if (m_nSetType == Local)
+        if (m_nSetType == ra::AchievementSetType::Local)
         {
             const char EndLine = '\n';
             char buffer[4096];
@@ -502,19 +502,19 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 {
                     //	Parse into correct boxes
                     unsigned int nFlags = AchievementsData[i]["Flags"].GetUint();
-                    if (nFlags == 3 && m_nSetType == Core)
+                    if (nFlags == 3 && m_nSetType == ra::AchievementSetType::Core)
                     {
                         Achievement& newAch = AddAchievement();
                         newAch.Parse(AchievementsData[i]);
                     }
-                    else if (nFlags == 5 && m_nSetType == Unofficial)
+                    else if (nFlags == 5 && m_nSetType == ra::AchievementSetType::Unofficial)
                     {
                         Achievement& newAch = AddAchievement();
                         newAch.Parse(AchievementsData[i]);
                     }
                 }
 
-                if (m_nSetType != Core)
+                if (m_nSetType != ra::AchievementSetType::Core)
                 {
                     fclose(pFile);
                     return TRUE;

@@ -893,23 +893,23 @@ void Dlg_MemBookmark::GenerateResizes(HWND hDlg)
     pDlgMemBookmarkMin.y = windowRect.Height();
 
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
+        GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES), ra::AlignType::BOTTOM_RIGHT, TRUE));
 
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADD_BOOKMARK), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_ADD_BOOKMARK), ra::AlignType::RIGHT, FALSE));
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DEL_BOOKMARK), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_DEL_BOOKMARK), ra::AlignType::RIGHT, FALSE));
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CLEAR_CHANGE), ResizeContent::ALIGN_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_CLEAR_CHANGE), ra::AlignType::RIGHT, FALSE));
 
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_FREEZE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_FREEZE), ra::AlignType::BOTTOM_RIGHT, FALSE));
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DECIMALBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_DECIMALBOOKMARK), ra::AlignType::BOTTOM_RIGHT, FALSE));
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_SAVEBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_SAVEBOOKMARK), ra::AlignType::BOTTOM_RIGHT, FALSE));
     vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LOADBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+        GetDlgItem(hDlg, IDC_RA_LOADBOOKMARK), ra::AlignType::BOTTOM_RIGHT, FALSE));
 }
 
 BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)

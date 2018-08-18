@@ -554,7 +554,7 @@ bool ConditionSet::ParseFromString(const char*& sSerialized)
     ConditionGroup* group = nullptr;
     m_vConditionGroups.clear();
 
-    // if string starts with 'S', there's no Core group. generate an empty one and leave 'group' as null
+    // if string starts with 'S', there's noCoregroup. generate an empty one and leave 'group' as null
     // so the alt group will get created by the first condition.
     if (*sSerialized == 'S')
     {

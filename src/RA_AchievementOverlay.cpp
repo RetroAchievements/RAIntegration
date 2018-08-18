@@ -537,7 +537,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     }
 
     SelectObject(hDC, g_hFontDesc);
-    if (g_nActiveAchievementSet == Core)
+    if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
     {
         for (size_t i = 0; i < nNumberOfAchievements; ++i)
         {
@@ -1272,10 +1272,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         FillRect(hDC, &rc, g_hBrushBG);
 
         //	Draw control text:
-        _stprintf_s(buffer.get(), 1024, " ->:%s ", "Next");
+        _stprintf_s(buffer.get(), 1024, _T(" ->:%Ts "), _T("Next"));
         TextOut(hDC, nRightPx - nControlsX1, nControlsY1, buffer.get(), _tcslen(buffer.get()));
 
-        _stprintf_s(buffer.get(), 1024, " <-:%s ", "Prev");
+        _stprintf_s(buffer.get(), 1024, _T(" <-:%s "), _T("Prev"));
         TextOut(hDC, nRightPx - nControlsX1, nControlsY2, buffer.get(), _tcslen(buffer.get()));
 
         char cBackChar = 'B';
@@ -1287,10 +1287,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
             cSelectChar = 'C';
         }
 
-        _stprintf_s(buffer.get(), 1024, " %c:%s ", cBackChar, "Back");
+        _stprintf_s(buffer.get(), 1024, _T(" %c:%Ts "), cBackChar, _T("Back"));
         TextOut(hDC, nRightPx - nControlsX2, nControlsY1, buffer.get(), _tcslen(buffer.get()));
 
-        _stprintf_s(buffer.get(), 1024, " %c:%s ", cSelectChar, "Select");
+        _stprintf_s(buffer.get(), 1024, _T(" %c:%Ts "), cSelectChar, _T("Select"));
         TextOut(hDC, nRightPx - nControlsX2, nControlsY2, buffer.get(), _tcslen(buffer.get()));
     }
 
@@ -1352,7 +1352,7 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
 
     if (bCanLock)
     {
-        if (g_nActiveAchievementSet == Core)
+        if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
             bLocked = pAch->Active();
     }
 

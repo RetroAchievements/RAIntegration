@@ -232,9 +232,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     //////////////////////////////////////////////////////////////////////////
     //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet(Core);
-    g_pUnofficialAchievements = new AchievementSet(Unofficial);
-    g_pLocalAchievements = new AchievementSet(Local);
+    g_pCoreAchievements = new AchievementSet(ra::AchievementSetType::Core);
+    g_pUnofficialAchievements = new AchievementSet(ra::AchievementSetType::Unofficial);
+    g_pLocalAchievements = new AchievementSet(ra::AchievementSetType::Local);
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////

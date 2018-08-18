@@ -12,9 +12,9 @@
 class AchievementSet
 {
 public:
-    AchievementSet(AchievementSetType nType) :
-        m_nSetType(nType),
-        m_bProcessingActive(TRUE)
+    explicit AchievementSet(ra::AchievementSetType nType) noexcept :
+        m_nSetType{ nType },
+        m_bProcessingActive{ TRUE }
     {
         Clear();
     }
@@ -24,7 +24,7 @@ public:
     static void OnRequestUnlocks(const Document& doc);
 
 public:
-    void Clear();
+    void Clear() noexcept;
     void Test();
     void Reset();
 
@@ -75,9 +75,9 @@ public:
     BOOL HasUnsavedChanges();
 
 private:
-    const AchievementSetType m_nSetType;
+    const ra::AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive;
+    BOOL m_bProcessingActive{};
 };
 
 
@@ -88,9 +88,9 @@ extern AchievementSet* g_pUnofficialAchievements;
 extern AchievementSet* g_pLocalAchievements;
 
 extern AchievementSet* g_pActiveAchievements;
-extern AchievementSetType g_nActiveAchievementSet;
+extern ra::AchievementSetType g_nActiveAchievementSet;
 
-extern void RASetAchievementCollection(enum AchievementSetType Type);
+void RASetAchievementCollection(_In_ ra::AchievementSetType Type) noexcept;
 
 
 #endif // !RA_ACHIEVEMENTSET_H

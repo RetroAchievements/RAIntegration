@@ -1185,8 +1185,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
                     HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
 
-                    TCHAR sNewNoteWide[512];
-                    GetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
+                    WCHAR sNewNoteWide[512];
+                    GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
                     const std::string sNewNote = ra::Narrow(sNewNoteWide);
 
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
@@ -1433,7 +1433,7 @@ void Dlg_Memory::OnWatchingMemChange()
     ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
-    SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
+    SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
 
     MemoryViewerControl::destroyEditCaret();
 

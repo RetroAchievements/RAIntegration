@@ -9,24 +9,32 @@
 #include "RA_Core.h"
 #include "RA_Interface.h"
 
+namespace ra {
 
-enum OverlayPage
+enum class OverlayPage
 {
-    OP_ACHIEVEMENTS,
-    OP_FRIENDS,
-    OP_MESSAGES,
-    OP_NEWS,
-    OP_LEADERBOARDS,
+    Achievements,
+    Friends,
+    Messages,
+    News,
+    Leaderboards,
 
-    OP_ACHIEVEMENT_EXAMINE,
-    OP_ACHIEVEMENT_COMPARE,
-    OP_FRIEND_EXAMINE,
-    OP_FRIEND_ADD,
-    OP_LEADERBOARD_EXAMINE,
-    OP_MESSAGE_VIEWER,
-
-    NumOverlayPages
+    Achievement_Examine,
+    Achievement_Compare,
+    Friend_Examine,
+    Friend_Add,
+    Leaderboard_Examine,
+    Message_Viewer
 };
+
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_OVERLAY_PAGES{11U};
+
+} // namespace enum_sizes
+
+} // namespace ra
+
 
 enum TransitionState
 {
@@ -46,9 +54,9 @@ public:
     void OnReceiveData(const Document& doc);
 
 public:
-    unsigned int m_nLBID;
+    unsigned int m_nLBID{};
     //	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
-    bool m_bHasData;
+    bool m_bHasData{};
 };
 extern LeaderboardExamine g_LBExamine;
 
@@ -72,9 +80,6 @@ public:
     };
 
 public:
-    AchievementExamine();
-
-public:
     void Initialize(const Achievement* pAchIn);
     void Clear();
     void OnReceiveData(Document& doc);
@@ -89,15 +94,15 @@ public:
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
 
 private:
-    const Achievement* m_pSelectedAchievement;
+    const Achievement* m_pSelectedAchievement{};
     std::string m_CreatedDate;
     std::string m_LastModifiedDate;
 
-    bool m_bHasData;
+    bool m_bHasData{};
 
     //	Data found:
-    unsigned int m_nTotalWinners;
-    unsigned int m_nPossibleWinners;
+    unsigned int m_nTotalWinners{};
+    unsigned int m_nPossibleWinners{};
 
     std::vector<RecentWinnerData> RecentWinners;
 };
@@ -107,8 +112,7 @@ extern AchievementExamine g_AchExamine;
 class AchievementOverlay
 {
 public:
-    AchievementOverlay();
-    ~AchievementOverlay();
+    ~AchievementOverlay() noexcept;
 
     void Initialize(HINSTANCE hInst);
 
@@ -139,8 +143,8 @@ public:
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
-    OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
-    void AddPage(OverlayPage NewPage);
+    ra::OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
+    void AddPage(ra::OverlayPage NewPage);
     BOOL GoBack();
 
     void SelectNextTopLevelPage(BOOL bPressedRight);
@@ -150,10 +154,10 @@ public:
 public:
     struct NewsItem
     {
-        unsigned int m_nID;
+        unsigned int m_nID{};
         std::string m_sTitle;
         std::string m_sPayload;
-        time_t m_nPostedAt;
+        time_t m_nPostedAt{};
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
@@ -161,35 +165,35 @@ public:
     };
 
 private:
-    int	m_nAchievementsScrollOffset;
-    int	m_nFriendsScrollOffset;
-    int	m_nMessagesScrollOffset;
-    int	m_nNewsScrollOffset;
-    int	m_nLeaderboardScrollOffset;
+    int	m_nAchievementsScrollOffset{};
+    int	m_nFriendsScrollOffset{};
+    int	m_nMessagesScrollOffset{};
+    int	m_nNewsScrollOffset{};
+    int	m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem;
-    int	m_nFriendsSelectedItem;
-    int	m_nMessagesSelectedItem;
-    int	m_nNewsSelectedItem;
-    int	m_nLeaderboardSelectedItem;
+    int	m_nAchievementsSelectedItem{};
+    int	m_nFriendsSelectedItem{};
+    int	m_nMessagesSelectedItem{};
+    int	m_nNewsSelectedItem{};
+    int	m_nLeaderboardSelectedItem{};
 
-    mutable int m_nNumAchievementsBeingRendered;
-    mutable int m_nNumFriendsBeingRendered;
-    mutable int m_nNumLeaderboardsBeingRendered;
+    mutable int m_nNumAchievementsBeingRendered{};
+    mutable int m_nNumFriendsBeingRendered{};
+    mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock;	//	Waiting for pad release
+    BOOL					m_bInputLock{};	//	Waiting for pad release
     std::vector<NewsItem>	m_LatestNews;
-    TransitionState			m_nTransitionState;
-    float					m_fTransitionTimer;
+    TransitionState			m_nTransitionState{};
+    float					m_fTransitionTimer{};
 
-    OverlayPage				m_Pages[5];
-    unsigned int			m_nPageStackPointer;
+    ra::OverlayPage			m_Pages[5]{};
+    unsigned int			m_nPageStackPointer{};
 
     //HBITMAP m_hLockedBitmap;	//	Cached	
-    HBITMAP m_hOverlayBackground;
+    HBITMAP m_hOverlayBackground{};
 
-    LPDIRECTDRAW4 m_lpDD;
-    LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay;
+    LPDIRECTDRAW4 m_lpDD{};
+    LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay{};
 };
 extern AchievementOverlay g_AchievementOverlay;
 

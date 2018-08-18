@@ -128,7 +128,13 @@ to_tstring(_In_ Arithmetic a) noexcept
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
 _NODISCARD _CONSTANT_FN __stdcall
-to_floating(_In_ Arithmetic a) noexcept { return static_cast<double>(a); }
+to_floating(_In_ Arithmetic a) noexcept
+{
+    if constexpr (is_same_size_v<Arithmetic, float>)
+        return static_cast<float>(a);
+    else
+        return static_cast<double>(a);
+}
 
 template<
     typename FloatingPoint,

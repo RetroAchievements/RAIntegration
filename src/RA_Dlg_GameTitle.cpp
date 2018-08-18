@@ -37,7 +37,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
 
             PostArgs args;
-            args['c'] = std::to_string(g_ConsoleID);
+            args['c'] = ra::etos(g_ConsoleID);
 
             Document doc;
             if (RAWeb::DoBlockingRequest(ra::RequestType::GamesList, args, doc))
@@ -116,7 +116,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     args['t'] = RAUsers::LocalUser().Token();
                     args['m'] = m_sMD5;
                     args['i'] = ra::Narrow(sSelectedTitle);
-                    args['c'] = std::to_string(g_ConsoleID);
+                    args['c'] = etos(g_ConsoleID);
 
                     Document doc;
                     if (RAWeb::DoBlockingRequest(ra::RequestType::SubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())

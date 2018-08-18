@@ -106,15 +106,15 @@ _NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept
 } // inline namespace int_literals
 
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
-_NODISCARD _CONSTANT_FN __stdcall
+_NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
-_NODISCARD _CONSTANT_FN __stdcall
+_NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD ra::tstring __cdecl
+_NODISCARD ra::tstring
 to_tstring(_In_ Arithmetic a) noexcept
 {
 #if _MBCS
@@ -127,7 +127,7 @@ to_tstring(_In_ Arithmetic a) noexcept
 } // end function to_tstring
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD _CONSTANT_FN __stdcall
+_NODISCARD _CONSTANT_FN
 to_floating(_In_ Arithmetic a) noexcept
 {
     if constexpr (is_same_size_v<Arithmetic, float>)
@@ -153,8 +153,15 @@ _NODISCARD _CONSTANT_FN __cdecl
 sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_NODISCARD _CONSTANT_VAR __stdcall
+_NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
+
+/// <summary>Converts the integral representation of an <typeparamref name="Enum" /> as a string.</summary>
+/// <param name="e">The Enum.</param>
+/// <returns>Number as string.</returns>
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
+_NODISCARD _CONSTANT_VAR
+etos(_In_ Enum e) noexcept { return std::to_string(etoi(e)); }
 
 
 /// <summary>
@@ -173,7 +180,7 @@ template<
     typename = std::enable_if_t<std::is_integral_v<Integral> and
     std::is_enum_v<Enum> and
     std::is_same_v<Integral, std::underlying_type_t<Enum>>>
-> _NODISCARD _CONSTANT_VAR __stdcall
+> _NODISCARD _CONSTANT_VAR
 itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
 
 // function alias template for etoi (EnumToIntegral)
@@ -323,7 +330,7 @@ operator<<=(_Inout_ Enum& a, _In_ const std::underlying_type_t<Enum> b) noexcept
 template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
 operator>>(const Enum a, const std::underlying_type_t<Enum> b) noexcept
 {
-    // too many risks of using signed numbers with bitwise shit, so we will make them unsigned no matter what
+    // too many risks of using signed numbers with bitwise shift, so we will make them unsigned no matter what
     using underlying_type = std::underlying_type_t<Enum>;
     if constexpr(std::is_signed_v<underlying_type>)
         return (itoe<Enum>(to_unsigned(etoi(a)) >> to_unsigned(b)));

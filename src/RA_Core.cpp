@@ -47,8 +47,8 @@ std::string g_sCurrentROMMD5;	//	Internal
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+ra::EmulatorID g_EmulatorID = ra::EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
+ra::ConsoleID g_ConsoleID = ra::ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 const char* g_sGetLatestClientPage = nullptr;
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
@@ -62,23 +62,23 @@ bool g_bLBDisplayCounter = true;
 bool g_bLBDisplayScoreboard = true;
 unsigned int g_nNumHTTPThreads = 15;
 
-typedef struct WindowPosition
+struct WindowPosition
 {
-    int nLeft;
-    int nTop;
-    int nWidth;
-    int nHeight;
-    bool bLoaded;
+    int nLeft{};
+    int nTop{};
+    int nWidth{};
+    int nHeight{};
+    bool bLoaded{};
 
-    static const int nUnset = -99999;
-} WindowPosition;
+    static constexpr int nUnset = -99999;
+};
 
-typedef std::map<std::string, WindowPosition> WindowPositionMap;
+using WindowPositionMap = std::map<std::string, WindowPosition>;
 WindowPositionMap g_mWindowPositions;
 
 namespace {
-const unsigned int PROCESS_WAIT_TIME = 100;
-unsigned int g_nProcessTimer = 0;
+_CONSTANT_VAR PROCESS_WAIT_TIME = 100U;
+unsigned int g_nProcessTimer = 0U;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -98,7 +98,7 @@ API const char* CCONV _RA_HostName()
     static std::string sHostName;
     if (sHostName.empty())
     {
-        std::ifstream fHost("host.txt", std::ifstream::in);
+        std::ifstream fHost{ "host.txt" };
         if (fHost.good())
             fHost >> sHostName;
 
@@ -126,7 +126,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
         _mkdir(RA_DIR_BOOKMARKS);
 
 
-    g_EmulatorID = static_cast<EmulatorID>(nEmulatorID);
+    g_EmulatorID = static_cast<ra::EmulatorID>(nEmulatorID);
     g_RAMainWnd = hMainHWND;
     //g_hThisDLLInst
 
@@ -134,65 +134,66 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     switch (g_EmulatorID)
     {
-        case RA_Gens:
-            g_ConsoleID = MegaDrive;
+        case ra::EmulatorID::RA_Gens:
+            g_ConsoleID = ra::ConsoleID::MegaDrive;
             g_sGetLatestClientPage = "LatestRAGensVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAGens_REWiND";
             g_sClientDownloadURL = "RAGens.zip";
             g_sClientEXEName = "RAGens.exe";
             break;
-        case RA_Project64:
-            g_ConsoleID = N64;
+        case ra::EmulatorID::RA_Project64:
+            g_ConsoleID = ra::ConsoleID::N64;
             g_sGetLatestClientPage = "LatestRAP64Version.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAP64";
             g_sClientDownloadURL = "RAP64.zip";
             g_sClientEXEName = "RAP64.exe";
             break;
-        case RA_Snes9x:
-            g_ConsoleID = SNES;
+        case ra::EmulatorID::RA_Snes9x:
+            g_ConsoleID = ra::ConsoleID::SNES;
             g_sGetLatestClientPage = "LatestRASnesVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RASnes9X";
             g_sClientDownloadURL = "RASnes9X.zip";
             g_sClientEXEName = "RASnes9X.exe";
             break;
-        case RA_VisualboyAdvance:
-            g_ConsoleID = GB;
+        case ra::EmulatorID::RA_VisualboyAdvance:
+            g_ConsoleID = ra::ConsoleID::GB;
             g_sGetLatestClientPage = "LatestRAVBAVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAVisualBoyAdvance";
             g_sClientDownloadURL = "RAVBA.zip";
             g_sClientEXEName = "RAVisualBoyAdvance.exe";
             break;
-        case RA_Nester:
-        case RA_FCEUX:
-            g_ConsoleID = NES;
+        case ra::EmulatorID::RA_Nester:
+            _FALLTHROUGH;
+        case ra::EmulatorID::RA_FCEUX:
+            g_ConsoleID = ra::ConsoleID::NES;
             g_sGetLatestClientPage = "LatestRANESVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RANes";
             g_sClientDownloadURL = "RANes.zip";
             g_sClientEXEName = "RANes.exe";
             break;
-        case RA_PCE:
-            g_ConsoleID = PCEngine;
+        case ra::EmulatorID::RA_PCE:
+            g_ConsoleID = ra::ConsoleID::PCEngine;
             g_sGetLatestClientPage = "LatestRAPCEVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAPCE";
             g_sClientDownloadURL = "RAPCE.zip";
             g_sClientEXEName = "RAPCE.exe";
             break;
-        case RA_Libretro:
-            g_ConsoleID = Atari2600;
+        case ra::EmulatorID::RA_Libretro:
+            g_ConsoleID = ra::ConsoleID::Atari2600;
             g_sGetLatestClientPage = "LatestRALibretroVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RALibretro";
             g_sClientDownloadURL = "RALibretro.zip";
             g_sClientEXEName = "RALibretro.exe";
             break;
-        case RA_Meka:
-            g_ConsoleID = MasterSystem;
+        case ra::EmulatorID::RA_Meka:
+            g_ConsoleID = ra::ConsoleID::MasterSystem;
             g_sGetLatestClientPage = "LatestRAMekaVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAMeka";
@@ -200,7 +201,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             g_sClientEXEName = "RAMeka.exe";
             break;
         default:
-            g_ConsoleID = UnknownConsoleID;
+            g_ConsoleID = ra::ConsoleID::UnknownConsoleID;
             g_sClientVersion = sClientVer;
             g_sClientName = "";
             break;
@@ -265,7 +266,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //////////////////////////////////////////////////////////////////////////
     //	Attempt to fetch latest client version:
     args.clear();
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::etoi(g_ConsoleID));
     RAWeb::CreateThreadedHTTPRequest(ra::RequestType::LatestClientPage, args);	//	g_sGetLatestClientPage
 
     //	TBD:
@@ -377,7 +378,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
 {
-    g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
+    g_ConsoleID = static_cast<ra::ConsoleID>(nConsoleID);
 }
 
 API int CCONV _RA_HardcoreModeIsActive()
@@ -869,7 +870,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 static void RA_CheckForUpdate()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = ra::etos(g_ConsoleID);
 
     std::string Response;
     if (RAWeb::DoBlockingRequest(ra::RequestType::LatestClientPage, args, Response))
@@ -931,23 +932,23 @@ API void CCONV _RA_LoadPreferences()
 
         //switch( g_EmulatorID )
         //{
-        //case RA_Gens:
+        //case ra::EmulatorID::RA_Gens:
         //	strcat_s( sWelcomeMessage, 4096,
         //		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
         //	break;
-        //case RA_VisualboyAdvance:
+        //case ra::EmulatorID::RA_VisualboyAdvance:
         //	strcat_s( sWelcomeMessage, 4096,
         //		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
         //	break;
-        //case RA_Snes9x:
+        //case ra::EmulatorID::RA_Snes9x:
         //	strcat_s( sWelcomeMessage, 4096,
         //		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
         //	break;
-        //case RA_FCEUX:
+        //case ra::EmulatorID::RA_FCEUX:
         //	strcat_s( sWelcomeMessage, 4096,
         //		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
         //	break;
-        //case RA_PCE:
+        //case ra::EmulatorID::RA_PCE:
         //	strcat_s( sWelcomeMessage, 4096,
         //		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
         //	break;
@@ -1091,7 +1092,7 @@ API void CCONV _RA_SavePreferences()
 void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::etoi(g_ConsoleID));
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -1102,7 +1103,7 @@ void _FetchGameHashLibraryFromWeb()
 void _FetchGameTitlesFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::etoi(g_ConsoleID));
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -1113,7 +1114,7 @@ void _FetchGameTitlesFromWeb()
 void _FetchMyProgressFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::etoi(g_ConsoleID));
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;

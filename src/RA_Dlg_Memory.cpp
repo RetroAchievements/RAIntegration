@@ -271,7 +271,7 @@ void MemoryViewerControl::Invalidate()
 
         // In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force the render by calling UpdateWindow
         // TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for the search results
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == ra::EmulatorID::RA_Libretro)
             UpdateWindow(hOurDlg);
     }
 }
@@ -1580,7 +1580,7 @@ void Dlg_Memory::Invalidate()
     if (hList != nullptr)
     {
         InvalidateRect(hList, nullptr, FALSE);
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == ra::EmulatorID::RA_Libretro)
             UpdateWindow(hList);
     }
 }
@@ -1657,6 +1657,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
 {
     switch (g_ConsoleID)
     {
+        using ra::ConsoleID;
         case ConsoleID::NES:
             // $0000-$07FF are the 2KB internal RAM for the NES. It's mirrored every 2KB until $1FFF.
             start = 0x0000;
@@ -1721,6 +1722,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 {
     switch (g_ConsoleID)
     {
+        using ra::ConsoleID;
         case ConsoleID::NES:
             // $4020-$FFFF is cartridge memory and subranges will vary by mapper. The most common mappers reference
             // battery-backed RAM or additional work RAM in the $6000-$7FFF range. $8000-$FFFF is usually read-only.
@@ -1761,7 +1763,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 
         case ConsoleID::N64:
             // This range contains the extra 4MB provided by the Expansion Pak.
-            // Only avaliable when memory size is greater than 4MB.
+            // Only available when memory size is greater than 4MB.
             if (g_MemManager.TotalBankSize() > 0x400000)
             {
                 start = 0x400000;

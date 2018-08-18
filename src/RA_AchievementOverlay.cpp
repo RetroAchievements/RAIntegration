@@ -1281,7 +1281,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         char cBackChar = 'B';
         char cSelectChar = 'A';
 
-        if (g_EmulatorID == RA_Gens)
+        if (g_EmulatorID == ra::EmulatorID::RA_Gens)
         {
             //	Genesis wouldn't use 'A' for select
             cSelectChar = 'C';

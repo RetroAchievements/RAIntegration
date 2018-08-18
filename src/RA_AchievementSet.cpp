@@ -198,25 +198,25 @@ void AchievementSet::Test()
                 if (g_nActiveAchievementSet != ra::AchievementSetType::Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
-                        MessagePopup("Test: Achievement Unlocked",
+                        MessagePopup{ "Test: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
-                            PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::PopupMessageType::AchievementUnlocked,
+                            ach.BadgeImage() });
                 }
                 else if (ach.Modified())
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
-                        MessagePopup("Modified: Achievement Unlocked",
+                        MessagePopup{ "Modified: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
-                            PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::PopupMessageType::AchievementUnlocked,
+                            ach.BadgeImage() });
                 }
                 else if (g_bRAMTamperedWith)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
-                            PopupAchievementError,
+                            ra::PopupMessageType::AchievementError,
                             ach.BadgeImage()));
                 }
                 else
@@ -414,7 +414,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         std::ostringstream oss;
         oss << "Could not connect to " << _RA_HostName();
         PopupWindows::AchievementPopups().AddMessage(
-            MessagePopup(oss.str(), "Working offline...", PopupInfo)
+            MessagePopup(oss.str(), "Working offline...", ra::PopupMessageType::Info)
         );
 
         return FALSE;
@@ -564,7 +564,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
 
                 g_PopupWindows.AchievementPopups().AddMessage(
-                    MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
+                    MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", ra::PopupMessageType::Info));
             }
 
             return TRUE;

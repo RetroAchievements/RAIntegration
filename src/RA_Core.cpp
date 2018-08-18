@@ -472,12 +472,12 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     if (!g_bHardcoreModeActive && g_bLeaderboardsActive)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo));
+            MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", ra::PopupMessageType::Info));
     }
     else if (!g_bHardcoreModeActive)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Playing in Softcore Mode", "", PopupInfo));
+            MessagePopup("Playing in Softcore Mode", "", ra::PopupMessageType::Info));
     }
 
     g_AchievementsDialog.OnLoad_NewRom(nGameID);
@@ -720,7 +720,7 @@ API int CCONV _RA_HandleHTTPResults()
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementUnlocked,
+                                    ra::PopupMessageType::AchievementUnlocked,
                                     pAch->BadgeImage()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
@@ -731,7 +731,7 @@ API int CCONV _RA_HandleHTTPResults()
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked (Error)",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementError,
+                                    ra::PopupMessageType::AchievementError,
                                     pAch->BadgeImage()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 

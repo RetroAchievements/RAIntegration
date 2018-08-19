@@ -11,56 +11,79 @@
 #include "RA_User.h"
 #include "RA_GameData.h"
 
+#ifndef _MEMORY_
+#include <memory>
+#endif // !_MEMORY_
 
-namespace {
 
-const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
-const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
+namespace ra {
 
-const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+// Never seen it referenced in any other file
 
-int iSelect = -1;
 
-}
+_CONSTANT_VAR MAX_TEXT_ITEM_SIZE{ 80 };
+
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_DLG_ACHIEVEMENT_COLS{ 6 };
+
+} // namespace enum_sizes
+
+using ColumnTitles = std::array<LPCTSTR, enum_sizes::NUM_DLG_ACHIEVEMENT_COLS>;
+inline constexpr ColumnTitles COLUMN_TITLES_CORE{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Achieved?"), _T("Modified?") };
+inline constexpr ColumnTitles COLUMN_TITLES_UNOFFICIAL{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Active"), _T("Votes") };
+inline constexpr ColumnTitles COLUMN_TITLES_LOCAL{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Active"), _T("Votes") };
+inline constexpr std::array<int, enum_sizes::NUM_DLG_ACHIEVEMENT_COLS> COLUMN_SIZE{ 45, 200, 45, 80, 65, 65 };
+
+// Doesn't really matter what's here just as long as the constant matches the value
+inline constexpr std::array<DlgAchievementColumn, enum_sizes::NUM_DLG_ACHIEVEMENT_COLS> aColumn{
+    DlgAchievementColumn::ID, DlgAchievementColumn::Title, DlgAchievementColumn::Points, DlgAchievementColumn::Author, DlgAchievementColumn::Achieved, DlgAchievementColumn::Active
+};
+
+_CONSTANT_VAR NUM_COLS{ enum_sizes::NUM_DLG_ACHIEVEMENT_COLS };
+
+auto iSelect{ -1 };
+
+} // namespace ra
 
 Dlg_Achievements g_AchievementsDialog;
 
-Dlg_Achievements::Dlg_Achievements()
-    : m_hAchievementsDlg(nullptr)
-{
-}
-
+_Use_decl_annotations_
 void Dlg_Achievements::SetupColumns(HWND hList)
 {
     //	Remove all columns and data.
     while (ListView_DeleteColumn(hList, 0) == TRUE) {}
     ListView_DeleteAllItems(hList);
-
-    for (int i = 0; i < NUM_COLS; ++i)
+   
+    for (auto it = ra::aColumn.cbegin(); it != ra::aColumn.cend(); ++it)
     {
-        const char* sColTitle = nullptr;
-        if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-            sColTitle = COLUMN_TITLES_CORE[i];
-        else if (g_nActiveAchievementSet == ra::AchievementSetType::Unofficial)
-            sColTitle = COLUMN_TITLES_UNOFFICIAL[i];
-        else if (g_nActiveAchievementSet == ra::AchievementSetType::Local)
-            sColTitle = COLUMN_TITLES_LOCAL[i];
+        auto lplvColumn{ std::make_unique<LV_COLUMN>() };
+        lplvColumn->mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
+        lplvColumn->fmt  = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
 
-        LV_COLUMN newColumn;
-        ZeroMemory(&newColumn, sizeof(newColumn));
-        newColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        newColumn.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == (NUM_COLS - 1))
-            newColumn.fmt |= LVCFMT_FILL;
-        newColumn.cx = COLUMN_SIZE[i];
-        ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
-        newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
-        newColumn.cchTextMax = 255;
-        newColumn.iSubItem = i;
+        const auto count{ std::distance(ra::aColumn.cbegin(), it) };
+        if (count == (ra::enum_sizes::NUM_DLG_ACHIEVEMENT_COLS - 1))
+            lplvColumn->fmt |= LVCFMT_FILL;
+        lplvColumn->cx = ra::COLUMN_SIZE.at(count);
 
-        ListView_InsertColumn(hList, i, &newColumn);
+        ra::tstring sColTitleStr;
+        // NB: Do not attempt to assign pszText inside the switch (or any conditional for that matter) -SBS
+        switch (const auto uCount{ ra::to_unsigned(count) }; g_nActiveAchievementSet)
+        {
+            case ra::AchievementSetType::Core:
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_CORE.at(uCount)); //	Take a copy
+                break;
+            case ra::AchievementSetType::Unofficial:
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_UNOFFICIAL.at(uCount)); //	Take a copy
+                break;
+            case ra::AchievementSetType::Local:
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_LOCAL.at(uCount)); //	Take a copy
+        }
+        lplvColumn->pszText    = sColTitleStr.data();
+        lplvColumn->cchTextMax = 255;
+        lplvColumn->iSubItem   = count;
+
+        ListView_InsertColumn(hList, count, lplvColumn.get());
     }
 
     m_lbxData.clear();
@@ -68,7 +91,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 }
 
 
-LRESULT ProcessCustomDraw(LPARAM lParam)
+_NODISCARD LRESULT ProcessCustomDraw(_In_ LPARAM lParam)
 {
     LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
     switch (lplvcd->nmcd.dwDrawStage)
@@ -130,6 +153,7 @@ LRESULT ProcessCustomDraw(LPARAM lParam)
 }
 
 
+_Use_decl_annotations_
 void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 {
     ASSERT(nIter < ListView_GetItemCount(hList));
@@ -146,55 +170,53 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
     g_AchievementEditorDialog.LoadAchievement(nullptr, FALSE);
 }
 
+_Use_decl_annotations_
 size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 {
     AchievementDlgRow newRow;
-    newRow.resize(NUM_COLS);
 
     //	Add to our local array:
-    newRow[ID] = std::to_string(Ach.ID());
-    newRow[Title] = Ach.Title();
-    newRow[Points] = std::to_string(Ach.Points());
-    newRow[Author] = Ach.Author();
+    newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::ID)), std::to_string(Ach.ID()));
+    newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Title)), Ach.Title());
+    newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Points)), std::to_string(Ach.Points()));
+    newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Author)), Ach.Author());
 
     if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
     {
-        newRow[Achieved] = !Ach.Active() ? "Yes" : "No";
-        newRow[Modified] = Ach.Modified() ? "Yes" : "No";
+        newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Achieved)), !Ach.Active() ? "Yes" : "No");
+        newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Modified)), Ach.Modified() ? "Yes" : "No");
     }
     else
     {
-        newRow[Active] = Ach.Active() ? "Yes" : "No";
-        newRow[Votes] = "N/A";
+        newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Active)), Ach.Active() ? "Yes" : "No");
+        newRow.emplace(std::next(newRow.cbegin(), ra::etoi(ra::DlgAchievementColumn::Votes)), "N/A");
     }
 
-    m_lbxData.push_back(newRow);
+    m_lbxData.push_back(std::move(newRow));
 
-    LV_ITEM item;
-    ZeroMemory(&item, sizeof(item));
-
-    item.mask = LVIF_TEXT;
-    item.cchTextMax = 256;
-    item.iItem = static_cast<int>(m_lbxData.size());
-
-    for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
+    auto lpItem{ std::make_unique<LV_ITEM>() };
+    lpItem->mask       = LVIF_TEXT;
+    lpItem->iItem      = static_cast<int>(ra::to_signed(m_lbxData.size())); // size_t could be unsigned long-long
+    lpItem->cchTextMax = 256;
+    
+    for (lpItem->iSubItem = 0; lpItem->iSubItem < ra::NUM_COLS; lpItem->iSubItem++)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
-        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
-        item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
+        auto sTextData{ NativeStr(m_lbxData.back().at(lpItem->iSubItem)) };
+        lpItem->pszText = sTextData.data();
 
-        if (item.iSubItem == 0)
-            item.iItem = ListView_InsertItem(hList, &item);
+        if (lpItem->iSubItem == 0)
+            lpItem->iItem = ListView_InsertItem(hList, lpItem.get());
         else
-            ListView_SetItem(hList, &item);
+            ListView_SetItem(hList, lpItem.get());
     }
 
-    ASSERT(item.iItem == (m_lbxData.size() - 1));
-    return static_cast<size_t>(item.iItem);
+    ASSERT(lpItem->iItem == (ra::to_signed(m_lbxData.size()) - 1));
+    return ra::to_unsigned(lpItem->iItem);
 }
 
-BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
+_NODISCARD BOOL LocalValidateAchievementsBeforeCommit(_In_ int nLbxItems[1])
 {
     char buffer[2048];
     for (size_t i = 0; i < 1; ++i)
@@ -227,7 +249,7 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
             return FALSE;
         }
 
-        char sIllegalChars[] = { '&', ':' };
+        char sIllegalChars[] ={ '&', ':' };
 
         const size_t nNumIllegalChars = sizeof(sIllegalChars) / sizeof(sIllegalChars[0]);
         for (size_t i = 0; i < nNumIllegalChars; ++i)
@@ -252,25 +274,27 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
     return TRUE;
 }
 
-//static
-INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
+_Use_decl_annotations_
+INT_PTR CALLBACK s_AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     //	TBD: intercept any msgs?
     return g_AchievementsDialog.AchievementsProc(hDlg, nMsg, wParam, lParam);
 }
 
-BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, Document& doc)
+_NODISCARD BOOL AttemptUploadAchievementBlocking(_In_ const Achievement& Ach,
+                                                 _In_ unsigned int nFlags,
+                                                 _Out_ Document& doc)
 {
     const std::string sMem = Ach.CreateMemString();
 
     //	Deal with secret:
     char sPostCode[2048];
     sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u",
-        RAUsers::LocalUser().Username().c_str(),
-        Ach.ID(),
-        sMem.c_str(),
-        Ach.Points(),
-        Ach.Points() * 3);
+              RAUsers::LocalUser().Username().c_str(),
+              Ach.ID(),
+              sMem.c_str(),
+              Ach.Points(),
+              Ach.Points() * 3);
 
     std::string sPostCodeHash = RAGenerateMD5(std::string(sPostCode));
 
@@ -321,7 +345,6 @@ void Dlg_Achievements::OnClickAchievementSet(ra::AchievementSetType eAchievement
             SetWindowText(::GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), TEXT("Refresh from Server"));
 
             ::EnableWindow(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE); // Cannot add direct to Unofficial
-
             ::ShowWindow(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), SW_SHOWNORMAL);
 
             Button_SetCheck(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVE_CORE), FALSE);
@@ -336,7 +359,6 @@ void Dlg_Achievements::OnClickAchievementSet(ra::AchievementSetType eAchievement
             SetWindowText(::GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), TEXT("Refresh from Disk"));
 
             ::EnableWindow(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), TRUE); // Can add to Local
-
             ::ShowWindow(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), SW_SHOWNORMAL);
 
             Button_SetCheck(::GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVE_CORE), FALSE);
@@ -352,6 +374,7 @@ void Dlg_Achievements::OnClickAchievementSet(ra::AchievementSetType eAchievement
     g_AchievementEditorDialog.OnLoad_NewRom();
 }
 
+_Use_decl_annotations_
 INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (nMsg)
@@ -421,7 +444,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         if (g_nActiveAchievementSet == ra::AchievementSetType::Local)
                         {
                             // Promote from Local to Unofficial is just a commit to Unofficial
-                            CommitAchievements(hDlg);
+                            return CommitAchievements(hDlg);
                         }
                         else if (g_nActiveAchievementSet == ra::AchievementSetType::Unofficial)
                         {
@@ -472,8 +495,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     else
                                     {
                                         MessageBox(hDlg,
-                                            NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
-                                            TEXT("Error in upload!"), MB_OK);
+                                                   NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
+                                                   TEXT("Error in upload!"), MB_OK);
                                     }
                                 }
                                 else
@@ -576,7 +599,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
                     ASSERT(nOffset < g_pActiveAchievements->NumAchievements());
                     if (nOffset < g_pActiveAchievements->NumAchievements())
-                        OnEditData(nOffset, Dlg_Achievements::Author, Cheevo.Author());
+                        OnEditData(nOffset, ra::DlgAchievementColumn::Author, Cheevo.Author());
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
                     int nNewID = AddAchievement(hList, Cheevo);
@@ -696,7 +719,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
                     else
                     {
-                        CommitAchievements(hDlg);
+                        return CommitAchievements(hDlg);
                     }
                 }
                 break;
@@ -744,9 +767,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     if (nIndex < g_pActiveAchievements->NumAchievements())
                                     {
                                         if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-                                            OnEditData(nIndex, Dlg_Achievements::Achieved, "Yes");
+                                            OnEditData(nIndex, ra::DlgAchievementColumn::Achieved, "Yes");
                                         else
-                                            OnEditData(nIndex, Dlg_Achievements::Active, "No");
+                                            OnEditData(nIndex, ra::DlgAchievementColumn::Active, "No");
 
                                         ReloadLBXData(nIndex);
                                     }
@@ -802,9 +825,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 if (nIndex < g_pActiveAchievements->NumAchievements())
                                 {
                                     if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-                                        OnEditData(nIndex, Dlg_Achievements::Achieved, "No");
+                                        OnEditData(nIndex, ra::DlgAchievementColumn::Achieved, "No");
                                     else
-                                        OnEditData(nIndex, Dlg_Achievements::Active, "Yes");
+                                        OnEditData(nIndex, ra::DlgAchievementColumn::Active, "Yes");
                                 }
 
                                 //	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
@@ -820,7 +843,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
                                 if (nIndex < g_pActiveAchievements->NumAchievements())
                                 {
-                                    OnEditData(nIndex, Dlg_Achievements::Active, "No");
+                                    OnEditData(nIndex, ra::DlgAchievementColumn::Active, "No");
                                 }
 
                                 //	Also needs to reinject text into IDC_RA_LISTACHIEVEMENTS
@@ -852,9 +875,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 Cheevo.SetActive(true);
 
                                 if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-                                    OnEditData(nIndex, Dlg_Achievements::Achieved, "No");
+                                    OnEditData(nIndex, ra::DlgAchievementColumn::Achieved, "No");
                                 else
-                                    OnEditData(nIndex, Dlg_Achievements::Active, "Yes");
+                                    OnEditData(nIndex, ra::DlgAchievementColumn::Active, "Yes");
 
                                 if (nIndex == nSel)
                                     UpdateSelectedAchievementButtons(&Cheevo);
@@ -874,12 +897,12 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             {
                 case LVN_ITEMCHANGED:	//!?? LVN on a LPNMHDR?
                 {
-                    iSelect = -1;
+                    ra::iSelect = -1;
                     //MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
                     LPNMLISTVIEW pLVInfo = (LPNMLISTVIEW)lParam;
                     if (pLVInfo->iItem != -1)
                     {
-                        iSelect = pLVInfo->iItem;
+                        ra::iSelect = pLVInfo->iItem;
                         if ((pLVInfo->uNewState &= LVIS_SELECTED) != 0)
                         {
                             int nNewIndexSelected = pLVInfo->iItem;
@@ -928,6 +951,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
     return FALSE;	//	Unhandled
 }
 
+_Use_decl_annotations_
 INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 {
     const int nMaxUploadLimit = 1;
@@ -966,9 +990,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     char message[1024];
     sprintf_s(message, 1024, "Uploading the selected %u achievement(s).\n"
-        "Are you sure? This will update the server with your new achievements\n"
-        "and players will be able to download them into their games immediately.",
-        nNumChecked);
+              "Are you sure? This will update the server with your new achievements\n"
+              "and players will be able to download them into their games immediately.",
+              nNumChecked);
 
     BOOL bErrorsEncountered = FALSE;
 
@@ -998,7 +1022,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
                     //	Update listbox on achievements dlg
 
-                    LbxDataAt(nLbxItemsChecked[i], ID) = std::to_string(nAchID);
+                    LbxDataAt(nLbxItemsChecked[i], ra::DlgAchievementColumn::ID) = std::to_string(nAchID);
 
                     if (bMovedFromUserToUnofficial)
                     {
@@ -1024,7 +1048,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                         if (nIndex < g_pActiveAchievements->NumAchievements())
                         {
                             if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-                                OnEditData(nIndex, Dlg_Achievements::Modified, "No");
+                                OnEditData(nIndex, ra::DlgAchievementColumn::Modified, "No");
                         }
 
                         //	Save em all - we may have changed any of them :S
@@ -1061,6 +1085,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     return TRUE;
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheevo)
 {
     if (Cheevo == nullptr)
@@ -1093,14 +1118,16 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheev
     }
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::LoadAchievements(HWND hList)
 {
     SetupColumns(hList);
 
     for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
-        AddAchievement(hList, g_pActiveAchievements->GetAchievement(i));
+        const auto _{ AddAchievement(hList, g_pActiveAchievements->GetAchievement(i)) }; // should throw (holding off) but we marked it as [[nodiscard]]
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
 {
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), FALSE);
@@ -1134,30 +1161,32 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
     UpdateSelectedAchievementButtons(nullptr);
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::OnGet_Achievement(const Achievement& ach)
 {
     size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
 
     if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-        OnEditData(nIndex, Achieved, "Yes");
+        OnEditData(nIndex, ra::DlgAchievementColumn::Achieved, "Yes");
     else
-        OnEditData(nIndex, Active, "No");
+        OnEditData(nIndex, ra::DlgAchievementColumn::Active, "No");
 
     UpdateSelectedAchievementButtons(&ach);
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
 {
     size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
     ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
     if (nIndex < g_pActiveAchievements->NumAchievements())
     {
-        OnEditData(nIndex, Dlg_Achievements::Points, std::to_string(ach.Points()));
+        OnEditData(nIndex, ra::DlgAchievementColumn::Points, std::to_string(ach.Points()));
 
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
         if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
-            OnEditData(nIndex, Dlg_Achievements::Modified, "Yes");
+            OnEditData(nIndex, ra::DlgAchievementColumn::Modified, "Yes");
 
         // Achievement stays active after edit, so this print is unnecessary.
         /*else
@@ -1167,6 +1196,7 @@ void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
     UpdateSelectedAchievementButtons(&ach);
 }
 
+_Use_decl_annotations_
 void Dlg_Achievements::ReloadLBXData(int nOffset)
 {
     //const char* g_sColTitles[]			= { "ID", "Title", "Author", "Achieved?", "Modified?" };
@@ -1175,60 +1205,64 @@ void Dlg_Achievements::ReloadLBXData(int nOffset)
     Achievement& Ach = g_pActiveAchievements->GetAchievement(nOffset);
     if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
     {
-        OnEditData(nOffset, Dlg_Achievements::Title, Ach.Title());
-        OnEditData(nOffset, Dlg_Achievements::Author, Ach.Author());
-        OnEditData(nOffset, Dlg_Achievements::Achieved, !Ach.Active() ? "Yes" : "No");
-        OnEditData(nOffset, Dlg_Achievements::Modified, Ach.Modified() ? "Yes" : "No");
+        OnEditData(nOffset, ra::DlgAchievementColumn::Title, Ach.Title());
+        OnEditData(nOffset, ra::DlgAchievementColumn::Author, Ach.Author());
+        OnEditData(nOffset, ra::DlgAchievementColumn::Achieved, !Ach.Active() ? "Yes" : "No");
+        OnEditData(nOffset, ra::DlgAchievementColumn::Modified, Ach.Modified() ? "Yes" : "No");
     }
     else
     {
-        OnEditData(nOffset, Dlg_Achievements::Title, Ach.Title());
-        OnEditData(nOffset, Dlg_Achievements::Author, Ach.Author());
-        OnEditData(nOffset, Dlg_Achievements::Active, Ach.Active() ? "Yes" : "No");
+        OnEditData(nOffset, ra::DlgAchievementColumn::Title, Ach.Title());
+        OnEditData(nOffset, ra::DlgAchievementColumn::Author, Ach.Author());
+        OnEditData(nOffset, ra::DlgAchievementColumn::Active, Ach.Active() ? "Yes" : "No");
 
         //char buffer[256];
         //sprintf_s( buffer, 256, "%d/%d", Ach.Upvotes(), Ach.Downvotes() );
         //OnEditData( nOffset, Dlg_Achievements::Votes, buffer );
-        OnEditData(nOffset, Dlg_Achievements::Votes, "N/A");
+        OnEditData(nOffset, ra::DlgAchievementColumn::Votes, "N/A");
     }
 
     UpdateSelectedAchievementButtons(&Ach);
 }
 
-void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::string& sNewData)
+_Use_decl_annotations_
+void Dlg_Achievements::OnEditData(size_t nItem, ra::DlgAchievementColumn nColumn, const std::string& sNewData)
 {
     if (nItem >= m_lbxData.size())
         return;
 
-    m_lbxData[nItem][nColumn] = sNewData;
-
-    HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-    if (hList != nullptr)
+    // This seemed kind of suspicious, it could cause an out_range exception at runtime with bounds checking...
+    // (rvalue as lvalue)
     {
-        LV_ITEM item;
-        ZeroMemory(&item, sizeof(item));
+        auto& row{ m_lbxData.at(nItem) };
+        row.emplace(std::next(row.cbegin(), ra::etoi(nColumn)), sNewData);
+    }
 
-        item.mask = LVIF_TEXT;
-        item.iItem = nItem;
-        item.iSubItem = nColumn;
-        item.cchTextMax = 256;
-        ra::tstring sStr = NativeStr(m_lbxData[nItem][nColumn]);	//	scoped cache
-        item.pszText = sStr.data();
-        if (ListView_SetItem(hList, &item) == FALSE)
+    // TODO: At least make hList a data member -SBS
+    if (::GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS) != nullptr)
+    {
+        auto lpItem{ std::make_unique<LV_ITEM>() };
+        lpItem->mask       = LVIF_TEXT;
+        lpItem->iItem      = nItem;
+        lpItem->iSubItem   = ra::etoi(nColumn);
+        
+        auto sStr{ NativeStr(m_lbxData.at(nItem).at(ra::etoi(nColumn))) };	//	scoped cache
+        lpItem->pszText    = sStr.data();
+        lpItem->cchTextMax = 256;
+        if (ListView_SetItem(::GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS), lpItem.get()) == FALSE)
         {
             ASSERT(!"Failed to ListView_SetItem!");
         }
         else
         {
-            RECT rcBounds;
-            ListView_GetItemRect(hList, nItem, &rcBounds, LVIR_BOUNDS);
-            InvalidateRect(hList, &rcBounds, FALSE);
+            auto lprcBounds{ std::make_unique<RECT>() };
+            ListView_GetItemRect(::GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS), nItem, lprcBounds.get(), LVIR_BOUNDS);
+            InvalidateRect(::GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS), lprcBounds.get(), FALSE);
         }
     }
 }
 
 int Dlg_Achievements::GetSelectedAchievementIndex()
 {
-    HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-    return ListView_GetSelectionMark(hList);
+    return ListView_GetSelectionMark(::GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS));
 }

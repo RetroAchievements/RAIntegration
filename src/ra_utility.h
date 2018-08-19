@@ -267,7 +267,6 @@ template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCA
 operator>>=(_Inout_ Enum& a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (a = a >> b); }
 
 } // namespace bitwise_ops
-
 } // namespace ra
 
 

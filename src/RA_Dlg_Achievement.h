@@ -4,66 +4,62 @@
 
 #include "RA_Achievement.h"
 
-const int MAX_TEXT_ITEM_SIZE = 80;
+namespace ra {
 
-//extern const char* g_sColTitles[];
-//extern const int g_nColSizes[];
+// More or less would have the same length scope wise so it was taken out
 
-//typedef struct Achievement;
+enum class DlgAchievementColumn
+{
+    ID,
+    Title,
+    Points,
+    Author,
+    Achieved,
+    Active = Achieved,
+    Modified,
+    Votes = Modified
+};
+
+} // namespace ra
 
 class Dlg_Achievements
 {
-public:
-    enum Column
-    {
-        ID,
-        Title,
-        Points,
-        Author,
-        Achieved,
-        Active = Achieved,
-        Modified,
-        Votes = Modified,
-
-        NUM_COLS
-    };
+    using AchievementDlgRow   = std::vector<std::string>;
+    using AchievementDlgTable = std::vector<AchievementDlgRow>;
+    friend INT_PTR CALLBACK s_AchievementsProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
 public:
-    Dlg_Achievements();
+    _NODISCARD INT_PTR AchievementsProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
 public:
-    static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);
-    INT_PTR AchievementsProc(HWND, UINT, WPARAM, LPARAM);
-
-public:
-    int GetSelectedAchievementIndex();
-    void OnLoad_NewRom(ra::GameID nGameID);
-    void OnGet_Achievement(const Achievement& ach);
-    void ReloadLBXData(int nOffset);
-    void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
-    void OnEditAchievement(const Achievement& ach);
+    _NODISCARD int GetSelectedAchievementIndex();
+    void OnLoad_NewRom(_In_ ra::GameID nGameID);
+    void OnGet_Achievement(_In_ const Achievement& ach);
+    void ReloadLBXData(_In_ int nOffset);
+    /*_NORETURN*/ void OnEditData(_In_ size_t nItem, _In_ ra::DlgAchievementColumn nColumn, _In_ const std::string& sNewData);
+    void OnEditAchievement(_In_ const Achievement& ach);
     void OnClickAchievementSet(_In_ ra::AchievementSetType nAchievementSet);
 
-    inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
+    // there's no way this is inline
+    _NODISCARD inline std::string& LbxDataAt(_In_ size_t nRow, _In_ ra::DlgAchievementColumn nCol) { return(m_lbxData.at(nRow)).at(ra::etoi(nCol)); }
 
-    inline HWND GetHWND() const { return m_hAchievementsDlg; }
-    void InstallHWND(HWND hWnd) { m_hAchievementsDlg = hWnd; }
-
-private:
-    void SetupColumns(HWND hList);
-    void LoadAchievements(HWND hList);
-
-    void RemoveAchievement(HWND hList, int nIter);
-    size_t AddAchievement(HWND hList, const Achievement& Ach);
-
-    INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg);
-
-    void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
+    _NODISCARD inline HWND GetHWND() const { return m_hAchievementsDlg; }
+    void InstallHWND(_In_ HWND hWnd) { m_hAchievementsDlg = hWnd; }
 
 private:
-    HWND m_hAchievementsDlg;
-    typedef std::vector< std::string > AchievementDlgRow;
-    std::vector< AchievementDlgRow > m_lbxData;
+    void SetupColumns(_In_ HWND hList);
+    void LoadAchievements(_In_ HWND hList);
+
+    void RemoveAchievement(_In_ HWND hList, _In_ int nIter);
+    _NODISCARD size_t AddAchievement(_In_ HWND hList, const Achievement& Ach);
+
+    _NODISCARD INT_PTR CommitAchievements(_In_ HWND hDlg);
+
+    void UpdateSelectedAchievementButtons(_In_ const Achievement* Cheevo);
+
+private:
+    HWND m_hAchievementsDlg{};
+    AchievementDlgTable m_lbxData;
 };
 
 extern Dlg_Achievements g_AchievementsDialog;

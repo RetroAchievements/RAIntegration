@@ -1233,7 +1233,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     {
         case IDM_RA_FILES_ACHIEVEMENTS:
             if (g_AchievementsDialog.GetHWND() == nullptr)
-                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
+                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, s_AchievementsProc));
             if (g_AchievementsDialog.GetHWND() != nullptr)
                 ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
             break;

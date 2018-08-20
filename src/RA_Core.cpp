@@ -1381,7 +1381,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_PARSERICHPRESENCE:
         {
             char sRichPresenceFile[1024];
-            sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+            sprintf_s(sRichPresenceFile, 1024, "%s%s%u-Rich.txt", g_sHomeDir.c_str(), RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
             std::string sRichPresence;
             bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile);

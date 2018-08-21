@@ -15,14 +15,7 @@
 #include <memory>
 #endif // !_MEMORY_
 
-
 namespace ra {
-
-// Never seen it referenced in any other file
-
-
-_CONSTANT_VAR MAX_TEXT_ITEM_SIZE{ 80 };
-
 namespace enum_sizes {
 
 _CONSTANT_VAR NUM_DLG_ACHIEVEMENT_COLS{ 6 };
@@ -37,10 +30,12 @@ inline constexpr std::array<int, enum_sizes::NUM_DLG_ACHIEVEMENT_COLS> COLUMN_SI
 
 // Doesn't really matter what's here just as long as the constant matches the value
 inline constexpr std::array<DlgAchievementColumn, enum_sizes::NUM_DLG_ACHIEVEMENT_COLS> aColumn{
-    DlgAchievementColumn::ID, DlgAchievementColumn::Title, DlgAchievementColumn::Points, DlgAchievementColumn::Author, DlgAchievementColumn::Achieved, DlgAchievementColumn::Active
+    DlgAchievementColumn::ID, DlgAchievementColumn::Title, DlgAchievementColumn::Points,
+    DlgAchievementColumn::Author, DlgAchievementColumn::Achieved, DlgAchievementColumn::Active
 };
 
 _CONSTANT_VAR NUM_COLS{ enum_sizes::NUM_DLG_ACHIEVEMENT_COLS };
+_CONSTANT_VAR MAX_TEXT_ITEM_SIZE{ 80 };
 
 auto iSelect{ -1 };
 
@@ -61,7 +56,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         lplvColumn->mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         lplvColumn->fmt  = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
 
-        const auto count{ std::distance(ra::aColumn.cbegin(), it) };
+        const auto count{ static_cast<int>(std::distance(ra::aColumn.cbegin(), it)) }; // ptrdiff_t could be long-long
         if (count == (ra::enum_sizes::NUM_DLG_ACHIEVEMENT_COLS - 1))
             lplvColumn->fmt |= LVCFMT_FILL;
         lplvColumn->cx = ra::COLUMN_SIZE.at(count);
@@ -70,14 +65,15 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         // NB: Do not attempt to assign pszText inside the switch (or any conditional for that matter) -SBS
         switch (const auto uCount{ ra::to_unsigned(count) }; g_nActiveAchievementSet)
         {
+            // Uses move-assignement, should be fast
             case ra::AchievementSetType::Core:
-                sColTitleStr = NativeStr(ra::COLUMN_TITLES_CORE.at(uCount)); //	Take a copy
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_CORE.at(uCount)); // Take a copy
                 break;
             case ra::AchievementSetType::Unofficial:
-                sColTitleStr = NativeStr(ra::COLUMN_TITLES_UNOFFICIAL.at(uCount)); //	Take a copy
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_UNOFFICIAL.at(uCount)); // Take a copy
                 break;
             case ra::AchievementSetType::Local:
-                sColTitleStr = NativeStr(ra::COLUMN_TITLES_LOCAL.at(uCount)); //	Take a copy
+                sColTitleStr = NativeStr(ra::COLUMN_TITLES_LOCAL.at(uCount)); // Take a copy
         }
         lplvColumn->pszText    = sColTitleStr.data();
         lplvColumn->cchTextMax = 255;

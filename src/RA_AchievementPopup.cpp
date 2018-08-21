@@ -12,12 +12,10 @@
 #include <MMSystem.h> // PlaySound
 #endif // WIN32_LEAN_AND_MEAN
 
-
-
 namespace ra {
 
-_CONSTANT_VAR POPUP_DIST_Y_TO_PCT   = 0.856F;		//	Where on screen to end up
-_CONSTANT_VAR POPUP_DIST_Y_FROM_PCT = 0.4F;		//	Amount of screens to travel
+_CONSTANT_VAR POPUP_DIST_Y_TO_PCT   = 0.856F; // Where on screen to end up
+_CONSTANT_VAR POPUP_DIST_Y_FROM_PCT = 0.4F;   // Amount of screens to travel
 _CONSTANT_VAR FONT_TO_USE           = _T("Tahoma");
 
 _CONSTANT_VAR FONT_SIZE_TITLE    = 32;
@@ -75,13 +73,13 @@ float AchievementPopup::GetYOffsetPct() const
     float fVal{ 0.0F };
     //	Fading in.
     if (m_fTimer < ra::APPEAR_AT)
-        fVal = ra::sqr(ra::APPEAR_AT - m_fTimer); //	Quadratic
+        fVal = ra::sqr(ra::APPEAR_AT - m_fTimer); // Quadratic
     //	Faded in - held
     else if (m_fTimer < ra::FADEOUT_AT)
         fVal = 0.0F;
     //	Fading out
     else if (m_fTimer < ra::FINISH_AT)
-        fVal = ra::sqr(ra::FADEOUT_AT - m_fTimer); //	Quadratic
+        fVal = ra::sqr(ra::FADEOUT_AT - m_fTimer); // Quadratic
     //	Finished!
     else
         fVal = 1.0F;
@@ -136,7 +134,7 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     fFadeInY += (ra::POPUP_DIST_Y_TO_PCT * ra::to_floating(nHeight));
 
     const auto nTitleY{ ra::ftol(fFadeInY) };
-    const auto nDescY = nTitleY + 32;
+    const auto nDescY{ nTitleY + 32 };
 
     if ((ActiveMessage().Type() == ra::PopupMessageType::AchievementUnlocked) or
         (ActiveMessage().Type() == ra::PopupMessageType::AchievementError))
@@ -156,20 +154,20 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     const auto sSubTitle{ " " + ActiveMessage().Subtitle() + " " };
 
     SelectFont(hDC, hFontTitle.get());
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), sTitle.length());
+    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), ra::strlen_as_int(sTitle));
 
     auto lpszTitle{ std::make_unique<SIZE>() };
-    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), sTitle.length(), lpszTitle.get());
+    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), ra::strlen_as_int(sTitle), lpszTitle.get());
 
     auto lpszAchievement{ std::make_unique<SIZE>() };
     if (!ActiveMessage().Subtitle().empty())
     {
         SelectFont(hDC, hFontDesc.get());
-        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), sSubTitle.length());
-        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), lpszAchievement.get());
+        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), ra::strlen_as_int(sSubTitle));
+        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), ra::strlen_as_int(sSubTitle), lpszAchievement.get());
     }
 
-    auto pen_deleter =[](HPEN hpen) noexcept
+    auto pen_deleter = [](HPEN hpen) noexcept
     {
         if (hpen)
         {
@@ -218,5 +216,6 @@ MessagePopup::MessagePopup(MessagePopup&& b) noexcept :
     m_nMessageType{ b.m_nMessageType },
     m_hMessageImage{ b.m_hMessageImage }
 {
+    // just pray the hbitmap doesn't leak
 }
 

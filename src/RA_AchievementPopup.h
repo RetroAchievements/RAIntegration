@@ -30,13 +30,15 @@ inline constexpr auto NUM_MESSAGE_TYPES{ 7U };
 class MessagePopup
 {
 public:
+    // Currently made the input a hard reference to a HBITMAP so it at least doesn't leak here
+
     MessagePopup(_In_ const std::string& sMessageTitle,
                  _In_ const std::string& sMessageSubtitle,
                  _In_ const ra::PopupMessageType nMessageType = ra::PopupMessageType::Info,
                  _In_ const HBITMAP& hMessageImage = nullptr) noexcept;
 
-    // TBD: Figure out when to free the HBITMAP, it currently makes the user image vanish if deleted after the scope
-    //      is done.
+    // TBD: Figure out when to free the HBITMAP, it currently makes the user image vanish if deleted after the
+    //      lifetime scope of a MessagePopup rvalue.
     ~MessagePopup() noexcept = default;
     MessagePopup(const MessagePopup&) = delete;
     MessagePopup& operator=(const MessagePopup&) = delete;

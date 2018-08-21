@@ -150,6 +150,30 @@ tstrtoul(_In_z_ LPCTSTR _String,
 #endif // _MBCS
 }
 
+// c string version, don't attempt to use unsigned char as CharT or it will show up as <<error type>>
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>>
+_Success_(return != 0) _NODISCARD inline auto __cdecl
+strlen_as_int(_In_z_ const CharT* str) noexcept
+{
+    // TBD: Should we care about unsigned char? It could slow things down... doesn't seem like it's needed anyway
+    static_assert(!std::is_same_v<CharT, std::uint8_t>);
+
+    if constexpr (std::is_same_v<CharT, char>)
+        return(static_cast<int>(to_signed(std::strlen(str)))); // size_t varies
+    else /* wchar_t is the only possibility at this point */
+        return(return(static_cast<int>(to_signed(std::wcslen(str)))););
+}
+
+// This is mostly needed in GDI functions, filters out char16_t and char32_t but there's another check to make sure
+// CharT isn't unsigned char.
+_Success_(return != 0)
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD inline auto
+strlen_as_int(_In_ const std::basic_string<CharT>& str) noexcept
+{
+    static_assert(!std::is_same_v<CharT, std::uint8_t>);
+    return(static_cast<int>(to_signed(str.length()))); // std::basic_string<CharT>::size_type varies
+}
+
 // Don't depend on std::rel_ops for stuff here because they assume the types are the same
 namespace rel_ops {
 

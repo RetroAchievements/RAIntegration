@@ -49,24 +49,6 @@ using PTBYTE = wchar_t*;
 using HANDLE = void*;
 #endif /* !_WINNT_ */
 
-#ifndef _VCRUNTIME_H
-#if _WIN32
-using uintptr_t = unsigned int;
-using intptr_t  = int;
-#elif _WIN64
-using uintptr_t = unsigned long long;
-using intptr_t  = long long;
-#else
-#error Only Windows is currently supported
-#endif /* _WIN32 */
-namespace std {
-
-using ::uintptr_t;
-using ::intptr_t;
-
-} /* namespace std */
-#endif /* !_VCRUNTIME_H */
-
 #ifndef _BASETSD_H_
 #if _WIN32
 using LONG_PTR = long;
@@ -130,8 +112,8 @@ using tstring = std::basic_string<wchar_t, std::char_traits<wchar_t>, std::alloc
 #endif /* _MBCS */
 
 using ARGB          = ::DWORD;
-using ByteAddress   = std::size_t;
 using DataPos       = std::size_t;
+using ByteAddress   = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 using GameID        = std::size_t;

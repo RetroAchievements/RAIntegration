@@ -2,10 +2,10 @@
 #define RA_DLG_ACHEDITOR_H
 #pragma once
 
-
-
 #include "RA_httpthread.h"
 #include "RA_Achievement.h"
+
+#include "services\ImageRepository.h"
 
 namespace ra {
 
@@ -100,7 +100,7 @@ private:
 
     Achievement* m_pSelectedAchievement;
     BOOL m_bPopulatingAchievementEditorData;
-    HBITMAP m_hAchievementBadge;
+    ra::services::ImageReference m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;
 };

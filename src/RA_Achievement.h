@@ -100,12 +100,8 @@ public:
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
 
-    inline HBITMAP BadgeImage() const { return m_hBadgeImage; }
-    inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }
-
     void SetBadgeImage(const std::string& sFilename);
-    void ClearBadgeImage() noexcept;
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
 
@@ -162,9 +158,6 @@ private:
 
     unsigned short m_nUpvotes;
     unsigned short m_nDownvotes;
-
-    HBITMAP m_hBadgeImage;
-    HBITMAP m_hBadgeImageLocked;
 };
 
 

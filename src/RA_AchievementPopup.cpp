@@ -137,18 +137,13 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     const auto nTitleY{ ra::ftol(fFadeInY) };
     const auto nDescY{ nTitleY + 32 };
 
-    if ((ActiveMessage().Type() == ra::PopupMessageType::AchievementUnlocked) or
-        (ActiveMessage().Type() == ra::PopupMessageType::AchievementError))
-    {
-        if (ActiveMessage().Image() != nullptr)
-            DrawImage(hDC, ActiveMessage().Image(), nTitleX, nTitleY, 64, 64);
+    HBITMAP hBitmap = ActiveMessage().Image();
+    if (hBitmap != nullptr)
+    { 
+        DrawImage(hDC, hBitmap, nTitleX, nTitleY, 64, 64);
 
         nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
         nDescX += 64 + 4;
-    }
-    else if (ActiveMessage().Type() == ra::PopupMessageType::LeaderboardInfo)
-    {
-        //	meh
     }
 
     const auto sTitle{ " " + ActiveMessage().Title() + " " };
@@ -199,24 +194,4 @@ void AchievementPopup::Clear() noexcept
         m_vMessages.pop();
 }
 
-_Use_decl_annotations_
-MessagePopup::MessagePopup(const std::string& sMessageTitle,
-                           const std::string& sMessageSubtitle,
-                           const ra::PopupMessageType nMessageType,
-                           const HBITMAP& hMessageImage) noexcept :
-    m_sMessageTitle{ sMessageTitle },
-    m_sMessageSubtitle{ sMessageSubtitle },
-    m_nMessageType{ nMessageType },
-    m_hMessageImage{ hMessageImage }
-{
-}
-
-MessagePopup::MessagePopup(MessagePopup&& b) noexcept :
-    m_sMessageTitle{ std::move(b.m_sMessageTitle) },
-    m_sMessageSubtitle{ std::move(b.m_sMessageSubtitle) },
-    m_nMessageType{ b.m_nMessageType },
-    m_hMessageImage{ b.m_hMessageImage }
-{
-    // just pray the hbitmap doesn't leak
-}
 

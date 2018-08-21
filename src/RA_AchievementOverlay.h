@@ -3,12 +3,15 @@
 #pragma once
 
 struct IUnknown;
-#include <ddraw.h>
-
 #include "RA_Achievement.h"
 #include "RA_User.h"
 #include "RA_Core.h"
 #include "RA_Interface.h"
+
+#include "services/ImageRepository.h"
+
+#include <map>
+#include <string>
 
 namespace ra {
 
@@ -104,8 +107,6 @@ extern AchievementExamine g_AchExamine;
 class AchievementOverlay
 {
 public:
-    ~AchievementOverlay() noexcept;
-
     void Initialize(HINSTANCE hInst);
 
     void Activate();
@@ -121,7 +122,6 @@ public:
     const int* GetActiveSelectedItem() const;
 
     void OnLoad_NewRom();
-    void OnUserPicDownloaded(const char* sUsername);
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
     void DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
@@ -181,11 +181,9 @@ private:
     ra::OverlayPage			m_Pages[5]{};
     unsigned int			m_nPageStackPointer{};
 
-    //HBITMAP m_hLockedBitmap;	//	Cached	
-    HBITMAP m_hOverlayBackground{};
-
-    LPDIRECTDRAW4 m_lpDD{};
-    LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay{};
+    ra::services::ImageReference m_hOverlayBackground{};
+    ra::services::ImageReference m_hUserImage{};
+    mutable std::map<std::string, ra::services::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;
 
@@ -195,9 +193,6 @@ extern "C"
     API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
     API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
     API extern bool _RA_IsOverlayFullyVisible();
-
-    //API extern void _RA_InitDirectX();
-    //API extern void _RA_OnPaint(HWND hWnd);
 }
 
 extern const COLORREF COL_TEXT;

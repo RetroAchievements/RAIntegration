@@ -28,9 +28,8 @@ void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
-                lb.Description(),
-                ra::PopupMessageType::LeaderboardInfo,
-                nullptr));
+            lb.Description(),
+            ra::PopupMessageType::LeaderboardInfo));
     }
 
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
@@ -43,10 +42,9 @@ void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) cons
     if (g_bLBDisplayNotification)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard attempt cancelled!",
-                lb.Title(),
-                ra::PopupMessageType::LeaderboardCancel,
-                nullptr));
+            MessagePopup("Leaderboard attempt canceled!",
+            lb.Title(),
+            ra::PopupMessageType::LeaderboardCancel));
     }
 }
 

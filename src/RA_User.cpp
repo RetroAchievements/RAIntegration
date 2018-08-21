@@ -26,21 +26,6 @@ BOOL RAUsers::DatabaseContainsUser(const std::string& sUser)
 }
 
 //static 
-void RAUsers::OnUserPicDownloaded(const RequestObject& obj)
-{
-    const std::string& sUsername = obj.GetData();
-
-    RAUser* pUser = GetUser(sUsername);
-    pUser->FlushBitmap();
-
-    //	Write this image to local, then signal overlay that new data has arrived.
-    _WriteBufferToFile(RA_DIR_USERPIC + sUsername + ".png", obj.GetResponse());
-    g_AchievementOverlay.OnUserPicDownloaded(sUsername.c_str());
-    std::intptr_t;
-    pUser->LoadOrFetchUserImage();
-}
-
-//static 
 RAUser* RAUsers::GetUser(const std::string& sUser)
 {
     if (DatabaseContainsUser(sUser) == FALSE)
@@ -52,9 +37,7 @@ RAUser* RAUsers::GetUser(const std::string& sUser)
 
 RAUser::RAUser(const std::string& sUsername) :
     m_sUsername(sUsername),
-    m_nScore(0),
-    m_hUserImage(nullptr),
-    m_bFetchingUserImage(false)
+    m_nScore(0)
 {
     //	Register
     if (sUsername.length() > 2)
@@ -62,25 +45,6 @@ RAUser::RAUser(const std::string& sUsername) :
         ASSERT(!RAUsers::DatabaseContainsUser(sUsername));
         RAUsers::RegisterUser(sUsername, this);
     }
-}
-
-RAUser::~RAUser()
-{
-    FlushBitmap();
-}
-
-void RAUser::FlushBitmap()
-{
-    if (m_hUserImage != nullptr)
-        DeleteObject(m_hUserImage);
-    m_hUserImage = nullptr;
-}
-
-
-void RAUser::LoadOrFetchUserImage()
-{
-    m_hUserImage = LoadOrFetchUserPic(m_sUsername, RA_USERPIC_PX);
-    m_bFetchingUserImage = false;
 }
 
 LocalRAUser::LocalRAUser(const std::string& sUser) :
@@ -167,14 +131,13 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
 
     m_aFriends.clear();
 
-    LoadOrFetchUserImage();
+    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
    FriendList();
 
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
             "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-            ra::PopupMessageType::Login,
-            GetUserImage()));
+            ra::PopupMessageType::Login, ra::services::ImageType::UserPic, Username()));
 
     g_AchievementsDialog.OnLoad_NewRom(g_pCurrentGameData->GetGameID());
     g_AchievementEditorDialog.OnLoad_NewRom();
@@ -186,7 +149,6 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
 
 void LocalRAUser::Logout()
 {
-    FlushBitmap();
     Clear();
     RA_RebuildMenu();
     _RA_UpdateAppTitle("");
@@ -208,8 +170,10 @@ void LocalRAUser::OnFriendListResponse(const Document& doc)
         const Value& NextFriend = FriendData[i];
 
         RAUser* pUser = RAUsers::GetUser(NextFriend["Friend"].GetString());
-        pUser->SetScore(NextFriend["RAPoints"].GetUint());
+        pUser->SetScore(strtol(NextFriend["RAPoints"].GetString(), nullptr, 10));
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());
+
+        AddFriend(pUser->Username(), pUser->GetScore());
     }
 }
 
@@ -226,7 +190,7 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
     RAUser* pUser = RAUsers::GetUser(sUser);
     pUser->SetScore(nScore);
-    pUser->LoadOrFetchUserImage();	//	May as well
+    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
 
     std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
     while (iter != m_aFriends.end())

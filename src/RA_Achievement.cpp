@@ -169,7 +169,6 @@ void Achievement::Clear() noexcept
     m_bPauseOnTrigger = FALSE;
     m_bPauseOnReset = FALSE;
     ClearDirtyFlag();
-    ClearBadgeImage();
 
     m_bProgressEnabled = FALSE;
     m_sProgress = "";
@@ -232,20 +231,11 @@ void Achievement::SetModified(BOOL bModified)
 void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 {
     SetDirtyFlag(ra::Achievement_DirtyFlags::Badge);
-    ClearBadgeImage();
 
-    char chars[] = "_lock";
-
-    std::string sNewBadgeURI = sBadgeURI;
-
-    for (unsigned int i = 0; i < strlen(chars); ++i)
-        sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
-
-    m_sBadgeImageURI = sNewBadgeURI;
-    m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);
-
-    if (sNewBadgeURI.find("_lock") == std::string::npos)	//	Ensure we're not going to look for _lock_lock
-        m_hBadgeImageLocked = LoadOrFetchBadge(sNewBadgeURI + "_lock", RA_BADGE_PX);
+    if (sBadgeURI.length() > 5 && strcmp(&sBadgeURI[sBadgeURI.length() - 5], "_lock") == 0)
+        m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
+    else
+        m_sBadgeImageURI = sBadgeURI;
 }
 
 void Achievement::Reset()
@@ -306,24 +296,10 @@ std::string Achievement::CreateMemString() const
     return buffer;
 }
 
-void Achievement::ClearBadgeImage() noexcept
-{
-    // local callback
-    auto deleter =[](HBITMAP hbm) noexcept
-    {
-        if (hbm)
-        {
-            DeleteBitmap(hbm);
-            hbm = nullptr;
-        }
-    };
-    deleter(m_hBadgeImage);
-    deleter(m_hBadgeImageLocked);
-}
+
 
 void Achievement::Set(const Achievement& rRHS)
 {
-    ClearBadgeImage();
     SetID(rRHS.m_nAchievementID);
     SetActive(rRHS.m_bActive);
     SetAuthor(rRHS.m_sAuthor);

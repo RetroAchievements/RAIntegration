@@ -3,11 +3,15 @@
 #pragma once
 
 #include <WTypes.h>
-#include <yvals.h>
 
 #ifndef _NORETURN
-#define _NORETURN
+#define _NORETURN [[noreturn]]
 #endif // !_NORETURN
+
+#ifndef _NODISCARD
+#define _NODISCARD [[nodiscard]]
+#endif // !_NODISCARD
+
 
 // References:
 // https://docs.microsoft.com/en-us/windows/desktop/api/Winuser/nf-winuser-defdlgprocw

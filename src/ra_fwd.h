@@ -112,13 +112,9 @@ using INT_PTR = std::intptr_t;
 /* This needs to be forward declared to get rid of a conformance error */
 struct IUnknown;
 
-using time_t = long long;
-using size_t = std::uintptr_t;
-
 namespace std {
 
 using ::time_t;
-using ::size_t;
 
 } /* namespace std */
 

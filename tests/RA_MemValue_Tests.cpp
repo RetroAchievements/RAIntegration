@@ -48,7 +48,7 @@ TEST_CLASS(RA_MemValue_Tests)
         Assert::AreEqual(false, value.GetInvertBit(), wsSerialized.c_str());
         Assert::AreEqual(1.0, value.GetModifier(), wsSerialized.c_str());
         Assert::AreEqual(0U, value.GetSecondAddress(), wsSerialized.c_str());
-        Assert::AreEqual(EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
+        Assert::AreEqual(ComparisonVariableSize::EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
     }
 
     void AssertParseFromString(const char* sSerialized, ComparisonVariableSize nExpectedVarSize, unsigned int nExpectedAddress, double fExpectedModifier)
@@ -64,7 +64,7 @@ TEST_CLASS(RA_MemValue_Tests)
         Assert::AreEqual(false, value.GetInvertBit(), wsSerialized.c_str());
         Assert::AreEqual(fExpectedModifier, value.GetModifier(), wsSerialized.c_str());
         Assert::AreEqual(0U, value.GetSecondAddress(), wsSerialized.c_str());
-        Assert::AreEqual(EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
+        Assert::AreEqual(ComparisonVariableSize::EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
     }
 
     void AssertParseFromString(const char* sSerialized, ComparisonVariableSize nExpectedVarSize, unsigned int nExpectedAddress, ComparisonVariableSize nExpectedSecondVarSize, unsigned int nExpectedSecondAddress)
@@ -95,49 +95,49 @@ public:
     TEST_METHOD(TestClauseParseFromString)
     {
         // sizes
-        AssertParseFromString("0xH1234", EightBit, 0x1234U);
-        AssertParseFromString("0x 1234", SixteenBit, 0x1234U);
-        AssertParseFromString("0x1234", SixteenBit, 0x1234U);
-        AssertParseFromString("0xX1234", ThirtyTwoBit, 0x1234U);
-        AssertParseFromString("0xL1234", Nibble_Lower, 0x1234U);
-        AssertParseFromString("0xU1234", Nibble_Upper, 0x1234U);
-        AssertParseFromString("0xM1234", Bit_0, 0x1234U);
-        AssertParseFromString("0xN1234", Bit_1, 0x1234U);
-        AssertParseFromString("0xO1234", Bit_2, 0x1234U);
-        AssertParseFromString("0xP1234", Bit_3, 0x1234U);
-        AssertParseFromString("0xQ1234", Bit_4, 0x1234U);
-        AssertParseFromString("0xR1234", Bit_5, 0x1234U);
-        AssertParseFromString("0xS1234", Bit_6, 0x1234U);
-        AssertParseFromString("0xT1234", Bit_7, 0x1234U);
+        AssertParseFromString("0xH1234", ComparisonVariableSize::EightBit, 0x1234U);
+        AssertParseFromString("0x 1234", ComparisonVariableSize::SixteenBit, 0x1234U);
+        AssertParseFromString("0x1234", ComparisonVariableSize::SixteenBit, 0x1234U);
+        AssertParseFromString("0xX1234", ComparisonVariableSize::ThirtyTwoBit, 0x1234U);
+        AssertParseFromString("0xL1234", ComparisonVariableSize::Nibble_Lower, 0x1234U);
+        AssertParseFromString("0xU1234", ComparisonVariableSize::Nibble_Upper, 0x1234U);
+        AssertParseFromString("0xM1234", ComparisonVariableSize::Bit_0, 0x1234U);
+        AssertParseFromString("0xN1234", ComparisonVariableSize::Bit_1, 0x1234U);
+        AssertParseFromString("0xO1234", ComparisonVariableSize::Bit_2, 0x1234U);
+        AssertParseFromString("0xP1234", ComparisonVariableSize::Bit_3, 0x1234U);
+        AssertParseFromString("0xQ1234", ComparisonVariableSize::Bit_4, 0x1234U);
+        AssertParseFromString("0xR1234", ComparisonVariableSize::Bit_5, 0x1234U);
+        AssertParseFromString("0xS1234", ComparisonVariableSize::Bit_6, 0x1234U);
+        AssertParseFromString("0xT1234", ComparisonVariableSize::Bit_7, 0x1234U);
 
         // BCD
-        AssertParseFromString("B0xH1234", EightBit, 0x1234U, true);
-        AssertParseFromString("B0xX1234", ThirtyTwoBit, 0x1234U, true);
-        AssertParseFromString("b0xH1234", EightBit, 0x1234U, true);
+        AssertParseFromString("B0xH1234", ComparisonVariableSize::EightBit, 0x1234U, true);
+        AssertParseFromString("B0xX1234", ComparisonVariableSize::ThirtyTwoBit, 0x1234U, true);
+        AssertParseFromString("b0xH1234", ComparisonVariableSize::EightBit, 0x1234U, true);
 
-        // Value (values don't actually have size, EightBit is the default)
-        AssertParseFromString("V0x1234", SixteenBit, 0x1234, false, true); // hex is indirectly supported through using CompVariable to parse the value/address
-        AssertParseFromString("V1234", EightBit, 1234, false, true);
-        AssertParseFromString("V+1", EightBit, 1, false, true);
-        AssertParseFromString("V-1", EightBit, 0xFFFFFFFFU, false, true);
-        AssertParseFromString("V-2", EightBit, 0xFFFFFFFEU, false, true); // twos compliment still works for addition
+        // Value (values don't actually have size, ComparisonVariableSize::EightBit is the default)
+        AssertParseFromString("V0x1234", ComparisonVariableSize::SixteenBit, 0x1234, false, true); // hex is indirectly supported through using CompVariable to parse the value/address
+        AssertParseFromString("V1234", ComparisonVariableSize::EightBit, 1234, false, true);
+        AssertParseFromString("V+1", ComparisonVariableSize::EightBit, 1, false, true);
+        AssertParseFromString("V-1", ComparisonVariableSize::EightBit, 0xFFFFFFFFU, false, true);
+        AssertParseFromString("V-2", ComparisonVariableSize::EightBit, 0xFFFFFFFEU, false, true); // twos compliment still works for addition
     }
 
     TEST_METHOD(TestClauseParseFromStringMultiply)
     {
-        AssertParseFromString("0xH1234", EightBit, 0x1234U, 1.0);
-        AssertParseFromString("0xH1234*1", EightBit, 0x1234U, 1.0);
-        AssertParseFromString("0xH1234*3", EightBit, 0x1234U, 3.0);
-        AssertParseFromString("0xH1234*0.5", EightBit, 0x1234U, 0.5);
-        AssertParseFromString("0xH1234*-1", EightBit, 0x1234U, -1.0);
+        AssertParseFromString("0xH1234", ComparisonVariableSize::EightBit, 0x1234U, 1.0);
+        AssertParseFromString("0xH1234*1", ComparisonVariableSize::EightBit, 0x1234U, 1.0);
+        AssertParseFromString("0xH1234*3", ComparisonVariableSize::EightBit, 0x1234U, 3.0);
+        AssertParseFromString("0xH1234*0.5", ComparisonVariableSize::EightBit, 0x1234U, 0.5);
+        AssertParseFromString("0xH1234*-1", ComparisonVariableSize::EightBit, 0x1234U, -1.0);
     }
 
     TEST_METHOD(TestClauseParseFromStringMultiplyAddress)
     {
-        AssertParseFromString("0xH1234", EightBit, 0x1234U, EightBit, 0U);
-        AssertParseFromString("0xH1234*0xH3456", EightBit, 0x1234U, EightBit, 0x3456U);
-        AssertParseFromString("0xH1234*0xL2222", EightBit, 0x1234U, Nibble_Lower, 0x2222U);
-        AssertParseFromString("0xH1234*0x1111", EightBit, 0x1234U, SixteenBit, 0x1111U);
+        AssertParseFromString("0xH1234", ComparisonVariableSize::EightBit, 0x1234U, ComparisonVariableSize::EightBit, 0U);
+        AssertParseFromString("0xH1234*0xH3456", ComparisonVariableSize::EightBit, 0x1234U, ComparisonVariableSize::EightBit, 0x3456U);
+        AssertParseFromString("0xH1234*0xL2222", ComparisonVariableSize::EightBit, 0x1234U, ComparisonVariableSize::Nibble_Lower, 0x2222U);
+        AssertParseFromString("0xH1234*0x1111", ComparisonVariableSize::EightBit, 0x1234U, ComparisonVariableSize::SixteenBit, 0x1111U);
     }
 
     TEST_METHOD(TestClauseGetValue)
@@ -157,7 +157,7 @@ public:
 
         // BCD encoding
         AssertGetValue("B0xH01", 12);
-        AssertGetValue("B0x0001", 12);               // BCD only applies to EightBit values
+        AssertGetValue("B0x0001", 12);               // BCD only applies to ComparisonVariableSize::EightBit values
 
                                                      // multiplication
         AssertGetValue("0xH01*4", 0x12 * 4);         // multiply by constant

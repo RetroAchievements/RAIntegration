@@ -1,9 +1,12 @@
 #ifndef RA_CONDITION_H
 #define RA_CONDITION_H
 #pragma once
+
 #include "RA_Defs.h"
 
-enum ComparisonVariableSize
+namespace ra {
+
+enum class ComparisonVariableSize
 {
     Bit_0,
     Bit_1,
@@ -18,11 +21,23 @@ enum ComparisonVariableSize
     //Byte,
     EightBit,//=Byte,  
     SixteenBit,
-    ThirtyTwoBit,
-
-    NumComparisonVariableSizeTypes
+    ThirtyTwoBit
 };
-extern const char* COMPARISONVARIABLESIZE_STR[];
+
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_COMPARISON_VARIABLE_SIZETYPES{13U};
+
+} // namespace enum_sizes
+
+// Let's skip using NativeStr if we can
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_COMPARISON_VARIABLE_SIZETYPES> COMPARISONVARIABLESIZE_STR
+{
+    _T("Bit0"), _T("Bit1"), _T("Bit2"), _T("Bit3"), _T("Bit4"), _T("Bit5"), _T("Bit6"), _T("Bit7"), _T("Lower4"),
+    _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("32-bit")
+};
+
+} // namespace ra
 
 enum ComparisonVariableType
 {
@@ -53,16 +68,7 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    CompVariable()
-        : m_nVal(0),
-        m_nPreviousVal(0),
-        m_nVarSize(ComparisonVariableSize::EightBit),
-        m_nVarType(ComparisonVariableType::Address)
-    {
-    }
-
-public:
-    void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    void Set(ra::ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
@@ -85,8 +91,8 @@ public:
 
     unsigned int GetValue();				//	Returns the live value
 
-    inline void SetSize(ComparisonVariableSize nSize) { m_nVarSize = nSize; }
-    inline ComparisonVariableSize Size() const { return m_nVarSize; }
+    _CONSTANT_FN SetSize(_In_ ra::ComparisonVariableSize nSize) noexcept { m_nVarSize = nSize; }
+    _NODISCARD _CONSTANT_FN Size() const noexcept { return m_nVarSize; }
 
     inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
     inline ComparisonVariableType Type() const { return m_nVarType; }
@@ -95,10 +101,10 @@ public:
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize;
-    ComparisonVariableType m_nVarType;
-    unsigned int m_nVal;
-    unsigned int m_nPreviousVal;
+    ra::ComparisonVariableSize m_nVarSize{ ra::ComparisonVariableSize::EightBit };
+    ComparisonVariableType m_nVarType{};
+    unsigned int m_nVal{};
+    unsigned int m_nPreviousVal{};
 };
 
 

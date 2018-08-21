@@ -27,8 +27,11 @@ double MemValue::Clause::GetValue() const
     {
         unsigned int nSecondVal = g_MemManager.ActiveBankRAMRead(m_nSecondAddress, m_nSecondVarSize);
 
-        if (m_bInvertBit && m_nSecondVarSize >= ComparisonVariableSize::Bit_0 && m_nSecondVarSize <= ComparisonVariableSize::Bit_7)
+        if ((m_bInvertBit && m_nSecondVarSize >= ra::ComparisonVariableSize::Bit_0) &&
+            (m_nSecondVarSize <= ra::ComparisonVariableSize::Bit_7))
+        {
             nSecondVal ^= 1;
+        }
 
         return nRetVal * nSecondVal;
     }
@@ -62,7 +65,7 @@ const char* MemValue::Clause::ParseFromString(const char* pBuffer)
     {
         pIter++;
 
-        // Invert bit flag - only applies if m_nSecondVarSize is Bit_0~Bit_7
+        // Invert bit flag - only applies if m_nSecondVarSize is ra::ComparisonVariableSize::Bit_0~ra::ComparisonVariableSize::Bit_7
         if (*pIter == '~')
         {
             m_bInvertBit = true;

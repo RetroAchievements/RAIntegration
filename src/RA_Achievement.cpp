@@ -9,7 +9,7 @@
 
 _Use_decl_annotations_
 Achievement::Achievement(ra::AchievementSetType nType) noexcept :
-    m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
+    m_nSetType{ nType }
 {
     Clear();
 

@@ -191,7 +191,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompSource().Type() != ValueComparison)
     {
         sMemTypStrSrc = (Cond.CompSource().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
+        sMemSizeStrSrc = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompSource().Size()));
     }
 
     const char* sMemTypStrDst = "Value";
@@ -199,7 +199,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompTarget().Type() != ValueComparison)
     {
         sMemTypStrDst = (Cond.CompTarget().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
+        sMemSizeStrDst = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompTarget().Size()));
     }
 
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Id)], ra::MEM_STRING_TEXT_LEN, "%d", nRow + 1);
@@ -675,7 +675,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * NumComparisonVariableSizeTypes),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_VARIABLE_SIZETYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -688,12 +688,14 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 break;
             };
 
-            for (size_t i = 0; i < NumComparisonVariableSizeTypes; ++i)
+            auto count{ 0 };
+            for (auto& cvs_name : ra::COMPARISONVARIABLESIZE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONVARIABLESIZE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, NativeStr(cvs_name).c_str());
 
-                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == COMPARISONVARIABLESIZE_STR[i])
-                    ComboBox_SetCurSel(g_hIPEEdit, i);
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == cvs_name)
+                    ComboBox_SetCurSel(g_hIPEEdit, count);
+                count++;
             }
 
             SetWindowFont(g_hIPEEdit, GetStockFont(DEFAULT_GUI_FONT), TRUE);
@@ -1177,8 +1179,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         return FALSE;
 
                     Condition NewCondition;
-                    NewCondition.CompSource().Set(EightBit, Address, 0x0000);
-                    NewCondition.CompTarget().Set(EightBit, ValueComparison, 0);	//	Compare defaults!
+                    NewCondition.CompSource().Set(ra::ComparisonVariableSize::EightBit, Address, 0x0000);
+                    NewCondition.CompTarget().Set(ra::ComparisonVariableSize::EightBit, ValueComparison, 0);	//	Compare defaults!
 
                     //	Helper: guess that the currently watched memory location
                     //	 is probably what they are about to want to add a cond for.
@@ -1756,21 +1758,27 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         case ra::CondSubItems::SizeSrc:
                         {
-                            for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
+                            auto i{ 0 }; // signed since the underlying type is int
+                            for (auto& cvs_name : ra::COMPARISONVARIABLESIZE_STR)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
-                                    rCond.CompSource().SetSize(static_cast<ComparisonVariableSize>(i));
+                                if (sData == ra::Narrow(cvs_name))
+                                    rCond.CompSource().SetSize(ra::itoe<ra::ComparisonVariableSize>(i));
+                                i++;
                             }
+
                             //	TBD: Limit validation
                             break;
                         }
                         case ra::CondSubItems::SizeTgt:
                         {
-                            for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
+                            auto i{ 0 }; // signed since the underlying type is int
+                            for (auto& cvs_name : ra::COMPARISONVARIABLESIZE_STR)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
-                                    rCond.CompTarget().SetSize(static_cast<ComparisonVariableSize>(i));
+                                if (sData == ra::Narrow(cvs_name))
+                                    rCond.CompTarget().SetSize(ra::itoe<ra::ComparisonVariableSize>(i));
+                                i++;
                             }
+
                             //	TBD: Limit validation
                             break;
                         }

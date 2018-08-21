@@ -47,7 +47,7 @@ void AchievementPopup::PlayAudio()
 }
 
 // not sure how this worked before with copying implicitly deleted
-void AchievementPopup::AddMessage(MessagePopup&& msg)
+void AchievementPopup::AddMessage(MessagePopup&& msg) noexcept
 {
     m_vMessages.push(std::move(msg));
     PlayAudio();

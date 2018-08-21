@@ -49,6 +49,10 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
+// Problem file is objbase.h which is a COM header file, which wtypes.h needs RPC for some reason (DCOM).
+// needs to be type forwarded before to resolve a standard conformance error still needs to forwarded in other
+// places until we finalize the PCH
+struct IUnknown; 
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -63,7 +67,7 @@
 #include <array>
 #include <sstream>
 #include <queue>
-#include "ra_utility.h"
+#include "ra_utility.h" /* this has to be on the bottom */
 
 #ifndef RA_EXPORTS
 #include <cassert> 

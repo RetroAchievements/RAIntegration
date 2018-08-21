@@ -61,7 +61,7 @@ private:
     HWND m_hAchievementsDlg{};
     AchievementDlgTable m_lbxData;
 };
-
+_NODISCARD INT_PTR CALLBACK s_AchievementsProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 extern Dlg_Achievements g_AchievementsDialog;
 
 

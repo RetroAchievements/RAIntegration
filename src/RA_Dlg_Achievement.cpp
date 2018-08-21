@@ -478,15 +478,17 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                         //	 add it to the unofficial set.
                                         Achievement& newAch = g_pCoreAchievements->AddAchievement();
                                         newAch.Set(selectedAch);
-                                        g_pUnofficialAchievements->RemoveAchievement(nSel);
-                                        RemoveAchievement(hList, nSel);
+                                        if(g_pUnofficialAchievements->RemoveAchievement(nSel))
+                                        {
+                                            RemoveAchievement(hList, nSel);
 
-                                        newAch.SetActive(TRUE);	//	Disable it: all promoted ach must be reachieved
+                                            newAch.SetActive(TRUE);	//	Disable it: all promoted ach must be reachieved
 
-                                        //CoreAchievements->Save();
-                                        //UnofficialAchievements->Save();
+                                                                    //CoreAchievements->Save();
+                                                                    //UnofficialAchievements->Save();
 
-                                        MessageBox(hDlg, TEXT("Successfully uploaded achievement!"), TEXT("Success!"), MB_OK);
+                                            MessageBox(hDlg, TEXT("Successfully uploaded achievement!"), TEXT("Success!"), MB_OK);
+                                        }
                                     }
                                     else
                                     {
@@ -673,8 +675,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             //	Local achievement
                             if (MessageBox(hDlg, TEXT("Are you sure that you want to remove this achievement?"), TEXT("Remove Achievement"), MB_YESNO | MB_ICONWARNING) == IDYES)
                             {
-                                g_pActiveAchievements->RemoveAchievement(nSel);
-                                RemoveAchievement(hList, nSel);
+                                if(g_pActiveAchievements->RemoveAchievement(nSel))
+                                    RemoveAchievement(hList, nSel);
                             }
                         }
                         else
@@ -1027,8 +1029,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                         Achievement& NewAch = g_pUnofficialAchievements->AddAchievement();
                         NewAch.Set(NextAch);
                         NewAch.SetModified(FALSE);
-                        g_pLocalAchievements->RemoveAchievement(nLbxItemsChecked[0]);
-                        RemoveAchievement(hList, nLbxItemsChecked[0]);
+                        // Make sure it exists first
+                        if (g_pLocalAchievements->RemoveAchievement(nLbxItemsChecked[0]))
+                            RemoveAchievement(hList, nLbxItemsChecked[0]);
 
                         //LocalAchievements->Save();
                         //UnofficialAchievements->Save();

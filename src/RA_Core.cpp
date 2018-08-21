@@ -34,7 +34,10 @@
 #include <direct.h>
 #include <fstream>
 #include <io.h>		//	_access()
+
+
 #include <atlbase.h> // CComPtr
+
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
 #endif // WIN32_LEAN_AND_MEAN
@@ -967,7 +970,8 @@ API void CCONV _RA_LoadPreferences()
     else
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (doc.HasParseError())
         {

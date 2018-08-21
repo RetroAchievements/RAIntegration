@@ -36,7 +36,7 @@ void RAUsers::OnUserPicDownloaded(const RequestObject& obj)
     //	Write this image to local, then signal overlay that new data has arrived.
     _WriteBufferToFile(RA_DIR_USERPIC + sUsername + ".png", obj.GetResponse());
     g_AchievementOverlay.OnUserPicDownloaded(sUsername.c_str());
-
+    std::intptr_t;
     pUser->LoadOrFetchUserImage();
 }
 

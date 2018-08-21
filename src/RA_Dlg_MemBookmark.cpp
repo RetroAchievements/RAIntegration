@@ -1,6 +1,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
+
 #include <memory>    // std::make_unique
 
 #include "RA_Core.h"
@@ -792,7 +793,8 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
     if (pFile != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pFile));
+        FileStream fs{ pFile };
+        doc.ParseStream(fs);
         if (!doc.HasParseError())
         {
             if (doc.HasMember("Bookmarks"))

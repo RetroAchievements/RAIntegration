@@ -843,7 +843,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 Col.iOrder = i;
                 Col.iSubItem = i;
-                Col.pszText = _T("Search Result");
+                ra::tstring myText{ _T("Search Result") };
+                Col.pszText = myText.data();
                 Col.cx = rc.right - rc.left - 24;
                 ListView_InsertColumn(GetDlgItem(hDlg, IDC_RA_MEM_LIST), i, &Col);
             }

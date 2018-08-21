@@ -238,6 +238,10 @@
       <ControlFlowGuard>false</ControlFlowGuard>
       <ShowIncludes>false</ShowIncludes>
       <EnablePREfast>false</EnablePREfast>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>

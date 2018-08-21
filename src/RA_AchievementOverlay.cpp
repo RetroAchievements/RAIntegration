@@ -1504,7 +1504,8 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (doc.HasMember("Success") && doc["Success"].GetBool())
         {

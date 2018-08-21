@@ -2,7 +2,7 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
-#include <wtypes.h>
+#include <ra_fwd.h>
 
 class RA_Dlg_Login
 {

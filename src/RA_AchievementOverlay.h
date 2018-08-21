@@ -2,6 +2,7 @@
 #define RA_ACHIEVEMENTOVERLAY_H
 #pragma once
 
+struct IUnknown;
 #include <ddraw.h>
 
 #include "RA_Achievement.h"

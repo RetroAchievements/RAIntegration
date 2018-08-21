@@ -4,7 +4,6 @@
 
 #include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
 
-
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet
 //////////////////////////////////////////////////////////////////////////
@@ -13,14 +12,13 @@ class AchievementSet
 {
 public:
     explicit AchievementSet(ra::AchievementSetType nType) noexcept :
-        m_nSetType{ nType },
-        m_bProcessingActive{ TRUE }
+        m_nSetType{ nType }
     {
         Clear();
     }
 
 public:
-    static BOOL FetchFromWebBlocking(ra::GameID nGameID);
+    static bool FetchFromWebBlocking(ra::GameID nGameID);
     static void OnRequestUnlocks(const Document& doc);
 
 public:
@@ -28,11 +26,11 @@ public:
     void Test();
     void Reset();
 
-    BOOL Serialize(FileStream& Stream);
-    BOOL LoadFromFile(ra::GameID nGameID);
-    BOOL SaveToFile();
+    bool Serialize(FileStream& Stream);
+    bool LoadFromFile(ra::GameID nGameID);
+    bool SaveToFile();
 
-    BOOL DeletePatchFile(ra::GameID nGameID);
+    bool DeletePatchFile(ra::GameID nGameID);
 
     std::string GetAchievementSetFilename(ra::GameID nGameID);
 
@@ -41,10 +39,10 @@ public:
     inline size_t NumAchievements() const { return m_Achievements.size(); }
 
     // Get Points Total
-    inline unsigned int PointTotal()
+    inline unsigned int PointTotal() noexcept
     {
-        unsigned int total = 0;
-        for (Achievement ach : m_Achievements) total += ach.Points();
+        unsigned int total = 0U;
+        for (auto& ach : m_Achievements) { total += ach.Points(); }
         return total;
     }
 
@@ -60,24 +58,26 @@ public:
     //	Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
 
-    BOOL RemoveAchievement(size_t nIter);
+    _Success_(return != false)
+    _NODISCARD bool RemoveAchievement(_In_ std::ptrdiff_t nIter);
 
     void SaveProgress(const char* sRomName);
     void LoadProgress(const char* sRomName);
 
-    BOOL Unlock(ra::AchievementID nAchievementID);
+    bool Unlock(ra::AchievementID nAchievementID);
 
     unsigned int NumActive() const;
 
-    BOOL ProcessingActive() const { return m_bProcessingActive; }
-    void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
+    bool ProcessingActive() const { return m_bProcessingActive; }
+    void SetPaused(bool bIsPaused) { m_bProcessingActive = !bIsPaused; }
 
-    BOOL HasUnsavedChanges();
+    bool HasUnsavedChanges();
 
 private:
-    const ra::AchievementSetType m_nSetType{};
+    ra::AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive{};
+#pragma pack(1) /* alignas currently doesn't have an effect in VC++ */
+    bool m_bProcessingActive{}; 
 };
 
 

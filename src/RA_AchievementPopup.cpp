@@ -1,16 +1,17 @@
 #include "RA_AchievementPopup.h"
 
-#include "RA_AchievementOverlay.h"
-#include "RA_ImageFactory.h"
-#include "RA_Interface.h"
-
 #ifndef _MEMORY_
 #include <memory>
 #endif // !_MEMORY_
 
-#ifdef WIN32_LEAN_AND_MEAN
+#include "RA_AchievementOverlay.h"
+#include "RA_ImageFactory.h"
+#include "RA_Interface.h"
+#include "ra_utility.h"
+
+#ifndef _INC_MMSYSTEM
 #include <MMSystem.h> // PlaySound
-#endif // WIN32_LEAN_AND_MEAN
+#endif // !WIN32_LEAN_AND_MEAN
 
 namespace ra {
 
@@ -37,7 +38,7 @@ inline constexpr std::array<LPCTSTR, enum_sizes::NUM_MESSAGE_TYPES> MSG_SOUND
     _T("./Overlay/message.wav"),
 };
 
-}
+} // namespace ra
 
 void AchievementPopup::PlayAudio()
 {

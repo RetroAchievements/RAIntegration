@@ -2,7 +2,6 @@
 #define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
-// TBD: Should MessagePopup be forward declared to get rid of include queue?
 #include <queue>
 #include "ra_fwd.h"
 
@@ -48,6 +47,7 @@ public:
 public:
     _NODISCARD inline auto& Title() const { return m_sMessageTitle; }
     _NODISCARD inline auto& Subtitle() const { return m_sMessageSubtitle; }
+    // It seems enum classes can't be auto-deduced with conformance mode one
     _NODISCARD inline auto Type() const { return m_nMessageType; }
     _NODISCARD inline auto& Image() const { return m_hMessageImage; }
 
@@ -62,10 +62,10 @@ struct ControllerInput;
 class AchievementPopup
 {
 public:
-    void Update(ControllerInput& input, float fDelta, bool bFullScreen, bool bPaused);
+    /*_NORETURN */void Update(_In_ ControllerInput& input, _In_ float fDelta, _In_ bool bFullScreen, _In_ bool bPaused);
     /*_NORETURN */void Render(_In_ HDC hDC, _Inout_ RECT& rcDest);
 
-    void AddMessage(MessagePopup&& msg);
+    void AddMessage(MessagePopup&& msg) noexcept;
     _NODISCARD float GetYOffsetPct() const;
 
     //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }

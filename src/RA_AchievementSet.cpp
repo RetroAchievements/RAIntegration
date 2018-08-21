@@ -1,5 +1,3 @@
-#pragma once
-
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
@@ -44,18 +42,18 @@ std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
     }
 }
 
-BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
+bool AchievementSet::DeletePatchFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
         //	Nothing to do
-        return TRUE;
+        return true;
     }
 
     if (m_nSetType == ra::AchievementSetType::Local)
     {
         //	We do not automatically delete Local patch files
-        return TRUE;
+        return true;
     }
 
     //	Remove the text file
@@ -89,21 +87,22 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
 
 Achievement& AchievementSet::AddAchievement()
 {
-    m_Achievements.push_back(Achievement(m_nSetType));
+    m_Achievements.push_back(Achievement{ m_nSetType });
     return m_Achievements.back();
 }
 
-BOOL AchievementSet::RemoveAchievement(size_t nIter)
+_Use_decl_annotations_
+bool AchievementSet::RemoveAchievement(std::ptrdiff_t nOffs)
 {
-    if (nIter < m_Achievements.size())
+    if (nOffs < ra::to_signed(m_Achievements.size()))
     {
-        m_Achievements.erase(m_Achievements.begin() + nIter);
-        return TRUE;
+        m_Achievements.erase(std::next(m_Achievements.begin(), nOffs));
+        return true;
     }
     else
     {
         ASSERT(!"There are no achievements to remove...");
-        return FALSE;
+        return false;
     }
 }
 
@@ -129,7 +128,7 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
     }
 
     //	Not found
-    return -1;
+    return ra::to_unsigned(-1);
 }
 
 unsigned int AchievementSet::NumActive() const
@@ -155,7 +154,7 @@ void AchievementSet::Clear() noexcept
     }
 
     m_Achievements.clear();
-    m_bProcessingActive = TRUE;
+    m_bProcessingActive = true;
 }
 
 void AchievementSet::Test()
@@ -172,23 +171,23 @@ void AchievementSet::Test()
         if (ach.Test() == TRUE)
         {
             //	Award. If can award or have already awarded, set inactive:
-            ach.SetActive(FALSE);
+            ach.SetActive(false);
 
             //	Reverse find where I am in the list:
-            unsigned int nOffset = 0;
-            for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
+            auto uOffset = 0U;
+            for (uOffset = 0; uOffset < g_pActiveAchievements->NumAchievements(); ++uOffset)
             {
-                if (&ach == &g_pActiveAchievements->GetAchievement(nOffset))
+                if (&ach == &g_pActiveAchievements->GetAchievement(uOffset))
                     break;
             }
 
-            ASSERT(nOffset < NumAchievements());
-            if (nOffset < NumAchievements())
+            ASSERT(uOffset < NumAchievements());
+            if (uOffset < NumAchievements())
             {
-                g_AchievementsDialog.ReloadLBXData(nOffset);
+                g_AchievementsDialog.ReloadLBXData(ra::to_signed(uOffset));
 
                 if (g_AchievementEditorDialog.ActiveAchievement() == &ach)
-                    g_AchievementEditorDialog.LoadAchievement(&ach, TRUE);
+                    g_AchievementEditorDialog.LoadAchievement(&ach, true);
             }
 
             if (RAUsers::LocalUser().IsLoggedIn())
@@ -248,10 +247,10 @@ void AchievementSet::Reset()
     for (Achievement& ach : m_Achievements)
         ach.Reset();
 
-    m_bProcessingActive = TRUE;
+    m_bProcessingActive = true;
 }
 
-BOOL AchievementSet::SaveToFile()
+bool AchievementSet::SaveToFile()
 {
     //	Takes all achievements in this group and dumps them in the filename provided.
     FILE* pFile = nullptr;
@@ -280,7 +279,7 @@ BOOL AchievementSet::SaveToFile()
             pAch->CreateMemString();
 
             ZeroMemory(sNextLine, 2048);
-            sprintf_s(sNextLine, 2048, "%u:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
+            sprintf_s(sNextLine, 2048, "%zu:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
                 pAch->ID(),
                 pAch->CreateMemString().c_str(),
                 pAch->Title().c_str(),
@@ -300,10 +299,10 @@ BOOL AchievementSet::SaveToFile()
         }
 
         fclose(pFile);
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 
     //FILE* pf = nullptr;
     //const std::string sFilename = GetAchievementSetFilename( m_nGameID );
@@ -319,10 +318,10 @@ BOOL AchievementSet::SaveToFile()
     //}
 }
 
-BOOL AchievementSet::Serialize(FileStream& Stream)
+bool AchievementSet::Serialize(FileStream& Stream)
 {
     //	Why not submit each ach straight to cloud?
-    return FALSE;
+    return false;
 
     //FILE* pf = nullptr;
     //const std::string sFilename = GetAchievementSetFilename( m_nGameID );
@@ -364,17 +363,17 @@ BOOL AchievementSet::Serialize(FileStream& Stream)
     //	doc.Accept( writer );
 
     //	fclose( pf );
-    //	return TRUE;
+    //	return true;
     //}
     //else
     //{
     //	//	Could not write to file?
-    //	return FALSE;
+    //	return false;
     //}
 }
 
 //	static: fetches both core and unofficial
-BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
+bool AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
 {
     //	Can't open file: attempt to find it on SQL server!
     PostArgs args;
@@ -399,13 +398,13 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
             Writer<FileStream> writer(fs);
             PatchData.Accept(writer);
             fclose(pf);
-            return TRUE;
+            return true;
         }
         else
         {
             ASSERT(!"Could not open patch file for writing?");
             RA_LOG("Could not open patch file for writing?");
-            return FALSE;
+            return false;
         }
     }
     else
@@ -417,15 +416,15 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
             MessagePopup(oss.str(), "Working offline...", ra::PopupMessageType::Info)
         );
 
-        return FALSE;
+        return false;
     }
 }
 
-BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
+bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
     {
-        return TRUE;
+        return true;
     }
 
     const std::string sFilename = GetAchievementSetFilename(nGameID);
@@ -483,12 +482,13 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             }
 
             fclose(pFile);
-            return TRUE;
+            return true;
         }
         else
         {
             Document doc;
-            doc.ParseStream(FileStream(pFile));
+            FileStream fs{ pFile };
+            doc.ParseStream(fs);
             if (!doc.HasParseError())
             {
                 //ASSERT( doc["Success"].GetBool() );
@@ -517,7 +517,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 if (m_nSetType != ra::AchievementSetType::Core)
                 {
                     fclose(pFile);
-                    return TRUE;
+                    return true;
                 }
 
                 const Value& LeaderboardsData = doc["Leaderboards"];
@@ -541,7 +541,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             {
                 fclose(pFile);
                 ASSERT(!"Could not parse file?!");
-                return FALSE;
+                return false;
             }
 
             fclose(pFile);
@@ -567,7 +567,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                     MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", ra::PopupMessageType::Info));
             }
 
-            return TRUE;
+            return true;
         }
     }
     else
@@ -577,7 +577,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         char sErrMsg[2048];
         strerror_s(sErrMsg, nErr);
         RA_LOG("Error %s\n", sErrMsg);
-        return FALSE;
+        return false;
     }
 }
 
@@ -612,7 +612,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
-            sprintf_s(buffer, "%u:%u:", pAch->ID(), pAch->NumConditions(nGrp));
+            sprintf_s(buffer, "%zu:%u:", pAch->ID(), pAch->NumConditions(nGrp));
             strcat_s(cheevoProgressString, 4096, buffer);
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
@@ -630,7 +630,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         //	Generate a slightly different key to md5ify:
         char sCheevoProgressMangled[4096];
-        sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%u",
+        sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%zu",
             RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
 
         std::string sMD5Progress = RAGenerateMD5(std::string(sCheevoProgressMangled));
@@ -768,7 +768,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
                 //assert(!"MD5 invalid... what to do... maybe they're trying to hack achievements?");
             }
 
-            nOffs = (pIter - pRawFile);
+            nOffs = ra::to_unsigned(pIter - pRawFile);
         }
 
         free(pRawFile);
@@ -781,35 +781,35 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
     Achievement& newAch = AddAchievement();		//	Create a brand new achievement
     newAch.Set(m_Achievements[nIter]);		//	Copy in all values from the clone src
     newAch.SetID(0);
-    newAch.SetModified(TRUE);
-    newAch.SetActive(FALSE);
+    newAch.SetModified(true);
+    newAch.SetActive(false);
 
     return newAch;
 }
 
-BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
+bool AchievementSet::Unlock(ra::AchievementID nAchID)
 {
     for (size_t i = 0; i < NumAchievements(); ++i)
     {
         if (m_Achievements[i].ID() == nAchID)
         {
-            m_Achievements[i].SetActive(FALSE);
-            return TRUE;	//	Update Dlg? //TBD
+            m_Achievements[i].SetActive(false);
+            return true;	//	Update Dlg? //TBD
         }
     }
 
     RA_LOG("Attempted to unlock achievement %u but failed!\n", nAchID);
-    return FALSE;//??
+    return false;//??
 }
 
-BOOL AchievementSet::HasUnsavedChanges()
+bool AchievementSet::HasUnsavedChanges()
 {
     for (size_t i = 0; i < NumAchievements(); ++i)
     {
         if (m_Achievements[i].Modified())
-            return TRUE;
+            return true;
     }
 
-    return FALSE;
+    return false;
 }
 

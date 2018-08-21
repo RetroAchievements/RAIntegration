@@ -3,8 +3,7 @@
 
 #include "RA_Defs.h"
 
-const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
+
 const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
 static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
 const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
@@ -240,17 +239,17 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     {
         //	Assume 'd0x' and four hex following it.
         pBufferInOut += 3;
-        m_nVarType = ComparisonVariableType::DeltaMem;
+        m_nVarType = ra::ComparisonVariableType::DeltaMem;
     }
     else if (pBufferInOut[0] == '0' && toupper(pBufferInOut[1]) == 'X')
     {
         //	Assume '0x' and four hex following it.
         pBufferInOut += 2;
-        m_nVarType = ComparisonVariableType::Address;
+        m_nVarType = ra::ComparisonVariableType::Address;
     }
     else
     {
-        m_nVarType = ComparisonVariableType::ValueComparison;
+        m_nVarType = ra::ComparisonVariableType::ValueComparison;
         //	Val only
         if (toupper(pBufferInOut[0]) == 'H')
         {
@@ -265,7 +264,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     }
 
 
-    if (m_nVarType == ComparisonVariableType::ValueComparison)
+    if (m_nVarType == ra::ComparisonVariableType::ValueComparison)
     {
         //	Values don't have a size!
     }
@@ -287,16 +286,16 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     char valueBuffer[20];
     switch (m_nVarType)
     {
-        case ValueComparison:
+        case ra::ComparisonVariableType::ValueComparison:
             sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
             buffer.append(valueBuffer);
             break;
 
-        case DeltaMem:
+        case ra::ComparisonVariableType::DeltaMem:
             buffer.append(1, 'd');
-            // explicit fallthrough to Address
+            // explicit fallthrough to ra::ComparisonVariableType::Address
 
-        case Address:
+        case ra::ComparisonVariableType::Address:
             buffer.append("0x");
 
             buffer.append(ra::ComparisonSizeToPrefix(m_nVarSize));
@@ -321,15 +320,15 @@ unsigned int CompVariable::GetValue()
 
     switch (m_nVarType)
     {
-        case ValueComparison:
+        case ra::ComparisonVariableType::ValueComparison:
             //	It's a raw value. Return it.
             return m_nVal;
 
-        case Address:
+        case ra::ComparisonVariableType::Address:
             //	It's an address in memory. Return it!
             return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
-        case DeltaMem:
+        case ra::ComparisonVariableType::DeltaMem:
             //	Return the backed up (last frame) value, but store the new one for the next frame!
             nPreviousVal = m_nPreviousVal;
             m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);

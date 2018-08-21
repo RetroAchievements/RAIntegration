@@ -37,7 +37,7 @@ inline constexpr std::array<BookmarkSubItems, enum_sizes::NUM_BOOKMARK_SUBCOLUMN
 };
 
 inline constexpr std::array<LPCTSTR, enum_sizes::NUM_BOOKMARK_SUBCOLUMNS> COLUMN_TITLE{
-    _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes")
+    _T("Description"), _T("ra::ComparisonVariableType::Address"), _T("Value"), _T("Prev."), _T("Changes")
 };
 inline constexpr std::array<int, enum_sizes::NUM_BOOKMARK_SUBCOLUMNS> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
 
@@ -585,7 +585,7 @@ void Dlg_MemBookmark::AddAddress()
 
     MemBookmark* NewBookmark = new MemBookmark();
 
-    // Fetch Memory Address from Memory Inspector
+    // Fetch Memory ra::ComparisonVariableType::Address from Memory Inspector
     TCHAR buffer[256];
     GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
     unsigned int nAddr = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
@@ -762,7 +762,7 @@ void Dlg_MemBookmark::ExportJSON()
                                         Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
-                                        item.AddMember("Address", bookmark->Address(), allocator);
+                                        item.AddMember("ra::ComparisonVariableType::Address", bookmark->Address(), allocator);
                                         item.AddMember("Type", bookmark->Type(), allocator);
                                         item.AddMember("Decimal", bookmark->Decimal(), allocator);
                                         bookmarks.PushBack(item, allocator);
@@ -810,7 +810,7 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
                     swprintf_s(buffer, 256, L"%s", ra::Widen(BookmarksData[i]["Description"].GetString()).c_str());
                     NewBookmark->SetDescription(buffer);
 
-                    NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());
+                    NewBookmark->SetAddress(BookmarksData[i]["ra::ComparisonVariableType::Address"].GetUint());
                     NewBookmark->SetType(BookmarksData[i]["Type"].GetInt());
                     NewBookmark->SetDecimal(BookmarksData[i]["Decimal"].GetBool());
 

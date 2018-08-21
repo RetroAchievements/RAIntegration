@@ -182,17 +182,17 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     //	Update our local array:
     const char* sMemTypStrSrc = "Value";
     const char* sMemSizeStrSrc = "";
-    if (Cond.CompSource().Type() != ValueComparison)
+    if (Cond.CompSource().Type() != ra::ComparisonVariableType::ValueComparison)
     {
-        sMemTypStrSrc = (Cond.CompSource().Type() == Address) ? "Mem" : "Delta";
+        sMemTypStrSrc = (Cond.CompSource().Type() == ra::ComparisonVariableType::Address) ? "Mem" : "Delta";
         sMemSizeStrSrc = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompSource().Size()));
     }
 
     const char* sMemTypStrDst = "Value";
     const char* sMemSizeStrDst = "";
-    if (Cond.CompTarget().Type() != ValueComparison)
+    if (Cond.CompTarget().Type() != ra::ComparisonVariableType::ValueComparison)
     {
-        sMemTypStrDst = (Cond.CompTarget().Type() == Address) ? "Mem" : "Delta";
+        sMemTypStrDst = (Cond.CompTarget().Type() == ra::ComparisonVariableType::Address) ? "Mem" : "Delta";
         sMemSizeStrDst = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompTarget().Size()));
     }
 
@@ -209,7 +209,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 
     if (g_bPreferDecimalVal)
     {
-        if (Cond.CompTarget().Type() == ValueComparison)
+        if (Cond.CompTarget().Type() == ra::ComparisonVariableType::ValueComparison)
             sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::ValueTgt)], ra::MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().RawValue());
     }
 
@@ -1173,8 +1173,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         return FALSE;
 
                     Condition NewCondition;
-                    NewCondition.CompSource().Set(ra::ComparisonVariableSize::EightBit, Address, 0x0000);
-                    NewCondition.CompTarget().Set(ra::ComparisonVariableSize::EightBit, ValueComparison, 0);	//	Compare defaults!
+                    NewCondition.CompSource().Set(ra::ComparisonVariableSize::EightBit, ra::ComparisonVariableType::Address, 0x0000);
+                    NewCondition.CompTarget().Set(ra::ComparisonVariableSize::EightBit, ra::ComparisonVariableType::ValueComparison, 0);	//	Compare defaults!
 
                     //	Helper: guess that the currently watched memory location
                     //	 is probably what they are about to want to add a cond for.
@@ -1631,7 +1631,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         //HWND hMem = GetDlgItem( HWndMemoryDlg, IDC_RA_WATCHING );
                         if (pOnClick->iSubItem == ra::CondSubItems::ValueSrc)
                         {
-                            if (rCond.CompSource().Type() != ValueComparison)
+                            if (rCond.CompSource().Type() != ra::ComparisonVariableType::ValueComparison)
                             {
                                 //	Wake up the mem dlg via the main app
                                 FORWARD_WM_COMMAND(g_RAMainWnd, IDM_RA_FILES_MEMORYFINDER, nullptr, 0U, SendMessage);
@@ -1648,7 +1648,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         else if (pOnClick->iSubItem == ra::CondSubItems::ValueTgt)
                         {
-                            if (rCond.CompTarget().Type() != ValueComparison)
+                            if (rCond.CompTarget().Type() != ra::ComparisonVariableType::ValueComparison)
                             {
                                 //	Wake up the mem dlg via the main app
                                 FORWARD_WM_COMMAND(g_RAMainWnd, IDM_RA_FILES_MEMORYFINDER, nullptr, 0U, SendMessage);
@@ -1730,22 +1730,22 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case ra::CondSubItems::TypeSrc:
                         {
                             if (strcmp(sData, "Mem") == 0)
-                                rCond.CompSource().SetType(Address);
+                                rCond.CompSource().SetType(ra::ComparisonVariableType::Address);
                             else if (strcmp(sData, "Delta") == 0)
-                                rCond.CompSource().SetType(DeltaMem);
+                                rCond.CompSource().SetType(ra::ComparisonVariableType::DeltaMem);
                             else
-                                rCond.CompSource().SetType(ValueComparison);
+                                rCond.CompSource().SetType(ra::ComparisonVariableType::ValueComparison);
 
                             break;
                         }
                         case ra::CondSubItems::TypeTgt:
                         {
                             if (strcmp(sData, "Mem") == 0)
-                                rCond.CompTarget().SetType(Address);
+                                rCond.CompTarget().SetType(ra::ComparisonVariableType::Address);
                             else if (strcmp(sData, "Delta") == 0)
-                                rCond.CompTarget().SetType(DeltaMem);
+                                rCond.CompTarget().SetType(ra::ComparisonVariableType::DeltaMem);
                             else
-                                rCond.CompTarget().SetType(ValueComparison);
+                                rCond.CompTarget().SetType(ra::ComparisonVariableType::ValueComparison);
 
                             break;
                         }
@@ -1789,7 +1789,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case ra::CondSubItems::ValueSrc:
                         {
                             int nBase = 16;
-                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
+                            if (rCond.CompSource().Type() == ra::ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
                                 nBase = 10;
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
@@ -1799,7 +1799,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case ra::CondSubItems::ValueTgt:
                         {
                             int nBase = 16;
-                            if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
+                            if (rCond.CompTarget().Type() == ra::ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
                                 nBase = 10;
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
@@ -1880,14 +1880,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     {
         using namespace ra::rel_ops;
         case ra::CondSubItems::ValueSrc:
-            if (rCond.CompSource().Type() != Address && rCond.CompSource().Type() != DeltaMem)
+            if (rCond.CompSource().Type() != ra::ComparisonVariableType::Address && rCond.CompSource().Type() != ra::ComparisonVariableType::DeltaMem)
                 return;
 
             nAddr = rCond.CompSource().RawValue();
             break;
 
         case ra::CondSubItems::ValueTgt:
-            if (rCond.CompTarget().Type() != Address && rCond.CompTarget().Type() != DeltaMem)
+            if (rCond.CompTarget().Type() != ra::ComparisonVariableType::Address && rCond.CompTarget().Type() != ra::ComparisonVariableType::DeltaMem)
                 return;
 
             nAddr = rCond.CompTarget().RawValue();

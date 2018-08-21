@@ -24,9 +24,18 @@ enum class ComparisonVariableSize
     ThirtyTwoBit
 };
 
+enum class ComparisonVariableType
+{
+    Address,         // compare to the value of a live address in RAM
+    ValueComparison, // a number. assume 32 bit 
+    DeltaMem,        // the value last known at this address.
+    DynamicVariable  // a custom user-set variable
+};
+
 namespace enum_sizes {
 
 _CONSTANT_VAR NUM_COMPARISON_VARIABLE_SIZETYPES{13U};
+_CONSTANT_VAR NUM_COMPARISON_VARIABLE_TYPES{ 4U };
 
 } // namespace enum_sizes
 
@@ -36,19 +45,13 @@ inline constexpr std::array<LPCTSTR, enum_sizes::NUM_COMPARISON_VARIABLE_SIZETYP
     _T("Bit0"), _T("Bit1"), _T("Bit2"), _T("Bit3"), _T("Bit4"), _T("Bit5"), _T("Bit6"), _T("Bit7"), _T("Lower4"),
     _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("32-bit")
 };
-
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_COMPARISON_VARIABLE_TYPES> COMPARISONVARIABLETYPE_STR
+{
+    _T("Memory"), _T("Value"), _T("Delta"), _T("DynVar")
+};
 } // namespace ra
 
-enum ComparisonVariableType
-{
-    Address,			//	compare to the value of a live address in RAM
-    ValueComparison,	//	a number. assume 32 bit 
-    DeltaMem,			//	the value last known at this address.
-    DynamicVariable,	//	a custom user-set variable
 
-    NumComparisonVariableTypes
-};
-extern const char* COMPARISONVARIABLETYPE_STR[];
 
 enum ComparisonType
 {
@@ -68,7 +71,7 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    void Set(ra::ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    void Set(ra::ComparisonVariableSize nSize, ra::ComparisonVariableType nType, unsigned int nInitialValue)
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
@@ -94,15 +97,15 @@ public:
     _CONSTANT_FN SetSize(_In_ ra::ComparisonVariableSize nSize) noexcept { m_nVarSize = nSize; }
     _NODISCARD _CONSTANT_FN Size() const noexcept { return m_nVarSize; }
 
-    inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
-    inline ComparisonVariableType Type() const { return m_nVarType; }
+    _CONSTANT_FN SetType(_In_ ra::ComparisonVariableType nType) noexcept { m_nVarType = nType; }
+    _NODISCARD _CONSTANT_FN Type() const noexcept { return m_nVarType; }
 
     inline unsigned int RawValue() const { return m_nVal; }
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
     ra::ComparisonVariableSize m_nVarSize{ ra::ComparisonVariableSize::EightBit };
-    ComparisonVariableType m_nVarType{};
+    ra::ComparisonVariableType m_nVarType{};
     unsigned int m_nVal{};
     unsigned int m_nPreviousVal{};
 };

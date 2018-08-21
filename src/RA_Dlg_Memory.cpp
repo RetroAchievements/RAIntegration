@@ -1219,7 +1219,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             char sWarning[4096];
                             sprintf_s(sWarning, 4096,
-                                "Address 0x%04x already stored with note:\n\n"
+                                "ra::ComparisonVariableType::Address 0x%04x already stored with note:\n\n"
                                 "%s\n"
                                 "by %s\n"
                                 "\n\n"

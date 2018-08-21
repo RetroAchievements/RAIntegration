@@ -4,14 +4,29 @@
 
 #include <wtypes.h>
 
-class RA_Dlg_RomChecksum
+namespace ra {
+namespace ui {
+
+class Dlg_RomChecksum
 {
 public:
-    static BOOL DoModalDialog();
+#pragma region Constructors
+    inline constexpr Dlg_RomChecksum() noexcept = default;
+    ~Dlg_RomChecksum() noexcept = default;
+    Dlg_RomChecksum(const Dlg_RomChecksum&) = delete;
+    Dlg_RomChecksum& operator=(const Dlg_RomChecksum&) = delete;
+    inline constexpr Dlg_RomChecksum(Dlg_RomChecksum&&) noexcept = default;
+    inline constexpr Dlg_RomChecksum& operator=(Dlg_RomChecksum&&) noexcept = default;
+#pragma endregion
 
-public:
-    static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, LPARAM);
+    INT_PTR DoModal();
+
+private:
+    friend INT_PTR CALLBACK Dlg_RomChecksumProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam);
 };
+
+} // namespace ui
+} // namespace ra
 
 
 #endif // !RA_DLG_ROMCHECKSUM_H

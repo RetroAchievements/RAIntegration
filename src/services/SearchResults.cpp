@@ -282,7 +282,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 {
     m_nSize = srSource.m_nSize;
 
-    ComparisonVariableSize nSize = m_nSize;
+    _UNUSED ComparisonVariableSize nSize = m_nSize;
     switch (m_nSize)
     {
         case Nibble_Lower:
@@ -290,6 +290,10 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             break;
 
         case EightBit:
+            // attributes don't seem to affect lambdas
+
+#pragma warning(push)
+#pragma warning(disable : 4100) // 'pPrev' unreferenced formal parameter
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
             {
                 return Compare(pMemory[nIndex], nTestValue, nCompareType);
@@ -311,6 +315,8 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
                     (pMemory[nIndex + 2] << 16) | (pMemory[nIndex + 3] << 24);
                 return Compare(nValue, nTestValue, nCompareType);
             });
+#pragma warning(pop)
+
             break;
     }
 

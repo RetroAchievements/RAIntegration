@@ -1,6 +1,8 @@
 #include "RA_Condition.h"
 #include "RA_MemManager.h"
 
+#include <cctype>
+
 const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
@@ -264,7 +266,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     }
     else
     {
-        m_nVarSize = PrefixToComparisonSize(toupper(pBufferInOut[0]));
+        m_nVarSize = PrefixToComparisonSize(static_cast<char>(std::toupper(static_cast<int>(pBufferInOut[0]))));
         if (m_nVarSize != ComparisonVariableSize::SixteenBit)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }

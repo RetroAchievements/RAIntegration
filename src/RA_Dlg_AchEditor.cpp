@@ -40,7 +40,7 @@ Dlg_AchievementEditor g_AchievementEditorDialog;
 std::vector<ResizeContent> vDlgAchEditorResize;
 POINT pDlgAchEditorMin;
 
-INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM lParam)
 {
     switch (nMsg)
     {
@@ -956,7 +956,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     g_bPreferDecimalVal = !g_bPreferDecimalVal;
                     if (ActiveAchievement() != nullptr)
                     {
-                        ActiveAchievement()->SetDirtyFlag(Dirty__All);
+                        ActiveAchievement()->SetDirtyFlag(ra::etoi(Dirty__All));
                         LoadAchievement(ActiveAchievement(), TRUE);
                         ActiveAchievement()->ClearDirtyFlag();
                     }
@@ -1178,7 +1178,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     //	Select last item
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
-                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                    // to_unsigned on any negative integer will make it the max size of it's unsigned counterpart
+                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
                 }
                 break;
@@ -1224,7 +1225,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             for (unsigned int i = 0; i < m_ConditionClipboard.Count(); i++)
                             {
                                 const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), m_ConditionClipboard.GetAt(i)) - 1;
-                                ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                                ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                                 ListView_EnsureVisible(hList, nNewID, FALSE);
                             }
 
@@ -1327,7 +1328,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //  Update selections
                             ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                             for (size_t i = 0; i < nInsertCount; ++i)
-                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
 
                             ListView_EnsureVisible(hList, nInsertIndex, FALSE);
                         }
@@ -1385,7 +1386,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //  Update selections
                             ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                             for (size_t i = 0; i < nInsertCount; ++i)
-                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
 
                             ListView_EnsureVisible(hList, nInsertIndex, FALSE);
                         }
@@ -1569,7 +1570,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     //	http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
-                    HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
+                    _UNUSED HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
                     ASSERT(hList != nullptr);
 
                     //	Note: first item should be an ID!
@@ -1964,7 +1965,7 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
     }
 }
 
-void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptKeepSelected)
+void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL bAttemptKeepSelected)
 {
     char buffer[1024];
 
@@ -2052,7 +2053,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
         BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
         BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));
         BOOL bPointsSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS));
-        HWND hCtrl = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
+        _UNUSED HWND hCtrl = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
 
         if (!m_pSelectedAchievement->IsDirty())
             return;
@@ -2084,7 +2085,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
             {
                 unsigned int nGrp = GetSelectedConditionGroup();
 
-                if (ListView_GetItemCount(hCondList) != m_pSelectedAchievement->NumConditions(nGrp))
+                if (ListView_GetItemCount(hCondList) != ra::to_signed(m_pSelectedAchievement->NumConditions(nGrp)))
                 {
                     PopulateConditions(pCheevo);
                 }
@@ -2204,7 +2205,7 @@ void BadgeNames::OnNewBadgeNames(const Document& data)
 
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
-    int nSel = ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str());
+    _UNUSED int nSel = ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str());
 
     if (bAndSelect)
     {

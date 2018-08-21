@@ -16,7 +16,7 @@ INT_PTR CALLBACK s_GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
     return g_GameTitleDialog.GameTitleProc(hDlg, uMsg, wParam, lParam);
 }
 
-INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM lParam)
 {
     static bool bUpdatingTextboxTitle = false;
 
@@ -123,15 +123,15 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     {
                         const Value& Response = doc["Response"];
 
-                        const ra::GameID nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
+                        const ra::GameID nGameID2 = static_cast<ra::GameID>(Response["GameID"].GetUint());
                         const std::string& sGameTitle = Response["GameTitle"].GetString();
 
                         //	If we're setting the game title here...
                         //	 surely we could set the game ID here too?
                         g_pCurrentGameData->SetGameTitle(sGameTitle);
-                        g_pCurrentGameData->SetGameID(nGameID);
+                        g_pCurrentGameData->SetGameID(nGameID2);
 
-                        g_GameTitleDialog.m_nReturnedGameID = nGameID;
+                        g_GameTitleDialog.m_nReturnedGameID = nGameID2;
 
                         //	Close this dialog
                         EndDialog(hDlg, TRUE);
@@ -234,7 +234,7 @@ std::string Dlg_GameTitle::CleanRomName(const std::string& sTryName)
     std::stringstream sstr;
 
     //	Scan through, reform sRomNameRef using all logical characters
-    int nCharsAdded = 0;
+    _UNUSED int nCharsAdded = 0;
 
     for (size_t i = 0; i < sTryName.length(); ++i)
     {

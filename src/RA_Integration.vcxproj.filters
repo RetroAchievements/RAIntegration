@@ -242,6 +242,7 @@
     <ClInclude Include="services\ImageRepository.h">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="ra_wm_handler.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">
@@ -258,5 +259,6 @@
     <None Include="ra_utility.h">
       <Filter>Helpers</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

@@ -231,20 +231,20 @@ BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
 
 void RAWeb::SetUserAgentString()
 {
-    std::string sUserAgent;
-    sUserAgent.reserve(128U);
+    std::string sUserAgent2;
+    sUserAgent2.reserve(128U);
 
     if (g_sClientName != nullptr)
     {
-        sUserAgent.append(g_sClientName);
-        sUserAgent.append("/");
+        sUserAgent2.append(g_sClientName);
+        sUserAgent2.append("/");
     }
     else
     {
-        sUserAgent.append("UnknownClient/");
+        sUserAgent2.append("UnknownClient/");
     }
-    sUserAgent.append(g_sClientVersion);
-    sUserAgent.append(" (");
+    sUserAgent2.append(g_sClientVersion);
+    sUserAgent2.append(" (");
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
@@ -260,25 +260,25 @@ void RAWeb::SetUserAgentString()
         RtlGetVersion(&osVersion);
         if (osVersion.dwMajorVersion > 0)
         {
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
+            sUserAgent2.append("WindowsNT ");
+            sUserAgent2.append(std::to_string(osVersion.dwMajorVersion));
+            sUserAgent2.append(".");
+            sUserAgent2.append(std::to_string(osVersion.dwMinorVersion));
         }
     }
 
-    sUserAgent.append(") Integration/");
+    sUserAgent2.append(") Integration/");
 
     auto buffer{ std::make_unique<char[]>(64U) };
     sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
               RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer.release());
+    sUserAgent2.append(buffer.release());
 
     const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
     if (ptr != nullptr)
-        sUserAgent.append(ptr);
+        sUserAgent2.append(ptr);
 
-    SetUserAgent(sUserAgent);
+    SetUserAgent(sUserAgent2);
 }
 
 void RAWeb::LogJSON(const Document& doc)
@@ -371,7 +371,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
             // Send a Request.
             if (hRequest != nullptr)
             {
-                BOOL bResults = WinHttpSendRequest(hRequest,
+                _UNUSED BOOL bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
                     0,
                     WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
@@ -646,8 +646,6 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
             while (nBytesToRead > 0)
             {
-                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-
                 //DataStream sHttpReadData;
                 //sHttpReadData.reserve( 8192 );
 

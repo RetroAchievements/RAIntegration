@@ -83,7 +83,7 @@ const unsigned int PROCESS_WAIT_TIME = 100;
 unsigned int g_nProcessTimer = 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
@@ -977,7 +977,8 @@ API void CCONV _RA_LoadPreferences()
     else
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (doc.HasParseError())
         {
@@ -1263,9 +1264,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGIN:
-            RA_Dlg_Login::DoModalLogin();
+        {
+            auto myLogin{ std::make_unique<ra::ui::Dlg_Login>() };
+            myLogin->DoModal();
             _RA_SavePreferences();
-            break;
+        }break;
+            
 
         case IDM_RA_FILES_LOGOUT:
             RAUsers::LocalUser().Clear();
@@ -1318,7 +1322,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_GETROMCHECKSUM:
         {
-            RA_Dlg_RomChecksum::DoModalDialog();
+            auto checksumDlg = std::make_unique<ra::ui::Dlg_RomChecksum>();
+            checksumDlg->DoModal();
             //MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
             break;
         }

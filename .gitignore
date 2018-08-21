@@ -3,7 +3,6 @@
 *.user
 /RetroAchievementsKey
 test_app/
-src/*_REMOTE_*.cpp
 src/clipboard.txt
 
 # Output files
@@ -11,3 +10,4 @@ src/clipboard.txt
 /bin
 *.pdb
 *.dll
+

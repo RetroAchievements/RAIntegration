@@ -6,11 +6,19 @@
 
 #include <vector>
 
+// this class is giving strange behavior... not sure why the functions are virtual without a derived class.
+
 class RA_Leaderboard
 {
 public:
-    RA_Leaderboard(const ra::LeaderboardID nLBID);
-    ~RA_Leaderboard();
+    explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept;
+    // virtual member functions need a virtual destructor, but this class isn't even derived, what's the point of
+    // making it go to virtual table?.
+    virtual ~RA_Leaderboard() noexcept = default;
+    RA_Leaderboard(const RA_Leaderboard&) = delete; // it's ID'd no?
+    RA_Leaderboard& operator=(const RA_Leaderboard&) = delete;
+    RA_Leaderboard(RA_Leaderboard&& b) noexcept; // it's ID'd no?
+    RA_Leaderboard& operator=(RA_Leaderboard&& b) noexcept;
 
     void ParseFromString(const char* sBuffer, MemValue::Format format);
 
@@ -35,10 +43,10 @@ public:
 
     struct Entry
     {
-        unsigned int m_nRank;
+        unsigned int m_nRank = unsigned int{};
         std::string	 m_sUsername;
-        int m_nScore;
-        time_t m_TimeAchieved;
+        int m_nScore = int{};
+        time_t m_TimeAchieved = time_t{};
     };
 
     void SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved);
@@ -53,17 +61,17 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    const ra::LeaderboardID		m_nID;			//	DB ID for this LB
+    ra::LeaderboardID		m_nID{};		//	DB ID for this LB
     ConditionSet			m_startCond;	//	Start monitoring if this is true
     ConditionSet			m_cancelCond;	//	Cancel monitoring if this is true
     ConditionSet			m_submitCond;	//	Submit new score if this is true
 
-    bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
-    bool                    m_bSubmitted;   //  True if already submitted.
+    bool					m_bStarted{};	// False = check start condition. True = check cancel or submit conditions.
+    bool                    m_bSubmitted{}; // True if already submitted.
 
     MemValue				m_value;		//	A collection of memory addresses and values to produce one value.
     MemValue				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
-    MemValue::Format        m_nFormat;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    MemValue::Format        m_nFormat{ MemValue::Format::Value }; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
     std::string				m_sTitle;		//	The title of the leaderboard
     std::string				m_sDescription;	//	

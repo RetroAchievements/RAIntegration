@@ -22,14 +22,14 @@ template<> static std::wstring ToString<ra::ComparisonVariableType>(const ra::Co
     return ra::Widen(ra::COMPARISONVARIABLETYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
+template<> static std::wstring ToString<ra::ComparisonType>(const ra::ComparisonType& t)
 {
-    return ra::Widen(COMPARISONTYPE_STR[ra::etoi(t)]);
+    return ra::Widen(ra::COMPARISONTYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
+template<> static std::wstring ToString<ra::ConditionType>(const ra::ConditionType& t)
 {
-    return ra::Widen(CONDITIONTYPE_STR[ra::etoi(t)]);
+    return ra::Widen(ra::CONDITIONTYPE_STR.at(ra::etoi(t)));
 }
 
 template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)

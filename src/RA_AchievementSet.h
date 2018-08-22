@@ -74,10 +74,9 @@ public:
     bool HasUnsavedChanges();
 
 private:
+    bool m_bProcessingActive{};
     ra::AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
-#pragma pack(1) /* alignas currently doesn't have an effect in VC++ */
-    bool m_bProcessingActive{}; 
 };
 
 

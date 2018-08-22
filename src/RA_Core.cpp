@@ -394,16 +394,17 @@ API int CCONV _RA_HardcoreModeIsActive()
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
-    static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
+    // Making this static is causing an access violation
+    auto sMD5NULL = RAGenerateMD5(nullptr, 0U);
 
     g_sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
     RA_LOG("Loading new ROM... MD5 is %s\n", (g_sCurrentROMMD5 == sMD5NULL) ? "Null" : g_sCurrentROMMD5.c_str());
 
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
-
+    using namespace ra::int_literals;
     //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
     //	TBD: local DB of MD5 to ra::GameIDs here
-    ra::GameID nGameID = 0;
+    auto nGameID = 0_gameid;
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
@@ -416,7 +417,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         if (RAWeb::DoBlockingRequest(ra::RequestType::GameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
-            if (nGameID == 0)	//	Unknown
+            if (nGameID == 0_gameid)	//	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());
                 char buffer[64];

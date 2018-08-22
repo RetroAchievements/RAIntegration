@@ -326,7 +326,7 @@ bool AchievementSet::SaveToFile()
     //}
 }
 
-bool AchievementSet::Serialize(FileStream& Stream)
+bool AchievementSet::Serialize(_UNUSED FileStream& Stream)
 {
     //	Why not submit each ach straight to cloud?
     return false;
@@ -501,11 +501,11 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
             {
                 //ASSERT( doc["Success"].GetBool() );
                 g_pCurrentGameData->ParseData(doc);
-                ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                ra::GameID nGameID2 = g_pCurrentGameData->GetGameID();
 
                 //	Rich Presence
                 SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
+                _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID2) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
                 g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
                 const Value& AchievementsData = doc["Achievements"];
@@ -536,8 +536,8 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
                 {
                     //"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
 
-                    auto& lbData = LeaderboardsData[i];
-                    RA_Leaderboard lb(lbData["ID"].GetUint());
+                    const auto& lbData = LeaderboardsData[i];
+                    RA_Leaderboard lb{ lbData["ID"].GetUint() };
 
                     lb.SetTitle(lbData["Title"].GetString());
                     lb.SetDescription(lbData["Description"].GetString());
@@ -545,7 +545,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
                     auto nFormat = MemValue::ParseFormat(lbData["Format"].GetString());
                     lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
 
-                    g_LeaderboardManager.AddLeaderboard(lb);
+                    g_LeaderboardManager.AddLeaderboard(std::move(lb));
                 }
             }
             else
@@ -629,7 +629,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
         for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
         {
-            sprintf_s(buffer, "%zu:%u:", pAch->ID(), pAch->NumConditions(nGrp));
+            sprintf_s(buffer, "%zu:%zu:", pAch->ID(), pAch->NumConditions(nGrp));
             strcat_s(cheevoProgressString, 4096, buffer);
 
             for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
@@ -680,7 +680,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     char* pGivenProgressMD5 = nullptr;
     char* pGivenCheevoMD5 = nullptr;
     char cheevoMD5TestMangled[4096];
-    int nMemStringLen = 0;
+    _UNUSED int nMemStringLen = 0;
 
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;

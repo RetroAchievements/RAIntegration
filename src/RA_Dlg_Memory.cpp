@@ -803,6 +803,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             GenerateResizes(hDlg);
 
+            // TODO: make all controls data members later as managed handles
+            //       Mainly so we only have to call GetDlgItem during OnInitDialog (WM_INITDIALOG)
             CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED);
             CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_SEARCHRANGE), FALSE);
@@ -812,17 +814,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), NativeStr(COMPARISONTYPE_STR[i]).c_str());
+            for (auto& comptype_name : ra::COMPARISONTYPE_STR)
+                ComboBox_AddString(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), comptype_name);
 
-            ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
+            ComboBox_SetCurSel(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 
-            EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
+            EnableWindow(::GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
 
             SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT("0x0000"));
 
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
+            SetWindowFont(::GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockFont(SYSTEM_FIXED_FONT), TRUE);
+            SetWindowFont(::GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockFont(SYSTEM_FIXED_FONT), TRUE);
 
             //	8-bit by default:
             CheckDlgButton(hDlg, IDC_RA_CBO_4BIT, BST_UNCHECKED);
@@ -1054,7 +1056,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (g_MemManager.TotalBankSize() == 0)
                         return TRUE;	//	Handled
 
-                    ComparisonType nCmpType = static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
+                    const auto nCmpType{
+                        ra::itoe<ra::ComparisonType>(ComboBox_GetCurSel(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)))
+                    };
 
                     while (m_SearchResults.size() > m_nPage + 1)
                         m_SearchResults.pop_back();
@@ -1111,7 +1115,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             sr.m_nLastQueryVal == srPrevious.m_nLastQueryVal)
                         {
                             // comparing against last value for non-equals case may result in different match highlights, keep it.
-                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ComparisonType::Equals)
+                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ra::ComparisonType::Equals)
                             {
                                 m_SearchResults.erase(m_SearchResults.end() - 1);
                                 m_nPage--;
@@ -1895,12 +1899,12 @@ bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal
 
     switch (m_SearchResults[m_nPage].m_nCompareType)
     {
-        case Equals:				bResult = (nCurVal == nVal);    break;
-        case LessThan:				bResult = (nCurVal < nVal);     break;
-        case LessThanOrEqual:		bResult = (nCurVal <= nVal);    break;
-        case GreaterThan:			bResult = (nCurVal > nVal);     break;
-        case GreaterThanOrEqual:	bResult = (nCurVal >= nVal);    break;
-        case NotEqualTo:			bResult = (nCurVal != nVal);    break;
+        case ra::ComparisonType::Equals:				bResult = (nCurVal == nVal);    break;
+        case ra::ComparisonType::LessThan:				bResult = (nCurVal < nVal);     break;
+        case ra::ComparisonType::LessThanOrEqual:		bResult = (nCurVal <= nVal);    break;
+        case ra::ComparisonType::GreaterThan:			bResult = (nCurVal > nVal);     break;
+        case ra::ComparisonType::GreaterThanOrEqual:	bResult = (nCurVal >= nVal);    break;
+        case ra::ComparisonType::NotEqualTo:			bResult = (nCurVal != nVal);    break;
         default:
             bResult = false;
             break;

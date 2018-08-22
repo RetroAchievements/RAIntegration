@@ -185,7 +185,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompSource().Type() != ra::ComparisonVariableType::ValueComparison)
     {
         sMemTypStrSrc = (Cond.CompSource().Type() == ra::ComparisonVariableType::Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompSource().Size()));
+        sMemSizeStrSrc = ra::Narrow(ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompSource().Size()))).c_str();
     }
 
     const char* sMemTypStrDst = "Value";
@@ -193,15 +193,17 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompTarget().Type() != ra::ComparisonVariableType::ValueComparison)
     {
         sMemTypStrDst = (Cond.CompTarget().Type() == ra::ComparisonVariableType::Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompTarget().Size()));
+        sMemSizeStrDst = ra::Narrow(ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(Cond.CompTarget().Size()))).c_str();
     }
 
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Id)], ra::MEM_STRING_TEXT_LEN, "%d", nRow + 1);
-    sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Group)], ra::MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
+    sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Group)], ra::MEM_STRING_TEXT_LEN, "%s",
+              ra::Narrow(ra::CONDITIONTYPE_STR.at(ra::etoi(Cond.GetConditionType()))).c_str());
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::TypeSrc)], ra::MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::SizeSrc)], ra::MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::ValueSrc)], ra::MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
-    sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Comparison)], ra::MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
+    sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::Comparison)], ra::MEM_STRING_TEXT_LEN, "%s",
+              ra::Narrow(ra::COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))).c_str());
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::TypeTgt)], ra::MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::SizeTgt)], ra::MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
     sprintf_s(m_lbxData[nRow][ra::etoi(ra::CondSubItems::ValueTgt)], ra::MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
@@ -492,6 +494,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
                 case CBN_SELENDCANCEL:
                 case CBN_SELCHANGE:
                 case CBN_CLOSEUP:
+                    _FALLTHROUGH;
                 case CBN_KILLFOCUS:
                     break;
             }
@@ -550,7 +553,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * Condition::NumConditionTypes),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_CONDITION_TYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -563,12 +566,14 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 break;
             };
 
-            for (size_t i = 0; i < Condition::NumConditionTypes; ++i)
+            auto count{ 0 };
+            for (auto& cond_name : ra::CONDITIONTYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(CONDITIONTYPE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, cond_name);
 
-                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == CONDITIONTYPE_STR[i])
-                    ComboBox_SetCurSel(g_hIPEEdit, i);
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(cond_name))
+                    ComboBox_SetCurSel(g_hIPEEdit, count);
+                count++;
             }
 
             SetWindowFont(g_hIPEEdit, GetStockFont(DEFAULT_GUI_FONT), TRUE);
@@ -685,9 +690,9 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
             auto count{ 0 };
             for (auto& cvs_name : ra::COMPARISONVARIABLESIZE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(cvs_name).c_str());
+                ComboBox_AddString(g_hIPEEdit, cvs_name);
 
-                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == cvs_name)
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(cvs_name))
                     ComboBox_SetCurSel(g_hIPEEdit, count);
                 count++;
             }
@@ -717,7 +722,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * NumComparisonTypes),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_TYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -730,14 +735,15 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 break;
             };
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
+            auto count{ 0 };
+            for (auto& comptype_name : ra::COMPARISONTYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, comptype_name);
 
-                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == COMPARISONTYPE_STR[i])
-                    ComboBox_SetCurSel(g_hIPEEdit, i);
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(comptype_name))
+                    ComboBox_SetCurSel(g_hIPEEdit, count);
+                count++;
             }
-
 
             SetWindowFont(g_hIPEEdit, GetStockFont(DEFAULT_GUI_FONT), TRUE);
             ComboBox_ShowDropdown(g_hIPEEdit, TRUE);
@@ -1549,6 +1555,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case CBN_SELENDCANCEL:
                 case CBN_SELCHANGE:
                 case CBN_CLOSEUP:
+                    _FALLTHROUGH;
                 case CBN_KILLFOCUS:
                 {
                     //	Only post this if the edit control is not empty:
@@ -1719,11 +1726,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case ra::CondSubItems::Group:
                         {
-                            for (int i = 0; i < Condition::NumConditionTypes; ++i)
+                            auto count{ 0 };
+                            for (auto& condtype_name : ra::CONDITIONTYPE_STR)
                             {
-                                if (strcmp(sData, CONDITIONTYPE_STR[i]) == 0)
-                                    rCond.SetConditionType(static_cast<Condition::ConditionType>(i));
+                                if (sData == ra::Narrow(condtype_name))
+                                    rCond.SetConditionType(ra::itoe<ra::ConditionType>(count));
+                                count++;
                             }
+
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
                             break;
                         }
@@ -1778,10 +1788,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         case ra::CondSubItems::Comparison:
                         {
-                            for (int i = 0; i < NumComparisonTypes; ++i)
+                            auto count{ 0 };
+                            for (auto& comptype_name : ra::COMPARISONTYPE_STR)
                             {
-                                if (strcmp(sData, COMPARISONTYPE_STR[i]) == 0)
-                                    rCond.SetCompareType(static_cast<ComparisonType>(i));
+                                if(sData == ra::Narrow(comptype_name))
+                                    rCond.SetCompareType(ra::itoe<ra::ComparisonType>(count));
+                                count++;
                             }
                             break;
                         }

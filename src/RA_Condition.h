@@ -18,7 +18,6 @@ enum class ComparisonVariableSize
     Bit_7,
     Nibble_Lower,
     Nibble_Upper,
-    //Byte,
     EightBit,//=Byte,  
     SixteenBit,
     ThirtyTwoBit
@@ -32,10 +31,15 @@ enum class ComparisonVariableType
     DynamicVariable  // a custom user-set variable
 };
 
+enum class ComparisonType { Equals, LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual, NotEqualTo };
+enum class ConditionType { Standard, PauseIf, ResetIf, AddSource, SubSource, AddHits };
+
 namespace enum_sizes {
 
-_CONSTANT_VAR NUM_COMPARISON_VARIABLE_SIZETYPES{13U};
+_CONSTANT_VAR NUM_COMPARISON_VARIABLE_SIZETYPES{ 13U };
 _CONSTANT_VAR NUM_COMPARISON_VARIABLE_TYPES{ 4U };
+_CONSTANT_VAR NUM_COMPARISON_TYPES{ 6U };
+_CONSTANT_VAR NUM_CONDITION_TYPES{ 6U };
 
 } // namespace enum_sizes
 
@@ -49,24 +53,16 @@ inline constexpr std::array<LPCTSTR, enum_sizes::NUM_COMPARISON_VARIABLE_TYPES> 
 {
     _T("Memory"), _T("Value"), _T("Delta"), _T("DynVar")
 };
-} // namespace ra
-
-
-
-enum ComparisonType
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_COMPARISON_TYPES> COMPARISONTYPE_STR
 {
-    Equals,
-    LessThan,
-    LessThanOrEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    NotEqualTo,
-
-    NumComparisonTypes
+    _T("="), _T("<"), _T("<="), _T(">"), _T(">="), _T("!=")
 };
-extern const char* COMPARISONTYPE_STR[];
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_CONDITION_TYPES> CONDITIONTYPE_STR
+{
+    _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits")
+};
 
-extern const char* CONDITIONTYPE_STR[];
+} // namespace ra
 
 class CompVariable
 {
@@ -110,38 +106,15 @@ private:
     unsigned int m_nPreviousVal{};
 };
 
-
 class Condition
 {
-public:
-    enum ConditionType
-    {
-        Standard,
-        PauseIf,
-        ResetIf,
-        AddSource,
-        SubSource,
-        AddHits,
-
-        NumConditionTypes
-    };
-
-public:
-    Condition()
-        : m_nConditionType(Standard),
-        m_nCompareType(Equals),
-        m_nRequiredHits(0),
-        m_nCurrentHits(0)
-    {
-    }
-
 public:
     //	Parse a Condition from a string of characters
     bool ParseFromString(const char*& sBuffer);
     void SerializeAppend(std::string& buffer) const;
 
     //	Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
-    bool Compare(unsigned int nAddBuffer = 0);
+    bool Compare(unsigned int nAddBuffer = 0U);
 
     //	Returns whether a change was made
     bool ResetHits();
@@ -153,37 +126,37 @@ public:
     inline const CompVariable& CompSource() const { return m_nCompSource; }
     inline CompVariable& CompTarget() { return m_nCompTarget; }
     inline const CompVariable& CompTarget() const { return m_nCompTarget; }
-    void SetCompareType(ComparisonType nType) { m_nCompareType = nType; }
-    inline ComparisonType CompareType() const { return m_nCompareType; }
+    _CONSTANT_FN SetCompareType(_In_ ra::ComparisonType nType) noexcept { m_nCompareType = nType; }
+    _NODISCARD _CONSTANT_FN CompareType() const noexcept { return m_nCompareType; }
 
-    inline unsigned int RequiredHits() const { return m_nRequiredHits; }
-    inline unsigned int CurrentHits() const { return m_nCurrentHits; }
+    _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
+    _NODISCARD _CONSTANT_FN CurrentHits() const noexcept { return m_nCurrentHits; }
 
-    inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
-    inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
-    inline bool IsAddCondition() const { return(m_nConditionType == AddSource); }
-    inline bool IsSubCondition() const { return(m_nConditionType == SubSource); }
-    inline bool IsAddHitsCondition() const { return(m_nConditionType == AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return(m_nConditionType == ra::ConditionType::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return(m_nConditionType == ra::ConditionType::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return(m_nConditionType == ra::ConditionType::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return(m_nConditionType == ra::ConditionType::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return(m_nConditionType == ra::ConditionType::AddHits); }
 
-    inline ConditionType GetConditionType() const { return m_nConditionType; }
-    void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }
+    _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
+    _CONSTANT_FN SetConditionType(_In_ ra::ConditionType nNewType) noexcept { m_nConditionType = nNewType; }
 
     void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
     void IncrHits() { m_nCurrentHits++; }
-    bool IsComplete() const { return(m_nCurrentHits >= m_nRequiredHits); }
+    _NODISCARD _CONSTANT_FN  IsComplete() const noexcept { return(m_nCurrentHits >= m_nRequiredHits); }
 
     void OverrideCurrentHits(unsigned int nHits) { m_nCurrentHits = nHits; }
 
 
 private:
-    ConditionType	m_nConditionType;
+    ra::ConditionType  m_nConditionType{};
 
-    CompVariable	m_nCompSource;
-    ComparisonType	m_nCompareType;
-    CompVariable	m_nCompTarget;
+    CompVariable	   m_nCompSource;
+    ra::ComparisonType m_nCompareType{};
+    CompVariable	   m_nCompTarget;
 
-    unsigned int	m_nRequiredHits;
-    unsigned int	m_nCurrentHits;
+    unsigned int	   m_nRequiredHits{};
+    unsigned int	   m_nCurrentHits{};
 };
 
 class ConditionGroup

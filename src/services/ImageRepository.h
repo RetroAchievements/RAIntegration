@@ -20,21 +20,41 @@ enum class ImageType
 class ImageReference
 {
 public:
-    ImageReference() {}
+    ImageReference() noexcept = default;
     ImageReference(ImageType nType, const std::string& sName)
     {
         ChangeReference(nType, sName);
     }
 
-    ImageReference(const ImageReference& source)
+    ImageReference(const ImageReference& source) noexcept
         : m_nType(source.m_nType), m_sName(source.m_sName)
     {
         // don't copy m_hBitmap, it'll get initialized when GetHBitmap is called, which
         // will ensure the reference count is accurate.
     }
+    ImageReference& operator=(const ImageReference&) noexcept = default;
+    ~ImageReference() noexcept;
 
-    ~ImageReference();
-    
+    // We need this to be movable because MessagePopup is always added as an rvalue reference
+    ImageReference(ImageReference&& source) noexcept:
+        m_nType{ source.m_nType },
+        m_sName{ std::move(source.m_sName) },
+        m_hBitmap{ source.m_hBitmap }
+    {
+        source.m_nType = ImageType::None;
+        source.Release();
+    }
+
+    ImageReference& operator=(ImageReference&& source) noexcept      
+    {
+        m_nType   = source.m_nType;
+        m_sName   = std::move(source.m_sName);
+        m_hBitmap = source.m_hBitmap;
+        source.m_nType = ImageType::None;
+        source.Release();
+        return *this;
+    }
+
     /// <summary>
     /// Updates the referenced image.
     /// </summary>
@@ -50,7 +70,7 @@ public:
     /// <summary>
     /// Releases the reference to the image. Will be re-acquired the next time <see cref="GetHBitmap" /> is called.
     /// </summary>
-    void Release();
+    void Release() noexcept;
 
 private:
     ImageType m_nType = ImageType::None;

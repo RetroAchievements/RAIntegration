@@ -93,7 +93,8 @@ etos(_In_ Enum e) noexcept { return std::to_string(etoi(e)); }
 
 /// <summary>
 ///   Casts an <typeparamref name="Integral" /> into an <typeparamref name="Enum" />. Only the
-///   <typeparamref name="Enum" /> type parameter needs to be specified.
+///   <typeparamref name="Enum" /> type parameter needs to be specified. <typeparamref name="Integral" /> must be
+///   implicitly convertible to the underlying type of <typeparamref name="Enum" />, it's not then cast it.
 /// </summary>
 /// <typeparam name="Enum"></typeparam>
 /// <typeparam name="Integral"></typeparam>
@@ -107,7 +108,7 @@ template<
     typename Integral,
     typename = std::enable_if_t<std::is_integral_v<Integral> and
     std::is_enum_v<Enum> and
-    std::is_same_v<Integral, std::underlying_type_t<Enum>>>
+    std::is_convertible_v<Integral, std::underlying_type_t<Enum>>>
 > _NODISCARD _CONSTANT_FN
 itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
 

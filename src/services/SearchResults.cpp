@@ -65,17 +65,17 @@ static bool Compare(unsigned int nLeft, unsigned int nRight, ComparisonType nCom
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return nLeft == nRight;
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return nLeft < nRight;
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return nLeft <= nRight;
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return nLeft > nRight;
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return nLeft >= nRight;
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return nLeft != nRight;
         default:
             return false;
@@ -86,17 +86,17 @@ static const char* ComparisonString(ComparisonType nCompareType)
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return "EQUAL";
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return "LESS THAN";
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return "LESS THAN/EQUAL";
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return "GREATER THAN";
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return "GREATER THAN/EQUAL";
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return "NOT EQUAL";
         default:
             return "?";
@@ -331,14 +331,14 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         // efficient comparisons for 8-bit
         switch (nCompareType)
         {
-            case Equals:
+            case ra::ComparisonType::Equals:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] == pPrev[nIndex];
                 });
                 break;
 
-            case NotEqualTo:
+            case ra::ComparisonType::NotEqualTo:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] != pPrev[nIndex];

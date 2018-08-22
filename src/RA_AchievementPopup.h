@@ -3,7 +3,6 @@
 #pragma once
 
 #include <queue>
-#include "ra_fwd.h"
 #include "services/ImageRepository.h"
 
 namespace ra {
@@ -26,13 +25,15 @@ inline constexpr auto NUM_MESSAGE_TYPES{ 7U };
 } // namespace enum_sizes
 } // namespace ra
 
+// Making this non-const with copying deleted, the rvalue references are leaking.
 //	Graphic to display an obtained achievement
 class MessagePopup
 {
 public:
-     MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
-                  ra::PopupMessageType nMsgType, ra::services::ImageType nImageType,
-                  const std::string& sImageName ) :
+    MessagePopup() noexcept = default;
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
+                 ra::PopupMessageType nMsgType, ra::services::ImageType nImageType,
+                 const std::string& sImageName) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
@@ -47,18 +48,30 @@ public:
         m_hMessageImage(ra::services::ImageType::None, "")
     {
     }
-
+    ~MessagePopup() noexcept = default; /*no pointers*/
+    MessagePopup(const MessagePopup&) = delete; /* can't delete it but shouldn't use it */
+    MessagePopup& operator=(const MessagePopup&) = delete; /*all members are const*/
+    /* Seems to do the trick, now we have expected of 1 Message popups in the queue instead of 2 */
+    MessagePopup(MessagePopup&& b) noexcept :
+        m_sMessageTitle{ std::move(b.m_sMessageTitle)},
+        m_sMessageSubtitle{ std::move(b.m_sMessageSubtitle) },
+        m_nMessageType{b.m_nMessageType},
+        m_hMessageImage{std::move(b.m_hMessageImage)}
+    {
+        m_nMessageType = ra::PopupMessageType::Info;
+    }
+    MessagePopup& operator=(MessagePopup&&) noexcept = delete; /*never saw a need to assign*/
 public:
     _NODISCARD inline auto& Title() const { return m_sMessageTitle; }
     _NODISCARD inline auto& Subtitle() const { return m_sMessageSubtitle; }
-    _NODISCARD inline auto& Type() const { return m_nMessageType; }
+    _NODISCARD inline auto Type() const { return m_nMessageType; }
     _NODISCARD inline auto Image() const { return m_hMessageImage.GetHBitmap(); }
 
 private:
-    const std::string m_sMessageTitle;
-    const std::string m_sMessageSubtitle;
-    const ra::PopupMessageType m_nMessageType{ ra::PopupMessageType::Info };
-    const ra::services::ImageReference m_hMessageImage;
+    std::string m_sMessageTitle;
+    std::string m_sMessageSubtitle;
+    ra::PopupMessageType m_nMessageType{ ra::PopupMessageType::Info };
+    ra::services::ImageReference m_hMessageImage;
 };
 
 struct ControllerInput;

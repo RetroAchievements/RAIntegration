@@ -1,14 +1,6 @@
 #include "RA_Condition.h"
 #include "RA_MemManager.h"
 
-#include "RA_Defs.h"
-
-
-const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
-
 namespace ra {
 
 _NODISCARD _CONSTANT_FN PrefixToComparisonSize(_In_ char cPrefix) noexcept
@@ -54,26 +46,16 @@ _NODISCARD _CONSTANT_FN ComparisonSizeToPrefix(_In_ ComparisonVariableSize nSize
     }
 }
 
-} // namespace ra
+// static constexpr only makes sense in classes
 
-
-
-
-static const char* ComparisonTypeToStr(ComparisonType nType)
+_NODISCARD _CONSTANT_VAR ComparisonTypeToStr(_In_ ra::ComparisonType nType) noexcept
 {
-    switch (nType)
-    {
-        case Equals:				return "=";
-        case GreaterThan:			return ">";
-        case GreaterThanOrEqual:	return ">=";
-        case LessThan:				return "<";
-        case LessThanOrEqual:		return "<=";
-        case NotEqualTo:			return "!=";
-        default:					return "";
-    }
+    return COMPARISONTYPE_STR.at(etoi(nType)); // all constant expressions, it's fast
 }
 
-static ComparisonType ReadOperator(const char*& pBufferInOut)
+} // namespace ra
+
+_NODISCARD _CONSTANT_FN ReadOperator(_Inout_ const char*& pBufferInOut) noexcept
 {
     switch (pBufferInOut[0])
     {
@@ -81,13 +63,13 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
             if (pBufferInOut[1] == '=')
                 ++pBufferInOut;
             ++pBufferInOut;
-            return ComparisonType::Equals;
+            return ra::ComparisonType::Equals;
 
         case '!':
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::NotEqualTo;
+                return ra::ComparisonType::NotEqualTo;
             }
             break;
 
@@ -95,28 +77,28 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::LessThanOrEqual;
+                return ra::ComparisonType::LessThanOrEqual;
             }
 
             ++pBufferInOut;
-            return ComparisonType::LessThan;
+            return ra::ComparisonType::LessThan;
 
         case '>':
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::GreaterThanOrEqual;
+                return ra::ComparisonType::GreaterThanOrEqual;
             }
 
             ++pBufferInOut;
-            return ComparisonType::GreaterThan;
+            return ra::ComparisonType::GreaterThan;
 
         default:
             break;
     }
 
     ASSERT(!"Could not parse?!");
-    return ComparisonType::Equals;
+    return ra::ComparisonType::Equals;
 }
 
 static unsigned int ReadHits(const char*& pBufferInOut)
@@ -136,32 +118,32 @@ bool Condition::ParseFromString(const char*& pBuffer)
 {
     if (pBuffer[0] == 'R' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::ResetIf;
+        m_nConditionType = ra::ConditionType::ResetIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'P' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::PauseIf;
+        m_nConditionType = ra::ConditionType::PauseIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'A' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddSource;
+        m_nConditionType = ra::ConditionType::AddSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'B' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::SubSource;
+        m_nConditionType = ra::ConditionType::SubSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'C' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddHits;
+        m_nConditionType = ra::ConditionType::AddHits;
         pBuffer += 2;
     }
     else
     {
-        m_nConditionType = Condition::Standard;
+        m_nConditionType = ra::ConditionType::Standard;
     }
 
     if (!m_nCompSource.ParseVariable(pBuffer))
@@ -182,19 +164,19 @@ void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-        case Condition::ResetIf:
+        case ra::ConditionType::ResetIf:
             buffer.append("R:");
             break;
-        case Condition::PauseIf:
+        case ra::ConditionType::PauseIf:
             buffer.append("P:");
             break;
-        case Condition::AddSource:
+        case ra::ConditionType::AddSource:
             buffer.append("A:");
             break;
-        case Condition::SubSource:
+        case ra::ConditionType::SubSource:
             buffer.append("B:");
             break;
-        case Condition::AddHits:
+        case ra::ConditionType::AddHits:
             buffer.append("C:");
             break;
         default:
@@ -203,7 +185,7 @@ void Condition::SerializeAppend(std::string& buffer) const
 
     m_nCompSource.SerializeAppend(buffer);
 
-    buffer.append(ComparisonTypeToStr(m_nCompareType));
+    buffer.append(ra::Narrow(ra::ComparisonTypeToStr(m_nCompareType)));
 
     m_nCompTarget.SerializeAppend(buffer);
 
@@ -345,17 +327,17 @@ bool Condition::Compare(unsigned int nAddBuffer)
 {
     switch (m_nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
         default:
             return true;	//?
@@ -376,15 +358,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
     {
         switch (m_Conditions[i].GetConditionType())
         {
-            case Condition::PauseIf:
+            case ra::ConditionType::PauseIf:
                 bHasPause = true;
                 bInPause = true;
                 vPauseConditions[i] = true;
                 break;
 
-            case Condition::AddSource:
-            case Condition::SubSource:
-            case Condition::AddHits:
+            case ra::ConditionType::AddSource:
+            case ra::ConditionType::SubSource:
+            case ra::ConditionType::AddHits:
                 vPauseConditions[i] = bInPause;
                 break;
 
@@ -419,15 +401,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
         Condition* pNextCond = &m_Conditions[i];
         switch (pNextCond->GetConditionType())
         {
-            case Condition::AddSource:
+            case ra::ConditionType::AddSource:
                 nAddBuffer += pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::SubSource:
+            case ra::ConditionType::SubSource:
                 nAddBuffer -= pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::AddHits:
+            case ra::ConditionType::AddHits:
                 if (pNextCond->Compare())
                 {
                     if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
@@ -473,7 +455,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
 
         switch (pNextCond->GetConditionType())
         {
-            case Condition::PauseIf:
+            case ra::ConditionType::PauseIf:
                 // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
                 if (bConditionValid)
                     return true;
@@ -494,7 +476,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
                 }
                 break;
 
-            case Condition::ResetIf:
+            case ra::ConditionType::ResetIf:
                 if (bConditionValid)
                 {
                     bResetAll = true;  // let caller know to reset all hit counts

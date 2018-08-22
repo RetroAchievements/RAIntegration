@@ -132,12 +132,22 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     m_aFriends.clear();
 
     ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
-   FriendList();
+    FriendList();
 
-    g_PopupWindows.AchievementPopups().AddMessage(
-        MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
-            "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-            ra::PopupMessageType::Login, ra::services::ImageType::UserPic, Username()));
+    // this thing is still leaking...
+    std::ostringstream oss;
+    oss << "Welcome back " << Username() << " (" << nPoints << ")";
+    auto sTitle{ oss.str() };
+    oss.str("");
+    std::string sNumMsgs{ (nMessages == 1) ? "message" : "messages" };
+    oss << "You have " << nMessages << " new " << sNumMsgs << ".";
+    auto sSubTitle{ oss.str() };
+
+    // lets try something
+    MessagePopup myPopup{
+        sTitle, sSubTitle, ra::PopupMessageType::Login, ra::services::ImageType::UserPic, Username()
+    };
+    g_PopupWindows.AchievementPopups().AddMessage(std::move(myPopup));
 
     g_AchievementsDialog.OnLoad_NewRom(g_pCurrentGameData->GetGameID());
     g_AchievementEditorDialog.OnLoad_NewRom();

@@ -40,7 +40,7 @@ size_t CodeNotes::Load(const std::string& sFile)
                 if (sNote.length() < 2)
                     continue;
 
-                const std::string& sAddr = NextNote["ra::ComparisonVariableType::Address"].GetString();
+                const std::string& sAddr = NextNote["Address"].GetString();
                 ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
                 const std::string& sAuthor = NextNote["User"].GetString();	//	Author?
 

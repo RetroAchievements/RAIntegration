@@ -10,15 +10,15 @@
 namespace ra {
 namespace services {
 
-constexpr char* DefaultBadge = "00000";
-constexpr char* DefaultUserPic = "_User";
+inline constexpr const char* DefaultBadge = "00000";
+inline constexpr const char* DefaultUserPic = "_User";
 
 ImageRepository g_ImageRepository;
 
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
 static bool g_bImageRepositoryValid = false;
 
-ImageReference::~ImageReference()
+ImageReference::~ImageReference() noexcept
 {
     Release();
 }
@@ -65,7 +65,7 @@ HBITMAP ImageReference::GetHBitmap() const
     return g_ImageRepository.DefaultImage(m_nType);
 }
 
-void ImageReference::Release()
+void ImageReference::Release() noexcept
 {
     if (m_hBitmap != nullptr && g_bImageRepositoryValid)
         g_ImageRepository.ReleaseReference(m_nType, m_sName);

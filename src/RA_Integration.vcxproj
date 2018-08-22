@@ -31,7 +31,9 @@
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementPopup.cpp" />
-    <ClCompile Include="RA_AchievementSet.cpp" />
+    <ClCompile Include="RA_AchievementSet.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level3</WarningLevel>
+    </ClCompile>
     <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />

@@ -44,20 +44,35 @@ protected:
     class Clause
     {
     public:
-        explicit Clause(ClauseOperation nOperation) noexcept : m_nOperation(nOperation) {}
+        // This class is having similar problems as the leaderboard
+        // FYI, the default constructors are constexpr we just have put it back since they aren't defaulted (0 constructors)
+        inline constexpr Clause() noexcept = default; // uses values below
+        explicit inline constexpr Clause(_In_ ClauseOperation nOperation) noexcept :
+            Clause{}
+        {
+            m_nOperation = nOperation;
+        }
+        ~Clause() noexcept = default;
+
+        // should be relatively fast to copy a literal type unless you don't want it
+        inline constexpr Clause(const Clause&) noexcept = default;
+        inline constexpr Clause& operator=(const Clause&) noexcept = default;
+        inline constexpr Clause(Clause&&) noexcept = default;
+        inline constexpr Clause& operator=(Clause&&) noexcept = default;
+
 
         _NODISCARD const char* ParseFromString(const char* pBuffer); // Parse string into values, returns end of string
         _NODISCARD double GetValue() const;                          // Get the value in-memory with modifiers
         _NODISCARD ClauseOperation GetOperation() const noexcept { return m_nOperation; }
 
     protected:
-        unsigned int			   m_nAddress       = 0U;               // Raw address of an 8-bit, or value.
+        unsigned int			   m_nAddress{};               // Raw address of an 8-bit, or value.
         ra::ComparisonVariableSize m_nVarSize       = ra::ComparisonVariableSize::EightBit;
-        double					   m_fModifier      = 1.0F;             //	* 60 etc
-        bool					   m_bBCDParse      = false;            //	Parse as a binary coded decimal.
-        bool					   m_bParseVal      = false;            //	Parse as a value
-        bool					   m_bInvertBit     = false;
-        unsigned int			   m_nSecondAddress = 0U;
+        double					   m_fModifier      = 1.0F; // * 60 etc
+        bool					   m_bBCDParse{};           // Parse as a binary coded decimal.
+        bool					   m_bParseVal{};           // Parse as a value
+        bool					   m_bInvertBit{};
+        unsigned int			   m_nSecondAddress{};
         ra::ComparisonVariableSize m_nSecondVarSize = ra::ComparisonVariableSize::EightBit;
         ClauseOperation            m_nOperation{};
     };

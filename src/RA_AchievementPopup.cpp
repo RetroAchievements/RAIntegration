@@ -43,7 +43,9 @@ inline constexpr std::array<LPCTSTR, enum_sizes::NUM_MESSAGE_TYPES> MSG_SOUND
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    PlaySound(ra::MSG_SOUND.at(ra::etoi(ActiveMessage().Type())), nullptr, SND_FILENAME | SND_ASYNC);
+    // maybe it doesn't like rvalues
+    const auto myType{ ActiveMessage().Type() };
+    PlaySound(ra::MSG_SOUND.at(ra::etoi(myType)), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
 // not sure how this worked before with copying implicitly deleted

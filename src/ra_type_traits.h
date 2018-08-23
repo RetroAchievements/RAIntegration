@@ -98,25 +98,23 @@ struct is_nothrow_comparable :
 {
 };
 
-} // namespace detail 
+} // namespace detail
 
-template<typename EqualityComparable> _NODISCARD _CONSTANT_VAR
+template<typename EqualityComparable> _CONSTANT_VAR
 is_equality_comparable_v{ detail::is_equality_comparable<EqualityComparable>::value };
 
-template<typename EqualityComparable> _NODISCARD _CONSTANT_VAR
+template<typename EqualityComparable> _CONSTANT_VAR
 is_nothrow_equality_comparable_v{ detail::is_nothrow_equality_comparable<EqualityComparable>::value };
 
-template<typename LessThanComparable> _NODISCARD _CONSTANT_VAR
+template<typename LessThanComparable> _CONSTANT_VAR
 is_lessthan_comparable_v{ detail::is_lessthan_comparable<LessThanComparable>::value };
 
-template<typename LessThanComparable> _NODISCARD _CONSTANT_VAR
+template<typename LessThanComparable> _CONSTANT_VAR
 is_nothrow_lessthan_comparable_v{ detail::is_nothrow_lessthan_comparable<LessThanComparable>::value };
 
-template<typename Comparable> _NODISCARD _CONSTANT_VAR
-is_comparable_v{ detail::is_comparable<Comparable>::value };
+template<typename Comparable> _CONSTANT_VAR is_comparable_v{ detail::is_comparable<Comparable>::value };
 
-template<typename Comparable> _NODISCARD _CONSTANT_VAR
-is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
+template<typename Comparable> _CONSTANT_VAR is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
 
 } // namespace ra
 

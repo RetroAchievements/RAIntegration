@@ -31,13 +31,13 @@ tstring CALLBACK GetLastErrorMsg() noexcept
 {
     // Get the error message, if any.
     auto errorID{ ::GetLastError() };
-    if (errorID == 0_dw)
+    if (errorID == 0UL)
         return tstring{};
 
     LPTSTR lpBuffer{ nullptr };
     auto size{ FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
                              FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, errorID,
-                             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&lpBuffer), 0_dw,
+                             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&lpBuffer), 0UL,
                              nullptr) };
 
     tstring message(lpBuffer, size);

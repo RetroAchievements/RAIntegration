@@ -805,7 +805,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
     HMENU hRA_LB = CreatePopupMenu();
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        // TODO: Use the literals once PR 23 is accepted
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
@@ -815,7 +814,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
 
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));

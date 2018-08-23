@@ -18,41 +18,6 @@ template<
 > _NODISCARD _CONSTANT_FN
 narrow_cast(_In_ WideType wt) noexcept { return static_cast<NarrowType>(wt); }
 
-// "using namespace ra::int_literals;" must be typed before using if not in namespace ra.
-inline namespace int_literals {
-
-// Used to prevent implicit narrowing conversions, most of these are based off of the format specs in printf
-
-// Example: 0 is an int (4 bytes on x86, x86_64, and AMD64 based processors) short has no such literal which is
-//          usually two bytes. So "short s = 0;" is already an implicit narrowing conversion.
-//
-//          Some types are "polymorphic" most notably (u)intptr_t, size_t, and ptrdiff_t
-//          (as well as aliases for them like LRESULT, WPARAM, LPARAM).
-//
-//          Therefore two literals "_z" and "_i" have been made for unsigned and signed integral values,
-//          respectively, without need for explicit narrowing conversion.
-//
-//          Literals that already exist are not included (L, LL, U, UL, ULL, s, ms, etc.)
-
-// There's also standard literals for strings and clock types
-
-// N.B.: The parameter can only be either "unsigned long-long", char16_t, or char32_t
-
-_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept { return static_cast<std::size_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept { return static_cast<std::intptr_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept { return narrow_cast<DWORD>(n); }
-_NODISCARD _CONSTANT_FN operator""_ss(_In_ unsigned long long n) noexcept { return static_cast<std::streamsize>(n); }
-_NODISCARD _CONSTANT_FN operator""_h(_In_ unsigned long long n) noexcept { return narrow_cast<std::int16_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept { return narrow_cast<std::uint16_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_hhu(_In_ unsigned long long n) noexcept { return narrow_cast<std::uint8_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept { return static_cast<DataPos>(n); }
-_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept { return static_cast<ByteAddress>(n); }
-_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept { return static_cast<AchievementID>(n); }
-_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept { return static_cast<LeaderboardID>(n); }
-_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept { return static_cast<GameID>(n); }
-
-} // inline namespace int_literals
-
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 

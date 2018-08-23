@@ -4,9 +4,6 @@
 
 #include "RA_Defs.h"
 
-typedef void* HANDLE;
-typedef void* LPVOID;
-
 enum HTTPRequestMethod
 {
     Post,
@@ -68,8 +65,7 @@ enum UploadType
 
 extern const char* RequestTypeToString[];
 
-typedef std::map<char, std::string> PostArgs;
-
+using PostArgs = std::map<char, std::string>;
 extern std::string PostArgsToString(const PostArgs& args);
 
 class RequestObject
@@ -89,7 +85,7 @@ public:
     const std::string& GetResponse() const { return m_sResponse; }
     void SetResponse(const std::string& sResponse) { m_sResponse = sResponse; }
 
-    BOOL ParseResponseToJSON(Document& rDocOut);
+    BOOL ParseResponseToJSON(rapidjson::Document& rDocOut);
 
 private:
     const RequestType m_nType;
@@ -120,19 +116,19 @@ public:
     static void RA_InitializeHTTPThreads();
     static void RA_KillHTTPThreads();
 
-    static void LogJSON(const Document& doc);
+    static void LogJSON(const rapidjson::Document& doc);
 
     static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
     static BOOL HTTPRequestExists(RequestType nType, const std::string& sData);
     static BOOL HTTPResponseExists(RequestType nType, const std::string& sData);
 
-    static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut);
+    static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
 
     static BOOL DoBlockingHttpGet(const std::string& sRequestedPage, std::string& ResponseOut, bool bIsImageRequest);
     static BOOL DoBlockingHttpPost(const std::string& sRequestedPage, const std::string& sPostString, std::string& ResponseOut);
 
-    static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut);
+    static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
 

@@ -5,7 +5,6 @@
 
 //	Graphic to display an progress towards an achievement
 
-
 #define OVERLAY_MESSAGE_QUEUE_SIZE (5)
 
 class ProgressPopup

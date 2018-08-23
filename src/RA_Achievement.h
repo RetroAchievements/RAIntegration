@@ -4,8 +4,6 @@
 
 #include "RA_Condition.h"
 
-
-
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
@@ -52,7 +50,7 @@ public:
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
 
-    BOOL IsCoreAchievement() const { return m_nSetType == Core; }
+    BOOL IsCoreAchievement() const { return m_nSetType == AchievementSetType::Core; }
 
     void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const { return m_nAchievementID; }
@@ -101,7 +99,7 @@ public:
     const char* ParseLine(const char* buffer);
 
     //	Parse from json element
-    void Parse(const Value& element);
+    void Parse(const rapidjson::Value& element);
 
     //	Used for rendering updates when editing achievements. Usually always false.
     unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }

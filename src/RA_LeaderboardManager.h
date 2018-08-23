@@ -4,13 +4,21 @@
 
 #include "RA_Leaderboard.h"
 
-#include <rapidjson\include\rapidjson\document.h>
+#if RA_EXPORTS
+#define RAPIDJSON_NOMEMBERITERATORCLASS
+#define RAPIDJSON_HAS_STDSTRING 1
+#include <rapidjson/document.h>
+#endif // RA_EXPORTS
+
 #include <vector>
 
 class RA_LeaderboardManager
 {
 public:
+#if RA_EXPORTS
     static void OnSubmitEntry(const rapidjson::Document& doc);
+#endif // RA_EXPORTS
+
 
 public:
     void Reset();

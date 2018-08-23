@@ -37,6 +37,8 @@
 #include <fstream>
 #include <io.h>		//	_access()
 #include <atlbase.h> // CComPtr
+#include <fstream>
+
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
 #endif // WIN32_LEAN_AND_MEAN
@@ -317,7 +319,7 @@ API int CCONV _RA_Shutdown()
     }
 
     g_GameLibrary.KillThread();
-
+    
     if (g_RichPresenceDialog.GetHWND() != nullptr)
     {
         g_RichPresenceDialog.ClearMessage();
@@ -338,7 +340,7 @@ API int CCONV _RA_Shutdown()
 
 API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 {
-    //	Returns true if we can go ahead and load the new rom.
+    //	Returns true if we can go ahead and load the new ROM.
     int nResult = IDYES;
 
     const char* sCurrentAction = bQuittingApp ? "quit now" : "load a new ROM";
@@ -348,9 +350,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Core Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Core Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -358,9 +360,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Unofficial Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Unofficial Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -368,9 +370,9 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     {
         char buffer[1024];
         sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Local Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+                  "You have unsaved changes in the Local Achievements set.\n"
+                  "If you %s you will lose these changes.\n"
+                  "%s", sCurrentAction, sNextAction);
 
         nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
@@ -408,7 +410,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = g_sCurrentROMMD5;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
@@ -578,11 +580,11 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
         std::ostringstream oss2;
         oss2 << "http://" << _RA_HostName() << "/download.php";
         ShellExecute(nullptr,
-            TEXT("open"),
-            NativeStr(oss2.str()).c_str(),
-            nullptr,
-            nullptr,
-            SW_SHOWNORMAL);
+                     TEXT("open"),
+                     NativeStr(oss2.str()).c_str(),
+                     nullptr,
+                     nullptr,
+                     SW_SHOWNORMAL);
 
         return TRUE;
     }
@@ -601,7 +603,7 @@ API int CCONV _RA_HandleHTTPResults()
     {
         if (pObj->GetResponse().size() > 0)
         {
-            Document doc;
+            rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
             if (pObj->GetRequestType() == RequestBadge)
@@ -729,8 +731,8 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementUnlocked,
+                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                PopupMessageType::PopupAchievementUnlocked,
                                     ra::services::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
@@ -740,16 +742,16 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked (Error)",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementError,
+                                pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
+                                PopupMessageType::PopupAchievementError,
                                     ra::services::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Error submitting achievement:",
-                                    doc["Error"].GetString())); //?
+                                doc["Error"].GetString())); //?
 
-                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
+              //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
                         }
                     }
                     else
@@ -803,7 +805,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
     HMENU hRA_LB = CreatePopupMenu();
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        // TODO: Use the literals once PR 23 is accepted
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
@@ -813,7 +814,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
 
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
         AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
@@ -927,115 +927,117 @@ API void CCONV _RA_LoadPreferences()
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "rb");
-    if (pf == nullptr)
+    std::ifstream ifile{ ra::PrefsFilename(), std::ios::binary };
+
+#pragma region Comments
+    /*if (pf == nullptr)
+    {*/
+    //	Test for first-time use:
+    //RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
+    //
+    //char sWelcomeMessage[4096];
+
+    //sprintf_s( sWelcomeMessage, 4096, 
+    //	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
+    //	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
+
+    //switch( g_EmulatorID )
+    //{
+    //case RA_Gens:
+    //	strcat_s( sWelcomeMessage, 4096,
+    //		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
+    //	break;
+    //case RA_VisualboyAdvance:
+    //	strcat_s( sWelcomeMessage, 4096,
+    //		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
+    //	break;
+    //case RA_Snes9x:
+    //	strcat_s( sWelcomeMessage, 4096,
+    //		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
+    //	break;
+    //case RA_FCEUX:
+    //	strcat_s( sWelcomeMessage, 4096,
+    //		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
+    //	break;
+    //case RA_PCE:
+    //	strcat_s( sWelcomeMessage, 4096,
+    //		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
+    //	break;
+    //}
+
+    //strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
+    //	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
+
+    //MessageBox( g_RAMainWnd, 
+    //	sWelcomeMessage,
+    //	"Welcome to RetroAchievements!", MB_OK );
+
+    //	TBD: setup some decent default variables:
+/*_RA_SavePreferences();*/
+/*}*/
+#pragma endregion
+
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasParseError())
     {
-        //	Test for first-time use:
-        //RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
-        //
-        //char sWelcomeMessage[4096];
-
-        //sprintf_s( sWelcomeMessage, 4096, 
-        //	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
-        //	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
-
-        //switch( g_EmulatorID )
-        //{
-        //case RA_Gens:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
-        //	break;
-        //case RA_VisualboyAdvance:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
-        //	break;
-        //case RA_Snes9x:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
-        //	break;
-        //case RA_FCEUX:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
-        //	break;
-        //case RA_PCE:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
-        //	break;
-        //}
-
-        //strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
-        //	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
-
-        //MessageBox( g_RAMainWnd, 
-        //	sWelcomeMessage,
-        //	"Welcome to RetroAchievements!", MB_OK );
-
-        //	TBD: setup some decent default variables:
+        //MessageBox( nullptr, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
         _RA_SavePreferences();
     }
     else
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
+        if (doc.HasMember("Username"))
+            RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
+        if (doc.HasMember("Token"))
+            RAUsers::LocalUser().SetToken(doc["Token"].GetString());
+        if (doc.HasMember("Hardcore Active"))
+            g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
 
-        if (doc.HasParseError())
+        if (doc.HasMember("Leaderboards Active"))
+            g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
+        if (doc.HasMember("Leaderboard Notification Display"))
+            g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
+        if (doc.HasMember("Leaderboard Counter Display"))
+            g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
+        if (doc.HasMember("Leaderboard Scoreboard Display"))
+            g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
+
+        if (doc.HasMember("Num Background Threads"))
+            g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
+        if (doc.HasMember("ROM Directory"))
+            g_sROMDirLocation = doc["ROM Directory"].GetString();
+
+        if (doc.HasMember("Window Positions"))
         {
-            //MessageBox( nullptr, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
-            _RA_SavePreferences();
-        }
-        else
-        {
-            if (doc.HasMember("Username"))
-                RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-            if (doc.HasMember("Token"))
-                RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-            if (doc.HasMember("Hardcore Active"))
-                g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-
-            if (doc.HasMember("Leaderboards Active"))
-                g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-            if (doc.HasMember("Leaderboard Notification Display"))
-                g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
-            if (doc.HasMember("Leaderboard Counter Display"))
-                g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
-            if (doc.HasMember("Leaderboard Scoreboard Display"))
-                g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
-
-            if (doc.HasMember("Num Background Threads"))
-                g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-            if (doc.HasMember("ROM Directory"))
-                g_sROMDirLocation = doc["ROM Directory"].GetString();
-
-            if (doc.HasMember("Window Positions"))
+            const auto& positions = doc["Window Positions"];
+            if (positions.IsObject())
             {
-                const Value& positions = doc["Window Positions"];
-                if (positions.IsObject())
+                for (auto iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
                 {
-                    for (Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
-                    {
-                        WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
-                        pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
-                        pos.bLoaded = false;
+                    auto& pos = g_mWindowPositions[iter->name.GetString()];
 
-                        if (iter->value.HasMember("X"))
-                            pos.nLeft = iter->value["X"].GetInt();
-                        if (iter->value.HasMember("Y"))
-                            pos.nTop = iter->value["Y"].GetInt();
-                        if (iter->value.HasMember("Width"))
-                            pos.nWidth = iter->value["Width"].GetInt();
-                        if (iter->value.HasMember("Height"))
-                            pos.nHeight = iter->value["Height"].GetInt();
-                    }
+                    pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
+                    pos.bLoaded = false;
+
+                    if (iter->value.HasMember("X"))
+                        pos.nLeft = iter->value["X"].GetInt();
+                    if (iter->value.HasMember("Y"))
+                        pos.nTop = iter->value["Y"].GetInt();
+                    if (iter->value.HasMember("Width"))
+                        pos.nWidth = iter->value["Width"].GetInt();
+                    if (iter->value.HasMember("Height"))
+                        pos.nHeight = iter->value["Height"].GetInt();
+
                 }
             }
         }
 
-        fclose(pf);
+        //TBD:
+        //g_GameLibrary.LoadAll();
     }
-
-    //TBD:
-    //g_GameLibrary.LoadAll();
 }
 
 API void CCONV _RA_SavePreferences()
@@ -1049,51 +1051,48 @@ API void CCONV _RA_SavePreferences()
     }
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
-    if (pf != nullptr)
+    std::ofstream ofile{ ra::PrefsFilename(), std::ios::binary };
+
+    using namespace rapidjson;
+    OStreamWrapper osw{ ofile };
+    Writer<OStreamWrapper> writer{ osw };
+
+    Document doc;
+    doc.SetObject();
+
+    Document::AllocatorType& a = doc.GetAllocator();
+    doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
+    doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
+    doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
+    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
+    doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
+    doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
+    doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
+    doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
+    doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
+
+    Value positions(kObjectType);
+
+    for (auto& i : g_mWindowPositions)
     {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
+        Value rect{ kObjectType };
+        if (i.second.nLeft != WindowPosition::nUnset)
+            rect.AddMember("X", i.second.nLeft, a);
+        if (i.second.nTop != WindowPosition::nUnset)
+            rect.AddMember("Y", i.second.nTop, a);
+        if (i.second.nWidth != WindowPosition::nUnset)
+            rect.AddMember("Width", i.second.nWidth, a);
+        if (i.second.nHeight != WindowPosition::nUnset)
+            rect.AddMember("Height", i.second.nHeight, a);
 
-        Document doc;
-        doc.SetObject();
-
-        Document::AllocatorType& a = doc.GetAllocator();
-        doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-        doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
-        doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-        doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-        doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-        doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-        doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-        doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-        doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
-
-        Value positions(kObjectType);
-        for (WindowPositionMap::const_iterator iter = g_mWindowPositions.begin(); iter != g_mWindowPositions.end(); ++iter)
-        {
-            Value rect(kObjectType);
-            if (iter->second.nLeft != WindowPosition::nUnset)
-                rect.AddMember("X", iter->second.nLeft, a);
-            if (iter->second.nTop != WindowPosition::nUnset)
-                rect.AddMember("Y", iter->second.nTop, a);
-            if (iter->second.nWidth != WindowPosition::nUnset)
-                rect.AddMember("Width", iter->second.nWidth, a);
-            if (iter->second.nHeight != WindowPosition::nUnset)
-                rect.AddMember("Height", iter->second.nHeight, a);
-
-            if (rect.MemberCount() > 0)
-                positions.AddMember(StringRef(iter->first.c_str()), rect, a);
-        }
-
-        if (positions.MemberCount() > 0)
-            doc.AddMember("Window Positions", positions.Move(), a);
-
-        doc.Accept(writer);	//	Save
-
-        fclose(pf);
+        if (rect.MemberCount() > 0)
+            positions.AddMember(StringRef(i.first.c_str()), rect, a);
     }
+
+    if (positions.MemberCount() > 0)
+        doc.AddMember("Window Positions", positions.Move(), a);
+
+    doc.Accept(writer);
 
     //TBD:
     //g_GameLibrary.SaveAll();
@@ -1249,11 +1248,22 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
+        {
             if (g_AchievementEditorDialog.GetHWND() == nullptr)
-                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
+            {
+                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst,
+                                                      MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd,
+                                                      g_AchievementEditorDialog.s_AchievementEditorProc));
+            }
             if (g_AchievementEditorDialog.GetHWND() != nullptr)
-                ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
-            break;
+            {
+                if (::GetWindowTextLength(::GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_TITLE)) == 0)
+                    ::SetWindowText(::GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_TITLE), _T("<<New Achievement>>"));
+
+                ::ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
+            }
+        }
+        break;
 
         case IDM_RA_FILES_MEMORYFINDER:
             if (g_MemoryDialog.GetHWND() == nullptr)
@@ -1334,11 +1344,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 std::ostringstream oss;
                 oss << "http://" << _RA_HostName() << "/User/" << RAUsers::LocalUser().Username();
                 ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                             TEXT("open"),
+                             NativeStr(oss.str()).c_str(),
+                             nullptr,
+                             nullptr,
+                             SW_SHOWNORMAL);
             }
             break;
 
@@ -1348,11 +1358,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 std::ostringstream oss;
                 oss << "http://" << _RA_HostName() << "/Game/" << g_pCurrentGameData->GetGameID();
                 ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                             TEXT("open"),
+                             NativeStr(oss.str()).c_str(),
+                             nullptr,
+                             nullptr,
+                             SW_SHOWNORMAL);
             }
             else
             {
@@ -1582,17 +1592,15 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     pSource++;
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
+void _WriteBufferToFile(const std::string& sFileName, const rapidjson::Document& doc)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
-    {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
-        doc.Accept(writer);
-        fclose(pf);
-    }
+    std::ofstream ofile{ sFileName, std::ios::binary };
+
+
+    rapidjson::OStreamWrapper osw{ ofile };
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
+    doc.Accept(writer);
 }
 
 void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
@@ -1618,7 +1626,7 @@ void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
 #pragma warning(disable : 4996) // Deprecation from Microsoft
     FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
 #pragma warning(pop)
-    
+
     auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
     std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
 }
@@ -1694,29 +1702,29 @@ BOOL _FileExists(const std::string& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
     HRESULT hr = HRESULT{};
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
+        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
             CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+            if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
                 LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = ra::Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;
                 }
-				pItem.Release();
+                pItem.Release();
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
     return sRetVal;
 }
@@ -1750,3 +1758,23 @@ BOOL CanCausePause()
 {
     return (_RA_CausePause != nullptr);
 }
+
+namespace ra {
+_Use_decl_annotations_
+std::string GameJSONFilename(GameID game_id) noexcept
+{
+    std::ostringstream oss;
+    oss << RA_DIR_DATA << game_id << ".txt";
+    return oss.str();
+} // end function GameJSONFilename
+
+std::string PrefsFilename() noexcept
+{
+    std::ostringstream oss;
+
+    oss << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << ".cfg";
+    return oss.str();
+} // end function PrefsFilename
+
+
+} // namespace ra

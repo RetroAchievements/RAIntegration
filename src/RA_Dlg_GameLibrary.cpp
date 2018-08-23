@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <stack>
+#include <fstream>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -14,8 +15,8 @@
 
 namespace {
 
-const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-const int COL_SIZE[] = { 30, 230, 110, 170 };
+const char* COL_TITLE[] ={ "ID", "Game Title", "Completion", "File Path" };
+const int COL_SIZE[] ={ 30, 230, 110, 170 };
 static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
 const bool bCancelScan = false;
 
@@ -92,99 +93,91 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, RA_GAME_HASH_FILENAME, "rb");
-    if (pf != nullptr)
+
+    std::ifstream ifile{ RA_GAME_HASH_FILENAME, std::ios::binary };
+
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-
-        if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
+        const auto& List = doc["MD5List"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            const Value& List = doc["MD5List"];
-            for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-                if (iter->name.IsNull() || iter->value.IsNull())
-                    continue;
+            // Ok, in this case it needs iterators
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-                const std::string sMD5 = iter->name.GetString();
-                //ra::GameID nID = static_cast<ra::GameID>( std::strtoul( iter->value.GetString(), nullptr, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
-                ra::GameID nID = static_cast<ra::GameID>(iter->value.GetUint());
-                GameHashLibraryOut[sMD5] = nID;
-            }
+            const std::string sMD5 = iter->name.GetString();
+            auto nID = static_cast<ra::GameID>(iter->value.GetUint()); //	MUST BE STRING, then converted to uint. Keys are strings ONLY
+
+            GameHashLibraryOut.try_emplace(sMD5, nID);
         }
-
-        fclose(pf);
     }
 }
 
 void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, RA_TITLES_FILENAME, "rb");
-    if (pf != nullptr)
+    std::ifstream ifile{ RA_TITLES_FILENAME, std::ios::binary };
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+
+
+    if (doc.ParseStream(isw); !doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() &&
+        doc.HasMember("Response"))
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-
-        if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+        const auto& List = doc["Response"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            const Value& List = doc["Response"];
-            for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-                if (iter->name.IsNull() || iter->value.IsNull())
-                    continue;
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-                ra::GameID nID = static_cast<ra::GameID>(std::strtoul(iter->name.GetString(), nullptr, 10));	//	KEYS ARE STRINGS, must convert afterwards!
-                const std::string sTitle = iter->value.GetString();
-                GameTitlesListOut[nID] = sTitle;
-            }
+            //	KEYS ARE STRINGS, must convert afterwards!
+            auto nID = static_cast<ra::GameID>(std::stoul(iter->name.GetString()));
+            GameTitlesListOut.try_emplace(nID, std::string{ iter->value.GetString() });
         }
-
-        fclose(pf);
     }
 }
 
 void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
-    FILE* pf = nullptr;
-    fopen_s(&pf, RA_MY_PROGRESS_FILENAME, "rb");
-    if (pf != nullptr)
+    std::ifstream ifile{ RA_MY_PROGRESS_FILENAME, std::ios::binary };
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
+        //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
 
-        if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
+        const auto& List = doc["Response"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
+            auto nID = static_cast<ra::GameID>(std::stoul(iter->name.GetString()));	//	KEYS MUST BE STRINGS
+            const auto nNumAchievements = iter->value["NumAch"].GetUint();
+            const auto nEarned = iter->value["Earned"].GetUint();
+            const auto nEarnedHardcore = iter->value["HCEarned"].GetUint();
 
-            const Value& List = doc["Response"];
-            for (Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
+            std::stringstream sstr;
+            sstr << nEarned;
+            if (nEarnedHardcore > 0)
+                sstr << " (" << nEarnedHardcore << ")";
+
+            sstr << " / " << nNumAchievements;
+            if (nNumAchievements > 0)
             {
-                ra::GameID nID = static_cast<ra::GameID>(std::strtoul(iter->name.GetString(), nullptr, 10));	//	KEYS MUST BE STRINGS
-                const unsigned int nNumAchievements = iter->value["NumAch"].GetUint();
-                const unsigned int nEarned = iter->value["Earned"].GetUint();
-                const unsigned int nEarnedHardcore = iter->value["HCEarned"].GetUint();
-
-                std::stringstream sstr;
-                sstr << nEarned;
-                if (nEarnedHardcore > 0)
-                    sstr << " (" << std::to_string(nEarnedHardcore) << ")";
-                sstr << " / " << nNumAchievements;
-                if (nNumAchievements > 0)
-                {
-                    const int nNumEarnedTotal = nEarned + nEarnedHardcore;
-                    char bufPct[256];
-                    sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
-                    sstr << bufPct;
-                }
-
-                GameProgressOut[nID] = sstr.str();
+                const auto nNumEarnedTotal = nEarned + nEarnedHardcore;
+                char bufPct[256];
+                sprintf_s(bufPct, 256, " (%1.1f%%)", (nNumEarnedTotal / static_cast<float>(nNumAchievements)) * 100.0f);
+                sstr << bufPct;
             }
+            GameProgressOut.emplace(nID, sstr.str());
         }
-
-        fclose(pf);
     }
 }
 
@@ -280,7 +273,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
             DWORD nSize = ftell(pf);
             rewind(pf);
 
-            static BYTE* pBuf = nullptr;	//	static (optimisation)
+            static BYTE* pBuf = nullptr;	//	static (optimization)
             if (pBuf == nullptr)
                 pBuf = new BYTE[6 * 1024 * 1024];
 
@@ -290,8 +283,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
                 fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
                 Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
 
-                // TODO: Use the the appropriate literals when PR 23 is accepted
-                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, WPARAM{}, LPARAM{});
+                FORWARD_WM_TIMER(::FindWindow(nullptr, _T("Game Library")), 0U, SendMessage);
             }
 
             fclose(pf);

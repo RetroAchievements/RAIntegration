@@ -66,7 +66,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
             args['u'] = Username();
             args['t'] = Token();		//	Plaintext password(!)
 
-            Document doc;
+            rapidjson::Document doc;
             if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
             {
                 HandleSilentLoginResponse(doc);
@@ -97,7 +97,7 @@ void LocalRAUser::AttemptSilentLogin()
     m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
-void LocalRAUser::HandleSilentLoginResponse(Document& doc)
+void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)
 {
     if (doc.HasMember("Success") && doc["Success"].GetBool())
     {
@@ -158,17 +158,15 @@ void LocalRAUser::Logout()
     MessageBox(nullptr, TEXT("You are now logged out."), TEXT("Info"), MB_OK);
 }
 
-void LocalRAUser::OnFriendListResponse(const Document& doc)
+void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
 {
     if (!doc.HasMember("Friends"))
         return;
 
-    const Value& FriendData = doc["Friends"];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+    const auto& FriendData = doc["Friends"];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
 
-    for (SizeType i = 0; i < FriendData.Size(); ++i)
+    for (auto& NextFriend : FriendData.GetArray())
     {
-        const Value& NextFriend = FriendData[i];
-
         RAUser* pUser = RAUsers::GetUser(NextFriend["Friend"].GetString());
         pUser->SetScore(strtol(NextFriend["RAPoints"].GetString(), nullptr, 10));
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());

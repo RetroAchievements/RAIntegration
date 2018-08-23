@@ -46,6 +46,7 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
+    <ClCompile Include="ra_errors.cpp" />
     <ClCompile Include="RA_GameData.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
@@ -84,6 +85,7 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
+    <ClInclude Include="ra_errors.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
@@ -319,8 +321,6 @@
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
       <Command>..\MakeBuildVer.bat</Command>

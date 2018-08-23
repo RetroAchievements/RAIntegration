@@ -196,7 +196,7 @@ HBITMAP ImageRepository::DefaultImage(ImageType nType)
     }
 }
 
-static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOriginalBitmapSource, _Inout_ IWICBitmapSource*& pToRenderBitmapSource)
+static HRESULT ConvertBitmapSource(_In_ const RECT& rcDest, _In_ IWICBitmapSource* pOriginalBitmapSource, _Inout_ IWICBitmapSource*& pToRenderBitmapSource)
 {
     pToRenderBitmapSource = nullptr;
 
@@ -244,9 +244,9 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
 static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Out_ HBITMAP& hBitmapInOut)
 {
     // Get BitmapSource format and size
-    WICPixelFormatGUID pixelFormat;
-    UINT nWidth = 0U;
-    UINT nHeight = 0U;
+    WICPixelFormatGUID pixelFormat{};
+    UINT nWidth{};
+    UINT nHeight{};
 
     auto hr = pToRenderBitmapSource->GetPixelFormat(&pixelFormat);
     if (SUCCEEDED(hr))
@@ -260,11 +260,11 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
     // Note that the height is negative for top-down bitmaps
     BITMAPINFOHEADER info_header{
         sizeof(BITMAPINFOHEADER),      // biSize
-        static_cast<LONG>(nWidth),
-        -static_cast<LONG>(nHeight),
+        to_signed(nWidth),
+        -to_signed(nHeight),
         WORD{ 1 },                     // biPlanes
         WORD{ 32 },                    // biBitCount
-        static_cast<DWORD>(BI_RGB)
+        to_unsigned(BI_RGB)
     };
     BITMAPINFO bminfo{ info_header };
     void *pvImageBits = nullptr;
@@ -282,7 +282,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
             DeleteBitmap(hBitmapInOut);
 
         //	TBD: check this. As a handle this should just be as-is, right?
-        hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, DWORD{});
+        hBitmapInOut = CreateDIBSection(hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, nullptr, 0UL);
 
         ReleaseDC(nullptr, hdcScreen);
 
@@ -290,7 +290,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
     }
 
     // Size of a scan line represented in bytes: 4 bytes each pixel
-    UINT cbStride = 0U;
+    UINT cbStride{};
     if (SUCCEEDED(hr))
         hr = UIntMult(nWidth, sizeof(ra::ARGB), &cbStride);
 
@@ -353,7 +353,10 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::string& sFilename, size_t nWidt
     // Scale the original IWICBitmapSource to the client rect size and convert the pixel format
     CComPtr<IWICBitmapSource> pToRenderBitmapSource;
     if (SUCCEEDED(hr))
-        hr = ConvertBitmapSource({ 0, 0, static_cast<LONG>(nWidth), static_cast<LONG>(nHeight) }, pOriginalBitmapSource, *&pToRenderBitmapSource);
+    {
+        RECT myRect{ 0, 0, to_signed(nWidth), to_signed(nHeight) };
+        hr = ConvertBitmapSource(myRect, pOriginalBitmapSource, *&pToRenderBitmapSource);
+    }
 
     // Create a DIB from the converted IWICBitmapSource
     HBITMAP hBitmap = nullptr;

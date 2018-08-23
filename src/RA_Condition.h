@@ -218,6 +218,7 @@ public:
     ConditionGroup& GetGroup(size_t i) { return m_vConditionGroups[i]; }
     const ConditionGroup& GetGroup(size_t i) const { return m_vConditionGroups[i]; }
 
+    _NODISCARD _CONSTANT_FN empty() const noexcept { return std::empty(m_vConditionGroups); }
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;
 };

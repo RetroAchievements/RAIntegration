@@ -2,9 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-
-
-
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -27,7 +24,6 @@
     #define NOWINOFFSETS
     #define NOWINSTYLES
 */
-
 
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
@@ -53,7 +49,6 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
-
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -63,12 +58,6 @@
 #pragma warning(pop)
 
 #include <tchar.h>
-
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
 
 #include <map>
 #include <array>
@@ -85,29 +74,17 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-
-
-
-//	RA-Only
-
-
-//	RA-Only
+#define RAPIDJSON_NOMEMBERITERATORCLASS
 #define RAPIDJSON_HAS_STDSTRING 1
-#pragma warning(push, 1)
-// This is not needed the most recent version
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+
 //	RA-Only
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
-#include <rapidjson/filestream.h>
-#include <rapidjson/stringbuffer.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/error/en.h>
-#pragma warning(pop)
 
-using namespace rapidjson;
-extern GetParseErrorFunc GetJSONParseErrorStr;
-#pragma warning(pop)
-
+extern rapidjson::GetParseErrorFunc GetJSONParseErrorStr;
 
 using namespace std::string_literals;
 //using namespace std::chrono_literals; we could use this later
@@ -134,7 +111,7 @@ using namespace std::string_literals;
 #define _CONSTANT_VAR        constexpr auto
 #endif // _HAS_CXX17        
 
-#define _CONSTANT_LOC constexpr // local vars can't be inline
+#define _CONSTANT_LOC constexpr auto // local vars can't be inline
 #define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
@@ -259,14 +236,7 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
+enum AchievementSetType { Core, Unofficial, Local };
 
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);

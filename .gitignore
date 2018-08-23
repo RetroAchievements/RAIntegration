@@ -2,12 +2,10 @@
 /src/RA_BuildVer.h
 *.user
 /RetroAchievementsKey
-test_app/
-src/*_REMOTE_*.cpp
-src/clipboard.txt
 
 # Output files
 /obj
 /bin
 *.pdb
 *.dll
+

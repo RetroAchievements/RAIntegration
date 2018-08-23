@@ -4,9 +4,7 @@
 
 
 #if RA_EXPORTS
-
-GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
-
+rapidjson::GetParseErrorFunc GetJSONParseErrorStr{ rapidjson::GetParseError_En };
 #endif
 
 namespace ra {
@@ -16,6 +14,7 @@ std::string Narrow(const std::wstring& wstr)
 {
     return Narrow(wstr.c_str());
 }
+
 _Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
@@ -62,6 +61,7 @@ _Use_decl_annotations_ std::wstring Widen(const char* str)
 
     return wstr;
 }
+
 
 std::string ByteAddressToString(ra::ByteAddress nAddr)
 {

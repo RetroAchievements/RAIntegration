@@ -15,7 +15,7 @@ Achievement::Achievement(AchievementSetType nType) :
     m_vConditions.AddGroup();
 }
 
-void Achievement::Parse(const Value& element)
+void Achievement::Parse(const rapidjson::Value& element)
 {
     //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50 rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
     m_nAchievementID = element["ID"].GetUint();
@@ -100,6 +100,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
     // SetUpvotes( (unsigned short)atol( sTemp.c_str() ) );
 
     _ReadStringTil(sTemp, ':', pBuffer);
+
     // SetDownvotes( (unsigned short)atol( sTemp.c_str() ) );
 
     _ReadStringTil(sTemp, ':', pBuffer);
@@ -159,6 +160,7 @@ void Achievement::Clear()
     m_sTitle.clear();
     m_sDescription.clear();
     m_sAuthor.clear();
+
     m_sBadgeImageURI.clear();
 
     m_nPointValue = 0;
@@ -169,9 +171,11 @@ void Achievement::Clear()
     ClearDirtyFlag();
 
     m_bProgressEnabled = FALSE;
-    m_sProgress[0] = '\0';
-    m_sProgressMax[0] = '\0';
-    m_sProgressFmt[0] = '\0';
+
+    m_sProgressMax = "";
+    m_sProgressMax = "";
+    m_sProgressMax = "";
+
     m_fProgressLastShown = 0.0f;
 
     m_nTimestampCreated = 0;

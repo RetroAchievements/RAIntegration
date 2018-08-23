@@ -203,7 +203,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['n'] = sBugReportComment.c_str();
                     args['m'] = g_sCurrentROMMD5;
 
-                    Document doc;
+                    rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))
                     {
                         if (doc["Success"].GetBool())

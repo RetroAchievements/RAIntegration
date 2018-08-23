@@ -111,7 +111,7 @@ PostArgs PrevArgs;
 
 std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
-BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
+BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
 
@@ -281,18 +281,18 @@ void RAWeb::SetUserAgentString()
     SetUserAgent(sUserAgent);
 }
 
-void RAWeb::LogJSON(const Document& doc)
+void RAWeb::LogJSON(const rapidjson::Document& doc)
 {
-    //  DebugLog:
-    GenericStringBuffer< UTF8<> > buffer;
-    Writer<GenericStringBuffer< UTF8<> > > writer(buffer);
+    //  DebugLog:   
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer{ buffer };
     doc.Accept(writer);
 
     //  buffer may contain percentage literals!
     RADebugLogNoFormat(buffer.GetString());
 }
 
-BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut)
+BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut)
 {
     std::string response;
     if (DoBlockingRequest(nType, PostData, response))
@@ -341,13 +341,13 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
 
     const char* sHostName = bIsImageRequest ? "i.retroachievements.org" : _RA_HostName();
 
-    size_t nTemp;
+    size_t nTemp{};
 
     // Use WinHttpOpen to obtain a session handle.
     HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        WINHTTP_NO_PROXY_BYPASS, 0UL);
 
     // Specify an HTTP server.
     if (hSession != nullptr)
@@ -366,33 +366,34 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                 nullptr,
                 WINHTTP_NO_REFERER,
                 WINHTTP_DEFAULT_ACCEPT_TYPES,
-                0);
+                0UL);
 
             // Send a Request.
             if (hRequest != nullptr)
             {
                 BOOL bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
-                    0,
+                                                   0UL,
                     WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
-                    0,
-                    0,
-                    0);
+                    0UL,
+                    0UL,
+                    0UL);
 
                 if (WinHttpReceiveResponse(hRequest, nullptr))
                 {
-                    DWORD nBytesToRead = 0;
+                    DWORD nBytesToRead = 0UL;
                     WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
 
                     //  Note: success is much earlier, as 0 bytes read is VALID
                     //  i.e. fetch achievements for new game will return 0 bytes.
                     bSuccess = TRUE;
 
-                    while (nBytesToRead > 0)
+                    while (nBytesToRead > 0UL)
                     {
+
                         //if( nBytesToRead <= 32 )
                         {
-                            DWORD nBytesFetched = 0;
+                            DWORD nBytesFetched{};
                             if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
                             ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
@@ -410,7 +411,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
-                    if (ResponseOut.size() > 0)
+                    if (!ResponseOut.empty())
                         ResponseOut.push_back('\0');    //  EOS for parsing
 
                     RA_LOG(__FUNCTION__ ": success! %s Returned %u bytes.", sRequestedPage.c_str(), ResponseOut.size());
@@ -437,7 +438,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     BOOL bSuccess = FALSE;
     ResponseOut.clear();
 
-    if (sRequestedPage.compare("login_app.php") == 0)
+    if (sRequestedPage == "login_app.php")
     {
         //  Special case: DO NOT LOG raw user credentials!
         RA_LOG(__FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str());
@@ -446,11 +447,11 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     {
         RA_LOG(__FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str());
     }
-
+    
     HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        WINHTTP_NO_PROXY_BYPASS, 0UL);
     if (hSession != nullptr)
     {
         HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
@@ -462,16 +463,16 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                 nullptr,
                 WINHTTP_NO_REFERER,
                 WINHTTP_DEFAULT_ACCEPT_TYPES,
-                0);
+                0UL);
             if (hRequest != nullptr)
             {
                 BOOL bSendSuccess = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
-                    0,
+                    0UL,
                     reinterpret_cast<LPVOID>(const_cast<char*>(sPostString.data())), //WINHTTP_NO_REQUEST_DATA,
                     strlen(sPostString.c_str()),
                     strlen(sPostString.c_str()),
-                    0);
+                    0UL);
 
                 if (bSendSuccess && WinHttpReceiveResponse(hRequest, nullptr))
                 {
@@ -479,12 +480,12 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     //  i.e. fetch achievements for new game will return 0 bytes.
                     bSuccess = TRUE;
 
-                    DWORD nBytesToRead = 0;
+                    DWORD nBytesToRead = 0UL;
                     WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-                    while (nBytesToRead > 0)
+                    while (nBytesToRead > 0UL)
                     {
                         {
-                            DWORD nBytesFetched = 0;
+                            DWORD nBytesFetched = 0UL;
                             if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
                             ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
@@ -501,7 +502,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
                     }
 
-                    if (ResponseOut.size() > 0)
+                    if (!ResponseOut.empty())
                         ResponseOut.push_back('\0');    //  EOS for parsing
 
                     if (sPostString.find("r=login") != std::string::npos)
@@ -525,9 +526,9 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     }
 
     //  Debug logging...
-    if (ResponseOut.size() > 0)
+    if (!ResponseOut.empty())
     {
-        Document doc;
+        rapidjson::Document doc;
         doc.Parse(ResponseOut.c_str());
 
         if (doc.HasParseError())
@@ -561,24 +562,25 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    size_t nTemp;
+    
+    size_t nTemp{};
 
     // Use WinHttpOpen to obtain a session handle.
     HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        WINHTTP_NO_PROXY_BYPASS, 0UL);
 
     // Specify an HTTP server.
     if (hSession != nullptr)
     {
-        hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0UL);
     }
 
     if (hConnect != nullptr)
     {
-        WCHAR wBuffer[1024];
-        mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
+        WCHAR wBuffer[1024U];
+        mbstowcs_s(&nTemp, wBuffer, 1024U, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1U);
 
         hRequest = WinHttpOpenRequest(hConnect,
             L"POST",
@@ -586,7 +588,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
             nullptr,
             WINHTTP_NO_REFERER,
             WINHTTP_DEFAULT_ACCEPT_TYPES,
-            0);
+            0UL);
     }
 
     if (hRequest != nullptr)
@@ -619,42 +621,34 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                                                                                                                 //sb_ascii << "\r\n";                                                                                   //  Spacing
                                                                                                                 //sb_ascii << "--" << mimeBoundary << "--\r\n";                                                     //  --Boundary--
 
-            const std::string str = sb_ascii.str();
+            std::string str = sb_ascii.str();
 
             //  Inject type of request
-
             bSuccess = WinHttpSendRequest(
                 hRequest,
                 WINHTTP_NO_ADDITIONAL_HEADERS,
-                0,
-                (void*)str.c_str(),
-                static_cast<unsigned long>(str.length()),
-                static_cast<unsigned long>(str.length()),
-                0);
+                0UL,
+                static_cast<LPVOID>(str.data()),
+                static_cast<DWORD>(str.length()),
+                static_cast<DWORD>(str.length()),
+                0UL);
         }
 
         if (WinHttpReceiveResponse(hRequest, nullptr))
         {
-            //BYTE* sDataDestOffset = &pBufferOut[0];
-
-            DWORD nBytesToRead = 0;
+            DWORD nBytesToRead{};
             WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
 
             //  Note: success is much earlier, as 0 bytes read is VALID
             //  i.e. fetch achievements for new game will return 0 bytes.
-            bSuccess = nBytesToRead > 0;
+            bSuccess = nBytesToRead > 0UL;
 
-            while (nBytesToRead > 0)
+            while (nBytesToRead > 0UL)
             {
-                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
-                ASSERT(nBytesToRead <= 8192);
-                if (nBytesToRead <= 8192)
+                ASSERT(nBytesToRead <= 8192UL);
+                if (nBytesToRead <= 8192UL)
                 {
-                    DWORD nBytesFetched = 0;                    
+                    DWORD nBytesFetched{};
                     if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
                     ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
@@ -664,11 +658,10 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                     }
                 }
 
-
                 WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
             }
 
-            if (ResponseOut.size() > 0)
+            if (!ResponseOut.empty())
                 ResponseOut.push_back('\0');    //  EOS for parsing
 
             RA_LOG(__FUNCTION__ ": success! Returned %u bytes.", ResponseOut.size());
@@ -678,7 +671,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut)
+BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut)
 {
     std::string response;
     if (::DoBlockingImageUpload(nType, sFilename, response))
@@ -690,7 +683,7 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
         }
         else
         {
-            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
+            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), rapidjson::GetParseError_En(ResponseOut.GetParseError()));
             return FALSE;
         }
     }

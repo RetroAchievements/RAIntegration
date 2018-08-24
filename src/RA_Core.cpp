@@ -1491,16 +1491,8 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        if (g_bHardcoreModeActive)
-        {
-            g_bHardcoreModeActive = false;
-            RA_RebuildMenu();
-            //RA_ResetEmulation();
-        }
-
         if (!g_bRAMTamperedWith)
         {
             g_pCoreAchievements->SaveProgress(sFilename);
@@ -1515,7 +1507,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
     {
         if (g_bHardcoreModeActive)
         {
-            MessageBox(nullptr, TEXT("Savestates are not allowed during Hardcore Mode!"), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(nullptr, TEXT("Loading save states is not allowed in Hardcore mode. Disabling Hardcore mode."), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
             DisableHardcoreMode();
         }
 

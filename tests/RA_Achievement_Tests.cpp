@@ -42,7 +42,7 @@ public:
         Assert::AreEqual(12U, ach.GetCondition(0, 0).CompTarget().RawValue());
         Assert::AreEqual(12U, ach.GetCondition(0, 0).CompTarget().RawPreviousValue());
 
-        // correct user should not load
+        // correct user should load
         pIter = sState.c_str();
         pIter = ach.ParseStateString(pIter, "user1");
         Assert::AreEqual('\0', *pIter);

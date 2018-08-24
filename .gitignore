@@ -1,13 +1,76 @@
-/.vs
-/src/RA_BuildVer.h
-*.user
-/RetroAchievementsKey
-test_app/
-packages/
-src/clipboard.txt
+#################
+# Miscellaneous #
+#################
+RetroAchievementsKey/
+src/RA_BuildVer.h
+overlay/
+*.wav
+*.mp3
+*.midi
 
-# Output files
-/obj
-/bin
-*.pdb
+######################
+# Output Directories #
+######################
+.vs/
+obj/
+bin/
+
+###########
+# Windows #
+###########
+Thumbs.db
+
+#############################
+# Other Visual Studio Files #
+#############################
+*.user
+*.aps
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.user
+
+###################
+# Build Artifacts #
+###################
+*.cache
+*.class
+*.com
 *.dll
+*.exe
+*.exp
+*.ilk
+*.iobj
+*.lib
+*.obj
+*.pch
+*.pdb
+*.sbr
+*.tlb
+*.tlh
+
+############
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+######################
+# Logs and Databases #
+######################
+*.log
+*.sql
+*.sqlite
+*.bak
+*.db
+*.suo
+*.ipch
+*.mdf
+*.ldf

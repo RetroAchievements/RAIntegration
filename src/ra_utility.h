@@ -68,11 +68,6 @@ _NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept
 } // end operator""_hu
 
 
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept
-{
-    return static_cast<ra::DataPos>(n);
-} // end operator""_dp
-
   // If you follow the standard every alias is considered mutually exclusive, if not don't worry about it
   // These are here if you follow the standards (starts with ISO C++11/C11) rvalue conversions
 

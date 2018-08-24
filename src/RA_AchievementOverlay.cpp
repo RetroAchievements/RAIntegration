@@ -97,7 +97,6 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 
 AchievementOverlay::AchievementOverlay()
 {
-    m_hOverlayBackground = nullptr;
     m_nAchievementsSelectedItem = 0;
     m_nFriendsSelectedItem = 0;
     m_nMessagesSelectedItem = 0;
@@ -107,11 +106,6 @@ AchievementOverlay::AchievementOverlay()
 
 AchievementOverlay::~AchievementOverlay()
 {
-    if (m_hOverlayBackground != nullptr)
-    {
-        DeleteObject(m_hOverlayBackground);
-        m_hOverlayBackground = nullptr;
-    }
 }
 
 void AchievementOverlay::Initialize(HINSTANCE hInst)
@@ -136,12 +130,8 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground = LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RASize(OVERLAY_WIDTH, OVERLAY_HEIGHT));
-    //if( m_hOverlayBackground == nullptr )
-    //{
-    //	//	Backup
-    //	m_hOverlayBackground = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_RA_BACKGROUND) );
-    //}
+    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, RA_OVERLAY_BG_FILENAME);
+    m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
 void AchievementOverlay::Activate()
@@ -241,6 +231,11 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
             else
             {
                 m_nTransitionState = TS_OFF;
+
+                m_hOverlayBackground.Release();
+                m_hUserImage.Release();
+
+                m_mAchievementBadges.clear(); // will release each item as they're destroyed
             }
         }
     }
@@ -667,6 +662,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
 
     const unsigned int nNumFriends = RAUsers::LocalUser().NumFriends();
 
+    // TODO: friends list/activity is captured at time of login. eliminate that call as most
+    // people don't care and fetch the data when switching to the friends page in the overlay
     for (unsigned int i = 0; i < nFriendsToDraw; ++i)
     {
         int nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
@@ -681,11 +678,10 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             if (pFriend == nullptr)
                 continue;
 
-            if (pFriend->GetUserImage() == nullptr && !pFriend->IsFetchingUserImage())
-                pFriend->LoadOrFetchUserImage();
-
-            if (pFriend->GetUserImage() != nullptr)
-                DrawImage(hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64);
+            ra::services::ImageReference friendImage(ra::services::ImageType::UserPic, pFriend->Username());
+            HBITMAP hBitmap = friendImage.GetHBitmap();
+            if (hBitmap != nullptr)
+                DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
 
             if ((m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i)
                 SetTextColor(hDC, COL_SELECTED);
@@ -702,7 +698,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             //RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
-                nXOffs + nFriendLeftOffsetText,
+                nXOffs + nFriendLeftOffsetText + 16,
                 nYOffs + nFriendSubtitleYOffs,
                 nDX + rcTarget.right - 40,
                 nYOffs + nFriendSubtitleYOffs + 46);
@@ -1183,10 +1179,14 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     //	Draw background:
     SetBkMode(hDC, TRANSPARENT);
 
-    RECT rcBGSize;
-    SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
-    OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
-    DrawImageTiled(hDC, m_hOverlayBackground, rcBGSize, rc);
+    HBITMAP hBackground = m_hOverlayBackground.GetHBitmap();
+    if (hBackground)
+    {
+        RECT rcBGSize;
+        SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+        OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
+        DrawImageTiled(hDC, hBackground, rcBGSize, rc);
+    }
 
     g_hBrushBG = CreateSolidBrush(COL_USER_FRAME_BG);
     g_hBrushSelectedBG = CreateSolidBrush(COL_SELECTED_BOX_BG);
@@ -1365,16 +1365,25 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     else
         SetTextColor(hDC, bLocked ? COL_TEXT_LOCKED : COL_TEXT);
 
-    if (!bLocked)
+    HBITMAP hBitmap = nullptr;
+    std::string sBadgeName = pAch->BadgeImageURI();
+    if (bLocked)
+        sBadgeName += "_lock";
+
+    auto iter = m_mAchievementBadges.find(sBadgeName);
+    if (iter != m_mAchievementBadges.end())
     {
-        if (pAch->BadgeImage() != nullptr)
-            DrawImage(hDC, pAch->BadgeImage(), nX + nAchImageOffset, nY, 64, 64);
+        hBitmap = iter->second.GetHBitmap();
     }
     else
     {
-        if (pAch->BadgeImageLocked() != nullptr)
-            DrawImage(hDC, pAch->BadgeImageLocked(), nX + nAchImageOffset, nY, 64, 64);
+        auto& imageRef = m_mAchievementBadges[sBadgeName];
+        imageRef.ChangeReference(ra::services::ImageType::Badge, sBadgeName);
+        hBitmap = imageRef.GetHBitmap();
     }
+
+    if (hBitmap != nullptr)
+        DrawImage(hDC, hBitmap, nX + nAchImageOffset, nY, 64, 64);
 
     sprintf_s(buffer, 1024, " %s ", pAch->Description().c_str());
     SelectObject(hDC, g_hFontDesc2);
@@ -1398,10 +1407,11 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
     FillRect(hDC, &rcUserFrame, hBrush2);
 
-    if (pUser->GetUserImage() != nullptr)
+    HBITMAP hBitmap = m_hUserImage.GetHBitmap();
+    if (hBitmap != nullptr)
     {
         DrawImage(hDC,
-            pUser->GetUserImage(),
+            hBitmap,
             nX + ((nW - 64) - 4),
             nY + 4,
             64, 64);
@@ -1490,11 +1500,6 @@ void AchievementOverlay::OnLoad_NewRom()
 
     if (IsActive())
         Deactivate();
-}
-
-void AchievementOverlay::OnUserPicDownloaded(const char* sUsername)
-{
-    RA_LOG("Overlay detected Userpic downloaded (%s)", sUsername);		//##SD unhandled?
 }
 
 void AchievementOverlay::InstallNewsArticlesFromFile()

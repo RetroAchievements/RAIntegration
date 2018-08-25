@@ -62,6 +62,7 @@ bool g_bLeaderboardsActive = true;
 bool g_bLBDisplayNotification = true;
 bool g_bLBDisplayCounter = true;
 bool g_bLBDisplayScoreboard = true;
+bool g_bPreferDecimalVal = false;
 unsigned int g_nNumHTTPThreads = 15;
 
 typedef struct WindowPosition
@@ -997,6 +998,9 @@ API void CCONV _RA_LoadPreferences()
             if (doc.HasMember("Leaderboard Scoreboard Display"))
                 g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
 
+            if (doc.HasMember("Prefer Decimal"))
+                g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
+
             if (doc.HasMember("Num Background Threads"))
                 g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
             if (doc.HasMember("ROM Directory"))
@@ -1062,6 +1066,7 @@ API void CCONV _RA_SavePreferences()
         doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
         doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
         doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
+        doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
         doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
         doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
 

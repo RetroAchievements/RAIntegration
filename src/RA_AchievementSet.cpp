@@ -79,7 +79,7 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
     const auto& UserUnlocks{ doc["UserUnlocks"] };
 
     for (auto& unlocked : UserUnlocks.GetArray())
-    {       
+    {
         //	IDs could be present in either core or unofficial:
         if (const auto nNextAchID{ static_cast<ra::AchievementID>(unlocked.GetUint()) };
             g_pCoreAchievements->Find(nNextAchID) != nullptr)
@@ -294,20 +294,20 @@ BOOL AchievementSet::SaveToFile()
 
             ZeroMemory(sNextLine, 2048);
             sprintf_s(sNextLine, 2048, "%u:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",
-                      pAch->ID(),
-                      pAch->CreateMemString().c_str(),
-                      pAch->Title().c_str(),
-                      pAch->Description().c_str(),
-                      " ", //Ach.ProgressIndicator()=="" ? " " : Ach.ProgressIndicator(),
-                      " ", //Ach.ProgressIndicatorMax()=="" ? " " : Ach.ProgressIndicatorMax(),
-                      " ", //Ach.ProgressIndicatorFormat()=="" ? " " : Ach.ProgressIndicatorFormat(),
-                      pAch->Author().c_str(),
-                      (unsigned short)pAch->Points(),
-                      (unsigned long)pAch->CreatedDate(),
-                      (unsigned long)pAch->ModifiedDate(),
-                      (unsigned short)pAch->Upvotes(), // Fix values
-                      (unsigned short)pAch->Downvotes(), // Fix values
-                      pAch->BadgeImageURI().c_str());
+                pAch->ID(),
+                pAch->CreateMemString().c_str(),
+                pAch->Title().c_str(),
+                pAch->Description().c_str(),
+                " ", //Ach.ProgressIndicator()=="" ? " " : Ach.ProgressIndicator(),
+                " ", //Ach.ProgressIndicatorMax()=="" ? " " : Ach.ProgressIndicatorMax(),
+                " ", //Ach.ProgressIndicatorFormat()=="" ? " " : Ach.ProgressIndicatorFormat(),
+                pAch->Author().c_str(),
+                (unsigned short)pAch->Points(),
+                (unsigned long)pAch->CreatedDate(),
+                (unsigned long)pAch->ModifiedDate(),
+                (unsigned short)pAch->Upvotes(), // Fix values
+                (unsigned short)pAch->Downvotes(), // Fix values
+                pAch->BadgeImageURI().c_str());
 
             fwrite(sNextLine, sizeof(char), strlen(sNextLine), pFile);
         }
@@ -427,7 +427,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             //	Get game title:
             ifile.getline(buffer.get(), 4096);
-           
+
             if (auto nCharsRead{ ifile.gcount() }; nCharsRead > 0)
             {
                 auto szCharsRead{ static_cast<std::size_t>(ra::to_unsigned(nCharsRead)) };
@@ -596,11 +596,11 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
             {
                 Condition& cond = pAch->GetCondition(nGrp, j);
                 sprintf_s(buffer, 4096, "%u:%u:%u:%u:%u:",
-                          cond.CurrentHits(),
-                          cond.CompSource().RawValue(),
-                          cond.CompSource().RawPreviousValue(),
-                          cond.CompTarget().RawValue(),
-                          cond.CompTarget().RawPreviousValue());
+                    cond.CurrentHits(),
+                    cond.CompSource().RawValue(),
+                    cond.CompSource().RawPreviousValue(),
+                    cond.CompTarget().RawValue(),
+                    cond.CompTarget().RawPreviousValue());
                 strcat_s(cheevoProgressString, 4096, buffer);
             }
         }
@@ -608,7 +608,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         //	Generate a slightly different key to md5ify:
         char sCheevoProgressMangled[4096];
         sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%u",
-                  RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
+            RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
 
         std::string sMD5Progress = RAGenerateMD5(std::string(sCheevoProgressMangled));
         std::string sMD5Achievement = RAGenerateMD5(pAch->CreateMemString());
@@ -683,11 +683,11 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
                 //	Concurrently build the md5 checkstring
                 sprintf_s(buffer, 4096, "%u:%u:%u:%u:%u:",
-                          CondNumHits[i],
-                          CondSourceVal[i],
-                          CondSourceLastVal[i],
-                          CondTargetVal[i],
-                          CondTargetLastVal[i]);
+                    CondNumHits[i],
+                    CondSourceVal[i],
+                    CondSourceLastVal[i],
+                    CondTargetVal[i],
+                    CondTargetLastVal[i]);
 
                 strcat_s(cheevoProgressString, 4096, buffer);
             }
@@ -698,7 +698,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
             //	Regenerate the md5 and see if it sticks:
             sprintf_s(cheevoMD5TestMangled, 4096, "%s%s%s%u",
-                      RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID);
+                RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID);
 
             std::string sRecalculatedProgressMD5 = RAGenerateMD5(cheevoMD5TestMangled);
 

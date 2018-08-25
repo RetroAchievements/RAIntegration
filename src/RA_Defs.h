@@ -140,8 +140,8 @@ using namespace std::string_literals;
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
 
-#define RA_DIR_OVERLAY					".\\Overlay\\"
-#define RA_DIR_BASE						".\\RACache\\"
+#define RA_DIR_OVERLAY					"Overlay\\"
+#define RA_DIR_BASE						"RACache\\"
 #define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
 #define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
 #define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"

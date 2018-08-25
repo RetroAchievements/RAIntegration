@@ -317,10 +317,20 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
     return bSuccess;
 }
 
-static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
+static std::wstring GetIntegrationPath()
 {
-    FILE* pf;
-    fopen_s(&pf, sFile, "wb");
+    wchar_t sBuffer[2048];
+    DWORD iIndex = GetModuleFileNameW(0, sBuffer, 2048);
+    while (iIndex > 0 && sBuffer[iIndex - 1] != '\\' && sBuffer[iIndex - 1] != '/')
+        --iIndex;
+    wcscpy(&sBuffer[iIndex], L"RA_Integration.dll");
+
+    return std::wstring(sBuffer);
+}
+
+static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, int nBytes)
+{
+    FILE* pf = _wfopen(sFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         fwrite(sBuffer, 1, nBytes, pf);
@@ -328,7 +338,7 @@ static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes
     }
     else
     {
-        MessageBoxA(nullptr, "Problems writing file!", sFile, MB_OK);
+        MessageBoxW(nullptr, L"Problems writing file!", sFile.c_str(), MB_OK);
     }
 }
 
@@ -344,7 +354,7 @@ static void FetchIntegrationFromWeb(const char* sHostName, DWORD* pStatusCode)
     {
         DWORD nBytesRead = 0;
         if (DoBlockingHttpGet(sHostName, "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead, pStatusCode))
-            WriteBufferToFile("RA_Integration.dll", buffer, nBytesRead);
+            WriteBufferToFile(GetIntegrationPath(), buffer, nBytesRead);
 
         delete[](buffer);
         buffer = nullptr;
@@ -375,11 +385,13 @@ static const char* CCONV _RA_InstallIntegration()
 {
     SetErrorMode(0);
 
-    DWORD dwAttrib = GetFileAttributes(TEXT("RA_Integration.dll"));
+    std::wstring sIntegrationPath = GetIntegrationPath();
+
+    DWORD dwAttrib = GetFileAttributesW(sIntegrationPath.c_str());
     if (dwAttrib == INVALID_FILE_ATTRIBUTES)
         return "0.000";
 
-    g_hRADLL = LoadLibrary(TEXT("RA_Integration.dll"));
+    g_hRADLL = LoadLibraryW(sIntegrationPath.c_str());
     if (g_hRADLL == nullptr)
     {
         char buffer[1024];
@@ -504,7 +516,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
     {
         RA_Shutdown();
 
-        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.", sHostName, nStatusCode);
+        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.");
         MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
     }
     else

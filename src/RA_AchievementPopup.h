@@ -33,7 +33,7 @@ public:
     MessagePopup() noexcept = default;
     MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
                  ra::PopupMessageType nMsgType, ra::services::ImageType nImageType,
-                 const std::string& sImageName) :
+                 const std::string& sImageName) noexcept :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
@@ -41,26 +41,14 @@ public:
     {
     }
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, ra::PopupMessageType nMsgType = ra::PopupMessageType::Info) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, ra::PopupMessageType nMsgType = ra::PopupMessageType::Info) noexcept :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(ra::services::ImageType::None, "")
     {
     }
-    ~MessagePopup() noexcept = default; /*no pointers*/
-    MessagePopup(const MessagePopup&) = delete; /* can't delete it but shouldn't use it */
-    MessagePopup& operator=(const MessagePopup&) = delete; /*all members are const*/
-    /* Seems to do the trick, now we have expected of 1 Message popups in the queue instead of 2 */
-    MessagePopup(MessagePopup&& b) noexcept :
-        m_sMessageTitle{ std::move(b.m_sMessageTitle)},
-        m_sMessageSubtitle{ std::move(b.m_sMessageSubtitle) },
-        m_nMessageType{b.m_nMessageType},
-        m_hMessageImage{std::move(b.m_hMessageImage)}
-    {
-        m_nMessageType = ra::PopupMessageType::Info;
-    }
-    MessagePopup& operator=(MessagePopup&&) noexcept = delete; /*never saw a need to assign*/
+
 public:
     _NODISCARD inline auto& Title() const { return m_sMessageTitle; }
     _NODISCARD inline auto& Subtitle() const { return m_sMessageSubtitle; }
@@ -81,7 +69,7 @@ public:
     /*_NORETURN */void Update(_In_ ControllerInput& input, _In_ float fDelta, _In_ bool bFullScreen, _In_ bool bPaused);
     /*_NORETURN */void Render(_In_ HDC hDC, _Inout_ RECT& rcDest);
 
-    void AddMessage(MessagePopup&& msg) noexcept;
+    void AddMessage(const MessagePopup& msg) noexcept;
     _NODISCARD float GetYOffsetPct() const;
 
     //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }

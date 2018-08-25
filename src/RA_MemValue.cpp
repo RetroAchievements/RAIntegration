@@ -1,9 +1,12 @@
 #include "RA_MemValue.h"
-
 #include "RA_MemManager.h"
 
-#include <algorithm>
+#ifndef _ALGORITHM_
+#include <algorithm>  
+#endif /* !_ALGORITHM_ */
+#ifndef RA_UTILITY_H
 #include "ra_utility.h"
+#endif /* !RA_UTILITY_H */
 
 double MemValue::Clause::GetValue() const
 {
@@ -96,16 +99,16 @@ const char* MemValue::Clause::ParseFromString(const char* pBuffer)
 unsigned int MemValue::GetValue() const
 {
     double fVal = 0.0;
-    for (const auto& clause : m_vClauses)
-    {
-        double fNextVal = clause.GetValue();
-        switch (clause.GetOperation())
+    for (auto& clause : m_vClauses)
+    {      
+        switch (double fNextVal = clause.GetValue(); clause.GetOperation())
         {
             case ClauseOperation::Maximum:
                 fVal = std::max(fVal, fNextVal);
                 break;
 
             case ClauseOperation::Addition:
+                _FALLTHROUGH;
             default:
                 fVal += fNextVal;
                 break;
@@ -149,10 +152,10 @@ const char* MemValue::ParseFromString(const char* pChar)
     return pChar;
 }
 
-std::string MemValue::FormatValue(unsigned int nValue, MemValue::Format nFormat)
+std::string MemValue::FormatValue(unsigned int nValue, Format nFormat) const
 {
-    static const int SECONDS_PER_MINUTE = 60;
-    static const int FRAMES_PER_SECOND = 60; // TODO: this isn't true for all systems
+    constexpr int SECONDS_PER_MINUTE = 60;
+    constexpr int FRAMES_PER_SECOND = 60; // TODO: this isn't true for all systems
 
     char buffer[128];
     switch (nFormat)
@@ -196,42 +199,8 @@ std::string MemValue::FormatValue(unsigned int nValue, MemValue::Format nFormat)
             break;
     }
 
-    return std::string(buffer);
+    std::string sRet{ buffer };
+    return sRet;
 }
 
-MemValue::Format MemValue::ParseFormat(const std::string& sFormat)
-{
-    if (sFormat == "VALUE")
-        return Format::Value;
 
-    if (sFormat == "SECS" || sFormat == "TIMESECS")
-        return Format::TimeSecs;
-
-    if (sFormat == "FRAMES" || sFormat == "TIME")
-        return Format::TimeFrames;
-
-    if (sFormat == "POINTS" || sFormat == "SCORE")
-        return Format::Score;
-
-    if (sFormat == "MILLISECS")
-        return Format::TimeMillisecs;
-
-    if (sFormat == "OTHER")
-        return Format::Other;
-
-    return Format::Value;
-}
-
-const char* MemValue::GetFormatString(Format format)
-{
-    switch (format)
-    {
-        case Format::Other: return "OTHER";
-        case Format::Score: return "POINTS";
-        case Format::TimeFrames: return "FRAMES";
-        case Format::TimeMillisecs: return "MILLISECS";
-        case Format::TimeSecs: return "SECS";
-        case Format::Value: return "VALUE";
-        default: return "UNKNOWN";
-    }
-}

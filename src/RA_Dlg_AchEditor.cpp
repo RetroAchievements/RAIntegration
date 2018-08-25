@@ -1,8 +1,18 @@
 #include "RA_Dlg_AchEditor.h"
 
-#ifdef WIN32_LEAN_AND_MEAN
+#include "RA_AchievementSet.h"
+#include "RA_Resource.h"
+#include "RA_Core.h"
+#include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_Memory.h"
+#include "RA_httpthread.h"
+#include "RA_ImageFactory.h"
+#include "RA_MemManager.h"
+#include "RA_User.h"
+
+#ifndef _INC_COMMDLG
 #include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
+#endif // !_INC_COMMDLG
 
 // TBD: These files should be included already, but some reported they were not
 //      on their machines, the above is not
@@ -13,16 +23,6 @@
 #ifndef _MEMORY_
 #include <memory>
 #endif // !_MEMORY_
-
-#include "RA_AchievementSet.h"
-#include "RA_Resource.h"
-#include "RA_Core.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_Memory.h"
-#include "RA_httpthread.h"
-#include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
-#include "RA_User.h"
 
 namespace ra {
 
@@ -553,7 +553,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_CONDITION_TYPES),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftoi(1.6f * nHeight * ra::enum_sizes::NUM_CONDITION_TYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -608,7 +608,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * nNumItems),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftoi(1.6f * nHeight * nNumItems),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -674,7 +674,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_VARIABLE_SIZETYPES),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftoi(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_VARIABLE_SIZETYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -722,7 +722,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_TYPES),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftoi(1.6f * nHeight * ra::enum_sizes::NUM_COMPARISON_TYPES),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,
@@ -774,7 +774,7 @@ _NODISCARD BOOL CALLBACK CreateIPE(_In_ int nItem, _In_ ra::CondSubItems eSubIte
                 TEXT("EDIT"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
-                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftol(1.5f*nHeight),
+                lprcSubItem->left, lprcSubItem->top, nWidth, ra::ftoi(1.5f*nHeight),
                 g_AchievementEditorDialog.GetHWND(),
                 nullptr,
                 nullptr,

@@ -2,9 +2,6 @@
 /src/RA_BuildVer.h
 *.user
 /RetroAchievementsKey
-test_app/
-packages/
-src/clipboard.txt
 
 # Output files
 /obj

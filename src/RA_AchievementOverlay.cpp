@@ -262,7 +262,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 {
                     if ((*pnSelectedItem) < nAchCount)
                     {
-                        AddPage(ra::OverlayPage::Achievement_Examine);
+                        AddPage(OverlayPage::Achievement_Examine);
                         g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
                     }
                 }
@@ -275,7 +275,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 
             }
             break;
-            case ra::OverlayPage::Achievement_Examine:
+            case OverlayPage::Achievement_Examine:
             {
                 //	Overload:
                 pnScrollOffset = &m_nAchievementsScrollOffset;
@@ -416,7 +416,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 {
                     if ((*pnSelectedItem) < nNumLBs)
                     {
-                        AddPage(ra::OverlayPage::Leaderboard_Examine);
+                        AddPage(OverlayPage::Leaderboard_Examine);
                         g_LBExamine.Initialize(g_LeaderboardManager.GetLB((*pnSelectedItem)).ID());
                     }
                 }
@@ -426,7 +426,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
                 break;
-            case ra::OverlayPage::Leaderboard_Examine:
+            case OverlayPage::Leaderboard_Examine:
                 //	Overload from previous
                 //	Overload:
                 pnScrollOffset = &m_nLeaderboardScrollOffset;
@@ -1150,11 +1150,11 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         (m_fTransitionTimer / ra::PAGE_TRANSITION_IN) :
         (m_fTransitionTimer / ra::PAGE_TRANSITION_OUT);
 
-    auto nDX = ra::ftol(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
+    auto nDX = ra::ftoi(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
     auto nDY = rcTarget.top;
 
-    auto nRightPx = ra::ftol(rcTarget.right - (fPctOffScreen * rcTarget.right));
-    auto nRightPxAbs = ra::ftol((rcTarget.right - rcTarget.left) - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
+    auto nRightPx = ra::ftoi(rcTarget.right - (fPctOffScreen * rcTarget.right));
+    auto nRightPxAbs = ra::ftoi((rcTarget.right - rcTarget.left) - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
 
     RECT rc;
     SetRect(&rc,
@@ -1276,8 +1276,8 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         _stprintf_s(buffer.get(), 1024, _T(" <-:%s "), _T("Prev"));
         TextOut(hDC, nRightPx - nControlsX1, nControlsY2, buffer.get(), _tcslen(buffer.get()));
 
-        char cBackChar = 'B';
-        char cSelectChar = 'A';
+        auto cBackChar{ _T('B') };
+        auto cSelectChar{ _T('A') };
 
         if (g_EmulatorID == ra::EmulatorID::RA_Gens)
         {
@@ -1316,7 +1316,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
     const float fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);
     const float fInnerBarOffsetY = fInnerBarSizePx * nSel;
 
-    const int nInnerBarAbsY = ra::ftol(nY + 2.0f + fInnerBarOffsetY);
+    const int nInnerBarAbsY = ra::ftoi(nY + 2.0f + fInnerBarOffsetY);
 
     //	Draw bar:
     SetTextColor(hDC, COL_BAR);
@@ -1331,7 +1331,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
         if (fNumMax <= 0.0f)
             fNumMax = 1.0f;
 
-        SetRect(&rc, nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + ra::ftol(fInnerBarSizePx));
+        SetRect(&rc, nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + ra::ftoi(fInnerBarSizePx));
         FillRect(hDC, &rc, hBarFront);
     }
 
@@ -1478,8 +1478,9 @@ const int* AchievementOverlay::GetActiveSelectedItem() const
             return &m_nLeaderboardSelectedItem;
 
         case OverlayPage::Achievement_Examine:
-        case ra::OverlayPage::Leaderboard_Examine:
-            return 0;
+            _FALLTHROUGH;
+        case OverlayPage::Leaderboard_Examine:
+            return nullptr;
 
         default:
             ASSERT(!"Unknown page");

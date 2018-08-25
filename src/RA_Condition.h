@@ -149,14 +149,14 @@ public:
 
 
 private:
-    ra::ConditionType  m_nConditionType{};
+    ra::ConditionType m_nConditionType{};
 
-    CompVariable	   m_nCompSource;
+    CompVariable       m_nCompSource;
     ra::ComparisonType m_nCompareType{};
-    CompVariable	   m_nCompTarget;
+    CompVariable       m_nCompTarget;
 
-    unsigned int	   m_nRequiredHits{};
-    unsigned int	   m_nCurrentHits{};
+    unsigned int m_nRequiredHits{};
+    unsigned int m_nCurrentHits{};
 };
 
 class ConditionGroup

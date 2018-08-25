@@ -22,12 +22,12 @@ namespace ra {
 
 enum class ActivityType
 {
-    ActivityTypeUnknown = 0,	//	DO NOT USE
-    PlayerEarnedAchievement,	//	DO NOT USE: handled at PHP level
-    PlayerLoggedIn,				//	DO NOT USE: handled at PHP level
+    ActivityTypeUnknown,     //	DO NOT USE
+    PlayerEarnedAchievement, // DO NOT USE: handled at PHP level
+    PlayerLoggedIn,          // DO NOT USE: handled at PHP level
     PlayerStartedPlaying,
     UserUploadedAchievement,
-    UserModifiedAchievement,
+    UserModifiedAchievement
 };
 
 } // namespace ra
@@ -69,7 +69,7 @@ public:
     void ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin);
     void Logout();
 
-    void FriendList();
+    void RequestFriendList();
     void OnFriendListResponse(const Document& doc);
 
     RAUser* AddFriend(const std::string& sFriend, unsigned int nScore);

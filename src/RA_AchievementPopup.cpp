@@ -1,13 +1,13 @@
 #include "RA_AchievementPopup.h"
 
-#ifndef _MEMORY_
-#include <memory>
-#endif // !_MEMORY_
-
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
 #include "ra_utility.h"
+
+#ifndef _MEMORY_
+#include <memory>
+#endif // !_MEMORY_
 
 #ifndef _INC_MMSYSTEM
 #include <MMSystem.h> // PlaySound
@@ -43,15 +43,13 @@ inline constexpr std::array<LPCTSTR, enum_sizes::NUM_MESSAGE_TYPES> MSG_SOUND
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    // maybe it doesn't like rvalues
     const auto myType{ ActiveMessage().Type() };
     PlaySound(ra::MSG_SOUND.at(ra::etoi(myType)), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
-// not sure how this worked before with copying implicitly deleted
-void AchievementPopup::AddMessage(MessagePopup&& msg) noexcept
+void AchievementPopup::AddMessage(const MessagePopup& msg) noexcept
 {
-    m_vMessages.push(std::move(msg));
+    m_vMessages.push(msg);
     PlayAudio();
 }
 
@@ -136,7 +134,7 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     auto fFadeInY{ GetYOffsetPct() * (ra::POPUP_DIST_Y_FROM_PCT * ra::to_floating(nHeight)) };
     fFadeInY += (ra::POPUP_DIST_Y_TO_PCT * ra::to_floating(nHeight));
 
-    const auto nTitleY{ ra::ftol(fFadeInY) };
+    const auto nTitleY{ ra::ftoi(fFadeInY) };
     const auto nDescY{ nTitleY + 32 };
 
     HBITMAP hBitmap = ActiveMessage().Image();

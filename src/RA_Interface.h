@@ -34,13 +34,13 @@ enum class EmulatorID
     RA_PCE,
     RA_Libretro,
     RA_Meka,
-    UnknownEmulator
+    Unknown
 };
 
 /// <summary>Order should match DB!</summary>
 enum class ConsoleID
 {
-    UnknownConsoleID,
+    Unknown,
     MegaDrive,
     N64,
     SNES,

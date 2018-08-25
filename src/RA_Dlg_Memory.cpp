@@ -12,9 +12,9 @@
 #include <memory>
 #endif // !_MEMORY_
 
-#ifdef WIN32_LEAN_AND_MEAN
+#ifndef _INC_SHELLAPI
 #include <ShellAPI.h>
-#endif // WIN32_LEAN_AND_MEAN
+#endif // !_INC_SHELLAPI
 
 
 #ifndef ID_OK
@@ -26,9 +26,8 @@
 
 namespace {
 
-using namespace ra::int_literals;
-_CONSTANT_VAR MIN_RESULTS_TO_DUMP{ 500000_z };
-_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE{ 50_z };
+_CONSTANT_VAR MIN_RESULTS_TO_DUMP{ 500000U };
+_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE{ 50U };
 
 }
 
@@ -50,8 +49,8 @@ bool MemoryViewerControl::m_bHasCaret = false;
 unsigned int MemoryViewerControl::m_nCaretWidth = 0U;
 unsigned int MemoryViewerControl::m_nCaretHeight = 0U;
 unsigned int MemoryViewerControl::m_nDisplayedLines = 8U;
-using namespace ra::int_literals;
-unsigned short MemoryViewerControl::m_nActiveMemBank = 0_hu; // unless "unsigned short{}" is fine
+
+unsigned short MemoryViewerControl::m_nActiveMemBank = unsigned short{};
 
 unsigned int m_nPage = 0U;
 
@@ -67,7 +66,6 @@ namespace ra {
 _Success_(return != 0)
 _NODISCARD _CONSTANT_FN GetMaxNibble(_In_ ComparisonVariableSize size) noexcept
 {
-    // Using default from the top does not get of warnings
     if (size == ComparisonVariableSize::EightBit)
         return 1U;
     else if (size == ComparisonVariableSize::SixteenBit)
@@ -222,7 +220,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
         if (offset < 0)
         {
 
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
+            if (m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
             {
                 m_nEditAddress -= offset;
                 MessageBeep((UINT)-1);
@@ -907,13 +905,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             // https://docs.microsoft.com/en-us/windows/desktop/controls/wm-drawitem
                             if (::SetTextColor(pDIS->hDC, RGB(0, 100, 150)) == CLR_INVALID)
                                 return 0;
-                            
+
                             if (const auto nMatches{ m_SearchResults[m_nPage].m_results.MatchingAddressCount()
                                 }; nMatches > MIN_RESULTS_TO_DUMP)
                             {
                                 _stprintf_s(buffer, sizeof(buffer),
-                                            _T("Found %u matches! (Displaying first %zu results)"), nMatches,
-                                            MIN_RESULTS_TO_DUMP);
+                                    _T("Found %u matches! (Displaying first %zu results)"), nMatches,
+                                    MIN_RESULTS_TO_DUMP);
                             }
                             else if (nMatches == 0U)
                                 _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), _T("Found *ZERO* matches!"));
@@ -922,7 +920,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         }
 
                         DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
-                                 DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                         if (::SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT)) == CLR_INVALID)
                             return 0;
                     }
@@ -1223,7 +1221,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             char sWarning[4096];
                             sprintf_s(sWarning, 4096,
-                                "ra::ComparisonVariableType::Address 0x%04x already stored with note:\n\n"
+                                "Address 0x%04x already stored with note:\n\n"
                                 "%s\n"
                                 "by %s\n"
                                 "\n\n"
@@ -1893,18 +1891,18 @@ void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& r
 
 bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal)
 {
-    unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ?
-        nPrevVal : m_SearchResults[m_nPage].m_nLastQueryVal;
+    unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ? nPrevVal
+                                                                   : m_SearchResults[m_nPage].m_nLastQueryVal;
     bool bResult = false;
 
     switch (m_SearchResults[m_nPage].m_nCompareType)
     {
-        case ra::ComparisonType::Equals:				bResult = (nCurVal == nVal);    break;
-        case ra::ComparisonType::LessThan:				bResult = (nCurVal < nVal);     break;
-        case ra::ComparisonType::LessThanOrEqual:		bResult = (nCurVal <= nVal);    break;
-        case ra::ComparisonType::GreaterThan:			bResult = (nCurVal > nVal);     break;
-        case ra::ComparisonType::GreaterThanOrEqual:	bResult = (nCurVal >= nVal);    break;
-        case ra::ComparisonType::NotEqualTo:			bResult = (nCurVal != nVal);    break;
+        case ra::ComparisonType::Equals:             bResult = (nCurVal == nVal); break;
+        case ra::ComparisonType::LessThan:           bResult = (nCurVal < nVal);  break;
+        case ra::ComparisonType::LessThanOrEqual:    bResult = (nCurVal <= nVal); break;
+        case ra::ComparisonType::GreaterThan:        bResult = (nCurVal > nVal);  break;
+        case ra::ComparisonType::GreaterThanOrEqual: bResult = (nCurVal >= nVal); break;
+        case ra::ComparisonType::NotEqualTo:         bResult = (nCurVal != nVal); break;
         default:
             bResult = false;
             break;

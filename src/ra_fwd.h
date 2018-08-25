@@ -46,9 +46,9 @@ using PTBYTE = wchar_t*;
 #endif /* !_TCHAR_DEFINED */
 
 #ifndef _WINNT_
-using HANDLE = void*;
+using HANDLE  = void*;
 using LPCTSTR = const TCHAR*;
-using LPTSTR = TCHAR*;
+using LPTSTR  = TCHAR*;
 #endif /* !_WINNT_ */
 
 #ifndef _BASETSD_H_

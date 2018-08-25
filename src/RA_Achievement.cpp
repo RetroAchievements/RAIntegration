@@ -155,31 +155,28 @@ void Achievement::Clear() noexcept
 {
     m_vConditions.Clear();
 
-    using namespace ra::int_literals;
-    m_nAchievementID = 0_achid;
+    m_nAchievementID = ra::AchievementID{};
 
     m_sTitle.clear();
     m_sDescription.clear();
     m_sAuthor.clear();
     m_sBadgeImageURI.clear();
 
-    m_nPointValue = 0U;
-    m_bActive = FALSE;
-    m_bModified = FALSE;
+    m_nPointValue     = 0U;
+    m_bActive         = FALSE;
+    m_bModified       = FALSE;
     m_bPauseOnTrigger = FALSE;
-    m_bPauseOnReset = FALSE;
+    m_bPauseOnReset   = FALSE;
     ClearDirtyFlag();
 
-    m_bProgressEnabled = FALSE;
-    m_sProgress = "";
-    m_sProgressMax = "";;
-    m_sProgressFmt = "";;
+    m_bProgressEnabled   = FALSE;
+    m_sProgress          = "";
+    m_sProgressMax       = "";
+    m_sProgressFmt       = "";
     m_fProgressLastShown = 0.0F;
 
-    m_nTimestampCreated = 0_tt;
-    m_nTimestampModified = 0_tt;
-    //m_nUpvotes = 0;
-    //m_nDownvotes = 0;
+    m_nTimestampCreated  = std::time_t{};
+    m_nTimestampModified = std::time_t{};
 }
 
 void Achievement::AddConditionGroup()

@@ -31,7 +31,6 @@
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#include <locale>
 #include <memory>
 #include <direct.h>
 #include <fstream>
@@ -40,9 +39,9 @@
 
 #include <atlbase.h> // CComPtr
 
-#ifdef WIN32_LEAN_AND_MEAN
+#ifndef _INC_SHELLAPI
 #include <ShellAPI.h>
-#endif // WIN32_LEAN_AND_MEAN
+#endif // _INC_SHELLAPI
 
 std::string g_sKnownRAVersion;
 std::string g_sHomeDir;
@@ -52,8 +51,14 @@ std::string g_sCurrentROMMD5;	//	Internal
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-ra::EmulatorID g_EmulatorID = ra::EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
-ra::ConsoleID g_ConsoleID = ra::ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+
+namespace ra {
+
+EmulatorID g_EmulatorID = EmulatorID::Unknown;	//	Uniquely identifies the emulator
+ConsoleID g_ConsoleID = ConsoleID::Unknown;	//	Currently active Console ID
+
+} /* namespace ra */
+
 const char* g_sGetLatestClientPage = nullptr;
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
@@ -206,7 +211,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             g_sClientEXEName = "RAMeka.exe";
             break;
         default:
-            g_ConsoleID = ra::ConsoleID::UnknownConsoleID;
+            g_ConsoleID = ra::ConsoleID::Unknown;
             g_sClientVersion = sClientVer;
             g_sClientName = "";
             break;
@@ -401,10 +406,9 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     RA_LOG("Loading new ROM... MD5 is %s\n", (g_sCurrentROMMD5 == sMD5NULL) ? "Null" : g_sCurrentROMMD5.c_str());
 
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
-    using namespace ra::int_literals;
     //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
-    //	TBD: local DB of MD5 to ra::GameIDs here
-    auto nGameID = 0_gameid;
+    //	TBD: local DB of MD5 to GameIDs here
+    ra::GameID nGameID{};
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
@@ -417,7 +421,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         if (RAWeb::DoBlockingRequest(ra::RequestType::GameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
-            if (nGameID == 0_gameid)	//	Unknown
+            if (nGameID == ra::GameID{})	//	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());
                 char buffer[64];
@@ -428,7 +432,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             }
             else
             {
-                RA_LOG("Successfully looked up game with ID %u\n", nGameID);
+                RA_LOG("Successfully looked up game with ID %zu\n", nGameID);
             }
         }
         else
@@ -682,8 +686,8 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"ra::RequestType::RequestScore bad response!?");
-                        RA_LOG("ra::RequestType::RequestScore bad response!?");
+                        ASSERT(!"RequestScore bad response!?");
+                        RA_LOG("RequestScore bad response!?");
                     }
                 }
                 break;
@@ -715,8 +719,8 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"ra::RequestType::RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
-                        RA_LOG("ra::RequestType::RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
+                        ASSERT(!"RequestLatestClientPage responded, but 'LatestVersion' cannot be found!");
+                        RA_LOG("RequestLatestClientPage responded, but 'LatestVersion' cannot be found?");
                     }
                 }
                 break;
@@ -759,8 +763,8 @@ API int CCONV _RA_HandleHTTPResults()
                     }
                     else
                     {
-                        ASSERT(!"ra::RequestType::RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("ra::RequestType::RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
+                        ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
+                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
                     }
                 }
                 break;

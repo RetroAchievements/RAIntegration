@@ -7,30 +7,8 @@
 
 namespace ra {
 
-inline namespace int_literals {
-
-// Don't feel like casting non-stop
-// There's also standard literals for strings and clock types
-
-// N.B.: The parameter can only be either "unsigned long-long", char16_t, or char32_t
-
-_NODISCARD _CONSTANT_FN operator""_z(_In_ unsigned long long n) noexcept { return static_cast<std::size_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_i(_In_ unsigned long long n) noexcept { return static_cast<std::intptr_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_tt(_In_ unsigned long long n) noexcept { return static_cast<std::time_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_dw(_In_ unsigned long long n) noexcept { return static_cast<::DWORD>(n); }
-_NODISCARD _CONSTANT_FN operator""_ss(_In_ unsigned long long n) noexcept { return static_cast<std::streamsize>(n); }
-_NODISCARD _CONSTANT_FN operator""_h(_In_ unsigned long long n) noexcept { return static_cast<std::int16_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_hu(_In_ unsigned long long n) noexcept { return static_cast<std::uint16_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_hhu(_In_ unsigned long long n) noexcept { return static_cast<std::uint8_t>(n); }
-_NODISCARD _CONSTANT_FN operator""_dp(_In_ unsigned long long n) noexcept { return static_cast<DataPos>(n); }
-_NODISCARD _CONSTANT_FN operator""_ba(_In_ unsigned long long n) noexcept { return static_cast<ByteAddress>(n); }
-_NODISCARD _CONSTANT_FN operator""_achid(_In_ unsigned long long n) noexcept { return static_cast<AchievementID>(n); }
-_NODISCARD _CONSTANT_FN operator""_lbid(_In_ unsigned long long n) noexcept { return static_cast<LeaderboardID>(n); }
-_NODISCARD _CONSTANT_FN operator""_gameid(_In_ unsigned long long n) noexcept { return static_cast<GameID>(n); }
-
-} // inline namespace int_literals
-
-// NB: The "requires" doesn't exist in VC++ and probably won't until C++20 so we are using type_traits instead
+// NB: The "requires" keyword doesn't exist in VC++ and probably won't until C++20 so we are using type_traits
+//     instead.
 
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>>
 _NODISCARD _CONSTANT_FN
@@ -41,7 +19,7 @@ _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD ra::tstring
+_NODISCARD inline auto
 to_tstring(_In_ Arithmetic a) noexcept
 {
 #if _MBCS
@@ -50,7 +28,7 @@ to_tstring(_In_ Arithmetic a) noexcept
     return std::to_wstring(a);
 #else
 #error Unknown character set detected, only MultiByte and Unicode character sets are supported!
-#endif // UNICODE
+#endif // _MBCS
 } // end function to_tstring
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
@@ -63,31 +41,25 @@ to_floating(_In_ Arithmetic a) noexcept
         return static_cast<double>(a);
 }
 
-template<
-    typename FloatingPoint,
-    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_signed_v<FloatingPoint>>
->
-_NODISCARD _CONSTANT_FN __cdecl ftol(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
+template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
+_NODISCARD _CONSTANT_FN __cdecl ftoi(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
 
-template<
-    typename FloatingPoint,
-    class = std::enable_if_t<std::is_floating_point_v<FloatingPoint> and std::is_unsigned_v<FloatingPoint>>
->
-_NODISCARD _CONSTANT_FN __cdecl ftoul(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
+template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
+_NODISCARD _CONSTANT_FN __cdecl ftou(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
 _NODISCARD _CONSTANT_FN __cdecl
 sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_NODISCARD _CONSTANT_VAR
+_NODISCARD _CONSTANT_FN
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
 
 /// <summary>Converts the integral representation of an <c>enum</c> to a string.</summary>
 /// <param name="e">The Enum.</param>
 /// <returns>Number as string.</returns>
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_NODISCARD _CONSTANT_VAR
+_NODISCARD _CONSTANT_FN
 etos(_In_ Enum e) noexcept { return std::to_string(etoi(e)); }
 
 
@@ -114,23 +86,16 @@ itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
 
 // function alias template for etoi (EnumToIntegral)
 template<typename Enum> _NODISCARD _CONSTANT_VAR to_integral = etoi<Enum>;
-
-template<typename Enum>
-_NODISCARD _CONSTANT_VAR to_enum = itoe<Enum, std::underlying_type_t<Enum>>;
+template<typename Enum> _NODISCARD _CONSTANT_VAR to_enum     = itoe<Enum, std::underlying_type_t<Enum>>;
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
 /// <typeparam name="CharT">
 ///   The character type, it should be auto deduced if valid. Otherwise you'll get an intellisense error.
 /// </typeparam>
-/// <typeparam name="Traits">
-///   The character traits of <typeparamref name="CharT" />. Should be auto-deduced, Otherwise you'll get an
-///   intellisense error.
-/// </typeparam>
 /// <returns>The size of the file stream.</returns>
 template<
     typename CharT,
-    typename Traits = std::char_traits<CharT>,
     class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
 filesize(_In_ const std::basic_string<CharT>& filename) noexcept
 {
@@ -208,51 +173,51 @@ strlen_as_int(_In_ const std::basic_string<CharT>& str) noexcept
 namespace rel_ops {
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator==(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) == b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator==(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a == etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator!=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) == b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator!=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a == etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator<(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) < b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator<(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a < etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator>(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (b < etoi(a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator>(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (etoi(b) < a); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator<=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(b < etoi(a))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator<=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(etoi(b) < a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator>=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a < etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_Success_(return != false) _NODISCARD _CONSTANT_VAR
+_Success_(return != false) _NODISCARD _CONSTANT_FN
 operator>=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
 
 } // namespace rel_ops
@@ -270,10 +235,7 @@ namespace bitwise_ops {
 // NB: You will still need to use etoi if a bitwise operator is used directly in an if statement. Also, bit-wise
 // assignments aren't marked [[nodiscard]] because value used is self-contained and can be safely discarded.
 
-template<
-    typename Enum,
-    class = std::enable_if_t<std::is_enum_v<Enum> and std::is_convertible_v<std::underlying_type_t<Enum>, bool>>
-> _NODISCARD _CONSTANT_FN
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
 operator&(_In_ const Enum a, _In_ const Enum b) noexcept { return(itoe<Enum>(etoi(a) & etoi(b))); }
 
 template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTANT_FN&
@@ -299,7 +261,7 @@ template<
 operator~(_In_ const Enum& a) noexcept { return(itoe<Enum>(~etoi(a))); }
 
 template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<<(const Enum a, const std::underlying_type_t<Enum> b) noexcept
+operator<<(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept
 {
     // too many risks of using signed numbers with bit shift, so we will make them unsigned no matter what
     using underlying_type = std::underlying_type_t<Enum>;
@@ -313,7 +275,7 @@ template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTAN
 operator<<=(_Inout_ Enum& a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (a = a << b); }
 
 template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>>(const Enum a, const std::underlying_type_t<Enum> b) noexcept
+operator>>(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept
 {
     // too many risks of using signed numbers with bit shift, so we will make them unsigned no matter what
     using underlying_type = std::underlying_type_t<Enum>;
@@ -328,6 +290,5 @@ operator>>=(_Inout_ Enum& a, _In_ const std::underlying_type_t<Enum> b) noexcept
 
 } // namespace bitwise_ops
 } // namespace ra
-
 
 #endif // !RA_UTILITY_H

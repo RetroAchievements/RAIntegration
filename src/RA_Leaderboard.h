@@ -4,21 +4,15 @@
 
 #include "RA_MemValue.h"
 
-#include <vector>
-
-// this class is giving strange behavior... not sure why the functions are virtual without a derived class.
+#ifndef _VECTOR_
+#include <vector>  
+#endif /* !_VECTOR_ */
 
 class RA_Leaderboard
 {
 public:
     explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept;
-    // virtual member functions need a virtual destructor, but this class isn't even derived, what's the point of
-    // making it go to virtual table?.
     virtual ~RA_Leaderboard() noexcept = default;
-    RA_Leaderboard(const RA_Leaderboard&) = delete; // it's ID'd no?
-    RA_Leaderboard& operator=(const RA_Leaderboard&) = delete;
-    RA_Leaderboard(RA_Leaderboard&& b) noexcept; // it's ID'd no?
-    RA_Leaderboard& operator=(RA_Leaderboard&& b) noexcept;
 
     void ParseFromString(const char* sBuffer, MemValue::Format format);
 
@@ -43,10 +37,10 @@ public:
 
     struct Entry
     {
-        unsigned int m_nRank = unsigned int{};
-        std::string	 m_sUsername;
-        int m_nScore = int{};
-        time_t m_TimeAchieved = time_t{};
+        unsigned int m_nRank{};
+        std::string m_sUsername;
+        int m_nScore{};
+        time_t m_TimeAchieved{};
     };
 
     void SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved);

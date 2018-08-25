@@ -6,12 +6,20 @@ struct IUnknown;
 #include "RA_Achievement.h"
 #include "RA_User.h"
 #include "RA_Core.h"
-#include "RA_Interface.h"
+
+#ifndef RA_INTERFACE_H
+#include "RA_Interface.h"  
+#endif /* !RA_INTERFACE_H */
 
 #include "services/ImageRepository.h"
 
+#ifndef _MAP_
 #include <map>
+#endif /* !_MAP_ */
+
+#ifndef _STRING_
 #include <string>
+#endif /* !_STRING_ */
 
 namespace ra {
 
@@ -31,7 +39,7 @@ enum class OverlayPage
     Message_Viewer
 };
 
-enum TransitionState { Off, In, Hold, Out };
+enum class TransitionState { Off, In, Hold, Out };
 
 namespace enum_sizes {
 
@@ -157,29 +165,29 @@ public:
     };
 
 private:
-    int	m_nAchievementsScrollOffset{};
-    int	m_nFriendsScrollOffset{};
-    int	m_nMessagesScrollOffset{};
-    int	m_nNewsScrollOffset{};
-    int	m_nLeaderboardScrollOffset{};
+    int m_nAchievementsScrollOffset{};
+    int m_nFriendsScrollOffset{};
+    int m_nMessagesScrollOffset{};
+    int m_nNewsScrollOffset{};
+    int m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem{};
-    int	m_nFriendsSelectedItem{};
-    int	m_nMessagesSelectedItem{};
-    int	m_nNewsSelectedItem{};
-    int	m_nLeaderboardSelectedItem{};
+    int m_nAchievementsSelectedItem{};
+    int m_nFriendsSelectedItem{};
+    int m_nMessagesSelectedItem{};
+    int m_nNewsSelectedItem{};
+    int m_nLeaderboardSelectedItem{};
 
     mutable int m_nNumAchievementsBeingRendered{};
     mutable int m_nNumFriendsBeingRendered{};
     mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock{};	//	Waiting for pad release
-    std::vector<NewsItem>	m_LatestNews;
-    ra::TransitionState		m_nTransitionState{};
-    float					m_fTransitionTimer{};
+    BOOL                  m_bInputLock{};	//	Waiting for pad release
+    std::vector<NewsItem> m_LatestNews;
+    ra::TransitionState   m_nTransitionState{};
+    float                 m_fTransitionTimer{};
 
-    ra::OverlayPage			m_Pages[5]{};
-    unsigned int			m_nPageStackPointer{};
+    ra::OverlayPage m_Pages[5]{};
+    unsigned int    m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground{};
     ra::services::ImageReference m_hUserImage{};
@@ -188,12 +196,11 @@ private:
 extern AchievementOverlay g_AchievementOverlay;
 
 //	Exposed to DLL
-extern "C"
-{
-    API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
-    API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
-    API extern bool _RA_IsOverlayFullyVisible();
-}
+_EXTERN_C
+API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
+API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
+API extern bool _RA_IsOverlayFullyVisible();
+_END_EXTERN_C
 
 extern const COLORREF COL_TEXT;
 extern const COLORREF COL_TEXT_HIGHLIGHT;

@@ -18,7 +18,7 @@ ImageRepository g_ImageRepository;
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
 static bool g_bImageRepositoryValid = false;
 
-ImageReference::~ImageReference() noexcept
+ImageReference::~ImageReference()
 {
     Release();
 }
@@ -65,7 +65,7 @@ HBITMAP ImageReference::GetHBitmap() const
     return g_ImageRepository.DefaultImage(m_nType);
 }
 
-void ImageReference::Release() noexcept
+void ImageReference::Release()
 {
     if (m_hBitmap != nullptr && g_bImageRepositoryValid)
         g_ImageRepository.ReleaseReference(m_nType, m_sName);

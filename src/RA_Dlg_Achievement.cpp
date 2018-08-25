@@ -49,7 +49,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
     //	Remove all columns and data.
     while (ListView_DeleteColumn(hList, 0) == TRUE) {}
     ListView_DeleteAllItems(hList);
-   
+
     for (auto it = ra::aColumn.cbegin(); it != ra::aColumn.cend(); ++it)
     {
         auto lplvColumn{ std::make_unique<LV_COLUMN>() };
@@ -194,7 +194,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     lpItem->mask       = LVIF_TEXT;
     lpItem->iItem      = static_cast<int>(ra::to_signed(m_lbxData.size())); // size_t could be unsigned long-long
     lpItem->cchTextMax = 256;
-    
+
     for (lpItem->iSubItem = 0; lpItem->iSubItem < ra::NUM_COLS; lpItem->iSubItem++)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
@@ -278,19 +278,19 @@ INT_PTR CALLBACK s_AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM 
 }
 
 _NODISCARD BOOL AttemptUploadAchievementBlocking(_In_ const Achievement& Ach,
-                                                 _In_ unsigned int nFlags,
-                                                 _Out_ Document& doc)
+    _In_ unsigned int nFlags,
+    _Out_ Document& doc)
 {
     const std::string sMem = Ach.CreateMemString();
 
     //	Deal with secret:
     char sPostCode[2048];
     sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u",
-              RAUsers::LocalUser().Username().c_str(),
-              Ach.ID(),
-              sMem.c_str(),
-              Ach.Points(),
-              Ach.Points() * 3);
+        RAUsers::LocalUser().Username().c_str(),
+        Ach.ID(),
+        sMem.c_str(),
+        Ach.Points(),
+        Ach.Points() * 3);
 
     std::string sPostCodeHash = RAGenerateMD5(std::string(sPostCode));
 
@@ -478,7 +478,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                         //	 add it to the unofficial set.
                                         Achievement& newAch = g_pCoreAchievements->AddAchievement();
                                         newAch.Set(selectedAch);
-                                        if(g_pUnofficialAchievements->RemoveAchievement(nSel))
+                                        if (g_pUnofficialAchievements->RemoveAchievement(nSel))
                                         {
                                             RemoveAchievement(hList, nSel);
 
@@ -493,8 +493,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     else
                                     {
                                         MessageBox(hDlg,
-                                                   NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
-                                                   TEXT("Error in upload!"), MB_OK);
+                                            NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
+                                            TEXT("Error in upload!"), MB_OK);
                                     }
                                 }
                                 else
@@ -675,7 +675,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             //	Local achievement
                             if (MessageBox(hDlg, TEXT("Are you sure that you want to remove this achievement?"), TEXT("Remove Achievement"), MB_YESNO | MB_ICONWARNING) == IDYES)
                             {
-                                if(g_pActiveAchievements->RemoveAchievement(nSel))
+                                if (g_pActiveAchievements->RemoveAchievement(nSel))
                                     RemoveAchievement(hList, nSel);
                             }
                         }
@@ -988,9 +988,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     char message[1024];
     sprintf_s(message, 1024, "Uploading the selected %u achievement(s).\n"
-              "Are you sure? This will update the server with your new achievements\n"
-              "and players will be able to download them into their games immediately.",
-              nNumChecked);
+        "Are you sure? This will update the server with your new achievements\n"
+        "and players will be able to download them into their games immediately.",
+        nNumChecked);
 
     BOOL bErrorsEncountered = FALSE;
 
@@ -1244,7 +1244,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, ra::DlgAchievementColumn nColumn
         lpItem->mask       = LVIF_TEXT;
         lpItem->iItem      = nItem;
         lpItem->iSubItem   = ra::etoi(nColumn);
-        
+
         auto sStr{ NativeStr(m_lbxData.at(nItem).at(ra::etoi(nColumn))) };	//	scoped cache
         lpItem->pszText    = sStr.data();
         lpItem->cchTextMax = 256;

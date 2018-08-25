@@ -132,7 +132,7 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     m_aFriends.clear();
 
     ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
-    FriendList();
+    RequestFriendList();
 
     // this thing is still leaking...
     std::ostringstream oss;
@@ -187,7 +187,7 @@ void LocalRAUser::OnFriendListResponse(const Document& doc)
     }
 }
 
-void LocalRAUser::FriendList()
+void LocalRAUser::RequestFriendList()
 {
     PostArgs args;
     args['u'] = Username();

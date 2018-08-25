@@ -5,60 +5,14 @@
 #endif
 
 #include <ctime>
-// watch was giving me bizarre values otherwise
+
 _Use_decl_annotations_
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept :
     m_nID{ nLeaderboardID }
 {
-    /* FINALLY! */
 }
-
 
 //{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 2","Description":"Complete this act in the fastest time!"},
-
-RA_Leaderboard::RA_Leaderboard(RA_Leaderboard&& b) noexcept :
-    m_nID{ b.m_nID },
-    m_startCond{std::move(b.m_startCond)},
-    m_cancelCond{std::move(b.m_cancelCond)},
-    m_submitCond{std::move(b.m_submitCond)},
-    m_bStarted{b.m_bStarted},
-    m_bSubmitted{b.m_bSubmitted},
-    m_value{std::move(b.m_value)},
-    m_progress{std::move(b.m_progress)},
-    m_nFormat{b.m_nFormat},
-    m_sTitle{std::move(b.m_sTitle)},
-    m_sDescription{ std::move(b.m_sDescription) },
-    m_RankInfo{ std::move(b.m_RankInfo) }
-{
-    b.m_nID        = ra::LeaderboardID{};
-    b.m_bStarted   = false;
-    b.m_bSubmitted = false;
-    b.m_nFormat    = MemValue::Format::Value;
-}
-
-RA_Leaderboard& RA_Leaderboard::operator=(RA_Leaderboard&& b) noexcept
-{
-    // TODO: make a std::swap specialization
-    m_nID          = b.m_nID;
-    m_startCond    = std::move(b.m_startCond);
-    m_cancelCond   = std::move(b.m_cancelCond);
-    m_submitCond   = std::move(b.m_submitCond);
-    m_bStarted     = b.m_bStarted;
-    m_bSubmitted   = b.m_bSubmitted;
-    m_value        = std::move(b.m_value);
-    m_progress     = std::move(b.m_progress);
-    m_nFormat      = b.m_nFormat;
-    m_sTitle       = std::move(b.m_sTitle);
-    m_sDescription = std::move(b.m_sDescription);
-    m_RankInfo     = std::move(b.m_RankInfo);
-
-    b.m_nID        = ra::LeaderboardID{};
-    b.m_bStarted   = false;
-    b.m_bSubmitted = false;
-    b.m_nFormat    = MemValue::Format::Value;
-
-    return *this;
-}
 
 void RA_Leaderboard::ParseFromString(const char* pChar, MemValue::Format nFormat)
 {

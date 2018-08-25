@@ -49,9 +49,6 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
-// Problem file is objbase.h which is a COM header file, which wtypes.h needs RPC for some reason (DCOM).
-// needs to be type forwarded before to resolve a standard conformance error still needs to forwarded in other
-// places until we finalize the PCH
 struct IUnknown; 
 #include <Windows.h>
 #include <WindowsX.h>
@@ -90,7 +87,6 @@ using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
 
 using namespace std::string_literals;
-//using namespace std::chrono_literals; we could use this later
 
 #endif	//RA_EXPORTS
 

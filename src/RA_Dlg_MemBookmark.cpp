@@ -21,12 +21,12 @@ int nSelItemBM;
 int nSelSubItemBM;
 
 namespace {
-const char* COLUMN_TITLE[] ={ "Description", "Address", "rapidjson::Value", "Prev.", "Changes" };
+const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
 const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
-inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text rapidjson::Document (*.txt)", L"*.txt"} };
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
 
 
 enum BookmarkSubItems
@@ -587,7 +587,7 @@ void Dlg_MemBookmark::AddAddress()
     else
         NewBookmark->SetType(3);
 
-    // Get Memory rapidjson::Value
+    // Get Memory Value
     NewBookmark->SetValue(GetMemory(nAddr, NewBookmark->Type()));
     NewBookmark->SetPrevious(NewBookmark->Value());
 

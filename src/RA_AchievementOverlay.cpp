@@ -557,8 +557,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
             SetTextColor(hDC, COL_TEXT_LOCKED);
             char buffer[256];
             sprintf_s(buffer, 256, " %u of %u won (%u/%u) ",
-                      nUserCompleted, nNumberOfAchievements,
-                      nUserPts, nMaxPts);
+                nUserCompleted, nNumberOfAchievements,
+                nUserPts, nMaxPts);
             TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(buffer).c_str(), strlen(buffer));
         }
     }
@@ -587,23 +587,23 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                 }
 
                 DrawAchievement(hDC,
-                                &g_pActiveAchievements->GetAchievement(nAchIdx),	//	pAch
-                                nDX,												//	X
-                                (nAchTopEdge + (i*nAchSpacing)),				//	Y
-                                bSelected,											//	Selected
-                                TRUE);
+                    &g_pActiveAchievements->GetAchievement(nAchIdx),	//	pAch
+                    nDX,												//	X
+                    (nAchTopEdge + (i*nAchSpacing)),				//	Y
+                    bSelected,											//	Selected
+                    TRUE);
             }
         }
 
         if (nNumberOfAchievements > static_cast<size_t>(nAchievementsToDraw - 1))
         {
             DrawBar(hDC,
-                    nDX + 8,
-                    nAchTopEdge,
-                    12,
-                    nAchSpacing*nAchievementsToDraw,
-                    nNumberOfAchievements - (nAchievementsToDraw - 1),
-                    (*pnScrollOffset));
+                nDX + 8,
+                nAchTopEdge,
+                12,
+                nAchSpacing*nAchievementsToDraw,
+                nNumberOfAchievements - (nAchievementsToDraw - 1),
+                (*pnScrollOffset));
         }
     }
     else
@@ -699,10 +699,10 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             //RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
-                    nXOffs + nFriendLeftOffsetText + 16,
-                    nYOffs + nFriendSubtitleYOffs,
-                    nDX + rcTarget.right - 40,
-                    nYOffs + nFriendSubtitleYOffs + 46);
+                nXOffs + nFriendLeftOffsetText + 16,
+                nYOffs + nFriendSubtitleYOffs,
+                nDX + rcTarget.right - 40,
+                nYOffs + nFriendSubtitleYOffs + 46);
             DrawText(hDC, NativeStr(pFriend->Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
 
             //	Restore
@@ -716,12 +716,12 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
     if (nNumFriends > (nFriendsToDraw))
     {
         DrawBar(hDC,
-                nDX + 8,
-                nFriendTopEdge,
-                12,
-                nFriendSpacing*nFriendsToDraw,
-                nNumFriends - (nFriendsToDraw - 1),
-                (*pnScrollOffset));
+            nDX + 8,
+            nFriendTopEdge,
+            12,
+            nFriendSpacing*nFriendsToDraw,
+            nNumFriends - (nFriendsToDraw - 1),
+            (*pnScrollOffset));
     }
 
     m_nNumFriendsBeingRendered = nFriendsToDraw;
@@ -762,11 +762,11 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
     const time_t tModified = pAch->ModifiedDate();
 
     DrawAchievement(hDC,
-                    pAch,
-                    nDX + nAchievementStartX,
-                    nAchievementStartY,
-                    TRUE,
-                    FALSE);
+        pAch,
+        nDX + nAchievementStartX,
+        nAchievementStartY,
+        TRUE,
+        FALSE);
 
     if (m_nAchievementsSelectedItem >= (int)nNumAchievements)
         return;
@@ -784,9 +784,9 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
     if (g_AchExamine.HasData())
     {
         sprintf_s(buffer, 256, " Won by %u of %u (%1.0f%%)",
-                  g_AchExamine.TotalWinners(),
-                  g_AchExamine.PossibleWinners(),
-                  static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
+            g_AchExamine.TotalWinners(),
+            g_AchExamine.PossibleWinners(),
+            static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
         TextOut(hDC, nDX + 20, nCoreDetailsY + (nCoreDetailsSpacing * 2), NativeStr(buffer).c_str(), strlen(buffer));
 
         if (g_AchExamine.NumRecentWinners() > 0)
@@ -808,14 +808,14 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
             //	Draw/Fetch user image? //TBD
 
             TextOut(hDC,
-                    nDX + nWonByPlayerNameX,
-                    nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                    NativeStr(buffer).c_str(), strlen(buffer));
+                nDX + nWonByPlayerNameX,
+                nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
+                NativeStr(buffer).c_str(), strlen(buffer));
 
             TextOut(hDC,
-                    nDX + nWonByPlayerDateX,
-                    nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                    NativeStr(buffer2).c_str(), strlen(buffer2));
+                nDX + nWonByPlayerDateX,
+                nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
+                NativeStr(buffer2).c_str(), strlen(buffer2));
         }
     }
     else
@@ -827,9 +827,9 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
 
         int nDotCount = nDots / 25;
         sprintf_s(buffer, 256, " Loading.%c%c%c ",
-                  nDotCount >= 1 ? '.' : ' ',
-                  nDotCount >= 2 ? '.' : ' ',
-                  nDotCount >= 3 ? '.' : ' ');
+            nDotCount >= 1 ? '.' : ' ',
+            nDotCount >= 2 ? '.' : ' ',
+            nDotCount >= 3 ? '.' : ' ');
 
         TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
     }
@@ -1007,12 +1007,12 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RE
         if (nNumLBs > (nNumLBsToDraw - 1))
         {
             DrawBar(hDC,
-                    nDX + 8,
-                    nYOffsetTop,
-                    12,
-                    nLBSpacing * m_nNumLeaderboardsBeingRendered,
-                    nNumLBs - (nNumLBsToDraw - 1),
-                    (*pnScrollOffset));
+                nDX + 8,
+                nYOffsetTop,
+                12,
+                nLBSpacing * m_nNumLeaderboardsBeingRendered,
+                nNumLBs - (nNumLBsToDraw - 1),
+                (*pnScrollOffset));
         }
     }
 
@@ -1079,19 +1079,19 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
 
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC,
-                        nDX + nWonByPlayerRankX,
-                        nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sRankText).c_str(), strlen(sRankText));
+                    nDX + nWonByPlayerRankX,
+                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                    NativeStr(sRankText).c_str(), strlen(sRankText));
 
                 TextOut(hDC,
-                        nDX + nWonByPlayerUserX,
-                        nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sNameText).c_str(), strlen(sNameText));
+                    nDX + nWonByPlayerUserX,
+                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                    NativeStr(sNameText).c_str(), strlen(sNameText));
 
                 TextOut(hDC,
-                        nDX + nWonByPlayerScoreX,
-                        nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sScoreText).c_str(), strlen(sScoreText));
+                    nDX + nWonByPlayerScoreX,
+                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                    NativeStr(sScoreText).c_str(), strlen(sScoreText));
             }
         }
         else
@@ -1106,9 +1106,9 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
 
             char buffer[256];
             sprintf_s(buffer, 256, " Loading.%c%c%c ",
-                      nDotCount > 1 ? '.' : ' ',
-                      nDotCount > 2 ? '.' : ' ',
-                      nDotCount > 3 ? '.' : ' ');
+                nDotCount > 1 ? '.' : ' ',
+                nDotCount > 2 ? '.' : ' ',
+                nDotCount > 3 ? '.' : ' ');
 
             TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
         }
@@ -1144,16 +1144,16 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
 
 
     g_hFontTitle = CreateFont(nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                              CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
+        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
 
     g_hFontDesc = CreateFont(nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                             CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
+        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
 
     g_hFontDesc2 = CreateFont(nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                              CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
+        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
 
     g_hFontTiny = CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                             CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
+        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
 
     float fPctOffScreen = (m_nTransitionState == TS_IN) ?
         (m_fTransitionTimer / PAGE_TRANSITION_IN) :
@@ -1167,10 +1167,10 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
 
     RECT rc;
     SetRect(&rc,
-            nDX,
-            nDY,
-            nDX + rcTarget.right,
-            rcTarget.bottom);
+        nDX,
+        nDY,
+        nDX + rcTarget.right,
+        rcTarget.bottom);
 
     // create backbuffer
     HDC hDC = CreateCompatibleDC(hRealDC);
@@ -1199,11 +1199,11 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     if (rcTarget.right > 360)
     {
         DrawUserFrame(hDC,
-                      &RAUsers::LocalUser(),
-                      (nDX + (rcTarget.right - nMinUserFrameWidth)) - 4,
-                      4 + nBorder,
-                      nMinUserFrameWidth,
-                      nMinUserFrameHeight);
+            &RAUsers::LocalUser(),
+            (nDX + (rcTarget.right - nMinUserFrameWidth)) - 4,
+            4 + nBorder,
+            nMinUserFrameWidth,
+            nMinUserFrameHeight);
     }
 
 
@@ -1254,9 +1254,9 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     sprintf_s(buffer, 1024, PAGE_TITLES[nCurrentPage]);
     //sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ], (*pnScrollOffset)+1 );
     TextOut(hDC,
-            nDX + nBorder,
-            4 + nBorder,
-            NativeStr(buffer).c_str(), strlen(buffer));
+        nDX + nBorder,
+        4 + nBorder,
+        NativeStr(buffer).c_str(), strlen(buffer));
 
 
     //int nNextPage = (int)(m_nCurrentPage+1);
@@ -1412,10 +1412,10 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     if (hBitmap != nullptr)
     {
         DrawImage(hDC,
-                  hBitmap,
-                  nX + ((nW - 64) - 4),
-                  nY + 4,
-                  64, 64);
+            hBitmap,
+            nX + ((nW - 64) - 4),
+            nY + 4,
+            64, 64);
     }
 
     SetTextColor(hDC, COL_TEXT);

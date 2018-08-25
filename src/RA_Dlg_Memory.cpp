@@ -974,7 +974,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
                         DeleteObject(hBrush);
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        std::wstring sBufferWide = ra::Widen(buffer);
+                        DrawTextW(pDIS->hDC, sBufferWide.c_str(), sBufferWide.length(), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
                 }
             }
@@ -1002,7 +1003,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
                             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
+                                SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
                             else
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
 
@@ -1209,8 +1210,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
                     HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
 
-                    TCHAR sNewNoteWide[512];
-                    GetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
+                    WCHAR sNewNoteWide[512];
+                    GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
                     const std::string sNewNote = ra::Narrow(sNewNoteWide);
 
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
@@ -1232,7 +1233,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 pSavedNote->Author().c_str(),
                                 sNewNote.c_str());
 
-                            if (MessageBox(hDlg, NativeStr(sWarning).c_str(), TEXT("Warning: overwrite note?"), MB_YESNO) == IDYES)
+                            if (MessageBoxW(hDlg, ra::Widen(sWarning).c_str(), L"Warning: overwrite note?", MB_YESNO) == IDYES)
                                 m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
                         }
                         else
@@ -1254,15 +1255,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_REMNOTE:
                 {
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                    HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
 
                     TCHAR sAddressWide[16];
                     ComboBox_GetText(hMemWatch, sAddressWide, 16);
                     const std::string sAddress = ra::Narrow(sAddressWide);
-
-                    TCHAR sDescriptionWide[1024];
-                    GetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, sDescriptionWide, 1024);
-                    const std::string sDescription = ra::Narrow(sDescriptionWide);
 
                     ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     m_CodeNotes.Remove(nAddr);
@@ -1383,7 +1379,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                     ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(ra::Narrow(sAddr).c_str(), nullptr, 16));
                                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                                     if (pSavedNote != nullptr && pSavedNote->Note().length() > 0)
-                                        SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
+                                        SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
 
                                     MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                                     MemoryViewerControl::setWatchedAddress(nAddr);
@@ -1457,7 +1453,7 @@ void Dlg_Memory::OnWatchingMemChange()
     ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
-    SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
+    SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
 
     MemoryViewerControl::destroyEditCaret();
 
@@ -1471,8 +1467,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     ra::GameID nGameID = g_pCurrentGameData->GetGameID();
     if (nGameID != 0)
     {
-        char sNotesFilename[1024];
-        sprintf_s(sNotesFilename, 1024, "%s%u-Notes2.txt", RA_DIR_DATA, nGameID);
+        std::string sNotesFilename = g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-Notes2.txt";
         nSize = m_CodeNotes.Load(sNotesFilename);
     }
 
@@ -1507,7 +1502,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {
-                SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, NativeStr(pSavedNote->Note()).c_str());
+                SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
                 MemoryViewerControl::setAddress((nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                 MemoryViewerControl::setWatchedAddress(nAddr);
             }

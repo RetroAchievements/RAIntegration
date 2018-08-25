@@ -70,6 +70,7 @@ bool g_bLeaderboardsActive = true;
 bool g_bLBDisplayNotification = true;
 bool g_bLBDisplayCounter = true;
 bool g_bLBDisplayScoreboard = true;
+bool g_bPreferDecimalVal = false;
 unsigned int g_nNumHTTPThreads = 15;
 
 struct WindowPosition
@@ -119,26 +120,35 @@ API const char* CCONV _RA_HostName()
     return sHostName.c_str();
 }
 
+static void EnsureDirectoryExists(const std::string& sDirectory)
+{
+    if (DirectoryExists(sDirectory.c_str()) == FALSE)
+        _mkdir(sDirectory.c_str());
+}
+
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
 {
+    // determine the home directory from the executable's path
+    TCHAR sBuffer[MAX_PATH];
+    GetModuleFileName(0, sBuffer, MAX_PATH);
+    PathRemoveFileSpec(sBuffer);
+    g_sHomeDir = ra::Narrow(sBuffer);
+    if (g_sHomeDir.back() != '\\')
+        g_sHomeDir.push_back('\\');
+
+    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str());
+
     //	Ensure all required directories are created:
-    if (DirectoryExists(RA_DIR_BASE) == FALSE)
-        _mkdir(RA_DIR_BASE);
-    if (DirectoryExists(RA_DIR_BADGE) == FALSE)
-        _mkdir(RA_DIR_BADGE);
-    if (DirectoryExists(RA_DIR_DATA) == FALSE)
-        _mkdir(RA_DIR_DATA);
-    if (DirectoryExists(RA_DIR_USERPIC) == FALSE)
-        _mkdir(RA_DIR_USERPIC);
-    if (DirectoryExists(RA_DIR_OVERLAY) == FALSE)	//	It should already, really...
-        _mkdir(RA_DIR_OVERLAY);
-    if (DirectoryExists(RA_DIR_BOOKMARKS) == FALSE)
-        _mkdir(RA_DIR_BOOKMARKS);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BASE);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BADGE);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_DATA);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_USERPIC);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_OVERLAY);
+    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BOOKMARKS);
 
-
+    // initialize global state
     g_EmulatorID = static_cast<ra::EmulatorID>(nEmulatorID);
     g_RAMainWnd = hMainHWND;
-    //g_hThisDLLInst
 
     RA_LOG(__FUNCTION__ " Init called! ID: %d, ClientVer: %s\n", nEmulatorID, sClientVer);
 
@@ -222,13 +232,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
         RA_LOG("(found as: %s)\n", g_sClientName);
     }
 
-    TCHAR buffer[2048];
-    GetCurrentDirectory(2048, buffer);
-    g_sHomeDir = ra::Narrow(buffer);
-    g_sHomeDir.append("\\");
-
-    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str());
-
     g_sROMDirLocation[0] = '\0';
 
     _RA_LoadPreferences();
@@ -251,10 +254,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     //	Image rendering: Setup image factory and overlay
     ra::services::g_ImageRepository.Initialize();
     g_AchievementOverlay.Initialize(g_hThisDLLInst);
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Setup min required directories:
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
@@ -556,7 +555,6 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
     if (MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Update available!"), MB_YESNO | MB_ICONINFORMATION) == IDYES)
     {
-        //SetCurrentDirectory( g_sHomeDir );
         //FetchBinaryFromWeb( g_sClientEXEName );
         //
         //char sBatchUpdater[2048];
@@ -630,9 +628,8 @@ API int CCONV _RA_HandleHTTPResults()
 
                 case ra::RequestType::Badge:
                 {
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
                     const std::string& sBadgeURI = pObj->GetData();
-                    _WriteBufferToFile(RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
 
                     /* This block seems unnecessary. --GD
                     for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
@@ -657,7 +654,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case ra::RequestType::UserPic:
                 {
                     const std::string& sUsername = pObj->GetData();
-                    _WriteBufferToFile(RA_DIR_USERPIC + sUsername + ".png", pObj->GetResponse());
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_USERPIC + sUsername + ".png", pObj->GetResponse());
                     break;
                 }
 
@@ -770,8 +767,7 @@ API int CCONV _RA_HandleHTTPResults()
                 break;
 
                 case ra::RequestType::News:
-                    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                    _WriteBufferToFile(RA_NEWS_FILENAME, doc);
+                    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
                     g_AchievementOverlay.InstallNewsArticlesFromFile();
                     break;
 
@@ -935,9 +931,9 @@ API void CCONV _RA_LoadPreferences()
 {
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    std::string sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
     FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "rb");
+    fopen_s(&pf, sPreferencesFile.c_str(), "rb");
     if (pf == nullptr)
     {
         //	Test for first-time use:
@@ -1012,6 +1008,9 @@ API void CCONV _RA_LoadPreferences()
             if (doc.HasMember("Leaderboard Scoreboard Display"))
                 g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
 
+            if (doc.HasMember("Prefer Decimal"))
+                g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
+
             if (doc.HasMember("Num Background Threads"))
                 g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
             if (doc.HasMember("ROM Directory"))
@@ -1058,9 +1057,9 @@ API void CCONV _RA_SavePreferences()
         return;
     }
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    std::string sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
     FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
+    fopen_s(&pf, sPreferencesFile.c_str(), "wb");
     if (pf != nullptr)
     {
         FileStream fs(pf);
@@ -1077,6 +1076,7 @@ API void CCONV _RA_SavePreferences()
         doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
         doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
         doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
+        doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
         doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
         doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
 
@@ -1117,7 +1117,7 @@ void _FetchGameHashLibraryFromWeb()
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
     if (RAWeb::DoBlockingRequest(ra::RequestType::HashLibrary, args, Response))
-        _WriteBufferToFile(RA_GAME_HASH_FILENAME, Response);
+        _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
 }
 
 void _FetchGameTitlesFromWeb()
@@ -1128,7 +1128,7 @@ void _FetchGameTitlesFromWeb()
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
     if (RAWeb::DoBlockingRequest(ra::RequestType::GamesList, args, Response))
-        _WriteBufferToFile(RA_GAME_LIST_FILENAME, Response);
+        _WriteBufferToFile(g_sHomeDir + RA_GAME_LIST_FILENAME, Response);
 }
 
 void _FetchMyProgressFromWeb()
@@ -1139,7 +1139,7 @@ void _FetchMyProgressFromWeb()
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
     if (RAWeb::DoBlockingRequest(ra::RequestType::AllProgress, args, Response))
-        _WriteBufferToFile(RA_MY_PROGRESS_FILENAME, Response);
+        _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);
 }
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
@@ -1396,7 +1396,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_PARSERICHPRESENCE:
         {
             char sRichPresenceFile[1024];
-            sprintf_s(sRichPresenceFile, 1024, "%s%u-Rich.txt", RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+            sprintf_s(sRichPresenceFile, 1024, "%s%s%u-Rich.txt", g_sHomeDir.c_str(), RA_DIR_DATA, g_pCurrentGameData->GetGameID());
 
             std::string sRichPresence;
             bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile);
@@ -1594,7 +1594,6 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     FILE* pf = nullptr;
     if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
     {
@@ -1607,8 +1606,6 @@ void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
 
 void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-
     using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
 #pragma warning(push)
 #pragma warning(disable : 4996) // Deprecation from Microsoft
@@ -1616,21 +1613,6 @@ void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
 #pragma warning(pop)
 
     std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
-}
-
-
-void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
-{
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-
-    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
-#pragma warning(push)
-#pragma warning(disable : 4996) // Deprecation from Microsoft
-    FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
-#pragma warning(pop)
-    
-    auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
-    std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
 }
 
 bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
@@ -1650,7 +1632,6 @@ bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
 
 char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     FILE* pf = nullptr;
     fopen_s(&pf, sFilename, "r");
     if (pf == nullptr)
@@ -1733,8 +1714,6 @@ std::string GetFolderFromDialog()
 
 BOOL RemoveFileIfExists(const std::string& sFilePath)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-
     if (_access(sFilePath.c_str(), 06) != -1)	//	06= Read/write permission
     {
         if (remove(sFilePath.c_str()) == -1)

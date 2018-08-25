@@ -32,11 +32,11 @@ std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
     switch (m_nSetType)
     {
         case ra::AchievementSetType::Core:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";
         case ra::AchievementSetType::Unofficial:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
         case ra::AchievementSetType::Local:
-            return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
         default:
             return "";
     }
@@ -397,9 +397,8 @@ bool AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc.HasMember("PatchData"))
     {
         const Value& PatchData = doc["PatchData"];
-        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
         FILE* pf = nullptr;
-        fopen_s(&pf, std::string(RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
+        fopen_s(&pf, std::string(g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
         if (pf != nullptr)
         {
             FileStream fs(pf);
@@ -437,7 +436,6 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
     const std::string sFilename = GetAchievementSetFilename(nGameID);
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     FILE* pFile = nullptr;
     errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
     if (pFile != nullptr)
@@ -504,8 +502,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
                 ra::GameID nGameID2 = g_pCurrentGameData->GetGameID();
 
                 //	Rich Presence
-                SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-                _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID2) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
+                _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
                 g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
                 const Value& AchievementsData = doc["Achievements"];
@@ -606,7 +603,6 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     char buffer[4096];
     sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
     FILE* pf = nullptr;
@@ -688,7 +684,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return;
 
-    sprintf_s(buffer, 4096, "%s%s.rap", RA_DIR_DATA, sLoadStateFilename);
+    sprintf_s(buffer, 4096, "%s%s%s.rap", g_sHomeDir.c_str(), RA_DIR_DATA, sLoadStateFilename);
 
     char* pRawFile = _MallocAndBulkReadFileToBuffer(buffer, nFileSize);
 

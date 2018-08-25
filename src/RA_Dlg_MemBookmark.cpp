@@ -713,9 +713,7 @@ void Dlg_MemBookmark::ExportJSON()
         return;
     }
 
-    std::string defaultDir = RA_DIR_BOOKMARKS;
-    defaultDir.erase(0, 2); // Removes the characters (".\\")
-    defaultDir = g_sHomeDir + defaultDir;
+    std::string defaultDir = g_sHomeDir + RA_DIR_BOOKMARKS;
 
     CComPtr<IFileSaveDialog> pDlg;
 

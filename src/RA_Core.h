@@ -108,12 +108,8 @@ extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
 
-namespace ra {
-
-extern EmulatorID g_EmulatorID;
-extern ConsoleID g_ConsoleID;
-
-} /* namespace ra */
+extern ra::EmulatorID g_EmulatorID;
+extern ra::ConsoleID g_ConsoleID;
 
 extern const char* g_sGetLatestClientPage;
 extern const char* g_sClientVersion;

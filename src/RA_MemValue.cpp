@@ -152,7 +152,7 @@ const char* MemValue::ParseFromString(const char* pChar)
     return pChar;
 }
 
-std::string MemValue::FormatValue(unsigned int nValue, Format nFormat) const
+std::string MemValue::FormatValue(unsigned int nValue, Format nFormat)
 {
     constexpr int SECONDS_PER_MINUTE = 60;
     constexpr int FRAMES_PER_SECOND = 60; // TODO: this isn't true for all systems

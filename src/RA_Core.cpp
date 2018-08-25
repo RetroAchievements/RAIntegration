@@ -35,7 +35,7 @@
 #include <direct.h>
 #include <fstream>
 #include <io.h>		//	_access()
-
+#include <ctime>
 
 #include <atlbase.h> // CComPtr
 
@@ -52,12 +52,8 @@ HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
 
-namespace ra {
-
-EmulatorID g_EmulatorID = EmulatorID::Unknown;	//	Uniquely identifies the emulator
-ConsoleID g_ConsoleID = ConsoleID::Unknown;	//	Currently active Console ID
-
-} /* namespace ra */
+ra::EmulatorID g_EmulatorID = ra::EmulatorID::Unknown;	//	Uniquely identifies the emulator
+ra::ConsoleID g_ConsoleID = ra::ConsoleID::Unknown;	//	Currently active Console ID
 
 const char* g_sGetLatestClientPage = nullptr;
 const char* g_sClientVersion = nullptr;

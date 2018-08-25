@@ -228,7 +228,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
             if (GetLine(ssRichPresence, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
             {
                 std::string sFormatType(sLine, 11);
-                MemValue::Format nType = MemValue::ParseFormat(sFormatType);
+                MemValue::Format nType = MemValue::ParseFormat(sFormatType.c_str());
 
                 RA_LOG("RP: Adding Formatter %s (%s)\n", sFormatName.c_str(), sFormatType.c_str());
                 mFormats[sFormatName] = nType;

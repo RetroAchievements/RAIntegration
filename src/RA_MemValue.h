@@ -31,8 +31,8 @@ public:
 
     _NODISCARD std::string GetFormattedValue(Format nFormat) const { return FormatValue(GetValue(), nFormat); }
 
-    _NODISCARD std::string FormatValue(unsigned int nValue, Format nFormat) const;
-    _NODISCARD _CONSTANT_FN ParseFormat(_In_ const char* sFormat) noexcept
+    _NODISCARD static std::string FormatValue(unsigned int nValue, Format nFormat);
+    _NODISCARD inline static constexpr Format ParseFormat(_In_ const char* sFormat) noexcept
     {
         if (sFormat == "VALUE")
             return Format::Value;
@@ -54,7 +54,7 @@ public:
 
         return Format::Value;
     }
-    _NODISCARD _CONSTANT_FN GetFormatString(_In_ Format format) noexcept
+    _NODISCARD inline static constexpr const char* GetFormatString(_In_ Format format) noexcept
     {
         switch (format)
         {

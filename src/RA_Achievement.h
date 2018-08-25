@@ -101,7 +101,7 @@ public:
     const char* ParseLine(const char* buffer);
 
     //	Parse from json element
-    void Parse(const Value& element);
+    void Parse(const rapidjson::Value& element);
 
     //	Used for rendering updates when editing achievements. Usually always false.
     unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }

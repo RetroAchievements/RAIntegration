@@ -111,7 +111,7 @@ PostArgs PrevArgs;
 
 std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
-BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
+BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
 
@@ -281,18 +281,18 @@ void RAWeb::SetUserAgentString()
     SetUserAgent(sUserAgent);
 }
 
-void RAWeb::LogJSON(const Document& doc)
+void RAWeb::LogJSON(const rapidjson::Document& doc)
 {
     //  DebugLog:
-    GenericStringBuffer< UTF8<> > buffer;
-    Writer<GenericStringBuffer< UTF8<> > > writer(buffer);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer{ buffer };
     doc.Accept(writer);
 
     //  buffer may contain percentage literals!
     RADebugLogNoFormat(buffer.GetString());
 }
 
-BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut)
+BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut)
 {
     std::string response;
     if (DoBlockingRequest(nType, PostData, response))
@@ -527,7 +527,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     //  Debug logging...
     if (ResponseOut.size() > 0)
     {
-        Document doc;
+        rapidjson::Document doc;
         doc.Parse(ResponseOut.c_str());
 
         if (doc.HasParseError())
@@ -678,7 +678,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut)
+BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut)
 {
     std::string response;
     if (::DoBlockingImageUpload(nType, sFilename, response))

@@ -66,7 +66,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
             args['u'] = Username();
             args['t'] = Token();		//	Plaintext password(!)
 
-            Document doc;
+            rapidjson::Document doc;
             if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
             {
                 HandleSilentLoginResponse(doc);
@@ -97,7 +97,7 @@ void LocalRAUser::AttemptSilentLogin()
     m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
-void LocalRAUser::HandleSilentLoginResponse(Document& doc)
+void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)
 {
     if (doc.HasMember("Success") && doc["Success"].GetBool())
     {
@@ -136,8 +136,8 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
 
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
-            "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-            PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
+        "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
+        PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
 
     g_AchievementsDialog.OnLoad_NewRom(g_pCurrentGameData->GetGameID());
     g_AchievementEditorDialog.OnLoad_NewRom();
@@ -158,19 +158,16 @@ void LocalRAUser::Logout()
     MessageBox(nullptr, TEXT("You are now logged out."), TEXT("Info"), MB_OK);
 }
 
-void LocalRAUser::OnFriendListResponse(const Document& doc)
+void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
 {
     if (!doc.HasMember("Friends"))
         return;
 
-    const Value& FriendData = doc["Friends"];		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
-
-    for (SizeType i = 0; i < FriendData.Size(); ++i)
+    const auto& FriendData{ doc["Friends"] };		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+    for (auto& NextFriend : FriendData.GetArray())
     {
-        const Value& NextFriend = FriendData[i];
-
-        RAUser* pUser = RAUsers::GetUser(NextFriend["Friend"].GetString());
-        pUser->SetScore(strtol(NextFriend["RAPoints"].GetString(), nullptr, 10));
+        auto pUser{ RAUsers::GetUser(NextFriend["Friend"].GetString()) };
+        pUser->SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());
 
         AddFriend(pUser->Username(), pUser->GetScore());

@@ -4,18 +4,13 @@
 
 
 #if RA_EXPORTS
-
-GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
-
+rapidjson::GetParseErrorFunc GetJSONParseErrorStr = rapidjson::GetParseError_En;
 #endif
 
 namespace ra {
 
-_Use_decl_annotations_
-std::string Narrow(const std::wstring& wstr)
-{
-    return Narrow(wstr.c_str());
-}
+_Use_decl_annotations_ std::string Narrow(const std::wstring& wstr) { return Narrow(wstr.c_str()); }
+
 _Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
@@ -39,10 +34,7 @@ std::string Narrow(const wchar_t* wstr)
     return str;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::string& str)
-{
-    return Widen(str.c_str());
-}
+_Use_decl_annotations_ std::wstring Widen(const std::string& str) { return Widen(str.c_str()); }
 
 _Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
 {
@@ -53,9 +45,9 @@ _Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
 _Use_decl_annotations_ std::wstring Widen(const char* str)
 {
     auto len{ ra::to_signed(std::strlen(str)) };
-    auto needed{::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0)};
+    auto needed{ ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0) };
     // doesn't seem wchar_t is treated like a character type by default
-    std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
+    std::wstring wstr(ra::to_unsigned(needed), L'\x0');
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
                           ra::to_signed(wstr.capacity()));
     wstr.resize(ra::to_unsigned(needed - 1));
@@ -73,15 +65,11 @@ std::string ByteAddressToString(ra::ByteAddress nAddr)
 
 _Use_decl_annotations_ std::wstring Widen(const wchar_t* wstr)
 {
-    // remove reference might seem confusing
     std::wstring _wstr{ wstr };
     return _wstr;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr)
-{
-    return wstr;
-}
+_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
 _Use_decl_annotations_ std::string Narrow(const char* str)
 {
@@ -89,13 +77,9 @@ _Use_decl_annotations_ std::string Narrow(const char* str)
     return _str;
 }
 
+_Use_decl_annotations_ std::string Narrow(const std::string& str) { return str; }
 
-_Use_decl_annotations_ std::string Narrow(const std::string& str)
-{
-    return str;
-}
-
-} // namespace ra
+} /* namespace ra */
 
 
 void RADebugLogNoFormat(const char* data)

@@ -168,7 +168,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     int nRow = item.iItem;
 
     //	Update our local array:
-    const char* sMemTypStrSrc = "Value";
+    const char* sMemTypStrSrc = "rapidjson::Value";
     const char* sMemSizeStrSrc = "";
     if (Cond.CompSource().Type() != ValueComparison)
     {
@@ -176,7 +176,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
         sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
     }
 
-    const char* sMemTypStrDst = "Value";
+    const char* sMemTypStrDst = "rapidjson::Value";
     const char* sMemSizeStrDst = "";
     if (Cond.CompTarget().Type() != ValueComparison)
     {
@@ -342,7 +342,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             //	Extra validation?
 
-            if (lstrcmp(sEditText, TEXT("Value")))
+            if (lstrcmp(sEditText, TEXT("rapidjson::Value")))
             {
                 //	Remove the associated 'size' entry
                 strcpy_s(g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, lvDispinfo.item.iSubItem + 1), 32, "");
@@ -576,7 +576,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     break;
             }
 
-            const int nNumItems = 3;	//	"Mem", "Delta" or "Value"
+            const int nNumItems = 3;	//	"Mem", "Delta" or "rapidjson::Value"
 
             g_hIPEEdit = CreateWindowEx(
                 WS_EX_CLIENTEDGE,
@@ -607,7 +607,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                         /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
+            ComboBox_AddString(g_hIPEEdit, NativeStr("rapidjson::Value").c_str());
 
             int nSel;
             if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Mem") == 0)
@@ -634,7 +634,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
 
             //	Note: this relies on column order :S
-            if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem - 1), "Value") == 0)
+            if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem - 1), "rapidjson::Value") == 0)
             {
                 //	Values have no size.
                 break;
@@ -1425,7 +1425,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        Document Response;
+                        rapidjson::Document Response;
                         if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
                             //TBD: ensure that:
@@ -1435,7 +1435,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //	The image can be uploaded OK
                             //	The image is not copyright
 
-                            const Value& ResponseData = Response["Response"];
+                            const rapidjson::Value& ResponseData = Response["Response"];
                             if (ResponseData.HasMember("BadgeIter"))
                             {
                                 const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
@@ -2171,7 +2171,7 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
     RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
 }
 
-void BadgeNames::OnNewBadgeNames(const Document& data)
+void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {
     unsigned int nLowerLimit = data["FirstBadge"].GetUint();
     unsigned int nUpperLimit = data["NextBadge"].GetUint();

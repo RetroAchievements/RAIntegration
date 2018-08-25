@@ -408,7 +408,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = g_sCurrentROMMD5;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
@@ -601,7 +601,7 @@ API int CCONV _RA_HandleHTTPResults()
     {
         if (pObj->GetResponse().size() > 0)
         {
-            Document doc;
+            rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
             if (pObj->GetRequestType() == RequestBadge)
@@ -927,9 +927,10 @@ API void CCONV _RA_LoadPreferences()
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "rb");
-    if (pf == nullptr)
+    std::ostringstream oss;
+    oss << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << ".cfg";
+    auto prefFile{ oss.str() };
+    if (std::ifstream ifile{ prefFile }; !ifile.is_open())
     {
         //	Test for first-time use:
         //RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
@@ -976,14 +977,12 @@ API void CCONV _RA_LoadPreferences()
     }
     else
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
+        rapidjson::Document doc;
+        rapidjson::IStreamWrapper isw{ ifile };
+        doc.ParseStream(isw);
 
         if (doc.HasParseError())
-        {
-            //MessageBox( nullptr, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
             _RA_SavePreferences();
-        }
         else
         {
             if (doc.HasMember("Username"))
@@ -1009,10 +1008,9 @@ API void CCONV _RA_LoadPreferences()
 
             if (doc.HasMember("Window Positions"))
             {
-                const Value& positions = doc["Window Positions"];
-                if (positions.IsObject())
+                if (const auto& positions{ doc["Window Positions"] }; positions.IsObject())
                 {
-                    for (Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
+                    for (auto iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
                     {
                         WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
                         pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
@@ -1030,13 +1028,22 @@ API void CCONV _RA_LoadPreferences()
                 }
             }
         }
-
-        fclose(pf);
     }
 
     //TBD:
     //g_GameLibrary.LoadAll();
 }
+
+namespace ra {
+
+_NODISCARD static std::string RAPrefsFilename() noexcept
+{
+    std::ostringstream oss;
+    oss << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << ".cfg";
+    return oss.str();
+}
+
+} /* namespace ra */
 
 API void CCONV _RA_SavePreferences()
 {
@@ -1049,50 +1056,48 @@ API void CCONV _RA_SavePreferences()
     }
 
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    fopen_s(&pf, std::string(std::string(RA_PREFERENCES_FILENAME_PREFIX) + g_sClientName + ".cfg").c_str(), "wb");
-    if (pf != nullptr)
+    
+    if (std::ofstream ofile{ ra::RAPrefsFilename() }; !ofile.is_open())
+        return; /* TBD: return a bool value instead of "returning" since we can't throw? */
+    else
     {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
+        rapidjson::OStreamWrapper osw{ ofile };
+        rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
 
-        Document doc;
-        doc.SetObject();
-
-        Document::AllocatorType& a = doc.GetAllocator();
-        doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-        doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
+        rapidjson::Document doc;
+        doc.SetObject();       
+        auto& a = doc.GetAllocator();
+        doc.AddMember("Username", rapidjson::StringRef(RAUsers::LocalUser().Username().c_str()), a);
+        doc.AddMember("Token", rapidjson::StringRef(RAUsers::LocalUser().Token().c_str()), a);
         doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
         doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
         doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
         doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
         doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
         doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-        doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
+        doc.AddMember("ROM Directory", rapidjson::StringRef(g_sROMDirLocation.c_str()), a);
 
-        Value positions(kObjectType);
-        for (WindowPositionMap::const_iterator iter = g_mWindowPositions.begin(); iter != g_mWindowPositions.end(); ++iter)
+        rapidjson::Value positions{ rapidjson::kObjectType };
+        for (auto& wndPos : g_mWindowPositions)
         {
-            Value rect(kObjectType);
-            if (iter->second.nLeft != WindowPosition::nUnset)
-                rect.AddMember("X", iter->second.nLeft, a);
-            if (iter->second.nTop != WindowPosition::nUnset)
-                rect.AddMember("Y", iter->second.nTop, a);
-            if (iter->second.nWidth != WindowPosition::nUnset)
-                rect.AddMember("Width", iter->second.nWidth, a);
-            if (iter->second.nHeight != WindowPosition::nUnset)
-                rect.AddMember("Height", iter->second.nHeight, a);
+            rapidjson::Value rect{ rapidjson::kObjectType };
+            if (wndPos.second.nLeft != WindowPosition::nUnset)
+                rect.AddMember("X", wndPos.second.nLeft, a);
+            if (wndPos.second.nTop != WindowPosition::nUnset)
+                rect.AddMember("Y", wndPos.second.nTop, a);
+            if (wndPos.second.nWidth != WindowPosition::nUnset)
+                rect.AddMember("Width", wndPos.second.nWidth, a);
+            if (wndPos.second.nHeight != WindowPosition::nUnset)
+                rect.AddMember("Height", wndPos.second.nHeight, a);
 
-            if (rect.MemberCount() > 0)
-                positions.AddMember(StringRef(iter->first.c_str()), rect, a);
+            if (rect.MemberCount() > 0U)
+                positions.AddMember(rapidjson::StringRef(wndPos.first.c_str()), rect, a);
         }
 
-        if (positions.MemberCount() > 0)
+        if (positions.MemberCount() > 0U)
             doc.AddMember("Window Positions", positions.Move(), a);
 
         doc.Accept(writer);	//	Save
-
-        fclose(pf);
     }
 
     //TBD:
@@ -1582,16 +1587,14 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     pSource++;
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
+void _WriteBufferToFile(const std::string& sFileName, const rapidjson::Document& doc)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
+    if (std::ofstream ofile{ sFileName }; ofile.is_open())
     {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
+        rapidjson::OStreamWrapper osw{ ofile };
+        rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
         doc.Accept(writer);
-        fclose(pf);
     }
 }
 
@@ -1599,28 +1602,8 @@ void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
 {
     SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
 
-    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
-#pragma warning(push)
-#pragma warning(disable : 4996) // Deprecation from Microsoft
-    FileH myFile{ std::fopen(sFileName.c_str(), "wb"), std::fclose };
-#pragma warning(pop)
-
-    std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
-}
-
-
-void _WriteBufferToFile(const char* sFile, std::streamsize nBytes)
-{
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-
-    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
-#pragma warning(push)
-#pragma warning(disable : 4996) // Deprecation from Microsoft
-    FileH myFile{ std::fopen(sFile, "wb"), std::fclose };
-#pragma warning(pop)
-    
-    auto sBuffer{ std::make_unique<char[]>(static_cast<size_t>(ra::to_unsigned(nBytes))) };
-    std::fwrite(static_cast<void* const>(sBuffer.get()), sizeof(char), std::strlen(sBuffer.get()), myFile.get());
+    if (std::ofstream ofile{ sFileName, std::ios::binary }; ofile.is_open())
+        ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
 bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)

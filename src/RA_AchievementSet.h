@@ -21,14 +21,13 @@ public:
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
-    static void OnRequestUnlocks(const Document& doc);
+    static void OnRequestUnlocks(const rapidjson::Document& doc);
 
 public:
     void Clear();
     void Test();
     void Reset();
 
-    BOOL Serialize(FileStream& Stream);
     BOOL LoadFromFile(ra::GameID nGameID);
     BOOL SaveToFile();
 

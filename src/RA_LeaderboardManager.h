@@ -4,8 +4,13 @@
 
 #include "RA_Leaderboard.h"
 
-#include <rapidjson\include\rapidjson\document.h>
+#ifndef RAPIDJSON_DOCUMENT_H_
+#include <rapidjson/document.h>
+#endif /* !RAPIDJSON_DOCUMENT_H_ */
+
+#ifndef _VECTOR_
 #include <vector>
+#endif /* !_VECTOR_ */
 
 class RA_LeaderboardManager
 {
@@ -33,4 +38,4 @@ private:
 
 extern RA_LeaderboardManager g_LeaderboardManager;
 
-#endif !RA_LEADERBOARD_MANAGER_H
+#endif /* !RA_LEADERBOARD_MANAGER_H */

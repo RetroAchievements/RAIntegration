@@ -135,7 +135,7 @@ extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffse
 
 //	Write out the buffer to a file
 extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
+extern void _WriteBufferToFile(const std::string& sFileName, const rapidjson::Document& doc);
 extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
 
 //	Fetch various interim txt/data files

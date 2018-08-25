@@ -181,7 +181,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
     m_vLookups.clear();
     m_vDisplayStrings.clear();
 
-    std::map<std::string, std::string> mDisplayStrings;
+    std::vector<std::pair<std::string, std::string>> mDisplayStrings;
     std::string sDisplayString;
 
     std::map<std::string, MemValue::Format> mFormats;
@@ -249,7 +249,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
                         std::string sCondition(sLine, 1, nIndex - 1);
                         std::string sDisplay(sLine, nIndex + 1);
 
-                        mDisplayStrings[sCondition] = sDisplay;
+                        mDisplayStrings.emplace_back(sCondition, sDisplay);
                         continue;
                     }
                 }
@@ -262,7 +262,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
 
     if (!sDisplayString.empty())
     {
-        for (std::map<std::string, std::string>::const_iterator iter = mDisplayStrings.begin(); iter != mDisplayStrings.end(); ++iter)
+        for (std::vector<std::pair<std::string, std::string>>::const_iterator iter = mDisplayStrings.begin(); iter != mDisplayStrings.end(); ++iter)
         {
             auto& displayString = m_vDisplayStrings.emplace_back(iter->first);
             displayString.InitializeParts(iter->second, mFormats, m_vLookups);

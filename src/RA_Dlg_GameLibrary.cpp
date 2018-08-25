@@ -104,7 +104,7 @@ static std::string GameHashFile() noexcept
 {
     std::ostringstream oss;
     oss << g_sHomeDir << RA_GAME_HASH_FILENAME;
-    oss.str();
+    return oss.str();
 }
 
 } /* namespace ra */
@@ -128,7 +128,6 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
                 if (iter->name.IsNull() || iter->value.IsNull())
                     continue;
 
-                //ra::GameID nID = static_cast<ra::GameID>( std::strtoul( iter->value.GetString(), nullptr, 10 ) );	//	MUST BE STRING, then converted to uint. Keys are strings ONLY
                 GameHashLibraryOut.try_emplace(iter->name.GetString(), iter->value.GetUint());
             }
         }

@@ -1597,6 +1597,8 @@ void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
 {
     if (std::ofstream ofile{ sFileName, std::ios::binary }; ofile.is_open())
         ofile.write(raw.c_str(), ra::to_signed(raw.length()));
+}
+
 bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
 {
     std::ifstream file(sFile);

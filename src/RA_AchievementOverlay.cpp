@@ -1506,7 +1506,8 @@ void AchievementOverlay::OnLoad_NewRom()
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
-    if (std::ifstream ifile{ RA_NEWS_FILENAME }; ifile.is_open())
+    std::string sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
+    if (std::ifstream ifile{ sNewsFile }; ifile.is_open())
     {
         rapidjson::Document doc;
         rapidjson::IStreamWrapper isw{ ifile };

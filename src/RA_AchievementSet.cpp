@@ -36,11 +36,11 @@ std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
     switch (m_nSetType)
     {
         case Core:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";
         case Unofficial:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
         case Local:
-            return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
         default:
             return "";
     }
@@ -347,7 +347,7 @@ namespace ra {
 _NODISCARD inline static auto AchSetFilename(_In_ const GameID& nGameID) noexcept
 {
     std::ostringstream oss;
-    oss << RA_DIR_DATA << nGameID << ".txt";
+    oss << g_sHomeDir << RA_DIR_DATA << nGameID << ".txt";
     return oss.str();
 } /* end function AchSetFilename */
 
@@ -370,7 +370,6 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc.HasMember("PatchData"))
     {
         const auto& PatchData{ doc["PatchData"] };
-        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
         if (std::ofstream ofile{ ra::AchSetFilename(nGameID) }; !ofile.is_open())
         {
             ASSERT(!"Could not open patch file for writing?");
@@ -403,7 +402,6 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
     const auto sFilename{ GetAchievementSetFilename(nGameID) };
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     if (std::ifstream ifile{ sFilename }; !ifile.is_open())
     {
         //	Cannot open file
@@ -480,9 +478,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             auto nGameID{ g_pCurrentGameData->GetGameID() };
 
             //	Rich Presence
-            SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
             std::ostringstream oss;
-            oss << RA_DIR_DATA << nGameID << "-Rich.txt";
+            oss << g_sHomeDir << RA_DIR_DATA << nGameID << "-Rich.txt";
             auto richFile{ oss.str() };
             oss.str("");
             _WriteBufferToFile(richFile, g_pCurrentGameData->RichPresencePatch());
@@ -566,7 +563,6 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     char buffer[4096];
     sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
     FILE* pf = nullptr;
@@ -648,7 +644,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return;
 
-    sprintf_s(buffer, 4096, "%s%s.rap", RA_DIR_DATA, sLoadStateFilename);
+    sprintf_s(buffer, 4096, "%s%s%s.rap", g_sHomeDir.c_str(), RA_DIR_DATA, sLoadStateFilename);
 
     char* pRawFile = _MallocAndBulkReadFileToBuffer(buffer, nFileSize);
 

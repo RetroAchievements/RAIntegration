@@ -100,13 +100,18 @@ static void LogErrno() noexcept
     RA_LOG("Error: %s", buf.get());
 }
 
+static std::string GameHashFile() noexcept
+{
+    std::ostringstream oss;
+    oss << g_sHomeDir << RA_GAME_HASH_FILENAME;
+    oss.str();
+}
+
 } /* namespace ra */
 
 void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    
-    if (std::ifstream ifile{ RA_GAME_HASH_FILENAME }; !ifile.is_open())
+    if (std::ifstream ifile{ ra::GameHashFile() }; !ifile.is_open())
         ra::LogErrno();
     else
     {
@@ -132,9 +137,9 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
 
 void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
 {
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
+    std::string sTitlesFile = g_sHomeDir + RA_TITLES_FILENAME;
 
-    if (std::ifstream ifile{ RA_TITLES_FILENAME }; !ifile.is_open())
+    if (std::ifstream ifile{ sTitlesFile }; !ifile.is_open())
         ra::LogErrno();
     else
     {
@@ -160,8 +165,8 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
 
 void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
-
-    if (std::ifstream ifile{ RA_MY_PROGRESS_FILENAME }; !ifile.is_open())
+    std::string sProgressFile = g_sHomeDir + RA_TITLES_FILENAME;
+    if (std::ifstream ifile{ sProgressFile }; !ifile.is_open())
         ra::LogErrno();
     else
     {
@@ -482,9 +487,11 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 
 void Dlg_GameLibrary::LoadAll()
 {
+    std::string sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+    
     mtx.lock();
     FILE* pLoadIn = nullptr;
-    fopen_s(&pLoadIn, RA_MY_GAME_LIBRARY_FILENAME, "rb");
+    fopen_s(&pLoadIn, sMyGameLibraryFile.c_str(), "rb");
     if (pLoadIn != nullptr)
     {
         DWORD nCharsRead1 = 0;
@@ -524,9 +531,11 @@ void Dlg_GameLibrary::LoadAll()
 
 void Dlg_GameLibrary::SaveAll()
 {
+    std::string sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+
     mtx.lock();
     FILE* pf = nullptr;
-    fopen_s(&pf, RA_MY_GAME_LIBRARY_FILENAME, "wb");
+    fopen_s(&pf, sMyGameLibraryFile.c_str(), "wb");
     if (pf != nullptr)
     {
         std::map<std::string, std::string>::iterator iter = Results.begin();

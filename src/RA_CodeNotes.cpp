@@ -15,7 +15,6 @@ size_t CodeNotes::Load(const std::string& sFile)
 {
     Clear();
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     if (std::ifstream ifile{ sFile }; !ifile.is_open())
         return std::size_t{};
     else
@@ -73,8 +72,7 @@ void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
     //	Persist then reload
     const ra::GameID nGameID = doc["GameID"].GetUint();
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    _WriteBufferToFile(std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
+    _WriteBufferToFile(g_sHomeDir + std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
 
     g_MemoryDialog.RepopulateMemNotesFromFile();
 }

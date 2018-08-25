@@ -1506,8 +1506,9 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
 
+    std::string sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
     FILE* pf = nullptr;
-    fopen_s(&pf, RA_NEWS_FILENAME, "rb");
+    fopen_s(&pf, sNewsFile.c_str(), "rb");
     if (pf != nullptr)
     {
         Document doc;

@@ -1506,41 +1506,47 @@ void AchievementOverlay::OnLoad_NewRom()
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
-    std::string sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
-    if (std::ifstream ifile{ sNewsFile }; ifile.is_open())
+    const std::string sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
+
+    std::ifstream ifile{ sNewsFile };
+    if (!ifile.is_open())
+        return;
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasMember("Success") && doc["Success"].GetBool())
     {
-        rapidjson::Document doc;
-        rapidjson::IStreamWrapper isw{ ifile };
-        doc.ParseStream(isw);
-
-        if (doc.HasMember("Success") && doc["Success"].GetBool())
+        const auto& News{ doc["News"] };
+        for (const auto& NextNewsArticle : News.GetArray())
         {
-            const auto& News{ doc["News"] };
-            for (auto& NextNewsArticle : News.GetArray())
+            NewsItem nNewsItem
             {
-                auto pNewsItem{ std::make_unique<NewsItem>() };
-                pNewsItem->m_nID       = NextNewsArticle["ID"].GetUint();
-                pNewsItem->m_sTitle    = NextNewsArticle["Title"].GetString();
-                pNewsItem->m_sPayload  = NextNewsArticle["Payload"].GetString();
-                pNewsItem->m_nPostedAt = NextNewsArticle["TimePosted"].GetUint();
-                { /* Scoped to deallocate the two smart pointers early */
-                    auto destTime{ std::make_unique<std::tm>() };
-                    localtime_s(destTime.get(), &pNewsItem->m_nPostedAt);
+                NextNewsArticle["ID"].GetUint(),
+                NextNewsArticle["Title"].GetString(),
+                NextNewsArticle["Payload"].GetString(),
+                NextNewsArticle["TimePosted"].GetUint(),
+                "", /* this value is assigned properly in the scope below */
+                NextNewsArticle["Author"].GetString(),
+                NextNewsArticle["Link"].GetString(),
+                NextNewsArticle["Image"].GetString(),
+            };
 
-                    auto buffer{ std::make_unique<char[]>(256U) };
-                    strftime(buffer.get(), 256U, "%b %d", destTime.get());
+            {
+                std::tm destTime;
+                localtime_s(&destTime, &nNewsItem.m_nPostedAt);
 
-                    pNewsItem->m_sPostedAt = buffer.get();
-                }
-                pNewsItem->m_sAuthor   = NextNewsArticle["Author"].GetString();
-                pNewsItem->m_sLink     = NextNewsArticle["Link"].GetString();
-                pNewsItem->m_sImage    = NextNewsArticle["Image"].GetString();
-
-                m_LatestNews.push_back(*pNewsItem);
+                char buffer[256U]{};
+                strftime(buffer, 256U, "%b %d", &destTime);
+                nNewsItem.m_sPostedAt = buffer;
             }
+
+            m_LatestNews.push_back(std::move(nNewsItem));
         }
     }
 }
+
 
 AchievementExamine::AchievementExamine() :
     m_pSelectedAchievement(nullptr),
@@ -1609,7 +1615,7 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
     ASSERT(RecentWinnerData.IsArray());
     for (auto& NextWinner : RecentWinnerData.GetArray())
     {
-        const auto nDateAwarded{ static_cast<time_t>(NextWinner["DateAwarded"].GetUint()) };
+        const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
         RecentWinners.push_back({ oss.str(), _TimeStampToString(nDateAwarded) });
@@ -1648,25 +1654,25 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
     ASSERT(doc.HasMember("LeaderboardData"));
     const auto& LBData{ doc["LeaderboardData"] };
 
-    auto nLBID{ LBData["LBID"].GetUint() };
-    auto nGameID{ LBData["GameID"].GetUint() };
+    const auto nLBID{ LBData["LBID"].GetUint() };
+    const auto nGameID{ LBData["GameID"].GetUint() };
     const std::string& sGameTitle{ LBData["GameTitle"].GetString() };
-    auto sConsoleID{ LBData["ConsoleID"].GetUint() };
+    const auto sConsoleID{ LBData["ConsoleID"].GetUint() };
     const std::string& sConsoleName{ LBData["ConsoleName"].GetString() };
-    const std::string& sGameIcon{ LBData["GameIcon"].GetString() };
+    const std::string& sGameIcon = LBData["GameIcon"].GetString();
     //unsigned int sForumTopicID = LBData["ForumTopicID"].GetUint();
 
-    auto nLowerIsBetter{ LBData["LowerIsBetter"].GetUint() };
+    const auto nLowerIsBetter{ LBData["LowerIsBetter"].GetUint() };
     const std::string& sLBTitle{ LBData["LBTitle"].GetString() };
     const std::string& sLBDesc{ LBData["LBDesc"].GetString() };
     const std::string& sLBFormat{ LBData["LBFormat"].GetString() };
     const std::string& sLBMem{ LBData["LBMem"].GetString() };
 
-    auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
+    const auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
     if (!pLB)
         return;
 
-    const auto& Entries = LBData["Entries"];
+    const auto& Entries{ LBData["Entries"] };
     ASSERT(Entries.IsArray());
     for (auto& NextLBData : Entries.GetArray())
     {
@@ -1676,8 +1682,7 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
         const auto nDate{ NextLBData["DateSubmitted"].GetUint() };
 
         RA_LOG("LB Entry: %u: %s earned %d at %u\n", nRank, sUser.c_str(), nScore, nDate);
-        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, nDate);
-
+        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, static_cast<time_t>(ra::to_signed(nDate)));
     }
 
     m_bHasData = true;

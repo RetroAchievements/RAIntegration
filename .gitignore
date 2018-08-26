@@ -1,7 +1,7 @@
 #################
 # Miscellaneous #
 #################
-RetroAchievementsKey/
+/RetroAchievementsKey
 src/RA_BuildVer.h
 overlay/
 *.wav
@@ -29,7 +29,6 @@ Thumbs.db
 *_i.c
 *_p.c
 *.ncb
-*.user
 
 ###################
 # Build Artifacts #
@@ -49,18 +48,6 @@ Thumbs.db
 *.sbr
 *.tlb
 *.tlh
-
-############
-# Packages #
-############
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
 
 ######################
 # Logs and Databases #

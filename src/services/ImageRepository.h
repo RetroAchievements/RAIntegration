@@ -20,7 +20,7 @@ enum class ImageType
 class ImageReference
 {
 public:
-    ImageReference() {};
+    ImageReference() {}
     ImageReference(ImageType nType, const std::string& sName)
     {
         ChangeReference(nType, sName);

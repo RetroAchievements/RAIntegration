@@ -116,12 +116,12 @@ public:
     void Parse(const Value& element);
 
     //	Used for rendering updates when editing achievements. Usually always false.
-    _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
+    _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
     _CONSTANT_FN IsDirty() const noexcept { return (m_nDirtyFlags != ra::Achievement_DirtyFlags{}); }
     _CONSTANT_FN SetDirtyFlag(_In_ ra::Achievement_DirtyFlags nFlags) noexcept
     {
         using namespace ra::bitwise_ops;
-        const auto _{ m_nDirtyFlags |= nFlags };
+        m_nDirtyFlags |= nFlags;
     }
     _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = ra::Achievement_DirtyFlags{}; }
 
@@ -151,7 +151,7 @@ private:
 
     float m_fProgressLastShown;	//	The last shown progress
 
-    ra::Achievement_DirtyFlags m_nDirtyFlags = ra::Achievement_DirtyFlags{}; // Use for rendering when editing.
+    ra::Achievement_DirtyFlags m_nDirtyFlags{}; // Use for rendering when editing.
 
     time_t m_nTimestampCreated;
     time_t m_nTimestampModified;

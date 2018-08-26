@@ -46,8 +46,6 @@ _NODISCARD _CONSTANT_FN ComparisonSizeToPrefix(_In_ ComparisonVariableSize nSize
     }
 }
 
-// static constexpr only makes sense in classes
-
 _NODISCARD _CONSTANT_VAR ComparisonTypeToStr(_In_ ra::ComparisonType nType) noexcept
 {
     return COMPARISONTYPE_STR.at(etoi(nType)); // all constant expressions, it's fast

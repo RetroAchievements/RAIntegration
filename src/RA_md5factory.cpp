@@ -43,13 +43,10 @@ std::string RAGenerateMD5(const std::string& sStringToMD5) noexcept
 _Use_decl_annotations_
 std::string RAGenerateMD5(const BYTE* pRawData, size_t nDataLen) noexcept
 {
-    // after some experimentation, it does seem that releasing unique_ptr causes a leak so the return string will be
-    // statically allocated. The rest did not leak.
     char buffer[33]{};
     auto pms{ std::make_unique<md5_state_t>() };
     auto digest{ std::make_unique<md5_byte_t[]>(16) };
-
-    // quick-info will automatically tell you if it's true or not
+   
     static_assert(ra::is_same_size_v<md5_byte_t, BYTE>, "Must be equivalent for the MD5 to work!");
 
     md5_init(pms.get());

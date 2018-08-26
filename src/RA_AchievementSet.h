@@ -74,7 +74,7 @@ public:
     bool HasUnsavedChanges();
 
 private:
-    bool m_bProcessingActive{};
+    bool m_bProcessingActive{true};
     ra::AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
 };

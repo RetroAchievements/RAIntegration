@@ -26,7 +26,6 @@ class Dlg_Achievements
 {
     using AchievementDlgRow   = std::vector<std::string>;
     using AchievementDlgTable = std::vector<AchievementDlgRow>;
-    friend INT_PTR CALLBACK s_AchievementsProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
 public:
     _NODISCARD INT_PTR AchievementsProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
@@ -40,7 +39,6 @@ public:
     void OnEditAchievement(_In_ const Achievement& ach);
     void OnClickAchievementSet(_In_ ra::AchievementSetType nAchievementSet);
 
-    // there's no way this is inline
     _NODISCARD inline std::string& LbxDataAt(_In_ size_t nRow, _In_ ra::DlgAchievementColumn nCol) { return(m_lbxData.at(nRow)).at(ra::etoi(nCol)); }
 
     _NODISCARD inline HWND GetHWND() const { return m_hAchievementsDlg; }

@@ -14,9 +14,12 @@
 #include <winhttp.h>
 #include <memory>
 #include <fstream>
-#include <time.h>
+#include <ctime>
 
-const char* RequestTypeToString[] =
+namespace ra {
+
+using RequestTypes = std::array<const char*, enum_sizes::NUM_REQUESTTYPES>;
+inline constexpr RequestTypes RequestTypeToString
 {
     "RequestLogin",
 
@@ -48,11 +51,10 @@ const char* RequestTypeToString[] =
     "RequestUserPic",
     "RequestBadge",
 
-    "STOP_THREAD",
+    "STOP_THREAD"
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
-const char* RequestTypeToPost[] =
+inline constexpr RequestTypes RequestTypeToPost
 {
     "login",
     "score",
@@ -85,19 +87,12 @@ const char* RequestTypeToPost[] =
 
     "_stopthread_",         //  STOP_THREAD
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
-const char* UploadTypeToString[] =
-{
-    "RequestUploadBadgeImage",
-};
-static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
+using UploadTypes = std::array<const char*, enum_sizes::NUM_UPLOADTYPES>;
+inline constexpr UploadTypes UploadTypeToString{ "RequestUploadBadgeImage" };
+inline constexpr UploadTypes UploadTypeToPost{ "uploadbadgeimage" };
 
-const char* UploadTypeToPost[] =
-{
-    "uploadbadgeimage",
-};
-static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
+} // namespace ra
 
 //  No game-specific code here please!
 
@@ -116,7 +111,7 @@ BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
     rDocOut.Parse(GetResponse().c_str());
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr(rDocOut.GetParseError()), ra::RequestTypeToString.at(ra::etoi(m_nType)));
 
     return !rDocOut.HasParseError();
 }
@@ -292,7 +287,7 @@ void RAWeb::LogJSON(const Document& doc)
     RADebugLogNoFormat(buffer.GetString());
 }
 
-BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut)
+BOOL RAWeb::DoBlockingRequest(ra::RequestType nType, const PostArgs& PostData, Document& JSONResponseOut)
 {
     std::string response;
     if (DoBlockingRequest(nType, PostData, response))
@@ -314,22 +309,20 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, Docum
     return FALSE;
 }
 
-BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& Response)
+BOOL RAWeb::DoBlockingRequest(ra::RequestType nType, const PostArgs& PostData, std::string& Response)
 {
-    PostArgs args = PostData;               //  Take a copy
-    args['r'] = RequestTypeToPost[nType];   //  Embed request type
-
-    switch (nType)
-    {
-        case RequestUserPic:
-            return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), Response, false); //  UserPic needs migrating to S3...
-        case RequestBadge:
-            return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), Response, true);
-        case RequestLogin:
-            return DoBlockingHttpPost("login_app.php", PostArgsToString(args), Response);
-        default:
-            return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), Response);
-    }
+    PostArgs args = PostData; //  Take a copy
+    args['r'] = ra::RequestTypeToPost.at(ra::etoi(nType)); //  Embed request type
+    
+    if( nType == ra::RequestType::Login) 
+        return DoBlockingHttpPost("login_app.php", PostArgsToString(args), Response);
+    //  UserPic needs migrating to S3...
+    else if(nType == ra::RequestType::UserPic)
+        return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), Response, false); 
+    else if(nType == ra::RequestType::Badge)
+        return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), Response, true);
+    else
+        return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), Response);
 }
 
 BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& ResponseOut, bool bIsImageRequest)
@@ -549,12 +542,12 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     return bSuccess;
 }
 
-BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::string& ResponseOut)
+BOOL DoBlockingImageUpload(ra::UploadType nType, const std::string& sFilename, std::string& ResponseOut)
 {
-    ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
+    ASSERT(nType == ra::UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
 
     const std::string sRequestedPage = "doupload.php";
-    const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
+    const std::string sRTarget = ra::UploadTypeToPost.at(ra::etoi(nType)); //"uploadbadgeimage";
 
     RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str());
 
@@ -646,11 +639,6 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
             while (nBytesToRead > 0)
             {
-                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
                 ASSERT(nBytesToRead <= 8192);
                 if (nBytesToRead <= 8192)
                 {
@@ -678,7 +666,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut)
+BOOL RAWeb::DoBlockingImageUpload(ra::UploadType nType, const std::string& sFilename, Document& ResponseOut)
 {
     std::string response;
     if (::DoBlockingImageUpload(nType, sFilename, response))
@@ -690,13 +678,13 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
         }
         else
         {
-            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
+            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", ra::etoi(nType), sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
             return FALSE;
         }
     }
     else
     {
-        RA_LOG(__FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str());
+        RA_LOG(__FUNCTION__ " (%d, %s) could not connect?\n", ra::etoi(nType), sFilename.c_str());
         return FALSE;
     }
 }
@@ -706,21 +694,21 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
 //  return HttpRequestQueue.PageRequestExists( sRequestPageName );
 //}
 
-BOOL RAWeb::HTTPRequestExists(RequestType nType, const std::string& sData)
+BOOL RAWeb::HTTPRequestExists(ra::RequestType nType, const std::string& sData)
 {
     return HttpRequestQueue.PageRequestExists(nType, sData);
 }
 
-BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
+BOOL RAWeb::HTTPResponseExists(ra::RequestType nType, const std::string& sData)
 {
     return ms_LastHttpResults.PageRequestExists(nType, sData);
 }
 
 //  Adds items to the httprequest queue
-void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
+void RAWeb::CreateThreadedHTTPRequest(ra::RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
     HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
-    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%u)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
+    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%zu)\n", ra::RequestTypeToString.at(ra::etoi(nType)), sData.c_str(), HttpRequestQueue.Count());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -733,6 +721,7 @@ void RAWeb::RA_InitializeHTTPThreads()
     for (size_t i = 0; i < g_nNumHTTPThreads; ++i)
     {
         DWORD dwThread;
+        // TBD: Ignore this for now and push the changes in the HANDLE POC branch when it's ready -Samer
         HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
         ASSERT(hThread != nullptr);
         if (hThread != nullptr)
@@ -759,17 +748,13 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
         if (pObj != nullptr)
         {
             std::string Response;
-            switch (pObj->GetRequestType())
+            if (pObj->GetRequestType() == ra::RequestType::StopThread)
             {
-                case StopThread:    //  Exception:
-                    bThreadActive = false;
-                    bDoPingKeepAlive = false;
-                    break;
-
-                default:
-                    DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
-                    break;
+                bThreadActive    = false;
+                bDoPingKeepAlive = false;
             }
+            else
+                DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
 
             pObj->SetResponse(Response);
 
@@ -809,7 +794,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                                 args['m'] = "Developing Achievements";
                             else if (g_bHardcoreModeActive)
                                 args['m'] = "Inspecting Memory in Hardcore mode";
-                            else if (g_nActiveAchievementSet == Core)
+                            else if (g_nActiveAchievementSet == ra::AchievementSetType::Core)
                                 args['m'] = "Fixing Achievements";
 
                         else
@@ -840,7 +825,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                     //   from 'currently playing'.
                     //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
                     {
-                        RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
+                        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::Ping, args);
                         PrevArgs = args;
                     }
                 }
@@ -865,7 +850,7 @@ void RAWeb::RA_KillHTTPThreads()
     for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
     {
         //  Create n of these:
-        RAWeb::CreateThreadedHTTPRequest(RequestType::StopThread);
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::StopThread);
     }
 
     for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
@@ -941,7 +926,7 @@ size_t HttpResults::Count() const
     return nCount;
 }
 
-BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData) const
+BOOL HttpResults::PageRequestExists(ra::RequestType nType, const std::string& sData) const
 {
     BOOL bRetVal = FALSE;
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);

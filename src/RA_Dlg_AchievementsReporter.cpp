@@ -204,7 +204,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['m'] = g_sCurrentROMMD5;
 
                     Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))
+                    if (RAWeb::DoBlockingRequest(ra::RequestType::SubmitTicket, args, doc))
                     {
                         if (doc["Success"].GetBool())
                         {

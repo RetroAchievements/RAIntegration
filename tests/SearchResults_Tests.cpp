@@ -255,7 +255,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::Equals, 0xABU);
+        results.Initialize(results1, ra::ComparisonType::Equals, 0xABU);
         Assert::AreEqual(std::string("Filtering for EQUAL 171..."), results.Summary());
 
         Assert::AreEqual(1U, results.MatchingAddressCount());
@@ -282,7 +282,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, 0xABU);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo, 0xABU);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL 171..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -314,7 +314,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, 0x34U);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo, 0x34U);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL 52..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -346,7 +346,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::GreaterThan, 0x34U);
+        results.Initialize(results1, ra::ComparisonType::GreaterThan, 0x34U);
         Assert::AreEqual(std::string("Filtering for GREATER THAN 52..."), results.Summary());
 
         Assert::AreEqual(1U, results.MatchingAddressCount());
@@ -373,7 +373,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::GreaterThanOrEqual, 0x34U);
+        results.Initialize(results1, ra::ComparisonType::GreaterThanOrEqual, 0x34U);
         Assert::AreEqual(std::string("Filtering for GREATER THAN/EQUAL 52..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -405,7 +405,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::LessThan, 0x34U);
+        results.Initialize(results1, ra::ComparisonType::LessThan, 0x34U);
         Assert::AreEqual(std::string("Filtering for LESS THAN 52..."), results.Summary());
 
         Assert::AreEqual(1U, results.MatchingAddressCount());
@@ -432,7 +432,7 @@ public:
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::LessThanOrEqual, 0x34U);
+        results.Initialize(results1, ra::ComparisonType::LessThanOrEqual, 0x34U);
         Assert::AreEqual(std::string("Filtering for LESS THAN/EQUAL 52..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -467,7 +467,7 @@ public:
         memory[1] = 0xAB;
         memory[3] = 0x12;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::Equals, 0xABU);
+        results.Initialize(results1, ra::ComparisonType::Equals, 0xABU);
         Assert::AreEqual(std::string("Filtering for EQUAL 171..."), results.Summary());
 
         Assert::AreEqual(1U, results.MatchingAddressCount());
@@ -496,7 +496,7 @@ public:
         memory[1] = 0x14;
         memory[2] = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -529,7 +529,7 @@ public:
 
         memory[2] = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -562,7 +562,7 @@ public:
         memory[1] = 0x14;
         memory[2] = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         Assert::AreEqual(3U, results.MatchingAddressCount());
@@ -605,7 +605,7 @@ public:
         memory[1] = 0x14;
         memory[2] = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
@@ -646,7 +646,7 @@ public:
         memory[1] = 0x14;
         memory[2] = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo);
+        results.Initialize(results1, ra::ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         Assert::AreEqual(2U, results.MatchingAddressCount());

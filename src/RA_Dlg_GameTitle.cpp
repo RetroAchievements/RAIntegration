@@ -37,10 +37,10 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
 
             PostArgs args;
-            args['c'] = std::to_string(g_ConsoleID);
+            args['c'] = ra::etos(g_ConsoleID);
 
             Document doc;
-            if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
+            if (RAWeb::DoBlockingRequest(ra::RequestType::GamesList, args, doc))
             {
                 const Value& Data = doc["Response"];
 
@@ -107,7 +107,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     else
                     {
                         //	Existing title
-                        ASSERT(m_aGameTitles.find(std::string(sSelectedTitle)) != m_aGameTitles.end());
+                        ASSERT(m_aGameTitles.find(ra::Narrow(sSelectedTitle)) != m_aGameTitles.end());
                         nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
                     }
 
@@ -116,10 +116,10 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     args['t'] = RAUsers::LocalUser().Token();
                     args['m'] = m_sMD5;
                     args['i'] = ra::Narrow(sSelectedTitle);
-                    args['c'] = std::to_string(g_ConsoleID);
+                    args['c'] = etos(g_ConsoleID);
 
                     Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
+                    if (RAWeb::DoBlockingRequest(ra::RequestType::SubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
                     {
                         const Value& Response = doc["Response"];
 

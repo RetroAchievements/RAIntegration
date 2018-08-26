@@ -3,34 +3,46 @@
 #pragma once
 
 #include "RA_Condition.h"
+#include "ra_utility.h"
 
-
+// just in-case
+#ifndef _ARRAY_
+#include <array>
+#endif // !_ARRAY_
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
-enum Achievement_DirtyFlags
-{
-    Dirty_Title = 1 << 0,
-    Dirty_Desc = 1 << 1,
-    Dirty_Points = 1 << 2,
-    Dirty_Author = 1 << 3,
-    Dirty_ID = 1 << 4,
-    Dirty_Badge = 1 << 5,
-    Dirty_Conditions = 1 << 6,
-    Dirty_Votes = 1 << 7,
-    Dirty_Description = 1 << 8,
 
-    Dirty__All = (unsigned int)(-1)
+namespace ra {
+
+// TBD: either use the max value of a signed int for Achievement_DirtyFlags::All or make it's underlying_type
+//      a size_type (such as std::size_t, std::uintptr_t).
+enum class Achievement_DirtyFlags : std::size_t
+{
+    NotDirty    = 0,
+    Title       = 1 << 0,
+    Desc        = 1 << 1,
+    Points      = 1 << 2,
+    Author      = 1 << 3,
+    ID          = 1 << 4,
+    Badge       = 1 << 5,
+    Conditions  = 1 << 6,
+    Votes       = 1 << 7,
+    Description = 1 << 8,
+
+    All = to_unsigned(-1)
 };
+
+} // namespace ra
 
 class Achievement
 {
 public:
-    Achievement(AchievementSetType nType);
+    explicit Achievement(_In_ ra::AchievementSetType nType) noexcept;
 
 public:
-    void Clear();
+    void Clear() noexcept;
     BOOL Test();
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
@@ -52,10 +64,10 @@ public:
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
 
-    BOOL IsCoreAchievement() const { return m_nSetType == Core; }
+    _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == ra::AchievementSetType::Core); }
 
     void SetID(ra::AchievementID nID);
-    inline ra::AchievementID ID() const { return m_nAchievementID; }
+    _NODISCARD _CONSTANT_FN ID() const noexcept { return m_nAchievementID; }
 
     inline const std::string& Title() const { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -104,13 +116,17 @@ public:
     void Parse(const Value& element);
 
     //	Used for rendering updates when editing achievements. Usually always false.
-    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
-    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
-    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
-    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
+    _CONSTANT_FN IsDirty() const noexcept { return (m_nDirtyFlags != ra::Achievement_DirtyFlags{}); }
+    _CONSTANT_FN SetDirtyFlag(_In_ ra::Achievement_DirtyFlags nFlags) noexcept
+    {
+        using namespace ra::bitwise_ops;
+        m_nDirtyFlags |= nFlags;
+    }
+    _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = ra::Achievement_DirtyFlags{}; }
 
 private:
-    /*const*/ AchievementSetType m_nSetType;
+    /*const*/ ra::AchievementSetType m_nSetType;
 
     ra::AchievementID m_nAchievementID;
     ConditionSet m_vConditions;
@@ -135,7 +151,7 @@ private:
 
     float m_fProgressLastShown;	//	The last shown progress
 
-    unsigned int m_nDirtyFlags;	//	Use for rendering when editing.
+    ra::Achievement_DirtyFlags m_nDirtyFlags{}; // Use for rendering when editing.
 
     time_t m_nTimestampCreated;
     time_t m_nTimestampModified;

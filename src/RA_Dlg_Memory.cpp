@@ -8,9 +8,13 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#ifdef WIN32_LEAN_AND_MEAN
+#ifndef _MEMORY_
+#include <memory>
+#endif // !_MEMORY_
+
+#ifndef _INC_SHELLAPI
 #include <ShellAPI.h>
-#endif // WIN32_LEAN_AND_MEAN
+#endif // !_INC_SHELLAPI
 
 
 #ifndef ID_OK
@@ -22,8 +26,8 @@
 
 namespace {
 
-const size_t MIN_RESULTS_TO_DUMP = 500000;
-const size_t MIN_SEARCH_PAGE_SIZE = 50;
+_CONSTANT_VAR MIN_RESULTS_TO_DUMP{ 500000U };
+_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE{ 50U };
 
 }
 
@@ -35,19 +39,20 @@ HWND Dlg_Memory::m_hWnd = nullptr;
 
 HFONT MemoryViewerControl::m_hViewerFont = nullptr;
 SIZE MemoryViewerControl::m_szFontSize;
-unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
-unsigned int MemoryViewerControl::m_nAddressOffset = 0;
-unsigned int MemoryViewerControl::m_nWatchedAddress = 0;
-ComparisonVariableSize MemoryViewerControl::m_nDataSize = EightBit;
-unsigned int MemoryViewerControl::m_nEditAddress = 0;
-unsigned int MemoryViewerControl::m_nEditNibble = 0;
-bool MemoryViewerControl::m_bHasCaret = 0;
-unsigned int MemoryViewerControl::m_nCaretWidth = 0;
-unsigned int MemoryViewerControl::m_nCaretHeight = 0;
-unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
-unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
+unsigned int MemoryViewerControl::m_nDataStartXOffset = 0U;
+unsigned int MemoryViewerControl::m_nAddressOffset = 0U;
+unsigned int MemoryViewerControl::m_nWatchedAddress = 0U;
+ra::ComparisonVariableSize MemoryViewerControl::m_nDataSize = ra::ComparisonVariableSize::EightBit;
+unsigned int MemoryViewerControl::m_nEditAddress = 0U;
+unsigned int MemoryViewerControl::m_nEditNibble = 0U;
+bool MemoryViewerControl::m_bHasCaret = false;
+unsigned int MemoryViewerControl::m_nCaretWidth = 0U;
+unsigned int MemoryViewerControl::m_nCaretHeight = 0U;
+unsigned int MemoryViewerControl::m_nDisplayedLines = 8U;
 
-unsigned int m_nPage = 0;
+unsigned short MemoryViewerControl::m_nActiveMemBank = unsigned short{};
+
+unsigned int m_nPage = 0U;
 
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
@@ -56,20 +61,22 @@ int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
 
-static unsigned int GetMaxNibble(ComparisonVariableSize size)
+namespace ra {
+
+_Success_(return != 0)
+_NODISCARD _CONSTANT_FN GetMaxNibble(_In_ ComparisonVariableSize size) noexcept
 {
-    switch (size)
-    {
-        default:
-        case EightBit:
-            return 1;
-        case SixteenBit:
-            return 3;
-        case ThirtyTwoBit:
-            return 7;
-    }
+    if (size == ComparisonVariableSize::EightBit)
+        return 1U;
+    else if (size == ComparisonVariableSize::SixteenBit)
+        return 3U;
+    else if (size == ComparisonVariableSize::ThirtyTwoBit)
+        return 7U;
+    else
+        return 0U;
 }
 
+} // namespace ra
 
 INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -213,7 +220,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
         if (offset < 0)
         {
 
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
+            if (m_nEditAddress >(m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
             {
                 m_nEditAddress -= offset;
                 MessageBeep((UINT)-1);
@@ -266,7 +273,7 @@ void MemoryViewerControl::Invalidate()
 
         // In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force the render by calling UpdateWindow
         // TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for the search results
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == ra::EmulatorID::RA_Libretro)
             UpdateWindow(hOurDlg);
     }
 }
@@ -333,12 +340,12 @@ bool MemoryViewerControl::OnEditInput(UINT c)
                 g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
         }
 
-        if (m_nDataSize == EightBit)
+        if (m_nDataSize == ra::ComparisonVariableSize::EightBit)
         {
             //	8 bit
             //nByteAddress = m_nEditAddress;
         }
-        else if (m_nDataSize == SixteenBit)
+        else if (m_nDataSize == ra::ComparisonVariableSize::SixteenBit)
         {
             //	16 bit
             nByteAddress += (1 - (m_nEditNibble >> 1));
@@ -413,13 +420,13 @@ void MemoryViewerControl::SetCaretPos()
 
     switch (m_nDataSize)
     {
-        case EightBit:
+        case ra::ComparisonVariableSize::EightBit:
             x += 3 * m_szFontSize.cx*(subAddress & 15);
             break;
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             x += 5 * m_szFontSize.cx*((subAddress >> 1) & 7);
             break;
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             x += 9 * m_szFontSize.cx*((subAddress >> 2) & 3);
             break;
     }
@@ -462,17 +469,17 @@ void MemoryViewerControl::OnClick(POINT point)
 
     switch (m_nDataSize)
     {
-        case EightBit:
+        case ra::ComparisonVariableSize::EightBit:
             rowLengthPx += 47 * m_szFontSize.cx;
             inc = 1;					//	increment mem offset by 1 each subset
             sub = 3 * m_szFontSize.cx;	//	2 char set plus one char space
             break;
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             rowLengthPx += 39 * m_szFontSize.cx;
             inc = 2;					//	increment mem offset by 2 each subset
             sub = 5 * m_szFontSize.cx;	//	4 char set plus one char space
             break;
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             rowLengthPx += 35 * m_szFontSize.cx;
             inc = 4;					//	increment mem offset by 4 each subset
             sub = 9 * m_szFontSize.cx;	//	8 char set plus one char space
@@ -552,16 +559,16 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     const char* sHeader;
     switch (m_nDataSize)
     {
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             sHeader = "          0        4        8        c";
             break;
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             sHeader = "          0    2    4    6    8    a    c    e";
             break;
         default:
-            m_nDataSize = EightBit;
-            // fallthrough to EightBit
-        case EightBit:
+            m_nDataSize = ra::ComparisonVariableSize::EightBit;
+            // fallthrough to ra::ComparisonVariableSize::EightBit
+        case ra::ComparisonVariableSize::EightBit:
             sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
             break;
     }
@@ -625,15 +632,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
                 {
-                    case EightBit:
+                    case ra::ComparisonVariableSize::EightBit:
                         for (int j = 0; j < 16; ++j)
                             ptr += wsprintf(ptr, TEXT("%02x "), data[j]);
                         break;
-                    case SixteenBit:
+                    case ra::ComparisonVariableSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
                             ptr += wsprintf(ptr, TEXT("%02x%02x "), data[j + 1], data[j]);
                         break;
-                    case ThirtyTwoBit:
+                    case ra::ComparisonVariableSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
                             ptr += wsprintf(ptr, TEXT("%02x%02x%02x%02x "), data[j + 3], data[j + 2], data[j + 1], data[j]);
                         break;
@@ -645,18 +652,18 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride{};
                     switch (m_nDataSize)
                     {
-                        case EightBit:
+                        case ra::ComparisonVariableSize::EightBit:
                             ptr = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
                             stride = 2;
                             break;
-                        case SixteenBit:
+                        case ra::ComparisonVariableSize::SixteenBit:
                             ptr = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
                             stride = 4;
                             break;
-                        case ThirtyTwoBit:
+                        case ra::ComparisonVariableSize::ThirtyTwoBit:
                             ptr = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
                             stride = 8;
                             break;
@@ -696,18 +703,18 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride{};
                             switch (m_nDataSize)
                             {
-                                case EightBit:
+                                case ra::ComparisonVariableSize::EightBit:
                                     ptr = bufferNative + 10 + 3 * j;
                                     stride = 2;
                                     break;
-                                case SixteenBit:
+                                case ra::ComparisonVariableSize::SixteenBit:
                                     ptr = bufferNative + 10 + 5 * (j / 2);
                                     stride = 4;
                                     break;
-                                case ThirtyTwoBit:
+                                case ra::ComparisonVariableSize::ThirtyTwoBit:
                                     ptr = bufferNative + 10 + 9 * (j / 4);
                                     stride = 8;
                                     break;
@@ -794,6 +801,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             GenerateResizes(hDlg);
 
+            // TODO: make all controls data members later as managed handles
+            //       Mainly so we only have to call GetDlgItem during OnInitDialog (WM_INITDIALOG)
             CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED);
             CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_SEARCHRANGE), FALSE);
@@ -803,17 +812,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), NativeStr(COMPARISONTYPE_STR[i]).c_str());
+            for (auto& comptype_name : ra::COMPARISONTYPE_STR)
+                ComboBox_AddString(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), comptype_name);
 
-            ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
+            ComboBox_SetCurSel(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 
-            EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
+            EnableWindow(::GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
 
             SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT("0x0000"));
 
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
+            SetWindowFont(::GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockFont(SYSTEM_FIXED_FONT), TRUE);
+            SetWindowFont(::GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockFont(SYSTEM_FIXED_FONT), TRUE);
 
             //	8-bit by default:
             CheckDlgButton(hDlg, IDC_RA_CBO_4BIT, BST_UNCHECKED);
@@ -838,7 +847,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 Col.iOrder = i;
                 Col.iSubItem = i;
-                Col.pszText = _T("Search Result");
+                ra::tstring myText{ _T("Search Result") };
+                Col.pszText = myText.data();
                 Col.cx = rc.right - rc.left - 24;
                 ListView_InsertColumn(GetDlgItem(hDlg, IDC_RA_MEM_LIST), i, &Col);
             }
@@ -873,34 +883,46 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 if (pDIS->itemID == -1)
                     break;
 
-                if (m_SearchResults.size() > 0)
+                if (!m_SearchResults.empty())
                 {
-                    TCHAR buffer[1024];
-
-                    if (pDIS->itemID < 2)
+                    // TBD: Make a dynamic overload for UpdateSearchResult and/or makes this message be processed by
+                    //      it's own delegate/callback. -Samer
+                    if (TCHAR buffer[1024]{}; pDIS->itemID < 2U)
                     {
-                        if (pDIS->itemID == 0)
+                        if (pDIS->itemID == 0U)
                         {
-                            const std::string& sFirstLine = m_SearchResults[m_nPage].m_results.Summary();
-                            if (sFirstLine.empty())
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), "Invalid Range");
+                            if (const auto& sFirstLine{ m_SearchResults[m_nPage].m_results.Summary()
+                                }; sFirstLine.empty())
+                            {
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), _T("Invalid Range"));
+                            }
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), sFirstLine.c_str());
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), NativeStr(sFirstLine).c_str());
                         }
                         else
                         {
-                            SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            unsigned int nMatches = m_SearchResults[m_nPage].m_results.MatchingAddressCount();
-                            if (nMatches > MIN_RESULTS_TO_DUMP)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches! (Displaying first %u results)"), nMatches, MIN_RESULTS_TO_DUMP);
-                            else if (nMatches == 0)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found *ZERO* matches!"));
+                            // https://docs.microsoft.com/en-us/windows/desktop/api/wingdi/nf-wingdi-settextcolor
+                            // https://docs.microsoft.com/en-us/windows/desktop/controls/wm-drawitem
+                            if (::SetTextColor(pDIS->hDC, RGB(0, 100, 150)) == CLR_INVALID)
+                                return 0;
+
+                            if (const auto nMatches{ m_SearchResults[m_nPage].m_results.MatchingAddressCount()
+                                }; nMatches > MIN_RESULTS_TO_DUMP)
+                            {
+                                _stprintf_s(buffer, sizeof(buffer),
+                                    _T("Found %u matches! (Displaying first %zu results)"), nMatches,
+                                    MIN_RESULTS_TO_DUMP);
+                            }
+                            else if (nMatches == 0U)
+                                _stprintf_s(buffer, sizeof(buffer), _T("%Ts"), _T("Found *ZERO* matches!"));
                             else
                                 _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches!"), nMatches);
                         }
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-                        SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
+                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        if (::SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT)) == CLR_INVALID)
+                            return 0;
                     }
                     else
                     {
@@ -909,7 +931,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if (!currentSearch.m_results.GetMatchingAddress(pDIS->itemID - 2, result))
                             break;
 
-                        unsigned int nVal = 0;
+                        auto nVal{ 0U };
                         UpdateSearchResult(result, nVal, buffer);
 
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
@@ -1033,7 +1055,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (g_MemManager.TotalBankSize() == 0)
                         return TRUE;	//	Handled
 
-                    ComparisonType nCmpType = static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
+                    const auto nCmpType{
+                        ra::itoe<ra::ComparisonType>(ComboBox_GetCurSel(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)))
+                    };
 
                     while (m_SearchResults.size() > m_nPage + 1)
                         m_SearchResults.pop_back();
@@ -1090,7 +1114,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             sr.m_nLastQueryVal == srPrevious.m_nLastQueryVal)
                         {
                             // comparing against last value for non-equals case may result in different match highlights, keep it.
-                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ComparisonType::Equals)
+                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ra::ComparisonType::Equals)
                             {
                                 m_SearchResults.erase(m_SearchResults.end() - 1);
                                 m_nPage--;
@@ -1108,21 +1132,21 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 return TRUE;
 
                 case IDC_RA_MEMVIEW8BIT:
-                    MemoryViewerControl::SetDataSize(EightBit);
+                    MemoryViewerControl::SetDataSize(ra::ComparisonVariableSize::EightBit);
                     MemoryViewerControl::destroyEditCaret();
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT("Bits: 7 6 5 4 3 2 1 0"));
                     UpdateBits();
                     return FALSE;
 
                 case IDC_RA_MEMVIEW16BIT:
-                    MemoryViewerControl::SetDataSize(SixteenBit);
+                    MemoryViewerControl::SetDataSize(ra::ComparisonVariableSize::SixteenBit);
                     MemoryViewerControl::destroyEditCaret();
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
                     return FALSE;
 
                 case IDC_RA_MEMVIEW32BIT:
-                    MemoryViewerControl::SetDataSize(ThirtyTwoBit);
+                    MemoryViewerControl::SetDataSize(ra::ComparisonVariableSize::ThirtyTwoBit);
                     MemoryViewerControl::destroyEditCaret();
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
@@ -1133,15 +1157,15 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_CBO_16BIT:
                 case IDC_RA_CBO_32BIT:
                 {
-                    ComparisonVariableSize nCompSize = Nibble_Lower;	//	or upper, doesn't really matter
+                    auto nCompSize = ra::ComparisonVariableSize::Nibble_Lower;	//	or upper, doesn't really matter
                     if (SendDlgItemMessage(hDlg, IDC_RA_CBO_8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = EightBit;
+                        nCompSize = ra::ComparisonVariableSize::EightBit;
                     else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = SixteenBit;
+                        nCompSize = ra::ComparisonVariableSize::SixteenBit;
                     else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_32BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = ThirtyTwoBit;
+                        nCompSize = ra::ComparisonVariableSize::ThirtyTwoBit;
                     else // if (SendDlgItemMessage(hDlg, IDC_RA_CBO_4BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = Nibble_Lower;
+                        nCompSize = ra::ComparisonVariableSize::Nibble_Lower;
 
                     ClearLogOutput();
                     m_nPage = 0;
@@ -1558,7 +1582,7 @@ void Dlg_Memory::Invalidate()
     if (hList != nullptr)
     {
         InvalidateRect(hList, nullptr, FALSE);
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == ra::EmulatorID::RA_Libretro)
             UpdateWindow(hList);
     }
 }
@@ -1567,7 +1591,7 @@ void Dlg_Memory::UpdateBits() const
 {
     TCHAR sNewValue[64] = _T("");
 
-    if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == EightBit)
+    if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == ra::ComparisonVariableSize::EightBit)
     {
         ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
         unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
@@ -1635,6 +1659,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
 {
     switch (g_ConsoleID)
     {
+        using ra::ConsoleID;
         case ConsoleID::NES:
             // $0000-$07FF are the 2KB internal RAM for the NES. It's mirrored every 2KB until $1FFF.
             start = 0x0000;
@@ -1699,6 +1724,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 {
     switch (g_ConsoleID)
     {
+        using ra::ConsoleID;
         case ConsoleID::NES:
             // $4020-$FFFF is cartridge memory and subranges will vary by mapper. The most common mappers reference
             // battery-backed RAM or additional work RAM in the $6000-$7FFF range. $8000-$FFFF is usually read-only.
@@ -1739,7 +1765,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 
         case ConsoleID::N64:
             // This range contains the extra 4MB provided by the Expansion Pak.
-            // Only avaliable when memory size is greater than 4MB.
+            // Only available when memory size is greater than 4MB.
             if (g_MemManager.TotalBankSize() > 0x400000)
             {
                 start = 0x400000;
@@ -1839,20 +1865,20 @@ void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& r
 
     switch (result.nSize)
     {
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
             break;
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
             break;
         default:
-        case EightBit:
+        case ra::ComparisonVariableSize::EightBit:
             _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
             break;
-        case Nibble_Lower:
+        case ra::ComparisonVariableSize::Nibble_Lower:
             _stprintf_s(buffer, sizeof(buffer), _T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
             break;
-        case Nibble_Upper:
+        case ra::ComparisonVariableSize::Nibble_Upper:
             _stprintf_s(buffer, sizeof(buffer), _T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
             break;
     }
@@ -1860,18 +1886,18 @@ void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& r
 
 bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal)
 {
-    unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ?
-        nPrevVal : m_SearchResults[m_nPage].m_nLastQueryVal;
+    unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ? nPrevVal
+                                                                   : m_SearchResults[m_nPage].m_nLastQueryVal;
     bool bResult = false;
 
     switch (m_SearchResults[m_nPage].m_nCompareType)
     {
-        case Equals:				bResult = (nCurVal == nVal);    break;
-        case LessThan:				bResult = (nCurVal < nVal);     break;
-        case LessThanOrEqual:		bResult = (nCurVal <= nVal);    break;
-        case GreaterThan:			bResult = (nCurVal > nVal);     break;
-        case GreaterThanOrEqual:	bResult = (nCurVal >= nVal);    break;
-        case NotEqualTo:			bResult = (nCurVal != nVal);    break;
+        case ra::ComparisonType::Equals:             bResult = (nCurVal == nVal); break;
+        case ra::ComparisonType::LessThan:           bResult = (nCurVal < nVal);  break;
+        case ra::ComparisonType::LessThanOrEqual:    bResult = (nCurVal <= nVal); break;
+        case ra::ComparisonType::GreaterThan:        bResult = (nCurVal > nVal);  break;
+        case ra::ComparisonType::GreaterThanOrEqual: bResult = (nCurVal >= nVal); break;
+        case ra::ComparisonType::NotEqualTo:         bResult = (nCurVal != nVal); break;
         default:
             bResult = false;
             break;
@@ -1887,5 +1913,5 @@ void Dlg_Memory::GenerateResizes(HWND hDlg)
     pDlgMemoryMin.y = windowRect.Height();
 
     vDlgMemoryResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ResizeContent::ALIGN_BOTTOM, TRUE));
+        GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ra::AlignType::BOTTOM, TRUE));
 }

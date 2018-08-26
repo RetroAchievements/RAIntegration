@@ -146,7 +146,7 @@ private:
 
     std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;
-    ComparisonVariableSize m_nSize = EightBit;
+    ra::ComparisonVariableSize m_nSize = ra::ComparisonVariableSize::EightBit;
 
     std::vector<unsigned int> m_vMatchingAddresses;
     bool m_bUnfiltered = false;

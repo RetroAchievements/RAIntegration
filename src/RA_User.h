@@ -7,26 +7,31 @@
 //////////////////////////////////////////////////////////////////////////
 //	RAUser
 
-typedef struct
+struct RAMessage
 {
     char m_Sender[256];
     char m_sDateSent[256];
     char m_sTitle[256];
     char m_sMessage[256];
     BOOL m_bRead;
-} RAMessage;
+};
 
 class RequestObject;
 
-enum ActivityType
+namespace ra {
+
+enum class ActivityType
 {
-    ActivityTypeUnknown = 0,	//	DO NOT USE
-    PlayerEarnedAchievement,	//	DO NOT USE: handled at PHP level
-    PlayerLoggedIn,				//	DO NOT USE: handled at PHP level
+    ActivityTypeUnknown,     //	DO NOT USE
+    PlayerEarnedAchievement, // DO NOT USE: handled at PHP level
+    PlayerLoggedIn,          // DO NOT USE: handled at PHP level
     PlayerStartedPlaying,
     UserUploadedAchievement,
-    UserModifiedAchievement,
+    UserModifiedAchievement
 };
+
+} // namespace ra
+
 
 
 class RAUser
@@ -80,7 +85,7 @@ public:
 
     BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
 
-    void PostActivity(ActivityType nActivityType);
+    void PostActivity(ra::ActivityType nActivityType);
 
     void Clear();
 

@@ -2,14 +2,15 @@
 #define RA_IMAGEFACTORY_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 //////////////////////////////////////////////////////////////////////////
 //	Image Factory
 
-extern void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH);
-extern void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest);
-extern void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest);
+// TBD: Should we reduce params by using WICRect/RECT?
+void DrawImage(_In_ HDC hDC, _In_ HBITMAP hBitmap, _In_ int nX, _In_ int nY, _In_ int nW, _In_ int nH);
+void DrawImageTiled(_In_ HDC hDC, _In_ HBITMAP hBitmap, _Inout_ RECT& rcSource, _In_ const RECT& rcDest);
+void DrawImageStretched(_In_ HDC hDC, _In_ HBITMAP hBitmap, _In_ const RECT& rcSource, _In_ const RECT& rcDest);
 
 
 #endif // !RA_IMAGEFACTORY_H

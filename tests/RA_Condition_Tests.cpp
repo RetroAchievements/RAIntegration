@@ -20,7 +20,7 @@ public:
         Assert::AreEqual(nExpectedRawValue, var.RawValue(), wsSerialized.c_str());
     }
 
-    void AssertCondition(const Condition& cond, Condition::ConditionType nExpectedType, ComparisonType nExpectedComparison, unsigned int nExpectedRequiredHits, const char* sSerialized)
+    void AssertCondition(const Condition& cond, ConditionType nExpectedType, ComparisonType nExpectedComparison, unsigned int nExpectedRequiredHits, const char* sSerialized)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         Assert::AreEqual(nExpectedType, cond.GetConditionType(), wsSerialized.c_str());
@@ -28,7 +28,7 @@ public:
         Assert::AreEqual(nExpectedRequiredHits, cond.RequiredHits(), wsSerialized.c_str());
     }
 
-    void AssertParseCondition(const char* sSerialized, Condition::ConditionType nExpectedConditionType,
+    void AssertParseCondition(const char* sSerialized, ConditionType nExpectedConditionType,
         ComparisonVariableType nExpectedLeftType, ComparisonVariableSize nExpectedLeftSize, unsigned int nExpectedLeftValue,
         ComparisonType nExpectedComparison,
         ComparisonVariableType nExpectedRightType, ComparisonVariableSize nExpectedRightSize, unsigned int nExpectedRightValue,
@@ -63,56 +63,56 @@ public:
     {
         // different comparisons
         AssertParseCondition("0xH1234=8",
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234==8",
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234!=8",
-            Condition::Standard, Address, EightBit, 0x1234U, NotEqualTo, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::NotEqualTo, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234<8",
-            Condition::Standard, Address, EightBit, 0x1234U, LessThan, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::LessThan, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234<=8",
-            Condition::Standard, Address, EightBit, 0x1234U, LessThanOrEqual, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::LessThanOrEqual, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234>8",
-            Condition::Standard, Address, EightBit, 0x1234U, GreaterThan, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::GreaterThan, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("0xH1234>=8",
-            Condition::Standard, Address, EightBit, 0x1234U, GreaterThanOrEqual, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::GreaterThanOrEqual, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
 
         // delta
         AssertParseCondition("d0xH1234=8",
-            Condition::Standard, DeltaMem, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::Standard, ComparisonVariableType::DeltaMem, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
 
         // flags
         AssertParseCondition("R:0xH1234=8",
-            Condition::ResetIf, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::ResetIf, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("P:0xH1234=8",
-            Condition::PauseIf, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::PauseIf, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("A:0xH1234=8",
-            Condition::AddSource, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::AddSource, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("B:0xH1234=8",
-            Condition::SubSource, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::SubSource, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
         AssertParseCondition("C:0xH1234=8",
-            Condition::AddHits, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 0);
+            ConditionType::AddHits, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 0);
 
         // hit count
         AssertParseCondition("0xH1234=8(1)",
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 1);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 1);
         AssertParseCondition("0xH1234=8.1.", // legacy format
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 1);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 1);
         AssertParseCondition("0xH1234=8(100)",
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 8U, 100);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::ValueComparison, ComparisonVariableSize::EightBit, 8U, 100);
     }
 
     TEST_METHOD(TestParseConditionMemoryComparisonHexValue)
     {
         // hex value is interpreted as a 16-bit memory reference
         AssertParseCondition("0xH1234=0x80",
-            Condition::Standard, Address, EightBit, 0x1234U, Equals, Address, SixteenBit, 0x80U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::EightBit, 0x1234U, ComparisonType::Equals, ComparisonVariableType::Address, ComparisonVariableSize::SixteenBit, 0x80U, 0);
     }
 
     TEST_METHOD(TestParseConditionMemoryComparisonMemory)
     {
         AssertParseCondition("0xL1234!=0xU3456",
-            Condition::Standard, Address, Nibble_Lower, 0x1234U, NotEqualTo, Address, Nibble_Upper, 0x3456U, 0);
+            ConditionType::Standard, ComparisonVariableType::Address, ComparisonVariableSize::Nibble_Lower, 0x1234U, ComparisonType::NotEqualTo, ComparisonVariableType::Address, ComparisonVariableSize::Nibble_Upper, 0x3456U, 0);
     }
 
     TEST_METHOD(TestSerialize)
@@ -144,39 +144,39 @@ public:
     TEST_METHOD(TestConditionSet)
     {
         Condition cond;
-        AssertCondition(cond, Condition::Standard, Equals, 0, "");
+        AssertCondition(cond, ConditionType::Standard, ComparisonType::Equals, 0, "");
 
-        cond.SetCompareType(NotEqualTo);
-        AssertCondition(cond, Condition::Standard, NotEqualTo, 0, "NotEqualTo");
+        cond.SetCompareType(ComparisonType::NotEqualTo);
+        AssertCondition(cond, ConditionType::Standard, ComparisonType::NotEqualTo, 0, "ComparisonType::NotEqualTo");
 
-        cond.SetConditionType(Condition::ResetIf);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 0, "ResetIf");
+        cond.SetConditionType(ConditionType::ResetIf);
+        AssertCondition(cond, ConditionType::ResetIf, ComparisonType::NotEqualTo, 0, "ResetIf");
 
         cond.SetRequiredHits(5);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 5, "5");
+        AssertCondition(cond, ConditionType::ResetIf, ComparisonType::NotEqualTo, 5, "5");
     }
 
     TEST_METHOD(TestConditionType)
     {
-        Condition::ConditionType types[] = {
-            Condition::Standard,
-            Condition::ResetIf,
-            Condition::PauseIf,
-            Condition::AddSource,
-            Condition::SubSource,
-            Condition::AddHits,
+        ConditionType types[] = {
+            ConditionType::Standard,
+            ConditionType::ResetIf,
+            ConditionType::PauseIf,
+            ConditionType::AddSource,
+            ConditionType::SubSource,
+            ConditionType::AddHits,
         };
 
-        for (auto type : types)
+        for (auto& type : types)
         {
             Condition cond;
             cond.SetConditionType(type);
 
-            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::ResetIf));
-            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::PauseIf));
-            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::AddSource));
-            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::SubSource));
-            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::AddHits));
+            Assert::AreEqual(cond.IsResetCondition(), (type == ConditionType::ResetIf));
+            Assert::AreEqual(cond.IsPauseCondition(), (type == ConditionType::PauseIf));
+            Assert::AreEqual(cond.IsAddCondition(), (type == ConditionType::AddSource));
+            Assert::AreEqual(cond.IsSubCondition(), (type == ConditionType::SubSource));
+            Assert::AreEqual(cond.IsAddHitsCondition(), (type == ConditionType::AddHits));
         }
     }
 

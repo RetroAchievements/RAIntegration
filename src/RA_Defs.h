@@ -2,9 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-
-
-
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -27,7 +24,6 @@
     #define NOWINOFFSETS
     #define NOWINSTYLES
 */
-
 
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
@@ -53,7 +49,7 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
-
+struct IUnknown; 
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -64,18 +60,11 @@
 
 #include <tchar.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
-
 #include <map>
 #include <array>
 #include <sstream>
 #include <queue>
-#include "ra_utility.h"
-
+#include "ra_utility.h" /* this has to be on the bottom */
 
 #ifndef RA_EXPORTS
 #include <cassert> 
@@ -85,57 +74,21 @@
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-
-
-
-//	RA-Only
-
-
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-#pragma warning(push, 1)
-// This is not needed the most recent version
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
-//	RA-Only
+#define RAPIDJSON_NOMEMBERITERATORCLASS
+
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
 #include <rapidjson/filestream.h>
-#include <rapidjson/stringbuffer.h>
 #include <rapidjson/error/en.h>
-#pragma warning(pop)
 
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
-#pragma warning(pop)
-
 
 using namespace std::string_literals;
-//using namespace std::chrono_literals; we could use this later
 
 #endif	//RA_EXPORTS
-
-
-// Maybe an extra check just in-case
-
-#define _NORETURN            [[noreturn]]
-
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-#define _CONSTANT_VAR        inline constexpr auto
-#else
-#define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecated)
-#define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
-#define _FALLTHROUGH         __fallthrough//; you need ';' at the end
-#define _UNUSED              
-#define _CONSTANT_VAR        constexpr auto
-#endif // _HAS_CXX17        
-
-#define _CONSTANT_LOC constexpr // local vars can't be inline
-#define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
@@ -157,11 +110,8 @@ using namespace std::string_literals;
 #define RA_TITLES_FILENAME				RA_DIR_DATA##"gametitles.txt"
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
 
-
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
 #define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
-
-
 
 //namespace RA
 //{
@@ -182,27 +132,24 @@ public:
     inline int Height() const { return(bottom - top); }
 };
 
+namespace ra {
+
+enum class AlignType { NO_ALIGN, RIGHT, BOTTOM, BOTTOM_RIGHT };
+
+} // namespace ra
+
 class ResizeContent
 {
 public:
-    enum AlignType
-    {
-        NO_ALIGN,
-        ALIGN_RIGHT,
-        ALIGN_BOTTOM,
-        ALIGN_BOTTOM_RIGHT
-    };
-
-public:
-    HWND hwnd;
+    HWND hwnd{};
     POINT pLT;
     POINT pRB;
-    AlignType nAlignType;
-    int nDistanceX;
-    int nDistanceY;
-    bool bResize;
+    ra::AlignType nAlignType{};
+    int nDistanceX{};
+    int nDistanceY{};
+    bool bResize{};
 
-    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
+    ResizeContent(HWND parentHwnd, HWND contentHwnd, ra::AlignType newAlignType, bool isResize)
     {
         hwnd = contentHwnd;
         nAlignType = newAlignType;
@@ -234,15 +181,15 @@ public:
 
         switch (nAlignType)
         {
-            case ResizeContent::ALIGN_RIGHT:
+            case ra::AlignType::RIGHT:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
                 break;
-            case ResizeContent::ALIGN_BOTTOM:
+            case ra::AlignType::BOTTOM:
                 xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
-            case ResizeContent::ALIGN_BOTTOM_RIGHT:
+            case ra::AlignType::BOTTOM_RIGHT:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
@@ -259,20 +206,22 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
+namespace ra {
 
-    NumAchievementSetTypes
-};
+enum class AchievementSetType { Core, Unofficial, Local };
+
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_ACHIEVEMENTSET_TYPES{ 3U };
+
+} // namespace enum_sizes
+} // namespace ra
 
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);
 extern BOOL DirectoryExists(const char* sPath);
 
-const int SERVER_PING_DURATION = 2 * 60;
+_CONSTANT_VAR SERVER_PING_DURATION{ 2 * 60 };
 //};
 //using namespace RA;
 
@@ -309,12 +258,9 @@ _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
-_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 
 } // namespace ra
-
-
-
 
 #ifdef UNICODE
 #define NativeStr(x) ra::Widen(x)

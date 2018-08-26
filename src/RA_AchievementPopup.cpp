@@ -2,27 +2,32 @@
 
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
+#include "RA_Interface.h"
+#include "ra_utility.h"
 
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#endif // WIN32_LEAN_AND_MEAN
+#ifndef _MEMORY_
+#include <memory>
+#endif // !_MEMORY_
 
+#ifndef _INC_MMSYSTEM
+#include <MMSystem.h> // PlaySound
+#endif // !WIN32_LEAN_AND_MEAN
 
+namespace ra {
 
-namespace {
-const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
-const TCHAR* FONT_TO_USE = _T("Tahoma");
+_CONSTANT_VAR POPUP_DIST_Y_TO_PCT   = 0.856F; // Where on screen to end up
+_CONSTANT_VAR POPUP_DIST_Y_FROM_PCT = 0.4F;   // Amount of screens to travel
+_CONSTANT_VAR FONT_TO_USE           = _T("Tahoma");
 
-const int FONT_SIZE_TITLE = 32;
-const int FONT_SIZE_SUBTITLE = 28;
+_CONSTANT_VAR FONT_SIZE_TITLE    = 32;
+_CONSTANT_VAR FONT_SIZE_SUBTITLE = 28;
 
-const float START_AT = 0.0f;
-const float APPEAR_AT = 0.8f;
-const float FADEOUT_AT = 4.2f;
-const float FINISH_AT = 5.0f;
+_CONSTANT_VAR START_AT   = 0.0F;
+_CONSTANT_VAR APPEAR_AT  = 0.8F;
+_CONSTANT_VAR FADEOUT_AT = 4.2F;
+_CONSTANT_VAR FINISH_AT  = 5.0F;
 
-const TCHAR* MSG_SOUND[] =
+inline constexpr std::array<LPCTSTR, enum_sizes::NUM_MESSAGE_TYPES> MSG_SOUND
 {
     _T("./Overlay/login.wav"),
     _T("./Overlay/info.wav"),
@@ -32,35 +37,31 @@ const TCHAR* MSG_SOUND[] =
     _T("./Overlay/lbcancel.wav"),
     _T("./Overlay/message.wav"),
 };
-static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
-}
 
-AchievementPopup::AchievementPopup() :
-    m_fTimer(0.0f)
-{
-}
+} // namespace ra
 
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    PlaySound(MSG_SOUND[ActiveMessage().Type()], nullptr, SND_FILENAME | SND_ASYNC);
+    const auto myType{ ActiveMessage().Type() };
+    PlaySound(ra::MSG_SOUND.at(ra::etoi(myType)), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
-void AchievementPopup::AddMessage(const MessagePopup& msg)
+void AchievementPopup::AddMessage(const MessagePopup& msg) noexcept
 {
     m_vMessages.push(msg);
     PlayAudio();
 }
 
-void AchievementPopup::Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused)
+void AchievementPopup::Update(ControllerInput& input, float fDelta, bool bFullScreen, bool bPaused)
 {
     if (bPaused)
         fDelta = 0.0F;
     fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
-    if (m_vMessages.size() > 0)
+    if (!m_vMessages.empty())
     {
         m_fTimer += fDelta;
-        if (m_fTimer >= FINISH_AT)
+        if (m_fTimer >= ra::FINISH_AT)
         {
             m_vMessages.pop();
             m_fTimer = 0.0F;
@@ -70,32 +71,19 @@ void AchievementPopup::Update(ControllerInput input, float fDelta, bool bFullScr
 
 float AchievementPopup::GetYOffsetPct() const
 {
-    float fVal = 0.0f;
-
-    if (m_fTimer < APPEAR_AT)
-    {
-        //	Fading in.
-        float fDelta = (APPEAR_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = fDelta;
-    }
-    else if (m_fTimer < FADEOUT_AT)
-    {
-        //	Faded in - held
-        fVal = 0.0f;
-    }
-    else if (m_fTimer < FINISH_AT)
-    {
-        //	Fading out
-        float fDelta = (FADEOUT_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = (fDelta);
-    }
+    float fVal{ 0.0F };
+    //	Fading in.
+    if (m_fTimer < ra::APPEAR_AT)
+        fVal = ra::sqr(ra::APPEAR_AT - m_fTimer); // Quadratic
+    //	Faded in - held
+    else if (m_fTimer < ra::FADEOUT_AT)
+        fVal = 0.0F;
+    //	Fading out
+    else if (m_fTimer < ra::FINISH_AT)
+        fVal = ra::sqr(ra::FADEOUT_AT - m_fTimer); // Quadratic
+    //	Finished!
     else
-    {
-        //	Finished!
-        fVal = 1.0f;
-    }
+        fVal = 1.0F;
 
     return fVal;
 }
@@ -105,30 +93,49 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     if (!MessagesPresent())
         return;
 
-    const int nPixelWidth = rcDest.right - rcDest.left;
+    const auto nPixelWidth{ rcDest.right - rcDest.left };
 
     //SetBkColor( hDC, RGB( 0, 212, 0 ) );
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
     SetTextColor(hDC, COL_POPUP);
 
-    HFONT hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, FONT_TO_USE);
+    // RAII looks like it can be applied here easily
+    auto font_deleter =[](HFONT hfont) noexcept
+    {
+        if (hfont)
+        {
+            DeleteFont(hfont);
+            hfont = nullptr;
+        }
+    };
+    // TBD: Can't use decltype(&DeleteFont) because it's a macro so we used a lambda instead, later there will be a
+    // generic class for all HGDIOBJs except HDC that one will have it's own class. Sets destruction at resource
+    // acquisition. -Samer
+    using font_handle = std::unique_ptr<HFONT__, decltype(font_deleter)>;   
+    font_handle hFontTitle
+    {
+        CreateFont(ra::FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,
+        DEFAULT_PITCH, ra::FONT_TO_USE), font_deleter
+    };
 
-    HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, FONT_TO_USE);
+    font_handle hFontDesc
+    {
+        CreateFont(ra::FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,
+        DEFAULT_PITCH, ra::FONT_TO_USE), font_deleter
+    };
 
-    int nTitleX = 10;
-    int nDescX = nTitleX + 2;
+    auto nTitleX{ 10 };
+    auto nDescX{ nTitleX + 2 };
 
-    const int nHeight = rcDest.bottom - rcDest.top;
+    const auto nHeight{ rcDest.bottom - rcDest.top };
 
-    float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(nHeight));
-    fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(nHeight));
+    auto fFadeInY{ GetYOffsetPct() * (ra::POPUP_DIST_Y_FROM_PCT * ra::to_floating(nHeight)) };
+    fFadeInY += (ra::POPUP_DIST_Y_TO_PCT * ra::to_floating(nHeight));
 
-    const int nTitleY = static_cast<int>(fFadeInY);
-    const int nDescY = nTitleY + 32;
+    const auto nTitleY{ ra::ftoi(fFadeInY) };
+    const auto nDescY{ nTitleY + 32 };
 
     HBITMAP hBitmap = ActiveMessage().Image();
     if (hBitmap != nullptr)
@@ -139,43 +146,52 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
         nDescX += 64 + 4;
     }
 
-    const std::string sTitle = std::string(" " + ActiveMessage().Title() + " ");
-    const std::string sSubTitle = std::string(" " + ActiveMessage().Subtitle() + " ");
+    const auto sTitle{ " " + ActiveMessage().Title() + " " };
+    const auto sSubTitle{ " " + ActiveMessage().Subtitle() + " " };
 
-    SelectObject(hDC, hFontTitle);
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), sTitle.length());
-    SIZE szTitle = { 0, 0 };
-    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &szTitle);
+    SelectFont(hDC, hFontTitle.get());
+    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), ra::strlen_as_int(sTitle));
 
-    SIZE szAchievement = { 0, 0 };
-    if (ActiveMessage().Subtitle().length() > 0)
+    auto lpszTitle{ std::make_unique<SIZE>() };
+    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), ra::strlen_as_int(sTitle), lpszTitle.get());
+
+    auto lpszAchievement{ std::make_unique<SIZE>() };
+    if (!ActiveMessage().Subtitle().empty())
     {
-        SelectObject(hDC, hFontDesc);
-        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), sSubTitle.length());
-        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), &szAchievement);
+        SelectFont(hDC, hFontDesc.get());
+        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), ra::strlen_as_int(sSubTitle));
+        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), ra::strlen_as_int(sSubTitle), lpszAchievement.get());
     }
 
-    HGDIOBJ hPen = CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);
-    SelectObject(hDC, hPen);
-
-    MoveToEx(hDC, nTitleX, nTitleY + szTitle.cy, nullptr);
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy);	//	right
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);			//	up
-
-    if (ActiveMessage().Subtitle().length() > 0)
+    auto pen_deleter = [](HPEN hpen) noexcept
     {
-        MoveToEx(hDC, nDescX, nDescY + szAchievement.cy, nullptr);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + 1);
-    }
+        if (hpen)
+        {
+            DeletePen(hpen);
+            hpen = nullptr;
+        }
+    };
 
-    DeleteObject(hPen);
-    DeleteObject(hFontTitle);
-    DeleteObject(hFontDesc);
+    using pen_handle = std::unique_ptr<HPEN__, decltype(pen_deleter)>;
+    pen_handle hPen{ CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW), pen_deleter };
+    SelectPen(hDC, hPen.get());
+
+    MoveToEx(hDC, nTitleX, nTitleY + lpszTitle->cy, nullptr);
+    LineTo(hDC, nTitleX + lpszTitle->cx, nTitleY + lpszTitle->cy);	//	right
+    LineTo(hDC, nTitleX + lpszTitle->cx, nTitleY + 1);			//	up
+
+    if (!ActiveMessage().Subtitle().empty())
+    {
+        MoveToEx(hDC, nDescX, nDescY + lpszAchievement->cy, nullptr);
+        LineTo(hDC, nDescX + lpszAchievement->cx, nDescY + lpszAchievement->cy);
+        LineTo(hDC, nDescX + lpszAchievement->cx, nDescY + 1);
+    }
 }
 
-void AchievementPopup::Clear()
+void AchievementPopup::Clear() noexcept
 {
     while (!m_vMessages.empty())
         m_vMessages.pop();
 }
+
+

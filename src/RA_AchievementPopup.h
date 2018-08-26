@@ -2,30 +2,38 @@
 #define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
-#include "RA_Defs.h"
-#include "RA_Interface.h"
+#include <queue>
+#include "services/ImageRepository.h"
 
-#include "services\ImageRepository.h"
+namespace ra {
 
-//	Graphic to display an obtained achievement
-enum PopupMessageType
+enum class PopupMessageType
 {
-    PopupLogin,
-    PopupInfo,
-    PopupAchievementUnlocked,
-    PopupAchievementError,
-    PopupLeaderboardInfo,
-    PopupLeaderboardCancel,
-    PopupMessage,
-
-    NumMessageTypes
+    Login,
+    Info,
+    AchievementUnlocked,
+    AchievementError,
+    LeaderboardInfo,
+    LeaderboardCancel,
+    Message
 };
 
+namespace enum_sizes {
+
+inline constexpr auto NUM_MESSAGE_TYPES{ 7U };
+
+} // namespace enum_sizes
+} // namespace ra
+
+// Making this non-const with copying deleted, the rvalue references are leaking.
+//	Graphic to display an obtained achievement
 class MessagePopup
 {
 public:
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType, 
-        ra::services::ImageType nImageType, const std::string& sImageName ) :
+    MessagePopup() noexcept = default;
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
+                 ra::PopupMessageType nMsgType, ra::services::ImageType nImageType,
+                 const std::string& sImageName) noexcept :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
@@ -33,7 +41,7 @@ public:
     {
     }
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, ra::PopupMessageType nMsgType = ra::PopupMessageType::Info) noexcept :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
@@ -42,41 +50,38 @@ public:
     }
 
 public:
-    const std::string& Title() const { return m_sMessageTitle; }
-    const std::string& Subtitle() const { return m_sMessageSubtitle; }
-    PopupMessageType Type() const { return m_nMessageType; }
-    HBITMAP Image() const { return m_hMessageImage.GetHBitmap(); }
+    _NODISCARD inline auto& Title() const { return m_sMessageTitle; }
+    _NODISCARD inline auto& Subtitle() const { return m_sMessageSubtitle; }
+    _NODISCARD inline auto Type() const { return m_nMessageType; }
+    _NODISCARD inline auto Image() const { return m_hMessageImage.GetHBitmap(); }
 
 private:
-    const std::string m_sMessageTitle;
-    const std::string m_sMessageSubtitle;
-    const PopupMessageType m_nMessageType;
-    const ra::services::ImageReference m_hMessageImage;
+    std::string m_sMessageTitle;
+    std::string m_sMessageSubtitle;
+    ra::PopupMessageType m_nMessageType{ ra::PopupMessageType::Info };
+    ra::services::ImageReference m_hMessageImage;
 };
 
+struct ControllerInput;
 class AchievementPopup
 {
 public:
+    /*_NORETURN */void Update(_In_ ControllerInput& input, _In_ float fDelta, _In_ bool bFullScreen, _In_ bool bPaused);
+    /*_NORETURN */void Render(_In_ HDC hDC, _Inout_ RECT& rcDest);
 
-public:
-    AchievementPopup();
-
-    void Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused);
-    void Render(HDC hDC, RECT& rcDest);
-
-    void AddMessage(const MessagePopup& msg);
-    float GetYOffsetPct() const;
+    void AddMessage(const MessagePopup& msg) noexcept;
+    _NODISCARD float GetYOffsetPct() const;
 
     //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
-    bool MessagesPresent() const { return(m_vMessages.size() > 0); }
-    const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
+    _NODISCARD bool MessagesPresent() const { return(m_vMessages.size() > 0); }
+    _NODISCARD const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
 
-    void Clear();
+    void Clear() noexcept;
     void PlayAudio();
 
 private:
     std::queue<MessagePopup> m_vMessages;
-    float m_fTimer;
+    float m_fTimer{};
 };
 
 #endif // !RA_ACHIEVEMENTPOPUP_H

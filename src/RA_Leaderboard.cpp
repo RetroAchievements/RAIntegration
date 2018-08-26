@@ -6,15 +6,9 @@
 
 #include <ctime>
 
-RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
-    m_nID(nLeaderboardID),
-    m_bStarted(false),
-    m_bSubmitted(false),
-    m_nFormat(MemValue::Format::Value)
-{
-}
-
-RA_Leaderboard::~RA_Leaderboard()
+_Use_decl_annotations_
+RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept :
+    m_nID{ nLeaderboardID }
 {
 }
 

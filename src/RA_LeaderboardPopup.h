@@ -7,16 +7,19 @@
 
 //	Graphic to display current leaderboard progress
 
+namespace ra {
+
+enum class PopupState { ShowingProgress, ShowingScoreboard };
+
+namespace enum_sizes {
+
+_CONSTANT_VAR POPUPSTATE_MAX{ 2U };
+
+} // namespace enum_sizes
+} // namespace ra
+
 class LeaderboardPopup
 {
-public:
-    enum PopupState
-    {
-        State_ShowingProgress,
-        State_ShowingScoreboard,
-        State__MAX
-    };
-
 public:
     LeaderboardPopup();
 
@@ -33,8 +36,8 @@ private:
     float GetOffsetPct() const;
 
 private:
-    PopupState m_nState;
-    float m_fScoreboardShowTimer;
+    ra::PopupState m_nState{};
+    float m_fScoreboardShowTimer{};
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 };

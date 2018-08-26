@@ -51,7 +51,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                     args['p'] = ra::Narrow(sPassEntry);		//	Plaintext password(!)
 
                     Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
+                    if (RAWeb::DoBlockingRequest(ra::RequestType::Login, args, doc))
                     {
                         std::string sResponse;
                         std::string sResponseTitle;

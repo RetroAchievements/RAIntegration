@@ -12,24 +12,24 @@ namespace CppUnitTestFramework {
 
 // converters for asserting enum values
 
-template<> static std::wstring ToString<ComparisonVariableSize>(const ComparisonVariableSize& t)
+template<> static std::wstring ToString<ra::ComparisonVariableSize>(const ra::ComparisonVariableSize& t)
 {
-    return ra::Widen(COMPARISONVARIABLESIZE_STR[(int)t]);
+    return ra::Widen(ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ComparisonVariableType>(const ComparisonVariableType& t)
+template<> static std::wstring ToString<ra::ComparisonVariableType>(const ra::ComparisonVariableType& t)
 {
-    return ra::Widen(COMPARISONVARIABLETYPE_STR[(int)t]);
+    return ra::Widen(ra::COMPARISONVARIABLETYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
+template<> static std::wstring ToString<ra::ComparisonType>(const ra::ComparisonType& t)
 {
-    return ra::Widen(COMPARISONTYPE_STR[(int)t]);
+    return ra::Widen(ra::COMPARISONTYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
+template<> static std::wstring ToString<ra::ConditionType>(const ra::ConditionType& t)
 {
-    return ra::Widen(CONDITIONTYPE_STR[(int)t]);
+    return ra::Widen(ra::CONDITIONTYPE_STR.at(ra::etoi(t)));
 }
 
 template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)

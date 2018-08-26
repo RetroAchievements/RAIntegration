@@ -2,7 +2,7 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
-#include <WTypes.h>
+#include <ra_fwd.h>
 
 class Dlg_RichPresence
 {

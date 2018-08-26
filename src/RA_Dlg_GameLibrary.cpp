@@ -97,7 +97,8 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("MD5List"))
         {
@@ -126,7 +127,8 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
         {
@@ -154,7 +156,8 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
     if (pf != nullptr)
     {
         Document doc;
-        doc.ParseStream(FileStream(pf));
+        FileStream fs{ pf };
+        doc.ParseStream(fs);
 
         if (!doc.HasParseError() && doc.HasMember("Success") && doc["Success"].GetBool() && doc.HasMember("Response"))
         {

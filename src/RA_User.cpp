@@ -67,7 +67,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
             args['t'] = Token();		//	Plaintext password(!)
 
             Document doc;
-            if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
+            if (RAWeb::DoBlockingRequest(ra::RequestType::Login, args, doc))
             {
                 HandleSilentLoginResponse(doc);
             }
@@ -92,7 +92,7 @@ void LocalRAUser::AttemptSilentLogin()
     PostArgs args;
     args['u'] = Username();
     args['t'] = Token();
-    RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::Login, args);
 
     m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
@@ -134,10 +134,20 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
     RequestFriendList();
 
-    g_PopupWindows.AchievementPopups().AddMessage(
-        MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
-            "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-            PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
+    // this thing is still leaking...
+    std::ostringstream oss;
+    oss << "Welcome back " << Username() << " (" << nPoints << ")";
+    auto sTitle{ oss.str() };
+    oss.str("");
+    std::string sNumMsgs{ (nMessages == 1) ? "message" : "messages" };
+    oss << "You have " << nMessages << " new " << sNumMsgs << ".";
+    auto sSubTitle{ oss.str() };
+
+    // lets try something
+    MessagePopup myPopup{
+        sTitle, sSubTitle, ra::PopupMessageType::Login, ra::services::ImageType::UserPic, Username()
+    };
+    g_PopupWindows.AchievementPopups().AddMessage(std::move(myPopup));
 
     g_AchievementsDialog.OnLoad_NewRom(g_pCurrentGameData->GetGameID());
     g_AchievementEditorDialog.OnLoad_NewRom();
@@ -183,7 +193,7 @@ void LocalRAUser::RequestFriendList()
     args['u'] = Username();
     args['t'] = Token();
 
-    RAWeb::CreateThreadedHTTPRequest(RequestType::RequestFriendList, args);
+    RAWeb::CreateThreadedHTTPRequest(ra::RequestType::FriendList, args);
 }
 
 RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
@@ -207,27 +217,20 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
     return pUser;
 }
 
-void LocalRAUser::PostActivity(ActivityType nActivityType)
+void LocalRAUser::PostActivity(ra::ActivityType eActivityType)
 {
-    switch (nActivityType)
+    if (eActivityType == ra::ActivityType::PlayerStartedPlaying)
     {
-        case PlayerStartedPlaying:
-        {
-            PostArgs args;
-            args['u'] = Username();
-            args['t'] = Token();
-            args['a'] = std::to_string(nActivityType);
-            args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
+        PostArgs args;
+        args['u'] = Username();
+        args['t'] = Token();
+        args['a'] = ra::etos(eActivityType);
+        args['m'] = std::to_string(g_pCurrentGameData->GetGameID());
 
-            RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
-            break;
-        }
-
-        default:
-            //	unhandled
-            ASSERT(!"User isn't designed to handle posting this activity!");
-            break;
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::PostActivity, args);
     }
+    else //	unhandled
+        ASSERT(!"User isn't designed to handle posting this activity!");
 }
 
 void LocalRAUser::Clear()

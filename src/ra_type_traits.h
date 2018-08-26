@@ -4,7 +4,7 @@
 
 #include <utility>
 #include <ciso646>
-#include <xmemory0>
+
 
 #if _HAS_CXX17
 #ifndef _CONSTANT_VAR
@@ -69,7 +69,7 @@ struct is_lessthan_comparable : std::false_type {};
 
 template<typename LessThanComparable>
 struct is_lessthan_comparable<LessThanComparable, std::enable_if_t<std::is_convertible_v<
-    decltype(std::declval<LessThanComparable&>() == std::declval<LessThanComparable&>()), bool>>> :
+    decltype(std::declval<LessThanComparable&>() < std::declval<LessThanComparable&>()), bool>>> :
     std::true_type {};
 
 template<typename LessThanComparable>

@@ -21,9 +21,11 @@ struct ControllerInput
     BOOL m_bQuitPressed;	//	Usually Start
 };
 
-enum EmulatorID
+namespace ra {
+
+enum class EmulatorID
 {
-    RA_Gens = 0,
+    RA_Gens,
     RA_Project64,
     RA_Snes9x,
     RA_VisualboyAdvance,
@@ -32,16 +34,14 @@ enum EmulatorID
     RA_PCE,
     RA_Libretro,
     RA_Meka,
-
-    NumEmulatorIDs,
-    UnknownEmulator = NumEmulatorIDs
+    Unknown
 };
 
-//	Should match DB!
-enum ConsoleID
+/// <summary>Order should match DB!</summary>
+enum class ConsoleID
 {
-    UnknownConsoleID = 0,
-    MegaDrive = 1,	//	DB
+    Unknown,
+    MegaDrive,
     N64,
     SNES,
     GB,
@@ -93,11 +93,16 @@ enum ConsoleID
     Atari5200,
     Atari7800,
     X68K,
-    WonderSwan,
-
-    NumConsoleIDs
+    WonderSwan
 };
 
+namespace enum_sizes {
+
+inline constexpr auto NUM_EMULATOR_IDS{ 9U };
+inline constexpr auto NUM_CONSOLE_IDS{ 54U };
+
+} // namespace enum_sizes
+} // namespace ra
 
 extern bool(*_RA_GameIsActive)();
 extern void(*_RA_CauseUnpause)();

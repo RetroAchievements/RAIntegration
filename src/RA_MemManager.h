@@ -55,7 +55,7 @@ public:
     unsigned char ActiveBankRAMByteRead(ra::ByteAddress nOffs) const;
     void ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal);
 
-    unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const;
+    unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, ra::ComparisonVariableSize size) const;
 
     void ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const;
 

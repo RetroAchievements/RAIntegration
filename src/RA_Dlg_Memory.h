@@ -29,8 +29,8 @@ public:
     static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
 
-    static void SetDataSize(ComparisonVariableSize value) { m_nDataSize = value; Invalidate(); }
-    static ComparisonVariableSize GetDataSize() { return m_nDataSize; }
+    static void SetDataSize(ra::ComparisonVariableSize value) { m_nDataSize = value; Invalidate(); }
+    static ra::ComparisonVariableSize GetDataSize() { return m_nDataSize; }
 
 public:
     static unsigned short m_nActiveMemBank;
@@ -42,7 +42,7 @@ private:
     static unsigned int m_nDataStartXOffset;
     static unsigned int m_nAddressOffset;
     static unsigned int m_nWatchedAddress;
-    static ComparisonVariableSize m_nDataSize;
+    static ra::ComparisonVariableSize m_nDataSize;
     static unsigned int m_nEditAddress;
     static unsigned int m_nEditNibble;
 
@@ -57,8 +57,8 @@ struct SearchResult
 
     std::vector<unsigned int> m_modifiedAddresses;
     bool m_bUseLastValue = false;
-    unsigned int m_nLastQueryVal = 0;
-    ComparisonType m_nCompareType = Equals;
+    unsigned int m_nLastQueryVal = 0U;
+    ra::ComparisonType m_nCompareType = ra::ComparisonType::Equals;
 
     bool WasModified(unsigned int nAddress)
     {
@@ -113,7 +113,7 @@ private:
 
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;
-    ComparisonVariableSize m_nCompareSize;
+    ra::ComparisonVariableSize m_nCompareSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

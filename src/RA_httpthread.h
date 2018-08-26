@@ -4,67 +4,66 @@
 
 #include "RA_Defs.h"
 
-typedef void* HANDLE;
-typedef void* LPVOID;
+namespace ra {
 
-enum HTTPRequestMethod
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_HTTPREQUEST_METHODS{ 3 };
+_CONSTANT_VAR NUM_REQUESTTYPES{ 27 };
+_CONSTANT_VAR NUM_UPLOADTYPES{ 1 };
+
+} // namespace enum_sizes
+
+// TODO: Determine whether we still need this or put it in the source file instead
+enum class HTTPRequestMethod { Post, Get, _TerminateThread };
+
+enum class RequestType : std::size_t
 {
-    Post,
-    Get,
-    _TerminateThread,
-
-    NumHTTPRequestMethods
-};
-
-enum RequestType
-{
-    //	Login
-    RequestLogin,
+    	
+    /// <summary>Login</summary>
+    Login,
 
     //	Fetch
-    RequestScore,
-    RequestNews,
-    RequestPatch,
-    RequestLatestClientPage,
-    RequestRichPresence,
-    RequestAchievementInfo,
-    RequestLeaderboardInfo,
-    RequestCodeNotes,
-    RequestFriendList,
-    RequestBadgeIter,
-    RequestUnlocks,
-    RequestHashLibrary,
-    RequestGamesList,
-    RequestAllProgress,
-    RequestGameID,
+    Score,
+    News,
+    Patch,
+    LatestClientPage,
+    RichPresence,
+    AchievementInfo,
+    LeaderboardInfo,
+    CodeNotes,
+    FriendList,
+    BadgeIter,
+    Unlocks,
+    HashLibrary,
+    GamesList,
+    AllProgress,
+    GameID,
 
     //	Submit
-    RequestPing,
-    RequestPostActivity,
-    RequestSubmitAwardAchievement,
-    RequestSubmitCodeNote,
-    RequestSubmitLeaderboardEntry,
-    RequestSubmitAchievementData,
-    RequestSubmitTicket,
-    RequestSubmitNewTitle,
+    Ping,
+    PostActivity,
+    SubmitAwardAchievement,
+    SubmitCodeNote,
+    SubmitLeaderboardEntry,
+    SubmitAchievementData,
+    SubmitTicket,
+    SubmitNewTitle,
 
     //	Media:
-    RequestUserPic,
-    RequestBadge,
+    UserPic,
+    Badge,
 
-    //	Special:
-    StopThread,
 
-    NumRequestTypes
+    /// <summary>Special</summary>
+    StopThread
 };
 
-enum UploadType
-{
-    //	Upload:
-    RequestUploadBadgeImage,
+/// <summary>Client-to-Server upload codes</summary>
+enum class UploadType : std::size_t { RequestUploadBadgeImage };
 
-    NumUploadTypes
-};
+} // namespace ra
+
 
 extern const char* RequestTypeToString[];
 
@@ -75,13 +74,13 @@ extern std::string PostArgsToString(const PostArgs& args);
 class RequestObject
 {
 public:
-    RequestObject(RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "") :
+    RequestObject(ra::RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "") :
         m_nType(nType), m_PostArgs(PostArgs), m_sData(sData)
     {
     }
 
 public:
-    const RequestType GetRequestType() const { return m_nType; }
+    const ra::RequestType GetRequestType() const { return m_nType; }
     const PostArgs& GetPostArgs() const { return m_PostArgs; }
     const std::string& GetData() const { return m_sData; }
 
@@ -92,7 +91,7 @@ public:
     BOOL ParseResponseToJSON(Document& rDocOut);
 
 private:
-    const RequestType m_nType;
+    const ra::RequestType m_nType;
     const PostArgs m_PostArgs;
     const std::string m_sData;
 
@@ -108,7 +107,7 @@ public:
     void PushItem(RequestObject* pObj);
     void Clear();
     size_t Count() const;
-    BOOL PageRequestExists(RequestType nType, const std::string& sData) const;
+    BOOL PageRequestExists(ra::RequestType nType, const std::string& sData) const;
 
 private:
     std::deque<RequestObject*> m_aRequests;
@@ -122,17 +121,17 @@ public:
 
     static void LogJSON(const Document& doc);
 
-    static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
-    static BOOL HTTPRequestExists(RequestType nType, const std::string& sData);
-    static BOOL HTTPResponseExists(RequestType nType, const std::string& sData);
+    static void CreateThreadedHTTPRequest(ra::RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
+    static BOOL HTTPRequestExists(ra::RequestType nType, const std::string& sData);
+    static BOOL HTTPResponseExists(ra::RequestType nType, const std::string& sData);
 
-    static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut);
-    static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
+    static BOOL DoBlockingRequest(ra::RequestType nType, const PostArgs& PostData, Document& JSONResponseOut);
+    static BOOL DoBlockingRequest(ra::RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
 
     static BOOL DoBlockingHttpGet(const std::string& sRequestedPage, std::string& ResponseOut, bool bIsImageRequest);
     static BOOL DoBlockingHttpPost(const std::string& sRequestedPage, const std::string& sPostString, std::string& ResponseOut);
 
-    static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut);
+    static BOOL DoBlockingImageUpload(ra::UploadType nType, const std::string& sFilename, Document& ResponseOut);
 
     static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
 

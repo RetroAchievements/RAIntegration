@@ -11,9 +11,9 @@ static unsigned int Padding(ComparisonVariableSize size)
 {
     switch (size)
     {
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             return 3;
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             return 1;
         default:
             return 0;
@@ -22,8 +22,8 @@ static unsigned int Padding(ComparisonVariableSize size)
 
 void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, ComparisonVariableSize nSize)
 {
-    if (nSize == Nibble_Upper)
-        nSize = Nibble_Lower;
+    if (nSize == ra::ComparisonVariableSize::Nibble_Upper)
+        nSize = ra::ComparisonVariableSize::Nibble_Lower;
 
     m_nSize = nSize;
     m_bUnfiltered = true;
@@ -36,9 +36,9 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, Compa
 
     m_sSummary.reserve(64);
     m_sSummary.append("Cleared: (");
-    m_sSummary.append(COMPARISONVARIABLESIZE_STR[nSize]);
+    m_sSummary.append(ra::Narrow(ra::COMPARISONVARIABLESIZE_STR.at(ra::etoi(nSize))));
     m_sSummary.append(") mode. Aware of ");
-    if (nSize == Nibble_Lower)
+    if (nSize == ra::ComparisonVariableSize::Nibble_Lower)
         m_sSummary.append(std::to_string(nBytes * 2));
     else
         m_sSummary.append(std::to_string(nBytes));
@@ -65,17 +65,17 @@ static bool Compare(unsigned int nLeft, unsigned int nRight, ComparisonType nCom
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return nLeft == nRight;
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return nLeft < nRight;
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return nLeft <= nRight;
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return nLeft > nRight;
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return nLeft >= nRight;
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return nLeft != nRight;
         default:
             return false;
@@ -86,17 +86,17 @@ static const char* ComparisonString(ComparisonType nCompareType)
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return "EQUAL";
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return "LESS THAN";
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return "LESS THAN/EQUAL";
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return "GREATER THAN";
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return "GREATER THAN/EQUAL";
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return "NOT EQUAL";
         default:
             return "?";
@@ -107,20 +107,20 @@ static unsigned int GetValue(const unsigned char* pBuffer, unsigned int nOffset,
 {
     switch (nSize)
     {
-        case EightBit:
+        case ra::ComparisonVariableSize::EightBit:
             return pBuffer[nOffset];
 
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8);
 
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8) |
                 (pBuffer[nOffset + 2] << 16) | (pBuffer[nOffset + 3] << 24);
 
-        case Nibble_Upper:
+        case ra::ComparisonVariableSize::Nibble_Upper:
             return pBuffer[nOffset] >> 4;
 
-        case Nibble_Lower:
+        case ra::ComparisonVariableSize::Nibble_Lower:
             return pBuffer[nOffset] & 0x0F;
 
         default:
@@ -132,7 +132,7 @@ bool SearchResults::ContainsAddress(unsigned int nAddress) const
 {
     if (!m_bUnfiltered)
     {
-        if (m_nSize != Nibble_Lower)
+        if (m_nSize != ra::ComparisonVariableSize::Nibble_Lower)
             return std::binary_search(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
 
         nAddress <<= 1;
@@ -285,18 +285,18 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     ComparisonVariableSize nSize = m_nSize;
     switch (m_nSize)
     {
-        case Nibble_Lower:
+        case ra::ComparisonVariableSize::Nibble_Lower:
             ProcessBlocksNibbles(srSource, nTestValue & 0x0F, nCompareType);
             break;
 
-        case EightBit:
+        case ra::ComparisonVariableSize::EightBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
             {
                 return Compare(pMemory[nIndex], nTestValue, nCompareType);
             });
             break;
 
-        case SixteenBit:
+        case ra::ComparisonVariableSize::SixteenBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
@@ -304,7 +304,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             });
             break;
 
-        case ThirtyTwoBit:
+        case ra::ComparisonVariableSize::ThirtyTwoBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
@@ -326,19 +326,19 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 {
     m_nSize = srSource.m_nSize;
 
-    if (m_nSize == EightBit)
+    if (m_nSize == ra::ComparisonVariableSize::EightBit)
     {
         // efficient comparisons for 8-bit
         switch (nCompareType)
         {
-            case Equals:
+            case ra::ComparisonType::Equals:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] == pPrev[nIndex];
                 });
                 break;
 
-            case NotEqualTo:
+            case ra::ComparisonType::NotEqualTo:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] != pPrev[nIndex];
@@ -353,7 +353,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
                 break;
         }
     }
-    else if (m_nSize == Nibble_Lower)
+    else if (m_nSize == ra::ComparisonVariableSize::Nibble_Lower)
     {
         // special logic for nibbles
         ProcessBlocksNibbles(srSource, 0xFFFF, nCompareType);
@@ -385,7 +385,7 @@ unsigned int SearchResults::MatchingAddressCount()
     for (auto& block : m_vBlocks)
         nCount += block.GetSize() - nPadding;
 
-    if (m_nSize == Nibble_Lower)
+    if (m_nSize == ra::ComparisonVariableSize::Nibble_Lower)
         nCount *= 2;
 
     return nCount;
@@ -413,11 +413,11 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
     unsigned int nPadding = 0;
     if (m_bUnfiltered)
     {
-        if (m_nSize == Nibble_Lower)
+        if (m_nSize == ra::ComparisonVariableSize::Nibble_Lower)
         {
             result.nAddress = (nIndex >> 1) + m_vBlocks[0].GetAddress();
             if (nIndex & 1)
-                result.nSize = Nibble_Upper;
+                result.nSize = ra::ComparisonVariableSize::Nibble_Upper;
         }
         else
         {
@@ -434,10 +434,10 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
 
         result.nAddress = m_vMatchingAddresses[nIndex];
 
-        if (m_nSize == Nibble_Lower)
+        if (m_nSize == ra::ComparisonVariableSize::Nibble_Lower)
         {
             if (result.nAddress & 1)
-                result.nSize = Nibble_Upper;
+                result.nSize = ra::ComparisonVariableSize::Nibble_Upper;
 
             result.nAddress >>= 1;
         }

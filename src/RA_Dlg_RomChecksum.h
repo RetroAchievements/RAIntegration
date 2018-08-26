@@ -2,7 +2,7 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
-#include <wtypes.h>
+#include <ra_fwd.h>
 
 class RA_Dlg_RomChecksum
 {

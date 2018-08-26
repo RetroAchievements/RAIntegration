@@ -34,7 +34,8 @@ public:
     }
 
     ~ImageReference();
-    
+
+
     /// <summary>
     /// Updates the referenced image.
     /// </summary>

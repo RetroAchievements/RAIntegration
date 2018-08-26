@@ -10,8 +10,8 @@
 namespace ra {
 namespace services {
 
-constexpr char* DefaultBadge = "00000";
-constexpr char* DefaultUserPic = "_User";
+inline constexpr const char* DefaultBadge = "00000";
+inline constexpr const char* DefaultUserPic = "_User";
 
 ImageRepository g_ImageRepository;
 
@@ -161,12 +161,12 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     switch (nType)
     {
         case ImageType::Badge:
-            nRequestType = RequestBadge;
+            nRequestType = RequestType::Badge;
             args['b'] = sName;
             break;
 
         case ImageType::UserPic:
-            nRequestType = RequestUserPic;
+            nRequestType = RequestType::UserPic;
             args['u'] = sName;
             break;
 

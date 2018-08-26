@@ -28,8 +28,8 @@ void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
-                lb.Description(),
-                PopupLeaderboardInfo));
+            lb.Description(),
+            ra::PopupMessageType::LeaderboardInfo));
     }
 
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
@@ -42,9 +42,9 @@ void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) cons
     if (g_bLBDisplayNotification)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard attempt cancelled!",
-                lb.Title(),
-                PopupLeaderboardCancel));
+            MessagePopup("Leaderboard attempt canceled!",
+            lb.Title(),
+            ra::PopupMessageType::LeaderboardCancel));
     }
 }
 
@@ -57,14 +57,14 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Not posting to leaderboard: memory tamper detected!",
                 "Reset game to reenable posting.",
-                PopupInfo));
+                ra::PopupMessageType::Info));
     }
     else if (!g_bHardcoreModeActive)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard submission post cancelled.",
                 "Enable Hardcore Mode to enable posting.",
-                PopupInfo));
+                ra::PopupMessageType::Info));
     }
     else
     {
@@ -79,7 +79,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
         args['v'] = sValidationMD5;
         args['s'] = std::to_string(nValue);
 
-        RAWeb::CreateThreadedHTTPRequest(RequestSubmitLeaderboardEntry, args);
+        RAWeb::CreateThreadedHTTPRequest(ra::RequestType::SubmitLeaderboardEntry, args);
     }
 }
 
@@ -147,10 +147,10 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
 
-void RA_LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
+void RA_LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb) noexcept
 {
     if (g_bLeaderboardsActive)	//	If not, simply ignore them.
-        m_Leaderboards.push_back(lb);
+        m_Leaderboards.push_back(std::move(lb));
 }
 
 void RA_LeaderboardManager::Test()

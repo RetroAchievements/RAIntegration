@@ -2,43 +2,52 @@
 #define RA_ACHIEVEMENTOVERLAY_H
 #pragma once
 
+struct IUnknown;
 #include "RA_Achievement.h"
 #include "RA_User.h"
 #include "RA_Core.h"
-#include "RA_Interface.h"
 
-#include "services\ImageRepository.h"
+#ifndef RA_INTERFACE_H
+#include "RA_Interface.h"  
+#endif /* !RA_INTERFACE_H */
 
+#include "services/ImageRepository.h"
+
+#ifndef _MAP_
 #include <map>
+#endif /* !_MAP_ */
+
+#ifndef _STRING_
 #include <string>
+#endif /* !_STRING_ */
 
-enum OverlayPage
+namespace ra {
+
+enum class OverlayPage
 {
-    OP_ACHIEVEMENTS,
-    OP_FRIENDS,
-    OP_MESSAGES,
-    OP_NEWS,
-    OP_LEADERBOARDS,
+    Achievements,
+    Friends,
+    Messages,
+    News,
+    Leaderboards,
 
-    OP_ACHIEVEMENT_EXAMINE,
-    OP_ACHIEVEMENT_COMPARE,
-    OP_FRIEND_EXAMINE,
-    OP_FRIEND_ADD,
-    OP_LEADERBOARD_EXAMINE,
-    OP_MESSAGE_VIEWER,
-
-    NumOverlayPages
+    Achievement_Examine,
+    Achievement_Compare,
+    Friend_Examine,
+    Friend_Add,
+    Leaderboard_Examine,
+    Message_Viewer
 };
 
-enum TransitionState
-{
-    TS_OFF = 0,
-    TS_IN,
-    TS_HOLD,
-    TS_OUT,
+enum class TransitionState { Off, In, Hold, Out };
 
-    TS__MAX
-};
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_OVERLAY_PAGES{ 11U };
+_CONSTANT_VAR TS__MAX{ 4U };
+
+} // namespace enum_sizes
+} // namespace ra
 
 class LeaderboardExamine
 {
@@ -48,9 +57,9 @@ public:
     void OnReceiveData(const Document& doc);
 
 public:
-    unsigned int m_nLBID;
+    unsigned int m_nLBID{};
     //	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
-    bool m_bHasData;
+    bool m_bHasData{};
 };
 extern LeaderboardExamine g_LBExamine;
 
@@ -74,9 +83,6 @@ public:
     };
 
 public:
-    AchievementExamine();
-
-public:
     void Initialize(const Achievement* pAchIn);
     void Clear();
     void OnReceiveData(Document& doc);
@@ -91,15 +97,15 @@ public:
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
 
 private:
-    const Achievement* m_pSelectedAchievement;
+    const Achievement* m_pSelectedAchievement{};
     std::string m_CreatedDate;
     std::string m_LastModifiedDate;
 
-    bool m_bHasData;
+    bool m_bHasData{};
 
     //	Data found:
-    unsigned int m_nTotalWinners;
-    unsigned int m_nPossibleWinners;
+    unsigned int m_nTotalWinners{};
+    unsigned int m_nPossibleWinners{};
 
     std::vector<RecentWinnerData> RecentWinners;
 };
@@ -109,9 +115,6 @@ extern AchievementExamine g_AchExamine;
 class AchievementOverlay
 {
 public:
-    AchievementOverlay();
-    ~AchievementOverlay();
-
     void Initialize(HINSTANCE hInst);
 
     void Activate();
@@ -120,8 +123,8 @@ public:
     void Render(HDC hDC, RECT* rcDest) const;
     BOOL Update(ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused);
 
-    BOOL IsActive() const { return(m_nTransitionState != TS_OFF); }
-    BOOL IsFullyVisible() const { return (m_nTransitionState == TS_HOLD); }
+    BOOL IsActive() const { return(m_nTransitionState != ra::TransitionState::Off); }
+    BOOL IsFullyVisible() const { return (m_nTransitionState == ra::TransitionState::Hold); }
 
     const int* GetActiveScrollOffset() const;
     const int* GetActiveSelectedItem() const;
@@ -140,8 +143,8 @@ public:
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
-    OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
-    void AddPage(OverlayPage NewPage);
+    ra::OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
+    void AddPage(ra::OverlayPage NewPage);
     BOOL GoBack();
 
     void SelectNextTopLevelPage(BOOL bPressedRight);
@@ -151,10 +154,10 @@ public:
 public:
     struct NewsItem
     {
-        unsigned int m_nID;
+        unsigned int m_nID{};
         std::string m_sTitle;
         std::string m_sPayload;
-        time_t m_nPostedAt;
+        time_t m_nPostedAt{};
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
@@ -162,43 +165,42 @@ public:
     };
 
 private:
-    int	m_nAchievementsScrollOffset;
-    int	m_nFriendsScrollOffset;
-    int	m_nMessagesScrollOffset;
-    int	m_nNewsScrollOffset;
-    int	m_nLeaderboardScrollOffset;
+    int m_nAchievementsScrollOffset{};
+    int m_nFriendsScrollOffset{};
+    int m_nMessagesScrollOffset{};
+    int m_nNewsScrollOffset{};
+    int m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem;
-    int	m_nFriendsSelectedItem;
-    int	m_nMessagesSelectedItem;
-    int	m_nNewsSelectedItem;
-    int	m_nLeaderboardSelectedItem;
+    int m_nAchievementsSelectedItem{};
+    int m_nFriendsSelectedItem{};
+    int m_nMessagesSelectedItem{};
+    int m_nNewsSelectedItem{};
+    int m_nLeaderboardSelectedItem{};
 
-    mutable int m_nNumAchievementsBeingRendered;
-    mutable int m_nNumFriendsBeingRendered;
-    mutable int m_nNumLeaderboardsBeingRendered;
+    mutable int m_nNumAchievementsBeingRendered{};
+    mutable int m_nNumFriendsBeingRendered{};
+    mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock;	//	Waiting for pad release
-    std::vector<NewsItem>	m_LatestNews;
-    TransitionState			m_nTransitionState;
-    float					m_fTransitionTimer;
+    BOOL                  m_bInputLock{};	//	Waiting for pad release
+    std::vector<NewsItem> m_LatestNews;
+    ra::TransitionState   m_nTransitionState{};
+    float                 m_fTransitionTimer{};
 
-    OverlayPage				m_Pages[5];
-    unsigned int			m_nPageStackPointer;
+    ra::OverlayPage m_Pages[5]{};
+    unsigned int    m_nPageStackPointer{};
 
-    ra::services::ImageReference m_hOverlayBackground;
-    ra::services::ImageReference m_hUserImage;
+    ra::services::ImageReference m_hOverlayBackground{};
+    ra::services::ImageReference m_hUserImage{};
     mutable std::map<std::string, ra::services::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;
 
 //	Exposed to DLL
-extern "C"
-{
-    API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
-    API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
-    API extern bool _RA_IsOverlayFullyVisible();
-}
+_EXTERN_C
+API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
+API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
+API extern bool _RA_IsOverlayFullyVisible();
+_END_EXTERN_C
 
 extern const COLORREF COL_TEXT;
 extern const COLORREF COL_TEXT_HIGHLIGHT;

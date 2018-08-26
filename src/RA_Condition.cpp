@@ -1,73 +1,59 @@
 #include "RA_Condition.h"
 #include "RA_MemManager.h"
 
-const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
-const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
-const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
+namespace ra {
 
-static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
+_NODISCARD _CONSTANT_FN PrefixToComparisonSize(_In_ char cPrefix) noexcept
 {
     //	Careful not to use ABCDEF here, this denotes part of an actual variable!
     switch (cPrefix)
     {
-        case 'M':	return Bit_0;
-        case 'N':	return Bit_1;
-        case 'O':	return Bit_2;
-        case 'P':	return Bit_3;
-        case 'Q':	return Bit_4;
-        case 'R':	return Bit_5;
-        case 'S':	return Bit_6;
-        case 'T':	return Bit_7;
-        case 'L':	return Nibble_Lower;
-        case 'U':	return Nibble_Upper;
-        case 'H':	return EightBit;
-        case 'X':	return ThirtyTwoBit;
+        case 'M':	return ComparisonVariableSize::Bit_0;
+        case 'N':	return ComparisonVariableSize::Bit_1;
+        case 'O':	return ComparisonVariableSize::Bit_2;
+        case 'P':	return ComparisonVariableSize::Bit_3;
+        case 'Q':	return ComparisonVariableSize::Bit_4;
+        case 'R':	return ComparisonVariableSize::Bit_5;
+        case 'S':	return ComparisonVariableSize::Bit_6;
+        case 'T':	return ComparisonVariableSize::Bit_7;
+        case 'L':	return ComparisonVariableSize::Nibble_Lower;
+        case 'U':	return ComparisonVariableSize::Nibble_Upper;
+        case 'H':	return ComparisonVariableSize::EightBit;
+        case 'X':	return ComparisonVariableSize::ThirtyTwoBit;
         default:
-        case ' ':	return SixteenBit;
+        case ' ':	return ComparisonVariableSize::SixteenBit;
     }
 }
 
-static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
+_NODISCARD _CONSTANT_FN ComparisonSizeToPrefix(_In_ ComparisonVariableSize nSize) noexcept
 {
     switch (nSize)
     {
-        case Bit_0:			return "M";
-        case Bit_1:			return "N";
-        case Bit_2:			return "O";
-        case Bit_3:			return "P";
-        case Bit_4:			return "Q";
-        case Bit_5:			return "R";
-        case Bit_6:			return "S";
-        case Bit_7:			return "T";
-        case Nibble_Lower:	return "L";
-        case Nibble_Upper:	return "U";
-        case EightBit:		return "H";
-        case ThirtyTwoBit:	return "X";
+        case ComparisonVariableSize::Bit_0:			return "M";
+        case ComparisonVariableSize::Bit_1:			return "N";
+        case ComparisonVariableSize::Bit_2:			return "O";
+        case ComparisonVariableSize::Bit_3:			return "P";
+        case ComparisonVariableSize::Bit_4:			return "Q";
+        case ComparisonVariableSize::Bit_5:			return "R";
+        case ComparisonVariableSize::Bit_6:			return "S";
+        case ComparisonVariableSize::Bit_7:			return "T";
+        case ComparisonVariableSize::Nibble_Lower:	return "L";
+        case ComparisonVariableSize::Nibble_Upper:	return "U";
+        case ComparisonVariableSize::EightBit:		return "H";
+        case ComparisonVariableSize::ThirtyTwoBit:	return "X";
         default:
-        case SixteenBit:	return " ";
+        case ComparisonVariableSize::SixteenBit:	return " ";
     }
 }
 
-static const char* ComparisonTypeToStr(ComparisonType nType)
+_NODISCARD _CONSTANT_VAR ComparisonTypeToStr(_In_ ra::ComparisonType nType) noexcept
 {
-    switch (nType)
-    {
-        case Equals:				return "=";
-        case GreaterThan:			return ">";
-        case GreaterThanOrEqual:	return ">=";
-        case LessThan:				return "<";
-        case LessThanOrEqual:		return "<=";
-        case NotEqualTo:			return "!=";
-        default:					return "";
-    }
+    return COMPARISONTYPE_STR.at(etoi(nType)); // all constant expressions, it's fast
 }
 
-static ComparisonType ReadOperator(const char*& pBufferInOut)
+} // namespace ra
+
+_NODISCARD _CONSTANT_FN ReadOperator(_Inout_ const char*& pBufferInOut) noexcept
 {
     switch (pBufferInOut[0])
     {
@@ -75,13 +61,13 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
             if (pBufferInOut[1] == '=')
                 ++pBufferInOut;
             ++pBufferInOut;
-            return ComparisonType::Equals;
+            return ra::ComparisonType::Equals;
 
         case '!':
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::NotEqualTo;
+                return ra::ComparisonType::NotEqualTo;
             }
             break;
 
@@ -89,28 +75,28 @@ static ComparisonType ReadOperator(const char*& pBufferInOut)
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::LessThanOrEqual;
+                return ra::ComparisonType::LessThanOrEqual;
             }
 
             ++pBufferInOut;
-            return ComparisonType::LessThan;
+            return ra::ComparisonType::LessThan;
 
         case '>':
             if (pBufferInOut[1] == '=')
             {
                 pBufferInOut += 2;
-                return ComparisonType::GreaterThanOrEqual;
+                return ra::ComparisonType::GreaterThanOrEqual;
             }
 
             ++pBufferInOut;
-            return ComparisonType::GreaterThan;
+            return ra::ComparisonType::GreaterThan;
 
         default:
             break;
     }
 
     ASSERT(!"Could not parse?!");
-    return ComparisonType::Equals;
+    return ra::ComparisonType::Equals;
 }
 
 static unsigned int ReadHits(const char*& pBufferInOut)
@@ -130,32 +116,32 @@ bool Condition::ParseFromString(const char*& pBuffer)
 {
     if (pBuffer[0] == 'R' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::ResetIf;
+        m_nConditionType = ra::ConditionType::ResetIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'P' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::PauseIf;
+        m_nConditionType = ra::ConditionType::PauseIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'A' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddSource;
+        m_nConditionType = ra::ConditionType::AddSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'B' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::SubSource;
+        m_nConditionType = ra::ConditionType::SubSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'C' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddHits;
+        m_nConditionType = ra::ConditionType::AddHits;
         pBuffer += 2;
     }
     else
     {
-        m_nConditionType = Condition::Standard;
+        m_nConditionType = ra::ConditionType::Standard;
     }
 
     if (!m_nCompSource.ParseVariable(pBuffer))
@@ -176,19 +162,19 @@ void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-        case Condition::ResetIf:
+        case ra::ConditionType::ResetIf:
             buffer.append("R:");
             break;
-        case Condition::PauseIf:
+        case ra::ConditionType::PauseIf:
             buffer.append("P:");
             break;
-        case Condition::AddSource:
+        case ra::ConditionType::AddSource:
             buffer.append("A:");
             break;
-        case Condition::SubSource:
+        case ra::ConditionType::SubSource:
             buffer.append("B:");
             break;
-        case Condition::AddHits:
+        case ra::ConditionType::AddHits:
             buffer.append("C:");
             break;
         default:
@@ -197,7 +183,7 @@ void Condition::SerializeAppend(std::string& buffer) const
 
     m_nCompSource.SerializeAppend(buffer);
 
-    buffer.append(ComparisonTypeToStr(m_nCompareType));
+    buffer.append(ra::Narrow(ra::ComparisonTypeToStr(m_nCompareType)));
 
     m_nCompTarget.SerializeAppend(buffer);
 
@@ -233,17 +219,17 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     {
         //	Assume 'd0x' and four hex following it.
         pBufferInOut += 3;
-        m_nVarType = ComparisonVariableType::DeltaMem;
+        m_nVarType = ra::ComparisonVariableType::DeltaMem;
     }
     else if (pBufferInOut[0] == '0' && toupper(pBufferInOut[1]) == 'X')
     {
         //	Assume '0x' and four hex following it.
         pBufferInOut += 2;
-        m_nVarType = ComparisonVariableType::Address;
+        m_nVarType = ra::ComparisonVariableType::Address;
     }
     else
     {
-        m_nVarType = ComparisonVariableType::ValueComparison;
+        m_nVarType = ra::ComparisonVariableType::ValueComparison;
         //	Val only
         if (toupper(pBufferInOut[0]) == 'H')
         {
@@ -258,14 +244,14 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     }
 
 
-    if (m_nVarType == ComparisonVariableType::ValueComparison)
+    if (m_nVarType == ra::ComparisonVariableType::ValueComparison)
     {
         //	Values don't have a size!
     }
     else
     {
-        m_nVarSize = PrefixToComparisonSize(toupper(pBufferInOut[0]));
-        if (m_nVarSize != ComparisonVariableSize::SixteenBit)
+        m_nVarSize = ra::PrefixToComparisonSize(toupper(pBufferInOut[0]));
+        if (m_nVarSize != ra::ComparisonVariableSize::SixteenBit)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }
 
@@ -280,19 +266,19 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     char valueBuffer[20];
     switch (m_nVarType)
     {
-        case ValueComparison:
+        case ra::ComparisonVariableType::ValueComparison:
             sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
             buffer.append(valueBuffer);
             break;
 
-        case DeltaMem:
+        case ra::ComparisonVariableType::DeltaMem:
             buffer.append(1, 'd');
-            // explicit fallthrough to Address
+            // explicit fallthrough to ra::ComparisonVariableType::Address
 
-        case Address:
+        case ra::ComparisonVariableType::Address:
             buffer.append("0x");
 
-            buffer.append(ComparisonSizeToPrefix(m_nVarSize));
+            buffer.append(ra::ComparisonSizeToPrefix(m_nVarSize));
 
             if (m_nVal >= 0x10000)
                 sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
@@ -314,15 +300,15 @@ unsigned int CompVariable::GetValue()
 
     switch (m_nVarType)
     {
-        case ValueComparison:
+        case ra::ComparisonVariableType::ValueComparison:
             //	It's a raw value. Return it.
             return m_nVal;
 
-        case Address:
+        case ra::ComparisonVariableType::Address:
             //	It's an address in memory. Return it!
             return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
-        case DeltaMem:
+        case ra::ComparisonVariableType::DeltaMem:
             //	Return the backed up (last frame) value, but store the new one for the next frame!
             nPreviousVal = m_nPreviousVal;
             m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
@@ -339,17 +325,17 @@ bool Condition::Compare(unsigned int nAddBuffer)
 {
     switch (m_nCompareType)
     {
-        case Equals:
+        case ra::ComparisonType::Equals:
             return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
-        case LessThan:
+        case ra::ComparisonType::LessThan:
             return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
-        case LessThanOrEqual:
+        case ra::ComparisonType::LessThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
-        case GreaterThan:
+        case ra::ComparisonType::GreaterThan:
             return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
-        case GreaterThanOrEqual:
+        case ra::ComparisonType::GreaterThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
-        case NotEqualTo:
+        case ra::ComparisonType::NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
         default:
             return true;	//?
@@ -370,15 +356,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
     {
         switch (m_Conditions[i].GetConditionType())
         {
-            case Condition::PauseIf:
+            case ra::ConditionType::PauseIf:
                 bHasPause = true;
                 bInPause = true;
                 vPauseConditions[i] = true;
                 break;
 
-            case Condition::AddSource:
-            case Condition::SubSource:
-            case Condition::AddHits:
+            case ra::ConditionType::AddSource:
+            case ra::ConditionType::SubSource:
+            case ra::ConditionType::AddHits:
                 vPauseConditions[i] = bInPause;
                 break;
 
@@ -413,15 +399,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
         Condition* pNextCond = &m_Conditions[i];
         switch (pNextCond->GetConditionType())
         {
-            case Condition::AddSource:
+            case ra::ConditionType::AddSource:
                 nAddBuffer += pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::SubSource:
+            case ra::ConditionType::SubSource:
                 nAddBuffer -= pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::AddHits:
+            case ra::ConditionType::AddHits:
                 if (pNextCond->Compare())
                 {
                     if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
@@ -467,7 +453,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
 
         switch (pNextCond->GetConditionType())
         {
-            case Condition::PauseIf:
+            case ra::ConditionType::PauseIf:
                 // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
                 if (bConditionValid)
                     return true;
@@ -488,7 +474,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
                 }
                 break;
 
-            case Condition::ResetIf:
+            case ra::ConditionType::ResetIf:
                 if (bConditionValid)
                 {
                     bResetAll = true;  // let caller know to reset all hit counts
@@ -554,7 +540,7 @@ bool ConditionSet::ParseFromString(const char*& sSerialized)
     ConditionGroup* group = nullptr;
     m_vConditionGroups.clear();
 
-    // if string starts with 'S', there's no Core group. generate an empty one and leave 'group' as null
+    // if string starts with 'S', there's noCoregroup. generate an empty one and leave 'group' as null
     // so the alt group will get created by the first condition.
     if (*sSerialized == 'S')
     {

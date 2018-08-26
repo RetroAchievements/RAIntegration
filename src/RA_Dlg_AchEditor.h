@@ -7,10 +7,18 @@
 
 #include "services\ImageRepository.h"
 
-namespace {
-const size_t MAX_CONDITIONS = 200;
-const size_t MEM_STRING_TEXT_LEN = 80;
-}
+namespace ra {
+
+_CONSTANT_VAR MAX_CONDITIONS{ 200U };
+_CONSTANT_VAR MEM_STRING_TEXT_LEN{ 80U };
+
+namespace enum_sizes {
+
+_CONSTANT_VAR NUM_COND_SUBITEMS{ 10 };
+
+} // namespace enum_sizes
+} // namespace ra
+
 
 class BadgeNames
 {
@@ -78,8 +86,6 @@ private:
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond);
 
 private:
-    static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
-
     HWND m_hAchievementEditorDlg;
     HWND m_hICEControl;
 
@@ -88,8 +94,8 @@ private:
     ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc;
 
-    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN];
-    TCHAR m_lbxGroupNames[MAX_CONDITIONS][MEM_STRING_TEXT_LEN];
+    char m_lbxData[ra::MAX_CONDITIONS][ra::enum_sizes::NUM_COND_SUBITEMS][ra::MEM_STRING_TEXT_LEN];
+    TCHAR m_lbxGroupNames[ra::MAX_CONDITIONS][ra::MEM_STRING_TEXT_LEN];
     int m_nNumOccupiedRows;
 
     Achievement* m_pSelectedAchievement;

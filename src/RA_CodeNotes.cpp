@@ -15,35 +15,34 @@ size_t CodeNotes::Load(const std::string& sFile)
 {
     Clear();
 
-    if (std::ifstream ifile{ sFile }; !ifile.is_open())
-        return std::size_t{};
-    else
+    std::ifstream ifile{ sFile };
+    if (!ifile.is_open())
+        return 0U;
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasParseError())
+        return 0U;
+
+    ASSERT(doc["CodeNotes"].IsArray());
+
+    const auto& NoteArray{ doc["CodeNotes"] };
+    for (const auto& note : NoteArray.GetArray())
     {
-        rapidjson::Document doc;
-        rapidjson::IStreamWrapper isw{ ifile };
-        doc.ParseStream(isw);
-        if (!doc.HasParseError())
-        {
-            ASSERT(doc["CodeNotes"].IsArray());
+        if (note["Note"].IsNull())
+            continue;
 
-            const auto& NoteArray{ doc["CodeNotes"] };
-            for (auto& note : NoteArray.GetArray())
-            {
+        const std::string& sNote = note["Note"].GetString();
+        if (sNote.length() < 2U)
+            continue;
 
-                if (note["Note"].IsNull())
-                    continue;
+        const std::string& sAddr { note["Address"].GetString() };
+        auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
+        const std::string& sAuthor { note["User"].GetString() }; // Author?
 
-                const std::string& sNote = note["Note"].GetString();
-                if (sNote.length() < 2U)
-                    continue;
-
-                const std::string& sAddr { note["Address"].GetString() };
-                auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
-                const std::string& sAuthor { note["User"].GetString() };	//	Author?
-
-                m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
-            }
-        }
+        m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
     }
 
     return m_CodeNotes.size();
@@ -51,8 +50,7 @@ size_t CodeNotes::Load(const std::string& sFile)
 
 BOOL CodeNotes::Save(const std::string& sFile)
 {
-    return FALSE;
-    //	All saving should be cloud-based!
+    return FALSE; // All saving should be cloud-based!
 }
 
 BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)

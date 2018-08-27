@@ -56,7 +56,7 @@ void ProgressPopup::AddMessage(const char* sTitle, const char* sDesc, int nMessa
 
 void ProgressPopup::NextMessage()
 {
-    //	Mem-move. Copy the lower 4 elements up a notch, and invalidate the fifth one.
+    //	Mem-move. Copy the lower 4 elements up a notch, && invalidate the fifth one.
     for (size_t i = 0; i < OVERLAY_MESSAGE_QUEUE_SIZE - 1; ++i)
     {
         memcpy((void*)m_sMessageTitleQueue[i], (void*)m_sMessageTitleQueue[i + 1], 1024);

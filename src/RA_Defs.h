@@ -50,6 +50,7 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
+struct IUnknown;
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -61,9 +62,9 @@
 #include <tchar.h>
 
 #include <map>
-#include <array>
-#include <sstream>
-#include <queue>
+#include <array> // algorithm, iterator, tuple
+#include <sstream> // string
+#include <queue> // deque, vector, algorithm
 #include "ra_utility.h"
 
 
@@ -77,14 +78,14 @@
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-#define RAPIDJSON_NOMEMBERITERATORCLASS 0
+#define RAPIDJSON_NOMEMBERITERATORCLASS 1
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/error/en.h>
 
-extern rapidjson::GetParseErrorFunc GetJSONParseErrorStr;
+_CONSTANT_FN GetJSONParseErrorStr{ rapidjson::GetParseError_En };
 
 using namespace std::string_literals;
 #endif	// RA_EXPORTS

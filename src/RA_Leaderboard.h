@@ -4,7 +4,10 @@
 
 #include "RA_MemValue.h"
 
-#include <vector>
+#ifndef _VECTOR_
+#include <vector>  
+#endif /* !_VECTOR_ */
+
 
 class RA_Leaderboard
 {
@@ -61,7 +64,7 @@ private:
     bool					m_bStarted;		//	False = check start condition. True = check cancel or submit conditions.
     bool                    m_bSubmitted;   //  True if already submitted.
 
-    MemValue				m_value;		//	A collection of memory addresses and values to produce one value.
+    MemValue				m_value;		//	A collection of memory addresses && values to produce one value.
     MemValue				m_progress;		//	A collection of memory addresses, used to show progress towards completion.
     MemValue::Format        m_nFormat;		//	A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 

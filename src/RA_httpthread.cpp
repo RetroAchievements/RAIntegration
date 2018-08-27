@@ -392,13 +392,12 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                     {
                         //if( nBytesToRead <= 32 )
                         {
-                            DWORD nBytesFetched = 0;
-                            if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                            ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                            DWORD nBytesFetched = 0UL;
+                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
                                 ASSERT(nBytesToRead == nBytesFetched);
                                 ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                                //ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
                             }
                             else
                             {
@@ -413,7 +412,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');    //  EOS for parsing
 
-                    RA_LOG(__FUNCTION__ ": success! %s Returned %u bytes.", sRequestedPage.c_str(), ResponseOut.size());
+                    RA_LOG(__FUNCTION__ ": success! %s Returned %zu bytes.", sRequestedPage.c_str(), ResponseOut.size());
                 }
 
             }
@@ -485,16 +484,18 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     {
                         {
                             DWORD nBytesFetched = 0;
-                            if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                            ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;  //Timed out?
+                                auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                                if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                                {
+                                    ASSERT(nBytesToRead == nBytesFetched);
+                                    ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                                }
+                                else
+                                {
+                                    RA_LOG("Assumed timed out connection?!");
+                                    break;  //Timed out?
+                                }
                             }
                         }
 
@@ -646,24 +647,19 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
             while (nBytesToRead > 0)
             {
-                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
                 ASSERT(nBytesToRead <= 8192);
                 if (nBytesToRead <= 8192)
                 {
-                    DWORD nBytesFetched = 0;                    
-                    if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                    ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                    DWORD nBytesFetched = 0;
                     {
-                        ASSERT(nBytesToRead == nBytesFetched);
-                        ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                        // pData gets deleted here
+                        auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                        if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                        {
+                            ASSERT(nBytesToRead == nBytesFetched);
+                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                        }
                     }
                 }
-
 
                 WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
             }

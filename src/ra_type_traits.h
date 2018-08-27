@@ -3,8 +3,6 @@
 #pragma once
 
 #include <utility>
-#include <ciso646>
-#include <xmemory0>
 
 #if _HAS_CXX17
 #ifndef _CONSTANT_VAR
@@ -23,21 +21,21 @@
 namespace ra {
 
 namespace detail {
-/// <summary>
-///   A check to tell whether a type is a known character type. If this
-///   function was reached, <typeparamref name="CharT" /> is a known character
-///   type.
-/// </summary>
-/// <typeparam name="CharT">A type to be evaluated</typeparam>
-template<typename CharT>
-struct is_char : std::bool_constant<(std::_Is_character<CharT>::value or std::is_same_v<CharT, wchar_t>)> {};
 
 /// <summary>
-///   This should only be used to compare the sizes of data types and not objects.
+///   A check to tell whether a type is a known character type. If there is no intellisense error,
+///   <typeparamref name="CharT" /> is a known character type.
+/// </summary>
+/// <typeparam name="CharT">A type to be evaluated.</typeparam>
+/// <remarks><c>char16_t</c> && <c>char32_t</c> are not considered valid by this type_trait.</remarks>
+template<typename CharT>
+struct is_char : std::bool_constant<(std::_Is_character<CharT>::value || std::is_same_v<CharT, wchar_t>)> {};
+
+/// <summary>
+///   This should only be used to compare the sizes of data types && not objects.
 /// </summary>
 template<typename T, typename U>
 struct is_same_size : std::bool_constant<sizeof(T) == sizeof(U)> {};
-
 
 } // namespace detail
 
@@ -80,7 +78,7 @@ struct is_nothrow_lessthan_comparable :
 
 template<typename Comparable>
 struct is_comparable :
-    std::bool_constant<(is_equality_comparable<Comparable>::value and is_lessthan_comparable<Comparable>::value)>
+    std::bool_constant<(is_equality_comparable<Comparable>::value && is_lessthan_comparable<Comparable>::value)>
 {
 };
 

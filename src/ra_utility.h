@@ -25,20 +25,22 @@ to_tstring(_In_ Arithmetic a) noexcept
 #endif // UNICODE
 } // end function to_tstring
 
-/// <summary>Casts <paramref name="i" /> into a <typeparamref name="FloatingPoint" />.</summary>
-/// <typeparam name="Integral">A valid integral type.</typeparam>
-/// <typeparam name="FloatingPoint">A valid floating-point type, defaults to <c>double</c>.</typeparam>
-/// <param name="i">The i.</param>
+/// <summary>Casts <paramref name="a" /> into a <typeparamref name="FloatingPoint" />.</summary>
+/// <typeparam name="Arithmetic">A valid arithmetic type.</typeparam>
+/// <param name="a">The number to be converted.</param>
 /// <returns>
-///   Return <paramref name="i" /> as a <typeparamref name="FloatingPoint" />. If not specified, it will return as a
-///   <c>double</c>.
+///   The return type depends on the size of <typeparamref name="Arithmetic" />. If it's 8 bytes, it will
+///   <c>double</c>, if it's anything less it will be float. <c>long double</c> is not considered as it is currently
+///   the same as <c>double</c> size-wise.
 /// </returns>
-template<
-    typename Integral,
-    typename FloatingPoint = double,
-    class = std::enable_if_t<std::is_integral_v<Integral> and std::is_floating_point_v<FloatingPoint>>
-> _NODISCARD _CONSTANT_FN
-to_floating(_In_ Integral i) noexcept { return static_cast<FloatingPoint>(i); }
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
+to_floating(_In_ Arithmetic a) noexcept
+{
+    if constexpr (is_same_size_v<Arithmetic, double>)
+        return static_cast<double>(a);
+    if constexpr (sizeof(Arithmetic) < sizeof(double))
+        return static_cast<float>(a);
+}
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
 _NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
@@ -86,7 +88,6 @@ filesize(std::basic_string<CharT>&& filename) noexcept
 } // end function filesize
 
 // More functions to be Unicode compatible w/o sacrificing MBCS (lots of errors)
-
 _EXTERN_C
 _NODISCARD inline auto __cdecl
 tstrtoul(_In_z_ LPCTSTR _String,

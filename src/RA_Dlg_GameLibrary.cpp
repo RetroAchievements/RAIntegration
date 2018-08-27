@@ -1,6 +1,7 @@
 #include "RA_Dlg_GameLibrary.h"
 
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <stack>
@@ -93,115 +94,128 @@ Dlg_GameLibrary::~Dlg_GameLibrary()
 
 namespace ra {
 
-static void LogErrno() noexcept
+inline static void LogErrno() noexcept
 {
-    auto buf{ std::make_unique<char[]>(2048U) };
-    strerror_s(buf.get(), 2048U, errno);
-    RA_LOG("Error: %s", buf.get());
-}
-
-static std::string GameHashFile() noexcept
-{
-    std::ostringstream oss;
-    oss << g_sHomeDir << RA_GAME_HASH_FILENAME;
-    return oss.str();
+    char buf[2048U]{};
+    strerror_s(buf, errno);
+    RA_LOG("Error: %s", buf);
 }
 
 } /* namespace ra */
 
 void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
 {
-    if (std::ifstream ifile{ ra::GameHashFile() }; !ifile.is_open())
-        ra::LogErrno();
-    else
+    std::string sGameHashFile;
     {
-        rapidjson::Document doc;
-        rapidjson::IStreamWrapper isw{ ifile };
-        doc.ParseStream(isw);
+        std::ostringstream oss;
+        oss << g_sHomeDir << RA_GAME_HASH_FILENAME;
+        sGameHashFile = oss.str();
+    }
+    std::ifstream ifile{ sGameHashFile };
+    if (!ifile.is_open())
+    {
+        ra::LogErrno();
+        return;
+    }
 
-        if ((!doc.HasParseError() and doc.HasMember("Success")) and
-            (doc["Success"].GetBool() and doc.HasMember("MD5List")))
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if ((!doc.HasParseError() && doc.HasMember("Success")) &&
+        (doc["Success"].GetBool() && doc.HasMember("MD5List")))
+    {
+        const auto& List{ doc["MD5List"] };
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            const auto& List{ doc["MD5List"] };
-            for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-                if (iter->name.IsNull() || iter->value.IsNull())
-                    continue;
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-                GameHashLibraryOut.try_emplace(iter->name.GetString(), iter->value.GetUint());
-            }
+            GameHashLibraryOut.try_emplace(iter->name.GetString(), iter->value.GetUint());
         }
     }
+
 }
 
 void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
 {
-    std::string sTitlesFile = g_sHomeDir + RA_TITLES_FILENAME;
-
-    if (std::ifstream ifile{ sTitlesFile }; !ifile.is_open())
-        ra::LogErrno();
-    else
+    std::string sTitlesFile;
     {
-        rapidjson::Document doc;
-        rapidjson::IStreamWrapper isw{ ifile };
-        doc.ParseStream(isw);
+        std::ostringstream oss;
+        oss << g_sHomeDir << RA_TITLES_FILENAME;
+        sTitlesFile = oss.str();
+    }
+    std::ifstream ifile{ sTitlesFile };
+    if (!ifile.is_open())
+    {
+        ra::LogErrno();
+        return;
+    }
 
-        if ((!doc.HasParseError() and doc.HasMember("Success")) and
-            (doc["Success"].GetBool() and doc.HasMember("Response")))
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if ((!doc.HasParseError() && doc.HasMember("Success")) &&
+        (doc["Success"].GetBool() && doc.HasMember("Response")))
+    {
+        const auto& List{ doc["Response"] };
+        for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
         {
-            const auto& List{ doc["Response"] };
-            for (auto iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
-            {
-                if (iter->name.IsNull() or iter->value.IsNull())
-                    continue;
+            if (iter->name.IsNull() || iter->value.IsNull())
+                continue;
 
-                //	KEYS ARE STRINGS, must convert afterwards!
-                GameTitlesListOut.try_emplace(std::stoul(iter->name.GetString()), iter->value.GetString());
-            }
+            //	KEYS ARE STRINGS, must convert afterwards!
+            GameTitlesListOut.try_emplace(std::stoul(iter->name.GetString()), iter->value.GetString());
         }
     }
 }
 
 void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
-    std::string sProgressFile = g_sHomeDir + RA_TITLES_FILENAME;
-    if (std::ifstream ifile{ sProgressFile }; !ifile.is_open())
-        ra::LogErrno();
-    else
+    std::string sProgressFile;
     {
-        rapidjson::Document doc;
-        rapidjson::IStreamWrapper isw{ ifile };
-        doc.ParseStream(isw);
+        std::ostringstream oss;
+        oss << g_sHomeDir << RA_TITLES_FILENAME;
+        sProgressFile = oss.str();
+    }
 
-        if ((!doc.HasParseError() and doc.HasMember("Success")) and
-            (doc["Success"].GetBool() and doc.HasMember("Response")))
+    std::ifstream ifile{ sProgressFile, std::ios::binary };
+    if (!ifile.is_open())
+    {
+        ra::LogErrno();
+        return;
+    }
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if ((!doc.HasParseError() && doc.HasMember("Success")) &&
+        (doc["Success"].GetBool() && doc.HasMember("Response")))
+    {
+        //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
+
+        const auto& List = doc["Response"];
+        for (auto iter = List.MemberBegin(); iter != List.MemberBegin(); ++iter)
         {
-            //{"ID":"7","NumAch":"14","Earned":"10","HCEarned":"0"},
+            const auto nNumAchievements{ iter->value["NumAch"].GetUint() };
+            const auto nEarned{ iter->value["Earned"].GetUint() };
+            const auto nEarnedHardcore{ iter->value["HCEarned"].GetUint() };
 
-            const auto& List = doc["Response"];
-            for (rapidjson::Value::ConstMemberIterator iter = List.MemberBegin(); iter != List.MemberEnd(); ++iter)
+            std::ostringstream sstr;
+            sstr << nEarned;
+            if (nEarnedHardcore > 0U)
+                sstr << " (" << nEarnedHardcore << ")";
+            sstr << " / " << nNumAchievements;
+            if (nNumAchievements > 0U)
             {
-                
-                const auto nNumAchievements{ iter->value["NumAch"].GetUint() };
-                const auto nEarned { iter->value["Earned"].GetUint() };
-                const auto nEarnedHardcore { iter->value["HCEarned"].GetUint() };
-
-                std::ostringstream sstr;
-                sstr << nEarned;
-                if (nEarnedHardcore > 0U)
-                    sstr << " (" << nEarnedHardcore << ")";
-                sstr << " / " << nNumAchievements;
-                if (nNumAchievements > 0U)
-                {
-                    const auto fNumEarnedTotal{ ra::to_floating(nEarned + nEarnedHardcore) };
-                    const auto fVal{ (fNumEarnedTotal/ra::to_floating(nNumAchievements)) * 100.0 };
-                    auto bufPct{ std::make_unique<char[]>(256U) };
-                    sprintf_s(bufPct.get(), 256U, " (%1.1f%%)", static_cast<float>(fVal));
-                    sstr << bufPct;
-                }
-                //	KEYS MUST BE STRINGS
-                GameProgressOut.try_emplace(std::stoul(iter->name.GetString()), sstr.str());
+                const auto fNumEarnedTotal{ ra::to_floating(nEarned + nEarnedHardcore) };
+                const auto fVal{ (fNumEarnedTotal/ra::to_floating(nNumAchievements)) * 100.0 };
+                sstr << std::setfill('0') << std::setw(1) << std::dec << fVal;
             }
+            //	KEYS MUST BE STRINGS
+            GameProgressOut.try_emplace(std::stoul(iter->name.GetString()), sstr.str());
         }
     }
 }
@@ -308,8 +322,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
                 fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
                 Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
 
-                // TODO: Use the the appropriate literals when PR 23 is accepted
-                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, WPARAM{}, LPARAM{});
+                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
             }
 
             fclose(pf);

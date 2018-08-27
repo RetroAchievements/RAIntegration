@@ -42,8 +42,8 @@ public:
     // Get Points Total
     inline unsigned int PointTotal()
     {
-        unsigned int total = 0;
-        for (Achievement ach : m_Achievements) total += ach.Points();
+        unsigned int total = 0U;
+        for (auto& ach : m_Achievements) total += ach.Points();
         return total;
     }
 

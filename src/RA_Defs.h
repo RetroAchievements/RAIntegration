@@ -50,7 +50,6 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
-struct IUnknown;
 #include <Windows.h>
 #include <WindowsX.h>
 

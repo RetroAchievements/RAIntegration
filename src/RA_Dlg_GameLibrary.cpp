@@ -211,8 +211,8 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
             if (nNumAchievements > 0U)
             {
                 const auto fNumEarnedTotal{ ra::to_floating(nEarned + nEarnedHardcore) };
-                const auto fVal{ (fNumEarnedTotal/ra::to_floating(nNumAchievements)) * 100.0 };
-                sstr << std::setfill('0') << std::setw(1) << std::dec << fVal;
+                const auto fVal{ (fNumEarnedTotal/ra::to_floating(nNumAchievements)) * 100.0F };
+                sstr << std::fixed << std::setw(1) << std::setprecision(1) << std::dec << fVal << '%';
             }
             //	KEYS MUST BE STRINGS
             GameProgressOut.try_emplace(std::stoul(iter->name.GetString()), sstr.str());

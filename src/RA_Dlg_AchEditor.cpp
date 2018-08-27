@@ -966,8 +966,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case IDC_RA_CHK_ACH_ACTIVE:
                     if (ActiveAchievement() != nullptr)
                     {
-                        // TODO: Use the literals once PR 23 is accepted
-                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, LPARAM{});
+                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, 0L);
                         CheckDlgButton(hDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
                     }
                     bHandled = TRUE;

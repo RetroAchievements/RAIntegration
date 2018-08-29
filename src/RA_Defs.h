@@ -64,12 +64,6 @@
 
 #include <tchar.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
-
 #include <map>
 #include <array>
 #include <sstream>
@@ -84,12 +78,6 @@
 #else
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
-
-
-
-
-//	RA-Only
-
 
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
@@ -113,29 +101,6 @@ using namespace std::string_literals;
 //using namespace std::chrono_literals; we could use this later
 
 #endif	//RA_EXPORTS
-
-
-// Maybe an extra check just in-case
-
-#define _NORETURN            [[noreturn]]
-
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-#define _CONSTANT_VAR        inline constexpr auto
-#else
-#define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecated)
-#define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
-#define _FALLTHROUGH         __fallthrough//; you need ';' at the end
-#define _UNUSED              
-#define _CONSTANT_VAR        constexpr auto
-#endif // _HAS_CXX17        
-
-#define _CONSTANT_LOC constexpr auto // local vars can't be inline
-#define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"

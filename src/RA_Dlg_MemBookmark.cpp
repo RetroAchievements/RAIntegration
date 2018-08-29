@@ -19,30 +19,16 @@ HWND g_hIPEEditBM;
 int nSelItemBM;
 int nSelSubItemBM;
 
-namespace {
-
-
-}
-
-inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
-enum class BookmarkSubItems { CSI_DESC, CSI_ADDRESS, CSI_VALUE, CSI_PREVIOUS, CSI_CHANGES };
-
 namespace ra {
-namespace enum_sizes {
 
-_CONSTANT_VAR NumBookmarkSubColumns{ 5 };
+using ColumnTitles = std::array<LPCTSTR, 5>;
+using ColumnWidths = std::array<int, 5>;
 
-} // namespace enum_sizes
+inline constexpr ColumnTitles COLUMN_TITLE{ _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes") };
+inline constexpr ColumnWidths COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
 
-inline constexpr std::array<BookmarkSubItems, enum_sizes::NumBookmarkSubColumns> aBookmarkSubItems{
-    BookmarkSubItems::CSI_DESC, BookmarkSubItems::CSI_ADDRESS, BookmarkSubItems::CSI_VALUE,
-    BookmarkSubItems::CSI_PREVIOUS, BookmarkSubItems::CSI_CHANGES
-};
-
-inline constexpr std::array<LPCTSTR, enum_sizes::NumBookmarkSubColumns> COLUMN_TITLE{
-    _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes")
-};
-inline constexpr std::array<int, enum_sizes::NumBookmarkSubColumns> COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+static_assert(is_same_size_v<ColumnTitles, ColumnWidths>);
 
 } // namespace ra
 
@@ -233,12 +219,13 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcCol.left = rcCol.right;
                         rcCol.right += lvc.cx;
 
-                        switch (i)
+                        const auto eSubItem{ ra::itoe<SubItems>(i) };
+                        switch (eSubItem)
                         {
-                            case ra::etoi(BookmarkSubItems::CSI_ADDRESS):
+                            case SubItems::Address:
                                 swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_VALUE):
+                            case SubItems::Value:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
                                 else
@@ -251,7 +238,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_PREVIOUS):
+                            case SubItems::Previous:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
                                 else
@@ -264,7 +251,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case ra::etoi(BookmarkSubItems::CSI_CHANGES):
+                            case SubItems::Changes:
                                 swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
@@ -327,14 +314,14 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
 
                         using namespace ra::rel_ops;
-                        if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == BookmarkSubItems::CSI_DESC))
+                        if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))
                         {
                             nSelItemBM = pOnClick->iItem;
                             nSelSubItemBM = pOnClick->iSubItem;
 
                             EditLabel(pOnClick->iItem, pOnClick->iSubItem);
                         }
-                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == BookmarkSubItems::CSI_ADDRESS)
+                        else if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Address))
                         {
                             g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
                             MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
@@ -548,27 +535,27 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
 
     //	Remove all data.
     ListView_DeleteAllItems(hList);
-
-    auto lplvColumn{ std::make_unique<LV_COLUMN>() };
-    for (auto& col : ra::aBookmarkSubItems)
     {
-        const auto i{ ra::to_unsigned(ra::etoi(col)) };
-        lplvColumn->mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        lplvColumn->fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
-        lplvColumn->cx         = ra::COLUMN_WIDTH.at(i);
+        auto lplvColumn{ std::make_unique<LV_COLUMN>() };
+        auto idx{ 0 };
+        for (auto& sColTitle : ra::COLUMN_TITLE)
+        {
+            lplvColumn->mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
+            lplvColumn->fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
+            lplvColumn->cx         = ra::COLUMN_WIDTH.at(idx);
 
-        // NB: The column title has to cached before hand or we won't see it. -SBS
-        ra::tstring tszText{ ra::COLUMN_TITLE.at(i) };
-        lplvColumn->pszText    = tszText.data();
-        lplvColumn->cchTextMax = 255;
-        lplvColumn->iSubItem   = i;
+            // NB: The column title has to cached before-hand or we won't see it. -SBS
+            ra::tstring tszText{ sColTitle };
+            lplvColumn->pszText    = tszText.data();
+            lplvColumn->cchTextMax = 255;
+            lplvColumn->iSubItem   = idx;
 
-        if (i == (ra::enum_sizes::NumBookmarkSubColumns - 1))
-            lplvColumn->fmt |= LVCFMT_FILL;
+            if (idx == (ra::COLUMN_TITLE.size() - 1))
+                lplvColumn->fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, lplvColumn.get());
+            ListView_InsertColumn(hList, idx, lplvColumn.get());
+        }
     }
-
     m_nNumOccupiedRows = 0;
 
     auto bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
@@ -722,10 +709,10 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    HRESULT hr;
+    auto hr{ S_OK };
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))
         {
             std::ostringstream oss;
             oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
@@ -746,7 +733,7 @@ void Dlg_MemBookmark::ExportJSON()
                         {
                             if (SUCCEEDED(hr = pDlg->GetResult(&pItem.p)))
                             {
-                                LPWSTR pStr = nullptr;
+                                LPWSTR pStr{ nullptr };
                                 if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
                                     Document doc;
@@ -850,17 +837,17 @@ std::string Dlg_MemBookmark::ImportDialog()
 
     CComPtr<IFileOpenDialog> pDlg;
 
-    HRESULT hr;
+    auto hr{ S_OK };
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
+        if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))
         {
             if (SUCCEEDED(hr = pDlg->Show(nullptr)))
             {
                 CComPtr<IShellItem> pItem;
                 if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
                 {
-                    LPWSTR pStr = nullptr;
+                    LPWSTR pStr{ nullptr };
                     if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
                         str = ra::Narrow(pStr);

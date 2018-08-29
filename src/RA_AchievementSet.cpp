@@ -81,25 +81,19 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
     for (const auto& unlocked : UserUnlocks.GetArray())
     {
         //	IDs could be present in either core or unofficial:
-        if (const auto nNextAchID{ static_cast<ra::AchievementID>(unlocked.GetUint()) };
-            g_pCoreAchievements->Find(nNextAchID) != nullptr)
-        {
+        const auto nNextAchID{ static_cast<ra::AchievementID>(unlocked.GetUint()) };
+        if (g_pCoreAchievements->Find(nNextAchID) != nullptr)
             g_pCoreAchievements->Unlock(nNextAchID);
-        }
         else if (g_pUnofficialAchievements->Find(nNextAchID) != nullptr)
             g_pUnofficialAchievements->Unlock(nNextAchID);
-        else
-            continue;
     }
 
     // pre-fetch locked images for any achievements the player hasn't earned
     for (size_t i = 0U; i < g_pCoreAchievements->NumAchievements(); ++i)
     {
-        {
-            const auto& ach{ g_pCoreAchievements->GetAchievement(i) };
-            if (ach.Active())
-                ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
-        }
+        const auto& ach{ g_pCoreAchievements->GetAchievement(i) };
+        if (ach.Active())
+            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
     }
 }
 
@@ -351,28 +345,27 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc["Success"].GetBool() &&
         doc.HasMember("PatchData"))
     {
-        {            
-            std::string sAchSetFileName;
-            {
-                std::ostringstream oss;
-                oss << g_sHomeDir << RA_DIR_DATA << nGameID << ".txt";
-                sAchSetFileName = oss.str();
-            }
-
-            std::ofstream ofile{ sAchSetFileName };
-            if (!ofile.is_open())
-            {
-                ASSERT(!"Could not open patch file for writing?");
-                RA_LOG("Could not open patch file for writing?");
-                return FALSE;
-            }
-
-            rapidjson::OStreamWrapper osw{ ofile };
-            rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
-
-            const auto& PatchData{ doc["PatchData"] };
-            PatchData.Accept(writer);
+        std::string sAchSetFileName;
+        {
+            std::ostringstream oss;
+            oss << g_sHomeDir << RA_DIR_DATA << nGameID << ".txt";
+            sAchSetFileName = oss.str();
         }
+
+        std::ofstream ofile{ sAchSetFileName };
+        if (!ofile.is_open())
+        {
+            ASSERT(!"Could not open patch file for writing?");
+            RA_LOG("Could not open patch file for writing?");
+            return FALSE;
+        }
+
+        rapidjson::OStreamWrapper osw{ ofile };
+        rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
+
+        const auto& PatchData{ doc["PatchData"] };
+        PatchData.Accept(writer);
+
         return TRUE;
     }
     else
@@ -482,20 +475,16 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         for (const auto& achData : AchievementsData.GetArray())
         {
             //	Parse into correct boxes
+            auto nFlags{ achData["Flags"].GetUint() };
+            if ((nFlags == 3U) && (m_nSetType == Core))
             {
-                auto nFlags{ achData["Flags"].GetUint() };
-                if ((nFlags == 3U) && (m_nSetType == Core))
-                {
-                    auto& newAch{ AddAchievement() };
-                    newAch.Parse(achData);
-                }
-                else if ((nFlags == 5) && (m_nSetType == Unofficial))
-                {
-                    auto& newAch{ AddAchievement() };
-                    newAch.Parse(achData);
-                }
-                else
-                    continue;
+                auto& newAch{ AddAchievement() };
+                newAch.Parse(achData);
+            }
+            else if ((nFlags == 5) && (m_nSetType == Unofficial))
+            {
+                auto& newAch{ AddAchievement() };
+                newAch.Parse(achData);
             }
         }
 

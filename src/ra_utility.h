@@ -5,6 +5,11 @@
 #include "ra_fwd.h"
 #include "ra_type_traits.h"
 
+/*
+    For most of these functions you won't have to specify the template argument as it will be auto-deduced unless
+    stated otherwise.
+*/
+
 namespace ra {
 
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
@@ -13,7 +18,7 @@ to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline tstring
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline auto
 to_tstring(_In_ Arithmetic a) noexcept
 {
 #if _MBCS
@@ -22,7 +27,7 @@ to_tstring(_In_ Arithmetic a) noexcept
     return std::to_wstring(a);
 #else
 #error Unknown character set detected, only MultiByte and Unicode character sets are supported!
-#endif // UNICODE
+#endif // _MBCS
 } // end function to_tstring
 
 /// <summary>Casts <paramref name="a" /> into a <typeparamref name="FloatingPoint" />.</summary>
@@ -87,8 +92,9 @@ filesize(std::basic_string<CharT>&& filename) noexcept
     return file.tellg();
 } // end function filesize
 
-// More functions to be Unicode compatible w/o sacrificing MBCS (lots of errors)
+// More functions to be Unicode compatible w/o sacrificing MBCS
 _EXTERN_C
+/* A wrapper for converting a string to an unsigned long depending on the character set specified */
 _NODISCARD inline auto __cdecl
 tstrtoul(_In_z_ LPCTSTR _String,
          _Out_opt_ _Deref_post_z_ LPTSTR* _EndPtr = nullptr,
@@ -104,7 +110,10 @@ tstrtoul(_In_z_ LPCTSTR _String,
 } /* end function tstrtoul */
 _END_EXTERN_C
 
-// Don't depend on std::rel_ops for stuff here because they assume the types are the same
+// Don't depend on std::rel_ops for stuff here because it assumes each parameter has the same type
+/// <summary>
+///   Relational operator overloads, mainly for comparing an <c>enum class</c> with it's <c>underlying_type</c>.
+/// </summary>
 namespace rel_ops {
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
@@ -144,8 +153,6 @@ template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODI
 operator>=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
 
 } // namespace rel_ops
-
 } // namespace ra
-
 
 #endif // !RA_UTILITY_H

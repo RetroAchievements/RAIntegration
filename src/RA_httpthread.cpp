@@ -484,18 +484,16 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     {
                         {
                             DWORD nBytesFetched = 0;
+                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
-                                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-                                if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
-                                {
-                                    ASSERT(nBytesToRead == nBytesFetched);
-                                    ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                                }
-                                else
-                                {
-                                    RA_LOG("Assumed timed out connection?!");
-                                    break;  //Timed out?
-                                }
+                                ASSERT(nBytesToRead == nBytesFetched);
+                                ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
+                            }
+                            else
+                            {
+                                RA_LOG("Assumed timed out connection?!");
+                                break;  //Timed out?
                             }
                         }
 
@@ -651,13 +649,12 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                 if (nBytesToRead <= 8192)
                 {
                     DWORD nBytesFetched = 0;
+
+                    auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                    if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
-                        auto pData{ std::make_unique<char[]>(nBytesToRead) };
-                        if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
-                        {
-                            ASSERT(nBytesToRead == nBytesFetched);
-                            ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                        }
+                        ASSERT(nBytesToRead == nBytesFetched);
+                        ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
                     }
                 }
 

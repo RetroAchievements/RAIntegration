@@ -27,12 +27,12 @@ namespace detail {
 ///   <typeparamref name="CharT" /> is a known character type.
 /// </summary>
 /// <typeparam name="CharT">A type to be evaluated.</typeparam>
-/// <remarks><c>char16_t</c> && <c>char32_t</c> are not considered valid by this type_trait.</remarks>
+/// <remarks><c>char16_t</c> and <c>char32_t</c> are not considered valid by this type_trait.</remarks>
 template<typename CharT>
 struct is_char : std::bool_constant<(std::_Is_character<CharT>::value || std::is_same_v<CharT, wchar_t>)> {};
 
 /// <summary>
-///   This should only be used to compare the sizes of data types && not objects.
+///   This should only be used to compare the sizes of data types and not objects.
 /// </summary>
 template<typename T, typename U>
 struct is_same_size : std::bool_constant<sizeof(T) == sizeof(U)> {};

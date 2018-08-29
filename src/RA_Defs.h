@@ -104,10 +104,9 @@ using namespace std::string_literals;
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
-#define RA_UNKNOWN_BADGE_IMAGE_URI		"00000"
 
-#define RA_DIR_OVERLAY					".\\Overlay\\"
-#define RA_DIR_BASE						".\\RACache\\"
+#define RA_DIR_OVERLAY					"Overlay\\"
+#define RA_DIR_BASE						"RACache\\"
 #define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
 #define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
 #define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"
@@ -147,27 +146,6 @@ public:
     inline int Width() const { return(right - left); }
     inline int Height() const { return(bottom - top); }
 };
-
-class RASize
-{
-public:
-    RASize() : m_nWidth(0), m_nHeight(0) {}
-    RASize(const RASize& rhs) : m_nWidth(rhs.m_nWidth), m_nHeight(rhs.m_nHeight) {}
-    RASize(int nW, int nH) : m_nWidth(nW), m_nHeight(nH) {}
-
-public:
-    inline int Width() const { return m_nWidth; }
-    inline int Height() const { return m_nHeight; }
-    inline void SetWidth(int nW) { m_nWidth = nW; }
-    inline void SetHeight(int nH) { m_nHeight = nH; }
-
-private:
-    int m_nWidth;
-    int m_nHeight;
-};
-
-const RASize RA_BADGE_PX(64, 64);
-const RASize RA_USERPIC_PX(64, 64);
 
 class ResizeContent
 {

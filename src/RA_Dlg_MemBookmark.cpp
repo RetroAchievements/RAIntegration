@@ -554,6 +554,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
                 lplvColumn->fmt |= LVCFMT_FILL;
 
             ListView_InsertColumn(hList, idx, lplvColumn.get());
+            idx++;
         }
     }
     m_nNumOccupiedRows = 0;

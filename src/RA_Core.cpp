@@ -387,6 +387,52 @@ API int CCONV _RA_HardcoreModeIsActive()
     return g_bHardcoreModeActive;
 }
 
+static void DisableHardcoreMode()
+{
+    g_bHardcoreModeActive = false;
+    _RA_RebuildMenu();
+
+    g_LeaderboardManager.Reset();
+    g_PopupWindows.LeaderboardPopups().Reset();
+}
+
+API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
+{
+    // already disabled, just return success
+    if (!g_bHardcoreModeActive)
+        return true;
+
+    // prompt. if user doesn't consent, return failure - caller should not continue
+    std::string sMessage;
+    sMessage = "You cannot " + std::string(sActivity) + " while Hardcore mode is active.\nDisable Hardcore mode?";
+    if (MessageBoxA(nullptr, sMessage.c_str(), "Warning", MB_YESNO | MB_ICONWARNING) != IDYES)
+        return false;
+
+    // user consented, switch to non-hardcore mode
+    DisableHardcoreMode();
+
+    // return success
+    return true;
+}
+
+static void DownloadAndActivateAchievementData(ra::GameID nGameID)
+{
+    // delete Core and Unofficial Achievements so they are redownloaded
+    g_pCoreAchievements->DeletePatchFile(nGameID);
+    g_pUnofficialAchievements->DeletePatchFile(nGameID);
+
+    g_pCoreAchievements->Clear();
+    g_pUnofficialAchievements->Clear();
+    g_pLocalAchievements->Clear();
+
+    // fetch remotely then load from file
+    AchievementSet::FetchFromWebBlocking(nGameID);
+
+    g_pCoreAchievements->LoadFromFile(nGameID);
+    g_pUnofficialAchievements->LoadFromFile(nGameID);
+    g_pLocalAchievements->LoadFromFile(nGameID);
+}
+
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
@@ -446,19 +492,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     {
         if (RAUsers::LocalUser().IsLoggedIn())
         {
-            //	Delete Core and Unofficial Achievements so they are redownloaded every time:
-            g_pCoreAchievements->Clear();
-            g_pUnofficialAchievements->Clear();
-            g_pLocalAchievements->Clear();
-
-            g_pCoreAchievements->DeletePatchFile(nGameID);
-            g_pUnofficialAchievements->DeletePatchFile(nGameID);
-
-            AchievementSet::FetchFromWebBlocking(nGameID);
-
-            g_pCoreAchievements->LoadFromFile(nGameID);
-            g_pUnofficialAchievements->LoadFromFile(nGameID);
-            g_pLocalAchievements->LoadFromFile(nGameID);
+            DownloadAndActivateAchievementData(nGameID);
 
             RAUsers::LocalUser().PostActivity(PlayerStartedPlaying);
         }
@@ -1283,32 +1317,32 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_HARDCORE_MODE:
         {
-            g_bHardcoreModeActive = !g_bHardcoreModeActive;
-            _RA_ResetEmulation();
-            _RA_OnReset();
-
-            g_PopupWindows.Clear();
-
-            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
-            if (nGameID != 0)
+            if (g_bHardcoreModeActive)
             {
-                //	Delete Core and Unofficial Achievements so it is redownloaded every time:
-                g_pCoreAchievements->DeletePatchFile(nGameID);
-                g_pUnofficialAchievements->DeletePatchFile(nGameID);
+                DisableHardcoreMode();
+            }
+            else
+            {
+                ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                if (nGameID != 0)
+                {
+                    if (MessageBox(g_RAMainWnd, TEXT("Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game. Continue?"), TEXT("Warning"), MB_YESNO | MB_ICONWARNING) == IDNO)
+                        break;
+                }
 
-                g_pCoreAchievements->Clear();
-                g_pUnofficialAchievements->Clear();
-                g_pLocalAchievements->Clear();
+                g_bHardcoreModeActive = true;
+                _RA_RebuildMenu();
 
-                //	Fetch remotely then load again from file
-                AchievementSet::FetchFromWebBlocking(nGameID);
+                // when enabling hardcore mode, force a system reset
+                _RA_ResetEmulation();
+                _RA_OnReset();
 
-                g_pCoreAchievements->LoadFromFile(nGameID);
-                g_pUnofficialAchievements->LoadFromFile(nGameID);
-                g_pLocalAchievements->LoadFromFile(nGameID);
+                // if a game was loaded, redownload the associated data
+                if (nGameID != 0)
+                    DownloadAndActivateAchievementData(nGameID);
             }
 
-            _RA_RebuildMenu();
+            g_PopupWindows.Clear();
         }
         break;
 
@@ -1457,16 +1491,8 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    //	Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        if (g_bHardcoreModeActive)
-        {
-            g_bHardcoreModeActive = false;
-            RA_RebuildMenu();
-            //RA_ResetEmulation();
-        }
-
         if (!g_bRAMTamperedWith)
         {
             g_pCoreAchievements->SaveProgress(sFilename);
@@ -1481,10 +1507,8 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
     {
         if (g_bHardcoreModeActive)
         {
-            MessageBox(nullptr, TEXT("Savestates are not allowed during Hardcore Mode!"), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
-            g_bHardcoreModeActive = false;
-            RA_RebuildMenu();
-            RA_ResetEmulation();
+            MessageBox(nullptr, TEXT("Loading save states is not allowed in Hardcore mode. Disabling Hardcore mode."), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
+            DisableHardcoreMode();
         }
 
         g_pCoreAchievements->LoadProgress(sFilename);

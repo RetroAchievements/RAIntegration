@@ -89,6 +89,11 @@ extern "C" {
     //	Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
 
+    //  Should be called before performing an activity that is not allowed in hardcore mode to
+    //  give the user a chance to disable hardcore mode and continue with the activity.
+    //  Returns TRUE if hardcore was disabled, or FALSE to cancel the activity.
+    API bool CCONV _RA_WarnDisableHardcore(const char* sActivity);
+
     //	Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));

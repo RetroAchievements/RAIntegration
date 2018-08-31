@@ -183,6 +183,11 @@ extern void RA_SetPaused(bool bIsPaused);
 //	With multiple platform emulators, call this immediately before loading a new ROM.
 extern void RA_SetConsoleID(unsigned int nConsoleID);
 
+//  Should be called before performing an activity that is not allowed in hardcore mode to
+//  give the user a chance to disable hardcore mode and continue with the activity.
+//  Returns TRUE if hardcore was disabled, or FALSE to cancel the activity.
+extern bool RA_WarnDisableHardcore(const char* sActivity);
+
 //	Should be called immediately after loading or saving a new state.
 extern void RA_OnLoadState(const char* sFilename);
 extern void RA_OnSaveState(const char* sFilename);

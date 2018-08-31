@@ -94,14 +94,18 @@ public:
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
 
     std::string CreateMemString() const;
+    std::string CreateStateString(const std::string& sSalt) const;
 
     void Reset();
 
     //	Returns the new char* offset after parsing.
-    const char* ParseLine(const char* buffer);
+    const char* ParseLine(const char* sBuffer);
+    const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 
+#ifndef RA_UTEST
     //	Parse from json element
     void Parse(const Value& element);
+#endif
 
     //	Used for rendering updates when editing achievements. Usually always false.
     unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }

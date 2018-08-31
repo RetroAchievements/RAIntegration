@@ -271,6 +271,51 @@ public:
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
     }
 
+    TEST_METHOD(TestConditionalDisplayCommonPrefix)
+    {
+        // ensures order matters
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\n?0xH0000=0_0xH0001=18?First\n?0xH0000=0?Second\nThird");
+
+        Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
+
+        memory[1] = 1;
+        Assert::AreEqual("Second", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 0;
+        memory[1] = 18;
+        rp.ParseFromString("Display:\n?0xH0000=0?First\n?0xH0000=0_0xH0001=18?Second\nThird");
+
+        Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
+
+        memory[1] = 1;
+        Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestConditionalDisplayDuplicatedCondition)
+    {
+        // ensures order matters
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RA_RichPresenceInterpreter rp;
+        rp.ParseFromString("Display:\n?0xH0000=0?First\n?0xH0000=0?Second\nThird");
+
+        Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1;
+        Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
+    }
+
     TEST_METHOD(TestConditionalDisplayInvalid)
     {
         // invalid condition is ignored

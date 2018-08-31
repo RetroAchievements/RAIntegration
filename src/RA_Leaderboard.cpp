@@ -38,19 +38,6 @@ void RA_Leaderboard::ParseFromString(const char* pChar, MemValue::Format nFormat
         {
             pChar += 4;
             m_cancelCond.ParseFromString(pChar);
-
-            // temporary backwards compatibility support: all conditions in CANCEL should be OR'd:
-            if (m_cancelCond.GroupCount() == 1 && m_cancelCond.GetGroup(0).Count() > 1)
-            {
-                for (size_t i = 0; i < m_cancelCond.GetGroup(0).Count(); ++i)
-                {
-                    m_cancelCond.AddGroup();
-                    m_cancelCond.GetGroup(i + 1).Add(m_cancelCond.GetGroup(0).GetAt(i));
-                }
-
-                m_cancelCond.GetGroup(0).Clear();
-            }
-            // end backwards compatibility conversion
         }
         else if (std::string("SUB:").compare(0, 4, pChar, 0, 4) == 0)
         {

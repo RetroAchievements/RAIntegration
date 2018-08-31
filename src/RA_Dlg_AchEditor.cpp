@@ -33,7 +33,6 @@ enum CondSubItems
     NumColumns
 };
 
-BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing
@@ -1398,8 +1397,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_UPLOAD_BADGE:
                 {
-                    SetCurrentDirectory(TEXT("\\"));
-
                     const int BUF_SIZE = 1024;
                     TCHAR buffer[BUF_SIZE];
                     ZeroMemory(buffer, BUF_SIZE);

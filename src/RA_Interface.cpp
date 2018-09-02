@@ -364,7 +364,8 @@ static std::wstring GetIntegrationPath()
 
 static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, int nBytes)
 {
-    FILE* pf = _wfopen(sFile.c_str(), L"wb");
+    FILE* pf;
+    errno_t nErr = _wfopen_s(&pf, sFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         fwrite(sBuffer, 1, nBytes, pf);
@@ -372,7 +373,11 @@ static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, in
     }
     else
     {
-        MessageBoxW(nullptr, L"Problems writing file!", sFile.c_str(), MB_OK);
+        wchar_t sErrBuffer[2048];
+        _wcserror_s(sErrBuffer, nErr);
+
+        std::wstring sErrMsg = L"Unable to write " + sFile + L"\n" + sErrBuffer;
+        MessageBoxW(nullptr, sErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
     }
 }
 

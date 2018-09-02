@@ -29,11 +29,11 @@ std::string Narrow(const wchar_t* wstr)
     auto len{ ra::to_signed(std::wcslen(wstr)) };
 
     auto needed{
-        ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, nullptr, 0, nullptr, nullptr)
+        ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr)
     };
 
     std::string str(ra::to_unsigned(needed), '\000'); // allocate required space (including terminator)
-    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
+    ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
                           nullptr, nullptr);
     str.resize(ra::to_unsigned(needed - 1)); // terminator is not actually part of the string
     return str;

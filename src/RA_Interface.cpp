@@ -258,13 +258,21 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
         WINHTTP_NO_PROXY_BYPASS, 0);
 
     // Specify an HTTP server.
-    if (hSession != nullptr)
+    if (hSession == nullptr)
+    {
+        *pStatusCode = GetLastError();
+    }
+    else
     {
         mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer) / sizeof(wBuffer[0]), sHostName, strlen(sHostName) + 1);
         hConnect = WinHttpConnect(hSession, wBuffer, INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
-        if (hConnect != nullptr)
+        if (hConnect == nullptr)
+        {
+            *pStatusCode = GetLastError();
+        }
+        else
         {
             mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer)/sizeof(wBuffer[0]), sRequestedPage, strlen(sRequestedPage) + 1);
 
@@ -277,7 +285,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                 0);
 
             // Send a Request.
-            if (hRequest != nullptr)
+            if (hRequest == nullptr)
+            {
+                *pStatusCode = GetLastError();
+            }
+            else
             {
                 bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
@@ -287,7 +299,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                     0,
                     0);
 
-                if (WinHttpReceiveResponse(hRequest, nullptr))
+                if (!WinHttpReceiveResponse(hRequest, nullptr))
+                {
+                    *pStatusCode = GetLastError();
+                }
+                else
                 {
                     DWORD dwSize = sizeof(DWORD);
                     WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, pStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);

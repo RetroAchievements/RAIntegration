@@ -89,6 +89,11 @@ extern "C" {
     //	Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
 
+    //  Should be called before performing an activity that is not allowed in hardcore mode to
+    //  give the user a chance to disable hardcore mode and continue with the activity.
+    //  Returns TRUE if hardcore was disabled, or FALSE to cancel the activity.
+    API bool CCONV _RA_WarnDisableHardcore(const char* sActivity);
+
     //	Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
@@ -118,6 +123,7 @@ extern bool g_bLeaderboardsActive;
 extern bool g_bLBDisplayNotification;
 extern bool g_bLBDisplayCounter;
 extern bool g_bLBDisplayScoreboard;
+extern bool g_bPreferDecimalVal;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
@@ -136,7 +142,6 @@ extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffse
 //	Write out the buffer to a file
 extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
 extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
-extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

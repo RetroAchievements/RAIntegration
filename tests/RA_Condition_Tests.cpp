@@ -107,6 +107,13 @@ public:
         // hex value is interpreted as a 16-bit memory reference
         AssertParseCondition("0xH1234=0x80",
             Condition::Standard, Address, EightBit, 0x1234U, Equals, Address, SixteenBit, 0x80U, 0);
+
+        // h prefix indicates hex value
+        AssertParseCondition("0xH1234=h80",
+            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 0x80U, 0);
+
+        AssertParseCondition("0xH1234=h0x80",
+            Condition::Standard, Address, EightBit, 0x1234U, Equals, ValueComparison, EightBit, 0x80U, 0);
     }
 
     TEST_METHOD(TestParseConditionMemoryComparisonMemory)

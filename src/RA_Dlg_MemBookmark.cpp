@@ -771,7 +771,7 @@ void Dlg_MemBookmark::ExportJSON()
     doc.AddMember("Bookmarks", bookmarks, allocator);
 
     _stprintf_s(buf, _T("%Ts"), ofn.lpstrFile);
-    _WriteBufferToFile(NativeStr(buf), doc);
+    _WriteBufferToFile(ra::Narrow(buf), doc);
 }
 
 void Dlg_MemBookmark::ImportFromFile(std::string sFilename) 

@@ -1,13 +1,12 @@
 #include "RA_Dlg_MemBookmark.h"
 
-#include <atlbase.h> // CComPtr
-
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
 
-
+#include <atlbase.h> // CComPtr
+#include <CommDlg.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -24,8 +23,11 @@ const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
-inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };
+// _COMDLG_FILTERSPEC is Windows Vista
 
+_CONSTANT_VAR c_rgFileTypes{_T("Text Document (*.txt)\0" "*.txt\0"
+                               "JSON File (*.json)\0" "*.json\0"
+                               "All files (*.*)\0" "*.*\0\0")};
 
 enum BookmarkSubItems
 {
@@ -119,7 +121,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             // Auto-import bookmark file when opening dialog
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+                std::string file{ g_sHomeDir };
+                file += RA_DIR_BOOKMARKS;
+                file += std::to_string(g_pCurrentGameData->GetGameID());
+                file += "-Bookmarks.txt";
+
                 ImportFromFile(file);
             }
 
@@ -695,82 +701,67 @@ void Dlg_MemBookmark::ExportJSON()
 
     if (m_vBookmarks.size() == 0)
     {
-        MessageBox(nullptr, _T("No bookmarks to save: please create a bookmark before attempting to save."), _T("Error!"), MB_OK);
+        MessageBox(nullptr, _T("No bookmarks to save: please create a bookmark before attempting to save."),
+                   _T("Error!"), MB_OK);
         return;
     }
 
-    std::string defaultDir = g_sHomeDir + RA_DIR_BOOKMARKS;
+    _CONSTANT_LOC BUF_SIZE{ 1024UL };
+    OPENFILENAME ofn{};
+    ofn.lStructSize  = static_cast<DWORD>(sizeof(OPENFILENAME));
+    ofn.hwndOwner    = m_hMemBookmarkDialog;
+    ofn.lpstrFilter  = c_rgFileTypes;
+    ofn.nFilterIndex = 1UL;
+    ofn.nMaxFile     = BUF_SIZE;
+    ofn.lpstrTitle   = _T("Save Bookmark File...");
+    ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+    ofn.lpstrDefExt = _T("txt");
 
-    CComPtr<IFileSaveDialog> pDlg;
-
-    HRESULT hr;
-    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
+    ra::tstring sDefaultFilename;
+    sDefaultFilename.reserve(BUF_SIZE);
+    sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
+    sDefaultFilename.append(_T("-Bookmarks.txt"));
+    sDefaultFilename = sDefaultFilename.data();
+    if (sDefaultFilename.length() > ofn.nMaxFile)
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
-        {
-            std::ostringstream oss;
-            oss << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
-            auto defaultFileName{ oss.str() };
-
-            if (SUCCEEDED(hr = pDlg->SetFileName(ra::Widen(defaultFileName).c_str())))
-            {
-                PIDLIST_ABSOLUTE pidl{ nullptr };
-                if (SUCCEEDED(hr = SHParseDisplayName(ra::Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
-                {
-                    CComPtr<IShellItem> pItem;
-                    SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
-
-                    if (SUCCEEDED(hr = pDlg->SetDefaultFolder(pItem)))
-                    {
-                        pDlg->SetDefaultExtension(L"txt");
-                        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
-                        {
-                            if (SUCCEEDED(hr = pDlg->GetResult(&pItem.p)))
-                            {
-                                LPWSTR pStr = nullptr;
-                                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
-                                {
-                                    Document doc;
-                                    auto& allocator = doc.GetAllocator();
-                                    doc.SetObject();
-
-                                    Value bookmarks(kArrayType);
-
-                                    for (auto bookmark : m_vBookmarks)
-                                    {
-                                        Value item(kObjectType);
-
-                                        oss.str("");
-                                        oss << ra::Narrow(bookmark->Description());
-                                        auto str{ oss.str() };
-                                        Value s{ str.c_str(), allocator };
-
-                                        item.AddMember("Description", s, allocator);
-                                        item.AddMember("Address", bookmark->Address(), allocator);
-                                        item.AddMember("Type", bookmark->Type(), allocator);
-                                        item.AddMember("Decimal", bookmark->Decimal(), allocator);
-                                        bookmarks.PushBack(item, allocator);
-                                    }
-                                    doc.AddMember("Bookmarks", bookmarks, allocator);
-
-                                    _WriteBufferToFile(ra::Narrow(pStr), doc);
-                                    CoTaskMemFree(static_cast<LPVOID>(pStr));
-                                    pStr = nullptr;
-                                }
-
-                                pItem.Release();
-                                ILFree(pidl);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        pDlg.Release();
+        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
+                   MB_OK | MB_ICONERROR);
+        return;
     }
+    ofn.lpstrFile = sDefaultFilename.data();
+    // what's causing this access violation?
+    ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
+    sFilePath += NativeStr(RA_DIR_BOOKMARKS);
+    ofn.lpstrInitialDir = sFilePath.c_str();
+
+    if (::GetSaveFileName(&ofn) == 0)
+        return;
+
+    Document doc;
+    auto& allocator{ doc.GetAllocator() };
+    doc.SetObject();
+
+    Value bookmarks(kArrayType);
+
+    for (auto bookmark : m_vBookmarks)
+    {
+        Value item(kObjectType);
+        std::string str{ ra::Narrow(bookmark->Description()) };
+        Value s{ str.c_str(), allocator };
+
+        item.AddMember("Description", s, allocator);
+        item.AddMember("Address", bookmark->Address(), allocator);
+        item.AddMember("Type", bookmark->Type(), allocator);
+        item.AddMember("Decimal", bookmark->Decimal(), allocator);
+        bookmarks.PushBack(item, allocator);
+    }
+    doc.AddMember("Bookmarks", bookmarks, allocator);
+
+    std::string str{ ra::Narrow(ofn.lpstrFile) };
+    _WriteBufferToFile(str, doc);
 }
 
-void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
+void Dlg_MemBookmark::ImportFromFile(std::string sFilename) 
 {
     FILE* pFile = nullptr;
     errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
@@ -821,51 +812,58 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
 
 std::string Dlg_MemBookmark::ImportDialog()
 {
-    std::string str;
-
     if (g_pCurrentGameData->GetGameID() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
-        return str;
+        return "";
     }
 
-    CComPtr<IFileOpenDialog> pDlg;
+    // Hopefully it's long enough
+    _CONSTANT_LOC BUF_SIZE{ 1024UL };
+    
+    OPENFILENAME ofn{}; // doesn't seem to default construct by itself, a stack based equivalent to ZeroMemory
+    ofn.lStructSize  = static_cast<DWORD>(sizeof(OPENFILENAME));
+    ofn.hwndOwner    = m_hMemBookmarkDialog;
+    ofn.lpstrFilter  = c_rgFileTypes;
+    ofn.nFilterIndex = 1UL;
+    ofn.lpstrTitle   = _T("Import Bookmark File...");
+    ofn.nMaxFile     = BUF_SIZE - 1UL;
+    ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    ofn.lpstrDefExt  = _T("txt");
 
-    HRESULT hr;
-    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    ra::tstring sDefaultFilename;
+    sDefaultFilename.reserve(BUF_SIZE);
+    sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
+    sDefaultFilename.append(_T("-Bookmarks.txt"));
+    sDefaultFilename = sDefaultFilename.data();
+    if (sDefaultFilename.length() > ofn.nMaxFile)
     {
-        if (SUCCEEDED(hr = pDlg->SetFileTypes(c_rgFileTypes.size(), &c_rgFileTypes.front())))
-        {
-            if (SUCCEEDED(hr = pDlg->Show(nullptr)))
-            {
-                CComPtr<IShellItem> pItem;
-                if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
-                {
-                    LPWSTR pStr = nullptr;
-                    if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
-                    {
-                        str = ra::Narrow(pStr);
-                        CoTaskMemFree(static_cast<LPVOID>(pStr));
-                        pStr = nullptr;
-                    }
-                    pItem.Release();
-                }
-            }
-        }
-        pDlg.Release();
+        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
+                   MB_OK | MB_ICONERROR);
+        return "";
     }
+    ofn.lpstrFile = sDefaultFilename.data();
 
-    return str;
+    ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
+    sFilePath += NativeStr(RA_DIR_BOOKMARKS);
+    ofn.lpstrInitialDir = sFilePath.data();
+
+    if (::GetOpenFileName(&ofn) == 0)
+        return "";
+    std::string ret{ ofn.lpstrFile };
+    return ret;
 }
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {
-    HWND hList = GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES);
-    if (hList != nullptr)
+    if (::GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES) != nullptr)
     {
         ClearAllBookmarks();
 
-        std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+        std::string file{ g_sHomeDir };
+        file += RA_DIR_BOOKMARKS;
+        file += std::to_string(g_pCurrentGameData->GetGameID());
+        file += "-Bookmarks.txt";
         ImportFromFile(file);
     }
 }

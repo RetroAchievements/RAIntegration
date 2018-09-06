@@ -1702,7 +1702,7 @@ namespace ra {
 
 _Success_(return == 0)
 _NODISCARD static auto CALLBACK
-BrowseFolderCallback(_In_ HWND hwnd, _In_ UINT uMsg, _In_ LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
 {
     ASSERT(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)
@@ -1715,10 +1715,9 @@ BrowseFolderCallback(_In_ HWND hwnd, _In_ UINT uMsg, _In_ LPARAM lParam, _In_ LP
 
 } /* namespace ra */
 
-
-std::string GetFolderFromDialog()
+_Use_decl_annotations_
+std::string CALLBACK GetFolderFromDialog() noexcept
 {
-    // https://docs.microsoft.com/en-us/windows/desktop/api/commdlg/ns-commdlg-tagofna
     auto lpbi{ std::make_unique<BROWSEINFO>() };
     lpbi->hwndOwner = ::GetActiveWindow();
 
@@ -1733,24 +1732,26 @@ std::string GetFolderFromDialog()
     }
 
     lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
-    lpbi->lpfn = ra::BrowseFolderCallback;
-    lpbi->lParam = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    lpbi->lpfn    = ra::BrowseCallbackProc;
+    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {
         auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
         {
             ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            lpItemIdList = nullptr;
         };
         using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        // While not "used", the docs said the return value SHBrowseForFolder needs to be deallocated
+
+        // While not "used", the docs said the return value from SHBrowseForFolder needs to be deallocated
         _UNUSED ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
         if (!owner)
         {
             ::OleUninitialize();
             return std::string{};
         }
-        
+
         if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
         {
             ::OleUninitialize();

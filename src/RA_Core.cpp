@@ -35,7 +35,6 @@
 #include <direct.h>
 #include <fstream>
 #include <io.h>		//	_access()
-#include <atlbase.h> // CComPtr
 #include <ctime>
 
 #ifdef WIN32_LEAN_AND_MEAN

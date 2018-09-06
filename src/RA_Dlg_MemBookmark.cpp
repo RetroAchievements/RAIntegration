@@ -5,7 +5,6 @@
 #include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
 
-#include <atlbase.h> // CComPtr
 #include <CommDlg.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
@@ -729,7 +728,6 @@ void Dlg_MemBookmark::ExportJSON()
         return;
     }
     ofn.lpstrFile = sDefaultFilename.data();
-    // what's causing this access violation?
     ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
     sFilePath += NativeStr(RA_DIR_BOOKMARKS);
     ofn.lpstrInitialDir = sFilePath.c_str();
@@ -817,9 +815,8 @@ std::string Dlg_MemBookmark::ImportDialog()
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
         return "";
     }
-
-    // Hopefully it's long enough
-    _CONSTANT_LOC BUF_SIZE{ 1024UL };
+    
+    _CONSTANT_LOC BUF_SIZE{ 1024UL }; // Hopefully it's long enough, there's a fail-safe to prevent buffer overrun
     
     OPENFILENAME ofn{}; // doesn't seem to default construct by itself, a stack based equivalent to ZeroMemory
     ofn.lStructSize  = static_cast<DWORD>(sizeof(OPENFILENAME));

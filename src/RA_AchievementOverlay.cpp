@@ -130,7 +130,7 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, RA_OVERLAY_BG_FILENAME);
+    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, RA_DIR_OVERLAY "overlayBG.png");
     m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 

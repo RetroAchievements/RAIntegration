@@ -152,7 +152,6 @@ using namespace std::string_literals;
 #define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA##"myprogress.txt"
 #define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA##"mygamelibrary.txt"
 
-#define RA_OVERLAY_BG_FILENAME			RA_DIR_OVERLAY##"overlayBG.png"
 #define RA_NEWS_FILENAME				RA_DIR_DATA##"ra_news.txt"
 #define RA_TITLES_FILENAME				RA_DIR_DATA##"gametitles.txt"
 #define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"

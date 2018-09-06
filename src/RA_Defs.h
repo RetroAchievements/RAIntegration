@@ -2,6 +2,9 @@
 #define RA_DEFS_H
 #pragma once
 
+
+
+
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -24,6 +27,7 @@
     #define NOWINOFFSETS
     #define NOWINSTYLES
 */
+
 
 // Windows stuff we don't need
 #define WIN32_LEAN_AND_MEAN
@@ -49,6 +53,7 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
+
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -59,11 +64,18 @@
 
 #include <tchar.h>
 
+#ifdef WIN32_LEAN_AND_MEAN
+#include <MMSystem.h>
+#include <ShellAPI.h>
+#include <CommDlg.h>
+#endif // WIN32_LEAN_AND_MEAN
+
 #include <map>
 #include <array>
 #include <sstream>
 #include <queue>
 #include "ra_utility.h"
+
 
 #ifndef RA_EXPORTS
 #include <cassert> 
@@ -75,23 +87,38 @@
 
 
 
+
+//	RA-Only
+
+
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-#define RAPIDJSON_NOMEMBERITERATORCLASS 1
+#pragma warning(push, 1)
+// This is not needed the most recent version
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+//	RA-Only
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
 #include <rapidjson/filestream.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/error/en.h>
+#pragma warning(pop)
 
 using namespace rapidjson;
 extern GetParseErrorFunc GetJSONParseErrorStr;
+#pragma warning(pop)
+
 
 using namespace std::string_literals;
-#endif	// RA_EXPORTS
+//using namespace std::chrono_literals; we could use this later
+
+#endif	//RA_EXPORTS
+
+
+// Maybe an extra check just in-case
 
 #define _NORETURN            [[noreturn]]
 
-// Maybe an extra check just in-case
 #if _HAS_CXX17
 #define _DEPRECATED          [[deprecated]]
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
@@ -107,7 +134,7 @@ using namespace std::string_literals;
 #define _CONSTANT_VAR        constexpr auto
 #endif // _HAS_CXX17        
 
-#define _CONSTANT_LOC constexpr auto // local vars can't be inline
+#define _CONSTANT_LOC constexpr // local vars can't be inline
 #define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
@@ -292,8 +319,7 @@ _CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
 _CONSTANT_VAR RA_MAX_PATH{ 32'767 }; // Unicode max path
 #else
 #error Unknown character set detected!
-#endif /* _MBSC */
-
+#endif /* _MBCS */
 
 #ifdef UNICODE
 #define NativeStr(x) ra::Widen(x)

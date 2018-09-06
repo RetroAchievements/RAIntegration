@@ -3,7 +3,7 @@
 *.user
 /RetroAchievementsKey
 test_app/
-packages/
+src/*_REMOTE_*.cpp
 src/clipboard.txt
 
 # Output files

@@ -40,6 +40,7 @@
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
 #include <CommDlg.h>
+#include <Shlwapi.h>
 #endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
@@ -1715,7 +1716,7 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 } /* namespace ra */
 
 _Use_decl_annotations_
-std::string CALLBACK GetFolderFromDialog() noexcept
+std::string GetFolderFromDialog() noexcept
 {
     auto lpbi{ std::make_unique<BROWSEINFO>() };
     lpbi->hwndOwner = ::GetActiveWindow();
@@ -1725,10 +1726,7 @@ std::string CALLBACK GetFolderFromDialog() noexcept
     lpbi->lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
-    {
-        ::OleUninitialize();
-        return std::string{};
-    }
+        return "";
 
     lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
     lpbi->lpfn    = ra::BrowseCallbackProc;
@@ -1741,20 +1739,19 @@ std::string CALLBACK GetFolderFromDialog() noexcept
             ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
             lpItemIdList = nullptr;
         };
-        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
 
-        // While not "used", the docs said the return value from SHBrowseForFolder needs to be deallocated
-        _UNUSED ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
         if (!owner)
         {
             ::OleUninitialize();
-            return std::string{};
+            return "";
         }
 
         if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
         {
             ::OleUninitialize();
-            return std::string{};
+            return "";
         }
         ret = ra::Narrow(lpbi->pszDisplayName);
     }

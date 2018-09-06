@@ -22,8 +22,6 @@ const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
-// _COMDLG_FILTERSPEC is Windows Vista
-
 _CONSTANT_VAR c_rgFileTypes{_T("Text Document (*.txt)\0" "*.txt\0"
                                "JSON File (*.json)\0" "*.json\0"
                                "All files (*.*)\0" "*.*\0\0")};
@@ -705,7 +703,7 @@ void Dlg_MemBookmark::ExportJSON()
         return;
     }
 
-    _CONSTANT_LOC BUF_SIZE{ 1024UL };
+    constexpr auto BUF_SIZE{ 1024UL };
     OPENFILENAME ofn{};
     ofn.lStructSize  = static_cast<DWORD>(sizeof(OPENFILENAME));
     ofn.hwndOwner    = m_hMemBookmarkDialog;
@@ -714,22 +712,34 @@ void Dlg_MemBookmark::ExportJSON()
     ofn.nMaxFile     = BUF_SIZE;
     ofn.lpstrTitle   = _T("Save Bookmark File...");
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
-    ofn.lpstrDefExt = _T("txt");
+    ofn.lpstrDefExt = _T("txt"); 
+
+    auto PathTooLong =[]() noexcept
+    {
+        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
+                    MB_OK | MB_ICONERROR);
+    };
 
     ra::tstring sDefaultFilename;
     sDefaultFilename.reserve(BUF_SIZE);
     sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
     sDefaultFilename.append(_T("-Bookmarks.txt"));
     sDefaultFilename = sDefaultFilename.data();
+
     if (sDefaultFilename.length() > ofn.nMaxFile)
     {
-        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
-                   MB_OK | MB_ICONERROR);
+        PathTooLong();
         return;
     }
     ofn.lpstrFile = sDefaultFilename.data();
+
     ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
     sFilePath += NativeStr(RA_DIR_BOOKMARKS);
+    if (sFilePath.length() > (ofn.nMaxFile - sDefaultFilename.length()))
+    {
+        PathTooLong();
+        return;
+    }
     ofn.lpstrInitialDir = sFilePath.c_str();
 
     if (::GetSaveFileName(&ofn) == 0)
@@ -816,9 +826,9 @@ std::string Dlg_MemBookmark::ImportDialog()
         return "";
     }
     
-    _CONSTANT_LOC BUF_SIZE{ 1024UL }; // Hopefully it's long enough, there's a fail-safe to prevent buffer overrun
+    constexpr auto BUF_SIZE{ 1024UL };
     
-    OPENFILENAME ofn{}; // doesn't seem to default construct by itself, a stack based equivalent to ZeroMemory
+    OPENFILENAME ofn{};
     ofn.lStructSize  = static_cast<DWORD>(sizeof(OPENFILENAME));
     ofn.hwndOwner    = m_hMemBookmarkDialog;
     ofn.lpstrFilter  = c_rgFileTypes;
@@ -828,22 +838,33 @@ std::string Dlg_MemBookmark::ImportDialog()
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     ofn.lpstrDefExt  = _T("txt");
 
+    auto PathTooLong =[]() noexcept
+    {
+        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
+                   MB_OK | MB_ICONERROR);
+    };
+
     ra::tstring sDefaultFilename;
     sDefaultFilename.reserve(BUF_SIZE);
     sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
     sDefaultFilename.append(_T("-Bookmarks.txt"));
     sDefaultFilename = sDefaultFilename.data();
+
     if (sDefaultFilename.length() > ofn.nMaxFile)
     {
-        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
-                   MB_OK | MB_ICONERROR);
+        PathTooLong();
         return "";
     }
     ofn.lpstrFile = sDefaultFilename.data();
 
     ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
     sFilePath += NativeStr(RA_DIR_BOOKMARKS);
-    ofn.lpstrInitialDir = sFilePath.data();
+    if (sFilePath.length() > (ofn.nMaxFile - sDefaultFilename.length()))
+    {
+        PathTooLong();
+        return "";
+    }
+    ofn.lpstrInitialDir = sFilePath.c_str();
 
     if (::GetOpenFileName(&ofn) == 0)
         return "";
@@ -857,10 +878,12 @@ void Dlg_MemBookmark::OnLoad_NewRom()
     {
         ClearAllBookmarks();
 
-        std::string file{ g_sHomeDir };
-        file += RA_DIR_BOOKMARKS;
-        file += std::to_string(g_pCurrentGameData->GetGameID());
-        file += "-Bookmarks.txt";
+        std::string file;
+        {
+            std::ostringstream oss;
+            oss << g_sHomeDir << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+            file = oss.str();
+        }
         ImportFromFile(file);
     }
 }

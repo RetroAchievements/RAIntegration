@@ -857,9 +857,8 @@ std::string Dlg_MemBookmark::ImportDialog()
             oss << g_pCurrentGameData->GetGameID() << _T("-Bookmarks.txt");
             sDefaultFilename = oss.str();
         }   
+        
         _stprintf_s(buf, _T("%Ts"), sDefaultFilename.c_str());
-        ofn.lpstrFile = buf;
-
         if (static_cast<DWORD>(_tcslen(buf)) > ofn.nMaxFile)
         {
             PathTooLong();

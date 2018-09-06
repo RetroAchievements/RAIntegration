@@ -709,7 +709,7 @@ void Dlg_MemBookmark::ExportJSON()
     ofn.hwndOwner    = m_hMemBookmarkDialog;
     ofn.lpstrFilter  = c_rgFileTypes;
     ofn.nFilterIndex = 1UL;
-    ofn.nMaxFile     = BUF_SIZE;
+    ofn.nMaxFile     = BUF_SIZE + 16UL;
     ofn.lpstrTitle   = _T("Save Bookmark File...");
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
     ofn.lpstrDefExt = _T("txt"); 
@@ -720,22 +720,27 @@ void Dlg_MemBookmark::ExportJSON()
                     MB_OK | MB_ICONERROR);
     };
 
-    ra::tstring sDefaultFilename;
-    sDefaultFilename.reserve(BUF_SIZE);
-    sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
-    sDefaultFilename.append(_T("-Bookmarks.txt"));
-    sDefaultFilename = sDefaultFilename.data();
-
-    if (sDefaultFilename.length() > ofn.nMaxFile)
+    TCHAR buf[BUF_SIZE + 16UL]{};
     {
-        PathTooLong();
-        return;
+        ra::tstring sDefaultFilename;
+        {
+            std::basic_ostringstream<TCHAR> oss;
+            oss << g_pCurrentGameData->GetGameID() << _T("-Bookmarks.txt");
+            sDefaultFilename = oss.str();
+        }
+        _stprintf_s(buf, _T("%Ts"), sDefaultFilename.c_str());
+
+        if (static_cast<DWORD>(_tcslen(buf)) > ofn.nMaxFile)
+        {
+            PathTooLong();
+            return;
+        }
+        ofn.lpstrFile = buf;
     }
-    ofn.lpstrFile = sDefaultFilename.data();
 
     ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
     sFilePath += NativeStr(RA_DIR_BOOKMARKS);
-    if (sFilePath.length() > (ofn.nMaxFile - sDefaultFilename.length()))
+    if (sFilePath.length() > (ofn.nMaxFile - static_cast<DWORD>(_tcslen(buf))))
     {
         PathTooLong();
         return;
@@ -765,8 +770,8 @@ void Dlg_MemBookmark::ExportJSON()
     }
     doc.AddMember("Bookmarks", bookmarks, allocator);
 
-    std::string str{ ra::Narrow(ofn.lpstrFile) };
-    _WriteBufferToFile(str, doc);
+    _stprintf_s(buf, _T("%Ts"), ofn.lpstrFile);
+    _WriteBufferToFile(NativeStr(buf), doc);
 }
 
 void Dlg_MemBookmark::ImportFromFile(std::string sFilename) 
@@ -834,7 +839,7 @@ std::string Dlg_MemBookmark::ImportDialog()
     ofn.lpstrFilter  = c_rgFileTypes;
     ofn.nFilterIndex = 1UL;
     ofn.lpstrTitle   = _T("Import Bookmark File...");
-    ofn.nMaxFile     = BUF_SIZE - 1UL;
+    ofn.nMaxFile     = BUF_SIZE + 16UL;
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     ofn.lpstrDefExt  = _T("txt");
 
@@ -844,22 +849,28 @@ std::string Dlg_MemBookmark::ImportDialog()
                    MB_OK | MB_ICONERROR);
     };
 
-    ra::tstring sDefaultFilename;
-    sDefaultFilename.reserve(BUF_SIZE);
-    sDefaultFilename.append(ra::to_tstring(g_pCurrentGameData->GetGameID()));
-    sDefaultFilename.append(_T("-Bookmarks.txt"));
-    sDefaultFilename = sDefaultFilename.data();
-
-    if (sDefaultFilename.length() > ofn.nMaxFile)
+    TCHAR buf[BUF_SIZE + 16UL]{};
     {
-        PathTooLong();
-        return "";
-    }
-    ofn.lpstrFile = sDefaultFilename.data();
+        ra::tstring sDefaultFilename;
+        {
+            std::basic_ostringstream<TCHAR> oss;
+            oss << g_pCurrentGameData->GetGameID() << _T("-Bookmarks.txt");
+            sDefaultFilename = oss.str();
+        }   
+        _stprintf_s(buf, _T("%Ts"), sDefaultFilename.c_str());
+        ofn.lpstrFile = buf;
+
+        if (static_cast<DWORD>(_tcslen(buf)) > ofn.nMaxFile)
+        {
+            PathTooLong();
+            return "";
+        }
+        ofn.lpstrFile = buf;
+    }    
 
     ra::tstring sFilePath{ NativeStr(g_sHomeDir) };
     sFilePath += NativeStr(RA_DIR_BOOKMARKS);
-    if (sFilePath.length() > (ofn.nMaxFile - sDefaultFilename.length()))
+    if (sFilePath.length() > (ofn.nMaxFile - static_cast<DWORD>(_tcslen(buf))))
     {
         PathTooLong();
         return "";
@@ -868,8 +879,8 @@ std::string Dlg_MemBookmark::ImportDialog()
 
     if (::GetOpenFileName(&ofn) == 0)
         return "";
-    std::string ret{ ofn.lpstrFile };
-    return ret;
+    _stprintf_s(buf, _T("%Ts"), ofn.lpstrFile);
+    return ra::Narrow(buf);
 }
 
 void Dlg_MemBookmark::OnLoad_NewRom()

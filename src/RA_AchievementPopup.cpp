@@ -22,15 +22,15 @@ const float APPEAR_AT = 0.8f;
 const float FADEOUT_AT = 4.2f;
 const float FINISH_AT = 5.0f;
 
-const char* MSG_SOUND[] =
+const wchar_t* MSG_SOUND[] =
 {
-    "login.wav",
-    "info.wav",
-    "unlock.wav",
-    "acherror.wav",
-    "lb.wav",
-    "lbcancel.wav",
-    "message.wav",
+    L"login.wav",
+    L"info.wav",
+    L"unlock.wav",
+    L"acherror.wav",
+    L"lb.wav",
+    L"lbcancel.wav",
+    L"message.wav",
 };
 static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
 }
@@ -43,8 +43,8 @@ AchievementPopup::AchievementPopup() :
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    std::string sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[ActiveMessage().Type()];
-    PlaySoundA(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
+    std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[ActiveMessage().Type()];
+    PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
 void AchievementPopup::AddMessage(const MessagePopup& msg)

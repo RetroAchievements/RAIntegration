@@ -138,23 +138,23 @@ using namespace std::string_literals;
 #define _CONSTANT_FN  _CONSTANT_VAR
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
-#define RA_PREFERENCES_FILENAME_PREFIX	"RAPrefs_"
+#define RA_PREFERENCES_FILENAME_PREFIX	L"RAPrefs_"
 
-#define RA_DIR_OVERLAY					"Overlay\\"
-#define RA_DIR_BASE						"RACache\\"
-#define RA_DIR_DATA						RA_DIR_BASE##"Data\\"
-#define RA_DIR_BADGE					RA_DIR_BASE##"Badge\\"
-#define RA_DIR_USERPIC					RA_DIR_BASE##"UserPic\\"
-#define RA_DIR_BOOKMARKS				RA_DIR_BASE##"Bookmarks\\"
+#define RA_DIR_OVERLAY					L"Overlay\\"
+#define RA_DIR_BASE						L"RACache\\"
+#define RA_DIR_DATA						RA_DIR_BASE L"Data\\"
+#define RA_DIR_BADGE					RA_DIR_BASE L"Badge\\"
+#define RA_DIR_USERPIC					RA_DIR_BASE L"UserPic\\"
+#define RA_DIR_BOOKMARKS				RA_DIR_BASE L"Bookmarks\\"
 
-#define RA_GAME_HASH_FILENAME			RA_DIR_DATA##"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME			RA_DIR_DATA##"gametitles.txt"
-#define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA##"myprogress.txt"
-#define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA##"mygamelibrary.txt"
+#define RA_GAME_HASH_FILENAME			RA_DIR_DATA L"gamehashlibrary.txt"
+#define RA_GAME_LIST_FILENAME			RA_DIR_DATA L"gametitles.txt"
+#define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA L"myprogress.txt"
+#define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA L"mygamelibrary.txt"
 
-#define RA_NEWS_FILENAME				RA_DIR_DATA##"ra_news.txt"
-#define RA_TITLES_FILENAME				RA_DIR_DATA##"gametitles.txt"
-#define RA_LOG_FILENAME					RA_DIR_DATA##"RALog.txt"
+#define RA_NEWS_FILENAME				RA_DIR_DATA L"ra_news.txt"
+#define RA_TITLES_FILENAME				RA_DIR_DATA L"gametitles.txt"
+#define RA_LOG_FILENAME					RA_DIR_DATA L"RALog.txt"
 
 
 #define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )

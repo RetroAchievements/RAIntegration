@@ -603,10 +603,9 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    char buffer[4096];
-    sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
+    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
     FILE* pf = nullptr;
-    fopen_s(&pf, buffer, "w");
+    _wfopen_s(&pf, sAchievementStateFile.c_str(), L"w");
     if (pf == nullptr)
     {
         ASSERT(!"Could not save progress!");

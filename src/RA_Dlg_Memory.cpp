@@ -1443,7 +1443,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     ra::GameID nGameID = g_pCurrentGameData->GetGameID();
     if (nGameID != 0)
     {
-        std::string sNotesFilename = g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-Notes2.txt";
+        std::wstring sNotesFilename = g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-Notes2.txt";
         nSize = m_CodeNotes.Load(sNotesFilename);
     }
 

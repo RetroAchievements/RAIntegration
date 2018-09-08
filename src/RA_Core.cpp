@@ -42,7 +42,7 @@
 #endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
-std::string g_sHomeDir;
+std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 std::string g_sCurrentROMMD5;	//	Internal
 
@@ -112,23 +112,24 @@ API const char* CCONV _RA_HostName()
     return sHostName.c_str();
 }
 
-static void EnsureDirectoryExists(const std::string& sDirectory)
+static void EnsureDirectoryExists(const std::wstring& sDirectory)
 {
-    if (DirectoryExists(sDirectory.c_str()) == FALSE)
-        _mkdir(sDirectory.c_str());
+    DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
+    if (nAttrib == INVALID_FILE_ATTRIBUTES)
+        CreateDirectoryW(sDirectory.c_str(), nullptr);
 }
 
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
 {
     // determine the home directory from the executable's path
-    TCHAR sBuffer[MAX_PATH];
-    GetModuleFileName(0, sBuffer, MAX_PATH);
-    PathRemoveFileSpec(sBuffer);
-    g_sHomeDir = ra::Narrow(sBuffer);
+    wchar_t sBuffer[MAX_PATH];
+    GetModuleFileNameW(0, sBuffer, MAX_PATH);
+    PathRemoveFileSpecW(sBuffer);
+    g_sHomeDir = sBuffer;
     if (g_sHomeDir.back() != '\\')
         g_sHomeDir.push_back('\\');
 
-    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", g_sHomeDir.c_str());
+    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", ra::Narrow(g_sHomeDir).c_str());
 
     //	Ensure all required directories are created:
     EnsureDirectoryExists(g_sHomeDir + RA_DIR_BASE);
@@ -654,7 +655,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestBadge:
                 {
                     const std::string& sBadgeURI = pObj->GetData();
-                    _WriteBufferToFile(g_sHomeDir + RA_DIR_BADGE + sBadgeURI + ".png", pObj->GetResponse());
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_BADGE + ra::Widen(sBadgeURI) + L".png", pObj->GetResponse());
 
                     /* This block seems unnecessary. --GD
                     for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
@@ -679,7 +680,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestUserPic:
                 {
                     const std::string& sUsername = pObj->GetData();
-                    _WriteBufferToFile(g_sHomeDir + RA_DIR_USERPIC + sUsername + ".png", pObj->GetResponse());
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_USERPIC + ra::Widen(sUsername) + L".png", pObj->GetResponse());
                     break;
                 }
 
@@ -956,9 +957,9 @@ API void CCONV _RA_LoadPreferences()
 {
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
-    std::string sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
+    std::wstring sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + ra::Widen(g_sClientName) + L".cfg";
     FILE* pf = nullptr;
-    fopen_s(&pf, sPreferencesFile.c_str(), "rb");
+    _wfopen_s(&pf, sPreferencesFile.c_str(), L"rb");
     if (pf == nullptr)
     {
         //	Test for first-time use:
@@ -1081,9 +1082,9 @@ API void CCONV _RA_SavePreferences()
         return;
     }
 
-    std::string sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + g_sClientName + ".cfg";
+    std::wstring sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + ra::Widen(g_sClientName) + L".cfg";
     FILE* pf = nullptr;
-    fopen_s(&pf, sPreferencesFile.c_str(), "wb");
+    _wfopen_s(&pf, sPreferencesFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         FileStream fs(pf);
@@ -1419,11 +1420,10 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            char sRichPresenceFile[1024];
-            sprintf_s(sRichPresenceFile, 1024, "%s%s%u-Rich.txt", g_sHomeDir.c_str(), RA_DIR_DATA, g_pCurrentGameData->GetGameID());
+            std::wstring sRichPresenceFile = g_sHomeDir + RA_DIR_DATA + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Rich.txt";
 
             std::string sRichPresence;
-            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile);
+            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile.c_str());
             g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
 
             if (g_RichPresenceDialog.GetHWND() == nullptr)
@@ -1553,11 +1553,6 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
     _RA_LoadROM = fpLoadROM;
 }
 
-API bool _RA_UserLoggedIn()
-{
-    return(RAUsers::LocalUser().IsLoggedIn() == TRUE);
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1606,10 +1601,10 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     pSource++;
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
+void _WriteBufferToFile(const std::wstring& sFileName, const Document& doc)
 {
     FILE* pf = nullptr;
-    if (fopen_s(&pf, sFileName.c_str(), "wb") == 0)
+    if (_wfopen_s(&pf, sFileName.c_str(), L"wb") == 0)
     {
         FileStream fs(pf);
         Writer<FileStream> writer(fs);
@@ -1618,18 +1613,18 @@ void _WriteBufferToFile(const std::string& sFileName, const Document& doc)
     }
 }
 
-void _WriteBufferToFile(const std::string& sFileName, const std::string& raw)
+void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
 {
     using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
 #pragma warning(push)
 #pragma warning(disable : 4996) // Deprecation from Microsoft
-    FileH myFile{ std::fopen(sFileName.c_str(), "wb"), std::fclose };
+    FileH myFile{ _wfopen(sFileName.c_str(), L"wb"), std::fclose };
 #pragma warning(pop)
 
     std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
 }
 
-bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
+bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
 {
     std::ifstream file(sFile);
     if (file.fail())
@@ -1644,10 +1639,10 @@ bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile)
     return true;
 }
 
-char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut)
+char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
     FILE* pf = nullptr;
-    fopen_s(&pf, sFilename, "r");
+    _wfopen_s(&pf, sFilename, L"r");
     if (pf == nullptr)
         return nullptr;
 
@@ -1681,10 +1676,10 @@ std::string _TimeStampToString(time_t nTime)
     return std::string(buffer);
 }
 
-BOOL _FileExists(const std::string& sFileName)
+BOOL _FileExists(const std::wstring& sFileName)
 {
     FILE* pf = nullptr;
-    fopen_s(&pf, sFileName.c_str(), "rb");
+    _wfopen_s(&pf, sFileName.c_str(), L"rb");
     if (pf != nullptr)
     {
         fclose(pf);
@@ -1726,11 +1721,11 @@ std::string GetFolderFromDialog()
     return sRetVal;
 }
 
-BOOL RemoveFileIfExists(const std::string& sFilePath)
+BOOL RemoveFileIfExists(const std::wstring& sFilePath)
 {
-    if (_access(sFilePath.c_str(), 06) != -1)	//	06= Read/write permission
+    if (_waccess(sFilePath.c_str(), 06) != -1)	//	06= Read/write permission
     {
-        if (remove(sFilePath.c_str()) == -1)
+        if (_wremove(sFilePath.c_str()) == -1)
         {
             //	Remove issues?
             ASSERT(!"Could not remove patch file!?");

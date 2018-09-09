@@ -299,7 +299,7 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                     0,
                     0);
 
-                if (!WinHttpReceiveResponse(hRequest, nullptr))
+                if (!bResults || !WinHttpReceiveResponse(hRequest, nullptr))
                 {
                     *pStatusCode = GetLastError();
                 }
@@ -332,7 +332,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                         }
                         else
                         {
+                            if (*pStatusCode == 200)
+                                *pStatusCode = GetLastError();
+
                             bSuccess = FALSE;
+                            break;
                         }
 
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);

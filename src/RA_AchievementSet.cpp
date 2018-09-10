@@ -29,18 +29,18 @@ void RASetAchievementCollection(AchievementSetType Type)
     g_pActiveAchievements = *ACH_SETS[Type];
 }
 
-std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
+std::wstring AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
         case Core:
-            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";
         case Unofficial:
-            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";	// Same as Core
         case Local:
-            return g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-User.txt";
         default:
-            return "";
+            return L"";
     }
 }
 
@@ -59,8 +59,8 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
     }
 
     //	Remove the text file
-    std::string sFilename = GetAchievementSetFilename(nGameID);
-    return RemoveFileIfExists(g_sHomeDir + "\\" + sFilename);
+    std::wstring sFilename = GetAchievementSetFilename(nGameID);
+    return RemoveFileIfExists(g_sHomeDir + L"\\" + sFilename);
 }
 
 //static 
@@ -267,9 +267,9 @@ BOOL AchievementSet::SaveToFile()
     char sMem[2048];
     unsigned int i = 0;
 
-    const std::string sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
+    const std::wstring sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
 
-    fopen_s(&pFile, sFilename.c_str(), "w");
+    _wfopen_s(&pFile, sFilename.c_str(), L"w");
     if (pFile != nullptr)
     {
         sprintf_s(sNextLine, 2048, "0.030\n");						//	Min ver
@@ -399,7 +399,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     {
         const Value& PatchData = doc["PatchData"];
         FILE* pf = nullptr;
-        fopen_s(&pf, std::string(g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
+        _wfopen_s(&pf, std::wstring(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt").c_str(), L"wb");
         if (pf != nullptr)
         {
             FileStream fs(pf);
@@ -435,10 +435,10 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         return TRUE;
     }
 
-    const std::string sFilename = GetAchievementSetFilename(nGameID);
+    const std::wstring sFilename = GetAchievementSetFilename(nGameID);
 
     FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
+    errno_t nErr = _wfopen_s(&pFile, sFilename.c_str(), L"r");
     if (pFile != nullptr)
     {
         //	Store this: we are now assuming this is the correct checksum if we have a file for it
@@ -502,7 +502,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 ra::GameID nGameID = g_pCurrentGameData->GetGameID();
 
                 //	Rich Presence
-                _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", g_pCurrentGameData->RichPresencePatch());
+                _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-Rich.txt", g_pCurrentGameData->RichPresencePatch());
                 g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
                 const Value& AchievementsData = doc["Achievements"];
@@ -603,10 +603,9 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    char buffer[4096];
-    sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
+    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
     FILE* pf = nullptr;
-    fopen_s(&pf, buffer, "w");
+    _wfopen_s(&pf, sAchievementStateFile.c_str(), L"w");
     if (pf == nullptr)
     {
         ASSERT(!"Could not save progress!");
@@ -628,7 +627,6 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
 void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 {
-    char buffer[4096];
     long nFileSize;
 
     if (!RAUsers::LocalUser().IsLoggedIn())
@@ -637,9 +635,9 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return;
 
-    sprintf_s(buffer, sizeof(buffer), "%s.rap", sLoadStateFilename);
+    std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
 
-    char* pRawFile = _MallocAndBulkReadFileToBuffer(buffer, nFileSize);
+    char* pRawFile = _MallocAndBulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
         const char* pIter = pRawFile;

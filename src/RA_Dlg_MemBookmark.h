@@ -70,9 +70,9 @@ private:
     unsigned int GetMemory(unsigned int nAddr, int type);
 
     void ExportJSON();
-    void ImportFromFile(std::string filename);
+    void ImportFromFile(std::wstring filename);
     void GenerateResizes(HWND hDlg);
-    std::string ImportDialog();
+    std::wstring ImportDialog();
 
     void AddBookmarkMap(MemBookmark* bookmark)
     {

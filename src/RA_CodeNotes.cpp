@@ -11,11 +11,11 @@
 
 void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
-size_t CodeNotes::Load(const std::string& sFile)
+size_t CodeNotes::Load(const std::wstring& sFile)
 {
     Clear();
 
-    std::ifstream ifile{ sFile };
+    std::wifstream ifile{ sFile };
     if (!ifile.is_open())
         return 0U;
 
@@ -48,7 +48,7 @@ size_t CodeNotes::Load(const std::string& sFile)
     return m_CodeNotes.size();
 }
 
-BOOL CodeNotes::Save(const std::string& sFile)
+BOOL CodeNotes::Save(const std::wstring& sFile)
 {
     return FALSE; // All saving should be cloud-based!
 }
@@ -70,7 +70,7 @@ void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
     //	Persist then reload
     const ra::GameID nGameID = doc["GameID"].GetUint();
 
-    _WriteBufferToFile(g_sHomeDir + std::string(RA_DIR_DATA) + std::to_string(nGameID) + "-Notes2.txt", doc);
+    _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-Notes2.txt", doc);
 
     g_MemoryDialog.RepopulateMemNotesFromFile();
 }

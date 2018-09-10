@@ -105,7 +105,7 @@ extern "C" {
 
 //	Non-exposed:
 extern std::string g_sKnownRAVersion;
-extern std::string g_sHomeDir;
+extern std::wstring g_sHomeDir;
 extern std::string g_sROMDirLocation;
 extern std::string g_sCurrentROMMD5;
 
@@ -127,10 +127,10 @@ extern bool g_bPreferDecimalVal;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut);
+extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
 
 //  Read a file to a std::string. Returns false on error.
-extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const char* sFile);
+extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
@@ -140,8 +140,8 @@ extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
 extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 //	Write out the buffer to a file
-extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const std::string& sFileName, const rapidjson::Document& doc);
+extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);
+extern void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();
@@ -149,14 +149,14 @@ extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
 
-extern BOOL _FileExists(const std::string& sFileName);
+extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
 
 extern std::string GetFolderFromDialog();
 
-extern BOOL RemoveFileIfExists(const std::string& sFilePath);
+extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);
 
 BOOL CanCausePause();
 

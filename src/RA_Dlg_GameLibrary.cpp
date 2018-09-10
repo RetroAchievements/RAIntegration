@@ -105,13 +105,9 @@ inline static void LogErrno() noexcept
 
 void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
 {
-    std::string sGameHashFile;
-    {
-        std::ostringstream oss;
-        oss << g_sHomeDir << RA_GAME_HASH_FILENAME;
-        sGameHashFile = oss.str();
-    }
-    std::ifstream ifile{ sGameHashFile };
+    std::wstring sGameHashFile{g_sHomeDir};
+    sGameHashFile += RA_GAME_HASH_FILENAME;
+    std::wifstream ifile{ sGameHashFile };
     if (!ifile.is_open())
     {
         ra::LogErrno();
@@ -139,13 +135,9 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
 
 void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
 {
-    std::string sTitlesFile;
-    {
-        std::ostringstream oss;
-        oss << g_sHomeDir << RA_TITLES_FILENAME;
-        sTitlesFile = oss.str();
-    }
-    std::ifstream ifile{ sTitlesFile };
+    std::wstring sTitlesFile{g_sHomeDir};
+    sTitlesFile += RA_TITLES_FILENAME;
+    std::wifstream ifile{ sTitlesFile };
     if (!ifile.is_open())
     {
         ra::LogErrno();
@@ -173,14 +165,11 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
 
 void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
 {
-    std::string sProgressFile;
-    {
-        std::ostringstream oss;
-        oss << g_sHomeDir << RA_TITLES_FILENAME;
-        sProgressFile = oss.str();
-    }
+    std::wstring sProgressFile{g_sHomeDir};
+    sProgressFile += RA_TITLES_FILENAME;
 
-    std::ifstream ifile{ sProgressFile, std::ios::binary };
+
+    std::wifstream ifile{ sProgressFile, std::ios::binary };
     if (!ifile.is_open())
     {
         ra::LogErrno();
@@ -499,11 +488,11 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 
 void Dlg_GameLibrary::LoadAll()
 {
-    std::string sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+    std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
     
     mtx.lock();
     FILE* pLoadIn = nullptr;
-    fopen_s(&pLoadIn, sMyGameLibraryFile.c_str(), "rb");
+    _wfopen_s(&pLoadIn, sMyGameLibraryFile.c_str(), L"rb");
     if (pLoadIn != nullptr)
     {
         DWORD nCharsRead1 = 0;
@@ -543,11 +532,11 @@ void Dlg_GameLibrary::LoadAll()
 
 void Dlg_GameLibrary::SaveAll()
 {
-    std::string sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+    std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
 
     mtx.lock();
     FILE* pf = nullptr;
-    fopen_s(&pf, sMyGameLibraryFile.c_str(), "wb");
+    _wfopen_s(&pf, sMyGameLibraryFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         std::map<std::string, std::string>::iterator iter = Results.begin();

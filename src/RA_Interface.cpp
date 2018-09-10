@@ -478,6 +478,31 @@ static const char* CCONV _RA_InstallIntegration()
     return _RA_IntegrationVersion ? _RA_IntegrationVersion() : "0.000";
 }
 
+static unsigned long long ParseVersion(const char* sVersion)
+{
+    char* pPart;
+
+    unsigned int major = strtoul(sVersion, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int minor = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int patch = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int revision = strtoul(pPart, &pPart, 10);
+
+    // 64-bit max signed value is 9223 37203 68547 75807
+    unsigned long long version = (major * 100000) + minor;
+    version = (version * 100000) + patch;
+    version = (version * 100000) + revision;
+    return version;
+}
+
 //	Console IDs: see enum EmulatorID in header
 void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 {
@@ -520,20 +545,26 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         return;
     }
 
-    // expected response is "0.XXX" where XXX is the most recent version of the integration DLL available.
-    const unsigned int nLatestDLLVer = strtol(buffer + 2, nullptr, 10);
+    // remove trailing whitespace
+    size_t nIndex = strlen(buffer);
+    while (nIndex > 0 && isspace(buffer[nIndex - 1]))
+        --nIndex;
+    buffer[nIndex] = '\0';
 
-    unsigned int nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+    // expected response is a single line containing the version of the DLL available on the server (i.e. 0.074 or 0.074.1)
+    const unsigned long long nLatestDLLVer = ParseVersion(buffer);
+
+    unsigned long long nVerInstalled = ParseVersion(sVerInstalled);
     if (nVerInstalled < nLatestDLLVer)
     {
         RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite it.
 
         char sErrorMsg[2048];
-        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: 0.%03d\n%s",
+        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: %s\n%s",
             nVerInstalled == 0 ?
             "Cannot find or load RA_Integration.dll" :
             "A new version of the RetroAchievements Toolset is available!",
-            nLatestDLLVer,
+            buffer,
             "Automatically update your RetroAchievements Toolset file?");
 
         int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
@@ -544,7 +575,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             if (nStatusCode == 200)
             {
                 sVerInstalled = _RA_InstallIntegration();
-                nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+                nVerInstalled = ParseVersion(sVerInstalled);
             }
 
             if (nVerInstalled < nLatestDLLVer)

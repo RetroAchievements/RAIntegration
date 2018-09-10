@@ -2,7 +2,7 @@
 
 GameData* g_pCurrentGameData = new GameData();
 
-void GameData::ParseData(const Document& doc)
+void GameData::ParseData(const rapidjson::Document& doc)
 {
     m_nGameID = doc["ID"].GetUint();
     m_sGameTitle = doc["Title"].GetString();

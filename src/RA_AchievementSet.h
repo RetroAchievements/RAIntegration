@@ -21,14 +21,13 @@ public:
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
-    static void OnRequestUnlocks(const Document& doc);
+    static void OnRequestUnlocks(const rapidjson::Document& doc);
 
 public:
     void Clear();
     void Test();
     void Reset();
 
-    BOOL Serialize(FileStream& Stream);
     BOOL LoadFromFile(ra::GameID nGameID);
     BOOL SaveToFile();
 
@@ -43,8 +42,8 @@ public:
     // Get Points Total
     inline unsigned int PointTotal()
     {
-        unsigned int total = 0;
-        for (Achievement ach : m_Achievements) total += ach.Points();
+        unsigned int total = 0U;
+        for (auto& ach : m_Achievements) total += ach.Points();
         return total;
     }
 

@@ -345,14 +345,14 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc["Success"].GetBool() &&
         doc.HasMember("PatchData"))
     {
-        std::string sAchSetFileName;
+        std::wstring sAchSetFileName;
         {
             std::wostringstream oss;
             oss << g_sHomeDir << RA_DIR_DATA << nGameID << L".txt";
             sAchSetFileName = oss.str();
         }
 
-        std::wofstream ofile{ sAchSetFileName };
+        std::ofstream ofile{ sAchSetFileName };
         if (!ofile.is_open())
         {
             ASSERT(!"Could not open patch file for writing?");

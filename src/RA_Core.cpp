@@ -961,7 +961,7 @@ API void CCONV _RA_LoadPreferences()
         sPrefsFileName = oss.str();
     }
 
-    std::wifstream ifile{ sPrefsFileName };
+    std::ifstream ifile{ sPrefsFileName };
     if (!ifile.is_open())
     {
         //	TBD: setup some decent default variables:
@@ -971,13 +971,11 @@ API void CCONV _RA_LoadPreferences()
 
     rapidjson::Document doc;
     rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+    if (doc.HasParseError())
     {
-        doc.ParseStream(isw);
-        if (doc.HasParseError())
-        {
-            _RA_SavePreferences();
-            return;
-        }
+        _RA_SavePreferences();
+        return;
     }
 
     if (doc.HasMember("Username"))
@@ -1050,7 +1048,7 @@ API void CCONV _RA_SavePreferences()
         sPrefsFileName = oss.str();
     }
 
-    std::wofstream ofile{ sPrefsFileName };
+    std::ofstream ofile{ sPrefsFileName };
     if (!ofile.is_open())
         return;
 
@@ -1058,7 +1056,7 @@ API void CCONV _RA_SavePreferences()
     rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
 
     rapidjson::Document doc;
-    doc.SetObject();       
+    doc.SetObject();
     auto& a = doc.GetAllocator();
     doc.AddMember("Username", rapidjson::StringRef(RAUsers::LocalUser().Username().c_str()), a);
     doc.AddMember("Token", rapidjson::StringRef(RAUsers::LocalUser().Token().c_str()), a);
@@ -1566,7 +1564,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
 {
-    std::wofstream ofile{ sFileName };
+    std::ofstream ofile{ sFileName };
     if (!ofile.is_open())
         return;
 
@@ -1577,7 +1575,7 @@ void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document
 
 void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
 {
-    std::wofstream ofile{ sFileName, std::ios::binary };
+    std::ofstream ofile{ sFileName, std::ios::binary };
     if (!ofile.is_open())
         return;
     ofile.write(raw.c_str(), ra::to_signed(raw.length()));

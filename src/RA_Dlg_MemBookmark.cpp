@@ -774,10 +774,10 @@ void Dlg_MemBookmark::ExportJSON()
 
 void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 {
-    std::wifstream ifile{ sFilename };
+    std::ifstream ifile{ sFilename };
     if (!ifile.is_open())
     {
-        char buf[2048U];
+        char buf[2048U]{};
         strerror_s(buf, errno);
         RA_LOG("%s: %s", ra::Narrow(sFilename).c_str(), buf);
         return;

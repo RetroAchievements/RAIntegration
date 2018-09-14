@@ -15,7 +15,7 @@ size_t CodeNotes::Load(const std::wstring& sFile)
 {
     Clear();
 
-    std::wifstream ifile{ sFile };
+    std::ifstream ifile{ sFile };
     if (!ifile.is_open())
         return 0U;
 

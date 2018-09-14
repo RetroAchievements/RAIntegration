@@ -107,7 +107,7 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
 {
     std::wstring sGameHashFile{g_sHomeDir};
     sGameHashFile += RA_GAME_HASH_FILENAME;
-    std::wifstream ifile{ sGameHashFile };
+    std::ifstream ifile{ sGameHashFile };
     if (!ifile.is_open())
     {
         ra::LogErrno();
@@ -137,7 +137,7 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
 {
     std::wstring sTitlesFile{g_sHomeDir};
     sTitlesFile += RA_TITLES_FILENAME;
-    std::wifstream ifile{ sTitlesFile };
+    std::ifstream ifile{ sTitlesFile };
     if (!ifile.is_open())
     {
         ra::LogErrno();
@@ -169,7 +169,7 @@ void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
     sProgressFile += RA_TITLES_FILENAME;
 
 
-    std::wifstream ifile{ sProgressFile, std::ios::binary };
+    std::ifstream ifile{ sProgressFile, std::ios::binary };
     if (!ifile.is_open())
     {
         ra::LogErrno();

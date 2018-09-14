@@ -1506,10 +1506,10 @@ void AchievementOverlay::OnLoad_NewRom()
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
-    const auto sNewsFile{g_sHomeDir};
+    auto sNewsFile{g_sHomeDir};
     sNewsFile += RA_NEWS_FILENAME;
 
-    std::wifstream ifile{ sNewsFile };
+    std::ifstream ifile{ sNewsFile };
     if (!ifile.is_open())
         return;
 

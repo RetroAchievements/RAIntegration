@@ -25,15 +25,11 @@ if %DIFF_FILE_SIZE% GTR 0 (
 
 git rev-parse --abbrev-ref HEAD > Temp.txt
 set /p ACTIVE_BRANCH=<Temp.txt
-if "%ACTIVE_BRANCH%"=="master" (
-    echo RAIntegration Tag: %ACTIVE_TAG% [%VERSION_MINOR%]
-    echo #define RA_INTEGRATION_VERSION "0.%VERSION_MINOR%" > RA_BuildVer.h
-) else (
-    echo RAIntegration Tag 0.999 - Not on Master Branch!
-    echo #define RA_INTEGRATION_VERSION "0.999" > RA_BuildVer.h
+if not "%ACTIVE_BRANCH%"=="master" (
     set VERSION_PRODUCT=%VERSION_PRODUCT%-%ACTIVE_BRANCH%
 )
 
+echo #define RA_INTEGRATION_VERSION "%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%.%VERSION_MODIFIED%" > RA_BuildVer.h
 echo #define RA_INTEGRATION_VERSION_MAJOR %VERSION_MAJOR% >> RA_BuildVer.h
 echo #define RA_INTEGRATION_VERSION_MINOR %VERSION_MINOR% >> RA_BuildVer.h
 echo #define RA_INTEGRATION_VERSION_REVISION %VERSION_REVISION% >> RA_BuildVer.h

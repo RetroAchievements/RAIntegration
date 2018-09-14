@@ -22,9 +22,9 @@ const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
 static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
 }
 
-_CONSTANT_VAR c_rgFileTypes{_T("Text Document (*.txt)\0" "*.txt\0"
-                               "JSON File (*.json)\0" "*.json\0"
-                               "All files (*.*)\0" "*.*\0\0")};
+_CONSTANT_VAR c_rgFileTypes{L"Text Document (*.txt)\x0" "*.txt\x0"
+                             "JSON File (*.json)\x0" "*.json\x0"
+                             "All files (*.*)\x0" "*.*\x0\x0"};
 
 enum BookmarkSubItems
 {
@@ -118,11 +118,12 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             // Auto-import bookmark file when opening dialog
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string file{ g_sHomeDir };
-                file += RA_DIR_BOOKMARKS;
-                file += std::to_string(g_pCurrentGameData->GetGameID());
-                file += "-Bookmarks.txt";
-
+                std::wstring file;
+                {
+                    std::wostringstream oss;
+                    oss << g_sHomeDir << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+                    file = oss.str();
+                }
                 ImportFromFile(file);
             }
 
@@ -728,7 +729,7 @@ void Dlg_MemBookmark::ExportJSON()
             oss << g_pCurrentGameData->GetGameID() << L"-Bookmarks.txt";
             sDefaultFilename = oss.str();
         }
-        swprinf_s(buf, L"%s", sDefaultFilename.c_str());
+        swprintf_s(buf, L"%s", sDefaultFilename.c_str());
 
         if (static_cast<DWORD>(std::wcslen(buf)) > ofn.nMaxFile)
         {
@@ -738,7 +739,7 @@ void Dlg_MemBookmark::ExportJSON()
         ofn.lpstrFile = buf;
     }
 
-    std::::wstring sFilePath{ g_sHomeDir };
+    std::wstring sFilePath{ g_sHomeDir };
     sFilePath += RA_DIR_BOOKMARKS;
     if (sFilePath.length() > (ofn.nMaxFile - static_cast<DWORD>(std::wcslen(buf))))
     {
@@ -771,10 +772,10 @@ void Dlg_MemBookmark::ExportJSON()
     doc.AddMember("Bookmarks", bookmarks, allocator);
 
     swprintf_s(buf, L"%s", ofn.lpstrFile);
-    _WriteBufferToFile(ra::Narrow(buf), doc);
+    _WriteBufferToFile(buf, doc);
 }
 
-void Dlg_MemBookmark::ImportFromFile(std::string sFilename) 
+void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename) 
 {
     FILE* pFile = nullptr;
     errno_t nErr = _wfopen_s(&pFile, sFilename.c_str(), L"r");
@@ -828,7 +829,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
     if (g_pCurrentGameData->GetGameID() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
-        return "";
+        return L"";
     }
     
     constexpr auto BUF_SIZE{ 1024UL };
@@ -859,7 +860,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
         }   
         
         if (swprintf_s(buf, L"%s", sDefaultFilename.c_str()) == -1)
-          return "";
+          return L"";
         if (static_cast<DWORD>(std::wcslen(buf)) > ofn.nMaxFile)
         {
             PathTooLong();

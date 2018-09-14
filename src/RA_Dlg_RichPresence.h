@@ -17,6 +17,9 @@ public:
     HWND GetHWND() const { return m_hRichPresenceDialog; }
 
     void StartMonitoring();
+    void ClearMessage();
+
+    void OnLoad_NewRom();
 
 private:
     void StartTimer();

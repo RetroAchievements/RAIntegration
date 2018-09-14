@@ -1,290 +1,323 @@
 #include "RA_RichPresence.h"
 
-#include "RA_Core.h"
-#include "RA_GameData.h"
+#include "RA_Defs.h"
 #include "RA_MemManager.h"
 
 #include "rcheevos\include\rcheevos.h"
 
-RA_RichPresenceInterpretter g_RichPresenceInterpretter;
+RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
-RA_Lookup::RA_Lookup(const std::string& sDesc)
+RA_RichPresenceInterpreter::Lookup::Lookup(const std::string& sDesc)
     : m_sLookupDescription(sDesc)
 {
 }
 
-const std::string& RA_Lookup::Lookup(ra::DataPos nValue) const
+const std::string& RA_RichPresenceInterpreter::Lookup::GetText(unsigned int nValue) const
 {
-    if (m_lookupData.find(nValue) != m_lookupData.end())
-        return m_lookupData.find(nValue)->second;
+    auto iter = m_mLookupData.find(nValue);
+    if (iter != m_mLookupData.end())
+        return iter->second;
 
-    static const std::string sUnknown = "";
-    return sUnknown;
+    return m_sDefault;
 }
 
-RA_ConditionalDisplayString::RA_ConditionalDisplayString(const char* pBuffer)
+RA_RichPresenceInterpreter::DisplayString::DisplayString()
 {
-    const char* pTrigger = ++pBuffer; // skip first question mark
-    while (*pBuffer != '?')
-    {
-        if (*pBuffer == '\0')
-        {
-            // not a valid condition, ensure Test() never returns true
-            m_pTrigger = nullptr;
-            return;
-        }
+}
 
-        ++pBuffer;
-    }
-
-    // call with nullptr to determine space required
-    int nSize = rc_trigger_size(pTrigger);
+RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
+{
+    int nSize = rc_trigger_size(sCondition.c_str());
     if (nSize < 0)
     {
         // parse error occurred
-        RA_LOG("rc_parse_trigger returned %d", nSize);
+        RA_LOG("rc_trigger_size returned %d", nSize);
         m_pTrigger = nullptr;
     }
     else
     {
         // allocate space and parse again
         m_pTriggerBuffer.reset(new unsigned char[nSize]);
-        m_pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), pTrigger, nullptr, 0);
-
-        // valid condition
-        m_sDisplayString = ++pBuffer; // skip second question mark
+        auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sCondition.c_str(), nullptr, 0);
+        m_pTrigger = pTrigger;
     }
 }
 
-bool RA_ConditionalDisplayString::Test()
+void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::string& sDisplayString,
+    std::map<std::string, int>& mFormats, std::vector<Lookup>& vLookups)
 {
-    if (m_pTrigger == nullptr)
-        return false;
-
-    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    return rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
-}
-
-void RA_RichPresenceInterpretter::ParseRichPresenceFile(const std::string& sFilename)
-{
-    m_formats.clear();
-    m_lookups.clear();
-    m_sDisplay.clear();
-    m_conditionalDisplayStrings.clear();
-
-    const char EndLine = '\n';
-
-    const char* LookupStr = "Lookup:";
-    const char* FormatStr = "Format:";
-    const char* FormatTypeStr = "FormatType=";
-    const char* DisplayableStr = "Display:";
-
-    FILE* pFile = nullptr;
-    fopen_s(&pFile, sFilename.c_str(), "r");
-    if (pFile != nullptr)
+    bool bHasEscapes = false;
+    size_t nIndex = 0;
+    size_t nStart = 0;
+    do
     {
-        DWORD nCharsRead = 0;
-        char buffer[4096];
-
-        _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
-        while (nCharsRead != 0)
+        if (nIndex < sDisplayString.length() && sDisplayString[nIndex] != '@')
         {
-            if (strncmp(LookupStr, buffer, strlen(LookupStr)) == 0)
+            if (sDisplayString[nIndex] == '\\')
             {
-                //	Lookup type
-                char* pBuf = buffer + (strlen(LookupStr));
-                RA_Lookup newLookup(_ReadStringTil(EndLine, pBuf, TRUE));
-                while (nCharsRead != 0 && (buffer[0] != EndLine))
-                {
-                    _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
-                    if (nCharsRead > 2)
-                    {
-                        char* pBuf = &buffer[0];
-                        const char* pValue = _ReadStringTil('=', pBuf, TRUE);
-                        const char* pName = _ReadStringTil(EndLine, pBuf, TRUE);
-
-                        int nBase = 10;
-                        if (pValue[0] == '0' && pValue[1] == 'x')
-                            nBase = 16;
-
-                        ra::DataPos nVal = static_cast<ra::DataPos>(strtoul(pValue, nullptr, nBase));
-
-                        newLookup.AddLookupData(nVal, pName);
-                    }
-                }
-
-                RA_LOG("RP: Adding Lookup %s\n", newLookup.Description().c_str());
-                m_lookups.push_back(newLookup);
-
-            }
-            else if (strncmp(FormatStr, buffer, strlen(FormatStr)) == 0)
-            {
-                //	
-                char* pBuf = &buffer[0];
-                const char* pUnused = _ReadStringTil(':', pBuf, TRUE);
-                std::string sDesc = _ReadStringTil(EndLine, pBuf, TRUE);
-
-                _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
-                if (nCharsRead > 0 && strncmp(FormatTypeStr, buffer, strlen(FormatTypeStr)) == 0)
-                {
-                    char* pBuf = &buffer[0];
-                    const char* pUnused = _ReadStringTil('=', pBuf, TRUE);
-                    const char* pType = _ReadStringTil(EndLine, pBuf, TRUE);
-
-                    int nType = rc_parse_format(pType);
-
-                    RA_LOG("RP: Adding Formatter %s (%s)\n", sDesc.c_str(), pType);
-                    m_formats[sDesc] = nType;
-                }
-            }
-            else if (strncmp(DisplayableStr, buffer, strlen(DisplayableStr)) == 0)
-            {
-                _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
-
-                char* pBuf = &buffer[0];
-                m_sDisplay = _ReadStringTil('\n', pBuf, TRUE);	//	Terminates \n instead
-
-                while (buffer[0] == '?')
-                {
-                    RA_ConditionalDisplayString conditionalString(buffer);
-                    m_conditionalDisplayStrings.push_back(conditionalString);
-
-                    _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
-                    pBuf = &buffer[0];
-                    m_sDisplay = _ReadStringTil('\n', pBuf, TRUE);
-                }
+                bHasEscapes = true;
+                if (nIndex + 1 < sDisplayString.length())
+                    ++nIndex;
             }
 
-            _ReadTil(EndLine, buffer, 4096, &nCharsRead, pFile);
+            ++nIndex;
+            continue;
         }
 
-        fclose(pFile);
-    }
-}
-
-const std::string RA_RichPresenceInterpretter::Lookup(const std::string& sName, const std::string& sMemString) const
-{
-    //	check lookups
-    for (size_t i = 0; i < m_lookups.size(); ++i)
-    {
-        if (m_lookups.at(i).Description().compare(sName) == 0)
+        Part& part = m_vParts.emplace_back();
+        if (nIndex > nStart)
         {
-            char buffer[2048];
-            rc_value_t* pValue = rc_parse_value(buffer, sMemString.c_str(), nullptr, 0);
-            unsigned int nValue = pValue ? rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr) : 0U;
-            return m_lookups.at(i).Lookup(static_cast<ra::DataPos>(nValue));
+            if (bHasEscapes)
+            {
+                do
+                {
+                    if (sDisplayString[nStart] == '\\')
+                        ++nStart;
+
+                    part.m_sDisplayString.push_back(sDisplayString[nStart]);
+                    ++nStart;
+                } while (nStart < nIndex);
+
+                bHasEscapes = false;
+            }
+            else
+            {
+                part.m_sDisplayString.assign(sDisplayString, nStart, nIndex - nStart);
+            }
         }
-    }
 
-    //	check formatters
-    auto iter = m_formats.find(sName);
-    if (iter != m_formats.end())
-    {
-        char buffer[2048];
-        rc_value_t* pValue = rc_parse_value(buffer, sMemString.c_str(), nullptr, 0);
-        unsigned int nValue = pValue ? rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr) : 0U;
-        rc_format_value(buffer, sizeof(buffer), nValue, iter->second);
-        return std::string(buffer);
-    }
-
-    return "";
-}
-
-bool RA_RichPresenceInterpretter::Enabled() const
-{
-    return !m_sDisplay.empty();
-}
-
-const std::string& RA_RichPresenceInterpretter::GetRichPresenceString()
-{
-    static std::string sReturnVal;
-    sReturnVal.clear();
-
-    if (g_pCurrentGameData->GetGameID() == 0)
-    {
-        sReturnVal = "No game loaded";
-        return sReturnVal;
-    }
-
-    bool bParsingLookupName = false;
-    bool bParsingLookupContent = false;
-
-    std::string sLookupName;
-    std::string sLookupValue;
-
-    const std::string* sDisplayString = &m_sDisplay;
-    for (std::vector<RA_ConditionalDisplayString>::iterator iter = m_conditionalDisplayStrings.begin(); iter != m_conditionalDisplayStrings.end(); ++iter)
-    {
-        if (iter->Test())
-        {
-            sDisplayString = &iter->GetDisplayString();
+        if (nIndex == sDisplayString.length())
             break;
-        }
-    }
 
-    for (size_t i = 0; i < sDisplayString->size(); ++i)
-    {
-        char c = sDisplayString->at(i);
+        nStart = nIndex + 1;
+        nIndex = nStart;
+        while (nIndex < sDisplayString.length() && sDisplayString[nIndex] != '(')
+            nIndex++;
+        if (nIndex == sDisplayString.length())
+            break;
 
-        if (bParsingLookupContent)
+        std::string sLookup(sDisplayString, nStart, nIndex - nStart);
+
+        nStart = nIndex + 1;
+        nIndex = nStart;
+        while (nIndex < sDisplayString.length() && sDisplayString[nIndex] != ')')
+            nIndex++;
+        if (nIndex == sDisplayString.length())
+            break;
+
+        std::string sMemValue(sDisplayString, nStart, nIndex - nStart);
+        nStart = nIndex + 1;
+
+        auto iter = mFormats.find(sLookup);
+        if (iter != mFormats.end())
         {
-            if (c == ')')
-            {
-                //	End of content
-                bParsingLookupContent = false;
-
-                //	Lookup!
-
-                sReturnVal.append(Lookup(sLookupName, sLookupValue));
-
-                sLookupName.clear();
-                sLookupValue.clear();
-            }
-            else
-            {
-                sLookupValue.push_back(c);
-            }
-        }
-        else if (bParsingLookupName)
-        {
-            if (c == '(')
-            {
-                //	Now parsing lookup content
-                bParsingLookupContent = true;
-                bParsingLookupName = false;
-            }
-            else
-            {
-                //	Continue to parse lookup name
-                sLookupName.push_back(c);
-            }
+            part.m_nFormat = iter->second;
+            InitializeValue(part, sMemValue.c_str());
         }
         else
         {
-            //	Not parsing a lookup at all.
-            if (c == '@')
+            for (std::vector<Lookup>::const_iterator lookup = vLookups.begin(); lookup != vLookups.end(); ++lookup)
             {
-                bParsingLookupName = true;
+                if (lookup->Description() == sLookup)
+                {
+                    part.m_pLookup = &(*lookup);
+                    InitializeValue(part, sMemValue.c_str());
+                    break;
+                }
+            }
+        }
+    } while (true);
+}
+
+void RA_RichPresenceInterpreter::DisplayString::InitializeValue(RA_RichPresenceInterpreter::DisplayString::Part& part, const char* sValue)
+{
+    int nSize = rc_value_size(sValue);
+    if (nSize < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_value_size returned %d", nSize);
+        part.m_pValue = nullptr;
+    }
+    else
+    {
+        // allocate space and parse again
+        part.m_pValueBuffer.reset(new unsigned char[nSize]);
+        auto* pValue = rc_parse_value(static_cast<void*>(part.m_pValueBuffer.get()), sValue, nullptr, 0);
+        part.m_pValue = pValue;
+    }
+}
+
+bool RA_RichPresenceInterpreter::DisplayString::Test()
+{
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    return pTrigger && rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
+}
+
+std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
+{
+    std::string sResult;
+    for (const auto& part : m_vParts)
+    {
+        if (!part.m_sDisplayString.empty())
+            sResult.append(part.m_sDisplayString);
+
+        if (part.m_pValue)
+        {
+            auto* pValue = static_cast<rc_value_t*>(part.m_pValue);
+            unsigned int nValue = rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr);
+
+            if (part.m_pLookup != nullptr)
+            {
+                sResult.append(part.m_pLookup->GetText(nValue));
             }
             else
             {
-                //	Standard text.
-                sReturnVal.push_back(c);
+                char buffer[32];
+                rc_format_value(buffer, sizeof(buffer), nValue, part.m_nFormat);
+                sResult.append(buffer);
             }
         }
     }
 
-    return sReturnVal;
+    return sResult;
 }
 
-//	static
-void RA_RichPresenceInterpretter::PersistAndParseScript(ra::GameID nGameID, const std::string& str)
+static bool GetLine(std::stringstream& stream, std::string& sLine)
 {
-    //	Read to file:
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    _WriteBufferToFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt", str);
+    if (!std::getline(stream, sLine, '\n'))
+        return false;
 
-    //	Then install it
-    g_RichPresenceInterpretter.ParseRichPresenceFile(RA_DIR_DATA + std::to_string(nGameID) + "-Rich.txt");
+    if (!sLine.empty())
+    {
+        size_t index = sLine.find("//");
+        while (index != std::string::npos && index > 0 && sLine[index - 1] == '\\')
+            index = sLine.find("//", index + 1);
+
+        if (index != std::string::npos)
+        {
+            // if a comment marker was found, remove it and any trailing whitespace
+            while (index > 0 && isspace(sLine[index - 1]))
+                index--;
+
+            sLine.resize(index);
+        }
+        else if (sLine[sLine.length() - 1] == '\r')
+        {
+            // also remove CR, not just LF
+            sLine.resize(sLine.length() - 1);
+        }
+    }
+
+    return true;
 }
 
+void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
+{
+    m_vLookups.clear();
+    m_vDisplayStrings.clear();
+
+    std::vector<std::pair<std::string, std::string>> mDisplayStrings;
+    std::string sDisplayString;
+
+    std::map<std::string, int> mFormats;
+
+    std::stringstream ssRichPresence(sRichPresence);
+    std::string sLine;
+    while (GetLine(ssRichPresence, sLine))
+    {
+        if (strncmp("Lookup:", sLine.c_str(), 7) == 0)
+        {
+            std::string sLookupName(sLine, 7);
+            Lookup& newLookup = m_vLookups.emplace_back(sLookupName);
+            do
+            {
+                if (!GetLine(ssRichPresence, sLine) || sLine.length() < 2)
+                    break;
+
+                size_t nIndex = sLine.find('=');
+                if (nIndex == std::string::npos)
+                    continue;
+
+                std::string sLabel(sLine, nIndex + 1);
+
+                if (sLine[0] == '*')
+                {
+                    newLookup.SetDefault(sLabel);
+                    continue;
+                }
+
+                unsigned int nVal;
+                if (sLine[0] == '0' && sLine[1] == 'x')
+                    nVal = strtoul(&sLine[2], nullptr, 16);
+                else
+                    nVal = strtoul(&sLine[0], nullptr, 10);
+
+                newLookup.AddLookupData(nVal, sLabel);
+            } while (true);
+
+            RA_LOG("RP: Adding Lookup %s (%zu items)\n", sLookupName.c_str(), newLookup.NumItems());
+        }
+        else if (strncmp("Format:", sLine.c_str(), 7) == 0)
+        {
+            std::string sFormatName(sLine, 7);
+            if (GetLine(ssRichPresence, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
+            {
+                std::string sFormatType(sLine, 11);
+                int nType = rc_parse_format(sFormatType.c_str());
+
+                RA_LOG("RP: Adding Formatter %s (%s)\n", sFormatName.c_str(), sFormatType.c_str());
+                mFormats[sFormatName] = nType;
+            }
+        }
+        else if (strncmp("Display:", sLine.c_str(), 8) == 0)
+        {
+            do
+            {
+                if (!GetLine(ssRichPresence, sLine) || sLine.length() < 2)
+                    break;
+
+                if (sLine[0] == '?')
+                {
+                    size_t nIndex = sLine.find('?', 1);
+                    if (nIndex != std::string::npos)
+                    {
+                        std::string sCondition(sLine, 1, nIndex - 1);
+                        std::string sDisplay(sLine, nIndex + 1);
+
+                        mDisplayStrings.emplace_back(sCondition, sDisplay);
+                        continue;
+                    }
+                }
+
+                sDisplayString = sLine;
+                break;
+            } while (true);
+        }
+    }
+
+    if (!sDisplayString.empty())
+    {
+        for (std::vector<std::pair<std::string, std::string>>::const_iterator iter = mDisplayStrings.begin(); iter != mDisplayStrings.end(); ++iter)
+        {
+            auto& displayString = m_vDisplayStrings.emplace_back(iter->first);
+            displayString.InitializeParts(iter->second, mFormats, m_vLookups);
+        }
+
+        auto& displayString = m_vDisplayStrings.emplace_back();
+        displayString.InitializeParts(sDisplayString, mFormats, m_vLookups);
+    }
+}
+
+std::string RA_RichPresenceInterpreter::GetRichPresenceString()
+{
+    if (m_vDisplayStrings.empty())
+        return std::string();
+
+    for (size_t i = 0; i < m_vDisplayStrings.size() - 1; ++i)
+    {
+        if (m_vDisplayStrings[i].Test())
+            return m_vDisplayStrings[i].GetDisplayString();
+    }
+
+    return m_vDisplayStrings.back().GetDisplayString();
+}

@@ -3,6 +3,8 @@
 #include "RA_Achievement.h"
 #include "RA_UnitTestHelpers.h"
 
+#include "rcheevos\include\rcheevos.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -18,6 +20,61 @@ public:
         AchievementHarness() : Achievement(AchievementSetType::Core) {}
 
         void ParseTrigger(const char* pTrigger) { Achievement::ParseTrigger(pTrigger); }
+
+        void SetState(size_t nGroup, size_t nCondition, unsigned nHits, unsigned nSrcValue, unsigned nSrcPrev, unsigned nCmpValue, unsigned nCmpPrev)
+        {
+            rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
+            pTrigger->current_hits = nHits;
+            pTrigger->operand1.value = nSrcValue;
+            pTrigger->operand1.previous = nSrcPrev;
+            pTrigger->operand2.value = nCmpValue;
+            pTrigger->operand2.previous = nCmpPrev;
+        }
+
+        void AssertState(size_t nGroup, size_t nCondition, unsigned nHits, unsigned nSrcValue, unsigned nSrcPrev, unsigned nCmpValue, unsigned nCmpPrev)
+        {
+            rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
+            Assert::AreEqual(nHits, pTrigger->current_hits, L"current_hits");
+            Assert::AreEqual(nSrcValue, pTrigger->operand1.value, L"source.value");
+            Assert::AreEqual(nSrcPrev, pTrigger->operand1.previous, L"source.prev");
+            Assert::AreEqual(nCmpValue, pTrigger->operand2.value, L"comp.value");
+            Assert::AreEqual(nCmpPrev, pTrigger->operand2.previous, L"comp.prev");
+        }
+
+        void AssertHits(size_t nGroup, size_t nCondition, unsigned nHits)
+        {
+            rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
+            Assert::AreEqual(nHits, pTrigger->current_hits);
+        }
+
+    private:
+        static rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex)
+        {
+            rc_condset_t* pGroup = pTrigger->requirement;
+            if (nGroup > 0)
+            {
+                pGroup = pTrigger->alternative;
+                --nGroup;
+
+                while (pGroup && nGroup > 0)
+                {
+                    pGroup = pGroup->next;
+                    --nGroup;
+                }
+            }
+
+            if (!pGroup)
+                return nullptr;
+
+            rc_condition_t* pCondition = pGroup->conditions;
+            while (pCondition && nIndex > 0)
+            {
+                --nIndex;
+                pCondition = pCondition->next;
+            }
+
+            return pCondition;
+        }
     };
 
     static int GetHitCount(Achievement& ach)
@@ -741,6 +798,152 @@ public:
 
         memory[0] = 2; // trigger win condition. alt group has no normal conditions, it should be considered false
         AssertSetTest(ach, false, true, false);
+    }
+
+    TEST_METHOD(TestStateEmpty)
+    {
+        Achievement ach(AchievementSetType::Local);
+        std::string sState = ach.CreateStateString("user1");
+
+        Assert::AreEqual(std::string("0:0:a9bf5b6918bb43ec1d430f09d6606fbd:d41d8cd98f00b204e9800998ecf8427e:"), sState);
+    }
+
+    TEST_METHOD(TestStateSimple)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=6");
+        ach.SetState(0, 0, 4, 12, 12, 12, 12);
+
+        std::string sState = ach.CreateStateString("user1");
+        Assert::IsFalse(sState.empty());
+
+        // incorrect user should cause the achievement to reset (which only affects hit count)
+        const char* pIter = sState.c_str();
+        pIter = ach.ParseStateString(pIter, "user2");
+        Assert::AreEqual('\0', *pIter);
+        ach.AssertState(0, 0, 0, 12, 12, 12, 12);
+
+        // correct user should load
+        pIter = sState.c_str();
+        pIter = ach.ParseStateString(pIter, "user1");
+        Assert::AreEqual('\0', *pIter);
+        ach.AssertState(0, 0, 4, 12, 12, 12, 12);
+    }
+
+    TEST_METHOD(TestStateDelta)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=d0x1234");
+        ach.SetState(0, 0, 4, 12, 11, 12, 11);
+
+        std::string sState = ach.CreateStateString("user1");
+        Assert::IsFalse(sState.empty());
+
+        const char* pIter = sState.c_str();
+        pIter = ach.ParseStateString(pIter, "user1");
+        Assert::AreEqual('\0', *pIter);
+        ach.AssertState(0, 0, 4, 12, 11, 12, 11);
+    }
+
+    TEST_METHOD(TestStateMultipleConditions)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
+        ach.SetState(0, 0, 1, 12, 12, 6, 6);
+        ach.SetState(0, 1, 0, 32, 32, 32, 32);
+        ach.SetState(0, 2, 1700, 0, 0, 0, 0);
+
+        std::string sState = ach.CreateStateString("user1");
+        Assert::IsFalse(sState.empty());
+
+        ach.Reset();
+        ach.AssertHits(0, 0, 0);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(0, 2, 0);
+
+        const char* pIter = sState.c_str();
+        ach.ParseStateString(pIter, "user1");
+        ach.AssertHits(0, 0, 1);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(0, 2, 1700);
+    }
+
+    TEST_METHOD(TestStateMultipleGroups)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345SR:0xh3456=7S0xh4567=0xh5678");
+        ach.SetState(0, 0, 1, 12, 12, 6, 6);
+        ach.SetState(0, 1, 0, 32, 32, 32, 32);
+        ach.SetState(1, 0, 1700, 0, 0, 0, 0);
+        ach.SetState(2, 0, 11, 17, 17, 18, 18);
+
+        std::string sState = ach.CreateStateString("user1");
+        Assert::IsFalse(sState.empty());
+
+        ach.Reset();
+        ach.AssertHits(0, 0, 0);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(1, 0, 0);
+        ach.AssertHits(2, 0, 0);
+
+        const char* pIter = sState.c_str();
+        ach.ParseStateString(pIter, "user1");
+        ach.AssertHits(0, 0, 1);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(1, 0, 1700);
+        ach.AssertHits(2, 0, 11);
+    }
+
+    TEST_METHOD(TestStateMultipleAchievements)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
+        ach.SetState(0, 0, 1, 12, 12, 6, 6);
+        ach.SetState(0, 1, 0, 32, 32, 32, 32);
+        ach.SetState(0, 2, 1700, 0, 0, 0, 0);
+
+        std::string sState = ach.CreateStateString("user1");
+        sState += "54321:0:junk:junk";
+        Assert::IsFalse(sState.empty());
+
+        ach.Reset();
+        ach.AssertHits(0, 0, 0);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(0, 2, 0);
+
+        const char* pIter = sState.c_str();
+        pIter = ach.ParseStateString(pIter, "user1");
+        ach.AssertHits(0, 0, 1);
+        ach.AssertHits(0, 1, 0);
+        ach.AssertHits(0, 2, 1700);
+
+        // pointer should be ready for next achievement
+        Assert::AreEqual("54321:0:junk:junk", pIter);
+    }
+
+    TEST_METHOD(TestStateAchievementModified)
+    {
+        AchievementHarness ach;
+        ach.SetID(12345);
+        ach.ParseTrigger("0xh1234=6");
+        ach.SetState(0, 0, 4, 12, 12, 12, 12);
+
+        std::string sState = ach.CreateStateString("user1");
+        Assert::IsFalse(sState.empty());
+
+        // if achievement has changed, achievement checksum will fail and achievement should
+        // just be reset (which only affects hitcount)
+        ach.GetCondition(0, 0).CompSource().Set(ComparisonVariableSize::EightBit,
+            ComparisonVariableType::Address, 0x2345U);
+        
+        const char* pIter = sState.c_str();
+        ach.ParseStateString(pIter, "user1");
+        ach.AssertHits(0, 0, 0);
     }
 };
 

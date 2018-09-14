@@ -89,6 +89,11 @@ extern "C" {
     //	Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
 
+    //  Should be called before performing an activity that is not allowed in hardcore mode to
+    //  give the user a chance to disable hardcore mode and continue with the activity.
+    //  Returns TRUE if hardcore was disabled, or FALSE to cancel the activity.
+    API bool CCONV _RA_WarnDisableHardcore(const char* sActivity);
+
     //	Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
@@ -100,7 +105,7 @@ extern "C" {
 
 //	Non-exposed:
 extern std::string g_sKnownRAVersion;
-extern std::string g_sHomeDir;
+extern std::wstring g_sHomeDir;
 extern std::string g_sROMDirLocation;
 extern std::string g_sCurrentROMMD5;
 
@@ -118,10 +123,14 @@ extern bool g_bLeaderboardsActive;
 extern bool g_bLBDisplayNotification;
 extern bool g_bLBDisplayCounter;
 extern bool g_bLBDisplayScoreboard;
+extern bool g_bPreferDecimalVal;
 extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const char* sFilename, long& nFileSizeOut);
+extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
+
+//  Read a file to a std::string. Returns false on error.
+extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
@@ -131,9 +140,8 @@ extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
 extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 //	Write out the buffer to a file
-extern void _WriteBufferToFile(const std::string& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const std::string& sFileName, const Document& doc);
-extern void _WriteBufferToFile(const char* sFile, std::streamsize nBytes);
+extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);
+extern void _WriteBufferToFile(const std::wstring& sFileName, const Document& doc);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();
@@ -141,14 +149,14 @@ extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
 
-extern BOOL _FileExists(const std::string& sFileName);
+extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
 
 extern std::string GetFolderFromDialog();
 
-extern BOOL RemoveFileIfExists(const std::string& sFilePath);
+extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);
 
 BOOL CanCausePause();
 

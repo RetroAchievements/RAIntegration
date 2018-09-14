@@ -29,11 +29,11 @@ std::string Narrow(const wchar_t* wstr)
     auto len{ ra::to_signed(std::wcslen(wstr)) };
 
     auto needed{
-        ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, nullptr, 0, nullptr, nullptr)
+        ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr)
     };
 
     std::string str(ra::to_unsigned(needed), '\000'); // allocate required space (including terminator)
-    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
+    ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
                           nullptr, nullptr);
     str.resize(ra::to_unsigned(needed - 1)); // terminator is not actually part of the string
     return str;
@@ -53,7 +53,7 @@ _Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
 _Use_decl_annotations_ std::wstring Widen(const char* str)
 {
     auto len{ ra::to_signed(std::strlen(str)) };
-    auto needed{::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0)};
+    auto needed{::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0)};
     // doesn't seem wchar_t is treated like a character type by default
     std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
@@ -96,18 +96,23 @@ _Use_decl_annotations_ std::string Narrow(const std::string& str)
 
 } // namespace ra
 
+#ifndef RA_UTEST
+extern std::wstring g_sHomeDir;
+#endif
 
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
 
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
+#ifndef RA_UTEST
+    std::wstring sLogFile = g_sHomeDir + RA_LOG_FILENAME;
     FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
+    if (_wfopen_s(&pf, sLogFile.c_str(), L"a") == 0)
     {
         fwrite(data, sizeof(char), strlen(data), pf);
         fclose(pf);
     }
+#endif
 }
 
 void RADebugLog(const char* format, ...)
@@ -129,15 +134,7 @@ void RADebugLog(const char* format, ...)
     *p++ = '\n';
     *p = '\0';
 
-    OutputDebugString(NativeStr(buf).c_str());
-
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
-    FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
-    {
-        fwrite(buf, sizeof(char), strlen(buf), pf);
-        fclose(pf);
-    }
+    RADebugLogNoFormat(buf);
 }
 
 BOOL DirectoryExists(const char* sPath)

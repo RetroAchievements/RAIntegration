@@ -219,6 +219,9 @@
     <ClCompile Include="..\lua\lauxlib.c">
       <Filter>Data\lua</Filter>
     </ClCompile>
+    <ClCompile Include="services\ImageRepository.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -331,6 +334,9 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">
       <Filter>Data\rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ImageRepository.h">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

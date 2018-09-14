@@ -130,18 +130,21 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs
 
     int bankID = 0;
     int numBanks = m_Banks.size();
-    while (bankID < numBanks)
+    do
     {
+        if (bankID == numBanks)
+        {
+            memset(buffer, 0, count);
+            return;
+        }
+
         bank = &m_Banks.at(bankID);
         if (nOffs < bank->BankSize)
             break;
 
         nOffs -= bank->BankSize;
         bankID++;
-    }
-
-    if (bank == nullptr)
-        return;
+    } while (true);
 
     _RAMByteReadFn* reader = bank->Reader;
 

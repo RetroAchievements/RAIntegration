@@ -119,7 +119,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             // Auto-import bookmark file when opening dialog
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+                std::wstring file = RA_DIR_BOOKMARKS + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Bookmarks.txt";
                 ImportFromFile(file);
             }
 
@@ -440,7 +440,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 case IDC_RA_LOADBOOKMARK:
                 {
-                    std::string file = ImportDialog();
+                    std::wstring file = ImportDialog();
                     if (file.length() > 0)
                         ImportFromFile(file);
                     return TRUE;
@@ -699,9 +699,7 @@ void Dlg_MemBookmark::ExportJSON()
         return;
     }
 
-    std::string defaultDir = RA_DIR_BOOKMARKS;
-    defaultDir.erase(0, 2); // Removes the characters (".\\")
-    defaultDir = g_sHomeDir + defaultDir;
+    std::wstring defaultDir = g_sHomeDir + RA_DIR_BOOKMARKS;
 
     CComPtr<IFileSaveDialog> pDlg;
 
@@ -717,7 +715,7 @@ void Dlg_MemBookmark::ExportJSON()
             if (SUCCEEDED(hr = pDlg->SetFileName(ra::Widen(defaultFileName).c_str())))
             {
                 PIDLIST_ABSOLUTE pidl{ nullptr };
-                if (SUCCEEDED(hr = SHParseDisplayName(ra::Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
+                if (SUCCEEDED(hr = SHParseDisplayName(defaultDir.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
                     CComPtr<IShellItem> pItem;
                     SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
@@ -755,7 +753,7 @@ void Dlg_MemBookmark::ExportJSON()
                                     }
                                     doc.AddMember("Bookmarks", bookmarks, allocator);
 
-                                    _WriteBufferToFile(ra::Narrow(pStr), doc);
+                                    _WriteBufferToFile(pStr, doc);
                                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                                     pStr = nullptr;
                                 }
@@ -772,10 +770,10 @@ void Dlg_MemBookmark::ExportJSON()
     }
 }
 
-void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
+void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 {
     FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
+    errno_t nErr = _wfopen_s(&pFile, sFilename.c_str(), L"r");
     if (pFile != nullptr)
     {
         Document doc;
@@ -821,9 +819,9 @@ void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
     }
 }
 
-std::string Dlg_MemBookmark::ImportDialog()
+std::wstring Dlg_MemBookmark::ImportDialog()
 {
-    std::string str;
+    std::wstring str;
 
     if (g_pCurrentGameData->GetGameID() == 0)
     {
@@ -846,7 +844,7 @@ std::string Dlg_MemBookmark::ImportDialog()
                     LPWSTR pStr = nullptr;
                     if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
-                        str = ra::Narrow(pStr);
+                        str = pStr;
                         CoTaskMemFree(static_cast<LPVOID>(pStr));
                         pStr = nullptr;
                     }
@@ -867,7 +865,7 @@ void Dlg_MemBookmark::OnLoad_NewRom()
     {
         ClearAllBookmarks();
 
-        std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+        std::wstring file = RA_DIR_BOOKMARKS + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Bookmarks.txt";
         ImportFromFile(file);
     }
 }

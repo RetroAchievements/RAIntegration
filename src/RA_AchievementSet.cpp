@@ -29,18 +29,18 @@ void RASetAchievementCollection(AchievementSetType Type)
     g_pActiveAchievements = *ACH_SETS[Type];
 }
 
-std::string AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
+std::wstring AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
 {
     switch (m_nSetType)
     {
         case Core:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";
         case Unofficial:
-            return RA_DIR_DATA + std::to_string(nGameID) + ".txt";	// Same as Core
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";	// Same as Core
         case Local:
-            return RA_DIR_DATA + std::to_string(nGameID) + "-User.txt";
+            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-User.txt";
         default:
-            return "";
+            return L"";
     }
 }
 
@@ -59,8 +59,8 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
     }
 
     //	Remove the text file
-    std::string sFilename = GetAchievementSetFilename(nGameID);
-    return RemoveFileIfExists(g_sHomeDir + "\\" + sFilename);
+    std::wstring sFilename = GetAchievementSetFilename(nGameID);
+    return RemoveFileIfExists(g_sHomeDir + L"\\" + sFilename);
 }
 
 //static 
@@ -84,6 +84,14 @@ void AchievementSet::OnRequestUnlocks(const Document& doc)
             g_pCoreAchievements->Unlock(nNextAchID);
         else if (g_pUnofficialAchievements->Find(nNextAchID) != nullptr)
             g_pUnofficialAchievements->Unlock(nNextAchID);
+    }
+
+    // pre-fetch locked images for any achievements the player hasn't earned
+    for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
+    {
+        Achievement& ach = g_pCoreAchievements->GetAchievement(i);
+        if (ach.Active())
+            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
     }
 }
 
@@ -201,7 +209,7 @@ void AchievementSet::Test()
                         MessagePopup("Test: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
                 {
@@ -209,7 +217,7 @@ void AchievementSet::Test()
                         MessagePopup("Modified: Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementUnlocked,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
                 {
@@ -217,7 +225,7 @@ void AchievementSet::Test()
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                             ach.Title() + " (" + sPoints + ") (Unofficial)",
                             PopupAchievementError,
-                            ach.BadgeImage()));
+                            ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else
                 {
@@ -259,9 +267,9 @@ BOOL AchievementSet::SaveToFile()
     char sMem[2048];
     unsigned int i = 0;
 
-    const std::string sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
+    const std::wstring sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
 
-    int err = fopen_s(&pFile, sFilename.c_str(), "w");
+    int err = _wfopen_s(&pFile, sFilename.c_str(), L"w");
     if (pFile != nullptr)
     {
         sprintf_s(sNextLine, 2048, "0.030\n");						//	Min ver
@@ -390,9 +398,8 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc.HasMember("PatchData"))
     {
         const Value& PatchData = doc["PatchData"];
-        SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
         FILE* pf = nullptr;
-        fopen_s(&pf, std::string(RA_DIR_DATA + std::to_string(nGameID) + ".txt").c_str(), "wb");
+        _wfopen_s(&pf, std::wstring(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt").c_str(), L"wb");
         if (pf != nullptr)
         {
             FileStream fs(pf);
@@ -428,11 +435,10 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         return TRUE;
     }
 
-    const std::string sFilename = GetAchievementSetFilename(nGameID);
+    const std::wstring sFilename = GetAchievementSetFilename(nGameID);
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
     FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
+    errno_t nErr = _wfopen_s(&pFile, sFilename.c_str(), L"r");
     if (pFile != nullptr)
     {
         //	Store this: we are now assuming this is the correct checksum if we have a file for it
@@ -495,7 +501,9 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 g_pCurrentGameData->ParseData(doc);
                 ra::GameID nGameID = g_pCurrentGameData->GetGameID();
 
-                RA_RichPresenceInterpretter::PersistAndParseScript(nGameID, g_pCurrentGameData->RichPresencePatch());
+                //	Rich Presence
+                _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-Rich.txt", g_pCurrentGameData->RichPresencePatch());
+                g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
                 const Value& AchievementsData = doc["Achievements"];
                 for (SizeType i = 0; i < AchievementsData.Size(); ++i)
@@ -545,9 +553,14 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             fclose(pFile);
 
+            // calculate the total number of points for the core set, and pre-fetch badge images
             unsigned int nTotalPoints = 0;
             for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
-                nTotalPoints += g_pCoreAchievements->GetAchievement(i).Points();
+            {
+                Achievement& ach = g_pCoreAchievements->GetAchievement(i);
+                ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI());
+                nTotalPoints += ach.Points();
+            }
 
             if (RAUsers::LocalUser().IsLoggedIn())
             {
@@ -563,7 +576,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
                 std::string sNumCoreAch = std::to_string(g_pCoreAchievements->NumAchievements());
 
                 g_PopupWindows.AchievementPopups().AddMessage(
-                    MessagePopup("Loaded " + sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), "", PopupInfo));
+                    MessagePopup("Loaded " + g_pCurrentGameData->GameTitle(),
+                        sNumCoreAch + " achievements, Total Score " + std::to_string(nTotalPoints), PopupInfo));
             }
 
             return TRUE;
@@ -588,11 +602,9 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    SetCurrentDirectory(NativeStr(g_sHomeDir).c_str());
-    char buffer[4096];
-    sprintf_s(buffer, 4096, "%s.rap", sSaveStateFilename);
+    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
     FILE* pf = nullptr;
-    fopen_s(&pf, buffer, "w");
+    _wfopen_s(&pf, sAchievementStateFile.c_str(), L"w");
     if (pf == nullptr)
     {
         ASSERT(!"Could not save progress!");
@@ -602,38 +614,11 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     for (size_t i = 0; i < NumAchievements(); ++i)
     {
         Achievement* pAch = &m_Achievements[i];
-        if (!pAch->Active())
-            continue;
-
-        //	Write ID of achievement and num conditions:
-        char cheevoProgressString[4096];
-        memset(cheevoProgressString, '\0', 4096);
-
-        for (unsigned int nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
+        if (pAch->Active())
         {
-            sprintf_s(buffer, "%u:%u:", pAch->ID(), pAch->NumConditions(nGrp));
-            strcat_s(cheevoProgressString, 4096, buffer);
-
-            for (unsigned int j = 0; j < pAch->NumConditions(nGrp); ++j)
-            {
-                pAch->StoreConditionState(nGrp, j, buffer);
-                strcat_s(cheevoProgressString, 4096, buffer);
-            }
+            std::string sProgress = pAch->CreateStateString(RAUsers::LocalUser().Username());
+            fwrite(sProgress.data(), sizeof(char), sProgress.length(), pf);
         }
-
-        //	Generate a slightly different key to md5ify:
-        char sCheevoProgressMangled[4096];
-        sprintf_s(sCheevoProgressMangled, 4096, "%s%s%s%u",
-            RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), pAch->ID());
-
-        std::string sMD5Progress = RAGenerateMD5(std::string(sCheevoProgressMangled));
-        std::string sMD5Achievement = RAGenerateMD5(pAch->CreateMemString());
-
-        fwrite(cheevoProgressString, sizeof(char), strlen(cheevoProgressString), pf);
-        fwrite(sMD5Progress.c_str(), sizeof(char), sMD5Progress.length(), pf);
-        fwrite(":", sizeof(char), 1, pf);
-        fwrite(sMD5Achievement.c_str(), sizeof(char), sMD5Achievement.length(), pf);
-        fwrite(":", sizeof(char), 1, pf);	//	Check!
     }
 
     fclose(pf);
@@ -641,22 +626,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
 void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 {
-    char buffer[4096];
-    long nFileSize = 0;
-    unsigned int CondNumHits[50];	//	50 conditions per achievement
-    unsigned int CondSourceVal[50];
-    unsigned int CondSourceLastVal[50];
-    unsigned int CondTargetVal[50];
-    unsigned int CondTargetLastVal[50];
-    unsigned int nID = 0;
-    unsigned int nNumCond = 0;
-    char cheevoProgressString[4096];
-    unsigned int i = 0;
-    unsigned int j = 0;
-    char* pGivenProgressMD5 = nullptr;
-    char* pGivenCheevoMD5 = nullptr;
-    char cheevoMD5TestMangled[4096];
-    int nMemStringLen = 0;
+    long nFileSize;
 
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;
@@ -664,103 +634,31 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return;
 
-    sprintf_s(buffer, 4096, "%s%s.rap", RA_DIR_DATA, sLoadStateFilename);
+    std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
 
-    char* pRawFile = _MallocAndBulkReadFileToBuffer(buffer, nFileSize);
-
+    char* pRawFile = _MallocAndBulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
-        unsigned int nOffs = 0;
-        while (nOffs < (unsigned int)(nFileSize - 2) && pRawFile[nOffs] != '\0')
+        const char* pIter = pRawFile;
+        while (*pIter)
         {
-            char* pIter = &pRawFile[nOffs];
-
-            //	Parse achievement id and num conditions
-            nID = strtoul(pIter, &pIter, 10); pIter++;
-            nNumCond = strtoul(pIter, &pIter, 10);	pIter++;
-
-            //	Concurrently build the md5 checkstring
-            sprintf_s(cheevoProgressString, 4096, "%u:%u:", nID, nNumCond);
-
-            ZeroMemory(CondNumHits, 50 * sizeof(unsigned int));
-            ZeroMemory(CondSourceVal, 50 * sizeof(unsigned int));
-            ZeroMemory(CondSourceLastVal, 50 * sizeof(unsigned int));
-            ZeroMemory(CondTargetVal, 50 * sizeof(unsigned int));
-            ZeroMemory(CondTargetLastVal, 50 * sizeof(unsigned int));
-
-            for (i = 0; i < nNumCond && i < 50; ++i)
+            char* pUnused;
+            unsigned int nID = strtoul(pIter, &pUnused, 10);
+            Achievement* pAch = Find(nID);
+            if (pAch != nullptr && pAch->Active())
             {
-                //	Parse next condition state
-                CondNumHits[i] = strtoul(pIter, &pIter, 10); pIter++;
-                CondSourceVal[i] = strtoul(pIter, &pIter, 10); pIter++;
-                CondSourceLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
-                CondTargetVal[i] = strtoul(pIter, &pIter, 10); pIter++;
-                CondTargetLastVal[i] = strtoul(pIter, &pIter, 10); pIter++;
-
-                //	Concurrently build the md5 checkstring
-                sprintf_s(buffer, 4096, "%u:%u:%u:%u:%u:",
-                    CondNumHits[i],
-                    CondSourceVal[i],
-                    CondSourceLastVal[i],
-                    CondTargetVal[i],
-                    CondTargetLastVal[i]);
-
-                strcat_s(cheevoProgressString, 4096, buffer);
-            }
-
-            //	Read the given md5:
-            pGivenProgressMD5 = strtok_s(pIter, ":", &pIter);
-            pGivenCheevoMD5 = strtok_s(pIter, ":", &pIter);
-
-            //	Regenerate the md5 and see if it sticks:
-            sprintf_s(cheevoMD5TestMangled, 4096, "%s%s%s%u",
-                RAUsers::LocalUser().Username().c_str(), cheevoProgressString, RAUsers::LocalUser().Username().c_str(), nID);
-
-            std::string sRecalculatedProgressMD5 = RAGenerateMD5(cheevoMD5TestMangled);
-
-            if (sRecalculatedProgressMD5.compare(pGivenProgressMD5) == 0)
-            {
-                //	Embed in achievement:
-                Achievement* pAch = Find(nID);
-                if (pAch != nullptr)
-                {
-                    std::string sMemStr = pAch->CreateMemString();
-
-                    //	Recalculate the current achievement to see if it's compatible:
-                    std::string sMemMD5 = RAGenerateMD5(sMemStr);
-                    if (sMemMD5.compare(0, 32, pGivenCheevoMD5) == 0)
-                    {
-                        for (size_t nGrp = 0; nGrp < pAch->NumConditionGroups(); ++nGrp)
-                        {
-                            for (j = 0; j < pAch->NumConditions(nGrp); ++j)
-                            {
-                                pAch->RestoreConditionState(nGrp, j, CondNumHits[j], CondSourceVal[j], CondSourceLastVal[j]);
-                                pAch->SetDirtyFlag(Dirty_Conditions);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"Achievement progress savestate incompatible (achievement has changed?)");
-                        RA_LOG("Achievement progress savestate incompatible (achievement has changed?)");
-                    }
-                }
-                else
-                {
-                    ASSERT(!"Achievement doesn't exist!");
-                    RA_LOG("Achievement doesn't exist!");
-                }
+                pIter = pAch->ParseStateString(pIter, RAUsers::LocalUser().Username());
             }
             else
             {
-                //assert(!"MD5 invalid... what to do... maybe they're trying to hack achievements?");
+                // achievement no longer exists, or is no longer active, skip to next one
+                Achievement ach(AchievementSetType::Local);
+                ach.SetID(nID);
+                pIter = ach.ParseStateString(pIter, "");
             }
-
-            nOffs = (pIter - pRawFile);
         }
 
         free(pRawFile);
-        pRawFile = nullptr;
     }
 }
 

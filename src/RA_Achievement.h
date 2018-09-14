@@ -99,12 +99,8 @@ public:
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
 
-    inline HBITMAP BadgeImage() const { return m_hBadgeImage; }
-    inline HBITMAP BadgeImageLocked() const { return m_hBadgeImageLocked; }
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }
-
     void SetBadgeImage(const std::string& sFilename);
-    void ClearBadgeImage();
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
     unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
@@ -112,14 +108,16 @@ public:
     void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPrevValue);
 
     std::string CreateMemString() const;
+    std::string CreateStateString(const std::string& sSalt) const;
 
     void Reset();
 
     //	Returns the new char* offset after parsing.
-    const char* ParseLine(const char* buffer);
+    const char* ParseLine(const char* sBuffer);
+    const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 
-    //	Parse from json element
 #ifndef RA_UTEST
+    //	Parse from json element
     void Parse(const Value& element);
 #endif
 
@@ -134,15 +132,15 @@ public:
 protected:
     void ParseTrigger(const char* pTrigger);
 
+    void*                             m_pTrigger = nullptr; //  rc_trigger_t
+    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
+
 private:
     /*const*/ AchievementSetType m_nSetType;
 
     ra::AchievementID m_nAchievementID;
 
     ConditionSet                      m_vConditions;        //  UI wrappers for trigger
-
-    void*                             m_pTrigger = nullptr; //  rc_trigger_t
-    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 
     std::string m_sTitle;
     std::string m_sDescription;
@@ -171,11 +169,6 @@ private:
 
     unsigned short m_nUpvotes;
     unsigned short m_nDownvotes;
-
-    HBITMAP m_hBadgeImage;
-    HBITMAP m_hBadgeImageLocked;
 };
-
-
 
 #endif // !RA_ACHIEVEMENT_H

@@ -339,7 +339,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
     RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
     ResponseOut.clear();
 
-    const char* sHostName = bIsImageRequest ? _RA_HostName() : "i.retroachievements.org";
+    const char* sHostName = bIsImageRequest ? "i.retroachievements.org" : _RA_HostName();
 
     size_t nTemp;
 
@@ -817,7 +817,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                         }
                         else
                         {
-                            const std::string& sRPResponse = g_RichPresenceInterpretter.GetRichPresenceString();
+                            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
                             if (!sRPResponse.empty())
                             {
                                 args['m'] = sRPResponse;

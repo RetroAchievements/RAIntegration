@@ -33,7 +33,6 @@ enum CondSubItems
     NumColumns
 };
 
-BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing
@@ -82,7 +81,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
     : m_hAchievementEditorDlg(nullptr),
     m_hICEControl(nullptr),
     m_pSelectedAchievement(nullptr),
-    m_hAchievementBadge(nullptr),
     m_bPopulatingAchievementEditorData(false)
 {
     for (size_t i = 0; i < MAX_CONDITIONS; ++i)
@@ -96,11 +94,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
 
 Dlg_AchievementEditor::~Dlg_AchievementEditor()
 {
-    if (m_hAchievementBadge != nullptr)
-    {
-        DeleteObject(m_hAchievementBadge);
-        m_hAchievementBadge = nullptr;
-    }
 }
 
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
@@ -884,8 +877,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
             m_BadgeNames.FetchNewBadgeNamesThreaded();
 
+            // achievement loaded before UI was created won't have populated the UI. reload it.
             if (m_pSelectedAchievement != nullptr)
-                RepopulateGroupList(m_pSelectedAchievement);
+            {
+                auto* pAchievement = m_pSelectedAchievement;
+                m_pSelectedAchievement = nullptr;
+                LoadAchievement(pAchievement, false);
+            }
 
             if (!CanCausePause())
             {
@@ -1403,8 +1401,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_UPLOAD_BADGE:
                 {
-                    SetCurrentDirectory(TEXT("\\"));
-
                     const int BUF_SIZE = 1024;
                     TCHAR buffer[BUF_SIZE];
                     ZeroMemory(buffer, BUF_SIZE);
@@ -1884,26 +1880,21 @@ void Dlg_AchievementEditor::GetListViewTooltip()
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
 {
-    std::string sAchievementBadgeURI = RA_UNKNOWN_BADGE_IMAGE_URI;
+    std::string sAchievementBadgeURI;
 
     if (m_pSelectedAchievement != nullptr)
         sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
     else if (sBackupBadgeToUse.length() > 2)
         sAchievementBadgeURI = sBackupBadgeToUse;
 
-    if (m_hAchievementBadge != nullptr)
-        DeleteObject(m_hAchievementBadge);
-    m_hAchievementBadge = nullptr;
-
-    HBITMAP hBitmap = LoadOrFetchBadge(sAchievementBadgeURI, RA_BADGE_PX);
-    if (hBitmap == nullptr)
-        return;
-
-    m_hAchievementBadge = hBitmap;
-
-    HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
-    SendMessage(hCheevoPic, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge);
-    InvalidateRect(hCheevoPic, nullptr, TRUE);
+    m_hAchievementBadge.ChangeReference(ra::services::ImageType::Badge, sAchievementBadgeURI);
+    HBITMAP hBitmap = m_hAchievementBadge.GetHBitmap();
+    if (hBitmap != nullptr)
+    {
+        HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
+        SendMessage(hCheevoPic, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+        InvalidateRect(hCheevoPic, nullptr, TRUE);
+    }
 
     //	Find buffer in the dropdown list
     int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());

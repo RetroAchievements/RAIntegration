@@ -45,7 +45,7 @@ class LeaderboardExamine
 public:
     void Initialize(const unsigned int nLBIDIn);
     //static void CB_OnReceiveData( void* pRequestObject );
-    void OnReceiveData(const Document& doc);
+    void OnReceiveData(const rapidjson::Document& doc);
 
 public:
     unsigned int m_nLBID;
@@ -79,7 +79,7 @@ public:
 public:
     void Initialize(const Achievement* pAchIn);
     void Clear();
-    void OnReceiveData(Document& doc);
+    void OnReceiveData(rapidjson::Document& doc);
 
     bool HasData() const { return m_bHasData; }
     const std::string& CreatedDate() const { return m_CreatedDate; }

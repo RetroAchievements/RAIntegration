@@ -2,9 +2,6 @@
 #define RA_DEFS_H
 #pragma once
 
-
-
-
 // Windows stuff we DO need, they are commented out to show we need them, if for
 // some reason you get a compiler error put the offending NO* define here
 /*
@@ -64,20 +61,14 @@ struct IUnknown;
 
 #include <tchar.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
-#include <MMSystem.h>
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#endif // WIN32_LEAN_AND_MEAN
-
 #include <map>
-#include <array>
-#include <sstream>
-#include <queue>
+#include <array> // algorithm, iterator, tuple
+#include <sstream> // string
+#include <queue> // deque, vector, algorithm
 #include "ra_utility.h"
 
 
-#ifndef RA_EXPORTS
+#if !RA_EXPORTS
 #include <cassert> 
 //	Version Information is integrated into tags
 
@@ -85,57 +76,19 @@ struct IUnknown;
 //NB. These must NOT be accessible from the emulator!
 //#define RA_INTEGRATION_VERSION	"0.053"
 
-
-
-
-//	RA-Only
-
-
 //	RA-Only
 #define RAPIDJSON_HAS_STDSTRING 1
-#pragma warning(push, 1)
-// This is not needed the most recent version
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
-//	RA-Only
+#define RAPIDJSON_NOMEMBERITERATORCLASS 1
 #include <rapidjson/document.h> // has reader.h
 #include <rapidjson/writer.h> // has stringbuffer.h
-#include <rapidjson/filestream.h>
-#include <rapidjson/stringbuffer.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/error/en.h>
-#pragma warning(pop)
 
-using namespace rapidjson;
-extern GetParseErrorFunc GetJSONParseErrorStr;
-#pragma warning(pop)
-
+_CONSTANT_FN GetJSONParseErrorStr{ rapidjson::GetParseError_En };
 
 using namespace std::string_literals;
-//using namespace std::chrono_literals; we could use this later
-
-#endif	//RA_EXPORTS
-
-
-// Maybe an extra check just in-case
-
-#define _NORETURN            [[noreturn]]
-
-#if _HAS_CXX17
-#define _DEPRECATED          [[deprecated]]
-#define _DEPRECATEDR(reason) [[deprecated(reason)]]
-#define _FALLTHROUGH         [[fallthrough]]//; you need ';' at the end
-#define _UNUSED              [[maybe_unused]]
-#define _CONSTANT_VAR        inline constexpr auto
-#else
-#define _NODISCARD           _Check_return_
-#define _DEPRECATED          __declspec(deprecated)
-#define _DEPRECATEDR(reason) _CRT_DEPRECATE_TEXT(reason)
-#define _FALLTHROUGH         __fallthrough//; you need ';' at the end
-#define _UNUSED              
-#define _CONSTANT_VAR        constexpr auto
-#endif // _HAS_CXX17        
-
-#define _CONSTANT_LOC constexpr // local vars can't be inline
-#define _CONSTANT_FN  _CONSTANT_VAR
+#endif	// RA_EXPORTS
 
 #define RA_KEYS_DLL						"RA_Keys.dll"
 #define RA_PREFERENCES_FILENAME_PREFIX	L"RAPrefs_"

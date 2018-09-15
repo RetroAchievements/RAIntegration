@@ -454,7 +454,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = g_sCurrentROMMD5;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
@@ -634,7 +634,7 @@ API int CCONV _RA_HandleHTTPResults()
     {
         if (pObj->GetResponse().size() > 0)
         {
-            Document doc;
+            rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
             if (pObj->GetRequestType() == RequestBadge)
@@ -834,35 +834,32 @@ API HMENU CCONV _RA_CreatePopupMenu()
     HMENU hRA_LB = CreatePopupMenu();
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        // TODO: Use the literals once PR 23 is accepted
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
-        AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
         UINT nGameFlags = MF_STRING;
         //if( g_pActiveAchievements->ra::GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
-
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
-        AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, g_bHardcoreModeActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
-        AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
         AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, g_bLeaderboardsActive ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
-        AppendMenu(hRA_LB, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA_LB, g_bLBDisplayNotification ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
         AppendMenu(hRA_LB, g_bLBDisplayCounter ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
         AppendMenu(hRA_LB, g_bLBDisplayScoreboard ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
 
-        AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
-        AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
         AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
         AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
@@ -872,7 +869,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA"));
     }
 
-    AppendMenu(hRA, MF_SEPARATOR, UINT_PTR{}, nullptr);
+    AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
     AppendMenu(hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update"));
 
     return hRA;
@@ -957,115 +954,77 @@ API void CCONV _RA_LoadPreferences()
 {
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
-    std::wstring sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + ra::Widen(g_sClientName) + L".cfg";
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sPreferencesFile.c_str(), L"rb");
-    if (pf == nullptr)
+    std::wstring sPrefsFileName;
     {
-        //	Test for first-time use:
-        //RA_LOG( __FUNCTION__ " - no preferences found: showing first-time message!\n" );
-        //
-        //char sWelcomeMessage[4096];
+        std::wostringstream oss;
+        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
+        sPrefsFileName = oss.str();
+    }
 
-        //sprintf_s( sWelcomeMessage, 4096, 
-        //	"Welcome! It looks like this is your first time using RetroAchievements.\n\n"
-        //	"Quick Start: Press ESCAPE or 'Back' on your Xbox 360 controller to view the achievement overlay.\n\n" );
-
-        //switch( g_EmulatorID )
-        //{
-        //case RA_Gens:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D are A, B, C, and Return for Start.\n\n" );
-        //	break;
-        //case RA_VisualboyAdvance:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, Z-X are A and B, A-S are L and R, use Return for Start and Backspace for Select.\n\n" );
-        //	break;
-        //case RA_Snes9x:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-C-S-X are A, B, X, Y, Z-V are L and R, use Return for Start and Space for Select.\n\n" );
-        //	break;
-        //case RA_FCEUX:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, D-F are B and A, use Return for Start and S for Select.\n\n" );
-        //	break;
-        //case RA_PCE:
-        //	strcat_s( sWelcomeMessage, 4096,
-        //		"Default Keyboard Controls: Use cursor keys, A-S-D for A, B, C, and Return for Start\n\n" );
-        //	break;
-        //}
-
-        //strcat_s( sWelcomeMessage, 4096, "These defaults can be changed under [Option]->[Joypads].\n\n"
-        //	"If you have any questions, comments or feedback, please visit forum.RetroAchievements.org for more information.\n\n" );
-
-        //MessageBox( g_RAMainWnd, 
-        //	sWelcomeMessage,
-        //	"Welcome to RetroAchievements!", MB_OK );
-
+    std::ifstream ifile{ sPrefsFileName };
+    if (!ifile.is_open())
+    {
         //	TBD: setup some decent default variables:
         _RA_SavePreferences();
+        return;
     }
-    else
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+    if (doc.HasParseError())
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
+        _RA_SavePreferences();
+        return;
+    }
 
-        if (doc.HasParseError())
+    if (doc.HasMember("Username"))
+        RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
+    if (doc.HasMember("Token"))
+        RAUsers::LocalUser().SetToken(doc["Token"].GetString());
+    if (doc.HasMember("Hardcore Active"))
+        g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
+
+    if (doc.HasMember("Leaderboards Active"))
+        g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
+    if (doc.HasMember("Leaderboard Notification Display"))
+        g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
+    if (doc.HasMember("Leaderboard Counter Display"))
+        g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
+    if (doc.HasMember("Leaderboard Scoreboard Display"))
+        g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
+
+    if (doc.HasMember("Prefer Decimal"))
+        g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
+
+    if (doc.HasMember("Num Background Threads"))
+        g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
+    if (doc.HasMember("ROM Directory"))
+        g_sROMDirLocation = doc["ROM Directory"].GetString();
+
+    if (doc.HasMember("Window Positions"))
+    {
         {
-            //MessageBox( nullptr, std::to_string( doc.GetParseError() ).c_str(), "ERROR!", MB_OK );
-            _RA_SavePreferences();
-        }
-        else
-        {
-            if (doc.HasMember("Username"))
-                RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-            if (doc.HasMember("Token"))
-                RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-            if (doc.HasMember("Hardcore Active"))
-                g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-
-            if (doc.HasMember("Leaderboards Active"))
-                g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-            if (doc.HasMember("Leaderboard Notification Display"))
-                g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
-            if (doc.HasMember("Leaderboard Counter Display"))
-                g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
-            if (doc.HasMember("Leaderboard Scoreboard Display"))
-                g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
-
-            if (doc.HasMember("Prefer Decimal"))
-                g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
-
-            if (doc.HasMember("Num Background Threads"))
-                g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-            if (doc.HasMember("ROM Directory"))
-                g_sROMDirLocation = doc["ROM Directory"].GetString();
-
-            if (doc.HasMember("Window Positions"))
+            const auto& positions{ doc["Window Positions"] };
+            if (positions.IsObject())
             {
-                const Value& positions = doc["Window Positions"];
-                if (positions.IsObject())
+                for (auto iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
                 {
-                    for (Value::ConstMemberIterator iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
-                    {
-                        WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
-                        pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
-                        pos.bLoaded = false;
+                    WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
+                    pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
+                    pos.bLoaded = false;
 
-                        if (iter->value.HasMember("X"))
-                            pos.nLeft = iter->value["X"].GetInt();
-                        if (iter->value.HasMember("Y"))
-                            pos.nTop = iter->value["Y"].GetInt();
-                        if (iter->value.HasMember("Width"))
-                            pos.nWidth = iter->value["Width"].GetInt();
-                        if (iter->value.HasMember("Height"))
-                            pos.nHeight = iter->value["Height"].GetInt();
-                    }
+                    if (iter->value.HasMember("X"))
+                        pos.nLeft = iter->value["X"].GetInt();
+                    if (iter->value.HasMember("Y"))
+                        pos.nTop = iter->value["Y"].GetInt();
+                    if (iter->value.HasMember("Width"))
+                        pos.nWidth = iter->value["Width"].GetInt();
+                    if (iter->value.HasMember("Height"))
+                        pos.nHeight = iter->value["Height"].GetInt();
                 }
             }
         }
-
-        fclose(pf);
     }
 
     //TBD:
@@ -1082,53 +1041,55 @@ API void CCONV _RA_SavePreferences()
         return;
     }
 
-    std::wstring sPreferencesFile = g_sHomeDir + RA_PREFERENCES_FILENAME_PREFIX + ra::Widen(g_sClientName) + L".cfg";
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sPreferencesFile.c_str(), L"wb");
-    if (pf != nullptr)
+    std::wstring sPrefsFileName;
     {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
-
-        Document doc;
-        doc.SetObject();
-
-        Document::AllocatorType& a = doc.GetAllocator();
-        doc.AddMember("Username", StringRef(RAUsers::LocalUser().Username().c_str()), a);
-        doc.AddMember("Token", StringRef(RAUsers::LocalUser().Token().c_str()), a);
-        doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-        doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-        doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-        doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-        doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-        doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
-        doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-        doc.AddMember("ROM Directory", StringRef(g_sROMDirLocation.c_str()), a);
-
-        Value positions(kObjectType);
-        for (WindowPositionMap::const_iterator iter = g_mWindowPositions.begin(); iter != g_mWindowPositions.end(); ++iter)
-        {
-            Value rect(kObjectType);
-            if (iter->second.nLeft != WindowPosition::nUnset)
-                rect.AddMember("X", iter->second.nLeft, a);
-            if (iter->second.nTop != WindowPosition::nUnset)
-                rect.AddMember("Y", iter->second.nTop, a);
-            if (iter->second.nWidth != WindowPosition::nUnset)
-                rect.AddMember("Width", iter->second.nWidth, a);
-            if (iter->second.nHeight != WindowPosition::nUnset)
-                rect.AddMember("Height", iter->second.nHeight, a);
-
-            if (rect.MemberCount() > 0)
-                positions.AddMember(StringRef(iter->first.c_str()), rect, a);
-        }
-
-        if (positions.MemberCount() > 0)
-            doc.AddMember("Window Positions", positions.Move(), a);
-
-        doc.Accept(writer);	//	Save
-
-        fclose(pf);
+        std::wostringstream oss;
+        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
+        sPrefsFileName = oss.str();
     }
+
+    std::ofstream ofile{ sPrefsFileName };
+    if (!ofile.is_open())
+        return;
+
+    rapidjson::OStreamWrapper osw{ ofile };
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
+
+    rapidjson::Document doc;
+    doc.SetObject();
+    auto& a = doc.GetAllocator();
+    doc.AddMember("Username", rapidjson::StringRef(RAUsers::LocalUser().Username().c_str()), a);
+    doc.AddMember("Token", rapidjson::StringRef(RAUsers::LocalUser().Token().c_str()), a);
+    doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
+    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
+    doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
+    doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
+    doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
+    doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
+    doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
+    doc.AddMember("ROM Directory", rapidjson::StringRef(g_sROMDirLocation.c_str()), a);
+
+    rapidjson::Value positions{ rapidjson::kObjectType };
+    for (const auto& wndPos : g_mWindowPositions)
+    {
+        rapidjson::Value rect{ rapidjson::kObjectType };
+        if (wndPos.second.nLeft != WindowPosition::nUnset)
+            rect.AddMember("X", wndPos.second.nLeft, a);
+        if (wndPos.second.nTop != WindowPosition::nUnset)
+            rect.AddMember("Y", wndPos.second.nTop, a);
+        if (wndPos.second.nWidth != WindowPosition::nUnset)
+            rect.AddMember("Width", wndPos.second.nWidth, a);
+        if (wndPos.second.nHeight != WindowPosition::nUnset)
+            rect.AddMember("Height", wndPos.second.nHeight, a);
+
+        if (rect.MemberCount() > 0U)
+            positions.AddMember(rapidjson::StringRef(wndPos.first.c_str()), rect, a);
+    }
+
+    if (positions.MemberCount() > 0U)
+        doc.AddMember("Window Positions", positions.Move(), a);
+
+    doc.Accept(writer);	//	Save
 
     //TBD:
     //g_GameLibrary.SaveAll();
@@ -1601,27 +1562,23 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
     pSource++;
 }
 
-void _WriteBufferToFile(const std::wstring& sFileName, const Document& doc)
+void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
 {
-    FILE* pf = nullptr;
-    if (_wfopen_s(&pf, sFileName.c_str(), L"wb") == 0)
-    {
-        FileStream fs(pf);
-        Writer<FileStream> writer(fs);
-        doc.Accept(writer);
-        fclose(pf);
-    }
+    std::ofstream ofile{ sFileName };
+    if (!ofile.is_open())
+        return;
+
+    rapidjson::OStreamWrapper osw{ ofile };
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
+    doc.Accept(writer);
 }
 
 void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
 {
-    using FileH = std::unique_ptr<FILE, decltype(&std::fclose)>;
-#pragma warning(push)
-#pragma warning(disable : 4996) // Deprecation from Microsoft
-    FileH myFile{ _wfopen(sFileName.c_str(), L"wb"), std::fclose };
-#pragma warning(pop)
-
-    std::fwrite(static_cast<const void*>(raw.c_str()), sizeof(char), raw.length(), myFile.get());
+    std::ofstream ofile{ sFileName, std::ios::binary };
+    if (!ofile.is_open())
+        return;
+    ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
 bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)

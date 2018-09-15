@@ -966,8 +966,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case IDC_RA_CHK_ACH_ACTIVE:
                     if (ActiveAchievement() != nullptr)
                     {
-                        // TODO: Use the literals once PR 23 is accepted
-                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, LPARAM{});
+                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, 0L);
                         CheckDlgButton(hDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
                     }
                     bHandled = TRUE;
@@ -1422,7 +1421,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        Document Response;
+                        rapidjson::Document Response;
                         if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
                             //TBD: ensure that:
@@ -1432,7 +1431,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //	The image can be uploaded OK
                             //	The image is not copyright
 
-                            const Value& ResponseData = Response["Response"];
+                            const rapidjson::Value& ResponseData = Response["Response"];
                             if (ResponseData.HasMember("BadgeIter"))
                             {
                                 const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
@@ -2168,7 +2167,7 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
     RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
 }
 
-void BadgeNames::OnNewBadgeNames(const Document& data)
+void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {
     unsigned int nLowerLimit = data["FirstBadge"].GetUint();
     unsigned int nUpperLimit = data["NextBadge"].GetUint();

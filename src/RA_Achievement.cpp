@@ -809,7 +809,7 @@ std::string Achievement::CreateStateString(const std::string& sSalt) const
         {
             size_t nGroups = 0;
             rc_condition_t* pCondition = pGroup->conditions;
-            while (pCondition != nullptr)
+            while (pCondition )
             {
                 ++nGroups;
                 pCondition = pCondition->next;

@@ -60,8 +60,7 @@ std::wstring Widen(const char* str)
     return wstr;
 }
 
-
-std::string ByteAddressToString(ra::ByteAddress nAddr)
+std::string ByteAddressToString(ByteAddress nAddr)
 {
     std::ostringstream oss;
     oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;

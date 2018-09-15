@@ -52,7 +52,7 @@ template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point
 _NODISCARD _CONSTANT_FN ftou(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD _CONSTANT_FN __cdecl sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
+_NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
@@ -70,7 +70,7 @@ itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
 // function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
 template<typename Enum> _CONSTANT_VAR to_integral{ etoi<Enum> };
 template<typename Enum, typename Integral = std::underlying_type_t<Enum>>
-_NODISCARD _CONSTANT_VAR to_enum = itoe<Enum, Integral>;
+_CONSTANT_VAR to_enum{ itoe<Enum, Integral> };
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
@@ -79,7 +79,7 @@ _NODISCARD _CONSTANT_VAR to_enum = itoe<Enum, Integral>;
 ///   get an intellisense error.
 /// </typeparam>
 /// <returns>The size of the file stream.</returns>
-template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN __cdecl
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
 filesize(_In_ const std::basic_string<CharT>& filename) noexcept
 {
     using file_type = std::basic_fstream<CharT>;

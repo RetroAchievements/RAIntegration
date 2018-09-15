@@ -3,6 +3,7 @@
 #pragma once
 
 struct IUnknown;
+#define NOMINMAX
 #include <WTypes.h>
 
 class Dlg_RichPresence

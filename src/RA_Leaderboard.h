@@ -4,7 +4,10 @@
 
 #include "RA_MemValue.h"
 
-#include <vector>
+#ifndef _VECTOR_
+#include <vector>  
+#endif /* !_VECTOR_ */
+
 
 class RA_Leaderboard
 {

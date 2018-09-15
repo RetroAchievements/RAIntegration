@@ -645,7 +645,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride;
+                    size_t stride{};
                     switch (m_nDataSize)
                     {
                         case EightBit:
@@ -696,7 +696,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride;
+                            size_t stride{};
                             switch (m_nDataSize)
                             {
                                 case EightBit:

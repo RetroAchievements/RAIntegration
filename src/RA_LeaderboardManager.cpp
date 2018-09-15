@@ -28,8 +28,8 @@ void RA_LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
-                lb.Description(),
-                PopupLeaderboardInfo));
+            lb.Description(),
+            PopupLeaderboardInfo));
     }
 
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
@@ -43,8 +43,8 @@ void RA_LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) cons
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard attempt cancelled!",
-                lb.Title(),
-                PopupLeaderboardCancel));
+            lb.Title(),
+            PopupLeaderboardCancel));
     }
 }
 
@@ -56,15 +56,15 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Not posting to leaderboard: memory tamper detected!",
-                "Reset game to reenable posting.",
-                PopupInfo));
+            "Reset game to reenable posting.",
+            PopupInfo));
     }
     else if (!g_bHardcoreModeActive)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard submission post cancelled.",
-                "Enable Hardcore Mode to enable posting.",
-                PopupInfo));
+            "Enable Hardcore Mode to enable posting.",
+            PopupInfo));
     }
     else
     {
@@ -83,7 +83,7 @@ void RA_LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, uns
     }
 }
 
-void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
+void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
 {
     if (!doc.HasMember("Response"))
     {
@@ -91,44 +91,46 @@ void RA_LeaderboardManager::OnSubmitEntry(const Document& doc)
         return;
     }
 
-    const Value& Response = doc["Response"];
+    const auto& Response{ doc["Response"] };
+    const auto& LBData{ Response["LBData"] };
 
-    const Value& LBData = Response["LBData"];
+    const std::string& sFormat{ LBData["Format"].GetString() };
+    const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
+    const auto nGameID{ static_cast<ra::GameID>(LBData["GameID"].GetUint()) };
+    const std::string& sLBTitle{ LBData["Title"].GetString() };
+    const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
 
-    const std::string& sFormat = LBData["Format"].GetString();
-    const ra::LeaderboardID nLBID = static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint());
-    const ra::GameID nGameID = static_cast<ra::GameID>(LBData["GameID"].GetUint());
-    const std::string& sLBTitle = LBData["Title"].GetString();
-    const bool bLowerIsBetter = (LBData["LowerIsBetter"].GetUint() == 1);
+    auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
 
-    RA_Leaderboard* pLB = g_LeaderboardManager.FindLB(nLBID);
-
-    const int nSubmittedScore = Response["Score"].GetInt();
-    const int nBestScore = Response["BestScore"].GetInt();
-    const std::string& sScoreFormatted = Response["ScoreFormatted"].GetString();
+    const auto nSubmittedScore{ Response["Score"].GetInt() };
+    const auto nBestScore{ Response["BestScore"].GetInt() };
+    const std::string& sScoreFormatted{ Response["ScoreFormatted"].GetString()};
 
     pLB->ClearRankInfo();
 
     RA_LOG("LB Data, Top Entries:\n");
-    const Value& TopEntries = Response["TopEntries"];
-    for (SizeType i = 0; i < TopEntries.Size(); ++i)
+    const auto& TopEntries{ Response["TopEntries"] };
+    for (auto& NextEntry : TopEntries.GetArray())
     {
-        const Value& NextEntry = TopEntries[i];
+        const auto nRank{ NextEntry["Rank"].GetUint() };
+        const std::string& sUser{ NextEntry["User"].GetString() };
+        const auto nUserScore{ NextEntry["Score"].GetInt() };
+        auto nSubmitted{ static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint())) };
 
-        const unsigned int nRank = NextEntry["Rank"].GetUint();
-        const std::string& sUser = NextEntry["User"].GetString();
-        const int nUserScore = NextEntry["Score"].GetInt();
-        time_t nSubmitted = NextEntry["DateSubmitted"].GetUint();
-
-        RA_LOG(std::string("(" + std::to_string(nRank) + ") " + sUser + ": " + pLB->FormatScore(nUserScore)).c_str());
+        {
+            std::ostringstream oss;
+            oss << "(" << nRank << ") " << sUser << ": " << pLB->FormatScore(nUserScore);
+            auto str{ oss.str() };
+            RA_LOG("%s", str.c_str());
+        }
 
         pLB->SubmitRankInfo(nRank, sUser, nUserScore, nSubmitted);
     }
 
     pLB->SortRankInfo();
 
-    const Value& TopEntriesFriends = Response["TopEntriesFriends"];
-    const Value& RankData = Response["RankInfo"];
+    const auto& TopEntriesFriends{ Response["TopEntriesFriends"] };
+    const auto& RankData{ Response["RankInfo"] };
 
     //	TBD!
     //char sTestData[ 4096 ];

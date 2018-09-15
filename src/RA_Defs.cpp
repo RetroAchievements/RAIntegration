@@ -63,7 +63,6 @@ _Use_decl_annotations_ std::wstring Widen(const char* str)
     return wstr;
 }
 
-
 std::string ByteAddressToString(ra::ByteAddress nAddr)
 {
     std::ostringstream oss;

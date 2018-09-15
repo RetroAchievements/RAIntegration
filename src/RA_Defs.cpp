@@ -2,13 +2,6 @@
 
 #include <iomanip>
 
-
-#if RA_EXPORTS
-
-GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
-
-#endif
-
 namespace ra {
 
 _Use_decl_annotations_
@@ -16,19 +9,20 @@ std::string Narrow(const std::wstring& wstr)
 {
     return Narrow(wstr.c_str());
 }
+
 _Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
-    auto wwstr{ std::move_if_noexcept(wstr) };
+    const auto wwstr{ std::move_if_noexcept(wstr) };
     return Narrow(wwstr);
 }
 
 _Use_decl_annotations_
 std::string Narrow(const wchar_t* wstr)
 {
-    auto len{ ra::to_signed(std::wcslen(wstr)) };
+    const auto len{ ra::to_signed(std::wcslen(wstr)) };
 
-    auto needed{
+    const auto needed{
         ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr)
     };
 
@@ -39,23 +33,26 @@ std::string Narrow(const wchar_t* wstr)
     return str;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::string& str)
+_Use_decl_annotations_
+std::wstring Widen(const std::string& str)
 {
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
+_Use_decl_annotations_
+std::wstring Widen(std::string&& str) noexcept
 {
-    auto sstr{ std::move_if_noexcept(str) };
+    const auto sstr{ std::move_if_noexcept(str) };
     return Widen(sstr);
 }
 
-_Use_decl_annotations_ std::wstring Widen(const char* str)
+_Use_decl_annotations_
+std::wstring Widen(const char* str)
 {
-    auto len{ ra::to_signed(std::strlen(str)) };
-    auto needed{::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0)};
+    const auto len{ ra::to_signed(std::strlen(str)) };
+    const auto needed{ ::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0) };
     // doesn't seem wchar_t is treated like a character type by default
-    std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
+    std::wstring wstr(ra::to_unsigned(needed), L'\x0');
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
                           ra::to_signed(wstr.capacity()));
     wstr.resize(ra::to_unsigned(needed - 1));
@@ -70,31 +67,29 @@ std::string ByteAddressToString(ra::ByteAddress nAddr)
     return oss.str();
 }
 
-_Use_decl_annotations_ std::wstring Widen(const wchar_t* wstr)
+_Use_decl_annotations_
+std::wstring Widen(const wchar_t* wstr)
 {
-    // remove reference might seem confusing
-    std::wstring _wstr{ wstr };
+    const std::wstring _wstr{ wstr };
     return _wstr;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr)
-{
-    return wstr;
-}
+_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
-_Use_decl_annotations_ std::string Narrow(const char* str)
+_Use_decl_annotations_
+std::string Narrow(const char* str)
 {
-    std::string _str{ str };
+    const std::string _str{ str };
     return _str;
 }
 
-
-_Use_decl_annotations_ std::string Narrow(const std::string& str)
+_Use_decl_annotations_
+std::string Narrow(const std::string& str)
 {
     return str;
 }
 
-} // namespace ra
+} /* namespace ra */
 
 #ifndef RA_UTEST
 extern std::wstring g_sHomeDir;

@@ -1,6 +1,8 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
+#include <fstream>
+#include <memory>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -628,8 +630,8 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{};
+    unsigned int width{};
     int n;
     char c;
 
@@ -667,7 +669,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{};
 
     switch (type)
     {
@@ -730,20 +732,20 @@ void Dlg_MemBookmark::ExportJSON()
                                 LPWSTR pStr = nullptr;
                                 if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
-                                    Document doc;
+                                    rapidjson::Document doc;
                                     auto& allocator = doc.GetAllocator();
                                     doc.SetObject();
 
-                                    Value bookmarks(kArrayType);
+                                    rapidjson::Value bookmarks{ rapidjson::kArrayType };
 
-                                    for (auto bookmark : m_vBookmarks)
+                                    for (auto& bookmark : m_vBookmarks)
                                     {
-                                        Value item(kObjectType);
+                                        rapidjson::Value item{ rapidjson::kObjectType };
 
                                         oss.str("");
                                         oss << ra::Narrow(bookmark->Description());
                                         auto str{ oss.str() };
-                                        Value s{ str.c_str(), allocator };
+                                        rapidjson::Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -772,51 +774,51 @@ void Dlg_MemBookmark::ExportJSON()
 
 void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 {
-    FILE* pFile = nullptr;
-    errno_t nErr = _wfopen_s(&pFile, sFilename.c_str(), L"r");
-    if (pFile != nullptr)
+    std::ifstream ifile{ sFilename };
+    if (!ifile.is_open())
     {
-        Document doc;
-        doc.ParseStream(FileStream(pFile));
-        if (!doc.HasParseError())
+        char buf[2048U]{};
+        strerror_s(buf, errno);
+        RA_LOG("%s: %s", ra::Narrow(sFilename).c_str(), buf);
+        return;
+    }
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasParseError())
+    {
+        ASSERT(" !Invalid Bookmark File...");
+        MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    if (doc.HasMember("Bookmarks"))
+    {
+        ClearAllBookmarks();
+
+        const auto& BookmarksData{ doc["Bookmarks"] };
+        for (const auto& bmData : BookmarksData.GetArray())
         {
-            if (doc.HasMember("Bookmarks"))
-            {
-                ClearAllBookmarks();
+            auto NewBookmark{ new MemBookmark };
+            NewBookmark->SetDescription(ra::Widen(bmData["Description"].GetString()));
 
-                const Value& BookmarksData = doc["Bookmarks"];
-                for (SizeType i = 0; i < BookmarksData.Size(); ++i)
-                {
-                    MemBookmark* NewBookmark = new MemBookmark();
+            NewBookmark->SetAddress(bmData["Address"].GetUint());
+            NewBookmark->SetType(bmData["Type"].GetInt());
+            NewBookmark->SetDecimal(bmData["Decimal"].GetBool());
 
-                    wchar_t buffer[256];
-                    swprintf_s(buffer, 256, L"%s", ra::Widen(BookmarksData[i]["Description"].GetString()).c_str());
-                    NewBookmark->SetDescription(buffer);
+            NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
+            NewBookmark->SetPrevious(NewBookmark->Value());
 
-                    NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());
-                    NewBookmark->SetType(BookmarksData[i]["Type"].GetInt());
-                    NewBookmark->SetDecimal(BookmarksData[i]["Decimal"].GetBool());
-
-                    NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
-                    NewBookmark->SetPrevious(NewBookmark->Value());
-
-                    AddBookmark(NewBookmark);
-                    AddBookmarkMap(NewBookmark);
-                }
-
-                if (m_vBookmarks.size() > 0)
-                    PopulateList();
-            }
-            else
-            {
-                ASSERT(" !Invalid Bookmark File...");
-                MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
-                return;
-            }
+            AddBookmark(NewBookmark);
+            AddBookmarkMap(NewBookmark);
         }
 
-        fclose(pFile);
+        if (!m_vBookmarks.empty())
+            PopulateList();
     }
+
 }
 
 std::wstring Dlg_MemBookmark::ImportDialog()

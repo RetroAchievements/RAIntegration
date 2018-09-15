@@ -259,7 +259,7 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
     return g_AchievementsDialog.AchievementsProc(hDlg, nMsg, wParam, lParam);
 }
 
-BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, Document& doc)
+BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, rapidjson::Document& doc)
 {
     const std::string sMem = Ach.CreateMemString();
 
@@ -443,7 +443,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     nFlags |= 1 << 1;			//	Official achievements: 3
 
 
-                                Document response;
+                                rapidjson::Document response;
                                 if (AttemptUploadAchievementBlocking(selectedAch, nFlags, response))
                                 {
                                     if (response["Success"].GetBool())
@@ -983,7 +983,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             else if (g_nActiveAchievementSet == Local)
                 nFlags |= 1 << 2;			//	Promote to Unofficial: 5
 
-            Document response;
+            rapidjson::Document response;
             if (AttemptUploadAchievementBlocking(NextAch, nFlags, response))
             {
                 if (response["Success"].GetBool())

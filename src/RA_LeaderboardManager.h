@@ -31,4 +31,4 @@ private:
 
 extern RA_LeaderboardManager g_LeaderboardManager;
 
-#endif !RA_LEADERBOARD_MANAGER_H
+#endif /* !RA_LEADERBOARD_MANAGER_H */

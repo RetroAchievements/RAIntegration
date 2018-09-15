@@ -282,7 +282,6 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 {
     m_nSize = srSource.m_nSize;
 
-    ComparisonVariableSize nSize = m_nSize;
     switch (m_nSize)
     {
         case Nibble_Lower:
@@ -290,14 +289,14 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             break;
 
         case EightBit:
-            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
+            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 return Compare(pMemory[nIndex], nTestValue, nCompareType);
             });
             break;
 
         case SixteenBit:
-            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
+            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
                 return Compare(nValue, nTestValue, nCompareType);
@@ -305,7 +304,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             break;
 
         case ThirtyTwoBit:
-            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
+            ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
                     (pMemory[nIndex + 2] << 16) | (pMemory[nIndex + 3] << 24);

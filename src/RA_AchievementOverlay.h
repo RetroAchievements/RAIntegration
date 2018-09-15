@@ -90,6 +90,12 @@ public:
     unsigned int TotalWinners() const { return m_nTotalWinners; }
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
 
+
+    _NODISCARD inline auto begin() noexcept { return RecentWinners.begin(); }
+    _NODISCARD inline auto begin() const noexcept { return RecentWinners.begin(); }
+    _NODISCARD inline auto end() noexcept { return RecentWinners.end(); }
+    _NODISCARD inline auto end() const noexcept { return RecentWinners.end(); }
+
 private:
     const Achievement* m_pSelectedAchievement;
     std::string m_CreatedDate;

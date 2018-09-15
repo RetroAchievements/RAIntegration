@@ -139,7 +139,7 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
     }
 
     //	Not found
-    return -1;
+    return ra::to_unsigned(-1);
 }
 
 unsigned int AchievementSet::NumActive() const
@@ -461,12 +461,12 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         //ASSERT( doc["Success"].GetBool() );
         g_pCurrentGameData->ParseData(doc);
-        const auto nGameID{ g_pCurrentGameData->GetGameID() };
+        const auto _nGameID{ g_pCurrentGameData->GetGameID() };
 
         //	Rich Presence
         {
             std::wostringstream oss;
-            oss << g_sHomeDir << RA_DIR_DATA << nGameID << L"-Rich.txt";
+            oss << g_sHomeDir << RA_DIR_DATA << _nGameID << L"-Rich.txt";
             _WriteBufferToFile(oss.str(), g_pCurrentGameData->RichPresencePatch());
         }
         g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
@@ -526,12 +526,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             args['h'] = g_bHardcoreModeActive ? "1" : "0";
 
             RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
-            std::string sTitle;
-            {
-                std::ostringstream oss;
-                oss << "Loaded " << g_pCurrentGameData->GameTitle();
-                sTitle = oss.str();
-            }
+            std::string sTitle{ "Loaded " };
+            sTitle += g_pCurrentGameData->GameTitle();
 
             std::string sSubTitle;
             {

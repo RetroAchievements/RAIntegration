@@ -190,8 +190,8 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
             ListView_SetItem(hList, &item);
     }
 
-    ASSERT(item.iItem == (m_lbxData.size() - 1));
-    return static_cast<size_t>(item.iItem);
+    ASSERT(item.iItem == (ra::to_signed(m_lbxData.size()) - 1));
+    return ra::to_unsigned(item.iItem);
 }
 
 BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
@@ -227,23 +227,25 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
             return FALSE;
         }
 
-        char sIllegalChars[] = { '&', ':' };
-
-        const size_t nNumIllegalChars = sizeof(sIllegalChars) / sizeof(sIllegalChars[0]);
-        for (size_t i = 0; i < nNumIllegalChars; ++i)
+        constexpr std::array<char, 2> sIllegalChars{ '&', ':' };
+        for (auto& cNextChar : sIllegalChars)
         {
-            char cNextChar = sIllegalChars[i];
-
-            if (strchr(Ach.Title().c_str(), cNextChar) != nullptr)
+            auto ErrMsg =[&cNextChar]() noexcept
             {
-                sprintf_s(buffer, 2048, "Achievement title contains an illegal character: '%c'\nPlease remove and try again", cNextChar);
-                MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+                std::ostringstream oss;
+                oss << "Achievement title contains an illegal character: " << cNextChar << "\nPlease remove and try again";
+                return oss.str();
+            };
+            if (Ach.Title().find_first_of(cNextChar) != std::string::npos)
+            {
+                const auto str{ ErrMsg() };
+                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
                 return FALSE;
             }
-            if (strchr(Ach.Description().c_str(), cNextChar) != nullptr)
+            if (Ach.Description().find_first_of(cNextChar) != std::string::npos)
             {
-                sprintf_s(buffer, 2048, "Achievement description contains an illegal character: '%c'\nPlease remove and try again", cNextChar);
-                MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+                const auto str{ ErrMsg() };
+                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK);
                 return FALSE;
             }
         }
@@ -575,7 +577,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
                     int nNewID = AddAchievement(hList, Cheevo);
-                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                    ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
                     char buffer[16];
@@ -615,7 +617,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     OnClickAchievementSet(Local);
 
-                    ListView_SetItemState(hList, g_pLocalAchievements->NumAchievements() - 1, LVIS_FOCUSED | LVIS_SELECTED, -1);
+                    ListView_SetItemState(hList, g_pLocalAchievements->NumAchievements() - 1, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, g_pLocalAchievements->NumAchievements() - 1, FALSE);
 
                     char buffer2[16];
@@ -851,7 +853,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 else
                                     OnEditData(nIndex, Dlg_Achievements::Active, "Yes");
 
-                                if (nIndex == nSel)
+                                if (ra::to_signed(nIndex) == nSel)
                                     UpdateSelectedAchievementButtons(&Cheevo);
                             }
                         }

@@ -363,7 +363,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
 void MemoryViewerControl::createEditCaret(int w, int h)
 {
-    if (!m_bHasCaret || m_nCaretWidth != w || m_nCaretHeight != h)
+    if (!m_bHasCaret || ra::to_signed(m_nCaretWidth) != w || ra::to_signed(m_nCaretHeight) != h)
     {
         m_bHasCaret = true;
         m_nCaretWidth = w;
@@ -641,7 +641,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                 DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
-                if ((m_nWatchedAddress & ~0x0F) == addr)
+                if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
@@ -1184,7 +1184,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_ADDNOTE:
                 {
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                    HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
+                    _UNUSED HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
 
                     WCHAR sNewNoteWide[512];
                     GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);

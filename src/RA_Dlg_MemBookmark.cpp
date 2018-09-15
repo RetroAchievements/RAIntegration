@@ -354,7 +354,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 case IDC_RA_DEL_BOOKMARK:
                 {
-                    HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
+                    hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
                     int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
                     if (nSel != -1)
@@ -509,11 +509,11 @@ void Dlg_MemBookmark::PopulateList()
     if (hList == nullptr)
         return;
 
-    int topIndex = ListView_GetTopIndex(hList);
+    _UNUSED int topIndex = ListView_GetTopIndex(hList);
     ListView_DeleteAllItems(hList);
     m_nNumOccupiedRows = 0;
 
-    for (MemBookmark* bookmark : m_vBookmarks)
+    for (auto it = m_vBookmarks.cbegin(); it != m_vBookmarks.cend(); ++it)
     {
         LV_ITEM item;
         ZeroMemory(&item, sizeof(item));

@@ -94,17 +94,17 @@ void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& Response{ doc["Response"] };
     const auto& LBData{ Response["LBData"] };
 
-    const std::string& sFormat{ LBData["Format"].GetString() };
+    _UNUSED const std::string& sFormat{ LBData["Format"].GetString() };
     const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
     const auto nGameID{ static_cast<ra::GameID>(LBData["GameID"].GetUint()) };
-    const std::string& sLBTitle{ LBData["Title"].GetString() };
+    _UNUSED const std::string& sLBTitle{ LBData["Title"].GetString() };
     const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
 
     auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
 
     const auto nSubmittedScore{ Response["Score"].GetInt() };
     const auto nBestScore{ Response["BestScore"].GetInt() };
-    const std::string& sScoreFormatted{ Response["ScoreFormatted"].GetString()};
+    _UNUSED const std::string& sScoreFormatted{ Response["ScoreFormatted"].GetString()};
 
     pLB->ClearRankInfo();
 
@@ -129,8 +129,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
 
     pLB->SortRankInfo();
 
-    const auto& TopEntriesFriends{ Response["TopEntriesFriends"] };
-    const auto& RankData{ Response["RankInfo"] };
+    _UNUSED const auto& TopEntriesFriends{ Response["TopEntriesFriends"] };
+    _UNUSED const auto& RankData{ Response["RankInfo"] };
 
     //	TBD!
     //char sTestData[ 4096 ];

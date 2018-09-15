@@ -258,13 +258,21 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
         WINHTTP_NO_PROXY_BYPASS, 0);
 
     // Specify an HTTP server.
-    if (hSession != nullptr)
+    if (hSession == nullptr)
+    {
+        *pStatusCode = GetLastError();
+    }
+    else
     {
         mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer) / sizeof(wBuffer[0]), sHostName, strlen(sHostName) + 1);
         hConnect = WinHttpConnect(hSession, wBuffer, INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
-        if (hConnect != nullptr)
+        if (hConnect == nullptr)
+        {
+            *pStatusCode = GetLastError();
+        }
+        else
         {
             mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer)/sizeof(wBuffer[0]), sRequestedPage, strlen(sRequestedPage) + 1);
 
@@ -277,7 +285,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                 0);
 
             // Send a Request.
-            if (hRequest != nullptr)
+            if (hRequest == nullptr)
+            {
+                *pStatusCode = GetLastError();
+            }
+            else
             {
                 bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
@@ -287,7 +299,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                     0,
                     0);
 
-                if (WinHttpReceiveResponse(hRequest, nullptr))
+                if (!bResults || !WinHttpReceiveResponse(hRequest, nullptr))
+                {
+                    *pStatusCode = GetLastError();
+                }
+                else
                 {
                     DWORD dwSize = sizeof(DWORD);
                     WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, pStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
@@ -316,7 +332,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                         }
                         else
                         {
+                            if (*pStatusCode == 200)
+                                *pStatusCode = GetLastError();
+
                             bSuccess = FALSE;
+                            break;
                         }
 
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
@@ -348,7 +368,8 @@ static std::wstring GetIntegrationPath()
 
 static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, int nBytes)
 {
-    FILE* pf = _wfopen(sFile.c_str(), L"wb");
+    FILE* pf;
+    errno_t nErr = _wfopen_s(&pf, sFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         fwrite(sBuffer, 1, nBytes, pf);
@@ -356,7 +377,11 @@ static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, in
     }
     else
     {
-        MessageBoxW(nullptr, L"Problems writing file!", sFile.c_str(), MB_OK);
+        wchar_t sErrBuffer[2048];
+        _wcserror_s(sErrBuffer, nErr);
+
+        std::wstring sErrMsg = L"Unable to write " + sFile + L"\n" + sErrBuffer;
+        MessageBoxW(nullptr, sErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
     }
 }
 
@@ -453,6 +478,31 @@ static const char* CCONV _RA_InstallIntegration()
     return _RA_IntegrationVersion ? _RA_IntegrationVersion() : "0.000";
 }
 
+static unsigned long long ParseVersion(const char* sVersion)
+{
+    char* pPart;
+
+    unsigned int major = strtoul(sVersion, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int minor = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int patch = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int revision = strtoul(pPart, &pPart, 10);
+
+    // 64-bit max signed value is 9223 37203 68547 75807
+    unsigned long long version = (major * 100000) + minor;
+    version = (version * 100000) + patch;
+    version = (version * 100000) + revision;
+    return version;
+}
+
 //	Console IDs: see enum EmulatorID in header
 void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 {
@@ -495,20 +545,26 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         return;
     }
 
-    // expected response is "0.XXX" where XXX is the most recent version of the integration DLL available.
-    const unsigned int nLatestDLLVer = strtol(buffer + 2, nullptr, 10);
+    // remove trailing whitespace
+    size_t nIndex = strlen(buffer);
+    while (nIndex > 0 && isspace(buffer[nIndex - 1]))
+        --nIndex;
+    buffer[nIndex] = '\0';
 
-    unsigned int nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+    // expected response is a single line containing the version of the DLL available on the server (i.e. 0.074 or 0.074.1)
+    const unsigned long long nLatestDLLVer = ParseVersion(buffer);
+
+    unsigned long long nVerInstalled = ParseVersion(sVerInstalled);
     if (nVerInstalled < nLatestDLLVer)
     {
         RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite it.
 
         char sErrorMsg[2048];
-        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: 0.%03d\n%s",
+        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: %s\n%s",
             nVerInstalled == 0 ?
             "Cannot find or load RA_Integration.dll" :
             "A new version of the RetroAchievements Toolset is available!",
-            nLatestDLLVer,
+            buffer,
             "Automatically update your RetroAchievements Toolset file?");
 
         int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
@@ -519,7 +575,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             if (nStatusCode == 200)
             {
                 sVerInstalled = _RA_InstallIntegration();
-                nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+                nVerInstalled = ParseVersion(sVerInstalled);
             }
 
             if (nVerInstalled < nLatestDLLVer)

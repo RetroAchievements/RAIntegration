@@ -92,8 +92,8 @@ public:
     void ReleaseReference(ImageType nType, const std::string& sName);
 
 private:
-    static std::string GetFilename(ImageType nType, const std::string& sName);
-    static HBITMAP LoadLocalPNG(const std::string& sFilename, size_t nWidth, size_t nHeight);
+    static std::wstring GetFilename(ImageType nType, const std::string& sName);
+    static HBITMAP LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight);
 
     friend class ImageReference;
     HBITMAP DefaultImage(ImageType nType);

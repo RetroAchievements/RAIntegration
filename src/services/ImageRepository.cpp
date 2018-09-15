@@ -123,20 +123,20 @@ ImageRepository::~ImageRepository()
     g_bImageRepositoryValid = false;
 }
 
-std::string ImageRepository::GetFilename(ImageType nType, const std::string& sName)
+std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sName)
 {
-    std::string sFilename = g_sHomeDir;
+    std::wstring sFilename = g_sHomeDir;
 
     switch (nType)
     {
         case ImageType::Badge:
-            sFilename += RA_DIR_BADGE + sName + ".png";
+            sFilename += RA_DIR_BADGE + ra::Widen(sName) + L".png";
             break;
         case ImageType::UserPic:
-            sFilename += RA_DIR_USERPIC + sName + ".png";
+            sFilename += RA_DIR_USERPIC + ra::Widen(sName) + L".png";
             break;
         case ImageType::Local:
-            sFilename += sName;
+            sFilename += ra::Widen(sName);
             break;
         default:
             ASSERT(!"Unsupported image type");
@@ -151,7 +151,7 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     if (sName.empty())
         return;
 
-    std::string sFilename = GetFilename(nType, sName);
+    std::wstring sFilename = GetFilename(nType, sName);
     if (_FileExists(sFilename))
         return;
 
@@ -320,7 +320,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
     return hr;
 }
 
-HBITMAP ImageRepository::LoadLocalPNG(const std::string& sFilename, size_t nWidth, size_t nHeight)
+HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight)
 {
     if (g_pIWICFactory == nullptr)
         return nullptr;
@@ -405,7 +405,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
     if (sName.empty())
         return nullptr;
 
-    std::string sFilename = GetFilename(nType, sName);
+    std::wstring sFilename = GetFilename(nType, sName);
     if (!_FileExists(sFilename))
     {
         FetchImage(nType, sName);

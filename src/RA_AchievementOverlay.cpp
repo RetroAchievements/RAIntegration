@@ -130,7 +130,7 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, RA_OVERLAY_BG_FILENAME);
+    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, "Overlay\\overlayBG.png");
     m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
@@ -1506,9 +1506,9 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
 
-    std::string sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
+    std::wstring sNewsFile = g_sHomeDir + RA_NEWS_FILENAME;
     FILE* pf = nullptr;
-    fopen_s(&pf, sNewsFile.c_str(), "rb");
+    _wfopen_s(&pf, sNewsFile.c_str(), L"rb");
     if (pf != nullptr)
     {
         Document doc;

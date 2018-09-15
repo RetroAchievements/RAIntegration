@@ -34,7 +34,7 @@ public:
 
     BOOL DeletePatchFile(ra::GameID nGameID);
 
-    std::string GetAchievementSetFilename(ra::GameID nGameID);
+    std::wstring GetAchievementSetFilename(ra::GameID nGameID);
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }

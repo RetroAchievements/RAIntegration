@@ -2,6 +2,7 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
+struct IUnknown;
 #include <wtypes.h>
 
 class RA_Dlg_Login

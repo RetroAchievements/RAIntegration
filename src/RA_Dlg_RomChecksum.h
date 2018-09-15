@@ -2,6 +2,7 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
+struct IUnknown;
 #include <wtypes.h>
 
 class RA_Dlg_RomChecksum

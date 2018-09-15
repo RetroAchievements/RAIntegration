@@ -2,6 +2,7 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
+struct IUnknown;
 #include <WTypes.h>
 
 class Dlg_RichPresence

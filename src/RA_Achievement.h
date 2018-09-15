@@ -104,7 +104,7 @@ public:
 
 #ifndef RA_UTEST
     //	Parse from json element
-    void Parse(const Value& element);
+    void Parse(const rapidjson::Value& element);
 #endif
 
     //	Used for rendering updates when editing achievements. Usually always false.

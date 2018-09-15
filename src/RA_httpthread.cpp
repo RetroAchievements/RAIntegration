@@ -111,7 +111,7 @@ PostArgs PrevArgs;
 
 std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
-BOOL RequestObject::ParseResponseToJSON(Document& rDocOut)
+BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
 
@@ -281,18 +281,18 @@ void RAWeb::SetUserAgentString()
     SetUserAgent(sUserAgent);
 }
 
-void RAWeb::LogJSON(const Document& doc)
+void RAWeb::LogJSON(const rapidjson::Document& doc)
 {
     //  DebugLog:
-    GenericStringBuffer< UTF8<> > buffer;
-    Writer<GenericStringBuffer< UTF8<> > > writer(buffer);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer{ buffer };
     doc.Accept(writer);
 
     //  buffer may contain percentage literals!
     RADebugLogNoFormat(buffer.GetString());
 }
 
-BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, Document& JSONResponseOut)
+BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut)
 {
     std::string response;
     if (DoBlockingRequest(nType, PostData, response))
@@ -392,13 +392,12 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                     {
                         //if( nBytesToRead <= 32 )
                         {
-                            DWORD nBytesFetched = 0;
-                            if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                            ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                            DWORD nBytesFetched = 0UL;
+                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
                                 ASSERT(nBytesToRead == nBytesFetched);
                                 ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                                //ResponseOut.insert( ResponseOut.end(), sHttpReadData.begin(), sHttpReadData.end() );
                             }
                             else
                             {
@@ -413,7 +412,7 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
                     if (ResponseOut.size() > 0)
                         ResponseOut.push_back('\0');    //  EOS for parsing
 
-                    RA_LOG(__FUNCTION__ ": success! %s Returned %u bytes.", sRequestedPage.c_str(), ResponseOut.size());
+                    RA_LOG(__FUNCTION__ ": success! %s Returned %zu bytes.", sRequestedPage.c_str(), ResponseOut.size());
                 }
 
             }
@@ -485,8 +484,8 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
                     {
                         {
                             DWORD nBytesFetched = 0;
-                            if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                            ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                             {
                                 ASSERT(nBytesToRead == nBytesFetched);
                                 ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
@@ -527,7 +526,7 @@ BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::str
     //  Debug logging...
     if (ResponseOut.size() > 0)
     {
-        Document doc;
+        rapidjson::Document doc;
         doc.Parse(ResponseOut.c_str());
 
         if (doc.HasParseError())
@@ -646,24 +645,18 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
             while (nBytesToRead > 0)
             {
-                auto pData{ std::make_unique<char[]>(nBytesToRead) };
-
-                //DataStream sHttpReadData;
-                //sHttpReadData.reserve( 8192 );
-
                 ASSERT(nBytesToRead <= 8192);
                 if (nBytesToRead <= 8192)
                 {
-                    DWORD nBytesFetched = 0;                    
-                    if (auto pData{ std::make_unique<char[]>(nBytesToRead) }
-                    ; WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
+                    DWORD nBytesFetched = 0;
+
+                    auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                    if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
                         ASSERT(nBytesToRead == nBytesFetched);
                         ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                        // pData gets deleted here
                     }
                 }
-
 
                 WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
             }
@@ -678,7 +671,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     return bSuccess;
 }
 
-BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, Document& ResponseOut)
+BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut)
 {
     std::string response;
     if (::DoBlockingImageUpload(nType, sFilename, response))

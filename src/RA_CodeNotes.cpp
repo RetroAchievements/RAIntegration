@@ -1,5 +1,7 @@
 #include "RA_CodeNotes.h"
 
+#include <fstream>
+
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 #include "RA_Dlg_Memory.h"
@@ -7,44 +9,40 @@
 #include "RA_AchievementSet.h" // RA_Achievement
 #include "RA_GameData.h"
 
-void CodeNotes::Clear()
-{
-    m_CodeNotes.clear();
-}
+void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
 size_t CodeNotes::Load(const std::wstring& sFile)
 {
     Clear();
 
-    FILE* pf = nullptr;
-    if (_wfopen_s(&pf, sFile.c_str(), L"rb") == 0)
+    std::ifstream ifile{ sFile };
+    if (!ifile.is_open())
+        return 0U;
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasParseError())
+        return 0U;
+
+    ASSERT(doc["CodeNotes"].IsArray());
+
+    const auto& NoteArray{ doc["CodeNotes"] };
+    for (const auto& note : NoteArray.GetArray())
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-        if (!doc.HasParseError())
-        {
-            ASSERT(doc["CodeNotes"].IsArray());
+        if (note["Note"].IsNull())
+            continue;
 
-            const Value& NoteArray = doc["CodeNotes"];
+        const std::string& sNote = note["Note"].GetString();
+        if (sNote.length() < 2U)
+            continue;
 
-            for (SizeType i = 0; i < NoteArray.Size(); ++i)
-            {
-                const Value& NextNote = NoteArray[i];
-                if (NextNote["Note"].IsNull())
-                    continue;
+        const std::string& sAddr { note["Address"].GetString() };
+        auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
+        const std::string& sAuthor { note["User"].GetString() }; // Author?
 
-                const std::string& sNote = NextNote["Note"].GetString();
-                if (sNote.length() < 2)
-                    continue;
-
-                const std::string& sAddr = NextNote["Address"].GetString();
-                ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str(), nullptr, 16));
-                const std::string& sAuthor = NextNote["User"].GetString();	//	Author?
-
-                m_CodeNotes.insert(std::map<ra::ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
-            }
-        }
-        fclose(pf);
+        m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
     }
 
     return m_CodeNotes.size();
@@ -52,8 +50,7 @@ size_t CodeNotes::Load(const std::wstring& sFile)
 
 BOOL CodeNotes::Save(const std::wstring& sFile)
 {
-    return FALSE;
-    //	All saving should be cloud-based!
+    return FALSE; // All saving should be cloud-based!
 }
 
 BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
@@ -68,7 +65,7 @@ BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 }
 
 //	static
-void CodeNotes::OnCodeNotesResponse(Document& doc)
+void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
 {
     //	Persist then reload
     const ra::GameID nGameID = doc["GameID"].GetUint();
@@ -94,7 +91,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         args['m'] = std::to_string(nAddr);
         args['n'] = sNote;
 
-        Document doc;
+        rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestSubmitCodeNote, args, doc))
         {
             //	OK!

@@ -141,7 +141,7 @@ extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffse
 
 //	Write out the buffer to a file
 extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);
-extern void _WriteBufferToFile(const std::wstring& sFileName, const Document& doc);
+extern void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc);
 
 //	Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();

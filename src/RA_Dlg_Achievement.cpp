@@ -137,7 +137,7 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
     m_lbxData.erase(m_lbxData.begin() + nIter);
 
     char buffer[16];
-    sprintf_s(buffer, 16, " %d", g_pActiveAchievements->NumAchievements());
+    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
@@ -259,13 +259,13 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
     return g_AchievementsDialog.AchievementsProc(hDlg, nMsg, wParam, lParam);
 }
 
-BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, Document& doc)
+BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, rapidjson::Document& doc)
 {
     const std::string sMem = Ach.CreateMemString();
 
     //	Deal with secret:
     char sPostCode[2048];
-    sprintf_s(sPostCode, "%sSECRET%dSEC%s%dRE2%d",
+    sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u",
         RAUsers::LocalUser().Username().c_str(),
         Ach.ID(),
         sMem.c_str(),
@@ -443,7 +443,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     nFlags |= 1 << 1;			//	Official achievements: 3
 
 
-                                Document response;
+                                rapidjson::Document response;
                                 if (AttemptUploadAchievementBlocking(selectedAch, nFlags, response))
                                 {
                                     if (response["Success"].GetBool())
@@ -579,7 +579,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
                     char buffer[16];
-                    sprintf_s(buffer, 16, " %d", g_pActiveAchievements->NumAchievements());
+                    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
                     Cheevo.SetModified(TRUE);
@@ -619,7 +619,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     ListView_EnsureVisible(hList, g_pLocalAchievements->NumAchievements() - 1, FALSE);
 
                     char buffer2[16];
-                    sprintf_s(buffer2, 16, " %d", g_pActiveAchievements->NumAchievements());
+                    sprintf_s(buffer2, 16, " %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer2).c_str());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
@@ -960,7 +960,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     //}
 
     char message[1024];
-    sprintf_s(message, 1024, "Uploading the selected %d achievement(s).\n"
+    sprintf_s(message, 1024, "Uploading the selected %u achievement(s).\n"
         "Are you sure? This will update the server with your new achievements\n"
         "and players will be able to download them into their games immediately.",
         nNumChecked);
@@ -983,7 +983,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             else if (g_nActiveAchievementSet == Local)
                 nFlags |= 1 << 2;			//	Promote to Unofficial: 5
 
-            Document response;
+            rapidjson::Document response;
             if (AttemptUploadAchievementBlocking(NextAch, nFlags, response))
             {
                 if (response["Success"].GetBool())
@@ -993,7 +993,6 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
                     //	Update listbox on achievements dlg
 
-                    //sprintf_s( LbxDataAt( nLbxItemsChecked[i], 0 ), 32, "%d", nAchID );
                     LbxDataAt(nLbxItemsChecked[i], ID) = std::to_string(nAchID);
 
                     if (bMovedFromUserToUnofficial)
@@ -1046,7 +1045,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
         else
         {
             char buffer[512];
-            sprintf_s(buffer, 512, "Successfully uploaded data for %d achievements!", nNumChecked);
+            sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);
             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
             RECT rcBounds;
@@ -1111,7 +1110,7 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
         LoadAchievements(hList);
 
         TCHAR buffer[256];
-        _stprintf_s(buffer, 256, _T(" %d"), nGameID);
+        _stprintf_s(buffer, 256, _T(" %u"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)
@@ -1122,7 +1121,7 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
             EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
         }
 
-        _stprintf_s(buffer, _T(" %d"), g_pActiveAchievements->NumAchievements());
+        _stprintf_s(buffer, _T(" %u"), g_pActiveAchievements->NumAchievements());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
     }

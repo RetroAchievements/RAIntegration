@@ -33,12 +33,8 @@ class RAUser
 {
 public:
     RAUser(const std::string& sUsername);
-    virtual ~RAUser();
 
 public:
-    void FlushBitmap();
-    void LoadOrFetchUserImage();
-
     unsigned int GetScore() const { return m_nScore; }
     void SetScore(unsigned int nScore) { m_nScore = nScore; }
 
@@ -48,18 +44,10 @@ public:
     void UpdateActivity(const std::string& sAct) { m_sActivity = sAct; }
     const std::string& Activity() const { return m_sActivity; }
 
-    HBITMAP GetUserImage() const { return m_hUserImage; }
-    void InstallUserImage(HBITMAP hImg) { m_hUserImage = hImg; }
-
-    BOOL IsFetchingUserImage() const { return m_bFetchingUserImage; }
-
 private:
     /*const*/std::string	m_sUsername;
     std::string				m_sActivity;
     unsigned int			m_nScore;
-
-    HBITMAP					m_hUserImage;
-    BOOL					m_bFetchingUserImage;
 };
 
 class LocalRAUser : public RAUser
@@ -71,13 +59,13 @@ public:
     void AttemptLogin(bool bBlocking);
 
     void AttemptSilentLogin();
-    void HandleSilentLoginResponse(Document& doc);
+    void HandleSilentLoginResponse(rapidjson::Document& doc);
 
     void ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin);
     void Logout();
 
     void RequestFriendList();
-    void OnFriendListResponse(const Document& doc);
+    void OnFriendListResponse(const rapidjson::Document& doc);
 
     RAUser* AddFriend(const std::string& sFriend, unsigned int nScore);
     RAUser* FindFriend(const std::string& sName);
@@ -106,7 +94,6 @@ class RAUsers
 public:
     static LocalRAUser& LocalUser() { return ms_LocalUser; }
     static BOOL DatabaseContainsUser(const std::string& sUser);
-    static void OnUserPicDownloaded(const RequestObject& obj);
 
     static void RegisterUser(const std::string& sUsername, RAUser* pUser) { UserDatabase[sUsername] = pUser; }
 

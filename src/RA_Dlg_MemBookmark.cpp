@@ -1,6 +1,8 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include <atlbase.h> // CComPtr
+#include <fstream>
+#include <memory>
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
@@ -73,7 +75,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
 
             DestroyWindow(hwnd);
-            break;
+            return 0;
         }
 
         case WM_KEYDOWN:
@@ -119,7 +121,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             // Auto-import bookmark file when opening dialog
             if (g_pCurrentGameData->GetGameID() != 0)
             {
-                std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+                std::wstring file = RA_DIR_BOOKMARKS + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Bookmarks.txt";
                 ImportFromFile(file);
             }
 
@@ -255,7 +257,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                 }
                                 break;
                             case CSI_CHANGES:
-                                swprintf_s(buffer, 512, L"%d", m_vBookmarks[pdis->itemID]->Count());
+                                swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
                                 swprintf_s(buffer, 512, L"");
@@ -440,7 +442,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 case IDC_RA_LOADBOOKMARK:
                 {
-                    std::string file = ImportDialog();
+                    std::wstring file = ImportDialog();
                     if (file.length() > 0)
                         ImportFromFile(file);
                     return TRUE;
@@ -574,7 +576,7 @@ void Dlg_MemBookmark::AddAddress()
     // Fetch Memory Address from Memory Inspector
     TCHAR buffer[256];
     GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-    unsigned int nAddr = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
+    unsigned int nAddr = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
     NewBookmark->SetAddress(nAddr);
 
     // Check Data Type
@@ -628,8 +630,8 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     if (!Bookmark.Frozen())
         return;
 
-    unsigned int addr;
-    unsigned int width;
+    unsigned int addr{};
+    unsigned int width{};
     int n;
     char c;
 
@@ -667,7 +669,7 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
 
 unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 {
-    unsigned int mem_value;
+    unsigned int mem_value{};
 
     switch (type)
     {
@@ -699,9 +701,7 @@ void Dlg_MemBookmark::ExportJSON()
         return;
     }
 
-    std::string defaultDir = RA_DIR_BOOKMARKS;
-    defaultDir.erase(0, 2); // Removes the characters (".\\")
-    defaultDir = g_sHomeDir + defaultDir;
+    std::wstring defaultDir = g_sHomeDir + RA_DIR_BOOKMARKS;
 
     CComPtr<IFileSaveDialog> pDlg;
 
@@ -717,7 +717,7 @@ void Dlg_MemBookmark::ExportJSON()
             if (SUCCEEDED(hr = pDlg->SetFileName(ra::Widen(defaultFileName).c_str())))
             {
                 PIDLIST_ABSOLUTE pidl{ nullptr };
-                if (SUCCEEDED(hr = SHParseDisplayName(ra::Widen(defaultDir).c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
+                if (SUCCEEDED(hr = SHParseDisplayName(defaultDir.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr)))
                 {
                     CComPtr<IShellItem> pItem;
                     SHCreateShellItem(nullptr, nullptr, pidl, &pItem);
@@ -732,20 +732,20 @@ void Dlg_MemBookmark::ExportJSON()
                                 LPWSTR pStr = nullptr;
                                 if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                                 {
-                                    Document doc;
+                                    rapidjson::Document doc;
                                     auto& allocator = doc.GetAllocator();
                                     doc.SetObject();
 
-                                    Value bookmarks(kArrayType);
+                                    rapidjson::Value bookmarks{ rapidjson::kArrayType };
 
-                                    for (auto bookmark : m_vBookmarks)
+                                    for (auto& bookmark : m_vBookmarks)
                                     {
-                                        Value item(kObjectType);
+                                        rapidjson::Value item{ rapidjson::kObjectType };
 
                                         oss.str("");
                                         oss << ra::Narrow(bookmark->Description());
                                         auto str{ oss.str() };
-                                        Value s{ str.c_str(), allocator };
+                                        rapidjson::Value s{ str.c_str(), allocator };
 
                                         item.AddMember("Description", s, allocator);
                                         item.AddMember("Address", bookmark->Address(), allocator);
@@ -755,7 +755,7 @@ void Dlg_MemBookmark::ExportJSON()
                                     }
                                     doc.AddMember("Bookmarks", bookmarks, allocator);
 
-                                    _WriteBufferToFile(ra::Narrow(pStr), doc);
+                                    _WriteBufferToFile(pStr, doc);
                                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                                     pStr = nullptr;
                                 }
@@ -772,58 +772,58 @@ void Dlg_MemBookmark::ExportJSON()
     }
 }
 
-void Dlg_MemBookmark::ImportFromFile(std::string sFilename)
+void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 {
-    FILE* pFile = nullptr;
-    errno_t nErr = fopen_s(&pFile, sFilename.c_str(), "r");
-    if (pFile != nullptr)
+    std::ifstream ifile{ sFilename };
+    if (!ifile.is_open())
     {
-        Document doc;
-        doc.ParseStream(FileStream(pFile));
-        if (!doc.HasParseError())
+        char buf[2048U]{};
+        strerror_s(buf, errno);
+        RA_LOG("%s: %s", ra::Narrow(sFilename).c_str(), buf);
+        return;
+    }
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasParseError())
+    {
+        ASSERT(" !Invalid Bookmark File...");
+        MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    if (doc.HasMember("Bookmarks"))
+    {
+        ClearAllBookmarks();
+
+        const auto& BookmarksData{ doc["Bookmarks"] };
+        for (const auto& bmData : BookmarksData.GetArray())
         {
-            if (doc.HasMember("Bookmarks"))
-            {
-                ClearAllBookmarks();
+            auto NewBookmark{ new MemBookmark };
+            NewBookmark->SetDescription(ra::Widen(bmData["Description"].GetString()));
 
-                const Value& BookmarksData = doc["Bookmarks"];
-                for (SizeType i = 0; i < BookmarksData.Size(); ++i)
-                {
-                    MemBookmark* NewBookmark = new MemBookmark();
+            NewBookmark->SetAddress(bmData["Address"].GetUint());
+            NewBookmark->SetType(bmData["Type"].GetInt());
+            NewBookmark->SetDecimal(bmData["Decimal"].GetBool());
 
-                    wchar_t buffer[256];
-                    swprintf_s(buffer, 256, L"%s", ra::Widen(BookmarksData[i]["Description"].GetString()).c_str());
-                    NewBookmark->SetDescription(buffer);
+            NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
+            NewBookmark->SetPrevious(NewBookmark->Value());
 
-                    NewBookmark->SetAddress(BookmarksData[i]["Address"].GetUint());
-                    NewBookmark->SetType(BookmarksData[i]["Type"].GetInt());
-                    NewBookmark->SetDecimal(BookmarksData[i]["Decimal"].GetBool());
-
-                    NewBookmark->SetValue(GetMemory(NewBookmark->Address(), NewBookmark->Type()));
-                    NewBookmark->SetPrevious(NewBookmark->Value());
-
-                    AddBookmark(NewBookmark);
-                    AddBookmarkMap(NewBookmark);
-                }
-
-                if (m_vBookmarks.size() > 0)
-                    PopulateList();
-            }
-            else
-            {
-                ASSERT(" !Invalid Bookmark File...");
-                MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
-                return;
-            }
+            AddBookmark(NewBookmark);
+            AddBookmarkMap(NewBookmark);
         }
 
-        fclose(pFile);
+        if (!m_vBookmarks.empty())
+            PopulateList();
     }
+
 }
 
-std::string Dlg_MemBookmark::ImportDialog()
+std::wstring Dlg_MemBookmark::ImportDialog()
 {
-    std::string str;
+    std::wstring str;
 
     if (g_pCurrentGameData->GetGameID() == 0)
     {
@@ -846,7 +846,7 @@ std::string Dlg_MemBookmark::ImportDialog()
                     LPWSTR pStr = nullptr;
                     if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                     {
-                        str = ra::Narrow(pStr);
+                        str = pStr;
                         CoTaskMemFree(static_cast<LPVOID>(pStr));
                         pStr = nullptr;
                     }
@@ -867,7 +867,7 @@ void Dlg_MemBookmark::OnLoad_NewRom()
     {
         ClearAllBookmarks();
 
-        std::string file = RA_DIR_BOOKMARKS + std::to_string(g_pCurrentGameData->GetGameID()) + "-Bookmarks.txt";
+        std::wstring file = RA_DIR_BOOKMARKS + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Bookmarks.txt";
         ImportFromFile(file);
     }
 }

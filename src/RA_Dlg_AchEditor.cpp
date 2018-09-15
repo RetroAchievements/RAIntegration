@@ -11,6 +11,9 @@
 #include "RA_MemManager.h"
 #include "RA_User.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 namespace {
 const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
 const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
@@ -33,7 +36,6 @@ enum CondSubItems
     NumColumns
 };
 
-BOOL g_bPreferDecimalVal = TRUE;
 Dlg_AchievementEditor g_AchievementEditorDialog;
 
 // Dialog Resizing
@@ -82,7 +84,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
     : m_hAchievementEditorDlg(nullptr),
     m_hICEControl(nullptr),
     m_pSelectedAchievement(nullptr),
-    m_hAchievementBadge(nullptr),
     m_bPopulatingAchievementEditorData(false)
 {
     for (size_t i = 0; i < MAX_CONDITIONS; ++i)
@@ -96,11 +97,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
 
 Dlg_AchievementEditor::~Dlg_AchievementEditor()
 {
-    if (m_hAchievementBadge != nullptr)
-    {
-        DeleteObject(m_hAchievementBadge);
-        m_hAchievementBadge = nullptr;
-    }
 }
 
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
@@ -199,12 +195,13 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%d (%d)", Cond.RequiredHits(), Cond.CurrentHits());
+    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), Cond.CurrentHits());
 
-    if (g_bPreferDecimalVal)
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
     {
         if (Cond.CompTarget().Type() == ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%d", Cond.CompTarget().RawValue());
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().RawValue());
     }
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
@@ -355,7 +352,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             }
 
             DestroyWindow(hwnd);
-            break;
+            return 0;
         }
 
         case WM_KEYDOWN:
@@ -436,6 +433,7 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             //DestroyWindow(hwnd);
             DestroyWindow(hwnd);
+            return 0;
         }
         break;
 
@@ -779,7 +777,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
                     char buffer[256];
-                    sprintf_s(buffer, 256, "%d", Cond.RequiredHits());
+                    sprintf_s(buffer, 256, "%u", Cond.RequiredHits());
                     SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
                 }
             }
@@ -875,7 +873,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
             SetupColumns(hList);
-            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS, g_bPreferDecimalVal);
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS, pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
 
             //	For scanning changes to achievement conditions (hit counts)
             SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
@@ -883,8 +882,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
             m_BadgeNames.FetchNewBadgeNamesThreaded();
 
+            // achievement loaded before UI was created won't have populated the UI. reload it.
             if (m_pSelectedAchievement != nullptr)
-                RepopulateGroupList(m_pSelectedAchievement);
+            {
+                auto* pAchievement = m_pSelectedAchievement;
+                m_pSelectedAchievement = nullptr;
+                LoadAchievement(pAchievement, false);
+            }
 
             if (!CanCausePause())
             {
@@ -953,7 +957,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_CHK_SHOW_DECIMALS:
                 {
-                    g_bPreferDecimalVal = !g_bPreferDecimalVal;
+                    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                    pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, !pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
                     if (ActiveAchievement() != nullptr)
                     {
                         ActiveAchievement()->SetDirtyFlag(Dirty__All);
@@ -967,8 +972,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case IDC_RA_CHK_ACH_ACTIVE:
                     if (ActiveAchievement() != nullptr)
                     {
-                        // TODO: Use the literals once PR 23 is accepted
-                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, LPARAM{});
+                        SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, 0L);
                         CheckDlgButton(hDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
                     }
                     bHandled = TRUE;
@@ -1159,7 +1163,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-                        unsigned int nVal = strtol(ra::Narrow(buffer).c_str(), nullptr, 16);
+                        unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValues(nVal, nVal);
                     }
 
@@ -1254,7 +1258,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                             char buffer[256];
-                            sprintf_s(buffer, 256, "Are you sure you wish to delete %d condition(s)?", uSelectedCount);
+                            sprintf_s(buffer, 256, "Are you sure you wish to delete %u condition(s)?", uSelectedCount);
                             if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
@@ -1398,8 +1402,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_UPLOAD_BADGE:
                 {
-                    SetCurrentDirectory(TEXT("\\"));
-
                     const int BUF_SIZE = 1024;
                     TCHAR buffer[BUF_SIZE];
                     ZeroMemory(buffer, BUF_SIZE);
@@ -1425,7 +1427,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        Document Response;
+                        rapidjson::Document Response;
                         if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
                             //TBD: ensure that:
@@ -1435,7 +1437,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //	The image can be uploaded OK
                             //	The image is not copyright
 
-                            const Value& ResponseData = Response["Response"];
+                            const rapidjson::Value& ResponseData = Response["Response"];
                             if (ResponseData.HasMember("BadgeIter"))
                             {
                                 const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
@@ -1755,27 +1757,35 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case CSI_VALUE_SRC:
                         {
                             int nBase = 16;
-                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
-                                nBase = 10;
+                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison)
+                            {
+                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                                    nBase = 10;
+                            }
 
-                            unsigned int nVal = strtol(sData, nullptr, nBase);
+                            unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompSource().SetValues(nVal, nVal);
                             break;
                         }
                         case CSI_VALUE_TGT:
                         {
                             int nBase = 16;
-                            if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
-                                nBase = 10;
+                            if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison)
+                            {
+                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                                    nBase = 10;
+                            }
 
-                            unsigned int nVal = strtol(sData, nullptr, nBase);
+                            unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompTarget().SetValues(nVal, nVal);
                             break;
                         }
                         case CSI_HITCOUNT:
                         {
                             //	Always decimal
-                            rCond.SetRequiredHits(strtol(sData, nullptr, 10));
+                            rCond.SetRequiredHits(strtoul(sData, nullptr, 10));
                             break;
                         }
                         default:
@@ -1876,26 +1886,21 @@ void Dlg_AchievementEditor::GetListViewTooltip()
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
 {
-    std::string sAchievementBadgeURI = RA_UNKNOWN_BADGE_IMAGE_URI;
+    std::string sAchievementBadgeURI;
 
     if (m_pSelectedAchievement != nullptr)
         sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
     else if (sBackupBadgeToUse.length() > 2)
         sAchievementBadgeURI = sBackupBadgeToUse;
 
-    if (m_hAchievementBadge != nullptr)
-        DeleteObject(m_hAchievementBadge);
-    m_hAchievementBadge = nullptr;
-
-    HBITMAP hBitmap = LoadOrFetchBadge(sAchievementBadgeURI, RA_BADGE_PX);
-    if (hBitmap == nullptr)
-        return;
-
-    m_hAchievementBadge = hBitmap;
-
-    HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
-    SendMessage(hCheevoPic, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_hAchievementBadge);
-    InvalidateRect(hCheevoPic, nullptr, TRUE);
+    m_hAchievementBadge.ChangeReference(ra::services::ImageType::Badge, sAchievementBadgeURI);
+    HBITMAP hBitmap = m_hAchievementBadge.GetHBitmap();
+    if (hBitmap != nullptr)
+    {
+        HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
+        SendMessage(hCheevoPic, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+        InvalidateRect(hCheevoPic, nullptr, TRUE);
+    }
 
     //	Find buffer in the dropdown list
     int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());
@@ -2023,10 +2028,10 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL bAttemptK
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->ID());
+        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->ID());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
 
-        sprintf_s(buffer, 1024, "%d", m_pSelectedAchievement->Points());
+        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
 
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
@@ -2176,7 +2181,7 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
     RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
 }
 
-void BadgeNames::OnNewBadgeNames(const Document& data)
+void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {
     unsigned int nLowerLimit = data["FirstBadge"].GetUint();
     unsigned int nUpperLimit = data["NextBadge"].GetUint();

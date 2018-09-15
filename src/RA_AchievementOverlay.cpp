@@ -11,7 +11,9 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#include <time.h>
+#include <fstream>
+#include <memory>
+#include <ctime>
 
 namespace {
 
@@ -20,7 +22,7 @@ const float PAGE_TRANSITION_OUT = (0.2f);
 const int NUM_MESSAGES_TO_DRAW = 4;
 const char* FONT_TO_USE = "Tahoma";
 
-const char* PAGE_TITLES[] = {
+const char* PAGE_TITLES[] ={
     " Achievements ",
     " Friends ",
     " Messages ",
@@ -37,7 +39,6 @@ const char* PAGE_TITLES[] = {
 static_assert(SIZEOF_ARRAY(PAGE_TITLES) == NumOverlayPages, "Must match!");
 
 }
-
 
 HFONT g_hFontTitle;
 HFONT g_hFontDesc;
@@ -99,7 +100,6 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 
 AchievementOverlay::AchievementOverlay()
 {
-    m_hOverlayBackground = nullptr;
     m_nAchievementsSelectedItem = 0;
     m_nFriendsSelectedItem = 0;
     m_nMessagesSelectedItem = 0;
@@ -109,11 +109,6 @@ AchievementOverlay::AchievementOverlay()
 
 AchievementOverlay::~AchievementOverlay()
 {
-    if (m_hOverlayBackground != nullptr)
-    {
-        DeleteObject(m_hOverlayBackground);
-        m_hOverlayBackground = nullptr;
-    }
 }
 
 void AchievementOverlay::Initialize(HINSTANCE hInst)
@@ -138,12 +133,8 @@ void AchievementOverlay::Initialize(HINSTANCE hInst)
 
     m_LatestNews.clear();
 
-    m_hOverlayBackground = LoadLocalPNG(RA_OVERLAY_BG_FILENAME, RASize(OVERLAY_WIDTH, OVERLAY_HEIGHT));
-    //if( m_hOverlayBackground == nullptr )
-    //{
-    //	//	Backup
-    //	m_hOverlayBackground = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_RA_BACKGROUND) );
-    //}
+    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, "Overlay\\overlayBG.png");
+    m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
 void AchievementOverlay::Activate()
@@ -245,6 +236,11 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
             else
             {
                 m_nTransitionState = TS_OFF;
+
+                m_hOverlayBackground.Release();
+                m_hUserImage.Release();
+
+                m_mAchievementBadges.clear(); // will release each item as they're destroyed
             }
         }
     }
@@ -567,7 +563,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         {
             SetTextColor(hDC, COL_TEXT_LOCKED);
             char buffer[256];
-            sprintf_s(buffer, 256, " %d of %d won (%d/%d) ",
+            sprintf_s(buffer, 256, " %u of %u won (%u/%u) ",
                 nUserCompleted, nNumberOfAchievements,
                 nUserPts, nMaxPts);
             TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(buffer).c_str(), strlen(buffer));
@@ -590,7 +586,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     const int nSelBoxWidth = nWidth - nAchSpacing - 24;
                     const int nSelBoxHeight = nAchSpacing - 8;
 
-                    RECT rcSelected = { (nDX + nSelBoxXOffs),
+                    RECT rcSelected ={ (nDX + nSelBoxXOffs),
                                         (nAchTopEdge + (i * nAchSpacing)),
                                         (nDX + nSelBoxXOffs + nSelBoxWidth),
                                         (nAchTopEdge + (i * nAchSpacing)) + nSelBoxHeight };
@@ -674,6 +670,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
 
     const unsigned int nNumFriends = RAUsers::LocalUser().NumFriends();
 
+    // TODO: friends list/activity is captured at time of login. eliminate that call as most
+    // people don't care and fetch the data when switching to the friends page in the overlay
     for (unsigned int i = 0; i < nFriendsToDraw; ++i)
     {
         int nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
@@ -688,11 +686,10 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             if (pFriend == nullptr)
                 continue;
 
-            if (pFriend->GetUserImage() == nullptr && !pFriend->IsFetchingUserImage())
-                pFriend->LoadOrFetchUserImage();
-
-            if (pFriend->GetUserImage() != nullptr)
-                DrawImage(hDC, pFriend->GetUserImage(), nXOffs, nYOffs, 64, 64);
+            ra::services::ImageReference friendImage(ra::services::ImageType::UserPic, pFriend->Username());
+            HBITMAP hBitmap = friendImage.GetHBitmap();
+            if (hBitmap != nullptr)
+                DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
 
             if ((m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i)
                 SetTextColor(hDC, COL_SELECTED);
@@ -701,7 +698,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
 
             HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
 
-            sprintf_s(buffer, 256, " %s (%d) ", pFriend->Username().c_str(), pFriend->GetScore());
+            sprintf_s(buffer, 256, " %s (%u) ", pFriend->Username().c_str(), pFriend->GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), strlen(buffer));
 
             SelectObject(hDC, g_hFontTiny);
@@ -709,7 +706,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& 
             //RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
-                nXOffs + nFriendLeftOffsetText,
+                nXOffs + nFriendLeftOffsetText + 16,
                 nYOffs + nFriendSubtitleYOffs,
                 nDX + rcTarget.right - 40,
                 nYOffs + nFriendSubtitleYOffs + 46);
@@ -793,7 +790,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, c
 
     if (g_AchExamine.HasData())
     {
-        sprintf_s(buffer, 256, " Won by %d of %d (%1.0f%%)",
+        sprintf_s(buffer, 256, " Won by %u of %u (%1.0f%%)",
             g_AchExamine.TotalWinners(),
             g_AchExamine.PossibleWinners(),
             static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
@@ -966,7 +963,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RE
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
 
-                RECT rcSelected = { nDX + nSelBoxXOffs,
+                RECT rcSelected ={ nDX + nSelBoxXOffs,
                                     static_cast<LONG>(nYOffset),
                                     nDX + nSelBoxXOffs + nSelBoxWidth,
                                     static_cast<LONG>(nYOffset + nSelBoxHeight) };
@@ -1081,7 +1078,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, c
                 std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
 
                 char sRankText[256];
-                sprintf_s(sRankText, 256, " %d ", rEntry.m_nRank);
+                sprintf_s(sRankText, 256, " %u ", rEntry.m_nRank);
 
                 char sNameText[256];
                 sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername.c_str());
@@ -1192,10 +1189,14 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     //	Draw background:
     SetBkMode(hDC, TRANSPARENT);
 
-    RECT rcBGSize;
-    SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
-    OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
-    DrawImageTiled(hDC, m_hOverlayBackground, rcBGSize, rc);
+    HBITMAP hBackground = m_hOverlayBackground.GetHBitmap();
+    if (hBackground)
+    {
+        RECT rcBGSize;
+        SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+        OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
+        DrawImageTiled(hDC, hBackground, rcBGSize, rc);
+    }
 
     g_hBrushBG = CreateSolidBrush(COL_USER_FRAME_BG);
     g_hBrushSelectedBG = CreateSolidBrush(COL_SELECTED_BOX_BG);
@@ -1374,22 +1375,31 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     else
         SetTextColor(hDC, bLocked ? COL_TEXT_LOCKED : COL_TEXT);
 
-    if (!bLocked)
+    HBITMAP hBitmap = nullptr;
+    std::string sBadgeName = pAch->BadgeImageURI();
+    if (bLocked)
+        sBadgeName += "_lock";
+
+    auto iter = m_mAchievementBadges.find(sBadgeName);
+    if (iter != m_mAchievementBadges.end())
     {
-        if (pAch->BadgeImage() != nullptr)
-            DrawImage(hDC, pAch->BadgeImage(), nX + nAchImageOffset, nY, 64, 64);
+        hBitmap = iter->second.GetHBitmap();
     }
     else
     {
-        if (pAch->BadgeImageLocked() != nullptr)
-            DrawImage(hDC, pAch->BadgeImageLocked(), nX + nAchImageOffset, nY, 64, 64);
+        auto& imageRef = m_mAchievementBadges[sBadgeName];
+        imageRef.ChangeReference(ra::services::ImageType::Badge, sBadgeName);
+        hBitmap = imageRef.GetHBitmap();
     }
+
+    if (hBitmap != nullptr)
+        DrawImage(hDC, hBitmap, nX + nAchImageOffset, nY, 64, 64);
 
     sprintf_s(buffer, 1024, " %s ", pAch->Description().c_str());
     SelectObject(hDC, g_hFontDesc2);
     TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), strlen(buffer));
 
-    sprintf_s(buffer, 1024, " %s (%d Points) ", pAch->Title().c_str(), pAch->Points());
+    sprintf_s(buffer, 1024, " %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
     TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
 }
@@ -1407,10 +1417,11 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
     FillRect(hDC, &rcUserFrame, hBrush2);
 
-    if (pUser->GetUserImage() != nullptr)
+    HBITMAP hBitmap = m_hUserImage.GetHBitmap();
+    if (hBitmap != nullptr)
     {
         DrawImage(hDC,
-            pUser->GetUserImage(),
+            hBitmap,
             nX + ((nW - 64) - 4),
             nY + 4,
             64, 64);
@@ -1422,7 +1433,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     sprintf_s(buffer, 256, " %s ", pUser->Username().c_str());
     TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
 
-    sprintf_s(buffer, 256, " %d Points ", pUser->GetScore());
+    sprintf_s(buffer, 256, " %u Points ", pUser->GetScore());
     TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
 
     if (_RA_HardcoreModeIsActive())
@@ -1501,52 +1512,51 @@ void AchievementOverlay::OnLoad_NewRom()
         Deactivate();
 }
 
-void AchievementOverlay::OnUserPicDownloaded(const char* sUsername)
-{
-    RA_LOG("Overlay detected Userpic downloaded (%s)", sUsername);		//##SD unhandled?
-}
-
 void AchievementOverlay::InstallNewsArticlesFromFile()
 {
     m_LatestNews.clear();
+    auto sNewsFile{g_sHomeDir};
+    sNewsFile += RA_NEWS_FILENAME;
 
-    FILE* pf = nullptr;
-    fopen_s(&pf, RA_NEWS_FILENAME, "rb");
-    if (pf != nullptr)
+    std::ifstream ifile{ sNewsFile };
+    if (!ifile.is_open())
+        return;
+
+    rapidjson::Document doc;
+    rapidjson::IStreamWrapper isw{ ifile };
+    doc.ParseStream(isw);
+
+    if (doc.HasMember("Success") && doc["Success"].GetBool())
     {
-        Document doc;
-        doc.ParseStream(FileStream(pf));
-
-        if (doc.HasMember("Success") && doc["Success"].GetBool())
+        const auto& News{ doc["News"] };
+        for (const auto& NextNewsArticle : News.GetArray())
         {
-            const Value& News = doc["News"];
-            for (SizeType i = 0; i < News.Size(); ++i)
+            NewsItem nNewsItem
             {
-                const Value& NextNewsArticle = News[i];
+                NextNewsArticle["ID"].GetUint(),
+                NextNewsArticle["Title"].GetString(),
+                NextNewsArticle["Payload"].GetString(),
+                NextNewsArticle["TimePosted"].GetUint(),
+                "", /* this value is assigned properly in the scope below */
+                NextNewsArticle["Author"].GetString(),
+                NextNewsArticle["Link"].GetString(),
+                NextNewsArticle["Image"].GetString(),
+            };
 
-                NewsItem nNewsItem;
-                nNewsItem.m_nID = NextNewsArticle["ID"].GetUint();
-                nNewsItem.m_sTitle = NextNewsArticle["Title"].GetString();
-                nNewsItem.m_sPayload = NextNewsArticle["Payload"].GetString();
-                nNewsItem.m_sAuthor = NextNewsArticle["Author"].GetString();
-                nNewsItem.m_sLink = NextNewsArticle["Link"].GetString();
-                nNewsItem.m_sImage = NextNewsArticle["Image"].GetString();
-                nNewsItem.m_nPostedAt = NextNewsArticle["TimePosted"].GetUint();
-
-                tm destTime;
+            {
+                std::tm destTime;
                 localtime_s(&destTime, &nNewsItem.m_nPostedAt);
 
-                char buffer[256];
-                strftime(buffer, 256, "%b %d", &destTime);
+                char buffer[256U]{};
+                strftime(buffer, 256U, "%b %d", &destTime);
                 nNewsItem.m_sPostedAt = buffer;
-
-                m_LatestNews.push_back(nNewsItem);
             }
-        }
 
-        fclose(pf);
+            m_LatestNews.push_back(std::move(nNewsItem));
+        }
     }
 }
+
 
 AchievementExamine::AchievementExamine() :
     m_pSelectedAchievement(nullptr),
@@ -1597,31 +1607,28 @@ void AchievementExamine::Initialize(const Achievement* pAch)
     }
 }
 
-void AchievementExamine::OnReceiveData(Document& doc)
+void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
 {
     ASSERT(doc["Success"].GetBool());
-    const unsigned int nOffset = doc["Offset"].GetUint();
-    const unsigned int nCount = doc["Count"].GetUint();
-    const unsigned int nFriendsOnly = doc["FriendsOnly"].GetUint();
-    const unsigned int nAchievementID = doc["AchievementID"].GetUint();
-    const Value& ResponseData = doc["Response"];
+    const auto nOffset{ doc["Offset"].GetUint() };
+    const auto nCount{ doc["Count"].GetUint() };
+    const auto nFriendsOnly{ doc["FriendsOnly"].GetUint() };
+    const auto nAchievementID{ doc["AchievementID"].GetUint() };
+    const auto& ResponseData{ doc["Response"] };
 
-    const unsigned int nGameID = ResponseData["GameID"].GetUint();
+    const auto nGameID{ ResponseData["GameID"].GetUint() };
 
-    m_nTotalWinners = ResponseData["NumEarned"].GetUint();
+    m_nTotalWinners    = ResponseData["NumEarned"].GetUint();
     m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
-    const Value& RecentWinnerData = ResponseData["RecentWinner"];
+    const auto& RecentWinnerData{ ResponseData["RecentWinner"] };
     ASSERT(RecentWinnerData.IsArray());
-
-    for (SizeType i = 0; i < RecentWinnerData.Size(); ++i)
+    for (auto& NextWinner : RecentWinnerData.GetArray())
     {
-        const Value& NextWinner = RecentWinnerData[i];
-        const std::string& sNextWinner = NextWinner["User"].GetString();
-        const unsigned int nPoints = NextWinner["RAPoints"].GetUint();
-        const time_t nDateAwarded = static_cast<time_t>(NextWinner["DateAwarded"].GetUint());
-
-        RecentWinners.push_back(AchievementExamine::RecentWinnerData(sNextWinner + " (" + std::to_string(nPoints) + ")", _TimeStampToString(nDateAwarded)));
+        const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
+        std::ostringstream oss;
+        oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
+        RecentWinners.push_back({ oss.str(), _TimeStampToString(nDateAwarded) });
     }
 
     m_bHasData = true;
@@ -1652,43 +1659,41 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 }
 
 //static 
-void LeaderboardExamine::OnReceiveData(const Document& doc)
+void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 {
     ASSERT(doc.HasMember("LeaderboardData"));
-    const Value& LBData = doc["LeaderboardData"];
+    const auto& LBData{ doc["LeaderboardData"] };
 
-    unsigned int nLBID = LBData["LBID"].GetUint();
-    unsigned int nGameID = LBData["GameID"].GetUint();
-    const std::string& sGameTitle = LBData["GameTitle"].GetString();
-    unsigned int sConsoleID = LBData["ConsoleID"].GetUint();
-    const std::string& sConsoleName = LBData["ConsoleName"].GetString();
+    const auto nLBID{ LBData["LBID"].GetUint() };
+    const auto nGameID{ LBData["GameID"].GetUint() };
+    const std::string& sGameTitle{ LBData["GameTitle"].GetString() };
+    const auto sConsoleID{ LBData["ConsoleID"].GetUint() };
+    const std::string& sConsoleName{ LBData["ConsoleName"].GetString() };
     const std::string& sGameIcon = LBData["GameIcon"].GetString();
     //unsigned int sForumTopicID = LBData["ForumTopicID"].GetUint();
 
-    unsigned int nLowerIsBetter = LBData["LowerIsBetter"].GetUint();
-    const std::string& sLBTitle = LBData["LBTitle"].GetString();
-    const std::string& sLBDesc = LBData["LBDesc"].GetString();
-    const std::string& sLBFormat = LBData["LBFormat"].GetString();
-    const std::string& sLBMem = LBData["LBMem"].GetString();
-
-    const Value& Entries = LBData["Entries"];
-    ASSERT(Entries.IsArray());
+    const auto nLowerIsBetter{ LBData["LowerIsBetter"].GetUint() };
+    const std::string& sLBTitle{ LBData["LBTitle"].GetString() };
+    const std::string& sLBDesc{ LBData["LBDesc"].GetString() };
+    const std::string& sLBFormat{ LBData["LBFormat"].GetString() };
+    const std::string& sLBMem{ LBData["LBMem"].GetString() };
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
     if (!pLB)
         return;
 
-    for (SizeType i = 0; i < Entries.Size(); ++i)
+    const auto& Entries{ LBData["Entries"] };
+    ASSERT(Entries.IsArray());
+    for (auto& NextLBData : Entries.GetArray())
     {
-        const Value& NextLBData = Entries[i];
-        const unsigned int nRank = NextLBData["Rank"].GetUint();
-        const std::string& sUser = NextLBData["User"].GetString();
-        const int nScore = NextLBData["Score"].GetInt();
-        const unsigned int nDate = NextLBData["DateSubmitted"].GetUint();
+        const auto nRank{ NextLBData["Rank"].GetUint() };
+        const std::string& sUser{ NextLBData["User"].GetString() };
+        const auto nScore{ NextLBData["Score"].GetInt() };
+        const auto nDate{ NextLBData["DateSubmitted"].GetUint() };
 
-        RA_LOG("LB Entry: %d: %s earned %d at %d\n", nRank, sUser.c_str(), nScore, nDate);
-        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, nDate);
+        RA_LOG("LB Entry: %u: %s earned %d at %u\n", nRank, sUser.c_str(), nScore, nDate);
+        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, static_cast<time_t>(ra::to_signed(nDate)));
     }
 
     m_bHasData = true;

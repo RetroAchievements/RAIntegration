@@ -2,6 +2,7 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
+#define NOMINMAX
 #include <WTypes.h>
 
 class Dlg_RichPresence
@@ -17,6 +18,9 @@ public:
     HWND GetHWND() const { return m_hRichPresenceDialog; }
 
     void StartMonitoring();
+    void ClearMessage();
+
+    void OnLoad_NewRom();
 
 private:
     void StartTimer();

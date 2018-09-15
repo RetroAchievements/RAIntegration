@@ -153,7 +153,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         {
                             //	NASTY big assumption here...
                             char buffer[1024];
-                            sprintf_s(buffer, 1024, "%d,", g_pActiveAchievements->GetAchievement(i).ID());
+                            sprintf_s(buffer, 1024, "%u,", g_pActiveAchievements->GetAchievement(i).ID());
                             strcat_s(sBuggedIDs, 1024, buffer);
 
                             //ListView_GetItem( hList );	
@@ -203,7 +203,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['n'] = sBugReportComment.c_str();
                     args['m'] = g_sCurrentROMMD5;
 
-                    Document doc;
+                    rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))
                     {
                         if (doc["Success"].GetBool())

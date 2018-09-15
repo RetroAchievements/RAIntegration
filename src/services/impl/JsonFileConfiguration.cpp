@@ -3,11 +3,13 @@
 #include "RA_Json.h"
 #include "RA_Log.h"
 
+#include <fstream>
+
 namespace ra {
 namespace services {
 namespace impl {
 
-bool JsonFileConfiguration::Load(const std::string& sFilename)
+bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 {
     m_sFilename = sFilename;
 
@@ -26,19 +28,15 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
 
     RA_LOG(__FUNCTION__ " - loading preferences...\n");
 
-    FILE* pf = nullptr;
-    fopen_s(&pf, sFilename.c_str(), "rb");
-    if (pf == nullptr)
+    std::ifstream ifile{ sFilename };
+    if (!ifile.is_open())
         return false;
 
-    rapidjson::FileStream fs(pf);
+    rapidjson::IStreamWrapper isw(ifile);
     rapidjson::Document doc;
-    doc.ParseStream(fs);
+    doc.ParseStream(isw);
     if (doc.HasParseError())
-    {
-        fclose(pf);
         return false;
-    }
 
     m_vEnabledFeatures = 0;
 
@@ -57,6 +55,9 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
         SetFeatureEnabled(Feature::LeaderboardCounters, doc["Leaderboard Counter Display"].GetBool());
     if (doc.HasMember("Leaderboard Scoreboard Display"))
         SetFeatureEnabled(Feature::LeaderboardScoreboards, doc["Leaderboard Scoreboard Display"].GetBool());
+
+    if (doc.HasMember("Prefer Decimal"))
+        SetFeatureEnabled(Feature::PreferDecimal, doc["Prefer Decimal"].GetBool());
 
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();
@@ -85,7 +86,6 @@ bool JsonFileConfiguration::Load(const std::string& sFilename)
         }
     }
 
-    fclose(pf);
     return true;
 }
 
@@ -99,14 +99,6 @@ void JsonFileConfiguration::Save() const
         return;
     }
 
-    FILE* pf = nullptr;
-    fopen_s(&pf, m_sFilename.c_str(), "wb");
-    if (pf == nullptr)
-        return;
-
-    rapidjson::FileStream fs(pf);
-    rapidjson::Writer<rapidjson::FileStream> writer(fs);
-
     rapidjson::Document doc;
     doc.SetObject();
 
@@ -118,6 +110,7 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
     doc.AddMember("Leaderboard Counter Display", IsFeatureEnabled(Feature::LeaderboardCounters), a);
     doc.AddMember("Leaderboard Scoreboard Display", IsFeatureEnabled(Feature::LeaderboardScoreboards), a);
+    doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
     if (!m_sRomDirectory.empty())
@@ -143,9 +136,7 @@ void JsonFileConfiguration::Save() const
     if (positions.MemberCount() > 0)
         doc.AddMember("Window Positions", positions.Move(), a);
 
-    doc.Accept(writer);	//	Save
-
-    fclose(pf);
+    _WriteBufferToFile(m_sFilename, doc);
 }
 
 bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const

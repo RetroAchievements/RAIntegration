@@ -2,13 +2,15 @@
 #define RA_ACHIEVEMENTOVERLAY_H
 #pragma once
 
-#include <ddraw.h>
-
 #include "RA_Achievement.h"
 #include "RA_User.h"
 #include "RA_Core.h"
 #include "RA_Interface.h"
 
+#include "services\ImageRepository.h"
+
+#include <map>
+#include <string>
 
 enum OverlayPage
 {
@@ -43,7 +45,7 @@ class LeaderboardExamine
 public:
     void Initialize(const unsigned int nLBIDIn);
     //static void CB_OnReceiveData( void* pRequestObject );
-    void OnReceiveData(const Document& doc);
+    void OnReceiveData(const rapidjson::Document& doc);
 
 public:
     unsigned int m_nLBID;
@@ -77,7 +79,7 @@ public:
 public:
     void Initialize(const Achievement* pAchIn);
     void Clear();
-    void OnReceiveData(Document& doc);
+    void OnReceiveData(rapidjson::Document& doc);
 
     bool HasData() const { return m_bHasData; }
     const std::string& CreatedDate() const { return m_CreatedDate; }
@@ -125,7 +127,6 @@ public:
     const int* GetActiveSelectedItem() const;
 
     void OnLoad_NewRom();
-    void OnUserPicDownloaded(const char* sUsername);
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
     void DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
@@ -185,11 +186,9 @@ private:
     OverlayPage				m_Pages[5];
     unsigned int			m_nPageStackPointer;
 
-    //HBITMAP m_hLockedBitmap;	//	Cached	
-    HBITMAP m_hOverlayBackground;
-
-    LPDIRECTDRAW4 m_lpDD;
-    LPDIRECTDRAWSURFACE4 m_lpDDS_Overlay;
+    ra::services::ImageReference m_hOverlayBackground;
+    ra::services::ImageReference m_hUserImage;
+    mutable std::map<std::string, ra::services::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;
 
@@ -199,9 +198,6 @@ extern "C"
     API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
     API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
     API extern bool _RA_IsOverlayFullyVisible();
-
-    API extern void _RA_InitDirectX();
-    API extern void _RA_OnPaint(HWND hWnd);
 }
 
 extern const COLORREF COL_TEXT;

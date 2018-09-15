@@ -94,6 +94,7 @@ void    (CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
 void    (CCONV *_RA_InstallSharedFunctions)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*)) = nullptr;
 int     (CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
 int     (CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
+bool    (CCONV *_RA_WarnDisableHardcore)(const char* sActivity) = nullptr;
 //  Overlay:
 int     (CCONV *_RA_UpdateOverlay)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
 int     (CCONV *_RA_UpdatePopups)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
@@ -222,6 +223,23 @@ int RA_HardcoreModeIsActive()
     return (_RA_HardcoreModeIsActive != nullptr) ? _RA_HardcoreModeIsActive() : 0;
 }
 
+bool RA_WarnDisableHardcore(const char* sActivity)
+{
+    // If Hardcore mode not active, allow the activity.
+    if (!RA_HardcoreModeIsActive())
+        return true;
+
+    // DLL function will display a yes/no dialog. If the user chooses yes, the DLL will disable hardcore mode, and the activity can proceed.
+    if (_RA_WarnDisableHardcore != nullptr)
+        return _RA_WarnDisableHardcore(sActivity);
+
+    // We cannot disable hardcore mode, so just warn the user and prevent the activity.
+    std::string sMessage;
+    sMessage = "You cannot " + std::string(sActivity) + " while Hardcore mode is active.";
+    MessageBoxA(nullptr, sMessage.c_str(), "Warning", MB_OK | MB_ICONWARNING);
+    return false;
+}
+
 static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage, char* pBufferOut, unsigned int nBufferOutSize, DWORD* pBytesRead, DWORD* pStatusCode)
 {
     BOOL bResults = FALSE, bSuccess = FALSE;
@@ -240,13 +258,21 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
         WINHTTP_NO_PROXY_BYPASS, 0);
 
     // Specify an HTTP server.
-    if (hSession != nullptr)
+    if (hSession == nullptr)
+    {
+        *pStatusCode = GetLastError();
+    }
+    else
     {
         mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer) / sizeof(wBuffer[0]), sHostName, strlen(sHostName) + 1);
         hConnect = WinHttpConnect(hSession, wBuffer, INTERNET_DEFAULT_HTTP_PORT, 0);
 
         // Create an HTTP Request handle.
-        if (hConnect != nullptr)
+        if (hConnect == nullptr)
+        {
+            *pStatusCode = GetLastError();
+        }
+        else
         {
             mbstowcs_s(&nTemp, wBuffer, sizeof(wBuffer)/sizeof(wBuffer[0]), sRequestedPage, strlen(sRequestedPage) + 1);
 
@@ -259,7 +285,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                 0);
 
             // Send a Request.
-            if (hRequest != nullptr)
+            if (hRequest == nullptr)
+            {
+                *pStatusCode = GetLastError();
+            }
+            else
             {
                 bResults = WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
@@ -269,7 +299,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                     0,
                     0);
 
-                if (WinHttpReceiveResponse(hRequest, nullptr))
+                if (!bResults || !WinHttpReceiveResponse(hRequest, nullptr))
+                {
+                    *pStatusCode = GetLastError();
+                }
+                else
                 {
                     DWORD dwSize = sizeof(DWORD);
                     WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, pStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
@@ -298,7 +332,11 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
                         }
                         else
                         {
+                            if (*pStatusCode == 200)
+                                *pStatusCode = GetLastError();
+
                             bSuccess = FALSE;
+                            break;
                         }
 
                         WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
@@ -317,10 +355,21 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
     return bSuccess;
 }
 
-static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes)
+static std::wstring GetIntegrationPath()
+{
+    wchar_t sBuffer[2048];
+    DWORD iIndex = GetModuleFileNameW(0, sBuffer, 2048);
+    while (iIndex > 0 && sBuffer[iIndex - 1] != '\\' && sBuffer[iIndex - 1] != '/')
+        --iIndex;
+    wcscpy(&sBuffer[iIndex], L"RA_Integration.dll");
+
+    return std::wstring(sBuffer);
+}
+
+static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, int nBytes)
 {
     FILE* pf;
-    fopen_s(&pf, sFile, "wb");
+    errno_t nErr = _wfopen_s(&pf, sFile.c_str(), L"wb");
     if (pf != nullptr)
     {
         fwrite(sBuffer, 1, nBytes, pf);
@@ -328,7 +377,11 @@ static void WriteBufferToFile(const char* sFile, const char* sBuffer, int nBytes
     }
     else
     {
-        MessageBoxA(nullptr, "Problems writing file!", sFile, MB_OK);
+        wchar_t sErrBuffer[2048];
+        _wcserror_s(sErrBuffer, nErr);
+
+        std::wstring sErrMsg = L"Unable to write " + sFile + L"\n" + sErrBuffer;
+        MessageBoxW(nullptr, sErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
     }
 }
 
@@ -344,7 +397,7 @@ static void FetchIntegrationFromWeb(const char* sHostName, DWORD* pStatusCode)
     {
         DWORD nBytesRead = 0;
         if (DoBlockingHttpGet(sHostName, "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead, pStatusCode))
-            WriteBufferToFile("RA_Integration.dll", buffer, nBytesRead);
+            WriteBufferToFile(GetIntegrationPath(), buffer, nBytesRead);
 
         delete[](buffer);
         buffer = nullptr;
@@ -375,11 +428,13 @@ static const char* CCONV _RA_InstallIntegration()
 {
     SetErrorMode(0);
 
-    DWORD dwAttrib = GetFileAttributes(TEXT("RA_Integration.dll"));
+    std::wstring sIntegrationPath = GetIntegrationPath();
+
+    DWORD dwAttrib = GetFileAttributesW(sIntegrationPath.c_str());
     if (dwAttrib == INVALID_FILE_ATTRIBUTES)
         return "0.000";
 
-    g_hRADLL = LoadLibrary(TEXT("RA_Integration.dll"));
+    g_hRADLL = LoadLibraryW(sIntegrationPath.c_str());
     if (g_hRADLL == nullptr)
     {
         char buffer[1024];
@@ -417,10 +472,35 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_DoAchievementsFrame = (void(CCONV *)())                                       GetProcAddress(g_hRADLL, "_RA_DoAchievementsFrame");
     _RA_SetConsoleID = (int(CCONV *)(unsigned int))                                   GetProcAddress(g_hRADLL, "_RA_SetConsoleID");
     _RA_HardcoreModeIsActive = (int(CCONV *)())                                       GetProcAddress(g_hRADLL, "_RA_HardcoreModeIsActive");
-
+    _RA_WarnDisableHardcore = (bool(CCONV *)(const char*))                            GetProcAddress(g_hRADLL, "_RA_WarnDisableHardcore");
     _RA_InstallSharedFunctions = (void(CCONV *)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*))) GetProcAddress(g_hRADLL, "_RA_InstallSharedFunctionsExt");
 
     return _RA_IntegrationVersion ? _RA_IntegrationVersion() : "0.000";
+}
+
+static unsigned long long ParseVersion(const char* sVersion)
+{
+    char* pPart;
+
+    unsigned int major = strtoul(sVersion, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int minor = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int patch = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int revision = strtoul(pPart, &pPart, 10);
+
+    // 64-bit max signed value is 9223 37203 68547 75807
+    unsigned long long version = (major * 100000) + minor;
+    version = (version * 100000) + patch;
+    version = (version * 100000) + revision;
+    return version;
 }
 
 //	Console IDs: see enum EmulatorID in header
@@ -465,20 +545,26 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         return;
     }
 
-    // expected response is "0.XXX" where XXX is the most recent version of the integration DLL available.
-    const unsigned int nLatestDLLVer = strtol(buffer + 2, nullptr, 10);
+    // remove trailing whitespace
+    size_t nIndex = strlen(buffer);
+    while (nIndex > 0 && isspace(buffer[nIndex - 1]))
+        --nIndex;
+    buffer[nIndex] = '\0';
 
-    unsigned int nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+    // expected response is a single line containing the version of the DLL available on the server (i.e. 0.074 or 0.074.1)
+    const unsigned long long nLatestDLLVer = ParseVersion(buffer);
+
+    unsigned long long nVerInstalled = ParseVersion(sVerInstalled);
     if (nVerInstalled < nLatestDLLVer)
     {
         RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite it.
 
         char sErrorMsg[2048];
-        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: 0.%03d\n%s",
+        sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: %s\n%s",
             nVerInstalled == 0 ?
             "Cannot find or load RA_Integration.dll" :
             "A new version of the RetroAchievements Toolset is available!",
-            nLatestDLLVer,
+            buffer,
             "Automatically update your RetroAchievements Toolset file?");
 
         int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
@@ -489,7 +575,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             if (nStatusCode == 200)
             {
                 sVerInstalled = _RA_InstallIntegration();
-                nVerInstalled = strtol(sVerInstalled + 2, nullptr, 10);
+                nVerInstalled = ParseVersion(sVerInstalled);
             }
 
             if (nVerInstalled < nLatestDLLVer)
@@ -504,7 +590,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
     {
         RA_Shutdown();
 
-        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.", sHostName, nStatusCode);
+        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.");
         MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
     }
     else
@@ -567,6 +653,7 @@ void RA_Shutdown()
     _RA_LoadROM = nullptr;
     _RA_SetConsoleID = nullptr;
     _RA_HardcoreModeIsActive = nullptr;
+    _RA_WarnDisableHardcore = nullptr;
     _RA_AttemptLogin = nullptr;
 
     //	Uninstall DLL

@@ -7,9 +7,9 @@
 namespace ra {
 namespace services {
 
-void Initialization::RegisterServices(const std::string& sHomeDir, const std::string& sClientName)
+void Initialization::RegisterServices(const std::wstring& sHomeDir, const std::string& sClientName)
 {
-    std::string sFilename = sHomeDir + "RAPrefs_" + sClientName + ".cfg";
+    std::wstring sFilename = sHomeDir + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
     auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
     pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);

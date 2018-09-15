@@ -13,7 +13,7 @@ namespace impl {
 class JsonFileConfiguration : public IConfiguration
 {
 public:
-    bool Load(const std::string& sFilename);
+    bool Load(const std::wstring& sFilename);
 
     const std::string& GetUsername() const override { return m_sUsername; }
     void SetUsername(const std::string& sValue) override { m_sUsername = sValue; }
@@ -53,7 +53,7 @@ private:
     typedef std::map<std::string, WindowPosition> WindowPositionMap;
     WindowPositionMap m_mWindowPositions;
 
-    std::string m_sFilename;
+    std::wstring m_sFilename;
 };
 
 } // namespace impl

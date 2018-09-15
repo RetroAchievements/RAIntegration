@@ -129,11 +129,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\md5.c" />
+    <ClCompile Include="..\src\RA_Achievement.cpp" />
+    <ClCompile Include="..\src\RA_md5factory.cpp" />
+    <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="RA_Achievement_Tests.cpp" />
+    <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClCompile Include="SearchResults_Tests.cpp" />
+    <ClInclude Include="..\src\md5.h" />
+    <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Condition.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />
+    <ClInclude Include="..\src\RA_md5factory.h" />
     <ClInclude Include="..\src\RA_MemManager.h" />
     <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />

@@ -1,9 +1,22 @@
 #include "RA_Achievement.h"
 
-#include "RA_Core.h"
-#include "RA_ImageFactory.h"
+#include "RA_md5factory.h"
 
-//	No game-specific code here please!
+#ifndef RA_UTEST
+#include "RA_Core.h"
+#else
+// duplicate of code in RA_Core, but RA_Core needs to be cleaned up before it can be pulled into the unit test build
+void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+{
+    const char* pStartString = pSource;
+
+    while (*pSource != '\0' && *pSource != nChar)
+        pSource++;
+
+    value.assign(pStartString, pSource - pStartString);
+    pSource++;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -15,7 +28,9 @@ Achievement::Achievement(AchievementSetType nType) :
     m_vConditions.AddGroup();
 }
 
-void Achievement::Parse(const Value& element)
+#ifndef RA_UTEST
+
+void Achievement::Parse(const rapidjson::Value& element)
 {
     //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50 rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
     m_nAchievementID = element["ID"].GetUint();
@@ -42,6 +57,8 @@ void Achievement::Parse(const Value& element)
 
     SetActive(IsCoreAchievement());	//	Activate core by default
 }
+
+#endif
 
 const char* Achievement::ParseLine(const char* pBuffer)
 {
@@ -140,11 +157,13 @@ BOOL Achievement::Test()
 
     if (bResetConditions && bNotifyOnReset)
     {
+#ifndef RA_UTEST
         RA_CausePause();
 
         char buffer[256];
         sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
         MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
+#endif
     }
 
     return bRetVal;
@@ -167,7 +186,6 @@ void Achievement::Clear()
     m_bPauseOnTrigger = FALSE;
     m_bPauseOnReset = FALSE;
     ClearDirtyFlag();
-    ClearBadgeImage();
 
     m_bProgressEnabled = FALSE;
     m_sProgress[0] = '\0';
@@ -230,20 +248,11 @@ void Achievement::SetModified(BOOL bModified)
 void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 {
     SetDirtyFlag(Dirty_Badge);
-    ClearBadgeImage();
 
-    char chars[] = "_lock";
-
-    std::string sNewBadgeURI = sBadgeURI;
-
-    for (unsigned int i = 0; i < strlen(chars); ++i)
-        sNewBadgeURI.erase(std::remove(sNewBadgeURI.begin(), sNewBadgeURI.end(), chars[i]), sNewBadgeURI.end());
-
-    m_sBadgeImageURI = sNewBadgeURI;
-    m_hBadgeImage = LoadOrFetchBadge(sNewBadgeURI, RA_BADGE_PX);
-
-    if (sNewBadgeURI.find("_lock") == std::string::npos)	//	Ensure we're not going to look for _lock_lock
-        m_hBadgeImageLocked = LoadOrFetchBadge(sNewBadgeURI + "_lock", RA_BADGE_PX);
+    if (sBadgeURI.length() > 5 && strcmp(&sBadgeURI[sBadgeURI.length() - 5], "_lock") == 0)
+        m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
+    else
+        m_sBadgeImageURI = sBadgeURI;
 }
 
 void Achievement::Reset()
@@ -304,23 +313,8 @@ std::string Achievement::CreateMemString() const
     return buffer;
 }
 
-void Achievement::ClearBadgeImage()
-{
-    if (m_hBadgeImage != nullptr)
-    {
-        DeleteObject(m_hBadgeImage);
-        m_hBadgeImage = nullptr;
-    }
-    if (m_hBadgeImageLocked != nullptr)
-    {
-        DeleteObject(m_hBadgeImageLocked);
-        m_hBadgeImageLocked = nullptr;
-    }
-}
-
 void Achievement::Set(const Achievement& rRHS)
 {
-    ClearBadgeImage();
     SetID(rRHS.m_nAchievementID);
     SetActive(rRHS.m_bActive);
     SetAuthor(rRHS.m_sAuthor);
@@ -570,3 +564,141 @@ void Achievement::Set(const Achievement& rRHS)
 //		g_PopupWindows.ProgressPopups().AddMessage( progressTitle, progressDesc );
 //	}
 // }
+
+std::string Achievement::CreateStateString(const std::string& sSalt) const
+{
+    // build the progress string
+    std::ostringstream oss;
+
+    for (unsigned int nGroup = 0; nGroup < NumConditionGroups(); ++nGroup)
+    {
+        const ConditionGroup& group = m_vConditions.GetGroup(nGroup);
+        oss << ID() << ":" << group.Count() << ":";
+
+        for (unsigned int j = 0; j < group.Count(); ++j)
+        {
+            const Condition& cond = group.GetAt(j);
+            oss << cond.CurrentHits() << ":" <<
+                cond.CompSource().RawValue() << ":" << cond.CompSource().RawPreviousValue() << ":" <<
+                cond.CompTarget().RawValue() << ":" << cond.CompTarget().RawPreviousValue() << ":";
+        }
+    }
+
+    std::string sProgressString = oss.str();
+
+    // Checksum the progress string (including the salt value)
+    std::string sModifiedProgressString;
+    sModifiedProgressString.resize(sProgressString.length() + sSalt.length() * 2 + 10);
+    size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
+        "%s%s%s%u", sSalt.c_str(), sProgressString.c_str(), sSalt.c_str(), static_cast<unsigned int>(ID()));
+    sModifiedProgressString.resize(nNewSize);
+    std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
+
+    sProgressString.append(sMD5Progress);
+    sProgressString.push_back(':');
+
+    // Also checksum the achievement string itself
+    std::string sMD5Achievement = RAGenerateMD5(CreateMemString());
+    sProgressString.append(sMD5Achievement);
+    sProgressString.push_back(':');
+
+    return sProgressString;
+}
+
+const char* Achievement::ParseStateString(const char* sBuffer, const std::string& sSalt)
+{
+    std::vector<Condition> vConditions;
+    const char* pIter = sBuffer;
+    bool bSuccess = true;
+
+    // recalculate the current achievement checksum
+    std::string sMD5Achievement = RAGenerateMD5(CreateMemString());
+
+    // parse achievement id and conditions
+    while (*pIter)
+    {
+        char* pEnd;
+
+        const char* pStart = pIter;
+        unsigned int nID = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+        if (nID != ID())
+        {
+            pIter = pStart;
+            break;
+        }
+
+        unsigned int nNumCond = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+        vConditions.reserve(vConditions.size() + nNumCond);
+
+        for (size_t i = 0; i < nNumCond; ++i)
+        {
+            // Parse next condition state
+            unsigned int nHits = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            unsigned int nSourceVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            unsigned int nTargetVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+
+            Condition& cond = vConditions.emplace_back();
+            cond.OverrideCurrentHits(nHits);
+            cond.CompSource().SetValues(nSourceVal, nSourcePrev);
+            cond.CompTarget().SetValues(nTargetVal, nTargetPrev);
+        }
+    }
+
+    const char* pEnd = pIter;
+
+    // read the given md5s
+    std::string sGivenMD5Progress;
+    _ReadStringTil(sGivenMD5Progress, ':', pIter);
+
+    std::string sGivenMD5Achievement;
+    _ReadStringTil(sGivenMD5Achievement, ':', pIter);
+
+    // if the achievement is still compatible
+    if (sGivenMD5Achievement == sMD5Achievement)
+    {
+        // regenerate the md5 and see if it sticks
+        std::string sModifiedProgressString;
+        sModifiedProgressString.resize(pEnd - sBuffer + sSalt.length() * 2 + 10);
+        size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
+            "%s%.*s%s%u", sSalt.c_str(), pEnd - sBuffer, sBuffer, sSalt.c_str(), ID());
+        sModifiedProgressString.resize(nNewSize);
+        std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
+        if (sMD5Progress == sGivenMD5Progress)
+        {
+            // compatible - merge
+            size_t nCondition = 0;
+            for (size_t nConditionGroup = 0; nConditionGroup < m_vConditions.GroupCount(); ++nConditionGroup)
+            {
+                ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
+                for (size_t i = 0; i < group.Count(); ++i)
+                {
+                    Condition& condSource = vConditions.at(nCondition++);
+                    Condition& condTarget = group.GetAt(i);
+
+                    condTarget.OverrideCurrentHits(condSource.CurrentHits());
+                    condTarget.CompSource().SetValues(condSource.CompSource().RawValue(), condSource.CompSource().RawPreviousValue());
+                    condTarget.CompTarget().SetValues(condSource.CompTarget().RawValue(), condSource.CompTarget().RawPreviousValue());
+                }
+            }
+        }
+        else
+        {
+            // state checksum fail
+            bSuccess = false;
+        }
+    }
+    else
+    {
+        // achievment checksum fail
+        bSuccess = false;
+    }
+
+    if (bSuccess)
+        SetDirtyFlag(Dirty_Conditions);
+    else
+        Reset();
+
+    return pIter;
+}

@@ -2,13 +2,6 @@
 
 #include <iomanip>
 
-
-#if RA_EXPORTS
-
-GetParseErrorFunc GetJSONParseErrorStr = GetParseError_En;
-
-#endif
-
 namespace ra {
 
 _Use_decl_annotations_
@@ -16,46 +9,50 @@ std::string Narrow(const std::wstring& wstr)
 {
     return Narrow(wstr.c_str());
 }
+
 _Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
-    auto wwstr{ std::move_if_noexcept(wstr) };
+    const auto wwstr{ std::move_if_noexcept(wstr) };
     return Narrow(wwstr);
 }
 
 _Use_decl_annotations_
 std::string Narrow(const wchar_t* wstr)
 {
-    auto len{ ra::to_signed(std::wcslen(wstr)) };
+    const auto len{ ra::to_signed(std::wcslen(wstr)) };
 
-    auto needed{
-        ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, nullptr, 0, nullptr, nullptr)
+    const auto needed{
+        ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr)
     };
 
     std::string str(ra::to_unsigned(needed), '\000'); // allocate required space (including terminator)
-    ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
+    ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
                           nullptr, nullptr);
     str.resize(ra::to_unsigned(needed - 1)); // terminator is not actually part of the string
     return str;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::string& str)
+_Use_decl_annotations_
+std::wstring Widen(const std::string& str)
 {
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_ std::wstring Widen(std::string&& str) noexcept
+_Use_decl_annotations_
+std::wstring Widen(std::string&& str) noexcept
 {
-    auto sstr{ std::move_if_noexcept(str) };
+    const auto sstr{ std::move_if_noexcept(str) };
     return Widen(sstr);
 }
 
-_Use_decl_annotations_ std::wstring Widen(const char* str)
+_Use_decl_annotations_
+std::wstring Widen(const char* str)
 {
-    auto len{ ra::to_signed(std::strlen(str)) };
-    auto needed{::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, nullptr, 0)};
+    const auto len{ ra::to_signed(std::strlen(str)) };
+    const auto needed{ ::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0) };
     // doesn't seem wchar_t is treated like a character type by default
-    std::wstring wstr(ra::to_unsigned(needed), L'\x0'); 
+    std::wstring wstr(ra::to_unsigned(needed), L'\x0');
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
                           ra::to_signed(wstr.capacity()));
     wstr.resize(ra::to_unsigned(needed - 1));
@@ -70,44 +67,47 @@ std::string ByteAddressToString(ra::ByteAddress nAddr)
     return oss.str();
 }
 
-_Use_decl_annotations_ std::wstring Widen(const wchar_t* wstr)
+_Use_decl_annotations_
+std::wstring Widen(const wchar_t* wstr)
 {
-    // remove reference might seem confusing
-    std::wstring _wstr{ wstr };
+    const std::wstring _wstr{ wstr };
     return _wstr;
 }
 
-_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr)
-{
-    return wstr;
-}
+_Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
-_Use_decl_annotations_ std::string Narrow(const char* str)
+_Use_decl_annotations_
+std::string Narrow(const char* str)
 {
-    std::string _str{ str };
+    const std::string _str{ str };
     return _str;
 }
 
-
-_Use_decl_annotations_ std::string Narrow(const std::string& str)
+_Use_decl_annotations_
+std::string Narrow(const std::string& str)
 {
     return str;
 }
 
-} // namespace ra
+} /* namespace ra */
 
+#ifndef RA_UTEST
+extern std::wstring g_sHomeDir;
+#endif
 
 void RADebugLogNoFormat(const char* data)
 {
     OutputDebugString(NativeStr(data).c_str());
 
-    //SetCurrentDirectory( g_sHomeDir.c_str() );//?
+#ifndef RA_UTEST
+    std::wstring sLogFile = g_sHomeDir + RA_LOG_FILENAME;
     FILE* pf = nullptr;
-    if (fopen_s(&pf, RA_LOG_FILENAME, "a") == 0)
+    if (_wfopen_s(&pf, sLogFile.c_str(), L"a") == 0)
     {
         fwrite(data, sizeof(char), strlen(data), pf);
         fclose(pf);
     }
+#endif
 }
 
 void RADebugLog(const char* format, ...)

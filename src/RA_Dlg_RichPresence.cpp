@@ -1,6 +1,7 @@
 #include "RA_Dlg_RichPresence.h"
 
 #include "RA_Core.h"
+#include "RA_GameData.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 
@@ -20,7 +21,7 @@ INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, 
 
         case WM_TIMER:
         {
-            std::wstring sRP = ra::Widen(g_RichPresenceInterpretter.GetRichPresenceString());
+            std::wstring sRP = ra::Widen(g_RichPresenceInterpreter.GetRichPresenceString());
             SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, sRP.c_str());
             return TRUE;
         }
@@ -76,9 +77,21 @@ Dlg_RichPresence::~Dlg_RichPresence()
     DeleteObject(m_hFont);
 }
 
+void Dlg_RichPresence::OnLoad_NewRom()
+{
+    if (g_RichPresenceInterpreter.Enabled())
+    {
+        StartTimer();
+    }
+    else
+    {
+        ClearMessage();
+    }
+}
+
 void Dlg_RichPresence::StartMonitoring()
 {
-    if (g_RichPresenceInterpretter.Enabled())
+    if (g_RichPresenceInterpreter.Enabled())
     {
         StartTimer();
     }
@@ -88,9 +101,19 @@ void Dlg_RichPresence::StartMonitoring()
     }
 }
 
+void Dlg_RichPresence::ClearMessage()
+{
+    StopTimer();
+
+    if (g_pCurrentGameData->GetGameID() == 0)
+        SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, L"No game loaded");
+    else
+        SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, L"No Rich Presence defined");
+}
+
 void Dlg_RichPresence::StartTimer()
 {
-    if (!m_bTimerActive)
+    if (!m_bTimerActive && m_hRichPresenceDialog != nullptr)
     {
         SetTimer(m_hRichPresenceDialog, 1, 1000, nullptr);
         m_bTimerActive = true;

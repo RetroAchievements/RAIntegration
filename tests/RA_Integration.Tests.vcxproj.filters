@@ -45,6 +45,24 @@
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="RA_RichPresence_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_RichPresence.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_Achievement.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Achievement_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\md5.c">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_md5factory.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -71,6 +89,15 @@
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RA_Leaderboard.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_Achievement.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\md5.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_md5factory.h">
       <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>

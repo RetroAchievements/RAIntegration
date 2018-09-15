@@ -2,10 +2,10 @@
 #define RA_DLG_ACHEDITOR_H
 #pragma once
 
-
-
 #include "RA_httpthread.h"
 #include "RA_Achievement.h"
+
+#include "services\ImageRepository.h"
 
 namespace {
 const size_t MAX_CONDITIONS = 200;
@@ -23,7 +23,7 @@ public:
 
     void FetchNewBadgeNamesThreaded();
     void AddNewBadgeName(const char* pStr, bool bAndSelect);
-    void OnNewBadgeNames(const Document& data);
+    void OnNewBadgeNames(const rapidjson::Document& data);
 
 private:
     HWND m_hDestComboBox;
@@ -94,7 +94,7 @@ private:
 
     Achievement* m_pSelectedAchievement;
     BOOL m_bPopulatingAchievementEditorData;
-    HBITMAP m_hAchievementBadge;
+    ra::services::ImageReference m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;
 };

@@ -45,7 +45,7 @@
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\alloc.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="RA_RichPresence_Tests.cpp">
@@ -71,31 +71,31 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\condition.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\condset.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\expression.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\format.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\lboard.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\operand.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\term.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\trigger.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\value.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="RA_Achievement_Tests.cpp">

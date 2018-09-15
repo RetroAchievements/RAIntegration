@@ -150,16 +150,16 @@
     <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" />
     <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\alloc.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\condition.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\condset.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\expression.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\format.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\lboard.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\operand.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\term.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\trigger.c" CompileAs="CompileAsC" />
-    <ClCompile Include="..\rcheevos\src\value.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
     <ClCompile Include="..\src\md5.c" />

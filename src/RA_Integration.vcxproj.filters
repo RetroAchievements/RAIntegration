@@ -126,34 +126,34 @@
     <ClCompile Include="RA_LeaderboardManager.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\alloc.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\condition.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\condset.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\expression.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\format.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\lboard.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\operand.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\term.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\trigger.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\value.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="..\lua\lapi.c">

@@ -704,7 +704,7 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    HRESULT hr{};
+    HRESULT hr;
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))
@@ -832,7 +832,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
 
     CComPtr<IFileOpenDialog> pDlg;
 
-    auto hr{ S_OK };
+    HRESULT hr;
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))

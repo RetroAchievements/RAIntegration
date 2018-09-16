@@ -2,6 +2,7 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
+struct IUnknown;
 #define NOMINMAX
 #include <wtypes.h>
 

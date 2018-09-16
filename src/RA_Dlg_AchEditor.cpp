@@ -2199,12 +2199,14 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
-    const auto nSel{ ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str()) };
-    if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
     {
-        MessageBox(::GetActiveWindow(), _T("An error has occurred or there is insufficient space "
-            "to store the new string"), _T("Error!"), MB_OK | MB_ICONERROR);
-        return;
+        const auto nSel{ ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str()) };
+        if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
+        {
+            ::MessageBox(::GetActiveWindow(), _T("An error has occurred or there is insufficient space "
+                "to store the new string"), _T("Error!"), MB_OK | MB_ICONERROR);
+            return;
+        }
     }
 
     if (bAndSelect)

@@ -379,6 +379,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     }
 }
 
+_Use_decl_annotations_
 BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
@@ -461,12 +462,12 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         //ASSERT( doc["Success"].GetBool() );
         g_pCurrentGameData->ParseData(doc);
-        const auto nGameID2{ g_pCurrentGameData->GetGameID() };
+        nGameID = g_pCurrentGameData->GetGameID();
 
         //	Rich Presence
         {
             std::wostringstream oss;
-            oss << g_sHomeDir << RA_DIR_DATA << nGameID2 << L"-Rich.txt";
+            oss << g_sHomeDir << RA_DIR_DATA << nGameID << L"-Rich.txt";
             _WriteBufferToFile(oss.str(), g_pCurrentGameData->RichPresencePatch());
         }
         g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
@@ -475,7 +476,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         for (const auto& achData : AchievementsData.GetArray())
         {
             //	Parse into correct boxes
-            auto nFlags{ achData["Flags"].GetUint() };
+            const auto nFlags{ achData["Flags"].GetUint() };
             if ((nFlags == 3U) && (m_nSetType == Core))
             {
                 auto& newAch{ AddAchievement() };

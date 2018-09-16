@@ -24,6 +24,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <PostBuildEvent>
       <Command>

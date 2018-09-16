@@ -41,7 +41,6 @@ private:
 
 class Dlg_MemBookmark
 {
-public:
     enum class SubItems
     {
         Desc,

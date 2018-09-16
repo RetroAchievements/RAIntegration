@@ -536,38 +536,33 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
 
     //	Remove all data.
     ListView_DeleteAllItems(hList);
+
+    auto idx{ 0 };
+    for (auto& sColTitle : ra::COLUMN_TITLE)
     {
-        auto lplvColumn{ std::make_unique<LV_COLUMN>() };
-        auto idx{ 0 };
-        for (auto& sColTitle : ra::COLUMN_TITLE)
+        ra::tstring tszText{ sColTitle };
+        LV_COLUMN col
         {
-            lplvColumn->mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-            lplvColumn->fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
-            lplvColumn->cx         = ra::COLUMN_WIDTH.at(idx);
+            col.mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT,
+            col.fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH,
+            col.cx         = ra::COLUMN_WIDTH.at(idx),
+            col.pszText    = tszText.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = idx
+        };
 
-            // NB: The column title has to cached before-hand or we won't see it. -SBS
-            ra::tstring tszText{ sColTitle };
-            lplvColumn->pszText    = tszText.data();
-            lplvColumn->cchTextMax = 255;
-            lplvColumn->iSubItem   = idx;
+        if (idx == (ra::COLUMN_TITLE.size() - 1))
+            col.fmt |= LVCFMT_FILL;
 
-            if (idx == (ra::COLUMN_TITLE.size() - 1))
-                lplvColumn->fmt |= LVCFMT_FILL;
-
-            ListView_InsertColumn(hList, idx, lplvColumn.get());
-            idx++;
-        }
+        ListView_InsertColumn(hList, idx, &col);
+        idx++;
     }
     m_nNumOccupiedRows = 0;
 
-    auto bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
-#if _WIN32
-    bSuccess = ra::to_unsigned(ListView_EnableGroupView(hList, FALSE));
-#elif _WIN64
-    bSuccess = static_cast<DWORD>(ra::to_unsigned(ListView_EnableGroupView(hList, FALSE)));
-#else
-#error Unknown platform, Windows is currently the only supported platform!
-#endif // _WIN32
+#if _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
+    if (ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER) != 0UL)
+        ::MessageBox(::GetActiveWindow(), _T("The styles specified could not be set."), _T("Error!"), MB_OK | MB_ICONERROR);
+#endif // _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
 }
 
 void Dlg_MemBookmark::AddAddress()
@@ -709,7 +704,7 @@ void Dlg_MemBookmark::ExportJSON()
 
     CComPtr<IFileSaveDialog> pDlg;
 
-    auto hr{ S_OK };
+    HRESULT hr{};
     if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg))))
     {
         if (SUCCEEDED(hr = pDlg->SetFileTypes(ra::c_rgFileTypes.size(), &ra::c_rgFileTypes.front())))

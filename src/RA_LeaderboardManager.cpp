@@ -94,18 +94,14 @@ void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& Response{ doc["Response"] };
     const auto& LBData{ Response["LBData"] };
 
-    _UNUSED const std::string& sFormat{ LBData["Format"].GetString() };
     const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
     const auto nGameID{ static_cast<ra::GameID>(LBData["GameID"].GetUint()) };
-    _UNUSED const std::string& sLBTitle{ LBData["Title"].GetString() };
     const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
 
     auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
 
     const auto nSubmittedScore{ Response["Score"].GetInt() };
     const auto nBestScore{ Response["BestScore"].GetInt() };
-    _UNUSED const std::string& sScoreFormatted{ Response["ScoreFormatted"].GetString()};
-
     pLB->ClearRankInfo();
 
     RA_LOG("LB Data, Top Entries:\n");
@@ -128,11 +124,7 @@ void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     }
 
     pLB->SortRankInfo();
-
-    _UNUSED const auto& TopEntriesFriends{ Response["TopEntriesFriends"] };
-    _UNUSED const auto& RankData{ Response["RankInfo"] };
-
-    //	TBD!
+#pragma region TBD
     //char sTestData[ 4096 ];
     //sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pLB->Title().c_str(), pLB->Description().c_str() );
     //for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
@@ -144,8 +136,8 @@ void RA_LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     //	char bufferMessage[ 512 ];
     //	sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
     //	strcat_s( sTestData, 4096, bufferMessage );
-    //}
-
+    //}  
+#pragma endregion
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
 

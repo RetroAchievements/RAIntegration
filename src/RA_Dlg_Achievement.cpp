@@ -230,21 +230,19 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
         constexpr std::array<char, 2> sIllegalChars{ '&', ':' };
         for (auto& cNextChar : sIllegalChars)
         {
-            auto ErrMsg =[&cNextChar]() noexcept
-            {
-                std::ostringstream oss;
-                oss << "Achievement title contains an illegal character: " << cNextChar << "\nPlease remove and try again";
-                return oss.str();
-            };
             if (Ach.Title().find_first_of(cNextChar) != std::string::npos)
             {
-                const auto str{ ErrMsg() };
+                std::string str{ "Achievement title contains an illegal character: " };
+                str += cNextChar;
+                str += "\nPlease remove and try again";
                 MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
                 return FALSE;
             }
             if (Ach.Description().find_first_of(cNextChar) != std::string::npos)
             {
-                const auto str{ ErrMsg() };
+                std::string str{ "Achievement description contains an illegal character: " };
+                str += cNextChar;
+                str += "\nPlease remove and try again";
                 MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK);
                 return FALSE;
             }

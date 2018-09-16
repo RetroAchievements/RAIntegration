@@ -624,7 +624,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     m_nNumAchievementsBeingRendered = nAchievementsToDraw;
 }
 
-_UNUSED void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
+void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
 {
 
     // 		for( size_t i = 0; i < 256; ++i )
@@ -645,7 +645,6 @@ _UNUSED void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNU
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
     const int* pnScrollOffset = GetActiveScrollOffset();
-    _UNUSED const int* pnSelectedItem = GetActiveSelectedItem();
 
     const unsigned int nFriendSpacing = 64 + 8;//80;
     const unsigned int nFriendsToDraw = ((rcTarget.bottom - rcTarget.top) - 140) / nFriendSpacing;
@@ -731,9 +730,6 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
 {
     char buffer[256];
 
-    _UNUSED const int* pnScrollOffset = GetActiveScrollOffset();
-    _UNUSED const int* pnSelectedItem = GetActiveSelectedItem();
-
     const unsigned int nNumAchievements = g_pActiveAchievements->NumAchievements();
 
     const int nAchievementStartX = 0;
@@ -799,7 +795,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
         for (const auto& data : g_AchExamine)
         {
             {
-                auto sUser{ " "s };
+                std::string sUser{ " " };
                 sUser += data.User();
                 sUser += " ";
 
@@ -810,7 +806,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
                     NativeStr(sUser).c_str(), ra::to_signed(sUser.length()));
             }
 
-            auto sWonAt{ " "s };
+            std::string sWonAt{ " " };
             sWonAt += data.WonAt();
             sWonAt += " ";
 
@@ -1025,9 +1021,6 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
 void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
 {
-    _UNUSED const int* pnScrollOffset = GetActiveScrollOffset();
-    _UNUSED const int* pnSelectedItem = GetActiveSelectedItem();
-
     const int nLBStartX = 0;
     const int nLBStartY = 80;
 
@@ -1166,7 +1159,6 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     int nDY = rcTarget.top;
 
     int nRightPx = (int)(rcTarget.right - (fPctOffScreen * rcTarget.right));
-    _UNUSED int nRightPxAbs = (int)((rcTarget.right - rcTarget.left) - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
 
     RECT rc;
     SetRect(&rc,
@@ -1247,9 +1239,6 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
             ASSERT(!"Attempting to render an undefined overlay page!");
             break;
     }
-
-    _UNUSED const int* pnScrollOffset = GetActiveScrollOffset();
-    _UNUSED const int* pnSelectedItem = GetActiveSelectedItem();
 
     //	Title:
     SelectObject(hDC, g_hFontTitle);
@@ -1660,17 +1649,8 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 
     const auto nLBID{ LBData["LBID"].GetUint() };
     const auto nGameID{ LBData["GameID"].GetUint() };
-    _UNUSED const std::string& sGameTitle{ LBData["GameTitle"].GetString() };
     const auto sConsoleID{ LBData["ConsoleID"].GetUint() };
-    _UNUSED const std::string& sConsoleName{ LBData["ConsoleName"].GetString() };
-    _UNUSED const std::string& sGameIcon = LBData["GameIcon"].GetString();
-    //unsigned int sForumTopicID = LBData["ForumTopicID"].GetUint();
-
     const auto nLowerIsBetter{ LBData["LowerIsBetter"].GetUint() };
-    _UNUSED const std::string& sLBTitle{ LBData["LBTitle"].GetString() };
-    _UNUSED const std::string& sLBDesc{ LBData["LBDesc"].GetString() };
-    _UNUSED const std::string& sLBFormat{ LBData["LBFormat"].GetString() };
-    _UNUSED const std::string& sLBMem{ LBData["LBMem"].GetString() };
 
     const auto pLB{ g_LeaderboardManager.FindLB(nLBID) };
     if (!pLB)

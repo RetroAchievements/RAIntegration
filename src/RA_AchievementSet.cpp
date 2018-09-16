@@ -461,12 +461,12 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         //ASSERT( doc["Success"].GetBool() );
         g_pCurrentGameData->ParseData(doc);
-        const auto _nGameID{ g_pCurrentGameData->GetGameID() };
+        const auto nGameID2{ g_pCurrentGameData->GetGameID() };
 
         //	Rich Presence
         {
             std::wostringstream oss;
-            oss << g_sHomeDir << RA_DIR_DATA << _nGameID << L"-Rich.txt";
+            oss << g_sHomeDir << RA_DIR_DATA << nGameID2 << L"-Rich.txt";
             _WriteBufferToFile(oss.str(), g_pCurrentGameData->RichPresencePatch());
         }
         g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());

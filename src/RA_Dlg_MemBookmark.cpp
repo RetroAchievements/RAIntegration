@@ -509,7 +509,6 @@ void Dlg_MemBookmark::PopulateList()
     if (hList == nullptr)
         return;
 
-    _UNUSED int topIndex = ListView_GetTopIndex(hList);
     ListView_DeleteAllItems(hList);
     m_nNumOccupiedRows = 0;
 

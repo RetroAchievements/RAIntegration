@@ -1184,7 +1184,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_ADDNOTE:
                 {
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                    _UNUSED HWND hMemDescription = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
 
                     WCHAR sNewNoteWide[512];
                     GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);

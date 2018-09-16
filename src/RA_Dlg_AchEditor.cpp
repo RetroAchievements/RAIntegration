@@ -2048,7 +2048,6 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
         BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));
         BOOL bPointsSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS));
-        _UNUSED HWND hCtrl = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
 
         if (!m_pSelectedAchievement->IsDirty())
             return;
@@ -2200,13 +2199,16 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
-    _UNUSED int nSel = ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str());
+    const auto nSel{ ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str()) };
+    if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
+    {
+        MessageBox(::GetActiveWindow(), _T("An error has occurred or there is insufficient space "
+            "to store the new string"), _T("Error!"), MB_OK | MB_ICONERROR);
+        return;
+    }
 
     if (bAndSelect)
-    {
         ComboBox_SelectString(m_hDestComboBox, 0, pStr);
-        //ComboBox_SetCurSel( m_hDestComboBox, nSel );
-    }
 }
 
 void GenerateResizes(HWND hDlg)

@@ -118,7 +118,7 @@ public:
     AchievementOverlay();
     ~AchievementOverlay();
 
-    void Initialize(HINSTANCE hInst);
+    void Initialize(_UNUSED HINSTANCE);
 
     void Activate();
     void Deactivate();
@@ -135,12 +135,12 @@ public:
     void OnLoad_NewRom();
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawAchievementExaminePage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawMessagesPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawFriendsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawNewsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawLeaderboardPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
-    void DrawLeaderboardExaminePage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
+    void DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
+    void DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const;
+    void DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
+    void DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
+    void DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
+    void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
 
     void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const;
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;

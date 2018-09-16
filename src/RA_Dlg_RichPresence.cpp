@@ -7,7 +7,7 @@
 
 Dlg_RichPresence g_RichPresenceDialog;
 
-INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM)
+INT_PTR CALLBACK Dlg_RichPresence::RichPresenceDialogProc(HWND hDlg, UINT nMsg, WPARAM wParam, [[maybe_unused]] LPARAM)
 {
     switch (nMsg)
     {

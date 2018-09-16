@@ -80,10 +80,6 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
             int nSourceWidth = rcSource.right - rcSource.left;
             int nSourceHeight = rcSource.bottom - rcSource.top;
 
-            int nTargetWidth = rcDest.right - rcDest.left;
-            _UNUSED int nTargetHeight = rcDest.bottom - rcDest.top;
-
-            _UNUSED int nWidthRemaining = nTargetWidth;
             for (int nXOffs = rcDest.left; nXOffs < rcDest.right; nXOffs += nSourceWidth)
             {
                 for (int nYOffs = rcDest.top; nYOffs < rcDest.bottom; nYOffs += nSourceHeight)

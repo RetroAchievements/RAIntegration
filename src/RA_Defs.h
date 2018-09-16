@@ -82,9 +82,6 @@ struct IUnknown;
 using namespace std::string_literals;
 #endif	// RA_EXPORTS
 
-#define RA_KEYS_DLL						"RA_Keys.dll"
-#define RA_UNKNOWN_BADGE_IMAGE_URI		"00000"
-
 #define RA_DIR_OVERLAY					L"Overlay\\"
 #define RA_DIR_BASE						L"RACache\\"
 #define RA_DIR_DATA						RA_DIR_BASE L"Data\\"

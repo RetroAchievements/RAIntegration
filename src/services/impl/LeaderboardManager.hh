@@ -15,7 +15,6 @@ namespace impl {
 class LeaderboardManager : public ILeaderboardManager
 {
 public:
-    LeaderboardManager();
     LeaderboardManager(const ra::services::IConfiguration& pConfiguration);
 
     static void OnSubmitEntry(const rapidjson::Document& doc);

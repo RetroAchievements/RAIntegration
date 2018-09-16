@@ -13,11 +13,6 @@ namespace ra {
 namespace services {
 namespace impl {
 
-LeaderboardManager::LeaderboardManager()
-    : LeaderboardManager(ra::services::ServiceLocator::Get<ra::services::IConfiguration>())
-{
-}
-
 LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConfiguration)
     : m_pConfiguration(pConfiguration)
 {

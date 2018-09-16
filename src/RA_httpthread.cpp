@@ -11,8 +11,8 @@
 #include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
-#include "services/IConfiguration.hh"
-#include "services/ServiceLocator.hh"
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
 
 #include <winhttp.h>
 #include <memory>

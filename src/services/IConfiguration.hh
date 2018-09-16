@@ -2,7 +2,7 @@
 #define RA_SERVICES_ICONFIGURATION
 #pragma once
 
-#include "ui/WindowViewModelBase.hh"
+#include "ui\WindowViewModelBase.hh"
 
 #include <string>
 

@@ -13,8 +13,8 @@
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
-#include "services/IConfiguration.hh"
-#include "services/ServiceLocator.hh"
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
 
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 

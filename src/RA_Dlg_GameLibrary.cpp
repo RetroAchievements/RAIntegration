@@ -389,7 +389,8 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                             nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
 
                         DWORD nBytes = 0;
-                        BOOL bResult = ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr);
+                        if (::ReadFile(hROMReader, sROMRawData, nSize, &nBytes, nullptr) == 0)
+                            return;
                         const std::string sHashOut = RAGenerateMD5(sROMRawData, nSize);
 
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())

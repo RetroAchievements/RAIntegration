@@ -10,8 +10,8 @@
 namespace ra {
 namespace services {
 
-constexpr char* DefaultBadge = "00000";
-constexpr char* DefaultUserPic = "_User";
+inline constexpr const char* DefaultBadge{ "00000" };
+inline constexpr const char* DefaultUserPic{ "_User" };
 
 ImageRepository g_ImageRepository;
 

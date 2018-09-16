@@ -73,7 +73,7 @@ void ProgressPopup::NextMessage()
     m_hMessageImage[OVERLAY_MESSAGE_QUEUE_SIZE - 1] = nullptr;
 }
 
-void ProgressPopup::Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused)
+void ProgressPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused)
 {
     if (!IsActive())
         return;

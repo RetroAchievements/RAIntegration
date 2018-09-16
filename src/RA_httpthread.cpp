@@ -112,7 +112,7 @@ HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
 
-std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
+std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
@@ -374,13 +374,19 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
             // Send a Request.
             if (hRequest != nullptr)
             {
-                BOOL bResults = WinHttpSendRequest(hRequest,
+                if (WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
                     0,
                     WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
                     0,
                     0,
-                    0);
+                    0) == 0)
+                {
+                    ::WinHttpCloseHandle(hRequest);
+                    ::WinHttpCloseHandle(hConnect);
+                    ::WinHttpCloseHandle(hSession);
+                    return static_cast<BOOL>(ra::to_signed(::GetLastError()));
+                }
 
                 if (WinHttpReceiveResponse(hRequest, nullptr))
                 {

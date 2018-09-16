@@ -142,7 +142,7 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
     }
 
     //	Not found
-    return -1;
+    return ra::to_unsigned(-1);
 }
 
 unsigned int AchievementSet::NumActive() const
@@ -382,6 +382,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     }
 }
 
+_Use_decl_annotations_
 BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 {
     if (nGameID == 0)
@@ -464,7 +465,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         //ASSERT( doc["Success"].GetBool() );
         g_pCurrentGameData->ParseData(doc);
-        const auto nGameID{ g_pCurrentGameData->GetGameID() };
+        nGameID = g_pCurrentGameData->GetGameID();
 
         //	Rich Presence
         {
@@ -478,7 +479,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         for (const auto& achData : AchievementsData.GetArray())
         {
             //	Parse into correct boxes
-            auto nFlags{ achData["Flags"].GetUint() };
+            const auto nFlags{ achData["Flags"].GetUint() };
             if ((nFlags == 3U) && (m_nSetType == Core))
             {
                 auto& newAch{ AddAchievement() };
@@ -530,12 +531,8 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             args['h'] = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? "1" : "0";
 
             RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
-            std::string sTitle;
-            {
-                std::ostringstream oss;
-                oss << "Loaded " << g_pCurrentGameData->GameTitle();
-                sTitle = oss.str();
-            }
+            std::string sTitle{ "Loaded " };
+            sTitle += g_pCurrentGameData->GameTitle();
 
             std::string sSubTitle;
             {

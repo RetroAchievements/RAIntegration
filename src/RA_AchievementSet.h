@@ -28,7 +28,8 @@ public:
     void Test();
     void Reset();
 
-    BOOL LoadFromFile(ra::GameID nGameID);
+    _Success_(return != 0)
+    BOOL LoadFromFile(_Inout_ ra::GameID nGameID);
     BOOL SaveToFile();
 
     BOOL DeletePatchFile(ra::GameID nGameID);

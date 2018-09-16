@@ -26,7 +26,7 @@ public:
 
 public:
     static void DoModalDialog(HINSTANCE hInst, HWND hParent);
-    static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, LPARAM);
+    static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, _UNUSED LPARAM);
 
 public:
     static void SetupColumns(HWND hList);

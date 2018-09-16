@@ -12,7 +12,7 @@ public:
     static BOOL DoModalDialog();
 
 public:
-    static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, LPARAM);
+    static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, [[maybe_unused]] LPARAM);
 };
 
 

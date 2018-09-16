@@ -13,7 +13,7 @@ public:
     ~Dlg_RichPresence();
 
     static INT_PTR CALLBACK s_RichPresenceDialogProc(HWND, UINT, WPARAM, LPARAM);
-    INT_PTR CALLBACK RichPresenceDialogProc(HWND, UINT, WPARAM, LPARAM);
+    INT_PTR CALLBACK RichPresenceDialogProc(HWND, UINT, WPARAM, [[maybe_unused]] LPARAM);
 
     void InstallHWND(HWND hWnd) { m_hRichPresenceDialog = hWnd; }
     HWND GetHWND() const { return m_hRichPresenceDialog; }

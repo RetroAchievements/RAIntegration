@@ -61,7 +61,7 @@ public:
 public:
     AchievementPopup();
 
-    void Update(ControllerInput input, float fDelta, bool bFullScreen, bool bPaused);
+    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
     void AddMessage(const MessagePopup& msg);

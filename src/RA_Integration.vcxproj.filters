@@ -16,6 +16,9 @@
     <Filter Include="Services">
       <UniqueIdentifier>{35979a09-2dc1-4255-9e37-d40bf000e961}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Services\Impl">
+      <UniqueIdentifier>{3b94374b-a06e-4994-b6f8-3a2f5e215803}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Helpers">
       <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
@@ -123,6 +126,15 @@
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\LeaderboardManager.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Initialization.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="services\ImageRepository.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -222,6 +234,36 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_MemValue.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IConfiguration.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\JsonFileConfiguration.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\WindowViewModelBase.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\LeaderboardManager.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILeaderboardManager.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Initialization.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ServiceLocator.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_Log.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_Json.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_MemManager.h">

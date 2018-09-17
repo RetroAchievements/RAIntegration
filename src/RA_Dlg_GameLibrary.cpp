@@ -16,7 +16,9 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
-#define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
+_NODISCARD _CONSTANT_FN
+KeyDown(_In_ int vkCode) noexcept { return ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false); }
+
 
 namespace ra {
 
@@ -343,7 +345,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
         do
         {
-            if (KEYDOWN(VK_ESCAPE))
+            if (KeyDown(VK_ESCAPE))
                 break;
 
             memset(sROMRawData, 0, ROM_MAX_SIZE);	//?!??

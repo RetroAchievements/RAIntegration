@@ -120,9 +120,6 @@
     <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_LeaderboardManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_MemValue.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -270,9 +267,6 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\SearchResults.h">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_LeaderboardManager.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_MemValue.h">

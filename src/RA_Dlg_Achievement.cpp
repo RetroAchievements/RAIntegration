@@ -40,7 +40,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
     for (int i = 0; i < NUM_COLS; ++i)
     {
-        const char* sColTitle = nullptr;
+        const char* sColTitle{""};
         if (g_nActiveAchievementSet == Core)
             sColTitle = COLUMN_TITLES_CORE[i];
         else if (g_nActiveAchievementSet == Unofficial)

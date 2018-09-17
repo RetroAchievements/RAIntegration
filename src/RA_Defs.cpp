@@ -60,7 +60,7 @@ std::wstring Widen(const char* str)
     return wstr;
 }
 
-
+_Use_decl_annotations_
 std::string ByteAddressToString(ra::ByteAddress nAddr)
 {
     std::ostringstream oss;
@@ -78,6 +78,13 @@ std::wstring Widen(const wchar_t* wstr)
 _Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
 _Use_decl_annotations_
+std::wstring Widen(std::wstring&& wstr) noexcept
+{
+    const auto _wstr{ std::move_if_noexcept(wstr) };
+    return Widen(_wstr);
+}
+
+_Use_decl_annotations_
 std::string Narrow(const char* str)
 {
     const std::string _str{ str };
@@ -88,6 +95,13 @@ _Use_decl_annotations_
 std::string Narrow(const std::string& str)
 {
     return str;
+}
+
+_Use_decl_annotations_
+std::string Narrow(std::string&& str) noexcept
+{
+    auto move_str{ std::move_if_noexcept(str) };
+    return Narrow(move_str);
 }
 
 } /* namespace ra */

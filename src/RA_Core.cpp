@@ -1439,8 +1439,10 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
     ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
-bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
+_Use_decl_annotations_
+bool _ReadBufferFromFile(std::string& buffer, const wchar_t* sFile)
 {
+    buffer = "";
     std::ifstream file(sFile);
     if (file.fail())
         return false;
@@ -1450,7 +1452,6 @@ bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
     file.seekg(0, std::ios::beg);
 
     buffer.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
-
     return true;
 }
 

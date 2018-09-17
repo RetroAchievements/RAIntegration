@@ -293,7 +293,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                     ra::tstring str;
                     {
                         std::basic_ostringstream<TCHAR> oss;
-                        oss << " " << lbInfo.m_nRank << " " << lbInfo.m_sUsername << " ";
+                        oss << " " << lbInfo.m_nRank << " " << ra::NativeStr(lbInfo.m_sUsername) << " ";
                         str = oss.str();
                     }
                     DrawText(hDC, str.c_str(), ra::to_signed(str.length()), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);

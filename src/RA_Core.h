@@ -116,7 +116,8 @@ extern bool g_bRAMTamperedWith;
 extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
 
 //  Read a file to a std::string. Returns false on error.
-extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);
+_Success_(return)
+_NODISCARD extern bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_z_ const wchar_t* sFile);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);

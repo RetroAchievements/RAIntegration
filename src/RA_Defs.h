@@ -244,7 +244,7 @@ const int SERVER_PING_DURATION = 2 * 60;
 #ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
-_CONSTANT_FN ASSERT(_In_ bool bExpression) noexcept { assert(bExpression); }
+_CONSTANT_FN ASSERT(_In_ bool bExpr) noexcept { assert(bExpr); }
 #else
 #undef ASSERT
 _CONSTANT_FN ASSERT(_UNUSED bool) noexcept {}
@@ -262,17 +262,19 @@ _CONSTANT_FN UNUSED(_UNUSED T) noexcept {}
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
+_NODISCARD std::string Narrow(_In_ std::wstring&& wstr) noexcept;
 _NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
-_NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
+_NODISCARD std::wstring Widen(_In_ std::string&& str) noexcept;
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
 
 //	No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
+_NODISCARD std::wstring Widen(_In_ std::wstring&& wstr) noexcept;
 _NODISCARD std::string Narrow(_In_z_ const char* str);
-_NODISCARD std::string Narrow(_In_ const std::string& wstr);
+_NODISCARD std::string Narrow(_In_ const std::string& str);
+_NODISCARD std::string Narrow(_In_ std::string&& str) noexcept;
 _NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
 
 
@@ -303,7 +305,7 @@ _NODISCARD inline auto NativeStr(_In_ const std::basic_string<CharT>& str)
 }
 
 template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>>
-_NODISCARD inline auto NativeStr(std::basic_string<CharT>&& str) noexcept
+_NODISCARD inline auto NativeStr(_In_ std::basic_string<CharT>&& str) noexcept
 {
     static_assert(!std::is_same_v<CharT, unsigned char>, "Conversion for unsigned strings is currently unsupported!");
 #if _MBCS

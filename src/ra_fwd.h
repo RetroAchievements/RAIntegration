@@ -53,7 +53,7 @@ using NativeStrType = std::string;
 #elif _UNICODE
 using NativeStrType = std::wstring;
 #else
-#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#error Unknown character set detected! Only MultiByte and Unicode are supported!
 #endif // _MBCS
 
 using Native_CStrType = NativeStrType::const_pointer;

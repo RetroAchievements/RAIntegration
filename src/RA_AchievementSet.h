@@ -16,7 +16,7 @@ public:
         m_nSetType{ nType }
     {
         Clear();
-    }   
+    }
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);

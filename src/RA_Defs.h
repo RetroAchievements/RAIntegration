@@ -287,7 +287,7 @@ _NODISCARD inline auto NativeStr(_In_ const CharT* str)
 #elif _UNICODE
     return Widen(str);
 #else
-#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#error Unknown character set detected! Only MultiByte and Unicode are supported!
 #endif // _MBCS
 }
 
@@ -300,7 +300,7 @@ _NODISCARD inline auto NativeStr(_In_ const std::basic_string<CharT>& str)
 #elif _UNICODE
     return Widen(str);
 #else
-#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#error Unknown character set detected! Only MultiByte and Unicode are supported!
 #endif // _MBCS
 }
 
@@ -313,7 +313,7 @@ _NODISCARD inline auto NativeStr(_In_ std::basic_string<CharT>&& str) noexcept
 #elif _UNICODE
     return Widen(std::forward<std::basic_string<CharT>>(str));
 #else
-#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#error Unknown character set detected! Only MultiByte and Unicode are supported!
 #endif // _MBCS
 }
 

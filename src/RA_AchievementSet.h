@@ -12,13 +12,11 @@
 class AchievementSet
 {
 public:
-    AchievementSet(AchievementSetType nType) :
-        m_nSetType(nType),
-        m_bProcessingActive(TRUE)
+    AchievementSet(_In_ AchievementSetType nType) noexcept :
+        m_nSetType{ nType }
     {
         Clear();
-    }
-    
+    }   
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
@@ -78,7 +76,7 @@ public:
 private:
     const AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive{};
+    BOOL m_bProcessingActive{ TRUE };
 };
 
 

@@ -787,7 +787,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
             {
                 //  Take ownership and delete(): we caused the 'pop' earlier, so we have responsibility to
                 //   either pass to LastHttpResults, or deal with it here.
-                SAFE_DELETE(pObj);
+                ra::SafeDelete(pObj);
             }
         }
 
@@ -928,7 +928,7 @@ void HttpResults::Clear()
         {
             RequestObject* pObj = m_aRequests.front();
             m_aRequests.pop_front();
-            SAFE_DELETE(pObj);
+            ra::SafeDelete(pObj);
         }
     }
     ReleaseMutex(RAWeb::Mutex());

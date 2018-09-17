@@ -274,8 +274,8 @@ API int CCONV _RA_Shutdown()
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
     ra::SafeDelete(g_pCoreAchievements);
-    SAFE_DELETE(g_pUnofficialAchievements);
-    SAFE_DELETE(g_pLocalAchievements);
+    ra::SafeDelete(g_pUnofficialAchievements);
+    ra::SafeDelete(g_pLocalAchievements);
 
     RAWeb::RA_KillHTTPThreads();
 
@@ -816,7 +816,7 @@ API int CCONV _RA_HandleHTTPResults()
             }
         }
 
-        SAFE_DELETE(pObj);
+        ra::SafeDelete(pObj);
         pObj = RAWeb::PopNextHttpResult();
     }
 

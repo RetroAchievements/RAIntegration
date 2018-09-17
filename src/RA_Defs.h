@@ -105,17 +105,28 @@ template<typename Array, class = std::enable_if_t<std::is_array_v<Array>>>
 _Success_(return >= 0) _NODISCARD _CONSTANT_FN __cdecl
 SizeOfArray(_In_ const Array& arr) noexcept { return(sizeof(arr) / sizeof(*arr)); }
 
+/// <summary>
+///   Safely deletes a pointer to prevent dangling
+/// </summary>
+/// <typeparam name="NullablePointer">
+///   A pointer that satisfies the 
+///   <a href="https://en.cppreference.com/w/cpp/named_req/NullablePointer">NullablePointer</a> named requirement.
+/// </typeparam>
+/// <param name="np">The pointer to delete.</param>
+/// <param name="bIsDynArray">
+///   Set this to <c>true</c> if <paramref name="np" /> is a dynamically allocated array.
+/// </param>
 template<typename NullablePointer, class = std::enable_if_t<is_nullable_pointer_v<NullablePointer>>>
-_Success_(x == nullptr) _NODISCARD _CONSTANT_FN __cdecl
-SafeDelete(_In_ NullablePointer x) noexcept
+_Success_(np == nullptr) _CONSTANT_FN
+SafeDelete(_In_ NullablePointer np, _In_ bool bIsDynArray = false) noexcept
 {
-    if (x != nullptr)
+    if (np != nullptr)
     {
-        if constexpr (std::is_array_v<NullablePointer>)
-            delete[] x;
+        if (bIsDynArray)
+            delete[] np;
         else
-            delete x;
-        x = nullptr;
+            delete np;
+        np = nullptr;
     }
 }
 

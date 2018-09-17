@@ -39,7 +39,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COL_SIZE[i];
         col.cchTextMax = 255;
-        ra::tstring str = NativeStr(COL_TITLE[i]);	//	Hold the temporary object
+        ra::tstring str = ra::NativeStr(COL_TITLE[i]);	//	Hold the temporary object
         col.pszText = str.data();
         col.iSubItem = i;
 
@@ -90,7 +90,7 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     for (size_t i = 0; i < NumReporterColumns; ++i)
     {
         item.iSubItem = i;
-        ra::tstring sStr = NativeStr(ms_lbxData[ms_nNumOccupiedRows][i]);	//Scoped cache
+        ra::tstring sStr = ra::NativeStr(ms_lbxData[ms_nNumOccupiedRows][i]);	//Scoped cache
         item.pszText = sStr.data();
 
         if (i == 0)
@@ -118,7 +118,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                 AddAchievementToListBox(hList, &g_pActiveAchievements->GetAchievement(i));
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP);
-            SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, NativeStr(RAUsers::LocalUser().Username()).c_str());
+            SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, ra::NativeStr(RAUsers::LocalUser().Username()).c_str());
         }
         return FALSE;
 
@@ -192,7 +192,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         g_sCurrentROMMD5.c_str(),
                         sBugReportComment.c_str());
 
-                    if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
+                    if (MessageBox(nullptr, ra::NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;
 
                     PostArgs args;
@@ -219,7 +219,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                                 "\n"
                                 "Thanks again!");
 
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
+                            MessageBox(hDlg, ra::NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
                             EndDialog(hDlg, TRUE);
                             return TRUE;
                         }
@@ -232,7 +232,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                                 "Response From Server:\n"
                                 "\n"
                                 "Error code: %d", doc.GetParseError());
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
+                            MessageBox(hDlg, ra::NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
                             return FALSE;
                         }
                     }

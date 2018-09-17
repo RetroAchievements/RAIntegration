@@ -339,7 +339,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd, ra::NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pUnofficialAchievements->HasUnsavedChanges())
     {
@@ -349,7 +349,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd, ra::NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pLocalAchievements->HasUnsavedChanges())
     {
@@ -359,7 +359,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd, ra::NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
 
     return(nResult == IDYES);
@@ -472,7 +472,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
             std::ostringstream oss;
             oss << "Game not loaded.\nError from " << _RA_HostName() << "!";
-            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
+            MessageBox(g_RAMainWnd, ra::NativeStr(oss.str()).c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
         }
     }
 
@@ -576,7 +576,7 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
         << "Current version: " << g_sClientVersion << "\n"
         << "New version: " << sNewVer;
 
-    if (MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Update available!"), MB_YESNO | MB_ICONINFORMATION) == IDYES)
+    if (MessageBox(g_RAMainWnd, ra::NativeStr(oss.str()).c_str(), TEXT("Update available!"), MB_YESNO | MB_ICONINFORMATION) == IDYES)
     {
         //FetchBinaryFromWeb( g_sClientEXEName );
         //
@@ -609,7 +609,7 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
         oss2 << "http://" << _RA_HostName() << "/download.php";
         ShellExecute(nullptr,
             TEXT("open"),
-            NativeStr(oss2.str()).c_str(),
+            ra::NativeStr(oss2.str()).c_str(),
             nullptr,
             nullptr,
             SW_SHOWNORMAL);
@@ -901,7 +901,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     if (strcmp(_RA_HostName(), "retroachievements.org") != 0)
         sstr << " [" << _RA_HostName() << "]";
 
-    SetWindowText(g_RAMainWnd, NativeStr(sstr.str()).c_str());
+    SetWindowText(g_RAMainWnd, ra::NativeStr(sstr.str()).c_str());
 }
 
 //	##BLOCKING##
@@ -929,7 +929,7 @@ static void RA_CheckForUpdate()
                 //	Up to date
                 char buffer[1024];
                 sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
-                MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
+                MessageBox(g_RAMainWnd, ra::NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
             }
         }
         else
@@ -937,7 +937,7 @@ static void RA_CheckForUpdate()
             //	Error in download
             std::ostringstream oss;
             oss << "Unexpected response from " << _RA_HostName() << ".";
-            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
+            MessageBox(g_RAMainWnd, ra::NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
         }
     }
     else
@@ -946,7 +946,7 @@ static void RA_CheckForUpdate()
         std::ostringstream oss;
         oss << "Could not connect to " << _RA_HostName() << ".\n" <<
             "Please check your connection settings or RA forums!";
-        MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
+        MessageBox(g_RAMainWnd, ra::NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
     }
 }
 
@@ -1168,7 +1168,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 oss << "http://" << _RA_HostName() << "/User/" << RAUsers::LocalUser().Username();
                 ShellExecute(nullptr,
                     TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
+                    ra::NativeStr(oss.str()).c_str(),
                     nullptr,
                     nullptr,
                     SW_SHOWNORMAL);
@@ -1182,7 +1182,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 oss << "http://" << _RA_HostName() << "/Game/" << g_pCurrentGameData->GetGameID();
                 ShellExecute(nullptr,
                     TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
+                    ra::NativeStr(oss.str()).c_str(),
                     nullptr,
                     nullptr,
                     SW_SHOWNORMAL);
@@ -1248,7 +1248,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             msg += (bLeaderboardsActive ? "enabled." : "disabled.");
             msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
 
-            MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
+            MessageBox(nullptr, ra::NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
 
             if (!bLeaderboardsActive)
                 g_PopupWindows.LeaderboardPopups().Reset();

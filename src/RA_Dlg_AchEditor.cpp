@@ -114,7 +114,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
+        ra::tstring colTitle = ra::NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
         col.pszText = const_cast<LPTSTR>(colTitle.c_str());
         col.cchTextMax = 255;
         col.iSubItem = i;
@@ -153,7 +153,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     item.cchTextMax = 256;
     item.iItem = m_nNumOccupiedRows;
     item.iSubItem = 0;
-    ra::tstring sData = NativeStr(m_lbxData[m_nNumOccupiedRows][CSI_ID]);
+    ra::tstring sData = ra::NativeStr(m_lbxData[m_nNumOccupiedRows][CSI_ID]);
     item.pszText = const_cast<LPTSTR>(sData.c_str());
     item.iItem = ListView_InsertItem(hList, &item);
 
@@ -216,7 +216,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     for (size_t i = 0; i < NumColumns; ++i)
     {
         item.iSubItem = i;
-        ra::tstring sData = NativeStr(m_lbxData[nRow][i]);
+        ra::tstring sData = ra::NativeStr(m_lbxData[nRow][i]);
         item.pszText = const_cast<LPTSTR>(sData.c_str());
         ListView_SetItem(hList, &item);
     }
@@ -549,7 +549,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             for (size_t i = 0; i < Condition::NumConditionTypes; ++i)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(CONDITIONTYPE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, ra::NativeStr(CONDITIONTYPE_STR[i]).c_str());
 
                 if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), CONDITIONTYPE_STR[i]) == 0)
                     ComboBox_SetCurSel(g_hIPEEdit, i);
@@ -608,9 +608,9 @@ BOOL CreateIPE(int nItem, int nSubItem)
             // 			}
 
                         /*CB_ERRSPACE*/
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
-            ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
+            ComboBox_AddString(g_hIPEEdit, ra::NativeStr("Mem").c_str());
+            ComboBox_AddString(g_hIPEEdit, ra::NativeStr("Delta").c_str());
+            ComboBox_AddString(g_hIPEEdit, ra::NativeStr("Value").c_str());
 
             int nSel;
             if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Mem") == 0)
@@ -672,7 +672,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             for (size_t i = 0; i < NumComparisonVariableSizeTypes; ++i)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONVARIABLESIZE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, ra::NativeStr(COMPARISONVARIABLESIZE_STR[i]).c_str());
 
                 if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONVARIABLESIZE_STR[i]) == 0)
                     ComboBox_SetCurSel(g_hIPEEdit, i);
@@ -716,7 +716,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             for (size_t i = 0; i < NumComparisonTypes; ++i)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, ra::NativeStr(COMPARISONTYPE_STR[i]).c_str());
 
                 if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONTYPE_STR[i]) == 0)
                     ComboBox_SetCurSel(g_hIPEEdit, i);
@@ -766,7 +766,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
             char* pData = g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem);
-            SetWindowText(g_hIPEEdit, NativeStr(pData).c_str());
+            SetWindowText(g_hIPEEdit, ra::NativeStr(pData).c_str());
 
             //	Special case, hitcounts
             if (nSubItem == CSI_HITCOUNT)
@@ -778,7 +778,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
                     char buffer[256];
                     sprintf_s(buffer, 256, "%u", Cond.RequiredHits());
-                    SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
+                    SetWindowText(g_hIPEEdit, ra::NativeStr(buffer).c_str());
                 }
             }
 
@@ -1132,7 +1132,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer, 16))
                             {
                                 
-                                int nVal = std::stoi(NativeStr(buffer));
+                                int nVal = std::stoi(ra::NativeStr(buffer));
                                 if (nVal < 0 || nVal > 100)
                                     return FALSE;
 
@@ -1259,7 +1259,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             char buffer[256];
                             sprintf_s(buffer, 256, "Are you sure you wish to delete %u condition(s)?", uSelectedCount);
-                            if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
+                            if (MessageBox(hDlg, ra::NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
                                 std::vector<int> items;
@@ -1451,7 +1451,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
                             else if (ResponseData.HasMember("Error"))
                             {
-                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"), MB_OK);
+                                MessageBox(nullptr, ra::NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"), MB_OK);
                             }
                             else
                             {
@@ -1615,7 +1615,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 //	Update the text to match
                                 char buffer[16];
                                 sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().RawValue());
-                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
+                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, ra::NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
                                 SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
@@ -1631,7 +1631,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 //	Update the text to match
                                 char buffer[16];
                                 sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().RawValue());
-                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
+                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, ra::NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
                                 SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
@@ -1880,7 +1880,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     else
         oss << "[no notes]";
 
-    m_sTooltip = NativeStr(oss.str());
+    m_sTooltip = ra::NativeStr(oss.str());
 }
 
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
@@ -2028,15 +2028,15 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
         sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->ID());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, ra::NativeStr(buffer).c_str());
 
         sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->Points());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, ra::NativeStr(buffer).c_str());
 
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, NativeStr(m_pSelectedAchievement->Description()).c_str());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, NativeStr(m_pSelectedAchievement->Author()).c_str());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, ra::NativeStr(m_pSelectedAchievement->Title()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, ra::NativeStr(m_pSelectedAchievement->Description()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, ra::NativeStr(m_pSelectedAchievement->Author()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, ra::NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
 
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR), FALSE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_ID), FALSE);
@@ -2070,18 +2070,18 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         m_bPopulatingAchievementEditorData = TRUE;
 
         if (pCheevo->GetDirtyFlags() & Dirty_ID)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, ra::NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
         if ((pCheevo->GetDirtyFlags() & Dirty_Points) && !bPointsSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, ra::NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());
         if ((pCheevo->GetDirtyFlags() & Dirty_Title) && !bTitleSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, ra::NativeStr(m_pSelectedAchievement->Title()).c_str());
         if ((pCheevo->GetDirtyFlags() & Dirty_Description) && !bDescSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, NativeStr(m_pSelectedAchievement->Description()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, ra::NativeStr(m_pSelectedAchievement->Description()).c_str());
         if (pCheevo->GetDirtyFlags() & Dirty_Author)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, NativeStr(m_pSelectedAchievement->Author()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, ra::NativeStr(m_pSelectedAchievement->Author()).c_str());
         if (pCheevo->GetDirtyFlags() & Dirty_Badge)
         {
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, ra::NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
@@ -2213,7 +2213,7 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
     {
-        const auto nSel{ ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str()) };
+        const auto nSel{ ComboBox_AddString(m_hDestComboBox, ra::NativeStr(pStr).c_str()) };
         if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
         {
             ::MessageBox(::GetActiveWindow(), _T("An error has occurred or there is insufficient space "

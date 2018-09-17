@@ -162,7 +162,7 @@ BOOL Achievement::Test()
 
         char buffer[256];
         sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
-        MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
+        MessageBox(g_RAMainWnd, ra::NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
 #endif
     }
 

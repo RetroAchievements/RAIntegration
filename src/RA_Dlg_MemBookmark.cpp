@@ -546,7 +546,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
+        ra::tstring colTitle = ra::NativeStr(COLUMN_TITLE[i]).c_str();
         col.pszText = const_cast<LPTSTR>(colTitle.c_str());
         col.cchTextMax = 255;
         col.iSubItem = i;
@@ -936,7 +936,7 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
     };
 
     SendMessage(g_hIPEEditBM, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks[nItem]->Description()).c_str());
+    SetWindowText(g_hIPEEditBM, ra::NativeStr(m_vBookmarks[nItem]->Description()).c_str());
 
     SendMessage(g_hIPEEditBM, EM_SETSEL, 0, -1);
     SetFocus(g_hIPEEditBM);

@@ -244,18 +244,19 @@ const int SERVER_PING_DURATION = 2 * 60;
 #ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
-#define ASSERT( x ) assert( x )
+_CONSTANT_FN ASSERT(_In_ bool bExpression) noexcept { assert(bExpression); }
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+_CONSTANT_FN ASSERT(_UNUSED bool) noexcept {}
 #endif
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+_CONSTANT_FN ASSERT(_UNUSED bool) noexcept {}
 #endif
 
 #ifndef UNUSED
-#define UNUSED( x ) ( x );
+template<typename T>
+_CONSTANT_FN UNUSED(_UNUSED T) noexcept {}
 #endif
 
 namespace ra {
@@ -274,17 +275,46 @@ _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 _NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
 
-} // namespace ra
 
-
-
-
-#ifdef UNICODE
-#define NativeStr(x) ra::Widen(x)
-#define NativeStrType std::wstring
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>>
+_NODISCARD inline auto NativeStr(_In_ const CharT* str)
+{
+    static_assert(!std::is_same_v<CharT, unsigned char>, "Conversion for unsigned strings is currently unsupported!");
+#if _MBCS
+    return Narrow(str);
+#elif _UNICODE
+    return Widen(str);
 #else
-#define NativeStr(x) ra::Narrow(x)
-#define NativeStrType std::string
-#endif
+#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#endif // _MBCS
+}
+
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>>
+_NODISCARD inline auto NativeStr(_In_ const std::basic_string<CharT>& str)
+{
+    static_assert(!std::is_same_v<CharT, unsigned char>, "Conversion for unsigned strings is currently unsupported!");
+#if _MBCS
+    return Narrow(str);
+#elif _UNICODE
+    return Widen(str);
+#else
+#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#endif // _MBCS
+}
+
+template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>>
+_NODISCARD inline auto NativeStr(std::basic_string<CharT>&& str) noexcept
+{
+    static_assert(!std::is_same_v<CharT, unsigned char>, "Conversion for unsigned strings is currently unsupported!");
+#if _MBCS
+    return Narrow(std::forward<std::basic_string<CharT>>(str));
+#elif _UNICODE
+    return Widen(std::forward<std::basic_string<CharT>>(str));
+#else
+#error Unknown character set detected! Only MutiByte and Unicode are supported!
+#endif // _MBCS
+}
+
+} // namespace ra
 
 #endif // !RA_DEFS_H

@@ -109,7 +109,7 @@ void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)
     }
     else if (doc.HasMember("Error"))
     {
-        MessageBox(nullptr, NativeStr(doc["Error"].GetString()).c_str(), TEXT("Login Failed"), MB_OK);
+        MessageBox(nullptr, ra::NativeStr(doc["Error"].GetString()).c_str(), TEXT("Login Failed"), MB_OK);
     }
     else
     {

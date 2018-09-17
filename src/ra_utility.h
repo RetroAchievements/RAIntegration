@@ -92,6 +92,9 @@ filesize(std::basic_string<CharT>&& filename) noexcept
     return file.tellg();
 } // end function filesize
 
+typedef const TCHAR *LPCTSTR;
+typedef TCHAR *LPTSTR;
+
 // More functions to be Unicode compatible w/o sacrificing MBCS
 _EXTERN_C
 /* A wrapper for converting a string to an unsigned long depending on the character set specified */

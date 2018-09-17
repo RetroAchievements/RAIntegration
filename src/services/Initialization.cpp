@@ -3,13 +3,17 @@
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
+#include "services\impl\WindowsFileSystem.hh"
 
 namespace ra {
 namespace services {
 
-void Initialization::RegisterServices(const std::wstring& sHomeDir, const std::string& sClientName)
+void Initialization::RegisterServices(const std::string& sClientName)
 {
-    std::wstring sFilename = sHomeDir + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
+    auto* pFileSystem = new ra::services::impl::WindowsFileSystem();
+    ra::services::ServiceLocator::Provide<ra::services::IFileSystem>(pFileSystem);
+
+    std::wstring sFilename = pFileSystem->BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
     auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
     pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);

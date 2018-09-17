@@ -44,3 +44,5 @@ template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format
 
 // Loads memory into the MemoryManager
 void InitializeMemory(unsigned char* pMemory, size_t szMemorySize);
+
+void AssertContains(const std::string& sHaystack, const std::string& sNeedle);

@@ -2,6 +2,9 @@
 #define RA_JSON_H
 #pragma once
 
+#include "services\TextReader.hh"
+#include "services\TextWriter.hh"
+
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
 
@@ -11,6 +14,9 @@
 #include <rapidjson\ostreamwrapper.h>
 #include <rapidjson\error\en.h>
 
-extern void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc);
+void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc);
+
+bool LoadDocument(_Out_ rapidjson::Document& doc, ra::services::TextReader& reader);
+bool SaveDocument(_In_ rapidjson::Document& doc, ra::services::TextWriter& writer);
 
 #endif // !RA_JSON_H

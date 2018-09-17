@@ -48,11 +48,6 @@ size_t CodeNotes::Load(const std::wstring& sFile)
     return m_CodeNotes.size();
 }
 
-BOOL CodeNotes::Save(const std::wstring& sFile)
-{
-    return FALSE; // All saving should be cloud-based!
-}
-
 BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 {
     if (nID == 0)

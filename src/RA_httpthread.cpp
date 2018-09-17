@@ -11,6 +11,9 @@
 #include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 #include <winhttp.h>
 #include <memory>
 #include <fstream>
@@ -109,14 +112,14 @@ HttpResults RAWeb::ms_LastHttpResults;
 
 PostArgs PrevArgs;
 
-std::wstring RAWeb::sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
+std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", GetJSONParseErrorStr(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
 
     return !rDocOut.HasParseError();
 }
@@ -371,13 +374,19 @@ BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& Re
             // Send a Request.
             if (hRequest != nullptr)
             {
-                BOOL bResults = WinHttpSendRequest(hRequest,
+                if (WinHttpSendRequest(hRequest,
                     L"Content-Type: application/x-www-form-urlencoded",
                     0,
                     WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
                     0,
                     0,
-                    0);
+                    0) == 0)
+                {
+                    ::WinHttpCloseHandle(hRequest);
+                    ::WinHttpCloseHandle(hConnect);
+                    ::WinHttpCloseHandle(hSession);
+                    return static_cast<BOOL>(ra::to_signed(::GetLastError()));
+                }
 
                 if (WinHttpReceiveResponse(hRequest, nullptr))
                 {
@@ -722,8 +731,11 @@ void RAWeb::RA_InitializeHTTPThreads()
 {
     RA_LOG(__FUNCTION__ " called\n");
 
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    unsigned int nNumHTTPThreads = pConfiguration.GetNumBackgroundThreads();
+
     RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
-    for (size_t i = 0; i < g_nNumHTTPThreads; ++i)
+    for (size_t i = 0; i < nNumHTTPThreads; ++i)
     {
         DWORD dwThread;
         HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
@@ -800,7 +812,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                         {
                             if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
                                 args['m'] = "Developing Achievements";
-                            else if (g_bHardcoreModeActive)
+                            else if (_RA_HardcoreModeIsActive())
                                 args['m'] = "Inspecting Memory in Hardcore mode";
                             else if (g_nActiveAchievementSet == Core)
                                 args['m'] = "Fixing Achievements";

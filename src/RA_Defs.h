@@ -50,6 +50,7 @@
 #define NODEFERWINDOWPOS
 #define NOMCX  
 
+struct IUnknown;
 #include <Windows.h>
 #include <WindowsX.h>
 
@@ -72,26 +73,16 @@
 //	Version Information is integrated into tags
 
 #else
-//NB. These must NOT be accessible from the emulator!
-//#define RA_INTEGRATION_VERSION	"0.053"
 
-//	RA-Only
-#define RAPIDJSON_HAS_STDSTRING 1
-#define RAPIDJSON_NOMEMBERITERATORCLASS 1
-#include <rapidjson/document.h> // has reader.h
-#include <rapidjson/writer.h> // has stringbuffer.h
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/ostreamwrapper.h>
-#include <rapidjson/error/en.h>
+#include "RA_Log.h"
 
-_CONSTANT_FN GetJSONParseErrorStr{ rapidjson::GetParseError_En };
+#include "RA_Json.h"
 
 using namespace std::string_literals; // u8 (UTF-8), u (UTF-16, char16_t), U (UTF-32, char32_t) prefixes and s (std::basic_string) suffix
 #endif	// RA_EXPORTS
 
 _CONSTANT_VAR RA_KEYS_DLL{ "RA_Keys.dll" };
 _CONSTANT_VAR RA_PREFERENCES_FILENAME_PREFIX{ L"RAPrefs_" };
-
 _CONSTANT_VAR RA_DIR_OVERLAY{ L"Overlay\\" };
 _CONSTANT_VAR RA_DIR_BASE{ L"RACache\\" };
 _CONSTANT_VAR RA_DIR_DATA{ L"RACache\\Data\\" };
@@ -233,15 +224,11 @@ enum AchievementSetType
     NumAchievementSetTypes
 };
 
-extern void RADebugLogNoFormat(const char* data);
-extern void RADebugLog(const char* sFormat, ...);
 extern BOOL DirectoryExists(const char* sPath);
 
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
-
-#define RA_LOG RADebugLog
 
 #ifdef _DEBUG
 #ifndef RA_UTEST

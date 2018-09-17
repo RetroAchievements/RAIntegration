@@ -1,6 +1,7 @@
 #include "RA_RichPresence.h"
 
 #include "RA_Defs.h"
+#include "RA_Log.h"
 #include "RA_MemValue.h"
 
 RA_RichPresenceInterpreter g_RichPresenceInterpreter;

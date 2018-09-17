@@ -15,6 +15,9 @@
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 //static 
 LocalRAUser RAUsers::ms_LocalUser("");
 std::map<std::string, RAUser*> RAUsers::UserDatabase;
@@ -49,8 +52,7 @@ RAUser::RAUser(const std::string& sUsername) :
 
 LocalRAUser::LocalRAUser(const std::string& sUser) :
     RAUser(sUser),
-    m_bIsLoggedIn(FALSE),
-    m_bStoreToken(FALSE)
+    m_bIsLoggedIn(FALSE)
 {
 }
 
@@ -64,7 +66,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
         {
             PostArgs args;
             args['u'] = Username();
-            args['t'] = Token();		//	Plaintext password(!)
+            args['t'] = Token();
 
             rapidjson::Document doc;
             if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
@@ -81,7 +83,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     {
         //	Push dialog to get them to login!
         DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-        _RA_SavePreferences();
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
     }
 
 }
@@ -93,8 +95,6 @@ void LocalRAUser::AttemptSilentLogin()
     args['u'] = Username();
     args['t'] = Token();
     RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
-
-    m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
 void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)
@@ -126,8 +126,10 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     SetScore(nPoints);
     //SetUnreadMessageCount( nMessages );
 
-    //	Used only for persistence: always store in memory (we need it!)
-    SetStoreToken(bRememberLogin);
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    pConfiguration.SetUsername(sUser);
+    if (bRememberLogin)
+        pConfiguration.SetApiToken(sToken);
 
     m_aFriends.clear();
 

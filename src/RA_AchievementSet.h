@@ -18,6 +18,7 @@ public:
     {
         Clear();
     }
+    
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
@@ -74,9 +75,9 @@ public:
     BOOL HasUnsavedChanges();
 
 private:
-    const AchievementSetType m_nSetType;
+    const AchievementSetType m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive;
+    BOOL m_bProcessingActive{};
 };
 
 

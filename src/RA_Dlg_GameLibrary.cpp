@@ -19,7 +19,7 @@ namespace {
 
 const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
 const int COL_SIZE[] = { 30, 230, 110, 170 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
+static_assert(ra::SizeOfArray(COL_TITLE) == ra::SizeOfArray(COL_SIZE), "Must match!");
 const bool bCancelScan = false;
 
 std::mutex mtx;
@@ -220,7 +220,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     LV_COLUMN col;
     ZeroMemory(&col, sizeof(col));
 
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    for (size_t i = 0; i < ra::SizeOfArray(COL_TITLE); ++i)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
@@ -230,7 +230,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//	Final column should fill
+        if (i == ra::SizeOfArray(COL_TITLE) - 1)	//	Final column should fill
         {
             col.fmt |= LVCFMT_FILL;
         }

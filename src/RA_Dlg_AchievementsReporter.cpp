@@ -12,7 +12,7 @@ namespace {
 
 const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
 const int COL_SIZE[] = { 19, 105, 205, 75, 62 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
+static_assert(ra::SizeOfArray(COL_TITLE) == ra::SizeOfArray(COL_SIZE), "Must match!");
 
 const char* PROBLEM_STR[] = { "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
 
@@ -34,7 +34,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     LV_COLUMN col;
     ZeroMemory(&col, sizeof(col));
 
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    for (size_t i = 0; i < ra::SizeOfArray(COL_TITLE); ++i)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cx = COL_SIZE[i];
@@ -44,7 +44,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//If the last element: fill to the end
+        if (i == ra::SizeOfArray(COL_TITLE) - 1)	//If the last element: fill to the end
             col.fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, i, reinterpret_cast<LPARAM>(&col));

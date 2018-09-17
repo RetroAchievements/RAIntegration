@@ -86,36 +86,50 @@
 
 _CONSTANT_FN GetJSONParseErrorStr{ rapidjson::GetParseError_En };
 
-using namespace std::string_literals;
+using namespace std::string_literals; // u8 (UTF-8), u (UTF-16, char16_t), U (UTF-32, char32_t) prefixes and s (std::basic_string) suffix
 #endif	// RA_EXPORTS
 
-#define RA_KEYS_DLL						"RA_Keys.dll"
-#define RA_PREFERENCES_FILENAME_PREFIX	L"RAPrefs_"
+_CONSTANT_VAR RA_KEYS_DLL{ "RA_Keys.dll" };
+_CONSTANT_VAR RA_PREFERENCES_FILENAME_PREFIX{ L"RAPrefs_" };
 
-#define RA_DIR_OVERLAY					L"Overlay\\"
-#define RA_DIR_BASE						L"RACache\\"
-#define RA_DIR_DATA						RA_DIR_BASE L"Data\\"
-#define RA_DIR_BADGE					RA_DIR_BASE L"Badge\\"
-#define RA_DIR_USERPIC					RA_DIR_BASE L"UserPic\\"
-#define RA_DIR_BOOKMARKS				RA_DIR_BASE L"Bookmarks\\"
+_CONSTANT_VAR RA_DIR_OVERLAY{ L"Overlay\\" };
+_CONSTANT_VAR RA_DIR_BASE{ L"RACache\\" };
+_CONSTANT_VAR RA_DIR_DATA{ L"RACache\\Data\\" };
+_CONSTANT_VAR RA_DIR_BADGE{ L"RACache\\Badge\\" };
+_CONSTANT_VAR RA_DIR_USERPIC{ L"RACache\\UserPic\\" };
+_CONSTANT_VAR RA_DIR_BOOKMARKS{ L"RACache\\Bookmarks\\" };
 
-#define RA_GAME_HASH_FILENAME			RA_DIR_DATA L"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME			RA_DIR_DATA L"gametitles.txt"
-#define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA L"myprogress.txt"
-#define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA L"mygamelibrary.txt"
+_CONSTANT_VAR RA_GAME_HASH_FILENAME{ L"RACache\\Data\\gamehashlibrary.txt" };
+_CONSTANT_VAR RA_GAME_LIST_FILENAME{ L"RACache\\Data\\gametitles.txt" };
+_CONSTANT_VAR RA_MY_PROGRESS_FILENAME{ L"RACache\\Data\\myprogress.txt" };
+_CONSTANT_VAR RA_MY_GAME_LIBRARY_FILENAME{ L"RACache\\Data\\mygamelibrary.txt" };
 
-#define RA_NEWS_FILENAME				RA_DIR_DATA L"ra_news.txt"
-#define RA_TITLES_FILENAME				RA_DIR_DATA L"gametitles.txt"
-#define RA_LOG_FILENAME					RA_DIR_DATA L"RALog.txt"
+_CONSTANT_VAR RA_NEWS_FILENAME{ L"RACache\\Data\\ra_news.txt" };
+_CONSTANT_VAR RA_TITLES_FILENAME{ L"RACache\\Data\\gametitles.txt" };
+_CONSTANT_VAR RA_LOG_FILENAME{ L"RACache\\Data\\RALog.txt" };
 
+namespace ra {
 
-#define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
-#define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
+template<typename Array, class = std::enable_if_t<std::is_array_v<Array>>>
+_Success_(return >= 0) _NODISCARD _CONSTANT_FN __cdecl
+SizeOfArray(_In_ const Array& arr) noexcept { return(sizeof(arr) / sizeof(*arr)); }
 
+template<typename NullablePointer, class = std::enable_if_t<is_nullable_pointer_v<NullablePointer>>>
+_Success_(x == nullptr) _NODISCARD _CONSTANT_FN __cdecl
+SafeDelete(_In_ NullablePointer x) noexcept
+{
+    if (x != nullptr)
+    {
+        if constexpr (std::is_array_v<NullablePointer>)
+            delete[] x;
+        else
+            delete x;
+        x = nullptr;
+    }
+}
 
+} /* namespace ra */
 
-//namespace RA
-//{
 class RARect : public RECT
 {
 public:

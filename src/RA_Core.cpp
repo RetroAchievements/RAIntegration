@@ -286,7 +286,7 @@ API int CCONV _RA_Shutdown()
 {
     _RA_SavePreferences();
 
-    SAFE_DELETE(g_pCoreAchievements);
+    ra::SafeDelete(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
     SAFE_DELETE(g_pLocalAchievements);
 

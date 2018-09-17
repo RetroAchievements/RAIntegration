@@ -23,7 +23,7 @@ int nSelSubItemBM;
 namespace {
 const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
 const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
+static_assert(ra::SizeOfArray(COLUMN_TITLE) == ra::SizeOfArray(COLUMN_WIDTH), "Must match!");
 }
 
 inline constexpr std::array<COMDLG_FILTERSPEC, 1> c_rgFileTypes{ {L"Text Document (*.txt)", L"*.txt"} };

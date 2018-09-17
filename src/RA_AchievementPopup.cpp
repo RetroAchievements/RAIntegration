@@ -32,7 +32,7 @@ const wchar_t* MSG_SOUND[] =
     L"lbcancel.wav",
     L"message.wav",
 };
-static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
+static_assert(ra::SizeOfArray(MSG_SOUND) == NumMessageTypes, "Must match!");
 }
 
 AchievementPopup::AchievementPopup() :

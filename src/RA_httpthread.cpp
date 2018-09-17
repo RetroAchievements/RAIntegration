@@ -50,7 +50,7 @@ const char* RequestTypeToString[] =
 
     "STOP_THREAD",
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
+static_assert(ra::SizeOfArray(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
 const char* RequestTypeToPost[] =
 {
@@ -85,19 +85,19 @@ const char* RequestTypeToPost[] =
 
     "_stopthread_",         //  STOP_THREAD
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
+static_assert(ra::SizeOfArray(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
 const char* UploadTypeToString[] =
 {
     "RequestUploadBadgeImage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
+static_assert(ra::SizeOfArray(UploadTypeToString) == NumUploadTypes, "Must match up!");
 
 const char* UploadTypeToPost[] =
 {
     "uploadbadgeimage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
+static_assert(ra::SizeOfArray(UploadTypeToPost) == NumUploadTypes, "Must match up!");
 
 //  No game-specific code here please!
 

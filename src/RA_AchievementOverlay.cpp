@@ -34,7 +34,7 @@ const char* PAGE_TITLES[] ={
     " Message Viewer "
 
 };
-static_assert(SIZEOF_ARRAY(PAGE_TITLES) == NumOverlayPages, "Must match!");
+static_assert(ra::SizeOfArray(PAGE_TITLES) == NumOverlayPages, "Must match!");
 
 }
 

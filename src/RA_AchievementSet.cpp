@@ -15,11 +15,31 @@
 #include "RA_GameData.h"
 
 AchievementSet* g_pCoreAchievements = nullptr;
+//is_nothrow_equality_comparable<T>::value   &&
+//std::is_nothrow_default_constructible_v<T> &&
+//std::is_nothrow_copy_constructible_v<T>    &&
+//std::is_nothrow_copy_assignable_v<T>       &&
+//std::is_nothrow_destructible_v<T>
+using shit = AchievementSet*;
+static_assert(ra::is_nothrow_equality_comparable_v<shit>);
+static_assert(std::is_nothrow_default_constructible_v<shit>);
+static_assert(std::is_nothrow_copy_constructible_v<shit>);
+static_assert(std::is_nothrow_copy_assignable_v<shit>);
+static_assert(std::is_nothrow_destructible_v<shit>);
+static_assert(ra::is_nullable_pointer_v<shit>);
+using b = shit(std::nullptr_t);
+using shit2 = decltype(shit(nullptr) });
+
+
+
+
+
+
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
 AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
+static_assert(ra::SizeOfArray(ACH_SETS) == NumAchievementSetTypes, "Must match!");
 
 AchievementSetType g_nActiveAchievementSet = Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;

@@ -19,7 +19,7 @@ const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "A
 const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
 const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
 
-const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+const int NUM_COLS = ra::SizeOfArray(COLUMN_SIZE);
 
 int iSelect = -1;
 

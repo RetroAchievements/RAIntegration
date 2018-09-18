@@ -10,6 +10,8 @@ namespace services {
 class TextWriter
 {
 public:
+    virtual ~TextWriter() {}
+
     /// <summary>
     /// Writes text to the output.
     /// </summary>

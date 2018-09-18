@@ -26,7 +26,7 @@ public:
         if (m_oStream.is_open())
             m_oStream.write(sText.c_str(), ra::to_signed(sText.length()));
     }
-    
+
     void Write(_In_ std::wstring& sText) override
     {
         if (m_oStream.is_open())

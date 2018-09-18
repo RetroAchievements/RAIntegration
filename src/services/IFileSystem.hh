@@ -14,24 +14,27 @@
 namespace ra {
 namespace services {
 
-class IFileSystem {
+class IFileSystem
+{
 public:
+    virtual ~IFileSystem() {}
+
     /// <summary>
     /// Gets the base directory of the running executable.
     /// </summary>
     virtual const std::wstring& BaseDirectory() const = 0;
-    
+
     /// <summary>
     /// Determines if the specified directory exists.
     /// </summary>
     virtual bool DirectoryExists(const std::wstring& sDirectory) const = 0;
-    
+
     /// <summary>
     /// Creates the specified directory.
     /// </summary>
     /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
     virtual bool CreateDirectory(const std::wstring& sDirectory) const = 0;
-    
+
     /// <summary>
     /// Opens the specified file.
     /// </summary>

@@ -18,7 +18,7 @@ public:
     {
     }
 
-    StringTextWriter(std::string& sOutput) 
+    StringTextWriter(std::string& sOutput)
         : m_sOutput(sOutput)
     {
     }

@@ -9,7 +9,9 @@ namespace services {
 
 class TextReader
 {
-public:    
+public:
+    virtual ~TextReader() {}
+
     /// <summary>
     /// Reads the next line from the input.
     /// </summary>

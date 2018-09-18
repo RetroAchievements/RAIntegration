@@ -15,7 +15,7 @@ namespace impl {
 class StringTextReader : public ra::services::TextReader
 {
 public:
-    StringTextReader(const std::string& sInput) 
+    StringTextReader(const std::string& sInput)
         : m_iStream(sInput)
     {
     }

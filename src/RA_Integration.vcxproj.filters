@@ -126,9 +126,6 @@
     <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_LeaderboardManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
       <Filter>Data\rcheevos</Filter>
     </ClCompile>
@@ -332,9 +329,6 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_MemValue.h">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="services\IConfiguration.hh">
       <Filter>Services</Filter>
     </ClInclude>
@@ -368,9 +362,6 @@
     <ClInclude Include="services\SearchResults.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_LeaderboardManager.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -379,6 +370,9 @@
     </ClInclude>
     <ClInclude Include="services\ImageRepository.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Data\rcheevos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

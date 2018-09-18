@@ -169,6 +169,7 @@
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClCompile Include="SearchResults_Tests.cpp" />
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
     <ClInclude Include="..\src\md5.h" />
     <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Condition.h" />

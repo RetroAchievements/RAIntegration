@@ -201,6 +201,9 @@
     <ClInclude Include="..\src\RA_md5factory.h">
       <Filter>Code</Filter>
     </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Code\rcheevos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

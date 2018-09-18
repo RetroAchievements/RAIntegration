@@ -140,14 +140,14 @@ public:
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
 
     static void SetUserAgentString();
-    static void SetUserAgent(const std::string& sValue) { sUserAgent = ra::Widen(sValue); }
-    static const std::wstring& GetUserAgent() { return sUserAgent; }
+    static void SetUserAgent(const std::string& sValue) { m_sUserAgent = ra::Widen(sValue); }
+    static const std::wstring& GetUserAgent() { return m_sUserAgent; }
 
 private:
     static HANDLE ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;
 
-    static std::wstring sUserAgent;
+    static std::wstring m_sUserAgent;
 };
 
 

@@ -3,9 +3,8 @@
 #include "RA_Defs.h"
 #include "RA_MemManager.h"
 
-#ifndef RA_UTEST
-#include "RA_LeaderboardManager.h"
-#endif
+#include "services\ILeaderboardManager.hh"
+#include "services\ServiceLocator.hh"
 
 #include "rcheevos\include\rcheevos.h"
 
@@ -89,23 +88,17 @@ void RA_Leaderboard::Test()
 
 void RA_Leaderboard::Start()
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.ActivateLeaderboard(*this);
-#endif
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().ActivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Cancel()
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.DeactivateLeaderboard(*this);
-#endif
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().DeactivateLeaderboard(*this);
 }
 
 void RA_Leaderboard::Submit(unsigned int nScore)
 {
-#ifndef RA_UTEST
-    g_LeaderboardManager.SubmitLeaderboardEntry(*this, nScore);
-#endif
+    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().SubmitLeaderboardEntry(*this, nScore);
 }
 
 void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)

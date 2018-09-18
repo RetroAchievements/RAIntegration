@@ -41,7 +41,7 @@ public:
     INT_PTR AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
 public:
     void OnLoad_NewRom();
-    void LoadAchievement(Achievement* pCheevo, BOOL bAttemptKeepScrollbar);
+    void LoadAchievement(Achievement* pCheevo, _UNUSED BOOL);
 
     inline void SetICEControl(HWND hIce) { m_hICEControl = hIce; }
     inline char* LbxDataAt(unsigned int nRow, unsigned int nCol) { return m_lbxData[nRow][nCol]; }

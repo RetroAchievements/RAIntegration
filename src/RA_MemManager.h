@@ -53,7 +53,7 @@ public:
 
     std::vector<size_t> GetBankIDs() const;
 
-    void ChangeActiveMemBank(unsigned short nMemBank);
+    void ChangeActiveMemBank(_UNUSED unsigned short);
 
     unsigned char ActiveBankRAMByteRead(ra::ByteAddress nOffs) const;
     void ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal);

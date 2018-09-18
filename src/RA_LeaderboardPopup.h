@@ -20,7 +20,7 @@ public:
 public:
     LeaderboardPopup();
 
-    void Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused);
+    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
     void Reset();

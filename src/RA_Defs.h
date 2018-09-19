@@ -246,7 +246,7 @@ _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
-_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 
 } // namespace ra
 

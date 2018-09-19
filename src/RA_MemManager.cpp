@@ -189,7 +189,7 @@ void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal
     }
 }
 
-extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, void* pData)
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
 {
     switch (nBytes)
     {

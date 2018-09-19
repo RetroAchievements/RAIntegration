@@ -3,7 +3,10 @@
 #include "RA_Defs.h"
 #include "RA_MemManager.h"
 
+#pragma warning (push)
+#pragma warning (disable:4201) // nameless struct
 #include "rcheevos\include\rcheevos.h"
+#pragma warning (pop)
 
 RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 

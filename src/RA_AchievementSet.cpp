@@ -274,7 +274,7 @@ BOOL AchievementSet::SaveToFile()
 
     const std::wstring sFilename = GetAchievementSetFilename(g_pCurrentGameData->GetGameID());
 
-    int err = _wfopen_s(&pFile, sFilename.c_str(), L"w");
+    _wfopen_s(&pFile, sFilename.c_str(), L"w");
     if (pFile != nullptr)
     {
         sprintf_s(sNextLine, 2048, "0.030\n");						//	Min ver

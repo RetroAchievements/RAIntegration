@@ -16,7 +16,7 @@ INT_PTR CALLBACK s_GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
     return g_GameTitleDialog.GameTitleProc(hDlg, uMsg, wParam, lParam);
 }
 
-INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
 {
     static bool bUpdatingTextboxTitle = false;
 
@@ -123,7 +123,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                     {
                         const rapidjson::Value& Response = doc["Response"];
 
-                        const ra::GameID nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
+                        nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
                         const std::string& sGameTitle = Response["GameTitle"].GetString();
 
                         //	If we're setting the game title here...
@@ -231,19 +231,15 @@ void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sM
 //	static
 std::string Dlg_GameTitle::CleanRomName(const std::string& sTryName)
 {
-    std::stringstream sstr;
+    if (sTryName.empty())
+        return "";
 
     //	Scan through, reform sRomNameRef using all logical characters
-    int nCharsAdded = 0;
-
-    for (size_t i = 0; i < sTryName.length(); ++i)
+    std::string ret;
+    for (auto& c : sTryName)
     {
-        if (sTryName[i] == '\0')
-            break;
-
-        if (__isascii(sTryName[i]))
-            sstr << sTryName[i];
+        if (__isascii(c))
+            ret.push_back(c);
     }
-
-    return sstr.str();
+    return ret;
 }

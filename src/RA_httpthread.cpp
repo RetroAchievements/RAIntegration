@@ -808,7 +808,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                                 args['m'] = "Developing Achievements";
                             else if (g_bHardcoreModeActive)
                                 args['m'] = "Inspecting Memory in Hardcore mode";
-                            else if (g_nActiveAchievementSet == Core)
+                            else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
                                 args['m'] = "Fixing Achievements";
 
                         else

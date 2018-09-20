@@ -211,15 +211,6 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
-
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);
 extern BOOL DirectoryExists(const char* sPath);

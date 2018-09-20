@@ -4,7 +4,18 @@
 
 #include "RA_Condition.h"
 
+namespace ra {
+namespace detail {
 
+enum class AchievementSetType
+{
+    Core,
+    Unofficial,
+    Local
+};
+
+} /* namespace detail */
+} /* namespace ra */
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
@@ -24,10 +35,11 @@ enum Achievement_DirtyFlags
     Dirty__All = (unsigned int)(-1)
 };
 
-class Achievement
+class Achievement 
 {
 public:
-    Achievement(AchievementSetType nType);
+    using Type = ra::detail::AchievementSetType;
+    explicit Achievement(_In_ Type nType) noexcept;
 
 public:
     void Clear();
@@ -52,7 +64,8 @@ public:
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
 
-    BOOL IsCoreAchievement() const { return m_nSetType == Core; }
+    _Success_(return)
+    _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == Type::Core); }
 
     void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const { return m_nAchievementID; }
@@ -114,7 +127,7 @@ public:
     void ClearDirtyFlag() { m_nDirtyFlags = 0; }
 
 private:
-    /*const*/ AchievementSetType m_nSetType;
+    /*const*/ Type m_nSetType;
 
     ra::AchievementID m_nAchievementID;
     ConditionSet m_vConditions;

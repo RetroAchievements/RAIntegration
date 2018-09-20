@@ -3,13 +3,16 @@
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
-#include "RA_LeaderboardManager.h"
 #include "RA_User.h"
 #include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 #include "RA_GameData.h"
+
+#include "services\IConfiguration.hh"
+#include "services\ILeaderboardManager.hh"
+#include "services\ServiceLocator.hh"
 
 #include <array>
 #include <fstream>
@@ -246,7 +249,7 @@ void AchievementSet::Test()
                     args['u'] = RAUsers::LocalUser().Username();
                     args['t'] = RAUsers::LocalUser().Token();
                     args['a'] = std::to_string(ach.ID());
-                    args['h'] = std::to_string(static_cast<int>(g_bHardcoreModeActive));
+                    args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
                     RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
                 }
@@ -348,7 +351,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     args['g'] = std::to_string(nGameID);
-    args['h'] = g_bHardcoreModeActive ? "1" : "0";
+    args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
     rapidjson::Document doc;
     if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
@@ -507,7 +510,6 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         for (const auto& lbData : LeaderboardsData.GetArray())
         {
             //"Leaderboards":[{"ID":"2","Mem":"STA:0xfe10=h0000_0xhf601=h0c_d0xhf601!=h0c_0xfff0=0_0xfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green Hill Act 1","Description":"Complete this act in the fastest time!"},
-
             RA_Leaderboard lb{ lbData["ID"].GetUint() };
 
             lb.SetTitle(lbData["Title"].GetString());
@@ -516,7 +518,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             const auto nFormat{ MemValue::ParseFormat(lbData["Format"].GetString()) };
             lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
 
-            g_LeaderboardManager.AddLeaderboard(lb);
+            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().AddLeaderboard(lb);
         }
 
         // calculate the total number of points for the core set, and pre-fetch badge images
@@ -530,12 +532,14 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         if (RAUsers::LocalUser().IsLoggedIn())
         {
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
             //	Loaded OK: post a request for unlocks
             PostArgs args;
             args['u'] = RAUsers::LocalUser().Username();
             args['t'] = RAUsers::LocalUser().Token();
             args['g'] = std::to_string(nGameID);
-            args['h'] = g_bHardcoreModeActive ? "1" : "0";
+            args['h'] = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? "1" : "0";
 
             RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
             std::string sTitle{ "Loaded " };

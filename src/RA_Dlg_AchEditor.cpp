@@ -11,6 +11,9 @@
 #include "RA_MemManager.h"
 #include "RA_User.h"
 
+#include "services\IConfiguration.hh"
+#include "services\ServiceLocator.hh"
+
 namespace {
 const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
 const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
@@ -194,7 +197,8 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
     sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), Cond.CurrentHits());
 
-    if (g_bPreferDecimalVal)
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
     {
         if (Cond.CompTarget().Type() == ValueComparison)
             sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().RawValue());
@@ -869,7 +873,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
             SetupColumns(hList);
-            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS, g_bPreferDecimalVal);
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS, pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
 
             //	For scanning changes to achievement conditions (hit counts)
             SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
@@ -952,7 +957,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_CHK_SHOW_DECIMALS:
                 {
-                    g_bPreferDecimalVal = !g_bPreferDecimalVal;
+                    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                    pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, !pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
                     if (ActiveAchievement() != nullptr)
                     {
                         ActiveAchievement()->SetDirtyFlag(ra::etoi(Dirty__All));
@@ -1565,8 +1571,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     //	http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
-                    HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
-                    ASSERT(hList != nullptr);
+                    ASSERT(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS) != nullptr);
 
                     //	Note: first item should be an ID!
                     if (pOnClick->iItem != -1 && pOnClick->iSubItem != 0)
@@ -1751,8 +1756,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case CSI_VALUE_SRC:
                         {
                             int nBase = 16;
-                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
-                                nBase = 10;
+                            if (rCond.CompSource().Type() == ComparisonVariableType::ValueComparison)
+                            {
+                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                                    nBase = 10;
+                            }
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompSource().SetValues(nVal, nVal);
@@ -1761,8 +1770,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case CSI_VALUE_TGT:
                         {
                             int nBase = 16;
-                            if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison && g_bPreferDecimalVal)
-                                nBase = 10;
+                            if (rCond.CompTarget().Type() == ComparisonVariableType::ValueComparison)
+                            {
+                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                                    nBase = 10;
+                            }
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompTarget().SetValues(nVal, nVal);

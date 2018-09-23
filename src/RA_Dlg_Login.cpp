@@ -5,6 +5,13 @@
 #include "RA_httpthread.h"
 #include "RA_PopupWindows.h"
 
+#include <cctype>
+#include <iomanip>
+#include <sstream>
+#include <string>
+
+using namespace std;
+
 //static 
 BOOL RA_Dlg_Login::DoModalLogin()
 {
@@ -46,9 +53,32 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                         return TRUE;
                     }
 
+
+                    //URL-escape password so it gets sent to the server properly
+                    //Code shamelessly stolen from https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
+                    ostringstream escaped;
+                    escaped.fill('0');
+                    escaped << hex;
+
+                    const string &value = ra::Narrow(sPassEntry);
+                    for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+                        string::value_type c = (*i);
+
+                        // Keep alphanumeric and other accepted characters intact
+                        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+                            escaped << c;
+                            continue;
+                        }
+
+                        // Any other characters are percent-encoded
+                        escaped << uppercase;
+                        escaped << '%' << setw(2) << int((unsigned char)c);
+                        escaped << nouppercase;
+                    }
+
                     PostArgs args;
                     args['u'] = ra::Narrow(sUserEntry);
-                    args['p'] = ra::Narrow(sPassEntry);		//	Plaintext password(!)
+                    args['p'] = escaped.str(); //Plaintext password(!)
 
                     rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))

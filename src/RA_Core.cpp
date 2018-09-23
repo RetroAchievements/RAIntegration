@@ -447,10 +447,22 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = g_sCurrentROMMD5;
 
+        std::ifstream ifile{ L"gameids.txt" };
+        if (!ifile.is_open())
+            return 0U;
+
         rapidjson::Document doc;
-        if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
+        rapidjson::IStreamWrapper isw{ ifile };
+        doc.ParseStream(isw);
+
+        if (!doc.HasParseError())
         {
-            nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
+            if (doc.HasMember(g_sCurrentROMMD5)) {
+                nGameID = static_cast<ra::GameID>(doc[g_sCurrentROMMD5].GetUint());
+            }
+            else {
+                nGameID = static_cast < ra::GameID>(0);
+            }
             if (nGameID == 0)	//	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());

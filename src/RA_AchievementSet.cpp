@@ -343,10 +343,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
     rapidjson::Document doc;
-    if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
-        doc.HasMember("Success") &&
-        doc["Success"].GetBool() &&
-        doc.HasMember("PatchData"))
+    if (FALSE)
     {
         std::wstring sAchSetFileName;
         {
@@ -373,12 +370,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
     }
     else
     {
-        //	Could not connect...
-        std::ostringstream oss;
-        oss << "Could not connect to " << _RA_HostName();
-        PopupWindows::AchievementPopups().AddMessage(MessagePopup{ oss.str(), "Working offline..." });
-
-        return FALSE;
+        return TRUE;
     }
 }
 
@@ -389,6 +381,13 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         return TRUE;
 
     const auto sFilename{ GetAchievementSetFilename(nGameID) };
+    std::ifstream f(sFilename.c_str());
+    //if file doesn't exist
+    if (!f.good()) {
+        std::ofstream newfile(sFilename);
+        newfile.close();
+    }
+
     std::ifstream ifile{ sFilename };
     if (!ifile.is_open())
     {

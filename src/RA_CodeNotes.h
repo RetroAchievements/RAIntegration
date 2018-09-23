@@ -21,7 +21,6 @@ public:
 
         void SetNote(const std::string& sNote) { m_sNote = sNote; }
 
-    private:
         const std::string m_sAuthor;
         std::string m_sNote;
     };
@@ -29,6 +28,7 @@ public:
 public:
     void Clear() noexcept;
 
+    BOOL Save(const std::wstring& sFile);
     size_t Load(const std::wstring& sFile);
 
     BOOL ReloadFromWeb(ra::GameID nID);

@@ -76,7 +76,8 @@ public:
     void SetToken(const std::string& sToken) { m_sToken = sToken; }
     const std::string& Token() const { return m_sToken; }
 
-    BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
+    //Make the application think the login always succeeded, allows for working offline with fake host
+    BOOL IsLoggedIn() const { return TRUE; }
 
     void PostActivity(ActivityType nActivityType);
 

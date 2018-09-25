@@ -23,7 +23,7 @@ enum class Feature
 class IConfiguration
 {
 public:
-    virtual ~IConfiguration() {}
+    virtual ~IConfiguration() noexcept = default;
 
     virtual const std::string& GetUsername() const = 0;
     virtual void SetUsername(const std::string& sValue) = 0;

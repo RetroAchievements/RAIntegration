@@ -16,18 +16,18 @@ namespace impl {
 class FileTextWriter : public ra::services::TextWriter
 {
 public:
-    FileTextWriter(const std::wstring& sFilename)
+    explicit FileTextWriter(const std::wstring& sFilename) noexcept
         : m_oStream(sFilename, std::ios::binary)
     {
     }
 
-    void Write(_In_ std::string& sText) override
+    void Write(_In_ const std::string& sText) override
     {
         if (m_oStream.is_open())
             m_oStream.write(sText.c_str(), ra::to_signed(sText.length()));
     }
 
-    void Write(_In_ std::wstring& sText) override
+    void Write(_In_ const std::wstring& sText) override
     {
         if (m_oStream.is_open())
         {

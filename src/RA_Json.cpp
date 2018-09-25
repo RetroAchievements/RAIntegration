@@ -47,7 +47,7 @@ bool LoadDocument(_Out_ rapidjson::Document& doc, ra::services::TextReader& read
     return !doc.HasParseError();
 }
 
-bool SaveDocument(_In_ rapidjson::Document& doc, ra::services::TextWriter& writer)
+bool SaveDocument(_In_ const rapidjson::Document& doc, ra::services::TextWriter& writer)
 {
     auto* pFileTextWriter = dynamic_cast<ra::services::impl::FileTextWriter*>(&writer);
     if (pFileTextWriter != nullptr)

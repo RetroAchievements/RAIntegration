@@ -17,7 +17,7 @@ namespace services {
 class IFileSystem
 {
 public:
-    virtual ~IFileSystem() {}
+    virtual ~IFileSystem() noexcept = default;
 
     /// <summary>
     /// Gets the base directory of the running executable.

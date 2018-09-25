@@ -10,7 +10,7 @@ namespace services {
 class TextReader
 {
 public:
-    virtual ~TextReader() {}
+    virtual ~TextReader() noexcept = default;
 
     /// <summary>
     /// Reads the next line from the input.

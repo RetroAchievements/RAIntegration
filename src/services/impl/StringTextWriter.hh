@@ -13,22 +13,22 @@ namespace impl {
 class StringTextWriter : public ra::services::TextWriter
 {
 public:
-    StringTextWriter()
+    explicit StringTextWriter() noexcept
         : StringTextWriter(m_sBuffer)
     {
     }
 
-    StringTextWriter(std::string& sOutput)
+    explicit StringTextWriter(std::string& sOutput) noexcept
         : m_sOutput(sOutput)
     {
     }
 
-    void Write(_In_ std::string& sText) override
+    void Write(_In_ const std::string& sText) override
     {
         m_sOutput.append(sText);
     }
 
-    void Write(_In_ std::wstring& sText) override
+    void Write(_In_ const std::wstring& sText) override
     {
         m_sOutput.append(ra::Narrow(sText));
     }

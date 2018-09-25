@@ -11,7 +11,7 @@ namespace impl {
 class WindowsFileSystem : public IFileSystem
 {
 public:
-    WindowsFileSystem();
+    WindowsFileSystem() noexcept;
 
     const std::wstring& BaseDirectory() const override { return m_sBaseDirectory; }
     bool DirectoryExists(const std::wstring& sDirectory) const override;

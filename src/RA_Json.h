@@ -17,6 +17,6 @@
 void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc);
 
 bool LoadDocument(_Out_ rapidjson::Document& doc, ra::services::TextReader& reader);
-bool SaveDocument(_In_ rapidjson::Document& doc, ra::services::TextWriter& writer);
+bool SaveDocument(_In_ const rapidjson::Document& doc, ra::services::TextWriter& writer);
 
 #endif // !RA_JSON_H

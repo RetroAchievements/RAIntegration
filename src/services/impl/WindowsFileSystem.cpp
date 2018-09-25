@@ -18,7 +18,7 @@ namespace ra {
 namespace services {
 namespace impl {
 
-WindowsFileSystem::WindowsFileSystem()
+WindowsFileSystem::WindowsFileSystem() noexcept
 {
     // determine the home directory from the executable's path
     wchar_t sBuffer[MAX_PATH];

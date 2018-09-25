@@ -15,7 +15,7 @@ namespace impl {
 class FileTextReader : public ra::services::TextReader
 {
 public:
-    FileTextReader(const std::wstring& sFilename)
+    explicit FileTextReader(const std::wstring& sFilename) noexcept
         : m_iStream(sFilename)
     {
     }

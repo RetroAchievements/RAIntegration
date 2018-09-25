@@ -53,6 +53,19 @@ private:
 
 TEST_CLASS(RA_Leaderboard_Tests)
 {
+	void AssertValue(const char* sSerialized, unsigned int nExpected)
+	{
+		// NOTE: requires value "1" in $00
+		std::string sString = "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:";
+		sString += sSerialized;
+
+		LeaderboardHarness lb;
+		lb.ParseFromString(sString.c_str(), "VALUE");
+		lb.Test();
+
+		Assert::AreEqual(nExpected, lb.GetCurrentValue(), ra::Widen(sSerialized).c_str());
+	}
+
 public:
     TEST_METHOD(TestSimpleLeaderboard)
     {
@@ -389,6 +402,47 @@ public:
         Assert::AreEqual(4U, lb.GetRankInfo(3).m_nRank);
         Assert::AreEqual(50, lb.GetRankInfo(4).m_nScore);
     }
+
+	TEST_METHOD(TestValue)
+	{
+		unsigned char memory[] = { 0x01, 0x12, 0x34, 0xAB, 0x56 };
+		InitializeMemory(memory, 5);
+
+		// simple accessors
+		AssertValue("0xH0002", 0x34U);
+		AssertValue("0x000002", 0xAB34U);
+		AssertValue("0xL02", 4U);
+		AssertValue("0xU2", 3U);
+
+		// BCD
+		AssertValue("B0xH02", 34U);
+
+		// static values
+		AssertValue("V1234", 1234U);
+		AssertValue("V+1", 1U);
+		AssertValue("V-1", 0xFFFFFFFFU);
+
+		// multiplication
+		AssertValue("0xH02*1", 0x34U);
+		AssertValue("0xH02*3", 156U);
+		AssertValue("0xH02*0.5", 26U);
+		AssertValue("0xH02*-1", 0xFFFFFFCCU);
+		AssertValue("0xH02*0xH01", 936U);
+		AssertValue("0xH02*~0xT02", 0x34U);                // multiply by inverse bit - T02 = 0, inverse = 1
+		AssertValue("0xH02*~0xQ02", 0U);                   // multiply by inverse bit - Q02 = 1, inverse = 0
+		AssertValue("0xH02*~0xH03", 0x34U * 0x54U);        // multiply by inverse byte - H03 = 0xAB, inverse = 0x54
+
+		// addition
+		AssertValue("0xH02_0xH03", 0x34U + 0xABU);
+		AssertValue("0xH02_V10", 0x34U + 10U);
+		AssertValue("0xH02_V-10", 0x34U - 10U);
+		AssertValue("0xH02*100_0xH03*0.5", 0x34U * 100U + 0xABU / 2U);
+
+		// maximum
+		AssertValue("0xH02$0xH03", 0xABU);
+		AssertValue("0xH02*4$0xH03", 0x34U * 4);
+		AssertValue("0xH0001_0xH0004*3$0xH0002*0xL0003", 0x34U * 0xBU); // 0x12 + 0x56 * 3 <> 0x34 * 0xB (0x114 <> 0x23C)
+	}
 };
 
 } // namespace tests

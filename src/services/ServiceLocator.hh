@@ -4,6 +4,10 @@
 
 #include "RA_Log.h"
 
+#ifndef NDEBUG
+#include "RA_Defs.h"
+#endif
+
 #include <assert.h>
 #include <memory>
 
@@ -129,6 +133,11 @@ private:
             sMessage.insert(0, "No service provided for ");
 
             RA_LOG("ERROR: %s\n", sMessage.c_str());
+
+#ifndef NDEBUG
+			// expanded definition of assert macro so we can use the constructed error message
+			_wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), (unsigned)(__LINE__));
+#endif
 
             throw std::runtime_error(sMessage);
         }

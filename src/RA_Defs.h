@@ -235,7 +235,7 @@ const int SERVER_PING_DURATION = 2 * 60;
 #include "RA_StringUtils.h"
 
 namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 }
 
 #endif // !RA_DEFS_H

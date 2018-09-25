@@ -41,9 +41,16 @@ private:
 
 class Dlg_MemBookmark
 {
+    enum class SubItems
+    {
+        Desc,
+        Address,
+        Value,
+        Previous,
+        Changes
+    };
+
 public:
-    //Dlg_MemBookmark();
-    //~Dlg_MemBookmark();
 
     static INT_PTR CALLBACK s_MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);

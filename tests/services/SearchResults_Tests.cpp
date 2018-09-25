@@ -673,8 +673,7 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryEightBitLargeMemory)
     {
-        std::unique_ptr<unsigned char> memory;
-        memory.reset(new unsigned char[BIG_BLOCK_SIZE]);
+        auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             memory.get()[i] = (i % 256);
         InitializeMemory(memory.get(), BIG_BLOCK_SIZE);
@@ -708,8 +707,7 @@ public:
 
     TEST_METHOD(TestInitializeFromMemorySixteenBitLargeMemory)
     {
-        std::unique_ptr<unsigned char> memory;
-        memory.reset(new unsigned char[BIG_BLOCK_SIZE]);
+        auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             memory.get()[i] = (i % 256);
         InitializeMemory(memory.get(), BIG_BLOCK_SIZE);

@@ -90,7 +90,7 @@ public:
         }
 
     private:
-        TClass * m_pPrevious;
+        TClass* m_pPrevious;
         bool m_bDestroy;
     };
 

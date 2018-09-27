@@ -16,7 +16,8 @@ namespace mocks {
 class MockFileSystem : public IFileSystem
 {
 public:
-    MockFileSystem() : m_Override(this)
+    MockFileSystem() noexcept 
+        : m_Override(this)
     {
     }
 
@@ -71,7 +72,6 @@ public:
     }
 
 private:
-
     ra::services::ServiceLocator::ServiceOverride<ra::services::IFileSystem> m_Override;
     std::wstring m_sBaseDirectory = L".\\";
     mutable std::map<std::wstring, std::string> m_mFileContents;

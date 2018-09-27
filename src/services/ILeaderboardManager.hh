@@ -10,7 +10,7 @@ namespace services {
 class ILeaderboardManager
 {
 public:
-    virtual ~ILeaderboardManager() {}
+    virtual ~ILeaderboardManager() noexcept = default;
 
     virtual void Test() = 0;
     virtual void Reset() = 0;

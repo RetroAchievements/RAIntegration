@@ -13,7 +13,7 @@ namespace impl {
 class StringTextWriter : public ra::services::TextWriter
 {
 public:
-    explicit StringTextWriter() noexcept
+    StringTextWriter() noexcept
         : StringTextWriter(m_sBuffer)
     {
     }

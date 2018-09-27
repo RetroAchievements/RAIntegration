@@ -625,7 +625,7 @@ API int CCONV _RA_HandleHTTPResults()
             rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
-            if (pObj->GetRequestType() == RequestBadge)
+            if (pObj->GetRequestType() == RequestBadge || pObj->GetRequestType() == RequestUserPic)
             {
                 //	Ignore...
             }

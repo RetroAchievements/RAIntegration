@@ -4,19 +4,6 @@
 
 #include "RA_Condition.h"
 
-namespace ra {
-namespace detail {
-
-enum class AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local
-};
-
-} /* namespace detail */
-} /* namespace ra */
-
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
@@ -35,10 +22,32 @@ enum Achievement_DirtyFlags
     Dirty__All = (unsigned int)(-1)
 };
 
-class Achievement 
+#ifdef RA_UTEST
+namespace ra {
+namespace data {
+namespace tests {
+
+class RA_Achievement_Tests;
+
+} // namespace ra
+} // namespace data
+} // namespace tests
+#endif
+
+class Achievement
 {
+protected:
+#ifdef RA_UTEST
+    friend class ra::data::tests::RA_Achievement_Tests;
+#endif
+    enum class Type
+    {
+        Core,
+        Unofficial,
+        Local
+    };
+
 public:
-    using Type = ra::detail::AchievementSetType;
     explicit Achievement(_In_ Type nType) noexcept;
 
 public:
@@ -65,7 +74,7 @@ public:
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
 
     _Success_(return)
-    _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == Type::Core); }
+        _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == Type::Core); }
 
     void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const { return m_nAchievementID; }
@@ -159,8 +168,8 @@ private:
 
     unsigned short m_nUpvotes;
     unsigned short m_nDownvotes;
+
+    friend class AchievementSet;
 };
-
-
 
 #endif // !RA_ACHIEVEMENT_H

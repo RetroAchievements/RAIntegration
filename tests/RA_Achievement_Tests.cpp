@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 #include "RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -14,7 +14,7 @@ TEST_CLASS(RA_Achievement_Tests)
 public:
     TEST_METHOD(TestStateEmpty)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         std::string sState = ach.CreateStateString("user1");
 
         Assert::AreEqual(std::string("0:0:a9bf5b6918bb43ec1d430f09d6606fbd:d41d8cd98f00b204e9800998ecf8427e:"), sState);
@@ -22,7 +22,7 @@ public:
 
     TEST_METHOD(TestStateSimple)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=6");
         ach.GetCondition(0, 0).OverrideCurrentHits(4);
@@ -55,7 +55,7 @@ public:
 
     TEST_METHOD(TestStateDelta)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=d0x1234");
         ach.GetCondition(0, 0).OverrideCurrentHits(4);
@@ -77,7 +77,7 @@ public:
 
     TEST_METHOD(TestStateMultipleConditions)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
         ach.GetCondition(0, 0).OverrideCurrentHits(1);
@@ -107,7 +107,7 @@ public:
 
     TEST_METHOD(TestStateMultipleGroups)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=6.1._0xh2345!=d0xh2345SR:0xh3456=7S0xh4567=0xh5678");
         ach.GetCondition(0, 0).OverrideCurrentHits(1);
@@ -142,7 +142,7 @@ public:
 
     TEST_METHOD(TestStateMultipleAchievements)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
         ach.GetCondition(0, 0).OverrideCurrentHits(1);
@@ -176,7 +176,7 @@ public:
 
     TEST_METHOD(TestStateAchievementModified)
     {
-        Achievement ach{ AchievementSet::Type::Local };
+        Achievement ach{ Achievement::Type::Local };
         ach.SetID(12345);
         ach.ParseLine("12345:0xh1234=6");
         ach.GetCondition(0, 0).OverrideCurrentHits(4);

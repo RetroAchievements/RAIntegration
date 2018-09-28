@@ -4,11 +4,6 @@
 
 #include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
 
-#if !defined(RAPIDJSON_DOCUMENT_H_) && defined(RA_UTEST)
-#define RAPIDJSON_NOMEMBERITERATORCLASS 1
-#include <rapidjson\include\rapidjson\document.h>
-#endif // !!defined(RAPIDJSON_DOCUMENT_H_) && defined(RA_UTEST)
-
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet
 //////////////////////////////////////////////////////////////////////////
@@ -16,7 +11,7 @@
 class AchievementSet
 {
 public:
-    using Type = ra::detail::AchievementSetType;
+    using Type = Achievement::Type;
 
     explicit AchievementSet(_In_ Type nType) noexcept :
         m_nSetType(nType),
@@ -27,14 +22,16 @@ public:
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
+#ifndef RA_UTEST
     static void OnRequestUnlocks(const rapidjson::Document& doc);
+#endif // !RA_UTEST
 
 public:
     void Clear();
     void Test();
     void Reset();
 
-    _Success_(return != 0)
+    _Success_(return)
     BOOL LoadFromFile(_Inout_ ra::GameID nGameID);
     BOOL SaveToFile();
 

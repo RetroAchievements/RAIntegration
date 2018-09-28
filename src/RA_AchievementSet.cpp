@@ -46,18 +46,12 @@ std::wstring AchievementSet::GetAchievementSetFilename(ra::GameID nGameID) noexc
     {
         std::wostringstream oss;
         oss << g_sHomeDir << RA_DIR_DATA << nGameID;
+        if (m_nSetType == Type::Local)
+            oss << L"-User";
+        oss << L".txt";
         str = oss.str();
     }
-    switch (m_nSetType)
-    {
-        case Type::Core:
-            return str += L".txt";
-        case Type::Unofficial:
-            return str += L".txt";	// Same as Core
-        case Type::Local:
-            return str += L"-User.txt";
-    }
-    return L"";
+    return str;
 }
 
 BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)

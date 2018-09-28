@@ -46,7 +46,10 @@ std::unique_ptr<TextReader> WindowsFileSystem::OpenTextFile(const std::wstring& 
 {
     auto pReader = std::make_unique<FileTextReader>(sPath);
     if (!pReader->GetFStream().is_open())
+    {
+        RA_LOG("Failed to open \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
         return std::unique_ptr<TextReader>();
+    }
 
     return std::unique_ptr<TextReader>(pReader.release());
 }
@@ -55,7 +58,10 @@ std::unique_ptr<TextWriter> WindowsFileSystem::CreateTextFile(const std::wstring
 {
     auto pWriter = std::make_unique<FileTextWriter>(sPath);
     if (!pWriter->GetFStream().is_open())
+    {
+        RA_LOG("Failed to create \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
         return std::unique_ptr<TextWriter>();
+    }
 
     return std::unique_ptr<TextWriter>(pWriter.release());
 }

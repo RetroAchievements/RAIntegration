@@ -55,8 +55,6 @@ void Achievement::Parse(const rapidjson::Value& element)
             m_vConditions.Clear();
         }
     }
-
-    SetActive(IsCoreAchievement());	//	Activate core by default
 }
 
 #endif

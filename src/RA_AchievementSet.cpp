@@ -489,6 +489,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
             {
                 auto& newAch{ AddAchievement() };
                 newAch.Parse(achData);
+                newAch.SetActive(TRUE); // Activate core by default
             }
             else if ((nFlags == 5) && (m_nSetType == Type::Unofficial))
             {

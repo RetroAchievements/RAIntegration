@@ -23,15 +23,12 @@ enum Achievement_DirtyFlags
 };
 
 #ifdef RA_UTEST
-namespace ra {
-namespace data {
-namespace tests {
+namespace ra::data::tests {
 
 class RA_Achievement_Tests;
 
-} // namespace ra
-} // namespace data
-} // namespace tests
+} // namespace ra::data::tests
+
 #endif
 
 class Achievement
@@ -72,9 +69,6 @@ public:
 
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
-
-    _Success_(return)
-        _NODISCARD _CONSTANT_FN IsCoreAchievement() const noexcept { return (m_nSetType == Type::Core); }
 
     void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const { return m_nAchievementID; }

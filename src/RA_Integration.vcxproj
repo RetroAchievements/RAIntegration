@@ -63,6 +63,7 @@
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
+    <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
@@ -116,8 +117,10 @@
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />
     <ClInclude Include="services\impl\StringTextWriter.hh" />
+    <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\Initialization.hh" />
+    <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
     <ClInclude Include="services\ImageRepository.h" />
     <ClInclude Include="services\SearchResults.h" />

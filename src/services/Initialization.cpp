@@ -3,6 +3,7 @@
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
+#include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsFileSystem.hh"
 
 namespace ra {
@@ -17,6 +18,10 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
     pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
+
+    auto* pThreadPool = new ra::services::impl::ThreadPool();
+    pThreadPool->Initialize(pConfiguration->GetNumBackgroundThreads());
+    ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(pThreadPool);
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);

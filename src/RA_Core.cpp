@@ -33,6 +33,7 @@
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
+#include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
@@ -208,7 +209,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     RAUsers::LocalUser().SetToken(pConfiguration.GetApiToken());
 
     RAWeb::SetUserAgentString();
-    RAWeb::RA_InitializeHTTPThreads();
 
     //////////////////////////////////////////////////////////////////////////
     //	Dialogs:
@@ -263,13 +263,14 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
+    // notify the background threads as soon as possible so they start to wind down
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown();
+
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
     SAFE_DELETE(g_pLocalAchievements);
-
-    RAWeb::RA_KillHTTPThreads();
 
     if (g_AchievementsDialog.GetHWND() != nullptr)
     {
@@ -616,6 +617,8 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
+    RAWeb::SendKeepAlive();
+
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
     RequestObject* pObj = RAWeb::PopNextHttpResult();
@@ -624,16 +627,7 @@ API int CCONV _RA_HandleHTTPResults()
         if (pObj->GetResponse().size() > 0)
         {
             rapidjson::Document doc;
-            BOOL bJSONParsedOK = FALSE;
-
-            if (pObj->GetRequestType() == RequestBadge || pObj->GetRequestType() == RequestUserPic)
-            {
-                //	Ignore...
-            }
-            else
-            {
-                bJSONParsedOK = pObj->ParseResponseToJSON(doc);
-            }
+            BOOL bJSONParsedOK = pObj->ParseResponseToJSON(doc);
 
             switch (pObj->GetRequestType())
             {
@@ -641,37 +635,9 @@ API int CCONV _RA_HandleHTTPResults()
                     RAUsers::LocalUser().HandleSilentLoginResponse(doc);
                     break;
 
-                case RequestBadge:
-                {
-                    const std::string& sBadgeURI = pObj->GetData();
-                    _WriteBufferToFile(g_sHomeDir + RA_DIR_BADGE + ra::Widen(sBadgeURI) + L".png", pObj->GetResponse());
-
-                    /* This block seems unnecessary. --GD
-                    for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
-                    {
-                        Achievement& ach = g_pActiveAchievements->GetAchievement( i );
-                        if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
-                        {
-                            //	Re-set this badge image
-                            //	NB. This is already a non-modifying op
-                            ach.SetBadgeImage( sBadgeURI );
-                        }
-                    }*/
-
-                    g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
-                }
-                break;
-
                 case RequestBadgeIter:
                     g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
                     break;
-
-                case RequestUserPic:
-                {
-                    const std::string& sUsername = pObj->GetData();
-                    _WriteBufferToFile(g_sHomeDir + RA_DIR_USERPIC + ra::Widen(sUsername) + L".png", pObj->GetResponse());
-                    break;
-                }
 
                 case RequestFriendList:
                     RAUsers::LocalUser().OnFriendListResponse(doc);

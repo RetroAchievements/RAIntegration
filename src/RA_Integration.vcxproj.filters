@@ -144,6 +144,9 @@
     <ClCompile Include="RA_Json.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\ThreadPool.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -313,6 +316,12 @@
     </ClInclude>
     <ClInclude Include="services\TextReader.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IThreadPool.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\ThreadPool.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

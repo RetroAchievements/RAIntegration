@@ -30,8 +30,8 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
     {
         BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
 
-		// create a copy of the list of pointers in case it's modified by one of the callbacks
-		NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
             target->OnViewModelBoolValueChanged(args);
     }
@@ -83,7 +83,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
     {
         StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
 
-		// create a copy of the list of pointers in case it's modified by one of the callbacks
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
             target->OnViewModelStringValueChanged(args);
@@ -97,30 +97,30 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
 
     if (nValue == pProperty.GetDefaultValue())
     {
-		// already default, do nothing
+        // already default, do nothing
         if (iter == m_mIntValues.end())
             return;
 
-		// changed to default value, remove from map
-		nOldValue = iter->second;
+        // changed to default value, remove from map
+        nOldValue = iter->second;
         m_mIntValues.erase(iter);
     }
-	else if (iter == m_mIntValues.end())
-	{
-		// not in map, add it
-		m_mIntValues[pProperty.GetKey()] = nValue;
-		nOldValue = pProperty.GetDefaultValue();
-	}
-	else if (iter->second != nValue)
-	{
-		// update map
-		nOldValue = iter->second;
-		iter->second = nValue;
-	}
-	else
+    else if (iter == m_mIntValues.end())
     {
-		// value didn't change
-		return;
+        // not in map, add it
+        m_mIntValues[pProperty.GetKey()] = nValue;
+        nOldValue = pProperty.GetDefaultValue();
+    }
+    else if (iter->second != nValue)
+    {
+        // update map
+        nOldValue = iter->second;
+        iter->second = nValue;
+    }
+    else
+    {
+        // value didn't change
+        return;
     }
 
 #ifdef _DEBUG
@@ -131,8 +131,8 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
     {
         IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
 
-		// create a copy of the list of pointers in case it's modified by one of the callbacks
-		NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
             target->OnViewModelIntValueChanged(args);
     }

@@ -13,9 +13,9 @@ ModelPropertyBase::ModelPropertyBase(const char* sTypeName, const char* sPropert
     m_sTypeName = sTypeName;
     m_sPropertyName = sPropertyName;
 
-	// ASSERT: ModelProperties are static variables and constructed when the DLL is loaded.
-	// We cannot reasonably use a mutex because it cannot be locked during static initialization in WinXP.
-	m_nKey = s_nNextKey++;
+    // ASSERT: ModelProperties are static variables and constructed when the DLL is loaded.
+    // We cannot reasonably use a mutex because it cannot be locked during static initialization in WinXP.
+    m_nKey = s_nNextKey++;
     s_vProperties.push_back(this);
 }
 

@@ -391,13 +391,13 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
         return true;
 
     // prompt. if user doesn't consent, return failure - caller should not continue
-	ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-	vmMessageBox.SetHeader(L"Disable Hardcore mode?");
-	vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
-	vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxButtons::YesNo);
-	vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxIcon::Warning);
-	if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
-		return false;
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+    vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxButtons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxIcon::Warning);
+    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+        return false;
 
     // user consented, switch to non-hardcore mode
     DisableHardcoreMode();
@@ -1504,29 +1504,29 @@ BOOL _FileExists(const std::wstring& sFileName)
 std::string GetFolderFromDialog()
 {
     std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+    CComPtr<IFileOpenDialog> pDlg;
 
     HRESULT hr = HRESULT{};
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+    if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
     {
         pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
+        if (SUCCEEDED(hr = pDlg->Show(nullptr)))
         {
             CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
+            if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
             {
                 LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
+                if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
                 {
                     sRetVal = ra::Narrow(pStr);
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
                     CoTaskMemFree(static_cast<LPVOID>(pStr));
                     pStr = nullptr;
                 }
-				pItem.Release();
+                pItem.Release();
             }
         }
-		pDlg.Release();
+        pDlg.Release();
     }
     return sRetVal;
 }

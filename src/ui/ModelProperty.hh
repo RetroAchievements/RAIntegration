@@ -73,7 +73,7 @@ public:
     /// <remarks>Affects all existing instances where a value has not been set, not just new instances.</remarks>
     void SetDefaultValue(const T& tValue) { m_tDefaultValue = tValue; }
 
-    typedef std::map<int, T> ValueMap;
+    typedef std::unordered_map<int, T> ValueMap;
 
     typedef struct ChangeArgs
     {

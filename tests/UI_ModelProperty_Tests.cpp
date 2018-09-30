@@ -10,38 +10,38 @@ namespace tests {
 
 TEST_CLASS(UI_ModelProperty_Tests)
 {
-	void AssertProperty(int nKey, const ModelPropertyBase* pExpected)
-	{
-		const ModelPropertyBase* pLookup = ModelPropertyBase::GetPropertyForKey(nKey);
-		if (pLookup != pExpected)
-		{
-			if (pExpected)
-				Assert::Fail(L"Found property when one wasn't expected");
-			else
-				Assert::Fail(L"Did not find expected property");
-		}
-	}
+    void AssertProperty(int nKey, const ModelPropertyBase* pExpected)
+    {
+        const ModelPropertyBase* pLookup = ModelPropertyBase::GetPropertyForKey(nKey);
+        if (pLookup != pExpected)
+        {
+            if (pExpected)
+                Assert::Fail(L"Found property when one wasn't expected");
+            else
+                Assert::Fail(L"Did not find expected property");
+        }
+    }
 
 public:
     TEST_METHOD(TestStringModelProperty)
     {
-		int nKey;
-		{
-			StringModelProperty pProperty("Test", "Property", L"Default");
+        int nKey;
+        {
+            StringModelProperty pProperty("Test", "Property", L"Default");
 
-			Assert::AreEqual("Test", pProperty.GetTypeName());
-			Assert::AreEqual("Property", pProperty.GetPropertyName());
-			Assert::AreEqual(std::wstring(L"Default"), pProperty.GetDefaultValue());
+            Assert::AreEqual("Test", pProperty.GetTypeName());
+            Assert::AreEqual("Property", pProperty.GetPropertyName());
+            Assert::AreEqual(std::wstring(L"Default"), pProperty.GetDefaultValue());
 
-			nKey = pProperty.GetKey();
-			AssertProperty(nKey, &pProperty);
+            nKey = pProperty.GetKey();
+            AssertProperty(nKey, &pProperty);
 
-			pProperty.SetDefaultValue(L"New Default");
-			Assert::AreEqual(std::wstring(L"New Default"), pProperty.GetDefaultValue());
-		}
+            pProperty.SetDefaultValue(L"New Default");
+            Assert::AreEqual(std::wstring(L"New Default"), pProperty.GetDefaultValue());
+        }
 
-		AssertProperty(nKey, nullptr);
-	}
+        AssertProperty(nKey, nullptr);
+    }
 
     TEST_METHOD(TestIntModelProperty)
     {

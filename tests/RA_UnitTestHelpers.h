@@ -41,16 +41,16 @@ template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format
 
 template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
-	switch (result)
-	{
-		case ra::ui::DialogResult::None: return L"None";
-		case ra::ui::DialogResult::OK: return L"OK";
-		case ra::ui::DialogResult::Cancel: return L"Cancel";
-		case ra::ui::DialogResult::Yes: return L"Yes";
-		case ra::ui::DialogResult::No: return L"No";
-		case ra::ui::DialogResult::Retry: return L"Retry";
-		default: return std::to_wstring(static_cast<int>(result));
-	}
+    switch (result)
+    {
+        case ra::ui::DialogResult::None: return L"None";
+        case ra::ui::DialogResult::OK: return L"OK";
+        case ra::ui::DialogResult::Cancel: return L"Cancel";
+        case ra::ui::DialogResult::Yes: return L"Yes";
+        case ra::ui::DialogResult::No: return L"No";
+        case ra::ui::DialogResult::Retry: return L"Retry";
+        default: return std::to_wstring(static_cast<int>(result));
+    }
 }
 
 } // namespace CppUnitTestFramework

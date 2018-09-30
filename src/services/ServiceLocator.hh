@@ -5,7 +5,7 @@
 #include "RA_Log.h"
 
 #ifndef NDEBUG
-#include "RA_Defs.h"
+#include "RA_StringUtils.h"
 #endif
 
 #include <assert.h>
@@ -94,7 +94,7 @@ public:
         }
 
     private:
-        TClass* m_pPrevious;
+        TClass * m_pPrevious;
         bool m_bDestroy;
     };
 
@@ -135,8 +135,8 @@ private:
             RA_LOG("ERROR: %s\n", sMessage.c_str());
 
 #ifndef NDEBUG
-			// expanded definition of assert macro so we can use the constructed error message
-			_wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), (unsigned)(__LINE__));
+            // expanded definition of assert macro so we can use the constructed error message
+            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), (unsigned)(__LINE__));
 #endif
 
             throw std::runtime_error(sMessage);

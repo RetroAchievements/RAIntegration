@@ -24,9 +24,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
 
-	auto* pDesktop = new ra::ui::win32::Desktop();
-	ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
-	ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+    auto* pDesktop = new ra::ui::win32::Desktop();
+    ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
+    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
 }
 
 } // namespace services

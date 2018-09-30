@@ -20,8 +20,11 @@ enum class Feature
     PreferDecimal,
 };
 
-class IConfiguration {
+class IConfiguration
+{
 public:
+    virtual ~IConfiguration() noexcept = default;
+
     virtual const std::string& GetUsername() const = 0;
     virtual void SetUsername(const std::string& sValue) = 0;
     virtual const std::string& GetApiToken() const = 0;

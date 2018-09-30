@@ -2,6 +2,8 @@
 
 #include "RA_MemManager.h"
 
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
 static unsigned char* g_pMemoryBuffer;
 static size_t g_nMemorySize;
 
@@ -26,4 +28,13 @@ void InitializeMemory(unsigned char* pMemory, size_t nMemorySize)
 
     g_MemManager.ClearMemoryBanks();
     g_MemManager.AddMemoryBank(0, ReadMemory, SetMemory, nMemorySize);
+}
+
+void AssertContains(const std::string& sHaystack, const std::string& sNeedle)
+{
+    if (sHaystack.find(sNeedle) == std::string::npos)
+    {
+        std::wstring sError = L"\"" + ra::Widen(sNeedle) + L"\" not found in \"" + ra::Widen(sHaystack) + L"\"";
+        Assert::Fail(sError.c_str());
+    }
 }

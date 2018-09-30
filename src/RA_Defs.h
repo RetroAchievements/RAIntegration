@@ -223,33 +223,10 @@ const int SERVER_PING_DURATION = 2 * 60;
 #define UNUSED( x ) ( x );
 #endif
 
+#include "RA_StringUtils.h"
+
 namespace ra {
-
-_NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
-_NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
-_NODISCARD std::wstring Widen(_In_ const std::string& str);
-_NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
-_NODISCARD std::wstring Widen(_In_z_ const char* str);
-
-//	No-ops to help convert:
-_NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
-_NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_In_z_ const char* str);
-_NODISCARD std::string Narrow(_In_ const std::string& wstr);
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-
-} // namespace ra
-
-
-
-
-#ifdef UNICODE
-#define NativeStr(x) ra::Widen(x)
-#define NativeStrType std::wstring
-#else
-#define NativeStr(x) ra::Narrow(x)
-#define NativeStrType std::string
-#endif
+}
 
 #endif // !RA_DEFS_H

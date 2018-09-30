@@ -38,7 +38,7 @@ public:
     {
         return Service<TClass>::Get();
     }
-    
+
     /// <summary>
     /// Registers a service implementation for an interface
     /// </summary>
@@ -51,7 +51,7 @@ public:
     {
         Service<TClass>::s_pInstance.reset(pInstance);
     }
-    
+
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
     /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
@@ -88,25 +88,25 @@ public:
 
             Service<TClass>::s_pInstance.reset(m_pPrevious);
         }
-        
+
     private:
         TClass* m_pPrevious;
         bool m_bDestroy;
     };
-    
+
 private:
     template <class TClass>
     class Service
     {
     public:
-        static TClass& Get() 
+        static TClass& Get()
         {
             if (s_pInstance == nullptr)
                 ThrowNoServiceProvidedException();
 
             return *s_pInstance.get();
         }
-        
+
         static std::unique_ptr<TClass> s_pInstance;
 
     private:

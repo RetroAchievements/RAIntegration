@@ -20,8 +20,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 //////////////////////////////////////////////////////////////////////////
 
-Achievement::Achievement(AchievementSetType nType) :
-    m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
+Achievement::Achievement() noexcept
 {
     Clear();
 
@@ -54,8 +53,6 @@ void Achievement::Parse(const rapidjson::Value& element)
             m_vConditions.Clear();
         }
     }
-
-    SetActive(IsCoreAchievement());	//	Activate core by default
 }
 
 #endif

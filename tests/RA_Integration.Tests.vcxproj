@@ -65,7 +65,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..;$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;RA_UTEST;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -97,7 +97,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..;$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;RA_UTEST;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -131,8 +131,11 @@
   <ItemGroup>
     <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\RA_Achievement.cpp" />
+    <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
     <ClCompile Include="..\src\RA_RichPresence.cpp" />
+    <ClCompile Include="..\src\RA_StringUtils.cpp" />
+    <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\ui\ModelProperty.cpp" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
@@ -140,8 +143,12 @@
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
     <ClCompile Include="RA_Achievement_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
-    <ClCompile Include="SearchResults_Tests.cpp" />
     <ClCompile Include="UI_ModelProperty_Tests.cpp" />
+    <ClCompile Include="RA_StringUtils_Tests.cpp" />
+    <ClCompile Include="services\JsonFileConfiguration_Tests.cpp" />
+    <ClCompile Include="services\SearchResults_Tests.cpp" />
+    <ClCompile Include="services\StringTextReader_Tests.cpp" />
+    <ClCompile Include="services\StringTextWriter_Tests.cpp" />
     <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
@@ -149,12 +156,12 @@
     <ClCompile Include="UI_ViewModelBase_Tests.cpp" />
     <ClCompile Include="UI_WindowViewModelBase_Tests.cpp" />
     <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp" />
+    <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="..\src\RA_MemValue.cpp" />
     <ClCompile Include="RA_CompVariable_Tests.cpp" />
     <ClCompile Include="RA_ConditionSet_Tests.cpp" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
-    <ClCompile Include="RA_Defs_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_MemValue_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />

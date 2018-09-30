@@ -4,7 +4,6 @@
 
 #include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
 
-
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet
 //////////////////////////////////////////////////////////////////////////
@@ -12,29 +11,37 @@
 class AchievementSet
 {
 public:
-    AchievementSet(AchievementSetType nType) :
-        m_nSetType(nType),
-        m_bProcessingActive(TRUE)
+    enum class Type
+    {
+        Core,
+        Unofficial,
+        Local
+    };
+
+    explicit AchievementSet(_In_ Type eType) noexcept :
+        m_nSetType{ eType }
     {
         Clear();
     }
 
 public:
     static BOOL FetchFromWebBlocking(ra::GameID nGameID);
+#ifndef RA_UTEST
     static void OnRequestUnlocks(const rapidjson::Document& doc);
+#endif // !RA_UTEST
 
 public:
     void Clear();
     void Test();
     void Reset();
 
-    _Success_(return != 0)
+    _Success_(return)
     BOOL LoadFromFile(_Inout_ ra::GameID nGameID);
     BOOL SaveToFile();
 
     BOOL DeletePatchFile(ra::GameID nGameID);
 
-    std::wstring GetAchievementSetFilename(ra::GameID nGameID);
+    _NODISCARD std::wstring GetAchievementSetFilename(_In_ ra::GameID nGameID) noexcept;
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
@@ -75,9 +82,9 @@ public:
     BOOL HasUnsavedChanges();
 
 private:
-    const AchievementSetType m_nSetType;
+    const Type m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive;
+    BOOL m_bProcessingActive{ TRUE };
 };
 
 
@@ -88,9 +95,9 @@ extern AchievementSet* g_pUnofficialAchievements;
 extern AchievementSet* g_pLocalAchievements;
 
 extern AchievementSet* g_pActiveAchievements;
-extern AchievementSetType g_nActiveAchievementSet;
+extern AchievementSet::Type g_nActiveAchievementSet;
 
-extern void RASetAchievementCollection(enum AchievementSetType Type);
+void RASetAchievementCollection(_In_ AchievementSet::Type Type) noexcept;
 
 
 #endif // !RA_ACHIEVEMENTSET_H

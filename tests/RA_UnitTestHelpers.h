@@ -60,3 +60,5 @@ template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::Dial
 
 // Loads memory into the MemoryManager
 void InitializeMemory(unsigned char* pMemory, size_t szMemorySize);
+
+void AssertContains(const std::string& sHaystack, const std::string& sNeedle);

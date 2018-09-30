@@ -13,6 +13,12 @@
     <Filter Include="Tests\UI\ViewModels">
       <UniqueIdentifier>{69299c0b-a9cd-4d78-b71a-dd83efc582d4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Services">
+      <UniqueIdentifier>{d2101e8f-5483-4eec-89f5-8f8fc586b0b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Mocks">
+      <UniqueIdentifier>{4623f02c-7135-4cd4-ada2-36fa4b29520c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -34,9 +40,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="RA_Leaderboard_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="SearchResults_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
@@ -84,6 +87,30 @@
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="RA_StringUtils_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_StringUtils.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="services\SearchResults_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextReader_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextWriter_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\JsonFileConfiguration_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_Json.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -101,8 +128,10 @@
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClCompile Include="RA_Defs_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockFileSystem.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

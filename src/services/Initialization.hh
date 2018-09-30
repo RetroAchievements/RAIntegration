@@ -10,7 +10,7 @@ namespace services {
 class Initialization
 {
 public:
-    static void RegisterServices(const std::wstring& sHomeDir, const std::string& sClientName);
+    static void RegisterServices(const std::string& sClientName);
 };
 
 } // namespace services

@@ -141,6 +141,9 @@
     <ClCompile Include="services\ImageRepository.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsFileSystem.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -158,6 +161,12 @@
     </ClCompile>
     <ClCompile Include="ui\win32\Desktop.cpp">
       <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_StringUtils.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Json.cpp">
+      <Filter>Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -300,6 +309,33 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="services\ImageRepository.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IFileSystem.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsFileSystem.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_StringUtils.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextReader.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextWriter.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextWriter.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextReader.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextWriter.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextReader.hh">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh">

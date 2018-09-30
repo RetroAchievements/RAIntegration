@@ -536,7 +536,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    auto idx{ 0U };
+    auto idx{ 0 };
     for (auto& sColTitle : ra::COLUMN_TITLE)
     {
         ra::tstring tszText{ sColTitle };

@@ -1,8 +1,5 @@
 #include "RA_AchievementSet.h"
 
-#include <fstream>
-#include <memory>
-
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
@@ -17,36 +14,44 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
+#include <array>
+#include <fstream>
+#include <memory>
+
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
 AchievementSet* g_pLocalAchievements = nullptr;
 
-AchievementSet** ACH_SETS[] ={ &g_pCoreAchievements, &g_pUnofficialAchievements, &g_pLocalAchievements };
-static_assert(SIZEOF_ARRAY(ACH_SETS) == NumAchievementSetTypes, "Must match!");
+inline constexpr std::array<AchievementSet**, 3> ACH_SETS
+{
+    &g_pCoreAchievements,
+    &g_pUnofficialAchievements,
+    &g_pLocalAchievements
+};
 
-AchievementSetType g_nActiveAchievementSet = Core;
+AchievementSet::Type g_nActiveAchievementSet = AchievementSet::Type::Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
-
-void RASetAchievementCollection(AchievementSetType Type)
+_Use_decl_annotations_
+void RASetAchievementCollection(AchievementSet::Type Type) noexcept
 {
     g_nActiveAchievementSet = Type;
-    g_pActiveAchievements = *ACH_SETS[Type];
+    g_pActiveAchievements = *ACH_SETS.at(ra::etoi(Type));
 }
 
-std::wstring AchievementSet::GetAchievementSetFilename(ra::GameID nGameID)
+_Use_decl_annotations_
+std::wstring AchievementSet::GetAchievementSetFilename(ra::GameID nGameID) noexcept
 {
-    switch (m_nSetType)
+    std::wstring str;
     {
-        case Core:
-            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";
-        case Unofficial:
-            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L".txt";	// Same as Core
-        case Local:
-            return g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-User.txt";
-        default:
-            return L"";
+        std::wostringstream oss;
+        oss << g_sHomeDir << RA_DIR_DATA << nGameID;
+        if (m_nSetType == Type::Local)
+            oss << L"-User";
+        oss << L".txt";
+        str = oss.str();
     }
+    return str;
 }
 
 BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
@@ -57,7 +62,7 @@ BOOL AchievementSet::DeletePatchFile(ra::GameID nGameID)
         return TRUE;
     }
 
-    if (m_nSetType == Local)
+    if (m_nSetType == Type::Local)
     {
         //	We do not automatically delete Local patch files
         return TRUE;
@@ -102,7 +107,7 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
 
 Achievement& AchievementSet::AddAchievement()
 {
-    m_Achievements.push_back(Achievement(m_nSetType));
+    m_Achievements.push_back(Achievement{});
     return m_Achievements.back();
 }
 
@@ -208,7 +213,7 @@ void AchievementSet::Test()
             {
                 const std::string sPoints = std::to_string(ach.Points());
 
-                if (g_nActiveAchievementSet != Core)
+                if (g_nActiveAchievementSet != Type::Core)
                 {
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
@@ -403,7 +408,7 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
     //	Store this: we are now assuming this is the correct checksum if we have a file for it
     g_pCurrentGameData->SetGameID(nGameID);
 
-    if (m_nSetType == Local)
+    if (m_nSetType == Type::Local)
     {
         auto buffer{ std::make_unique<char[]>(4096U) };
 
@@ -480,19 +485,20 @@ BOOL AchievementSet::LoadFromFile(ra::GameID nGameID)
         {
             //	Parse into correct boxes
             const auto nFlags{ achData["Flags"].GetUint() };
-            if ((nFlags == 3U) && (m_nSetType == Core))
+            if ((nFlags == 3U) && (m_nSetType == Type::Core))
             {
                 auto& newAch{ AddAchievement() };
                 newAch.Parse(achData);
+                newAch.SetActive(TRUE); // Activate core by default
             }
-            else if ((nFlags == 5) && (m_nSetType == Unofficial))
+            else if ((nFlags == 5) && (m_nSetType == Type::Unofficial))
             {
                 auto& newAch{ AddAchievement() };
                 newAch.Parse(achData);
             }
         }
 
-        if (m_nSetType != Core)
+        if (m_nSetType != Type::Core)
             return TRUE;
 
         const auto& LeaderboardsData{ doc["Leaderboards"] };
@@ -607,7 +613,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             else
             {
                 // achievement no longer exists, or is no longer active, skip to next one
-                Achievement ach(AchievementSetType::Local);
+                Achievement ach;
                 ach.SetID(nID);
                 pIter = ach.ParseStateString(pIter, "");
             }

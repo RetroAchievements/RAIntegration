@@ -200,15 +200,6 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
-
 extern BOOL DirectoryExists(const char* sPath);
 
 const int SERVER_PING_DURATION = 2 * 60;

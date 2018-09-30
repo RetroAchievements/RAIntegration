@@ -550,7 +550,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
             col.iSubItem   = idx
         };
 
-        if (idx == (ra::COLUMN_TITLE.size() - 1))
+        if (idx == (ra::to_signed(ra::COLUMN_TITLE.size()) - 1))
             col.fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, idx, &col);

@@ -140,6 +140,7 @@
     <ClCompile Include="RA_Achievement_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
+    <ClCompile Include="services\FileLogger_Tests.cpp" />
     <ClCompile Include="services\JsonFileConfiguration_Tests.cpp" />
     <ClCompile Include="services\SearchResults_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="..\src\RA_MemValue.h" />
     <ClInclude Include="..\src\RA_StringUtils.h" />
     <ClInclude Include="..\src\services\impl\JsonFileConfiguration.hh" />
+    <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="..\src\RA_MemValue.cpp" />

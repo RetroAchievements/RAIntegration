@@ -183,12 +183,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
     }
 
-    RA_LOG("=================================================");
-    if (g_sClientName != nullptr)
-        RA_LOG("Initializing for %s %s", g_sClientName, sClientVer);
-    else
-        RA_LOG("Initializing for unknown client %d %s", nEmulatorID, sClientVer);
-
     g_sROMDirLocation[0] = '\0';
 
     ra::services::Initialization::RegisterServices(g_sClientName);

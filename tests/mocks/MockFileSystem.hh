@@ -7,7 +7,7 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
-#include <map>
+#include <unordered_map>
 
 namespace ra {
 namespace services {
@@ -67,6 +67,14 @@ public:
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override
     {
         std::string& sContents = m_mFileContents[sPath];
+        sContents.clear();
+        auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(sContents);
+        return std::unique_ptr<TextWriter>(pWriter.release());
+    }
+
+    std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override
+    {
+        std::string& sContents = m_mFileContents[sPath];
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(sContents);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
@@ -74,7 +82,7 @@ public:
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::IFileSystem> m_Override;
     std::wstring m_sBaseDirectory = L".\\";
-    mutable std::map<std::wstring, std::string> m_mFileContents;
+    mutable std::unordered_map<std::wstring, std::string> m_mFileContents;
 };
 
 } // namespace mocks

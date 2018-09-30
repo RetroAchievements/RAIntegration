@@ -53,6 +53,17 @@ public:
         Assert::AreEqual(std::string("test\n"), TrimLineEnding(std::string("test\n\n")));
         Assert::AreEqual(std::string("test\r\n"), TrimLineEnding(std::string("test\r\n\r\n")));
     }
+
+    TEST_METHOD(TestFormat)
+    {
+        Assert::AreEqual(std::string("This is a test."), Format("This is a %s.", "test"));
+        Assert::AreEqual(std::string("1, 2, 3, 4"), Format("%d, %u, %zu, %li", 1, 2U, 3U, 4L));
+        Assert::AreEqual(std::string("53.45%"), Format("%.2f%%", 53.45f));
+        Assert::AreEqual(std::string("Nothing to replace"), Format("Nothing to replace"));
+        Assert::AreEqual(std::string(), Format(""));
+        Assert::AreEqual(std::string("'Twas the night before Christmas and all through the house, not a creature was stirring, not even a mouse."), 
+            Format("'Twas the %s before %s and all through the %s, not a %s was %s, not even a %s.", "night", "Christmas", "house", "creature", "stirring", "mouse"));
+    }
 };
 
 } // namespace tests

@@ -17,7 +17,12 @@ class FileTextWriter : public ra::services::TextWriter
 {
 public:
     explicit FileTextWriter(const std::wstring& sFilename) noexcept
-        : m_oStream(sFilename, std::ios::binary)
+        : FileTextWriter(sFilename, std::ios::out)
+    {
+    }
+
+    explicit FileTextWriter(const std::wstring& sFilename, std::ios_base::openmode nMode) noexcept
+        : m_oStream(sFilename, std::ios::binary | nMode)
     {
     }
 

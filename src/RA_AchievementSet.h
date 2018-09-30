@@ -11,11 +11,15 @@
 class AchievementSet
 {
 public:
-    using Type = Achievement::Type;
+    enum class Type
+    {
+        Core,
+        Unofficial,
+        Local
+    };
 
-    explicit AchievementSet(_In_ Type nType) noexcept :
-        m_nSetType(nType),
-        m_bProcessingActive(TRUE)
+    explicit AchievementSet(_In_ Type eType) noexcept :
+        m_nSetType{ eType }
     {
         Clear();
     }
@@ -37,7 +41,6 @@ public:
 
     BOOL DeletePatchFile(ra::GameID nGameID);
 
-    _Success_(return != L"")
     _NODISCARD std::wstring GetAchievementSetFilename(_In_ ra::GameID nGameID) noexcept;
 
     //	Get Achievement at offset
@@ -79,9 +82,9 @@ public:
     BOOL HasUnsavedChanges();
 
 private:
-    const Type m_nSetType;
+    const Type m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive;
+    BOOL m_bProcessingActive{ TRUE };
 };
 
 

@@ -20,9 +20,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 //////////////////////////////////////////////////////////////////////////
 
-_Use_decl_annotations_
-Achievement::Achievement(Type nType) noexcept :
-    m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
+Achievement::Achievement() noexcept
 {
     Clear();
 

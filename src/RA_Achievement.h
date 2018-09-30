@@ -22,30 +22,10 @@ enum Achievement_DirtyFlags
     Dirty__All = (unsigned int)(-1)
 };
 
-#ifdef RA_UTEST
-namespace ra::data::tests {
-
-class RA_Achievement_Tests;
-
-} // namespace ra::data::tests
-
-#endif
-
 class Achievement
 {
-protected:
-#ifdef RA_UTEST
-    friend class ra::data::tests::RA_Achievement_Tests;
-#endif
-    enum class Type
-    {
-        Core,
-        Unofficial,
-        Local
-    };
-
 public:
-    explicit Achievement(_In_ Type nType) noexcept;
+    Achievement() noexcept;
 
 public:
     void Clear();
@@ -130,9 +110,7 @@ public:
     void ClearDirtyFlag() { m_nDirtyFlags = 0; }
 
 private:
-    /*const*/ Type m_nSetType;
-
-    ra::AchievementID m_nAchievementID;
+    ra::AchievementID m_nAchievementID{};
     ConditionSet m_vConditions;
 
     std::string m_sTitle;
@@ -140,30 +118,28 @@ private:
     std::string m_sAuthor;
     std::string m_sBadgeImageURI;
 
-    unsigned int m_nPointValue;
-    BOOL m_bActive;
-    BOOL m_bModified;
-    BOOL m_bPauseOnTrigger;
-    BOOL m_bPauseOnReset;
+    unsigned int m_nPointValue{};
+    BOOL m_bActive{};
+    BOOL m_bModified{};
+    BOOL m_bPauseOnTrigger{};
+    BOOL m_bPauseOnReset{};
 
     //	Progress:
-    BOOL m_bProgressEnabled;	//	on/off
+    BOOL m_bProgressEnabled{};	//	on/off
 
     std::string m_sProgress;	//	How to calculate the progress so far (syntactical)
     std::string m_sProgressMax;	//	Upper limit of the progress (syntactical? value?)
     std::string m_sProgressFmt;	//	Format of the progress to be shown (currency? step?)
 
-    float m_fProgressLastShown;	//	The last shown progress
+    float m_fProgressLastShown{};	//	The last shown progress
 
-    unsigned int m_nDirtyFlags;	//	Use for rendering when editing.
+    unsigned int m_nDirtyFlags{};	//	Use for rendering when editing.
 
-    time_t m_nTimestampCreated;
-    time_t m_nTimestampModified;
+    time_t m_nTimestampCreated{};
+    time_t m_nTimestampModified{};
 
-    unsigned short m_nUpvotes;
-    unsigned short m_nDownvotes;
-
-    friend class AchievementSet;
+    unsigned short m_nUpvotes{};
+    unsigned short m_nDownvotes{};
 };
 
 #endif // !RA_ACHIEVEMENT_H

@@ -107,7 +107,7 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
 
 Achievement& AchievementSet::AddAchievement()
 {
-    m_Achievements.push_back(Achievement(m_nSetType));
+    m_Achievements.push_back(Achievement{});
     return m_Achievements.back();
 }
 
@@ -613,7 +613,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             else
             {
                 // achievement no longer exists, or is no longer active, skip to next one
-                Achievement ach{ Type::Local };
+                Achievement ach;
                 ach.SetID(nID);
                 pIter = ach.ParseStateString(pIter, "");
             }

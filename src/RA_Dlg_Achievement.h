@@ -2,7 +2,7 @@
 #define RA_DLG_ACHIEVEMENT_H
 #pragma once
 
-#include "RA_Achievement.h"
+#include "RA_AchievementSet.h"
 
 const int MAX_TEXT_ITEM_SIZE = 80;
 
@@ -42,7 +42,7 @@ public:
     void ReloadLBXData(int nOffset);
     void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
     void OnEditAchievement(const Achievement& ach);
-    void OnClickAchievementSet(AchievementSetType nAchievementSet);
+    void OnClickAchievementSet(_In_ AchievementSet::Type nAchievementSet);
 
     inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
 

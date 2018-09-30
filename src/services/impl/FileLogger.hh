@@ -23,7 +23,7 @@ public:
     {
         m_pWriter = pFileSystem.AppendTextFile(pFileSystem.BaseDirectory() + L"RACache\\RALog.txt");
         if (m_pWriter != nullptr)
-            m_pWriter->Write("\n");
+            m_pWriter->Write("\r\n");
     }
 
     bool IsEnabled([[maybe_unused]] LogLevel level) const override
@@ -65,7 +65,7 @@ public:
             m_pWriter->Write(sMessage);
 
             // newline
-            m_pWriter->Write("\n");
+            m_pWriter->Write("\r\n");
         }
 
         // if writing to a file, flush immediately

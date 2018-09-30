@@ -312,6 +312,8 @@ API int CCONV _RA_Shutdown()
         g_MemBookmarkDialog.InstallHWND(nullptr);
     }
 
+    ra::services::Initialization::Shutdown();
+
     CoUninitialize();
 
     return 0;

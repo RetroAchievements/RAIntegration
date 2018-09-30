@@ -29,5 +29,10 @@ void Initialization::RegisterServices(const std::string& sClientName)
     ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
 }
 
+void Initialization::Shutdown()
+{
+    ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
+}
+
 } // namespace services
 } // namespace ra

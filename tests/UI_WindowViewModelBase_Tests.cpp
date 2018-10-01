@@ -17,6 +17,8 @@ TEST_CLASS(UI_WindowViewModelBase_Tests)
 {
     class WindowViewModelHarness : public WindowViewModelBase
     {
+    public:
+        WindowViewModelHarness() = default;
     };
 
     class MockDesktop : public IDesktop, ra::services::ServiceLocator::ServiceOverride<IDesktop>

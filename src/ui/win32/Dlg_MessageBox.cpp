@@ -12,19 +12,19 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-using ra::ui::viewmodels::MessageBoxIcon;
-using ra::ui::viewmodels::MessageBoxButtons;
 using ra::ui::viewmodels::MessageBoxViewModel;
 
-static HRESULT(WINAPI *pTaskDialog)(HWND hwndParent, HINSTANCE hInstance, PCWSTR pszWindowTitle, PCWSTR pszMainInstruction,
-    PCWSTR pszContent, TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons, PCWSTR pszIcon, int *pnButton) = nullptr;
+using fnTaskDialog = HRESULT(WINAPI*)(HWND hwndParent, HINSTANCE hInstance, PCWSTR pszWindowTitle, PCWSTR pszMainInstruction,
+    PCWSTR pszContent, TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons, PCWSTR pszIcon, int *pnButton);
+
+static fnTaskDialog pTaskDialog = nullptr;
 
 Dlg_MessageBox::Controller::Controller() noexcept
 {
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
     auto hDll = LoadLibraryA("comctl32");
     if (hDll)
-        pTaskDialog = (HRESULT(WINAPI*)(HWND, HINSTANCE, PCWSTR, PCWSTR, PCWSTR, TASKDIALOG_COMMON_BUTTON_FLAGS, PCWSTR, int *))GetProcAddress(hDll, "TaskDialog");
+        pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
 }
 
 bool Dlg_MessageBox::Controller::IsSupported(const ra::ui::WindowViewModelBase& oViewModel)
@@ -57,20 +57,20 @@ void Dlg_MessageBox::Controller::ShowModal(ra::ui::WindowViewModelBase& oViewMod
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
-            case MessageBoxIcon::None: uType = 0; break;
-            case MessageBoxIcon::Info: uType = MB_ICONINFORMATION; break;
-            case MessageBoxIcon::Warning: uType = MB_ICONWARNING; break;
-            case MessageBoxIcon::Error: uType = MB_ICONERROR; break;
+            case MessageBoxViewModel::Icon::None: uType = 0; break;
+            case MessageBoxViewModel::Icon::Info: uType = MB_ICONINFORMATION; break;
+            case MessageBoxViewModel::Icon::Warning: uType = MB_ICONWARNING; break;
+            case MessageBoxViewModel::Icon::Error: uType = MB_ICONERROR; break;
         }
 
         switch (oMessageBoxViewModel.GetButtons())
         {
             default:
-            case MessageBoxButtons::OK: uType |= MB_OK; break;
-            case MessageBoxButtons::OKCancel: uType |= MB_OKCANCEL; break;
-            case MessageBoxButtons::YesNo: uType |= MB_YESNO; break;
-            case MessageBoxButtons::YesNoCancel: uType |= MB_YESNOCANCEL; break;
-            case MessageBoxButtons::RetryCancel: uType |= MB_RETRYCANCEL; break;
+            case MessageBoxViewModel::Buttons::OK: uType |= MB_OK; break;
+            case MessageBoxViewModel::Buttons::OKCancel: uType |= MB_OKCANCEL; break;
+            case MessageBoxViewModel::Buttons::YesNo: uType |= MB_YESNO; break;
+            case MessageBoxViewModel::Buttons::YesNoCancel: uType |= MB_YESNOCANCEL; break;
+            case MessageBoxViewModel::Buttons::RetryCancel: uType |= MB_RETRYCANCEL; break;
         }
 
         nButton = MessageBoxW(GetActiveWindow(), pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
@@ -81,21 +81,21 @@ void Dlg_MessageBox::Controller::ShowModal(ra::ui::WindowViewModelBase& oViewMod
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
-            case MessageBoxIcon::None: pszIcon = nullptr; break;
-            case MessageBoxIcon::Info: pszIcon = TD_INFORMATION_ICON; break;
-            case MessageBoxIcon::Warning: pszIcon = TD_WARNING_ICON; break;
-            case MessageBoxIcon::Error: pszIcon = TD_ERROR_ICON; break;
+            case MessageBoxViewModel::Icon::None: pszIcon = nullptr; break;
+            case MessageBoxViewModel::Icon::Info: pszIcon = TD_INFORMATION_ICON; break;
+            case MessageBoxViewModel::Icon::Warning: pszIcon = TD_WARNING_ICON; break;
+            case MessageBoxViewModel::Icon::Error: pszIcon = TD_ERROR_ICON; break;
         }
 
         TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons;
         switch (oMessageBoxViewModel.GetButtons())
         {
             default:
-            case MessageBoxButtons::OK: dwCommonButtons = TDCBF_OK_BUTTON; break;
-            case MessageBoxButtons::OKCancel: dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_CANCEL_BUTTON; break;
-            case MessageBoxButtons::YesNo: dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON; break;
-            case MessageBoxButtons::YesNoCancel: dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON | TDCBF_CANCEL_BUTTON; break;
-            case MessageBoxButtons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
+            case MessageBoxViewModel::Buttons::OK: dwCommonButtons = TDCBF_OK_BUTTON; break;
+            case MessageBoxViewModel::Buttons::OKCancel: dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_CANCEL_BUTTON; break;
+            case MessageBoxViewModel::Buttons::YesNo: dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON; break;
+            case MessageBoxViewModel::Buttons::YesNoCancel: dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON | TDCBF_CANCEL_BUTTON; break;
+            case MessageBoxViewModel::Buttons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
         }
 
         HRESULT result = pTaskDialog(GetActiveWindow(), nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),

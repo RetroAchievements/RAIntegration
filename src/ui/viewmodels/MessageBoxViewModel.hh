@@ -8,32 +8,32 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-enum class MessageBoxButtons
-{
-    OK,
-    OKCancel,
-    YesNo,
-    YesNoCancel,
-    RetryCancel,
-};
-
-enum class MessageBoxIcon
-{
-    None,
-    Info,
-    Warning,
-    Error,
-};
-
 class MessageBoxViewModel : public WindowViewModelBase
 {
 public:
-    MessageBoxViewModel() noexcept {}
+    MessageBoxViewModel() = default;
 
-    MessageBoxViewModel(const std::wstring& sMessage) noexcept
+    explicit MessageBoxViewModel(const std::wstring& sMessage) noexcept : WindowViewModelBase()
     {
         SetMessage(sMessage);
     }
+
+    enum class Buttons
+    {
+        OK,
+        OKCancel,
+        YesNo,
+        YesNoCancel,
+        RetryCancel,
+    };
+
+    enum class Icon
+    {
+        None,
+        Info,
+        Warning,
+        Error,
+    };
 
 #pragma push_macro("GetMessage") // windows stole my method name
 #undef GetMessage
@@ -76,12 +76,12 @@ public:
     /// <summary>
     /// Gets the icon to display.
     /// </summary>
-    const MessageBoxIcon GetIcon() const { return static_cast<MessageBoxIcon>(GetValue(IconProperty)); }
+    const Icon GetIcon() const { return static_cast<Icon>(GetValue(IconProperty)); }
 
     /// <summary>
     /// Sets the icon to display (default: None).
     /// </summary>
-    void SetIcon(MessageBoxIcon nValue) { SetValue(IconProperty, static_cast<int>(nValue)); }
+    void SetIcon(Icon nValue) { SetValue(IconProperty, static_cast<int>(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the buttons to display.
@@ -91,12 +91,12 @@ public:
     /// <summary>
     /// Gets the buttons to display.
     /// </summary>
-    const MessageBoxButtons GetButtons() const { return static_cast<MessageBoxButtons>(GetValue(ButtonsProperty)); }
+    const Buttons GetButtons() const { return static_cast<Buttons>(GetValue(ButtonsProperty)); }
 
     /// <summary>
     /// Sets the buttons to display (default: OK).
     /// </summary>
-    void SetButtons(MessageBoxButtons nValue) { SetValue(ButtonsProperty, static_cast<int>(nValue)); }
+    void SetButtons(Buttons nValue) { SetValue(ButtonsProperty, static_cast<int>(nValue)); }
 
     /// <summary>
     /// Shows a generic message.
@@ -113,7 +113,7 @@ public:
     static void ShowInfoMessage(const std::wstring& sMessage)
     {
         MessageBoxViewModel viewModel(sMessage);
-        viewModel.SetIcon(MessageBoxIcon::Info);
+        viewModel.SetIcon(Icon::Info);
         viewModel.ShowModal();
     }
 
@@ -123,7 +123,7 @@ public:
     static void ShowWarningMessage(const std::wstring& sMessage)
     {
         MessageBoxViewModel viewModel(sMessage);
-        viewModel.SetIcon(MessageBoxIcon::Warning);
+        viewModel.SetIcon(Icon::Warning);
         viewModel.ShowModal();
     }
 
@@ -134,7 +134,7 @@ public:
     {
         MessageBoxViewModel viewModel(sMessage);
         viewModel.SetHeader(sHeader);
-        viewModel.SetIcon(MessageBoxIcon::Warning);
+        viewModel.SetIcon(Icon::Warning);
         viewModel.ShowModal();
     }
 
@@ -144,7 +144,7 @@ public:
     static void ShowErrorMessage(const std::wstring& sMessage)
     {
         MessageBoxViewModel viewModel(sMessage);
-        viewModel.SetIcon(MessageBoxIcon::Error);
+        viewModel.SetIcon(Icon::Error);
         viewModel.ShowModal();
     }
 
@@ -155,7 +155,7 @@ public:
     {
         MessageBoxViewModel viewModel(sMessage);
         viewModel.SetHeader(sHeader);
-        viewModel.SetIcon(MessageBoxIcon::Error);
+        viewModel.SetIcon(Icon::Error);
         viewModel.ShowModal();
     }
 };

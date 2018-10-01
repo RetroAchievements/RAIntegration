@@ -396,8 +396,8 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
     vmMessageBox.SetHeader(L"Disable Hardcore mode?");
     vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
-    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxButtons::YesNo);
-    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxIcon::Warning);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
     if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
         return false;
 
@@ -580,8 +580,8 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
     vmMessageBox.SetHeader(L"Would you like to update?");
     vmMessageBox.SetMessage(oss.str());
-    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxIcon::Info);
-    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxButtons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Info);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
     if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes)
     {
@@ -1133,8 +1133,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
                     vmMessageBox.SetHeader(L"Enable Hardcore mode?");
                     vmMessageBox.SetMessage(L"Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game.");
-                    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxIcon::Warning);
-                    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxButtons::YesNo);
+                    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
                     if (vmMessageBox.ShowModal() == ra::ui::DialogResult::No)
                         break;

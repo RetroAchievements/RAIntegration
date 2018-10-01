@@ -39,15 +39,15 @@ public:
     bool operator!=(const ModelPropertyBase& that) const { return m_nKey != that.m_nKey; }
 
 protected:
-    ModelPropertyBase(const char* sTypeName, const char* sPropertyName) noexcept;
+    explicit ModelPropertyBase(const char* sTypeName, const char* sPropertyName) noexcept;
     virtual ~ModelPropertyBase() noexcept;
 
-    ModelPropertyBase(int nKey) noexcept { m_nKey = nKey; } // for binary search
+    explicit ModelPropertyBase(int nKey) noexcept { m_nKey = nKey; } // for binary search
 
 private:
-    int m_nKey;
-    const char* m_sTypeName;
-    const char* m_sPropertyName;
+    int m_nKey{};
+    const char* m_sTypeName{};
+    const char* m_sPropertyName{};
 
     static std::vector<ModelPropertyBase*> s_vProperties;
     static int s_nNextKey;
@@ -57,7 +57,7 @@ template<class T>
 class ModelProperty : public ModelPropertyBase
 {
 public:
-    ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue) noexcept
+    explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue) noexcept
         : ModelPropertyBase(sTypeName, sPropertyName), m_tDefaultValue(tDefaultValue)
     {
     }
@@ -73,9 +73,9 @@ public:
     /// <remarks>Affects all existing instances where a value has not been set, not just new instances.</remarks>
     void SetDefaultValue(const T& tValue) { m_tDefaultValue = tValue; }
 
-    typedef std::unordered_map<int, T> ValueMap;
+    using ValueMap = std::unordered_map<int, T>;
 
-    typedef struct ChangeArgs
+    struct ChangeArgs
     {
         /// <summary>
         /// The property that changed.
@@ -91,15 +91,15 @@ public:
         /// The new value.
         /// </summary>
         const T& tNewValue;
-    } ChangeArgs;
+    };
 
 private:
     T m_tDefaultValue;
 };
 
-typedef ModelProperty<bool> BoolModelProperty;
-typedef ModelProperty<std::wstring> StringModelProperty;
-typedef ModelProperty<int> IntModelProperty;
+using BoolModelProperty = ModelProperty<bool>;
+using StringModelProperty = ModelProperty<std::wstring>;
+using IntModelProperty = ModelProperty<int>;
 
 } // namespace ui
 } // namespace ra

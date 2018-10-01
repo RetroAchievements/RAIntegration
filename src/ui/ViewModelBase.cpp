@@ -19,11 +19,11 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
         if (iter != m_mIntValues.end())
             return;
 
-        m_mIntValues[pProperty.GetKey()] = static_cast<int>(bValue);
+        m_mIntValues.insert_or_assign(pProperty.GetKey(), static_cast<int>(bValue));
     }
 
 #ifdef _DEBUG
-    m_mDebugValues[pProperty.GetPropertyName()] = bValue ? L"true" : L"false";
+    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), bValue ? L"true" : L"false");
 #endif
 
     if (!m_vNotifyTargets.empty())
@@ -41,7 +41,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
 {
     StringModelProperty::ValueMap::iterator iter = m_mStringValues.find(pProperty.GetKey());
     std::wstring sOldValue;
-    const std::wstring* pOldValue;
+    const std::wstring* pOldValue{};
 
     if (sValue == pProperty.GetDefaultValue())
     {
@@ -60,7 +60,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
     {
         // not in map, add it
         pOldValue = &(pProperty.GetDefaultValue());
-        m_mStringValues[pProperty.GetKey()] = sValue;
+        m_mStringValues.insert_or_assign(pProperty.GetKey(), sValue);
     }
     else if (iter->second != sValue)
     {
@@ -76,7 +76,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
     }
 
 #ifdef _DEBUG
-    m_mDebugValues[pProperty.GetPropertyName()] = sValue;
+    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), sValue);
 #endif
 
     if (!m_vNotifyTargets.empty())
@@ -108,7 +108,7 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
     else if (iter == m_mIntValues.end())
     {
         // not in map, add it
-        m_mIntValues[pProperty.GetKey()] = nValue;
+        m_mIntValues.insert_or_assign(pProperty.GetKey(), nValue);
         nOldValue = pProperty.GetDefaultValue();
     }
     else if (iter->second != nValue)
@@ -124,7 +124,7 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
     }
 
 #ifdef _DEBUG
-    m_mDebugValues[pProperty.GetPropertyName()] = std::to_wstring(nValue);
+    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nValue));
 #endif
 
     if (!m_vNotifyTargets.empty())

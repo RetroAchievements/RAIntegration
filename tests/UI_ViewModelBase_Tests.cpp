@@ -13,6 +13,8 @@ TEST_CLASS(UI_ViewModelBase_Tests)
     class ViewModelHarness : public ViewModelBase
     {
     public:
+        ViewModelHarness() = default;
+
         StringModelProperty StringProperty{ "ViewModelHarness", "String", L"" };
         const std::wstring& GetString() const { return GetValue(StringProperty); }
         void SetString(const std::wstring& sValue) { SetValue(StringProperty, sValue); }

@@ -74,7 +74,7 @@ public:
     DialogResult ShowModal();
 
 protected:
-    WindowViewModelBase() : ViewModelBase() {}
+    WindowViewModelBase() = default;
 };
 
 } // namespace ui

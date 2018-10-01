@@ -5,7 +5,8 @@
     <RA_DIR>$(SolutionDir)</RA_DIR>
     <RapidJSON_IncludeDir>$(RA_DIR)rapidjson/include/</RapidJSON_IncludeDir>
     <RA_SourceDir>$(RA_DIR)src/</RA_SourceDir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir)</RA_IncludePath>
+    <MSTest_IncludePath>$(VCInstallDir)UnitTest\include\</MSTest_IncludePath>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(MSTest_IncludePath)</RA_IncludePath>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -22,8 +23,7 @@
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <PostBuildEvent>

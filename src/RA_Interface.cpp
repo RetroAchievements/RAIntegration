@@ -361,7 +361,7 @@ static std::wstring GetIntegrationPath()
     DWORD iIndex = GetModuleFileNameW(0, sBuffer, 2048);
     while (iIndex > 0 && sBuffer[iIndex - 1] != '\\' && sBuffer[iIndex - 1] != '/')
         --iIndex;
-    wcscpy(&sBuffer[iIndex], L"RA_Integration.dll");
+    wcscpy_s(&sBuffer[iIndex], sizeof(sBuffer)/sizeof(sBuffer[0]) - iIndex, L"RA_Integration.dll");
 
     return std::wstring(sBuffer);
 }
@@ -378,7 +378,7 @@ static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, in
     else
     {
         wchar_t sErrBuffer[2048];
-        _wcserror_s(sErrBuffer, nErr);
+        _wcserror_s(sErrBuffer, sizeof(sErrBuffer)/sizeof(sErrBuffer[0]), nErr);
 
         std::wstring sErrMsg = L"Unable to write " + sFile + L"\n" + sErrBuffer;
         MessageBoxW(nullptr, sErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);

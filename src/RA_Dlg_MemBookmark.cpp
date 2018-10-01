@@ -18,26 +18,21 @@ HWND g_hIPEEditBM;
 int nSelItemBM;
 int nSelSubItemBM;
 
-namespace {
-const char* COLUMN_TITLE[] ={ "Description", "Address", "Value", "Prev.", "Changes" };
-const int COLUMN_WIDTH[] ={ 112, 64, 64, 64, 54 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
-}
+namespace ra {
+
+using ColumnTitles = std::array<LPCTSTR, 5>;
+using ColumnWidths = std::array<int, 5>;
+
+inline constexpr ColumnTitles COLUMN_TITLE{ _T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes") };
+inline constexpr ColumnWidths COLUMN_WIDTH{ 112, 64, 64, 64, 54 };
+static_assert(is_same_size_v<ColumnTitles, ColumnWidths>);
+
+} // namespace ra
 
 _CONSTANT_VAR c_rgFileTypes{L"Text Document (*.txt)\x0" "*.txt\x0"
                              "JSON File (*.json)\x0" "*.json\x0"
                              "All files (*.*)\x0" "*.*\x0\x0"};
 
-enum BookmarkSubItems
-{
-    CSI_DESC,
-    CSI_ADDRESS,
-    CSI_VALUE,
-    CSI_PREVIOUS,
-    CSI_CHANGES,
-
-    NumColumns
-};
 
 INT_PTR CALLBACK Dlg_MemBookmark::s_MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -229,12 +224,13 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcCol.left = rcCol.right;
                         rcCol.right += lvc.cx;
 
-                        switch (i)
+                        const auto eSubItem{ ra::itoe<SubItems>(i) };
+                        switch (eSubItem)
                         {
-                            case CSI_ADDRESS:
+                            case SubItems::Address:
                                 swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
                                 break;
-                            case CSI_VALUE:
+                            case SubItems::Value:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
                                 else
@@ -247,7 +243,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case CSI_PREVIOUS:
+                            case SubItems::Previous:
                                 if (m_vBookmarks[pdis->itemID]->Decimal())
                                     swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
                                 else
@@ -260,7 +256,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                     }
                                 }
                                 break;
-                            case CSI_CHANGES:
+                            case SubItems::Changes:
                                 swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
                                 break;
                             default:
@@ -322,14 +318,15 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
 
-                        if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_DESC)
+                        using namespace ra::rel_ops;
+                        if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))
                         {
                             nSelItemBM = pOnClick->iItem;
                             nSelSubItemBM = pOnClick->iSubItem;
 
                             EditLabel(pOnClick->iItem, pOnClick->iSubItem);
                         }
-                        else if (pOnClick->iItem != -1 && pOnClick->iSubItem == CSI_ADDRESS)
+                        else if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Address))
                         {
                             g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
                             MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
@@ -543,30 +540,32 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < NumColumns; ++i)
+    auto idx{ 0 };
+    for (auto& sColTitle : ra::COLUMN_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]).c_str();
-        col.pszText = const_cast<LPTSTR>(colTitle.c_str());
-        col.cchTextMax = 255;
-        col.iSubItem = i;
+        ra::tstring tszText{ sColTitle };
+        LV_COLUMN col
+        {
+            col.mask       = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT,
+            col.fmt        = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH,
+            col.cx         = ra::COLUMN_WIDTH.at(idx),
+            col.pszText    = tszText.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = idx
+        };
 
-        col.fmt = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH;
-        if (i == NumColumns - 1)
+        if (idx == (ra::to_signed(ra::COLUMN_TITLE.size()) - 1))
             col.fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, (LPARAM)&col);
+        ListView_InsertColumn(hList, idx, &col);
+        idx++;
     }
-
     m_nNumOccupiedRows = 0;
 
-    BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
-    bSuccess = ListView_EnableGroupView(hList, FALSE);
-
+#if _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
+    if (ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER) != 0UL)
+        ::MessageBox(::GetActiveWindow(), _T("The styles specified could not be set."), _T("Error!"), MB_OK | MB_ICONERROR);
+#endif // _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
 }
 
 void Dlg_MemBookmark::AddAddress()

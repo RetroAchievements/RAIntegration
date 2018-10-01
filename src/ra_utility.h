@@ -9,9 +9,7 @@
     For most of these functions you won't have to specify the template argument as it will be auto-deduced unless
     stated otherwise.
 */
-
 namespace ra {
-
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
@@ -53,19 +51,32 @@ _NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept { return std::lroun
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
 _NODISCARD _CONSTANT_FN ftou(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
 
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
-sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
+_NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
 
-// function alias template for etoi (EnumToIntegral)
-template<typename Enum> _NODISCARD _CONSTANT_VAR to_integral{ etoi<Enum> };
+template<
+    typename Enum,
+    typename Integral = std::underlying_type_t<Enum>,
+    typename = std::enable_if_t<
+    std::is_enum_v<Enum> &&
+    std::is_integral_v<Integral> &&
+    std::is_convertible_v<Integral, std::underlying_type_t<Enum>>>
+> _NODISCARD _CONSTANT_VAR
+itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
+
+// function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
+template<typename Enum> _CONSTANT_VAR to_integral{ etoi<Enum> };
+template<typename Enum, typename Integral = std::underlying_type_t<Enum>>
+_CONSTANT_VAR to_enum{ itoe<Enum, Integral> };
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
 /// <typeparam name="CharT">
-///   The character type, it should be auto deduced if valid. Otherwise you'll get an intellisense error.
+///   The character type, it should be auto deduced if valid. Otherwise you'll
+///   get an intellisense error.
 /// </typeparam>
 /// <returns>The size of the file stream.</returns>
 template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
@@ -91,6 +102,9 @@ filesize(std::basic_string<CharT>&& filename) noexcept
     file_type file{ bstr, std::ios::in | std::ios::ate | std::ios::binary };
     return file.tellg();
 } // end function filesize
+
+using LPCTSTR = const TCHAR*;
+using LPTSTR = TCHAR*;
 
 // More functions to be Unicode compatible w/o sacrificing MBCS
 _EXTERN_C

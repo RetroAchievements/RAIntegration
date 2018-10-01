@@ -31,6 +31,7 @@
 #include "RA_Dlg_MemBookmark.h"
 
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
@@ -70,6 +71,7 @@ static const unsigned int PROCESS_WAIT_TIME = 100;
 static unsigned int g_nProcessTimer = 0;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
+
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
@@ -97,38 +99,17 @@ API const char* CCONV _RA_HostName()
     return sHostName.c_str();
 }
 
-static void EnsureDirectoryExists(const std::wstring& sDirectory)
+static void EnsureDirectoryExists(const ra::services::IFileSystem& pFileSystem, const std::wstring& sDirectory)
 {
-    DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
-    if (nAttrib == INVALID_FILE_ATTRIBUTES)
-        CreateDirectoryW(sDirectory.c_str(), nullptr);
+    if (!pFileSystem.DirectoryExists(sDirectory))
+        pFileSystem.CreateDirectory(sDirectory);
 }
 
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
 {
-    // determine the home directory from the executable's path
-    wchar_t sBuffer[MAX_PATH];
-    GetModuleFileNameW(0, sBuffer, MAX_PATH);
-    PathRemoveFileSpecW(sBuffer);
-    g_sHomeDir = sBuffer;
-    if (g_sHomeDir.back() != '\\')
-        g_sHomeDir.push_back('\\');
-
-    RA_LOG(__FUNCTION__ " - storing \"%s\" as home dir\n", ra::Narrow(g_sHomeDir).c_str());
-
-    //	Ensure all required directories are created:
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BASE);
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BADGE);
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_DATA);
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_USERPIC);
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_OVERLAY);
-    EnsureDirectoryExists(g_sHomeDir + RA_DIR_BOOKMARKS);
-
     // initialize global state
     g_EmulatorID = static_cast<EmulatorID>(nEmulatorID);
     g_RAMainWnd = hMainHWND;
-
-    RA_LOG(__FUNCTION__ " Init called! ID: %d, ClientVer: %s\n", nEmulatorID, sClientVer);
 
     switch (g_EmulatorID)
     {
@@ -204,14 +185,25 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
     }
 
+    RA_LOG("=================================================");
     if (g_sClientName != nullptr)
-    {
-        RA_LOG("(found as: %s)\n", g_sClientName);
-    }
+        RA_LOG("Initializing for %s %s", g_sClientName, sClientVer);
+    else
+        RA_LOG("Initializing for unknown client %d %s", nEmulatorID, sClientVer);
 
     g_sROMDirLocation[0] = '\0';
 
-    ra::services::Initialization::RegisterServices(g_sHomeDir, g_sClientName);
+    ra::services::Initialization::RegisterServices(g_sClientName);
+
+    //	Ensure all required directories are created:
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BASE);
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BADGE);
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_DATA);
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_USERPIC);
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_OVERLAY);
+    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BOOKMARKS);
+    g_sHomeDir = pFileSystem.BaseDirectory();
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     RAUsers::LocalUser().SetUsername(pConfiguration.GetUsername());
@@ -226,9 +218,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     //////////////////////////////////////////////////////////////////////////
     //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet(Core);
-    g_pUnofficialAchievements = new AchievementSet(Unofficial);
-    g_pLocalAchievements = new AchievementSet(Local);
+    g_pCoreAchievements = new AchievementSet(AchievementSet::Type::Core);
+    g_pUnofficialAchievements = new AchievementSet(AchievementSet::Type::Unofficial);
+    g_pLocalAchievements = new AchievementSet(AchievementSet::Type::Local);
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////
@@ -636,7 +628,7 @@ API int CCONV _RA_HandleHTTPResults()
             rapidjson::Document doc;
             BOOL bJSONParsedOK = FALSE;
 
-            if (pObj->GetRequestType() == RequestBadge)
+            if (pObj->GetRequestType() == RequestBadge || pObj->GetRequestType() == RequestUserPic)
             {
                 //	Ignore...
             }
@@ -1420,17 +1412,6 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
     value.assign(pStartString, pSource - pStartString);
     pSource++;
-}
-
-void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
-{
-    std::ofstream ofile{ sFileName };
-    if (!ofile.is_open())
-        return;
-
-    rapidjson::OStreamWrapper osw{ ofile };
-    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
-    doc.Accept(writer);
 }
 
 void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)

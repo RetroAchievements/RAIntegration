@@ -2,12 +2,12 @@
 #define RA_FWD_H
 #pragma once
 
-// Forward declaring namespace std caused problems
+/* Forward declaring namespace std caused problems */
 #include <xstring>
 
-// Maybe an extra check just in-case
 #define _NORETURN            [[noreturn]]
 
+/* Maybe an extra check just in-case */
 #if _HAS_CXX17
 #define _DEPRECATED          [[deprecated]]
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
@@ -33,9 +33,9 @@ using TCHAR = char;
 using TCHAR = wchar_t;
 #else 
 #error Unknown character set detected, only MultiByte and Unicode are supported!
-#endif // _MBCS
+#endif /* _MBCS */
 #define _TCHAR_DEFINED
-#endif // !_TCHAR_DEFINED
+#endif /* !_TCHAR_DEFINED */
 
 #ifndef _WINDEF_
 using DWORD  = unsigned long;

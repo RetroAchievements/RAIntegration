@@ -111,7 +111,7 @@ public:
 
     _CONSTANT_FN SetDirtyFlag(_In_ DirtyFlags nFlags) noexcept
     {
-        using namespace ra::biwise_ops;
+        using namespace ra::bitwise_ops;
         m_nDirtyFlags |= nFlags;
     }
 

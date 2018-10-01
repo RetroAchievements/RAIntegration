@@ -2069,7 +2069,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
         m_bPopulatingAchievementEditorData = TRUE;
 
-        using namespace ra::biwise_ops;
+        using namespace ra::bitwise_ops;
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Points) && !bPointsSelected)

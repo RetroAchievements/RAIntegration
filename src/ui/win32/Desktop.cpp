@@ -12,7 +12,7 @@ namespace win32 {
 
 Desktop::Desktop() noexcept
 {
-    m_vDialogControllers.push_back(new Dlg_MessageBox::Controller());
+    m_vDialogPresenters.emplace_back(new Dlg_MessageBox::Presenter());
 }
 
 void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
@@ -43,12 +43,12 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel) const
     return vmViewModel.GetDialogResult();
 }
 
-ra::ui::win32::IDialogController* Desktop::GetDialogController(ra::ui::WindowViewModelBase& oViewModel) const
+ra::ui::win32::IDialogPresenter* Desktop::GetDialogController(ra::ui::WindowViewModelBase& oViewModel) const
 {
-    for (ra::ui::win32::IDialogController* pController : m_vDialogControllers)
+    for (auto& pController : m_vDialogPresenters)
     {
         if (pController->IsSupported(oViewModel))
-            return pController;
+            return pController.get();
     }
 
     return nullptr;

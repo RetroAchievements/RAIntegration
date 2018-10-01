@@ -2,7 +2,9 @@
 #define RA_UI_WIN32_DESKTOP
 
 #include "ui/IDesktop.hh"
-#include "ui/win32/IDialogController.hh"
+#include "ui/win32/IDialogPresenter.hh"
+
+#include <memory>
 
 namespace ra {
 namespace ui {
@@ -19,9 +21,9 @@ public:
     void Shutdown() override;
 
 private:
-    ra::ui::win32::IDialogController* GetDialogController(WindowViewModelBase& oViewModel) const;
+    ra::ui::win32::IDialogPresenter* GetDialogController(WindowViewModelBase& oViewModel) const;
 
-    std::vector<ra::ui::win32::IDialogController*> m_vDialogControllers;
+    std::vector<std::unique_ptr<ra::ui::win32::IDialogPresenter>> m_vDialogPresenters;
 };
 
 } // namespace win32

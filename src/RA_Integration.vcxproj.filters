@@ -356,7 +356,7 @@
     <ClInclude Include="ui\win32\Desktop.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\IDialogController.hh">
+    <ClInclude Include="ui\win32\IDialogPresenter.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>

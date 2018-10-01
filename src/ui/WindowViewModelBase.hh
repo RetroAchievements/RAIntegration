@@ -50,7 +50,7 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for the dialog result.
     /// </summary>
-    static IntModelProperty DialogResultProperty;
+    static const IntModelProperty DialogResultProperty;
 
     /// <summary>
     /// Gets the dialog result.
@@ -74,7 +74,7 @@ public:
     DialogResult ShowModal();
 
 protected:
-    WindowViewModelBase() = default;
+    WindowViewModelBase() noexcept = default;
 };
 
 } // namespace ui

@@ -7,10 +7,10 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-class IDialogController
+class IDialogPresenter
 {
 public:
-    virtual ~IDialogController() noexcept = default;
+    virtual ~IDialogPresenter() noexcept = default;
 
     /// <summary>
     /// Determines whether the specified view model can be shown by this controller.

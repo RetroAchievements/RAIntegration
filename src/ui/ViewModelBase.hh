@@ -26,7 +26,7 @@ public:
     void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
 
 protected:
-    ViewModelBase() = default;
+    ViewModelBase() noexcept {}
 
     /// <summary>
     /// Gets the value associated to the requested boolean property.
@@ -91,6 +91,8 @@ private:
     std::map<std::string, std::wstring> m_mDebugValues;
 #endif
 
+    // m_vNotifyTargets is a collection of pointers to other objects. These are not allocated object
+    // and do not need to be free'd. It's impossible to create a std::set<NotifyTarget&>.
     typedef std::set<NotifyTarget*> NotifyTargetSet;
     NotifyTargetSet m_vNotifyTargets;
 };

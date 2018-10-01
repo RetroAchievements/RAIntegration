@@ -135,7 +135,7 @@
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\Dlg_MessageBox.hh" />
-    <ClInclude Include="ui\win32\IDialogController.hh" />
+    <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
   </ItemGroup>
   <ItemGroup>

@@ -19,7 +19,7 @@ using fnTaskDialog = HRESULT(WINAPI*)(HWND hwndParent, HINSTANCE hInstance, PCWS
 
 static fnTaskDialog pTaskDialog = nullptr;
 
-Dlg_MessageBox::Controller::Controller() noexcept
+Dlg_MessageBox::Presenter::Presenter() noexcept
 {
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
     auto hDll = LoadLibraryA("comctl32");
@@ -27,17 +27,17 @@ Dlg_MessageBox::Controller::Controller() noexcept
         pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
 }
 
-bool Dlg_MessageBox::Controller::IsSupported(const ra::ui::WindowViewModelBase& oViewModel)
+bool Dlg_MessageBox::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel)
 {
     return (dynamic_cast<const ra::ui::viewmodels::MessageBoxViewModel*>(&oViewModel) != nullptr);
 }
 
-void Dlg_MessageBox::Controller::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
+void Dlg_MessageBox::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
 {
     ShowModal(oViewModel);
 }
 
-void Dlg_MessageBox::Controller::ShowModal(ra::ui::WindowViewModelBase& oViewModel)
+void Dlg_MessageBox::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel)
 {
     auto& oMessageBoxViewModel = reinterpret_cast<MessageBoxViewModel&>(oViewModel);
     int nButton = 0;

@@ -40,7 +40,7 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.
     /// </summary>
-    static StringModelProperty MessageProperty;
+    static const StringModelProperty MessageProperty;
 
     /// <summary>
     /// Gets the message to display.
@@ -56,7 +56,7 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for the header message.
     /// </summary>
-    static StringModelProperty HeaderProperty;
+    static const StringModelProperty HeaderProperty;
 
     /// <summary>
     /// Gets the header message to display.
@@ -71,7 +71,7 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for the icon.
     /// </summary>
-    static IntModelProperty IconProperty;
+    static const IntModelProperty IconProperty;
 
     /// <summary>
     /// Gets the icon to display.
@@ -86,7 +86,7 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for the buttons to display.
     /// </summary>
-    static IntModelProperty ButtonsProperty;
+    static const IntModelProperty ButtonsProperty;
 
     /// <summary>
     /// Gets the buttons to display.

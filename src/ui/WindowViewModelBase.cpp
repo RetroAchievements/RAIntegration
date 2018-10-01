@@ -7,7 +7,7 @@ namespace ra {
 namespace ui {
 
 StringModelProperty WindowViewModelBase::WindowTitleProperty("WindowViewModelBase", "WindowTitle", L"Window");
-IntModelProperty WindowViewModelBase::DialogResultProperty("WindowViewModelBase", "DialogResult", static_cast<int>(DialogResult::None));
+const IntModelProperty WindowViewModelBase::DialogResultProperty("WindowViewModelBase", "DialogResult", static_cast<int>(DialogResult::None));
 
 DialogResult WindowViewModelBase::ShowModal()
 {

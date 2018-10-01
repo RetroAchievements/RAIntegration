@@ -7,24 +7,26 @@
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
-enum Achievement_DirtyFlags
-{
-    Dirty_Title = 1 << 0,
-    Dirty_Desc = 1 << 1,
-    Dirty_Points = 1 << 2,
-    Dirty_Author = 1 << 3,
-    Dirty_ID = 1 << 4,
-    Dirty_Badge = 1 << 5,
-    Dirty_Conditions = 1 << 6,
-    Dirty_Votes = 1 << 7,
-    Dirty_Description = 1 << 8,
-
-    Dirty__All = (unsigned int)(-1)
-};
 
 class Achievement
 {
 public:
+    enum class DirtyFlags
+    {
+        Clean,
+        Title       = 1 << 0,
+        Desc        = 1 << 1,
+        Points      = 1 << 2,
+        Author      = 1 << 3,
+        ID          = 1 << 4,
+        Badge       = 1 << 5,
+        Conditions  = 1 << 6,
+        Votes       = 1 << 7,
+        Description = 1 << 8,
+
+        All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
+    };
+
     Achievement() noexcept;
 
 public:
@@ -104,10 +106,16 @@ public:
 #endif
 
     //	Used for rendering updates when editing achievements. Usually always false.
-    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
-    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
-    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
-    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
+    _NODISCARD _CONSTANT_FN IsDirty() const { return (m_nDirtyFlags != DirtyFlags{}); }
+
+    _CONSTANT_FN SetDirtyFlag(_In_ DirtyFlags nFlags) noexcept
+    {
+        using namespace ra::biwise_ops;
+        m_nDirtyFlags |= nFlags;
+    }
+
+    _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = DirtyFlags{}; }
 
 private:
     ra::AchievementID m_nAchievementID{};
@@ -133,7 +141,7 @@ private:
 
     float m_fProgressLastShown{};	//	The last shown progress
 
-    unsigned int m_nDirtyFlags{};	//	Use for rendering when editing.
+    DirtyFlags m_nDirtyFlags{};	//	Use for rendering when editing.
 
     time_t m_nTimestampCreated{};
     time_t m_nTimestampModified{};

@@ -106,7 +106,7 @@ std::string& TrimLineEnding(std::string& str) noexcept
 }
 
 _Use_decl_annotations_
-_NODISCARD std::string Format(const char* sFormat, ...)
+_NODISCARD std::string StringPrintf(const char* sFormat, ...)
 {
     std::string sFormatted;
 
@@ -117,7 +117,7 @@ _NODISCARD std::string Format(const char* sFormat, ...)
 
     if (nNeeded >= 0)
     {
-        if (nNeeded >= sFormatted.size())
+        if (ra::to_unsigned(nNeeded) >= sFormatted.size())
         {
             sFormatted.resize(ra::to_unsigned(nNeeded + 1));
 

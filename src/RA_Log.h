@@ -19,7 +19,7 @@
 { \
     const auto& __pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>(); \
     if (__pLogger.IsEnabled(lvl)) \
-        __pLogger.LogMessage(lvl, ra::Format(__VA_ARGS__)); \
+        __pLogger.LogMessage(lvl, ra::StringPrintf(__VA_ARGS__)); \
 }
 
 // legacy log message writes at Info level and may need trailing newline removed
@@ -28,7 +28,7 @@
     const auto& __pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>(); \
     if (__pLogger.IsEnabled(ra::services::LogLevel::Info)) \
     { \
-        std::string __sFormatted = ra::Format(__VA_ARGS__); \
+        std::string __sFormatted = ra::StringPrintf(__VA_ARGS__); \
         __pLogger.LogMessage(ra::services::LogLevel::Info, ra::TrimLineEnding(__sFormatted)); \
     } \
 }

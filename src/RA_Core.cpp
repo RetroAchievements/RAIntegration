@@ -183,8 +183,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
     }
 
-    g_sROMDirLocation[0] = '\0';
-
     ra::services::Initialization::RegisterServices(g_sClientName);
 
     //	Ensure all required directories are created:

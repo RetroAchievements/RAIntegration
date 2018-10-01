@@ -17,21 +17,13 @@ public:
     MockClock() noexcept
         : m_Override(this)
     {
-        struct tm tNow;
-        tNow.tm_year = 118; // 2018
-        tNow.tm_mon = 7;    // August
-        tNow.tm_mday = 21;  // 21
-        tNow.tm_hour = 16;  // 4 pm
-        tNow.tm_min = 8;    // 4:08
-        tNow.tm_sec = 43;   // 4:08:43
-
-        m_tNow = std::chrono::system_clock::from_time_t(mktime(&tNow)); // 16:08:43 08/21/18
+        m_tNow = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18
         m_tUpTime = std::chrono::steady_clock::time_point();
     }
 
-    std::chrono::system_clock::time_point Now() const 
-    { 
-        return m_tNow; 
+    std::chrono::system_clock::time_point Now() const
+    {
+        return m_tNow;
     }
 
     std::chrono::steady_clock::time_point UpTime() const

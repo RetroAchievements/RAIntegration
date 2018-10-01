@@ -11,7 +11,7 @@ namespace impl {
 class Clock : public ra::services::IClock
 {
 public:
-    explicit Clock() = default;
+    Clock() noexcept = default;
 
     std::chrono::system_clock::time_point Now() const override
     {

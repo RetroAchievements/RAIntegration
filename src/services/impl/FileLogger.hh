@@ -49,7 +49,7 @@ public:
         sprintf_s(&sBuffer[6], sizeof(sBuffer) - 6, ".%03u|", tMilliseconds);
 
         {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
+            std::scoped_lock<std::mutex> oLock(m_oMutex);
             m_pWriter->Write(sBuffer);
 
             // mark the level

@@ -314,6 +314,9 @@
     <ClInclude Include="services\TextReader.hh">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="windows_nodefines.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

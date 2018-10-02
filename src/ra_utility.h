@@ -10,6 +10,7 @@
     stated otherwise.
 */
 namespace ra {
+
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
@@ -98,13 +99,10 @@ template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD 
 filesize(std::basic_string<CharT>&& filename) noexcept
 {
     using file_type = std::basic_fstream<CharT>;
-    auto bstr{ std::move(filename) };
+    auto bstr{ std::forward<std::basic_string<CharT>>(filename) };
     file_type file{ bstr, std::ios::in | std::ios::ate | std::ios::binary };
     return file.tellg();
 } // end function filesize
-
-using LPCTSTR = const TCHAR*;
-using LPTSTR = TCHAR*;
 
 // More functions to be Unicode compatible w/o sacrificing MBCS
 _EXTERN_C
@@ -124,6 +122,39 @@ tstrtoul(_In_z_ LPCTSTR _String,
 } /* end function tstrtoul */
 _END_EXTERN_C
 
+template<typename Array, class = std::enable_if_t<std::is_array_v<Array>>>
+_Success_(return >= 0) _NODISCARD _CONSTANT_FN
+SizeOfArray(_In_ const Array& arr) noexcept
+{
+    static_assert(sizeof(*arr) > 0, "Array must at least have one element!");
+    return(sizeof(arr) / sizeof(*arr));
+}
+
+/// <summary>
+///   Safely deletes a pointer to prevent dangling
+/// </summary>
+/// <typeparam name="NullablePointer">
+///   A pointer that satisfies the 
+///   <a href="https://en.cppreference.com/w/cpp/named_req/NullablePointer">NullablePointer</a> named requirement.
+/// </typeparam>
+/// <param name="np">The pointer to delete.</param>
+/// <param name="bIsDynArray">
+///   Set this to <c>true</c> if <paramref name="np" /> is a dynamically allocated array.
+/// </param>
+template<typename NullablePointer, class = std::enable_if_t<is_nullable_pointer_v<NullablePointer>>>
+_Success_(np == nullptr) _CONSTANT_FN
+SafeDelete(_In_ NullablePointer np, _In_ bool bIsDynArray = false) noexcept
+{
+    if (np != nullptr)
+    {
+        if (bIsDynArray)
+            delete[] np;
+        else
+            delete np;
+        np = nullptr;
+    }
+}
+
 // Don't depend on std::rel_ops for stuff here because it assumes each parameter has the same type
 /// <summary>
 ///   Relational operator overloads, mainly for comparing an <c>enum class</c> with it's <c>underlying_type</c>.
@@ -131,40 +162,40 @@ _END_EXTERN_C
 namespace rel_ops {
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator==(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) == b); }
+operator==(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (etoi(a) == b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator==(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a == etoi(b)); }
+operator==(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (a == etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator!=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) == b)); }
+operator!=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) == b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator!=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a == etoi(b))); }
+operator!=(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (!(a == etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) < b); }
+operator<(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (etoi(a) < b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a < etoi(b)); }
+operator<(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (a < etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (b < etoi(a)); }
+operator>(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (b < etoi(a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (etoi(b) < a); }
+operator>(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (etoi(b) < a); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(b < etoi(a))); }
+operator<=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(b < etoi(a))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(etoi(b) < a)); }
+operator<=(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (!(etoi(b) < a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a < etoi(b))); }
+operator>=(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (!(a < etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
+operator>=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
 
 } // namespace rel_ops
 } // namespace ra

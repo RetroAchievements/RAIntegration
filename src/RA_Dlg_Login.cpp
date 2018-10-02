@@ -17,7 +17,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
     {
         case WM_INITDIALOG:
 
-            SetDlgItemText(hDlg, IDC_RA_USERNAME, NativeStr(RAUsers::LocalUser().Username()).c_str());
+            SetDlgItemText(hDlg, IDC_RA_USERNAME, ra::NativeStr(RAUsers::LocalUser().Username()).c_str());
             if (RAUsers::LocalUser().Username().length() > 2)
             {
                 HWND hPass = GetDlgItem(hDlg, IDC_RA_PASSWORD);
@@ -80,7 +80,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                             sResponseTitle = "Error logging in!";
                         }
 
-                        MessageBox(hDlg, NativeStr(sResponse).c_str(), NativeStr(sResponseTitle).c_str(), MB_OK);
+                        MessageBox(hDlg, ra::NativeStr(sResponse).c_str(), ra::NativeStr(sResponseTitle).c_str(), MB_OK);
 
                         //	If we are now logged in
                         if (RAUsers::LocalUser().IsLoggedIn())
@@ -95,7 +95,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                     {
                         if (!doc.HasParseError() && doc.HasMember("Error"))
                         {
-                            MessageBox(hDlg, NativeStr(std::string("Server error: ") + std::string(doc["Error"].GetString())).c_str(), TEXT("Error!"), MB_OK);
+                            MessageBox(hDlg, ra::NativeStr(std::string("Server error: ") + std::string(doc["Error"].GetString())).c_str(), TEXT("Error!"), MB_OK);
                         }
                         else
                         {

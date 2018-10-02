@@ -589,7 +589,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.right = rect.right - 3;
 
     //	Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+    DrawText(hMemDC, ra::NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
     //	Adjust for header:
     r.top += m_szFontSize.cy;
@@ -639,7 +639,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                 }
 
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                DrawText(hMemDC, ra::NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                 if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
                 {
@@ -714,7 +714,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             }
 
                             r.left = 3 + (ptr - bufferNative) * m_szFontSize.cx;
-                            DrawText(hMemDC, NativeStr(ptr).c_str(), stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                            DrawText(hMemDC, ra::NativeStr(ptr).c_str(), stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
                         }
 
                         notes >>= 1;
@@ -804,7 +804,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
             for (size_t i = 0; i < NumComparisonTypes; ++i)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), NativeStr(COMPARISONTYPE_STR[i]).c_str());
+                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), ra::NativeStr(COMPARISONTYPE_STR[i]).c_str());
 
             ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 
@@ -884,9 +884,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             const std::string& sFirstLine = m_SearchResults[m_nPage].m_results.Summary();
                             if (sFirstLine.empty())
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), "Invalid Range");
+                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), _T("Invalid Range"));
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), sFirstLine.c_str());
+                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), ra::NativeStr(sFirstLine).c_str());
                         }
                         else
                         {
@@ -918,7 +918,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             std::ostringstream oss;
                             oss << "   (" << pSavedNote->Note() << ")";
-                            _tcscat_s(buffer, NativeStr(oss.str()).c_str());
+                            _tcscat_s(buffer, ra::NativeStr(oss.str()).c_str());
                         }
 
                         COLORREF color;
@@ -978,7 +978,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             if (!m_SearchResults[m_nPage].m_results.GetMatchingAddress(nSelect - 2, result))
                                 break;
 
-                            ComboBox_SetText(GetDlgItem(hDlg, IDC_RA_WATCHING), NativeStr(ra::ByteAddressToString(result.nAddress)).c_str());
+                            ComboBox_SetText(GetDlgItem(hDlg, IDC_RA_WATCHING), ra::NativeStr(ra::ByteAddressToString(result.nAddress)).c_str());
 
                             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
                             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
@@ -1222,7 +1222,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         //	Doesn't yet exist: add it newly!
                         m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
                         const std::string sAddress = ra::ByteAddressToString(nAddr);
-                        ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
+                        ComboBox_AddString(hMemWatch, ra::NativeStr(sAddress).c_str());
                     }
 
                     return FALSE;
@@ -1241,7 +1241,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
 
-                    int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddress).c_str());
+                    int nIndex = ComboBox_FindString(hMemWatch, -1, ra::NativeStr(sAddress).c_str());
                     if (nIndex != CB_ERR)
                         ComboBox_DeleteString(hMemWatch, nIndex);
 
@@ -1258,7 +1258,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         oss << "http://" << _RA_HostName() << "/codenotes.php?g=" << g_pCurrentGameData->GetGameID();
                         ShellExecute(nullptr,
                             _T("open"),
-                            NativeStr(oss.str()).c_str(),
+                            ra::NativeStr(oss.str()).c_str(),
                             nullptr,
                             nullptr,
                             SW_SHOWNORMAL);
@@ -1460,7 +1460,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
         while (iter != m_CodeNotes.EndOfNotes())
         {
             const std::string sAddr = ra::ByteAddressToString(iter->first);
-            ComboBox_AddString(hMemWatch, NativeStr(sAddr).c_str());
+            ComboBox_AddString(hMemWatch, ra::NativeStr(sAddr).c_str());
             iter++;
         }
 
@@ -1595,7 +1595,7 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 
     char buffer[32];
     sprintf_s(buffer, 32, "0x%06x", nAddr);
-    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
+    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, ra::NativeStr(buffer).c_str());
     UpdateBits();
 
     OnWatchingMemChange();
@@ -1621,7 +1621,7 @@ void Dlg_Memory::AddBank(size_t nBankID)
         return;
 
     HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-    int nIndex = ComboBox_AddString(hMemBanks, NativeStr(std::to_string(nBankID)).c_str());
+    int nIndex = ComboBox_AddString(hMemBanks, ra::NativeStr(std::to_string(nBankID)).c_str());
     if (nIndex != CB_ERR)
     {
         ComboBox_SetItemData(hMemBanks, nIndex, nBankID);

@@ -5,6 +5,6 @@
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);
 
-#define RA_LOG RADebugLog
+inline constexpr auto& RA_LOG{ RADebugLog };
 
 #endif // !RA_LOG_H

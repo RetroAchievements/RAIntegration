@@ -19,7 +19,7 @@ const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "A
 const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
 const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
 
-const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+const int NUM_COLS = ra::SizeOfArray(COLUMN_SIZE);
 
 int iSelect = -1;
 
@@ -40,7 +40,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
     for (int i = 0; i < NUM_COLS; ++i)
     {
-        const char* sColTitle = nullptr;
+        const char* sColTitle{""};
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             sColTitle = COLUMN_TITLES_CORE[i];
         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
@@ -55,7 +55,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
         if (i == (NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
         newColumn.cx = COLUMN_SIZE[i];
-        ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
+        ra::tstring sColTitleStr = ra::NativeStr(sColTitle);	//	Take a copy
         newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
         newColumn.cchTextMax = 255;
         newColumn.iSubItem = i;
@@ -138,8 +138,8 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 
     char buffer[16];
     sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
-    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
-    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
+    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, ra::NativeStr(buffer).c_str());
+    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, ra::NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
     UpdateSelectedAchievementButtons(nullptr);
 
@@ -181,7 +181,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     {
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
-        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
+        ra::tstring sTextData = ra::NativeStr(m_lbxData.back()[item.iSubItem]);
         item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
 
         if (item.iSubItem == 0)
@@ -204,26 +204,26 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
         if (Ach.Title().length() < 2)
         {
             sprintf_s(buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, ra::NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Title().length() > 63)
         {
             sprintf_s(buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.", Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, ra::NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
 
         if (Ach.Description().length() < 2)
         {
             sprintf_s(buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.", Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, ra::NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Description().length() > 255)
         {
             sprintf_s(buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.", Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, ra::NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
 
@@ -235,7 +235,7 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
                 std::string str{ "Achievement title contains an illegal character: " };
                 str += cNextChar;
                 str += "\nPlease remove and try again";
-                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
+                MessageBox(nullptr, ra::NativeStr(str).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
                 return FALSE;
             }
             if (Ach.Description().find_first_of(cNextChar) != std::string::npos)
@@ -243,7 +243,7 @@ BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
                 std::string str{ "Achievement description contains an illegal character: " };
                 str += cNextChar;
                 str += "\nPlease remove and try again";
-                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK);
+                MessageBox(nullptr, ra::NativeStr(str).c_str(), TEXT("Error!"), MB_OK);
                 return FALSE;
             }
         }
@@ -341,7 +341,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSet::Type nAchievementSe
         CheckDlgButton(m_hAchievementsDlg, IDC_RA_ACTIVE_LOCAL, TRUE);
     }
 
-    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
+    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, ra::NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
     CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
     OnLoad_NewRom(g_pCurrentGameData->GetGameID()); // assert: calls UpdateSelectedAchievementButtons
@@ -468,7 +468,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     else
                                     {
                                         MessageBox(hDlg,
-                                            NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
+                                            ra::NativeStr(std::string("Error in upload: response from server:") + std::string(response["Error"].GetString())).c_str(),
                                             TEXT("Error in upload!"), MB_OK);
                                     }
                                 }
@@ -519,7 +519,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         std::ostringstream oss;
                         oss << "Are you sure that you want to download fresh achievements from " << _RA_HostName() << "?\n" <<
                             "This will overwrite any changes that you have made with fresh achievements from the server";
-                        if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
+                        if (MessageBox(hDlg, ra::NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
                             ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                             if (nGameID != 0)
@@ -581,7 +581,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     char buffer[16];
                     sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
-                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
+                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, ra::NativeStr(buffer).c_str());
 
                     Cheevo.SetModified(TRUE);
                     UpdateSelectedAchievementButtons(&Cheevo);
@@ -621,8 +621,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     char buffer2[16];
                     sprintf_s(buffer2, 16, " %u", g_pActiveAchievements->NumAchievements());
-                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer2).c_str());
-                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
+                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, ra::NativeStr(buffer2).c_str());
+                    SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, ra::NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
                     NewClone.SetModified(TRUE);
                     UpdateSelectedAchievementButtons(&NewClone);
@@ -662,7 +662,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             oss << "This achievement exists on " << _RA_HostName() << ".\n\n"
                                 << "*Removing it will affect other games*\n\n"
                                 << "Are you absolutely sure you want to delete this?";
-                            MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Confirm Delete"), MB_YESNO | MB_ICONWARNING);
+                            MessageBox(hDlg, ra::NativeStr(oss.str()).c_str(), TEXT("Confirm Delete"), MB_YESNO | MB_ICONWARNING);
                         }
                     }
                 }
@@ -968,7 +968,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     BOOL bErrorsEncountered = FALSE;
 
-    if (MessageBox(hDlg, NativeStr(message).c_str(), NativeStr(title).c_str(), MB_YESNO | MB_ICONWARNING) == IDYES)
+    if (MessageBox(hDlg, ra::NativeStr(message).c_str(), ra::NativeStr(title).c_str(), MB_YESNO | MB_ICONWARNING) == IDYES)
     {
         for (size_t i = 0; i < nNumChecked; ++i)
         {
@@ -1033,7 +1033,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                 {
                     char buffer[1024];
                     sprintf_s(buffer, 1024, "Error!!\n%s", std::string(response["Error"].GetString()).c_str());
-                    MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+                    MessageBox(hDlg, ra::NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
                     bErrorsEncountered = TRUE;
                 }
             }
@@ -1047,7 +1047,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
         {
             char buffer[512];
             sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);
-            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
+            MessageBox(hDlg, ra::NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
             RECT rcBounds;
             GetClientRect(hList, &rcBounds);
@@ -1112,7 +1112,7 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
 
         TCHAR buffer[256];
         _stprintf_s(buffer, 256, _T(" %u"), nGameID);
-        SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
+        SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, ra::NativeStr(buffer).c_str());
 
         if (nGameID != 0)
         {
@@ -1123,8 +1123,8 @@ void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
         }
 
         _stprintf_s(buffer, _T(" %u"), g_pActiveAchievements->NumAchievements());
-        SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
-        SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
+        SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, ra::NativeStr(buffer).c_str());
+        SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, ra::NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
     }
 
     UpdateSelectedAchievementButtons(nullptr);
@@ -1150,7 +1150,7 @@ void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
     {
         OnEditData(nIndex, Dlg_Achievements::Points, std::to_string(ach.Points()));
 
-        SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
+        SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, ra::NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             OnEditData(nIndex, Dlg_Achievements::Modified, "Yes");
@@ -1208,7 +1208,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         item.iItem = nItem;
         item.iSubItem = nColumn;
         item.cchTextMax = 256;
-        ra::tstring sStr = NativeStr(m_lbxData[nItem][nColumn]);	//	scoped cache
+        ra::tstring sStr = ra::NativeStr(m_lbxData[nItem][nColumn]);	//	scoped cache
         item.pszText = sStr.data();
         if (ListView_SetItem(hList, &item) == FALSE)
         {

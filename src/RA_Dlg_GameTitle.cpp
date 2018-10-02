@@ -26,14 +26,14 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
         {
             const HWND hKnownGamesCbo = GetDlgItem(hDlg, IDC_RA_KNOWNGAMES);
             std::string sGameTitleTidy = Dlg_GameTitle::CleanRomName(g_GameTitleDialog.m_sEstimatedGameTitle);
-            SetDlgItemText(hDlg, IDC_RA_GAMETITLE, NativeStr(sGameTitleTidy).c_str());
+            SetDlgItemText(hDlg, IDC_RA_GAMETITLE, ra::NativeStr(sGameTitleTidy).c_str());
 
             //	Load in the checksum
-            SetDlgItemText(hDlg, IDC_RA_CHECKSUM, NativeStr(g_GameTitleDialog.m_sMD5).c_str());
+            SetDlgItemText(hDlg, IDC_RA_CHECKSUM, ra::NativeStr(g_GameTitleDialog.m_sMD5).c_str());
 
             //	Populate the dropdown
             //	***Do blocking fetch of all game titles.***
-            int nSel = ComboBox_AddString(hKnownGamesCbo, NativeStr("<New Title>").c_str());
+            int nSel = ComboBox_AddString(hKnownGamesCbo, ra::NativeStr("<New Title>").c_str());
             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
 
             PostArgs args;
@@ -69,7 +69,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     {
                         const std::string& sTitle = iter->first;
 
-                        nSel = ComboBox_AddString(hKnownGamesCbo, NativeStr(sTitle).c_str());
+                        nSel = ComboBox_AddString(hKnownGamesCbo, ra::NativeStr(sTitle).c_str());
 
                         //	Attempt to find this game and select it by default: case insensitive comparison
                         if (sGameTitleTidy.compare(sTitle) == 0)
@@ -107,7 +107,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     else
                     {
                         //	Existing title
-                        ASSERT(m_aGameTitles.find(std::string(sSelectedTitle)) != m_aGameTitles.end());
+                        ASSERT(m_aGameTitles.find(ra::Narrow(sSelectedTitle)) != m_aGameTitles.end());
                         nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
                     }
 
@@ -143,7 +143,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                         {
                             //Error given
                             MessageBox(hDlg,
-                                NativeStr(std::string("Could not add new title: ") + std::string(doc["Error"].GetString())).c_str(),
+                                ra::NativeStr(std::string("Could not add new title: ") + std::string(doc["Error"].GetString())).c_str(),
                                 TEXT("Errors encountered"),
                                 MB_OK);
                         }

@@ -144,11 +144,11 @@ void ProgressPopup::Render(HDC hDC, RECT& rcDest)
 
     HFONT hFontTitle = CreateFont(FONT_SIZE_MAIN, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+        DEFAULT_PITCH, ra::NativeStr(FONT_TO_USE).c_str());
 
     HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+        DEFAULT_PITCH, ra::NativeStr(FONT_TO_USE).c_str());
 
 
     int nTitleX = 10;
@@ -173,12 +173,12 @@ void ProgressPopup::Render(HDC hDC, RECT& rcDest)
     SIZE szTitle, szAchievement;
 
     SelectObject(hDC, hFontTitle);
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(GetTitle()).c_str(), strlen(GetTitle()));
-    GetTextExtentPoint32(hDC, NativeStr(GetTitle()).c_str(), strlen(GetTitle()), &szTitle);
+    TextOut(hDC, nTitleX, nTitleY, ra::NativeStr(GetTitle()).c_str(), strlen(GetTitle()));
+    GetTextExtentPoint32(hDC, ra::NativeStr(GetTitle()).c_str(), strlen(GetTitle()), &szTitle);
 
     SelectObject(hDC, hFontDesc);
-    TextOut(hDC, nDescX, nDescY, NativeStr(GetDesc()).c_str(), strlen(GetDesc()));
-    GetTextExtentPoint32(hDC, NativeStr(GetDesc()).c_str(), strlen(GetDesc()), &szAchievement);
+    TextOut(hDC, nDescX, nDescY, ra::NativeStr(GetDesc()).c_str(), strlen(GetDesc()));
+    GetTextExtentPoint32(hDC, ra::NativeStr(GetDesc()).c_str(), strlen(GetDesc()), &szAchievement);
 
     HGDIOBJ hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
     SelectObject(hDC, hPen);

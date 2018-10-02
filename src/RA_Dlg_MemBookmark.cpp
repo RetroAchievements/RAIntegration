@@ -935,7 +935,7 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
     };
 
     SendMessage(g_hIPEEditBM, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks[nItem]->Description()).c_str());
+    SetWindowText(g_hIPEEditBM, ra::NativeStr(m_vBookmarks[nItem]->Description()).c_str());
 
     SendMessage(g_hIPEEditBM, EM_SETSEL, 0, -1);
     SetFocus(g_hIPEEditBM);

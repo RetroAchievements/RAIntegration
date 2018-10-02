@@ -1,26 +1,12 @@
 #include "RA_Defs.h"
 
-#include <iomanip>
-
-namespace ra {
-
-std::string ByteAddressToString(ByteAddress nAddr)
-{
-    std::ostringstream oss;
-    oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
-    return oss.str();
-}
-
-} /* namespace ra */
-
 #ifndef RA_UTEST
 extern std::wstring g_sHomeDir;
 #endif
 
 void RADebugLogNoFormat(const char* data)
 {
-    OutputDebugString(NativeStr(data).c_str());
-
+    OutputDebugString(ra::NativeStr(data).c_str());
 #ifndef RA_UTEST
     std::wstring sLogFile = g_sHomeDir + RA_LOG_FILENAME;
     FILE* pf = nullptr;
@@ -56,6 +42,6 @@ void RADebugLog(const char* format, ...)
 
 BOOL DirectoryExists(const char* sPath)
 {
-    DWORD dwAttrib = GetFileAttributes(NativeStr(sPath).c_str());
+    DWORD dwAttrib = GetFileAttributes(ra::NativeStr(sPath).c_str());
     return(dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }

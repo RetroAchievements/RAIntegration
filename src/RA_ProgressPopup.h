@@ -6,14 +6,14 @@
 //	Graphic to display an progress towards an achievement
 
 
-#define OVERLAY_MESSAGE_QUEUE_SIZE (5)
+_CONSTANT_VAR OVERLAY_MESSAGE_QUEUE_SIZE{ 5 };
 
 class ProgressPopup
 {
 public:
     ProgressPopup();
 
-    void Update(ControllerInput input, float fDelta, BOOL bFullScreen, BOOL bPaused);
+    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
     void AddMessage(const char* sTitle, const char* sMessage, int nMessageType = 0, HBITMAP hImage = nullptr);

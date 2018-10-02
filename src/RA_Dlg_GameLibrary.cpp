@@ -16,13 +16,15 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
-#define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
+_NODISCARD _CONSTANT_FN
+KeyDown(_In_ int vkCode) noexcept { return ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false); }
 
-namespace {
+
+namespace ra {
 
 const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
 const int COL_SIZE[] = { 30, 230, 110, 170 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
+static_assert(ra::SizeOfArray(COL_TITLE) == ra::SizeOfArray(COL_SIZE), "Must match!");
 const bool bCancelScan = false;
 
 std::mutex mtx;
@@ -51,7 +53,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
         directories.pop();
 
         WIN32_FIND_DATA ffd;
-        HANDLE hFind = FindFirstFile(NativeStr(spec).c_str(), &ffd);
+        HANDLE hFind = FindFirstFile(ra::NativeStr(spec).c_str(), &ffd);
         if (hFind == INVALID_HANDLE_VALUE)
             return false;
 
@@ -223,17 +225,17 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     LV_COLUMN col;
     ZeroMemory(&col, sizeof(col));
 
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    for (size_t i = 0; i < ra::SizeOfArray(ra::COL_TITLE); ++i)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
-        ra::tstring sCol = NativeStr(COL_TITLE[i]);	//	scoped cache
+        ra::tstring sCol = ra::NativeStr(ra::COL_TITLE[i]);	//	scoped cache
         col.pszText = sCol.data();
-        col.cx = COL_SIZE[i];
+        col.cx = ra::COL_SIZE[i];
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//	Final column should fill
+        if (i == ra::SizeOfArray(ra::COL_TITLE) - 1)	//	Final column should fill
         {
             col.fmt |= LVCFMT_FILL;
         }
@@ -260,13 +262,14 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     item.iItem = ListView_InsertItem(hList, &item);
 
     item.iSubItem = 1;
-    ListView_SetItemText(hList, item.iItem, 1, NativeStr(sTitle).data());
+    ListView_SetItemText(hList, item.iItem, 1, ra::NativeStr(sTitle).data());
 
     item.iSubItem = 2;
-    ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
+    ListView_SetItemText(hList, item.iItem, 2, ra::NativeStr(m_ProgressLibrary[nGameID]).data());
 
     item.iSubItem = 3;
-    ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));
+    auto tstr{ ra::NativeStr(sFilename) };
+    ListView_SetItemText(hList, item.iItem, 3, tstr.data());
 
     m_vGameEntries.push_back(GameEntry(sTitle, sFilename, nGameID));
 }
@@ -288,13 +291,11 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
     while (FilesToScan.size() > 0)
     {
-        mtx.lock();
-        if (!Dlg_GameLibrary::ThreadProcessingAllowed)
         {
-            mtx.unlock();
-            break;
+            std::scoped_lock lock{ ra::mtx };
+            if (!Dlg_GameLibrary::ThreadProcessingAllowed)
+                break;
         }
-        mtx.unlock();
 
         FILE* pf = nullptr;
         if (fopen_s(&pf, FilesToScan.front().c_str(), "rb") == 0)
@@ -320,9 +321,10 @@ void Dlg_GameLibrary::ThreadedScanProc()
             fclose(pf);
         }
 
-        mtx.lock();
-        FilesToScan.pop_front();
-        mtx.unlock();
+        {
+            std::scoped_lock lock{ ra::mtx };
+            FilesToScan.pop_front();
+        }
     }
 
     Dlg_GameLibrary::ThreadProcessingActive = false;
@@ -335,7 +337,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
     sprintf_s(sSearchDir, 2048, "%s\\*.*", sBaseDir.c_str());
 
     WIN32_FIND_DATA ffd;
-    HANDLE hFind = FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd);
+    HANDLE hFind = FindFirstFile(ra::NativeStr(sSearchDir).c_str(), &ffd);
     if (hFind != INVALID_HANDLE_VALUE)
     {
         unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
@@ -343,7 +345,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
         do
         {
-            if (KEYDOWN(VK_ESCAPE))
+            if (KeyDown(VK_ESCAPE))
                 break;
 
             memset(sROMRawData, 0, ROM_MAX_SIZE);	//?!??
@@ -378,7 +380,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                     char sAbsFileDir[2048];
                     sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
 
-                    HANDLE hROMReader = CreateFile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
+                    HANDLE hROMReader = CreateFile(ra::NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
                         nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
                     if (hROMReader != INVALID_HANDLE_VALUE)
@@ -400,7 +402,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
                             const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                             AddTitle(sGameTitle, sAbsFileDir, nGameID);
-                            SetDlgItemText(m_hDialogBox, IDC_RA_GLIB_NAME, NativeStr(sGameTitle).c_str());
+                            SetDlgItemText(m_hDialogBox, IDC_RA_GLIB_NAME, ra::NativeStr(sGameTitle).c_str());
                             InvalidateRect(m_hDialogBox, nullptr, TRUE);
                         }
 
@@ -426,10 +428,11 @@ void Dlg_GameLibrary::ReloadGameListData()
     TCHAR sROMDir[1024];
     GetDlgItemText(m_hDialogBox, IDC_RA_ROMDIR, sROMDir, 1024);
 
-    mtx.lock();
-    while (FilesToScan.size() > 0)
-        FilesToScan.pop_front();
-    mtx.unlock();
+    {
+        std::scoped_lock lock{ ra::mtx };
+        while (!FilesToScan.empty())
+            FilesToScan.pop_front();
+    }
 
     bool bOK = ListFiles(ra::Narrow(sROMDir), "*.bin", FilesToScan);
     bOK |= ListFiles(ra::Narrow(sROMDir), "*.gen", FilesToScan);
@@ -461,7 +464,7 @@ void Dlg_GameLibrary::RefreshList()
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                 AddTitle(sGameTitle, filepath, nGameID);
 
-                SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, NativeStr(sGameTitle).c_str());
+                SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, ra::NativeStr(sGameTitle).c_str());
                 VisibleResults[filepath] = md5;	//	Copy to VisibleResults
             }
         }
@@ -493,8 +496,8 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 void Dlg_GameLibrary::LoadAll()
 {
     std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
-    
-    mtx.lock();
+
+    std::scoped_lock lock{ ra::mtx };
     FILE* pLoadIn = nullptr;
     _wfopen_s(&pLoadIn, sMyGameLibraryFile.c_str(), L"rb");
     if (pLoadIn != nullptr)
@@ -531,14 +534,13 @@ void Dlg_GameLibrary::LoadAll()
         } while (nCharsRead1 > 0 && nCharsRead2 > 0);
         fclose(pLoadIn);
     }
-    mtx.unlock();
 }
 
 void Dlg_GameLibrary::SaveAll()
 {
     std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
 
-    mtx.lock();
+    std::scoped_lock lock{ ra::mtx };
     FILE* pf = nullptr;
     _wfopen_s(&pf, sMyGameLibraryFile.c_str(), L"wb");
     if (pf != nullptr)
@@ -559,7 +561,6 @@ void Dlg_GameLibrary::SaveAll()
 
         fclose(pf);
     }
-    mtx.unlock();
 }
 
 //static 
@@ -580,7 +581,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
             auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(pConfiguration.GetRomDirectory()).c_str());
+            SetDlgItemText(hDlg, IDC_RA_ROMDIR, ra::NativeStr(pConfiguration.GetRomDirectory()).c_str());
             SetDlgItemText(hDlg, IDC_RA_GLIB_NAME, TEXT(""));
 
             m_GameHashLibrary.clear();
@@ -664,9 +665,11 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 case IDC_RA_RESCAN:
                     ReloadGameListData();
 
-                    mtx.lock();	//?
-                    SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, TEXT("Scanning..."));
-                    mtx.unlock();
+                    // ambiguous?
+                    {
+                        std::scoped_lock lock{ ra::mtx };
+                        SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, TEXT("Scanning..."));
+                    }
                     return FALSE;
 
                 case IDC_RA_PICKROMDIR:
@@ -675,7 +678,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
                     pConfiguration.SetRomDirectory(sROMDirLocation);
                     RA_LOG("Selected Folder: %s\n", sROMDirLocation.c_str());
-                    SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(sROMDirLocation).c_str());
+                    SetDlgItemText(hDlg, IDC_RA_ROMDIR, ra::NativeStr(sROMDirLocation).c_str());
                     return FALSE;
                 }
 

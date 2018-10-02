@@ -82,6 +82,25 @@ struct _NODISCARD is_comparable :
 
 template<typename Comparable>
 struct _NODISCARD is_nothrow_comparable : std::bool_constant<noexcept(is_comparable<Comparable>::value)> {};
+template<typename T, typename C, class = std::void_t<>>
+struct is_equality_comparable_with :
+    std::false_type
+{
+};
+
+template<typename T, typename C>
+struct is_equality_comparable_with<T, C, std::enable_if_t<std::is_convertible_v<
+    decltype(std::declval<T&>() == std::declval<C&>()), bool>>> :
+    std::true_type
+{
+};
+
+template<typename T, typename C>
+struct is_nothrow_equality_comparable_with :
+    std::bool_constant<noexcept(is_equality_comparable_with<T, C>::value)>
+{
+};
+
 } // namespace detail
 
 template<typename EqualityComparable> _CONSTANT_VAR
@@ -101,6 +120,38 @@ is_comparable_v{ detail::is_comparable<Comparable>::value };
 
 template<typename Comparable> _CONSTANT_VAR
 is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
+
+template<typename EqualityComparable, typename TestComparable> _NODISCARD _CONSTANT_VAR
+is_equality_comparable_with_v{ detail::is_equality_comparable_with<EqualityComparable, TestComparable>::value };
+
+template<typename EqualityComparable, typename TestComparable> _NODISCARD _CONSTANT_VAR
+is_nothrow_equality_comparable_with_v{ detail::is_nothrow_equality_comparable_with<EqualityComparable, TestComparable>::value };
+
+namespace detail {
+
+// Based off of the NullablePointer named requirement
+template<typename T, class = std::void_t<>>
+struct _NODISCARD is_nullable_pointer : std::false_type{};
+
+template<typename T>
+struct is_nullable_pointer<T, std::enable_if_t<
+    is_nothrow_equality_comparable<T>::value &&
+    std::is_nothrow_default_constructible_v<T> &&
+    std::is_nothrow_copy_constructible_v<T> &&
+    std::is_nothrow_copy_assignable_v<T> &&
+    std::is_nothrow_destructible_v<T> &&
+    std::is_nothrow_constructible_v<T, std::nullptr_t> &&
+    std::is_nothrow_assignable_v<T&, std::nullptr_t> &&
+    std::is_nothrow_constructible_v<T&&, std::nullptr_t> &&
+    std::is_same_v<decltype(std::declval<T&>() = nullptr), T&> &&
+    is_nothrow_equality_comparable_with<T, std::nullptr_t>::value &&
+    is_nothrow_equality_comparable_with<std::nullptr_t, T>::value
+>> : std::true_type{};
+
+} // namespace detail
+
+template<typename NullablePointer> _CONSTANT_VAR
+is_nullable_pointer_v{ detail::is_nullable_pointer<NullablePointer>::value };
 
 } // namespace ra
 

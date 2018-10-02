@@ -1,13 +1,12 @@
 #include "RA_StringUtils.h"
 
-#include <iomanip>
-
-#define WIN32_LEAN_AND_MEAN
+#include "windows_nodefines.h"
 struct IUnknown;
 #include <Windows.h>
 
-// has to be after Windows.h for LPTSTR definition
-#include "ra_utility.h"
+#include <iomanip>
+#include <sstream>
+
 
 namespace ra {
 
@@ -74,6 +73,20 @@ std::wstring Widen(const wchar_t* wstr)
     return _wstr;
 }
 
+_Use_decl_annotations_
+std::wstring Widen(std::wstring&& wstr) noexcept
+{
+    const auto _wstr{ std::move_if_noexcept(wstr) };
+    return Widen(_wstr);
+}
+
+_Use_decl_annotations_
+std::string Narrow(std::string&& str) noexcept
+{
+    auto move_str{ std::move_if_noexcept(str) };
+    return Narrow(move_str);
+}
+
 _Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
 _Use_decl_annotations_
@@ -89,6 +102,7 @@ std::string Narrow(const std::string& str)
     return str;
 }
 
+_Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
     auto nIndex = str.length();
@@ -101,6 +115,14 @@ std::string& TrimLineEnding(std::string& str) noexcept
         str.resize(nIndex);
 
     return str;
+}
+
+_Use_decl_annotations_
+std::string ByteAddressToString(ByteAddress nAddr)
+{
+    std::ostringstream oss;
+    oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
+    return oss.str();
 }
 
 } /* namespace ra */

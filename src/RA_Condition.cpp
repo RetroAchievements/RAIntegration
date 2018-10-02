@@ -4,13 +4,13 @@
 #include <cctype>
 
 const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
+static_assert(ra::SizeOfArray(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
+static_assert(ra::SizeOfArray(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
 const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
+static_assert(ra::SizeOfArray(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
 const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
+static_assert(ra::SizeOfArray(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
 static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
 {

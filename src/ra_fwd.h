@@ -43,12 +43,23 @@ using LPVOID = void*;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
-using HANDLE = void*;
+using HANDLE  = void*;
+using LPTSTR  = TCHAR*;
+using LPCTSTR = const TCHAR*;
 #endif // !_WINNT_
 
 namespace ra {
 
-using tstring = std::basic_string<TCHAR>;
+#if _MBCS
+using NativeStrType = std::string;
+#elif _UNICODE
+using NativeStrType = std::wstring;
+#else
+#error Unknown character set detected! Only MultiByte and Unicode are supported!
+#endif // _MBCS
+
+using Native_CStrType = NativeStrType::const_pointer;
+using tstring         = NativeStrType;
 
 using ARGB          = DWORD;
 using ByteAddress   = std::size_t;

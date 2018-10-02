@@ -2,54 +2,7 @@
 #define RA_DEFS_H
 #pragma once
 
-// Windows stuff we DO need, they are commented out to show we need them, if for
-// some reason you get a compiler error put the offending NO* define here
-/*
-    #define NOCOLOR
-    #define NOCLIPBOARD - gave an error when put in the pch
-    #define NOCTLMGR
-    #define NODRAWTEXT
-    #define NOGDI
-    #define NOMB
-    #define NOMENUS
-    #define NOMSG
-    #define NONLS
-    #define NOOPENFILE
-    #define NORASTEROPS
-    #define NOSHOWWINDOW
-    #define NOTEXTMETRIC
-    #define NOUSER
-    #define NOVIRTUALKEYCODES
-    #define NOWINMESSAGES
-    #define NOWINOFFSETS
-    #define NOWINSTYLES
-*/
-
-
-// Windows stuff we don't need
-#define WIN32_LEAN_AND_MEAN
-#define NOGDICAPMASKS
-#define NOSYSMETRICS
-#define NOICONS
-#define NOKEYSTATES
-#define NOSYSCOMMANDS
-#define OEMRESOURCE
-#define NOATOM
-#define NOKERNEL
-#define NOMEMMGR
-#define NOMETAFILE
-#define NOMINMAX
-#define NOSCROLL
-#define NOSERVICE
-#define NOSOUND
-#define NOWH
-#define NOCOMM
-#define NOKANJI
-#define NOHELP
-#define NOPROFILER
-#define NODEFERWINDOWPOS
-#define NOMCX  
-
+#include "windows_nodefines.h"
 struct IUnknown;
 #include <Windows.h>
 #include <WindowsX.h>
@@ -65,8 +18,9 @@ struct IUnknown;
 #include <array> // algorithm, iterator, tuple
 #include <sstream> // string
 #include <queue> // deque, vector, algorithm
-#include "ra_utility.h"
 
+#include "ra_utility.h"
+#include "RA_StringUtils.h"
 
 #if !RA_EXPORTS
 #include <cassert> 
@@ -78,34 +32,27 @@ struct IUnknown;
 
 #include "RA_Json.h"
 
-//	RA-Only
-using namespace std::string_literals;
+using namespace std::string_literals; // u8 (UTF-8), u (UTF-16, char16_t), U (UTF-32, char32_t) prefixes and s (std::basic_string) suffix
 #endif	// RA_EXPORTS
 
-#define RA_DIR_OVERLAY					L"Overlay\\"
-#define RA_DIR_BASE						L"RACache\\"
-#define RA_DIR_DATA						RA_DIR_BASE L"Data\\"
-#define RA_DIR_BADGE					RA_DIR_BASE L"Badge\\"
-#define RA_DIR_USERPIC					RA_DIR_BASE L"UserPic\\"
-#define RA_DIR_BOOKMARKS				RA_DIR_BASE L"Bookmarks\\"
+_CONSTANT_VAR RA_KEYS_DLL{ "RA_Keys.dll" };
+_CONSTANT_VAR RA_PREFERENCES_FILENAME_PREFIX{ L"RAPrefs_" };
+_CONSTANT_VAR RA_DIR_OVERLAY{ L"Overlay\\" };
+_CONSTANT_VAR RA_DIR_BASE{ L"RACache\\" };
+_CONSTANT_VAR RA_DIR_DATA{ L"RACache\\Data\\" };
+_CONSTANT_VAR RA_DIR_BADGE{ L"RACache\\Badge\\" };
+_CONSTANT_VAR RA_DIR_USERPIC{ L"RACache\\UserPic\\" };
+_CONSTANT_VAR RA_DIR_BOOKMARKS{ L"RACache\\Bookmarks\\" };
 
-#define RA_GAME_HASH_FILENAME			RA_DIR_DATA L"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME			RA_DIR_DATA L"gametitles.txt"
-#define RA_MY_PROGRESS_FILENAME			RA_DIR_DATA L"myprogress.txt"
-#define RA_MY_GAME_LIBRARY_FILENAME		RA_DIR_DATA L"mygamelibrary.txt"
+_CONSTANT_VAR RA_GAME_HASH_FILENAME{ L"RACache\\Data\\gamehashlibrary.txt" };
+_CONSTANT_VAR RA_GAME_LIST_FILENAME{ L"RACache\\Data\\gametitles.txt" };
+_CONSTANT_VAR RA_MY_PROGRESS_FILENAME{ L"RACache\\Data\\myprogress.txt" };
+_CONSTANT_VAR RA_MY_GAME_LIBRARY_FILENAME{ L"RACache\\Data\\mygamelibrary.txt" };
 
-#define RA_NEWS_FILENAME				RA_DIR_DATA L"ra_news.txt"
-#define RA_TITLES_FILENAME				RA_DIR_DATA L"gametitles.txt"
-#define RA_LOG_FILENAME					RA_DIR_DATA L"RALog.txt"
+_CONSTANT_VAR RA_NEWS_FILENAME{ L"RACache\\Data\\ra_news.txt" };
+_CONSTANT_VAR RA_TITLES_FILENAME{ L"RACache\\Data\\gametitles.txt" };
+_CONSTANT_VAR RA_LOG_FILENAME{ L"RACache\\Data\\RALog.txt" };
 
-
-#define SIZEOF_ARRAY( ar )	( sizeof( ar ) / sizeof( ar[ 0 ] ) )
-#define SAFE_DELETE( x )	{ if( x != nullptr ) { delete x; x = nullptr; } }
-
-
-
-//namespace RA
-//{
 class RARect : public RECT
 {
 public:
@@ -209,24 +156,19 @@ const int SERVER_PING_DURATION = 2 * 60;
 #ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
-#define ASSERT( x ) assert( x )
+_CONSTANT_FN ASSERT(_In_ bool bExpr) noexcept { assert(bExpr); }
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+_CONSTANT_FN ASSERT(_UNUSED bool) noexcept {}
 #endif
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+_CONSTANT_FN ASSERT(_UNUSED bool) noexcept {}
 #endif
 
 #ifndef UNUSED
-#define UNUSED( x ) ( x );
+template<typename T>
+_CONSTANT_FN UNUSED(_UNUSED T) noexcept {}
 #endif
-
-#include "RA_StringUtils.h"
-
-namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-}
 
 #endif // !RA_DEFS_H

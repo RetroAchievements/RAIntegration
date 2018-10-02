@@ -165,6 +165,7 @@
     <ClCompile Include="RA_CompVariable_Tests.cpp" />
     <ClCompile Include="RA_ConditionSet_Tests.cpp" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
+    <ClCompile Include="RA_Defs_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_MemValue_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />

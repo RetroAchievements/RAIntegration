@@ -71,6 +71,12 @@ extern "C" {
     //	Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
 
+    //	Load preferences from ra_prefs.cfg
+    API void CCONV _RA_LoadPreferences();
+
+    //	Save preferences to ra_prefs.cfg
+    API void CCONV _RA_SavePreferences();
+
     //	Display or unhide an RA dialog.
     API void CCONV _RA_InvokeDialog(LPARAM nID);
 
@@ -100,6 +106,7 @@ extern "C" {
 //	Non-exposed:
 extern std::string g_sKnownRAVersion;
 extern std::wstring g_sHomeDir;
+extern std::string g_sROMDirLocation;
 extern std::string g_sCurrentROMMD5;
 
 extern HINSTANCE g_hRAKeysDLL;
@@ -111,6 +118,13 @@ extern const char* g_sGetLatestClientPage;
 extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
+extern bool g_bHardcoreModeActive;
+extern bool g_bLeaderboardsActive;
+extern bool g_bLBDisplayNotification;
+extern bool g_bLBDisplayCounter;
+extern bool g_bLBDisplayScoreboard;
+extern bool g_bPreferDecimalVal;
+extern unsigned int g_nNumHTTPThreads;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
 extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);

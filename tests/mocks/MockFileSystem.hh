@@ -73,7 +73,7 @@ public:
 
     std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override
     {
-        auto iter = m_mFileContents.insert_or_assign(sPath, "");
+        auto iter = m_mFileContents.insert({ sPath, "" });
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }

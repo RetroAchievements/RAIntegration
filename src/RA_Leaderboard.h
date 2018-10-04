@@ -13,7 +13,7 @@ class RA_Leaderboard
 {
 public:
     RA_Leaderboard(const ra::LeaderboardID nLBID);
-    ~RA_Leaderboard();
+    virtual ~RA_Leaderboard() noexcept = default;
 
     void ParseFromString(const char* sBuffer, MemValue::Format format);
 

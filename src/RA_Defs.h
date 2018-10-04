@@ -249,4 +249,12 @@ _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 
 } // namespace ra
 
+#if _MBCS
+_CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
+#elif _UNICODE
+_CONSTANT_VAR RA_MAX_PATH{ 32767 }; // Unicode max path
+#else
+#error Unknown character set detected!
+#endif /* _MBCS */
+
 #endif // !RA_DEFS_H

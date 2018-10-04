@@ -38,14 +38,16 @@
 
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
-#include <locale>
 #include <memory>
 #include <direct.h>
 #include <fstream>
 #include <io.h>		//	_access()
-#include <atlbase.h> // CComPtr
+#include <ctime>
+
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
+#include <CommDlg.h>
+#include <Shlwapi.h>
 #endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
@@ -1668,34 +1670,65 @@ BOOL _FileExists(const std::wstring& sFileName)
     }
 }
 
-std::string GetFolderFromDialog()
-{
-    std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+namespace ra {
 
-    HRESULT hr = HRESULT{};
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+_Success_(return == 0)
+_NODISCARD static auto CALLBACK
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+{
+    ASSERT(uMsg != BFFM_VALIDATEFAILED);
+    if (uMsg == BFFM_INITIALIZED)
     {
-        pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
-        {
-            CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
-            {
-                LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
-                {
-                    sRetVal = ra::Narrow(pStr);
-                    // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
-                    CoTaskMemFree(static_cast<LPVOID>(pStr));
-                    pStr = nullptr;
-                }
-				pItem.Release();
-            }
-        }
-		pDlg.Release();
+        const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
     }
-    return sRetVal;
+    return 0;
+}
+
+} /* namespace ra */
+
+_Use_decl_annotations_
+std::string GetFolderFromDialog() noexcept
+{
+    auto lpbi{ std::make_unique<BROWSEINFO>() };
+    lpbi->hwndOwner = ::GetActiveWindow();
+
+    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
+    lpbi->pszDisplayName = pDisplayName.get();
+    lpbi->lpszTitle = _T("Select ROM folder...");
+
+    if (::OleInitialize(nullptr) != S_OK)
+        return "";
+
+    lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+    lpbi->lpfn    = ra::BrowseCallbackProc;
+    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    
+    std::string ret;
+    {
+        auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
+        {
+            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            lpItemIdList = nullptr;
+        };
+
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        if (!owner)
+        {
+            ::OleUninitialize();
+            return "";
+        }
+
+        if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
+        {
+            ::OleUninitialize();
+            return "";
+        }
+        ret = ra::Narrow(lpbi->pszDisplayName);
+    }
+    ::OleUninitialize();
+    return ret;
 }
 
 BOOL RemoveFileIfExists(const std::wstring& sFilePath)

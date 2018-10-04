@@ -961,7 +961,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, !pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
                     if (ActiveAchievement() != nullptr)
                     {
-                        ActiveAchievement()->SetDirtyFlag(ra::etoi(Dirty__All));
+                        ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::All);
                         LoadAchievement(ActiveAchievement(), TRUE);
                         ActiveAchievement()->ClearDirtyFlag();
                     }
@@ -2069,23 +2069,24 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
         m_bPopulatingAchievementEditorData = TRUE;
 
-        if (pCheevo->GetDirtyFlags() & Dirty_ID)
+        using namespace ra::bitwise_ops;
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
-        if ((pCheevo->GetDirtyFlags() & Dirty_Points) && !bPointsSelected)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Points) && !bPointsSelected)
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());
-        if ((pCheevo->GetDirtyFlags() & Dirty_Title) && !bTitleSelected)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Title) && !bTitleSelected)
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
-        if ((pCheevo->GetDirtyFlags() & Dirty_Description) && !bDescSelected)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Description) && !bDescSelected)
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, NativeStr(m_pSelectedAchievement->Description()).c_str());
-        if (pCheevo->GetDirtyFlags() & Dirty_Author)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Author))
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, NativeStr(m_pSelectedAchievement->Author()).c_str());
-        if (pCheevo->GetDirtyFlags() & Dirty_Badge)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Badge))
         {
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
-        if (pCheevo->GetDirtyFlags() & Dirty_Conditions)
+        if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Conditions))
         {
             HWND hCondList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
             if (hCondList != nullptr)

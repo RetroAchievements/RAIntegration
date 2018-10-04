@@ -168,6 +168,22 @@ template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODI
 operator>=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
 
 } // namespace rel_ops
+
+namespace bitwise_ops {
+
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
+operator|(_In_ Enum a, _In_ Enum b) noexcept { return(itoe<Enum>(etoi(a) | etoi(b))); }
+
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
+operator&(_In_ Enum a, _In_ Enum b) noexcept { return(itoe<Enum>(etoi(a) & etoi(b))); }
+
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTANT_FN&
+operator|=(_Inout_ Enum& a, _In_ Enum b) noexcept { return (a = a | b); }
+
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTANT_FN&
+operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept { return (a = a & b); }
+
+} // namespace bitwise_ops
 } // namespace ra
 
 #endif // !RA_UTILITY_H

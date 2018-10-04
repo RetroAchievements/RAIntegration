@@ -562,6 +562,29 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
+static unsigned long long ParseVersion(const char* sVersion)
+{
+    char* pPart;
+    unsigned int major = strtoul(sVersion, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int minor = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int patch = strtoul(pPart, &pPart, 10);
+    if (*pPart == '.')
+        ++pPart;
+
+    unsigned int revision = strtoul(pPart, &pPart, 10);
+    // 64-bit max signed value is 9223 37203 68547 75807
+    unsigned long long version = (major * 100000) + minor;
+    version = (version * 100000) + patch;
+    version = (version * 100000) + revision;
+    return version;
+}
+
 static bool RA_OfferNewRAUpdate(const char* sNewVer)
 {
     std::ostringstream oss;
@@ -711,24 +734,17 @@ API int CCONV _RA_HandleHTTPResults()
                     if (doc.HasMember("LatestVersion"))
                     {
                         const std::string& sReply = doc["LatestVersion"].GetString();
-                        if (sReply.substr(0, 2).compare("0.") == 0)
+                        unsigned long long nServerVersion = ParseVersion(sReply.c_str());
+                        unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
+
+                        if (nLocalVersion < nServerVersion)
                         {
-                            long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
-                            long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
-                            long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
-
-                            if (nValKnown < nValServer && nValCurrent < nValServer)
-                            {
-                                //	Update available:
-                                RA_OfferNewRAUpdate(sReply.c_str());
-
-                                //	Update the last version I've heard of:
-                                g_sKnownRAVersion = sReply;
-                            }
-                            else
-                            {
-                                RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
-                            }
+                            //	Update available:
+                            RA_OfferNewRAUpdate(sReply.c_str());
+                        }
+                        else
+                        {
+                            RA_LOG("Latest Client already up to date: server %s, current %s\n", sReply.c_str(), g_sClientVersion);
                         }
                     }
                     else
@@ -904,25 +920,25 @@ static void RA_CheckForUpdate()
     PostArgs args;
     args['c'] = std::to_string(g_ConsoleID);
 
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
+    rapidjson::Document doc;
+    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, doc))
     {
-        std::string sReply = std::move(Response);
-        if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
+        if (doc.HasMember("LatestVersion"))
         {
-            //	Ignore g_sKnownRAVersion: check against g_sRAVersion
-            unsigned long nLocalVersion = std::strtoul(g_sClientVersion + 2, nullptr, 10);
-            unsigned long nServerVersion = std::strtoul(sReply.c_str() + 2, nullptr, 10);
+            const std::string& sReply = doc["LatestVersion"].GetString();
+            unsigned long long nServerVersion = ParseVersion(sReply.c_str());
+            unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
 
             if (nLocalVersion < nServerVersion)
             {
                 RA_OfferNewRAUpdate(sReply.c_str());
             }
+
             else
             {
                 //	Up to date
                 char buffer[1024];
-                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
+                sprintf_s(buffer, 1024, "You have the latest version of %s: %s", g_sClientEXEName, sReply.c_str());
                 MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
             }
         }

@@ -66,6 +66,7 @@ public:
 
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override
     {
+        // insert_or_assign will replace any existing value
         auto iter = m_mFileContents.insert_or_assign(sPath, "");
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());
@@ -73,6 +74,7 @@ public:
 
     std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override
     {
+        // insert will return a pointer to the new (or previously existing) value
         auto iter = m_mFileContents.insert({ sPath, "" });
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());

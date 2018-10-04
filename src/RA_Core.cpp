@@ -50,7 +50,6 @@
 #include <Shlwapi.h>
 #endif // WIN32_LEAN_AND_MEAN
 
-std::string g_sKnownRAVersion;
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 std::string g_sCurrentROMMD5;	//	Internal

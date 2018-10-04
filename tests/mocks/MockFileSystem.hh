@@ -67,7 +67,6 @@ public:
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override
     {
         auto iter = m_mFileContents.insert_or_assign(sPath, "");
-        iter.first->second.clear();
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }

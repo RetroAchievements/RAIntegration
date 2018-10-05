@@ -10,11 +10,39 @@
     stated otherwise.
 */
 namespace ra {
+
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
+
+/// <summary>
+///   Converts '<paramref name="from" />' into a <typeparamref name="NarrowedType" />.
+/// </summary>
+/// <typeparam name="Narrowed">
+///   A narrower version of <typeparamref name="WideType" />. This template parameter must be
+///   specified.
+/// </typeparam>
+/// <typeparam name="WideType">
+///   The <c>value_type</c> of the input, must have a larger size than
+///   <typeparamref name="NarrowedType" />.
+/// </typeparam>
+/// <param name="from">The arithmetic value to narrowed.</param>
+/// <returns><typeparamref name="WideType" /> as a <typeparamref name="NarrowedType" />.</returns>
+/// <remarks>
+///   This function is used for explicit narrowing conversions when a platform type is different than
+///   a function parameter's type, such as <c>std::size_t</c> and <c>unsigned int</c>.
+/// </remarks>
+template<
+    typename NarrowedType,
+    typename WideType,
+    class = std::enable_if_t<
+    std::is_arithmetic_v<NarrowedType> &&
+    std::is_arithmetic_v<WideType> &&
+    has_smaller_or_same_size_than_v<NarrowedType, WideType>>
+> _NODISCARD _CONSTANT_FN
+narrow_cast(_In_ WideType from) noexcept { return static_cast<NarrowedType>(static_cast<WideType>(from)); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline auto
 to_tstring(_In_ Arithmetic a) noexcept
@@ -41,7 +69,7 @@ to_floating(_In_ Arithmetic a) noexcept
 {
     if constexpr (is_same_size_v<Arithmetic, double>)
         return static_cast<double>(a);
-    if constexpr (sizeof(Arithmetic) < sizeof(double))
+    if constexpr (has_smaller_size_than_v<Arithmetic, double>)
         return static_cast<float>(a);
 }
 
@@ -104,9 +132,6 @@ filesize(std::basic_string<CharT>&& filename) noexcept
     return file.tellg();
 } // end function filesize
 
-using LPCTSTR = const TCHAR*;
-using LPTSTR = TCHAR*;
-
 // More functions to be Unicode compatible w/o sacrificing MBCS
 _EXTERN_C
 /* A wrapper for converting a string to an unsigned long depending on the character set specified */
@@ -123,6 +148,29 @@ tstrtoul(_In_z_ LPCTSTR _String,
 #error Unsupported character set detected.
 #endif /* _MBCS */
 } /* end function tstrtoul */
+
+/*
+    https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
+    TBD: Annotate ANSI compatibility (509 bytes even after concatenation) or Microsoft's (2,048 bytes)?
+    Error Checking: First part might happen in MBCS mode but the standard does not reserve an error code for it.
+    Remarks: The second part is Microsoft Specific. A single null-terminated c string may not exceed 2048 bytes,
+             but may reach a total size of 65,535 bytes after concatenation.
+    This check will only occur during code analysis, the standard does not have data contracts yet,
+    i.e, expects, ensures... (GSL does though however).
+*/
+_Success_((return != to_unsigned(-1)) && (return <= 2048U))
+/* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
+_NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
+{
+#if _MBCS
+    return std::strlen(_Str);   
+#elif _UNICODE
+    return std::wcslen(_Str);
+#else
+#error Unsupported character set detected.
+#endif /* _MBCS */
+} /* end function tstrlen */
+
 _END_EXTERN_C
 
 // Don't depend on std::rel_ops for stuff here because it assumes each parameter has the same type
@@ -132,40 +180,40 @@ _END_EXTERN_C
 namespace rel_ops {
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator==(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) == b); }
+operator==(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (etoi(a) == b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator==(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a == etoi(b)); }
+operator==(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (a == etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator!=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) == b)); }
+operator!=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) == b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator!=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a == etoi(b))); }
+operator!=(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (!(a == etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (etoi(a) < b); }
+operator<(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (etoi(a) < b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (a < etoi(b)); }
+operator<(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (a < etoi(b)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (b < etoi(a)); }
+operator>(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (b < etoi(a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (etoi(b) < a); }
+operator>(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (etoi(b) < a); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator<=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(b < etoi(a))); }
+operator<=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(b < etoi(a))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
 operator<=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(etoi(b) < a)); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>=(_In_ const std::underlying_type_t<Enum> a, _In_ const Enum b) noexcept { return (!(a < etoi(b))); }
+operator>=(_In_ std::underlying_type_t<Enum> a, _In_ Enum b) noexcept { return (!(a < etoi(b))); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
-operator>=(_In_ const Enum a, _In_ const std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
+operator>=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
 
 } // namespace rel_ops
 

@@ -248,7 +248,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
     ra::services::g_ImageRepository.Initialize();
-    g_AchievementOverlay.Initialize(g_hThisDLLInst);
+    g_AchievementOverlay = AchievementOverlay{};
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)

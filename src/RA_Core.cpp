@@ -260,7 +260,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 API int CCONV _RA_Shutdown()
 {
     // notify the background threads as soon as possible so they start to wind down
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown();
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
 
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
@@ -310,6 +310,8 @@ API int CCONV _RA_Shutdown()
     ra::services::Initialization::Shutdown();
 
     CoUninitialize();
+
+    RA_LOG_INFO("Shutdown complete");
 
     return 0;
 }
@@ -636,7 +638,6 @@ API int CCONV _RA_HandleHTTPResults()
         if (pObj->GetResponse().size() > 0)
         {
             rapidjson::Document doc;
-            BOOL bJSONParsedOK = pObj->ParseResponseToJSON(doc);
 
             switch (pObj->GetRequestType())
             {

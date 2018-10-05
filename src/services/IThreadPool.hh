@@ -22,11 +22,15 @@ public:
     }
 
     virtual void RunAsyncImpl(std::function<void()> f) noexcept = 0;
-    
+
     /// <summary>
     /// Sets the <see ref="IsShutdownRequested" /> flag so threads can start winding down.
     /// </summary>
-    virtual void Shutdown() noexcept = 0;
+    /// <param name="bWait">
+    /// if <c>false</c>, start shutting down background threads and return. 
+    /// if <c>true</c> waits for the threads to finish shutting down before returning.
+    /// </param>
+    virtual void Shutdown(bool bWait) noexcept = 0;
 
     /// <summary>
     /// Determines whether the process has started shutting down.

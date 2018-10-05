@@ -37,11 +37,11 @@ public:
         m_cvMutex.notify_one();
     }
 
-    void Shutdown() noexcept override;
+    void Shutdown(bool bWait) noexcept override;
 
-    bool IsShutdownRequested() const noexcept override 
-    { 
-        return m_bShutdownInitiated; 
+    bool IsShutdownRequested() const noexcept override
+    {
+        return m_bShutdownInitiated;
     }
 
 private:

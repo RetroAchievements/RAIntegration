@@ -68,6 +68,8 @@ void Initialization::RegisterServices(const std::string& sClientName)
 void Initialization::Shutdown()
 {
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
 }
 
 } // namespace services

@@ -67,6 +67,12 @@
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
+    <ClCompile Include="ui\ModelProperty.cpp" />
+    <ClCompile Include="ui\ViewModelBase.cpp" />
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\win32\Desktop.cpp" />
+    <ClCompile Include="ui\win32\Dlg_MessageBox.cpp" />
+    <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />
@@ -107,15 +113,20 @@
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
     <ClInclude Include="services\ILeaderboardManager.hh" />
+    <ClInclude Include="services\ILogger.hh" />
+    <ClInclude Include="services\impl\FileLogger.hh" />
     <ClInclude Include="services\impl\FileTextReader.hh" />
     <ClInclude Include="services\impl\FileTextWriter.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />
     <ClInclude Include="services\impl\StringTextWriter.hh" />
+    <ClInclude Include="services\impl\Clock.hh" />
+    <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
@@ -123,6 +134,13 @@
     <ClInclude Include="services\SearchResults.h" />
     <ClInclude Include="services\TextReader.hh" />
     <ClInclude Include="services\TextWriter.hh" />
+    <ClInclude Include="ui\IDesktop.hh" />
+    <ClInclude Include="ui\ModelProperty.hh" />
+    <ClInclude Include="ui\ViewModelBase.hh" />
+    <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\win32\Desktop.hh" />
+    <ClInclude Include="ui\win32\Dlg_MessageBox.hh" />
+    <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
   </ItemGroup>
   <ItemGroup>
@@ -259,7 +277,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>

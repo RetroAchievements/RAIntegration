@@ -7,6 +7,12 @@
     <Filter Include="Code">
       <UniqueIdentifier>{c09a9464-e27a-4721-8467-626c7f5e3ab0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\UI">
+      <UniqueIdentifier>{4f043333-855f-48b9-b8c2-08e3c5f0d576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\UI\ViewModels">
+      <UniqueIdentifier>{69299c0b-a9cd-4d78-b71a-dd83efc582d4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Tests\Services">
       <UniqueIdentifier>{d2101e8f-5483-4eec-89f5-8f8fc586b0b9}</UniqueIdentifier>
     </Filter>
@@ -21,18 +27,9 @@
     <ClCompile Include="..\src\RA_MemManager.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClInclude Include="..\src\RA_Condition.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_MemManager.h">
-      <Filter>Code</Filter>
-    </ClInclude>
     <ClCompile Include="..\src\RA_Defs.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClInclude Include="..\src\RA_Defs.h">
-      <Filter>Code</Filter>
-    </ClInclude>
     <ClCompile Include="..\src\RA_MemValue.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -43,9 +40,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="RA_Leaderboard_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="SearchResults_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
@@ -67,6 +61,30 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_md5factory.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="UI_ModelProperty_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\ModelProperty.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\ViewModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\WindowViewModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="UI_ViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI_WindowViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="RA_StringUtils_Tests.cpp">
@@ -93,6 +111,9 @@
     <ClCompile Include="..\src\RA_Json.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\FileLogger_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -110,37 +131,11 @@
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClCompile Include="RA_Defs_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\RA_MemValue.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_Leaderboard.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_Achievement.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\md5.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_md5factory.h">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_StringUtils.h">
-      <Filter>Code</Filter>
-    </ClInclude>
     <ClInclude Include="mocks\MockFileSystem.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\services\impl\JsonFileConfiguration.hh">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RA_Json.h">
-      <Filter>Code</Filter>
+    <ClInclude Include="mocks\MockClock.hh">
+      <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

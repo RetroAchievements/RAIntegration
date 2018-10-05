@@ -38,6 +38,8 @@
 
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #include <memory>
 #include <direct.h>
 #include <fstream>
@@ -66,32 +68,9 @@ const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
-bool g_bHardcoreModeActive = true;
-bool g_bLeaderboardsActive = true;
-bool g_bLBDisplayNotification = true;
-bool g_bLBDisplayCounter = true;
-bool g_bLBDisplayScoreboard = true;
-bool g_bPreferDecimalVal = false;
-unsigned int g_nNumHTTPThreads = 15;
 
-typedef struct WindowPosition
-{
-    int nLeft;
-    int nTop;
-    int nWidth;
-    int nHeight;
-    bool bLoaded;
-
-    static const int nUnset = -99999;
-} WindowPosition;
-
-typedef std::map<std::string, WindowPosition> WindowPositionMap;
-WindowPositionMap g_mWindowPositions;
-
-namespace {
-const unsigned int PROCESS_WAIT_TIME = 100;
-unsigned int g_nProcessTimer = 0;
-}
+inline static constexpr unsigned int PROCESS_WAIT_TIME{ 100U };
+inline static unsigned int g_nProcessTimer{ 0U };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
@@ -206,14 +185,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             g_sClientName = "";
             break;
     }
-
-    RA_LOG("=================================================");
-    if (g_sClientName != nullptr)
-        RA_LOG("Initializing for %s %s", g_sClientName, sClientVer);
-    else
-        RA_LOG("Initializing for unknown client %d %s", nEmulatorID, sClientVer);
-
-    g_sROMDirLocation[0] = '\0';
 
     ra::services::Initialization::RegisterServices(g_sClientName);
 
@@ -334,6 +305,8 @@ API int CCONV _RA_Shutdown()
         g_MemBookmarkDialog.InstallHWND(nullptr);
     }
 
+    ra::services::Initialization::Shutdown();
+
     CoUninitialize();
 
     return 0;
@@ -413,9 +386,12 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
         return true;
 
     // prompt. if user doesn't consent, return failure - caller should not continue
-    std::string sMessage;
-    sMessage = "You cannot " + std::string(sActivity) + " while Hardcore mode is active.\nDisable Hardcore mode?";
-    if (MessageBoxA(nullptr, sMessage.c_str(), "Warning", MB_YESNO | MB_ICONWARNING) != IDYES)
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+    vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
         return false;
 
     // user consented, switch to non-hardcore mode
@@ -486,9 +462,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             //	Some other fatal error... panic?
             ASSERT(!"Unknown error from requestgameid.php");
 
-            std::ostringstream oss;
-            oss << "Game not loaded.\nError from " << _RA_HostName() << "!";
-            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
+            std::wstring sErrorMessage = L"Error from " + ra::Widen(_RA_HostName());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage.c_str());
         }
     }
 
@@ -586,13 +561,22 @@ API void CCONV _RA_ClearMemoryBanks()
 
 static bool RA_OfferNewRAUpdate(const char* sNewVer)
 {
-    std::ostringstream oss;
-    oss << "Would you like to update?\n\n"
-        << "A new version of " << g_sClientName << " is available for download at " << _RA_HostName() << ".\n\n"
-        << "Current version: " << g_sClientVersion << "\n"
-        << "New version: " << sNewVer;
+    std::string sClientVersion = g_sClientVersion;
+    while (sClientVersion[sClientVersion.length() - 1] == '0' && sClientVersion[sClientVersion.length() - 2] == '.')
+        sClientVersion.resize(sClientVersion.length() - 2);
 
-    if (MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Update available!"), MB_YESNO | MB_ICONINFORMATION) == IDYES)
+    std::wostringstream oss;
+    oss << L"A new version of " << ra::Widen(g_sClientName) << L" is available for download at " << ra::Widen(_RA_HostName()) << L".\n\n"
+        << L"Current version: " << ra::Widen(sClientVersion) << L"\n"
+        << L"New version: " << ra::Widen(sNewVer);
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Would you like to update?");
+    vmMessageBox.SetMessage(oss.str());
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Info);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+    if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes)
     {
         //FetchBinaryFromWeb( g_sClientEXEName );
         //
@@ -793,8 +777,6 @@ API int CCONV _RA_HandleHTTPResults()
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Error submitting achievement:",
                                     doc["Error"].GetString())); //?
-
-                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
                         }
                     }
                     else
@@ -929,6 +911,7 @@ static void RA_CheckForUpdate()
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
     {
+        // TODO: this doesn't work - response is JSON
         std::string sReply = std::move(Response);
         if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
         {
@@ -943,9 +926,8 @@ static void RA_CheckForUpdate()
             else
             {
                 //	Up to date
-                char buffer[1024];
-                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
-                MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
+                std::wstring sMessage = L"You already have the latest version of " + ra::Widen(g_sClientName) + L": " + ra::Widen(sReply);
+                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(sMessage);
             }
         }
         else
@@ -964,151 +946,6 @@ static void RA_CheckForUpdate()
             "Please check your connection settings or RA forums!";
         MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
     }
-}
-
-API void CCONV _RA_LoadPreferences()
-{
-    RA_LOG(__FUNCTION__ " - loading preferences...\n");
-
-    std::wstring sPrefsFileName;
-    {
-        std::wostringstream oss;
-        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
-        sPrefsFileName = oss.str();
-    }
-
-    std::ifstream ifile{ sPrefsFileName };
-    if (!ifile.is_open())
-    {
-        //	TBD: setup some decent default variables:
-        _RA_SavePreferences();
-        return;
-    }
-
-    rapidjson::Document doc;
-    rapidjson::IStreamWrapper isw{ ifile };
-    doc.ParseStream(isw);
-    if (doc.HasParseError())
-    {
-        _RA_SavePreferences();
-        return;
-    }
-
-    if (doc.HasMember("Username"))
-        RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-    if (doc.HasMember("Token"))
-        RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-    if (doc.HasMember("Hardcore Active"))
-        g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-
-    if (doc.HasMember("Leaderboards Active"))
-        g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-    if (doc.HasMember("Leaderboard Notification Display"))
-        g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
-    if (doc.HasMember("Leaderboard Counter Display"))
-        g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
-    if (doc.HasMember("Leaderboard Scoreboard Display"))
-        g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
-
-    if (doc.HasMember("Prefer Decimal"))
-        g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
-
-    if (doc.HasMember("Num Background Threads"))
-        g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-    if (doc.HasMember("ROM Directory"))
-        g_sROMDirLocation = doc["ROM Directory"].GetString();
-
-    if (doc.HasMember("Window Positions"))
-    {
-        {
-            const auto& positions{ doc["Window Positions"] };
-            if (positions.IsObject())
-            {
-                for (auto iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
-                {
-                    WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
-                    pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
-                    pos.bLoaded = false;
-
-                    if (iter->value.HasMember("X"))
-                        pos.nLeft = iter->value["X"].GetInt();
-                    if (iter->value.HasMember("Y"))
-                        pos.nTop = iter->value["Y"].GetInt();
-                    if (iter->value.HasMember("Width"))
-                        pos.nWidth = iter->value["Width"].GetInt();
-                    if (iter->value.HasMember("Height"))
-                        pos.nHeight = iter->value["Height"].GetInt();
-                }
-            }
-        }
-    }
-
-    //TBD:
-    //g_GameLibrary.LoadAll();
-}
-
-API void CCONV _RA_SavePreferences()
-{
-    RA_LOG(__FUNCTION__ " - saving preferences...\n");
-
-    if (g_sClientName == nullptr)
-    {
-        RA_LOG(__FUNCTION__ " - aborting save, we don't even know who we are...\n");
-        return;
-    }
-
-    std::wstring sPrefsFileName;
-    {
-        std::wostringstream oss;
-        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
-        sPrefsFileName = oss.str();
-    }
-
-    std::ofstream ofile{ sPrefsFileName };
-    if (!ofile.is_open())
-        return;
-
-    rapidjson::OStreamWrapper osw{ ofile };
-    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
-
-    rapidjson::Document doc;
-    doc.SetObject();
-    auto& a = doc.GetAllocator();
-    doc.AddMember("Username", rapidjson::StringRef(RAUsers::LocalUser().Username().c_str()), a);
-    doc.AddMember("Token", rapidjson::StringRef(RAUsers::LocalUser().Token().c_str()), a);
-    doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-    doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-    doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-    doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-    doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
-    doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-    doc.AddMember("ROM Directory", rapidjson::StringRef(g_sROMDirLocation.c_str()), a);
-
-    rapidjson::Value positions{ rapidjson::kObjectType };
-    for (const auto& wndPos : g_mWindowPositions)
-    {
-        rapidjson::Value rect{ rapidjson::kObjectType };
-        if (wndPos.second.nLeft != WindowPosition::nUnset)
-            rect.AddMember("X", wndPos.second.nLeft, a);
-        if (wndPos.second.nTop != WindowPosition::nUnset)
-            rect.AddMember("Y", wndPos.second.nTop, a);
-        if (wndPos.second.nWidth != WindowPosition::nUnset)
-            rect.AddMember("Width", wndPos.second.nWidth, a);
-        if (wndPos.second.nHeight != WindowPosition::nUnset)
-            rect.AddMember("Height", wndPos.second.nHeight, a);
-
-        if (rect.MemberCount() > 0U)
-            positions.AddMember(rapidjson::StringRef(wndPos.first.c_str()), rect, a);
-    }
-
-    if (positions.MemberCount() > 0U)
-        doc.AddMember("Window Positions", positions.Move(), a);
-
-    doc.Accept(writer);	//	Save
-
-    //TBD:
-    //g_GameLibrary.SaveAll();
 }
 
 void _FetchGameHashLibraryFromWeb()
@@ -1205,13 +1042,6 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
 
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rcMainWindow;
     GetWindowRect(g_RAMainWnd, &rcMainWindow);
 
@@ -1227,13 +1057,6 @@ void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 
 void RememberWindowSize(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rc;
     GetWindowRect(hDlg, &rc);
 
@@ -1280,7 +1103,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
             _RA_UpdateAppTitle();
 
-            MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
+            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
             _RA_RebuildMenu();
             break;
 
@@ -1300,7 +1123,13 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                 if (nGameID != 0)
                 {
-                    if (MessageBox(g_RAMainWnd, TEXT("Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game. Continue?"), TEXT("Warning"), MB_YESNO | MB_ICONWARNING) == IDNO)
+                    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+                    vmMessageBox.SetHeader(L"Enable Hardcore mode?");
+                    vmMessageBox.SetMessage(L"Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game.");
+                    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+                    if (vmMessageBox.ShowModal() == ra::ui::DialogResult::No)
                         break;
                 }
 
@@ -1327,14 +1156,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_GETROMCHECKSUM:
         {
             RA_Dlg_RomChecksum::DoModalDialog();
-            //MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
             break;
         }
-        //if( g_pActiveAchievements->NumAchievements() == 0 )
-        //	MessageBox( nullptr, "No ROM loaded!", "Error", MB_OK );
-        //else
-        //	MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
-        //break;
 
         case IDM_RA_OPENUSERPAGE:
             if (RAUsers::LocalUser().IsLoggedIn())
@@ -1418,15 +1241,18 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
             pConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
-            std::string msg;
-            msg += "Leaderboards are now ";
-            msg += (bLeaderboardsActive ? "enabled." : "disabled.");
-            msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
-
-            MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
-
             if (!bLeaderboardsActive)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
                 g_PopupWindows.LeaderboardPopups().Reset();
+            }
+            else
+            {
+                std::wstring sMessage = L"Leaderboards are now enabled.";
+                if (g_pCurrentGameData->GetGameID() != 0)
+                    sMessage += L"\nYou may need to reload the game to activate them.";
+                ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+            }
 
             _RA_RebuildMenu();
         }
@@ -1501,7 +1327,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            MessageBox(nullptr, TEXT("Loading save states is not allowed in Hardcore mode. Disabling Hardcore mode."), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
             DisableHardcoreMode();
         }
 

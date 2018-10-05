@@ -27,6 +27,11 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
 std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
+/// <summary>
+/// Constructs a <see cref="std::string" /> from a sprintf format and paramaters
+/// </summary>
+_NODISCARD std::string StringPrintf(_In_ const char* sFormat, ...);
+
 } // namespace ra
 
 #ifdef UNICODE

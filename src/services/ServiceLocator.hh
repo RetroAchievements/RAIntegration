@@ -2,7 +2,11 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
-#include "RA_Log.h"
+#include "services\ILogger.hh"
+
+#ifndef NDEBUG
+#include "RA_StringUtils.h"
+#endif
 
 #include <assert.h>
 #include <memory>
@@ -37,6 +41,16 @@ public:
     static TClass& GetMutable()
     {
         return Service<TClass>::Get();
+    }
+
+    /// <summary>
+    /// Determines whether or not a service implementing the requested interface was registered.
+    /// </summary>
+    /// <returns><c>true</c> if an implementation exists, <c>false</c> if not.</returns>
+    template <class TClass>
+    static bool Exists()
+    {
+        return Service<TClass>::Exists();
     }
 
     /// <summary>
@@ -90,7 +104,7 @@ public:
         }
 
     private:
-        TClass* m_pPrevious;
+        TClass * m_pPrevious;
         bool m_bDestroy;
     };
 
@@ -105,6 +119,11 @@ private:
                 ThrowNoServiceProvidedException();
 
             return *s_pInstance.get();
+        }
+
+        static bool Exists()
+        {
+            return (s_pInstance != nullptr);
         }
 
         static std::unique_ptr<TClass> s_pInstance;
@@ -128,7 +147,17 @@ private:
             }
             sMessage.insert(0, "No service provided for ");
 
-            RA_LOG("ERROR: %s\n", sMessage.c_str());
+            if (Service<ra::services::ILogger>::Exists())
+            {
+                const auto& pLogger = Service<ra::services::ILogger>::Get();
+                if (pLogger.IsEnabled(ra::services::LogLevel::Error))
+                    pLogger.LogMessage(ra::services::LogLevel::Error, "ERROR: " + sMessage);
+            }
+
+#ifndef NDEBUG
+            // expanded definition of assert macro so we can use the constructed error message
+            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), static_cast<unsigned int>(__LINE__));
+#endif
 
             throw std::runtime_error(sMessage);
         }

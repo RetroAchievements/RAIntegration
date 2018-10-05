@@ -67,6 +67,12 @@
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
+    <ClCompile Include="ui\ModelProperty.cpp" />
+    <ClCompile Include="ui\ViewModelBase.cpp" />
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\win32\Desktop.cpp" />
+    <ClCompile Include="ui\win32\Dlg_MessageBox.cpp" />
+    <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />
@@ -128,6 +134,13 @@
     <ClInclude Include="services\SearchResults.h" />
     <ClInclude Include="services\TextReader.hh" />
     <ClInclude Include="services\TextWriter.hh" />
+    <ClInclude Include="ui\IDesktop.hh" />
+    <ClInclude Include="ui\ModelProperty.hh" />
+    <ClInclude Include="ui\ViewModelBase.hh" />
+    <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\win32\Desktop.hh" />
+    <ClInclude Include="ui\win32\Dlg_MessageBox.hh" />
+    <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
   </ItemGroup>
   <ItemGroup>
@@ -264,7 +277,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>

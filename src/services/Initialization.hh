@@ -11,6 +11,8 @@ class Initialization
 {
 public:
     static void RegisterServices(const std::string& sClientName);
+
+    static void Shutdown();
 };
 
 } // namespace services

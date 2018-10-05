@@ -4,6 +4,10 @@
 
 #include "services\ILogger.hh"
 
+#ifndef NDEBUG
+#include "RA_StringUtils.h"
+#endif
+
 #include <assert.h>
 #include <memory>
 
@@ -100,7 +104,7 @@ public:
         }
 
     private:
-        TClass* m_pPrevious;
+        TClass * m_pPrevious;
         bool m_bDestroy;
     };
 
@@ -149,6 +153,11 @@ private:
                 if (pLogger.IsEnabled(ra::services::LogLevel::Error))
                     pLogger.LogMessage(ra::services::LogLevel::Error, "ERROR: " + sMessage);
             }
+
+#ifndef NDEBUG
+            // expanded definition of assert macro so we can use the constructed error message
+            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), static_cast<unsigned int>(__LINE__));
+#endif
 
             throw std::runtime_error(sMessage);
         }

@@ -22,6 +22,12 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI\ViewModels">
+      <UniqueIdentifier>{0badbd6c-a477-4f69-b999-f27b050c3a17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Win32">
+      <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -137,6 +143,24 @@
     </ClCompile>
     <ClCompile Include="services\impl\WindowsFileSystem.cpp">
       <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\Dlg_MessageBox.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\WindowViewModelBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ViewModelBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ModelProperty.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\Desktop.cpp">
+      <Filter>UI\Win32</Filter>
     </ClCompile>
     <ClCompile Include="RA_StringUtils.cpp">
       <Filter>Services</Filter>
@@ -313,6 +337,27 @@
     </ClInclude>
     <ClInclude Include="services\TextReader.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\Dlg_MessageBox.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ViewModelBase.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ModelProperty.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\IDesktop.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\Desktop.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\IDialogPresenter.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

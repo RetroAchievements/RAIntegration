@@ -8,6 +8,8 @@ namespace ra {
 namespace services {
 namespace impl {
 
+#undef CreateDirectory
+
 class WindowsFileSystem : public IFileSystem
 {
 public:
@@ -18,6 +20,7 @@ public:
     bool CreateDirectory(const std::wstring& sDirectory) const override;
     std::unique_ptr<TextReader> OpenTextFile(const std::wstring& sPath) const override;
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override;
+    std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override;
 
 private:
 

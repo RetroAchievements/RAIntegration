@@ -216,8 +216,6 @@ enum AchievementSetType
 
 extern void RADebugLogNoFormat(const char* data);
 extern void RADebugLog(const char* sFormat, ...);
-extern BOOL DirectoryExists(const char* sPath);
-
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;

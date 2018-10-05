@@ -16,8 +16,8 @@ namespace impl {
 class FileTextWriter : public ra::services::TextWriter
 {
 public:
-    explicit FileTextWriter(const std::wstring& sFilename) noexcept
-        : m_oStream(sFilename, std::ios::binary)
+    explicit FileTextWriter(const std::wstring& sFilename, std::ios_base::openmode nMode = std::ios::out) noexcept
+        : m_oStream(sFilename, std::ios::binary | nMode)
     {
     }
 

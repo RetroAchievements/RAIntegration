@@ -111,6 +111,9 @@
     <ClCompile Include="..\src\RA_Json.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\FileLogger_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -128,9 +131,10 @@
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="mocks\MockFileSystem.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockClock.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>

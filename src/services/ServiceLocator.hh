@@ -2,7 +2,7 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
-#include "RA_Log.h"
+#include "services\ILogger.hh"
 
 #ifndef NDEBUG
 #include "RA_StringUtils.h"
@@ -41,6 +41,16 @@ public:
     static TClass& GetMutable()
     {
         return Service<TClass>::Get();
+    }
+
+    /// <summary>
+    /// Determines whether or not a service implementing the requested interface was registered.
+    /// </summary>
+    /// <returns><c>true</c> if an implementation exists, <c>false</c> if not.</returns>
+    template <class TClass>
+    static bool Exists()
+    {
+        return Service<TClass>::Exists();
     }
 
     /// <summary>
@@ -111,6 +121,11 @@ private:
             return *s_pInstance.get();
         }
 
+        static bool Exists()
+        {
+            return (s_pInstance != nullptr);
+        }
+
         static std::unique_ptr<TClass> s_pInstance;
 
     private:
@@ -132,7 +147,12 @@ private:
             }
             sMessage.insert(0, "No service provided for ");
 
-            RA_LOG("ERROR: %s\n", sMessage.c_str());
+            if (Service<ra::services::ILogger>::Exists())
+            {
+                const auto& pLogger = Service<ra::services::ILogger>::Get();
+                if (pLogger.IsEnabled(ra::services::LogLevel::Error))
+                    pLogger.LogMessage(ra::services::LogLevel::Error, "ERROR: " + sMessage);
+            }
 
 #ifndef NDEBUG
             // expanded definition of assert macro so we can use the constructed error message

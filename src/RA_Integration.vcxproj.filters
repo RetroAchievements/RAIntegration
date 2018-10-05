@@ -338,6 +338,21 @@
     <ClInclude Include="services\TextReader.hh">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="services\ILogger.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileLogger.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClock.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\Clock.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

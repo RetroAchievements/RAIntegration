@@ -145,6 +145,7 @@
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClCompile Include="UI_ModelProperty_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
+    <ClCompile Include="services\FileLogger_Tests.cpp" />
     <ClCompile Include="services\JsonFileConfiguration_Tests.cpp" />
     <ClCompile Include="services\SearchResults_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="UI_ViewModelBase_Tests.cpp" />
     <ClCompile Include="UI_WindowViewModelBase_Tests.cpp" />
     <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp" />
+    <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="..\src\RA_MemValue.cpp" />

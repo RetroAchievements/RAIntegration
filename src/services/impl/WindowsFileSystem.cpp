@@ -27,8 +27,6 @@ WindowsFileSystem::WindowsFileSystem() noexcept
     m_sBaseDirectory = sBuffer;
     if (m_sBaseDirectory.back() != '\\')
         m_sBaseDirectory.push_back('\\');
-
-    RA_LOG("BaseDirectory: %s", ra::Narrow(m_sBaseDirectory).c_str());
 }
 
 bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const
@@ -60,6 +58,18 @@ std::unique_ptr<TextWriter> WindowsFileSystem::CreateTextFile(const std::wstring
     if (!pWriter->GetFStream().is_open())
     {
         RA_LOG("Failed to create \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
+        return std::unique_ptr<TextWriter>();
+    }
+
+    return std::unique_ptr<TextWriter>(pWriter.release());
+}
+
+std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring& sPath) const
+{
+    auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::app);
+    if (!pWriter->GetFStream().is_open())
+    {
+        RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
         return std::unique_ptr<TextWriter>();
     }
 

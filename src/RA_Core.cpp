@@ -59,7 +59,6 @@ HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
 EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
 ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
-const char* g_sGetLatestClientPage = nullptr;
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
@@ -114,7 +113,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     {
         case RA_Gens:
             g_ConsoleID = MegaDrive;
-            g_sGetLatestClientPage = "LatestRAGensVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAGens_REWiND";
             g_sClientDownloadURL = "RAGens.zip";
@@ -122,7 +120,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Project64:
             g_ConsoleID = N64;
-            g_sGetLatestClientPage = "LatestRAP64Version.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAP64";
             g_sClientDownloadURL = "RAP64.zip";
@@ -130,7 +127,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Snes9x:
             g_ConsoleID = SNES;
-            g_sGetLatestClientPage = "LatestRASnesVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RASnes9X";
             g_sClientDownloadURL = "RASnes9X.zip";
@@ -138,7 +134,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_VisualboyAdvance:
             g_ConsoleID = GB;
-            g_sGetLatestClientPage = "LatestRAVBAVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAVisualBoyAdvance";
             g_sClientDownloadURL = "RAVBA.zip";
@@ -147,7 +142,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
         case RA_Nester:
         case RA_FCEUX:
             g_ConsoleID = NES;
-            g_sGetLatestClientPage = "LatestRANESVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RANes";
             g_sClientDownloadURL = "RANes.zip";
@@ -155,7 +149,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_PCE:
             g_ConsoleID = PCEngine;
-            g_sGetLatestClientPage = "LatestRAPCEVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAPCE";
             g_sClientDownloadURL = "RAPCE.zip";
@@ -163,7 +156,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Libretro:
             g_ConsoleID = Atari2600;
-            g_sGetLatestClientPage = "LatestRALibretroVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RALibretro";
             g_sClientDownloadURL = "RALibretro.zip";
@@ -171,7 +163,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Meka:
             g_ConsoleID = MasterSystem;
-            g_sGetLatestClientPage = "LatestRAMekaVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAMeka";
             g_sClientDownloadURL = "RAMeka.zip";

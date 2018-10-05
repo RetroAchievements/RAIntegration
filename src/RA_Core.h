@@ -138,8 +138,8 @@ extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
-
-extern std::string GetFolderFromDialog();
+_Success_(return != "")
+_NODISCARD std::string GetFolderFromDialog() noexcept;
 
 extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);
 
@@ -148,6 +148,5 @@ BOOL CanCausePause();
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);
-
 
 #endif // !RA_CORE_H

@@ -39,14 +39,18 @@
 
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
-#include <locale>
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #include <memory>
 #include <direct.h>
 #include <fstream>
 #include <io.h>		//	_access()
-#include <atlbase.h> // CComPtr
+#include <ctime>
+
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
+#include <CommDlg.h>
+#include <Shlwapi.h>
 #endif // WIN32_LEAN_AND_MEAN
 
 std::string g_sKnownRAVersion;
@@ -184,14 +188,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
     }
 
-    RA_LOG("=================================================");
-    if (g_sClientName != nullptr)
-        RA_LOG("Initializing for %s %s", g_sClientName, sClientVer);
-    else
-        RA_LOG("Initializing for unknown client %d %s", nEmulatorID, sClientVer);
-
-    g_sROMDirLocation[0] = '\0';
-
     ra::services::Initialization::RegisterServices(g_sClientName);
 
     //	Ensure all required directories are created:
@@ -311,6 +307,8 @@ API int CCONV _RA_Shutdown()
         g_MemBookmarkDialog.InstallHWND(nullptr);
     }
 
+    ra::services::Initialization::Shutdown();
+
     CoUninitialize();
 
     return 0;
@@ -390,9 +388,12 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
         return true;
 
     // prompt. if user doesn't consent, return failure - caller should not continue
-    std::string sMessage;
-    sMessage = "You cannot " + std::string(sActivity) + " while Hardcore mode is active.\nDisable Hardcore mode?";
-    if (MessageBoxA(nullptr, sMessage.c_str(), "Warning", MB_YESNO | MB_ICONWARNING) != IDYES)
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+    vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
         return false;
 
     // user consented, switch to non-hardcore mode
@@ -463,9 +464,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
             //	Some other fatal error... panic?
             ASSERT(!"Unknown error from requestgameid.php");
 
-            std::ostringstream oss;
-            oss << "Game not loaded.\nError from " << _RA_HostName() << "!";
-            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error returned!"), MB_OK | MB_ICONERROR);
+            std::wstring sErrorMessage = L"Error from " + ra::Widen(_RA_HostName());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage.c_str());
         }
     }
 
@@ -563,13 +563,22 @@ API void CCONV _RA_ClearMemoryBanks()
 
 static bool RA_OfferNewRAUpdate(const char* sNewVer)
 {
-    std::ostringstream oss;
-    oss << "Would you like to update?\n\n"
-        << "A new version of " << g_sClientName << " is available for download at " << _RA_HostName() << ".\n\n"
-        << "Current version: " << g_sClientVersion << "\n"
-        << "New version: " << sNewVer;
+    std::string sClientVersion = g_sClientVersion;
+    while (sClientVersion[sClientVersion.length() - 1] == '0' && sClientVersion[sClientVersion.length() - 2] == '.')
+        sClientVersion.resize(sClientVersion.length() - 2);
 
-    if (MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Update available!"), MB_YESNO | MB_ICONINFORMATION) == IDYES)
+    std::wostringstream oss;
+    oss << L"A new version of " << ra::Widen(g_sClientName) << L" is available for download at " << ra::Widen(_RA_HostName()) << L".\n\n"
+        << L"Current version: " << ra::Widen(sClientVersion) << L"\n"
+        << L"New version: " << ra::Widen(sNewVer);
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Would you like to update?");
+    vmMessageBox.SetMessage(oss.str());
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Info);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+    if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes)
     {
         //FetchBinaryFromWeb( g_sClientEXEName );
         //
@@ -735,8 +744,6 @@ API int CCONV _RA_HandleHTTPResults()
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Error submitting achievement:",
                                     doc["Error"].GetString())); //?
-
-                  //MessageBox( HWnd, buffer, "Error!", MB_OK|MB_ICONWARNING );
                         }
                     }
                     else
@@ -871,6 +878,7 @@ static void RA_CheckForUpdate()
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
     {
+        // TODO: this doesn't work - response is JSON
         std::string sReply = std::move(Response);
         if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
         {
@@ -885,9 +893,8 @@ static void RA_CheckForUpdate()
             else
             {
                 //	Up to date
-                char buffer[1024];
-                sprintf_s(buffer, 1024, "You have the latest version of %s: 0.%02d", g_sClientEXEName, nServerVersion);
-                MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Up to date"), MB_OK);
+                std::wstring sMessage = L"You already have the latest version of " + ra::Widen(g_sClientName) + L": " + ra::Widen(sReply);
+                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(sMessage);
             }
         }
         else
@@ -1063,7 +1070,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
             _RA_UpdateAppTitle();
 
-            MessageBox(g_RAMainWnd, TEXT("You are now logged out."), TEXT("Info"), MB_OK);	//	##BLOCKING##
+            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
             _RA_RebuildMenu();
             break;
 
@@ -1083,7 +1090,13 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                 if (nGameID != 0)
                 {
-                    if (MessageBox(g_RAMainWnd, TEXT("Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game. Continue?"), TEXT("Warning"), MB_YESNO | MB_ICONWARNING) == IDNO)
+                    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+                    vmMessageBox.SetHeader(L"Enable Hardcore mode?");
+                    vmMessageBox.SetMessage(L"Enabling Hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game.");
+                    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+                    if (vmMessageBox.ShowModal() == ra::ui::DialogResult::No)
                         break;
                 }
 
@@ -1110,14 +1123,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_GETROMCHECKSUM:
         {
             RA_Dlg_RomChecksum::DoModalDialog();
-            //MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
             break;
         }
-        //if( g_pActiveAchievements->NumAchievements() == 0 )
-        //	MessageBox( nullptr, "No ROM loaded!", "Error", MB_OK );
-        //else
-        //	MessageBox( nullptr, ( std::string( "Current ROM MD5: " ) + g_sCurrentROMMD5 ).c_str(), "Get ROM Checksum", MB_OK );
-        //break;
 
         case IDM_RA_OPENUSERPAGE:
             if (RAUsers::LocalUser().IsLoggedIn())
@@ -1201,15 +1208,18 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
             pConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
-            std::string msg;
-            msg += "Leaderboards are now ";
-            msg += (bLeaderboardsActive ? "enabled." : "disabled.");
-            msg += "\nNB. You may need to load ROM again to re-enable leaderboards.";
-
-            MessageBox(nullptr, NativeStr(msg).c_str(), TEXT("Success"), MB_OK);
-
             if (!bLeaderboardsActive)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
                 g_PopupWindows.LeaderboardPopups().Reset();
+            }
+            else
+            {
+                std::wstring sMessage = L"Leaderboards are now enabled.";
+                if (g_pCurrentGameData->GetGameID() != 0)
+                    sMessage += L"\nYou may need to reload the game to activate them.";
+                ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+            }
 
             _RA_RebuildMenu();
         }
@@ -1284,7 +1294,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            MessageBox(nullptr, TEXT("Loading save states is not allowed in Hardcore mode. Disabling Hardcore mode."), TEXT("Warning!"), MB_OK | MB_ICONEXCLAMATION);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
             DisableHardcoreMode();
         }
 
@@ -1453,34 +1463,65 @@ BOOL _FileExists(const std::wstring& sFileName)
     }
 }
 
-std::string GetFolderFromDialog()
-{
-    std::string sRetVal;
-	CComPtr<IFileOpenDialog> pDlg;
+namespace ra {
 
-    HRESULT hr = HRESULT{};
-	if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg))))
+_Success_(return == 0)
+_NODISCARD static auto CALLBACK
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+{
+    ASSERT(uMsg != BFFM_VALIDATEFAILED);
+    if (uMsg == BFFM_INITIALIZED)
     {
-        pDlg->SetOptions(FOS_PICKFOLDERS);
-		if (SUCCEEDED(hr = pDlg->Show(nullptr)))
-        {
-            CComPtr<IShellItem> pItem;
-			if (SUCCEEDED(hr = pDlg->GetResult(&pItem)))
-            {
-                LPWSTR pStr{ nullptr };
-				if (SUCCEEDED(hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pStr)))
-                {
-                    sRetVal = ra::Narrow(pStr);
-                    // https://msdn.microsoft.com/en-us/library/windows/desktop/bb761140(v=vs.85).aspx
-                    CoTaskMemFree(static_cast<LPVOID>(pStr));
-                    pStr = nullptr;
-                }
-				pItem.Release();
-            }
-        }
-		pDlg.Release();
+        const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
     }
-    return sRetVal;
+    return 0;
+}
+
+} /* namespace ra */
+
+_Use_decl_annotations_
+std::string GetFolderFromDialog() noexcept
+{
+    auto lpbi{ std::make_unique<BROWSEINFO>() };
+    lpbi->hwndOwner = ::GetActiveWindow();
+
+    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
+    lpbi->pszDisplayName = pDisplayName.get();
+    lpbi->lpszTitle = _T("Select ROM folder...");
+
+    if (::OleInitialize(nullptr) != S_OK)
+        return "";
+
+    lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+    lpbi->lpfn    = ra::BrowseCallbackProc;
+    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    
+    std::string ret;
+    {
+        auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
+        {
+            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            lpItemIdList = nullptr;
+        };
+
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        if (!owner)
+        {
+            ::OleUninitialize();
+            return "";
+        }
+
+        if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
+        {
+            ::OleUninitialize();
+            return "";
+        }
+        ret = ra::Narrow(lpbi->pszDisplayName);
+    }
+    ::OleUninitialize();
+    return ret;
 }
 
 BOOL RemoveFileIfExists(const std::wstring& sFilePath)

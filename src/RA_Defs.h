@@ -200,8 +200,6 @@ public:
     }
 };
 
-extern BOOL DirectoryExists(const char* sPath);
-
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
@@ -228,5 +226,12 @@ const int SERVER_PING_DURATION = 2 * 60;
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 }
+#if _MBCS
+_CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
+#elif _UNICODE
+_CONSTANT_VAR RA_MAX_PATH{ 32767 }; // Unicode max path
+#else
+#error Unknown character set detected!
+#endif /* _MBCS */
 
 #endif // !RA_DEFS_H

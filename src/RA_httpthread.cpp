@@ -278,6 +278,8 @@ void RAWeb::SetUserAgentString()
     if (ptr != nullptr)
         sUserAgent.append(ptr);
 
+    RA_LOG("User-Agent: %s", sUserAgent.c_str());
+
     SetUserAgent(sUserAgent);
 }
 
@@ -289,7 +291,9 @@ void RAWeb::LogJSON(const rapidjson::Document& doc)
     doc.Accept(writer);
 
     //  buffer may contain percentage literals!
-    RADebugLogNoFormat(buffer.GetString());
+    const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
+    if (pLogger.IsEnabled(ra::services::LogLevel::Info))
+        pLogger.LogMessage(ra::services::LogLevel::Info, buffer.GetString());
 }
 
 BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut)

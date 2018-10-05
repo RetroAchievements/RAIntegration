@@ -15,13 +15,7 @@ public:
     /// <summary>
     /// Queues work for a background thread
     /// </summary>
-    template<typename F>
-    void RunAsync(F&& f) noexcept
-    {
-        RunAsyncImpl(std::move(f));
-    }
-
-    virtual void RunAsyncImpl(std::function<void()> f) noexcept = 0;
+    virtual void RunAsync(std::function<void()>&& f) noexcept = 0;
 
     /// <summary>
     /// Sets the <see ref="IsShutdownRequested" /> flag so threads can start winding down.

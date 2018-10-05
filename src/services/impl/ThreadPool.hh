@@ -22,7 +22,7 @@ public:
 
     void Initialize(size_t nThreads) noexcept;
 
-    void RunAsyncImpl(std::function<void()> f) noexcept override
+    void RunAsync(std::function<void()>&& f) noexcept override
     {
         if (m_bShutdownInitiated)
             return;

@@ -726,7 +726,6 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
 
 //////////////////////////////////////////////////////////////////////////
 
-//  Takes items from the http request queue, and posts them to the last http results queue.
 void RAWeb::SendKeepAlive()
 {
     if (!RAUsers::LocalUser().IsLoggedIn())

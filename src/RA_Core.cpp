@@ -635,10 +635,9 @@ API int CCONV _RA_HandleHTTPResults()
     RequestObject* pObj = RAWeb::PopNextHttpResult();
     while (pObj != nullptr)
     {
-        if (pObj->GetResponse().size() > 0)
+        rapidjson::Document doc;
+        if (pObj->GetResponse().size() > 0 && pObj->ParseResponseToJSON(doc))
         {
-            rapidjson::Document doc;
-
             switch (pObj->GetRequestType())
             {
                 case RequestLogin:

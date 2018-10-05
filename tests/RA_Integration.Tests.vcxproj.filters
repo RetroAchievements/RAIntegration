@@ -42,9 +42,6 @@
     <ClCompile Include="RA_Leaderboard_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="SearchResults_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -134,9 +131,6 @@
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClCompile Include="RA_Defs_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClInclude Include="mocks\MockFileSystem.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>

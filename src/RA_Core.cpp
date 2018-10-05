@@ -68,32 +68,9 @@ const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
-bool g_bHardcoreModeActive = true;
-bool g_bLeaderboardsActive = true;
-bool g_bLBDisplayNotification = true;
-bool g_bLBDisplayCounter = true;
-bool g_bLBDisplayScoreboard = true;
-bool g_bPreferDecimalVal = false;
-unsigned int g_nNumHTTPThreads = 15;
 
-typedef struct WindowPosition
-{
-    int nLeft;
-    int nTop;
-    int nWidth;
-    int nHeight;
-    bool bLoaded;
-
-    static const int nUnset = -99999;
-} WindowPosition;
-
-typedef std::map<std::string, WindowPosition> WindowPositionMap;
-WindowPositionMap g_mWindowPositions;
-
-namespace {
-const unsigned int PROCESS_WAIT_TIME = 100;
-unsigned int g_nProcessTimer = 0;
-}
+inline static constexpr unsigned int PROCESS_WAIT_TIME{ 100U };
+inline static unsigned int g_nProcessTimer{ 0U };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
@@ -971,151 +948,6 @@ static void RA_CheckForUpdate()
     }
 }
 
-API void CCONV _RA_LoadPreferences()
-{
-    RA_LOG(__FUNCTION__ " - loading preferences...\n");
-
-    std::wstring sPrefsFileName;
-    {
-        std::wostringstream oss;
-        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
-        sPrefsFileName = oss.str();
-    }
-
-    std::ifstream ifile{ sPrefsFileName };
-    if (!ifile.is_open())
-    {
-        //	TBD: setup some decent default variables:
-        _RA_SavePreferences();
-        return;
-    }
-
-    rapidjson::Document doc;
-    rapidjson::IStreamWrapper isw{ ifile };
-    doc.ParseStream(isw);
-    if (doc.HasParseError())
-    {
-        _RA_SavePreferences();
-        return;
-    }
-
-    if (doc.HasMember("Username"))
-        RAUsers::LocalUser().SetUsername(doc["Username"].GetString());
-    if (doc.HasMember("Token"))
-        RAUsers::LocalUser().SetToken(doc["Token"].GetString());
-    if (doc.HasMember("Hardcore Active"))
-        g_bHardcoreModeActive = doc["Hardcore Active"].GetBool();
-
-    if (doc.HasMember("Leaderboards Active"))
-        g_bLeaderboardsActive = doc["Leaderboards Active"].GetBool();
-    if (doc.HasMember("Leaderboard Notification Display"))
-        g_bLBDisplayNotification = doc["Leaderboard Notification Display"].GetBool();
-    if (doc.HasMember("Leaderboard Counter Display"))
-        g_bLBDisplayCounter = doc["Leaderboard Counter Display"].GetBool();
-    if (doc.HasMember("Leaderboard Scoreboard Display"))
-        g_bLBDisplayScoreboard = doc["Leaderboard Scoreboard Display"].GetBool();
-
-    if (doc.HasMember("Prefer Decimal"))
-        g_bPreferDecimalVal = doc["Prefer Decimal"].GetBool();
-
-    if (doc.HasMember("Num Background Threads"))
-        g_nNumHTTPThreads = doc["Num Background Threads"].GetUint();
-    if (doc.HasMember("ROM Directory"))
-        g_sROMDirLocation = doc["ROM Directory"].GetString();
-
-    if (doc.HasMember("Window Positions"))
-    {
-        {
-            const auto& positions{ doc["Window Positions"] };
-            if (positions.IsObject())
-            {
-                for (auto iter = positions.MemberBegin(); iter != positions.MemberEnd(); ++iter)
-                {
-                    WindowPosition& pos = g_mWindowPositions[iter->name.GetString()];
-                    pos.nLeft = pos.nTop = pos.nWidth = pos.nHeight = WindowPosition::nUnset;
-                    pos.bLoaded = false;
-
-                    if (iter->value.HasMember("X"))
-                        pos.nLeft = iter->value["X"].GetInt();
-                    if (iter->value.HasMember("Y"))
-                        pos.nTop = iter->value["Y"].GetInt();
-                    if (iter->value.HasMember("Width"))
-                        pos.nWidth = iter->value["Width"].GetInt();
-                    if (iter->value.HasMember("Height"))
-                        pos.nHeight = iter->value["Height"].GetInt();
-                }
-            }
-        }
-    }
-
-    //TBD:
-    //g_GameLibrary.LoadAll();
-}
-
-API void CCONV _RA_SavePreferences()
-{
-    RA_LOG(__FUNCTION__ " - saving preferences...\n");
-
-    if (g_sClientName == nullptr)
-    {
-        RA_LOG(__FUNCTION__ " - aborting save, we don't even know who we are...\n");
-        return;
-    }
-
-    std::wstring sPrefsFileName;
-    {
-        std::wostringstream oss;
-        oss << g_sHomeDir << RA_PREFERENCES_FILENAME_PREFIX << g_sClientName << L".cfg";
-        sPrefsFileName = oss.str();
-    }
-
-    std::ofstream ofile{ sPrefsFileName };
-    if (!ofile.is_open())
-        return;
-
-    rapidjson::OStreamWrapper osw{ ofile };
-    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
-
-    rapidjson::Document doc;
-    doc.SetObject();
-    auto& a = doc.GetAllocator();
-    doc.AddMember("Username", rapidjson::StringRef(RAUsers::LocalUser().Username().c_str()), a);
-    doc.AddMember("Token", rapidjson::StringRef(RAUsers::LocalUser().Token().c_str()), a);
-    doc.AddMember("Hardcore Active", g_bHardcoreModeActive, a);
-    doc.AddMember("Leaderboards Active", g_bLeaderboardsActive, a);
-    doc.AddMember("Leaderboard Notification Display", g_bLBDisplayNotification, a);
-    doc.AddMember("Leaderboard Counter Display", g_bLBDisplayCounter, a);
-    doc.AddMember("Leaderboard Scoreboard Display", g_bLBDisplayScoreboard, a);
-    doc.AddMember("Prefer Decimal", g_bPreferDecimalVal, a);
-    doc.AddMember("Num Background Threads", g_nNumHTTPThreads, a);
-    doc.AddMember("ROM Directory", rapidjson::StringRef(g_sROMDirLocation.c_str()), a);
-
-    rapidjson::Value positions{ rapidjson::kObjectType };
-    for (const auto& wndPos : g_mWindowPositions)
-    {
-        rapidjson::Value rect{ rapidjson::kObjectType };
-        if (wndPos.second.nLeft != WindowPosition::nUnset)
-            rect.AddMember("X", wndPos.second.nLeft, a);
-        if (wndPos.second.nTop != WindowPosition::nUnset)
-            rect.AddMember("Y", wndPos.second.nTop, a);
-        if (wndPos.second.nWidth != WindowPosition::nUnset)
-            rect.AddMember("Width", wndPos.second.nWidth, a);
-        if (wndPos.second.nHeight != WindowPosition::nUnset)
-            rect.AddMember("Height", wndPos.second.nHeight, a);
-
-        if (rect.MemberCount() > 0U)
-            positions.AddMember(rapidjson::StringRef(wndPos.first.c_str()), rect, a);
-    }
-
-    if (positions.MemberCount() > 0U)
-        doc.AddMember("Window Positions", positions.Move(), a);
-
-    doc.Accept(writer);	//	Save
-
-    //TBD:
-    //g_GameLibrary.SaveAll();
-}
-
 void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
@@ -1210,13 +1042,6 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
 
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rcMainWindow;
     GetWindowRect(g_RAMainWnd, &rcMainWindow);
 
@@ -1232,13 +1057,6 @@ void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 
 void RememberWindowSize(HWND hDlg, const char* sDlgKey)
 {
-    WindowPositionMap::iterator iter = g_mWindowPositions.find(std::string(sDlgKey));
-    if (iter == g_mWindowPositions.end())
-        return;
-
-    if (!iter->second.bLoaded)
-        return;
-
     RECT rc;
     GetWindowRect(hDlg, &rc);
 

@@ -73,8 +73,6 @@ struct IUnknown;
 //	Version Information is integrated into tags
 
 #else
-//NB. These must NOT be accessible from the emulator!
-//#define RA_INTEGRATION_VERSION	"0.053"
 
 #include "RA_Log.h"
 
@@ -83,9 +81,6 @@ struct IUnknown;
 //	RA-Only
 using namespace std::string_literals;
 #endif	// RA_EXPORTS
-
-#define RA_KEYS_DLL						"RA_Keys.dll"
-#define RA_PREFERENCES_FILENAME_PREFIX	L"RAPrefs_"
 
 #define RA_DIR_OVERLAY					L"Overlay\\"
 #define RA_DIR_BASE						L"RACache\\"
@@ -205,22 +200,9 @@ public:
     }
 };
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
-
-extern void RADebugLogNoFormat(const char* data);
-extern void RADebugLog(const char* sFormat, ...);
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
-
-#define RA_LOG RADebugLog
 
 #ifdef _DEBUG
 #ifndef RA_UTEST
@@ -242,9 +224,7 @@ const int SERVER_PING_DURATION = 2 * 60;
 #include "RA_StringUtils.h"
 
 namespace ra {
-
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-
 } // namespace ra
 
 #if _MBCS

@@ -97,7 +97,6 @@ filesize(_In_ const std::basic_string<CharT>& filename) noexcept
 template<typename CharT, class = std::enable_if_t<is_char_v<CharT>>> _NODISCARD _CONSTANT_FN
 filesize(std::basic_string<CharT>&& filename) noexcept
 {
-    // It's always the little things...
     using file_type = std::basic_fstream<CharT>;
     auto bstr{ std::move(filename) };
     file_type file{ bstr, std::ios::in | std::ios::ate | std::ios::binary };

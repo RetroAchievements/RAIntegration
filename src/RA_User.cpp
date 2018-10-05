@@ -95,8 +95,6 @@ void LocalRAUser::AttemptSilentLogin()
     args['u'] = Username();
     args['t'] = Token();
     RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
-
-    m_bStoreToken = TRUE;	//	Store it! We just used it!
 }
 
 void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)

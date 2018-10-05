@@ -47,7 +47,7 @@ void ThreadPool::RunThread() noexcept
             {
                 RA_LOG_ERR("Exception on background thread: %s", ex.what());
             }
-        } while (true);
+        } while (!m_bShutdownInitiated);
 
         // wait for work
         if (!m_bShutdownInitiated)

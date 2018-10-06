@@ -359,8 +359,11 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
             return false;
         }
 
-        g_pCurrentGameData->ParseData(doc);
-        nGameID = g_pCurrentGameData->GetGameID();
+        if (m_nSetType == Type::Core)
+        {
+            g_pCurrentGameData->ParseData(doc);
+            nGameID = g_pCurrentGameData->GetGameID();
+        }
 
         const auto& AchievementsData{ doc["Achievements"] };
         for (const auto& achData : AchievementsData.GetArray())
@@ -382,14 +385,6 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         if (m_nSetType != Type::Core)
             return true;
-
-        //	Rich Presence
-        {
-            auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(static_cast<unsigned int>(nGameID)));
-            pRich->Write(g_pCurrentGameData->RichPresencePatch());
-        }
-
-        g_RichPresenceInterpreter.ParseFromString(g_pCurrentGameData->RichPresencePatch().c_str());
 
         const auto& LeaderboardsData{ doc["Leaderboards"] };
         for (const auto& lbData : LeaderboardsData.GetArray())

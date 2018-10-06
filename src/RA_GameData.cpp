@@ -1,12 +1,25 @@
 #include "RA_GameData.h"
 
+#include "services\ILocalStorage.hh"
+
 GameData* g_pCurrentGameData = new GameData();
 
 void GameData::ParseData(const rapidjson::Document& doc)
 {
     m_nGameID = doc["ID"].GetUint();
     m_sGameTitle = doc["Title"].GetString();
-    m_sRichPresencePatch = doc["RichPresencePatch"].IsNull() ? "" : doc["RichPresencePatch"].GetString();
+
+    if (doc.HasMember("RichPresencePatch"))
+    {
+        std::string sRichPresence;
+        if (!doc["RichPresencePatch"].IsNull())
+            sRichPresence = doc["RichPresencePatch"].GetString();
+
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(static_cast<unsigned int>(m_nGameID)));
+
+        pRich->Write(sRichPresence);
+    }
 
     //m_nConsoleID = doc["ConsoleID"].GetUint();
     //m_sConsoleName = doc["ConsoleName"].GetString();

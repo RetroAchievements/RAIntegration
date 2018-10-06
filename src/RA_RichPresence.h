@@ -10,7 +10,7 @@ class RA_RichPresenceInterpreter
 public:
     RA_RichPresenceInterpreter() {}
 
-    void ParseFromString(const char* sRichPresence);
+    bool Load();
 
     std::string GetRichPresenceString();
     

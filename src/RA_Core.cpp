@@ -1200,11 +1200,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            std::wstring sRichPresenceFile = g_sHomeDir + RA_DIR_DATA + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Rich.txt";
-
-            std::string sRichPresence;
-            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile.c_str());
-            g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
+            bool bRichPresenceExists = g_RichPresenceInterpreter.Load();
 
             if (g_RichPresenceDialog.GetHWND() == nullptr)
                 g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));

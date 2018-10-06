@@ -41,9 +41,9 @@ public:
         logger.LogMessage(LogLevel::Error, "This is the third message.");
 
         Assert::AreEqual(std::string("\r\n"
-            "160843.000|INFO| This is a message.\r\n"
-            "160843.000|WARN| This is another message.\r\n"
-            "160843.375|ERR | This is the third message.\r\n"), mockFileSystem.GetFileContents(mockLogFileName));
+            "220843.000|INFO| This is a message.\r\n"
+            "220843.000|WARN| This is another message.\r\n"
+            "220843.375|ERR | This is the third message.\r\n"), mockFileSystem.GetFileContents(mockLogFileName));
     }
 };
 

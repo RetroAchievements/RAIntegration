@@ -1,5 +1,5 @@
-#ifndef RA_DLG_MESSAGEBOX_H
-#define RA_DLG_MESSAGEBOX_H
+#ifndef RA_UI_WIN32_MESSAGEBOXDIALOG_H
+#define RA_UI_WIN32_MESSAGEBOXDIALOG_H
 #pragma once
 
 #include "ui/win32/IDialogPresenter.hh"
@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-class Dlg_MessageBox
+class MessageBoxDialog
 {
 public:
     class Presenter : public IDialogPresenter
@@ -26,4 +26,4 @@ public:
 } // namespace ui
 } // namespace ra
 
-#endif // !RA_DLG_MESSAGEBOX_H
+#endif // !RA_UI_WIN32_MESSAGEBOXDIALOG_H

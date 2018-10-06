@@ -7,6 +7,7 @@
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\WindowViewModelBase.hh"
 
@@ -58,6 +59,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pDesktop = new ra::ui::win32::Desktop();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
     ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+
+    auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
+    ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
 }
 
 void Initialization::Shutdown()

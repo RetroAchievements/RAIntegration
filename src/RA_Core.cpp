@@ -26,7 +26,6 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RichPresence.h"
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
@@ -39,6 +38,7 @@
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #include <memory>
 #include <direct.h>
@@ -293,13 +293,6 @@ API int CCONV _RA_Shutdown()
 
     g_GameLibrary.KillThread();
 
-    if (g_RichPresenceDialog.GetHWND() != nullptr)
-    {
-        g_RichPresenceDialog.ClearMessage();
-        DestroyWindow(g_RichPresenceDialog.GetHWND());
-        g_RichPresenceDialog.InstallHWND(nullptr);
-    }
-
     if (g_MemBookmarkDialog.GetHWND() != nullptr)
     {
         DestroyWindow(g_MemBookmarkDialog.GetHWND());
@@ -510,7 +503,6 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemoryDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
     g_MemBookmarkDialog.OnLoad_NewRom();
-    g_RichPresenceDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
 
@@ -1220,18 +1212,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             std::wstring sRichPresenceFile = g_sHomeDir + RA_DIR_DATA + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Rich.txt";
 
             std::string sRichPresence;
-            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile.c_str());
+            _ReadBufferFromFile(sRichPresence, sRichPresenceFile.c_str());
             g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
 
-            if (g_RichPresenceDialog.GetHWND() == nullptr)
-                g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
-            if (g_RichPresenceDialog.GetHWND() != nullptr)
-                ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
-
-            if (bRichPresenceExists)
-                g_RichPresenceDialog.StartMonitoring();
-            else
-                g_RichPresenceDialog.ClearMessage();
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            pWindowManager.RichPresenceMonitor.Show();
 
             break;
         }

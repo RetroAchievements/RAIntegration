@@ -28,6 +28,9 @@
     <Filter Include="UI\Win32">
       <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI\Win32\Bindings">
+      <UniqueIdentifier>{24415556-accd-41e1-a23a-3ef078909014}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -67,9 +70,6 @@
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_Dlg_Memory.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Dlg_RichPresence.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_Dlg_RomChecksum.cpp">
@@ -147,9 +147,6 @@
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\win32\Dlg_MessageBox.cpp">
-      <Filter>UI\Win32</Filter>
-    </ClCompile>
     <ClCompile Include="ui\WindowViewModelBase.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -167,6 +164,18 @@
     </ClCompile>
     <ClCompile Include="RA_Json.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\DialogBase.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\MessageBoxDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\RichPresenceDialog.cpp">
+      <Filter>UI\Win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -207,9 +216,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RichPresence.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_RomChecksum.h">
@@ -356,9 +362,6 @@
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\Dlg_MessageBox.hh">
-      <Filter>UI\Win32</Filter>
-    </ClInclude>
     <ClInclude Include="ui\ViewModelBase.hh">
       <Filter>UI</Filter>
     </ClInclude>
@@ -373,6 +376,27 @@
     </ClInclude>
     <ClInclude Include="ui\win32\IDialogPresenter.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\WindowBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\DialogBase.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MessageBoxDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\RichPresenceDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\BindingBase.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\WindowManager.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

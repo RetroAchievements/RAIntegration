@@ -112,12 +112,6 @@ void AchievementOverlay::Deactivate()
     }
 }
 
-void AchievementOverlay::AddPage(Page NewPage)
-{
-    m_nPageStackPointer++;
-    m_Pages.at(m_nPageStackPointer) = NewPage;
-}
-
 //	Returns TRUE if we are ready to exit the overlay.
 BOOL AchievementOverlay::GoBack()
 {
@@ -756,23 +750,23 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
             {
                 std::string sUser{ " " };
                 sUser += data.User();
-                sUser += " ";
+                sUser += "      ";
 
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC,
                     nDX + nWonByPlayerNameX,
-                    nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                    NativeStr(sUser).c_str(), ra::to_signed(sUser.length()));
+                    nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
+                    NativeStr(sUser).c_str(), ra::narrow_cast<int>(sUser.length()));
             }
 
-            std::string sWonAt{ " " };
+            std::string sWonAt{ "       " };
             sWonAt += data.WonAt();
             sWonAt += " ";
 
             TextOut(hDC,
                 nDX + nWonByPlayerDateX,
-                nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                NativeStr(sWonAt).c_str(), ra::to_signed(sWonAt.length()));
+                nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
+                NativeStr(sWonAt).c_str(), ra::narrow_cast<int>(sWonAt.length()));
             i++;
         }
     }
@@ -1497,6 +1491,13 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
             m_LatestNews.push_back(std::move(nNewsItem));
         }
     }
+}
+
+void AchievementOverlay::UpdateImages() noexcept
+{
+    using ra::services::ImageReference;
+    m_hOverlayBackground = ImageReference{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
+    m_hUserImage         = ImageReference{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
 }
 
 

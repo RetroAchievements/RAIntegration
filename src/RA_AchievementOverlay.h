@@ -133,13 +133,18 @@ public:
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
-    Page CurrentPage() { return m_Pages[m_nPageStackPointer]; }
-    void AddPage(Page NewPage);
+    _NODISCARD _CONSTANT_FN CurrentPage() const noexcept { return m_Pages.at(m_nPageStackPointer); }
+    _CONSTANT_FN AddPage(_In_ Page NewPage) noexcept
+    {
+        m_nPageStackPointer++;
+        m_Pages.at(m_nPageStackPointer) = NewPage;
+    }
+
     BOOL GoBack();
-
     void SelectNextTopLevelPage(BOOL bPressedRight);
-
     void InstallNewsArticlesFromFile();
+
+    void UpdateImages() noexcept;
 
 public:
     struct NewsItem
@@ -155,8 +160,8 @@ public:
     };
 
 private:
-    static _CONSTANT_VAR PAGE_TRANSITION_IN{ -0.2F };
-    static _CONSTANT_VAR PAGE_TRANSITION_OUT{ 0.2F };
+    inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
+    inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
 
     int	m_nAchievementsScrollOffset{};
     int	m_nFriendsScrollOffset{};
@@ -182,8 +187,8 @@ private:
     std::array<Page, 5>   m_Pages{ Page::Achievements };
     unsigned int          m_nPageStackPointer{};
 
-    ra::services::ImageReference m_hOverlayBackground{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
-    ra::services::ImageReference m_hUserImage{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
+    ra::services::ImageReference m_hOverlayBackground;
+    ra::services::ImageReference m_hUserImage;
     mutable std::map<std::string, ra::services::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;

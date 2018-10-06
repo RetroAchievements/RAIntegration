@@ -50,10 +50,33 @@ protected:
     DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept;
     virtual ~DialogBase();
 
+    /// <summary>
+    /// Called when the window is created, but before it is shown.
+    /// </summary>
     virtual void OnInitDialog() {}
+
+    /// <summary>
+    /// Called when the window is moved.
+    /// </summary>
     virtual void OnDestroy();
+    
+    /// <summary>
+    /// Called when a button is clicked.
+    /// </summary>
+    /// <param name="nCommand">The unique identifier of the button.</param>
+    /// <returns><c>TRUE</c> if the command was handled, <c>FALSE</c> if not.</returns>
     virtual BOOL OnCommand(WORD nCommand);
+    
+    /// <summary>
+    /// Called when the window is moved.
+    /// </summary>
+    /// <param name="oNewPosition">The new upperleft corner of the client area.</param>
     virtual void OnMove(ra::ui::Position& oNewPosition);
+
+    /// <summary>
+    /// Called when the window is resized.
+    /// </summary>
+    /// <param name="oNewPosition">The new size of the client area.</param>
     virtual void OnSize(ra::ui::Size& oNewSize);
 
     ra::ui::win32::bindings::WindowBinding m_bindWindow;

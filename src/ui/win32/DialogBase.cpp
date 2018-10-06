@@ -115,18 +115,12 @@ BOOL DialogBase::OnCommand(WORD nCommand)
 
 void DialogBase::OnMove(ra::ui::Position& oNewPosition)
 {
-    //RECT rcMainWindow;
-    //GetWindowRect(g_RAMainWnd, &rcMainWindow);
-
-    //oNewPosition.X -= rcMainWindow.left;
-    //oNewPosition.Y -= rcMainWindow.top;
-
-    //m_vmWindow.SetPosition(oNewPosition);
+    m_bindWindow.OnPositionChanged(oNewPosition);
 }
 
 void DialogBase::OnSize(ra::ui::Size& oNewSize)
 {
-    //m_vmWindow.SetSize(oNewSize);
+    m_bindWindow.OnSizeChanged(oNewSize);
 }
 
 } // namespace win32

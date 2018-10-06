@@ -138,4 +138,9 @@
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockDesktop.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

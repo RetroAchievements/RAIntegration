@@ -158,6 +158,7 @@
     <ClCompile Include="UI_WindowViewModelBase_Tests.cpp" />
     <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp" />
     <ClInclude Include="mocks\MockClock.hh" />
+    <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="..\src\RA_MemValue.cpp" />

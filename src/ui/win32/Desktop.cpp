@@ -45,6 +45,31 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel) const
     return vmViewModel.GetDialogResult();
 }
 
+void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const
+{
+    if (m_oWorkAreaSize.Width == 0)
+    {
+        RECT rcWorkArea;
+        if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0))
+        {
+            m_oWorkAreaPosition = { rcWorkArea.left, rcWorkArea.top };
+            m_oWorkAreaSize = { rcWorkArea.right - rcWorkArea.left, rcWorkArea.bottom - rcWorkArea.top };
+
+            RA_LOG_INFO("Desktop work area: %dx%d", m_oWorkAreaSize.Width, m_oWorkAreaSize.Height);
+        }
+        else
+        {
+            RA_LOG_ERR("Unable to determine work area");
+
+            m_oWorkAreaPosition = { 0, 0 };
+            m_oWorkAreaSize = { 800, 600 };
+        }
+    }
+
+    oUpperLeftCorner = m_oWorkAreaPosition;
+    oSize = m_oWorkAreaSize;
+}
+
 ra::ui::win32::IDialogPresenter* Desktop::GetDialogPresenter(ra::ui::WindowViewModelBase& oViewModel) const
 {
     for (auto& pPresenter : m_vDialogPresenters)

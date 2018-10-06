@@ -5,6 +5,7 @@
 #include <string>
 
 #include "TextReader.hh"
+#include "TextWriter.hh"
 
 namespace ra {
 namespace services {

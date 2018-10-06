@@ -5,6 +5,8 @@
 #include "RA_Condition.h"
 #include "RA_MemValue.h"
 
+#include "services\TextReader.hh"
+
 class RA_RichPresenceInterpreter
 {
 public:
@@ -17,6 +19,8 @@ public:
     bool Enabled() const { return !m_vDisplayStrings.empty(); }
 
 protected:
+    bool Load(ra::services::TextReader& pReader);
+
     class Lookup
     {
     public:

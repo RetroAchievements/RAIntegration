@@ -1,5 +1,6 @@
 #include "FileLocalStorage.hh"
 
+#include "ra_fwd.h"
 #include "RA_Json.h"
 #include "RA_Log.h"
 

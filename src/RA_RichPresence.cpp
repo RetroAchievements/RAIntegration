@@ -6,6 +6,7 @@
 #include "RA_MemValue.h"
 
 #include "services\ILocalStorage.hh"
+#include "services\ServiceLocator.hh"
 
 RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
@@ -185,10 +186,22 @@ bool RA_RichPresenceInterpreter::Load()
     m_vLookups.clear();
     m_vDisplayStrings.clear();
 
+#ifdef RA_UTEST
+    return false;
+#else
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(static_cast<unsigned int>(g_pCurrentGameData->GetGameID())));
     if (pRich == nullptr)
         return false;
+
+    return Load(*pRich.get());
+#endif
+}
+
+bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
+{
+    m_vLookups.clear();
+    m_vDisplayStrings.clear();
 
     std::vector<std::pair<std::string, std::string>> mDisplayStrings;
     std::string sDisplayString;
@@ -196,7 +209,7 @@ bool RA_RichPresenceInterpreter::Load()
     std::map<std::string, MemValue::Format> mFormats;
 
     std::string sLine;
-    while (GetLine(*pRich.get(), sLine))
+    while (GetLine(pReader, sLine))
     {
         if (strncmp("Lookup:", sLine.c_str(), 7) == 0)
         {
@@ -204,7 +217,7 @@ bool RA_RichPresenceInterpreter::Load()
             Lookup& newLookup = m_vLookups.emplace_back(sLookupName);
             do
             {
-                if (!GetLine(*pRich.get(), sLine) || sLine.length() < 2)
+                if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
                 size_t nIndex = sLine.find('=');
@@ -233,7 +246,7 @@ bool RA_RichPresenceInterpreter::Load()
         else if (strncmp("Format:", sLine.c_str(), 7) == 0)
         {
             std::string sFormatName(sLine, 7);
-            if (GetLine(*pRich.get(), sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
+            if (GetLine(pReader, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
             {
                 std::string sFormatType(sLine, 11);
                 MemValue::Format nType = MemValue::ParseFormat(sFormatType);
@@ -246,7 +259,7 @@ bool RA_RichPresenceInterpreter::Load()
         {
             do
             {
-                if (!GetLine(*pRich.get(), sLine) || sLine.length() < 2)
+                if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
                 if (sLine[0] == '?')

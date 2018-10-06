@@ -13,7 +13,9 @@ public:
     const std::string& GameTitle() { return m_sGameTitle; }
     void SetGameTitle(const std::string& str) { m_sGameTitle = str; }
 
+#ifndef RA_UTEST
     void ParseData(const rapidjson::Document& doc);
+#endif
 
 private:
     ra::GameID m_nGameID;

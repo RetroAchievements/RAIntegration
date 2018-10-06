@@ -41,16 +41,16 @@ public:
 
     void MockFile(const std::wstring& sPath, const std::string& sContents)
     {
-        m_mFileContents[sPath] = sContents;
+        m_mFileContents.insert_or_assign(sPath, sContents);
     }
 
-    std::string& GetFileContents(const std::wstring& sPath)
+    const std::string& GetFileContents(const std::wstring& sPath)
     {
         auto pIter = m_mFileContents.find(sPath);
         if (pIter != m_mFileContents.end())
             return pIter->second;
 
-        static std::string sEmpty;
+        static const std::string sEmpty;
         return sEmpty;
     }
 

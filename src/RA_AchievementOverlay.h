@@ -174,13 +174,13 @@ private:
     mutable int m_nNumFriendsBeingRendered{};
     mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock{};	//	Waiting for pad release
-    std::vector<NewsItem>	m_LatestNews{};
-    TransitionState			m_nTransitionState{};
-    float					m_fTransitionTimer{ PAGE_TRANSITION_IN };
+    BOOL                  m_bInputLock{}; // Waiting for pad release
+    std::vector<NewsItem> m_LatestNews{};
+    TransitionState       m_nTransitionState{};
+    float                 m_fTransitionTimer{ PAGE_TRANSITION_IN };
 
-    std::array<Page, 5>		m_Pages{ Page::Achievements };
-    unsigned int			m_nPageStackPointer{};
+    std::array<Page, 5>   m_Pages{ Page::Achievements };
+    unsigned int          m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
     ra::services::ImageReference m_hUserImage{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };

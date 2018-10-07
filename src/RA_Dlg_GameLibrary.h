@@ -2,7 +2,6 @@
 #define RA_DLG_GAMELIBRARY_H
 #pragma once
 
-
 #include "RA_Defs.h"
 
 class GameEntry

@@ -7,7 +7,6 @@
 #include "RA_Resource.h"
 #include "RA_User.h"
 
-
 namespace {
 
 const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
@@ -172,25 +171,19 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
-                    char sBugReportInFull[8192];
-                    sprintf_s(sBugReportInFull, 8192,
-                        "--New Bug Report--\n"
-                        "\n"
-                        "Game: %s\n"
-                        "Achievement IDs: %s\n"
-                        "Problem: %s\n"
-                        "Reporter: %s\n"
-                        "ROM Checksum: %s\n"
-                        "\n"
-                        "Comment: %s\n"
-                        "\n"
-                        "Is this OK?",
-                        g_pCurrentGameData->GameTitle().c_str(),
-                        sBuggedIDs,
-                        sProblemTypeNice,
-                        RAUsers::LocalUser().Username().c_str(),
-                        g_sCurrentROMMD5.c_str(),
-                        sBugReportComment.c_str());
+                    std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
+                    sBugReportInFull += g_pCurrentGameData->GameTitle();
+                    sBugReportInFull += "\nAchievement IDs: ";
+                    sBugReportInFull += sBuggedIDs;
+                    sBugReportInFull += "\nProblem: ";
+                    sBugReportInFull += sProblemTypeNice;
+                    sBugReportInFull += "\nReporter: ";
+                    sBugReportInFull += RAUsers::LocalUser().Username();
+                    sBugReportInFull += "\nROM Checksum: ";
+                    sBugReportInFull += g_sCurrentROMMD5;
+                    sBugReportInFull += "\n\nComment: "; 
+                    sBugReportInFull += sBugReportComment;
+                    sBugReportInFull += "\n\nIs this OK?";
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;

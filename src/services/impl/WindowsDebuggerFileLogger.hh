@@ -4,6 +4,7 @@
 
 #include "services\impl\FileLogger.hh"
 
+#include "windows_nodefines.h"
 #include <Windows.h>
 
 namespace ra {

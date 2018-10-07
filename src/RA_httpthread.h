@@ -4,9 +4,6 @@
 
 #include "RA_Defs.h"
 
-typedef void* HANDLE;
-typedef void* LPVOID;
-
 enum HTTPRequestMethod
 {
     Post,

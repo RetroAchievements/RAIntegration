@@ -1,9 +1,12 @@
 #include "RA_Defs.h"
 
-#include <iomanip>
+#ifndef PCH_H
+#include <iomanip>  
+#endif /* !PCH_H */
 
 namespace ra {
 
+_Use_decl_annotations_
 std::string ByteAddressToString(ByteAddress nAddr)
 {
     std::ostringstream oss;

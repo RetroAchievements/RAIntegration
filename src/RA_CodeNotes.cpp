@@ -1,7 +1,5 @@
 #include "RA_CodeNotes.h"
 
-#include <fstream>
-
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 #include "RA_Dlg_Memory.h"

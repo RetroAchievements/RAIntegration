@@ -5,12 +5,12 @@
 #include "ra_utility.h"
 
 #if !RA_EXPORTS
-#include "windows_config.h"
+#include "windows_nodefines.h"
 #include <Windows.h>
 #include <WindowsX.h>
 
 #pragma warning(push)
-#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
+#pragma warning(disable : 4091)
 #include <ShlObj.h>
 #pragma warning(pop)
 

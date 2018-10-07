@@ -2,9 +2,8 @@
 #define RA_CORE_H
 #pragma once
 
-#include "RA_Defs.h"
 #include "RA_Interface.h"
-
+#include "RA_Defs.h"
 
 #if defined RA_EXPORTS
 #define API __declspec(dllexport)
@@ -113,11 +112,17 @@ extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 
-//	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
+// Read a file to a managed buffer. Returns nullptr on error. Caller MUST 'delete' buffer after
+// releasing ownership if not nullptr.
+_Success_(return != nullptr)
+_NODISCARD char* _BulkReadFileToBuffer(
+    _In_z_                     const wchar_t* const sFilename,
+    _Out_range_(1, UINT16_MAX) long&                nFileSizeOut
+);
 
 //  Read a file to a std::string. Returns false on error.
-extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);
+_Success_(return)
+_NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_z_ const wchar_t* const sFile);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
@@ -139,7 +144,6 @@ extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
-_Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
 extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);

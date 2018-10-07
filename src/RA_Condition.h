@@ -1,6 +1,7 @@
 #ifndef RA_CONDITION_H
 #define RA_CONDITION_H
 #pragma once
+
 #include "RA_Defs.h"
 
 enum ComparisonVariableSize

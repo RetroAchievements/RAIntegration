@@ -1,6 +1,5 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include <Commdlg.h>
 #include "RA_AchievementSet.h"
 #include "RA_Resource.h"
 #include "RA_Core.h"
@@ -1947,11 +1946,12 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
         {
             ListBox_AddString(hGroupList, m_lbxGroupNames[i]);
         }
-    }
 
-    //	Try and restore selection
-    if (nSel < 0 || nSel >= (int)pCheevo->NumConditionGroups())
-        nSel = 0;	//	Reset to core if unsure
+        //	Try and restore selection
+        // TODO: Use narrow_cast later
+        if (nSel < 0 || nSel >= (int)(size_t)pCheevo->NumConditionGroups())
+            nSel = 0;	//	Reset to core if unsure
+    }
 
     ListBox_SetCurSel(hGroupList, nSel);
 }

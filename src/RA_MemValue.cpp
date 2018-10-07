@@ -2,8 +2,9 @@
 
 #include "RA_MemManager.h"
 
-#include <algorithm>
-#include "ra_utility.h"
+#ifndef PCH_H
+#include <algorithm>  
+#endif /* !PCH_H */
 
 double MemValue::Clause::GetValue() const
 {

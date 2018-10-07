@@ -6,7 +6,9 @@
 
 #include "RA_StringUtils.h"
 
-#include <sstream>
+#ifndef PCH_H
+#include <sstream>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {
@@ -29,7 +31,8 @@ public:
         return true;
     }
 
-    bool GetLine(_Out_ std::wstring& sLine) override
+	_Success_(return)
+    _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
     {
         std::string sNarrowLine;
         if (!std::getline(m_iStream, sNarrowLine))

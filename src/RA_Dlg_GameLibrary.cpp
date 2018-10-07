@@ -1,11 +1,5 @@
 #include "RA_Dlg_GameLibrary.h"
 
-#include <fstream>
-#include <iomanip>
-#include <memory>
-#include <mutex>
-#include <stack>
-
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
@@ -15,6 +9,14 @@
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
+
+#ifndef PCH_H
+#include <fstream>
+#include <iomanip>
+#include <memory>
+#include <mutex>
+#include <stack>
+#endif /* !PCH_H */
 
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 
@@ -297,25 +299,21 @@ void Dlg_GameLibrary::ThreadedScanProc()
         mtx.unlock();
 
         FILE* pf = nullptr;
-        if (fopen_s(&pf, FilesToScan.front().c_str(), "rb") == 0)
+        if ((fopen_s(&pf, FilesToScan.front().c_str(), "rb") == 0) && pf)
         {
             // obtain file size:
             fseek(pf, 0, SEEK_END);
             DWORD nSize = ftell(pf);
             rewind(pf);
 
-            static BYTE* pBuf = nullptr;	//	static (optimisation)
-            if (pBuf == nullptr)
-                pBuf = new BYTE[6 * 1024 * 1024];
+            // May have caused a buffer overrun, this is way to big to be on the stack
+            auto pBuf{ std::make_unique<unsigned char[]>(6 * 1024 * 1024) };
 
-            //BYTE* pBuf = new BYTE[ nSize ];	//	Do we really need to load this into memory?
-            if (pBuf != nullptr)
-            {
-                fread(pBuf, sizeof(BYTE), nSize, pf);	//Check
-                Results[FilesToScan.front()] = RAGenerateMD5(pBuf, nSize);
+            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf);	//Check
+            Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
 
-                SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
-            }
+            SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
+
 
             fclose(pf);
         }
@@ -475,7 +473,7 @@ BOOL Dlg_GameLibrary::LaunchSelected()
     const int nSel = ListView_GetSelectionMark(hList);
     if (nSel != -1)
     {
-        TCHAR buffer[1024];
+        TCHAR buffer[1024]{};
         ListView_GetItemText(hList, nSel, 1, buffer, 1024);
         SetWindowText(GetDlgItem(m_hDialogBox, IDC_RA_GLIB_NAME), buffer);
 
@@ -617,7 +615,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                             const int nSel = ListView_GetSelectionMark(hList);
                             if (nSel != -1)
                             {
-                                TCHAR buffer[1024];
+                                TCHAR buffer[1024]{};
                                 ListView_GetItemText(hList, nSel, 1, buffer, 1024);
                                 SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), buffer);
                             }
@@ -685,7 +683,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                     const int nSel = ListView_GetSelectionMark(hList);
                     if (nSel != -1)
                     {
-                        TCHAR sGameTitle[1024];
+                        TCHAR sGameTitle[1024]{};
                         ListView_GetItemText(hList, nSel, 1, sGameTitle, 1024);
                         SetWindowText(GetDlgItem(hDlg, IDC_RA_GLIB_NAME), sGameTitle);
                     }

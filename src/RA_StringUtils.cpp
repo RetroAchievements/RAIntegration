@@ -1,12 +1,14 @@
 #include "RA_StringUtils.h"
 
+#include "ra_utility.h"
+
+#ifndef PCH_H
 #include <iomanip>
 #include <memory>
 
-#include <Windows.h>
-
-// has to be after Windows.h for LPTSTR definition
-#include "ra_utility.h"
+#include "windows_nodefines.h"
+#include <Windows.h>  
+#endif /* !PCH_H */
 
 namespace ra {
 

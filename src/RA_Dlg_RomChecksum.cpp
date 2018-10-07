@@ -27,16 +27,23 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
                 case IDC_RA_COPYCHECKSUMCLIPBOARD:
                 {
                     //	Allocate memory to be managed by the clipboard
-                    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, g_sCurrentROMMD5.length() + 1);
-                    memcpy(GlobalLock(hMem), g_sCurrentROMMD5.c_str(), g_sCurrentROMMD5.length() + 1);
-                    GlobalUnlock(hMem);
+                    auto hMem{ ::GlobalAlloc(GMEM_MOVEABLE, g_sCurrentROMMD5.length() + 1) };
+                    if (hMem)
+                    {
+                        const auto& lockResult{ ::GlobalLock(hMem) };
+                        if (lockResult)
+                            std::memcpy(lockResult, g_sCurrentROMMD5.c_str(), g_sCurrentROMMD5.length() + 1);
+                    }
+                    else
+                        return ra::to_signed(::GetLastError());
 
-                    OpenClipboard(nullptr);
-                    EmptyClipboard();
-                    SetClipboardData(CF_TEXT, hMem);
-                    CloseClipboard();
+                    ::GlobalUnlock(hMem);
+                    ::OpenClipboard(nullptr);
+                    ::EmptyClipboard();
+                    ::SetClipboardData(CF_TEXT, hMem);
+                    ::CloseClipboard();
 
-                    //MessageBeep( 0xffffffff );
+                    ::GlobalFree(hMem);
                 }
                 return TRUE;
 

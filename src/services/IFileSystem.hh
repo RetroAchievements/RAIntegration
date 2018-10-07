@@ -5,11 +5,13 @@
 #include "services/TextReader.hh"
 #include "services/TextWriter.hh"
 
+#ifndef PCH_H
 #include <string>
 #include <memory>
 
 // nuke WinAPI #defines - anything including this file should be using these functions
-#undef CreateDirectory 
+#undef CreateDirectory   
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

@@ -4,9 +4,9 @@
 
 #include "RA_Condition.h"
 
-#ifndef _VECTOR_
+#ifndef PCH_H
 #include <vector>  
-#endif /* !_VECTOR_ */
+#endif /* !PCH_H */
 
 // Represents a value expression (one or more values which are added together to create a single value)
 class MemValue

@@ -1,9 +1,13 @@
+#ifndef SEARCHRESULTS_H
+#define SEARCHRESULTS_H
 #pragma once
 
 #include "RA_Condition.h" // ComparisonVariableSize, ComparisonType
 
-#include <vector>
+#ifndef PCH_H
 #include <functional>
+#include <vector>
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {
@@ -155,3 +159,6 @@ private:
 } // namespace services
 } // namespace ra
 
+
+
+#endif /* !SEARCHRESULTS_H */

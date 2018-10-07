@@ -1,10 +1,14 @@
+#ifndef IMAGEREPOSITORY_H
+#define IMAGEREPOSITORY_H
 #pragma once
 
 #include "RA_Defs.h"
 
+#ifndef PCH_H
 #include <atomic>
 #include <map>
 #include <string>
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {
@@ -34,7 +38,7 @@ public:
     }
 
     ~ImageReference();
-    
+
     /// <summary>
     /// Updates the referenced image.
     /// </summary>
@@ -46,7 +50,7 @@ public:
     /// Gets the bitmap handle for the image.
     /// </summary>
     HBITMAP GetHBitmap() const;
-    
+
     /// <summary>
     /// Releases the reference to the image. Will be re-acquired the next time <see cref="GetHBitmap" /> is called.
     /// </summary>
@@ -60,7 +64,7 @@ private:
 
 class ImageRepository
 {
-public:        
+public:
     ~ImageRepository();
 
     /// <summary>
@@ -74,7 +78,7 @@ public:
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     void FetchImage(ImageType nType, const std::string& sName);
-    
+
     /// <summary>
     /// Gets the HBITMAP for the requested image.
     /// </summary>
@@ -83,7 +87,7 @@ public:
     /// <param name="bAddReference"><c>true</c> to add a reference to the image. Image will remain in memory until <see cref="ReleaseReference" /> is called.</param>
     /// <returns><see cref="HBITMAP" /> for the image, <c>nullptr</c> if not available.</returns>
     HBITMAP GetImage(ImageType nType, const std::string& sName, bool bAddReference);
-    
+
     /// <summary>
     /// Releases a reference to an image.
     /// </summary>
@@ -117,3 +121,6 @@ extern ImageRepository g_ImageRepository;
 } // namespace services
 } // namespace ra
 
+
+
+#endif /* !IMAGEREPOSITORY_H */

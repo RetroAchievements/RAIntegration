@@ -2,7 +2,10 @@
 #define RA_DLG_LOGIN_H
 #pragma once
 
+#ifndef PCH_H
+#include "windows_nodefines.h"
 #include <wtypes.h>
+#endif /* !PCH_H */
 
 class RA_Dlg_Login
 {

@@ -14,9 +14,6 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#include <array>
-#include <fstream>
-#include <memory>
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -597,7 +594,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
     std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
 
-    char* pRawFile = _MallocAndBulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
+    char* pRawFile = _BulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
         const char* pIter = pRawFile;
@@ -619,7 +616,8 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             }
         }
 
-        free(pRawFile);
+        delete pRawFile;
+        pRawFile = nullptr;
     }
 }
 

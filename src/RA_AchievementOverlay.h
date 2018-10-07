@@ -4,13 +4,8 @@
 
 #include "RA_Achievement.h"
 #include "RA_User.h"
-#include "RA_Core.h"
-#include "RA_Interface.h"
-
-#include "services\ImageRepository.h"
-
-#include <map>
-#include <string>
+#include "RA_Core.h" // for API; RA_Interface.h
+#include "services\ImageRepository.h" // map, string
 
 enum OverlayPage
 {

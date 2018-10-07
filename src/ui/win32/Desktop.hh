@@ -4,7 +4,9 @@
 #include "ui/IDesktop.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
-#include <memory>
+#ifndef PCH_H
+#include <memory>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace ui {

@@ -1,6 +1,5 @@
 #include "RA_Interface.h"
 
-
 //	Exposed, shared
 //	App-level:
 bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
@@ -10,7 +9,6 @@ void	(CCONV *_RA_RebuildMenu) (void) = nullptr;
 void	(CCONV *_RA_ResetEmulation) (void) = nullptr;
 void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
 void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
-
 
 bool RA_GameIsActive()
 {

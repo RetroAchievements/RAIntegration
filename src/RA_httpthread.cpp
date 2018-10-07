@@ -3,8 +3,8 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_AchievementSet.h"
 #include "RA_BuildVer.h"
+#include "RA_AchievementSet.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
@@ -14,10 +14,12 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#ifndef PCH_H
 #include <winhttp.h>
 #include <memory>
 #include <fstream>
-#include <time.h>
+#include <ctime> 
+#endif /* !PCH_H */
 
 const char* RequestTypeToString[] =
 {
@@ -256,9 +258,10 @@ void RAWeb::SetUserAgentString()
     #define NTSTATUS long
 #endif
     using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-    auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion");
-    if (RtlGetVersion)
+    const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
+    if (ntModule)
     {
+        auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(ntModule, "RtlGetVersion");
         RTL_OSVERSIONINFOEXW osVersion = {};
         RtlGetVersion(&osVersion);
         if (osVersion.dwMajorVersion > 0)

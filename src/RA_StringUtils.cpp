@@ -3,8 +3,6 @@
 #include <iomanip>
 #include <memory>
 
-#define WIN32_LEAN_AND_MEAN
-struct IUnknown;
 #include <Windows.h>
 
 // has to be after Windows.h for LPTSTR definition

@@ -4,7 +4,6 @@
 
 #include "services\impl\FileLogger.hh"
 
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 namespace ra {

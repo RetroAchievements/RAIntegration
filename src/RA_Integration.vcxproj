@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c" />
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementPopup.cpp" />
@@ -76,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="RA_Achievement.h" />
     <ClInclude Include="RA_AchievementOverlay.h" />
     <ClInclude Include="RA_AchievementPopup.h" />
@@ -142,6 +144,7 @@
     <ClInclude Include="ui\win32\Dlg_MessageBox.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
+    <ClInclude Include="windows_nodefines.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc" />

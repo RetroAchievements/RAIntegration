@@ -2,8 +2,6 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
-struct IUnknown;
-#define NOMINMAX
 #include <wtypes.h>
 
 class RA_Dlg_RomChecksum

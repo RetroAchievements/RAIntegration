@@ -1,10 +1,10 @@
 #include "RA_RichPresence.h"
 
 #include "RA_Defs.h"
-#include "RA_GameData.h"
 #include "RA_Log.h"
 #include "RA_MemValue.h"
 
+#include "services\IGameContext.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
@@ -189,8 +189,9 @@ bool RA_RichPresenceInterpreter::Load()
 #ifdef RA_UTEST
     return false;
 #else
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(g_pCurrentGameData->GetGameID()));
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
     if (pRich == nullptr)
         return false;
 

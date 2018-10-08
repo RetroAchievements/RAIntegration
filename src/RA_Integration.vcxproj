@@ -46,7 +46,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
-    <ClCompile Include="RA_GameData.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Interface.cpp" />
@@ -62,6 +61,7 @@
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
+    <ClCompile Include="services\impl\GameContext.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
@@ -97,7 +97,6 @@
     <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
     <ClInclude Include="ra_fwd.h" />
-    <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
@@ -117,6 +116,7 @@
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
+    <ClInclude Include="services\IGameContext.hh" />
     <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
@@ -124,6 +124,7 @@
     <ClInclude Include="services\impl\FileLogger.hh" />
     <ClInclude Include="services\impl\FileTextReader.hh" />
     <ClInclude Include="services\impl\FileTextWriter.hh" />
+    <ClInclude Include="services\impl\GameContext.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />

@@ -2,11 +2,11 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 
+#include "services\IGameContext.hh"
 
 namespace {
 
@@ -172,6 +172,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
                     char sBugReportInFull[8192];
                     sprintf_s(sBugReportInFull, 8192,
                         "--New Bug Report--\n"
@@ -185,11 +186,11 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         "Comment: %s\n"
                         "\n"
                         "Is this OK?",
-                        g_pCurrentGameData->GameTitle().c_str(),
+                        ra::Narrow(pGameContext.GameTitle()).c_str(),
                         sBuggedIDs,
                         sProblemTypeNice,
                         RAUsers::LocalUser().Username().c_str(),
-                        g_sCurrentROMMD5.c_str(),
+                        pGameContext.GameHash().c_str(),
                         sBugReportComment.c_str());
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
@@ -201,7 +202,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['i'] = sBuggedIDs;
                     args['p'] = std::to_string(nProblemType);
                     args['n'] = sBugReportComment.c_str();
-                    args['m'] = g_sCurrentROMMD5;
+                    args['m'] = pGameContext.GameHash();
 
                     rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))

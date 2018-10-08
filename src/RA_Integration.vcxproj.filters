@@ -75,9 +75,6 @@
     <ClCompile Include="RA_Dlg_RomChecksum.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_GameData.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -171,6 +168,9 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\GameContext.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -217,9 +217,6 @@
     </ClInclude>
     <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_GameData.h">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
       <Filter>Data</Filter>
@@ -381,6 +378,12 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IGameContext.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\GameContext.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,6 +3,7 @@
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
+#include "services\impl\GameContext.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
 #include "services\impl\WindowsFileSystem.hh"
@@ -62,6 +63,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pDesktop = new ra::ui::win32::Desktop();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
     ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+
+    auto* pGameContext = new ra::services::impl::GameContext();
+    ra::services::ServiceLocator::Provide<ra::services::IGameContext>(pGameContext);
 }
 
 void Initialization::Shutdown()

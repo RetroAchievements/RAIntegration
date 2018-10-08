@@ -8,10 +8,10 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
-#include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
 #include "services\IConfiguration.hh"
+#include "services\IGameContext.hh"
 #include "services\ServiceLocator.hh"
 
 #include <winhttp.h>
@@ -805,10 +805,12 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                 //  Post a keepalive packet:
                 if (RAUsers::LocalUser().IsLoggedIn())
                 {
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+
                     PostArgs args;
                     args['u'] = RAUsers::LocalUser().Username();
                     args['t'] = RAUsers::LocalUser().Token();
-                    args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
+                    args['g'] = std::to_string(pGameContext.GameId());
 
                     if (RA_GameIsActive())
                     {
@@ -827,19 +829,11 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                         {
                             const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
                             if (!sRPResponse.empty())
-                            {
                                 args['m'] = sRPResponse;
-                            }
                             else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
-                            {
                                 args['m'] = "Earning Achievements";
-                            }
                             else
-                            {
-                                char buffer[128];
-                                snprintf(buffer, sizeof(buffer), "Playing %s", g_pCurrentGameData->GameTitle().c_str());
-                                args['m'] = buffer;
-                            }
+                                args['m'] = "Playing " + ra::Narrow(pGameContext.GameTitle());
                         }
                     }
 

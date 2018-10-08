@@ -8,9 +8,9 @@
 #include "RA_httpthread.h"
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
-#include "RA_GameData.h"
 
 #include "services\IConfiguration.hh"
+#include "services\IGameContext.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -238,14 +238,16 @@ void AchievementSet::Reset()
 
 bool AchievementSet::SaveToFile() const
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+
     // Commits local achievements to the file
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(g_pCurrentGameData->GetGameID())));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(pGameContext.GameId())));
     if (pData == nullptr)
         return false;
 
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
-    pData->WriteLine(g_pCurrentGameData->GameTitle());
+    pData->WriteLine(pGameContext.GameTitle());
 
     for (size_t i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
     {
@@ -348,10 +350,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
         auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameID));
         if (pData == nullptr)
             return false;
-
-        //	Store this: we are now assuming this is the correct checksum if we have a file for it
-        g_pCurrentGameData->SetGameID(nGameID);
-               
+              
         rapidjson::Document doc;
         LoadDocument(doc, *pData.get());
         if (doc.HasParseError())
@@ -362,8 +361,18 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         if (m_nSetType == Type::Core)
         {
-            g_pCurrentGameData->ParseData(doc);
-            nGameID = g_pCurrentGameData->GetGameID();
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::services::IGameContext>();
+            pGameContext.LoadGame(nGameID, ra::Widen(doc["Title"].GetString()));
+
+            if (doc.HasMember("RichPresencePatch"))
+            {
+                std::string sRichPresence;
+                if (!doc["RichPresencePatch"].IsNull())
+                    sRichPresence = doc["RichPresencePatch"].GetString();
+
+                auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(nGameID));
+                pRich->Write(sRichPresence);
+            }
         }
 
         const auto& AchievementsData{ doc["Achievements"] };
@@ -413,7 +422,8 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         if (RAUsers::LocalUser().IsLoggedIn())
         {
-            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
 
             //	Loaded OK: post a request for unlocks
             PostArgs args;
@@ -424,7 +434,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
             RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
             std::string sTitle{ "Loaded " };
-            sTitle += g_pCurrentGameData->GameTitle();
+            sTitle += ra::Narrow(pGameContext.GameTitle());
 
             std::string sSubTitle;
             {

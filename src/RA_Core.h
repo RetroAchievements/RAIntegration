@@ -100,7 +100,6 @@ extern "C" {
 //	Non-exposed:
 extern std::string g_sKnownRAVersion;
 extern std::wstring g_sHomeDir;
-extern std::string g_sCurrentROMMD5;
 
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;

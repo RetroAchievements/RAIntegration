@@ -18,7 +18,7 @@ size_t CodeNotes::Load(ra::GameID nID)
     Clear();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, std::to_wstring(static_cast<unsigned int>(nID)));
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, std::to_wstring(nID));
     if (pData == nullptr)
         return 0U;
 
@@ -64,7 +64,7 @@ void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
     const ra::GameID nGameID = doc["GameID"].GetUint();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(static_cast<unsigned int>(nGameID)));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(nGameID));
     if (pData != nullptr)
     {
         rapidjson::Document patchData;

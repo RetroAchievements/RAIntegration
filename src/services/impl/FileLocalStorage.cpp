@@ -25,7 +25,7 @@ static void EnsureDirectoryExists(const ra::services::IFileSystem& pFileSystem, 
         pFileSystem.CreateDirectory(sDirectory);
 }
 
-FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem)
+FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem) noexcept
     : pFileSystem(pFileSystem)
 {
     // Ensure all required directories are created
@@ -39,31 +39,55 @@ FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem)
 std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring& sKey) const
 {
     std::wstring sPath = pFileSystem.BaseDirectory();
+    sPath.reserve(sPath.length() + sKey.length() + 32); // assume max 20 chars for path and 12 chars for suffix
 
     switch (nType)
     {
         case StorageItemType::GameData:
-            return sPath + RA_DIR_DATA + sKey + L".json";
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L".json");
+            break;
 
         case StorageItemType::CodeNotes:
-            return sPath + RA_DIR_DATA + sKey + L"-Notes.json";
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L"-Notes.json");
+            break;
 
         case StorageItemType::RichPresence:
-            return sPath + RA_DIR_DATA + sKey + L"-Rich.txt";
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L"-Rich.txt");
+            break;
 
         case StorageItemType::UserAchievements:
-            return sPath + RA_DIR_DATA + sKey + L"-User.txt";
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L"-User.txt");
+            break;
 
         case StorageItemType::Badge:
-            return sPath + RA_DIR_BADGE + sKey + L".png";
+            sPath.append(RA_DIR_BADGE);
+            sPath.append(sKey);
+            sPath.append(L".png");
+            break;
 
         case StorageItemType::UserPic:
-            return sPath + RA_DIR_USERPIC + sKey + L".png";
+            sPath.append(RA_DIR_USERPIC);
+            sPath.append(sKey);
+            sPath.append(L".png");
+            break;
 
         default:
             assert(!"unhandled StorageItemType");
-            return sPath + RA_DIR_DATA + sKey + L".txt";
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L".txt");
+            break;
     }
+
+    return sPath;
 }
 
 std::unique_ptr<TextReader> FileLocalStorage::ReadText(StorageItemType nType, const std::wstring& sKey)

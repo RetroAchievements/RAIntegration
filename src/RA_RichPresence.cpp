@@ -190,7 +190,7 @@ bool RA_RichPresenceInterpreter::Load()
     return false;
 #else
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(static_cast<unsigned int>(g_pCurrentGameData->GetGameID())));
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(g_pCurrentGameData->GetGameID()));
     if (pRich == nullptr)
         return false;
 
@@ -284,10 +284,10 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
     if (sDisplayString.empty())
         return false;
 
-    for (std::vector<std::pair<std::string, std::string>>::const_iterator iter = mDisplayStrings.begin(); iter != mDisplayStrings.end(); ++iter)
+    for (auto& pPair : mDisplayStrings)
     {
-        auto& displayString = m_vDisplayStrings.emplace_back(iter->first);
-        displayString.InitializeParts(iter->second, mFormats, m_vLookups);
+        auto& displayString = m_vDisplayStrings.emplace_back(pPair.first);
+        displayString.InitializeParts(pPair.second, mFormats, m_vLookups);
     }
 
     auto& displayString = m_vDisplayStrings.emplace_back();

@@ -292,7 +292,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
         doc.HasMember("PatchData"))
     {
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(static_cast<unsigned int>(nGameID)));
+        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(nGameID));
         if (pData != nullptr)
         {
             rapidjson::Document patchData;
@@ -323,7 +323,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
     if (m_nSetType == Type::Local)
     {
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(nGameID)));
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(nGameID));
         if (pData == nullptr)
             return false;
 
@@ -333,7 +333,8 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
 
         while (pData->GetLine(sLine))
         {
-            if (!sLine.empty() && isdigit(sLine[0]))
+            // achievement lines start with the achievement id
+            if (!sLine.empty() && isdigit(sLine.front()))
             {
                 auto& newAch = g_pLocalAchievements->AddAchievement();
                 newAch.ParseLine(sLine.c_str());
@@ -344,7 +345,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
     }
     else
     {
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(static_cast<unsigned int>(nGameID)));
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameID));
         if (pData == nullptr)
             return false;
 

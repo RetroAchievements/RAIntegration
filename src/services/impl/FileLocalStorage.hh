@@ -12,7 +12,7 @@ namespace impl {
 class FileLocalStorage : public ILocalStorage
 {
 public:
-    FileLocalStorage(IFileSystem& pFileSystem);
+    explicit FileLocalStorage(IFileSystem& pFileSystem) noexcept;
 
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey);
 

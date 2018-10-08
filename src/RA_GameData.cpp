@@ -16,7 +16,7 @@ void GameData::ParseData(const rapidjson::Document& doc)
             sRichPresence = doc["RichPresencePatch"].GetString();
 
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(static_cast<unsigned int>(m_nGameID)));
+        auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(m_nGameID));
 
         pRich->Write(sRichPresence);
     }

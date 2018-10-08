@@ -10,7 +10,7 @@
 class RA_RichPresenceInterpreter
 {
 public:
-    RA_RichPresenceInterpreter() {}
+    RA_RichPresenceInterpreter() noexcept = default;
 
     bool Load();
 

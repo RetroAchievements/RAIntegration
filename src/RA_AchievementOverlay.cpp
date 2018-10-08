@@ -1577,8 +1577,7 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
         const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinnerData rwd{ oss.str(), _TimeStampToString(nDateAwarded) };
-        RecentWinners.emplace_back(std::move(rwd));
+        RecentWinners.emplace_back(RecentWinnerData{ oss.str(), _TimeStampToString(nDateAwarded) });
     }
 
     m_bHasData = true;

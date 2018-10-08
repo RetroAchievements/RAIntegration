@@ -104,7 +104,7 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     return item.iItem;
 }
 
-INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
+INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -172,18 +172,35 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 
                     //	Intentionally MBCS
                     std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
-                    sBugReportInFull += g_pCurrentGameData->GameTitle();
-                    sBugReportInFull += "\nAchievement IDs: ";
-                    sBugReportInFull += sBuggedIDs;
-                    sBugReportInFull += "\nProblem: ";
-                    sBugReportInFull += sProblemTypeNice;
-                    sBugReportInFull += "\nReporter: ";
-                    sBugReportInFull += RAUsers::LocalUser().Username();
-                    sBugReportInFull += "\nROM Checksum: ";
-                    sBugReportInFull += g_sCurrentROMMD5;
-                    sBugReportInFull += "\n\nComment: "; 
-                    sBugReportInFull += sBugReportComment;
-                    sBugReportInFull += "\n\nIs this OK?";
+                    sBugReportInFull.append(g_pCurrentGameData->GameTitle());
+                    sBugReportInFull.append("\nAchievement IDs: ");
+                    sBugReportInFull.append(sBuggedIDs);
+                    sBugReportInFull.append("\nProblem: ");
+                    sBugReportInFull.append(sProblemTypeNice);
+                    sBugReportInFull.append("\nReporter: ");
+                    sBugReportInFull.append(RAUsers::LocalUser().Username());
+                    sBugReportInFull.append("\nROM Checksum: ");
+                    sBugReportInFull.append(g_sCurrentROMMD5);
+                    sBugReportInFull.append("\n\nComment: ");
+                    sBugReportInFull.append(sBugReportComment);
+                    sBugReportInFull.append("\n\nIs this OK?");
+
+                    if (sBugReportInFull.length() > 8192U)
+                    {
+                        ra::tstring stMsg;
+                        {
+                            std::basic_ostringstream<TCHAR> oss;
+                            oss << _T("Bug report is too long, it needs to be ")
+                                << sBugReportInFull.length() - 8192U
+                                << _T(" characters shorter.\n\n"
+                                    "Consider breaking up this bug report and try again!");
+                            stMsg = oss.str();
+                        }
+                        if (::MessageBox(nullptr, stMsg.c_str(), _T("Error"), MB_RETRYCANCEL | MB_ICONERROR) == IDRETRY)
+                            return TRUE; // User wants to try again
+                        FORWARD_WM_CLOSE(hDlg, ::PostMessage); // User doesn't want to retry
+                        return FALSE;
+                    }
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;
@@ -204,7 +221,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                             char buffer[2048];
                             sprintf_s(buffer, 2048, "Submitted OK!\n"
                                 "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n"
                                 "\n"
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"

@@ -594,7 +594,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
     std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
 
-    char* pRawFile = _BulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
+    auto pRawFile = _BulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
         const char* pIter = pRawFile;
@@ -616,7 +616,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             }
         }
 
-        delete pRawFile;
+        delete[] pRawFile;
         pRawFile = nullptr;
     }
 }

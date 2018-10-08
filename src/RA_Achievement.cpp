@@ -166,7 +166,6 @@ void Achievement::Clear()
 {
     m_vConditions.Clear();
 
-
     m_nAchievementID = 0U;
 
     m_sTitle.clear();
@@ -174,23 +173,21 @@ void Achievement::Clear()
     m_sAuthor.clear();
     m_sBadgeImageURI.clear();
 
-    m_nPointValue = 0U;
-    m_bActive = FALSE;
-    m_bModified = FALSE;
+    m_nPointValue     = 0U;
+    m_bActive         = FALSE;
+    m_bModified       = FALSE;
     m_bPauseOnTrigger = FALSE;
-    m_bPauseOnReset = FALSE;
+    m_bPauseOnReset   = FALSE;
     ClearDirtyFlag();
 
-    m_bProgressEnabled = FALSE;
-    m_sProgress = "";
-    m_sProgressMax = "";;
-    m_sProgressFmt = "";;
+    m_bProgressEnabled   = FALSE;
+    m_sProgress          = "";
+    m_sProgressMax       = "";
+    m_sProgressFmt       = "";
     m_fProgressLastShown = 0.0F;
 
-    m_nTimestampCreated = 0LL;
+    m_nTimestampCreated  = 0LL;
     m_nTimestampModified = 0LL;
-    //m_nUpvotes = 0;
-    //m_nDownvotes = 0;
 }
 
 void Achievement::AddConditionGroup()

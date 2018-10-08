@@ -120,7 +120,7 @@ void AchievementOverlay::Deactivate()
     }
 }
 
-void AchievementOverlay::AddPage(enum OverlayPage NewPage)
+void AchievementOverlay::AddPage(OverlayPage NewPage)
 {
     m_nPageStackPointer++;
     m_Pages[m_nPageStackPointer] = NewPage;
@@ -763,8 +763,8 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
         {
             {
                 std::string sUser{ " " };
-                sUser += data.User();
-                sUser += " ";
+                sUser += data.m_sUser;
+                sUser += "      ";
 
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC,
@@ -773,8 +773,8 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
                     NativeStr(sUser).c_str(), ra::to_signed(sUser.length()));
             }
 
-            std::string sWonAt{ " " };
-            sWonAt += data.WonAt();
+            std::string sWonAt{ "       " };
+            sWonAt += data.m_sWonAt;
             sWonAt += " ";
 
             TextOut(hDC,
@@ -1515,15 +1515,6 @@ void AchievementOverlay::UpdateImages() noexcept
     m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
-
-AchievementExamine::AchievementExamine() :
-    m_pSelectedAchievement(nullptr),
-    m_bHasData(false),
-    m_nTotalWinners(0),
-    m_nPossibleWinners(0)
-{
-}
-
 void AchievementExamine::Clear()
 {
     m_pSelectedAchievement = nullptr;
@@ -1579,14 +1570,15 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
     m_nTotalWinners    = ResponseData["NumEarned"].GetUint();
     m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
-    const auto& RecentWinnerData{ ResponseData["RecentWinner"] };
-    ASSERT(RecentWinnerData.IsArray());
-    for (auto& NextWinner : RecentWinnerData.GetArray())
+    const auto& vRecentWinnerData{ ResponseData["RecentWinner"] };
+    ASSERT(vRecentWinnerData.IsArray());
+    for (auto& NextWinner : vRecentWinnerData.GetArray())
     {
         const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.push_back({ oss.str(), _TimeStampToString(nDateAwarded) });
+        RecentWinnerData rwd{ oss.str(), _TimeStampToString(nDateAwarded) };
+        RecentWinners.emplace_back(std::move(rwd));
     }
 
     m_bHasData = true;

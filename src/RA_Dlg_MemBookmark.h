@@ -29,14 +29,14 @@ public:
     bool Decimal() const { return m_bDecimal; }
 
 private:
-    std::wstring m_sDescription{};
+    std::wstring m_sDescription;
     unsigned int m_nAddress{};
     unsigned int m_nType{};
     unsigned int m_sValue{};
     unsigned int m_sPrevious{};
-    unsigned int m_nCount = 0;
-    bool m_bFrozen = FALSE;
-    bool m_bDecimal = FALSE;
+    unsigned int m_nCount{};
+    bool m_bFrozen{};
+    bool m_bDecimal{};
 };
 
 class Dlg_MemBookmark

@@ -52,24 +52,12 @@ extern LeaderboardExamine g_LBExamine;
 
 class AchievementExamine
 {
-public:
-    class RecentWinnerData
+    struct RecentWinnerData
     {
-    public:
-        RecentWinnerData(const std::string& sUser, const std::string& sWonAt) :
-            m_sUser(sUser), m_sWonAt(sWonAt)
-        {
-        }
-        const std::string& User() const { return m_sUser; }
-        const std::string& WonAt() const { return m_sWonAt; }
-
-    private:
         const std::string m_sUser;
         const std::string m_sWonAt;
+        friend class AchievementOverlay;
     };
-
-public:
-    AchievementExamine();
 
 public:
     void Initialize(const Achievement* pAchIn);
@@ -85,27 +73,26 @@ public:
     unsigned int TotalWinners() const { return m_nTotalWinners; }
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
 
-
     _NODISCARD inline auto begin() noexcept { return RecentWinners.begin(); }
     _NODISCARD inline auto begin() const noexcept { return RecentWinners.begin(); }
     _NODISCARD inline auto end() noexcept { return RecentWinners.end(); }
     _NODISCARD inline auto end() const noexcept { return RecentWinners.end(); }
 
 private:
-    const Achievement* m_pSelectedAchievement;
+    const Achievement* m_pSelectedAchievement{};
     std::string m_CreatedDate;
     std::string m_LastModifiedDate;
 
-    bool m_bHasData;
+    bool m_bHasData{};
 
     //	Data found:
-    unsigned int m_nTotalWinners;
-    unsigned int m_nPossibleWinners;
+    unsigned int m_nTotalWinners{};
+    unsigned int m_nPossibleWinners{};
 
     std::vector<RecentWinnerData> RecentWinners;
+    friend class AchievementOverlay;
 };
 extern AchievementExamine g_AchExamine;
-
 
 class AchievementOverlay
 {
@@ -148,7 +135,7 @@ public:
     struct NewsItem
     {
         unsigned int m_nID{};
-        std::string m_sTitle{};
+        std::string m_sTitle;
         std::string m_sPayload;
         time_t m_nPostedAt{};
         std::string m_sPostedAt;
@@ -181,9 +168,9 @@ private:
     BOOL					m_bInputLock{};	//	Waiting for pad release
     std::vector<NewsItem>	m_LatestNews{};
     TransitionState			m_nTransitionState{};
-    float					m_fTransitionTimer{-0.2F};
+    float                   m_fTransitionTimer{-0.2F};
 
-    OverlayPage				m_Pages[5]{OverlayPage::OP_ACHIEVEMENTS};
+    OverlayPage	            m_Pages[5]{OverlayPage::OP_ACHIEVEMENTS};
     unsigned int			m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground;

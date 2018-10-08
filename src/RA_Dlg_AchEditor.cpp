@@ -319,7 +319,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
 #pragma warning(push)
-#pragma warning(disable : 26454) // unreferenced inline functions
+#pragma warning(disable : 26454) // needs to be this way
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 #pragma warning(pop)
             lvDispinfo.item.mask = LVIF_TEXT;

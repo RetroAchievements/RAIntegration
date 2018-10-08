@@ -50,9 +50,13 @@ public:
 private:
     const std::string m_sMessageTitle;
     const std::string m_sMessageSubtitle;
-    const PopupMessageType m_nMessageType;
+    const PopupMessageType m_nMessageType{};
     const ra::services::ImageReference m_hMessageImage;
+#pragma warning(push)
+#pragma warning(disable : 26495) // "variable" uninitialized
 };
+#pragma warning(pop)
+
 
 class AchievementPopup
 {

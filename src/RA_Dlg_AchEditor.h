@@ -33,8 +33,7 @@ private:
 class Dlg_AchievementEditor
 {
 public:
-    Dlg_AchievementEditor();
-    ~Dlg_AchievementEditor();
+    Dlg_AchievementEditor() noexcept;
 
 public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
@@ -78,22 +77,22 @@ private:
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond);
 
 private:
-    static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
+    inline static constexpr auto m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
 
-    HWND m_hAchievementEditorDlg;
-    HWND m_hICEControl;
+    HWND m_hAchievementEditorDlg{};
+    HWND m_hICEControl{};
 
-    HWND m_hTooltip;
-    int m_nTooltipLocation;
+    HWND m_hTooltip{};
+    int m_nTooltipLocation{};
     ra::tstring m_sTooltip;
-    WNDPROC m_pListViewWndProc;
+    WNDPROC m_pListViewWndProc{};
 
-    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN];
-    TCHAR m_lbxGroupNames[MAX_CONDITIONS][MEM_STRING_TEXT_LEN];
-    int m_nNumOccupiedRows;
+    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN]{};
+    TCHAR m_lbxGroupNames[MAX_CONDITIONS][MEM_STRING_TEXT_LEN]{};
+    int m_nNumOccupiedRows{};
 
-    Achievement* m_pSelectedAchievement;
-    BOOL m_bPopulatingAchievementEditorData;
+    Achievement* m_pSelectedAchievement{};
+    BOOL m_bPopulatingAchievementEditorData{};
     ra::services::ImageReference m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;

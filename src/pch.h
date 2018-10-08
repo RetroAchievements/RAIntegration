@@ -53,6 +53,8 @@
 #include <sstream> // string
 #include <stack>
 
+#pragma warning(push)
+#pragma warning(disable : 26451 26495)
 /* RapidJSON Stuff */
 #if RA_EXPORTS
 #define RAPIDJSON_HAS_STDSTRING 1
@@ -64,10 +66,10 @@
 #include <rapidjson\ostreamwrapper.h>
 #include <rapidjson\error\en.h>  
 #endif /* RA_EXPORTS */
+#pragma warning(pop)
 
 /* Other Libs */
 #include <md5.h>
 #pragma warning(pop)
-
 
 #endif /* !PCH_H */

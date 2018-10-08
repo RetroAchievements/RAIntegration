@@ -100,45 +100,6 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
     }
 }
 
-AchievementOverlay::AchievementOverlay()
-{
-    m_nAchievementsSelectedItem = 0;
-    m_nFriendsSelectedItem = 0;
-    m_nMessagesSelectedItem = 0;
-    m_nNewsSelectedItem = 0;
-    m_nLeaderboardSelectedItem = 0;
-}
-
-AchievementOverlay::~AchievementOverlay()
-{
-}
-
-void AchievementOverlay::Initialize(_UNUSED HINSTANCE)
-{
-    m_nAchievementsScrollOffset = 0;
-    m_nFriendsScrollOffset = 0;
-    m_nMessagesScrollOffset = 0;
-    m_nNewsScrollOffset = 0;
-    m_nLeaderboardScrollOffset = 0;
-
-    m_bInputLock = FALSE;
-    m_nTransitionState = TS_OFF;
-    m_fTransitionTimer = PAGE_TRANSITION_IN;
-
-    m_nPageStackPointer = 0;
-    m_Pages[0] = OP_ACHIEVEMENTS;
-    //m_Pages.push( OP_ACHIEVEMENTS );
-
-    m_nNumAchievementsBeingRendered = 0;
-    m_nNumFriendsBeingRendered = 0;
-    m_nNumLeaderboardsBeingRendered = 0;
-
-    m_LatestNews.clear();
-
-    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, "Overlay\\overlayBG.png");
-    m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
-}
-
 void AchievementOverlay::Activate()
 {
     if (m_nTransitionState != TS_HOLD)
@@ -1546,6 +1507,12 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
             m_LatestNews.push_back(std::move(nNewsItem));
         }
     }
+}
+
+void AchievementOverlay::UpdateImages() noexcept
+{
+    m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, "Overlay\\overlayBG.png");
+    m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
 

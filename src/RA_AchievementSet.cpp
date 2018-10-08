@@ -292,7 +292,7 @@ BOOL AchievementSet::SaveToFile()
             Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
 
             ZeroMemory(sMem, 2048);
-            pAch->CreateMemString();
+            const auto _ = pAch->CreateMemString();
 
             ZeroMemory(sNextLine, 2048);
             sprintf_s(sNextLine, 2048, "%u:%s:%s:%s:%s:%s:%s:%s:%d:%lu:%lu:%d:%d:%s\n",

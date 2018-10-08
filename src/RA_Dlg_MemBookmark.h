@@ -29,11 +29,11 @@ public:
     bool Decimal() const { return m_bDecimal; }
 
 private:
-    std::wstring m_sDescription;
-    unsigned int m_nAddress;
-    unsigned int m_nType;
-    unsigned int m_sValue;
-    unsigned int m_sPrevious;
+    std::wstring m_sDescription{};
+    unsigned int m_nAddress{};
+    unsigned int m_nType{};
+    unsigned int m_sValue{};
+    unsigned int m_sPrevious{};
     unsigned int m_nCount = 0;
     bool m_bFrozen = FALSE;
     bool m_bDecimal = FALSE;
@@ -67,7 +67,7 @@ public:
     void OnLoad_NewRom();
 
 private:
-    int m_nNumOccupiedRows;
+    int m_nNumOccupiedRows{};
 
     void PopulateList();
     void SetupColumns(HWND hList);
@@ -98,7 +98,7 @@ public:
     }
 
 private:
-    HWND m_hMemBookmarkDialog;
+    HWND m_hMemBookmarkDialog{};
     std::map<ra::ByteAddress, std::vector<const MemBookmark*>> m_BookmarkMap;
     std::vector<MemBookmark*> m_vBookmarks;
 };

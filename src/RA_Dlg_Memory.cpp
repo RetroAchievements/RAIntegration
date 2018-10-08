@@ -965,7 +965,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
                     if (((LPNMHDR)lParam)->code == LVN_ITEMCHANGED || ((LPNMHDR)lParam)->code == NM_CLICK)
+#pragma warning(pop)
                     {
                         int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 

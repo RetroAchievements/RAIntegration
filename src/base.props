@@ -29,6 +29,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>CreateDirectory, GetMessage</UndefinePreprocessorDefinitions>
     </ClCompile>
     <PostBuildEvent>
       <Command>

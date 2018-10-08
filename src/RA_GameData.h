@@ -19,12 +19,9 @@ public:
     void ParseData(const rapidjson::Document& doc);
 
 private:
-    ra::GameID m_nGameID;
+    ra::GameID m_nGameID{};
     std::string m_sGameTitle;
     std::string m_sRichPresencePatch;
-
-    //unsigned int m_nConsoleID;
-    //std::string m_sConsoleName;
 };
 
 

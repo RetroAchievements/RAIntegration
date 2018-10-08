@@ -270,7 +270,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     item.iSubItem = 3;
     ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));
 
-    m_vGameEntries.push_back(GameEntry(sTitle, sFilename, nGameID));
+    m_vGameEntries.push_back(GameEntry{ sTitle, sFilename, nGameID });
 }
 
 void Dlg_GameLibrary::ClearTitles()

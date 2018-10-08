@@ -8,7 +8,7 @@
 
 double MemValue::Clause::GetValue() const
 {
-    unsigned int nRetVal = 0;
+    auto nRetVal = 0ULL;
     if (m_bParseVal)
     {
         nRetVal = m_nAddress;	//	insert address as value.
@@ -26,12 +26,12 @@ double MemValue::Clause::GetValue() const
 
     if (m_nSecondAddress != 0)
     {
-        unsigned int nSecondVal = g_MemManager.ActiveBankRAMRead(m_nSecondAddress, m_nSecondVarSize);
+        auto nSecondVal = static_cast<std::uint64_t>(g_MemManager.ActiveBankRAMRead(m_nSecondAddress, m_nSecondVarSize));
 
         if (m_bInvertBit && m_nSecondVarSize >= ComparisonVariableSize::Bit_0 && m_nSecondVarSize <= ComparisonVariableSize::Bit_7)
             nSecondVal ^= 1;
 
-        return nRetVal * nSecondVal;
+        return static_cast<double>(nRetVal * nSecondVal);
     }
 
     return nRetVal * m_fModifier;

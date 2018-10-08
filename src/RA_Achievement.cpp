@@ -22,8 +22,6 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 Achievement::Achievement() noexcept
 {
-    Clear();
-
     m_vConditions.AddGroup();
 }
 
@@ -169,14 +167,14 @@ void Achievement::Clear()
     m_vConditions.Clear();
 
 
-    m_nAchievementID = 0;
+    m_nAchievementID = 0U;
 
     m_sTitle.clear();
     m_sDescription.clear();
     m_sAuthor.clear();
     m_sBadgeImageURI.clear();
 
-    m_nPointValue = 0;
+    m_nPointValue = 0U;
     m_bActive = FALSE;
     m_bModified = FALSE;
     m_bPauseOnTrigger = FALSE;
@@ -184,13 +182,13 @@ void Achievement::Clear()
     ClearDirtyFlag();
 
     m_bProgressEnabled = FALSE;
-    m_sProgress[0] = '\0';
-    m_sProgressMax[0] = '\0';
-    m_sProgressFmt[0] = '\0';
-    m_fProgressLastShown = 0.0f;
+    m_sProgress = "";
+    m_sProgressMax = "";;
+    m_sProgressFmt = "";;
+    m_fProgressLastShown = 0.0F;
 
-    m_nTimestampCreated = 0;
-    m_nTimestampModified = 0;
+    m_nTimestampCreated = 0LL;
+    m_nTimestampModified = 0LL;
     //m_nUpvotes = 0;
     //m_nDownvotes = 0;
 }

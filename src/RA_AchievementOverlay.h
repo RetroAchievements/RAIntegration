@@ -110,11 +110,6 @@ extern AchievementExamine g_AchExamine;
 class AchievementOverlay
 {
 public:
-    AchievementOverlay();
-    ~AchievementOverlay();
-
-    void Initialize(_UNUSED HINSTANCE);
-
     void Activate();
     void Deactivate();
 
@@ -148,44 +143,48 @@ public:
     void SelectNextTopLevelPage(BOOL bPressedRight);
 
     void InstallNewsArticlesFromFile();
-
+    void UpdateImages() noexcept;
 public:
     struct NewsItem
     {
-        unsigned int m_nID;
-        std::string m_sTitle;
+        unsigned int m_nID{};
+        std::string m_sTitle{};
         std::string m_sPayload;
-        time_t m_nPostedAt;
+        time_t m_nPostedAt{};
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
         std::string m_sImage;
+#pragma warning(push)
+#pragma warning(disable : 26495) // "variable" uninitialized
     };
+#pragma warning(pop)
+
 
 private:
-    int	m_nAchievementsScrollOffset;
-    int	m_nFriendsScrollOffset;
-    int	m_nMessagesScrollOffset;
-    int	m_nNewsScrollOffset;
-    int	m_nLeaderboardScrollOffset;
+    int	m_nAchievementsScrollOffset{};
+    int	m_nFriendsScrollOffset{};
+    int	m_nMessagesScrollOffset{};
+    int	m_nNewsScrollOffset{};
+    int	m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem;
-    int	m_nFriendsSelectedItem;
-    int	m_nMessagesSelectedItem;
-    int	m_nNewsSelectedItem;
-    int	m_nLeaderboardSelectedItem;
+    int	m_nAchievementsSelectedItem{};
+    int	m_nFriendsSelectedItem{};
+    int	m_nMessagesSelectedItem{};
+    int	m_nNewsSelectedItem{};
+    int	m_nLeaderboardSelectedItem{};
 
-    mutable int m_nNumAchievementsBeingRendered;
-    mutable int m_nNumFriendsBeingRendered;
-    mutable int m_nNumLeaderboardsBeingRendered;
+    mutable int m_nNumAchievementsBeingRendered{};
+    mutable int m_nNumFriendsBeingRendered{};
+    mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock;	//	Waiting for pad release
-    std::vector<NewsItem>	m_LatestNews;
-    TransitionState			m_nTransitionState;
-    float					m_fTransitionTimer;
+    BOOL					m_bInputLock{};	//	Waiting for pad release
+    std::vector<NewsItem>	m_LatestNews{};
+    TransitionState			m_nTransitionState{};
+    float					m_fTransitionTimer{-0.2F};
 
-    OverlayPage				m_Pages[5];
-    unsigned int			m_nPageStackPointer;
+    OverlayPage				m_Pages[5]{OverlayPage::OP_ACHIEVEMENTS};
+    unsigned int			m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground;
     ra::services::ImageReference m_hUserImage;

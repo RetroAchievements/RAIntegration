@@ -26,7 +26,6 @@ public:
 
         All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
     };
-
     Achievement() noexcept;
 
 public:
@@ -141,6 +140,7 @@ private:
 
     float m_fProgressLastShown{};	//	The last shown progress
 
+
     DirtyFlags m_nDirtyFlags{};	//	Use for rendering when editing.
 
     time_t m_nTimestampCreated{};
@@ -148,6 +148,8 @@ private:
 
     unsigned short m_nUpvotes{};
     unsigned short m_nDownvotes{};
+#pragma warning(push)
+#pragma warning(disable : 26495) // "variable" uninitialized
 };
-
+#pragma warning(pop)
 #endif // !RA_ACHIEVEMENT_H

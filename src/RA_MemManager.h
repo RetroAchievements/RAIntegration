@@ -35,11 +35,10 @@ private:
     };
 
 public:
-    MemManager();
-    virtual ~MemManager();
+    ~MemManager() noexcept;
 
 public:
-    void ClearMemoryBanks();
+    void ClearMemoryBanks() noexcept;
     void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
     size_t NumMemoryBanks() const { return m_Banks.size(); }
 
@@ -61,9 +60,9 @@ public:
 
 private:
     std::map<size_t, BankData> m_Banks;
-    unsigned short m_nActiveMemBank;
+    unsigned short m_nActiveMemBank{};
 
-    size_t m_nTotalBankSize;
+    size_t m_nTotalBankSize{};
 };
 
 extern MemManager g_MemManager;

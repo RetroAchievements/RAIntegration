@@ -30,12 +30,16 @@ public:
         ChangeReference(nType, sName);
     }
 
+#pragma warning(push)
+#pragma warning(disable : 26495)
     ImageReference(const ImageReference& source)
         : m_nType(source.m_nType), m_sName(source.m_sName)
     {
         // don't copy m_hBitmap, it'll get initialized when GetHBitmap is called, which
         // will ensure the reference count is accurate.
     }
+#pragma warning(pop)
+
 
     ~ImageReference();
 

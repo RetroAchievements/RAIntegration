@@ -25,12 +25,6 @@ const int FONT_SIZE_TEXT = 16;
 
 }
 
-
-LeaderboardPopup::LeaderboardPopup()
-{
-    Reset();
-}
-
 void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
     m_vScoreboardQueue.push(nID);
@@ -91,7 +85,7 @@ void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOO
     }
 }
 
-BOOL LeaderboardPopup::Activate(unsigned int nLBID)
+BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -105,7 +99,7 @@ BOOL LeaderboardPopup::Activate(unsigned int nLBID)
     return TRUE;
 }
 
-BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
+BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())

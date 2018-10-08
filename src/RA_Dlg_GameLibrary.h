@@ -7,19 +7,18 @@
 class GameEntry
 {
 public:
-    GameEntry(const std::string& sTitle, const std::string& sFile, unsigned int nGameID) :
-        m_sTitle(sTitle), m_sFilename(sFile), m_nGameID(nGameID)
-    {
-    }
-
     const std::string& Title() const { return m_sTitle; }
     const std::string& Filename() const { return m_sFilename; }
     ra::GameID GameID() const { return m_nGameID; }
 
     const std::string m_sTitle;
     const std::string m_sFilename;
-    const ra::GameID m_nGameID;
+    const ra::GameID m_nGameID{};
+#pragma warning(push)
+#pragma warning(disable : 26495) // "variable" uninitialized
 };
+#pragma warning(pop)
+
 
 class Dlg_GameLibrary
 {

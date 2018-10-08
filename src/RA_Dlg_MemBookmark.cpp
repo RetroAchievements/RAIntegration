@@ -54,8 +54,11 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             LV_DISPINFO lvDispinfo;
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
-            lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+            lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);           
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItemBM;
             lvDispinfo.item.iSubItem = nSelSubItemBM;
@@ -92,6 +95,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
     return CallWindowProc(EOldProcBM, hwnd, nMsg, wParam, lParam);
 }
+
 
 INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -305,7 +309,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             switch (LOWORD(wParam))
             {
                 case IDC_RA_LBX_ADDRESSES:
+                {
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
                     if (((LPNMHDR)lParam)->code == NM_CLICK)
+#pragma warning(pop)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
@@ -314,7 +322,10 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (nSelect == -1)
                             break;
                     }
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
                     else if (((LPNMHDR)lParam)->code == NM_DBLCLK)
+#pragma warning(pop)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
@@ -335,6 +346,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                                 ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                         }
                     }
+                }
             }
             return TRUE;
         }

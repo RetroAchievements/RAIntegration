@@ -166,12 +166,12 @@ private:
     mutable int m_nNumLeaderboardsBeingRendered{};
 
     BOOL					m_bInputLock{};	//	Waiting for pad release
-    std::vector<NewsItem>	m_LatestNews{};
-    TransitionState			m_nTransitionState{};
+    std::vector<NewsItem>   m_LatestNews{};
+    TransitionState         m_nTransitionState{};
     float                   m_fTransitionTimer{-0.2F};
 
     OverlayPage	            m_Pages[5]{OverlayPage::OP_ACHIEVEMENTS};
-    unsigned int			m_nPageStackPointer{};
+    unsigned int            m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground;
     ra::services::ImageReference m_hUserImage;

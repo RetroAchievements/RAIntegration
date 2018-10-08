@@ -47,8 +47,8 @@ public:
 protected:
     DialogBase() = delete;
 
-    DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept;
-    virtual ~DialogBase();
+    explicit DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept;
+    virtual ~DialogBase() noexcept;
 
     /// <summary>
     /// Called when the window is created, but before it is shown.
@@ -84,7 +84,7 @@ protected:
     ra::ui::WindowViewModelBase& m_vmWindow;
 
 private:
-    HWND m_hWnd;
+    HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
 };
 

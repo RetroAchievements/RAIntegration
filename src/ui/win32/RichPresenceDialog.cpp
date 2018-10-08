@@ -39,7 +39,7 @@ void RichPresenceDialog::Presenter::OnClosed()
 
 // ------------------------------------
 
-RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay)
+RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept
     : DialogBase(vmRichPresenceDisplay)
 {
     m_hFont = CreateFont(15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, nullptr);
@@ -48,7 +48,7 @@ RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorVi
     m_bindWindow.BindLabel(IDC_RA_RICHPRESENCERESULTTEXT, ra::ui::viewmodels::RichPresenceMonitorViewModel::DisplayStringProperty);
 }
 
-RichPresenceDialog::~RichPresenceDialog()
+RichPresenceDialog::~RichPresenceDialog() noexcept
 {
     DeleteFont(m_hFont);
 }

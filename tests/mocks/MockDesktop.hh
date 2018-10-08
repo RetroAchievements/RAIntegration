@@ -15,7 +15,7 @@ using DialogHandler = std::function<ra::ui::DialogResult(WindowViewModelBase&)>;
 class MockDesktop : public IDesktop
 {
 public:
-    MockDesktop(DialogHandler pHandler) 
+    explicit MockDesktop(DialogHandler&& pHandler) noexcept
         : m_Override(this), m_pHandler(pHandler)
     {
     }

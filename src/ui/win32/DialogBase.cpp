@@ -11,7 +11,7 @@ DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept
 {
 }
 
-DialogBase::~DialogBase()
+DialogBase::~DialogBase() noexcept
 {
     if (m_hWnd)
     {

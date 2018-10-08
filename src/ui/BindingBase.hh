@@ -10,19 +10,19 @@ namespace ui {
 class BindingBase : protected ViewModelBase::NotifyTarget
 {
 protected:
-    BindingBase(ViewModelBase& vmViewModel) noexcept
+    explicit BindingBase(ViewModelBase& vmViewModel) noexcept
         : m_vmViewModel(vmViewModel)
     {
         vmViewModel.AddNotifyTarget(*this);
     }
 
-    virtual ~BindingBase()
+    virtual ~BindingBase() noexcept
     {
         m_vmViewModel.RemoveNotifyTarget(*this);
     }
 
     /// <summary>
-    /// Gets the value associated to the requested boolean property.
+    /// Gets the value associated to the requested boolean property from the viewmodel.
     /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for the bound view model.</returns>
@@ -32,7 +32,7 @@ protected:
     }
 
     /// <summary>
-    /// Sets the specified boolean property to the specified value.
+    /// Sets the specified boolean property of the viewmodel to the specified value.
     /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="bValue">The value to set.</param>
@@ -42,7 +42,7 @@ protected:
     }
 
     /// <summary>
-    /// Gets the value associated to the requested string property.
+    /// Gets the value associated to the requested string property from the viewmodel.
     /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for the bound view model.</returns>
@@ -52,7 +52,7 @@ protected:
     }
 
     /// <summary>
-    /// Sets the specified string property to the specified value.
+    /// Sets the specified string property of the viewmodel to the specified value.
     /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="sValue">The value to set.</param>
@@ -62,7 +62,7 @@ protected:
     }
 
     /// <summary>
-    /// Gets the value associated to the requested integer property.
+    /// Gets the value associated to the requested integer property from the viewmodel.
     /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for the bound view model.</returns>
@@ -72,7 +72,7 @@ protected:
     }
 
     /// <summary>
-    /// Sets the specified integer property to the specified value.
+    /// Sets the specified integer property of the viewmodel to the specified value.
     /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="nValue">The value to set.</param>

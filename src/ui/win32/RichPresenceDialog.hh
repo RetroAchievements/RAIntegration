@@ -15,8 +15,8 @@ namespace win32 {
 class RichPresenceDialog : public DialogBase
 {
 public:
-    RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay);
-    ~RichPresenceDialog();
+    explicit RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept;
+    ~RichPresenceDialog() noexcept;
 
     INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM) override;
 

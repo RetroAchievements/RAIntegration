@@ -21,7 +21,18 @@ class FileLogger : public ra::services::ILogger
 public:
     explicit FileLogger(const ra::services::IFileSystem& pFileSystem) noexcept
     {
-        m_pWriter = pFileSystem.AppendTextFile(pFileSystem.BaseDirectory() + L"RACache\\RALog.txt");
+        std::wstring sLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog.txt";
+
+        // if the file is over 1MB, rename it and start a new one
+        int64_t nLogSize = pFileSystem.GetFileSize(sLogFilePath);
+        if (nLogSize > 1024 * 1024)
+        {
+            std::wstring sOldLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog-old.txt";
+            pFileSystem.DeleteFile(sOldLogFilePath);
+            pFileSystem.MoveFile(sLogFilePath, sOldLogFilePath);
+        }
+
+        m_pWriter = pFileSystem.AppendTextFile(sLogFilePath);
         if (m_pWriter != nullptr)
             m_pWriter->Write("\r\n");
     }

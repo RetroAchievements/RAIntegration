@@ -13,6 +13,8 @@ struct IUnknown;
 #include <Windows.h>
 #include <Shlwapi.h>
 #undef CreateDirectory
+#undef DeleteFile
+#undef MoveFile
 
 namespace ra {
 namespace services {
@@ -32,12 +34,49 @@ WindowsFileSystem::WindowsFileSystem() noexcept
 bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const
 {
     DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
-    return (nAttrib != INVALID_FILE_ATTRIBUTES);
+    return (nAttrib != INVALID_FILE_ATTRIBUTES) && (nAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
 bool WindowsFileSystem::CreateDirectory(const std::wstring& sDirectory) const
 {
     return static_cast<bool>(CreateDirectoryW(sDirectory.c_str(), nullptr));
+}
+
+bool WindowsFileSystem::DeleteFile(const std::wstring& sPath) const
+{
+    return static_cast<bool>(DeleteFileW(sPath.c_str()));
+}
+
+bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const
+{
+    return static_cast<bool>(MoveFileW(sOldPath.c_str(), sNewPath.c_str()));
+}
+
+int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
+{
+    WIN32_FILE_ATTRIBUTE_DATA fadFile;
+    if (!GetFileAttributesExW(sPath.c_str(), GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fadFile))
+    {
+        if (GetLastError() != ERROR_FILE_NOT_FOUND && ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+        {
+            RA_LOG_ERR("Error %d getting file size: %s", GetLastError(), ra::Narrow(sPath).c_str());
+        }
+
+        return -1;
+    }
+
+    if (fadFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+        {
+            RA_LOG_ERR("File size requested for directory: %s", ra::Narrow(sPath).c_str());
+        }
+
+        return -1;
+    }
+
+    LARGE_INTEGER nSize{ fadFile.nFileSizeLow, fadFile.nFileSizeHigh };
+    return nSize.QuadPart;
 }
 
 std::unique_ptr<TextReader> WindowsFileSystem::OpenTextFile(const std::wstring& sPath) const
@@ -69,7 +108,11 @@ std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring
     auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::app);
     if (!pWriter->GetFStream().is_open())
     {
-        RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
+        if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+        {
+            RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
+        }
+
         return std::unique_ptr<TextWriter>();
     }
 

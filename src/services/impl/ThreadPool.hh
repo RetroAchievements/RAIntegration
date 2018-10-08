@@ -18,7 +18,7 @@ namespace impl {
 class ThreadPool : public IThreadPool
 {
 public:
-    ~ThreadPool();
+    ~ThreadPool() noexcept;
 
     void Initialize(size_t nThreads) noexcept;
 
@@ -51,7 +51,7 @@ private:
     std::queue<std::function<void()>> m_vQueue;
     std::mutex m_oMutex;
     std::condition_variable m_cvMutex;
-    size_t m_nThreads;
+    size_t m_nThreads{ 0U };
     bool m_bShutdownInitiated{ false };
 };
 

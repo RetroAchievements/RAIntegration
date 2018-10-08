@@ -106,7 +106,7 @@ private:
         std::atomic<unsigned int> m_nReferences;
     };
 
-    typedef std::unordered_map<std::string, HBitmapReference> HBitmapMap;
+    using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
     HBitmapMap m_mLocal;

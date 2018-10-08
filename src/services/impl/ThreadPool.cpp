@@ -43,7 +43,7 @@ void ThreadPool::RunThread() noexcept
             {
                 pNext();
             }
-            catch (std::exception ex)
+            catch (const std::exception& ex)
             {
                 RA_LOG_ERR("Exception on background thread: %s", ex.what());
             }
@@ -67,8 +67,8 @@ void ThreadPool::Shutdown(bool bWait) noexcept
     {
         RA_LOG_INFO("Waiting for background threads");
 
-        for (size_t i = 0; i < m_vThreads.size(); ++i)
-            m_vThreads[i].join();
+        for (auto& pThread : m_vThreads)
+            pThread.join();
 
         RA_LOG_INFO("Background threads finished");
 

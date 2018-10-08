@@ -35,60 +35,24 @@ public:
     /// <summary>
     /// Sets the unique identifier for remembering this window's size and position.
     /// </summary>
-    /// <param name="sSizeAndPositionKey">The unique identifier for the window.</param>
     /// <param name="nDefaultHorizontalLocation">The default horizontal location if a custom placement is not known.</param>
     /// <param name="nDefaultVerticalLocation">The default vertical location if a custom placement is not known.</param>
-    void SetInitialPosition(RelativePosition nDefaultHorizontalLocation, RelativePosition nDefaultVerticalLocation, const char* sSizeAndPositionKey = nullptr)
-    {
-        if (sSizeAndPositionKey)
-            m_sSizeAndPositionKey = sSizeAndPositionKey;
-
-        m_nDefaultHorizontalLocation = nDefaultHorizontalLocation;
-        m_nDefaultVerticalLocation = nDefaultVerticalLocation;
-
-        if (m_hWnd)
-            RestoreSizeAndPosition();
-    }
+    /// <param name="sSizeAndPositionKey">The unique identifier for the window.</param>
+    void SetInitialPosition(RelativePosition nDefaultHorizontalLocation, RelativePosition nDefaultVerticalLocation, const char* sSizeAndPositionKey = nullptr);
     
     /// <summary>
     /// Associates the <see cref="HWND" /> of a window for binding.
     /// </summary>
     /// <param name="hWnd">The window handle.</param>
-    void SetHWND(HWND hWnd)
-    { 
-        m_hWnd = hWnd;
-
-        if (m_hWnd)
-        {
-            // immediately push values from the viewmodel to the UI
-            SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
-
-            for (auto& pIter : m_mLabelBindings)
-            {
-                auto* pProperty = dynamic_cast<const StringModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
-                if (pProperty != nullptr)
-                    SetDlgItemTextW(m_hWnd, pIter.second, GetValue(*pProperty).c_str());
-            }
-
-            RestoreSizeAndPosition();
-        }
-    }
+    void SetHWND(HWND hWnd);
     
     /// <summary>
     /// Binds the a label to a property of the viewmodel.
     /// </summary>
     /// <param name="nDlgItemId">The unique identifier of the label in the dialog.</param>
     /// <param name="pSourceProperty">The property to bind to.</param>
-    void BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty)
-    {
-        m_mLabelBindings.insert_or_assign(pSourceProperty.GetKey(), nDlgItemId);
+    void BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty);
 
-        if (m_hWnd)
-        {
-            // immediately push values from the viewmodel to the UI
-            SetDlgItemTextW(m_hWnd, nDlgItemId, GetValue(pSourceProperty).c_str());
-        }
-    }
     
     /// <summary>
     /// Called when the window's size changes.
@@ -103,21 +67,7 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
 protected:
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
-    {
-        if (args.Property == WindowViewModelBase::WindowTitleProperty)
-        {
-            SetWindowTextW(m_hWnd, args.tNewValue.c_str());
-            return;
-        }
-        
-        auto pIter = m_mLabelBindings.find(args.Property.GetKey());
-        if (pIter != m_mLabelBindings.end())
-        {
-            SetDlgItemTextW(m_hWnd, pIter->second, args.tNewValue.c_str());
-            return;
-        }
-    }
+    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     void RestoreSizeAndPosition();
 

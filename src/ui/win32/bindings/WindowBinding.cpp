@@ -12,6 +12,38 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
+void WindowBinding::SetHWND(HWND hWnd)
+{
+    m_hWnd = hWnd;
+
+    if (m_hWnd)
+    {
+        // immediately push values from the viewmodel to the UI
+        SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
+
+        for (auto& pIter : m_mLabelBindings)
+        {
+            auto* pProperty = dynamic_cast<const StringModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
+            if (pProperty != nullptr)
+                SetDlgItemTextW(m_hWnd, pIter.second, GetValue(*pProperty).c_str());
+        }
+
+        RestoreSizeAndPosition();
+    }
+}
+
+void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocation, RelativePosition nDefaultVerticalLocation, const char* sSizeAndPositionKey)
+{
+    if (sSizeAndPositionKey)
+        m_sSizeAndPositionKey = sSizeAndPositionKey;
+
+    m_nDefaultHorizontalLocation = nDefaultHorizontalLocation;
+    m_nDefaultVerticalLocation = nDefaultVerticalLocation;
+
+    if (m_hWnd)
+        RestoreSizeAndPosition();
+}
+
 void WindowBinding::RestoreSizeAndPosition()
 {
     ra::ui::Position oWorkAreaPosition;
@@ -169,6 +201,33 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
         ra::ui::Position oRelativePosition{ rcDialog.left - rcMainWindow.left, rcDialog.top - rcMainWindow.top };
 
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(m_sSizeAndPositionKey, oRelativePosition);
+    }
+}
+
+void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+{
+    if (args.Property == WindowViewModelBase::WindowTitleProperty)
+    {
+        SetWindowTextW(m_hWnd, args.tNewValue.c_str());
+        return;
+    }
+
+    auto pIter = m_mLabelBindings.find(args.Property.GetKey());
+    if (pIter != m_mLabelBindings.end())
+    {
+        SetDlgItemTextW(m_hWnd, pIter->second, args.tNewValue.c_str());
+        return;
+    }
+}
+
+void WindowBinding::BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty)
+{
+    m_mLabelBindings.insert_or_assign(pSourceProperty.GetKey(), nDlgItemId);
+
+    if (m_hWnd)
+    {
+        // immediately push values from the viewmodel to the UI
+        SetDlgItemTextW(m_hWnd, nDlgItemId, GetValue(pSourceProperty).c_str());
     }
 }
 

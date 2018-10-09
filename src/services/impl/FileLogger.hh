@@ -34,7 +34,7 @@ public:
 
         m_pWriter = pFileSystem.AppendTextFile(sLogFilePath);
         if (m_pWriter != nullptr)
-            m_pWriter->Write("\r\n");
+            m_pWriter->WriteLine();
     }
 
     bool IsEnabled([[maybe_unused]] LogLevel level) const override
@@ -76,7 +76,7 @@ public:
             m_pWriter->Write(sMessage);
 
             // newline
-            m_pWriter->Write("\r\n");
+            m_pWriter->WriteLine();
         }
 
         // if writing to a file, flush immediately

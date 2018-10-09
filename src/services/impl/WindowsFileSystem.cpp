@@ -75,7 +75,7 @@ int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
         return -1;
     }
 
-    LARGE_INTEGER nSize{ fadFile.nFileSizeLow, fadFile.nFileSizeHigh };
+    LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
     return nSize.QuadPart;
 }
 

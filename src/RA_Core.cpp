@@ -69,11 +69,10 @@ const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
 
-static const unsigned int PROCESS_WAIT_TIME = 100;
-static unsigned int g_nProcessTimer = 0;
+inline static constexpr unsigned int PROCESS_WAIT_TIME{ 100U };
+inline static unsigned int g_nProcessTimer{ 0U };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
-
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
@@ -99,12 +98,6 @@ API const char* CCONV _RA_HostName()
     }
 
     return sHostName.c_str();
-}
-
-static void EnsureDirectoryExists(const ra::services::IFileSystem& pFileSystem, const std::wstring& sDirectory)
-{
-    if (!pFileSystem.DirectoryExists(sDirectory))
-        pFileSystem.CreateDirectory(sDirectory);
 }
 
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
@@ -189,14 +182,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     ra::services::Initialization::RegisterServices(g_sClientName);
 
-    //	Ensure all required directories are created:
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BASE);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BADGE);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_DATA);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_USERPIC);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_OVERLAY);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BOOKMARKS);
     g_sHomeDir = pFileSystem.BaseDirectory();
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -220,7 +206,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
     ra::services::g_ImageRepository.Initialize();
-    g_AchievementOverlay.Initialize(g_hThisDLLInst);
+    g_AchievementOverlay.UpdateImages();
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
@@ -402,12 +388,8 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-static void DownloadAndActivateAchievementData(ra::GameID nGameID)
+void DownloadAndActivateAchievementData(ra::GameID nGameID)
 {
-    // delete Core and Unofficial Achievements so they are redownloaded
-    g_pCoreAchievements->DeletePatchFile(nGameID);
-    g_pUnofficialAchievements->DeletePatchFile(nGameID);
-
     g_pCoreAchievements->Clear();
     g_pUnofficialAchievements->Clear();
     g_pLocalAchievements->Clear();
@@ -1217,11 +1199,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            std::wstring sRichPresenceFile = g_sHomeDir + RA_DIR_DATA + std::to_wstring(g_pCurrentGameData->GetGameID()) + L"-Rich.txt";
-
-            std::string sRichPresence;
-            bool bRichPresenceExists = _ReadBufferFromFile(sRichPresence, sRichPresenceFile.c_str());
-            g_RichPresenceInterpreter.ParseFromString(sRichPresence.c_str());
+            bool bRichPresenceExists = g_RichPresenceInterpreter.Load();
 
             if (g_RichPresenceDialog.GetHWND() == nullptr)
                 g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
@@ -1556,29 +1534,6 @@ std::string GetFolderFromDialog() noexcept
     }
     ::OleUninitialize();
     return ret;
-}
-
-BOOL RemoveFileIfExists(const std::wstring& sFilePath)
-{
-    if (_waccess(sFilePath.c_str(), 06) != -1)	//	06= Read/write permission
-    {
-        if (_wremove(sFilePath.c_str()) == -1)
-        {
-            //	Remove issues?
-            ASSERT(!"Could not remove patch file!?");
-            return FALSE;
-        }
-        else
-        {
-            //	Successfully deleted
-            return TRUE;
-        }
-    }
-    else
-    {
-        //	Doesn't exist (or no permissions?)
-        return TRUE;
-    }
 }
 
 BOOL CanCausePause()

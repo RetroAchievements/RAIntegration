@@ -8,7 +8,9 @@ namespace ra {
 namespace services {
 namespace impl {
 
-#undef CreateDirectory
+#undef CreateDirectory 
+#undef DeleteFile
+#undef MoveFile
 
 class WindowsFileSystem : public IFileSystem
 {

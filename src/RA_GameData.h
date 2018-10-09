@@ -13,23 +13,15 @@ public:
     const std::string& GameTitle() { return m_sGameTitle; }
     void SetGameTitle(const std::string& str) { m_sGameTitle = str; }
 
-    const std::string& RichPresencePatch() { return m_sRichPresencePatch; }
-    void SetRichPresencePatch(const std::string& str) { m_sRichPresencePatch = str; }
-
+#ifndef RA_UTEST
     void ParseData(const rapidjson::Document& doc);
+#endif
 
 private:
     ra::GameID m_nGameID;
     std::string m_sGameTitle;
-    std::string m_sRichPresencePatch;
-
-    //unsigned int m_nConsoleID;
-    //std::string m_sConsoleName;
 };
 
-
-
 extern GameData* g_pCurrentGameData;
-
 
 #endif // !RA_GAMEDATA_H

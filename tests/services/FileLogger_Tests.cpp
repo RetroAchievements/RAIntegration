@@ -27,7 +27,7 @@ public:
     {
         MockFileSystem mockFileSystem;
         FileLogger logger(mockFileSystem);
-        Assert::AreEqual(std::string("\r\n"), mockFileSystem.GetFileContents(mockLogFileName));
+        Assert::AreEqual(std::string("\n"), mockFileSystem.GetFileContents(mockLogFileName));
     }
 
     TEST_METHOD(TestLogMessage)
@@ -41,10 +41,10 @@ public:
         mockClock.AdvanceTime(std::chrono::milliseconds(375));
         logger.LogMessage(LogLevel::Error, "This is the third message.");
 
-        Assert::AreEqual(std::string("\r\n"
-            "160843.000|INFO| This is a message.\r\n"
-            "160843.000|WARN| This is another message.\r\n"
-            "160843.375|ERR | This is the third message.\r\n"), mockFileSystem.GetFileContents(mockLogFileName));
+        Assert::AreEqual(std::string("\n"
+            "220843.000|INFO| This is a message.\n"
+            "220843.000|WARN| This is another message.\n"
+            "220843.375|ERR | This is the third message.\n"), mockFileSystem.GetFileContents(mockLogFileName));
     }
 
     TEST_METHOD(TestRotate)
@@ -59,7 +59,7 @@ public:
         FileLogger logger(mockFileSystem);
         logger.LogMessage(LogLevel::Info, "This is a message.");
 
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 39);
+        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 37);
         Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), 1100000);
     }
 
@@ -76,7 +76,7 @@ public:
         FileLogger logger(mockFileSystem);
         logger.LogMessage(LogLevel::Info, "This is a message.");
 
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 39);
+        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 37);
         Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), 1100000);
     }
 };

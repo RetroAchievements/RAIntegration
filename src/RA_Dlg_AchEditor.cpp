@@ -1970,6 +1970,8 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
         unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
             AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i));
+
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
     }
 }
 
@@ -2043,7 +2045,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), TRUE);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(0) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2086,13 +2088,13 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
+        unsigned int nGrp = GetSelectedConditionGroup();
+
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Conditions))
         {
             HWND hCondList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
             if (hCondList != nullptr)
             {
-                unsigned int nGrp = GetSelectedConditionGroup();
-
                 if (ListView_GetItemCount(hCondList) != ra::to_signed(m_pSelectedAchievement->NumConditions(nGrp)))
                 {
                     PopulateConditions(pCheevo);
@@ -2119,7 +2121,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), TRUE);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);

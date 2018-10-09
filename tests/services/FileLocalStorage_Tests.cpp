@@ -17,6 +17,17 @@ namespace tests {
 TEST_CLASS(FileLocalStorage_Tests)
 {
 public:
+    TEST_METHOD(TestDirectories)
+    {
+        MockFileSystem mockFileSystem;
+        FileLocalStorage storage(mockFileSystem);
+        Assert::IsTrue(mockFileSystem.DirectoryExists(L".\\RACache\\"));
+        Assert::IsTrue(mockFileSystem.DirectoryExists(L".\\RACache\\Data\\"));
+        Assert::IsTrue(mockFileSystem.DirectoryExists(L".\\RACache\\Badge\\"));
+        Assert::IsTrue(mockFileSystem.DirectoryExists(L".\\RACache\\UserPic\\"));
+        Assert::IsTrue(mockFileSystem.DirectoryExists(L".\\RACache\\Bookmarks\\"));
+    }
+
     TEST_METHOD(TestFileNames)
     {
         MockFileSystem mockFileSystem;

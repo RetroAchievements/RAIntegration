@@ -69,11 +69,10 @@ const char* g_sClientDownloadURL = nullptr;
 const char* g_sClientEXEName = nullptr;
 bool g_bRAMTamperedWith = false;
 
-static const unsigned int PROCESS_WAIT_TIME = 100;
-static unsigned int g_nProcessTimer = 0;
+inline static constexpr unsigned int PROCESS_WAIT_TIME{ 100U };
+inline static unsigned int g_nProcessTimer{ 0U };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
-
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
@@ -207,7 +206,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     //////////////////////////////////////////////////////////////////////////
     //	Image rendering: Setup image factory and overlay
     ra::services::g_ImageRepository.Initialize();
-    g_AchievementOverlay.Initialize(g_hThisDLLInst);
+    g_AchievementOverlay.UpdateImages();
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)

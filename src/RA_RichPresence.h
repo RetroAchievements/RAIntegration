@@ -5,18 +5,22 @@
 #include "RA_Condition.h"
 #include "RA_MemValue.h"
 
+#include "services\TextReader.hh"
+
 class RA_RichPresenceInterpreter
 {
 public:
-    RA_RichPresenceInterpreter() {}
+    RA_RichPresenceInterpreter() noexcept = default;
 
-    void ParseFromString(const char* sRichPresence);
+    bool Load();
 
     std::string GetRichPresenceString();
     
     bool Enabled() const { return !m_vDisplayStrings.empty(); }
 
 protected:
+    bool Load(ra::services::TextReader& pReader);
+
     class Lookup
     {
     public:

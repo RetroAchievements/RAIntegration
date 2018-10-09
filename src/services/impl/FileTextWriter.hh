@@ -36,6 +36,12 @@ public:
         }
     }
 
+    void WriteLine() override
+    {
+        if (m_oStream.is_open())
+            m_oStream.write("\r\n", 2);
+    }
+
     std::ofstream& GetFStream() { return m_oStream; }
 
 private:

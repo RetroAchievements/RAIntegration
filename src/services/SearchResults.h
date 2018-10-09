@@ -107,8 +107,7 @@ protected:
             if (other.m_nSize > sizeof(m_vBytes))
             {
                 m_pBytes = other.m_pBytes;
-                delete[] m_pBytes;
-                m_pBytes = nullptr;
+                other.m_pBytes = nullptr;
                 other.m_nSize = 0;
             }
             else

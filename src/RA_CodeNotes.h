@@ -29,7 +29,7 @@ public:
 public:
     void Clear() noexcept;
 
-    size_t Load(const std::wstring& sFile);
+    size_t Load(ra::GameID nID);
 
     BOOL ReloadFromWeb(ra::GameID nID);
     static void OnCodeNotesResponse(rapidjson::Document& doc);

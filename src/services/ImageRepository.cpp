@@ -21,7 +21,7 @@ ImageRepository g_ImageRepository;
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
 static bool g_bImageRepositoryValid = false;
 
-ImageReference::~ImageReference()
+ImageReference::~ImageReference() noexcept
 {
     Release();
 }
@@ -68,7 +68,7 @@ HBITMAP ImageReference::GetHBitmap() const
     return g_ImageRepository.DefaultImage(m_nType);
 }
 
-void ImageReference::Release()
+void ImageReference::Release() noexcept
 {
     if (m_hBitmap != nullptr && g_bImageRepositoryValid)
         g_ImageRepository.ReleaseReference(m_nType, m_sName);
@@ -111,7 +111,7 @@ bool ImageRepository::Initialize()
     return SUCCEEDED(hr);
 }
 
-ImageRepository::~ImageRepository()
+ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
     for (HBitmapMap::iterator iter = m_mBadges.begin(); iter != m_mBadges.end(); ++iter)
@@ -441,7 +441,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
     return hBitmap;
 }
 
-void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName)
+void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName) noexcept
 {
     HBitmapMap* mMap = GetBitmapMap(nType);
     if (mMap != nullptr)

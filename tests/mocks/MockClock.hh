@@ -17,6 +17,10 @@ public:
     MockClock() noexcept
         : m_Override(this)
     {
+        // force GMT timezone for unit tests
+        _putenv("TZ=GMT");
+        _tzset();
+
         m_tNow = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18
         m_tUpTime = std::chrono::steady_clock::time_point();
     }

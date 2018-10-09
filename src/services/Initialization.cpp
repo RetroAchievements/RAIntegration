@@ -2,6 +2,7 @@
 
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
+#include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
 #include "services\impl\ThreadPool.hh"
@@ -52,6 +53,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     std::wstring sFilename = pFileSystem->BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
     pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
+
+    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(*pFileSystem);
+    ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(pLocalStorage);
 
     auto* pThreadPool = new ra::services::impl::ThreadPool();
     pThreadPool->Initialize(pConfiguration->GetNumBackgroundThreads());

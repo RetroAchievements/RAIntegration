@@ -7,33 +7,7 @@
 #include "RA_Core.h" // for API; RA_Interface.h
 #include "services\ImageRepository.h" // map, string
 
-enum OverlayPage
-{
-    OP_ACHIEVEMENTS,
-    OP_FRIENDS,
-    OP_MESSAGES,
-    OP_NEWS,
-    OP_LEADERBOARDS,
-
-    OP_ACHIEVEMENT_EXAMINE,
-    OP_ACHIEVEMENT_COMPARE,
-    OP_FRIEND_EXAMINE,
-    OP_FRIEND_ADD,
-    OP_LEADERBOARD_EXAMINE,
-    OP_MESSAGE_VIEWER,
-
-    NumOverlayPages
-};
-
-enum TransitionState
-{
-    TS_OFF = 0,
-    TS_IN,
-    TS_HOLD,
-    TS_OUT,
-
-    TS__MAX
-};
+#include "services\ImageRepository.h" // map, string
 
 class LeaderboardExamine
 {
@@ -96,6 +70,30 @@ extern AchievementExamine g_AchExamine;
 
 class AchievementOverlay
 {
+    enum class Page
+    {
+        Achievements,
+        Friends,
+        Messages,
+        News,
+        Leaderboards,
+
+        Achievement_Examine,
+        Achievement_Compare,
+        Friend_Examine,
+        Friend_Add,
+        Leaderboard_Examine,
+        Message_Viewer
+    };
+
+    enum class TransitionState
+    {
+        Off,
+        In,
+        Hold,
+        Out
+    };
+
 public:
     void Activate();
     void Deactivate();
@@ -103,8 +101,8 @@ public:
     void Render(HDC hDC, RECT* rcDest) const;
     BOOL Update(ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused);
 
-    BOOL IsActive() const { return(m_nTransitionState != TS_OFF); }
-    BOOL IsFullyVisible() const { return (m_nTransitionState == TS_HOLD); }
+    _NODISCARD _CONSTANT_FN IsActive() const noexcept { return(m_nTransitionState != TransitionState::Off); }
+    _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
 
     const int* GetActiveScrollOffset() const;
     const int* GetActiveSelectedItem() const;
@@ -123,14 +121,18 @@ public:
     void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
-    OverlayPage CurrentPage() { return m_Pages[m_nPageStackPointer]; }
-    void AddPage(OverlayPage NewPage);
+    _NODISCARD _CONSTANT_FN CurrentPage() const noexcept { return m_Pages.at(m_nPageStackPointer); }
+    _CONSTANT_FN AddPage(_In_ Page NewPage) noexcept
+    {
+        m_nPageStackPointer++;
+        m_Pages.at(m_nPageStackPointer) = NewPage;
+    }
+
     BOOL GoBack();
-
     void SelectNextTopLevelPage(BOOL bPressedRight);
-
     void InstallNewsArticlesFromFile();
     void UpdateImages() noexcept;
+
 public:
     struct NewsItem
     {
@@ -149,6 +151,9 @@ public:
 
 
 private:
+    inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
+    inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
+
     int	m_nAchievementsScrollOffset{};
     int	m_nFriendsScrollOffset{};
     int	m_nMessagesScrollOffset{};
@@ -165,13 +170,13 @@ private:
     mutable int m_nNumFriendsBeingRendered{};
     mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL					m_bInputLock{};	//	Waiting for pad release
-    std::vector<NewsItem>   m_LatestNews{};
-    TransitionState         m_nTransitionState{};
-    float                   m_fTransitionTimer{-0.2F};
+    BOOL                  m_bInputLock{}; // Waiting for pad release
+    std::vector<NewsItem> m_LatestNews{};
+    TransitionState       m_nTransitionState{};
+    float                 m_fTransitionTimer{ PAGE_TRANSITION_IN };
 
-    OverlayPage	            m_Pages[5]{OverlayPage::OP_ACHIEVEMENTS};
-    unsigned int            m_nPageStackPointer{};
+    std::array<Page, 5>   m_Pages{ Page::Achievements };
+    unsigned int          m_nPageStackPointer{};
 
     ra::services::ImageReference m_hOverlayBackground;
     ra::services::ImageReference m_hUserImage;

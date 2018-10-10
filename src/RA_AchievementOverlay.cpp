@@ -17,30 +17,24 @@
 #include <ctime>  
 #endif /* !PCH_H */
 
-namespace {
+namespace ra {
 
-const float PAGE_TRANSITION_IN = (-0.2f);
-const float PAGE_TRANSITION_OUT = (0.2f);
-const int NUM_MESSAGES_TO_DRAW = 4;
-const char* FONT_TO_USE = "Tahoma";
-
-const char* PAGE_TITLES[] ={
-    " Achievements ",
-    " Friends ",
-    " Messages ",
-    " News ",
-    " Leaderboards ",
-    " Achievement Info ",
-    " Achievement Compare ",
-    " Friend Info ",
-    " Friend Add ",
-    " Leaderboard Examine ",
-    " Message Viewer "
-
+inline constexpr std::array<LPCTSTR, 11> PAGE_TITLES
+{
+    _T(" Achievements "),
+    _T(" Friends "),
+    _T(" Messages "),
+    _T(" News "),
+    _T(" Leaderboards "),
+    _T(" Achievement Info "),
+    _T(" Achievement Compare "),
+    _T(" Friend Info "),
+    _T(" Friend Add "),
+    _T(" Leaderboard Examine "),
+    _T(" Message Viewer ")
 };
-static_assert(SIZEOF_ARRAY(PAGE_TITLES) == NumOverlayPages, "Must match!");
 
-}
+} // namespace ra
 
 HFONT g_hFontTitle;
 HFONT g_hFontDesc;
@@ -76,22 +70,22 @@ const unsigned int OVERLAY_HEIGHT = 1024;
 
 void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 {
-    switch (m_Pages[m_nPageStackPointer])
+    switch (m_Pages.at(m_nPageStackPointer))
     {
-        case OP_ACHIEVEMENTS:
-            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_FRIENDS : OP_LEADERBOARDS);
+        case Page::Achievements:
+            m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::Friends : Page::Leaderboards);
             break;
-        case OP_FRIENDS:
-            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_MESSAGES : OP_ACHIEVEMENTS);
+        case Page::Friends:
+            m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::Messages : Page::Achievements);
             break;
-        case OP_MESSAGES:
-            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_NEWS : OP_FRIENDS);
+        case Page::Messages:
+            m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::News : Page::Friends);
             break;
-        case OP_NEWS:
-            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_LEADERBOARDS : OP_MESSAGES);
+        case Page::News:
+            m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::Leaderboards : Page::Messages);
             break;
-        case OP_LEADERBOARDS:
-            m_Pages[m_nPageStackPointer] = (bPressedRight ? OP_ACHIEVEMENTS : OP_NEWS);
+        case Page::Leaderboards:
+            m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::Achievements : Page::News);
             break;
         default:
             //	Not on a toplevel page: cannot do anything!
@@ -102,28 +96,22 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 
 void AchievementOverlay::Activate()
 {
-    if (m_nTransitionState != TS_HOLD)
+    if (m_nTransitionState != TransitionState::Hold)
     {
-        m_nTransitionState = TS_IN;
+        m_nTransitionState = TransitionState::In;
         m_fTransitionTimer = PAGE_TRANSITION_IN;
     }
 }
 
 void AchievementOverlay::Deactivate()
 {
-    if (m_nTransitionState != TS_OFF && m_nTransitionState != TS_OUT)
+    if (m_nTransitionState != TransitionState::Off && m_nTransitionState != TransitionState::Out)
     {
-        m_nTransitionState = TS_OUT;
-        m_fTransitionTimer = 0.0f;
+        m_nTransitionState = TransitionState::Out;
+        m_fTransitionTimer = 0.0F;
 
         RA_CauseUnpause();
     }
-}
-
-void AchievementOverlay::AddPage(OverlayPage NewPage)
-{
-    m_nPageStackPointer++;
-    m_Pages[m_nPageStackPointer] = NewPage;
 }
 
 //	Returns TRUE if we are ready to exit the overlay.
@@ -160,24 +148,24 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
     //	FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
     {
-        if (m_nTransitionState == TS_OUT && !bPaused)
+        if (m_nTransitionState == TransitionState::Out && !bPaused)
         {
             //	Skip to 'out' if we are full-screen
             m_fTransitionTimer = PAGE_TRANSITION_OUT;
         }
     }
 
-    if (m_nTransitionState == TS_IN)
+    if (m_nTransitionState == TransitionState::In)
     {
         m_fTransitionTimer += fDelta;
 
         if (m_fTransitionTimer >= 0.0f)
         {
             m_fTransitionTimer = 0.0f;
-            m_nTransitionState = TS_HOLD;
+            m_nTransitionState = TransitionState::Hold;
         }
     }
-    else if (m_nTransitionState == TS_OUT)
+    else if (m_nTransitionState == TransitionState::Out)
     {
         m_fTransitionTimer += fDelta;
         if (m_fTransitionTimer >= PAGE_TRANSITION_OUT)
@@ -193,12 +181,12 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 // 				if( m_nCurrentPage == OP__MAX )
 // 					m_nCurrentPage = OP_ACHIEVEMENTS;
 
-                m_nTransitionState = TS_IN;
+                m_nTransitionState = TransitionState::In;
                 m_fTransitionTimer = PAGE_TRANSITION_IN;
             }
             else
             {
-                m_nTransitionState = TS_OFF;
+                m_nTransitionState = TransitionState::Off;
 
                 m_hOverlayBackground.Release();
                 m_hUserImage.Release();
@@ -208,15 +196,15 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
         }
     }
 
-    if (m_nTransitionState == TS_OFF)
+    if (m_nTransitionState == TransitionState::Off)
         return FALSE;
 
     //	Inputs! Restrict to ABCULDR+Start
     if (!m_bInputLock)
     {
-        switch (m_Pages[m_nPageStackPointer])
+        switch (m_Pages.at(m_nPageStackPointer))
         {
-            case OP_ACHIEVEMENTS:
+            case Page::Achievements:
             {
                 if (input.m_bDownPressed)
                 {
@@ -238,7 +226,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 {
                     if ((*pnSelectedItem) < nAchCount)
                     {
-                        AddPage(OP_ACHIEVEMENT_EXAMINE);
+                        AddPage(Page::Achievement_Examine);
                         g_AchExamine.Initialize(&g_pActiveAchievements->GetAchievement((*pnSelectedItem)));
                     }
                 }
@@ -251,7 +239,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 
             }
             break;
-            case OP_ACHIEVEMENT_EXAMINE:
+            case Page::Achievement_Examine:
             {
                 //	Overload:
                 pnScrollOffset = &m_nAchievementsScrollOffset;
@@ -283,7 +271,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
             }
             break;
-            case OP_FRIENDS:
+            case Page::Friends:
             {
                 if (input.m_bDownPressed)
                 {
@@ -318,7 +306,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 // 					nScrollOffset++;
             }
             break;
-            case OP_MESSAGES:
+            case Page::Messages:
             {
                 //	Select message
                 if (input.m_bDownPressed)
@@ -345,13 +333,13 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
             }
             break;
-            case OP_MESSAGE_VIEWER:
+            case Page::Message_Viewer:
             {
                 //RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
 
                 break;
             }
-            case OP_NEWS:
+            case Page::News:
                 //	Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -370,7 +358,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                     }
                 }
                 break;
-            case OP_LEADERBOARDS:
+            case Page::Leaderboards:
                 //	Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -392,7 +380,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 {
                     if ((*pnSelectedItem) < nNumLBs)
                     {
-                        AddPage(OP_LEADERBOARD_EXAMINE);
+                        AddPage(Page::Leaderboard_Examine);
                         g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
                     }
                 }
@@ -402,7 +390,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
                 break;
-            case OP_LEADERBOARD_EXAMINE:
+            case Page::Leaderboard_Examine:
                 //	Overload from previous
                 //	Overload:
                 pnScrollOffset = &m_nLeaderboardScrollOffset;
@@ -449,7 +437,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
 
         if (input.m_bLeftPressed || input.m_bRightPressed)
         {
-            if (m_nTransitionState == TS_HOLD)
+            if (m_nTransitionState == TransitionState::Hold)
             {
                 SelectNextTopLevelPage(input.m_bRightPressed);
                 m_bInputLock = TRUE;
@@ -769,8 +757,8 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC,
                     nDX + nWonByPlayerNameX,
-                    nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                    NativeStr(sUser).c_str(), ra::to_signed(sUser.length()));
+                    nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
+                    NativeStr(sUser).c_str(), ra::narrow_cast<int>(sUser.length()));
             }
 
             std::string sWonAt{ "       " };
@@ -779,8 +767,8 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
 
             TextOut(hDC,
                 nDX + nWonByPlayerDateX,
-                nWonByPlayerYOffs + (i*nWonByPlayerYSpacing),
-                NativeStr(sWonAt).c_str(), ra::to_signed(sWonAt.length()));
+                nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
+                NativeStr(sWonAt).c_str(), ra::narrow_cast<int>(sWonAt.length()));
             i++;
         }
     }
@@ -1086,148 +1074,132 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;	//	Not available!
 
-    if (m_nTransitionState == TS_OFF)
+    if (m_nTransitionState == TransitionState::Off)
         return;
 
-    const int nOuterBorder = 4;
-    RECT rcTarget = (*rcDest);
-    const int nBorder = 8;
+    RECT rcTarget{ *rcDest };
+    const auto lHeight{ rcTarget.bottom - rcTarget.top };
+    {
+        _CONSTANT_LOC nFontSize1{ 32 };
+        _CONSTANT_LOC nFontSize2{ 26 };
+        _CONSTANT_LOC nFontSize3{ 22 };
+        _CONSTANT_LOC nFontSize4{ 16 };
+        _CONSTANT_LOC FONT_TO_USE{ _T("Tahoma") };
 
-    const int nFontSize1 = 32;
-    const int nFontSize2 = 26;
-    const int nFontSize3 = 22;
-    const int nFontSize4 = 16;
+        g_hFontTitle = CreateFont(nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-    const int nPixelWidth = (*rcDest).right - (*rcDest).left;
-    const BOOL bHiRes = (nPixelWidth >= 320);
+        g_hFontDesc = CreateFont(nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-    unsigned int nMinUserFrameWidth = 300;
-    unsigned int nMinUserFrameHeight = 64 + 4 + 4;
-    char buffer[1024];
+        g_hFontDesc2 = CreateFont(nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-    const int nHeight = rcTarget.bottom - rcTarget.top;
+        g_hFontTiny = CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
+    }
 
-
-    g_hFontTitle = CreateFont(nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
-
-    g_hFontDesc = CreateFont(nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
-
-    g_hFontDesc2 = CreateFont(nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
-
-    g_hFontTiny = CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, NativeStr(FONT_TO_USE).c_str());
-
-    float fPctOffScreen = (m_nTransitionState == TS_IN) ?
+    const auto fPctOffScreen{ (m_nTransitionState == TransitionState::In) ?
         (m_fTransitionTimer / PAGE_TRANSITION_IN) :
-        (m_fTransitionTimer / PAGE_TRANSITION_OUT);
+        (m_fTransitionTimer / PAGE_TRANSITION_OUT)
+    };
 
-    int nDX = (int)(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left)));
-    int nDY = rcTarget.top;
+    const auto nDX{ ra::ftoi(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left))) };
+    const auto nDY{ rcTarget.top };
 
-    int nRightPx = (int)(rcTarget.right - (fPctOffScreen * rcTarget.right));
+    const auto  nRightPx{ ra::ftoi(rcTarget.right - (fPctOffScreen * rcTarget.right)) };
 
-    RECT rc;
-    SetRect(&rc,
-        nDX,
-        nDY,
-        nDX + rcTarget.right,
-        rcTarget.bottom);
+    RECT rc{ nDX, nDY, nDX + rcTarget.right, rcTarget.bottom };
 
     // create backbuffer
-    HDC hDC = CreateCompatibleDC(hRealDC);
-    HBITMAP hBitmap = CreateCompatibleBitmap(hRealDC, rc.right, nHeight);
-    SelectObject(hDC, hBitmap);
+    auto hDC{ ::CreateCompatibleDC(hRealDC) };
+    auto hBitmap{ ::CreateCompatibleBitmap(hRealDC, rc.right, lHeight) };
+    SelectBitmap(hDC, hBitmap);
 
     //	Draw background:
     SetBkMode(hDC, TRANSPARENT);
-
-    HBITMAP hBackground = m_hOverlayBackground.GetHBitmap();
-    if (hBackground)
     {
-        RECT rcBGSize;
-        SetRect(&rcBGSize, 0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
-        OffsetRect(&rcBGSize, -((LONG)OVERLAY_WIDTH - rc.right), 0);
-        DrawImageTiled(hDC, hBackground, rcBGSize, rc);
+        auto hBackground{ m_hOverlayBackground.GetHBitmap() };
+        if (hBackground)
+        {
+            RECT rcBGSize{ 0L, 0L, ra::to_signed(OVERLAY_WIDTH), ra::to_signed(OVERLAY_HEIGHT) };
+            OffsetRect(&rcBGSize, -(ra::to_signed(OVERLAY_WIDTH) - rc.right), 0);
+            DrawImageTiled(hDC, hBackground, rcBGSize, rc);
+        }
     }
 
     g_hBrushBG = CreateSolidBrush(COL_USER_FRAME_BG);
     g_hBrushSelectedBG = CreateSolidBrush(COL_SELECTED_BOX_BG);
 
-    SetTextColor(hDC, COL_TEXT);
-    SelectObject(hDC, g_hFontDesc);
+    ::SetTextColor(hDC, COL_TEXT);
+    SelectFont(hDC, g_hFontDesc);
 
-    //	Draw user info
-    if (rcTarget.right > 360)
+    _CONSTANT_LOC nBorder{ 8 };
     {
-        DrawUserFrame(hDC,
-            &RAUsers::LocalUser(),
-            (nDX + (rcTarget.right - nMinUserFrameWidth)) - 4,
-            4 + nBorder,
-            nMinUserFrameWidth,
-            nMinUserFrameHeight);
-    }
+        _CONSTANT_LOC uMinUserFrameWidth{ 300U };
+        _CONSTANT_LOC uMinUserFrameHeight{ 64U + 4U + 4U };
 
+        //	Draw user info
+        if (rcTarget.right > 360)
+        {
+            DrawUserFrame(hDC,
+                &RAUsers::LocalUser(),
+                (nDX + (rcTarget.right - ra::to_signed(uMinUserFrameWidth))) - 4,
+                4 + nBorder,
+                ra::to_signed(uMinUserFrameWidth),
+                ra::to_signed(uMinUserFrameHeight));
+        }
+    }
 
     //	Draw the bulk of the page:
-    const OverlayPage nCurrentPage = m_Pages[m_nPageStackPointer];
-    switch (nCurrentPage)
     {
-        case OP_ACHIEVEMENTS:
-            DrawAchievementsPage(hDC, nDX, nDY, rcTarget);
-            break;
+        const auto nCurrentPage{ m_Pages.at(m_nPageStackPointer) };
+        switch (nCurrentPage)
+        {
+            case Page::Achievements:
+                DrawAchievementsPage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_MESSAGES:
-            DrawMessagesPage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::Messages:
+                DrawMessagesPage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_FRIENDS:
-            DrawFriendsPage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::Friends:
+                DrawFriendsPage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_ACHIEVEMENT_EXAMINE:
-            DrawAchievementExaminePage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::Achievement_Examine:
+                DrawAchievementExaminePage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_NEWS:
-            DrawNewsPage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::News:
+                DrawNewsPage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_LEADERBOARDS:
-            DrawLeaderboardPage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::Leaderboards:
+                DrawLeaderboardPage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        case OP_LEADERBOARD_EXAMINE:
-            DrawLeaderboardExaminePage(hDC, nDX, nDY, rcTarget);
-            break;
+            case Page::Leaderboard_Examine:
+                DrawLeaderboardExaminePage(hDC, nDX, nDY, rcTarget);
+                break;
 
-        default:
-            //	Not implemented!
-            ASSERT(!"Attempting to render an undefined overlay page!");
-            break;
+            default:
+                //	Not implemented!
+                ASSERT(!"Attempting to render an undefined overlay page!");
+        }
+    
+    //	Title:
+    SelectFont(hDC, g_hFontTitle);
+    SetTextColor(hDC, COL_TEXT);
+
+    const auto& sTitle{ ra::PAGE_TITLES.at(ra::etoi(nCurrentPage)) };
+    TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tstrlen(sTitle)));
+
     }
 
-    //	Title:
-    SelectObject(hDC, g_hFontTitle);
-    SetTextColor(hDC, COL_TEXT);
-    sprintf_s(buffer, 1024, PAGE_TITLES[nCurrentPage]);
-    //sprintf_s( buffer, 1024, PAGE_TITLES[ nCurrentPage ], (*pnScrollOffset)+1 );
-    TextOut(hDC,
-        nDX + nBorder,
-        4 + nBorder,
-        NativeStr(buffer).c_str(), strlen(buffer));
-
-
-    //int nNextPage = (int)(m_nCurrentPage+1);
-    //if( nNextPage == (int)OP__MAX )
-    //	nNextPage = (int)OP_ACHIEVEMENTS;
-// 	sprintf_s( buffer, 1024, " A:%s", g_sPageTitles[nNextPage] );
-// 	TextOut( hDC, nDX+8, nHeight-24, buffer, strlen( buffer ) );
-
     //	Render controls:
-    SelectObject(hDC, g_hFontDesc2);
+    SelectFont(hDC, g_hFontDesc2);
     {
         const int nControlsX1 = 80 + 80 + 4;
         const int nControlsX2 = 80;
@@ -1235,43 +1207,55 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         const int nControlsY2 = rcTarget.bottom - 30 - 4;
 
         //	Fill again:
-        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, nHeight);
+        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
         FillRect(hDC, &rc, g_hBrushBG);
 
         //	Draw control text:
-        sprintf_s(buffer, 1024, " ->:%s ", "Next");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY1, NativeStr(buffer).c_str(), strlen(buffer));
-
-        sprintf_s(buffer, 1024, " <-:%s ", "Prev");
-        TextOut(hDC, nRightPx - nControlsX1, nControlsY2, NativeStr(buffer).c_str(), strlen(buffer));
-
-        char cBackChar = 'B';
-        char cSelectChar = 'A';
-
-        if (g_EmulatorID == RA_Gens)
         {
-            //	Genesis wouldn't use 'A' for select
-            cSelectChar = 'C';
+            ra::tstring stNext{ _T(" ->:") };
+            stNext += _T("Next ");
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::narrow_cast<int>(stNext.length()));
+        }
+        {
+            ra::tstring stPrev{ _T(" <-:") };
+            stPrev += _T("Prev ");
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::narrow_cast<int>(stPrev.length()));
         }
 
-        sprintf_s(buffer, 1024, " %c:%s ", cBackChar, "Back");
-        TextOut(hDC, nRightPx - nControlsX2, nControlsY1, NativeStr(buffer).c_str(), strlen(buffer));
+        _CONSTANT_LOC ctBackChar{ _T('B') };
+        auto ctSelectChar{ _T('A') };
 
-        sprintf_s(buffer, 1024, " %c:%s ", cSelectChar, "Select");
-        TextOut(hDC, nRightPx - nControlsX2, nControlsY2, NativeStr(buffer).c_str(), strlen(buffer));
+        //	Genesis wouldn't use 'A' for select
+        if (g_EmulatorID == RA_Gens)
+            ctSelectChar = _T('C');
+
+        {
+            ra::tstring stBack{ _T(" ") };
+            stBack += ctBackChar;
+            stBack += _T(":");
+            stBack += _T("Back ");
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::narrow_cast<int>(stBack.length()));
+        }
+        {
+            ra::tstring stSelect{ _T(" ") };
+            stSelect += ctSelectChar;
+            stSelect += _T(":");
+            stSelect += _T("Select ");
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::narrow_cast<int>(stSelect.length()));
+        }
     }
 
-    DeleteObject(g_hBrushBG);
-    DeleteObject(g_hBrushSelectedBG);
-    DeleteObject(g_hFontTitle);
-    DeleteObject(g_hFontDesc);
-    DeleteObject(g_hFontDesc2);
-    DeleteObject(g_hFontTiny);
+    DeleteBrush(g_hBrushBG);
+    DeleteBrush(g_hBrushSelectedBG);
+    DeleteFont(g_hFontTitle);
+    DeleteFont(g_hFontDesc);
+    DeleteFont(g_hFontDesc2);
+    DeleteFont(g_hFontTiny);
 
     // render backbuffer to real DC
-    BitBlt(hRealDC, 0, 0, rcDest->right - nDX, nHeight, hDC, 0, 0, SRCCOPY);
-    DeleteObject(hBitmap);
-    DeleteObject(hDC);
+    ::BitBlt(hRealDC, 0, 0, rcDest->right - nDX, lHeight, hDC, 0, 0, SRCCOPY);
+    DeleteBitmap(hBitmap);
+    ::DeleteDC(hDC);
 }
 
 void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const
@@ -1405,22 +1389,23 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
 
 const int* AchievementOverlay::GetActiveScrollOffset() const
 {
-    switch (m_Pages[m_nPageStackPointer])
+    switch (m_Pages.at(m_nPageStackPointer))
     {
-        case OP_ACHIEVEMENTS:
+        case Page::Achievements:
             return &m_nAchievementsScrollOffset;
-        case OP_FRIENDS:
+        case Page::Friends:
             return &m_nFriendsScrollOffset;
-        case OP_MESSAGES:
+        case Page::Messages:
             return &m_nMessagesScrollOffset;
-        case OP_NEWS:
+        case Page::News:
             return &m_nNewsScrollOffset;
-        case OP_LEADERBOARDS:
+        case Page::Leaderboards:
             return &m_nLeaderboardScrollOffset;
 
-        case OP_LEADERBOARD_EXAMINE:
-        case OP_ACHIEVEMENT_EXAMINE:
-            return 0;
+        case Page::Leaderboard_Examine:
+            _FALLTHROUGH;
+        case Page::Achievement_Examine:
+            return nullptr;
 
         default:
             ASSERT(!"Unknown page");
@@ -1430,22 +1415,23 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
 
 const int* AchievementOverlay::GetActiveSelectedItem() const
 {
-    switch (m_Pages[m_nPageStackPointer])
+    switch (m_Pages.at(m_nPageStackPointer))
     {
-        case OP_ACHIEVEMENTS:
+        case Page::Achievements:
             return &m_nAchievementsSelectedItem;	//	?
-        case OP_FRIENDS:
+        case Page::Friends:
             return &m_nFriendsSelectedItem;
-        case OP_MESSAGES:
+        case Page::Messages:
             return &m_nMessagesSelectedItem;
-        case OP_NEWS:
+        case Page::News:
             return &m_nNewsSelectedItem;
-        case OP_LEADERBOARDS:
+        case Page::Leaderboards:
             return &m_nLeaderboardSelectedItem;
 
-        case OP_ACHIEVEMENT_EXAMINE:
-        case OP_LEADERBOARD_EXAMINE:
-            return 0;
+        case Page::Achievement_Examine:
+            _FALLTHROUGH;
+        case Page::Leaderboard_Examine:
+            return nullptr;
 
         default:
             ASSERT(!"Unknown page");
@@ -1510,6 +1496,10 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 }
 
 void AchievementOverlay::UpdateImages() noexcept
+{
+    using ra::services::ImageReference;
+    m_hOverlayBackground = ImageReference{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
+    m_hUserImage         = ImageReference{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
 {
     m_hOverlayBackground.ChangeReference(ra::services::ImageType::Local, "Overlay\\overlayBG.png");
     m_hUserImage.ChangeReference(ra::services::ImageType::UserPic, RAUsers::LocalUser().Username());

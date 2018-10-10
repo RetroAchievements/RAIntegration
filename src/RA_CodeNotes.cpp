@@ -7,27 +7,25 @@
 #include "RA_AchievementSet.h" // RA_Achievement
 #include "RA_GameData.h"
 
+#include "services\ILocalStorage.hh"
+
 void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
-size_t CodeNotes::Load(const std::wstring& sFile)
+size_t CodeNotes::Load(ra::GameID nID)
 {
     Clear();
 
-    std::ifstream ifile{ sFile };
-    if (!ifile.is_open())
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, std::to_wstring(nID));
+    if (pData == nullptr)
         return 0U;
 
     rapidjson::Document doc;
-    rapidjson::IStreamWrapper isw{ ifile };
-    doc.ParseStream(isw);
-
+    LoadDocument(doc, *pData.get());
     if (doc.HasParseError())
         return 0U;
 
-    ASSERT(doc["CodeNotes"].IsArray());
-
-    const auto& NoteArray{ doc["CodeNotes"] };
-    for (const auto& note : NoteArray.GetArray())
+    for (const auto& note : doc.GetArray())
     {
         if (note["Note"].IsNull())
             continue;
@@ -63,7 +61,14 @@ void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
     //	Persist then reload
     const ra::GameID nGameID = doc["GameID"].GetUint();
 
-    _WriteBufferToFile(g_sHomeDir + RA_DIR_DATA + std::to_wstring(nGameID) + L"-Notes2.txt", doc);
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(nGameID));
+    if (pData != nullptr)
+    {
+        rapidjson::Document patchData;
+        patchData.CopyFrom(doc["CodeNotes"], doc.GetAllocator());
+        SaveDocument(patchData, *pData.get());
+    }
 
     g_MemoryDialog.RepopulateMemNotesFromFile();
 }

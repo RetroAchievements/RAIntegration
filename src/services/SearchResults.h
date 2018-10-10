@@ -23,14 +23,14 @@ public:
     /// Initializes a result set by comparing against the previous result set.
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
-    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nCompareType">GetType of comparison to apply.</param>
     void Initialize(const SearchResults& srSource, ComparisonType nCompareType);
 
     /// <summary>
     /// Initializes a result set by comparing against a provided value.
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
-    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nCompareType">GetType of comparison to apply.</param>
     /// <param name="nTestValue">The value to compare against.</param>
     void Initialize(const SearchResults& srSource, ComparisonType nCompareType, unsigned int nTestValue);
 

@@ -173,7 +173,7 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 //          if( hRequest != nullptr )
 //          {
 //              bResults = WinHttpSendRequest( hRequest, 
-//                  L"Content-Type: application/x-www-form-urlencoded",
+//                  L"Content-GetType: application/x-www-form-urlencoded",
 //                  0, 
 //                  WINHTTP_NO_REQUEST_DATA,
 //                  0, 

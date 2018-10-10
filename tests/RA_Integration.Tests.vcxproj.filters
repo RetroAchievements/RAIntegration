@@ -19,6 +19,9 @@
     <Filter Include="Tests\Mocks">
       <UniqueIdentifier>{4623f02c-7135-4cd4-ada2-36fa4b29520c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{5ab5f986-3dfc-4fc1-b952-b7926fe53660}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -114,6 +117,9 @@
     <ClCompile Include="services\FileLogger_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\pch.cpp">
+      <Filter>PCH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -136,6 +142,11 @@
     </ClInclude>
     <ClInclude Include="mocks\MockClock.hh">
       <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\pch.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

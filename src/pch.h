@@ -10,6 +10,12 @@
     We don't care about warnings for library files.
 */
 #pragma warning(push)
+#include <sdkddkver.h>
+
+#if (_WIN32_WINNT <= 0x0A00 /*_WIN32_WINNT_WIN10*/)
+#pragma warning(disable : 4091) // only happens in Win10 RTM (1507/10.0.10240) and below
+#endif /* _WIN32_WINNT <= WIN32_WINNT_WIN10 */
+
 #pragma warning(disable : 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
 /* Windows Stuff */
 #include "windows_nodefines.h"
@@ -21,11 +27,11 @@
 #include <WindowsX.h>
 #include <winhttp.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
+#if WIN32_LEAN_AND_MEAN
 #include <CommDlg.h>
 #include <MMSystem.h>
 #include <ShellAPI.h>
-#endif // WIN32_LEAN_AND_MEAN
+#endif /* WIN32_LEAN_AND_MEAN */
 
 /*
     Nuke WinAPI #defines - anything including this file should be using the
@@ -56,7 +62,7 @@
 #pragma warning(push)
 #pragma warning(disable : 26451 26495)
 /* RapidJSON Stuff */
-#if RA_EXPORTS
+#if (RA_EXPORTS || RA_UTEST)
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
 

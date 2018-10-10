@@ -4,7 +4,7 @@
 
 #include "ra_utility.h"
 
-#if !RA_EXPORTS
+#if !(RA_EXPORTS || RA_UTEST)
 #include "windows_nodefines.h"
 #include <Windows.h>
 #include <WindowsX.h>

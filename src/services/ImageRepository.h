@@ -67,7 +67,7 @@ public:
     ~ImageReference() noexcept;
 
     /// <summary>Updates the referenced image.</summary>
-    /// <param name="nType">GetType of the image.</param>
+    /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     void ChangeReference(ImageType nType, const std::string& sName);
 
@@ -95,12 +95,12 @@ public:
     bool Initialize();
 
     /// <summary>Ensures an image is available locally.</summary>
-    /// <param name="nType">GetType of the image.</param>
+    /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     void FetchImage(ImageType nType, const std::string& sName);
 
     /// <summary>Gets the HBITMAP for the requested image.</summary>
-    /// <param name="nType">GetType of the image.</param>
+    /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     /// <param name="bAddReference">
     ///   <c>true</c> to add a reference to the image. Image will remain in memory until
@@ -110,7 +110,7 @@ public:
     HBITMAP GetImage(ImageType nType, const std::string& sName, bool bAddReference);
 
     /// <summary>Releases a reference to an image.</summary>
-    /// <param name="nType">GetType of the image.</param>
+    /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     void ReleaseReference(ImageType nType, const std::string& sName) noexcept;
 

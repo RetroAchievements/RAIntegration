@@ -7,6 +7,7 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
+#include <set>
 #include <unordered_map>
 
 namespace ra {
@@ -29,28 +30,27 @@ public:
 
     bool DirectoryExists(const std::wstring& sDirectory) const override
     {
-        assert(!"not implemented");
-        return false;
+        return m_vDirectories.find(sDirectory) != m_vDirectories.end();
     }
 
     bool CreateDirectory(const std::wstring& sDirectory) const override
     {
-        assert(!"not implemented");
-        return false;
+        m_vDirectories.insert(sDirectory);
+        return true;
     }
 
     void MockFile(const std::wstring& sPath, const std::string& sContents)
     {
-        m_mFileContents[sPath] = sContents;
+        m_mFileContents.insert_or_assign(sPath, sContents);
     }
 
-    std::string& GetFileContents(const std::wstring& sPath)
+    const std::string& GetFileContents(const std::wstring& sPath)
     {
         auto pIter = m_mFileContents.find(sPath);
         if (pIter != m_mFileContents.end())
             return pIter->second;
 
-        static std::string sEmpty;
+        static const std::string sEmpty;
         return sEmpty;
     }
 
@@ -83,6 +83,7 @@ public:
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::IFileSystem> m_Override;
     std::wstring m_sBaseDirectory = L".\\";
+    mutable std::set<std::wstring> m_vDirectories;
     mutable std::unordered_map<std::wstring, std::string> m_mFileContents;
 };
 

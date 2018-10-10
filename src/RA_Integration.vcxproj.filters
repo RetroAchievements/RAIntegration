@@ -168,6 +168,9 @@
     <ClCompile Include="RA_Json.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\FileLocalStorage.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -373,6 +376,12 @@
     </ClInclude>
     <ClInclude Include="ui\win32\IDialogPresenter.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILocalStorage.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileLocalStorage.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

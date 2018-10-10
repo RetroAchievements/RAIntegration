@@ -142,8 +142,7 @@ extern std::string _TimeStampToString(time_t nTime);
 _Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
-extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);
-
+void DownloadAndActivateAchievementData(ra::GameID nGameID);
 BOOL CanCausePause();
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

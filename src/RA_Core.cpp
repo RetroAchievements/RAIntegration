@@ -1409,21 +1409,34 @@ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
 }
 
 _Use_decl_annotations_
-char* _BulkReadFileToBuffer(const wchar_t* const sFilename, long& nFileSizeOut)
+char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
-    nFileSizeOut = 0L;
-    std::ifstream ifile{ sFilename, std::ios::binary };
-    if (!ifile.is_open())
+    FILE* pf = nullptr;
+    _wfopen_s(&pf, sFilename, L"r");
+    if (pf == nullptr)
         return nullptr;
 
     // Calculate filesize
-    // TODO: Put in ra::narrow_cast later
-    nFileSizeOut = (long)(std::streamoff)ra::filesize(std::wstring{ sFilename });
+    fseek(pf, 0L, SEEK_END);
+    nFileSizeOut = ftell(pf);
+    fseek(pf, 0L, SEEK_SET);
 
+    if (nFileSizeOut <= 0)
+    {
+        //	No good content in this file.
+        fclose(pf);
+        return nullptr;
+    }
+
+    //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
-    auto pRawFileOut = std::make_unique<char[]>(nFileSizeOut + 1);
-    ifile.read(pRawFileOut.get(), nFileSizeOut);
-    return pRawFileOut.release(); // callers needs to manage it
+    char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
+    ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+
+    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
+    fclose(pf);
+
+    return pRawFileOut;
 }
 
 std::string _TimeStampToString(time_t nTime)

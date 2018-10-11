@@ -1946,13 +1946,11 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
         {
             ListBox_AddString(hGroupList, m_lbxGroupNames[i]);
         }
-
-        //	Try and restore selection
-        // TODO: Use narrow_cast later
-        if (nSel < 0 || nSel >= (int)(size_t)pCheevo->NumConditionGroups())
-            nSel = 0;	//	Reset to core if unsure
     }
 
+    //	Try and restore selection
+    if (nSel < 0 || nSel >= (int)pCheevo->NumConditionGroups())
+        nSel = 0;	//	Reset to core if unsure
     ListBox_SetCurSel(hGroupList, nSel);
 }
 

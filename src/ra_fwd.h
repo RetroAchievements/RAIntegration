@@ -44,7 +44,9 @@ using LPVOID = void*;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
-using HANDLE = void*;
+using HANDLE  = void*;
+using LPCTSTR = const TCHAR*;
+using LPTSTR  = TCHAR* ;
 #endif // !_WINNT_
 
 namespace ra {

@@ -33,6 +33,11 @@ public:
         m_sOutput.append(ra::Narrow(sText));
     }
 
+    void WriteLine() override
+    {
+        m_sOutput.append("\n");
+    }
+
     std::string& GetString() { return m_sOutput; }
 
 private:

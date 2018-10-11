@@ -29,7 +29,7 @@
       <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
     </Filter>
     <Filter Include="PCH">
-      <UniqueIdentifier>{612977db-b48f-4e56-84bb-02365c7de88b}</UniqueIdentifier>
+      <UniqueIdentifier>{8e6c1d9b-9649-45df-85ee-4d8f2870bd24}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -170,6 +170,9 @@
     </ClCompile>
     <ClCompile Include="RA_Json.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\FileLocalStorage.cpp">
+      <Filter>Services\Impl</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
@@ -379,6 +382,12 @@
     </ClInclude>
     <ClInclude Include="ui\win32\IDialogPresenter.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILocalStorage.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileLocalStorage.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="windows_nodefines.h">
       <Filter>PCH</Filter>

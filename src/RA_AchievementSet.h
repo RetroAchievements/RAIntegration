@@ -36,12 +36,8 @@ public:
     void Reset();
 
     _Success_(return)
-    BOOL LoadFromFile(_Inout_ ra::GameID nGameID);
-    BOOL SaveToFile();
-
-    BOOL DeletePatchFile(ra::GameID nGameID);
-
-    _NODISCARD std::wstring GetAchievementSetFilename(_In_ ra::GameID nGameID) noexcept;
+    bool LoadFromFile(_Inout_ ra::GameID nGameID);
+    bool SaveToFile() const;
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }

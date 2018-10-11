@@ -522,20 +522,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             ra::GameID nGameID = g_pCurrentGameData->GetGameID();
                             if (nGameID != 0)
                             {
-                                g_pCoreAchievements->DeletePatchFile(nGameID);
-                                g_pUnofficialAchievements->DeletePatchFile(nGameID);
-
-                                g_pCoreAchievements->Clear();
-                                g_pUnofficialAchievements->Clear();
-                                g_pLocalAchievements->Clear();
-
-                                //	Reload the achievements file (fetch from server fresh)
-
-                                AchievementSet::FetchFromWebBlocking(nGameID);
-
-                                g_pLocalAchievements->LoadFromFile(nGameID);
-                                g_pUnofficialAchievements->LoadFromFile(nGameID);
-                                g_pCoreAchievements->LoadFromFile(nGameID);
+                                DownloadAndActivateAchievementData(nGameID);
 
                                 //	Refresh dialog contents:
                                 OnLoad_NewRom(nGameID);

@@ -49,7 +49,7 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
         return;
     }
 
-    const auto nGameID{ static_cast<ra::GameID>(doc["GameID"].GetUint()) };
+    const auto nGameID{ doc["GameID"].GetUint() };
     const auto bHardcoreMode{ doc["HardcoreMode"].GetBool() };
     const auto& UserUnlocks{ doc["UserUnlocks"] };
 
@@ -278,7 +278,7 @@ bool AchievementSet::SaveToFile() const
 }
 
 //	static: fetches both core and unofficial
-BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
+BOOL AchievementSet::FetchFromWebBlocking(unsigned int nGameID)
 {
     //	Can't open file: attempt to find it on SQL server!
     PostArgs args;
@@ -316,7 +316,7 @@ BOOL AchievementSet::FetchFromWebBlocking(ra::GameID nGameID)
 }
 
 _Use_decl_annotations_
-bool AchievementSet::LoadFromFile(ra::GameID nGameID)
+bool AchievementSet::LoadFromFile(unsigned int nGameID)
 {
     if (nGameID == 0)
         return true;

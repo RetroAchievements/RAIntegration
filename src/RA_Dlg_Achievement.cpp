@@ -1092,7 +1092,7 @@ void Dlg_Achievements::LoadAchievements(HWND hList)
         AddAchievement(hList, g_pActiveAchievements->GetAchievement(i));
 }
 
-void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
+void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
 {
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), FALSE);
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE);

@@ -387,7 +387,7 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-void DownloadAndActivateAchievementData(ra::GameID nGameID)
+void DownloadAndActivateAchievementData(unsigned int nGameID)
 {
     g_pCoreAchievements->Clear();
     g_pUnofficialAchievements->Clear();
@@ -412,7 +412,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
     //	TBD: local DB of MD5 to ra::GameIDs here
-    ra::GameID nGameID = 0;
+    unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
@@ -424,7 +424,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
-            nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
+            nGameID = doc["GameID"].GetUint();
             if (nGameID == 0)	//	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());

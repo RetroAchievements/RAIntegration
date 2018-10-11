@@ -13,7 +13,7 @@
 
 void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
-size_t CodeNotes::Load(ra::GameID nID)
+size_t CodeNotes::Load(unsigned int nID)
 {
     Clear();
 
@@ -46,7 +46,7 @@ size_t CodeNotes::Load(ra::GameID nID)
     return m_CodeNotes.size();
 }
 
-BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
+BOOL CodeNotes::ReloadFromWeb(unsigned int nID)
 {
     if (nID == 0)
         return FALSE;
@@ -61,7 +61,7 @@ BOOL CodeNotes::ReloadFromWeb(ra::GameID nID)
 void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
 {
     //	Persist then reload
-    const ra::GameID nGameID = doc["GameID"].GetUint();
+    const auto nGameID = doc["GameID"].GetUint();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(nGameID));

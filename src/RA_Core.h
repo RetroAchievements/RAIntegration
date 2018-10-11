@@ -140,7 +140,7 @@ extern std::string _TimeStampToString(time_t nTime);
 _Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
-void DownloadAndActivateAchievementData(ra::GameID nGameID);
+void DownloadAndActivateAchievementData(unsigned int nGameID);
 BOOL CanCausePause();
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

@@ -56,7 +56,6 @@ using ARGB          = DWORD;
 using ByteAddress   = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
-using GameID        = std::size_t;
 
 } /* namespace ra */
 

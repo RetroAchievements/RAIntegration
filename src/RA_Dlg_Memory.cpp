@@ -8,10 +8,9 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#ifdef WIN32_LEAN_AND_MEAN
+#ifndef PCH_H
 #include <ShellAPI.h>
-#endif // WIN32_LEAN_AND_MEAN
-
+#endif /* !PCH_H */
 
 #ifndef ID_OK
 #define ID_OK                           1024
@@ -876,7 +875,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 if (m_SearchResults.size() > 0)
                 {
-                    TCHAR buffer[1024];
+                    TCHAR buffer[1024]{};
 
                     if (pDIS->itemID < 2)
                     {
@@ -966,7 +965,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
                     if (((LPNMHDR)lParam)->code == LVN_ITEMCHANGED || ((LPNMHDR)lParam)->code == NM_CLICK)
+#pragma warning(pop)
                     {
                         int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 
@@ -1467,7 +1469,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             ComboBox_SetCurSel(hMemWatch, 0);
 
             //	Note: as this is sorted, we should grab the desc again
-            TCHAR sAddrBuffer[64];
+            TCHAR sAddrBuffer[64]{};
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
 

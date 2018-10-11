@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <RA_DIR>$(SolutionDir)</RA_DIR>
-    <RapidJSON_IncludeDir>$(RA_DIR)rapidjson/include/</RapidJSON_IncludeDir>
-    <RA_SourceDir>$(RA_DIR)src/</RA_SourceDir>
+    <RapidJSON_IncludeDir>$(RA_DIR)rapidjson\include\</RapidJSON_IncludeDir>
+    <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
     <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir)</RA_IncludePath>
   </PropertyGroup>
   <PropertyGroup>
@@ -25,6 +25,11 @@
       <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>CreateDirectory, GetMessage</UndefinePreprocessorDefinitions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <PostBuildEvent>
       <Command>

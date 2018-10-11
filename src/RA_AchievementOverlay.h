@@ -4,7 +4,8 @@
 
 #include "RA_Achievement.h"
 #include "RA_User.h"
-#include "RA_Core.h" // RA_Interface
+#include "RA_Core.h" // for API; RA_Interface.h
+#include "services\ImageRepository.h" // map, string
 
 #include "services\ImageRepository.h" // map, string
 
@@ -25,24 +26,12 @@ extern LeaderboardExamine g_LBExamine;
 
 class AchievementExamine
 {
-public:
-    class RecentWinnerData
+    struct RecentWinnerData
     {
-    public:
-        RecentWinnerData(const std::string& sUser, const std::string& sWonAt) :
-            m_sUser(sUser), m_sWonAt(sWonAt)
-        {
-        }
-        const std::string& User() const { return m_sUser; }
-        const std::string& WonAt() const { return m_sWonAt; }
-
-    private:
         const std::string m_sUser;
         const std::string m_sWonAt;
+        friend class AchievementOverlay;
     };
-
-public:
-    AchievementExamine();
 
 public:
     void Initialize(const Achievement* pAchIn);
@@ -58,27 +47,26 @@ public:
     unsigned int TotalWinners() const { return m_nTotalWinners; }
     unsigned int PossibleWinners() const { return m_nPossibleWinners; }
 
-
     _NODISCARD inline auto begin() noexcept { return RecentWinners.begin(); }
     _NODISCARD inline auto begin() const noexcept { return RecentWinners.begin(); }
     _NODISCARD inline auto end() noexcept { return RecentWinners.end(); }
     _NODISCARD inline auto end() const noexcept { return RecentWinners.end(); }
 
 private:
-    const Achievement* m_pSelectedAchievement;
+    const Achievement* m_pSelectedAchievement{};
     std::string m_CreatedDate;
     std::string m_LastModifiedDate;
 
-    bool m_bHasData;
+    bool m_bHasData{};
 
     //	Data found:
-    unsigned int m_nTotalWinners;
-    unsigned int m_nPossibleWinners;
+    unsigned int m_nTotalWinners{};
+    unsigned int m_nPossibleWinners{};
 
     std::vector<RecentWinnerData> RecentWinners;
+    friend class AchievementOverlay;
 };
 extern AchievementExamine g_AchExamine;
-
 
 class AchievementOverlay
 {
@@ -143,20 +131,19 @@ public:
     BOOL GoBack();
     void SelectNextTopLevelPage(BOOL bPressedRight);
     void InstallNewsArticlesFromFile();
-
     void UpdateImages() noexcept;
 
 public:
     struct NewsItem
     {
-        unsigned int m_nID{};
-        std::string m_sTitle;
-        std::string m_sPayload;
-        time_t m_nPostedAt{};
-        std::string m_sPostedAt;
-        std::string m_sAuthor;
-        std::string m_sLink;
-        std::string m_sImage;
+        const std::size_t m_nID{};
+        const char* const m_sTitle{};
+        const char* const m_sPayload{};
+        const std::time_t m_nPostedAt{};
+        const char* m_sPostedAt{};
+        const char* const m_sAuthor{};
+        const char* const m_sLink{};
+        const char* const m_sImage{};
     };
 
 private:

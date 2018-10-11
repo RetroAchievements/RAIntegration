@@ -6,13 +6,14 @@
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 
-#include <fstream>
-
-#define WIN32_LEAN_AND_MEAN
-struct IUnknown;
+#ifndef PCH_H
+#include "windows_nodefines.h"
 #include <Windows.h>
 #include <Shlwapi.h>
 #undef CreateDirectory
+
+#include <fstream>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

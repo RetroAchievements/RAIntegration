@@ -55,12 +55,11 @@ protected:
         {
             std::string m_sDisplayString;
             MemValue m_memValue;
-            const Lookup* m_pLookup = nullptr;
+            const Lookup* m_pLookup{ nullptr };
             MemValue::Format m_nFormat = MemValue::Format::Value;
         };
 
     private:
-
         std::vector<Part> m_vParts;
         ConditionSet m_conditions;
     };

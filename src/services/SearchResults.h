@@ -1,9 +1,13 @@
+#ifndef SEARCHRESULTS_H
+#define SEARCHRESULTS_H
 #pragma once
 
 #include "RA_Condition.h" // ComparisonVariableSize, ComparisonType
 
-#include <vector>
+#ifndef PCH_H
 #include <functional>
+#include <vector>
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {
@@ -46,9 +50,9 @@ public:
 
     struct Result
     {
-        unsigned int nAddress;
-        unsigned int nValue;
-        ComparisonVariableSize nSize;
+        unsigned int nAddress{};
+        unsigned int nValue{};
+        ComparisonVariableSize nSize{};
     };
 
     /// <summary>
@@ -82,29 +86,29 @@ protected:
     {
     public:
         MemBlock(unsigned int nAddress, unsigned int nSize)
-            : nAddress(nAddress), nSize(nSize)
+            : m_nAddress(nAddress), m_nSize(nSize)
         {
             if (nSize > sizeof(m_vBytes))
                 m_pBytes = new unsigned char[nSize];
         }
 
         MemBlock(const MemBlock& other) noexcept
-            : MemBlock(other.nAddress, other.nSize)
+            : MemBlock(other.m_nAddress, other.m_nSize)
         {
-            if (nSize > sizeof(m_vBytes))
-                memcpy(m_pBytes, other.m_pBytes, nSize);
+            if (m_nSize > sizeof(m_vBytes))
+                memcpy(m_pBytes, other.m_pBytes, other.m_nAddress);
         }
 
         MemBlock(MemBlock&& other) noexcept
         {
-            nAddress = other.nAddress;
-            nSize = other.nSize;
+            m_nAddress = other.m_nAddress;
+            m_nSize = other.m_nSize;
 
-            if (other.nSize > sizeof(m_vBytes))
+            if (other.m_nSize > sizeof(m_vBytes))
             {
                 m_pBytes = other.m_pBytes;
                 other.m_pBytes = nullptr;
-                other.nSize = 0;
+                other.m_nSize = 0;
             }
             else
             {
@@ -112,27 +116,30 @@ protected:
             }
         }
 
-        ~MemBlock()
+        ~MemBlock() noexcept
         {
-            if (nSize > sizeof(m_vBytes))
-                delete m_pBytes;
+            if (m_nSize > sizeof(m_vBytes))
+            {
+                delete[] m_pBytes;
+                m_pBytes = nullptr;
+            }
         }
 
-        unsigned char* GetBytes() { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
-        const unsigned char* GetBytes() const { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+        unsigned char* GetBytes() { return (m_nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+        const unsigned char* GetBytes() const { return (m_nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
 
-        unsigned int GetAddress() const { return nAddress; }
-        unsigned int GetSize() const { return nSize; }
+        unsigned int GetAddress() const { return m_nAddress; }
+        unsigned int GetSize() const { return m_nSize; }
 
     private:
         union // 8 bytes
         {
-            unsigned char m_vBytes[8];
+            unsigned char m_vBytes[8]{};
             unsigned char* m_pBytes;
         };
 
-        unsigned int nAddress; // 4 bytes
-        unsigned int nSize;    // 4 bytes
+        unsigned int m_nAddress{}; // 4 bytes
+        unsigned int m_nSize{};    // 4 bytes
     };
     static_assert(sizeof(MemBlock) == 16, "sizeof(MemBlock) is incorrect");
 
@@ -144,14 +151,17 @@ private:
     void AddMatches(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
     void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
 
-    std::string m_sSummary;
+    std::string m_sSummary{};
     std::vector<MemBlock> m_vBlocks;
-    ComparisonVariableSize m_nSize = EightBit;
+    ComparisonVariableSize m_nSize{ EightBit };
 
     std::vector<unsigned int> m_vMatchingAddresses;
-    bool m_bUnfiltered = false;
+    bool m_bUnfiltered{};
 };
 
 } // namespace services
 } // namespace ra
 
+
+
+#endif /* !SEARCHRESULTS_H */

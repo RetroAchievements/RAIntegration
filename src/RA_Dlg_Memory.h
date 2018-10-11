@@ -53,6 +53,7 @@ private:
 
 struct SearchResult
 {
+    SearchResult() noexcept = default;
     ra::services::SearchResults m_results;
 
     std::vector<unsigned int> m_modifiedAddresses;
@@ -64,13 +65,14 @@ struct SearchResult
     {
         return std::find(m_modifiedAddresses.begin(), m_modifiedAddresses.end(), nAddress) != m_modifiedAddresses.end();
     }
+#pragma warning(push)
+#pragma warning(disable : 26495) // "variable" uninitialized
 };
+#pragma warning(pop)
+
 
 class Dlg_Memory
 {
-public:
-    Dlg_Memory() {}
-
 public:
     void Init();
 
@@ -113,7 +115,7 @@ private:
 
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;
-    ComparisonVariableSize m_nCompareSize;
+    ComparisonVariableSize m_nCompareSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

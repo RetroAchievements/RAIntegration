@@ -2,7 +2,9 @@
 #define RA_SERVICES_ICLOCK_HH
 #pragma once
 
-#include <chrono>
+#ifndef PCH_H
+#include <chrono>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

@@ -28,6 +28,9 @@
     <Filter Include="UI\Win32">
       <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{c0f72dbe-5f28-4a6a-a104-908015fb809f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -170,6 +173,9 @@
     </ClCompile>
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>PCH</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -382,6 +388,12 @@
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="windows_nodefines.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

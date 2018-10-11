@@ -2,9 +2,10 @@
 #define RA_DLG_RICHPRESENCE_H
 #pragma once
 
-struct IUnknown;
-#define NOMINMAX
-#include <WTypes.h>
+#ifndef PCH_H
+#include "windows_nodefines.h"
+#include <wtypes.h>
+#endif /* !PCH_H */
 
 class Dlg_RichPresence
 {

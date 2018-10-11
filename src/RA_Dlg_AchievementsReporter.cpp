@@ -7,7 +7,6 @@
 #include "RA_Resource.h"
 #include "RA_User.h"
 
-
 namespace {
 
 const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
@@ -105,7 +104,7 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
     return item.iItem;
 }
 
-INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
+INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -172,25 +171,36 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
-                    char sBugReportInFull[8192];
-                    sprintf_s(sBugReportInFull, 8192,
-                        "--New Bug Report--\n"
-                        "\n"
-                        "Game: %s\n"
-                        "Achievement IDs: %s\n"
-                        "Problem: %s\n"
-                        "Reporter: %s\n"
-                        "ROM Checksum: %s\n"
-                        "\n"
-                        "Comment: %s\n"
-                        "\n"
-                        "Is this OK?",
-                        g_pCurrentGameData->GameTitle().c_str(),
-                        sBuggedIDs,
-                        sProblemTypeNice,
-                        RAUsers::LocalUser().Username().c_str(),
-                        g_sCurrentROMMD5.c_str(),
-                        sBugReportComment.c_str());
+                    std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
+                    sBugReportInFull.append(g_pCurrentGameData->GameTitle());
+                    sBugReportInFull.append("\nAchievement IDs: ");
+                    sBugReportInFull.append(sBuggedIDs);
+                    sBugReportInFull.append("\nProblem: ");
+                    sBugReportInFull.append(sProblemTypeNice);
+                    sBugReportInFull.append("\nReporter: ");
+                    sBugReportInFull.append(RAUsers::LocalUser().Username());
+                    sBugReportInFull.append("\nROM Checksum: ");
+                    sBugReportInFull.append(g_sCurrentROMMD5);
+                    sBugReportInFull.append("\n\nComment: ");
+                    sBugReportInFull.append(sBugReportComment);
+                    sBugReportInFull.append("\n\nIs this OK?");
+
+                    if (sBugReportInFull.length() > 8192U)
+                    {
+                        ra::tstring stMsg;
+                        {
+                            std::basic_ostringstream<TCHAR> oss;
+                            oss << _T("Bug report is too long, it needs to be ")
+                                << sBugReportInFull.length() - 8192U
+                                << _T(" characters shorter.\n\n"
+                                    "Consider breaking up this bug report and try again!");
+                            stMsg = oss.str();
+                        }
+                        if (::MessageBox(nullptr, stMsg.c_str(), _T("Error"), MB_RETRYCANCEL | MB_ICONERROR) == IDRETRY)
+                            return TRUE; // User wants to try again
+                        FORWARD_WM_CLOSE(hDlg, ::PostMessage); // User doesn't want to retry
+                        return FALSE;
+                    }
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;
@@ -211,7 +221,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                             char buffer[2048];
                             sprintf_s(buffer, 2048, "Submitted OK!\n"
                                 "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n"
                                 "\n"
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"

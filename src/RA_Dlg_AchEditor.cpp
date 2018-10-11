@@ -1,6 +1,5 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include <Commdlg.h>
 #include "RA_AchievementSet.h"
 #include "RA_Resource.h"
 #include "RA_Core.h"
@@ -80,11 +79,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
 
 
 
-Dlg_AchievementEditor::Dlg_AchievementEditor()
-    : m_hAchievementEditorDlg(nullptr),
-    m_hICEControl(nullptr),
-    m_pSelectedAchievement(nullptr),
-    m_bPopulatingAchievementEditorData(false)
+Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
 {
     for (size_t i = 0; i < MAX_CONDITIONS; ++i)
     {
@@ -93,10 +88,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
         else
             _stprintf_s(m_lbxGroupNames[i], MEM_STRING_TEXT_LEN, _T("Alt %02d"), i);
     }
-}
-
-Dlg_AchievementEditor::~Dlg_AchievementEditor()
-{
 }
 
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
@@ -327,7 +318,10 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(push)
+#pragma warning(disable : 26454) // needs to be this way
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -384,7 +378,10 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -415,7 +412,10 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
             lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1538,7 +1538,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
                         lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                         lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
+#pragma warning(push)
+#pragma warning(disable : 26454) // we still need it unsigned
                         lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
                         lvDispinfo.item.mask = LVIF_TEXT;
                         lvDispinfo.item.iItem = nSelItem;
                         lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1947,11 +1950,12 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
         {
             ListBox_AddString(hGroupList, m_lbxGroupNames[i]);
         }
-    }
 
-    //	Try and restore selection
-    if (nSel < 0 || nSel >= (int)pCheevo->NumConditionGroups())
-        nSel = 0;	//	Reset to core if unsure
+        //	Try and restore selection
+        // TODO: Use narrow_cast later
+        if (nSel < 0 || nSel >= (int)(size_t)pCheevo->NumConditionGroups())
+            nSel = 0;	//	Reset to core if unsure
+    }
 
     ListBox_SetCurSel(hGroupList, nSel);
 }

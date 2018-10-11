@@ -15,9 +15,6 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
-#include <array>
-#include <fstream>
-#include <memory>
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -353,8 +350,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
         g_pCurrentGameData->SetGameID(nGameID);
                
         rapidjson::Document doc;
-        LoadDocument(doc, *pData.get());
-        if (doc.HasParseError())
+        if (LoadDocument(doc, *pData.get()) == doc.HasParseError())
         {
             ASSERT(!"Could not parse file?!");
             return false;
@@ -483,7 +479,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
     std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
 
-    char* pRawFile = _MallocAndBulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
+    auto pRawFile = _BulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
         const char* pIter = pRawFile;
@@ -505,7 +501,8 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             }
         }
 
-        free(pRawFile);
+        delete[] pRawFile;
+        pRawFile = nullptr;
     }
 }
 

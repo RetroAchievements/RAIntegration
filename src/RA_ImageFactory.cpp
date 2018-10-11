@@ -1,7 +1,5 @@
 #include "RA_ImageFactory.h"
 
-#include "RA_Defs.h"
-
 //////////////////////////////////////////////////////////////////////////
 
 void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)

@@ -5,7 +5,9 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
-#include <fstream>
+#ifndef PCH_H
+#include <fstream>  
+#endif /* !PCH_H */
 
 void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
 {
@@ -18,7 +20,8 @@ void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document
     doc.Accept(writer);
 }
 
-bool LoadDocument(_Out_ rapidjson::Document& doc, ra::services::TextReader& reader)
+_Use_decl_annotations_
+bool LoadDocument(rapidjson::Document& doc, ra::services::TextReader& reader)
 {
     auto* pFileTextReader = dynamic_cast<ra::services::impl::FileTextReader*>(&reader);
     if (pFileTextReader != nullptr)

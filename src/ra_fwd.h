@@ -38,6 +38,7 @@ using TCHAR = wchar_t;
 #endif /* !_TCHAR_DEFINED */
 
 #ifndef _WINDEF_
+using BOOL   = int;
 using DWORD  = unsigned long;
 using LPVOID = void*;
 #endif // !_WINDEF_
@@ -47,6 +48,8 @@ using HANDLE  = void*;
 using LPCTSTR = const TCHAR*;
 using LPTSTR  = TCHAR* ;
 #endif // !_WINNT_
+
+using LPCTCSTR = const TCHAR* const;
 
 namespace ra {
 
@@ -59,5 +62,15 @@ using LeaderboardID = std::size_t;
 using GameID        = std::size_t;
 
 } /* namespace ra */
+
+namespace std {
+
+#ifndef _CTIME_
+struct ::tm;
+
+using::time_t = unsigned long long;
+#endif /* !_CTIME_ */
+
+} /* namespace std */
 
 #endif /* !RA_FWD_H */

@@ -2,76 +2,28 @@
 #define RA_DEFS_H
 #pragma once
 
-// Windows stuff we DO need, they are commented out to show we need them, if for
-// some reason you get a compiler error put the offending NO* define here
-/*
-    #define NOCOLOR
-    #define NOCLIPBOARD - gave an error when put in the pch
-    #define NOCTLMGR
-    #define NODRAWTEXT
-    #define NOGDI
-    #define NOMB
-    #define NOMENUS
-    #define NOMSG
-    #define NONLS
-    #define NOOPENFILE
-    #define NORASTEROPS
-    #define NOSHOWWINDOW
-    #define NOTEXTMETRIC
-    #define NOUSER
-    #define NOVIRTUALKEYCODES
-    #define NOWINMESSAGES
-    #define NOWINOFFSETS
-    #define NOWINSTYLES
-*/
+#include "ra_utility.h"
 
-
-// Windows stuff we don't need
-#define WIN32_LEAN_AND_MEAN
-#define NOGDICAPMASKS
-#define NOSYSMETRICS
-#define NOICONS
-#define NOKEYSTATES
-#define NOSYSCOMMANDS
-#define OEMRESOURCE
-#define NOATOM
-#define NOKERNEL
-#define NOMEMMGR
-#define NOMETAFILE
-#define NOMINMAX
-#define NOSCROLL
-#define NOSERVICE
-#define NOSOUND
-#define NOWH
-#define NOCOMM
-#define NOKANJI
-#define NOHELP
-#define NOPROFILER
-#define NODEFERWINDOWPOS
-#define NOMCX  
-
-struct IUnknown;
+#if !(RA_EXPORTS || RA_UTEST)
+#include "windows_nodefines.h"
 #include <Windows.h>
 #include <WindowsX.h>
 
 #pragma warning(push)
-#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
+#pragma warning(disable : 4091)
 #include <ShlObj.h>
 #pragma warning(pop)
 
 #include <tchar.h>
 
+#include <cassert> 
+
 #include <map>
 #include <array> // algorithm, iterator, tuple
 #include <sstream> // string
 #include <queue> // deque, vector, algorithm
-#include "ra_utility.h"
 
-
-#if !RA_EXPORTS
-#include <cassert> 
 //	Version Information is integrated into tags
-
 #else
 
 #include "RA_Log.h"

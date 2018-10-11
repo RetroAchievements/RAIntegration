@@ -1,6 +1,7 @@
 #ifndef RA_DLG_ACHIEVEMENTSREPORTER_H
 #define RA_DLG_ACHIEVEMENTSREPORTER_H
 #pragma once
+
 #include "RA_Defs.h"
 
 class Achievement;

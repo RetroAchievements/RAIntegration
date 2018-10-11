@@ -4,7 +4,9 @@
 
 #include "ui/win32/Dlg_MessageBox.hh"
 
-#include <assert.h>
+#ifndef PCH_H
+#include <cassert>
+#endif /* !PCH_H */
 
 namespace ra {
 namespace ui {

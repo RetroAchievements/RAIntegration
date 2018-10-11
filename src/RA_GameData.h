@@ -18,7 +18,7 @@ public:
 #endif
 
 private:
-    ra::GameID m_nGameID;
+    ra::GameID m_nGameID{};
     std::string m_sGameTitle;
 };
 

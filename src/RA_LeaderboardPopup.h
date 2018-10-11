@@ -2,7 +2,6 @@
 #define RA_LEADERBOARDPOPUP_H
 #pragma once
 
-
 #include "RA_AchievementOverlay.h"
 
 //	Graphic to display current leaderboard progress
@@ -18,8 +17,6 @@ public:
     };
 
 public:
-    LeaderboardPopup();
-
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
     void Render(HDC hDC, RECT& rcDest);
 
@@ -33,8 +30,8 @@ private:
     float GetOffsetPct() const;
 
 private:
-    PopupState m_nState;
-    float m_fScoreboardShowTimer;
+    PopupState m_nState{};
+    float m_fScoreboardShowTimer{};
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 };

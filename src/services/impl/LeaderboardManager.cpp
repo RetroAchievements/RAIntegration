@@ -131,7 +131,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
             RA_LOG("%s", str.c_str());
         }
 
-        pLB->SubmitRankInfo(nRank, sUser, nUserScore, nSubmitted);
+        pLB->SubmitRankInfo(nRank, sUser.c_str(), nUserScore, nSubmitted);
     }
 
     pLB->SortRankInfo();

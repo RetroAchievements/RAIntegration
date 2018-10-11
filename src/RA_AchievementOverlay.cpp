@@ -11,9 +11,11 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
+#ifndef PCH_H
 #include <fstream>
 #include <memory>
-#include <ctime>
+#include <ctime>  
+#endif /* !PCH_H */
 
 namespace ra {
 
@@ -749,7 +751,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
         {
             {
                 std::string sUser{ " " };
-                sUser += data.User();
+                sUser += data.m_sUser;
                 sUser += "      ";
 
                 //	Draw/Fetch user image? //TBD
@@ -760,7 +762,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
             }
 
             std::string sWonAt{ "       " };
-            sWonAt += data.WonAt();
+            sWonAt += data.m_sWonAt;
             sWonAt += " ";
 
             TextOut(hDC,
@@ -808,9 +810,8 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
 
     for (int i = m_nNewsSelectedItem; i < static_cast<int>(m_LatestNews.size()); ++i)
     {
-        const char* sTitle = m_LatestNews[i].m_sTitle.c_str();
-        const char* sPayload = m_LatestNews[i].m_sPayload.c_str();
-
+        const auto sTitle{ m_LatestNews.at(i).m_sTitle };
+        const auto sPayload{ m_LatestNews.at(i).m_sPayload };
 
         SelectObject(hDC, g_hFontDesc2);
 
@@ -1023,7 +1024,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
                 sprintf_s(sRankText, 256, " %u ", rEntry.m_nRank);
 
                 char sNameText[256];
-                sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername.c_str());
+                sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername);
 
                 char sScoreText[256];
                 sprintf_s(sScoreText, 256, " %s ", sScoreFormatted.c_str());
@@ -1488,7 +1489,9 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
                 nNewsItem.m_sPostedAt = buffer;
             }
 
-            m_LatestNews.push_back(std::move(nNewsItem));
+            m_LatestNews.emplace_back(std::move(nNewsItem));
+            if (nNewsItem.m_sPostedAt)
+                nNewsItem.m_sPostedAt = nullptr;
         }
     }
 }
@@ -1498,15 +1501,6 @@ void AchievementOverlay::UpdateImages() noexcept
     using ra::services::ImageReference;
     m_hOverlayBackground = ImageReference{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
     m_hUserImage         = ImageReference{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
-}
-
-
-AchievementExamine::AchievementExamine() :
-    m_pSelectedAchievement(nullptr),
-    m_bHasData(false),
-    m_nTotalWinners(0),
-    m_nPossibleWinners(0)
-{
 }
 
 void AchievementExamine::Clear()
@@ -1564,14 +1558,14 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
     m_nTotalWinners    = ResponseData["NumEarned"].GetUint();
     m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
-    const auto& RecentWinnerData{ ResponseData["RecentWinner"] };
-    ASSERT(RecentWinnerData.IsArray());
-    for (auto& NextWinner : RecentWinnerData.GetArray())
+    const auto& vRecentWinnerData{ ResponseData["RecentWinner"] };
+    ASSERT(vRecentWinnerData.IsArray());
+    for (auto& NextWinner : vRecentWinnerData.GetArray())
     {
         const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.push_back({ oss.str(), _TimeStampToString(nDateAwarded) });
+        RecentWinners.emplace_back(RecentWinnerData{ oss.str(), _TimeStampToString(nDateAwarded) });
     }
 
     m_bHasData = true;

@@ -4,8 +4,6 @@
 
 #include "ra_fwd.h"
 
-#include <string>
-
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);

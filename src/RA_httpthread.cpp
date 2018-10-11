@@ -3,8 +3,8 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_AchievementSet.h"
 #include "RA_BuildVer.h"
+#include "RA_AchievementSet.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
@@ -14,10 +14,12 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#ifndef PCH_H
 #include <winhttp.h>
 #include <memory>
 #include <fstream>
-#include <time.h>
+#include <ctime> 
+#endif /* !PCH_H */
 
 const char* RequestTypeToString[] =
 {
@@ -255,31 +257,39 @@ void RAWeb::SetUserAgentString()
 #ifndef NTSTATUS
     #define NTSTATUS long
 #endif
-    using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-    auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion");
-    if (RtlGetVersion)
     {
-        RTL_OSVERSIONINFOEXW osVersion = {};
-        RtlGetVersion(&osVersion);
-        if (osVersion.dwMajorVersion > 0)
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+        const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
+        if (ntModule)
         {
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
+            auto RtlGetVersion{
+                reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+            };
+            RTL_OSVERSIONINFOEXW osVersion{};
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0)
+            {
+                std::ostringstream oss;
+                oss << "WindowsNT " << osVersion.dwMajorVersion << '.' << osVersion.dwMinorVersion
+                    << '.' << osVersion.dwBuildNumber;
+                sUserAgent.append(oss.str());
+            }
         }
     }
 
     sUserAgent.append(") Integration/");
+    {
+        std::ostringstream oss;
+        oss << RA_INTEGRATION_VERSION_MAJOR << '.' << RA_INTEGRATION_VERSION_MINOR
+            << '.' << RA_INTEGRATION_VERSION_REVISION << '.' << RA_INTEGRATION_VERSION_MODIFIED;
+        sUserAgent.append(oss.str());
+    }
 
-    auto buffer{ std::make_unique<char[]>(64U) };
-    sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
-              RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer.release());
-
-    const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
-    if (ptr != nullptr)
-        sUserAgent.append(ptr);
+    {
+        const auto szPosFound{ std::string{RA_INTEGRATION_VERSION_PRODUCT}.rfind('-') };
+        if (szPosFound != std::string::npos)
+            sUserAgent.append(std::string{RA_INTEGRATION_VERSION_PRODUCT }, szPosFound);
+    }
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 

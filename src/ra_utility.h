@@ -11,11 +11,38 @@
 */
 namespace ra {
 
-template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
-to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
-template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
-to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
+
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
+etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
+
+template<
+    typename Enum,
+    typename Integral = std::underlying_type_t<Enum>,
+    typename = std::enable_if_t<
+    std::is_enum_v<Enum> &&
+    std::is_integral_v<Integral> &&
+    std::is_convertible_v<Integral, std::underlying_type_t<Enum>>>
+> _NODISCARD _CONSTANT_VAR
+itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
+
+// function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
+template<typename Enum> _CONSTANT_VAR to_integral{ etoi<Enum> };
+template<typename Enum, typename Integral = std::underlying_type_t<Enum>>
+_CONSTANT_VAR to_enum{ itoe<Enum, Integral> };
+
+/// <summary>
+///   Used to determine how many casts are needed for a proper narrowing conversion.
+/// </summary>
+enum class ByteWidthDistances
+{
+    /// <summary>Four casts needed</summary>
+    EightTo1 = sizeof(double) - sizeof(char),
+    /// <summary>Three casts needed</summary>
+    EightTo2 = sizeof(double) - sizeof(short),
+    /// <summary>Two casts needed</summary>
+    EightTo4 = sizeof(double) - sizeof(int)
+};
 
 /// <summary>
 ///   Converts '<paramref name="from" />' into a <typeparamref name="NarrowedType" />.
@@ -42,7 +69,51 @@ template<
     std::is_arithmetic_v<WideType> &&
     has_smaller_or_same_size_than_v<NarrowedType, WideType>>
 > _NODISCARD _CONSTANT_FN
-narrow_cast(_In_ WideType from) noexcept { return static_cast<NarrowedType>(static_cast<WideType>(from)); }
+narrow_cast(_In_ WideType from) noexcept
+{
+    // Determines how many casts we need    
+    _CONSTANT_LOC sizeDiff{ itoe<ByteWidthDistances>(sizeof(WideType) - sizeof(NarrowedType)) };
+    switch (sizeDiff)
+    {
+        using fourbyte_t = std::int32_t;
+
+        case ByteWidthDistances::EightTo1:
+        {
+            using twobyte_t = std::int16_t;
+            if constexpr (std::is_signed_v<WideType>)
+            {
+                return (static_cast<NarrowedType>(static_cast<twobyte_t>(static_cast<fourbyte_t>(
+                    static_cast<WideType>(from)))));
+            }
+            if constexpr (std::is_unsigned_v<WideType>)
+            {
+                using ufourbyte_t = std::make_unsigned_t<fourbyte_t>;
+                using utwobyte_t  = std::make_unsigned_t<twobyte_t>;
+                return (static_cast<NarrowedType>(static_cast<utwobyte_t>(static_cast<ufourbyte_t>(
+                        static_cast<WideType>(from)))));
+            }
+        }
+        case ByteWidthDistances::EightTo2:
+        {
+            if constexpr (std::is_signed_v<WideType>)
+                return (static_cast<NarrowedType>(static_cast<fourbyte_t>(static_cast<WideType>(from))));
+            if constexpr (std::is_unsigned_v<WideType>)
+            {
+                using ufourbyte_t = std::make_unsigned_t<fourbyte_t>;
+                return (static_cast<NarrowedType>(static_cast<ufourbyte_t>(static_cast<WideType>(from))));
+            }
+        }
+        case ByteWidthDistances::EightTo4:
+            return (static_cast<NarrowedType>(static_cast<WideType>(from)));
+    }
+    return static_cast<NarrowedType>(from);
+}
+
+template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
+to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
+
+template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
+to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline auto
 to_tstring(_In_ Arithmetic a) noexcept
@@ -81,24 +152,6 @@ _NODISCARD _CONSTANT_FN ftou(_In_ FloatingPoint fp) noexcept { return to_unsigne
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
 _NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
-
-template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
-etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
-
-template<
-    typename Enum,
-    typename Integral = std::underlying_type_t<Enum>,
-    typename = std::enable_if_t<
-    std::is_enum_v<Enum> &&
-    std::is_integral_v<Integral> &&
-    std::is_convertible_v<Integral, std::underlying_type_t<Enum>>>
-> _NODISCARD _CONSTANT_VAR
-itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
-
-// function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
-template<typename Enum> _CONSTANT_VAR to_integral{ etoi<Enum> };
-template<typename Enum, typename Integral = std::underlying_type_t<Enum>>
-_CONSTANT_VAR to_enum{ itoe<Enum, Integral> };
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
@@ -150,16 +203,15 @@ tstrtoul(_In_z_ LPCTSTR _String,
 
 /*
     https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
-    TBD: Annotate ANSI compatibility (509 bytes even after concatenation) or Microsoft's (2,048 bytes)?
     Error Checking: First part might happen in MBCS mode but the standard does not reserve an error code for it.
     Remarks: The second part is Microsoft Specific. A single null-terminated c string may not exceed 2048 bytes,
              but may reach a total size of 65,535 bytes after concatenation.
     This check will only occur during code analysis, the standard does not have data contracts yet,
     i.e, expects, ensures... (GSL does though however).
 */
-_Success_((return != to_unsigned(-1)) && (return <= 2048U))
+_Success_((return <= RSIZE_MAX) && (return <= 2048U))
 /* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
-_NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
+_NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTCSTR _Str) noexcept
 {
 #if _MBCS
     return std::strlen(_Str);   

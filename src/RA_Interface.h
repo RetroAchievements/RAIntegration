@@ -4,8 +4,6 @@
 
 //	NB. Shared between RA_Integration and emulator
 
-typedef int BOOL;
-
 #ifndef CCONV
 #define CCONV __cdecl
 #endif

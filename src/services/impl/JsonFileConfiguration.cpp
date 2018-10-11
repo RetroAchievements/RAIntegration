@@ -6,7 +6,9 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#include <fstream>
+#ifndef PCH_H
+#include <fstream>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

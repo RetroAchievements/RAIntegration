@@ -3,11 +3,9 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
-#ifdef WIN32_LEAN_AND_MEAN
+#ifndef PCH_H
 #include <MMSystem.h>
-#endif // WIN32_LEAN_AND_MEAN
-
-
+#endif // !PCH_H
 
 namespace {
 const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up

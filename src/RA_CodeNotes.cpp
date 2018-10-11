@@ -21,8 +21,7 @@ size_t CodeNotes::Load(ra::GameID nID)
         return 0U;
 
     rapidjson::Document doc;
-    LoadDocument(doc, *pData.get());
-    if (doc.HasParseError())
+    if (LoadDocument(doc, *pData.get()) == doc.HasParseError())
         return 0U;
 
     for (const auto& note : doc.GetArray())

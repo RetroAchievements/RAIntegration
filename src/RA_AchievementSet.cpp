@@ -350,8 +350,7 @@ bool AchievementSet::LoadFromFile(ra::GameID nGameID)
         g_pCurrentGameData->SetGameID(nGameID);
                
         rapidjson::Document doc;
-        LoadDocument(doc, *pData.get());
-        if (doc.HasParseError())
+        if (LoadDocument(doc, *pData.get()) == doc.HasParseError())
         {
             ASSERT(!"Could not parse file?!");
             return false;

@@ -49,6 +49,8 @@ using LPCTSTR = const TCHAR*;
 using LPTSTR  = TCHAR* ;
 #endif // !_WINNT_
 
+using LPCTCSTR = const TCHAR* const;
+
 namespace ra {
 
 using tstring = std::basic_string<TCHAR>;
@@ -60,5 +62,15 @@ using LeaderboardID = std::size_t;
 using GameID        = std::size_t;
 
 } /* namespace ra */
+
+namespace std {
+
+#ifndef _CTIME_
+struct ::tm;
+
+using::time_t = unsigned long long;
+#endif /* !_CTIME_ */
+
+} /* namespace std */
 
 #endif /* !RA_FWD_H */

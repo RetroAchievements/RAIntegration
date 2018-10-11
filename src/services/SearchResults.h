@@ -151,17 +151,13 @@ private:
     void AddMatches(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
     void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
 
-    std::string m_sSummary;
+    std::string m_sSummary{};
     std::vector<MemBlock> m_vBlocks;
     ComparisonVariableSize m_nSize{ EightBit };
 
     std::vector<unsigned int> m_vMatchingAddresses;
-    bool m_bUnfiltered = false;
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
+    bool m_bUnfiltered{};
 };
-#pragma warning(pop)
-
 
 } // namespace services
 } // namespace ra

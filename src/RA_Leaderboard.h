@@ -7,7 +7,7 @@
 class RA_Leaderboard
 {
 public:
-    RA_Leaderboard(const ra::LeaderboardID nLBID);
+    RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept;
     virtual ~RA_Leaderboard() noexcept = default;
 
     void ParseFromString(const char* sBuffer, MemValue::Format format);
@@ -33,17 +33,16 @@ public:
 
     struct Entry
     {
-        unsigned int m_nRank{};
-        std::string	 m_sUsername;
-        int m_nScore{};
-        time_t m_TimeAchieved{};
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
+        std::size_t m_nRank{};
+        const char* m_sUsername{};
+        int         m_nScore{};
+        std::time_t m_TimeAchieved{};
     };
-#pragma warning(pop)
 
-
-    void SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved);
+    void SubmitRankInfo(_In_                       unsigned int      nRank,
+                        _In_z_ _In_range_(1, 2048) const char* const sUsername,
+                        _In_                       int               nScore,
+                        _In_                       std::time_t       nAchieved) noexcept;
     void ClearRankInfo() { m_RankInfo.clear(); }
     const Entry& GetRankInfo(unsigned int nAt) const { return m_RankInfo.at(nAt); }
     size_t GetRankInfoCount() const { return m_RankInfo.size(); }
@@ -65,16 +64,24 @@ private:
 
     MemValue				m_value;     // A collection of memory addresses and values to produce one value.
     MemValue				m_progress;  // A collection of memory addresses, used to show progress towards completion.
-    MemValue::Format        m_nFormat{}; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    MemValue::Format        m_nFormat{ MemValue::Format::Value }; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
     std::string				m_sTitle;       // The title of the leaderboard
     std::string				m_sDescription;	//	
 
     std::vector<Entry>	    m_RankInfo; // Recent users ranks
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
 };
-#pragma warning(pop)
 
+_Success_(return) _NODISCARD _CONSTANT_FN
+operator==(_In_ const RA_Leaderboard::Entry& a, _In_ const RA_Leaderboard::Entry& b) noexcept
+{
+    return(a.m_nRank == b.m_nRank);
+}
+
+_Success_(return) _NODISCARD _CONSTANT_FN
+operator<(_In_ const RA_Leaderboard::Entry& a, _In_ const RA_Leaderboard::Entry& b) noexcept
+{
+    return(a.m_nRank < b.m_nRank);
+}
 
 #endif // !RA_LEADERBOARD_H

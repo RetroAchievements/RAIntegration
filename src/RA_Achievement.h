@@ -148,9 +148,6 @@ private:
 
     unsigned short m_nUpvotes{};
     unsigned short m_nDownvotes{};
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
 };
-#pragma warning(pop)
 
 #endif // !RA_ACHIEVEMENT_H

@@ -7,11 +7,9 @@
 #include <ctime>  
 #endif /* !PCH_H */
 
-RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
-    m_nID(nLeaderboardID),
-    m_bStarted(false),
-    m_bSubmitted(false),
-    m_nFormat(MemValue::Format::Value)
+_Use_decl_annotations_
+RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept :
+    m_nID{ nLeaderboardID }
 {
 }
 
@@ -153,42 +151,22 @@ void RA_Leaderboard::Submit(unsigned int nScore)
     ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().SubmitLeaderboardEntry(*this, nScore);
 }
 
-void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)
+_Use_decl_annotations_
+void RA_Leaderboard::SubmitRankInfo(unsigned int nRank,
+                                    const char* const sUsername,
+                                    int nScore,
+                                    std::time_t nAchieved) noexcept
 {
-    Entry newEntry;
-    newEntry.m_nRank = nRank;
-    newEntry.m_sUsername = sUsername;
-    newEntry.m_nScore = nScore;
-    newEntry.m_TimeAchieved = nAchieved;
-
-    std::vector<Entry>::iterator iter = m_RankInfo.begin();
-    while (iter != m_RankInfo.end())
-    {
-        if ((*iter).m_nRank == nRank)
-        {
-            (*iter) = newEntry;
-            return;
-        }
-        iter++;
-    }
+    Entry entry{ nRank, sUsername, nScore, nAchieved };
+    if (std::binary_search(m_RankInfo.begin(), m_RankInfo.end(), entry))
+        return;
 
     //	If not found, add new entry.
-    m_RankInfo.push_back(newEntry);
+    m_RankInfo.emplace_back(std::move_if_noexcept(entry));
 }
 
 void RA_Leaderboard::SortRankInfo()
 {
-    for (size_t i = 0; i < m_RankInfo.size(); ++i)
-    {
-        for (size_t j = i + 1; j < m_RankInfo.size(); ++j)
-        {
-            if (m_RankInfo.at(i).m_nRank > m_RankInfo.at(j).m_nRank)
-            {
-                Entry temp = m_RankInfo[i];
-                m_RankInfo[i] = m_RankInfo[j];
-                m_RankInfo[j] = temp;
-            }
-        }
-    }
+    std::sort(m_RankInfo.begin(), m_RankInfo.end());
 }
 

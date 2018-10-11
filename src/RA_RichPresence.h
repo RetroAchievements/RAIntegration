@@ -57,14 +57,9 @@ protected:
             MemValue m_memValue;
             const Lookup* m_pLookup{ nullptr };
             MemValue::Format m_nFormat = MemValue::Format::Value;
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
         };
-#pragma warning(pop)
-
 
     private:
-
         std::vector<Part> m_vParts;
         ConditionSet m_conditions;
     };

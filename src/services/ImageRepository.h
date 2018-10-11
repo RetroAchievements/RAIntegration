@@ -28,30 +28,19 @@ public:
         ChangeReference(nType, sName);
     }
 
-#pragma warning(push)
-#pragma warning(disable : 26495)
-ImageReference(const ImageReference& source) noexcept :
-        m_nType{ source.m_nType }, m_sName{ source.m_sName }
+ImageReference(const ImageReference& source) noexcept
     {
+        m_nType = source.m_nType;
+        m_sName = source.m_sName;
         // don't copy m_hBitmap, it'll get initialized when GetHBitmap is called, which
         // will ensure the reference count is accurate.
     }
-#pragma warning(pop)
-
 
     ImageReference& operator=(const ImageReference&) noexcept = delete;
 
-    ImageReference(ImageReference&& source) noexcept :
-        m_nType{source.m_nType},
-        m_sName{std::move(source.m_sName)},
-        m_hBitmap{ source.m_hBitmap }
+    ImageReference(ImageReference&& source) noexcept       
     {
-        source.m_nType = ImageType{};
-        if (source.m_hBitmap != nullptr)
-        {
-            DeleteBitmap(source.m_hBitmap);
-            source.m_hBitmap = nullptr;
-        }
+        *this = std::move(source);
     }
 
     ImageReference& operator=(ImageReference&& source) noexcept

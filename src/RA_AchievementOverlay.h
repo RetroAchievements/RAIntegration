@@ -136,19 +136,15 @@ public:
 public:
     struct NewsItem
     {
-        unsigned int m_nID{};
-        std::string m_sTitle;
-        std::string m_sPayload;
-        time_t m_nPostedAt{};
-        std::string m_sPostedAt;
-        std::string m_sAuthor;
-        std::string m_sLink;
-        std::string m_sImage;
-#pragma warning(push)
-#pragma warning(disable : 26495) // "variable" uninitialized
+        const std::size_t m_nID{};
+        const char* const m_sTitle{};
+        const char* const m_sPayload{};
+        const std::time_t m_nPostedAt{};
+        const char* m_sPostedAt{};
+        const char* const m_sAuthor{};
+        const char* const m_sLink{};
+        const char* const m_sImage{};
     };
-#pragma warning(pop)
-
 
 private:
     inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };

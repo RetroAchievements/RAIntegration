@@ -10,7 +10,7 @@
     We don't care about warnings for library files.
 */
 #pragma warning(push)
-#pragma warning(disable : 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
+#pragma warning(disable : 4091 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
 /* Windows Stuff */
 #include "windows_nodefines.h"
 #include <atlbase.h> // atldef.h (Windows.h), atlcore.h (tchar.h), Shlwapi.h
@@ -54,7 +54,7 @@
 #include <stack>
 
 /* RapidJSON Stuff */
-#if RA_EXPORTS
+#if (RA_EXPORTS || RA_UTEST)
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
 

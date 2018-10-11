@@ -380,10 +380,10 @@
     <ClInclude Include="ui\win32\IDialogPresenter.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="windows_nodefines.h">
       <Filter>PCH</Filter>
     </ClInclude>
-    <ClInclude Include="windows_nodefines.h">
+    <ClInclude Include="pch.h">
       <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>

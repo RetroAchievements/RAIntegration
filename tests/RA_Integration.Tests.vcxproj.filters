@@ -114,6 +114,7 @@
     <ClCompile Include="services\FileLogger_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -137,5 +138,8 @@
     <ClInclude Include="mocks\MockClock.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\pch.h" />
   </ItemGroup>
 </Project>

@@ -222,9 +222,18 @@ const int SERVER_PING_DURATION = 2 * 60;
 #endif
 
 #include "RA_StringUtils.h"
-
+#include <iomanip>
 namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
+
+// Specify CharT explicitly if you want to use the opposite of the current character set
+template<typename CharT = TCHAR, class = std::enable_if_t<is_char_v<CharT>>>
+_NODISCARD inline auto ByteAddressToString(_In_ ByteAddress nAddr,
+                                           _In_ std::streamsize ssWidth = 6LL )
+{
+    std::basic_ostringstream<CharT> oss;
+    oss << _T("0x") << std::setfill(_T('0')) << std::setw(ssWidth) << std::hex << nAddr ;
+    return oss.str();
+}
 } // namespace ra
 
 #if _MBCS

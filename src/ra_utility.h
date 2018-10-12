@@ -157,7 +157,7 @@ tstrtoul(_In_z_ LPCTSTR _String,
     This check will only occur during code analysis, the standard does not have data contracts yet,
     i.e, expects, ensures... (GSL does though however).
 */
-_Success_((return != to_unsigned(-1)) && (return <= 2048U))
+_Success_((return != -1) && (return <= 2048U))
 /* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
 _NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
 {

@@ -527,69 +527,62 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     PAINTSTRUCT ps;
     HDC dc = BeginPaint(hTarget, &ps);
 
-    HDC hMemDC = CreateCompatibleDC(dc);
+    auto hMemDC{ CreateCompatibleDC(dc) };
 
     RECT rect;
     GetClientRect(hTarget, &rect);
-    int w = rect.right - rect.left;
-    int h = rect.bottom - rect.top - 6;
+    const auto w{ rect.right - rect.left };
+    const auto h{ rect.bottom - rect.top - 6 };
 
     //	Pick font
     if (m_hViewerFont == nullptr)
-        m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
-    HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
+        m_hViewerFont = GetStockFont(SYSTEM_FIXED_FONT);
+    auto hOldFont{ SelectFont(hMemDC, m_hViewerFont) };
 
-    HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
-    HGDIOBJ hOldBitmap = SelectObject(hMemDC, hBitmap);
+    auto hBitmap{ CreateCompatibleBitmap(dc, w, rect.bottom - rect.top) };
+    auto hOldBitmap{ SelectBitmap(hMemDC, hBitmap) };
 
     GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
 
     //	Fill white:
-    HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    FillRect(hMemDC, &rect, hBrush);
-    DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
+    auto hBrush{ GetStockBrush(WHITE_BRUSH) };
+    ::FillRect(hMemDC, &rect, hBrush);
+    ::DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
-    const char* sHeader;
+    LPCTSTR sHeader{ "" };
     switch (m_nDataSize)
     {
         case ThirtyTwoBit:
-            sHeader = "          0        4        8        c";
+            sHeader = _T("          0        4        8        c");
             break;
         case SixteenBit:
-            sHeader = "          0    2    4    6    8    a    c    e";
+            sHeader = _T("          0    2    4    6    8    a    c    e");
             break;
         default:
             m_nDataSize = EightBit;
             // fallthrough to EightBit
         case EightBit:
-            sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
-            break;
+            sHeader = _T("          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f");
     }
 
-    int lines = h / m_szFontSize.cy;
+    auto lines{ h / m_szFontSize.cy };
     lines -= 1;	//	Watch out for header
-    m_nDisplayedLines = lines;
+    m_nDisplayedLines = lines; 
 
-    TCHAR bufferNative[64];
-
-    int addr = m_nAddressOffset;
+    auto addr{ m_nAddressOffset };
     addr -= (0x40);	//	Offset will be this quantity (push up four lines)...
 
-    SetTextColor(hMemDC, RGB(0, 0, 0));
+    ::SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    unsigned char data[16];
-    unsigned int notes;
-    unsigned int bookmarks;
-    unsigned int freeze;
+    
+    unsigned int notes{};
+    unsigned int bookmarks{};
+    unsigned int freeze{};
 
-    RECT r;
-    r.top = 3;
-    r.left = 3;
-    r.bottom = r.top + m_szFontSize.cy;
-    r.right = rect.right - 3;
+    RECT r{ 3, 3, rect.right - 3, 3 + m_szFontSize.cy };
 
     //	Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+    DrawText(hMemDC, sHeader, ra::narrow_cast<int>(ra::tstrlen(sHeader)), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
     //	Adjust for header:
     r.top += m_szFontSize.cy;
@@ -619,27 +612,40 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             g_MemBookmarkDialog.WriteFrozenValue(*bm);
                     }
                 }
+                
 
+                TCHAR bufferNative[64]{};
+                const auto b{
+                    _stprintf_s(bufferNative, 64, _T("%s "), ra::ByteAddressToString(addr).c_str())
+                };
+
+                auto ptr{ bufferNative + b };
+
+                unsigned char data[16]{};
                 g_MemManager.ActiveBankRAMRead(data, addr, 16);
-
-                TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
                 {
                     case EightBit:
+                    {
                         for (int j = 0; j < 16; ++j)
-                            ptr += wsprintf(ptr, TEXT("%02x "), data[j]);
-                        break;
+                            ptr += _stprintf_s(ptr, 5U, TEXT("%02x "), data[j]);
+                    }break;
                     case SixteenBit:
+                    {
                         for (int j = 0; j < 16; j += 2)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x "), data[j + 1], data[j]);
-                        break;
+                            ptr += _stprintf_s(ptr, 9U, TEXT("%02x%02x "), data[j + 1], data[j]);
+                    }break;
                     case ThirtyTwoBit:
-                        for (int j = 0; j < 16; j += 4)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x%02x%02x "), data[j + 3], data[j + 2], data[j + 1], data[j]);
-                        break;
+                    {
+                        for (int j = 0; j < 32; j += 4)
+                        {
+                            ptr += _stprintf_s(ptr, 17U, TEXT("%02x%02x%02x%02x "),
+                                               data[j + 3], data[j + 2], data[j + 1], data[j]);
+                        }
+                    }
                 }
 
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                DrawText(hMemDC, bufferNative, ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                 if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
                 {
@@ -734,25 +740,26 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     }
 
     {
-        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-        HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
+        auto hPen{ ::CreatePen(PS_SOLID, 1, RGB(0, 0, 0)) };
+        auto hOldPen{ SelectPen(hMemDC, hPen) };
 
-        MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
-        LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
+        ::MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
+        ::LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
 
-        SelectObject(hMemDC, hOldPen);
-        DeleteObject(hPen);
+        SelectPen(hMemDC, hOldPen);
+        DeletePen(hPen);
+        hPen = nullptr;
     }
 
-    SelectObject(hMemDC, hOldFont);
+    ::DeleteFont(hMemDC, hOldFont);
 
-    BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
+    ::BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
 
-    SelectObject(hMemDC, hOldBitmap);
-    DeleteDC(hMemDC);
-    DeleteObject(hBitmap);
+    SelectBitmap(hMemDC, hOldBitmap);
+    ::DeleteDC(hMemDC);
+    ::DeleteBitmap(hBitmap);
 
-    EndPaint(hTarget, &ps);
+    ::EndPaint(hTarget, &ps);
 }
 
 void Dlg_Memory::Init()
@@ -1501,9 +1508,9 @@ void Dlg_Memory::OnLoad_NewRom()
         {
             TCHAR label[64];
             if (g_MemManager.TotalBankSize() > 0x10000)
-                wsprintf(label, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
             else
-                wsprintf(label, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
+                _stprintf_s(label, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
 
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), TRUE);
@@ -1518,9 +1525,9 @@ void Dlg_Memory::OnLoad_NewRom()
         {
             TCHAR label[64];
             if (g_MemManager.TotalBankSize() > 0x10000)
-                wsprintf(label, TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
             else
-                wsprintf(label, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
+                _stprintf_s(label, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
 
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);

@@ -108,23 +108,24 @@ _NODISCARD _CONSTANT_FN GetValue(_In_z_ const unsigned char* const pBuffer,
                                  _In_   unsigned int nOffset,
                                  _In_   MemSize nSize) noexcept
 {
-    [[maybe_unused]] const auto bufAtOffs{ static_cast<unsigned int>(pBuffer[nOffset]) };
+    // TBD: See if std::byte fits are purposes better
+    [[maybe_unused]] const auto uItemAtOffs{ static_cast<unsigned int>(pBuffer[nOffset]) };
     switch (nSize)
     {
         case MemSize::EightBit:
-            return bufAtOffs;
+            return uItemAtOffs;
         case MemSize::SixteenBit:
-            return (static_cast<unsigned int>(pBuffer[nOffset]) | (pBuffer[nOffset + 1] << 8U));
+            return (uItemAtOffs | (pBuffer[nOffset + 1] << 8U));
 
         case MemSize::ThirtyTwoBit:
-            return (bufAtOffs | (pBuffer[nOffset + 1] << 8U) |
+            return (uItemAtOffs | (pBuffer[nOffset + 1] << 8U) |
                 (pBuffer[nOffset + 2] << 16U) | (pBuffer[nOffset + 3] << 24U));
 
         case MemSize::Nibble_Upper:
-            return bufAtOffs >> 4U;
+            return uItemAtOffs >> 4U;
 
         case MemSize::Nibble_Lower:
-            return bufAtOffs & 0x0FU;
+            return uItemAtOffs & 0x0FU;
 
         default:
             return 0U;

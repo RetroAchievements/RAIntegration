@@ -175,7 +175,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompSource().Type() != ValueComparison)
     {
         sMemTypStrSrc = (Cond.CompSource().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = COMPARISONVARIABLESIZE_STR[Cond.CompSource().Size()];
+        sMemSizeStrSrc = MEMSIZE_STR.at(ra::etoi(Cond.CompSource().Size()));
     }
 
     const char* sMemTypStrDst = "Value";
@@ -183,7 +183,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompTarget().Type() != ValueComparison)
     {
         sMemTypStrDst = (Cond.CompTarget().Type() == Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = COMPARISONVARIABLESIZE_STR[Cond.CompTarget().Size()];
+        sMemSizeStrDst = MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().Size()));
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
@@ -657,7 +657,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f * nHeight * NumComparisonVariableSizeTypes),
+                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f * nHeight * MEMSIZE_STR.size()),
                 g_AchievementEditorDialog.GetHWND(),
                 0,
                 GetModuleHandle(nullptr),
@@ -670,12 +670,16 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            for (size_t i = 0; i < NumComparisonVariableSizeTypes; ++i)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONVARIABLESIZE_STR[i]).c_str());
+                auto i{ 0 };
+                for (auto& str : MEMSIZE_STR)
+                {
+                    ComboBox_AddString(g_hIPEEdit, str);
 
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONVARIABLESIZE_STR[i]) == 0)
-                    ComboBox_SetCurSel(g_hIPEEdit, i);
+                    if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
+                        ComboBox_SetCurSel(g_hIPEEdit, i);
+                    i++;
+                }
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -1154,8 +1158,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         return FALSE;
 
                     Condition NewCondition;
-                    NewCondition.CompSource().Set(EightBit, Address, 0x0000);
-                    NewCondition.CompTarget().Set(EightBit, ValueComparison, 0);	//	Compare defaults!
+                    NewCondition.CompSource().Set(MemSize::EightBit, Address, 0x0000);
+                    NewCondition.CompTarget().Set(MemSize::EightBit, ValueComparison, 0);	//	Compare defaults!
 
                     //	Helper: guess that the currently watched memory location
                     //	 is probably what they are about to want to add a cond for.
@@ -1725,24 +1729,26 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         case CSI_SIZE_SRC:
                         {
-                            for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
+                            auto i{ 0 };
+                            for (auto& str : MEMSIZE_STR)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
-                                    rCond.CompSource().SetSize(static_cast<ComparisonVariableSize>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.CompSource().SetSize(ra::itoe<MemSize>(i));
+                                i++;
                             }
-                            //	TBD: Limit validation
-                            break;
-                        }
+                            //	TBD: Limit validation                            
+                        }break;
                         case CSI_SIZE_TGT:
                         {
-                            for (int i = 0; i < NumComparisonVariableSizeTypes; ++i)
+                            auto i{ 0 };
+                            for (auto& str : MEMSIZE_STR)
                             {
-                                if (strcmp(sData, COMPARISONVARIABLESIZE_STR[i]) == 0)
-                                    rCond.CompTarget().SetSize(static_cast<ComparisonVariableSize>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.CompTarget().SetSize(ra::itoe<MemSize>(i));
+                                i++;
                             }
-                            //	TBD: Limit validation
-                            break;
-                        }
+                            //	TBD: Limit validation                           
+                        }break;
                         case CSI_COMPARISON:
                         {
                             for (int i = 0; i < NumComparisonTypes; ++i)

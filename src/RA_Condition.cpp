@@ -3,8 +3,6 @@
 
 #include <cctype>
 
-const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
 const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
@@ -12,46 +10,46 @@ static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must matc
 const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
 static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
-static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
+_NODISCARD _CONSTANT_FN PrefixToComparisonSize(_In_ char cPrefix) noexcept
 {
     //	Careful not to use ABCDEF here, this denotes part of an actual variable!
     switch (cPrefix)
     {
-        case 'M':	return Bit_0;
-        case 'N':	return Bit_1;
-        case 'O':	return Bit_2;
-        case 'P':	return Bit_3;
-        case 'Q':	return Bit_4;
-        case 'R':	return Bit_5;
-        case 'S':	return Bit_6;
-        case 'T':	return Bit_7;
-        case 'L':	return Nibble_Lower;
-        case 'U':	return Nibble_Upper;
-        case 'H':	return EightBit;
-        case 'X':	return ThirtyTwoBit;
+        case 'M':	return MemSize::Bit_0;
+        case 'N':	return MemSize::Bit_1;
+        case 'O':	return MemSize::Bit_2;
+        case 'P':	return MemSize::Bit_3;
+        case 'Q':	return MemSize::Bit_4;
+        case 'R':	return MemSize::Bit_5;
+        case 'S':	return MemSize::Bit_6;
+        case 'T':	return MemSize::Bit_7;
+        case 'L':	return MemSize::Nibble_Lower;
+        case 'U':	return MemSize::Nibble_Upper;
+        case 'H':	return MemSize::EightBit;
+        case 'X':	return MemSize::ThirtyTwoBit;
         default:
-        case ' ':	return SixteenBit;
+        case ' ':	return MemSize::SixteenBit;
     }
 }
 
-static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
+_NODISCARD _CONSTANT_FN ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
     {
-        case Bit_0:			return "M";
-        case Bit_1:			return "N";
-        case Bit_2:			return "O";
-        case Bit_3:			return "P";
-        case Bit_4:			return "Q";
-        case Bit_5:			return "R";
-        case Bit_6:			return "S";
-        case Bit_7:			return "T";
-        case Nibble_Lower:	return "L";
-        case Nibble_Upper:	return "U";
-        case EightBit:		return "H";
-        case ThirtyTwoBit:	return "X";
+        case MemSize::Bit_0:        return "M";
+        case MemSize::Bit_1:        return "N";
+        case MemSize::Bit_2:        return "O";
+        case MemSize::Bit_3:        return "P";
+        case MemSize::Bit_4:        return "Q";
+        case MemSize::Bit_5:        return "R";
+        case MemSize::Bit_6:        return "S";
+        case MemSize::Bit_7:        return "T";
+        case MemSize::Nibble_Lower: return "L";
+        case MemSize::Nibble_Upper: return "U";
+        case MemSize::EightBit:     return "H";
+        case MemSize::ThirtyTwoBit: return "X";
         default:
-        case SixteenBit:	return " ";
+        case MemSize::SixteenBit:   return " ";
     }
 }
 
@@ -267,7 +265,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     else
     {
         m_nVarSize = PrefixToComparisonSize(static_cast<char>(std::toupper(pBufferInOut[0])));
-        if (m_nVarSize != ComparisonVariableSize::SixteenBit)
+        if (m_nVarSize != MemSize::SixteenBit)
             pBufferInOut++;	//	In all cases except one, advance char ptr
     }
 

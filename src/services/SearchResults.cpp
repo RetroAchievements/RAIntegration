@@ -5,25 +5,25 @@
 namespace ra {
 namespace services {
 
-const unsigned int MAX_BLOCK_SIZE = 256 * 1024; // 256K
+_CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
-static unsigned int Padding(ComparisonVariableSize size)
+_NODISCARD _CONSTANT_FN Padding(_In_ MemSize size) noexcept
 {
     switch (size)
     {
-        case ThirtyTwoBit:
-            return 3;
-        case SixteenBit:
-            return 1;
+        case MemSize::ThirtyTwoBit:
+            return 3U;
+        case MemSize::SixteenBit:
+            return 1U;
         default:
-            return 0;
+            return 0U;
     }
 }
 
-void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, ComparisonVariableSize nSize)
+void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize)
 {
-    if (nSize == Nibble_Upper)
-        nSize = Nibble_Lower;
+    if (nSize == MemSize::Nibble_Upper)
+        nSize = MemSize::Nibble_Lower;
 
     m_nSize = nSize;
     m_bUnfiltered = true;
@@ -36,9 +36,9 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, Compa
 
     m_sSummary.reserve(64);
     m_sSummary.append("Cleared: (");
-    m_sSummary.append(COMPARISONVARIABLESIZE_STR[nSize]);
+    m_sSummary.append(ra::Narrow(MEMSIZE_STR.at(ra::etoi(nSize))));
     m_sSummary.append(") mode. Aware of ");
-    if (nSize == Nibble_Lower)
+    if (nSize == MemSize::Nibble_Lower)
         m_sSummary.append(std::to_string(nBytes * 2));
     else
         m_sSummary.append(std::to_string(nBytes));
@@ -103,28 +103,31 @@ static const char* ComparisonString(ComparisonType nCompareType)
     }
 }
 
-static unsigned int GetValue(const unsigned char* pBuffer, unsigned int nOffset, ComparisonVariableSize nSize)
+_Success_(return)
+_NODISCARD _CONSTANT_FN GetValue(_In_z_ const unsigned char* const pBuffer,
+                                 _In_   unsigned int nOffset,
+                                 _In_   MemSize nSize) noexcept
 {
+    [[maybe_unused]] const auto bufAtOffs{ static_cast<unsigned int>(pBuffer[nOffset]) };
     switch (nSize)
     {
-        case EightBit:
-            return pBuffer[nOffset];
+        case MemSize::EightBit:
+            return bufAtOffs;
+        case MemSize::SixteenBit:
+            return (static_cast<unsigned int>(pBuffer[nOffset]) | (pBuffer[nOffset + 1] << 8U));
 
-        case SixteenBit:
-            return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8);
+        case MemSize::ThirtyTwoBit:
+            return (bufAtOffs | (pBuffer[nOffset + 1] << 8U) |
+                (pBuffer[nOffset + 2] << 16U) | (pBuffer[nOffset + 3] << 24U));
 
-        case ThirtyTwoBit:
-            return pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8) |
-                (pBuffer[nOffset + 2] << 16) | (pBuffer[nOffset + 3] << 24);
+        case MemSize::Nibble_Upper:
+            return bufAtOffs >> 4U;
 
-        case Nibble_Upper:
-            return pBuffer[nOffset] >> 4;
-
-        case Nibble_Lower:
-            return pBuffer[nOffset] & 0x0F;
+        case MemSize::Nibble_Lower:
+            return bufAtOffs & 0x0FU;
 
         default:
-            return 0;
+            return 0U;
     }
 }
 
@@ -132,7 +135,7 @@ bool SearchResults::ContainsAddress(unsigned int nAddress) const
 {
     if (!m_bUnfiltered)
     {
-        if (m_nSize != Nibble_Lower)
+        if (m_nSize != MemSize::Nibble_Lower)
             return std::binary_search(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
 
         nAddress <<= 1;
@@ -284,18 +287,18 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 
     switch (m_nSize)
     {
-        case Nibble_Lower:
+        case MemSize::Nibble_Lower:
             ProcessBlocksNibbles(srSource, nTestValue & 0x0F, nCompareType);
             break;
 
-        case EightBit:
+        case MemSize::EightBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 return Compare(pMemory[nIndex], nTestValue, nCompareType);
             });
             break;
 
-        case SixteenBit:
+        case MemSize::SixteenBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
@@ -303,7 +306,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             });
             break;
 
-        case ThirtyTwoBit:
+        case MemSize::ThirtyTwoBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
                 unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
@@ -325,7 +328,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 {
     m_nSize = srSource.m_nSize;
 
-    if (m_nSize == EightBit)
+    if (m_nSize == MemSize::EightBit)
     {
         // efficient comparisons for 8-bit
         switch (nCompareType)
@@ -352,7 +355,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
                 break;
         }
     }
-    else if (m_nSize == Nibble_Lower)
+    else if (m_nSize == MemSize::Nibble_Lower)
     {
         // special logic for nibbles
         ProcessBlocksNibbles(srSource, 0xFFFF, nCompareType);
@@ -384,7 +387,7 @@ unsigned int SearchResults::MatchingAddressCount()
     for (auto& block : m_vBlocks)
         nCount += block.GetSize() - nPadding;
 
-    if (m_nSize == Nibble_Lower)
+    if (m_nSize == MemSize::Nibble_Lower)
         nCount *= 2;
 
     return nCount;
@@ -412,11 +415,11 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
     unsigned int nPadding = 0;
     if (m_bUnfiltered)
     {
-        if (m_nSize == Nibble_Lower)
+        if (m_nSize == MemSize::Nibble_Lower)
         {
             result.nAddress = (nIndex >> 1) + m_vBlocks[0].GetAddress();
             if (nIndex & 1)
-                result.nSize = Nibble_Upper;
+                result.nSize = MemSize::Nibble_Upper;
         }
         else
         {
@@ -433,10 +436,10 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
 
         result.nAddress = m_vMatchingAddresses[nIndex];
 
-        if (m_nSize == Nibble_Lower)
+        if (m_nSize == MemSize::Nibble_Lower)
         {
             if (result.nAddress & 1)
-                result.nSize = Nibble_Upper;
+                result.nSize = MemSize::Nibble_Upper;
 
             result.nAddress >>= 1;
         }

@@ -2,7 +2,7 @@
 #define RA_MEMMANAGER_H
 #pragma once
 
-#include "RA_Condition.h" // ComparisonVariableSize
+#include "RA_Condition.h" // MemSize
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
 typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
@@ -55,7 +55,7 @@ public:
     unsigned char ActiveBankRAMByteRead(ra::ByteAddress nOffs) const;
     void ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal);
 
-    unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const;
+    unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) const;
 
     void ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const;
 

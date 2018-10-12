@@ -27,7 +27,7 @@ double MemValue::Clause::GetValue() const
     {
         unsigned int nSecondVal = g_MemManager.ActiveBankRAMRead(m_nSecondAddress, m_nSecondVarSize);
 
-        if (m_bInvertBit && m_nSecondVarSize >= ComparisonVariableSize::Bit_0 && m_nSecondVarSize <= ComparisonVariableSize::Bit_7)
+        if (m_bInvertBit && m_nSecondVarSize >= MemSize::Bit_0 && m_nSecondVarSize <= MemSize::Bit_7)
             nSecondVal ^= 1;
 
         return nRetVal * nSecondVal;

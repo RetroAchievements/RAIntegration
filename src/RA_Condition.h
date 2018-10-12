@@ -3,7 +3,7 @@
 #pragma once
 #include "RA_Defs.h"
 
-enum ComparisonVariableSize
+enum class MemSize
 {
     Bit_0,
     Bit_1,
@@ -15,14 +15,28 @@ enum ComparisonVariableSize
     Bit_7,
     Nibble_Lower,
     Nibble_Upper,
-    //Byte,
-    EightBit,//=Byte,  
+    EightBit,  
     SixteenBit,
-    ThirtyTwoBit,
-
-    NumComparisonVariableSizeTypes
+    ThirtyTwoBit
 };
-extern const char* COMPARISONVARIABLESIZE_STR[];
+
+inline constexpr std::array<LPCTSTR, 13> MEMSIZE_STR
+{
+    _T("Bit0"),
+    _T("Bit1"),
+    _T("Bit2"),
+    _T("Bit3"),
+    _T("Bit4"),
+    _T("Bit5"),
+    _T("Bit6"),
+    _T("Bit7"),
+    _T("Lower4"),
+    _T("Upper4"),
+    _T("8-bit"),
+    _T("16-bit"),
+    _T("32-bit")
+};
+
 
 enum ComparisonVariableType
 {
@@ -56,13 +70,13 @@ public:
     CompVariable()
         : m_nVal(0),
         m_nPreviousVal(0),
-        m_nVarSize(ComparisonVariableSize::EightBit),
+        m_nVarSize(MemSize::EightBit),
         m_nVarType(ComparisonVariableType::Address)
     {
     }
 
 public:
-    void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    void Set(MemSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
@@ -85,8 +99,8 @@ public:
 
     unsigned int GetValue();				//	Returns the live value
 
-    inline void SetSize(ComparisonVariableSize nSize) { m_nVarSize = nSize; }
-    inline ComparisonVariableSize Size() const { return m_nVarSize; }
+    inline void SetSize(MemSize nSize) { m_nVarSize = nSize; }
+    inline MemSize Size() const { return m_nVarSize; }
 
     inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
     inline ComparisonVariableType Type() const { return m_nVarType; }
@@ -95,7 +109,7 @@ public:
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize;
+    MemSize m_nVarSize;
     ComparisonVariableType m_nVarType;
     unsigned int m_nVal;
     unsigned int m_nPreviousVal;

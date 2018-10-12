@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RA_Condition.h" // ComparisonVariableSize, ComparisonType
+#include "RA_Condition.h" // MemSize, ComparisonType
 
 #include <vector>
 #include <functional>
@@ -17,7 +17,7 @@ public:
     /// <param name="nAddress">The address to start reading from.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <param name="nSize">Size of the entries.</param>
-    void Initialize(unsigned int nAddress, unsigned int nBytes, ComparisonVariableSize nSize);
+    void Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize);
 
     /// <summary>
     /// Initializes a result set by comparing against the previous result set.
@@ -48,7 +48,7 @@ public:
     {
         unsigned int nAddress;
         unsigned int nValue;
-        ComparisonVariableSize nSize;
+        MemSize nSize;
     };
 
     /// <summary>
@@ -146,7 +146,7 @@ private:
 
     std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;
-    ComparisonVariableSize m_nSize = EightBit;
+    MemSize m_nSize = MemSize::EightBit;
 
     std::vector<unsigned int> m_vMatchingAddresses;
     bool m_bUnfiltered = false;

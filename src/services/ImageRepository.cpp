@@ -6,13 +6,6 @@
 #include "services/IThreadPool.hh"
 #include "services/ServiceLocator.hh"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-
-#include <atlbase.h>
-#include <wincodec.h>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

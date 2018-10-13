@@ -4,11 +4,6 @@
 
 #include "RA_Condition.h" // ComparisonVariableSize, ComparisonType
 
-#ifndef PCH_H
-#include <functional>
-#include <vector>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

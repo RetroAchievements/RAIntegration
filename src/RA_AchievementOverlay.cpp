@@ -11,12 +11,6 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include <fstream>
-#include <memory>
-#include <ctime>  
-#endif /* !PCH_H */
-
 namespace ra {
 
 inline constexpr std::array<LPCTSTR, 11> PAGE_TITLES

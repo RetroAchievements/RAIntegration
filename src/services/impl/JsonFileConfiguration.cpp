@@ -6,10 +6,6 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include <fstream>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

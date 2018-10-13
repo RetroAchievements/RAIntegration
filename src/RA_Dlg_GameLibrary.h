@@ -4,16 +4,6 @@
 
 #include "ra_fwd.h"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <WTypes.h>
-
-#include <deque>
-#include <map>
-#include <vector>
-#endif /* !PCH_H */
-
-
 class GameEntry
 {
 public:

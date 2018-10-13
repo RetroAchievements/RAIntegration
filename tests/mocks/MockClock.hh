@@ -5,8 +5,6 @@
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
-#include <unordered_map>
-
 namespace ra {
 namespace services {
 namespace mocks {

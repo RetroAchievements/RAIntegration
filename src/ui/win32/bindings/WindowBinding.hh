@@ -5,13 +5,6 @@
 #include "ui/BindingBase.hh"
 #include "ui/WindowViewModelBase.hh"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <WTypes.h>
-#include <string>
-#include <unordered_map>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace ui {
 namespace win32 {

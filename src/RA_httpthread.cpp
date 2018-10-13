@@ -15,13 +15,6 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include <winhttp.h>
-#include <memory>
-#include <fstream>
-#include <ctime> 
-#endif /* !PCH_H */
-
 const char* RequestTypeToString[] =
 {
     "RequestLogin",

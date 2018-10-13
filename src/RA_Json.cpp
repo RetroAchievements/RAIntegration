@@ -5,10 +5,6 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
-#ifndef PCH_H
-#include <fstream>  
-#endif /* !PCH_H */
-
 void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
 {
     std::ofstream ofile{ sFileName };

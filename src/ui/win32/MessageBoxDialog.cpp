@@ -2,13 +2,6 @@
 
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <WTypes.h>
-
-#undef GetMessage // ignore Windows macro  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace ui {
 namespace win32 {

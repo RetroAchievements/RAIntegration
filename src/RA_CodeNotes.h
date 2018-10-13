@@ -4,10 +4,6 @@
 
 #include "ra_fwd.h"
 
-#ifndef PCH_H
-#include <map>
-#endif /* !PCH_H */
-
 class CodeNotes
 {
 public:

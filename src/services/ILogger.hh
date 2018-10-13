@@ -2,10 +2,6 @@
 #define RA_SERVICES_ILOGGER_HH
 #pragma once
 
-#ifndef PCH_H
-#include <string>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

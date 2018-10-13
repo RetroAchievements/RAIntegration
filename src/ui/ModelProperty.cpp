@@ -1,9 +1,5 @@
 #include "ModelProperty.hh"
 
-#ifndef PCH_H
-#include <algorithm>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace ui {
 

@@ -4,10 +4,6 @@
 
 #include "services\IConfiguration.hh"
 
-#ifndef PCH_H
-#include <map>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

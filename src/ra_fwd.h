@@ -2,11 +2,6 @@
 #define RA_FWD_H
 #pragma once
 
-/* Forward declaring namespace std caused problems */
-#ifndef PCH_H
-#include <string>  
-#endif /* !PCH_H */
-
 #define _NORETURN            [[noreturn]]
 
 /* Maybe an extra check just in-case */

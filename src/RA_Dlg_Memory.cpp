@@ -8,10 +8,6 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#ifndef PCH_H
-#include <ShellAPI.h>
-#endif /* !PCH_H */
-
 #ifndef ID_OK
 #define ID_OK                           1024
 #endif

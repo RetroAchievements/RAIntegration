@@ -2,11 +2,6 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <wtypes.h>
-#endif /* !PCH_H */
-
 class RA_Dlg_RomChecksum
 {
 public:

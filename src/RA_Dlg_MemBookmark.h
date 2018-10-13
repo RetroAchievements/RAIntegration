@@ -2,7 +2,7 @@
 #define RA_DLG_MEMBOOKMARK_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 class MemBookmark
 {

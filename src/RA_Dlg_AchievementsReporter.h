@@ -4,11 +4,6 @@
 
 #include "ra_fwd.h"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <WTypes.h>
-#endif /* !PCH_H */
-
 class Achievement;
 
 class Dlg_AchievementsReporter
@@ -44,10 +39,5 @@ public:
 };
 
 extern Dlg_AchievementsReporter g_AchievementsReporterDialog;
-
-
-
-
-
 
 #endif // !RA_DLG_ACHIEVEMENTSREPORTER_H

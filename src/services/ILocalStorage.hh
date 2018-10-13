@@ -5,10 +5,6 @@
 #include "TextReader.hh"
 #include "TextWriter.hh"
 
-#ifndef PCH_H
-#include <string>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

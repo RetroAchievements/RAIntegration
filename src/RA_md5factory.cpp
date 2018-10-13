@@ -2,10 +2,6 @@
 
 #include "RA_Defs.h"
 
-#ifndef PCH_H
-#include <md5.h>  
-#endif /* !PCH_H */
-
 namespace {
 const static unsigned int MD5_STRING_LEN = 32;
 }

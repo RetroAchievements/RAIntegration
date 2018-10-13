@@ -2,10 +2,6 @@
 
 #include "RA_MemManager.h"
 
-#ifndef PCH_H
-#include <algorithm>  
-#endif /* !PCH_H */
-
 double MemValue::Clause::GetValue() const
 {
     unsigned int nRetVal = 0;

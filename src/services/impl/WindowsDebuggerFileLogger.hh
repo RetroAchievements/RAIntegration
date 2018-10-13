@@ -4,11 +4,6 @@
 
 #include "services\impl\FileLogger.hh"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <Windows.h>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

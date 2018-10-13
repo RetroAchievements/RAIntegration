@@ -7,10 +7,6 @@
 #include "RA_StringUtils.h"
 #include "ra_utility.h"
 
-#ifndef PCH_H
-#include <fstream>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

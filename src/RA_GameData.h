@@ -4,11 +4,6 @@
 
 #include "ra_fwd.h"
 
-#ifndef PCH_H
-#include <rapidjson\fwd.h>
-#endif /* !PCH_H */
-
-
 class GameData
 {
 public:

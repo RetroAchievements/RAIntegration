@@ -10,17 +10,6 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <Windows.h>
-
-#include <fstream>
-#include <iomanip>
-#include <memory>
-#include <mutex>
-#include <stack>
-#endif /* !PCH_H */
-
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 
 namespace {

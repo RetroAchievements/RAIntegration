@@ -31,10 +31,8 @@
     Nuke WinAPI #defines - anything including this file should be using the
     ra versions.
 */
-#if RA_EXPORTS
 #undef CreateDirectory
 #undef GetMessage
-#endif /* RA_EXPORTS */
 
 /* C Stuff */
 #include <cassert> 
@@ -52,18 +50,16 @@
 #include <set>
 #include <sstream> // string
 #include <stack>
+#include <unordered_map>
 
 /* RapidJSON Stuff */
-#if (RA_EXPORTS || RA_UTEST)
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
-
 #include <rapidjson\document.h> // has reader.h
 #include <rapidjson\writer.h> // has stringbuffer.h
 #include <rapidjson\istreamwrapper.h>
 #include <rapidjson\ostreamwrapper.h>
 #include <rapidjson\error\en.h>  
-#endif /* RA_EXPORTS */
 
 /* Other Libs */
 #include <md5.h>

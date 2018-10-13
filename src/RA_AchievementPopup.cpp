@@ -3,10 +3,6 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
-#ifndef PCH_H
-#include <MMSystem.h>
-#endif // !PCH_H
-
 namespace {
 const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
 const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel

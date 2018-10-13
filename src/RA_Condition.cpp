@@ -3,10 +3,6 @@
 
 #include "RA_Defs.h"
 
-#ifndef PCH_H
-#include <cctype>  
-#endif /* !PCH_H */
-
 const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 

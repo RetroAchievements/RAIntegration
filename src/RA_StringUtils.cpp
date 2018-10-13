@@ -2,14 +2,6 @@
 
 #include "ra_utility.h"
 
-#ifndef PCH_H
-#include <iomanip>
-#include <memory>
-
-#include "windows_nodefines.h"
-#include <Windows.h>  
-#endif /* !PCH_H */
-
 namespace ra {
 
 _Use_decl_annotations_

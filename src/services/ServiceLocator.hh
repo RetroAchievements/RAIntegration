@@ -8,11 +8,6 @@
 #include "RA_StringUtils.h"
 #endif
 
-#ifndef PCH_H
-#include <cassert>
-#include <memory>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

@@ -2,13 +2,6 @@
 #define RA_UI_MODEL_PROPERTY_H
 #pragma once
 
-#ifndef PCH_H
-#include <map>
-#include <mutex> // thread(memory)
-#include <set>
-#include <string>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace ui {
 

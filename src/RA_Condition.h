@@ -4,10 +4,6 @@
 
 #include "ra_fwd.h"
 
-#ifndef PCH_H
-#include <vector>
-#endif /* !PCH_H */
-
 enum ComparisonVariableSize
 {
     Bit_0,

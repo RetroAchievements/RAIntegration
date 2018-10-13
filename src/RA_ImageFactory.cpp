@@ -2,12 +2,6 @@
 
 #include "RA_Defs.h"
 
-#ifndef PCH_H
-#include "windows_nodefines.h"
-#include <Windows.h>
-#include <WindowsX.h>
-#endif /* !PCH_H */
-
 //////////////////////////////////////////////////////////////////////////
 
 void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)

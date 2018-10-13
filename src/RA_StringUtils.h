@@ -2,8 +2,6 @@
 #define RA_STRINGUTILS_H
 #pragma once
 
-#include "ra_fwd.h"
-
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);

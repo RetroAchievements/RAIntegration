@@ -2,10 +2,6 @@
 #define RA_SERVICES_ITHREADPOOL_HH
 #pragma once
 
-#ifndef PCH_H
-#include <functional>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

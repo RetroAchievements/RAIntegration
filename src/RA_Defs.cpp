@@ -1,9 +1,5 @@
 #include "RA_Defs.h"
 
-#ifndef PCH_H
-#include <iomanip>  
-#endif /* !PCH_H */
-
 namespace ra {
 
 _Use_decl_annotations_

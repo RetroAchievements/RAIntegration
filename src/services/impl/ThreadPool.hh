@@ -4,12 +4,6 @@
 
 #include "services\IThreadPool.hh"
 
-#ifndef PCH_H
-#include <cassert>
-#include <mutex>
-#include <queue>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

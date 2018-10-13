@@ -9,10 +9,6 @@
 #include "services\TextWriter.hh"
 #include "services\impl\FileTextWriter.hh"
 
-#ifndef PCH_H
-#include <mutex> // chrono (time.h) 
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

@@ -7,10 +7,6 @@
 
 #include "RA_Log.h"
 
-#ifndef PCH_H
-#include <cassert>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace ui {
 namespace win32 {

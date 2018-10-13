@@ -239,9 +239,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 newLookup.AddLookupData(nVal, sLabel);
             } while (true);
 
-#ifndef RA_UTEST
             RA_LOG("RP: Adding Lookup %s (%zu items)\n", sLookupName.c_str(), newLookup.NumItems());
-#endif /* !RA_UTEST */
         }
         else if (strncmp("Format:", sLine.c_str(), 7) == 0)
         {
@@ -251,9 +249,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 std::string sFormatType(sLine, 11);
                 MemValue::Format nType = MemValue::ParseFormat(sFormatType);
 
-#ifndef RA_UTEST
                 RA_LOG("RP: Adding Formatter %s (%s)\n", sFormatName.c_str(), sFormatType.c_str());
-#endif /* !RA_UTEST */
                 mFormats[sFormatName] = nType;
             }
         }

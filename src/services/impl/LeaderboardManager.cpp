@@ -7,10 +7,6 @@
 
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include <ctime>  
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 namespace impl {

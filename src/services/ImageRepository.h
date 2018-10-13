@@ -4,13 +4,6 @@
 
 #include "RA_Defs.h"
 
-#ifndef PCH_H
-#include <atomic>
-#include <mutex>
-#include <set>
-#include <unordered_map>
-#endif /* !PCH_H */
-
 namespace ra {
 namespace services {
 

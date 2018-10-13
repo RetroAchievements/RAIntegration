@@ -5,10 +5,6 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef PCH_H
-#include <ctime>  
-#endif /* !PCH_H */
-
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),
     m_bStarted(false),

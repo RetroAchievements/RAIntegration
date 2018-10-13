@@ -5,6 +5,11 @@
 #include "ra_fwd.h"
 #include "ra_type_traits.h"
 
+// don't like asserts but it's good for debugging
+#ifndef assert
+#include <cassert>
+#endif /* !assert */
+
 /*
     For most of these functions you won't have to specify the template argument as it will be auto-deduced unless
     stated otherwise.
@@ -135,7 +140,7 @@ filesize(std::basic_string<CharT>&& filename) noexcept
 _EXTERN_C
 /* A wrapper for converting a string to an unsigned long depending on the character set specified */
 _NODISCARD inline auto __cdecl
-tstrtoul(_In_z_ LPCTSTR _String,
+tcstoul(_In_z_ LPCTSTR const _String,
          _Out_opt_ _Deref_post_z_ LPTSTR* _EndPtr = nullptr,
          _In_ int _Radix = 10) /* calling functions might throw */
 {
@@ -146,7 +151,7 @@ tstrtoul(_In_z_ LPCTSTR _String,
 #else
 #error Unsupported character set detected.
 #endif /* _MBCS */
-} /* end function tstrtoul */
+} /* end function tcstoul */
 
 /*
     https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
@@ -157,7 +162,7 @@ tstrtoul(_In_z_ LPCTSTR _String,
     This check will only occur during code analysis, the standard does not have data contracts yet,
     i.e, expects, ensures... (GSL does though however).
 */
-_Success_((return != -1) && (return <= 2048U))
+_Success_((return != static_cast<unsigned>(-1)) && (return <= 2048U))
 /* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
 _NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
 {
@@ -171,6 +176,130 @@ _NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
 } /* end function tstrlen */
 
 _END_EXTERN_C
+
+// Pro-tip: don't use C functions, if you must there must be a lot of checks done.
+// TODO: Check if an arg is nullptr, it's kind of complicated
+/// <summary>Writes output to <paramref name="buffer" /> with arguments specified.</summary>
+/// <typeparam name="CharT">
+///   A character type, specify this explicitly to use a different character set than configured.
+///   Valid character types are <c>char</c>, <c>signed char</c>, and <c>wchar_T</c>. Using any other
+///   type will disable this function.
+/// </typeparam>
+/// <param name="buffer">
+///   Pointer to a character string to write to, if this is <c>nullptr</c>, the operation is
+///   undefined.
+/// </param>
+/// <param name="bufsz">
+///   Up to <c><paramref name="bufsz" /> - 1</c> characters may be written, plus the null terminator.
+///   If the size is <c>0</c> or greater than <c>RSIZE_MAX</c>, the operation is undefined.
+/// </param>
+/// <param name="format">
+///   Pointer to a null-terminated multibyte string or wide-character string specifying how to
+///   interpret the data. The format string consists of ordinary multibyte characters(except %),
+///   which are copied unchanged into the output stream, and conversion specifications. The %n
+///   specifier is considered undefined.
+/// </param>
+/// <param name="...args">
+///   Forwarded arguments specifying data to print. If the number of arguments is more than the
+///   number of format specifiers present, the operation is undefined.
+/// </param>
+/// <returns>
+///   The number of characters written to <paramref name="buffer" /> excluding the null character.
+/// </returns>
+/// <exception cref="std::runtime_error">The function has an encoding error.</exception>
+/// <exception cref="std::invalid_argument">
+///   <para>
+///     Thrown <paramref name="buffer" />, <paramref name="format" />, or any argument in
+///     <paramref name="...args" /> are <c>nullptr</c>.
+///   </para>
+/// </exception>
+/// <exception cref="std::out_of_range">
+///   <para><paramref name="bufsz" /> does not meet the specification.</para>
+///   <para>
+///     The string stored in <paramref name="buffer" /> is larger than <paramref name="bufsz" />.
+///   </para>
+///   <para>
+///     Number arguments of <paramref name="...args" /> is greater than format specifiers present.
+///   </para>
+/// </exception>
+/// <remarks>Exceptions are only explicitly thrown in release mode.</remarks>
+template<typename CharT = TCHAR, typename ...Args, typename = std::enable_if_t<is_char_v<CharT>>>
+_Success_(return >= 0) /*_NODISCARD*/ inline int __cdecl
+stprintf_s(_Inout_updates_bytes_(_BufferCount) CharT*       const __restrict buffer,
+           _In_range_(1, RSIZE_MAX)            rsize_t      const            bufsz,
+           _In_z_ _Printf_format_string_       const CharT* const __restrict format,
+           _In_                                Args&&...                     args)
+{
+#if _DEBUG
+    assert((buffer != nullptr) && (format != nullptr));
+    assert((bufsz > 0) && (bufsz <= RSIZE_MAX));
+    // too difficult as a generic
+    if constexpr(std::is_same_v<CharT, char>)
+    {
+        assert(std::string{ format }.find("%n") == std::string::npos);
+        std::string test{ format };
+        const auto num_specs{ std::count(test.begin(), test.end(), '%') };
+        assert(num_specs == sizeof...(args));
+    }
+    else if constexpr(std::is_same_v<CharT, wchar_t>)
+    {
+        assert(std::wstring{ format }.find(L"%n") == std::wstring::npos);
+        std::wstring test{ format };
+        const auto num_specs{ std::count(test.begin(), test.end(), L'%') };
+        assert(num_specs == sizeof...(args));
+    }
+#else
+    if ((buffer != nullptr) || (format != nullptr))
+        throw std::invalid_argument{ "nullptr arguments are undefined for this operation!" };
+    else if ((bufsz == 0) || (bufsz > RSIZE_MAX))
+    {
+        std::string msg;
+        {
+            std::ostringstream oss;
+            oss << "Invalid buffer size!\nValid range: 0 < bufsz <= " << RSIZE_MAX << '!';
+            msg = oss.str();
+        }
+        throw std::out_of_range{ msg };
+    }
+    else if constexpr (std::is_same_v<CharT, char>)
+        throw std::invalid_argument{ "The conversion specifier '%n' is unsupported!" };
+    else if constexpr (std::is_same_v<CharT, wchar_t>)
+        assert(std::wstring{ format }.find(L"%n") == std::wstring::npos);
+    else if(num_specs != sizeof...(args))
+        throw std::invalid_argument{ "The number of format specifiers and arguments must be identical!" };
+#endif /* _DEBUG */
+    
+    // MSVC doesn't seem to have constraint handlers like C11 we could throw an exception...
+    if constexpr (std::is_same_v<CharT, char>)
+    {
+        const int ret{ std::snprintf(buffer, bufsz, format, std::forward<Args>(args)...) };
+#if _DEBUG
+        assert(std::strlen(buffer) < bufsz);
+        assert(ret > 0);
+#else
+        if (std::strlen(buffer) > bufsz)
+            throw std::out_of_range{ "Stack or heap corruption detected, increase bufsz!" };
+        else if (ret < 0)
+            throw std::out_of_range{ "An encoding error has occurred, try using Unicode!" };
+#endif /* _DEBUG */
+
+        return ret;
+    }
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+    {
+        const int ret{ std::swprintf(buffer, bufsz, format, std::forward<Args>(args)...) };
+#if _DEBUG
+        assert(std::wcslen(buffer) < bufsz);
+        assert(ret > 0);
+#else
+        if (std::wcslen(buffer) > bufsz)
+            throw std::out_of_range{ "Stack or heap corruption detected, increase bufsz!" };
+        else if (ret < 0)
+            throw std::out_of_range{ "An encoding error has occurred, try using MultiByte!" };
+#endif /* _DEBUG */
+        return ret;
+    }
+}
 
 // Don't depend on std::rel_ops for stuff here because it assumes each parameter has the same type
 /// <summary>

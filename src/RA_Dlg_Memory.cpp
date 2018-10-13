@@ -527,64 +527,73 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     PAINTSTRUCT ps;
     HDC dc = BeginPaint(hTarget, &ps);
 
-    auto hMemDC{ CreateCompatibleDC(dc) };
+    HDC hMemDC = CreateCompatibleDC(dc);
 
     RECT rect;
     GetClientRect(hTarget, &rect);
-    const auto w{ rect.right - rect.left };
-    const auto h{ rect.bottom - rect.top - 6 };
+    int w = rect.right - rect.left;
+    int h = rect.bottom - rect.top - 6;
 
-    //	Pick font
+    //  Pick font
     if (m_hViewerFont == nullptr)
-        m_hViewerFont = GetStockFont(SYSTEM_FIXED_FONT);
-    auto hOldFont{ SelectFont(hMemDC, m_hViewerFont) };
+        m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
+    HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
 
-    auto hBitmap{ CreateCompatibleBitmap(dc, w, rect.bottom - rect.top) };
-    auto hOldBitmap{ SelectBitmap(hMemDC, hBitmap) };
+    HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
+    HGDIOBJ hOldBitmap = SelectObject(hMemDC, hBitmap);
 
     GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
 
-    //	Fill white:
-    auto hBrush{ GetStockBrush(WHITE_BRUSH) };
-    ::FillRect(hMemDC, &rect, hBrush);
-    ::DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
+    //  Fill white:
+    HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    FillRect(hMemDC, &rect, hBrush);
+    DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
-    LPCTSTR sHeader{ "" };
+    const char* sHeader;
     switch (m_nDataSize)
     {
         case ThirtyTwoBit:
-            sHeader = _T("          0        4        8        c");
+            sHeader = "          0        4        8        c";
             break;
         case SixteenBit:
-            sHeader = _T("          0    2    4    6    8    a    c    e");
+            sHeader = "          0    2    4    6    8    a    c    e";
             break;
         default:
             m_nDataSize = EightBit;
             // fallthrough to EightBit
         case EightBit:
-            sHeader = _T("          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f");
+            sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
+            break;
     }
 
-    auto lines{ h / m_szFontSize.cy };
-    lines -= 1;	//	Watch out for header
-    m_nDisplayedLines = lines; 
+    int lines = h / m_szFontSize.cy;
+    lines -= 1; //  Watch out for header
+    m_nDisplayedLines = lines;
 
-    auto addr{ m_nAddressOffset };
-    addr -= (0x40);	//	Offset will be this quantity (push up four lines)...
+    TCHAR bufferNative[64]{}; // fill all characters with null characters instead of garbage...
 
-    ::SetTextColor(hMemDC, RGB(0, 0, 0));
+    int addr = m_nAddressOffset;
+    addr -= (0x40); //  Offset will be this quantity (push up four lines)...
 
-    
-    unsigned int notes{};
-    unsigned int bookmarks{};
-    unsigned int freeze{};
+    SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    RECT r{ 3, 3, rect.right - 3, 3 + m_szFontSize.cy };
+    // TODO: Use std::byte instead if the intent is to pass raw data
+    //       Raw data shouldn't be assumed to be unsigned char
+    unsigned char data[16]{};
+    unsigned int notes;
+    unsigned int bookmarks;
+    unsigned int freeze;
 
-    //	Draw header:
-    DrawText(hMemDC, sHeader, ra::narrow_cast<int>(ra::tstrlen(sHeader)), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+    RECT r;
+    r.top = 3;
+    r.left = 3;
+    r.bottom = r.top + m_szFontSize.cy;
+    r.right = rect.right - 3;
 
-    //	Adjust for header:
+    //  Draw header:
+    DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+
+    //  Adjust for header:
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
@@ -612,40 +621,28 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             g_MemBookmarkDialog.WriteFrozenValue(*bm);
                     }
                 }
-                
 
-                TCHAR bufferNative[64]{};
-                const auto b{
-                    _stprintf_s(bufferNative, 64, _T("%s "), ra::ByteAddressToString(addr).c_str())
-                };
-
-                auto ptr{ bufferNative + b };
-
-                unsigned char data[16]{};
                 g_MemManager.ActiveBankRAMRead(data, addr, 16);
+
+                TCHAR* ptr = bufferNative + ra::stprintf_s(bufferNative, 64, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
                 {
                     case EightBit:
-                    {
+                        // "buffer" sizes are for the extra null character
                         for (int j = 0; j < 16; ++j)
-                            ptr += _stprintf_s(ptr, 5U, TEXT("%02x "), data[j]);
-                    }break;
+                            ptr += ra::stprintf_s(ptr, 5, TEXT("%02x "), data[j]);
+                        break;
                     case SixteenBit:
-                    {
                         for (int j = 0; j < 16; j += 2)
-                            ptr += _stprintf_s(ptr, 9U, TEXT("%02x%02x "), data[j + 1], data[j]);
-                    }break;
+                            ptr += ra::stprintf_s(ptr, 9, TEXT("%02x%02x "), data[j + 1], data[j]);
+                        break;
                     case ThirtyTwoBit:
-                    {
-                        for (int j = 0; j < 32; j += 4)
-                        {
-                            ptr += _stprintf_s(ptr, 17U, TEXT("%02x%02x%02x%02x "),
-                                               data[j + 3], data[j + 2], data[j + 1], data[j]);
-                        }
-                    }
+                        for (int j = 0; j < 16; j += 4)
+                            ptr += ra::stprintf_s(ptr, 17, TEXT("%02x%02x%02x%02x "), data[j + 3], data[j + 2], data[j + 1], data[j]);
+                        break;
                 }
 
-                DrawText(hMemDC, bufferNative, ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                 if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
                 {
@@ -740,26 +737,25 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     }
 
     {
-        auto hPen{ ::CreatePen(PS_SOLID, 1, RGB(0, 0, 0)) };
-        auto hOldPen{ SelectPen(hMemDC, hPen) };
+        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
 
-        ::MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
-        ::LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
+        MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
+        LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
 
-        SelectPen(hMemDC, hOldPen);
-        DeletePen(hPen);
-        hPen = nullptr;
+        SelectObject(hMemDC, hOldPen);
+        DeleteObject(hPen);
     }
 
-    ::DeleteFont(hMemDC, hOldFont);
+    SelectObject(hMemDC, hOldFont);
 
-    ::BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
+    BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
 
-    SelectBitmap(hMemDC, hOldBitmap);
-    ::DeleteDC(hMemDC);
-    ::DeleteBitmap(hBitmap);
+    SelectObject(hMemDC, hOldBitmap);
+    DeleteDC(hMemDC);
+    DeleteObject(hBitmap);
 
-    ::EndPaint(hTarget, &ps);
+    EndPaint(hTarget, &ps);
 }
 
 void Dlg_Memory::Init()
@@ -1079,9 +1075,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             ra::tstring buffer = nativeBuffer;
                             //	Read hex or dec
                             if (buffer[0] == '0' && buffer[1] == 'x')
-                                nValueQuery = ra::tstrtoul(buffer.c_str() + 2, nullptr, 16);
+                                nValueQuery = ra::tcstoul(buffer.c_str() + 2, nullptr, 16);
                             else
-                                nValueQuery = ra::tstrtoul(buffer.c_str());
+                                nValueQuery = ra::tcstoul(buffer.c_str());
                         }
 
                         sr.m_results.Initialize(srPrevious.m_results, nCmpType, nValueQuery);

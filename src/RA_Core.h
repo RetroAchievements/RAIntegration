@@ -99,6 +99,7 @@ extern "C" {
 
 //	Non-exposed:
 extern std::wstring g_sHomeDir;
+extern std::string g_sROMDirLocation;
 extern std::string g_sCurrentROMMD5;
 
 extern HINSTANCE g_hRAKeysDLL;

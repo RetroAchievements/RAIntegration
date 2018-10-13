@@ -155,14 +155,13 @@ tcstoul(_In_z_ LPCTSTR const _String,
 
 /*
     https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
-    TBD: Annotate ANSI compatibility (509 bytes even after concatenation) or Microsoft's (2,048 bytes)?
     Error Checking: First part might happen in MBCS mode but the standard does not reserve an error code for it.
     Remarks: The second part is Microsoft Specific. A single null-terminated c string may not exceed 2048 bytes,
              but may reach a total size of 65,535 bytes after concatenation.
     This check will only occur during code analysis, the standard does not have data contracts yet,
     i.e, expects, ensures... (GSL does though however).
 */
-_Success_((return != static_cast<unsigned>(-1)) && (return <= 2048U))
+_Success_((return != SIZE_MAX) && (return <= 2048U))
 /* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
 _NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
 {
@@ -206,23 +205,6 @@ _END_EXTERN_C
 /// <returns>
 ///   The number of characters written to <paramref name="buffer" /> excluding the null character.
 /// </returns>
-/// <exception cref="std::runtime_error">The function has an encoding error.</exception>
-/// <exception cref="std::invalid_argument">
-///   <para>
-///     Thrown <paramref name="buffer" />, <paramref name="format" />, or any argument in
-///     <paramref name="...args" /> are <c>nullptr</c>.
-///   </para>
-/// </exception>
-/// <exception cref="std::out_of_range">
-///   <para><paramref name="bufsz" /> does not meet the specification.</para>
-///   <para>
-///     The string stored in <paramref name="buffer" /> is larger than <paramref name="bufsz" />.
-///   </para>
-/// </exception>
-/// <exception cref="std::logic_error">
-///   Number arguments from <paramref name="...args" /> is greater than format specifiers present.
-/// </exception>
-/// <remarks>Exceptions are only explicitly thrown in release mode.</remarks>
 template<typename CharT = TCHAR, typename ...Args, typename = std::enable_if_t<is_char_v<CharT>>>
 _Success_(return >= 0) /*_NODISCARD*/ inline auto __cdecl
 stprintf_s(_Inout_updates_bytes_(bufsz)  CharT*       const __restrict buffer,
@@ -230,89 +212,37 @@ stprintf_s(_Inout_updates_bytes_(bufsz)  CharT*       const __restrict buffer,
            _In_z_ _Printf_format_string_ const CharT* const __restrict format,
            _In_                          Args&&...                     args)
 {
-#if _DEBUG
     assert((buffer != nullptr) && (format != nullptr));
     assert((bufsz > 0) && (bufsz <= RSIZE_MAX));
-    // too difficult as a generic
+    
     if constexpr(std::is_same_v<CharT, char>)
     {
-        assert(std::string{ format }.find("%n") == std::string::npos);
-        std::string test{ format };
-        const auto num_specs{ std::count(test.begin(), test.end(), '%') };
+        [[maybe_unused]] std::string_view test{ format };
+        assert(test.find("%n") == std::string::npos);
+        [[maybe_unused]] const auto num_specs{ std::count(test.begin(), test.end(), '%') };
         assert(num_specs == sizeof...(args));
     }
     else if constexpr(std::is_same_v<CharT, wchar_t>)
     {
-        assert(std::wstring{ format }.find(L"%n") == std::wstring::npos);
-        std::wstring test{ format };
-        const auto num_specs{ std::count(test.begin(), test.end(), L'%') };
+        [[maybe_unused]] std::wstring_view test{ format };
+        assert(test.find(L"%n") == std::wstring::npos);
+        [[maybe_unused]] const auto num_specs{ std::count(test.begin(), test.end(), L'%') };
         assert(num_specs == sizeof...(args));
     }
-#else
-    if ((buffer == nullptr) || (format == nullptr))
-        throw std::invalid_argument{ "nullptr arguments are undefined for this operation!" };
-    else if ((bufsz == 0) || (bufsz > RSIZE_MAX))
-    {
-        std::string msg;
-        {
-            std::ostringstream oss;
-            oss << "Invalid buffer size!\nValid range: 0 < bufsz <= " << RSIZE_MAX << '!';
-            msg = oss.str();
-        }
-        throw std::out_of_range{ msg };
-    }
-    else if constexpr (std::is_same_v<CharT, char>)
-    {
-        if (std::string{ format }.find("%n") != std::string::npos)
-            throw std::invalid_argument{ "The conversion specifier '%n' is unsupported!" };
-        {
-            std::string test{ format };
-            const auto num_specs{ std::count(test.begin(), test.end(), '%') };
-            if(num_specs != sizeof...(args))
-                throw std::logic_error{ "The number of format specifiers and arguments must be identical!" };
-        }
-    }
-    else if constexpr (std::is_same_v<CharT, wchar_t>)
-    {
-        if(std::wstring{ format }.find(L"%n") != std::wstring::npos)
-            throw std::invalid_argument{ "The conversion specifier '%n' is unsupported!" };
-        {
-            std::wstring test{ format };
-            const auto num_specs{ std::count(test.begin(), test.end(), L'%') };
-            if (num_specs != sizeof...(args))
-                throw std::logic_error{ "The number of format specifiers and arguments must be identical!" };
-        }
-    }
-#endif /* _DEBUG */
     
-    // MSVC doesn't seem to have constraint handlers like C11 we could throw an exception...
+    // MSVC doesn't seem to have constraint handlers like C11
     if constexpr (std::is_same_v<CharT, char>)
     {
         const auto ret{ std::snprintf(buffer, bufsz, format, std::forward<Args>(args)...) };
-#if _DEBUG
-        assert(std::strlen(buffer) < bufsz);
+        assert(std::char_traits<char>::length(buffer) < bufsz);
         assert(ret > 0);
-#else
-        if (std::strlen(buffer) > bufsz)
-            throw std::out_of_range{ "Stack or heap corruption detected, increase bufsz!" };
-        else if (ret < 0)
-            throw std::runtime_error{ "An encoding error has occurred, try using Unicode!" };
-#endif /* _DEBUG */
-
         return ret;
     }
     if constexpr (std::is_same_v<CharT, wchar_t>)
     {
         const auto ret{ std::swprintf(buffer, bufsz, format, std::forward<Args>(args)...) };
-#if _DEBUG
-        assert(std::wcslen(buffer) < bufsz);
+        assert(std::char_traits<wchar_t>::length(buffer) < bufsz);
         assert(ret > 0);
-#else
-        if (std::wcslen(buffer) > bufsz)
-            throw std::out_of_range{ "Stack or heap corruption detected, increase bufsz!" };
-        else if (ret < 0)
-            throw std::runtime_error{ "An encoding error has occurred, try using MultiByte!" };
-#endif /* _DEBUG */
         return ret;
     }
 }

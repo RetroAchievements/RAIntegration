@@ -2,7 +2,12 @@
 #define RA_DLG_ACHIEVEMENTSREPORTER_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#ifndef PCH_H
+#include "windows_nodefines.h"
+#include <WTypes.h>
+#endif /* !PCH_H */
 
 class Achievement;
 

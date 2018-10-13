@@ -2,7 +2,17 @@
 #define RA_DLG_GAMELIBRARY_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#ifndef PCH_H
+#include "windows_nodefines.h"
+#include <WTypes.h>
+
+#include <deque>
+#include <map>
+#include <vector>
+#endif /* !PCH_H */
+
 
 class GameEntry
 {

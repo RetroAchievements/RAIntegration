@@ -1,0 +1,42 @@
+#ifndef RA_SERVICES_ITHREADPOOL_HH
+#define RA_SERVICES_ITHREADPOOL_HH
+#pragma once
+
+#ifndef PCH_H
+#include <functional>  
+#endif /* !PCH_H */
+
+namespace ra {
+namespace services {
+
+class IThreadPool
+{
+public:
+    virtual ~IThreadPool() noexcept = default;
+
+    /// <summary>
+    /// Queues work for a background thread
+    /// </summary>
+    virtual void RunAsync(std::function<void()>&& f) noexcept = 0;
+
+    /// <summary>
+    /// Sets the <see ref="IsShutdownRequested" /> flag so threads can start winding down.
+    /// </summary>
+    /// <param name="bWait">
+    /// if <c>false</c>, start shutting down background threads and return. 
+    /// if <c>true</c> waits for the threads to finish shutting down before returning.
+    /// </param>
+    virtual void Shutdown(bool bWait) noexcept = 0;
+
+    /// <summary>
+    /// Determines whether the process has started shutting down.
+    /// </summary>
+    /// <returns><c>true</c> if shutdown has started.</returns>
+    /// <remarks>Long running background threads should occassionally check this and terminate early.</remarks>
+    virtual bool IsShutdownRequested() const noexcept = 0;
+};
+
+} // namespace services
+} // namespace ra
+
+#endif // !RA_SERVICES_ITHREADPOOL_HH

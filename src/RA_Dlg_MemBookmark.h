@@ -30,13 +30,13 @@ public:
 
 private:
     std::wstring m_sDescription;
-    unsigned int m_nAddress;
-    unsigned int m_nType;
-    unsigned int m_sValue;
-    unsigned int m_sPrevious;
-    unsigned int m_nCount = 0;
-    bool m_bFrozen = FALSE;
-    bool m_bDecimal = FALSE;
+    unsigned int m_nAddress  = 0U;
+    unsigned int m_nType     = 0U;
+    unsigned int m_sValue    = 0U;
+    unsigned int m_sPrevious = 0U;
+    unsigned int m_nCount    = 0U;
+    bool         m_bFrozen   = false;
+    bool         m_bDecimal  = false;
 };
 
 class Dlg_MemBookmark

@@ -164,6 +164,7 @@
     <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="mocks\MockClock.hh" />
+    <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />

@@ -2,7 +2,7 @@
 #define RA_MD5FACTORY_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 extern std::string RAGenerateMD5(const std::string& sStringToMD5);
 extern std::string RAGenerateMD5(const BYTE* pIn, size_t nLen);

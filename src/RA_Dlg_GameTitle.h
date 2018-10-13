@@ -2,7 +2,14 @@
 #define RA_DLG_GAMETITLE_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#ifndef PCH_H
+#include "windows_nodefines.h"
+#include <WTypes.h>
+
+#include <map>
+#endif /* !PCH_H */
 
 class Dlg_GameTitle
 {

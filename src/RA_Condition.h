@@ -2,7 +2,11 @@
 #define RA_CONDITION_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#ifndef PCH_H
+#include <vector>
+#endif /* !PCH_H */
 
 enum ComparisonVariableSize
 {
@@ -25,17 +29,6 @@ enum ComparisonVariableSize
 };
 extern const char* COMPARISONVARIABLESIZE_STR[];
 
-enum ComparisonVariableType
-{
-    Address,			//	compare to the value of a live address in RAM
-    ValueComparison,	//	a number. assume 32 bit 
-    DeltaMem,			//	the value last known at this address.
-    DynamicVariable,	//	a custom user-set variable
-
-    NumComparisonVariableTypes
-};
-extern const char* COMPARISONVARIABLETYPE_STR[];
-
 enum ComparisonType
 {
     Equals,
@@ -54,16 +47,24 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    CompVariable()
-        : m_nVal(0),
-        m_nPreviousVal(0),
-        m_nVarSize(ComparisonVariableSize::EightBit),
-        m_nVarType(ComparisonVariableType::Address)
+    enum class Type
     {
-    }
+        Address,         // compare to the value of a live address in RAM
+        ValueComparison, //	a number. assume 32 bit 
+        DeltaMem,        // the value last known at this address.
+        DynamicVariable  // a custom user-set variable
+    };
+
+    inline static constexpr std::array<const char*, 4> TYPE_STR
+    {
+        "Memory",
+        "Value",
+        "Delta",
+        "DynVar"
+    };
 
 public:
-    void Set(ComparisonVariableSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    void Set(ComparisonVariableSize nSize, Type nType, unsigned int nInitialValue)
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
@@ -89,17 +90,17 @@ public:
     inline void SetSize(ComparisonVariableSize nSize) { m_nVarSize = nSize; }
     inline ComparisonVariableSize Size() const { return m_nVarSize; }
 
-    inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
-    inline ComparisonVariableType Type() const { return m_nVarType; }
+    _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
+    _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
 
     inline unsigned int RawValue() const { return m_nVal; }
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize;
-    ComparisonVariableType m_nVarType;
-    unsigned int m_nVal;
-    unsigned int m_nPreviousVal;
+    ComparisonVariableSize m_nVarSize{ EightBit };
+    Type m_nVarType{};
+    unsigned int m_nVal{};
+    unsigned int m_nPreviousVal{};
 };
 
 

@@ -1,5 +1,7 @@
 #include "RA_md5factory.h"
 
+#include "RA_Defs.h"
+
 #ifndef PCH_H
 #include <md5.h>  
 #endif /* !PCH_H */

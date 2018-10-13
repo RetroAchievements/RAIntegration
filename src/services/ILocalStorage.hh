@@ -2,10 +2,12 @@
 #define RA_SERVICES_ILOCALSTORAGE_HH
 #pragma once
 
-#include <string>
-
 #include "TextReader.hh"
 #include "TextWriter.hh"
+
+#ifndef PCH_H
+#include <string>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {
@@ -25,7 +27,7 @@ class ILocalStorage
 {
 public:
     virtual ~ILocalStorage() noexcept = default;
-    
+
     /// <summary>
     /// Begins reading stored data for the specified <paramref name="nType"/> and <paramref name="sKey" />.
     /// </summary>

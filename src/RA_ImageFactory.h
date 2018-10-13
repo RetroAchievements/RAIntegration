@@ -2,7 +2,7 @@
 #define RA_IMAGEFACTORY_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 //////////////////////////////////////////////////////////////////////////
 //	Image Factory

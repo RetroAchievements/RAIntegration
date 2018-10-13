@@ -1,6 +1,7 @@
 #include "RA_GameData.h"
 
 #include "services\ILocalStorage.hh"
+#include "services\ServiceLocator.hh"
 
 GameData* g_pCurrentGameData = new GameData();
 

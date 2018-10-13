@@ -12,6 +12,7 @@
 #include "RA_RichPresence.h"
 
 #include "services\IConfiguration.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 #ifndef PCH_H
@@ -52,8 +53,6 @@ const char* RequestTypeToString[] =
 
     "RequestUserPic",
     "RequestBadge",
-
-    "STOP_THREAD",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
@@ -87,8 +86,6 @@ const char* RequestTypeToPost[] =
 
     "_requestuserpic_",     //  TBD RequestUserPic
     "_requestbadge_",       //  TBD RequestBadge
-
-    "_stopthread_",         //  STOP_THREAD
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
@@ -107,10 +104,10 @@ static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!"
 //  No game-specific code here please!
 
 std::vector<HANDLE> g_vhHTTPThread;
-HttpResults HttpRequestQueue;
 
 HANDLE RAWeb::ms_hHTTPMutex = nullptr;
 HttpResults RAWeb::ms_LastHttpResults;
+time_t RAWeb::ms_tSendNextKeepAliveAt = time(nullptr);
 
 PostArgs PrevArgs;
 
@@ -709,16 +706,6 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
         return FALSE;
     }
 }
-//
-//BOOL RAWeb::HTTPRequestExists( const char* sRequestPageName )
-//{
-//  return HttpRequestQueue.PageRequestExists( sRequestPageName );
-//}
-
-BOOL RAWeb::HTTPRequestExists(RequestType nType, const std::string& sData)
-{
-    return HttpRequestQueue.PageRequestExists(nType, sData);
-}
 
 BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 {
@@ -728,162 +715,77 @@ BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
 //  Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
-    HttpRequestQueue.PushItem(new RequestObject(nType, PostData, sData));
-    RA_LOG(__FUNCTION__ " added '%s', ('%s'), queue (%u)\n", RequestTypeToString[nType], sData.c_str(), HttpRequestQueue.Count());
+    auto* pObj = new RequestObject(nType, PostData, sData);
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([pObj]()
+    {
+        std::string sResponse;
+        DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), sResponse);
+
+        pObj->SetResponse(sResponse);
+        ms_LastHttpResults.PushItem(pObj);
+    });
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-void RAWeb::RA_InitializeHTTPThreads()
+void RAWeb::SendKeepAlive()
 {
-    RA_LOG(__FUNCTION__ " called\n");
+    if (!RAUsers::LocalUser().IsLoggedIn())
+        return;
 
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    unsigned int nNumHTTPThreads = pConfiguration.GetNumBackgroundThreads();
+    //  Post a pingback once every few minutes to keep the server aware of our presence
+    time_t tNow = time(nullptr);
+    if (tNow < ms_tSendNextKeepAliveAt)
+        return;
 
-    RAWeb::ms_hHTTPMutex = CreateMutex(nullptr, FALSE, nullptr);
-    for (size_t i = 0; i < nNumHTTPThreads; ++i)
+    ms_tSendNextKeepAliveAt = tNow + SERVER_PING_DURATION;
+
+    PostArgs args;
+    args['u'] = RAUsers::LocalUser().Username();
+    args['t'] = RAUsers::LocalUser().Token();
+    args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
+
+    if (RA_GameIsActive())
     {
-        DWORD dwThread;
-        HANDLE hThread = CreateThread(nullptr, 0, RAWeb::HTTPWorkerThread, (void*)i, 0, &dwThread);
-        ASSERT(hThread != nullptr);
-        if (hThread != nullptr)
+        if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive())
         {
-            g_vhHTTPThread.push_back(hThread);
-            RA_LOG(__FUNCTION__ " Adding HTTP thread %d (%08x, %08x)\n", i, dwThread, hThread);
+            if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
+                args['m'] = "Developing Achievements";
+            else if (_RA_HardcoreModeIsActive())
+                args['m'] = "Inspecting Memory in Hardcore mode";
+            else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+                args['m'] = "Fixing Achievements";
+            else
+                args['m'] = "Developing Achievements";
         }
-    }
-}
-
-//  Takes items from the http request queue, and posts them to the last http results queue.
-DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
-{
-    time_t nSendNextKeepAliveAt = time(nullptr) + SERVER_PING_DURATION;
-
-    bool bThreadActive = true;
-    bool bDoPingKeepAlive = (reinterpret_cast<int>(lpParameter) == 0);  //  Cause this only on first thread
-
-    while (bThreadActive)
-    {
-        WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-        RequestObject* pObj = HttpRequestQueue.PopNextItem();
-        ReleaseMutex(RAWeb::Mutex());
-        if (pObj != nullptr)
+        else
         {
-            std::string Response;
-            switch (pObj->GetRequestType())
+            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
+            if (!sRPResponse.empty())
             {
-                case StopThread:    //  Exception:
-                    bThreadActive = false;
-                    bDoPingKeepAlive = false;
-                    break;
-
-                default:
-                    DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), Response);
-                    break;
+                args['m'] = sRPResponse;
             }
-
-            pObj->SetResponse(Response);
-
-            if (bThreadActive)
+            else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
             {
-                //  Push object over to results queue - let app deal with them now.
-                ms_LastHttpResults.PushItem(pObj);
+                args['m'] = "Earning Achievements";
             }
             else
             {
-                //  Take ownership and delete(): we caused the 'pop' earlier, so we have responsibility to
-                //   either pass to LastHttpResults, or deal with it here.
-                SAFE_DELETE(pObj);
+                char buffer[128];
+                snprintf(buffer, sizeof(buffer), "Playing %s", g_pCurrentGameData->GameTitle().c_str());
+                args['m'] = buffer;
             }
         }
-
-        if (bDoPingKeepAlive)
-        {
-            //  Post a pingback once every few minutes to keep the server aware of our presence
-            if (time(nullptr) > nSendNextKeepAliveAt)
-            {
-                nSendNextKeepAliveAt += SERVER_PING_DURATION;
-
-                //  Post a keepalive packet:
-                if (RAUsers::LocalUser().IsLoggedIn())
-                {
-                    PostArgs args;
-                    args['u'] = RAUsers::LocalUser().Username();
-                    args['t'] = RAUsers::LocalUser().Token();
-                    args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
-
-                    if (RA_GameIsActive())
-                    {
-                        if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive())
-                        {
-                            if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
-                                args['m'] = "Developing Achievements";
-                            else if (_RA_HardcoreModeIsActive())
-                                args['m'] = "Inspecting Memory in Hardcore mode";
-                            else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-                                args['m'] = "Fixing Achievements";
-                            else
-                                args['m'] = "Developing Achievements";
-                        }
-                        else
-                        {
-                            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
-                            if (!sRPResponse.empty())
-                            {
-                                args['m'] = sRPResponse;
-                            }
-                            else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
-                            {
-                                args['m'] = "Earning Achievements";
-                            }
-                            else
-                            {
-                                char buffer[128];
-                                snprintf(buffer, sizeof(buffer), "Playing %s", g_pCurrentGameData->GameTitle().c_str());
-                                args['m'] = buffer;
-                            }
-                        }
-                    }
-
-                    //  Scott: Temporarily removed; Ping and RP are merged at current
-                    //   and if we don't constantly poll the server, the players are dropped
-                    //   from 'currently playing'.
-                    //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
-                    {
-                        RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
-                        PrevArgs = args;
-                    }
-                }
-            }
-        }
-
-        if (HttpRequestQueue.Count() > 0)
-            RA_LOG(__FUNCTION__ " (%08x) request queue is at %u\n", GetCurrentThreadId(), HttpRequestQueue.Count());
-
-        Sleep(100);
     }
 
-    //  Delete and empty queue - allocated data is within!
-    RAWeb::ms_LastHttpResults.Clear();
-    return 0;
-}
-
-void RAWeb::RA_KillHTTPThreads()
-{
-    RA_LOG(__FUNCTION__ " called\n");
-
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
+    //  Scott: Temporarily removed; Ping and RP are merged at current
+    //   and if we don't constantly poll the server, the players are dropped
+    //   from 'currently playing'.
+    //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
     {
-        //  Create n of these:
-        RAWeb::CreateThreadedHTTPRequest(RequestType::StopThread);
-    }
-
-    for (size_t i = 0; i < g_vhHTTPThread.size(); ++i)
-    {
-        //  Wait for n responses:
-        DWORD nResult = WaitForSingleObject(g_vhHTTPThread[i], INFINITE);
-        RA_LOG(__FUNCTION__ " ended, result %d\n", nResult);
+        RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
+        PrevArgs = args;
     }
 }
 

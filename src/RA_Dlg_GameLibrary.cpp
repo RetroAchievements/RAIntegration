@@ -11,6 +11,9 @@
 #include "services\ServiceLocator.hh"
 
 #ifndef PCH_H
+#include "windows_nodefines.h"
+#include <Windows.h>
+
 #include <fstream>
 #include <iomanip>
 #include <memory>

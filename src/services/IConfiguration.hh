@@ -4,7 +4,9 @@
 
 #include "ui\WindowViewModelBase.hh"
 
-#include <string>
+#ifndef PCH_H
+#include <string>  
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

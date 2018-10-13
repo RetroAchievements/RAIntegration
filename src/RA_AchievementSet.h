@@ -2,7 +2,7 @@
 #define RA_ACHIEVEMENTSET_H
 #pragma once
 
-#include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
+#include "RA_Achievement.h" // RA_Condition.h (ra_fwd.h)
 
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet

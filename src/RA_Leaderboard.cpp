@@ -1,5 +1,7 @@
 #include "RA_Leaderboard.h"
 
+#include "RA_Defs.h"
+
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 

@@ -2,7 +2,9 @@
 #define RA_SERVICES_TEXTREADER
 #pragma once
 
+#ifndef PCH_H
 #include <xstring>
+#endif /* !PCH_H */
 
 namespace ra {
 namespace services {

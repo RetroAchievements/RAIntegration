@@ -2,7 +2,9 @@
 #define RA_TYPE_TRAITS_H
 #pragma once
 
-#include <utility>
+#ifndef PCH_H
+#include <utility>  
+#endif /* !PCH_H */
 
 #if _HAS_CXX17
 #ifndef _CONSTANT_VAR

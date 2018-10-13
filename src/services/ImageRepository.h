@@ -2,10 +2,13 @@
 #define IMAGEREPOSITORY_H
 #pragma once
 
-#include "RA_Defs.h" // map, sstream (string)
+#include "RA_Defs.h"
 
 #ifndef PCH_H
 #include <atomic>
+#include <mutex>
+#include <set>
+#include <unordered_map>
 #endif /* !PCH_H */
 
 namespace ra {
@@ -129,12 +132,15 @@ private:
         std::atomic<unsigned int> m_nReferences;
     };
 
-    typedef std::map<std::string, HBitmapReference> HBitmapMap;
+    using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
     HBitmapMap m_mLocal;
 
     HBitmapMap* GetBitmapMap(ImageType nType);
+
+    std::mutex m_oMutex;
+    std::set<std::wstring> m_vRequestedImages;
 };
 
 extern ImageRepository g_ImageRepository;

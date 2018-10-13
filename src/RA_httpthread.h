@@ -2,7 +2,13 @@
 #define RA_HTTPTHREAD_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+#include "RA_StringUtils.h"
+
+#ifndef PCH_H
+#include <map>
+#include <deque>
+#endif /* !PCH_H */
 
 enum HTTPRequestMethod
 {
@@ -49,8 +55,6 @@ enum RequestType
     RequestUserPic,
     RequestBadge,
 
-    //	Special:
-    StopThread,
 
     NumRequestTypes
 };
@@ -114,13 +118,9 @@ private:
 class RAWeb
 {
 public:
-    static void RA_InitializeHTTPThreads();
-    static void RA_KillHTTPThreads();
-
     static void LogJSON(const rapidjson::Document& doc);
 
     static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
-    static BOOL HTTPRequestExists(RequestType nType, const std::string& sData);
     static BOOL HTTPResponseExists(RequestType nType, const std::string& sData);
 
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
@@ -131,7 +131,7 @@ public:
 
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
-    static DWORD WINAPI HTTPWorkerThread(LPVOID lpParameter);
+    static void SendKeepAlive();
 
     static HANDLE Mutex() { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
@@ -143,6 +143,7 @@ public:
 private:
     static HANDLE ms_hHTTPMutex;
     static HttpResults ms_LastHttpResults;
+    static time_t ms_tSendNextKeepAliveAt;
 
     static std::wstring m_sUserAgent;
 };

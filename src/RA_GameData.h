@@ -2,7 +2,12 @@
 #define RA_GAMEDATA_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#ifndef PCH_H
+#include <rapidjson\fwd.h>
+#endif /* !PCH_H */
+
 
 class GameData
 {

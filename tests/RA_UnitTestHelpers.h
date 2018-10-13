@@ -1,10 +1,14 @@
+#ifndef RA_UNITTESTHELPERS_H
+#define RA_UNITTESTHELPERS_H
 #pragma once
 
 #include "CppUnitTest.h"
 
+#include "ra_utility.h"
+
 #include "RA_Condition.h"
-#include "RA_Defs.h"
 #include "RA_MemValue.h"
+#include "RA_StringUtils.h"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -19,9 +23,9 @@ template<> static std::wstring ToString<ComparisonVariableSize>(const Comparison
     return ra::Widen(COMPARISONVARIABLESIZE_STR[(int)t]);
 }
 
-template<> static std::wstring ToString<ComparisonVariableType>(const ComparisonVariableType& t)
+template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 {
-    return ra::Widen(COMPARISONVARIABLETYPE_STR[(int)t]);
+    return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
@@ -62,3 +66,6 @@ template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::Dial
 void InitializeMemory(unsigned char* pMemory, size_t szMemorySize);
 
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
+
+
+#endif /* !RA_UNITTESTHELPERS_H */

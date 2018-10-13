@@ -15,7 +15,6 @@
     <ProjectGuid>{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RA_IntegrationTests</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

@@ -5,6 +5,9 @@
 #include "RA_Defs.h" // map, sstream (string)
 
 #include <atomic>
+#include <mutex>
+#include <set>
+#include <unordered_map>
 
 namespace ra {
 namespace services {
@@ -127,12 +130,15 @@ private:
         std::atomic<unsigned int> m_nReferences;
     };
 
-    typedef std::map<std::string, HBitmapReference> HBitmapMap;
+    using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
     HBitmapMap m_mLocal;
 
     HBitmapMap* GetBitmapMap(ImageType nType);
+
+    std::mutex m_oMutex;
+    std::set<std::wstring> m_vRequestedImages;
 };
 
 extern ImageRepository g_ImageRepository;

@@ -45,7 +45,6 @@
     <ClCompile Include="RA_Dlg_Login.cpp" />
     <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_Dlg_RichPresence.cpp" />
     <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
@@ -64,6 +63,7 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
+    <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
@@ -71,8 +71,12 @@
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
+    <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
-    <ClCompile Include="ui\win32\Dlg_MessageBox.cpp" />
+    <ClCompile Include="ui\win32\DialogBase.cpp" />
+    <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
+    <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -95,7 +99,6 @@
     <ClInclude Include="RA_Dlg_Login.h" />
     <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
-    <ClInclude Include="RA_Dlg_RichPresence.h" />
     <ClInclude Include="RA_Dlg_RomChecksum.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_httpthread.h" />
@@ -128,21 +131,29 @@
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />
     <ClInclude Include="services\impl\StringTextWriter.hh" />
+    <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\Clock.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\Initialization.hh" />
+    <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
     <ClInclude Include="services\ImageRepository.h" />
     <ClInclude Include="services\SearchResults.h" />
     <ClInclude Include="services\TextReader.hh" />
     <ClInclude Include="services\TextWriter.hh" />
+    <ClInclude Include="ui\BindingBase.hh" />
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\WindowManager.hh" />
+    <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
-    <ClInclude Include="ui\win32\Dlg_MessageBox.hh" />
+    <ClInclude Include="ui\win32\DialogBase.hh" />
+    <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
+    <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
   </ItemGroup>

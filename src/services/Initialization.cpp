@@ -5,6 +5,7 @@
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
+#include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 
@@ -56,6 +57,10 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto *pLocalStorage = new ra::services::impl::FileLocalStorage(*pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(pLocalStorage);
 
+    auto* pThreadPool = new ra::services::impl::ThreadPool();
+    pThreadPool->Initialize(pConfiguration->GetNumBackgroundThreads());
+    ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(pThreadPool);
+
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
 
@@ -67,6 +72,8 @@ void Initialization::RegisterServices(const std::string& sClientName)
 void Initialization::Shutdown()
 {
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
 }
 
 } // namespace services

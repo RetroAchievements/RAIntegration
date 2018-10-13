@@ -114,6 +114,12 @@
     <ClCompile Include="services\FileLogger_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="services\FileLocalStorage_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -140,6 +146,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockDesktop.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockLocalStorage.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>

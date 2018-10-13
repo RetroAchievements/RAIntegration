@@ -98,7 +98,6 @@ extern "C" {
 
 
 //	Non-exposed:
-extern std::string g_sKnownRAVersion;
 extern std::wstring g_sHomeDir;
 extern std::string g_sCurrentROMMD5;
 
@@ -107,7 +106,6 @@ extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
 extern EmulatorID g_EmulatorID;
 extern ConsoleID g_ConsoleID;
-extern const char* g_sGetLatestClientPage;
 extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
@@ -141,8 +139,7 @@ extern std::string _TimeStampToString(time_t nTime);
 _Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
-extern BOOL RemoveFileIfExists(const std::wstring& sFilePath);
-
+void DownloadAndActivateAchievementData(ra::GameID nGameID);
 BOOL CanCausePause();
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

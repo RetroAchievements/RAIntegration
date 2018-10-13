@@ -4,6 +4,9 @@
 #include "RA_Defs.h"
 #include "RA_httpthread.h"
 
+#include "services/IThreadPool.hh"
+#include "services/ServiceLocator.hh"
+
 #include <atlbase.h>
 #include <wincodec.h>
 
@@ -18,7 +21,7 @@ ImageRepository g_ImageRepository;
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
 static bool g_bImageRepositoryValid = false;
 
-ImageReference::~ImageReference()
+ImageReference::~ImageReference() noexcept
 {
     Release();
 }
@@ -65,7 +68,7 @@ HBITMAP ImageReference::GetHBitmap() const
     return g_ImageRepository.DefaultImage(m_nType);
 }
 
-void ImageReference::Release()
+void ImageReference::Release() noexcept
 {
     if (m_hBitmap != nullptr && g_bImageRepositoryValid)
         g_ImageRepository.ReleaseReference(m_nType, m_sName);
@@ -108,7 +111,7 @@ bool ImageRepository::Initialize()
     return SUCCEEDED(hr);
 }
 
-ImageRepository::~ImageRepository()
+ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
     for (HBitmapMap::iterator iter = m_mBadges.begin(); iter != m_mBadges.end(); ++iter)
@@ -155,6 +158,16 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     if (_FileExists(sFilename))
         return;
 
+    // check to see if it's already queued
+    {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+        if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
+            return;
+
+        m_vRequestedImages.emplace(sFilename);
+    }
+
+    // fetch it
     RequestType nRequestType;
     PostArgs args;
 
@@ -175,9 +188,17 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             return;
     }
 
-    // Prevent duplicate requests
-    if (!RAWeb::HTTPRequestExists(nRequestType, sName) && !RAWeb::HTTPResponseExists(nRequestType, sName))
-        RAWeb::CreateThreadedHTTPRequest(nRequestType, args, sName);
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([this, nRequestType, args, sFilename]()
+    {
+        std::string sResponse;
+        if (RAWeb::DoBlockingRequest(nRequestType, args, sResponse))
+            _WriteBufferToFile(sFilename, sResponse);
+
+        {
+            std::lock_guard<std::mutex> lock(m_oMutex);
+            m_vRequestedImages.erase(sFilename);
+        }
+    });
 }
 
 HBITMAP ImageRepository::DefaultImage(ImageType nType)
@@ -420,7 +441,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
     return hBitmap;
 }
 
-void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName)
+void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName) noexcept
 {
     HBitmapMap* mMap = GetBitmapMap(nType);
     if (mMap != nullptr)

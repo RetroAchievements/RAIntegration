@@ -23,7 +23,7 @@ public:
     {
         m_pWriter = pFileSystem.AppendTextFile(pFileSystem.BaseDirectory() + L"RACache\\RALog.txt");
         if (m_pWriter != nullptr)
-            m_pWriter->Write("\r\n");
+            m_pWriter->WriteLine();
     }
 
     bool IsEnabled([[maybe_unused]] LogLevel level) const override
@@ -37,9 +37,19 @@ public:
             return;
 
         // write a timestamp
-        auto tNow = ServiceLocator::Get<IClock>().Now();
-        auto tMilliseconds = static_cast<unsigned int>(std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch().count() % 1000);
-        auto tTime = std::chrono::system_clock::to_time_t(tNow);
+        time_t tTime;
+        unsigned int tMilliseconds;
+        if (ServiceLocator::Exists<IClock>())
+        {
+            auto tNow = ServiceLocator::Get<IClock>().Now();
+            tMilliseconds = static_cast<unsigned int>(std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch().count() % 1000);
+            tTime = std::chrono::system_clock::to_time_t(tNow);
+        }
+        else
+        {
+            tTime = time(nullptr);
+            tMilliseconds = 0;
+        }
 
         std::tm tTimeStruct;
         localtime_s(&tTimeStruct, &tTime);
@@ -65,7 +75,7 @@ public:
             m_pWriter->Write(sMessage);
 
             // newline
-            m_pWriter->Write("\r\n");
+            m_pWriter->WriteLine();
         }
 
         // if writing to a file, flush immediately

@@ -6,7 +6,7 @@
 #include "RA_Resource.h"
 #include "RA_User.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 namespace {
 
@@ -172,7 +172,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     char sBugReportInFull[8192];
                     sprintf_s(sBugReportInFull, 8192,
                         "--New Bug Report--\n"

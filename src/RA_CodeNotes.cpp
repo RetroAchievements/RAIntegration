@@ -8,8 +8,9 @@
 #include "RA_User.h"
 #include "RA_AchievementSet.h" // RA_Achievement
 
+#include "data\GameContext.hh"
+
 #include "services\ILocalStorage.hh"
-#include "services\IGameContext.hh"
 
 void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
@@ -84,7 +85,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
 
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();
@@ -118,7 +119,7 @@ BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
 
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();

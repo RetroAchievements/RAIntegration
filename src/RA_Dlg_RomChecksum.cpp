@@ -3,7 +3,7 @@
 #include "RA_Resource.h"
 #include "RA_Core.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 //static 
 BOOL RA_Dlg_RomChecksum::DoModalDialog()
@@ -17,7 +17,7 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
     {
         case WM_INITDIALOG:
         {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             SetDlgItemText(hDlg, IDC_RA_ROMCHECKSUMTEXT, NativeStr("ROM Checksum: " + pGameContext.GameHash()).c_str());
             return FALSE;
         }
@@ -32,7 +32,7 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
                 case IDC_RA_COPYCHECKSUMCLIPBOARD:
                 {
                     //	Allocate memory to be managed by the clipboard
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, pGameContext.GameHash().length() + 1);
                     memcpy(GlobalLock(hMem), pGameContext.GameHash().c_str(), pGameContext.GameHash().length() + 1);
                     GlobalUnlock(hMem);

@@ -29,9 +29,10 @@
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#include "data\GameContext.hh"
+
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
-#include "services\IGameContext.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
@@ -1102,7 +1103,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
             else
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                 if (pGameContext.GameId() != 0)
                 {
                     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -1157,7 +1158,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_OPENGAMEPAGE:
         {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             if (pGameContext.GameId() != 0)
             {
                 std::ostringstream oss;
@@ -1229,7 +1230,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
             else
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                 std::wstring sMessage = L"Leaderboards are now enabled.";
                 if (pGameContext.GameId() != 0)
                     sMessage += L"\nYou may need to reload the game to activate them.";

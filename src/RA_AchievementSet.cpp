@@ -9,8 +9,9 @@
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 
+#include "data\GameContext.hh"
+
 #include "services\IConfiguration.hh"
-#include "services\IGameContext.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -238,7 +239,7 @@ void AchievementSet::Reset()
 
 bool AchievementSet::SaveToFile() const
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
     // Commits local achievements to the file
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
@@ -361,7 +362,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
 
         if (m_nSetType == Type::Core)
         {
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::services::IGameContext>();
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
             pGameContext.LoadGame(nGameID, ra::Widen(doc["Title"].GetString()));
 
             if (doc.HasMember("RichPresencePatch"))
@@ -423,7 +424,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
         if (RAUsers::LocalUser().IsLoggedIn())
         {
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
             //	Loaded OK: post a request for unlocks
             PostArgs args;

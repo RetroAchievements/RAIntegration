@@ -14,8 +14,9 @@
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
+#include "data\GameContext.hh"
+
 #include "services\IConfiguration.hh"
-#include "services\IGameContext.hh"
 #include "services\ServiceLocator.hh"
 
 //static 
@@ -141,7 +142,7 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
         "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
         PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     g_AchievementsDialog.OnLoad_NewRom(pGameContext.GameId());
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
@@ -213,7 +214,7 @@ void LocalRAUser::PostActivity(ActivityType nActivityType)
     {
         case PlayerStartedPlaying:
         {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
             PostArgs args;
             args['u'] = Username();

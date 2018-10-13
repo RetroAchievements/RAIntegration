@@ -7,7 +7,8 @@
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
+
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
@@ -483,7 +484,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nWidth = rcTarget.right - rcTarget.left;
     const int nHeight = rcTarget.bottom - rcTarget.top;
 
-    auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto& sGameTitle = pGameContext.GameTitle();
     if (!sGameTitle.empty())
     {

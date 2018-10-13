@@ -7,8 +7,7 @@
 #include "services\impl\FileTextWriter.hh"
 
 namespace ra {
-namespace services {
-namespace impl {
+namespace data {
 
 void GameContext::LoadGame(unsigned int nGameId, const std::wstring& sGameTitle)
 {
@@ -24,6 +23,5 @@ void GameContext::LoadGame(unsigned int nGameId, const std::wstring& sGameTitle)
     m_sGameTitle = sGameTitle;
 }
 
-} // namespace impl
-} // namespace services
+} // namespace data
 } // namespace ra

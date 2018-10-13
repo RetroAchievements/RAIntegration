@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="md5.c" />
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />
@@ -61,7 +62,6 @@
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
-    <ClCompile Include="services\impl\GameContext.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
@@ -76,6 +76,7 @@
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="RA_Achievement.h" />
     <ClInclude Include="RA_AchievementOverlay.h" />
@@ -116,7 +117,6 @@
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
-    <ClInclude Include="services\IGameContext.hh" />
     <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
@@ -124,7 +124,6 @@
     <ClInclude Include="services\impl\FileLogger.hh" />
     <ClInclude Include="services\impl\FileTextReader.hh" />
     <ClInclude Include="services\impl\FileTextWriter.hh" />
-    <ClInclude Include="services\impl\GameContext.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
     <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />

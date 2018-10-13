@@ -7,7 +7,7 @@
 #include "RA_User.h"
 #include "RA_Dlg_MemBookmark.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 #ifdef WIN32_LEAN_AND_MEAN
 #include <ShellAPI.h>
@@ -1253,7 +1253,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 case IDC_RA_OPENPAGE:
                 {
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     if (pGameContext.GameId() != 0)
                     {
                         std::ostringstream oss;
@@ -1442,7 +1442,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 {
     size_t nSize = 0;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
         nSize = m_CodeNotes.Load(nGameID);
@@ -1488,7 +1488,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
 void Dlg_Memory::OnLoad_NewRom()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     m_CodeNotes.ReloadFromWeb(pGameContext.GameId());
 
     SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_MEM_LIST, TEXT(""));

@@ -9,7 +9,7 @@
 #include "RA_md5factory.h"
 #include "RA_User.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 namespace {
 
@@ -260,7 +260,7 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
 
 BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, rapidjson::Document& doc)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const std::string sMem = Ach.CreateMemString();
 
     //	Deal with secret:
@@ -345,7 +345,7 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSet::Type nAchievementSe
 
     CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     OnLoad_NewRom(pGameContext.GameId()); // assert: calls UpdateSelectedAchievementButtons
 
     g_AchievementEditorDialog.OnLoad_NewRom();
@@ -380,7 +380,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             }
 
             //	Continue as if a new rom had been loaded
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             OnLoad_NewRom(pGameContext.GameId());
 
             CheckDlgButton(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
@@ -505,7 +505,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             TEXT("Refresh from Disk"),
                             MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                             auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
@@ -527,7 +527,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             "This will overwrite any changes that you have made with fresh achievements from the server";
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                             auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
@@ -716,7 +716,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                             BOOL bFound = FALSE;
 
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                             AchievementSet TempSet(g_nActiveAchievementSet);
                             if (TempSet.LoadFromFile(pGameContext.GameId()))
                             {

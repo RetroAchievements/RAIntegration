@@ -10,8 +10,9 @@
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_RichPresence.h"
 
+#include "data\GameContext.hh"
+
 #include "services\IConfiguration.hh"
-#include "services\IGameContext.hh"
 #include "services\ServiceLocator.hh"
 
 #include <winhttp.h>
@@ -805,7 +806,7 @@ DWORD RAWeb::HTTPWorkerThread(LPVOID lpParameter)
                 //  Post a keepalive packet:
                 if (RAUsers::LocalUser().IsLoggedIn())
                 {
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
                     PostArgs args;
                     args['u'] = RAUsers::LocalUser().Username();

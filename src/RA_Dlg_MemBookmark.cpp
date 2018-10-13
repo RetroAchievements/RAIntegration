@@ -6,7 +6,7 @@
 #include "RA_Resource.h"
 #include "RA_Dlg_Memory.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 #include <CommDlg.h>
 
@@ -114,7 +114,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             SetupColumns(hList);
 
             // Auto-import bookmark file when opening dialog
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             if (pGameContext.GameId() != 0)
             {
                 std::wstring file;
@@ -571,7 +571,7 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
 
 void Dlg_MemBookmark::AddAddress()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
         return;
 
@@ -693,7 +693,7 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 
 void Dlg_MemBookmark::ExportJSON()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
@@ -829,7 +829,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 
 std::wstring Dlg_MemBookmark::ImportDialog()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
@@ -896,7 +896,7 @@ void Dlg_MemBookmark::OnLoad_NewRom()
 
         std::wstring file;
         {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             std::wostringstream oss;
             oss << g_sHomeDir << RA_DIR_BOOKMARKS << pGameContext.GameId() << L"-Bookmarks.txt";
             file = oss.str();

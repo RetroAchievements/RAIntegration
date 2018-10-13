@@ -4,7 +4,7 @@
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 
-#include "services\IGameContext.hh"
+#include "data\GameContext.hh"
 
 Dlg_RichPresence g_RichPresenceDialog;
 
@@ -106,7 +106,7 @@ void Dlg_RichPresence::ClearMessage()
 {
     StopTimer();
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::services::IGameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
         SetDlgItemTextW(m_hRichPresenceDialog, IDC_RA_RICHPRESENCERESULTTEXT, L"No game loaded");
     else

@@ -232,7 +232,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //////////////////////////////////////////////////////////////////////////
     //	Attempt to fetch latest client version:
     args.clear();
-    args['c'] = std::to_string(g_ConsoleID);
+    args['e'] = std::to_string(nEmulatorID);
     RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args);	//	g_sGetLatestClientPage
 
     //	TBD:
@@ -913,7 +913,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 static void RA_CheckForUpdate()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['e'] = std::to_string(g_EmulatorID);
 
     rapidjson::Document doc;
     if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, doc))

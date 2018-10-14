@@ -6,7 +6,7 @@
 #include "ui\IDesktop.hh"
 #include "tests\mocks\MockDesktop.hh"
 
-#include "RA_UnitTestHelpers.h"
+#include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -16,7 +16,7 @@ namespace ra {
 namespace ui {
 namespace tests {
 
-TEST_CLASS(UI_WindowViewModelBase_Tests)
+TEST_CLASS(WindowViewModelBase_Tests)
 {
     class WindowViewModelHarness : public WindowViewModelBase
     {

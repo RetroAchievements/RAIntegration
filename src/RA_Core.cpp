@@ -26,7 +26,6 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
 #include "services\IConfiguration.hh"
@@ -38,6 +37,7 @@
 
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
+#include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -1100,7 +1100,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_GETROMCHECKSUM:
         {
-            RA_Dlg_RomChecksum::DoModalDialog();
+            ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
+            vmGameChecksum.ShowModal();
             break;
         }
 

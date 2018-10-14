@@ -44,7 +44,6 @@
     <ClCompile Include="RA_Dlg_Login.cpp" />
     <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
     <ClCompile Include="RA_GameData.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
@@ -70,11 +69,13 @@
     <ClCompile Include="services\SearchResults.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
@@ -98,7 +99,6 @@
     <ClInclude Include="RA_Dlg_Login.h" />
     <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
-    <ClInclude Include="RA_Dlg_RomChecksum.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_GameData.h" />
     <ClInclude Include="RA_httpthread.h" />
@@ -117,6 +117,7 @@
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
@@ -133,6 +134,7 @@
     <ClInclude Include="services\impl\StringTextWriter.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\Clock.hh" />
+    <ClInclude Include="services\impl\WindowsClipboard.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\Initialization.hh" />
@@ -146,12 +148,14 @@
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />

@@ -20,7 +20,14 @@ public:
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
     HWND CreateDialogWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter);
-    
+
+    /// <summary>
+    /// Creates the dialog window and does not return until the window is closed.
+    /// </summary>
+    /// <param name="sResourceId">The resource identifier defining the dialog.</param>
+    /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
+    void CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter);
+
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.
     /// </summary>
@@ -29,7 +36,7 @@ public:
     /// <summary>
     /// Callback for procesing WINAPI messages - do not call directly!
     /// </summary>
-    virtual INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+    virtual INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
     
     /// <summary>
     /// Shows the dialog window.
@@ -86,6 +93,7 @@ protected:
 private:
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
+    bool m_bModal = false;
 };
 
 } // namespace win32

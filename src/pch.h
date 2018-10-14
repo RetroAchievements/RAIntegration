@@ -21,7 +21,7 @@
 #include <WindowsX.h>
 #include <winhttp.h>
 
-#ifdef WIN32_LEAN_AND_MEAN
+#if WIN32_LEAN_AND_MEAN
 #include <CommDlg.h>
 #include <MMSystem.h>
 #include <ShellAPI.h>
@@ -52,6 +52,11 @@
 #include <stack>
 #include <unordered_map>
 
+#pragma warning(push)
+// Look at this file if you want to know what they are and what they mean
+#include "pch_cppcorecheck_suppressions.h"
+#include "pch_microsoft_suppressions.h"
+
 /* RapidJSON Stuff */
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
@@ -60,8 +65,8 @@
 #include <rapidjson\istreamwrapper.h>
 #include <rapidjson\ostreamwrapper.h>
 #include <rapidjson\error\en.h>  
+#pragma warning(pop)
 
-/* Other Libs */
 #include <md5.h>
 #pragma warning(pop)
 

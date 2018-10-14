@@ -247,32 +247,55 @@ void RAWeb::SetUserAgentString()
 #ifndef NTSTATUS
     #define NTSTATUS long
 #endif
-    using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-    const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
-    if (ntModule)
     {
-        auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(ntModule, "RtlGetVersion");
-        RTL_OSVERSIONINFOEXW osVersion = {};
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
+
+        const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
+        if (!ntModule)
+            return;
+
+        RTL_OSVERSIONINFOEXW osVersion{};
+        const auto& RtlGetVersion{
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+        };
+        if (!RtlGetVersion)
+            return;
         RtlGetVersion(&osVersion);
-        if (osVersion.dwMajorVersion > 0)
+        // needs to be XP or higher, NT 5.1.2600 is XP AND XP w/SP3, SP1&2 is different, 5.0 is
+        // Windows 2000
+        if ((osVersion.dwMajorVersion < 5UL) &&
+            (osVersion.dwMinorVersion < 1UL) &&
+            (osVersion.dwBuildNumber  < 2600UL))
+            return;
         {
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
+            std::ostringstream oss;
+            oss << "WindowsNT " << osVersion.dwMajorVersion << '.' << osVersion.dwMinorVersion
+                << '.' << osVersion.dwBuildNumber;
+            sUserAgent.append(oss.str());
         }
     }
 
     sUserAgent.append(") Integration/");
+    {
+        std::ostringstream oss;
+        // Compile-time string concatenation will need some user-defined stuff/work.
+        oss << "WindowsNT " << RA_INTEGRATION_VERSION_MAJOR << '.' << RA_INTEGRATION_VERSION_MINOR
+            << '.' << RA_INTEGRATION_VERSION_REVISION << '.' << RA_INTEGRATION_VERSION_MODIFIED;
+        sUserAgent.append(oss.str());
+    }
 
-    auto buffer{ std::make_unique<char[]>(64U) };
-    sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
-              RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer.release());
-
-    const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
-    if (ptr != nullptr)
-        sUserAgent.append(ptr);
+    {
+        // compile-time finding, intellisense will tell you the number is already
+        // Only put C-Strings in string_view, they must also live longer than the string_view
+        _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+        if constexpr (posFound != std::string_view::npos)
+        {
+            // appending still done at runtime but the values for it are retrieved at compile-time
+            // needs to use the const T& overload
+            std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+            sUserAgent.append(sAppend, posFound);
+        }
+    }
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 

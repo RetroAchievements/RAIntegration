@@ -36,9 +36,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="md5.c">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Achievement.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -191,6 +188,9 @@
     </ClCompile>
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="md5.c">
+      <Filter>Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -430,6 +430,12 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_cppcorecheck_suppressions.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_microsoft_suppressions.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

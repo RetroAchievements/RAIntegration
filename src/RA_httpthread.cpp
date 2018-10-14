@@ -248,6 +248,30 @@ void RAWeb::SetUserAgentString()
     #define NTSTATUS long
 #endif
     {
+        // needs to be XP or higher no point in continuing
+        // Windows 7 doesn't have the version helper api....
+        // TBD: Consider Service Pack?
+        {
+            auto IsXPOrGreater =[]() noexcept
+            {
+                OSVERSIONINFOEXW osvi{
+                    sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP) , LOBYTE(_WIN32_WINNT_WINXP)
+                };
+                const auto dwlConditionMask
+                {
+                    VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(
+                        0ULL, VER_MAJORVERSION, VER_GREATER_EQUAL),
+                        VER_MINORVERSION, VER_GREATER_EQUAL),
+                        VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)
+                };
+
+                return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION |
+                                          VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
+            };
+            if (!IsXPOrGreater())
+                return;
+        }
+
         using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
 
         const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
@@ -261,12 +285,7 @@ void RAWeb::SetUserAgentString()
         if (!RtlGetVersion)
             return;
         RtlGetVersion(&osVersion);
-        // needs to be XP or higher, NT 5.1.2600 is XP AND XP w/SP3, SP1&2 is different, 5.0 is
-        // Windows 2000
-        if ((osVersion.dwMajorVersion < 5UL) &&
-            (osVersion.dwMinorVersion < 1UL) &&
-            (osVersion.dwBuildNumber  < 2600UL))
-            return;
+        
         {
             std::ostringstream oss;
             oss << "WindowsNT " << osVersion.dwMajorVersion << '.' << osVersion.dwMinorVersion

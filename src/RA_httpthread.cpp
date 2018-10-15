@@ -248,40 +248,72 @@ void RAWeb::SetUserAgentString()
     #define NTSTATUS long
 #endif
     {
+        // needs to be XP or higher no point in continuing
+        // Windows 7 doesn't have the version helper api....
+        // TBD: Consider Service Pack?
+        {
+            auto IsXPOrGreater =[]() noexcept
+            {
+                OSVERSIONINFOEXW osvi{
+                    sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP) , LOBYTE(_WIN32_WINNT_WINXP)
+                };
+                const auto dwlConditionMask
+                {
+                    VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(
+                        0ULL, VER_MAJORVERSION, VER_GREATER_EQUAL),
+                        VER_MINORVERSION, VER_GREATER_EQUAL),
+                        VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)
+                };
+
+                return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION |
+                                          VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
+            };
+            if (!IsXPOrGreater())
+                return;
+        }
+
         using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
 
-        const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
+        const auto& ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
         if (!ntModule)
             return;
 
-        RTL_OSVERSIONINFOEXW osVersion{ sizeof(OSVERSIONINFOEX) };
-        const auto RtlGetVersion{
+        RTL_OSVERSIONINFOEXW osVersion{};
+        const auto& RtlGetVersion{
             reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
         };
-        if (RtlGetVersion)
+        if (!RtlGetVersion)
+            return;
+        RtlGetVersion(&osVersion);
+        
         {
-            RtlGetVersion(&osVersion);
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
+            std::ostringstream oss;
+            oss << "WindowsNT " << osVersion.dwMajorVersion << '.' << osVersion.dwMinorVersion
+                << '.' << osVersion.dwBuildNumber;
+            sUserAgent.append(oss.str());
         }
     }
 
     sUserAgent.append(") Integration/");
     {
-        std::string buffer;
-        buffer.reserve(64);
-        sprintf_s(buffer.data(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
-                    RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-        sUserAgent.append(buffer);
+        std::ostringstream oss;
+        // Compile-time string concatenation will need some user-defined stuff/work.
+        oss << "WindowsNT " << RA_INTEGRATION_VERSION_MAJOR << '.' << RA_INTEGRATION_VERSION_MINOR
+            << '.' << RA_INTEGRATION_VERSION_REVISION << '.' << RA_INTEGRATION_VERSION_MODIFIED;
+        sUserAgent.append(oss.str());
     }
 
     {
-        // We should already assume it's there, we just need to know where the '-' is
+        // compile-time finding, intellisense will tell you the number is already
+        // Only put C-Strings in string_view, they must also live longer than the string_view
         _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-        sUserAgent.append(sAppend, posFound);
+        if constexpr (posFound != std::string_view::npos)
+        {
+            // appending still done at runtime but the values for it are retrieved at compile-time
+            // needs to use the const T& overload
+            std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+            sUserAgent.append(sAppend, posFound);
+        }
     }
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());

@@ -5,7 +5,7 @@
 class RA_Dlg_RomChecksum
 {
 public:
-    static INT_PTR DoModalDialog() noexcept;
+    static BOOL DoModalDialog();
 
 public:
     static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, [[maybe_unused]] LPARAM);

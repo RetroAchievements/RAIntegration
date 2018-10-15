@@ -1,5 +1,5 @@
 #ifndef WINDOWS_NODEFINES_H
-#define MY_CLASS_H
+#define WINDOWS_NODEFINES_H
 #pragma once
 
 /*

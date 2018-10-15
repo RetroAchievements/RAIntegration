@@ -44,6 +44,26 @@ template<typename T, typename U> struct _NODISCARD has_smaller_size_than :
 template<typename T, typename U> struct _NODISCARD has_smaller_or_same_size_than :
     std::bool_constant<!has_smaller_size_than<U, T>::value> {};
 
+/// <summary>This should only be used to compare arithmetic types.</summary>
+template<
+    typename T,
+    typename U,
+    typename = std::enable_if_t<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>
+> struct _NODISCARD has_same_sign :
+    std::bool_constant<(std::is_signed_v<T>   && std::is_signed_v<U>) ||
+                       (std::is_unsigned_v<T> && std::is_unsigned_v<U>)>
+{
+};
+
+/// <summary>This should only be used to compare arithmetic types.</summary>
+template<
+    typename T,
+    typename U,
+    typename = std::enable_if_t<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>
+> struct _NODISCARD has_opposite_sign : std::bool_constant<!has_same_sign<T, U>::value>
+{
+};
+
 } // namespace detail
 
 template<typename CharacterType> _CONSTANT_VAR
@@ -57,6 +77,12 @@ has_smaller_size_than_v{ detail::has_smaller_size_than<ValueType, TestType>::val
 
 template<typename ValueType, typename TestType> _CONSTANT_VAR
 has_smaller_or_same_size_than_v{ detail::has_smaller_or_same_size_than<ValueType, TestType>::value };
+
+template<typename ValueType, typename TestType> _CONSTANT_VAR
+has_same_sign_v{ detail::has_same_sign<ValueType, TestType>::value };
+
+template<typename ValueType, typename TestType> _CONSTANT_VAR
+has_opposite_sign_v{ detail::has_opposite_sign<ValueType, TestType>::value };
 
 namespace detail {
 

@@ -35,8 +35,8 @@
 #undef GetMessage
 
 /* C Stuff */
-#include <cassert> 
 #include <cctype>
+#undef BUFSIZ // make it constexpr in RA_Defs
 
 /* STL Stuff */
 #include <array> // algorithm, iterator, tuple

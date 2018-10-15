@@ -32,6 +32,7 @@
 
 //	RA-Only
 using namespace std::string_literals;
+_CONSTANT_VAR BUFSIZ{ 512U };
 #endif	// RA_EXPORTS
 
 #define RA_DIR_OVERLAY					L"Overlay\\"

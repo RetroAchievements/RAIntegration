@@ -4,7 +4,7 @@
 #include "RA_Core.h"
 
 //static 
-BOOL RA_Dlg_RomChecksum::DoModalDialog()
+INT_PTR RA_Dlg_RomChecksum::DoModalDialog() noexcept
 {
     return DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), g_RAMainWnd, RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc);
 }
@@ -28,11 +28,12 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
                 {
                     //	Allocate memory to be managed by the clipboard
                     // wrapped just in case it goes out of scope early
-                    using GlobalOwner = std::unique_ptr<std::remove_pointer_t<HGLOBAL>, decltype(&::GlobalFree)>;
-                    GlobalOwner hMem{ ::GlobalAlloc(GMEM_MOVEABLE, g_sCurrentROMMD5.length() + 1), ::GlobalFree };
+                    using Global = std::unique_ptr<std::remove_pointer_t<HGLOBAL>, decltype(&::GlobalFree)>;
+                    Global hMem{ ::GlobalAlloc(GMEM_MOVEABLE, g_sCurrentROMMD5.length() + 1), ::GlobalFree };
                     if (hMem)
                     {
-                        const auto& lockResult{ ::GlobalLock(hMem.get()) };
+                        // It's not auto-deducing what we need, the pointer should not be modified at all
+                        void* const lockResult{ ::GlobalLock(hMem.get()) };
                         if (lockResult)
                             std::memcpy(lockResult, g_sCurrentROMMD5.c_str(), g_sCurrentROMMD5.length() + 1);
                     }
@@ -46,7 +47,8 @@ INT_PTR CALLBACK RA_Dlg_RomChecksum::RA_Dlg_RomChecksumProc(HWND hDlg, UINT nMsg
                         return TRUE;
                     if (::EmptyClipboard() == 0)
                         return TRUE;
-                    if (::SetClipboardData(CF_TEXT, hMem.get()) == nullptr)
+                    // According to docs, the system owns the handle if it failed
+                    if (::SetClipboardData(CF_TEXT, hMem.release()) == nullptr)
                         return TRUE;
                     if (::CloseClipboard() == 0)
                         return TRUE;

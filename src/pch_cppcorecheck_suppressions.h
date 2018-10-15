@@ -13,7 +13,7 @@
 #pragma warning(disable : 26401) // Do not delete a raw pointer that is not an owner<T>(i.11).
 
 #pragma warning(disable : 26408) // Avoid malloc() and free(), prefer the nothrow version of new
-// with delete (r.10).
+                                 // with delete (r.10).
 
 #pragma warning(disable : 26409) // Avoid calling new and delete explicitly, use std::make_unique<T>
                                  // instead (r.11).

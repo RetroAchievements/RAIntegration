@@ -24,6 +24,11 @@ public:
         m_vTasks.emplace(f);
     }
 
+    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept override
+    {
+
+    }
+
     /// <summary>
     /// Gets the number of outstanding asynchronous tasks are queued
     /// </summary>

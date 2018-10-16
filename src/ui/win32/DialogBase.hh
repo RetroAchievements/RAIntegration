@@ -69,7 +69,12 @@ protected:
     virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
-    /// Called when the window is moved.
+    /// Called when the window is shown.
+    /// </summary>
+    virtual void OnShown() {}
+
+    /// <summary>
+    /// Called when the window is destroyed.
     /// </summary>
     virtual void OnDestroy();
 

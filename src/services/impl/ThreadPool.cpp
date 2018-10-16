@@ -35,7 +35,7 @@ void ThreadPool::RunThread() noexcept
                     break;
 
                 pNext = std::move(m_vQueue.front());
-                m_vQueue.pop();
+                m_vQueue.pop_front();
             }
 
             // do work
@@ -53,15 +53,70 @@ void ThreadPool::RunThread() noexcept
         if (!m_bShutdownInitiated)
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
-            m_cvMutex.wait(lock);
+            m_cvWork.wait(lock);
         }
     } while (!m_bShutdownInitiated);
+}
+
+void ThreadPool::ProcessDelayedTasks() noexcept
+{
+    auto& pClock = ServiceLocator::Get<IClock>();
+    constexpr auto tZeroMilliseconds = std::chrono::milliseconds(0);
+
+    // check for work
+    while (!m_bShutdownInitiated)
+    {
+        // move any work that needs to occur now to the work queue
+        size_t nReadyTasks = 0U;
+        {
+            std::unique_lock<std::mutex> lock(m_oMutex);
+
+            auto tNow = pClock.UpTime();
+            while (!m_vDelayedTasks.empty() && m_vDelayedTasks.front().tWhen <= tNow)
+            {
+                m_vQueue.emplace_front(std::move(m_vDelayedTasks.front().fTask));
+                m_vDelayedTasks.pop_front();
+
+                ++nReadyTasks;
+            }
+        }
+
+        if (m_bShutdownInitiated)
+            break;
+
+        // wake up other threads to do the work
+        if (nReadyTasks >= m_nThreads - 1) // we're using one thread
+        {
+            m_cvWork.notify_all();
+        }
+        else
+        {
+            while (nReadyTasks--)
+                m_cvWork.notify_one();
+        }
+
+
+        // sleep until it's time to do the next work. use a wait_for instead of a sleep so we can can be woken
+        // early if new work gets added that needs to occur sooner that we were expecting.
+        {
+            std::unique_lock<std::mutex> lock(m_oMutex);
+
+            // no more delayed tasks, free up the thread for other work
+            if (m_vDelayedTasks.empty())
+                break;
+
+            auto tNext = m_vDelayedTasks.front().tWhen - pClock.UpTime();
+            if (tNext > tZeroMilliseconds)
+                m_cvDelayedWork.wait_for(lock, tNext);
+        }
+    }
 }
 
 void ThreadPool::Shutdown(bool bWait) noexcept
 {
     m_bShutdownInitiated = true;
-    m_cvMutex.notify_all();
+    m_cvDelayedWork.notify_all();
+    m_cvWork.notify_all();
 
     if (bWait && !m_vThreads.empty())
     {

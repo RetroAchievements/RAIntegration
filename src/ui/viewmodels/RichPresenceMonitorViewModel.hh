@@ -23,14 +23,39 @@ public:
     /// </summary>
     const std::wstring& GetDisplayString() const { return GetValue(DisplayStringProperty); }
 
+    /// <summary>
+    /// Starts periodically updating the display string.
+    /// </summary>
+    void StartMonitoring();
+    
+    /// <summary>
+    /// Stops periodically updating the display string.
+    /// </summary>
+    void StopMonitoring();
+    
+    /// <summary>
+    /// Refreshes the display string.
+    /// </summary>
+    void UpdateDisplayString();
+
 protected:
     /// <summary>
     /// Sets the message to display.
     /// </summary>
     void SetDisplayString(const std::wstring& sValue) { SetValue(DisplayStringProperty, sValue); }
 
-public:
-    void UpdateDisplayString();
+private:
+    void ScheduleUpdateDisplayString();
+    
+    enum class MonitorState
+    {
+        None,
+        Active,
+        Deactivated,
+        Static,
+    };
+
+    MonitorState m_nState{ MonitorState::None };
 };
 
 } // namespace viewmodels

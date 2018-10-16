@@ -346,6 +346,8 @@ void DownloadAndActivateAchievementData(unsigned int nGameID)
     g_pCoreAchievements->LoadFromFile(nGameID);
     g_pUnofficialAchievements->LoadFromFile(nGameID);
     g_pLocalAchievements->LoadFromFile(nGameID);
+
+    g_RichPresenceInterpreter.Load();
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
@@ -442,6 +444,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemBookmarkDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
+
+    RAWeb::SendKeepAlive();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
 
     return 0;
 }
@@ -577,8 +583,6 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
-    RAWeb::SendKeepAlive();
-
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
     RequestObject* pObj = RAWeb::PopNextHttpResult();

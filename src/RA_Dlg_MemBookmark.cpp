@@ -580,7 +580,7 @@ void Dlg_MemBookmark::AddAddress()
     unsigned int nAddr = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
     NewBookmark->SetAddress(nAddr);
 
-    // Check Data Type
+    // Check Data GetType
     if (SendDlgItemMessage(g_MemoryDialog.GetHWND(), IDC_RA_MEMVIEW8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
         NewBookmark->SetType(1);
     else if (SendDlgItemMessage(g_MemoryDialog.GetHWND(), IDC_RA_MEMVIEW16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)

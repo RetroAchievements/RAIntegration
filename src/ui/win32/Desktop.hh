@@ -18,17 +18,12 @@ public:
     void ShowWindow(WindowViewModelBase& oViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& oViewModel) const override;
 
-    void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override;
-
     void Shutdown() override;
 
 private:
-    ra::ui::win32::IDialogPresenter* GetDialogPresenter(WindowViewModelBase& oViewModel) const;
+    ra::ui::win32::IDialogPresenter* GetDialogController(WindowViewModelBase& oViewModel) const;
 
     std::vector<std::unique_ptr<ra::ui::win32::IDialogPresenter>> m_vDialogPresenters;
-
-    mutable ra::ui::Position m_oWorkAreaPosition{};
-    mutable ra::ui::Size m_oWorkAreaSize{};
 };
 
 } // namespace win32

@@ -11,7 +11,7 @@ namespace viewmodels {
 class MessageBoxViewModel : public WindowViewModelBase
 {
 public:
-    MessageBoxViewModel() noexcept = default;
+    MessageBoxViewModel() = default;
 
     explicit MessageBoxViewModel(const std::wstring& sMessage) noexcept : WindowViewModelBase()
     {

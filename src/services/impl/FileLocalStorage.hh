@@ -14,13 +14,14 @@ class FileLocalStorage : public ILocalStorage
 public:
     explicit FileLocalStorage(IFileSystem& pFileSystem) noexcept;
 
-    std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override;
-    std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override;
+    std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey);
+
+    std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey);
 
     std::wstring GetPath(StorageItemType nType, const std::wstring& sKey) const;
 
 private:
-    IFileSystem& m_pFileSystem;
+    IFileSystem& pFileSystem;
 };
 
 } // namespace impl

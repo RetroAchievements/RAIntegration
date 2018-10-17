@@ -4,9 +4,6 @@
 #include "RA_Defs.h"
 #include "RA_httpthread.h"
 
-#include "services/IThreadPool.hh"
-#include "services/ServiceLocator.hh"
-
 #include <atlbase.h>
 #include <wincodec.h>
 
@@ -158,16 +155,6 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     if (_FileExists(sFilename))
         return;
 
-    // check to see if it's already queued
-    {
-        std::lock_guard<std::mutex> lock(m_oMutex);
-        if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
-            return;
-
-        m_vRequestedImages.emplace(sFilename);
-    }
-
-    // fetch it
     RequestType nRequestType;
     PostArgs args;
 
@@ -188,17 +175,9 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             return;
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([this, nRequestType, args, sFilename]()
-    {
-        std::string sResponse;
-        if (RAWeb::DoBlockingRequest(nRequestType, args, sResponse))
-            _WriteBufferToFile(sFilename, sResponse);
-
-        {
-            std::lock_guard<std::mutex> lock(m_oMutex);
-            m_vRequestedImages.erase(sFilename);
-        }
-    });
+    // Prevent duplicate requests
+    if (!RAWeb::HTTPRequestExists(nRequestType, sName) && !RAWeb::HTTPResponseExists(nRequestType, sName))
+        RAWeb::CreateThreadedHTTPRequest(nRequestType, args, sName);
 }
 
 HBITMAP ImageRepository::DefaultImage(ImageType nType)

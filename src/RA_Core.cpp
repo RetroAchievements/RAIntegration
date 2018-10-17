@@ -26,20 +26,19 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
+#include "RA_Dlg_RichPresence.h"
 #include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
-#include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
 #include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
-#include "ui\viewmodels\WindowManager.hh"
 
 #include <memory>
 #include <direct.h>
@@ -53,6 +52,7 @@
 #include <Shlwapi.h>
 #endif // WIN32_LEAN_AND_MEAN
 
+std::string g_sKnownRAVersion;
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 std::string g_sCurrentROMMD5;	//	Internal
@@ -62,6 +62,7 @@ HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
 EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
 ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+const char* g_sGetLatestClientPage = nullptr;
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
@@ -109,6 +110,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     {
         case RA_Gens:
             g_ConsoleID = MegaDrive;
+            g_sGetLatestClientPage = "LatestRAGensVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAGens_REWiND";
             g_sClientDownloadURL = "RAGens.zip";
@@ -116,6 +118,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Project64:
             g_ConsoleID = N64;
+            g_sGetLatestClientPage = "LatestRAP64Version.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAP64";
             g_sClientDownloadURL = "RAP64.zip";
@@ -123,6 +126,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Snes9x:
             g_ConsoleID = SNES;
+            g_sGetLatestClientPage = "LatestRASnesVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RASnes9X";
             g_sClientDownloadURL = "RASnes9X.zip";
@@ -130,6 +134,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_VisualboyAdvance:
             g_ConsoleID = GB;
+            g_sGetLatestClientPage = "LatestRAVBAVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAVisualBoyAdvance";
             g_sClientDownloadURL = "RAVBA.zip";
@@ -138,6 +143,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
         case RA_Nester:
         case RA_FCEUX:
             g_ConsoleID = NES;
+            g_sGetLatestClientPage = "LatestRANESVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RANes";
             g_sClientDownloadURL = "RANes.zip";
@@ -145,6 +151,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_PCE:
             g_ConsoleID = PCEngine;
+            g_sGetLatestClientPage = "LatestRAPCEVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAPCE";
             g_sClientDownloadURL = "RAPCE.zip";
@@ -152,6 +159,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Libretro:
             g_ConsoleID = Atari2600;
+            g_sGetLatestClientPage = "LatestRALibretroVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RALibretro";
             g_sClientDownloadURL = "RALibretro.zip";
@@ -159,6 +167,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             break;
         case RA_Meka:
             g_ConsoleID = MasterSystem;
+            g_sGetLatestClientPage = "LatestRAMekaVersion.html";
             g_sClientVersion = sClientVer;
             g_sClientName = "RAMeka";
             g_sClientDownloadURL = "RAMeka.zip";
@@ -181,6 +190,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     RAUsers::LocalUser().SetToken(pConfiguration.GetApiToken());
 
     RAWeb::SetUserAgentString();
+    RAWeb::RA_InitializeHTTPThreads();
 
     //////////////////////////////////////////////////////////////////////////
     //	Dialogs:
@@ -218,7 +228,7 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     //////////////////////////////////////////////////////////////////////////
     //	Attempt to fetch latest client version:
     args.clear();
-    args['e'] = std::to_string(nEmulatorID);
+    args['c'] = std::to_string(g_ConsoleID);
     RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args);	//	g_sGetLatestClientPage
 
     //	TBD:
@@ -235,14 +245,13 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
-    // notify the background threads as soon as possible so they start to wind down
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
-
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
     SAFE_DELETE(g_pLocalAchievements);
+
+    RAWeb::RA_KillHTTPThreads();
 
     if (g_AchievementsDialog.GetHWND() != nullptr)
     {
@@ -270,6 +279,13 @@ API int CCONV _RA_Shutdown()
 
     g_GameLibrary.KillThread();
 
+    if (g_RichPresenceDialog.GetHWND() != nullptr)
+    {
+        g_RichPresenceDialog.ClearMessage();
+        DestroyWindow(g_RichPresenceDialog.GetHWND());
+        g_RichPresenceDialog.InstallHWND(nullptr);
+    }
+
     if (g_MemBookmarkDialog.GetHWND() != nullptr)
     {
         DestroyWindow(g_MemBookmarkDialog.GetHWND());
@@ -279,8 +295,6 @@ API int CCONV _RA_Shutdown()
     ra::services::Initialization::Shutdown();
 
     CoUninitialize();
-
-    RA_LOG_INFO("Shutdown complete");
 
     return 0;
 }
@@ -478,6 +492,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemoryDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
     g_MemBookmarkDialog.OnLoad_NewRom();
+    g_RichPresenceDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
 
@@ -526,29 +541,6 @@ API void CCONV _RA_ClearMemoryBanks()
 //		buffer = nullptr;
 //	}
 //}
-
-static unsigned long long ParseVersion(const char* sVersion)
-{
-    char* pPart;
-    unsigned int major = strtoul(sVersion, &pPart, 10);
-    if (*pPart == '.')
-        ++pPart;
-
-    unsigned int minor = strtoul(pPart, &pPart, 10);
-    if (*pPart == '.')
-        ++pPart;
-
-    unsigned int patch = strtoul(pPart, &pPart, 10);
-    if (*pPart == '.')
-        ++pPart;
-
-    unsigned int revision = strtoul(pPart, &pPart, 10);
-    // 64-bit max signed value is 9223 37203 68547 75807
-    unsigned long long version = (major * 100000) + minor;
-    version = (version * 100000) + patch;
-    version = (version * 100000) + revision;
-    return version;
-}
 
 static bool RA_OfferNewRAUpdate(const char* sNewVer)
 {
@@ -615,25 +607,62 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
-    RAWeb::SendKeepAlive();
-
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
     RequestObject* pObj = RAWeb::PopNextHttpResult();
     while (pObj != nullptr)
     {
-        rapidjson::Document doc;
-        if (pObj->GetResponse().size() > 0 && pObj->ParseResponseToJSON(doc))
+        if (pObj->GetResponse().size() > 0)
         {
+            rapidjson::Document doc;
+            BOOL bJSONParsedOK = FALSE;
+
+            if (pObj->GetRequestType() == RequestBadge || pObj->GetRequestType() == RequestUserPic)
+            {
+                //	Ignore...
+            }
+            else
+            {
+                bJSONParsedOK = pObj->ParseResponseToJSON(doc);
+            }
+
             switch (pObj->GetRequestType())
             {
                 case RequestLogin:
                     RAUsers::LocalUser().HandleSilentLoginResponse(doc);
                     break;
 
+                case RequestBadge:
+                {
+                    const std::string& sBadgeURI = pObj->GetData();
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_BADGE + ra::Widen(sBadgeURI) + L".png", pObj->GetResponse());
+
+                    /* This block seems unnecessary. --GD
+                    for( size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i )
+                    {
+                        Achievement& ach = g_pActiveAchievements->GetAchievement( i );
+                        if( ach.BadgeImageURI().compare( 0, 5, sBadgeURI, 0, 5 ) == 0 )
+                        {
+                            //	Re-set this badge image
+                            //	NB. This is already a non-modifying op
+                            ach.SetBadgeImage( sBadgeURI );
+                        }
+                    }*/
+
+                    g_AchievementEditorDialog.UpdateSelectedBadgeImage();	//	Is this necessary if it's no longer selected?
+                }
+                break;
+
                 case RequestBadgeIter:
                     g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
                     break;
+
+                case RequestUserPic:
+                {
+                    const std::string& sUsername = pObj->GetData();
+                    _WriteBufferToFile(g_sHomeDir + RA_DIR_USERPIC + ra::Widen(sUsername) + L".png", pObj->GetResponse());
+                    break;
+                }
 
                 case RequestFriendList:
                     RAUsers::LocalUser().OnFriendListResponse(doc);
@@ -671,17 +700,24 @@ API int CCONV _RA_HandleHTTPResults()
                     if (doc.HasMember("LatestVersion"))
                     {
                         const std::string& sReply = doc["LatestVersion"].GetString();
-                        unsigned long long nServerVersion = ParseVersion(sReply.c_str());
-                        unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
+                        if (sReply.substr(0, 2).compare("0.") == 0)
+                        {
+                            long nValServer = std::strtol(sReply.c_str() + 2, nullptr, 10);
+                            long nValKnown = std::strtol(g_sKnownRAVersion.c_str() + 2, nullptr, 10);
+                            long nValCurrent = std::strtol(g_sClientVersion + 2, nullptr, 10);
 
-                        if (nLocalVersion < nServerVersion)
-                        {
-                            //	Update available:
-                            RA_OfferNewRAUpdate(sReply.c_str());
-                        }
-                        else
-                        {
-                            RA_LOG("Latest Client already up to date: server %s, current %s\n", sReply.c_str(), g_sClientVersion);
+                            if (nValKnown < nValServer && nValCurrent < nValServer)
+                            {
+                                //	Update available:
+                                RA_OfferNewRAUpdate(sReply.c_str());
+
+                                //	Update the last version I've heard of:
+                                g_sKnownRAVersion = sReply;
+                            }
+                            else
+                            {
+                                RA_LOG("Latest Client already up to date: server 0.%d, current 0.%d\n", nValServer, nValCurrent);
+                            }
                         }
                     }
                     else
@@ -853,16 +889,18 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 static void RA_CheckForUpdate()
 {
     PostArgs args;
-    args['e'] = std::to_string(g_EmulatorID);
+    args['c'] = std::to_string(g_ConsoleID);
 
-    rapidjson::Document doc;
-    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, doc))
+    std::string Response;
+    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, Response))
     {
-        if (doc.HasMember("LatestVersion"))
+        // TODO: this doesn't work - response is JSON
+        std::string sReply = std::move(Response);
+        if (sReply.length() > 2 && sReply.at(0) == '0' && sReply.at(1) == '.')
         {
-            const std::string& sReply = doc["LatestVersion"].GetString();
-            unsigned long long nServerVersion = ParseVersion(sReply.c_str());
-            unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
+            //	Ignore g_sKnownRAVersion: check against g_sRAVersion
+            unsigned long nLocalVersion = std::strtoul(g_sClientVersion + 2, nullptr, 10);
+            unsigned long nServerVersion = std::strtoul(sReply.c_str() + 2, nullptr, 10);
 
             if (nLocalVersion < nServerVersion)
             {
@@ -1161,10 +1199,17 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            g_RichPresenceInterpreter.Load();
+            bool bRichPresenceExists = g_RichPresenceInterpreter.Load();
 
-            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-            pWindowManager.RichPresenceMonitor.Show();
+            if (g_RichPresenceDialog.GetHWND() == nullptr)
+                g_RichPresenceDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), g_RAMainWnd, &Dlg_RichPresence::s_RichPresenceDialogProc));
+            if (g_RichPresenceDialog.GetHWND() != nullptr)
+                ShowWindow(g_RichPresenceDialog.GetHWND(), SW_SHOW);
+
+            if (bRichPresenceExists)
+                g_RichPresenceDialog.StartMonitoring();
+            else
+                g_RichPresenceDialog.ClearMessage();
 
             break;
         }

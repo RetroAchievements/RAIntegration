@@ -4,13 +4,10 @@
 
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
-#include "tests\mocks\MockDesktop.hh"
 
 #include "RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-
-using ra::ui::mocks::MockDesktop;
 
 namespace ra {
 namespace ui {
@@ -22,6 +19,30 @@ TEST_CLASS(UI_WindowViewModelBase_Tests)
     {
     public:
         WindowViewModelHarness() noexcept = default;
+    };
+
+    class MockDesktop : public IDesktop, ra::services::ServiceLocator::ServiceOverride<IDesktop>
+    {
+    public:
+        MockDesktop() : ra::services::ServiceLocator::ServiceOverride<IDesktop>(this)
+        {
+        }
+
+        void ShowWindow(WindowViewModelBase& vmViewModel) const override
+        {
+            vmShownWindow = &vmViewModel;
+        }
+
+        ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const override
+        {
+            vmModalWindow = &vmViewModel;
+            return DialogResult::OK;
+        }
+
+        void Shutdown() override {}
+
+        mutable WindowViewModelBase* vmShownWindow = nullptr;
+        mutable WindowViewModelBase* vmModalWindow = nullptr;
     };
 
     void AssertPointer(const WindowViewModelBase* pExpected, const WindowViewModelBase* pActual)
@@ -55,32 +76,20 @@ public:
 
     TEST_METHOD(TestShow)
     {
-        WindowViewModelBase* vmShownWindow = nullptr;
-        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
-        {
-            vmShownWindow = &vmWindow;
-            return DialogResult::OK;
-        });
-
+        MockDesktop mockDesktop;
         WindowViewModelHarness vmViewModel;
         vmViewModel.Show();
 
-        AssertPointer(&vmViewModel, vmShownWindow);
+        AssertPointer(&vmViewModel, mockDesktop.vmShownWindow);
     }
 
     TEST_METHOD(TestShowModal)
     {
-        WindowViewModelBase* vmShownWindow = nullptr;
-        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
-        {
-            vmShownWindow = &vmWindow;
-            return DialogResult::OK;
-        });
-
+        MockDesktop mockDesktop;
         WindowViewModelHarness vmViewModel;
         vmViewModel.ShowModal();
 
-        AssertPointer(&vmViewModel, vmShownWindow);
+        AssertPointer(&vmViewModel, mockDesktop.vmModalWindow);
     }
 };
 

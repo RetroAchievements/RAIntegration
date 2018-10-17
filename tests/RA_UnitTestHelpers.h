@@ -19,9 +19,9 @@ template<> static std::wstring ToString<ComparisonVariableSize>(const Comparison
     return ra::Widen(COMPARISONVARIABLESIZE_STR[(int)t]);
 }
 
-template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
+template<> static std::wstring ToString<ComparisonVariableType>(const ComparisonVariableType& t)
 {
-    return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
+    return ra::Widen(COMPARISONVARIABLETYPE_STR[(int)t]);
 }
 
 template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)

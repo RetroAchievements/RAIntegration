@@ -98,6 +98,7 @@ extern "C" {
 
 
 //	Non-exposed:
+extern std::string g_sKnownRAVersion;
 extern std::wstring g_sHomeDir;
 extern std::string g_sROMDirLocation;
 extern std::string g_sCurrentROMMD5;
@@ -107,6 +108,7 @@ extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
 extern EmulatorID g_EmulatorID;
 extern ConsoleID g_ConsoleID;
+extern const char* g_sGetLatestClientPage;
 extern const char* g_sClientVersion;
 extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;

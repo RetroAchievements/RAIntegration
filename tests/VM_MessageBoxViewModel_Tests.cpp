@@ -4,7 +4,6 @@
 
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
-#include "tests\mocks\MockDesktop.hh"
 
 #include "RA_UnitTestHelpers.h"
 
@@ -45,8 +44,6 @@ template<> static std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel:
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-using ra::ui::mocks::MockDesktop;
-
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -55,6 +52,38 @@ namespace tests {
 TEST_CLASS(VM_MessageBoxViewModel_Tests)
 {
     typedef ra::ui::DialogResult(*DialogHandler)(MessageBoxViewModel&);
+
+    class MockDesktop : public IDesktop, ra::services::ServiceLocator::ServiceOverride<IDesktop>
+    {
+    public:
+        MockDesktop(DialogHandler pHandler) : ra::services::ServiceLocator::ServiceOverride<IDesktop>(this), m_pHandler(pHandler)
+        {
+        }
+
+        ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const override
+        {
+            m_bDialogShown = true;
+
+            auto* vmMessageBox = dynamic_cast<MessageBoxViewModel*>(&vmViewModel);
+            if (vmMessageBox == nullptr)
+                return ra::ui::DialogResult::None;
+
+            return m_pHandler(*vmMessageBox);
+        }
+
+        void ShowWindow(WindowViewModelBase& vmViewModel) const override {}
+
+        void Shutdown() override {}
+
+        void AssertDialogShown()
+        {
+            Assert::IsTrue(m_bDialogShown);
+        }
+
+    private:
+        DialogHandler m_pHandler = nullptr;
+        mutable bool m_bDialogShown = false;
+    };
 
     void AssertPointer(const WindowViewModelBase* pExpected, const WindowViewModelBase* pActual)
     {
@@ -105,9 +134,8 @@ public:
 
     TEST_METHOD(TestShowMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Hello, world!"), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::None, vmMessageBox.GetIcon());
@@ -117,14 +145,13 @@ public:
 
         MessageBoxViewModel::ShowMessage(L"Hello, world!");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 
     TEST_METHOD(TestShowInfoMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
@@ -134,14 +161,13 @@ public:
 
         MessageBoxViewModel::ShowInfoMessage(L"Something happened.");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 
     TEST_METHOD(TestShowWarningMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
@@ -151,14 +177,13 @@ public:
 
         MessageBoxViewModel::ShowWarningMessage(L"Something happened.");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 
     TEST_METHOD(TestShowHeaderedWarningMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Please try again."), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
@@ -168,14 +193,13 @@ public:
 
         MessageBoxViewModel::ShowWarningMessage(L"Something happened.", L"Please try again.");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 
     TEST_METHOD(TestShowErrorMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());
@@ -185,14 +209,13 @@ public:
 
         MessageBoxViewModel::ShowErrorMessage(L"Something happened.");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 
     TEST_METHOD(TestShowHeaderedErrorMessage)
     {
-        MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop([](MessageBoxViewModel& vmMessageBox)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Please try again."), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());
@@ -202,7 +225,7 @@ public:
 
         MessageBoxViewModel::ShowErrorMessage(L"Something happened.", L"Please try again.");
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
+        mockDesktop.AssertDialogShown();
     }
 };
 

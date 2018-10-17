@@ -82,9 +82,6 @@ protected:
     /// <param name="nValue">The value to set.</param>
     void SetValue(const IntModelProperty& pProperty, int nValue);
 
-    // allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
-    friend class BindingBase;
-
 private:
     StringModelProperty::ValueMap m_mStringValues;
     IntModelProperty::ValueMap m_mIntValues;

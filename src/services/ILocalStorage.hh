@@ -25,7 +25,7 @@ class ILocalStorage
 {
 public:
     virtual ~ILocalStorage() noexcept = default;
-
+    
     /// <summary>
     /// Begins reading stored data for the specified <paramref name="nType"/> and <paramref name="sKey" />.
     /// </summary>

@@ -6,8 +6,6 @@
 const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
 static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 
-const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
 const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
 static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
@@ -54,17 +52,17 @@ static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
     }
 }
 
-static const char* ComparisonTypeToStr(ComparisonType nType)
+_NODISCARD _CONSTANT_FN ComparisonTypeToStr(_In_ ComparisonType nType) noexcept
 {
     switch (nType)
     {
-        case Equals:				return "=";
-        case GreaterThan:			return ">";
-        case GreaterThanOrEqual:	return ">=";
-        case LessThan:				return "<";
-        case LessThanOrEqual:		return "<=";
-        case NotEqualTo:			return "!=";
-        default:					return "";
+        case ComparisonType::Equals:             return "=";
+        case ComparisonType::GreaterThan:        return ">";
+        case ComparisonType::GreaterThanOrEqual: return ">=";
+        case ComparisonType::LessThan:           return "<";
+        case ComparisonType::LessThanOrEqual:    return "<=";
+        case ComparisonType::NotEqualTo:         return "!=";
+        default:                                 return "";
     }
 }
 
@@ -340,17 +338,17 @@ bool Condition::Compare(unsigned int nAddBuffer)
 {
     switch (m_nCompareType)
     {
-        case Equals:
+        case ComparisonType::Equals:
             return(m_nCompSource.GetValue() + nAddBuffer == m_nCompTarget.GetValue());
-        case LessThan:
+        case ComparisonType::LessThan:
             return(m_nCompSource.GetValue() + nAddBuffer < m_nCompTarget.GetValue());
-        case LessThanOrEqual:
+        case ComparisonType::LessThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer <= m_nCompTarget.GetValue());
-        case GreaterThan:
+        case ComparisonType::GreaterThan:
             return(m_nCompSource.GetValue() + nAddBuffer > m_nCompTarget.GetValue());
-        case GreaterThanOrEqual:
+        case ComparisonType::GreaterThanOrEqual:
             return(m_nCompSource.GetValue() + nAddBuffer >= m_nCompTarget.GetValue());
-        case NotEqualTo:
+        case ComparisonType::NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
         default:
             return true;	//?

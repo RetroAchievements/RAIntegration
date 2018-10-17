@@ -191,7 +191,8 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
+    sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s",
+              ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))).c_str());
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
@@ -701,7 +702,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f * nHeight * NumComparisonTypes),
+                rcSubItem.left, rcSubItem.top, nWidth, ra::ftoi(1.6F * nHeight * COMPARISONTYPE_STR.size()),
                 g_AchievementEditorDialog.GetHWND(),
                 0,
                 GetModuleHandle(nullptr),
@@ -713,13 +714,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 MessageBox(nullptr, TEXT("Could not create combo box."), TEXT("Error"), MB_OK | MB_ICONERROR);
                 break;
             };
-
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
+            for (const auto& str : COMPARISONTYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
-
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONTYPE_STR[i]) == 0)
-                    ComboBox_SetCurSel(g_hIPEEdit, i);
+                const auto idx{ ComboBox_AddString(g_hIPEEdit, str) };
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
+                    ComboBox_SetCurSel(g_hIPEEdit, idx);
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -1745,13 +1744,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         case CSI_COMPARISON:
                         {
-                            for (int i = 0; i < NumComparisonTypes; ++i)
+                            auto i{ 0 };
+                            for (const auto& str : COMPARISONTYPE_STR)
                             {
-                                if (strcmp(sData, COMPARISONTYPE_STR[i]) == 0)
-                                    rCond.SetCompareType(static_cast<ComparisonType>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.SetCompareType(ra::itoe<ComparisonType>(i));
+                                i++;
                             }
-                            break;
-                        }
+                        }break;
 
                         case CSI_VALUE_SRC:
                         {

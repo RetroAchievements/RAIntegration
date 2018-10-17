@@ -25,18 +25,25 @@ enum ComparisonVariableSize
 };
 extern const char* COMPARISONVARIABLESIZE_STR[];
 
-enum ComparisonType
+enum class ComparisonType
 {
     Equals,
     LessThan,
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
-    NotEqualTo,
-
-    NumComparisonTypes
+    NotEqualTo
 };
-extern const char* COMPARISONTYPE_STR[];
+// 'const LPCTSTR' is the same as const TCHAR* const
+inline constexpr std::array<const LPCTSTR, 6> COMPARISONTYPE_STR
+{
+    _T("="),
+    _T("<"),
+    _T("<="),
+    _T(">"),
+    _T(">="),
+    _T("!=")
+};
 
 extern const char* CONDITIONTYPE_STR[];
 
@@ -118,7 +125,7 @@ public:
 public:
     Condition()
         : m_nConditionType(Standard),
-        m_nCompareType(Equals),
+        m_nCompareType(ComparisonType::Equals),
         m_nRequiredHits(0),
         m_nCurrentHits(0)
     {

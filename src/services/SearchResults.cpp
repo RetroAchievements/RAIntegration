@@ -61,42 +61,45 @@ SearchResults::MemBlock& SearchResults::AddBlock(unsigned int nAddress, unsigned
     return m_vBlocks.back();
 }
 
-static bool Compare(unsigned int nLeft, unsigned int nRight, ComparisonType nCompareType)
+_Success_(return)
+_NODISCARD _CONSTANT_FN Compare(_In_ unsigned int nLeft,
+                                _In_ unsigned int nRight,
+                                _In_ ComparisonType nCompareType) noexcept
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ComparisonType::Equals:
             return nLeft == nRight;
-        case LessThan:
+        case ComparisonType::LessThan:
             return nLeft < nRight;
-        case LessThanOrEqual:
+        case ComparisonType::LessThanOrEqual:
             return nLeft <= nRight;
-        case GreaterThan:
+        case ComparisonType::GreaterThan:
             return nLeft > nRight;
-        case GreaterThanOrEqual:
+        case ComparisonType::GreaterThanOrEqual:
             return nLeft >= nRight;
-        case NotEqualTo:
+        case ComparisonType::NotEqualTo:
             return nLeft != nRight;
         default:
             return false;
     }
 }
 
-static const char* ComparisonString(ComparisonType nCompareType)
+_NODISCARD _CONSTANT_FN ComparisonString(_In_ ComparisonType nCompareType) noexcept
 {
     switch (nCompareType)
     {
-        case Equals:
+        case ComparisonType::Equals:
             return "EQUAL";
-        case LessThan:
+        case ComparisonType::LessThan:
             return "LESS THAN";
-        case LessThanOrEqual:
+        case ComparisonType::LessThanOrEqual:
             return "LESS THAN/EQUAL";
-        case GreaterThan:
+        case ComparisonType::GreaterThan:
             return "GREATER THAN";
-        case GreaterThanOrEqual:
+        case ComparisonType::GreaterThanOrEqual:
             return "GREATER THAN/EQUAL";
-        case NotEqualTo:
+        case ComparisonType::NotEqualTo:
             return "NOT EQUAL";
         default:
             return "?";
@@ -321,6 +324,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_sSummary.append("...");
 }
 
+_Use_decl_annotations_
 void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType)
 {
     m_nSize = srSource.m_nSize;
@@ -330,14 +334,14 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         // efficient comparisons for 8-bit
         switch (nCompareType)
         {
-            case Equals:
+            case ComparisonType::Equals:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] == pPrev[nIndex];
                 });
                 break;
 
-            case NotEqualTo:
+            case ComparisonType::NotEqualTo:
                 ProcessBlocks(srSource, [](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
                 {
                     return pMemory[nIndex] != pPrev[nIndex];

@@ -1,6 +1,7 @@
 #ifndef RA_CONDITION_H
 #define RA_CONDITION_H
 #pragma once
+
 #include "RA_Defs.h"
 
 enum class MemSize
@@ -38,17 +39,6 @@ inline constexpr std::array<LPCTSTR, 13> MEMSIZE_STR
 };
 
 
-enum ComparisonVariableType
-{
-    Address,			//	compare to the value of a live address in RAM
-    ValueComparison,	//	a number. assume 32 bit 
-    DeltaMem,			//	the value last known at this address.
-    DynamicVariable,	//	a custom user-set variable
-
-    NumComparisonVariableTypes
-};
-extern const char* COMPARISONVARIABLETYPE_STR[];
-
 enum ComparisonType
 {
     Equals,
@@ -67,13 +57,21 @@ extern const char* CONDITIONTYPE_STR[];
 class CompVariable
 {
 public:
-    CompVariable()
-        : m_nVal(0),
-        m_nPreviousVal(0),
-        m_nVarSize(MemSize::EightBit),
-        m_nVarType(ComparisonVariableType::Address)
+    enum class Type
     {
-    }
+        Address,         // compare to the value of a live address in RAM
+        ValueComparison, //	a number. assume 32 bit 
+        DeltaMem,        // the value last known at this address.
+        DynamicVariable  // a custom user-set variable
+    };
+
+    inline static constexpr std::array<const char*, 4> TYPE_STR
+    {
+        "Memory",
+        "Value",
+        "Delta",
+        "DynVar"
+    };
 
 public:
     void Set(MemSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
@@ -102,17 +100,17 @@ public:
     inline void SetSize(MemSize nSize) { m_nVarSize = nSize; }
     inline MemSize Size() const { return m_nVarSize; }
 
-    inline void SetType(ComparisonVariableType nType) { m_nVarType = nType; }
-    inline ComparisonVariableType Type() const { return m_nVarType; }
+    _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
+    _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
 
     inline unsigned int RawValue() const { return m_nVal; }
     inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
 
 private:
-    MemSize m_nVarSize;
-    ComparisonVariableType m_nVarType;
-    unsigned int m_nVal;
-    unsigned int m_nPreviousVal;
+    MemSize m_nVarSize{};
+    Type m_nVarType{};
+    unsigned int m_nVal{};
+    unsigned int m_nPreviousVal{};
 };
 
 

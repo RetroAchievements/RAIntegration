@@ -25,9 +25,9 @@ template<> static std::wstring ToString<MemSize>(const MemSize& t)
 #endif /* _MBCS */
 }
 
-template<> static std::wstring ToString<ComparisonVariableType>(const ComparisonVariableType& t)
+template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 {
-    return ra::Widen(COMPARISONVARIABLETYPE_STR[(int)t]);
+    return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)

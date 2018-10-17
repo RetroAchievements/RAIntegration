@@ -4,7 +4,7 @@
 #include "ui/WindowViewModelBase.hh"
 
 namespace ra {
-namespace ui {
+namespace ui {  
 namespace win32 {
 
 class IDialogPresenter
@@ -27,6 +27,16 @@ public:
     /// </summary>
     virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel) = 0;
 };
+
+class IClosableDialogPresenter : public IDialogPresenter
+{
+public:    
+    /// <summary>
+    /// Called when the dialog is closed.
+    /// </summary>
+    virtual void OnClosed() = 0;
+};
+
 
 } // namespace win32
 } // namespace ui

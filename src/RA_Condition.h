@@ -74,37 +74,67 @@ public:
     };
 
 public:
-    void Set(MemSize nSize, ComparisonVariableType nType, unsigned int nInitialValue)
+    inline constexpr CompVariable() noexcept = default;
+    explicit inline constexpr CompVariable(_In_ MemSize nSize,
+                          _In_ CompVariable::Type nType,
+                          _In_ unsigned int nInitialValue) noexcept :
+        m_nVarSize{ nSize },
+        m_nVarType{ nType },
+        m_nVal{ nInitialValue }
     {
-        m_nVarSize = nSize;
-        m_nVarType = nType;
-        m_nVal = nInitialValue;
+
     }
 
-    void SetValues(unsigned int nVal, unsigned int nPrevVal)
+    explicit inline constexpr CompVariable(_In_ unsigned int nInitialValue,
+                                           _In_ unsigned int nPrevVal) noexcept :
+        m_nVal{ nInitialValue },
+        m_nPreviousVal{ nPrevVal }
     {
-        m_nVal = nVal;
-        m_nPreviousVal = nPrevVal;
     }
 
-    void ResetDelta()
+    _CONSTANT_FN Set(_In_ MemSize nSize,
+                     _In_ CompVariable::Type nType,
+                     _In_ unsigned int nInitialValue) noexcept
     {
-        m_nPreviousVal = m_nVal;
+        this->swap(CompVariable{ nSize, nType, nInitialValue });
     }
 
-    bool ParseVariable(const char*& sInString);	//	Parse from string
-    void SerializeAppend(std::string& buffer) const;
+    _CONSTANT_FN SetValues(_In_ unsigned int nVal, _In_ unsigned int nPrevVal) noexcept
+    {
+        this->swap(CompVariable{ nVal, nPrevVal });
+    }
+
+    _CONSTANT_FN ResetDelta() noexcept { m_nPreviousVal = m_nVal; }
+
+    bool ParseVariable(_Inout_ const char*& sInString);	//	Parse from string
+    void SerializeAppend(_Out_ std::string& buffer) const;
 
     unsigned int GetValue();				//	Returns the live value
 
-    inline void SetSize(MemSize nSize) { m_nVarSize = nSize; }
-    inline MemSize Size() const { return m_nVarSize; }
+    _CONSTANT_FN SetSize(MemSize nSize) noexcept { m_nVarSize = nSize; }
+    _NODISCARD _CONSTANT_FN Size() const noexcept { return m_nVarSize; }
 
     _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
     _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
 
-    inline unsigned int RawValue() const { return m_nVal; }
-    inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
+    _NODISCARD _CONSTANT_FN RawValue() const noexcept { return m_nVal; }
+    _NODISCARD _CONSTANT_FN RawPreviousValue() const noexcept { return m_nPreviousVal; }
+
+    inline void swap(_Inout_ CompVariable& a) noexcept
+    {
+        std::swap(this->m_nVarSize, a.m_nVarSize);
+        std::swap(this->m_nVarType, a.m_nVarType);
+        std::swap(this->m_nVal, a.m_nVal);
+        std::swap(this->m_nPreviousVal, a.m_nPreviousVal);
+    }
+
+    inline constexpr void swap(_In_ CompVariable&& a) noexcept
+    {
+        this->m_nVarSize     = a.m_nVarSize;
+        this->m_nVarType     = a.m_nVarType;
+        this->m_nVal         = a.m_nVal;
+        this->m_nPreviousVal = a.m_nPreviousVal;
+    }
 
 private:
     MemSize m_nVarSize{};
@@ -112,7 +142,6 @@ private:
     unsigned int m_nVal{};
     unsigned int m_nPreviousVal{};
 };
-
 
 class Condition
 {

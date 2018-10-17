@@ -187,7 +187,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
-    sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
+    sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))).c_str());
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
@@ -534,7 +534,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f * nHeight * Condition::NumConditionTypes),
+                rcSubItem.left, rcSubItem.top, nWidth, ra::ftoi(1.6F * nHeight * Condition::TYPE_STR.size()),
                 g_AchievementEditorDialog.GetHWND(),
                 0,
                 GetModuleHandle(nullptr),
@@ -547,12 +547,14 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            for (size_t i = 0; i < Condition::NumConditionTypes; ++i)
+            auto i{ 0 };
+            for (const auto& str : Condition::TYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(CONDITIONTYPE_STR[i]).c_str());
+                ComboBox_AddString(g_hIPEEdit, str);
 
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), CONDITIONTYPE_STR[i]) == 0)
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
+                i++;
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -1692,11 +1694,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CSI_GROUP:
                         {
-                            for (int i = 0; i < Condition::NumConditionTypes; ++i)
+                            auto i{ 0 };
+                            for (const auto& str : Condition::TYPE_STR)
                             {
-                                if (strcmp(sData, CONDITIONTYPE_STR[i]) == 0)
-                                    rCond.SetConditionType(static_cast<Condition::ConditionType>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.SetConditionType(ra::itoe<Condition::Type>(i));
+                                i++;
                             }
+
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
                             break;
                         }

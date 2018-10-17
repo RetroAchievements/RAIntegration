@@ -38,15 +38,13 @@ enum ComparisonType
 };
 extern const char* COMPARISONTYPE_STR[];
 
-extern const char* CONDITIONTYPE_STR[];
-
 class CompVariable
 {
 public:
     enum class Type
     {
         Address,         // compare to the value of a live address in RAM
-        ValueComparison, //	a number. assume 32 bit 
+        ValueComparison, // a number. assume 32 bit 
         DeltaMem,        // the value last known at this address.
         DynamicVariable  // a custom user-set variable
     };
@@ -78,10 +76,10 @@ public:
         m_nPreviousVal = m_nVal;
     }
 
-    bool ParseVariable(const char*& sInString);	//	Parse from string
+    bool ParseVariable(const char*& sInString); //  Parse from string
     void SerializeAppend(std::string& buffer) const;
 
-    unsigned int GetValue();				//	Returns the live value
+    unsigned int GetValue();                //  Returns the live value
 
     inline void SetSize(ComparisonVariableSize nSize) { m_nVarSize = nSize; }
     inline ComparisonVariableSize Size() const { return m_nVarSize; }
@@ -103,42 +101,41 @@ private:
 class Condition
 {
 public:
-    enum ConditionType
+    enum class Type
     {
         Standard,
         PauseIf,
         ResetIf,
         AddSource,
         SubSource,
-        AddHits,
+        AddHits
+    };
 
-        NumConditionTypes
+    inline static constexpr std::array<const LPCTSTR, 6> TYPE_STR
+    {
+        _T(""),
+        _T("Pause If"),
+        _T("Reset If"),
+        _T("Add Source"),
+        _T("Sub Source"),
+        _T("Add Hits")
     };
 
 public:
-    Condition()
-        : m_nConditionType(Standard),
-        m_nCompareType(Equals),
-        m_nRequiredHits(0),
-        m_nCurrentHits(0)
-    {
-    }
-
-public:
-    //	Parse a Condition from a string of characters
+    //  Parse a Condition from a string of characters
     bool ParseFromString(const char*& sBuffer);
     void SerializeAppend(std::string& buffer) const;
 
-    //	Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
+    //  Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
     bool Compare(unsigned int nAddBuffer = 0);
 
-    //	Returns whether a change was made
+    //  Returns whether a change was made
     bool ResetHits();
 
-    //	Resets 'last known' values
+    //  Resets 'last known' values
     void ResetDeltas();
 
-    inline CompVariable& CompSource() { return m_nCompSource; }	//	NB both required!!
+    inline CompVariable& CompSource() { return m_nCompSource; } //  NB both required!!
     inline const CompVariable& CompSource() const { return m_nCompSource; }
     inline CompVariable& CompTarget() { return m_nCompTarget; }
     inline const CompVariable& CompTarget() const { return m_nCompTarget; }
@@ -148,14 +145,14 @@ public:
     inline unsigned int RequiredHits() const { return m_nRequiredHits; }
     inline unsigned int CurrentHits() const { return m_nCurrentHits; }
 
-    inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
-    inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
-    inline bool IsAddCondition() const { return(m_nConditionType == AddSource); }
-    inline bool IsSubCondition() const { return(m_nConditionType == SubSource); }
-    inline bool IsAddHitsCondition() const { return(m_nConditionType == AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const { return(m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const { return(m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const { return(m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const { return(m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return(m_nConditionType == Type::AddHits); }
 
-    inline ConditionType GetConditionType() const { return m_nConditionType; }
-    void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }
+    inline Type GetConditionType() const { return m_nConditionType; }
+    void SetConditionType(Type nNewType) { m_nConditionType = nNewType; }
 
     void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
     void IncrHits() { m_nCurrentHits++; }
@@ -165,14 +162,14 @@ public:
 
 
 private:
-    ConditionType	m_nConditionType;
+    Type m_nConditionType{};
 
-    CompVariable	m_nCompSource;
-    ComparisonType	m_nCompareType;
-    CompVariable	m_nCompTarget;
+    CompVariable   m_nCompSource{};
+    ComparisonType m_nCompareType{};
+    CompVariable   m_nCompTarget{};
 
-    unsigned int	m_nRequiredHits;
-    unsigned int	m_nCurrentHits;
+    unsigned int m_nRequiredHits{};
+    unsigned int m_nCurrentHits{};
 };
 
 class ConditionGroup
@@ -189,7 +186,7 @@ public:
     const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
     void Clear() { m_Conditions.clear(); }
     void RemoveAt(size_t i);
-    bool Reset(bool bIncludingDeltas);	//	Returns dirty
+    bool Reset(bool bIncludingDeltas);  //  Returns dirty
 
 protected:
     bool Test(bool& bDirtyConditions, bool& bResetRead, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs);

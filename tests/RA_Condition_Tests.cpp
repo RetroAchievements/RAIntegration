@@ -20,7 +20,7 @@ public:
         Assert::AreEqual(nExpectedRawValue, var.RawValue(), wsSerialized.c_str());
     }
 
-    void AssertCondition(const Condition& cond, Condition::ConditionType nExpectedType, ComparisonType nExpectedComparison, unsigned int nExpectedRequiredHits, const char* sSerialized)
+    void AssertCondition(const Condition& cond, Condition::Type nExpectedType, ComparisonType nExpectedComparison, unsigned int nExpectedRequiredHits, const char* sSerialized)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         Assert::AreEqual(nExpectedType, cond.GetConditionType(), wsSerialized.c_str());
@@ -28,7 +28,7 @@ public:
         Assert::AreEqual(nExpectedRequiredHits, cond.RequiredHits(), wsSerialized.c_str());
     }
 
-    void AssertParseCondition(const char* sSerialized, Condition::ConditionType nExpectedConditionType,
+    void AssertParseCondition(const char* sSerialized, Condition::Type nExpectedConditionType,
         CompVariable::Type nExpectedLeftType, ComparisonVariableSize nExpectedLeftSize, unsigned int nExpectedLeftValue,
         ComparisonType nExpectedComparison,
         CompVariable::Type nExpectedRightType, ComparisonVariableSize nExpectedRightSize, unsigned int nExpectedRightValue,
@@ -63,58 +63,58 @@ public:
     {
         // different comparisons
         AssertParseCondition("0xH1234=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234==8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234!=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, NotEqualTo,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, NotEqualTo,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234<8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, LessThan,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, LessThan,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234<=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, LessThanOrEqual,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, LessThanOrEqual,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234>8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, GreaterThan,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, GreaterThan,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("0xH1234>=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, GreaterThanOrEqual,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, GreaterThanOrEqual,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
 
         // delta
         AssertParseCondition("d0xH1234=8",
-            Condition::Standard, CompVariable::Type::DeltaMem, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::DeltaMem, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
 
         // flags
         AssertParseCondition("R:0xH1234=8",
-            Condition::ResetIf, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::ResetIf, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("P:0xH1234=8",
-            Condition::PauseIf, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::PauseIf, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("A:0xH1234=8",
-            Condition::AddSource, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::AddSource, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("B:0xH1234=8",
-            Condition::SubSource, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::SubSource, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
         AssertParseCondition("C:0xH1234=8",
-            Condition::AddHits, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::AddHits, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 0);
 
         // hit count
         AssertParseCondition("0xH1234=8(1)",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 1);
         AssertParseCondition("0xH1234=8.1.", // legacy format
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 1);
         AssertParseCondition("0xH1234=8(100)",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 8U, 100);
     }
 
@@ -122,23 +122,23 @@ public:
     {
         // hex value is interpreted as a 16-bit memory reference
         AssertParseCondition("0xH1234=0x80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::Address, SixteenBit, 0x80U, 0);
 
         // h prefix indicates hex value
         AssertParseCondition("0xH1234=h80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 0x80U, 0);
 
         AssertParseCondition("0xH1234=h0x80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
+            Condition::Type::Standard, CompVariable::Type::Address, EightBit, 0x1234U, Equals,
             CompVariable::Type::ValueComparison, EightBit, 0x80U, 0);
     }
 
     TEST_METHOD(TestParseConditionMemoryComparisonMemory)
     {
         AssertParseCondition("0xL1234!=0xU3456",
-            Condition::Standard, CompVariable::Type::Address, Nibble_Lower, 0x1234U, NotEqualTo,
+            Condition::Type::Standard, CompVariable::Type::Address, Nibble_Lower, 0x1234U, NotEqualTo,
             CompVariable::Type::Address, Nibble_Upper, 0x3456U, 0);
     }
 
@@ -171,27 +171,27 @@ public:
     TEST_METHOD(TestConditionSet)
     {
         Condition cond;
-        AssertCondition(cond, Condition::Standard, Equals, 0, "");
+        AssertCondition(cond, Condition::Type::Standard, Equals, 0, "");
 
         cond.SetCompareType(NotEqualTo);
-        AssertCondition(cond, Condition::Standard, NotEqualTo, 0, "NotEqualTo");
+        AssertCondition(cond, Condition::Type::Standard, NotEqualTo, 0, "NotEqualTo");
 
-        cond.SetConditionType(Condition::ResetIf);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 0, "ResetIf");
+        cond.SetConditionType(Condition::Type::ResetIf);
+        AssertCondition(cond, Condition::Type::ResetIf, NotEqualTo, 0, "ResetIf");
 
         cond.SetRequiredHits(5);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 5, "5");
+        AssertCondition(cond, Condition::Type::ResetIf, NotEqualTo, 5, "5");
     }
 
     TEST_METHOD(TestConditionType)
     {
-        Condition::ConditionType types[] = {
-            Condition::Standard,
-            Condition::ResetIf,
-            Condition::PauseIf,
-            Condition::AddSource,
-            Condition::SubSource,
-            Condition::AddHits,
+        Condition::Type types[] = {
+            Condition::Type::Standard,
+            Condition::Type::ResetIf,
+            Condition::Type::PauseIf,
+            Condition::Type::AddSource,
+            Condition::Type::SubSource,
+            Condition::Type::AddHits,
         };
 
         for (auto type : types)
@@ -199,11 +199,11 @@ public:
             Condition cond;
             cond.SetConditionType(type);
 
-            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::ResetIf));
-            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::PauseIf));
-            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::AddSource));
-            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::SubSource));
-            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::AddHits));
+            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::Type::ResetIf));
+            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::Type::PauseIf));
+            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::Type::AddSource));
+            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::Type::SubSource));
+            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::Type::AddHits));
         }
     }
 

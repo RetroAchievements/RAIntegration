@@ -29,9 +29,9 @@ template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
     return ra::Widen(COMPARISONTYPE_STR[(int)t]);
 }
 
-template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
+template<> static std::wstring ToString<Condition::Type>(const Condition::Type& t)
 {
-    return ra::Widen(CONDITIONTYPE_STR[(int)t]);
+    return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)

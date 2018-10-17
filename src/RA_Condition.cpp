@@ -8,8 +8,6 @@ static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableS
 
 const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
 static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
 static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
 {
@@ -131,32 +129,32 @@ bool Condition::ParseFromString(const char*& pBuffer)
 {
     if (pBuffer[0] == 'R' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::ResetIf;
+        m_nConditionType = Type::ResetIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'P' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::PauseIf;
+        m_nConditionType = Type::PauseIf;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'A' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddSource;
+        m_nConditionType = Type::AddSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'B' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::SubSource;
+        m_nConditionType = Type::SubSource;
         pBuffer += 2;
     }
     else if (pBuffer[0] == 'C' && pBuffer[1] == ':')
     {
-        m_nConditionType = Condition::AddHits;
+        m_nConditionType = Type::AddHits;
         pBuffer += 2;
     }
     else
     {
-        m_nConditionType = Condition::Standard;
+        m_nConditionType = Type::Standard;
     }
 
     if (!m_nCompSource.ParseVariable(pBuffer))
@@ -177,19 +175,19 @@ void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-        case Condition::ResetIf:
+        case Type::ResetIf:
             buffer.append("R:");
             break;
-        case Condition::PauseIf:
+        case Type::PauseIf:
             buffer.append("P:");
             break;
-        case Condition::AddSource:
+        case Type::AddSource:
             buffer.append("A:");
             break;
-        case Condition::SubSource:
+        case Type::SubSource:
             buffer.append("B:");
             break;
-        case Condition::AddHits:
+        case Type::AddHits:
             buffer.append("C:");
             break;
         default:
@@ -371,15 +369,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll)
     {
         switch (m_Conditions[i].GetConditionType())
         {
-            case Condition::PauseIf:
+            case Condition::Type::PauseIf:
                 bHasPause = true;
                 bInPause = true;
                 vPauseConditions[i] = true;
                 break;
 
-            case Condition::AddSource:
-            case Condition::SubSource:
-            case Condition::AddHits:
+            case Condition::Type::AddSource:
+            case Condition::Type::SubSource:
+            case Condition::Type::AddHits:
                 vPauseConditions[i] = bInPause;
                 break;
 
@@ -414,15 +412,15 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
         Condition* pNextCond = &m_Conditions[i];
         switch (pNextCond->GetConditionType())
         {
-            case Condition::AddSource:
+            case Condition::Type::AddSource:
                 nAddBuffer += pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::SubSource:
+            case Condition::Type::SubSource:
                 nAddBuffer -= pNextCond->CompSource().GetValue();
                 continue;
 
-            case Condition::AddHits:
+            case Condition::Type::AddHits:
                 if (pNextCond->Compare())
                 {
                     if (pNextCond->RequiredHits() == 0 || pNextCond->CurrentHits() < pNextCond->RequiredHits())
@@ -468,7 +466,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
 
         switch (pNextCond->GetConditionType())
         {
-            case Condition::PauseIf:
+            case Condition::Type::PauseIf:
                 // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
                 if (bConditionValid)
                     return true;
@@ -489,7 +487,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
                 }
                 break;
 
-            case Condition::ResetIf:
+            case Condition::Type::ResetIf:
                 if (bConditionValid)
                 {
                     bResetAll = true;  // let caller know to reset all hit counts

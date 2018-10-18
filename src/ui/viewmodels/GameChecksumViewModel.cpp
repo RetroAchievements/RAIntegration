@@ -14,7 +14,9 @@ const StringModelProperty GameChecksumViewModel::ChecksumProperty("GameChecksumV
 GameChecksumViewModel::GameChecksumViewModel() noexcept
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    SetChecksum(ra::Widen(pGameContext.GameHash()));
+    auto& sGameHash = pGameContext.GameHash();
+    if (!sGameHash.empty())
+        SetChecksum(ra::Widen(pGameContext.GameHash()));
 }
 
 void GameChecksumViewModel::CopyChecksumToClipboard() const

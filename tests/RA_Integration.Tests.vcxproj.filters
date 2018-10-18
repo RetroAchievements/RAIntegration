@@ -157,5 +157,8 @@
     <ClInclude Include="mocks\MockLocalStorage.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClInclude Include="mocks\MockGameContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

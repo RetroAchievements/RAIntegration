@@ -29,9 +29,9 @@ public:
 public:
     void Clear() noexcept;
 
-    size_t Load(ra::GameID nID);
+    size_t Load(unsigned int nID);
 
-    BOOL ReloadFromWeb(ra::GameID nID);
+    BOOL ReloadFromWeb(unsigned int nID);
     static void OnCodeNotesResponse(rapidjson::Document& doc);
 
     void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);

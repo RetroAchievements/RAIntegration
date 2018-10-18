@@ -8,12 +8,10 @@
 
 class LeaderboardPopup
 {
-public:
-    enum PopupState
+    enum class PopupState
     {
-        State_ShowingProgress,
-        State_ShowingScoreboard,
-        State__MAX
+        ShowingProgress,
+        ShowingScoreboard
     };
 
 public:

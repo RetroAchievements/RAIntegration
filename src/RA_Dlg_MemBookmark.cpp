@@ -2,8 +2,9 @@
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_GameData.h"
 #include "RA_Dlg_Memory.h"
+
+#include "data\GameContext.hh"
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -109,12 +110,13 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             SetupColumns(hList);
 
             // Auto-import bookmark file when opening dialog
-            if (g_pCurrentGameData->GetGameID() != 0)
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+            if (pGameContext.GameId() != 0)
             {
                 std::wstring file;
                 {
                     std::wostringstream oss;
-                    oss << g_sHomeDir << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << "-Bookmarks.txt";
+                    oss << g_sHomeDir << RA_DIR_BOOKMARKS << pGameContext.GameId() << "-Bookmarks.txt";
                     file = oss.str();
                 }
                 ImportFromFile(file);
@@ -565,7 +567,8 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
 
 void Dlg_MemBookmark::AddAddress()
 {
-    if (g_pCurrentGameData->GetGameID() == 0)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() == 0)
         return;
 
     MemBookmark* NewBookmark = new MemBookmark();
@@ -686,7 +689,8 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 
 void Dlg_MemBookmark::ExportJSON()
 {
-    if (g_pCurrentGameData->GetGameID() == 0)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
         return;
@@ -721,7 +725,7 @@ void Dlg_MemBookmark::ExportJSON()
         std::wstring sDefaultFilename;
         {
             std::wostringstream oss;
-            oss << g_pCurrentGameData->GetGameID() << L"-Bookmarks.txt";
+            oss << pGameContext.GameId() << L"-Bookmarks.txt";
             sDefaultFilename = oss.str();
         }
         swprintf_s(buf, L"%s", sDefaultFilename.c_str());
@@ -821,7 +825,8 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring sFilename)
 
 std::wstring Dlg_MemBookmark::ImportDialog()
 {
-    if (g_pCurrentGameData->GetGameID() == 0)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
         return L"";
@@ -850,7 +855,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
         std::wstring sDefaultFilename;
         {
             std::wostringstream oss;
-            oss << g_pCurrentGameData->GetGameID() << L"-Bookmarks.txt";
+            oss << pGameContext.GameId() << L"-Bookmarks.txt";
             sDefaultFilename = oss.str();
         }   
         
@@ -887,8 +892,9 @@ void Dlg_MemBookmark::OnLoad_NewRom()
 
         std::wstring file;
         {
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             std::wostringstream oss;
-            oss << g_sHomeDir << RA_DIR_BOOKMARKS << g_pCurrentGameData->GetGameID() << L"-Bookmarks.txt";
+            oss << g_sHomeDir << RA_DIR_BOOKMARKS << pGameContext.GameId() << L"-Bookmarks.txt";
             file = oss.str();
         }
         ImportFromFile(file);

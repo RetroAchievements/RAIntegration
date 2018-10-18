@@ -100,7 +100,7 @@ inline static void LogErrno() noexcept
 
 } /* namespace ra */
 
-void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLibraryOut)
+void ParseGameHashLibraryFromFile(std::map<std::string, unsigned int>& GameHashLibraryOut)
 {
     std::wstring sGameHashFile{g_sHomeDir};
     sGameHashFile += RA_GAME_HASH_FILENAME;
@@ -130,7 +130,7 @@ void ParseGameHashLibraryFromFile(std::map<std::string, ra::GameID>& GameHashLib
 
 }
 
-void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOut)
+void ParseGameTitlesFromFile(std::map<unsigned int, std::string>& GameTitlesListOut)
 {
     std::wstring sTitlesFile{g_sHomeDir};
     sTitlesFile += RA_TITLES_FILENAME;
@@ -160,7 +160,7 @@ void ParseGameTitlesFromFile(std::map<ra::GameID, std::string>& GameTitlesListOu
     }
 }
 
-void ParseMyProgressFromFile(std::map<ra::GameID, std::string>& GameProgressOut)
+void ParseMyProgressFromFile(std::map<unsigned int, std::string>& GameProgressOut)
 {
     std::wstring sProgressFile{g_sHomeDir};
     sProgressFile += RA_TITLES_FILENAME;
@@ -237,7 +237,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
 }
 
 //static
-void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, ra::GameID nGameID)
+void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, unsigned int nGameID)
 {
     LV_ITEM item;
     ZeroMemory(&item, sizeof(item));
@@ -445,7 +445,7 @@ void Dlg_GameLibrary::RefreshList()
             if (m_GameHashLibrary.find(md5) != m_GameHashLibrary.end())
             {
                 //	Found in our hash library!
-                const ra::GameID nGameID = m_GameHashLibrary[md5];
+                const auto nGameID = m_GameHashLibrary[md5];
                 RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];

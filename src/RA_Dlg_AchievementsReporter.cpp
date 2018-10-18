@@ -2,11 +2,11 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 
+#include "data\GameContext.hh"
 namespace {
 
 const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
@@ -171,8 +171,9 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
-                    sBugReportInFull += g_pCurrentGameData->GameTitle();
+                    sBugReportInFull += ra::Narrow(pGameContext.GameTitle()).c_str();
                     sBugReportInFull += "\nAchievement IDs: ";
                     sBugReportInFull += sBuggedIDs;
                     sBugReportInFull += "\nProblem: ";
@@ -180,10 +181,12 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     sBugReportInFull += "\nReporter: ";
                     sBugReportInFull += RAUsers::LocalUser().Username();
                     sBugReportInFull += "\nROM Checksum: ";
-                    sBugReportInFull += g_sCurrentROMMD5;
+                    sBugReportInFull += pGameContext.GameHash().c_str();
                     sBugReportInFull += "\n\nComment: "; 
                     sBugReportInFull += sBugReportComment;
                     sBugReportInFull += "\n\nIs this OK?";
+                        
+                        
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;
@@ -194,7 +197,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['i'] = sBuggedIDs;
                     args['p'] = std::to_string(nProblemType);
                     args['n'] = sBugReportComment.c_str();
-                    args['m'] = g_sCurrentROMMD5;
+                    args['m'] = pGameContext.GameHash();
 
                     rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))

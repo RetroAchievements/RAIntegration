@@ -28,14 +28,17 @@
     <Filter Include="UI\Win32">
       <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
     </Filter>
-    <Filter Include="PCH">
-      <UniqueIdentifier>{8e6c1d9b-9649-45df-85ee-4d8f2870bd24}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI\Win32\Bindings">
-      <UniqueIdentifier>{80d13e80-4cfd-4c0d-9570-b9fe73ebe4f0}</UniqueIdentifier>
+      <UniqueIdentifier>{24415556-accd-41e1-a23a-3ef078909014}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{2e33d92b-6ab7-47c6-9d74-f2802ca48d25}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="md5.c">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="RA_Achievement.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -74,9 +77,6 @@
     </ClCompile>
     <ClCompile Include="RA_Dlg_RomChecksum.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_GameData.cpp">
-      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
@@ -177,20 +177,20 @@
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\WindowBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
     <ClCompile Include="services\impl\ThreadPool.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="data\GameContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\win32\bindings\WindowBinding.cpp">
-      <Filter>UI\Win32\Bindings</Filter>
-    </ClCompile>
-    <ClCompile Include="md5.c">
-      <Filter>Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -235,9 +235,6 @@
     </ClInclude>
     <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_GameData.h">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
       <Filter>Data</Filter>
@@ -401,6 +398,9 @@
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
+    <ClInclude Include="ui\win32\bindings\WindowBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
     <ClInclude Include="ui\win32\DialogBase.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
@@ -422,14 +422,14 @@
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="data\GameContext.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
     <ClInclude Include="windows_nodefines.h">
       <Filter>PCH</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>PCH</Filter>
-    </ClInclude>
-    <ClInclude Include="ui\win32\bindings\WindowBinding.hh">
-      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
     <ClInclude Include="pch_cppcorecheck_suppressions.h">
       <Filter>PCH</Filter>

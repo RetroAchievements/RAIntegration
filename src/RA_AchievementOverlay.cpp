@@ -6,7 +6,8 @@
 #include "RA_Resource.h"
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
-#include "RA_GameData.h"
+
+#include "data\GameContext.hh"
 
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
@@ -483,12 +484,13 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nWidth = rcTarget.right - rcTarget.left;
     const int nHeight = rcTarget.bottom - rcTarget.top;
 
-    if (g_pCurrentGameData->GameTitle().length() > 0)
+    auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& sGameTitle = pGameContext.GameTitle();
+    if (!sGameTitle.empty())
     {
         SelectObject(hDC, g_hFontTitle);
         SetTextColor(hDC, COL_TEXT);
-        std::string sTitleWithSpaces(" " + g_pCurrentGameData->GameTitle() + " ");
-        TextOut(hDC, nGameTitleX + nDX, nGameTitleY + nDY, NativeStr(sTitleWithSpaces).c_str(), sTitleWithSpaces.length());
+        TextOutW(hDC, nGameTitleX + nDX + 8, nGameTitleY + nDY, sGameTitle.c_str(), sGameTitle.length());
     }
 
     SelectObject(hDC, g_hFontDesc);

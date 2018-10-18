@@ -99,7 +99,6 @@ extern "C" {
 
 //	Non-exposed:
 extern std::wstring g_sHomeDir;
-extern std::string g_sCurrentROMMD5;
 
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
@@ -139,7 +138,7 @@ extern std::string _TimeStampToString(time_t nTime);
 _Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
-void DownloadAndActivateAchievementData(ra::GameID nGameID);
+void DownloadAndActivateAchievementData(unsigned int nGameID);
 BOOL CanCausePause();
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

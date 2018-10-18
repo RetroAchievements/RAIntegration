@@ -1,6 +1,6 @@
 #include "GameChecksumViewModel.hh"
 
-#include "RA_Core.h"
+#include "data\GameContext.hh"
 
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
@@ -13,7 +13,8 @@ const StringModelProperty GameChecksumViewModel::ChecksumProperty("GameChecksumV
 
 GameChecksumViewModel::GameChecksumViewModel() noexcept
 {
-    SetChecksum(ra::Widen(g_sCurrentROMMD5));
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    SetChecksum(ra::Widen(pGameContext.GameHash()));
 }
 
 void GameChecksumViewModel::CopyChecksumToClipboard() const

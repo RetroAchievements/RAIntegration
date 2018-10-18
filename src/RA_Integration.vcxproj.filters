@@ -72,9 +72,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_GameData.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -189,6 +186,9 @@
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="data\GameContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -229,9 +229,6 @@
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_GameData.h">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
       <Filter>Data</Filter>
@@ -430,6 +427,9 @@
     </ClInclude>
     <ClInclude Include="services\impl\WindowsClipboard.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="data\GameContext.hh">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

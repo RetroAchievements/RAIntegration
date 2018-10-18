@@ -292,7 +292,8 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
                     
                     {
-                        std::string str{ "" };
+                        std::string str;
+                        str.reserve(BUFSIZ);
                         const auto nCharsWritten
                         {
                             std::snprintf(str.data(), BUFSIZ, " %u %s ", lbInfo.m_nRank,
@@ -300,7 +301,8 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                         };
                         if (nCharsWritten > 0)
                         {
-                            DrawText(hDC, NativeStr(str).c_str(), nCharsWritten+1, // +1 is null-character
+                            str = str.c_str();
+                            DrawText(hDC, NativeStr(str).c_str(), ra::narrow_cast<int>(str.length()),
                                      &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
                         }
                     }

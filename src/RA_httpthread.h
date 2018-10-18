@@ -68,6 +68,10 @@ typedef std::map<char, std::string> PostArgs;
 
 extern std::string PostArgsToString(const PostArgs& args);
 
+void AppendNTVersion(std::string &sUserAgent);
+
+void AppendIntegrationVersion(std::string &sUserAgent);
+
 class RequestObject
 {
 public:

@@ -241,61 +241,67 @@ void RAWeb::SetUserAgentString()
     sUserAgent.append(g_sClientVersion);
     sUserAgent.append(" (");
 
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
-    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
-#ifndef NTSTATUS
-    #define NTSTATUS long
-#endif
-    {
-        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-
-        const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") };
-        if (!ntModule)
-            return;
-
-        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
-        const auto RtlGetVersion{
-            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
-        };
-        if (!RtlGetVersion)
-            return;
-        RtlGetVersion(&osVersion);
-        if (osVersion.dwMajorVersion > 0UL)
-        {
-            // we don't have to explicitly reserve as long as the pointer isn't a nullptr
-            std::string str{ "" };
-            const auto needed
-            {
-                std::snprintf(str.data(), BUFSIZ, "WindowsNT %lu.%lu", osVersion.dwMajorVersion,
-                osVersion.dwMinorVersion)
-            };
-            if (needed > 0)
-                sUserAgent.append(str.c_str());
-        }
-    }
-
+    AppendNTVersion(sUserAgent);
     sUserAgent.append(") Integration/");
-    {
-        std::string str{ "" };
-        const auto needed
-        {
-            std::snprintf(str.data(), BUFSIZ, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-            RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED)
-        };
-        if (needed > 0)
-            sUserAgent.append(str.c_str()); // this is required
-    }
+    AppendIntegrationVersion(sUserAgent);
 
-    {
-        _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-        std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-        sUserAgent.append(sAppend, posFound);
-    }
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 
     SetUserAgent(sUserAgent);
+}
+
+void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+{
+    std::string str;
+    str.reserve(BUFSIZ);
+    const auto needed{ std::snprintf(str.data(), BUFSIZ, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+                                     RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
+                                     RA_INTEGRATION_VERSION_MODIFIED) };
+    if (needed > 0)
+    {
+        str = str.c_str();
+        sUserAgent.append(str);
+
+        _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+        sUserAgent.append(sAppend, posFound);
+    }
+}
+
+void AppendNTVersion(_Inout_ std::string& sUserAgent)
+{
+
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+#define NTSTATUS long
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+        const auto RtlGetVersion{
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+        };
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+            {
+                std::string str;
+                str.reserve(BUFSIZ);
+                const auto needed{ std::snprintf(str.data(), BUFSIZ, "WindowsNT %lu.%lu",
+                                                 osVersion.dwMajorVersion, osVersion.dwMinorVersion) };
+                if (needed > 0)
+                {
+                    str = str.c_str(); // resize didn't work but this does
+                    sUserAgent.append(str);
+                }
+            }
+        }
+    }
 }
 
 void RAWeb::LogJSON(const rapidjson::Document& doc)

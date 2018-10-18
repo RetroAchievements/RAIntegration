@@ -292,19 +292,12 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
                     
                     {
-                        std::string str;
-                        str.reserve(BUFSIZ);
-                        const auto nCharsWritten
-                        {
-                            std::snprintf(str.data(), BUFSIZ, " %u %s ", lbInfo.m_nRank,
-                            lbInfo.m_sUsername.c_str())
+                        const auto str{
+                            ra::StringPrintf(" %u %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str())
                         };
-                        if (nCharsWritten > 0)
-                        {
-                            str = str.c_str();
-                            DrawText(hDC, NativeStr(str).c_str(), ra::narrow_cast<int>(str.length()),
-                                     &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
-                        }
+
+                        DrawText(hDC, NativeStr(str).c_str(), ra::narrow_cast<int>(str.length()),
+                                    &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
                     }
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
                     DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);

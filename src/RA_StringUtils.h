@@ -26,7 +26,7 @@ std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 /// <summary>
 /// Constructs a <see cref="std::string" /> from a sprintf format and paramaters
 /// </summary>
-_NODISCARD std::string StringPrintf(_In_ const char* sFormat, ...);
+_NODISCARD std::string StringPrintf(_In_z_ _Printf_format_string_ const char* const sFormat, ...);
 
 } // namespace ra
 

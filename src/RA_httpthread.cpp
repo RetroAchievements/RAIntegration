@@ -246,38 +246,33 @@ void RAWeb::SetUserAgentString()
     sUserAgent.append(") Integration/");
     AppendIntegrationVersion(sUserAgent);
 
-
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 
     SetUserAgent(sUserAgent);
 }
 
-void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+_Use_decl_annotations_
+void AppendIntegrationVersion(std::string& sUserAgent)
 {
-    std::string str;
-    str.reserve(BUFSIZ);
-    const auto needed{ std::snprintf(str.data(), BUFSIZ, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-                                     RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
-                                     RA_INTEGRATION_VERSION_MODIFIED) };
-    if (needed > 0)
-    {
-        str = str.c_str();
-        sUserAgent.append(str);
+    auto str{ ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+                               RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
+                               RA_INTEGRATION_VERSION_MODIFIED) };
+    sUserAgent.append(std::move(str));
 
-        _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-        sUserAgent.append(sAppend, posFound);
-    }
+    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+    sUserAgent.append(sAppend, posFound);
+
 }
 
-void AppendNTVersion(_Inout_ std::string& sUserAgent)
+_Use_decl_annotations_
+void AppendNTVersion(std::string& sUserAgent)
 {
-
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
     // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
 #ifndef NTSTATUS
-#define NTSTATUS long
+    using NTSTATUS = __success(return >= 0) LONG;
 #endif
     if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
     {
@@ -291,15 +286,9 @@ void AppendNTVersion(_Inout_ std::string& sUserAgent)
             RtlGetVersion(&osVersion);
             if (osVersion.dwMajorVersion > 0UL)
             {
-                std::string str;
-                str.reserve(BUFSIZ);
-                const auto needed{ std::snprintf(str.data(), BUFSIZ, "WindowsNT %lu.%lu",
-                                                 osVersion.dwMajorVersion, osVersion.dwMinorVersion) };
-                if (needed > 0)
-                {
-                    str = str.c_str(); // resize didn't work but this does
-                    sUserAgent.append(str);
-                }
+                auto str{ ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
+                                                 osVersion.dwMinorVersion) };
+                sUserAgent.append(std::move(str));
             }
         }
     }

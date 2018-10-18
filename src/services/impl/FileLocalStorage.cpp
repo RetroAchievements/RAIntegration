@@ -26,7 +26,7 @@ static void EnsureDirectoryExists(const ra::services::IFileSystem& pFileSystem, 
 }
 
 FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem) noexcept
-    : pFileSystem(pFileSystem)
+    : m_pFileSystem(pFileSystem)
 {
     // Ensure all required directories are created
     EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BASE);
@@ -38,7 +38,7 @@ FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem) noexcept
 
 std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring& sKey) const
 {
-    std::wstring sPath = pFileSystem.BaseDirectory();
+    std::wstring sPath = m_pFileSystem.BaseDirectory();
     sPath.reserve(sPath.length() + sKey.length() + 32); // assume max 20 chars for path and 12 chars for suffix
 
     switch (nType)
@@ -92,12 +92,12 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
 
 std::unique_ptr<TextReader> FileLocalStorage::ReadText(StorageItemType nType, const std::wstring& sKey)
 {
-    return pFileSystem.OpenTextFile(GetPath(nType, sKey));
+    return m_pFileSystem.OpenTextFile(GetPath(nType, sKey));
 }
 
 std::unique_ptr<TextWriter> FileLocalStorage::WriteText(StorageItemType nType, const std::wstring& sKey)
 {
-    return pFileSystem.CreateTextFile(GetPath(nType, sKey));
+    return m_pFileSystem.CreateTextFile(GetPath(nType, sKey));
 }
 
 } // namespace impl

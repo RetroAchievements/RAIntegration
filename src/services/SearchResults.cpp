@@ -7,7 +7,7 @@ namespace services {
 
 _CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
-_NODISCARD _CONSTANT_FN Padding(_In_ MemSize size) noexcept
+_NODISCARD inline static constexpr auto Padding(_In_ MemSize size) noexcept
 {
     switch (size)
     {
@@ -104,32 +104,31 @@ static const char* ComparisonString(ComparisonType nCompareType)
 }
 
 _Success_(return)
-_NODISCARD _CONSTANT_FN GetValue(_In_z_ const unsigned char* const pBuffer,
-                                 _In_   unsigned int nOffset,
-                                 _In_   MemSize nSize) noexcept
+_NODISCARD inline static constexpr auto GetValue(_In_ const unsigned char* const pBuffer,
+                                                 _In_ unsigned int nOffset,
+                                                 _In_ MemSize nSize) noexcept
 {
-    // TBD: See if std::byte fits are purposes better
-    [[maybe_unused]] const auto uItemAtOffs{ static_cast<unsigned int>(pBuffer[nOffset]) };
+    // TBD: See if std::byte fits our purposes better
+    auto ret{ 0U };
     switch (nSize)
     {
         case MemSize::EightBit:
-            return uItemAtOffs;
+            ret = pBuffer[nOffset];
+            break;
         case MemSize::SixteenBit:
-            return (uItemAtOffs | (pBuffer[nOffset + 1] << 8U));
-
+            ret = pBuffer[nOffset] | (pBuffer[nOffset + 1U] << 8U);
+            break;
         case MemSize::ThirtyTwoBit:
-            return (uItemAtOffs | (pBuffer[nOffset + 1] << 8U) |
+            ret = (pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8U) |
                 (pBuffer[nOffset + 2] << 16U) | (pBuffer[nOffset + 3] << 24U));
-
+            break;
         case MemSize::Nibble_Upper:
-            return uItemAtOffs >> 4U;
-
+            ret = pBuffer[nOffset] >> 4U;
+            break;
         case MemSize::Nibble_Lower:
-            return uItemAtOffs & 0x0FU;
-
-        default:
-            return 0U;
+            ret = pBuffer[nOffset] & 0x0FU;
     }
+    return ret;
 }
 
 bool SearchResults::ContainsAddress(unsigned int nAddress) const

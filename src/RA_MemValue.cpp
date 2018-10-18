@@ -53,7 +53,7 @@ const char* MemValue::Clause::ParseFromString(const char* pBuffer)
     }
 
     CompVariable varTemp;
-    varTemp.ParseVariable(pIter);
+    (void)varTemp.ParseVariable(pIter);
     m_nAddress = varTemp.RawValue();	//	Fetch value ('address') as parsed. Note RawValue! Do not parse memory!
     m_nVarSize = varTemp.Size();
 
@@ -72,7 +72,7 @@ const char* MemValue::Clause::ParseFromString(const char* pBuffer)
         if (strncmp(pIter, "0x", sizeof("0x") - 1) == 0)
         {
             // Multiply by address
-            varTemp.ParseVariable(pIter);
+            (void)varTemp.ParseVariable(pIter);
             m_nSecondAddress = varTemp.RawValue();
             m_nSecondVarSize = varTemp.Size();
         }

@@ -16,13 +16,7 @@ namespace CppUnitTestFramework {
 
 template<> static std::wstring ToString<MemSize>(const MemSize& t)
 {
-#if _MBCS
-    return ra::Widen(MEMSIZE_STR.at(ra::etoi(t)));
-#elif _UNICODE
     return MEMSIZE_STR.at(ra::etoi(t));
-#else
-#error Unsupported character set detected
-#endif /* _MBCS */
 }
 
 template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)

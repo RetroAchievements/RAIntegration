@@ -16,12 +16,12 @@ enum class MemSize
     Bit_7,
     Nibble_Lower,
     Nibble_Upper,
-    EightBit,  
+    EightBit,
     SixteenBit,
     ThirtyTwoBit
 };
 
-inline constexpr std::array<LPCTSTR, 13> MEMSIZE_STR
+inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
 {
     _T("Bit0"),
     _T("Bit1"),
@@ -60,32 +60,31 @@ public:
     enum class Type
     {
         Address,         // compare to the value of a live address in RAM
-        ValueComparison, //	a number. assume 32 bit 
+        ValueComparison, // a number. assume 32 bit 
         DeltaMem,        // the value last known at this address.
         DynamicVariable  // a custom user-set variable
     };
 
-    inline static constexpr std::array<const char*, 4> TYPE_STR
+    inline static constexpr std::array<const LPCTSTR, 4> TYPE_STR
     {
-        "Memory",
-        "Value",
-        "Delta",
-        "DynVar"
+        _T("Memory"),
+        _T("Value"),
+        _T("Delta"),
+        _T("DynVar")
     };
 
 public:
     inline constexpr CompVariable() noexcept = default;
-    explicit inline constexpr CompVariable(_In_ MemSize nSize,
-                          _In_ CompVariable::Type nType,
-                          _In_ unsigned int nInitialValue) noexcept :
+    inline constexpr explicit CompVariable(_In_ MemSize nSize,
+                                           _In_ CompVariable::Type nType,
+                                           _In_ unsigned int nInitialValue) noexcept :
         m_nVarSize{ nSize },
         m_nVarType{ nType },
         m_nVal{ nInitialValue }
     {
-
     }
 
-    explicit inline constexpr CompVariable(_In_ unsigned int nInitialValue,
+    inline constexpr explicit CompVariable(_In_ unsigned int nInitialValue,
                                            _In_ unsigned int nPrevVal) noexcept :
         m_nVal{ nInitialValue },
         m_nPreviousVal{ nPrevVal }
@@ -96,22 +95,25 @@ public:
                      _In_ CompVariable::Type nType,
                      _In_ unsigned int nInitialValue) noexcept
     {
-        this->swap(CompVariable{ nSize, nType, nInitialValue });
+        m_nVarSize = nSize;
+        m_nVarType = nType;
+        m_nVal     = nInitialValue;
     }
 
     _CONSTANT_FN SetValues(_In_ unsigned int nVal, _In_ unsigned int nPrevVal) noexcept
     {
-        this->swap(CompVariable{ nVal, nPrevVal });
+        m_nVal         = nVal;
+        m_nPreviousVal = nPrevVal;
     }
 
     _CONSTANT_FN ResetDelta() noexcept { m_nPreviousVal = m_nVal; }
 
-    bool ParseVariable(_Inout_ const char*& sInString);	//	Parse from string
+    _NODISCARD bool ParseVariable(_Inout_ const char*& sInString); // Parse from string
     void SerializeAppend(_Out_ std::string& buffer) const;
 
-    unsigned int GetValue();				//	Returns the live value
+    unsigned int GetValue(); // Returns the live value
 
-    _CONSTANT_FN SetSize(MemSize nSize) noexcept { m_nVarSize = nSize; }
+    _CONSTANT_FN SetSize(_In_ MemSize nSize) noexcept { m_nVarSize = nSize; }
     _NODISCARD _CONSTANT_FN Size() const noexcept { return m_nVarSize; }
 
     _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
@@ -120,24 +122,8 @@ public:
     _NODISCARD _CONSTANT_FN RawValue() const noexcept { return m_nVal; }
     _NODISCARD _CONSTANT_FN RawPreviousValue() const noexcept { return m_nPreviousVal; }
 
-    inline void swap(_Inout_ CompVariable& a) noexcept
-    {
-        std::swap(this->m_nVarSize, a.m_nVarSize);
-        std::swap(this->m_nVarType, a.m_nVarType);
-        std::swap(this->m_nVal, a.m_nVal);
-        std::swap(this->m_nPreviousVal, a.m_nPreviousVal);
-    }
-
-    inline constexpr void swap(_In_ CompVariable&& a) noexcept
-    {
-        this->m_nVarSize     = a.m_nVarSize;
-        this->m_nVarType     = a.m_nVarType;
-        this->m_nVal         = a.m_nVal;
-        this->m_nPreviousVal = a.m_nPreviousVal;
-    }
-
 private:
-    MemSize m_nVarSize{};
+    MemSize m_nVarSize{ MemSize::EightBit };
     Type m_nVarType{};
     unsigned int m_nVal{};
     unsigned int m_nPreviousVal{};
@@ -168,20 +154,20 @@ public:
     }
 
 public:
-    //	Parse a Condition from a string of characters
+    //  Parse a Condition from a string of characters
     bool ParseFromString(const char*& sBuffer);
     void SerializeAppend(std::string& buffer) const;
 
-    //	Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
+    //  Returns a logical comparison between m_CompSource and m_CompTarget, depending on m_nComparison
     bool Compare(unsigned int nAddBuffer = 0);
 
-    //	Returns whether a change was made
+    //  Returns whether a change was made
     bool ResetHits();
 
-    //	Resets 'last known' values
+    //  Resets 'last known' values
     void ResetDeltas();
 
-    inline CompVariable& CompSource() { return m_nCompSource; }	//	NB both required!!
+    inline CompVariable& CompSource() { return m_nCompSource; } //  NB both required!!
     inline const CompVariable& CompSource() const { return m_nCompSource; }
     inline CompVariable& CompTarget() { return m_nCompTarget; }
     inline const CompVariable& CompTarget() const { return m_nCompTarget; }
@@ -208,14 +194,14 @@ public:
 
 
 private:
-    ConditionType	m_nConditionType;
+    ConditionType   m_nConditionType;
 
-    CompVariable	m_nCompSource;
-    ComparisonType	m_nCompareType;
-    CompVariable	m_nCompTarget;
+    CompVariable    m_nCompSource;
+    ComparisonType  m_nCompareType;
+    CompVariable    m_nCompTarget;
 
-    unsigned int	m_nRequiredHits;
-    unsigned int	m_nCurrentHits;
+    unsigned int    m_nRequiredHits;
+    unsigned int    m_nCurrentHits;
 };
 
 class ConditionGroup
@@ -232,7 +218,7 @@ public:
     const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
     void Clear() { m_Conditions.clear(); }
     void RemoveAt(size_t i);
-    bool Reset(bool bIncludingDeltas);	//	Returns dirty
+    bool Reset(bool bIncludingDeltas);  //  Returns dirty
 
 protected:
     bool Test(bool& bDirtyConditions, bool& bResetRead, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs);

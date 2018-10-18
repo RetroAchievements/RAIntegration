@@ -24,8 +24,8 @@ public:
     {
         const char* ptr = sSerialized;
         CompVariable var;
-        var.ParseVariable(ptr);
-        Assert::AreEqual(*ptr, '\0');
+        if(var.ParseVariable(ptr))
+            Assert::AreEqual(*ptr, '\0');
 
         AssertCompVariable(var, nExpectedType, nExpectedSize, nExpectedRawValue, sSerialized);
     }
@@ -34,8 +34,8 @@ public:
     {
         const char* ptr = sSerialized;
         CompVariable var;
-        var.ParseVariable(ptr);
-        Assert::AreEqual(*ptr, sSerialized[nExpectedValidChars]);
+        if(var.ParseVariable(ptr))
+            Assert::AreEqual(*ptr, sSerialized[nExpectedValidChars]);
 
         AssertCompVariable(var, nExpectedType, nExpectedSize, nExpectedRawValue, sSerialized);
     }
@@ -47,7 +47,7 @@ public:
 
         const char* ptr = sSerialized;
         CompVariable var;
-        var.ParseVariable(ptr);
+        (void)var.ParseVariable(ptr);
 
         std::string sReserialized;
         var.SerializeAppend(sReserialized);

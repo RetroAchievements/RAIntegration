@@ -670,16 +670,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
+            for (auto& str : MEMSIZE_STR)
             {
-                auto i{ 0 };
-                for (auto& str : MEMSIZE_STR)
-                {
-                    ComboBox_AddString(g_hIPEEdit, str);
-
-                    if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
-                        ComboBox_SetCurSel(g_hIPEEdit, i);
-                    i++;
-                }
+                const auto i{ ComboBox_AddString(g_hIPEEdit, str) };
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
+                    ComboBox_SetCurSel(g_hIPEEdit, i);
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);

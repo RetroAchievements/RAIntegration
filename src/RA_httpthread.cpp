@@ -225,6 +225,45 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 //  return bSuccess;
 //}
 
+static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+{
+    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
+                                       RA_INTEGRATION_VERSION_MODIFIED));
+
+    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+    sUserAgent.append(sAppend, posFound);
+
+}
+
+static void AppendNTVersion(_Inout_ std::string& sUserAgent)
+{
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    using NTSTATUS = __success(return >= 0) LONG;
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+        const auto RtlGetVersion{
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+        };
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+            {
+                sUserAgent.append(ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
+                                                   osVersion.dwMinorVersion));
+            }
+        }
+    }
+}
+
 void RAWeb::SetUserAgentString()
 {
     std::string sUserAgent;
@@ -249,49 +288,6 @@ void RAWeb::SetUserAgentString()
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 
     SetUserAgent(sUserAgent);
-}
-
-_Use_decl_annotations_
-void AppendIntegrationVersion(std::string& sUserAgent)
-{
-    auto str{ ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-                               RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
-                               RA_INTEGRATION_VERSION_MODIFIED) };
-    sUserAgent.append(std::move(str));
-
-    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-    sUserAgent.append(sAppend, posFound);
-
-}
-
-_Use_decl_annotations_
-void AppendNTVersion(std::string& sUserAgent)
-{
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
-    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
-#ifndef NTSTATUS
-    using NTSTATUS = __success(return >= 0) LONG;
-#endif
-    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
-    {
-        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
-        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
-        const auto RtlGetVersion{
-            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
-        };
-        if (RtlGetVersion)
-        {
-            RtlGetVersion(&osVersion);
-            if (osVersion.dwMajorVersion > 0UL)
-            {
-                auto str{ ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
-                                                 osVersion.dwMinorVersion) };
-                sUserAgent.append(std::move(str));
-            }
-        }
-    }
 }
 
 void RAWeb::LogJSON(const rapidjson::Document& doc)

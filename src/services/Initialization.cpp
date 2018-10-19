@@ -39,8 +39,12 @@ static void LogHeader(ra::services::ILogger& pLogger, ra::services::IFileSystem&
     pLogger.LogMessage(LogLevel::Info, "BaseDirectory: " + ra::Narrow(pFileSystem.BaseDirectory()));
 }
 
-void Initialization::RegisterServices(const std::string& sClientName)
+void Initialization::RegisterCoreServices()
 {
+    // check to see if already registered
+    if (ra::services::ServiceLocator::Exists<ra::services::IConfiguration>())
+        return;
+
     auto* pClock = new ra::services::impl::Clock();
     ra::services::ServiceLocator::Provide<ra::services::IClock>(pClock);
 
@@ -50,14 +54,23 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pLogger = new ra::services::impl::WindowsDebuggerFileLogger(*pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILogger>(pLogger);
 
-    LogHeader(*pLogger, *pFileSystem, *pClock);  
+    LogHeader(*pLogger, *pFileSystem, *pClock);
 
     auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
-    std::wstring sFilename = pFileSystem->BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
-    pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
+}
 
-    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(*pFileSystem);
+void Initialization::RegisterServices(const std::string& sClientName)
+{
+    RegisterCoreServices();
+
+    auto& pFileSystem = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
+
+    auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(&ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
+    std::wstring sFilename = pFileSystem.BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
+    pConfiguration->Load(sFilename);
+
+    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(pLocalStorage);
 
     auto* pThreadPool = new ra::services::impl::ThreadPool();

@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="data\GameContext.cpp" />
+    <ClCompile Include="Exports.cpp" />
     <ClCompile Include="md5.c" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
@@ -99,6 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data\GameContext.hh" />
+    <ClInclude Include="Exports.hh" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />

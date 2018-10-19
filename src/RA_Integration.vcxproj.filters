@@ -192,6 +192,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
+    <ClCompile Include="Exports.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -436,6 +439,9 @@
     </ClInclude>
     <ClInclude Include="pch_microsoft_suppressions.h">
       <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.hh">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

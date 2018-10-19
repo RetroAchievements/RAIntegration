@@ -7,8 +7,6 @@
 
 #include "services\ServiceLocator.hh"
 
-#include <ctime>
-
 namespace ra {
 namespace services {
 namespace impl {

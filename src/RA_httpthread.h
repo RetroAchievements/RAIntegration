@@ -2,10 +2,8 @@
 #define RA_HTTPTHREAD_H
 #pragma once
 
-#include "RA_Defs.h"
-
-typedef void* HANDLE;
-typedef void* LPVOID;
+#include "ra_fwd.h"
+#include "RA_StringUtils.h"
 
 enum HTTPRequestMethod
 {

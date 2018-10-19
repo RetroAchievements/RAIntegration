@@ -1,8 +1,10 @@
 #include "RichPresenceMonitorViewModel.hh"
 
 #include "RA_RichPresence.h"
+#include "RA_StringUtils.h"
 
 #include "data\GameContext.hh"
+#include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace ui {
@@ -18,7 +20,7 @@ RichPresenceMonitorViewModel::RichPresenceMonitorViewModel() noexcept
 void RichPresenceMonitorViewModel::UpdateDisplayString()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    auto nGameId = pGameContext.GameId();
+    const auto nGameId = pGameContext.GameId();
     if (nGameId == 0)
     {
         SetDisplayString(L"No game loaded.");

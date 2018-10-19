@@ -9,9 +9,6 @@
 #include "services\TextWriter.hh"
 #include "services\impl\FileTextWriter.hh"
 
-#include <time.h>
-#include <mutex>
-
 namespace ra {
 namespace services {
 namespace impl {

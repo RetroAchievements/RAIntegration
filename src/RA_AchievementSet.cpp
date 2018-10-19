@@ -16,9 +16,6 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
-#include <array>
-#include <fstream>
-#include <memory>
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -353,8 +350,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
             return false;
               
         rapidjson::Document doc;
-        LoadDocument(doc, *pData.get());
-        if (doc.HasParseError())
+        if (!LoadDocument(doc, *pData.get()))
         {
             ASSERT(!"Could not parse file?!");
             return false;

@@ -4,8 +4,6 @@
 
 #include "services\IConfiguration.hh"
 
-#include <map>
-
 namespace ra {
 namespace services {
 namespace impl {

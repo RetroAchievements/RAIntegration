@@ -126,6 +126,9 @@
     <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\pch.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">

@@ -2,7 +2,6 @@
 #define RA_LEADERBOARDPOPUP_H
 #pragma once
 
-
 #include "RA_AchievementOverlay.h"
 
 //	Graphic to display current leaderboard progress

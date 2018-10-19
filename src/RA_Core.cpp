@@ -1,25 +1,20 @@
 #include "RA_Core.h"
 
-#include "RA_Achievement.h"
-#include "RA_AchievementSet.h"
-#include "RA_AchievementOverlay.h"
+#include "RA_AchievementOverlay.h" // RA_User
 #include "RA_BuildVer.h"
 #include "RA_CodeNotes.h"
-#include "RA_Defs.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_Interface.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
-#include "RA_User.h"
 
 #include "services\ImageRepository.h"
 
-#include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_AchEditor.h" // RA_httpthread.h, services/ImageRepository.h
+#include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_GameTitle.h"
@@ -36,23 +31,12 @@
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
-#include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
+// for SubmitEntry callback
+#include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
-
-#include <memory>
-#include <direct.h>
-#include <fstream>
-#include <io.h>		//	_access()
-#include <ctime>
-
-#ifdef WIN32_LEAN_AND_MEAN
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#include <Shlwapi.h>
-#endif // WIN32_LEAN_AND_MEAN
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -1370,7 +1354,8 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
     ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
-bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
+_Use_decl_annotations_
+bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
 {
     std::ifstream file(sFile);
     if (file.fail())
@@ -1385,6 +1370,7 @@ bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
     return true;
 }
 
+_Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
     FILE* pf = nullptr;
@@ -1392,7 +1378,7 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     if (pf == nullptr)
         return nullptr;
 
-    //	Calculate filesize
+    // Calculate filesize
     fseek(pf, 0L, SEEK_END);
     nFileSizeOut = ftell(pf);
     fseek(pf, 0L, SEEK_SET);
@@ -1454,7 +1440,6 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 } /* namespace ra */
 
-_Use_decl_annotations_
 std::string GetFolderFromDialog() noexcept
 {
     auto lpbi{ std::make_unique<BROWSEINFO>() };

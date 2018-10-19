@@ -7,7 +7,6 @@
 #include "RA_LeaderboardPopup.h"
 #include "RA_Core.h"
 
-
 class PopupWindows
 {
 public:

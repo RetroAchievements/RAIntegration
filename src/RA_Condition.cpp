@@ -1,56 +1,54 @@
 #include "RA_Condition.h"
 #include "RA_MemManager.h"
 
-#include <cctype>
+#include "RA_Defs.h"
 
-const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
 
-const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
+const char* COMPARISONTYPE_STR[] ={ "=", "<", "<=", ">", ">=", "!=" };
 static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
+const char* CONDITIONTYPE_STR[] ={ "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
 static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
-static ComparisonVariableSize PrefixToComparisonSize(char cPrefix)
+_NODISCARD inline static constexpr auto PrefixToComparisonSize(_In_ char cPrefix) noexcept
 {
-    //	Careful not to use ABCDEF here, this denotes part of an actual variable!
+    //  Careful not to use ABCDEF here, this denotes part of an actual variable!
     switch (cPrefix)
     {
-        case 'M':	return Bit_0;
-        case 'N':	return Bit_1;
-        case 'O':	return Bit_2;
-        case 'P':	return Bit_3;
-        case 'Q':	return Bit_4;
-        case 'R':	return Bit_5;
-        case 'S':	return Bit_6;
-        case 'T':	return Bit_7;
-        case 'L':	return Nibble_Lower;
-        case 'U':	return Nibble_Upper;
-        case 'H':	return EightBit;
-        case 'X':	return ThirtyTwoBit;
+        case 'M':   return MemSize::Bit_0;
+        case 'N':   return MemSize::Bit_1;
+        case 'O':   return MemSize::Bit_2;
+        case 'P':   return MemSize::Bit_3;
+        case 'Q':   return MemSize::Bit_4;
+        case 'R':   return MemSize::Bit_5;
+        case 'S':   return MemSize::Bit_6;
+        case 'T':   return MemSize::Bit_7;
+        case 'L':   return MemSize::Nibble_Lower;
+        case 'U':   return MemSize::Nibble_Upper;
+        case 'H':   return MemSize::EightBit;
+        case 'X':   return MemSize::ThirtyTwoBit;
         default:
-        case ' ':	return SixteenBit;
+        case ' ':   return MemSize::SixteenBit;
     }
 }
 
-static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
+_NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
     {
-        case Bit_0:			return "M";
-        case Bit_1:			return "N";
-        case Bit_2:			return "O";
-        case Bit_3:			return "P";
-        case Bit_4:			return "Q";
-        case Bit_5:			return "R";
-        case Bit_6:			return "S";
-        case Bit_7:			return "T";
-        case Nibble_Lower:	return "L";
-        case Nibble_Upper:	return "U";
-        case EightBit:		return "H";
-        case ThirtyTwoBit:	return "X";
+        case MemSize::Bit_0:        return "M";
+        case MemSize::Bit_1:        return "N";
+        case MemSize::Bit_2:        return "O";
+        case MemSize::Bit_3:        return "P";
+        case MemSize::Bit_4:        return "Q";
+        case MemSize::Bit_5:        return "R";
+        case MemSize::Bit_6:        return "S";
+        case MemSize::Bit_7:        return "T";
+        case MemSize::Nibble_Lower: return "L";
+        case MemSize::Nibble_Upper: return "U";
+        case MemSize::EightBit:     return "H";
+        case MemSize::ThirtyTwoBit: return "X";
         default:
-        case SixteenBit:	return " ";
+        case MemSize::SixteenBit:   return " ";
     }
 }
 
@@ -58,13 +56,13 @@ static const char* ComparisonTypeToStr(ComparisonType nType)
 {
     switch (nType)
     {
-        case Equals:				return "=";
-        case GreaterThan:			return ">";
-        case GreaterThanOrEqual:	return ">=";
-        case LessThan:				return "<";
-        case LessThanOrEqual:		return "<=";
-        case NotEqualTo:			return "!=";
-        default:					return "";
+        case Equals:                return "=";
+        case GreaterThan:           return ">";
+        case GreaterThanOrEqual:    return ">=";
+        case LessThan:              return "<";
+        case LessThanOrEqual:       return "<=";
+        case NotEqualTo:            return "!=";
+        default:                    return "";
     }
 }
 
@@ -118,12 +116,12 @@ static unsigned int ReadHits(const char*& pBufferInOut)
 {
     if (pBufferInOut[0] == '(' || pBufferInOut[0] == '.')
     {
-        unsigned int nNumHits = strtoul(pBufferInOut + 1, (char**)&pBufferInOut, 10);	//	dirty!
+        unsigned int nNumHits = strtoul(pBufferInOut + 1, (char**)&pBufferInOut, 10);   //  dirty!
         pBufferInOut++;
         return nNumHits;
     }
 
-    //	0 by default: disable hit-tracking!
+    //  0 by default: disable hit-tracking!
     return 0;
 }
 
@@ -225,27 +223,28 @@ void Condition::ResetDeltas()
     m_nCompTarget.ResetDelta();
 }
 
+_Use_decl_annotations_
 bool CompVariable::ParseVariable(const char*& pBufferInOut)
 {
     char* nNextChar = nullptr;
-    unsigned int nBase = 16;	//	Assume hex address
+    unsigned int nBase = 16;    //  Assume hex address
 
     if (toupper(pBufferInOut[0]) == 'D' && pBufferInOut[1] == '0' && toupper(pBufferInOut[2]) == 'X')
     {
-        //	Assume 'd0x' and four hex following it.
+        //  Assume 'd0x' and four hex following it.
         pBufferInOut += 3;
         m_nVarType = Type::DeltaMem;
     }
     else if (pBufferInOut[0] == '0' && toupper(pBufferInOut[1]) == 'X')
     {
-        //	Assume '0x' and four hex following it.
+        //  Assume '0x' and four hex following it.
         pBufferInOut += 2;
         m_nVarType = Type::Address;
     }
     else
     {
         m_nVarType = Type::ValueComparison;
-        //	Val only
+        //  Val only
         if (toupper(pBufferInOut[0]) == 'H')
         {
             nBase = 16;
@@ -253,7 +252,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
         }
         else
         {
-            //	Values in decimal.
+            //  Values in decimal.
             nBase = 10;
         }
     }
@@ -261,13 +260,13 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
 
     if (m_nVarType == Type::ValueComparison)
     {
-        //	Values don't have a size!
+        //  Values don't have a size!
     }
     else
     {
         m_nVarSize = PrefixToComparisonSize(static_cast<char>(std::toupper(pBufferInOut[0])));
-        if (m_nVarSize != ComparisonVariableSize::SixteenBit)
-            pBufferInOut++;	//	In all cases except one, advance char ptr
+        if (m_nVarSize != MemSize::SixteenBit)
+            pBufferInOut++; //  In all cases except one, advance char ptr
     }
 
     m_nVal = strtoul(pBufferInOut, &nNextChar, nBase);
@@ -276,6 +275,7 @@ bool CompVariable::ParseVariable(const char*& pBufferInOut)
     return true;
 }
 
+_Use_decl_annotations_
 void CompVariable::SerializeAppend(std::string& buffer) const
 {
     char valueBuffer[20];
@@ -308,7 +308,7 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     }
 }
 
-//	Return the raw, live value of this variable. Advances 'deltamem'
+//  Return the raw, live value of this variable. Advances 'deltamem'
 unsigned int CompVariable::GetValue()
 {
     unsigned int nPreviousVal;
@@ -316,21 +316,21 @@ unsigned int CompVariable::GetValue()
     switch (m_nVarType)
     {
         case Type::ValueComparison:
-            //	It's a raw value. Return it.
+            //  It's a raw value. Return it.
             return m_nVal;
 
         case Type::Address:
-            //	It's an address in memory. Return it!
+            //  It's an address in memory. Return it!
             return g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
 
         case Type::DeltaMem:
-            //	Return the backed up (last frame) value, but store the new one for the next frame!
+            //  Return the backed up (last frame) value, but store the new one for the next frame!
             nPreviousVal = m_nPreviousVal;
             m_nPreviousVal = g_MemManager.ActiveBankRAMRead(m_nVal, m_nVarSize);
             return nPreviousVal;
 
         default:
-            //	Panic!
+            //  Panic!
             ASSERT(!"Undefined mem type!");
             return 0;
     }
@@ -353,7 +353,7 @@ bool Condition::Compare(unsigned int nAddBuffer)
         case NotEqualTo:
             return(m_nCompSource.GetValue() + nAddBuffer != m_nCompTarget.GetValue());
         default:
-            return true;	//?
+            return true;    //?
     }
 }
 
@@ -405,7 +405,7 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
     unsigned int nAddBuffer = 0;
     unsigned int nAddHits = 0;
     bool bSetValid = true; // must start true so AND logic works
-                          
+
     for (size_t i = 0; i < m_Conditions.size(); ++i)
     {
         if (vPauseConditions[i] != bProcessingPauseIfs)
@@ -472,10 +472,10 @@ bool ConditionGroup::Test(bool& bDirtyConditions, bool& bResetAll, const std::ve
                 // as soon as we find a PauseIf that evaluates to true, stop processing the rest of the group
                 if (bConditionValid)
                     return true;
-                
+
                 // if we make it to the end of the function, make sure we indicate that nothing matched. if we do find
                 // a later PauseIf match, it'll automatically return true via the previous condition.
-                bSetValid = false; 
+                bSetValid = false;
 
                 if (pNextCond->RequiredHits() == 0)
                 {

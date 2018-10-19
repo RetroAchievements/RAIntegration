@@ -6,8 +6,6 @@
 
 #include "RA_StringUtils.h"
 
-#include <fstream>
-
 namespace ra {
 namespace services {
 namespace impl {
@@ -28,8 +26,8 @@ public:
         ra::TrimLineEnding(sLine);
         return true;
     }
-
-    bool GetLine(_Out_ std::wstring& sLine) override
+	_Success_(return)
+    _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
     {
         std::string sNarrowLine;
         if (!std::getline(m_iStream, sNarrowLine))

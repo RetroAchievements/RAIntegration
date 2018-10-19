@@ -1,5 +1,7 @@
 #include "Initialization.hh"
 
+#include "data\GameContext.hh"
+
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -65,6 +67,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pHttpRequester = new ra::services::impl::WindowsHttpRequester();
     ra::services::ServiceLocator::Provide<ra::services::IHttpRequester>(pHttpRequester);
+
+    auto* pGameContext = new ra::data::GameContext();
+    ra::services::ServiceLocator::Provide<ra::data::GameContext>(pGameContext);
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);

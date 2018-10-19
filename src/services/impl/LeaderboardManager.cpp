@@ -7,8 +7,6 @@
 
 #include "services\ServiceLocator.hh"
 
-#include <ctime>
-
 namespace ra {
 namespace services {
 namespace impl {
@@ -105,7 +103,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& LBData{ Response["LBData"] };
 
     const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
-    const auto nGameID{ static_cast<ra::GameID>(LBData["GameID"].GetUint()) };
+    const auto nGameID{ LBData["GameID"].GetUint() };
     const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();

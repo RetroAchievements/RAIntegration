@@ -2,8 +2,6 @@
 #define RA_SERVICES_TEXTWRITER
 #pragma once
 
-#include <string>
-
 namespace ra {
 namespace services {
 

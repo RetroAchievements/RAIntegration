@@ -187,8 +187,8 @@ public:
 
         // if achievement has changed, achievement checksum will fail and achievement should
         // just be reset (which only affects hitcount)
-        ach.GetCondition(0, 0).CompSource().Set(ComparisonVariableSize::EightBit,
-            ComparisonVariableType::Address, 0x2345U);
+        ach.GetCondition(0, 0).CompSource().Set(MemSize::EightBit,
+            CompVariable::Type::Address, 0x2345U);
         
         const char* pIter = sState.c_str();
         ach.ParseStateString(pIter, "user1");

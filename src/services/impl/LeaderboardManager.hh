@@ -5,9 +5,6 @@
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 
-#include <rapidjson\include\rapidjson\document.h>
-#include <vector>
-
 namespace ra {
 namespace services {
 namespace impl {

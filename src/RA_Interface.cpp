@@ -1,6 +1,5 @@
 #include "RA_Interface.h"
 
-
 //	Exposed, shared
 //	App-level:
 bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
@@ -10,7 +9,6 @@ void	(CCONV *_RA_RebuildMenu) (void) = nullptr;
 void	(CCONV *_RA_ResetEmulation) (void) = nullptr;
 void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
 void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
-
 
 bool RA_GameIsActive()
 {
@@ -58,9 +56,8 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 
 #ifndef RA_EXPORTS
 
-#include <wtypes.h>
 #include <winhttp.h>
-#include <assert.h>
+#include <cassert>
 #include <string>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit

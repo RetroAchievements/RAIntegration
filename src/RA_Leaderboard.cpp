@@ -1,9 +1,9 @@
 #include "RA_Leaderboard.h"
 
+#include "RA_Defs.h"
+
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
-
-#include <ctime>
 
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
     m_nID(nLeaderboardID),

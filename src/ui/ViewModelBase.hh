@@ -4,8 +4,6 @@
 
 #include "ModelProperty.hh"
 
-#include <string>
-
 namespace ra {
 namespace ui {
 

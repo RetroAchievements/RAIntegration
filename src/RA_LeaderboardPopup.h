@@ -2,19 +2,16 @@
 #define RA_LEADERBOARDPOPUP_H
 #pragma once
 
-
 #include "RA_AchievementOverlay.h"
 
 //	Graphic to display current leaderboard progress
 
 class LeaderboardPopup
 {
-public:
-    enum PopupState
+    enum class PopupState
     {
-        State_ShowingProgress,
-        State_ShowingScoreboard,
-        State__MAX
+        ShowingProgress,
+        ShowingScoreboard
     };
 
 public:

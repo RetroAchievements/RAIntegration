@@ -2,8 +2,6 @@
 #define RA_SERVICES_ILOCALSTORAGE_HH
 #pragma once
 
-#include <string>
-
 #include "TextReader.hh"
 #include "TextWriter.hh"
 

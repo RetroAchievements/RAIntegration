@@ -6,16 +6,8 @@
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 
-#include <fstream>
-
-#define WIN32_LEAN_AND_MEAN
-struct IUnknown;
-#include <Windows.h>
-#include <Shlwapi.h>
-#undef CreateDirectory
 #undef DeleteFile
 #undef MoveFile
-
 namespace ra {
 namespace services {
 namespace impl {

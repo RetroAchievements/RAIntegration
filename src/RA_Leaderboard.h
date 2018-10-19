@@ -4,11 +4,6 @@
 
 #include "RA_MemValue.h"
 
-#ifndef _VECTOR_
-#include <vector>  
-#endif /* !_VECTOR_ */
-
-
 class RA_Leaderboard
 {
 public:

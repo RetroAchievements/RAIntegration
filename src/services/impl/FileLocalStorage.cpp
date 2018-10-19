@@ -7,8 +7,6 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#include <fstream>
-
 namespace ra {
 namespace services {
 namespace impl {

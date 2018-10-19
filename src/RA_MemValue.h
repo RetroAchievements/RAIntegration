@@ -4,10 +4,6 @@
 
 #include "RA_Condition.h"
 
-#ifndef _VECTOR_
-#include <vector>  
-#endif /* !_VECTOR_ */
-
 // Represents a value expression (one or more values which are added together to create a single value)
 class MemValue
 {
@@ -53,15 +49,15 @@ protected:
         ClauseOperation GetOperation() const { return m_nOperation; }
 
     protected:
-        unsigned int			m_nAddress = 0;                 //	Raw address of an 8-bit, or value.
-        ComparisonVariableSize	m_nVarSize = EightBit;
-        double					m_fModifier = 1.0f;             //	* 60 etc
-        bool					m_bBCDParse = false;            //	Parse as a binary coded decimal.
-        bool					m_bParseVal = false;            //	Parse as a value
-        bool					m_bInvertBit = false;
-        unsigned int			m_nSecondAddress = 0;
-        ComparisonVariableSize	m_nSecondVarSize = EightBit;
-        ClauseOperation         m_nOperation;
+        unsigned int    m_nAddress       = 0U;    // Raw address of an 8-bit, or value.
+        MemSize         m_nVarSize       = MemSize::EightBit;
+        double          m_fModifier      = 1.0F;  // * 60 etc
+        bool            m_bBCDParse      = false; // Parse as a binary coded decimal.
+        bool            m_bParseVal      = false; // Parse as a value
+        bool            m_bInvertBit     = false;
+        unsigned int    m_nSecondAddress = 0U;
+        MemSize         m_nSecondVarSize = MemSize::EightBit;
+        ClauseOperation m_nOperation     ={};
     };
 
     std::vector<Clause> m_vClauses;

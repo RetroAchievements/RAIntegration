@@ -99,7 +99,6 @@ extern "C" {
 
 //	Non-exposed:
 extern std::wstring g_sHomeDir;
-extern std::string g_sROMDirLocation;
 
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
@@ -136,7 +135,6 @@ extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
-_Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
 void DownloadAndActivateAchievementData(unsigned int nGameID);

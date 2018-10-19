@@ -3,14 +3,12 @@
 #include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_md5factory.h"
 #include "RA_User.h"
 
 #include "data\GameContext.hh"
-
 namespace {
 
 const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
@@ -39,7 +37,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
     for (int i = 0; i < NUM_COLS; ++i)
     {
-        const char* sColTitle = nullptr;
+        const char* sColTitle{ "" };
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             sColTitle = COLUMN_TITLES_CORE[i];
         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)

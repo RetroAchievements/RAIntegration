@@ -1,14 +1,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
-#include <fstream>
-#include <memory>
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_Dlg_Memory.h"
 
 #include "data\GameContext.hh"
-
-#include <CommDlg.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;
@@ -678,13 +674,13 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
     switch (type)
     {
         case 1:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, EightBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::EightBit);
             break;
         case 2:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, SixteenBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::SixteenBit);
             break;
         case 3:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, ThirtyTwoBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::ThirtyTwoBit);
             break;
     }
 

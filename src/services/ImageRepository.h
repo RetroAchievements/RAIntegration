@@ -2,12 +2,7 @@
 #define IMAGEREPOSITORY_H
 #pragma once
 
-#include "RA_Defs.h" // map, sstream (string)
-
-#include <atomic>
-#include <mutex>
-#include <set>
-#include <unordered_map>
+#include "RA_Defs.h"
 
 namespace ra {
 namespace services {
@@ -146,4 +141,4 @@ extern ImageRepository g_ImageRepository;
 } // namespace services
 } // namespace ra
 
-#endif // !IMAGEREPOSITORY_H
+#endif /* !IMAGEREPOSITORY_H */

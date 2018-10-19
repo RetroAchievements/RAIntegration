@@ -290,14 +290,15 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                         SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
                     }
 
-                    ra::tstring str;
+                    
                     {
-                        std::basic_ostringstream<TCHAR> oss;
-                        oss << " " << lbInfo.m_nRank << " " << lbInfo.m_sUsername << " ";
-                        str = oss.str();
-                    }
-                    DrawText(hDC, str.c_str(), ra::to_signed(str.length()), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                        const auto str{
+                            ra::StringPrintf(" %u %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str())
+                        };
 
+                        DrawText(hDC, NativeStr(str).c_str(), ra::narrow_cast<int>(str.length()),
+                                    &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                    }
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
                     DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
 

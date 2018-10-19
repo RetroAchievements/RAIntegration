@@ -12,12 +12,12 @@ class IHttpRequester
 {
 public:
     virtual ~IHttpRequester() noexcept = default;
-    
+
     /// <summary>
     /// Sets the default User-Agent to send for requests made by this service.
     /// </summary>
     virtual void SetUserAgent(const std::string& sUserAgent) = 0;
-    
+
     /// <summary>
     /// Calls this server and waits for the response.
     /// </summary>

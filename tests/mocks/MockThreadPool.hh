@@ -23,12 +23,12 @@ public:
     {
         m_vTasks.emplace(f);
     }
-    
+
     /// <summary>
     /// Gets the number of outstanding asynchronous tasks are queued
     /// </summary>
     size_t PendingTasks() const { return m_vTasks.size(); }
-    
+
     /// <summary>
     /// Executes the next outstanding task.
     /// </summary>

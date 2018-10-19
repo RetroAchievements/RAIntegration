@@ -2,8 +2,6 @@
 #define RA_SERVICES_WINDOWS_CLIPBOARD_HH
 #pragma once
 
-#include "RA_Defs.h"
-
 #include "services\IClipboard.hh"
 
 namespace ra {

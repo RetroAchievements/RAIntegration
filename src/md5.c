@@ -54,6 +54,10 @@
 #include "md5.h"
 #include <string.h>
 
+/* Really didn't want to have to do this but can't find a better way to do it - SyrianBallaS */
+#include <codeanalysis\warnings.h>
+#pragma warning(disable : ALL_CPPCORECHECK_WARNINGS)
+
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */
 #ifdef ARCH_IS_BIG_ENDIAN
 #  define BYTE_ORDER (ARCH_IS_BIG_ENDIAN ? 1 : -1)

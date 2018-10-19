@@ -23,19 +23,19 @@ public:
         ClauseHarness() : Clause(ClauseOperation::None) {}
 
         unsigned int GetAddress() const { return m_nAddress; }
-        ComparisonVariableSize GetVarSize() const { return m_nVarSize; }
+        MemSize GetVarSize() const { return m_nVarSize; }
         double GetModifier() const { return m_fModifier; }
         bool GetBcdParse() const { return m_bBCDParse; }
         bool GetParseVal() const { return m_bParseVal; }
         bool GetInvertBit() const { return m_bInvertBit; }
         unsigned int GetSecondAddress() const { return m_nSecondAddress; }
-        ComparisonVariableSize GetSecondVarSize() const { return m_nSecondVarSize; }
+        MemSize GetSecondVarSize() const { return m_nSecondVarSize; }
     };
 };
 
 TEST_CLASS(RA_MemValue_Tests)
 {
-    void AssertParseFromString(const char* sSerialized, ComparisonVariableSize nExpectedVarSize, unsigned int nExpectedAddress, bool bExpectedBcdParse = false, bool bExpectedParseVal = false)
+    void AssertParseFromString(const char* sSerialized, MemSize nExpectedVarSize, unsigned int nExpectedAddress, bool bExpectedBcdParse = false, bool bExpectedParseVal = false)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         MemValueHarness::ClauseHarness value;
@@ -48,10 +48,10 @@ TEST_CLASS(RA_MemValue_Tests)
         Assert::AreEqual(false, value.GetInvertBit(), wsSerialized.c_str());
         Assert::AreEqual(1.0, value.GetModifier(), wsSerialized.c_str());
         Assert::AreEqual(0U, value.GetSecondAddress(), wsSerialized.c_str());
-        Assert::AreEqual(EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
+        Assert::AreEqual(MemSize::EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
     }
 
-    void AssertParseFromString(const char* sSerialized, ComparisonVariableSize nExpectedVarSize, unsigned int nExpectedAddress, double fExpectedModifier)
+    void AssertParseFromString(const char* sSerialized, MemSize nExpectedVarSize, unsigned int nExpectedAddress, double fExpectedModifier)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         MemValueHarness::ClauseHarness value;
@@ -64,10 +64,10 @@ TEST_CLASS(RA_MemValue_Tests)
         Assert::AreEqual(false, value.GetInvertBit(), wsSerialized.c_str());
         Assert::AreEqual(fExpectedModifier, value.GetModifier(), wsSerialized.c_str());
         Assert::AreEqual(0U, value.GetSecondAddress(), wsSerialized.c_str());
-        Assert::AreEqual(EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
+        Assert::AreEqual(MemSize::EightBit, value.GetSecondVarSize(), wsSerialized.c_str());
     }
 
-    void AssertParseFromString(const char* sSerialized, ComparisonVariableSize nExpectedVarSize, unsigned int nExpectedAddress, ComparisonVariableSize nExpectedSecondVarSize, unsigned int nExpectedSecondAddress)
+    void AssertParseFromString(const char* sSerialized, MemSize nExpectedVarSize, unsigned int nExpectedAddress, MemSize nExpectedSecondVarSize, unsigned int nExpectedSecondAddress)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         MemValueHarness::ClauseHarness value;
@@ -95,49 +95,49 @@ public:
     TEST_METHOD(TestClauseParseFromString)
     {
         // sizes
-        AssertParseFromString("0xH1234", EightBit, 0x1234U);
-        AssertParseFromString("0x 1234", SixteenBit, 0x1234U);
-        AssertParseFromString("0x1234", SixteenBit, 0x1234U);
-        AssertParseFromString("0xX1234", ThirtyTwoBit, 0x1234U);
-        AssertParseFromString("0xL1234", Nibble_Lower, 0x1234U);
-        AssertParseFromString("0xU1234", Nibble_Upper, 0x1234U);
-        AssertParseFromString("0xM1234", Bit_0, 0x1234U);
-        AssertParseFromString("0xN1234", Bit_1, 0x1234U);
-        AssertParseFromString("0xO1234", Bit_2, 0x1234U);
-        AssertParseFromString("0xP1234", Bit_3, 0x1234U);
-        AssertParseFromString("0xQ1234", Bit_4, 0x1234U);
-        AssertParseFromString("0xR1234", Bit_5, 0x1234U);
-        AssertParseFromString("0xS1234", Bit_6, 0x1234U);
-        AssertParseFromString("0xT1234", Bit_7, 0x1234U);
+        AssertParseFromString("0xH1234", MemSize::EightBit, 0x1234U);
+        AssertParseFromString("0x 1234", MemSize::SixteenBit, 0x1234U);
+        AssertParseFromString("0x1234", MemSize::SixteenBit, 0x1234U);
+        AssertParseFromString("0xX1234", MemSize::ThirtyTwoBit, 0x1234U);
+        AssertParseFromString("0xL1234", MemSize::Nibble_Lower, 0x1234U);
+        AssertParseFromString("0xU1234", MemSize::Nibble_Upper, 0x1234U);
+        AssertParseFromString("0xM1234", MemSize::Bit_0, 0x1234U);
+        AssertParseFromString("0xN1234", MemSize::Bit_1, 0x1234U);
+        AssertParseFromString("0xO1234", MemSize::Bit_2, 0x1234U);
+        AssertParseFromString("0xP1234", MemSize::Bit_3, 0x1234U);
+        AssertParseFromString("0xQ1234", MemSize::Bit_4, 0x1234U);
+        AssertParseFromString("0xR1234", MemSize::Bit_5, 0x1234U);
+        AssertParseFromString("0xS1234", MemSize::Bit_6, 0x1234U);
+        AssertParseFromString("0xT1234", MemSize::Bit_7, 0x1234U);
 
         // BCD
-        AssertParseFromString("B0xH1234", EightBit, 0x1234U, true);
-        AssertParseFromString("B0xX1234", ThirtyTwoBit, 0x1234U, true);
-        AssertParseFromString("b0xH1234", EightBit, 0x1234U, true);
+        AssertParseFromString("B0xH1234", MemSize::EightBit, 0x1234U, true);
+        AssertParseFromString("B0xX1234", MemSize::ThirtyTwoBit, 0x1234U, true);
+        AssertParseFromString("b0xH1234", MemSize::EightBit, 0x1234U, true);
 
         // Value (values don't actually have size, EightBit is the default)
-        AssertParseFromString("V0x1234", SixteenBit, 0x1234, false, true); // hex is indirectly supported through using CompVariable to parse the value/address
-        AssertParseFromString("V1234", EightBit, 1234, false, true);
-        AssertParseFromString("V+1", EightBit, 1, false, true);
-        AssertParseFromString("V-1", EightBit, 0xFFFFFFFFU, false, true);
-        AssertParseFromString("V-2", EightBit, 0xFFFFFFFEU, false, true); // twos compliment still works for addition
+        AssertParseFromString("V0x1234", MemSize::SixteenBit, 0x1234, false, true); // hex is indirectly supported through using CompVariable to parse the value/address
+        AssertParseFromString("V1234", MemSize::EightBit, 1234, false, true);
+        AssertParseFromString("V+1", MemSize::EightBit, 1, false, true);
+        AssertParseFromString("V-1", MemSize::EightBit, 0xFFFFFFFFU, false, true);
+        AssertParseFromString("V-2", MemSize::EightBit, 0xFFFFFFFEU, false, true); // twos compliment still works for addition
     }
 
     TEST_METHOD(TestClauseParseFromStringMultiply)
     {
-        AssertParseFromString("0xH1234", EightBit, 0x1234U, 1.0);
-        AssertParseFromString("0xH1234*1", EightBit, 0x1234U, 1.0);
-        AssertParseFromString("0xH1234*3", EightBit, 0x1234U, 3.0);
-        AssertParseFromString("0xH1234*0.5", EightBit, 0x1234U, 0.5);
-        AssertParseFromString("0xH1234*-1", EightBit, 0x1234U, -1.0);
+        AssertParseFromString("0xH1234", MemSize::EightBit, 0x1234U, 1.0);
+        AssertParseFromString("0xH1234*1", MemSize::EightBit, 0x1234U, 1.0);
+        AssertParseFromString("0xH1234*3", MemSize::EightBit, 0x1234U, 3.0);
+        AssertParseFromString("0xH1234*0.5", MemSize::EightBit, 0x1234U, 0.5);
+        AssertParseFromString("0xH1234*-1", MemSize::EightBit, 0x1234U, -1.0);
     }
 
     TEST_METHOD(TestClauseParseFromStringMultiplyAddress)
     {
-        AssertParseFromString("0xH1234", EightBit, 0x1234U, EightBit, 0U);
-        AssertParseFromString("0xH1234*0xH3456", EightBit, 0x1234U, EightBit, 0x3456U);
-        AssertParseFromString("0xH1234*0xL2222", EightBit, 0x1234U, Nibble_Lower, 0x2222U);
-        AssertParseFromString("0xH1234*0x1111", EightBit, 0x1234U, SixteenBit, 0x1111U);
+        AssertParseFromString("0xH1234", MemSize::EightBit, 0x1234U, MemSize::EightBit, 0U);
+        AssertParseFromString("0xH1234*0xH3456", MemSize::EightBit, 0x1234U, MemSize::EightBit, 0x3456U);
+        AssertParseFromString("0xH1234*0xL2222", MemSize::EightBit, 0x1234U, MemSize::Nibble_Lower, 0x2222U);
+        AssertParseFromString("0xH1234*0x1111", MemSize::EightBit, 0x1234U, MemSize::SixteenBit, 0x1111U);
     }
 
     TEST_METHOD(TestClauseGetValue)

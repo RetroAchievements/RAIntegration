@@ -11,6 +11,10 @@
 */
 namespace ra {
 
+#pragma warning(push)
+// TODO: Finish narrow_cast in another PR
+// we don't use gsl::narrow_cast, ra::narrow_cast won't trigger this when its done
+#pragma warning(disable : 26472)
 template<typename SignedType, class = std::enable_if_t<std::is_signed_v<SignedType>>> _NODISCARD _CONSTANT_FN
 to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned_t<SignedType>>(st); }
 
@@ -43,6 +47,7 @@ template<
     has_smaller_or_same_size_than_v<NarrowedType, WideType>>
 > _NODISCARD _CONSTANT_FN
 narrow_cast(_In_ WideType from) noexcept { return static_cast<NarrowedType>(static_cast<WideType>(from)); }
+#pragma warning(pop)
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline auto
 to_tstring(_In_ Arithmetic a) noexcept
@@ -150,14 +155,13 @@ tstrtoul(_In_z_ LPCTSTR _String,
 
 /*
     https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
-    TBD: Annotate ANSI compatibility (509 bytes even after concatenation) or Microsoft's (2,048 bytes)?
     Error Checking: First part might happen in MBCS mode but the standard does not reserve an error code for it.
     Remarks: The second part is Microsoft Specific. A single null-terminated c string may not exceed 2048 bytes,
              but may reach a total size of 65,535 bytes after concatenation.
     This check will only occur during code analysis, the standard does not have data contracts yet,
     i.e, expects, ensures... (GSL does though however).
 */
-_Success_((return != to_unsigned(-1)) && (return <= 2048U))
+_Success_((return != SIZE_MAX) && (return <= 2048U))
 /* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
 _NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
 {

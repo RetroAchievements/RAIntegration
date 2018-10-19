@@ -5,12 +5,8 @@
 #include "services/TextReader.hh"
 #include "services/TextWriter.hh"
 
-#include <string>
-#include <memory>
-
-// nuke WinAPI #defines - anything including this file should be using these functions
-#undef CreateDirectory 
-
+#undef DeleteFile
+#undef MoveFile
 namespace ra {
 namespace services {
 
@@ -34,6 +30,25 @@ public:
     /// </summary>
     /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
     virtual bool CreateDirectory(const std::wstring& sDirectory) const = 0;
+
+    /// <summary>
+    /// Gets the size of the file (in bytes).
+    /// </summary>
+    /// <remarks>Returns -1 if the file does not exist.</remarks>
+    virtual int64_t GetFileSize(const std::wstring& sPath) const = 0;
+
+    /// <summary>
+    /// Deletes the specified file.
+    /// </summary>
+    /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
+    virtual bool DeleteFile(const std::wstring& sPath) const = 0;
+
+    /// <summary>
+    /// Moves a file from one location to another.
+    /// </summary>
+    /// <remarks>Can be used to rename a file if the path to the file is the same.</remarks>
+    /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
+    virtual bool MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const = 0;
 
     /// <summary>
     /// Opens the specified file.

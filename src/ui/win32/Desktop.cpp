@@ -5,7 +5,7 @@
 #include "ui/win32/MessageBoxDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
 
-#include <assert.h>
+#include "RA_Log.h"
 
 namespace ra {
 namespace ui {

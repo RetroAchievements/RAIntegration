@@ -8,9 +8,6 @@
 #include "RA_StringUtils.h"
 #endif
 
-#include <assert.h>
-#include <memory>
-
 namespace ra {
 namespace services {
 

@@ -2,8 +2,6 @@
 #define RA_SERVICES_ITHREADPOOL_HH
 #pragma once
 
-#include <functional>
-
 namespace ra {
 namespace services {
 

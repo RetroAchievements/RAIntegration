@@ -2,7 +2,7 @@
 #define RA_ACHIEVEMENTSET_H
 #pragma once
 
-#include "RA_Achievement.h" // RA_Condition.h (RA_Defs.h)
+#include "RA_Achievement.h" // RA_Condition.h (ra_fwd.h)
 
 //////////////////////////////////////////////////////////////////////////
 //	AchievementSet
@@ -25,7 +25,7 @@ public:
     }
 
 public:
-    static BOOL FetchFromWebBlocking(ra::GameID nGameID);
+    static BOOL FetchFromWebBlocking(unsigned int nGameID);
 #ifndef RA_UTEST
     static void OnRequestUnlocks(const rapidjson::Document& doc);
 #endif // !RA_UTEST
@@ -36,7 +36,7 @@ public:
     void Reset();
 
     _Success_(return)
-    bool LoadFromFile(_Inout_ ra::GameID nGameID);
+    bool LoadFromFile(_Inout_ unsigned int nGameID);
     bool SaveToFile() const;
 
     //	Get Achievement at offset

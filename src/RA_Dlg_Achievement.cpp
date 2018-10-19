@@ -3,15 +3,12 @@
 #include "RA_Resource.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameTitle.h"
-#include "RA_GameData.h"
 #include "RA_md5factory.h"
 #include "RA_User.h"
-#include "RA_GameData.h"
 
-
+#include "data\GameContext.hh"
 namespace {
 
 const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
@@ -40,7 +37,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
     for (int i = 0; i < NUM_COLS; ++i)
     {
-        const char* sColTitle = nullptr;
+        const char* sColTitle{ "" };
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             sColTitle = COLUMN_TITLES_CORE[i];
         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
@@ -261,6 +258,7 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
 
 BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, rapidjson::Document& doc)
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const std::string sMem = Ach.CreateMemString();
 
     //	Deal with secret:
@@ -278,7 +276,7 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     args['a'] = std::to_string(Ach.ID());
-    args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
+    args['g'] = std::to_string(pGameContext.GameId());
     args['n'] = Ach.Title();
     args['d'] = Ach.Description();
     args['m'] = sMem;
@@ -344,7 +342,10 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSet::Type nAchievementSe
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL, NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
     CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
-    OnLoad_NewRom(g_pCurrentGameData->GetGameID()); // assert: calls UpdateSelectedAchievementButtons
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    OnLoad_NewRom(pGameContext.GameId()); // assert: calls UpdateSelectedAchievementButtons
+
     g_AchievementEditorDialog.OnLoad_NewRom();
 }
 
@@ -377,7 +378,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             }
 
             //	Continue as if a new rom had been loaded
-            OnLoad_NewRom(g_pCurrentGameData->GetGameID());
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+            OnLoad_NewRom(pGameContext.GameId());
+
             CheckDlgButton(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
 
             //	Click the core 
@@ -500,7 +503,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             TEXT("Refresh from Disk"),
                             MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                            auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
                                 g_pLocalAchievements->Clear();
@@ -521,7 +525,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             "This will overwrite any changes that you have made with fresh achievements from the server";
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            ra::GameID nGameID = g_pCurrentGameData->GetGameID();
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                            auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
                                 DownloadAndActivateAchievementData(nGameID);
@@ -709,8 +714,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                             BOOL bFound = FALSE;
 
+                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                             AchievementSet TempSet(g_nActiveAchievementSet);
-                            if (TempSet.LoadFromFile(g_pCurrentGameData->GetGameID()))
+                            if (TempSet.LoadFromFile(pGameContext.GameId()))
                             {
                                 Achievement* pAchBackup = TempSet.Find(nID);
                                 if (pAchBackup != nullptr)
@@ -1084,7 +1090,7 @@ void Dlg_Achievements::LoadAchievements(HWND hList)
         AddAchievement(hList, g_pActiveAchievements->GetAchievement(i));
 }
 
-void Dlg_Achievements::OnLoad_NewRom(ra::GameID nGameID)
+void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
 {
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DOWNLOAD_ACH), FALSE);
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ADD_ACH), FALSE);

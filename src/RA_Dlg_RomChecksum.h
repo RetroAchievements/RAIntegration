@@ -2,14 +2,10 @@
 #define RA_DLG_ROMCHECKSUM_H
 #pragma once
 
-struct IUnknown;
-#define NOMINMAX
-#include <wtypes.h>
-
 class RA_Dlg_RomChecksum
 {
 public:
-    static BOOL DoModalDialog();
+    static INT_PTR DoModalDialog() noexcept;
 
 public:
     static INT_PTR CALLBACK RA_Dlg_RomChecksumProc(HWND, UINT, WPARAM, [[maybe_unused]] LPARAM);

@@ -3,8 +3,8 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_AchievementSet.h"
 #include "RA_BuildVer.h"
+#include "RA_AchievementSet.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
@@ -15,11 +15,6 @@
 #include "services\IConfiguration.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
-
-#include <winhttp.h>
-#include <memory>
-#include <fstream>
-#include <time.h>
 
 const char* RequestTypeToString[] =
 {
@@ -230,6 +225,45 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 //  return bSuccess;
 //}
 
+static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+{
+    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
+                                       RA_INTEGRATION_VERSION_MODIFIED));
+
+    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+    sUserAgent.append(sAppend, posFound);
+
+}
+
+static void AppendNTVersion(_Inout_ std::string& sUserAgent)
+{
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    using NTSTATUS = __success(return >= 0) LONG;
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+        const auto RtlGetVersion{
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+        };
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+            {
+                sUserAgent.append(ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
+                                                   osVersion.dwMinorVersion));
+            }
+        }
+    }
+}
+
 void RAWeb::SetUserAgentString()
 {
     std::string sUserAgent;
@@ -247,37 +281,9 @@ void RAWeb::SetUserAgentString()
     sUserAgent.append(g_sClientVersion);
     sUserAgent.append(" (");
 
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
-    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
-#ifndef NTSTATUS
-    #define NTSTATUS long
-#endif
-    using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-    auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion");
-    if (RtlGetVersion)
-    {
-        RTL_OSVERSIONINFOEXW osVersion = {};
-        RtlGetVersion(&osVersion);
-        if (osVersion.dwMajorVersion > 0)
-        {
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
-        }
-    }
-
+    AppendNTVersion(sUserAgent);
     sUserAgent.append(") Integration/");
-
-    auto buffer{ std::make_unique<char[]>(64U) };
-    sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
-              RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer.release());
-
-    const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
-    if (ptr != nullptr)
-        sUserAgent.append(ptr);
+    AppendIntegrationVersion(sUserAgent);
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 

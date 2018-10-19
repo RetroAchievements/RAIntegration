@@ -1,14 +1,10 @@
 #include "RA_Dlg_MemBookmark.h"
 
-#include <fstream>
-#include <memory>
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_Dlg_Memory.h"
 
 #include "data\GameContext.hh"
-
-#include <CommDlg.h>
 
 Dlg_MemBookmark g_MemBookmarkDialog;
 std::vector<ResizeContent> vDlgMemBookmarkResize;

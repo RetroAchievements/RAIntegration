@@ -1,7 +1,5 @@
 #include "RA_CodeNotes.h"
 
-#include <fstream>
-
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 #include "RA_Dlg_Memory.h"
@@ -24,8 +22,7 @@ size_t CodeNotes::Load(unsigned int nID)
         return 0U;
 
     rapidjson::Document doc;
-    LoadDocument(doc, *pData.get());
-    if (doc.HasParseError())
+    if (!LoadDocument(doc, *pData.get()))
         return 0U;
 
     for (const auto& note : doc.GetArray())

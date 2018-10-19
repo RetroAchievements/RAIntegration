@@ -2,8 +2,6 @@
 #define RA_TYPE_TRAITS_H
 #pragma once
 
-#include <utility>
-
 #if _HAS_CXX17
 #ifndef _CONSTANT_VAR
 #define _CONSTANT_VAR inline constexpr auto

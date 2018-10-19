@@ -3,8 +3,7 @@
 #pragma once
 
 //	NB. Shared between RA_Integration and emulator
-
-typedef int BOOL;
+using BOOL = int;
 
 #ifndef CCONV
 #define CCONV __cdecl

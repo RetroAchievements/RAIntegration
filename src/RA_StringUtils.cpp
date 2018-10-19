@@ -1,13 +1,5 @@
 #include "RA_StringUtils.h"
 
-#include <iomanip>
-#include <memory>
-
-#define WIN32_LEAN_AND_MEAN
-struct IUnknown;
-#include <Windows.h>
-
-// has to be after Windows.h for LPTSTR definition
 #include "ra_utility.h"
 
 namespace ra {
@@ -106,13 +98,13 @@ std::string& TrimLineEnding(std::string& str) noexcept
 }
 
 _Use_decl_annotations_
-_NODISCARD std::string StringPrintf(const char* sFormat, ...)
+std::string StringPrintf(const char* const sFormat, ...)
 {
     std::string sFormatted;
 
     va_list pArgs;
     va_start(pArgs, sFormat);
-    int nNeeded = vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
+    const auto nNeeded = std::vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
     va_end(pArgs);
 
     if (nNeeded >= 0)
@@ -122,7 +114,7 @@ _NODISCARD std::string StringPrintf(const char* sFormat, ...)
             sFormatted.resize(ra::to_unsigned(nNeeded + 1));
 
             va_start(pArgs, sFormat);
-            vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
+            std::vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
             va_end(pArgs);
         }
 

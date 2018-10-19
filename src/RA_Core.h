@@ -135,7 +135,6 @@ extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 
-_Success_(return != "")
 _NODISCARD std::string GetFolderFromDialog() noexcept;
 
 void DownloadAndActivateAchievementData(unsigned int nGameID);

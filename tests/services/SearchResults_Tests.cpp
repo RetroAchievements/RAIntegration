@@ -3,8 +3,6 @@
 #include "services\SearchResults.h"
 #include "tests\RA_UnitTestHelpers.h"
 
-#include <memory>
-
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

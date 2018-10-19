@@ -2,9 +2,6 @@
 #define RA_FWD_H
 #pragma once
 
-/* Forward declaring namespace std caused problems */
-#include <xstring>
-
 #define _NORETURN            [[noreturn]]
 
 /* Maybe an extra check just in-case */
@@ -38,14 +35,39 @@ using TCHAR = wchar_t;
 #endif /* !_TCHAR_DEFINED */
 
 #ifndef _WINDEF_
-using DWORD  = unsigned long;
-using LPVOID = void*;
+struct HBITMAP__;
+struct HDC__;
+struct HPEN__;
+struct HBRUSH__;
+struct HWND__;
+struct HINSTANCE__;
+
+using HBITMAP = HBITMAP__*;
+using HDC     = HDC__*;
+using HPEN    = HPEN__*;
+using HBRUSH  = HBRUSH__*;
+
+using HWND      = HWND__*;
+using HINSTANCE = HINSTANCE__*;
+using HMODULE   = HINSTANCE__*;
+
+struct tagRECT;
+struct tagSIZE;
+using RECT = tagRECT;
+using SIZE = tagSIZE;
+
+using BOOL    = int;
+using BYTE    = unsigned char;
+using DWORD   = unsigned long;
+using HGDIOBJ = void*;
+using LPVOID  = void*;
+using WORD    = unsigned short;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
 using HANDLE  = void*;
 using LPCTSTR = const TCHAR*;
-using LPTSTR  = TCHAR* ;
+using LPTSTR  = TCHAR*;
 #endif // !_WINNT_
 
 namespace ra {

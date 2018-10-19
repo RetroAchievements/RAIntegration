@@ -7,8 +7,6 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
-#include <unordered_map>
-
 namespace ra {
 namespace services {
 namespace mocks {

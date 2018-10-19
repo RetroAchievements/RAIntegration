@@ -1,5 +1,7 @@
 #include "RA_MemManager.h"
 
+#include "RA_Defs.h"
+
 MemManager g_MemManager;
 
 MemManager::MemManager()

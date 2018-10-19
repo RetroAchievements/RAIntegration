@@ -4,13 +4,6 @@
 
 #include "services\IThreadPool.hh"
 
-#include <assert.h>
-#include <functional>
-#include <mutex>
-#include <queue>
-#include <thread>
-#include <vector>
-
 namespace ra {
 namespace services {
 namespace impl {

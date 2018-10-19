@@ -31,6 +31,9 @@
     <Filter Include="UI\Win32\Bindings">
       <UniqueIdentifier>{24415556-accd-41e1-a23a-3ef078909014}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{2e33d92b-6ab7-47c6-9d74-f2802ca48d25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -185,6 +188,9 @@
     </ClCompile>
     <ClCompile Include="data\GameContext.cpp">
       <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>PCH</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -418,6 +424,18 @@
     </ClInclude>
     <ClInclude Include="data\GameContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="windows_nodefines.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_cppcorecheck_suppressions.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_microsoft_suppressions.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

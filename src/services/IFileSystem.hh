@@ -5,14 +5,8 @@
 #include "services/TextReader.hh"
 #include "services/TextWriter.hh"
 
-#include <string>
-#include <memory>
-
-// nuke WinAPI #defines - anything including this file should be using these functions
-#undef CreateDirectory 
 #undef DeleteFile
 #undef MoveFile
-
 namespace ra {
 namespace services {
 

@@ -2,12 +2,6 @@
 #define RA_UI_MODEL_PROPERTY_H
 #pragma once
 
-#include <set>
-#include <string>
-#include <map>
-#include <memory>
-#include <mutex>
-
 namespace ra {
 namespace ui {
 

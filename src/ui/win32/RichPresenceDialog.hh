@@ -5,9 +5,6 @@
 #include "ui/viewmodels/RichPresenceMonitorViewModel.hh"
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
-
-#include <memory>
-
 namespace ra {
 namespace ui {
 namespace win32 {

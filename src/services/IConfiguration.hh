@@ -4,8 +4,6 @@
 
 #include "ui\WindowViewModelBase.hh"
 
-#include <string>
-
 namespace ra {
 namespace services {
 

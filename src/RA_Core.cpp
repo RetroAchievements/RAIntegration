@@ -347,7 +347,7 @@ void DownloadAndActivateAchievementData(unsigned int nGameID)
     g_pUnofficialAchievements->LoadFromFile(nGameID);
     g_pLocalAchievements->LoadFromFile(nGameID);
 
-    g_RichPresenceInterpreter.Load();
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
@@ -1131,7 +1131,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            g_RichPresenceInterpreter.Load();
+            ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.RichPresenceMonitor.Show();

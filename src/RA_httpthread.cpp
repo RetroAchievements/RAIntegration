@@ -446,9 +446,9 @@ static void DoSendKeepAlive(unsigned int nGameId)
         }
         else
         {
-            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
+            const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
             if (!sRPResponse.empty())
-                args['m'] = sRPResponse;
+                args['m'] = ra::Narrow(sRPResponse);
             else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
                 args['m'] = "Earning Achievements";
             else

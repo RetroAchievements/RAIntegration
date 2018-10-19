@@ -91,15 +91,14 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
 void RichPresenceMonitorViewModel::UpdateDisplayString()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto nGameId = pGameContext.GameId();
-    if (nGameId == 0)
+    if (pGameContext.GameId() == 0)
     {
         SetDisplayString(L"No game loaded.");
 
         if (m_nState == MonitorState::Active)
             m_nState = MonitorState::Static;
     }
-    else if (!g_RichPresenceInterpreter.Enabled())
+    else if (!pGameContext.HasRichPresence())
     {
         SetDisplayString(DisplayStringProperty.GetDefaultValue());
 
@@ -108,7 +107,7 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
     }
     else
     {
-        std::wstring sDisplayString = ra::Widen(g_RichPresenceInterpreter.GetRichPresenceString());
+        std::wstring sDisplayString = ra::Widen(pGameContext.GetRichPresenceDisplayString());
         SetDisplayString(sDisplayString);
 
         if (m_nState == MonitorState::Static)

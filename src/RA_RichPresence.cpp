@@ -13,8 +13,6 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
-RA_RichPresenceInterpreter g_RichPresenceInterpreter;
-
 RA_RichPresenceInterpreter::Lookup::Lookup(const std::string& sDesc)
     : m_sLookupDescription(sDesc)
 {

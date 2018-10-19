@@ -18,9 +18,9 @@ namespace CppUnitTestFramework {
 
 // converters for asserting enum values
 
-template<> static std::wstring ToString<ComparisonVariableSize>(const ComparisonVariableSize& t)
+template<> static std::wstring ToString<MemSize>(const MemSize& t)
 {
-    return ra::Widen(COMPARISONVARIABLESIZE_STR[(int)t]);
+    return MEMSIZE_STR.at(ra::etoi(t));
 }
 
 template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)

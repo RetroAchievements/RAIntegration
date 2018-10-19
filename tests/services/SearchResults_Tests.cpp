@@ -31,7 +31,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results;
-        results.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results.Initialize(1U, 3U, MemSize::EightBit);
 
         Assert::AreEqual(3U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (8-bit) mode. Aware of 3 RAM locations."), results.Summary());
@@ -45,17 +45,17 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x34U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -65,7 +65,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results;
-        results.Initialize(1U, 3U, ComparisonVariableSize::SixteenBit);
+        results.Initialize(1U, 3U, MemSize::SixteenBit);
 
         Assert::AreEqual(2U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 2 RAM locations."), results.Summary());
@@ -78,12 +78,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x3412U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xAB34U, result.nValue);
     }
 
@@ -93,7 +93,7 @@ public:
         InitializeMemory(memory, 6);
 
         SearchResults results;
-        results.Initialize(1U, 4U, ComparisonVariableSize::ThirtyTwoBit);
+        results.Initialize(1U, 4U, MemSize::ThirtyTwoBit);
 
         Assert::AreEqual(1U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (32-bit) mode. Aware of 1 RAM locations."), results.Summary());
@@ -105,7 +105,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::ThirtyTwoBit, result.nSize);
+        Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
         Assert::AreEqual(0x56AB3412U, result.nValue);
     }
 
@@ -115,7 +115,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results;
-        results.Initialize(1U, 3U, ComparisonVariableSize::Nibble_Upper);
+        results.Initialize(1U, 3U, MemSize::Nibble_Upper);
 
         Assert::AreEqual(6U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (Lower4) mode. Aware of 6 RAM locations."), results.Summary());
@@ -130,32 +130,32 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0x2U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0x1U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0x4U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(3U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0x3U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(4U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0xBU, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(5U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0xAU, result.nValue);
     }
 
@@ -165,7 +165,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results;
-        results.Initialize(1U, 3U, ComparisonVariableSize::Nibble_Lower); // should behave identical to Nibble_Upper
+        results.Initialize(1U, 3U, MemSize::Nibble_Lower); // should behave identical to Nibble_Upper
 
         Assert::AreEqual(6U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (Lower4) mode. Aware of 6 RAM locations."), results.Summary());
@@ -180,32 +180,32 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0x2U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0x1U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0x4U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(3U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0x3U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(4U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(0xBU, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(5U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(0xAU, result.nValue);
     }
 
@@ -215,7 +215,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results;
-        results.Initialize(1U, 8U, ComparisonVariableSize::SixteenBit);
+        results.Initialize(1U, 8U, MemSize::SixteenBit);
 
         Assert::AreEqual(3U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 3 RAM locations."), results.Summary());
@@ -229,17 +229,17 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x3412U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xAB34U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x56ABU, result.nValue);
     }
 
@@ -249,7 +249,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -266,7 +266,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -276,7 +276,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -293,12 +293,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x34U, result.nValue);
     }
 
@@ -308,7 +308,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -325,12 +325,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -340,7 +340,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -357,7 +357,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -367,7 +367,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -384,12 +384,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x34U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -399,7 +399,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -416,7 +416,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
     }
 
@@ -426,7 +426,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         SearchResults results;
@@ -443,12 +443,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x34U, result.nValue);
     }
 
@@ -458,7 +458,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         // swap bytes 1 and 3, match should be found at address 1, not address 3
@@ -478,7 +478,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
     }
 
@@ -488,7 +488,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         memory[1] = 0x14;
@@ -507,12 +507,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x14U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x55U, result.nValue);
     }
 
@@ -522,7 +522,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 4U, ComparisonVariableSize::SixteenBit);
+        results1.Initialize(1U, 4U, MemSize::SixteenBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         memory[2] = 0x55;
@@ -539,12 +539,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x5512U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xAB55U, result.nValue);
     }
 
@@ -554,7 +554,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::Nibble_Lower);
+        results1.Initialize(1U, 3U, MemSize::Nibble_Lower);
         Assert::AreEqual(6U, results1.MatchingAddressCount());
 
         memory[1] = 0x14;
@@ -573,17 +573,17 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(4U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
         Assert::AreEqual(5U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
         Assert::AreEqual(5U, result.nValue);
     }
 
@@ -593,7 +593,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
@@ -624,7 +624,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x55U, result.nValue);
     }
 
@@ -634,7 +634,7 @@ public:
         InitializeMemory(memory, 5);
 
         SearchResults results1;
-        results1.Initialize(1U, 3U, ComparisonVariableSize::EightBit);
+        results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
@@ -665,7 +665,7 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x55U, result.nValue);
     }
 
@@ -677,7 +677,7 @@ public:
         InitializeMemory(memory.get(), BIG_BLOCK_SIZE);
 
         SearchResults results;
-        results.Initialize(0U, BIG_BLOCK_SIZE, ComparisonVariableSize::EightBit);
+        results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::EightBit);
 
         Assert::AreEqual(BIG_BLOCK_SIZE, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
@@ -689,17 +689,17 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE - 1, result));
         Assert::AreEqual(MAX_BLOCK_SIZE - 1, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xFFU, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE, result));
         Assert::AreEqual(MAX_BLOCK_SIZE, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x00U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(BIG_BLOCK_SIZE - 1, result));
         Assert::AreEqual(BIG_BLOCK_SIZE - 1, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xFFU, result.nValue);
     }
 
@@ -711,7 +711,7 @@ public:
         InitializeMemory(memory.get(), BIG_BLOCK_SIZE);
 
         SearchResults results;
-        results.Initialize(0U, BIG_BLOCK_SIZE, ComparisonVariableSize::SixteenBit);
+        results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::SixteenBit);
 
         Assert::AreEqual(BIG_BLOCK_SIZE - 1, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
@@ -723,17 +723,17 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE - 1, result));
         Assert::AreEqual(MAX_BLOCK_SIZE - 1, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x00FFU, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE, result));
         Assert::AreEqual(MAX_BLOCK_SIZE, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0x0100U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(BIG_BLOCK_SIZE - 2, result));
         Assert::AreEqual(BIG_BLOCK_SIZE - 2, result.nAddress);
-        Assert::AreEqual(ComparisonVariableSize::SixteenBit, result.nSize);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xFFFEU, result.nValue);
     }
 };

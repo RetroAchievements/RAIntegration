@@ -68,38 +68,38 @@ std::vector<size_t> MemManager::GetBankIDs() const
     return bankIDs;
 }
 
-unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, ComparisonVariableSize size) const
+unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) const
 {
     unsigned char buffer[4];
     switch (size)
     {
-        case Bit_0:
+        case MemSize::Bit_0:
             return (ActiveBankRAMByteRead(nOffs) & 0x01);
-        case Bit_1:
+        case MemSize::Bit_1:
             return (ActiveBankRAMByteRead(nOffs) & 0x02) ? 1 : 0;
-        case Bit_2:
+        case MemSize::Bit_2:
             return (ActiveBankRAMByteRead(nOffs) & 0x04) ? 1 : 0;
-        case Bit_3:
+        case MemSize::Bit_3:
             return (ActiveBankRAMByteRead(nOffs) & 0x08) ? 1 : 0;
-        case Bit_4:
+        case MemSize::Bit_4:
             return (ActiveBankRAMByteRead(nOffs) & 0x10) ? 1 : 0;
-        case Bit_5:
+        case MemSize::Bit_5:
             return (ActiveBankRAMByteRead(nOffs) & 0x20) ? 1 : 0;
-        case Bit_6:
+        case MemSize::Bit_6:
             return (ActiveBankRAMByteRead(nOffs) & 0x40) ? 1 : 0;
-        case Bit_7:
+        case MemSize::Bit_7:
             return (ActiveBankRAMByteRead(nOffs) & 0x80) ? 1 : 0;
-        case Nibble_Lower:
+        case MemSize::Nibble_Lower:
             return (ActiveBankRAMByteRead(nOffs) & 0x0F);
-        case Nibble_Upper:
+        case MemSize::Nibble_Upper:
             return ((ActiveBankRAMByteRead(nOffs) >> 4) & 0x0F);
-        case EightBit:
+        case MemSize::EightBit:
             return ActiveBankRAMByteRead(nOffs);
         default:
-        case SixteenBit:
+        case MemSize::SixteenBit:
             ActiveBankRAMRead(buffer, nOffs, 2);
             return buffer[0] | (buffer[1] << 8);
-        case ThirtyTwoBit:
+        case MemSize::ThirtyTwoBit:
             ActiveBankRAMRead(buffer, nOffs, 4);
             return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
     }

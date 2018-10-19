@@ -674,13 +674,13 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
     switch (type)
     {
         case 1:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, EightBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::EightBit);
             break;
         case 2:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, SixteenBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::SixteenBit);
             break;
         case 3:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, ThirtyTwoBit);
+            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::ThirtyTwoBit);
             break;
     }
 

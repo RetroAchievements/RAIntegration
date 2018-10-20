@@ -4,26 +4,26 @@
 #include "ui/WindowViewModelBase.hh"
 
 namespace ra {
-namespace ui {
+namespace ui {  
 namespace win32 {
 
 class IDialogPresenter
 {
 public:
-	virtual ~IDialogPresenter() noexcept = default;
+    virtual ~IDialogPresenter() noexcept = default;
 	IDialogPresenter(const IDialogPresenter&) noexcept = delete;
 	IDialogPresenter& operator=(const IDialogPresenter&) noexcept = delete;
 	IDialogPresenter(IDialogPresenter&&) noexcept = delete;
 	IDialogPresenter& operator=(IDialogPresenter&&) noexcept = delete;
 
-	/// <summary>Determines whether the specified view model can be shown by this controller.</summary>
-	virtual bool IsSupported(const ra::ui::WindowViewModelBase& oViewModel) = 0;
+    /// <summary>Determines whether the specified view model can be shown by this controller.</summary>
+    virtual bool IsSupported(const ra::ui::WindowViewModelBase& oViewModel) = 0;
 
-	/// <summary>Shows the window associated to the provided view model.</summary>
-	virtual void ShowWindow(ra::ui::WindowViewModelBase& oViewModel) = 0;
+    /// <summary>Shows the window associated to the provided view model.</summary>
+    virtual void ShowWindow(ra::ui::WindowViewModelBase& oViewModel) = 0;
 
-	/// <summary>Shows a modal window for the provided view model.</summary>
-	virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel) = 0;
+    /// <summary>Shows a modal window for the provided view model.</summary>
+    virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel) = 0;
 
 protected:
 	IDialogPresenter() noexcept = default;
@@ -31,9 +31,9 @@ protected:
 
 class IClosableDialogPresenter : public IDialogPresenter
 {
-public:
-	/// <summary>Called when the dialog is closed.</summary>
-	virtual void OnClosed() = 0;
+public:    
+    /// <summary>Called when the dialog is closed.</summary>
+    virtual void OnClosed() = 0;
 };
 
 

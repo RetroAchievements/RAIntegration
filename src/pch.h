@@ -33,8 +33,6 @@
 */
 #undef CreateDirectory
 #undef GetMessage
-#undef DeleteFile
-#undef MoveFile
 
 /* C Stuff */
 #include <cctype>

@@ -87,7 +87,12 @@ private:
 class ImageRepository
 {
 public:
+    ImageRepository() noexcept(false) = default; // we still need the noexcept
     ~ImageRepository() noexcept;
+    ImageRepository(const ImageRepository&) noexcept = delete;
+    ImageRepository& operator=(const ImageRepository&) noexcept = delete;
+    ImageRepository(ImageRepository&&) noexcept = delete;
+    ImageRepository& operator=(ImageRepository&&) noexcept = delete;
 
     /// <summary>Initializes the repository.</summary>
     bool Initialize();
@@ -97,7 +102,7 @@ public:
     /// <param name="sName">Name of the image.</param>
     void FetchImage(ImageType nType, const std::string& sName);
 
-    /// <summary>Gets the HBITMAP for the requested image.</summary>
+    /// <summary>Gets the <c>HBITMAP</c> for the requested image.</summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     /// <param name="bAddReference">

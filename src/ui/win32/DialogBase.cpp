@@ -6,8 +6,10 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept
-    : m_vmWindow(vmWindow), m_bindWindow(vmWindow)
+_Use_decl_annotations_
+DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept :
+    m_vmWindow{ vmWindow },
+    m_bindWindow{ vmWindow }
 {
 }
 
@@ -20,26 +22,31 @@ DialogBase::~DialogBase() noexcept
     }
 }
 
-static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+_Use_decl_annotations_
+_NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    DialogBase* pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
-    if (pDialog == nullptr)
-        return DefWindowProc(hDlg, uMsg, wParam, lParam);
+    const auto pDialog{ reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER)) };
 
-    INT_PTR result = pDialog->DialogProc(hDlg, uMsg, wParam, lParam);
+    // TBD: A dialog should not be calling DefWindowProc, it should return 0 
+    if (pDialog == nullptr)
+        return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
+
+    const auto result{ pDialog->DialogProc(hDlg, uMsg, wParam, lParam) };
 
     if (uMsg == WM_DESTROY)
-        SetWindowLongPtr(hDlg, DWLP_USER, 0L);
+        ::SetWindowLongPtr(hDlg, DWLP_USER, 0L);
 
     return result;
 }
 
-HWND DialogBase::CreateDialogWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter)
+_Use_decl_annotations_
+HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
 {
-    m_hWnd = CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, &StaticDialogProc);
+    m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc,
+                               reinterpret_cast<LPARAM>(this));
     if (m_hWnd)
     {
-        SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG>(this));
+        ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
         m_pDialogPresenter = pDialogPresenter;
         m_bindWindow.SetHWND(m_hWnd);
     }
@@ -47,6 +54,7 @@ HWND DialogBase::CreateDialogWindow(LPTSTR sResourceId, IDialogPresenter* pDialo
     return m_hWnd;
 }
 
+_Use_decl_annotations_
 INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -60,25 +68,26 @@ INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wPa
             return 0;
 
         case WM_COMMAND:
-            return OnCommand(LOWORD(wParam));
+        {
+            const auto id{ ra::to_signed(LOWORD(wParam)) };
+            if (id < 1)
+                return -1; // Invalid Command ID
+            OnCommand(id);
+        }break;
 
         case WM_MOVE:
         {
             ra::ui::Position oPosition{ LOWORD(lParam), HIWORD(lParam) };
             OnMove(oPosition);
-            return 0;
-        }
+        }break;
 
         case WM_SIZE:
         {
             ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
             OnSize(oSize);
-            return 0;
-        }
-
-        default:
-            return FALSE;
+        }break;
     }
+    return 0;
 }
 
 void DialogBase::OnDestroy()
@@ -93,23 +102,20 @@ void DialogBase::OnDestroy()
     m_pDialogPresenter = nullptr;
 }
 
-BOOL DialogBase::OnCommand(WORD nCommand)
+_Use_decl_annotations_
+void DialogBase::OnCommand(int id)
 {
-    switch (nCommand)
+    switch (id)
     {
         case IDOK:
-            m_vmWindow.SetDialogResult(ra::ui::DialogResult::OK);
+            m_vmWindow.SetDialogResult(DialogResult::OK);
             DestroyWindow(m_hWnd);
-            return TRUE;
+            break;
 
         case IDCLOSE:
         case IDCANCEL:
-            m_vmWindow.SetDialogResult(ra::ui::DialogResult::Cancel);
+            m_vmWindow.SetDialogResult(DialogResult::Cancel);
             DestroyWindow(m_hWnd);
-            return TRUE;
-
-        default:
-            return FALSE;
     }
 }
 

@@ -11,7 +11,12 @@ namespace impl {
 class ThreadPool : public IThreadPool
 {
 public:
+	ThreadPool() noexcept(std::is_nothrow_default_constructible_v<std::condition_variable>) = default;
     ~ThreadPool() noexcept;
+	ThreadPool(const ThreadPool&) noexcept = delete;
+	ThreadPool& operator=(const ThreadPool&) noexcept = delete;
+	ThreadPool(ThreadPool&&) noexcept = delete;
+	ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
     void Initialize(size_t nThreads) noexcept;
 

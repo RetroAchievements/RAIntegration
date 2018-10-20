@@ -11,7 +11,7 @@ namespace ra {
 namespace services {
 namespace impl {
 
-LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConfiguration)
+LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConfiguration) noexcept
     : m_pConfiguration(pConfiguration)
 {
 }
@@ -150,10 +150,10 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
 }
 
-void LeaderboardManager::AddLeaderboard(const RA_Leaderboard& lb)
+void LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb)
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
-        m_Leaderboards.push_back(lb);
+        m_Leaderboards.emplace_back(std::move(lb));
 }
 
 void LeaderboardManager::Test()

@@ -80,25 +80,24 @@ protected:
     class MemBlock
     {
     public:
-        MemBlock(unsigned int nAddress, unsigned int nSize)
-            : nAddress(nAddress), nSize(nSize)
+        explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize) noexcept :
+            nAddress{ nAddress }, nSize{ nSize }
         {
             if (nSize > sizeof(m_vBytes))
                 m_pBytes = new unsigned char[nSize];
         }
 
-        MemBlock(const MemBlock& other) noexcept
-            : MemBlock(other.nAddress, other.nSize)
+        MemBlock(const MemBlock& other) noexcept :
+            MemBlock{ other.nAddress, other.nSize }
         {
             if (nSize > sizeof(m_vBytes))
-                memcpy(m_pBytes, other.m_pBytes, nSize);
+                std::memcpy(m_pBytes, other.m_pBytes, nSize);
         }
+        MemBlock& operator=(const MemBlock&) noexcept = delete;
 
-        MemBlock(MemBlock&& other) noexcept
+        MemBlock(MemBlock&& other) noexcept :
+            nAddress{ other.nAddress }, nSize{ other.nSize }
         {
-            nAddress = other.nAddress;
-            nSize = other.nSize;
-
             if (other.nSize > sizeof(m_vBytes))
             {
                 m_pBytes = other.m_pBytes;
@@ -107,14 +106,14 @@ protected:
             }
             else
             {
-                memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+                std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
             }
         }
-
-        ~MemBlock()
+        MemBlock& operator=(MemBlock&&) noexcept = delete;
+        ~MemBlock() noexcept
         {
             if (nSize > sizeof(m_vBytes))
-                delete m_pBytes;
+                delete[] m_pBytes;
         }
 
         unsigned char* GetBytes() { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }

@@ -8,35 +8,38 @@ namespace ui {
 class ModelPropertyBase
 {
 public:
-    /// <summary>
-    /// Gets the unique identifier of the property.
-    /// </summary>
+	virtual ~ModelPropertyBase() noexcept;
+	ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
+	ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
+	ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
+	ModelPropertyBase& operator=(ModelPropertyBase&&) noexcept = delete;
+
+    /// <summary>Gets the unique identifier of the property.</summary>
     int GetKey() const { return m_nKey; }
 
-    /// <summary>
-    /// Gets the name of the type that owns the property.
-    /// </summary>
+    /// <summary>Gets the name of the type that owns the property.</summary>
     const char* GetTypeName() const { return m_sTypeName; }
 
-    /// <summary>
-    /// Gets the name of the property.
-    /// </summary>
+    /// <summary>Gets the name of the property.</summary>
     const char* GetPropertyName() const { return m_sPropertyName; }
 
-    /// <summary>
-    /// Gets the property for specified unique identifier.
-    /// </summary>
-    /// <returns>Associated property, <c>null</c> if not found.</returns>
+    /// <summary>Gets the property for specified unique identifier.</summary>
+    /// <returns>Associated property, <c>nullptr</c> if not found.</returns>
     static const ModelPropertyBase* GetPropertyForKey(int nKey);
 
-    bool operator==(const ModelPropertyBase& that) const { return m_nKey == that.m_nKey; }
-    bool operator!=(const ModelPropertyBase& that) const { return m_nKey != that.m_nKey; }
+    _NODISCARD inline constexpr auto 
+	operator==(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey == that.m_nKey; }
+
+	_NODISCARD inline constexpr auto 
+	operator!=(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey != that.m_nKey; }
+
+	_NODISCARD inline constexpr auto // for sorting if needed
+	operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
 
 protected:
-    explicit ModelPropertyBase(const char* sTypeName, const char* sPropertyName) noexcept;
-    virtual ~ModelPropertyBase() noexcept;
+    explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName) noexcept;
 
-    explicit ModelPropertyBase(int nKey) noexcept { m_nKey = nKey; } // for binary search
+    explicit ModelPropertyBase(_In_ int nKey) noexcept { m_nKey = nKey; } // for binary search
 
 private:
     int m_nKey{};

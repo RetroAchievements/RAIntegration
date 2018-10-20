@@ -110,12 +110,18 @@ bool ImageRepository::Initialize()
 ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
-    for (HBitmapMap::iterator iter = m_mBadges.begin(); iter != m_mBadges.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& badge : m_mBadges)
+    {
+        DeleteBitmap(badge.second.m_hBitmap);
+        badge.second.m_hBitmap = nullptr;
+    }
     m_mBadges.clear();
 
-    for (HBitmapMap::iterator iter = m_mUserPics.begin(); iter != m_mUserPics.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& userPic : m_mUserPics)
+    {
+        DeleteBitmap(userPic.second.m_hBitmap);
+        userPic.second.m_hBitmap = nullptr;
+    }
     m_mUserPics.clear();
 
     // prevent errors disposing ImageReferences after the repository is disposed.

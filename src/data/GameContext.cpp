@@ -26,6 +26,11 @@ void GameContext::LoadGame(unsigned int nGameId, const std::wstring& sGameTitle)
     m_sGameTitle = sGameTitle;
 }
 
+bool GameContext::HasRichPresence() const
+{
+    return (m_pRichPresenceInterpreter != nullptr && m_pRichPresenceInterpreter->Enabled());
+}
+
 std::wstring GameContext::GetRichPresenceDisplayString() const
 {
     if (m_pRichPresenceInterpreter == nullptr)
@@ -37,7 +42,8 @@ std::wstring GameContext::GetRichPresenceDisplayString() const
 void GameContext::ReloadRichPresenceScript()
 {
     m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
-    m_pRichPresenceInterpreter->Load();
+    if (!m_pRichPresenceInterpreter->Load())
+        m_pRichPresenceInterpreter.reset();
 }
 
 } // namespace data

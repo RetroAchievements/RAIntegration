@@ -47,7 +47,7 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    bool HasRichPresence() const { return m_pRichPresenceInterpreter != nullptr; }
+    bool HasRichPresence() const;
     
     /// <summary>
     /// Gets the current rich presence display string.

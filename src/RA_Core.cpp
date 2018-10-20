@@ -1,7 +1,6 @@
 #include "RA_Core.h"
 
 #include "RA_AchievementOverlay.h" // RA_User
-#include "RA_BuildVer.h"
 #include "RA_CodeNotes.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"

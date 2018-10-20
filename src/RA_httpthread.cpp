@@ -447,7 +447,7 @@ static void DoSendKeepAlive(unsigned int nGameId)
         else
         {
             const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
-            if (!sRPResponse.empty())
+            if (pGameContext.HasRichPresence() && !sRPResponse.empty())
                 args['m'] = ra::Narrow(sRPResponse);
             else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
                 args['m'] = "Earning Achievements";

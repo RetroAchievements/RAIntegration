@@ -11,7 +11,7 @@ namespace viewmodels {
 class GameChecksumViewModel : public WindowViewModelBase
 {
 public:
-    explicit GameChecksumViewModel() noexcept;
+    GameChecksumViewModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.

@@ -15,10 +15,10 @@ public:
     {
         // allocate memory to be managed by the clipboard
         SIZE_T nSize = (sValue.length() + 1) * 2; // 16-bit characters, with null terminator
-        HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
+        const HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
         if (hMem)
         {
-            LPVOID pMem = GlobalLock(hMem);
+            const LPVOID pMem = GlobalLock(hMem);
             if (pMem)
             {
                 memcpy(pMem, sValue.c_str(), nSize);

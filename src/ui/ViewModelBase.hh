@@ -10,13 +10,13 @@ namespace ui {
 class ViewModelBase
 {
 public:
-    virtual ~ViewModelBase() noexcept = default;
+	virtual ~ViewModelBase() noexcept = default;
 	ViewModelBase(const ViewModelBase&) = delete;
 	ViewModelBase& operator=(const ViewModelBase&) = delete;
 
-    class NotifyTarget
-    {
-    public:
+	class NotifyTarget
+	{
+	public:
 		NotifyTarget() noexcept = default;
 		virtual ~NotifyTarget() noexcept = default;
 		NotifyTarget(const NotifyTarget&) noexcept = delete;
@@ -24,86 +24,86 @@ public:
 		NotifyTarget(NotifyTarget&&) noexcept = default;
 		NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
-        virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) {}
-        virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) {}
-        virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) {}
-    };
+		virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) {}
+		virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) {}
+		virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) {}
+	};
 
-    void AddNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
+	void AddNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.insert(&pTarget); }
+	void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
 
 private:
 	using NotifyTargetSet = std::set<NotifyTarget*>;
 
 public:
 	// Class is nothrow move assignable but not nothrow move constructible.
-	ViewModelBase(ViewModelBase&&) 
+	ViewModelBase(ViewModelBase&&)
 		noexcept(std::is_nothrow_move_constructible_v<NotifyTargetSet> &&
 				 std::is_nothrow_move_constructible_v<StringModelProperty::ValueMap> &&
 				 std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap> &&
 				 std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
 
-	ViewModelBase& operator=(ViewModelBase&&) 
+	ViewModelBase& operator=(ViewModelBase&&)
 		noexcept(std::is_nothrow_move_assignable_v<NotifyTargetSet> &&
 				 std::is_nothrow_move_assignable_v<StringModelProperty::ValueMap> &&
 				 std::is_nothrow_move_assignable_v<IntModelProperty::ValueMap> &&
 				 std::is_nothrow_move_assignable_v<std::map<std::string, std::wstring>>) = default;
 
 protected:
-	ViewModelBase() 
+	ViewModelBase()
 		noexcept(std::is_nothrow_default_constructible_v<NotifyTargetSet> &&
 				 std::is_nothrow_default_constructible_v<StringModelProperty::ValueMap> &&
 				 std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap> &&
 				 std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
-	
-    /// <summary>Gets the value associated to the requested boolean property.</summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    bool GetValue(const BoolModelProperty& pProperty) const
-    {
-        IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return static_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
 
-    /// <summary>Sets the specified boolean property to the specified value.</summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="bValue">The value to set.</param>
-    void SetValue(const BoolModelProperty& pProperty, bool bValue);
+	/// <summary>Gets the value associated to the requested boolean property.</summary>
+	/// <param name="pProperty">The property to query.</param>
+	/// <returns>The current value of the property for this object.</returns>
+	bool GetValue(const BoolModelProperty& pProperty) const
+	{
+		IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
+		return static_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
+	}
 
-    /// <summary>Gets the value associated to the requested string property.</summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    const std::wstring& GetValue(const StringModelProperty& pProperty) const
-    {
-        StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
-        return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
+	/// <summary>Sets the specified boolean property to the specified value.</summary>
+	/// <param name="pProperty">The property to set.</param>
+	/// <param name="bValue">The value to set.</param>
+	void SetValue(const BoolModelProperty& pProperty, bool bValue);
 
-    /// <summary>Sets the specified string property to the specified value.</summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="sValue">The value to set.</param>
-    void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue);
+	/// <summary>Gets the value associated to the requested string property.</summary>
+	/// <param name="pProperty">The property to query.</param>
+	/// <returns>The current value of the property for this object.</returns>
+	const std::wstring& GetValue(const StringModelProperty& pProperty) const
+	{
+		StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
+		return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
+	}
 
-    /// <summary>Gets the value associated to the requested integer property.</summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    int GetValue(const IntModelProperty& pProperty) const
-    {
-        IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
+	/// <summary>Sets the specified string property to the specified value.</summary>
+	/// <param name="pProperty">The property to set.</param>
+	/// <param name="sValue">The value to set.</param>
+	void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue);
 
-    /// <summary>Sets the specified integer property to the specified value.</summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="nValue">The value to set.</param>
-    void SetValue(const IntModelProperty& pProperty, int nValue);
+	/// <summary>Gets the value associated to the requested integer property.</summary>
+	/// <param name="pProperty">The property to query.</param>
+	/// <returns>The current value of the property for this object.</returns>
+	int GetValue(const IntModelProperty& pProperty) const
+	{
+		IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
+		return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
+	}
 
-    // allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
-    friend class BindingBase;
+	/// <summary>Sets the specified integer property to the specified value.</summary>
+	/// <param name="pProperty">The property to set.</param>
+	/// <param name="nValue">The value to set.</param>
+	void SetValue(const IntModelProperty& pProperty, int nValue);
+
+	// allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
+	friend class BindingBase;
 
 private:
-    StringModelProperty::ValueMap m_mStringValues;
-    IntModelProperty::ValueMap m_mIntValues;
+	StringModelProperty::ValueMap m_mStringValues;
+	IntModelProperty::ValueMap m_mIntValues;
 
 #ifdef _DEBUG
 	/// <summary>Complete list of values as strings for viewing in the debugger</summary>
@@ -120,4 +120,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif RA_UI_VIEW_MODEL_BASE_H
+#endif /* !RA_UI_VIEW_MODEL_BASE_H */

@@ -25,7 +25,7 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    const auto pDialog{ reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER)) };
+    const auto pDialog{ reinterpret_cast<DialogBase*>(::GetWindowLongPtr(hDlg, DWLP_USER)) };
 
     // TBD: A dialog should not be calling DefWindowProc, it should return 0 
     if (pDialog == nullptr)
@@ -43,7 +43,7 @@ _Use_decl_annotations_
 HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
 {
     m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc,
-                               reinterpret_cast<LPARAM>(this));
+                                 reinterpret_cast<LPARAM>(this));
     if (m_hWnd)
     {
         ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
@@ -55,7 +55,7 @@ HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter*
 }
 
 _Use_decl_annotations_
-INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -85,7 +85,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wPa
         {
             ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
             OnSize(oSize);
-        }break;
+        }
     }
     return 0;
 }

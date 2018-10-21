@@ -34,7 +34,7 @@ static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const
             const auto tExpire = pClock.Now() - std::chrono::hours(24 * 30); // 30 days
             std::wstring sPath;
 
-            for (auto sFile : vFiles)
+            for (const auto& sFile : vFiles)
             {
                 sPath = sDirectory;
                 sPath += sFile;

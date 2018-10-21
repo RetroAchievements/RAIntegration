@@ -30,12 +30,26 @@ public:
     /// </summary>
     /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
     virtual bool CreateDirectory(const std::wstring& sDirectory) const = 0;
+    
+    /// <summary>
+    /// Gets the files in a directory.
+    /// </summary>
+    /// <param name="sDirectory">The directory to enumerate.</param>
+    /// <param name="vResults">The vector to populate with the matching files.</param>
+    /// <returns>Number of files added to <paramref name="vResults" /></returns>
+    virtual size_t GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const = 0;
 
     /// <summary>
     /// Gets the size of the file (in bytes).
     /// </summary>
     /// <remarks>Returns -1 if the file does not exist.</remarks>
     virtual int64_t GetFileSize(const std::wstring& sPath) const = 0;
+    
+    /// <summary>
+    /// Gets the time the file was last modified.
+    /// </summary>
+    /// <returns>Time the file was last modified, <c>0</c> if file doesn't exist.</returns>
+    virtual std::chrono::system_clock::time_point GetLastModified(const std::wstring& sPath) const = 0;
 
     /// <summary>
     /// Deletes the specified file.

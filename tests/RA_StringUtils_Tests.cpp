@@ -5,7 +5,7 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
-namespace data {
+namespace services {
 namespace tests {
 
 TEST_CLASS(RA_StringUtils_Tests)
@@ -54,7 +54,7 @@ public:
         Assert::AreEqual(std::string("test\r\n"), TrimLineEnding(std::string("test\r\n\r\n")));
     }
 
-    TEST_METHOD(TestFormat)
+    TEST_METHOD(TestStringPrintf)
     {
         Assert::AreEqual(std::string("This is a test."), StringPrintf("This is a %s.", "test"));
         Assert::AreEqual(std::string("1, 2, 3, 4"), StringPrintf("%d, %u, %zu, %li", 1, 2U, 3U, 4L));
@@ -64,8 +64,28 @@ public:
         Assert::AreEqual(std::string("'Twas the night before Christmas and all through the house, not a creature was stirring, not even a mouse."), 
             StringPrintf("'Twas the %s before %s and all through the %s, not a %s was %s, not even a %s.", "night", "Christmas", "house", "creature", "stirring", "mouse"));
     }
+
+    TEST_METHOD(TestStringStartsWith)
+    {
+        Assert::IsTrue(StringStartsWith(L"Test", L"Tes"));
+        Assert::IsTrue(StringStartsWith(L"Test", L"Test"));
+        Assert::IsFalse(StringStartsWith(L"Test", L"Test1"));
+        Assert::IsFalse(StringStartsWith(L"Test", L"TES"));
+        Assert::IsFalse(StringStartsWith(L"Test", L"est"));
+        Assert::IsFalse(StringStartsWith(L"Test", L"1Test"));
+    }
+
+    TEST_METHOD(TestStringEndsWith)
+    {
+        Assert::IsTrue(StringEndsWith(L"Test", L"est"));
+        Assert::IsTrue(StringEndsWith(L"Test", L"Test"));
+        Assert::IsFalse(StringEndsWith(L"Test", L"1Test"));
+        Assert::IsFalse(StringEndsWith(L"Test", L"EST"));
+        Assert::IsFalse(StringEndsWith(L"Test", L"Tes"));
+        Assert::IsFalse(StringEndsWith(L"Test", L"Test1"));
+    }
 };
 
 } // namespace tests
-} // namespace data
+} // namespace services
 } // namespace ra

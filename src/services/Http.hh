@@ -18,8 +18,11 @@ public:
         {
         }
 
+        ~Response() noexcept = default;
         Response(const Response&) noexcept = default;
+        Response& operator=(const Response&) noexcept = delete;
         Response(Response&&) noexcept = default;
+        Response& operator=(Response&&) noexcept = delete;
 
         /// <summary>
         /// Gets the HTTP status code returned from the server.
@@ -53,8 +56,12 @@ public:
             }
         }
 
+        ~Request() noexcept = default;
         Request(const Request&) = default;
-        
+        Request& operator=(const Request&) noexcept = delete;
+        Request(Request&&) noexcept = default;
+        Request& operator=(Request&&) noexcept = delete;
+
         /// <summary>
         /// Gets the URL to request data from.
         /// </summary>

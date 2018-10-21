@@ -11,9 +11,8 @@ namespace impl {
 class ThreadPool : public IThreadPool
 {
 public:
-    // TBD: m_vQueue changed to adapt std::list in-case it threw an exception as it has handlers for it (in VC++ at least). 
-    //      std::condition_variable can throw std::system_error (a.k.a fatal error).
-    //      We could just delete the compiler defaulted constructor and handle the exception in an invariant (param constructor)
+    // TODO: std::condition_variable can throw std::system_error (a.k.a fatal error).
+    //       We could just delete the compiler defaulted constructor and handle the exception in an invariant (param constructor)
     // Info: https://en.cppreference.com/w/cpp/thread/condition_variable/condition_variable
     ThreadPool() 
         noexcept(std::is_nothrow_default_constructible_v<std::condition_variable>) = default;
@@ -52,6 +51,7 @@ private:
     void RunThread() noexcept;
 
     std::vector<std::thread> m_vThreads;
+    // m_vQueue changed to adapt std::list in-case it threw an exception as it has handlers for it (in VC++ at least). 
     std::queue<std::function<void()>, std::list<std::function<void()>>> m_vQueue;
     std::mutex m_oMutex;
     std::condition_variable m_cvMutex;

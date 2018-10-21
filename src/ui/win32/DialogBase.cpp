@@ -27,11 +27,10 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
 {
     const auto pDialog{ reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER)) };
 
-    // TBD: A dialog should not be calling DefWindowProc, it should return 0 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
 
-    const auto result{ pDialog->DialogProc(hDlg, uMsg, wParam, lParam) };
+    const auto result = pDialog->DialogProc(hDlg, uMsg, wParam, lParam);
 
     if (uMsg == WM_DESTROY)
         ::SetWindowLongPtr(hDlg, DWLP_USER, 0L);
@@ -42,8 +41,7 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
 _Use_decl_annotations_
 HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
 {
-    m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc,
-                               reinterpret_cast<LPARAM>(this));
+    m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
     if (m_hWnd)
     {
         ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
@@ -67,13 +65,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND, UINT uMsg, WPARAM wParam, 
             return 0;
 
         case WM_COMMAND:
-        {
-            const auto id{ ra::to_signed(LOWORD(wParam)) };
-            if (id < 1)
-                return -1; // Invalid Command ID
-            OnCommand(id);
-            return 0;
-        }
+            return OnCommand(LOWORD(wParam));
 
         case WM_MOVE:
         {
@@ -108,19 +100,23 @@ void DialogBase::OnDestroy()
 }
 
 _Use_decl_annotations_
-void DialogBase::OnCommand(int id)
+BOOL DialogBase::OnCommand(WORD nCommand)
 {
-    switch (id)
+    switch (nCommand)
     {
         case IDOK:
             m_vmWindow.SetDialogResult(DialogResult::OK);
             DestroyWindow(m_hWnd);
-            break;
+            return TRUE;
 
         case IDCLOSE:
         case IDCANCEL:
             m_vmWindow.SetDialogResult(DialogResult::Cancel);
             DestroyWindow(m_hWnd);
+            return TRUE;
+
+        default:
+            return FALSE;
     }
 }
 

@@ -56,48 +56,23 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    /// <summary>DB ID for this LB.</summary>
-    ra::LeaderboardID m_nID;
+    ra::LeaderboardID m_nID; // DB ID for this LB.
 
-    /// <summary>Start monitoring if this is true.</summary>
-    ConditionSet m_startCond;
+    ConditionSet m_startCond;  // Start monitoring if this is true.
+    ConditionSet m_cancelCond; // Cancel monitoring if this is true.
+    ConditionSet m_submitCond; // Submit new score if this is true.
 
-    /// <summary>Cancel monitoring if this is true.</summary>
-    ConditionSet m_cancelCond;
+    bool m_bStarted{ false };   // false = check start condition; true = check cancel or submit conditions.
+    bool m_bSubmitted{ false }; // true if already submitted.
 
-    /// <summary>Submit new score if this is true.</summary>
-    ConditionSet m_submitCond;
+    MemValue m_value;    // A collection of memory addresses and values to produce one value.
+    MemValue m_progress; // A collection of memory addresses, used to show progress towards completion.
+    MemValue::Format m_nFormat{ MemValue::Format::Value }; // A format to output. Typically '%d' for score or '%02d:%02d.%02d' for time.
 
-    /// <summary>
-    ///   <para><c>false</c> = check start condition.</para>
-    ///   <para><c>true</c> = check cancel or submit conditions.</para>
-    /// </summary>
-    bool m_bStarted{ false };
+    std::string m_sTitle;       // The title of the leaderboard.
+    std::string m_sDescription; // A description of the leaderboard.
 
-    /// <summary><c>true</c> if already submitted.</summary>
-    bool m_bSubmitted{ false };
-
-    /// <summary>A collection of memory addresses and values to produce one value.</summary>
-    MemValue m_value;
-
-    /// <summary>
-    ///   A collection of memory addresses, used to show progress towards completion.
-    /// </summary>
-    MemValue m_progress;
-
-    /// <summary>
-    ///   A format to output. Typically '<c>%d</c>' for score or '<c>%02d:%02d.%02d</c>' for time.
-    /// </summary>
-    MemValue::Format m_nFormat{ MemValue::Format::Value };
-
-    /// <summary>The title of the leaderboard.</summary>
-    std::string m_sTitle;
-
-    /// <summary>A description of the leaderboard.</summary>
-    std::string m_sDescription;
-
-    /// <summary>Recent users ranks.</summary>
-    std::vector<Entry> m_RankInfo;
+    std::vector<Entry> m_RankInfo; // Recent users ranks.
 };
 
 #endif // !RA_LEADERBOARD_H

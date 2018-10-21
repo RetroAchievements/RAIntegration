@@ -22,10 +22,10 @@ class IConfiguration
 {
 public:
     virtual ~IConfiguration() noexcept = default;
-	IConfiguration(const IConfiguration&) noexcept = delete;
-	IConfiguration& operator=(const IConfiguration&) noexcept = delete;
-	IConfiguration(IConfiguration&&) noexcept = delete;
-	IConfiguration& operator=(IConfiguration&&) noexcept = delete;
+    IConfiguration(const IConfiguration&) noexcept = delete;
+    IConfiguration& operator=(const IConfiguration&) noexcept = delete;
+    IConfiguration(IConfiguration&&) noexcept = delete;
+    IConfiguration& operator=(IConfiguration&&) noexcept = delete;
 
     virtual const std::string& GetUsername() const = 0;
     virtual void SetUsername(const std::string& sValue) = 0;
@@ -48,7 +48,7 @@ public:
     virtual void Save() const = 0;
 
 protected:
-	IConfiguration() noexcept = default;
+    IConfiguration() noexcept = default;
 };
 
 } // namespace services

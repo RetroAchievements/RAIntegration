@@ -10,11 +10,11 @@ namespace services {
 class ILeaderboardManager
 {
 public:
-	virtual ~ILeaderboardManager() noexcept = default;
-	ILeaderboardManager(const ILeaderboardManager&) noexcept = delete;
-	ILeaderboardManager& operator=(const ILeaderboardManager&) noexcept = delete;
-	ILeaderboardManager(ILeaderboardManager&&) noexcept = delete;
-	ILeaderboardManager& operator=(ILeaderboardManager&&) noexcept = delete;
+    virtual ~ILeaderboardManager() noexcept = default;
+    ILeaderboardManager(const ILeaderboardManager&) noexcept = delete;
+    ILeaderboardManager& operator=(const ILeaderboardManager&) noexcept = delete;
+    ILeaderboardManager(ILeaderboardManager&&) noexcept = delete;
+    ILeaderboardManager& operator=(ILeaderboardManager&&) noexcept = delete;
 
     virtual void Test() = 0;
     virtual void Reset() = 0;
@@ -31,7 +31,7 @@ public:
     virtual void Clear() = 0;
 
 protected:
-	ILeaderboardManager() noexcept = default;
+    ILeaderboardManager() noexcept = default;
 };
 
 } // namespace services

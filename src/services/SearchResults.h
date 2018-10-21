@@ -88,7 +88,7 @@ protected:
         }
 
         MemBlock(const MemBlock& other) noexcept :
-            MemBlock{ other.nAddress, other.nSize }
+            MemBlock(other.nAddress, other.nSize)
         {
             if (nSize > sizeof(m_vBytes))
                 std::memcpy(m_pBytes, other.m_pBytes, nSize);

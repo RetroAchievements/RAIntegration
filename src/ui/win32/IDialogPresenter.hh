@@ -11,22 +11,28 @@ class IDialogPresenter
 {
 public:
     virtual ~IDialogPresenter() noexcept = default;
-	IDialogPresenter(const IDialogPresenter&) noexcept = delete;
-	IDialogPresenter& operator=(const IDialogPresenter&) noexcept = delete;
-	IDialogPresenter(IDialogPresenter&&) noexcept = delete;
-	IDialogPresenter& operator=(IDialogPresenter&&) noexcept = delete;
+    IDialogPresenter(const IDialogPresenter&) noexcept = delete;
+    IDialogPresenter& operator=(const IDialogPresenter&) noexcept = delete;
+    IDialogPresenter(IDialogPresenter&&) noexcept = delete;
+    IDialogPresenter& operator=(IDialogPresenter&&) noexcept = delete;
 
-    /// <summary>Determines whether the specified view model can be shown by this controller.</summary>
+    /// <summary>
+    /// Determines whether the specified view model can be shown by this controller.
+    /// </summary>
     virtual bool IsSupported(const ra::ui::WindowViewModelBase& oViewModel) = 0;
 
-    /// <summary>Shows the window associated to the provided view model.</summary>
+    /// <summary>
+    /// Shows the window associated to the provided view model.
+    /// </summary>
     virtual void ShowWindow(ra::ui::WindowViewModelBase& oViewModel) = 0;
 
-    /// <summary>Shows a modal window for the provided view model.</summary>
+    /// <summary>
+    /// Shows a modal window for the provided view model.
+    /// </summary>
     virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel) = 0;
 
 protected:
-	IDialogPresenter() noexcept = default;
+    IDialogPresenter() noexcept = default;
 };
 
 class IClosableDialogPresenter : public IDialogPresenter

@@ -13,11 +13,11 @@ class RichPresenceDialog : public DialogBase
 {
 public:
     explicit RichPresenceDialog(_Inout_ ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept;
-	virtual ~RichPresenceDialog() noexcept;
-	RichPresenceDialog(const RichPresenceDialog&) noexcept = delete;
-	RichPresenceDialog& operator=(const RichPresenceDialog&) noexcept = delete;
-	RichPresenceDialog(RichPresenceDialog&&) noexcept = delete;
-	RichPresenceDialog& operator=(RichPresenceDialog&&) noexcept = delete;
+    virtual ~RichPresenceDialog() noexcept;
+    RichPresenceDialog(const RichPresenceDialog&) noexcept = delete;
+    RichPresenceDialog& operator=(const RichPresenceDialog&) noexcept = delete;
+    RichPresenceDialog(RichPresenceDialog&&) noexcept = delete;
+    RichPresenceDialog& operator=(RichPresenceDialog&&) noexcept = delete;
 
     INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM) override;
 
@@ -34,7 +34,7 @@ public:
     };
 
 protected:
-    void OnInitDialog() override;
+    BOOL OnInitDialog() override;
     void OnDestroy() override;
 
 private:

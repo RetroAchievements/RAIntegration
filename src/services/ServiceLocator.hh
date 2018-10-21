@@ -74,13 +74,15 @@ public:
     class ServiceOverride
     {
     public:
-        /// <summary>Initializes a new instance of the <see cref="ServiceOverride" /> class.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceOverride" /> class.
+        /// </summary>
         /// <param name="pOverride">A pointer to the temporary implementation.</param>
         /// <param name="bDestroy">
-        ///   If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride" /> and
-        ///   deleted when the <see cref="ServiceOverride" /> goes out of scope. This should normally be false,
-        ///   as <paramref name="pOverride" /> will typically be a this pointer to the subclass, or the address
-        ///   of a stack variable.
+        /// If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride" /> and deleted 
+        /// when the <see cref="ServiceOverride" /> goes out of scope. This should normally be false, as 
+        /// <paramref name="pOverride" /> will typically be a this pointer to the subclass, or the address
+        /// of a stack variable.
         /// </param>
         explicit ServiceOverride(TClass* pOverride, bool bDestroy = false) noexcept
             : m_pPrevious(Service<TClass>::s_pInstance.release()), m_bDestroy(bDestroy)
@@ -98,10 +100,10 @@ public:
             Service<TClass>::s_pInstance.reset(m_pPrevious);
         }
 
-		ServiceOverride(const ServiceOverride&) noexcept = delete;
-		ServiceOverride& operator=(const ServiceOverride&) noexcept = delete;
-		ServiceOverride(ServiceOverride&&) noexcept = delete;
-		ServiceOverride& operator=(ServiceOverride&&) noexcept = delete;
+        ServiceOverride(const ServiceOverride&) noexcept = delete;
+        ServiceOverride& operator=(const ServiceOverride&) noexcept = delete;
+        ServiceOverride(ServiceOverride&&) noexcept = delete;
+        ServiceOverride& operator=(ServiceOverride&&) noexcept = delete;
 
     private:
         TClass * m_pPrevious;

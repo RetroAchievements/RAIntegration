@@ -11,18 +11,18 @@ class ViewModelBase
 {
 public:
     virtual ~ViewModelBase() noexcept = default;
-	ViewModelBase(const ViewModelBase&) = delete;
-	ViewModelBase& operator=(const ViewModelBase&) = delete;
+    ViewModelBase(const ViewModelBase&) = delete;
+    ViewModelBase& operator=(const ViewModelBase&) = delete;
 
     class NotifyTarget
     {
     public:
-		NotifyTarget() noexcept = default;
-		virtual ~NotifyTarget() noexcept = default;
-		NotifyTarget(const NotifyTarget&) noexcept = delete;
-		NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
-		NotifyTarget(NotifyTarget&&) noexcept = default;
-		NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
+        NotifyTarget() noexcept = default;
+        virtual ~NotifyTarget() noexcept = default;
+        NotifyTarget(const NotifyTarget&) noexcept = delete;
+        NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
+        NotifyTarget(NotifyTarget&&) noexcept = default;
+        NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) {}
         virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) {}
@@ -33,30 +33,28 @@ public:
     void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
 
 private:
-	using NotifyTargetSet = std::set<NotifyTarget*>;
+    using NotifyTargetSet = std::set<NotifyTarget*>;
 
 public:
-	// Class is nothrow move assignable but not nothrow move constructible.
-	ViewModelBase(ViewModelBase&&) 
-		noexcept(std::is_nothrow_move_constructible_v<NotifyTargetSet> &&
-				 std::is_nothrow_move_constructible_v<StringModelProperty::ValueMap> &&
-				 std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap> &&
-				 std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
+    // Class is nothrow move assignable but not nothrow move constructible.
+    ViewModelBase(ViewModelBase&&)
+        noexcept(std::is_nothrow_move_constructible_v<NotifyTargetSet> &&
+                 std::is_nothrow_move_constructible_v<StringModelProperty::ValueMap> &&
+                 std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap> &&
+                 std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
 
-	ViewModelBase& operator=(ViewModelBase&&) 
-		noexcept(std::is_nothrow_move_assignable_v<NotifyTargetSet> &&
-				 std::is_nothrow_move_assignable_v<StringModelProperty::ValueMap> &&
-				 std::is_nothrow_move_assignable_v<IntModelProperty::ValueMap> &&
-				 std::is_nothrow_move_assignable_v<std::map<std::string, std::wstring>>) = default;
+    ViewModelBase& operator=(ViewModelBase&&) noexcept = default;
 
 protected:
-	ViewModelBase() 
-		noexcept(std::is_nothrow_default_constructible_v<NotifyTargetSet> &&
-				 std::is_nothrow_default_constructible_v<StringModelProperty::ValueMap> &&
-				 std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap> &&
-				 std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
-	
-    /// <summary>Gets the value associated to the requested boolean property.</summary>
+    ViewModelBase()
+        noexcept(std::is_nothrow_default_constructible_v<NotifyTargetSet> &&
+                 std::is_nothrow_default_constructible_v<StringModelProperty::ValueMap> &&
+                 std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap> &&
+                 std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
+
+    /// <summary>
+    /// Gets the value associated to the requested boolean property.
+    /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     bool GetValue(const BoolModelProperty& pProperty) const
@@ -65,12 +63,16 @@ protected:
         return static_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 
-    /// <summary>Sets the specified boolean property to the specified value.</summary>
+    /// <summary>
+    /// Sets the specified boolean property to the specified value.
+    /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="bValue">The value to set.</param>
     void SetValue(const BoolModelProperty& pProperty, bool bValue);
 
-    /// <summary>Gets the value associated to the requested string property.</summary>
+    /// <summary>
+    /// Gets the value associated to the requested string property.
+    /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     const std::wstring& GetValue(const StringModelProperty& pProperty) const
@@ -79,12 +81,16 @@ protected:
         return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 
-    /// <summary>Sets the specified string property to the specified value.</summary>
+    /// <summary>
+    /// Sets the specified string property to the specified value.
+    /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="sValue">The value to set.</param>
     void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue);
 
-    /// <summary>Gets the value associated to the requested integer property.</summary>
+    /// <summary>
+    /// Gets the value associated to the requested integer property.
+    /// </summary>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     int GetValue(const IntModelProperty& pProperty) const
@@ -93,7 +99,9 @@ protected:
         return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 
-    /// <summary>Sets the specified integer property to the specified value.</summary>
+    /// <summary>
+    /// Sets the specified integer property to the specified value.
+    /// </summary>
     /// <param name="pProperty">The property to set.</param>
     /// <param name="nValue">The value to set.</param>
     void SetValue(const IntModelProperty& pProperty, int nValue);
@@ -106,14 +114,16 @@ private:
     IntModelProperty::ValueMap m_mIntValues;
 
 #ifdef _DEBUG
-	/// <summary>Complete list of values as strings for viewing in the debugger</summary>
-	std::map<std::string, std::wstring> m_mDebugValues;
+    /// <summary>
+    /// Complete list of values as strings for viewing in the debugger
+    /// </summary>
+    std::map<std::string, std::wstring> m_mDebugValues;
 #endif
 
-	/// <summary>
-	///   A collection of pointers to other objects. These are not allocated object and do not need to be
-	///   free'd. It's impossible to create a set of <c>NotifyTarget</c> references.
-	/// </summary>
+    /// <summary>
+    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's impossible to create a set of
+    /// <c>NotifyTarget</c> references.
+    /// </summary>
 	NotifyTargetSet m_vNotifyTargets;
 };
 

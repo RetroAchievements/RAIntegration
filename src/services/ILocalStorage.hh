@@ -22,11 +22,11 @@ enum class StorageItemType
 class ILocalStorage
 {
 public:
-	virtual ~ILocalStorage() noexcept = default;
-	ILocalStorage(const ILocalStorage&) noexcept = delete;
-	ILocalStorage& operator=(const ILocalStorage&) noexcept = delete;
-	ILocalStorage(ILocalStorage&&) noexcept = delete;
-	ILocalStorage& operator=(ILocalStorage&&) noexcept = delete;
+    virtual ~ILocalStorage() noexcept = default;
+    ILocalStorage(const ILocalStorage&) noexcept = delete;
+    ILocalStorage& operator=(const ILocalStorage&) noexcept = delete;
+    ILocalStorage(ILocalStorage&&) noexcept = delete;
+    ILocalStorage& operator=(ILocalStorage&&) noexcept = delete;
 
     /// <summary>
     ///   Begins reading stored data for the specified <paramref name="nType" /> and <paramref name="sKey" />.
@@ -43,7 +43,7 @@ public:
     virtual std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) = 0;
 
 protected:
-	ILocalStorage() noexcept = default;
+    ILocalStorage() noexcept = default;
 };
 
 } // namespace services

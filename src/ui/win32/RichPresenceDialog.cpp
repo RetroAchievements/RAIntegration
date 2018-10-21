@@ -59,13 +59,11 @@ static void UpdateDisplayString(ra::ui::WindowViewModelBase& vmWindow)
     vmRichPresence.UpdateDisplayString();
 }
 
-void RichPresenceDialog::OnInitDialog()
+BOOL RichPresenceDialog::OnInitDialog()
 {
-    DialogBase::OnInitDialog();
-
-    SendMessage(GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), WM_SETFONT, (WPARAM)m_hFont, LPARAM{});
-
+    SetWindowFont(::GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), m_hFont, FALSE);
     UpdateDisplayString(m_vmWindow);
+    return DialogBase::OnInitDialog();
 }
 
 void RichPresenceDialog::OnDestroy()

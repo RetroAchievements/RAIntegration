@@ -8,33 +8,41 @@ namespace ui {
 class ModelPropertyBase
 {
 public:
-	virtual ~ModelPropertyBase() noexcept;
-	ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
-	ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
-	ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
-	ModelPropertyBase& operator=(ModelPropertyBase&&) noexcept = delete;
+    virtual ~ModelPropertyBase() noexcept;
+    ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
+    ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
+    ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
+    ModelPropertyBase& operator=(ModelPropertyBase&&) noexcept = delete;
 
-    /// <summary>Gets the unique identifier of the property.</summary>
+    /// <summary>
+    /// Gets the unique identifier of the property.
+    /// </summary>
     int GetKey() const { return m_nKey; }
 
-    /// <summary>Gets the name of the type that owns the property.</summary>
+    /// <summary>
+    /// Gets the name of the type that owns the property.
+    /// </summary>
     const char* GetTypeName() const { return m_sTypeName; }
 
-    /// <summary>Gets the name of the property.</summary>
+    /// <summary>
+    /// Gets the name of the property.
+    /// </summary>
     const char* GetPropertyName() const { return m_sPropertyName; }
 
-    /// <summary>Gets the property for specified unique identifier.</summary>
+    /// <summary>
+    /// Gets the property for specified unique identifier.
+    /// </summary>
     /// <returns>Associated property, <c>nullptr</c> if not found.</returns>
     static const ModelPropertyBase* GetPropertyForKey(int nKey);
 
     _NODISCARD inline constexpr auto 
-	operator==(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey == that.m_nKey; }
+    operator==(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey == that.m_nKey; }
 
-	_NODISCARD inline constexpr auto 
-	operator!=(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey != that.m_nKey; }
+    _NODISCARD inline constexpr auto 
+    operator!=(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey != that.m_nKey; }
 
-	_NODISCARD inline constexpr auto // for sorting if needed
-	operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
+    _NODISCARD inline constexpr auto // for sorting if needed
+    operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
 
 protected:
     explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName) noexcept;

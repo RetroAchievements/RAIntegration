@@ -55,13 +55,12 @@ HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter*
 }
 
 _Use_decl_annotations_
-INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
         case WM_INITDIALOG:
-            OnInitDialog();
-            return TRUE;
+            return OnInitDialog();
 
         case WM_DESTROY:
             OnDestroy();
@@ -73,21 +72,27 @@ INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND hDlg, UINT uMsg, WPARAM wPa
             if (id < 1)
                 return -1; // Invalid Command ID
             OnCommand(id);
-        }break;
+            return 0;
+        }
 
         case WM_MOVE:
         {
             ra::ui::Position oPosition{ LOWORD(lParam), HIWORD(lParam) };
             OnMove(oPosition);
-        }break;
+            return 0;
+        }
 
         case WM_SIZE:
         {
             ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
             OnSize(oSize);
-        }break;
+            return 0;
+        }
+
+        default:
+            return 0;
     }
-    return 0;
+    
 }
 
 void DialogBase::OnDestroy()
@@ -119,12 +124,14 @@ void DialogBase::OnCommand(int id)
     }
 }
 
-void DialogBase::OnMove(ra::ui::Position& oNewPosition)
+_Use_decl_annotations_
+void DialogBase::OnMove(const ra::ui::Position& oNewPosition)
 {
     m_bindWindow.OnPositionChanged(oNewPosition);
 }
 
-void DialogBase::OnSize(ra::ui::Size& oNewSize)
+_Use_decl_annotations_
+void DialogBase::OnSize(const ra::ui::Size& oNewSize)
 {
     m_bindWindow.OnSizeChanged(oNewSize);
 }

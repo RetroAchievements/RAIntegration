@@ -64,17 +64,20 @@ public:
 
     ~ImageReference() noexcept;
 
-    /// <summary>Updates the referenced image.</summary>
+    /// <summary>
+    /// Updates the referenced image.
+    /// </summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     void ChangeReference(ImageType nType, const std::string& sName);
 
-    /// <summary>Gets the bitmap handle for the image.</summary>
+    /// <summary>
+    /// Gets the bitmap handle for the image.
+    /// </summary>
     HBITMAP GetHBitmap() const;
 
     /// <summary>
-    ///   Releases the reference to the image. Will be re-acquired the next time <see cref="GetHBitmap" /> is
-    ///   called.
+    /// Releases the reference to the image. Will be re-acquired the next time <see cref="GetHBitmap" /> is called.
     /// </summary>
     void Release() noexcept;
 

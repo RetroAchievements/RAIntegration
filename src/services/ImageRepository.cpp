@@ -111,17 +111,11 @@ ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
     for (auto& badge : m_mBadges)
-    {
         DeleteBitmap(badge.second.m_hBitmap);
-        badge.second.m_hBitmap = nullptr;
-    }
     m_mBadges.clear();
 
     for (auto& userPic : m_mUserPics)
-    {
         DeleteBitmap(userPic.second.m_hBitmap);
-        userPic.second.m_hBitmap = nullptr;
-    }
     m_mUserPics.clear();
 
     // prevent errors disposing ImageReferences after the repository is disposed.

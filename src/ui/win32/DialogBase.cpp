@@ -25,12 +25,12 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    const auto pDialog{ reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER)) };
+    DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
 
-    const auto result = pDialog->DialogProc(hDlg, uMsg, wParam, lParam);
+    const INT_PTR result = pDialog->DialogProc(hDlg, uMsg, wParam, lParam);
 
     if (uMsg == WM_DESTROY)
         ::SetWindowLongPtr(hDlg, DWLP_USER, 0L);

@@ -1,9 +1,6 @@
 #include "SearchResults.h"
 
 #include "RA_MemManager.h"
-#include "RA_StringUtils.h"
-
-#include "ra_utility.h"
 
 namespace ra {
 namespace services {

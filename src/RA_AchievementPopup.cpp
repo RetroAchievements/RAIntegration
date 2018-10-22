@@ -115,10 +115,9 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     int nX = 10;
     int nY = static_cast<int>(fFadeInY);
 
-    HBITMAP hBitmap = ActiveMessage().Image();
-    if (hBitmap != nullptr)
+    if (ActiveMessage().Image().Type() != ra::ui::ImageType::None)
     {
-        DrawImage(hDC, hBitmap, nX, nY, 64, 64);
+        pSurface.DrawImage(nX, nY, 64, 64, ActiveMessage().Image());
         nX += 64 + 6;
     }
 

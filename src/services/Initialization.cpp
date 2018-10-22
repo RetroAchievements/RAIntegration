@@ -13,6 +13,7 @@
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\WindowViewModelBase.hh"
@@ -97,6 +98,10 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
+
+    auto* pImageRepository = new ra::ui::drawing::gdi::ImageRepository();
+    pImageRepository->Initialize();
+    ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(pImageRepository);
 }
 
 void Initialization::Shutdown()
@@ -104,6 +109,11 @@ void Initialization::Shutdown()
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
 
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
+
+    // ImageReference destructors will try to use the IImageRepository if they think it still exists.
+    // explicitly deregister it to prevent exceptions when closing down the application.
+    ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
+
 }
 
 } // namespace services

@@ -7,12 +7,14 @@
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
 
+#include "ra_math.h"
+
 #include "data\GameContext.hh"
 
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#include "ra_math.h"
+#include "ui\drawing\gdi\ImageRepository.hh"
 
 namespace ra {
 
@@ -631,8 +633,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
             if (pFriend == nullptr)
                 continue;
 
-            ra::services::ImageReference friendImage(ra::services::ImageType::UserPic, pFriend->Username());
-            HBITMAP hBitmap = friendImage.GetHBitmap();
+            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend->Username());
+            HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(friendImage);
             if (hBitmap != nullptr)
                 DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
 
@@ -1117,7 +1119,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     //	Draw background:
     SetBkMode(hDC, TRANSPARENT);
     {
-        auto hBackground{ m_hOverlayBackground.GetHBitmap() };
+        HBITMAP hBackground = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hOverlayBackground);
         if (hBackground)
         {
             RECT rcBGSize{ 0L, 0L, ra::to_signed(OVERLAY_WIDTH), ra::to_signed(OVERLAY_HEIGHT) };
@@ -1317,13 +1319,13 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     auto iter = m_mAchievementBadges.find(sBadgeName);
     if (iter != m_mAchievementBadges.end())
     {
-        hBitmap = iter->second.GetHBitmap();
+        hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(iter->second);
     }
     else
     {
         auto& imageRef = m_mAchievementBadges[sBadgeName];
-        imageRef.ChangeReference(ra::services::ImageType::Badge, sBadgeName);
-        hBitmap = imageRef.GetHBitmap();
+        imageRef.ChangeReference(ra::ui::ImageType::Badge, sBadgeName);
+        hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(imageRef);
     }
 
     if (hBitmap != nullptr)
@@ -1351,7 +1353,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
     SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
     FillRect(hDC, &rcUserFrame, hBrush2);
 
-    HBITMAP hBitmap = m_hUserImage.GetHBitmap();
+    HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
     if (hBitmap != nullptr)
     {
         DrawImage(hDC,
@@ -1495,11 +1497,9 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 
 void AchievementOverlay::UpdateImages() noexcept
 {
-    using ra::services::ImageReference;
-    m_hOverlayBackground = ImageReference{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
-    m_hUserImage         = ImageReference{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
+    m_hOverlayBackground.ChangeReference(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
+    m_hUserImage.ChangeReference(ra::ui::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
-
 
 AchievementExamine::AchievementExamine() :
     m_pSelectedAchievement(nullptr),

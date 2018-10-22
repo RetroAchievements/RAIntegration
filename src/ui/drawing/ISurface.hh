@@ -2,6 +2,7 @@
 #define RA_UI_DRAWING_ISURFACE_HH
 
 #include "ui\Types.hh"
+#include "ui\ImageReference.hh"
 
 namespace ra {
 namespace ui {
@@ -60,6 +61,16 @@ public:
     /// <param name="nColor">The color to use.</param>
     /// <param name="sText">The text to write.</param>
     virtual void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) = 0;
+    
+    /// <summary>
+    /// Draws an image on the surface.
+    /// </summary>
+    /// <param name="nX">The x coordinate to draw at.</param>
+    /// <param name="nY">The y coordinate to draw at.</param>
+    /// <param name="nWidth">The width to draw the image.</param>
+    /// <param name="nHeight">The height to draw the image.</param>
+    /// <param name="pImage">The image to draw.</param>
+    virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
 
 protected:
     ISurface() noexcept = default;

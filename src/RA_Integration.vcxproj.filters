@@ -237,9 +237,6 @@
     <ClCompile Include="services\Initialization.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="services\ImageRepository.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="services\impl\WindowsFileSystem.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
@@ -310,6 +307,9 @@
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -591,6 +591,12 @@
       <Filter>UI\Drawing</Filter>
     </ClInclude>
     <ClInclude Include="ui\Types.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\ImageRepository.hh">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ImageReference.hh">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>

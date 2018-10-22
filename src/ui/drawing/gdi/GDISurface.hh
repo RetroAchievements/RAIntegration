@@ -25,6 +25,8 @@ public:
     ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
+    void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
+
 private:
     void SwitchFont(int nFont) const;
 

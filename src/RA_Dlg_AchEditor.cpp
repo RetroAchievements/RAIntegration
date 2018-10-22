@@ -13,6 +13,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\drawing\gdi\ImageRepository.hh"
+
 namespace {
 const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
 const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
@@ -1896,8 +1898,8 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
     else if (sBackupBadgeToUse.length() > 2)
         sAchievementBadgeURI = sBackupBadgeToUse;
 
-    m_hAchievementBadge.ChangeReference(ra::services::ImageType::Badge, sAchievementBadgeURI);
-    HBITMAP hBitmap = m_hAchievementBadge.GetHBitmap();
+    m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
+    HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
     if (hBitmap != nullptr)
     {
         HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);

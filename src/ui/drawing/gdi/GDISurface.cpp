@@ -2,6 +2,8 @@
 
 #include "ra_utility.h"
 
+#include "ui\drawing\gdi\ImageRepository.hh"
+
 namespace ra {
 namespace ui {
 namespace drawing {
@@ -98,6 +100,27 @@ void GDISurface::SwitchFont(int nFont) const
             SelectFont(m_hDC, m_vFonts.at(nFont - 1).hFont);
         }
     }
+}
+
+void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
+{
+    auto hBitmap = ImageRepository::GetHBitmap(pImage);
+    if (!hBitmap)
+        return;
+
+    HDC hdcMem = CreateCompatibleDC(m_hDC);
+    if (!hdcMem)
+        return;
+
+    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
+
+    BITMAP bm;
+    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+        BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+
+    SelectBitmap(hdcMem, hOldBitmap);
+
+    DeleteDC(hdcMem);
 }
 
 } // namespace gdi

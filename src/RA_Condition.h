@@ -162,14 +162,14 @@ public:
 
 
 private:
-    Type m_nConditionType{};
+    Type           m_nConditionType = Type::Standard;
 
-    CompVariable   m_nCompSource{};
-    ComparisonType m_nCompareType{};
-    CompVariable   m_nCompTarget{};
+    CompVariable   m_nCompSource;
+    ComparisonType m_nCompareType   = ComparisonType::Equals;
+    CompVariable   m_nCompTarget;
 
-    unsigned int m_nRequiredHits{};
-    unsigned int m_nCurrentHits{};
+    unsigned int   m_nRequiredHits  = 0U;
+    unsigned int   m_nCurrentHits   = 0U;
 };
 
 class ConditionGroup

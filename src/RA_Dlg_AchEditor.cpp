@@ -547,7 +547,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            auto i{ 0 };
+            auto i = 0;
             for (const auto& str : Condition::TYPE_STR)
             {
                 ComboBox_AddString(g_hIPEEdit, str);
@@ -1694,7 +1694,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CSI_GROUP:
                         {
-                            auto i{ 0 };
+                            auto i = 0;
                             for (const auto& str : Condition::TYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))

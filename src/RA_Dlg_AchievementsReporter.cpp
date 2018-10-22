@@ -2,12 +2,11 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
-#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 
-
+#include "data\GameContext.hh"
 namespace {
 
 const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
@@ -172,25 +171,22 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
                     //	Intentionally MBCS
-                    char sBugReportInFull[8192];
-                    sprintf_s(sBugReportInFull, 8192,
-                        "--New Bug Report--\n"
-                        "\n"
-                        "Game: %s\n"
-                        "Achievement IDs: %s\n"
-                        "Problem: %s\n"
-                        "Reporter: %s\n"
-                        "ROM Checksum: %s\n"
-                        "\n"
-                        "Comment: %s\n"
-                        "\n"
-                        "Is this OK?",
-                        g_pCurrentGameData->GameTitle().c_str(),
-                        sBuggedIDs,
-                        sProblemTypeNice,
-                        RAUsers::LocalUser().Username().c_str(),
-                        g_sCurrentROMMD5.c_str(),
-                        sBugReportComment.c_str());
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                    std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
+                    sBugReportInFull += ra::Narrow(pGameContext.GameTitle()).c_str();
+                    sBugReportInFull += "\nAchievement IDs: ";
+                    sBugReportInFull += sBuggedIDs;
+                    sBugReportInFull += "\nProblem: ";
+                    sBugReportInFull += sProblemTypeNice;
+                    sBugReportInFull += "\nReporter: ";
+                    sBugReportInFull += RAUsers::LocalUser().Username();
+                    sBugReportInFull += "\nROM Checksum: ";
+                    sBugReportInFull += pGameContext.GameHash().c_str();
+                    sBugReportInFull += "\n\nComment: "; 
+                    sBugReportInFull += sBugReportComment;
+                    sBugReportInFull += "\n\nIs this OK?";
+                        
+                        
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;
@@ -201,7 +197,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['i'] = sBuggedIDs;
                     args['p'] = std::to_string(nProblemType);
                     args['n'] = sBugReportComment.c_str();
-                    args['m'] = g_sCurrentROMMD5;
+                    args['m'] = pGameContext.GameHash();
 
                     rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))

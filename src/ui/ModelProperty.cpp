@@ -1,7 +1,5 @@
 #include "ModelProperty.hh"
 
-#include <algorithm>
-
 namespace ra {
 namespace ui {
 

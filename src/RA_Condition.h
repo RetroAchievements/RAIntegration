@@ -2,9 +2,9 @@
 #define RA_CONDITION_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
-enum ComparisonVariableSize
+enum class MemSize
 {
     Bit_0,
     Bit_1,
@@ -16,14 +16,28 @@ enum ComparisonVariableSize
     Bit_7,
     Nibble_Lower,
     Nibble_Upper,
-    //Byte,
-    EightBit,//=Byte,  
+    EightBit,
     SixteenBit,
-    ThirtyTwoBit,
-
-    NumComparisonVariableSizeTypes
+    ThirtyTwoBit
 };
-extern const char* COMPARISONVARIABLESIZE_STR[];
+
+inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
+{
+    _T("Bit0"),
+    _T("Bit1"),
+    _T("Bit2"),
+    _T("Bit3"),
+    _T("Bit4"),
+    _T("Bit5"),
+    _T("Bit6"),
+    _T("Bit7"),
+    _T("Lower4"),
+    _T("Upper4"),
+    _T("8-bit"),
+    _T("16-bit"),
+    _T("32-bit")
+};
+
 
 enum ComparisonType
 {
@@ -49,54 +63,69 @@ public:
         DynamicVariable  // a custom user-set variable
     };
 
-    inline static constexpr std::array<const char*, 4> TYPE_STR
+    inline static constexpr std::array<const LPCTSTR, 4> TYPE_STR
     {
-        "Memory",
-        "Value",
-        "Delta",
-        "DynVar"
+        _T("Memory"),
+        _T("Value"),
+        _T("Delta"),
+        _T("DynVar")
     };
 
 public:
-    void Set(ComparisonVariableSize nSize, Type nType, unsigned int nInitialValue)
+    inline constexpr CompVariable() noexcept = default;
+    inline constexpr explicit CompVariable(_In_ MemSize nSize,
+                                           _In_ CompVariable::Type nType,
+                                           _In_ unsigned int nInitialValue) noexcept :
+        m_nVarSize{ nSize },
+        m_nVarType{ nType },
+        m_nVal{ nInitialValue }
+    {
+    }
+
+    inline constexpr explicit CompVariable(_In_ unsigned int nInitialValue,
+                                           _In_ unsigned int nPrevVal) noexcept :
+        m_nVal{ nInitialValue },
+        m_nPreviousVal{ nPrevVal }
+    {
+    }
+
+    _CONSTANT_FN Set(_In_ MemSize nSize,
+                     _In_ CompVariable::Type nType,
+                     _In_ unsigned int nInitialValue) noexcept
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
-        m_nVal = nInitialValue;
+        m_nVal     = nInitialValue;
     }
 
-    void SetValues(unsigned int nVal, unsigned int nPrevVal)
+    _CONSTANT_FN SetValues(_In_ unsigned int nVal, _In_ unsigned int nPrevVal) noexcept
     {
-        m_nVal = nVal;
+        m_nVal         = nVal;
         m_nPreviousVal = nPrevVal;
     }
 
-    void ResetDelta()
-    {
-        m_nPreviousVal = m_nVal;
-    }
+    _CONSTANT_FN ResetDelta() noexcept { m_nPreviousVal = m_nVal; }
 
-    bool ParseVariable(const char*& sInString); //  Parse from string
-    void SerializeAppend(std::string& buffer) const;
+    _NODISCARD bool ParseVariable(_Inout_ const char*& sInString); // Parse from string
+    void SerializeAppend(_Out_ std::string& buffer) const;
 
-    unsigned int GetValue();                //  Returns the live value
+    unsigned int GetValue(); // Returns the live value
 
-    inline void SetSize(ComparisonVariableSize nSize) { m_nVarSize = nSize; }
-    inline ComparisonVariableSize Size() const { return m_nVarSize; }
+    _CONSTANT_FN SetSize(_In_ MemSize nSize) noexcept { m_nVarSize = nSize; }
+    _NODISCARD _CONSTANT_FN Size() const noexcept { return m_nVarSize; }
 
     _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
     _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
 
-    inline unsigned int RawValue() const { return m_nVal; }
-    inline unsigned int RawPreviousValue() const { return m_nPreviousVal; }
+    _NODISCARD _CONSTANT_FN RawValue() const noexcept { return m_nVal; }
+    _NODISCARD _CONSTANT_FN RawPreviousValue() const noexcept { return m_nPreviousVal; }
 
 private:
-    ComparisonVariableSize m_nVarSize{ EightBit };
+    MemSize m_nVarSize{ MemSize::EightBit };
     Type m_nVarType{};
     unsigned int m_nVal{};
     unsigned int m_nPreviousVal{};
 };
-
 
 class Condition
 {
@@ -164,9 +193,9 @@ public:
 private:
     Type           m_nConditionType = Type::Standard;
 
-    CompVariable   m_nCompSource;
+    CompVariable    m_nCompSource;
     ComparisonType m_nCompareType   = ComparisonType::Equals;
-    CompVariable   m_nCompTarget;
+    CompVariable    m_nCompTarget;
 
     unsigned int   m_nRequiredHits  = 0U;
     unsigned int   m_nCurrentHits   = 0U;

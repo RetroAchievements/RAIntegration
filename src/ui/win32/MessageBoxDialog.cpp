@@ -1,12 +1,6 @@
 #include "MessageBoxDialog.hh"
 
-#include "RA_Defs.h" // for NativeStr
-
 #include "ui/viewmodels/MessageBoxViewModel.hh"
-
-#include <WTypes.h>
-
-#undef GetMessage // ignore Windows macro
 
 namespace ra {
 namespace ui {

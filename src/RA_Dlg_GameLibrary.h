@@ -2,8 +2,7 @@
 #define RA_DLG_GAMELIBRARY_H
 #pragma once
 
-
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 class GameEntry
 {
@@ -15,11 +14,11 @@ public:
 
     const std::string& Title() const { return m_sTitle; }
     const std::string& Filename() const { return m_sFilename; }
-    ra::GameID GameID() const { return m_nGameID; }
+    unsigned int GameID() const { return m_nGameID; }
 
     const std::string m_sTitle;
     const std::string m_sFilename;
-    const ra::GameID m_nGameID;
+    const unsigned int m_nGameID;
 };
 
 class Dlg_GameLibrary
@@ -65,9 +64,9 @@ private:
 private:
     HWND m_hDialogBox;
 
-    std::map<std::string, ra::GameID> m_GameHashLibrary;
-    std::map<ra::GameID, std::string> m_GameTitlesLibrary;
-    std::map<ra::GameID, std::string> m_ProgressLibrary;
+    std::map<std::string, unsigned int> m_GameHashLibrary;
+    std::map<unsigned int, std::string> m_GameTitlesLibrary;
+    std::map<unsigned int, std::string> m_ProgressLibrary;
     std::vector<GameEntry> m_vGameEntries;
 };
 extern Dlg_GameLibrary g_GameLibrary;

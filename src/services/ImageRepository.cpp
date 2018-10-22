@@ -1,14 +1,10 @@
 #include "ImageRepository.h"
 
 #include "RA_Core.h"
-#include "RA_Defs.h"
 #include "RA_httpthread.h"
 
 #include "services/IThreadPool.hh"
 #include "services/ServiceLocator.hh"
-
-#include <atlbase.h>
-#include <wincodec.h>
 
 namespace ra {
 namespace services {
@@ -262,7 +258,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
     return hr;
 }
 
-static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Out_ HBITMAP& hBitmapInOut)
+static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Inout_ HBITMAP& hBitmapInOut)
 {
     // Get BitmapSource format and size
     WICPixelFormatGUID pixelFormat;
@@ -321,7 +317,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
         hr = UIntMult(cbStride, nHeight, &cbImage);
 
     // Extract the image into the HBITMAP    
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && pvImageBits)
     {
         hr = pToRenderBitmapSource->CopyPixels(
             //hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,

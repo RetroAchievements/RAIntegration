@@ -120,6 +120,9 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\pch.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -150,6 +153,9 @@
     </ClInclude>
     <ClInclude Include="mocks\MockLocalStorage.hh">
       <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pch.h">
+      <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

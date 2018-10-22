@@ -103,7 +103,6 @@
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
     <ClCompile Include="RA_PopupWindows.cpp" />
-    <ClCompile Include="RA_ProgressPopup.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
@@ -171,7 +170,6 @@
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_PopupWindows.h" />
-    <ClInclude Include="RA_ProgressPopup.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
@@ -208,6 +206,7 @@
     <ClInclude Include="ui\BindingBase.hh" />
     <ClInclude Include="ui\drawing\gdi\GDISurface.hh" />
     <ClInclude Include="ui\drawing\gdi\ImageRepository.hh" />
+    <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh" />
     <ClInclude Include="ui\drawing\ISurface.hh" />
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ImageReference.hh" />

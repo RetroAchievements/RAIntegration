@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui\drawing\ISurface.hh"
+#include "ui\drawing\gdi\ResourceRepository.hh"
 
 namespace ra {
 namespace ui {
@@ -12,9 +13,14 @@ namespace gdi {
 class GDISurface : public ISurface
 {
 public:
-    explicit GDISurface(HDC hDC, RECT& rcDEST) noexcept;
+    explicit GDISurface(HDC hDC, RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept;
 
-    ~GDISurface() noexcept;
+    explicit GDISurface(HDC hDC, RECT& rcDEST) noexcept
+        : GDISurface(hDC, rcDEST, m_oResourceRepository)
+    {
+    }
+
+    ~GDISurface() noexcept = default;
 
     size_t GetWidth() const override { return m_nWidth; }
     size_t GetHeight() const override { return m_nHeight; }
@@ -34,19 +40,8 @@ private:
     int m_nWidth;
     int m_nHeight;
 
-    struct GDIFont
-    {
-        GDIFont(const std::string& sFontName, int nFontSize, FontStyles nStyle, HFONT hFont)
-            : sFontName(sFontName), nFontSize(nFontSize), nStyle(nStyle), hFont(hFont)
-        {
-        }
-
-        std::string sFontName;
-        int nFontSize{};
-        FontStyles nStyle{};
-        HFONT hFont{};
-    };
-    std::vector<GDIFont> m_vFonts;
+    ResourceRepository m_oResourceRepository;
+    ResourceRepository& m_pResourceRepository;
 
     mutable int m_nCurrentFont{};
     Color m_nCurrentTextColor{ 0U };

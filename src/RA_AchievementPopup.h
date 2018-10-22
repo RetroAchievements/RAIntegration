@@ -7,6 +7,8 @@
 
 #include "ui\ImageReference.hh"
 
+#include "ui\drawing\gdi\ResourceRepository.hh"
+
 //	Graphic to display an obtained achievement
 enum PopupMessageType
 {
@@ -75,6 +77,8 @@ public:
     void PlayAudio();
 
 private:
+    ra::ui::drawing::gdi::ResourceRepository m_pResourceRepository;
+
     std::queue<MessagePopup> m_vMessages;
     float m_fTimer;
 };

@@ -1,7 +1,5 @@
 #include "GDISurface.hh"
 
-#include "ra_utility.h"
-
 #include "ui\drawing\gdi\ImageRepository.hh"
 
 namespace ra {
@@ -9,19 +7,11 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-GDISurface::GDISurface(HDC hDC, RECT& rcDEST) noexcept
-    : m_hDC(hDC), m_nWidth(rcDEST.right - rcDEST.left), m_nHeight(rcDEST.bottom - rcDEST.top)
+GDISurface::GDISurface(HDC hDC, RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept
+    : m_hDC(hDC), m_nWidth(rcDEST.right - rcDEST.left), m_nHeight(rcDEST.bottom - rcDEST.top), m_pResourceRepository(pResourceRepository)
 {
     SelectObject(hDC, GetStockObject(DC_PEN));
     SelectObject(hDC, GetStockObject(DC_BRUSH));
-}
-
-GDISurface::~GDISurface() noexcept
-{
-    for (auto& pFont : m_vFonts)
-        DeleteFont(pFont.hFont);
-
-    m_vFonts.clear();
 }
 
 void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
@@ -40,30 +30,7 @@ void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nC
 
 int GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
 {
-    int i = 1;
-    for (const auto& pFont : m_vFonts)
-    {
-        if (pFont.nFontSize == nFontSize && pFont.nStyle == nStyle && pFont.sFontName == sFont)
-            return i;
-        ++i;
-    }
-
-    using namespace ra::bitwise_ops;
-    auto nWeight = ((nStyle & FontStyles::Bold) == FontStyles::Bold) ? FW_BOLD : FW_NORMAL;
-    auto nItalic = ((nStyle & FontStyles::Italic) == FontStyles::Italic) ? TRUE : FALSE;
-    auto nUnderline = ((nStyle & FontStyles::Underline) == FontStyles::Underline) ? TRUE : FALSE;
-    auto nStrikeOut = ((nStyle & FontStyles::Strikethrough) == FontStyles::Strikethrough) ? TRUE : FALSE;
-
-    HFONT hFont = CreateFontA(nFontSize, 0, 0, 0, nWeight, nItalic, nUnderline, nStrikeOut,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, sFont.c_str());
-
-    if (hFont)
-    {
-        m_vFonts.emplace_back(sFont, nFontSize, nStyle, hFont);
-        return m_vFonts.size();
-    }
-
-    return 0;
+    return m_pResourceRepository.LoadFont(sFont, nFontSize, nStyle);
 }
 
 ra::ui::Size GDISurface::MeasureText(int nFont, const std::wstring& sText) const
@@ -94,10 +61,11 @@ void GDISurface::SwitchFont(int nFont) const
 {
     if (nFont != m_nCurrentFont)
     {
-        if (nFont > 0 && ra::to_unsigned(nFont) <= m_vFonts.size())
+        auto hFont = m_pResourceRepository.GetHFont(nFont);
+        if (hFont)
         {
             m_nCurrentFont = nFont;
-            SelectFont(m_hDC, m_vFonts.at(nFont - 1).hFont);
+            SelectFont(m_hDC, hFont);
         }
     }
 }

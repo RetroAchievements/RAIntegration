@@ -102,9 +102,6 @@
     <ClCompile Include="RA_PopupWindows.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_ProgressPopup.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -368,9 +365,6 @@
     <ClInclude Include="RA_PopupWindows.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="RA_ProgressPopup.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
@@ -598,6 +592,9 @@
     </ClInclude>
     <ClInclude Include="ui\ImageReference.hh">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh">
+      <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

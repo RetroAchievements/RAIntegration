@@ -105,7 +105,7 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     const auto sTitle = ra::Widen(ActiveMessage().Title());
     const auto sSubTitle = ra::Widen(ActiveMessage().Subtitle());
 
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest);
+    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest, m_pResourceRepository);
     auto nFontTitle = pSurface.LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     auto nFontSubtitle = pSurface.LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
 

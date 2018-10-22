@@ -1,5 +1,5 @@
-#ifndef IMAGEREPOSITORY_H
-#define IMAGEREPOSITORY_H
+#ifndef RA_UI_DRAWING_GDI_IMAGEREPOSITORY_HH
+#define RA_UI_DRAWING_GDI_IMAGEREPOSITORY_HH
 #pragma once
 
 #include "ui\ImageReference.hh"
@@ -59,4 +59,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif /* !IMAGEREPOSITORY_H */
+#endif /* !RA_UI_DRAWING_GDI_IMAGEREPOSITORY_HH */

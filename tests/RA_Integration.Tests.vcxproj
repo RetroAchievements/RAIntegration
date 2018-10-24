@@ -176,6 +176,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Exports.cpp" />
     <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -195,6 +196,7 @@
     <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
+    <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="RA_Achievement_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
@@ -215,6 +217,7 @@
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="mocks\MockClock.hh" />
+    <ClInclude Include="mocks\MockConfiguration.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />

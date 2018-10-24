@@ -16,6 +16,11 @@ class GameChecksumDialog : public DialogBase
 {
 public:
     explicit GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum) noexcept;
+    virtual ~GameChecksumDialog() noexcept = default;
+    GameChecksumDialog(const GameChecksumDialog&) noexcept = delete;
+    GameChecksumDialog& operator=(const GameChecksumDialog&) noexcept = delete;
+    GameChecksumDialog(GameChecksumDialog&&) noexcept = delete;
+    GameChecksumDialog& operator=(GameChecksumDialog&&) noexcept = delete;
 
     class Presenter : public IDialogPresenter
     {

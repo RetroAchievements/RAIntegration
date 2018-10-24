@@ -6,7 +6,7 @@ namespace ra {
 namespace ui {
 namespace tests {
 
-TEST_CLASS(UI_ViewModelBase_Tests)
+TEST_CLASS(ViewModelBase_Tests)
 {
     class ViewModelHarness : public ViewModelBase
     {

@@ -11,7 +11,7 @@ namespace viewmodels {
 class RichPresenceMonitorViewModel : public WindowViewModelBase
 {
 public:
-    RichPresenceMonitorViewModel() noexcept;
+    explicit RichPresenceMonitorViewModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.

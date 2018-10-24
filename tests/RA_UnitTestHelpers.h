@@ -2,8 +2,6 @@
 #define RA_UNITTESTHELPERS_H
 #pragma once
 
-#include "CppUnitTest.h"
-
 #include "ra_utility.h"
 
 #include "RA_Condition.h"
@@ -17,33 +15,34 @@ namespace VisualStudio {
 namespace CppUnitTestFramework {
 
 // converters for asserting enum values
-
-template<> static std::wstring ToString<MemSize>(const MemSize& t)
+#pragma warning(push)
+#pragma warning(disable : 4505) // unreferenced inline functions
+template<> std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
 }
 
-template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
+template<> std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 {
     return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
+template<> std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
     return ra::Widen(COMPARISONTYPE_STR[(int)t]);
 }
 
-template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
+template<> std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
 {
-    return ra::Widen(CONDITIONTYPE_STR[(int)t]);
+    return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)
+template<> std::wstring ToString<MemValue::Format>(const MemValue::Format& format)
 {
     return ra::Widen(MemValue::GetFormatString(format));
 }
 
-template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
+template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
     switch (result)
     {
@@ -56,6 +55,7 @@ template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::Dial
         default: return std::to_wstring(static_cast<int>(result));
     }
 }
+#pragma warning(pop)
 
 } // namespace CppUnitTestFramework
 } // namespace VisualStudio

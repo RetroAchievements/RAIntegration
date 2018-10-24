@@ -126,7 +126,7 @@ protected:
     private:
         union // 8 bytes
         {
-            unsigned char m_vBytes[8];
+            unsigned char m_vBytes[8]{};
             unsigned char* m_pBytes;
         };
 
@@ -136,7 +136,6 @@ protected:
     static_assert(sizeof(MemBlock) == 16, "sizeof(MemBlock) is incorrect");
 
     MemBlock& AddBlock(unsigned int nAddress, unsigned int nSize);
-
 private:
     void ProcessBlocks(const SearchResults& srSource, std::function<bool(unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])> testIndexFunction);
     void ProcessBlocksNibbles(const SearchResults& srSource, unsigned int nTestValue, ComparisonType nCompareType);

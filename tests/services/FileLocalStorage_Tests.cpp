@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "services\impl\FileLocalStorage.hh"
 
 #include "tests\mocks\MockFileSystem.hh"

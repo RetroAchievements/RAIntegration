@@ -11,12 +11,12 @@
 #include "data\GameContext.hh"
 namespace {
 
-const char* COLUMN_TITLES_CORE[] = { "ID", "Title", "Points", "Author", "Achieved?", "Modified?" };
-const char* COLUMN_TITLES_UNOFFICIAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const char* COLUMN_TITLES_LOCAL[] = { "ID", "Title", "Points", "Author", "Active",	"Votes" };
-const int COLUMN_SIZE[] = { 45, 200, 45, 80, 65, 65 };
+inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_CORE{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Achieved?"), _T("Modified?") };
+inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_UNOFFICIAL{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Active"), _T("Votes") };
+inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_LOCAL{ _T("ID"), _T("Title"), _T("Points"), _T("Author"), _T("Active"), _T("Votes") };
+inline constexpr std::array<int, 6> COLUMN_SIZE{ 45, 200, 45, 80, 65, 65 };
 
-const int NUM_COLS = SIZEOF_ARRAY(COLUMN_SIZE);
+inline constexpr auto NUM_COLS = ra::narrow_cast<int>(ra::to_signed(COLUMN_SIZE.size()));
 
 int iSelect = -1;
 
@@ -35,29 +35,33 @@ void Dlg_Achievements::SetupColumns(HWND hList)
     while (ListView_DeleteColumn(hList, 0) == TRUE) {}
     ListView_DeleteAllItems(hList);
 
-    for (int i = 0; i < NUM_COLS; ++i)
+    auto i = 0;
+    for (const auto& col_size : COLUMN_SIZE)
     {
-        const char* sColTitle{ "" };
+        LPCTSTR sColTitle{ _T("") };
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-            sColTitle = COLUMN_TITLES_CORE[i];
+            sColTitle = COLUMN_TITLES_CORE.at(i);
         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
-            sColTitle = COLUMN_TITLES_UNOFFICIAL[i];
+            sColTitle = COLUMN_TITLES_UNOFFICIAL.at(i);
         else if (g_nActiveAchievementSet == AchievementSet::Type::Local)
-            sColTitle = COLUMN_TITLES_LOCAL[i];
+            sColTitle = COLUMN_TITLES_LOCAL.at(i);
 
-        LV_COLUMN newColumn;
-        ZeroMemory(&newColumn, sizeof(newColumn));
-        newColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        newColumn.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == (NUM_COLS - 1))
+        ra::tstring sColTitleStr = sColTitle; // Take a copy
+        LV_COLUMN newColumn
+        {
+            newColumn.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            newColumn.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            newColumn.cx         = col_size,
+            newColumn.pszText    = sColTitleStr.data(),
+            newColumn.cchTextMax = 255,
+            newColumn.iSubItem   = i
+        };
+
+        if (i == (::NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
-        newColumn.cx = COLUMN_SIZE[i];
-        ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
-        newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
-        newColumn.cchTextMax = 255;
-        newColumn.iSubItem = i;
 
         ListView_InsertColumn(hList, i, &newColumn);
+        i++;
     }
 
     m_lbxData.clear();
@@ -191,12 +195,11 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     return ra::to_unsigned(item.iItem);
 }
 
-BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
+BOOL LocalValidateAchievementsBeforeCommit(const std::array<int, 1> nLbxItems)
 {
     char buffer[2048];
-    for (size_t i = 0; i < 1; ++i)
+    for (const auto& nIter : nLbxItems)
     {
-        int nIter = nLbxItems[i];
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
         if (Ach.Title().length() < 2)
         {
@@ -919,11 +922,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
 INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 {
-    const int nMaxUploadLimit = 1;
+    constexpr int nMaxUploadLimit = 1;
 
     size_t nNumChecked = 0;
     int nIDsChecked[nMaxUploadLimit];
-    int nLbxItemsChecked[nMaxUploadLimit];
+    std::array<int, nMaxUploadLimit> nLbxItemsChecked{};
 
     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
     int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
@@ -965,7 +968,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     {
         for (size_t i = 0; i < nNumChecked; ++i)
         {
-            Achievement& NextAch = g_pActiveAchievements->GetAchievement(nLbxItemsChecked[i]);
+            Achievement& NextAch = g_pActiveAchievements->GetAchievement(nLbxItemsChecked.at(i));
 
             BOOL bMovedFromUserToUnofficial = (g_nActiveAchievementSet == AchievementSet::Type::Local);
 

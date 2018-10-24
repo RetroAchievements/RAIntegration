@@ -10,7 +10,8 @@
     We don't care about warnings for library files.
 */
 #pragma warning(push)
-#pragma warning(disable : 4091 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
+#pragma warning(disable : 4061 4091 4191 4365 4464 4571 4619 4623 4625 4626 \
+                          4768 4774 5026 5027 5039 5045)
 /* Windows Stuff */
 #include "windows_nodefines.h"
 #include <atlbase.h> // atldef.h (Windows.h), atlcore.h (tchar.h), Shlwapi.h
@@ -68,6 +69,15 @@
 #pragma warning(pop)
 
 #include <md5.h>
+
+#if RA_UTEST
+#pragma warning(push)
+#include <CodeAnalysis\Warnings.h>
+#pragma warning(disable : ALL_CPPCORECHECK_WARNINGS)
+#include <CppUnitTest.h>
+#pragma warning(pop)
+#endif /* RA_UTEST */
+
 #pragma warning(pop)
 
 #endif /* !PCH_H */

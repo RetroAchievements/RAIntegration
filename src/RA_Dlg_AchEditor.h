@@ -78,7 +78,7 @@ private:
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond);
 
 private:
-    static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
+    static constexpr int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );
 
     HWND m_hAchievementEditorDlg;
     HWND m_hICEControl;

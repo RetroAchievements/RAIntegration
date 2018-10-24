@@ -50,9 +50,9 @@ enum ComparisonType
 
     NumComparisonTypes
 };
-extern const char* COMPARISONTYPE_STR[];
-
-extern const char* CONDITIONTYPE_STR[];
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR{                    
+    _T("="), _T("<"), _T("<="), _T(">"), _T(">="), _T("!=")
+};
 
 class CompVariable
 {
@@ -142,6 +142,16 @@ public:
         AddHits,
 
         NumConditionTypes
+    };
+
+    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
+    {
+        _T(""),
+        _T("Pause If"),
+        _T("Reset If"),
+        _T("Add Source"),
+        _T("Sub Source"),
+        _T("Add Hits")
     };
 
 public:

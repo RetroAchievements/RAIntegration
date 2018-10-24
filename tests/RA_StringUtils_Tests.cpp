@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_Defs.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -46,12 +44,22 @@ public:
 
     TEST_METHOD(TestTrimLineEnding)
     {
-        Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test")));
-        Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test\r")));
-        Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test\n")));
-        Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test\r\n")));
-        Assert::AreEqual(std::string("test\n"), TrimLineEnding(std::string("test\n\n")));
-        Assert::AreEqual(std::string("test\r\n"), TrimLineEnding(std::string("test\r\n\r\n")));
+        std::array<std::string, 6> test_strings
+        {
+            "test",
+            "test\r",
+            "test\n",
+            "test\r\n",
+            "test\n\n",
+            "test\r\n\r\n"
+        };
+
+        Assert::AreEqual(test_strings.at(0), TrimLineEnding(test_strings.at(0)));
+        Assert::AreEqual(test_strings.at(0), TrimLineEnding(test_strings.at(1)));
+        Assert::AreEqual(test_strings.at(0), TrimLineEnding(test_strings.at(2)));
+        Assert::AreEqual(test_strings.at(0), TrimLineEnding(test_strings.at(3)));
+        Assert::AreEqual(test_strings.at(2), TrimLineEnding(test_strings.at(4)));
+        Assert::AreEqual(test_strings.at(3), TrimLineEnding(test_strings.at(5)));
     }
 
     TEST_METHOD(TestFormat)

@@ -14,9 +14,8 @@
 #include "services\ServiceLocator.hh"
 
 namespace {
-const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
+inline constexpr std::array<LPCTSTR, 10> COLUMN_TITLE{ _T("ID"), _T("Flag"), _T("Type"), _T("Size"), _T("Memory"), _T("Cmp"), _T("Type"), _T("Size"), _T("Mem/Val"), _T("Hits") };
+inline constexpr std::array<int, 10>  COLUMN_WIDTH{ 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
 }
 
 enum CondSubItems
@@ -106,23 +105,25 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < m_nNumCols; ++i)
+    auto i = 0;
+    for (const auto& title : COLUMN_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
-        col.pszText = const_cast<LPTSTR>(colTitle.c_str());
-        col.cchTextMax = 255;
-        col.iSubItem = i;
+        ra::tstring str = title; // Hold the temporary object
+        LV_COLUMN col
+        {
+            col.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            col.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            col.cx         = COLUMN_WIDTH.at(i),
+            col.pszText    = str.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = i
+        };
 
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == m_nNumCols - 1)
+        if (i == (m_nNumCols - 1))
             col.fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, (LPARAM)&col);
+        ListView_InsertColumn(hList, i, &col);
+        i++;
     }
 
     ZeroMemory(&m_lbxData, sizeof(m_lbxData));
@@ -186,7 +187,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
-    sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", CONDITIONTYPE_STR[Cond.GetConditionType()]);
+    sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", Condition::TYPE_STR.at(Cond.GetConditionType()));
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
@@ -546,11 +547,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            for (size_t i = 0; i < Condition::NumConditionTypes; ++i)
+            for (const auto& str : Condition::TYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(CONDITIONTYPE_STR[i]).c_str());
-
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), CONDITIONTYPE_STR[i]) == 0)
+                auto i = ComboBox_AddString(g_hIPEEdit, str);
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
             }
 
@@ -712,11 +712,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
+            for (const auto& str : COMPARISONTYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, NativeStr(COMPARISONTYPE_STR[i]).c_str());
-
-                if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), COMPARISONTYPE_STR[i]) == 0)
+                auto i = ComboBox_AddString(g_hIPEEdit, str);
+                if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
             }
 
@@ -1690,10 +1689,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CSI_GROUP:
                         {
-                            for (int i = 0; i < Condition::NumConditionTypes; ++i)
+                            auto i = 0;
+                            for (const auto& str : Condition::TYPE_STR)
                             {
-                                if (strcmp(sData, CONDITIONTYPE_STR[i]) == 0)
-                                    rCond.SetConditionType(static_cast<Condition::ConditionType>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.SetConditionType(ra::itoe<Condition::ConditionType>(i));
+                                i++;
                             }
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
                             break;
@@ -1745,10 +1746,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }break;
                         case CSI_COMPARISON:
                         {
-                            for (int i = 0; i < NumComparisonTypes; ++i)
+                            auto i = 0;
+                            for (const auto& str : COMPARISONTYPE_STR)
                             {
-                                if (strcmp(sData, COMPARISONTYPE_STR[i]) == 0)
-                                    rCond.SetCompareType(static_cast<ComparisonType>(i));
+                                if (sData == ra::Narrow(str))
+                                    rCond.SetCompareType(ra::itoe<ComparisonType>(i));
+                                i++;
                             }
                             break;
                         }

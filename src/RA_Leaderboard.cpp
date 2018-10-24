@@ -153,21 +153,13 @@ void RA_Leaderboard::Submit(unsigned int nScore)
 
 void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)
 {
-    Entry newEntry;
-    newEntry.m_nRank = nRank;
-    newEntry.m_sUsername = sUsername;
-    newEntry.m_nScore = nScore;
-    newEntry.m_TimeAchieved = nAchieved;
+    static_assert(ra::is_nothrow_equality_comparable_v<decltype(m_RankInfo)>);
+    Entry newEntry{ nRank, sUsername, nScore, nAchieved };
 
-    std::vector<Entry>::iterator iter = m_RankInfo.begin();
-    while (iter != m_RankInfo.end())
+    for (const auto& entry : m_RankInfo)
     {
-        if ((*iter).m_nRank == nRank)
-        {
-            (*iter) = newEntry;
+        if (entry == newEntry)
             return;
-        }
-        iter++;
     }
 
     //	If not found, add new entry.
@@ -176,17 +168,7 @@ void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUser
 
 void RA_Leaderboard::SortRankInfo()
 {
-    for (size_t i = 0; i < m_RankInfo.size(); ++i)
-    {
-        for (size_t j = i + 1; j < m_RankInfo.size(); ++j)
-        {
-            if (m_RankInfo.at(i).m_nRank > m_RankInfo.at(j).m_nRank)
-            {
-                Entry temp = m_RankInfo[i];
-                m_RankInfo[i] = m_RankInfo[j];
-                m_RankInfo[j] = temp;
-            }
-        }
-    }
+    static_assert(ra::is_nothrow_lessthan_comparable_v<decltype(m_RankInfo)>);
+    std::sort(m_RankInfo.begin(), m_RankInfo.end());
 }
 

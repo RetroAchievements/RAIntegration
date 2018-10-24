@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "ui\WindowViewModelBase.hh"
 
 #include "services\ServiceLocator.hh"

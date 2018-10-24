@@ -1,6 +1,9 @@
 #include "SearchResults.h"
 
 #include "RA_MemManager.h"
+#include "RA_StringUtils.h"
+#include "ra_utility.h"
+
 
 namespace ra {
 namespace services {
@@ -228,15 +231,21 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
         if (block.GetSize() > vMemory.capacity())
             vMemory.reserve(block.GetSize());
 
-        unsigned char* pMemory = vMemory.data();
-        const unsigned char* pPrev = block.GetBytes();
+        std::vector<unsigned char> vMemory2(vMemory.capacity());
+        _CONSTANT_LOC pPrevSize {
+            sizeof(block.GetBytes()) / sizeof(*block.GetBytes())
+        };
+        std::array<unsigned char, pPrevSize> pPrev{};
 
-        g_MemManager.ActiveBankRAMRead(pMemory, block.GetAddress(), block.GetSize());
+        for (auto i = 0U; i < pPrevSize; i++)
+            pPrev.at(i) = block.GetBytes()[i];
+
+        g_MemManager.ActiveBankRAMRead(vMemory2.data(), block.GetAddress(), block.GetSize());
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
-            unsigned int nValue1 = pMemory[i];
-            unsigned int nValue2 = (nTestValue > 15) ? (pPrev[i] & 0x0F) : nTestValue;
+            unsigned int nValue1 = vMemory2.at(i);
+            unsigned int nValue2 = (nTestValue > 15) ? (pPrev.at(i) & 0x0F) : nTestValue;
 
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
@@ -245,7 +254,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, vMemory2.data(), vMatches);
                         vMatches.clear();
                     }
 
@@ -254,7 +263,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             }
 
             if (nTestValue > 15)
-                nValue2 = pPrev[i] >> 4;
+                nValue2 = pPrev.at(i) >> 4;
 
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {
@@ -263,7 +272,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, vMemory2.data(), vMatches);
                         vMatches.clear();
                     }
 
@@ -274,7 +283,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
         if (!vMatches.empty())
         {
-            AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+            AddMatchesNibbles(block.GetAddress() << 1, vMemory2.data(), vMatches);
             vMatches.clear();
         }
     }

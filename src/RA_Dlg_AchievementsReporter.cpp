@@ -9,9 +9,8 @@
 #include "data\GameContext.hh"
 namespace {
 
-const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
-const int COL_SIZE[] = { 19, 105, 205, 75, 62 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
+inline constexpr std::array<LPCTSTR, 5> COL_TITLE{ _T(""), _T("Title"), _T("Description"), _T("Author"), _T("Achieved?") };
+inline constexpr std::array<int, 5> COL_SIZE{ 19, 105, 205, 75, 62 };
 
 const char* PROBLEM_STR[] = { "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
 
@@ -30,23 +29,25 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    auto i = 0;
+    for (const auto& title : COL_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COL_SIZE[i];
-        col.cchTextMax = 255;
-        ra::tstring str = NativeStr(COL_TITLE[i]);	//	Hold the temporary object
-        col.pszText = str.data();
-        col.iSubItem = i;
+        ra::tstring str = title; // Hold the temporary object
+        LV_COLUMN col
+        {
+            col.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            col.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            col.cx         = COL_SIZE.at(i),
+            col.pszText    = str.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = i
+        };
 
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//If the last element: fill to the end
+        if (i == ra::to_signed(COL_TITLE.size() - 1)) // If the last element: fill to the end
             col.fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, i, reinterpret_cast<LPARAM>(&col));
+        i++;
     }
 
     ms_nNumOccupiedRows = 0;

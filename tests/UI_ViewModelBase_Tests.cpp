@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "ui\ViewModelBase.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

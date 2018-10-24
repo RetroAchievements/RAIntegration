@@ -633,7 +633,6 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
     unsigned int addr{};
     unsigned int width{};
     int n;
-    char c;
 
     switch (Bookmark.Type())
     {
@@ -653,17 +652,16 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark & Bookmark)
             break;
     }
 
-    char buffer[32];
-    sprintf_s(buffer, sizeof(buffer), "%0*x", width, Bookmark.Value());
-
-    for (unsigned int i = 0; i < strlen(buffer); i++)
+    const std::string buffer{ ra::StringPrintf("%0*x", width, Bookmark.Value()) };
+    auto i = 0;
+    for (const auto& c : buffer)
     {
-        c = buffer[i];
         n = (c >= 'a') ? (c - 'a' + 10) : (c - '0');
         MemoryViewerControl::editData(addr, (i % 2 != 0), n);
 
         if (i % 2 != 0)
             addr--;
+        i++;
     }
 }
 

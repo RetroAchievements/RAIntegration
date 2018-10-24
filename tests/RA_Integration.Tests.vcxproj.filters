@@ -129,6 +129,12 @@
     <ClCompile Include="..\src\pch.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="Exports_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -161,6 +167,9 @@
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockGameContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="..\src\pch.h" />

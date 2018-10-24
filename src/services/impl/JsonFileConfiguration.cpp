@@ -183,6 +183,21 @@ void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, cons
     m_mWindowPositions[sPositionKey].oSize = oSize;
 }
 
+const std::string& JsonFileConfiguration::GetHostName() const
+{
+    if (m_sHostName.empty())
+    {
+        auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().OpenTextFile(L"host.txt");
+        if (pFile != nullptr)
+            pFile->GetLine(m_sHostName);
+
+        if (m_sHostName.empty())
+            m_sHostName = "retroachievements.org";
+    }
+
+    return m_sHostName;
+}
+
 } // namespace impl
 } // namespace services
 } // namespace ra

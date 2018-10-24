@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "ui\ViewModelBase.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -13,7 +11,7 @@ TEST_CLASS(ViewModelBase_Tests)
     class ViewModelHarness : public ViewModelBase
     {
     public:
-        ViewModelHarness() noexcept = default;
+        ViewModelHarness() noexcept(std::is_nothrow_default_constructible_v<ViewModelBase>) = default;
 
         StringModelProperty StringProperty{ "ViewModelHarness", "String", L"" };
         const std::wstring& GetString() const { return GetValue(StringProperty); }

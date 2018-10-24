@@ -2,8 +2,6 @@
 #define RA_UNITTESTHELPERS_H
 #pragma once
 
-#include "CppUnitTest.h"
-
 #include "ra_utility.h"
 
 #include "RA_Condition.h"

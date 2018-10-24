@@ -4,18 +4,12 @@
 
 MemManager g_MemManager;
 
-MemManager::MemManager()
-    : m_nTotalBankSize(0)
-{
-}
-
-//	virtual
-MemManager::~MemManager()
+MemManager::~MemManager() noexcept
 {
     ClearMemoryBanks();
 }
 
-void MemManager::ClearMemoryBanks()
+void MemManager::ClearMemoryBanks() noexcept
 {
     m_Banks.clear();
     m_nTotalBankSize = 0;

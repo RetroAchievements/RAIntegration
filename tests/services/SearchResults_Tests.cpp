@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "services\SearchResults.h"
 #include "tests\RA_UnitTestHelpers.h"
 

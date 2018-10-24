@@ -10,36 +10,43 @@ typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
 class MemManager
 {
 private:
+    
     class BankData
     {
     public:
-        BankData()
-            : Reader(nullptr), Writer(nullptr), BankSize(0)
-        {
-        }
-
-        BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize)
+        BankData() noexcept = default;
+        explicit BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize) noexcept
             : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
         {
         }
-
-    private:
+        ~BankData() noexcept
+        {
+            Reader   = nullptr;
+            Writer   = nullptr;
+            BankSize = 0U;
+        }
         //	Copying disabled
         BankData(const BankData&) = delete;
         BankData& operator=(BankData&) = delete;
+        BankData(BankData&&) = delete;
+        BankData& operator=(BankData&&) = delete;
 
     public:
-        _RAMByteReadFn * Reader;
-        _RAMByteWriteFn* Writer;
-        size_t BankSize;
+        _RAMByteReadFn* Reader{ nullptr };
+        _RAMByteWriteFn* Writer{ nullptr };
+        size_t BankSize{ 0U };
     };
+    using Banks = std::map<size_t, BankData>;
+public:
+    MemManager() noexcept(std::is_nothrow_default_constructible_v<Banks>) = default;
+    ~MemManager() noexcept;
+    MemManager(const MemManager&) noexcept = delete;
+    MemManager& operator=(const MemManager&) noexcept = delete;
+    MemManager(MemManager&&) noexcept = delete;
+    MemManager& operator=(MemManager&&) noexcept = delete;
 
 public:
-    MemManager();
-    virtual ~MemManager();
-
-public:
-    void ClearMemoryBanks();
+    void ClearMemoryBanks() noexcept;
     void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
     size_t NumMemoryBanks() const { return m_Banks.size(); }
 
@@ -61,9 +68,9 @@ public:
 
 private:
     std::map<size_t, BankData> m_Banks;
-    unsigned short m_nActiveMemBank;
+    unsigned short m_nActiveMemBank{};
 
-    size_t m_nTotalBankSize;
+    size_t m_nTotalBankSize{};
 };
 
 extern MemManager g_MemManager;

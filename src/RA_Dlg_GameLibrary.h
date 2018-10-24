@@ -24,10 +24,6 @@ public:
 class Dlg_GameLibrary
 {
 public:
-    Dlg_GameLibrary();
-    ~Dlg_GameLibrary();
-
-public:
     //void DoModalDialog( HINSTANCE hInst, HWND hParent );
     static INT_PTR CALLBACK s_GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR CALLBACK GameLibraryProc(HWND, UINT, WPARAM, LPARAM);

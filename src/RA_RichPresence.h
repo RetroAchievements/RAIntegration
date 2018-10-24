@@ -13,7 +13,6 @@ public:
     RA_RichPresenceInterpreter() noexcept = default;
 
     bool Load();
-
     std::string GetRichPresenceString();
     
     bool Enabled() const { return !m_vDisplayStrings.empty(); }

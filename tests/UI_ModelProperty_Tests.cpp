@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "ui\ModelProperty.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

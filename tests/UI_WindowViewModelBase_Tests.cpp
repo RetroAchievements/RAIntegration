@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "ui\WindowViewModelBase.hh"
 
 #include "services\ServiceLocator.hh"
@@ -21,7 +19,8 @@ TEST_CLASS(UI_WindowViewModelBase_Tests)
     class WindowViewModelHarness : public WindowViewModelBase
     {
     public:
-        WindowViewModelHarness() noexcept = default;
+        WindowViewModelHarness()
+            noexcept(std::is_nothrow_default_constructible_v<WindowViewModelBase>) = default;
     };
 
     void AssertPointer(const WindowViewModelBase* pExpected, const WindowViewModelBase* pActual)

@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "services\impl\StringTextWriter.hh"
 #include "tests\RA_UnitTestHelpers.h"
 

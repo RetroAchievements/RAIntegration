@@ -26,18 +26,25 @@ public:
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
     _NODISCARD HWND CreateDialogWindow(_In_ const LPCTSTR sResourceId,
-                                       _In_ IDialogPresenter* const pDialogPresenter);
-    
+        _In_ IDialogPresenter* const pDialogPresenter);
+
+    /// <summary>
+    /// Creates the dialog window and does not return until the window is closed.
+    /// </summary>
+    /// <param name="sResourceId">The resource identifier defining the dialog.</param>
+    /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
+    void CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter);
+
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.
     /// </summary>
-	_NODISCARD HWND GetHWND() const { return m_hWnd; }
-    
+    _NODISCARD HWND GetHWND() const { return m_hWnd; }
+
     /// <summary>
     /// Shows the dialog window.
     /// </summary>
     /// <returns><c>true</c> if the window was shown, <c>false</c> if CreateDialogWindow has not been called.</returns>
-	_NODISCARD bool ShowDialogWindow() const
+    _NODISCARD bool ShowDialogWindow() const
     {
         if (!m_hWnd)
             return false;
@@ -65,13 +72,13 @@ protected:
     /// Called when the window is moved.
     /// </summary>
     virtual void OnDestroy();
-    
+
     /// <summary>
     /// Called when a button is clicked.
     /// </summary>
     /// <param name="nCommand">The unique identifier of the button.</param>
     virtual BOOL OnCommand(_In_ WORD nCommand);
-    
+
     /// <summary>
     /// Called when the window is moved.
     /// </summary>
@@ -91,9 +98,11 @@ protected:
 private:
     // Allows access to `DialogProc` from static helper
     friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
 
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
+    bool m_bModal = false;
 };
 
 } // namespace win32

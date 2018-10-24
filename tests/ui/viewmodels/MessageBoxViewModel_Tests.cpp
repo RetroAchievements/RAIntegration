@@ -4,7 +4,7 @@
 #include "ui\IDesktop.hh"
 #include "tests\mocks\MockDesktop.hh"
 
-#include "RA_UnitTestHelpers.h"
+#include "tests\RA_UnitTestHelpers.h"
 
 #undef GetMessage
 
@@ -50,7 +50,7 @@ namespace ui {
 namespace viewmodels {
 namespace tests {
 
-TEST_CLASS(VM_MessageBoxViewModel_Tests)
+TEST_CLASS(MessageBoxViewModel_Tests)
 {
     typedef ra::ui::DialogResult(*DialogHandler)(MessageBoxViewModel&);
 

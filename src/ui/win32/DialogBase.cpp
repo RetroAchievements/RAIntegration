@@ -52,12 +52,52 @@ HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter*
     return m_hWnd;
 }
 
+// CreateModalWindow uses DialogBox to run a modal loop. As such, we don't know the HWND without processing the
+// associated WM_INITDIALOG message. Use a secondary WNDPROC to capture that so we can associate the DialogBase
+// to the HWND's DWLP_USER attribute, then switch back to using the normal StaticDialogProc.
+static DialogBase* s_pModalDialog = nullptr;
+
+static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (s_pModalDialog == nullptr)
+        return StaticDialogProc(hDlg, uMsg, wParam, lParam);
+
+    INT_PTR result = s_pModalDialog->DialogProc(hDlg, uMsg, wParam, lParam);
+
+    if (uMsg == WM_INITDIALOG)
+    {
+        // Once we've seen the WM_INITDIALOG message, we've associated the HWND to the DialogBase and
+        // can use the normal StaticDialogProc handler.
+        SetWindowLongPtr(hDlg, DWLP_DLGPROC, reinterpret_cast<LONG_PTR>(&StaticDialogProc));
+
+        SetWindowLongPtr(hDlg, DWLP_USER, reinterpret_cast<LONG_PTR>(s_pModalDialog));
+        s_pModalDialog = nullptr;
+    }
+
+    return result;
+}
+
+void DialogBase::CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter)
+{
+    m_pDialogPresenter = pDialogPresenter;
+    m_bModal = true;
+
+    s_pModalDialog = this;
+    DialogBox(g_hThisDLLInst, sResourceId, g_RAMainWnd, &StaticModalDialogProc);
+}
+
 _Use_decl_annotations_
-INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
         case WM_INITDIALOG:
+            if (m_hWnd == nullptr)
+            {
+                m_hWnd = hDlg;
+                m_bindWindow.SetHWND(m_hWnd);
+            }
+
             return OnInitDialog();
 
         case WM_DESTROY:
@@ -84,7 +124,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(_UNUSED HWND, UINT uMsg, WPARAM wParam, 
         default:
             return 0;
     }
-    
+
 }
 
 void DialogBase::OnDestroy()
@@ -106,13 +146,23 @@ BOOL DialogBase::OnCommand(WORD nCommand)
     {
         case IDOK:
             m_vmWindow.SetDialogResult(DialogResult::OK);
-            DestroyWindow(m_hWnd);
+
+            if (m_bModal)
+                EndDialog(m_hWnd, IDOK);
+            else
+                DestroyWindow(m_hWnd);
+
             return TRUE;
 
         case IDCLOSE:
         case IDCANCEL:
             m_vmWindow.SetDialogResult(DialogResult::Cancel);
-            DestroyWindow(m_hWnd);
+
+            if (m_bModal)
+                EndDialog(m_hWnd, nCommand);
+            else
+                DestroyWindow(m_hWnd);
+
             return TRUE;
 
         default:

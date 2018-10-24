@@ -6,7 +6,7 @@ namespace ra {
 namespace ui {
 namespace tests {
 
-TEST_CLASS(UI_ModelProperty_Tests)
+TEST_CLASS(ModelProperty_Tests)
 {
     void AssertProperty(int nKey, const ModelPropertyBase* pExpected)
     {

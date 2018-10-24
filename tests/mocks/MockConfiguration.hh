@@ -41,24 +41,26 @@ public:
     const std::string& GetRomDirectory() const override { return m_sRomDirectory; }
     void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
 
-    ra::ui::Position GetWindowPosition(const std::string& sPositionKey) const override
+    ra::ui::Position GetWindowPosition(_UNUSED const std::string& /*sPositionKey*/) const override
     {
         assert(!"Not implemented");
         return ra::ui::Position();
     }
 
-    void SetWindowPosition(const std::string& sPositionKey, const ra::ui::Position& oPosition) override
+    void SetWindowPosition(_UNUSED const std::string& /*sPositionKey*/,
+                           _UNUSED const ra::ui::Position& /*oPosition*/) override
     {
         assert(!"Not implemented");
     }
 
-    ra::ui::Size GetWindowSize(const std::string& sPositionKey) const override
+    ra::ui::Size GetWindowSize(_UNUSED const std::string& /*sPositionKey*/) const override
     {
         assert(!"Not implemented");
         return ra::ui::Size();
     }
 
-    void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override
+    void SetWindowSize(_UNUSED const std::string& /*sPositionKey*/,
+                       _UNUSED const ra::ui::Size& /*oSize*/) override
     {
         assert(!"Not implemented");
     }

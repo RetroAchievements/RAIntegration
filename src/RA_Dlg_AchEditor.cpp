@@ -93,9 +93,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
     }
 }
 
-Dlg_AchievementEditor::~Dlg_AchievementEditor()
-{
-}
 
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
 {

@@ -105,7 +105,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Hello, world!"), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::None, vmMessageBox.GetIcon());
@@ -122,7 +122,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
@@ -139,7 +139,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
@@ -156,7 +156,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Please try again."), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
@@ -173,7 +173,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetMessage());
             Assert::AreEqual(std::wstring(), vmMessageBox.GetHeader());
             Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());
@@ -190,7 +190,7 @@ public:
     {
         MockDesktop mockDesktop([](WindowViewModelBase& vmWindow)
         {
-            auto vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
+            const auto& vmMessageBox = *(dynamic_cast<MessageBoxViewModel*>(&vmWindow));
             Assert::AreEqual(std::wstring(L"Something happened."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Please try again."), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());

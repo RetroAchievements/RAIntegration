@@ -73,10 +73,12 @@
 #if RA_UTEST
 #pragma warning(push)
 #include <CodeAnalysis\Warnings.h>
+#pragma warning(push)
 #pragma warning(disable : ALL_CPPCORECHECK_WARNINGS)
-#include <CppUnitTest.h>
+#include "CppUnitTest.h"
 #pragma warning(pop)
 #endif /* RA_UTEST */
+
 
 #pragma warning(pop)
 

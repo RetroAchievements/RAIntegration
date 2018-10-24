@@ -75,9 +75,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -192,11 +189,20 @@
     <ClCompile Include="services\Http.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
     <ClCompile Include="data\GameContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports.cpp">
+      <Filter>Interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -237,9 +243,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
@@ -437,6 +440,18 @@
     <ClInclude Include="services\Http.hh">
       <Filter>Services</Filter>
     </ClInclude>
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClipboard.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsClipboard.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
     <ClInclude Include="data\GameContext.hh">
       <Filter>Data</Filter>
     </ClInclude>
@@ -451,6 +466,9 @@
     </ClInclude>
     <ClInclude Include="pch_microsoft_suppressions.h">
       <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.hh">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

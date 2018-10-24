@@ -44,7 +44,7 @@ public:
 
     void Shutdown(bool bWait) noexcept override {}
 
-    virtual bool IsShutdownRequested() const noexcept override { return false; }
+    bool IsShutdownRequested() const noexcept override { return false; }
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::IThreadPool> m_Override;

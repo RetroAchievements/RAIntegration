@@ -1,7 +1,6 @@
 #include "RA_Core.h"
 
 #include "RA_AchievementOverlay.h" // RA_User
-#include "RA_BuildVer.h"
 #include "RA_CodeNotes.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
@@ -20,7 +19,6 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
 #include "data\GameContext.hh"
@@ -35,6 +33,7 @@
 // for SubmitEntry callback
 #include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
+#include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -59,28 +58,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
+
+    ra::services::Initialization::RegisterCoreServices();
+
     return TRUE;
-}
-
-API const char* CCONV _RA_IntegrationVersion()
-{
-    return RA_INTEGRATION_VERSION;
-}
-
-API const char* CCONV _RA_HostName()
-{
-    static std::string sHostName;
-    if (sHostName.empty())
-    {
-        std::ifstream fHost("host.txt", std::ifstream::in);
-        if (fHost.good())
-            fHost >> sHostName;
-
-        if (sHostName.empty())
-            sHostName = "retroachievements.org";
-    }
-
-    return sHostName.c_str();
 }
 
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
@@ -316,12 +297,6 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
     g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
 }
 
-API int CCONV _RA_HardcoreModeIsActive()
-{
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-}
-
 static void DisableHardcoreMode()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -425,6 +400,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_bRAMTamperedWith = false;
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
     g_PopupWindows.LeaderboardPopups().Reset();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().SetGameHash(sCurrentROMMD5);
 
     if (nGameID != 0)
     {
@@ -1084,7 +1061,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_GETROMCHECKSUM:
         {
-            RA_Dlg_RomChecksum::DoModalDialog();
+            ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
+            vmGameChecksum.ShowModal();
             break;
         }
 

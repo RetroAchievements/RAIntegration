@@ -68,6 +68,16 @@
 #pragma warning(pop)
 
 #include <md5.h>
+
+#if RA_UTEST
+#include <CodeAnalysis\Warnings.h>
+#pragma warning(push)
+#pragma warning(disable : ALL_CPPCORECHECK_WARNINGS)
+#include "CppUnitTest.h"
+#pragma warning(pop)
+#endif /* RA_UTEST */
+
+
 #pragma warning(pop)
 
 #endif /* !PCH_H */

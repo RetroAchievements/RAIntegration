@@ -12,7 +12,7 @@ namespace impl {
 class LeaderboardManager : public ILeaderboardManager
 {
 public:
-    LeaderboardManager(const ra::services::IConfiguration& pConfiguration);
+    explicit LeaderboardManager(const ra::services::IConfiguration& pConfiguration) noexcept;
 
     static void OnSubmitEntry(const rapidjson::Document& doc);
 
@@ -24,7 +24,7 @@ public:
     void DeactivateLeaderboard(const RA_Leaderboard& lb) const override;
     void SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const override;
 
-    void AddLeaderboard(const RA_Leaderboard& lb) override;
+    void AddLeaderboard(RA_Leaderboard&& lb) override;
     size_t Count() const override { return m_Leaderboards.size(); }
     const RA_Leaderboard& GetLB(size_t iter) const override { return m_Leaderboards[iter]; }
     RA_Leaderboard* FindLB(ra::LeaderboardID nID) override;

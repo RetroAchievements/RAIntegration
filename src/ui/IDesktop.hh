@@ -10,6 +10,10 @@ class IDesktop
 {
 public:
     virtual ~IDesktop() noexcept = default;
+    IDesktop(const IDesktop&) noexcept = delete;
+    IDesktop& operator=(const IDesktop&) noexcept = delete;
+    IDesktop(IDesktop&&) noexcept = delete;
+    IDesktop& operator=(IDesktop&&) noexcept = delete;
 
     /// <summary>
     /// Shows a window for the provided view model.
@@ -29,6 +33,9 @@ public:
     virtual void GetWorkArea(_Out_ ra::ui::Position& oUpperLeftCorner, _Out_ ra::ui::Size& oSize) const = 0;
 
     virtual void Shutdown() = 0;
+
+protected:
+    IDesktop() noexcept = default;
 };
 
 } // namespace ui

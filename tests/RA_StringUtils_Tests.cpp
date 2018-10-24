@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_Defs.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

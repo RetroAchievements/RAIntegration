@@ -1,12 +1,10 @@
-#include "CppUnitTest.h"
-
 #include "ui\WindowViewModelBase.hh"
 
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
 #include "tests\mocks\MockDesktop.hh"
 
-#include "RA_UnitTestHelpers.h"
+#include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -16,12 +14,13 @@ namespace ra {
 namespace ui {
 namespace tests {
 
-TEST_CLASS(UI_WindowViewModelBase_Tests)
+TEST_CLASS(WindowViewModelBase_Tests)
 {
     class WindowViewModelHarness : public WindowViewModelBase
     {
     public:
-        WindowViewModelHarness() noexcept = default;
+        WindowViewModelHarness()
+            noexcept(std::is_nothrow_default_constructible_v<WindowViewModelBase>) = default;
     };
 
     void AssertPointer(const WindowViewModelBase* pExpected, const WindowViewModelBase* pActual)

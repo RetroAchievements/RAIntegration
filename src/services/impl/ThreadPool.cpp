@@ -6,7 +6,7 @@ namespace ra {
 namespace services {
 namespace impl {
 
-ThreadPool::~ThreadPool()
+ThreadPool::~ThreadPool() noexcept
 {
     Shutdown(true);
 }

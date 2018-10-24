@@ -25,7 +25,8 @@ void RichPresenceDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oVie
     if (m_pDialog == nullptr)
     {
         m_pDialog.reset(new RichPresenceDialog(oRichPresenceViewModel));
-        m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), this);
+        if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), this))
+            RA_LOG_ERR("Could not create RichPresence dialog!");
     }
     
     if (m_pDialog->ShowDialogWindow())
@@ -38,7 +39,7 @@ void RichPresenceDialog::Presenter::OnClosed()
 }
 
 // ------------------------------------
-
+_Use_decl_annotations_
 RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept
     : DialogBase(vmRichPresenceDisplay)
 {
@@ -59,13 +60,11 @@ static void UpdateDisplayString(ra::ui::WindowViewModelBase& vmWindow)
     vmRichPresence.UpdateDisplayString();
 }
 
-void RichPresenceDialog::OnInitDialog()
+BOOL RichPresenceDialog::OnInitDialog()
 {
-    DialogBase::OnInitDialog();
-
-    SendMessage(GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), WM_SETFONT, (WPARAM)m_hFont, LPARAM{});
-
+    SetWindowFont(::GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), m_hFont, FALSE);
     UpdateDisplayString(m_vmWindow);
+    return DialogBase::OnInitDialog();
 }
 
 void RichPresenceDialog::OnDestroy()

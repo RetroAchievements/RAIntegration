@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_RichPresence.h"
 #include "RA_UnitTestHelpers.h"
 
@@ -17,7 +15,7 @@ public:
     class RichPresenceInterpreterHarness : public RA_RichPresenceInterpreter
     {
     public:
-        bool Load(const std::string& sScript)
+        bool LoadTest(const std::string& sScript)
         {
             ra::services::impl::StringTextReader oReader(sScript);
             return RA_RichPresenceInterpreter::Load(oReader);
@@ -30,7 +28,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0x 0001) Points");
+        rp.LoadTest("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0x 0001) Points");
 
         Assert::AreEqual("13330 Points", rp.GetRichPresenceString().c_str());
 
@@ -44,7 +42,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0xH0001*100_0xH0002) Points");
+        rp.LoadTest("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points(0xH0001*100_0xH0002) Points");
 
         Assert::AreEqual("1852 Points", rp.GetRichPresenceString().c_str());
 
@@ -58,7 +56,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -75,7 +73,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000*0.5)");
+        rp.LoadTest("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000*0.5)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -92,7 +90,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000), Near @Location(0xH0001)");
+        rp.LoadTest("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\nAt @Location(0xH0000), Near @Location(0xH0001)");
 
         Assert::AreEqual("At Zero, Near ", rp.GetRichPresenceString().c_str());
 
@@ -109,7 +107,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\nAt @Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -126,7 +124,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0=Zero\n1=One\n*=Star\n\nDisplay:\nAt @Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0=Zero\n1=One\n*=Star\n\nDisplay:\nAt @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -143,7 +141,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\r\n0=Zero\r\n1=One\r\n\r\nDisplay:\r\nAt @Location(0xH0000)\r\n");
+        rp.LoadTest("Lookup:Location\r\n0=Zero\r\n1=One\r\n\r\nDisplay:\r\nAt @Location(0xH0000)\r\n");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -160,7 +158,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nAt @Location(0xH0000)\n\nLookup:Location\n0=Zero\n1=One");
+        rp.LoadTest("Display:\nAt @Location(0xH0000)\n\nLookup:Location\n0=Zero\n1=One");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -177,7 +175,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0= Zero \n1= One \n\nDisplay:\nAt '@Location(0xH0000)' ");
+        rp.LoadTest("Lookup:Location\n0= Zero \n1= One \n\nDisplay:\nAt '@Location(0xH0000)' ");
 
         Assert::AreEqual("At ' Zero ' ", rp.GetRichPresenceString().c_str());
 
@@ -193,7 +191,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Locations are fun!\nLookup:Location\n0=Zero\n1=One\n\nDisplay goes here\nDisplay:\nAt @Location(0xH0000)\n\nWritten by User3");
+        rp.LoadTest("Locations are fun!\nLookup:Location\n0=Zero\n1=One\n\nDisplay goes here\nDisplay:\nAt @Location(0xH0000)\n\nWritten by User3");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -211,7 +209,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("// Locations are fun!\nLookup:Location // lookup\n0=Zero // 0\n1=One // 1\n\n//Display goes here\nDisplay: // display\nAt @Location(0xH0000) // text\n\n//Written by User3");
+        rp.LoadTest("// Locations are fun!\nLookup:Location // lookup\n0=Zero // 0\n1=One // 1\n\n//Display goes here\nDisplay: // display\nAt @Location(0xH0000) // text\n\n//Written by User3");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -228,7 +226,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\n?0xH0000=0?Zero\n?0xH0000=1?One\nOther");
+        rp.LoadTest("Display:\n?0xH0000=0?Zero\n?0xH0000=1?One\nOther");
 
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
@@ -246,7 +244,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nOther\n?0xH0000=0?Zero\n?0xH0000=1?One");
+        rp.LoadTest("Display:\nOther\n?0xH0000=0?Zero\n?0xH0000=1?One");
 
         Assert::AreEqual("Other", rp.GetRichPresenceString().c_str());
     }
@@ -258,7 +256,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\n?0xH0000=0?Zero");
+        rp.LoadTest("Display:\n?0xH0000=0?Zero");
 
         Assert::AreEqual(false, rp.Enabled());
     }
@@ -269,7 +267,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?0xH0001=18?At @Location(0xH0000)\nNear @Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?0xH0001=18?At @Location(0xH0000)\nNear @Location(0xH0000)");
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
@@ -290,7 +288,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\n?0xH0000=0_0xH0001=18?First\n?0xH0000=0?Second\nThird");
+        rp.LoadTest("Display:\n?0xH0000=0_0xH0001=18?First\n?0xH0000=0?Second\nThird");
 
         Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
 
@@ -302,7 +300,7 @@ public:
 
         memory[0] = 0;
         memory[1] = 18;
-        rp.Load("Display:\n?0xH0000=0?First\n?0xH0000=0_0xH0001=18?Second\nThird");
+        rp.LoadTest("Display:\n?0xH0000=0?First\n?0xH0000=0_0xH0001=18?Second\nThird");
 
         Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
 
@@ -320,7 +318,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\n?0xH0000=0?First\n?0xH0000=0?Second\nThird");
+        rp.LoadTest("Display:\n?0xH0000=0?First\n?0xH0000=0?Second\nThird");
 
         Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
 
@@ -335,7 +333,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)");
 
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
 
@@ -356,7 +354,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\n@Points(0x 0001) Points");
+        rp.LoadTest("Display:\n@Points(0x 0001) Points");
 
         Assert::AreEqual(" Points", rp.GetRichPresenceString().c_str());
     }
@@ -364,7 +362,7 @@ public:
     TEST_METHOD(TestEscapedComment)
     {
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nWhat \\// Where");
+        rp.LoadTest("Display:\nWhat \\// Where");
 
         Assert::AreEqual("What // Where", rp.GetRichPresenceString().c_str());
     }
@@ -372,7 +370,7 @@ public:
     TEST_METHOD(TestEscapedBackslash)
     {
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nWhat \\\\ Where");
+        rp.LoadTest("Display:\nWhat \\\\ Where");
 
         Assert::AreEqual("What \\ Where", rp.GetRichPresenceString().c_str());
     }
@@ -380,7 +378,7 @@ public:
     TEST_METHOD(TestPartiallyEscapedComment)
     {
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nWhat \\/// Where");
+        rp.LoadTest("Display:\nWhat \\/// Where");
 
         Assert::AreEqual("What /", rp.GetRichPresenceString().c_str());
     }
@@ -388,7 +386,7 @@ public:
     TEST_METHOD(TestTrailingBackslash)
     {
         RichPresenceInterpreterHarness rp;
-        rp.Load("Display:\nWhat \\");
+        rp.LoadTest("Display:\nWhat \\");
 
         Assert::AreEqual("What ", rp.GetRichPresenceString().c_str());
     }
@@ -399,7 +397,7 @@ public:
         InitializeMemory(memory, 5);
 
         RichPresenceInterpreterHarness rp;
-        rp.Load("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\n\\@@Location(0xH0000)");
+        rp.LoadTest("Lookup:Location\n0=Zero\n1=One\n\nDisplay:\n\\@@Location(0xH0000)");
 
         Assert::AreEqual("@Zero", rp.GetRichPresenceString().c_str());
 

@@ -14,6 +14,10 @@ class IFileSystem
 {
 public:
     virtual ~IFileSystem() noexcept = default;
+    IFileSystem(const IFileSystem&) noexcept = delete;
+    IFileSystem& operator=(const IFileSystem&) noexcept = delete;
+    IFileSystem(IFileSystem&&) noexcept = delete;
+    IFileSystem& operator=(IFileSystem&&) noexcept = delete;
 
     /// <summary>
     /// Gets the base directory of the running executable.
@@ -53,21 +57,24 @@ public:
     /// <summary>
     /// Opens the specified file.
     /// </summary>
-    /// <returns>Pointer to a <see cref="TextReader"/> for reading the contents of the file. nullptr if the file was not found.</returns>
+    /// <returns>Pointer to a <see cref="TextReader" /> for reading the contents of the file. <c>nullptr</c> if the file was not found.</returns>
     virtual std::unique_ptr<TextReader> OpenTextFile(const std::wstring& sPath) const = 0;
 
     /// <summary>
     /// Creates the specified file.
     /// </summary>
-    /// <returns>Pointer to a <see cref="TextWriter"/> for writing the contents of the file. nullptr if the file could not be created.</returns>
+    /// <returns>Pointer to a <see cref="TextWriter" /> for writing the contents of the file. <c>nullptr</c> if the file could not be created.</returns>
     virtual std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const = 0;
 
     /// <summary>
     /// Opens the specified file for appending.
     /// </summary>
-    /// <returns>Pointer to a <see cref="TextWriter"/> for writing the contents of the file. nullptr if the file could not be opened.</returns>
+    /// <returns>Pointer to a <see cref="TextWriter" /> for writing the contents of the file. <c>nullptr</c> if the file could not be opened.</returns>
     /// <remarks>Will create the file if it doesn't already exist.</remarks>
     virtual std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const = 0;
+
+protected:
+    IFileSystem() noexcept = default;
 };
 
 } // namespace services

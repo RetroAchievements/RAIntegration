@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_MemValue.h"
 #include "RA_UnitTestHelpers.h"
 

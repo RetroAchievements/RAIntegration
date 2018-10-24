@@ -120,7 +120,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
         const auto nRank{ NextEntry["Rank"].GetUint() };
         const std::string& sUser{ NextEntry["User"].GetString() };
         const auto nUserScore{ NextEntry["Score"].GetInt() };
-        auto nSubmitted{ static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint())) };
+        const auto nSubmitted{ static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint())) };
 
         {
             std::ostringstream oss;

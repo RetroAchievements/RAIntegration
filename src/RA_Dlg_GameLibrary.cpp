@@ -281,7 +281,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
         {
             // obtain file size:
             fseek(pf, 0, SEEK_END);
-            DWORD nSize = ftell(pf);
+            const DWORD nSize = ftell(pf);
             rewind(pf);
 
             // May have caused a buffer overrun, this is way to big to be on the stack
@@ -314,7 +314,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
     HANDLE hFind = FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd);
     if (hFind != INVALID_HANDLE_VALUE)
     {
-        unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
+        constexpr unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
         unsigned char* sROMRawData = new unsigned char[ROM_MAX_SIZE];
 
         do

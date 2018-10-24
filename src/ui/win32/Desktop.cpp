@@ -72,9 +72,10 @@ void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSiz
     oSize = m_oWorkAreaSize;
 }
 
-ra::ui::win32::IDialogPresenter* Desktop::GetDialogPresenter(ra::ui::WindowViewModelBase& oViewModel) const
+_Use_decl_annotations_
+IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewModel) const
 {
-    for (auto& pPresenter : m_vDialogPresenters)
+    for (const auto& pPresenter : m_vDialogPresenters)
     {
         if (pPresenter->IsSupported(oViewModel))
             return pPresenter.get();

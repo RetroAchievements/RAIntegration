@@ -91,7 +91,8 @@ void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOO
     }
 }
 
-BOOL LeaderboardPopup::Activate(unsigned int nLBID)
+_Use_decl_annotations_
+BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -105,7 +106,8 @@ BOOL LeaderboardPopup::Activate(unsigned int nLBID)
     return TRUE;
 }
 
-BOOL LeaderboardPopup::Deactivate(unsigned int nLBID)
+_Use_decl_annotations_
+BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -159,7 +161,8 @@ float LeaderboardPopup::GetOffsetPct() const
     return fVal;
 }
 
-void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
+_Use_decl_annotations_
+void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
@@ -185,14 +188,14 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
     const int nHeight = rcDest.bottom - rcDest.top;
 
     //float fOffscreenAmount = ( GetOffsetPct() * ( POPUP_DIST_FROM_PCT * (float)nWidth ) );
-    float fOffscreenAmount = (GetOffsetPct() * 600);
+    const float fOffscreenAmount = (GetOffsetPct() * 600);
     //float fFadeOffs = (POPUP_DIST_TO_PCT * (float)nWidth ) + fOffscreenAmount;
-    float fFadeOffs = (nWidth - 300) + fOffscreenAmount;
+    const float fFadeOffs = (nWidth - 300) + fOffscreenAmount;
 
-    int nScoreboardX = (int)fFadeOffs;
-    int nScoreboardY = (int)nHeight - 200;
+    const int nScoreboardX = (int)fFadeOffs;
+    const int nScoreboardY = (int)nHeight - 200;
 
-    int nRightLim = (int)((nWidth - 8) + fOffscreenAmount);
+    const int nRightLim = (int)((nWidth - 8) + fOffscreenAmount);
 
     //if( GetMessageType() == 1 )
     //{

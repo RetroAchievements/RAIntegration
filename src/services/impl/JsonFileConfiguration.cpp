@@ -147,7 +147,7 @@ bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const
 
 void JsonFileConfiguration::SetFeatureEnabled(Feature nFeature, bool bEnabled)
 {
-    int bit = 1 << static_cast<int>(nFeature);
+    const int bit = 1 << static_cast<int>(nFeature);
 
     if (bEnabled)
         m_vEnabledFeatures |= bit;

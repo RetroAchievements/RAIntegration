@@ -124,7 +124,8 @@ BOOL AchievementOverlay::GoBack()
     }
 }
 
-BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused)
+_Use_decl_annotations_
+BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused)
 {
     auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
 
@@ -136,7 +137,7 @@ BOOL AchievementOverlay::Update(ControllerInput* pInput, float fDelta, BOOL bFul
     int* pnScrollOffset = const_cast<int*>(GetActiveScrollOffset());	//	Dirty!
     int* pnSelectedItem = const_cast<int*>(GetActiveSelectedItem());
 
-    ControllerInput& input = *pInput;
+    const ControllerInput& input = *pInput;
 
     BOOL bCloseOverlay = FALSE;	//	False==close overlay
 
@@ -494,7 +495,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     {
         for (size_t i = 0; i < nNumberOfAchievements; ++i)
         {
-            Achievement* pAch = &g_pActiveAchievements->GetAchievement(i);
+            const Achievement* pAch = &g_pActiveAchievements->GetAchievement(i);
             nMaxPts += pAch->Points();
             if (!pAch->Active())
             {
@@ -514,7 +515,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         }
     }
 
-    int nAchievementsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nAchSpacing;
+    const int nAchievementsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nAchSpacing;
     if (nAchievementsToDraw > 0 && nNumberOfAchievements > 0)
     {
         for (int i = 0; i < nAchievementsToDraw; ++i)
@@ -522,7 +523,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
             nAchIdx = (*pnScrollOffset) + i;
             if (nAchIdx < static_cast<int>(nNumberOfAchievements))
             {
-                BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);
+                const BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);
                 if (bSelected)
                 {
                     //	Draw bounding box around text
@@ -609,7 +610,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
     char buffer[256];
 
-    unsigned int nOffset = m_nFriendsScrollOffset;
+    const unsigned int nOffset = m_nFriendsScrollOffset;
 
     const unsigned int nNumFriends = RAUsers::LocalUser().NumFriends();
 
@@ -617,15 +618,15 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
     // people don't care and fetch the data when switching to the friends page in the overlay
     for (unsigned int i = 0; i < nFriendsToDraw; ++i)
     {
-        int nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
-        int nYOffs = nFriendTopEdge + nFriendSpacing * i;
+        const int nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
+        const int nYOffs = nFriendTopEdge + nFriendSpacing * i;
 
         if (i > nNumFriends)
             break;
 
         if ((i + nOffset) < nNumFriends)
         {
-            RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
+            const RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
             if (pFriend == nullptr)
                 continue;
 
@@ -703,7 +704,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
 
     char bufTime[256];
 
-    Achievement* pAch = &g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem);
+    const Achievement* pAch = &g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem);
 
     const time_t tCreated = pAch->CreatedDate();
     const time_t tModified = pAch->ModifiedDate();
@@ -775,7 +776,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
         if (nDots > 100)
             nDots = 0;
 
-        int nDotCount = nDots / 25;
+        const int nDotCount = nDots / 25;
         sprintf_s(buffer, 256, " Loading.%c%c%c ",
             nDotCount >= 1 ? '.' : ' ',
             nDotCount >= 2 ? '.' : ' ',
@@ -881,7 +882,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
     unsigned int nNumLBsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nItemSpacing;
-    unsigned int nNumLBs = pLeaderboardManager.Count();
+    const unsigned int nNumLBs = pLeaderboardManager.Count();
 
     if (nNumLBsToDraw > nNumLBs)
         nNumLBsToDraw = nNumLBs;
@@ -898,7 +899,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             std::string sTitle(" " + nextLB.Title() + " ");
             const std::string& sPayload = nextLB.Description();
 
-            BOOL bSelected = ((*pnSelectedItem) == ra::to_signed(i));
+            const BOOL bSelected = ((*pnSelectedItem) == ra::to_signed(i));
             if (bSelected)
             {
                 //	Draw bounding box around text
@@ -1064,7 +1065,8 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
     }
 }
 
-void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
+_Use_decl_annotations_
+void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 {
     //	Rendering:
     if (!RAUsers::LocalUser().IsLoggedIn())
@@ -1073,7 +1075,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
     if (m_nTransitionState == TransitionState::Off)
         return;
 
-    RECT rcTarget{ *rcDest };
+    const RECT rcTarget{ *rcDest };
     const auto lHeight{ rcTarget.bottom - rcTarget.top };
     {
         _CONSTANT_LOC nFontSize1{ 32 };
@@ -1336,7 +1338,8 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
 }
 
-void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const
+_Use_decl_annotations_
+void AchievementOverlay::DrawUserFrame(HDC hDC, const RAUser* pUser, int nX, int nY, int nW, int nH) const
 {
     char buffer[256];
     HBRUSH hBrush2 = CreateSolidBrush(COL_USER_FRAME_BG);
@@ -1370,8 +1373,8 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, i
 
     if (_RA_HardcoreModeIsActive())
     {
-        COLORREF nLastColor = SetTextColor(hDC, COL_WARNING);
-        COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
+        const COLORREF nLastColor = SetTextColor(hDC, COL_WARNING);
+        const COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
 
         sprintf_s(buffer, 256, " HARDCORE ");
         TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), strlen(buffer));
@@ -1588,8 +1591,8 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 
     m_nLBID = nLBIDIn;
 
-    unsigned int nOffset = 0;		//	TBD
-    unsigned int nCount = 10;
+    const unsigned int nOffset = 0;		//	TBD
+    const unsigned int nCount = 10;
 
     PostArgs args;
     args['i'] = std::to_string(m_nLBID);
@@ -1632,12 +1635,14 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 }
 
 //	Stubs for non-class based, indirect calling of these functions.
-API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
+_Use_decl_annotations_
+API int _RA_UpdateOverlay(const ControllerInput* const pInput, float fDTime, bool Full_Screen, bool Paused)
 {
     return g_AchievementOverlay.Update(pInput, fDTime, Full_Screen, Paused);
 }
 
-API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
+_Use_decl_annotations_
+API void _RA_RenderOverlay(HDC hDC, const RECT* const rcSize)
 {
     g_AchievementOverlay.Render(hDC, rcSize);
 }

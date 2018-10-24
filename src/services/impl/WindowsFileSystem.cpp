@@ -25,7 +25,7 @@ WindowsFileSystem::WindowsFileSystem() noexcept
 
 bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const
 {
-    DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
+    const DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
     return (nAttrib != INVALID_FILE_ATTRIBUTES) && (nAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
@@ -67,7 +67,7 @@ int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
         return -1;
     }
 
-    LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
+    const LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
     return nSize.QuadPart;
 }
 

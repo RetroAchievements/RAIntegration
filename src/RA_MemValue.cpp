@@ -92,7 +92,7 @@ unsigned int MemValue::GetValue() const
     double fVal = 0.0;
     for (const auto& clause : m_vClauses)
     {
-        double fNextVal = clause.GetValue();
+        const double fNextVal = clause.GetValue();
         switch (clause.GetOperation())
         {
             case ClauseOperation::Maximum:
@@ -153,26 +153,26 @@ std::string MemValue::FormatValue(unsigned int nValue, MemValue::Format nFormat)
     {
         case Format::TimeFrames:
         {
-            int nSecs = nValue / FRAMES_PER_SECOND;
-            int nMins = nSecs / SECONDS_PER_MINUTE;
-            int nMilli = static_cast<int>((nValue % FRAMES_PER_SECOND) * (100.0 / 60.0));	//	Convert from frames to hundredths of a second
+            const int nSecs = nValue / FRAMES_PER_SECOND;
+            const int nMins = nSecs / SECONDS_PER_MINUTE;
+            const int nMilli = static_cast<int>((nValue % FRAMES_PER_SECOND) * (100.0 / 60.0));	//	Convert from frames to hundredths of a second
             sprintf_s(buffer, sizeof(buffer), "%02d:%02d.%02d", nMins, nSecs % SECONDS_PER_MINUTE, nMilli);
         }
         break;
 
         case Format::TimeSecs:
         {
-            int nMins = nValue / SECONDS_PER_MINUTE;
-            int nSecs = nValue % SECONDS_PER_MINUTE;
+            const int nMins = nValue / SECONDS_PER_MINUTE;
+            const int nSecs = nValue % SECONDS_PER_MINUTE;
             sprintf_s(buffer, sizeof(buffer), "%02d:%02d", nMins, nSecs);
         }
         break;
 
         case Format::TimeMillisecs:
         {
-            int nSecs = nValue / 100; // hundredths of a second
-            int nMilli = nValue % 100;
-            int nMins = nSecs / SECONDS_PER_MINUTE;
+            const int nSecs = nValue / 100; // hundredths of a second
+            const int nMilli = nValue % 100;
+            const int nMins = nSecs / SECONDS_PER_MINUTE;
             sprintf_s(buffer, sizeof(buffer), "%02d:%02d.%02d", nMins, nSecs % SECONDS_PER_MINUTE, nMilli);
         }
         break;

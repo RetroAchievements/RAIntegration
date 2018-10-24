@@ -502,7 +502,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
     rcSubItem.top += rcOffset.top;
     rcSubItem.bottom += rcOffset.top;
 
-    int nHeight = rcSubItem.bottom - rcSubItem.top;
+    const int nHeight = rcSubItem.bottom - rcSubItem.top;
     int nWidth = rcSubItem.right - rcSubItem.left;
     if (nSubItem == 0)
         nWidth = nWidth / 4; /*NOTE: the ListView has 4 columns;
@@ -760,7 +760,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 
-            char* pData = g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem);
+            const char* pData = g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem);
             SetWindowText(g_hIPEEdit, NativeStr(pData).c_str());
 
             //	Special case, hitcounts
@@ -1058,7 +1058,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                             HWND hList = GetDlgItem(g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS);
-                            int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                            const int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                             if (nSelectedIndex != -1)
                             {
                                 //	Implicit updating:
@@ -1097,7 +1097,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                             HWND hList = GetDlgItem(g_AchievementsDialog.GetHWND(), IDC_RA_LISTACHIEVEMENTS);
-                            int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                            const int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                             if (nSelectedIndex == -1)
                                 return FALSE;
 
@@ -1188,7 +1188,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     Achievement* pActiveAch = ActiveAchievement();
                     if (pActiveAch != nullptr)
                     {
-                        unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+                        const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                         if (uSelectedCount > 0)
                         {
@@ -1198,7 +1198,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             {
                                 const Condition& CondToCopy = pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>(i));
 
-                                Condition NewCondition(CondToCopy);
+                                const Condition NewCondition(CondToCopy);
 
                                 m_ConditionClipboard.Add(NewCondition);
                             }
@@ -1250,7 +1250,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         Achievement* pActiveAch = ActiveAchievement();
                         if (pActiveAch != nullptr)
                         {
-                            unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+                            const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                             char buffer[256];
                             sprintf_s(buffer, 256, "Are you sure you wish to delete %u condition(s)?", uSelectedCount);
@@ -1289,17 +1289,17 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     Achievement* pActiveAch = ActiveAchievement();
                     if (pActiveAch != nullptr)
                     {
-                        int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        const int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                         if (nSelectedIndex >= 0)
                         {
                             //  Get conditions to move
                             std::vector<Condition> conditionsToMove;
-                            size_t nSelectedConditionGroup = GetSelectedConditionGroup();
+                            const size_t nSelectedConditionGroup = GetSelectedConditionGroup();
 
                             for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                             {
                                 // as we remove items, the index within the achievement changes, but not in the UI until we refresh
-                                size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
+                                const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
 
                                 const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
                                 conditionsToMove.push_back(std::move(CondToMove));
@@ -1307,8 +1307,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
 
                             //  Insert at new location
-                            int nInsertIndex = (nSelectedIndex > 0) ? nSelectedIndex - 1 : 0;
-                            size_t nInsertCount = conditionsToMove.size();
+                            const int nInsertIndex = (nSelectedIndex > 0) ? nSelectedIndex - 1 : 0;
+                            const size_t nInsertCount = conditionsToMove.size();
 
                             for (size_t i = 0; i < nInsertCount; ++i)
                             {
@@ -1348,12 +1348,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             //  Get conditions to move
                             std::vector<Condition> conditionsToMove;
-                            size_t nSelectedConditionGroup = GetSelectedConditionGroup();
+                            const size_t nSelectedConditionGroup = GetSelectedConditionGroup();
 
                             for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                             {
                                 // as we remove items, the index within the achievement changes, but not in the UI until we refresh
-                                size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
+                                const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
 
                                 const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
                                 conditionsToMove.push_back(std::move(CondToMove));
@@ -1364,9 +1364,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
 
                             //  Insert at new location
-                            int nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
-                            int nInsertIndex = (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
-                            size_t nInsertCount = conditionsToMove.size();
+                            const int nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
+                            const int nInsertIndex = (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
+                            const size_t nInsertCount = conditionsToMove.size();
 
                             for (size_t i = 0; i < nInsertCount; ++i)
                             {
@@ -1562,7 +1562,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             {
                 case NM_CLICK:
                 {
-                    LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
+                    const NMITEMACTIVATE* pOnClick = (LPNMITEMACTIVATE)lParam;
 
                     //	http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
@@ -1590,7 +1590,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 break;
                 case NM_RCLICK:
                 {
-                    LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
+                    const NMITEMACTIVATE* pOnClick = (LPNMITEMACTIVATE)lParam;
                     if (pOnClick->iItem != -1 &&
                         pOnClick->iSubItem != -1)
                     {
@@ -1760,7 +1760,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     nBase = 10;
                             }
 
-                            unsigned int nVal = strtoul(sData, nullptr, nBase);
+                            const auto nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompSource().SetValues(nVal, nVal);
                             break;
                         }
@@ -1774,7 +1774,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     nBase = 10;
                             }
 
-                            unsigned int nVal = strtoul(sData, nullptr, nBase);
+                            const auto nVal = strtoul(sData, nullptr, nBase);
                             rCond.CompTarget().SetValues(nVal, nVal);
                             break;
                         }
@@ -1890,7 +1890,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         sAchievementBadgeURI = sBackupBadgeToUse;
 
     m_hAchievementBadge.ChangeReference(ra::services::ImageType::Badge, sAchievementBadgeURI);
-    HBITMAP hBitmap = m_hAchievementBadge.GetHBitmap();
+    const HBITMAP__* hBitmap = m_hAchievementBadge.GetHBitmap();
     if (hBitmap != nullptr)
     {
         HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
@@ -1899,7 +1899,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
     }
 
     //	Find buffer in the dropdown list
-    int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());
+    const int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());
     if (nSel != -1)
         ComboBox_SetCurSel(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), nSel);	//	Force select
 }
@@ -1918,7 +1918,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
 
             if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             {
-                int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
+                const int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
                 g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Modified, "Yes");
             }
         }
@@ -1928,7 +1928,8 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
     UpdateSelectedBadgeImage(sNewName.c_str());
 }
 
-void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
+_Use_decl_annotations_
+void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo)
 {
     HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
     if (hGroupList == nullptr)
@@ -1952,7 +1953,8 @@ void Dlg_AchievementEditor::RepopulateGroupList(Achievement* pCheevo)
     ListBox_SetCurSel(hGroupList, nSel);
 }
 
-void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
+_Use_decl_annotations_
+void Dlg_AchievementEditor::PopulateConditions(const Achievement* const pCheevo)
 {
     HWND hCondList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
     if (hCondList == nullptr)
@@ -1963,7 +1965,7 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
 
     if (pCheevo != nullptr)
     {
-        unsigned int nGrp = GetSelectedConditionGroup();
+        const unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
             AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i));
 
@@ -2056,9 +2058,9 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     {
         //	Same achievement still selected: what's changed?
 
-        BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
-        BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));
-        BOOL bPointsSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS));
+        const BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
+        const BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));
+        const BOOL bPointsSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS));
 
         if (!m_pSelectedAchievement->IsDirty())
             return;
@@ -2084,7 +2086,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
-        unsigned int nGrp = GetSelectedConditionGroup();
+        const unsigned int nGrp = GetSelectedConditionGroup();
 
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Conditions))
         {
@@ -2156,7 +2158,7 @@ void Dlg_AchievementEditor::OnLoad_NewRom()
 size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
-    int nSel = ListBox_GetCurSel(hList);
+    const int nSel = ListBox_GetCurSel(hList);
     if (nSel == LB_ERR)
     {
         OutputDebugString(TEXT("ListBox_GetCurSel returning LB_ERR\n"));
@@ -2180,10 +2182,10 @@ void BadgeNames::FetchNewBadgeNamesThreaded()
 
 void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {
-    unsigned int nLowerLimit = data["FirstBadge"].GetUint();
-    unsigned int nUpperLimit = data["NextBadge"].GetUint();
+    const unsigned int nLowerLimit = data["FirstBadge"].GetUint();
+    const unsigned int nUpperLimit = data["NextBadge"].GetUint();
 
-    SendMessage(m_hDestComboBox, WM_SETREDRAW, FALSE, LPARAM{});
+    SetWindowRedraw(m_hDestComboBox, FALSE);
 
     //	Clean out cbo
     while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
@@ -2203,7 +2205,7 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
     //	Find buffer in the dropdown list
     if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
     {
-        int nSel = ComboBox_FindStringExact(m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
+        const int nSel = ComboBox_FindStringExact(m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
         if (nSel != -1)
             ComboBox_SetCurSel(m_hDestComboBox, nSel);	//	Force select
     }

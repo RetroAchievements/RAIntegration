@@ -192,7 +192,7 @@ public:
             Condition::AddHits,
         };
 
-        for (auto type : types)
+        for (const auto type : types)
         {
             Condition cond;
             cond.SetConditionType(type);

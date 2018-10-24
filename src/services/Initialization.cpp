@@ -19,12 +19,14 @@
 namespace ra {
 namespace services {
 
-static void LogHeader(ra::services::ILogger& pLogger, ra::services::IFileSystem& pFileSystem, ra::services::IClock& pClock)
+static void LogHeader(_In_ const ra::services::ILogger& pLogger,
+                      _In_ const ra::services::IFileSystem& pFileSystem,
+                      _In_ const ra::services::IClock& pClock)
 {
     pLogger.LogMessage(LogLevel::Info, "================================================================================");
 
-    auto tNow = pClock.Now();
-    auto tTime = std::chrono::system_clock::to_time_t(tNow);
+    const auto tNow = pClock.Now();
+    const auto tTime = std::chrono::system_clock::to_time_t(tNow);
 
     std::tm tTimeStruct;
     localtime_s(&tTimeStruct, &tTime);

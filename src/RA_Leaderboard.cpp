@@ -80,9 +80,9 @@ void RA_Leaderboard::Test()
     bool bUnused;
 
     //	ASSERT: these are always tested once every frame, to ensure delta variables work properly
-    bool bStartOK = m_startCond.Test(bUnused, bUnused);
-    bool bCancelOK = m_cancelCond.Test(bUnused, bUnused);
-    bool bSubmitOK = m_submitCond.Test(bUnused, bUnused);
+    const bool bStartOK = m_startCond.Test(bUnused, bUnused);
+    const bool bCancelOK = m_cancelCond.Test(bUnused, bUnused);
+    const bool bSubmitOK = m_submitCond.Test(bUnused, bUnused);
 
     if (m_bSubmitted)
     {

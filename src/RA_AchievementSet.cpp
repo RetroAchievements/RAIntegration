@@ -249,7 +249,7 @@ bool AchievementSet::SaveToFile() const
 
     for (size_t i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
     {
-        Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
+        const Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
 
         pData->Write(std::to_string(pAch->ID()));
         pData->Write(":");
@@ -468,7 +468,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 
     for (size_t i = 0; i < NumAchievements(); ++i)
     {
-        Achievement* pAch = &m_Achievements[i];
+        const Achievement* pAch = &m_Achievements[i];
         if (pAch->Active())
         {
             std::string sProgress = pAch->CreateStateString(RAUsers::LocalUser().Username());
@@ -498,7 +498,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
         while (*pIter)
         {
             char* pUnused;
-            unsigned int nID = strtoul(pIter, &pUnused, 10);
+            const unsigned int nID = strtoul(pIter, &pUnused, 10);
             Achievement* pAch = Find(nID);
             if (pAch != nullptr && pAch->Active())
             {

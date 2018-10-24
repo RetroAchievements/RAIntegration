@@ -218,7 +218,7 @@ public:
     const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
     void Clear() { m_Conditions.clear(); }
     void RemoveAt(size_t i);
-    bool Reset(bool bIncludingDeltas);  //  Returns dirty
+    bool Reset(bool bIncludingDeltas); // Returns dirty
 
 protected:
     bool Test(bool& bDirtyConditions, bool& bResetRead, const std::vector<bool>& vPauseConditions, bool bProcessingPauseIfs);

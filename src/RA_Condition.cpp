@@ -116,7 +116,7 @@ static unsigned int ReadHits(const char*& pBufferInOut)
 {
     if (pBufferInOut[0] == '(' || pBufferInOut[0] == '.')
     {
-        unsigned int nNumHits = strtoul(pBufferInOut + 1, (char**)&pBufferInOut, 10);   //  dirty!
+        const unsigned int nNumHits = strtoul(pBufferInOut + 1, (char**)&pBufferInOut, 10);   //  dirty!
         pBufferInOut++;
         return nNumHits;
     }

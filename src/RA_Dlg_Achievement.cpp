@@ -77,13 +77,13 @@ LRESULT ProcessCustomDraw(LPARAM lParam)
 
         case CDDS_ITEMPREPAINT: //Before an item is drawn
         {
-            int nNextItem = static_cast<int>(lplvcd->nmcd.dwItemSpec);
+            const int nNextItem = static_cast<int>(lplvcd->nmcd.dwItemSpec);
 
             if (static_cast<size_t>(nNextItem) < g_pActiveAchievements->NumAchievements())
             {
                 //if (((int)lplvcd->nmcd.dwItemSpec%2)==0)
-                BOOL bSelected = &g_pActiveAchievements->GetAchievement(nNextItem) == g_AchievementEditorDialog.ActiveAchievement();
-                BOOL bModified = g_pActiveAchievements->GetAchievement(nNextItem).Modified();
+                const BOOL bSelected = &g_pActiveAchievements->GetAchievement(nNextItem) == g_AchievementEditorDialog.ActiveAchievement();
+                const BOOL bModified = g_pActiveAchievements->GetAchievement(nNextItem).Modified();
 
                 lplvcd->clrText = bModified ? RGB(255, 0, 0) : RGB(0, 0, 0);
                 lplvcd->clrTextBk = bSelected ? RGB(222, 222, 222) : RGB(255, 255, 255);
@@ -191,12 +191,13 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
     return ra::to_unsigned(item.iItem);
 }
 
-BOOL LocalValidateAchievementsBeforeCommit(int nLbxItems[1])
+_Success_(return)
+_NODISCARD BOOL LocalValidateAchievementsBeforeCommit(_In_reads_(1) const int nLbxItems[1])
 {
     char buffer[2048];
     for (size_t i = 0; i < 1; ++i)
     {
-        int nIter = nLbxItems[i];
+        const int nIter = nLbxItems[i];
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
         if (Ach.Title().length() < 2)
         {
@@ -425,7 +426,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
                         {
                             HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                            int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                            const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                             if (nSel == -1)
                                 return FALSE;
 
@@ -504,7 +505,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
                             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                            auto nGameID = pGameContext.GameId();
+                            const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
                                 g_pLocalAchievements->Clear();
@@ -526,7 +527,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
                             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                            auto nGameID = pGameContext.GameId();
+                            const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
                                 DownloadAndActivateAchievementData(nGameID);
@@ -567,7 +568,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         OnEditData(nOffset, Dlg_Achievements::Author, Cheevo.Author());
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    int nNewID = AddAchievement(hList, Cheevo);
+                    const int nNewID = AddAchievement(hList, Cheevo);
                     ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
@@ -589,7 +590,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                     if (nSel == -1)
                         return FALSE;
 
@@ -597,7 +598,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     Achievement& NewClone = g_pLocalAchievements->AddAchievement();
 
                     //	Clone TO the user achievements
-                    Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
+                    const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
                     NewClone.Set(Ach);
                     NewClone.SetID(0);
@@ -632,10 +633,10 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //	Attempt to remove from list, but if it has an ID > 0, 
                     //	 attempt to remove from DB
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                     if (nSel != -1)
                     {
-                        Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
+                        const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
                         if (Ach.ID() == 0)
                         {
@@ -696,7 +697,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //	Attempt to remove from list, but if it has an ID > 0, 
                     //	 attempt to remove from DB
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                     if (nSel != -1)
                     {
                         Achievement& Cheevo = g_pActiveAchievements->GetAchievement(nSel);
@@ -710,7 +711,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             TEXT("Revert from file?"), MB_YESNO) == IDYES)
                         {
                             //	Find Achievement with Ach.ID()
-                            unsigned int nID = Cheevo.ID();
+                            const unsigned int nID = Cheevo.ID();
 
                             BOOL bFound = FALSE;
 
@@ -718,7 +719,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             AchievementSet TempSet(g_nActiveAchievementSet);
                             if (TempSet.LoadFromFile(pGameContext.GameId()))
                             {
-                                Achievement* pAchBackup = TempSet.Find(nID);
+                                const Achievement* pAchBackup = TempSet.Find(nID);
                                 if (pAchBackup != nullptr)
                                 {
                                     Cheevo.Set(*pAchBackup);
@@ -728,7 +729,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                     //Cheevo.SetDirtyFlag();
 
                                     //	Reverse find where I am in the list:
-                                    size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+                                    const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
                                     assert(nIndex < g_pActiveAchievements->NumAchievements());
                                     if (nIndex < g_pActiveAchievements->NumAchievements())
                                     {
@@ -771,7 +772,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                     //	this could fuck up in so, so many ways. But fuck it, just reset achieved status.
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                     if (nSel != -1)
                     {
                         Achievement& Cheevo = g_pActiveAchievements->GetAchievement(nSel);
@@ -786,7 +787,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 Cheevo.Reset();
                                 Cheevo.SetActive(true);
 
-                                size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+                                const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
                                 ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
                                 if (nIndex < g_pActiveAchievements->NumAchievements())
                                 {
@@ -805,7 +806,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             {
                                 Cheevo.SetActive(false);
 
-                                size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+                                const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
                                 ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
                                 if (nIndex < g_pActiveAchievements->NumAchievements())
                                 {
@@ -830,7 +831,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     if (MessageBox(hDlg, TEXT("Activate all achievements?"), TEXT("Activate Achievements"), MB_YESNO) == IDYES)
                     {
                         HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                        int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
                         for (size_t nIndex = 0; nIndex < g_pActiveAchievements->NumAchievements(); ++nIndex)
                         {
@@ -871,7 +872,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         iSelect = pLVInfo->iItem;
                         if ((pLVInfo->uNewState &= LVIS_SELECTED) != 0)
                         {
-                            int nNewIndexSelected = pLVInfo->iItem;
+                            const int nNewIndexSelected = pLVInfo->iItem;
                             Achievement& Cheevo = g_pActiveAchievements->GetAchievement(nNewIndexSelected);
                             g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
 
@@ -926,10 +927,10 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     int nLbxItemsChecked[nMaxUploadLimit];
 
     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
     if (nSel != -1)
     {
-        Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
+        const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
         nLbxItemsChecked[0] = nSel;
         nIDsChecked[0] = Ach.ID();
 
@@ -967,7 +968,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
         {
             Achievement& NextAch = g_pActiveAchievements->GetAchievement(nLbxItemsChecked[i]);
 
-            BOOL bMovedFromUserToUnofficial = (g_nActiveAchievementSet == AchievementSet::Type::Local);
+            const BOOL bMovedFromUserToUnofficial = (g_nActiveAchievementSet == AchievementSet::Type::Local);
 
             unsigned int nFlags = 1 << 0;	//	Active achievements! : 1
             if (g_nActiveAchievementSet == AchievementSet::Type::Core)
@@ -1008,7 +1009,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                         NextAch.SetModified(FALSE);
 
                         //	Reverse find where I am in the list:
-                        size_t nIndex = g_pActiveAchievements->GetAchievementIndex(*g_AchievementEditorDialog.ActiveAchievement());
+                        const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(*g_AchievementEditorDialog.ActiveAchievement());
                         ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
                         if (nIndex < g_pActiveAchievements->NumAchievements())
                         {
@@ -1125,7 +1126,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
 
 void Dlg_Achievements::OnGet_Achievement(const Achievement& ach)
 {
-    size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
+    const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
 
     if (g_nActiveAchievementSet == AchievementSet::Type::Core)
         OnEditData(nIndex, Achieved, "Yes");
@@ -1137,7 +1138,7 @@ void Dlg_Achievements::OnGet_Achievement(const Achievement& ach)
 
 void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
 {
-    size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
+    const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
     ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
     if (nIndex < g_pActiveAchievements->NumAchievements())
     {
@@ -1161,7 +1162,7 @@ void Dlg_Achievements::ReloadLBXData(int nOffset)
     //const char* g_sColTitles[]			= { "ID", "Title", "Author", "Achieved?", "Modified?" };
     //const char* g_sColTitlesUnofficial[]  = { "ID", "Title", "Author", "Active", "Votes" };
 
-    Achievement& Ach = g_pActiveAchievements->GetAchievement(nOffset);
+    const Achievement& Ach = g_pActiveAchievements->GetAchievement(nOffset);
     if (g_nActiveAchievementSet == AchievementSet::Type::Core)
     {
         OnEditData(nOffset, Dlg_Achievements::Title, Ach.Title());

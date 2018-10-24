@@ -163,5 +163,6 @@
     <ClInclude Include="mocks\MockGameContext.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\pch.h" />
   </ItemGroup>
 </Project>

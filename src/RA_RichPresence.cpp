@@ -141,7 +141,7 @@ std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
 
         if (!part.m_memValue.IsEmpty())
         {
-            unsigned int nValue = part.m_memValue.GetValue();
+            const unsigned int nValue = part.m_memValue.GetValue();
 
             if (part.m_pLookup != nullptr)
                 sResult.append(part.m_pLookup->GetText(nValue));
@@ -222,7 +222,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
-                size_t nIndex = sLine.find('=');
+                const size_t nIndex = sLine.find('=');
                 if (nIndex == std::string::npos)
                     continue;
 
@@ -266,7 +266,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 
                 if (sLine[0] == '?')
                 {
-                    size_t nIndex = sLine.find('?', 1);
+                    const size_t nIndex = sLine.find('?', 1);
                     if (nIndex != std::string::npos)
                     {
                         std::string sCondition(sLine, 1, nIndex - 1);

@@ -8,6 +8,7 @@
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
 #include "services\impl\ThreadPool.hh"
+#include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 
@@ -82,6 +83,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
+
+    auto* pClipboard = new ra::services::impl::WindowsClipboard();
+    ra::services::ServiceLocator::Provide<ra::services::IClipboard>(pClipboard);
 
     auto* pDesktop = new ra::ui::win32::Desktop();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);

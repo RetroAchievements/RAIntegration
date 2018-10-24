@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ViewModelBase.hh"
+#include "ra_utility.h"
 
 namespace ra {
 namespace ui {
@@ -32,6 +33,15 @@ enum class DialogResult
 class WindowViewModelBase : public ViewModelBase
 {
 public:
+    ~WindowViewModelBase() noexcept = default;
+    WindowViewModelBase(const WindowViewModelBase&) = delete;
+    WindowViewModelBase& operator=(const WindowViewModelBase&) = delete;
+
+    WindowViewModelBase(WindowViewModelBase&&) 
+        noexcept(std::is_nothrow_move_constructible_v<ViewModelBase>) = default;
+
+    WindowViewModelBase& operator=(WindowViewModelBase&&) noexcept = default;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the window title.
     /// </summary>
@@ -55,13 +65,13 @@ public:
     /// <summary>
     /// Gets the dialog result.
     /// </summary>
-    const DialogResult GetDialogResult() const { return static_cast<DialogResult>(GetValue(DialogResultProperty)); }
+    const DialogResult GetDialogResult() const { return itoe<DialogResult>(GetValue(DialogResultProperty)); }
 
     /// <summary>
     /// Sets the dialog result.
     /// </summary>
     /// <remarks>Setting this to anything other than 'None' will cause the window to close.</remarks>
-    void SetDialogResult(DialogResult nValue) { SetValue(DialogResultProperty, static_cast<int>(nValue)); }
+    void SetDialogResult(DialogResult nValue) { SetValue(DialogResultProperty, etoi(nValue)); }
 
     /// <summary>
     /// Shows a window for this view model.
@@ -74,7 +84,7 @@ public:
     DialogResult ShowModal();
 
 protected:
-    WindowViewModelBase() noexcept = default;
+    WindowViewModelBase() noexcept(std::is_nothrow_default_constructible_v<ViewModelBase>) = default;
 };
 
 } // namespace ui

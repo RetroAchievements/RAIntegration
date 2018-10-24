@@ -63,9 +63,6 @@
     <ClCompile Include="..\src\RA_md5factory.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="UI_ModelProperty_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\ModelProperty.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -74,15 +71,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="UI_ViewModelBase_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI_WindowViewModelBase_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp">
-      <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>Code</Filter>
@@ -118,6 +106,24 @@
       <Filter>Tests\Services</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ModelProperty_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\WindowViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\pch.cpp">
@@ -160,8 +166,8 @@
     <ClInclude Include="mocks\MockLocalStorage.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\pch.h">
-      <Filter>Code</Filter>
+    <ClInclude Include="mocks\MockGameContext.hh">
+      <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>

@@ -22,6 +22,10 @@ class IConfiguration
 {
 public:
     virtual ~IConfiguration() noexcept = default;
+    IConfiguration(const IConfiguration&) noexcept = delete;
+    IConfiguration& operator=(const IConfiguration&) noexcept = delete;
+    IConfiguration(IConfiguration&&) noexcept = delete;
+    IConfiguration& operator=(IConfiguration&&) noexcept = delete;
 
     /// <summary>
     /// Gets the user name to use for automatic login.
@@ -90,6 +94,9 @@ public:
     /// Saves the current configuration so it can be used in a future session.
     /// </summary>
     virtual void Save() const = 0;
+
+protected:
+    IConfiguration() noexcept = default;
 };
 
 } // namespace services

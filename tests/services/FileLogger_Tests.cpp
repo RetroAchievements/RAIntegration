@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "services\impl\FileLogger.hh"
 
 #include "tests\mocks\MockClock.hh"

@@ -75,9 +75,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -186,6 +183,12 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
     <ClCompile Include="data\GameContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -234,9 +237,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
@@ -423,6 +423,18 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClipboard.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsClipboard.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="data\GameContext.hh">

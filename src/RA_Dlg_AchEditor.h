@@ -34,7 +34,6 @@ class Dlg_AchievementEditor
 {
 public:
     Dlg_AchievementEditor();
-    ~Dlg_AchievementEditor();
 
 public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);

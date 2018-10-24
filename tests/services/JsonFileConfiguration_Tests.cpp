@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "services\impl\JsonFileConfiguration.hh"
 
 #include "tests\RA_UnitTestHelpers.h"

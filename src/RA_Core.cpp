@@ -19,7 +19,6 @@
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
 
 #include "data\GameContext.hh"
@@ -34,6 +33,7 @@
 // for SubmitEntry callback
 #include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
+#include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -400,6 +400,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_bRAMTamperedWith = false;
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
     g_PopupWindows.LeaderboardPopups().Reset();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().SetGameHash(sCurrentROMMD5);
 
     if (nGameID != 0)
     {
@@ -1059,7 +1061,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_GETROMCHECKSUM:
         {
-            RA_Dlg_RomChecksum::DoModalDialog();
+            ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
+            vmGameChecksum.ShowModal();
             break;
         }
 

@@ -226,8 +226,9 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
 
         RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
-        assert(!sPostData.empty());
-        sPostData += "&r=";
+        if (!sPostData.empty())
+            sPostData.push_back('&');
+        sPostData += "r=";
         sPostData += RequestTypeToPost[nType];
     }
 

@@ -158,12 +158,21 @@
     <ClInclude Include="mocks\MockClock.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="mocks\MockDesktop.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockLocalStorage.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClCompile Include="services\Http_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\Http.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockThreadPool.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockGameContext.hh">

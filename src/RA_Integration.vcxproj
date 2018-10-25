@@ -78,11 +78,13 @@
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
+    <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
@@ -140,10 +142,12 @@
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
+    <ClInclude Include="services\IHttpRequester.hh" />
     <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
@@ -160,6 +164,7 @@
     <ClInclude Include="services\impl\WindowsClipboard.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh" />
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />

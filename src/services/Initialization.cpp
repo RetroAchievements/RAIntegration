@@ -11,6 +11,7 @@
 #include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsHttpRequester.hh"
 
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
@@ -79,6 +80,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pThreadPool = new ra::services::impl::ThreadPool();
     pThreadPool->Initialize(pConfiguration->GetNumBackgroundThreads());
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(pThreadPool);
+
+    auto* pHttpRequester = new ra::services::impl::WindowsHttpRequester();
+    ra::services::ServiceLocator::Provide<ra::services::IHttpRequester>(pHttpRequester);
 
     auto* pGameContext = new ra::data::GameContext();
     ra::services::ServiceLocator::Provide<ra::data::GameContext>(pGameContext);

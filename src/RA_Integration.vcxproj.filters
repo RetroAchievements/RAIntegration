@@ -183,6 +183,12 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -424,6 +430,15 @@
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IHttpRequester.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Http.hh">
+      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
       <Filter>UI\ViewModels</Filter>

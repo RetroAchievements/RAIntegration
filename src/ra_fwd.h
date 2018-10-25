@@ -2,12 +2,9 @@
 #define RA_FWD_H
 #pragma once
 
-// Forward declaring namespace std caused problems
-#include <xstring>
-
-// Maybe an extra check just in-case
 #define _NORETURN            [[noreturn]]
 
+/* Maybe an extra check just in-case */
 #if _HAS_CXX17
 #define _DEPRECATED          [[deprecated]]
 #define _DEPRECATEDR(reason) [[deprecated(reason)]]
@@ -33,17 +30,44 @@ using TCHAR = char;
 using TCHAR = wchar_t;
 #else 
 #error Unknown character set detected, only MultiByte and Unicode are supported!
-#endif // _MBCS
+#endif /* _MBCS */
 #define _TCHAR_DEFINED
-#endif // !_TCHAR_DEFINED
+#endif /* !_TCHAR_DEFINED */
 
 #ifndef _WINDEF_
-using DWORD  = unsigned long;
-using LPVOID = void*;
+struct HBITMAP__;
+struct HDC__;
+struct HPEN__;
+struct HBRUSH__;
+struct HWND__;
+struct HINSTANCE__;
+
+using HBITMAP = HBITMAP__*;
+using HDC     = HDC__*;
+using HPEN    = HPEN__*;
+using HBRUSH  = HBRUSH__*;
+
+using HWND      = HWND__*;
+using HINSTANCE = HINSTANCE__*;
+using HMODULE   = HINSTANCE__*;
+
+struct tagRECT;
+struct tagSIZE;
+using RECT = tagRECT;
+using SIZE = tagSIZE;
+
+using BOOL    = int;
+using BYTE    = unsigned char;
+using DWORD   = unsigned long;
+using HGDIOBJ = void*;
+using LPVOID  = void*;
+using WORD    = unsigned short;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
-using HANDLE = void*;
+using HANDLE  = void*;
+using LPCTSTR = const TCHAR*;
+using LPTSTR  = TCHAR*;
 #endif // !_WINNT_
 
 namespace ra {
@@ -54,7 +78,6 @@ using ARGB          = DWORD;
 using ByteAddress   = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
-using GameID        = std::size_t;
 
 } /* namespace ra */
 

@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_Achievement.h"
 #include "RA_UnitTestHelpers.h"
 
@@ -17,8 +15,6 @@ public:
     class AchievementHarness : public Achievement
     {
     public:
-        AchievementHarness() : Achievement(AchievementSetType::Core) {}
-
         void ParseTrigger(const char* pTrigger) { Achievement::ParseTrigger(pTrigger); }
 
         void SetState(size_t nGroup, size_t nCondition, unsigned nHits, unsigned nSrcValue, unsigned nSrcPrev, unsigned nCmpValue, unsigned nCmpPrev)
@@ -802,8 +798,7 @@ public:
 
     TEST_METHOD(TestStateEmpty)
     {
-        Achievement ach(AchievementSetType::Local);
-        std::string sState = ach.CreateStateString("user1");
+        std::string sState = Achievement{}.CreateStateString("user1");
 
         Assert::AreEqual(std::string("0:0:a9bf5b6918bb43ec1d430f09d6606fbd:d41d8cd98f00b204e9800998ecf8427e:"), sState);
     }
@@ -938,8 +933,8 @@ public:
 
         // if achievement has changed, achievement checksum will fail and achievement should
         // just be reset (which only affects hitcount)
-        ach.GetCondition(0, 0).CompSource().Set(ComparisonVariableSize::EightBit,
-            ComparisonVariableType::Address, 0x2345U);
+        ach.GetCondition(0, 0).CompSource().Set(MemSize::EightBit,
+            CompVariable::Type::Address, 0x2345U);
         
         const char* pIter = sState.c_str();
         ach.ParseStateString(pIter, "user1");

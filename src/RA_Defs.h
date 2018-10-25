@@ -2,76 +2,28 @@
 #define RA_DEFS_H
 #pragma once
 
-// Windows stuff we DO need, they are commented out to show we need them, if for
-// some reason you get a compiler error put the offending NO* define here
-/*
-    #define NOCOLOR
-    #define NOCLIPBOARD - gave an error when put in the pch
-    #define NOCTLMGR
-    #define NODRAWTEXT
-    #define NOGDI
-    #define NOMB
-    #define NOMENUS
-    #define NOMSG
-    #define NONLS
-    #define NOOPENFILE
-    #define NORASTEROPS
-    #define NOSHOWWINDOW
-    #define NOTEXTMETRIC
-    #define NOUSER
-    #define NOVIRTUALKEYCODES
-    #define NOWINMESSAGES
-    #define NOWINOFFSETS
-    #define NOWINSTYLES
-*/
+#include "ra_utility.h"
 
-
-// Windows stuff we don't need
-#define WIN32_LEAN_AND_MEAN
-#define NOGDICAPMASKS
-#define NOSYSMETRICS
-#define NOICONS
-#define NOKEYSTATES
-#define NOSYSCOMMANDS
-#define OEMRESOURCE
-#define NOATOM
-#define NOKERNEL
-#define NOMEMMGR
-#define NOMETAFILE
-#define NOMINMAX
-#define NOSCROLL
-#define NOSERVICE
-#define NOSOUND
-#define NOWH
-#define NOCOMM
-#define NOKANJI
-#define NOHELP
-#define NOPROFILER
-#define NODEFERWINDOWPOS
-#define NOMCX  
-
-struct IUnknown;
+#if !(RA_EXPORTS || RA_UTEST)
+#include "windows_nodefines.h"
 #include <Windows.h>
 #include <WindowsX.h>
 
 #pragma warning(push)
-#pragma warning(disable : 4091) // 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
+#pragma warning(disable : 4091)
 #include <ShlObj.h>
 #pragma warning(pop)
 
 #include <tchar.h>
 
+#include <cassert> 
+
 #include <map>
 #include <array> // algorithm, iterator, tuple
 #include <sstream> // string
 #include <queue> // deque, vector, algorithm
-#include "ra_utility.h"
 
-
-#if !RA_EXPORTS
-#include <cassert> 
 //	Version Information is integrated into tags
-
 #else
 
 #include "RA_Log.h"
@@ -80,6 +32,10 @@ struct IUnknown;
 
 //	RA-Only
 using namespace std::string_literals;
+_CONSTANT_VAR BUFSIZ{ 512U }; // ANSI buffer size
+_CONSTANT_VAR BYTESTRING_BUFSIZ{ BUFSIZ*4U }; // should be the same for MultiByte
+_CONSTANT_VAR WIDESTRING_BUFSIZ{ BUFSIZ*8U };
+_CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
 #endif	// RA_EXPORTS
 
 #define RA_DIR_OVERLAY					L"Overlay\\"
@@ -200,8 +156,6 @@ public:
     }
 };
 
-extern BOOL DirectoryExists(const char* sPath);
-
 const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
@@ -223,33 +177,20 @@ const int SERVER_PING_DURATION = 2 * 60;
 #define UNUSED( x ) ( x );
 #endif
 
+#include "RA_StringUtils.h"
+
+#include "ra_fwd.h"
+
 namespace ra {
-
-_NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
-_NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
-_NODISCARD std::wstring Widen(_In_ const std::string& str);
-_NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
-_NODISCARD std::wstring Widen(_In_z_ const char* str);
-
-//	No-ops to help convert:
-_NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
-_NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_In_z_ const char* str);
-_NODISCARD std::string Narrow(_In_ const std::string& wstr);
-_NODISCARD std::string ByteAddressToString(_In_ ra::ByteAddress nAddr);
-
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 } // namespace ra
 
-
-
-
-#ifdef UNICODE
-#define NativeStr(x) ra::Widen(x)
-#define NativeStrType std::wstring
+#if _MBCS
+_CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
+#elif _UNICODE
+_CONSTANT_VAR RA_MAX_PATH{ 32767 }; // Unicode max path
 #else
-#define NativeStr(x) ra::Narrow(x)
-#define NativeStrType std::string
-#endif
+#error Unknown character set detected!
+#endif /* _MBCS */
 
 #endif // !RA_DEFS_H

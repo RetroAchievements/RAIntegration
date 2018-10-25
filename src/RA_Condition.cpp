@@ -2,35 +2,29 @@
 
 #include "RA_Defs.h"
 
-#include <cctype>
-
-const char* COMPARISONVARIABLESIZE_STR[] = { "Bit0", "Bit1", "Bit2", "Bit3", "Bit4", "Bit5", "Bit6", "Bit7", "Lower4", "Upper4", "8-bit", "16-bit", "32-bit" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLESIZE_STR) == NumComparisonVariableSizeTypes, "Must match!");
-const char* COMPARISONVARIABLETYPE_STR[] = { "Memory", "Value", "Delta", "DynVar" };
-static_assert(SIZEOF_ARRAY(COMPARISONVARIABLETYPE_STR) == NumComparisonVariableTypes, "Must match!");
-const char* COMPARISONTYPE_STR[] = { "=", "<", "<=", ">", ">=", "!=" };
+const char* COMPARISONTYPE_STR[] ={ "=", "<", "<=", ">", ">=", "!=" };
 static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] = { "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
+const char* CONDITIONTYPE_STR[] ={ "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
 static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
-static const char* ComparisonSizeToPrefix(ComparisonVariableSize nSize)
+_NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
     {
-        case Bit_0:			return "M";
-        case Bit_1:			return "N";
-        case Bit_2:			return "O";
-        case Bit_3:			return "P";
-        case Bit_4:			return "Q";
-        case Bit_5:			return "R";
-        case Bit_6:			return "S";
-        case Bit_7:			return "T";
-        case Nibble_Lower:	return "L";
-        case Nibble_Upper:	return "U";
-        case EightBit:		return "H";
-        case ThirtyTwoBit:	return "X";
+        case MemSize::Bit_0:        return "M";
+        case MemSize::Bit_1:        return "N";
+        case MemSize::Bit_2:        return "O";
+        case MemSize::Bit_3:        return "P";
+        case MemSize::Bit_4:        return "Q";
+        case MemSize::Bit_5:        return "R";
+        case MemSize::Bit_6:        return "S";
+        case MemSize::Bit_7:        return "T";
+        case MemSize::Nibble_Lower: return "L";
+        case MemSize::Nibble_Upper: return "U";
+        case MemSize::EightBit:     return "H";
+        case MemSize::ThirtyTwoBit: return "X";
         default:
-        case SixteenBit:	return " ";
+        case MemSize::SixteenBit:   return " ";
     }
 }
 
@@ -38,13 +32,13 @@ static const char* ComparisonTypeToStr(ComparisonType nType)
 {
     switch (nType)
     {
-        case Equals:				return "=";
-        case GreaterThan:			return ">";
-        case GreaterThanOrEqual:	return ">=";
-        case LessThan:				return "<";
-        case LessThanOrEqual:		return "<=";
-        case NotEqualTo:			return "!=";
-        default:					return "";
+        case Equals:                return "=";
+        case GreaterThan:           return ">";
+        case GreaterThanOrEqual:    return ">=";
+        case LessThan:              return "<";
+        case LessThanOrEqual:       return "<=";
+        case NotEqualTo:            return "!=";
+        default:                    return "";
     }
 }
 
@@ -85,21 +79,22 @@ void Condition::SerializeAppend(std::string& buffer) const
     }
 }
 
+_Use_decl_annotations_
 void CompVariable::SerializeAppend(std::string& buffer) const
 {
     char valueBuffer[20];
     switch (m_nVarType)
     {
-        case ValueComparison:
+        case Type::ValueComparison:
             sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
             buffer.append(valueBuffer);
             break;
 
-        case DeltaMem:
+        case Type::DeltaMem:
             buffer.append(1, 'd');
             // explicit fallthrough to Address
 
-        case Address:
+        case Type::Address:
             buffer.append("0x");
 
             buffer.append(ComparisonSizeToPrefix(m_nVarSize));

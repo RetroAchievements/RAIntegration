@@ -2,7 +2,7 @@
 #define RA_CODENOTES_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
 
 class CodeNotes
 {
@@ -29,9 +29,9 @@ public:
 public:
     void Clear() noexcept;
 
-    size_t Load(const std::wstring& sFile);
+    size_t Load(unsigned int nID);
 
-    BOOL ReloadFromWeb(ra::GameID nID);
+    BOOL ReloadFromWeb(unsigned int nID);
     static void OnCodeNotesResponse(rapidjson::Document& doc);
 
     void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);

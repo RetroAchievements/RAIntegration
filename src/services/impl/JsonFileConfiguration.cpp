@@ -3,7 +3,8 @@
 #include "RA_Json.h"
 #include "RA_Log.h"
 
-#include <fstream>
+#include "services\IFileSystem.hh"
+#include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace services {
@@ -26,19 +27,16 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         (1 << static_cast<int>(Feature::LeaderboardCounters)) |
         (1 << static_cast<int>(Feature::LeaderboardScoreboards));
 
-    RA_LOG(__FUNCTION__ " - loading preferences...\n");
+    RA_LOG("Loading preferences...");
 
-    std::ifstream ifile{ sFilename };
-    if (!ifile.is_open())
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto pReader = pFileSystem.OpenTextFile(m_sFilename);
+    if (pReader == nullptr)
         return false;
 
-    rapidjson::IStreamWrapper isw(ifile);
     rapidjson::Document doc;
-    doc.ParseStream(isw);
-    if (doc.HasParseError())
+    if (!LoadDocument(doc, *pReader))
         return false;
-
-    m_vEnabledFeatures = 0;
 
     if (doc.HasMember("Username"))
         m_sUsername = doc["Username"].GetString();
@@ -91,11 +89,11 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 
 void JsonFileConfiguration::Save() const
 {
-    RA_LOG(__FUNCTION__ " - saving preferences...\n");
+    RA_LOG("Saving preferences...");
 
     if (m_sFilename.empty())
     {
-        RA_LOG(__FUNCTION__ " - aborting save, we don't know where to write...\n");
+        RA_LOG(" - Aborting save, we don't know where to write...");
         return;
     }
 
@@ -136,7 +134,10 @@ void JsonFileConfiguration::Save() const
     if (positions.MemberCount() > 0)
         doc.AddMember("Window Positions", positions.Move(), a);
 
-    _WriteBufferToFile(m_sFilename, doc);
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto pWriter = pFileSystem.CreateTextFile(m_sFilename);
+    if (pWriter != nullptr)
+        SaveDocument(doc, *pWriter);
 }
 
 bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const
@@ -180,6 +181,21 @@ ra::ui::Size JsonFileConfiguration::GetWindowSize(const std::string & sPositionK
 void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, const ra::ui::Size & oSize)
 {
     m_mWindowPositions[sPositionKey].oSize = oSize;
+}
+
+const std::string& JsonFileConfiguration::GetHostName() const
+{
+    if (m_sHostName.empty())
+    {
+        auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().OpenTextFile(L"host.txt");
+        if (pFile != nullptr)
+            pFile->GetLine(m_sHostName);
+
+        if (m_sHostName.empty())
+            m_sHostName = "retroachievements.org";
+    }
+
+    return m_sHostName;
 }
 
 } // namespace impl

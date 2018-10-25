@@ -13,12 +13,8 @@
 
 #include <ctime>
 
-RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) :
+RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept :
     m_nID(nLeaderboardID)
-{
-}
-
-RA_Leaderboard::~RA_Leaderboard()
 {
 }
 

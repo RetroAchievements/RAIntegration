@@ -3,7 +3,7 @@
 #pragma once
 
 #include "RA_Condition.h"
-#include "RA_Defs.h"
+#include "ra_utility.h"
 
 #include <memory>
 
@@ -11,34 +11,26 @@
 //	Achievement
 //////////////////////////////////////////////////////////////////////////
 
-enum AchievementSetType
-{
-    Core,
-    Unofficial,
-    Local,
-
-    NumAchievementSetTypes
-};
-
-enum Achievement_DirtyFlags
-{
-    Dirty_Title = 1 << 0,
-    Dirty_Desc = 1 << 1,
-    Dirty_Points = 1 << 2,
-    Dirty_Author = 1 << 3,
-    Dirty_ID = 1 << 4,
-    Dirty_Badge = 1 << 5,
-    Dirty_Conditions = 1 << 6,
-    Dirty_Votes = 1 << 7,
-    Dirty_Description = 1 << 8,
-
-    Dirty__All = (unsigned int)(-1)
-};
-
 class Achievement
 {
 public:
-    Achievement(AchievementSetType nType);
+    enum class DirtyFlags
+    {
+        Clean,
+        Title       = 1 << 0,
+        Desc        = 1 << 1,
+        Points      = 1 << 2,
+        Author      = 1 << 3,
+        ID          = 1 << 4,
+        Badge       = 1 << 5,
+        Conditions  = 1 << 6,
+        Votes       = 1 << 7,
+        Description = 1 << 8,
+
+        All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
+    };
+
+    Achievement() noexcept;
 
 public:
     void Clear();
@@ -62,8 +54,6 @@ public:
 
     inline BOOL GetPauseOnReset() const { return m_bPauseOnReset; }
     void SetPauseOnReset(BOOL bPause) { m_bPauseOnReset = bPause; }
-
-    BOOL IsCoreAchievement() const { return m_nSetType == Core; }
 
     void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const { return m_nAchievementID; }
@@ -122,10 +112,16 @@ public:
 #endif
 
     //	Used for rendering updates when editing achievements. Usually always false.
-    unsigned int GetDirtyFlags() const { return m_nDirtyFlags; }
-    BOOL IsDirty() const { return (m_nDirtyFlags != 0); }
-    void SetDirtyFlag(unsigned int nFlags) { m_nDirtyFlags |= nFlags; }
-    void ClearDirtyFlag() { m_nDirtyFlags = 0; }
+    _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
+    _NODISCARD _CONSTANT_FN IsDirty() const { return (m_nDirtyFlags != DirtyFlags{}); }
+
+    _CONSTANT_FN SetDirtyFlag(_In_ DirtyFlags nFlags) noexcept
+    {
+        using namespace ra::bitwise_ops;
+        m_nDirtyFlags |= nFlags;
+    }
+
+    _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = DirtyFlags{}; }
 
     void RebuildTrigger();
 
@@ -136,8 +132,6 @@ protected:
     std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
 
 private:
-    /*const*/ AchievementSetType m_nSetType;
-
     ra::AchievementID m_nAchievementID;
 
     ConditionSet                      m_vConditions;        //  UI wrappers for trigger
@@ -147,28 +141,28 @@ private:
     std::string m_sAuthor;
     std::string m_sBadgeImageURI;
 
-    unsigned int m_nPointValue;
-    BOOL m_bActive;
-    BOOL m_bModified;
-    BOOL m_bPauseOnTrigger;
-    BOOL m_bPauseOnReset;
+    unsigned int m_nPointValue{};
+    BOOL m_bActive{};
+    BOOL m_bModified{};
+    BOOL m_bPauseOnTrigger{};
+    BOOL m_bPauseOnReset{};
 
     //	Progress:
-    BOOL m_bProgressEnabled;	//	on/off
+    BOOL m_bProgressEnabled{};	//	on/off
 
     std::string m_sProgress;	//	How to calculate the progress so far (syntactical)
     std::string m_sProgressMax;	//	Upper limit of the progress (syntactical? value?)
     std::string m_sProgressFmt;	//	Format of the progress to be shown (currency? step?)
 
-    float m_fProgressLastShown;	//	The last shown progress
+    float m_fProgressLastShown{};	//	The last shown progress
 
-    unsigned int m_nDirtyFlags;	//	Use for rendering when editing.
+    DirtyFlags m_nDirtyFlags{};	//	Use for rendering when editing.
 
-    time_t m_nTimestampCreated;
-    time_t m_nTimestampModified;
+    time_t m_nTimestampCreated{};
+    time_t m_nTimestampModified{};
 
-    unsigned short m_nUpvotes;
-    unsigned short m_nDownvotes;
+    unsigned short m_nUpvotes{};
+    unsigned short m_nDownvotes{};
 };
 
 #endif // !RA_ACHIEVEMENT_H

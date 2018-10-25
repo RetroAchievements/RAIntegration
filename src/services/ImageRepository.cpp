@@ -1,11 +1,11 @@
 #include "ImageRepository.h"
 
 #include "RA_Core.h"
-#include "RA_Defs.h"
 #include "RA_httpthread.h"
 
-#include <atlbase.h>
-#include <wincodec.h>
+#include "services\Http.hh"
+#include "services\IFileSystem.hh"
+#include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace services {
@@ -18,7 +18,7 @@ ImageRepository g_ImageRepository;
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
 static bool g_bImageRepositoryValid = false;
 
-ImageReference::~ImageReference()
+ImageReference::~ImageReference() noexcept
 {
     Release();
 }
@@ -65,7 +65,7 @@ HBITMAP ImageReference::GetHBitmap() const
     return g_ImageRepository.DefaultImage(m_nType);
 }
 
-void ImageReference::Release()
+void ImageReference::Release() noexcept
 {
     if (m_hBitmap != nullptr && g_bImageRepositoryValid)
         g_ImageRepository.ReleaseReference(m_nType, m_sName);
@@ -108,15 +108,15 @@ bool ImageRepository::Initialize()
     return SUCCEEDED(hr);
 }
 
-ImageRepository::~ImageRepository()
+ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
-    for (HBitmapMap::iterator iter = m_mBadges.begin(); iter != m_mBadges.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& badge : m_mBadges)
+        DeleteBitmap(badge.second.m_hBitmap);
     m_mBadges.clear();
 
-    for (HBitmapMap::iterator iter = m_mUserPics.begin(); iter != m_mUserPics.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& userPic : m_mUserPics)
+        DeleteBitmap(userPic.second.m_hBitmap);
     m_mUserPics.clear();
 
     // prevent errors disposing ImageReferences after the repository is disposed.
@@ -155,29 +155,52 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     if (_FileExists(sFilename))
         return;
 
-    RequestType nRequestType;
-    PostArgs args;
+    // check to see if it's already queued
+    {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+        if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
+            return;
 
+        m_vRequestedImages.emplace(sFilename);
+    }
+
+    // fetch it
+    std::string sUrl;
     switch (nType)
     {
         case ImageType::Badge:
-            nRequestType = RequestBadge;
-            args['b'] = sName;
+            sUrl = "http://i.retroachievements.org/Badge/";
             break;
-
         case ImageType::UserPic:
-            nRequestType = RequestUserPic;
-            args['u'] = sName;
+            sUrl = _RA_HostName();
+            sUrl += "/UserPic/";
             break;
-
         default:
             ASSERT(!"Unsupported image type");
             return;
     }
+    sUrl += sName;
+    sUrl += ".png";
 
-    // Prevent duplicate requests
-    if (!RAWeb::HTTPRequestExists(nRequestType, sName) && !RAWeb::HTTPResponseExists(nRequestType, sName))
-        RAWeb::CreateThreadedHTTPRequest(nRequestType, args, sName);
+    RA_LOG_INFO("Downloading %s", sUrl.c_str());
+
+    Http::Request request(sUrl);
+    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const Http::Response& response)
+    {
+        if (response.StatusCode() == 200)
+        {
+            RA_LOG_INFO("Wrote %zu bytes to %s", ServiceLocator::Get<IFileSystem>().GetFileSize(sFilename), ra::Narrow(sFilename).c_str());
+        }
+        else
+        {
+            RA_LOG_WARN("Error %u fetching %s", response.StatusCode(), sUrl.c_str());
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(m_oMutex);
+            m_vRequestedImages.erase(sFilename);
+        }
+    });
 }
 
 HBITMAP ImageRepository::DefaultImage(ImageType nType)
@@ -241,7 +264,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
     return hr;
 }
 
-static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Out_ HBITMAP& hBitmapInOut)
+static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Inout_ HBITMAP& hBitmapInOut)
 {
     // Get BitmapSource format and size
     WICPixelFormatGUID pixelFormat;
@@ -300,7 +323,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapS
         hr = UIntMult(cbStride, nHeight, &cbImage);
 
     // Extract the image into the HBITMAP    
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && pvImageBits)
     {
         hr = pToRenderBitmapSource->CopyPixels(
             //hr = IWICBitmapSource_CopyPixels( pToRenderBitmapSource,
@@ -420,7 +443,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
     return hBitmap;
 }
 
-void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName)
+void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName) noexcept
 {
     HBitmapMap* mMap = GetBitmapMap(nType);
     if (mMap != nullptr)

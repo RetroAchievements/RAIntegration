@@ -4,14 +4,15 @@
 
 #include "ra_fwd.h"
 
-#include <memory>
-#include <vector>
-
 class RA_Leaderboard
 {
 public:
-    RA_Leaderboard(const ra::LeaderboardID nLBID);
-    ~RA_Leaderboard();
+    explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept;
+    virtual ~RA_Leaderboard() noexcept = default;
+    RA_Leaderboard(const RA_Leaderboard&) noexcept = delete;
+    RA_Leaderboard& operator=(const RA_Leaderboard&) noexcept = delete;
+    RA_Leaderboard(RA_Leaderboard&&) noexcept = default;
+    RA_Leaderboard& operator=(RA_Leaderboard&&) noexcept = default;
 
     void ParseFromString(const char* sBuffer, const char* sFormat);
 
@@ -33,7 +34,7 @@ public:
     struct Entry
     {
         unsigned int m_nRank;
-        std::string	 m_sUsername;
+        std::string m_sUsername;
         int m_nScore;
         time_t m_TimeAchieved;
     };

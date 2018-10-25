@@ -3,6 +3,8 @@
 #include "RA_MemManager.h"
 #include "RA_md5factory.h"
 
+#include "RA_Defs.h"
+
 #ifndef RA_UTEST
 #include "RA_ImageFactory.h"
 #endif
@@ -30,8 +32,7 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 //////////////////////////////////////////////////////////////////////////
 
-Achievement::Achievement(AchievementSetType nType) :
-    m_nSetType(nType), m_bPauseOnTrigger(FALSE), m_bPauseOnReset(FALSE)
+Achievement::Achievement() noexcept
 {
     Clear();
 
@@ -58,8 +59,6 @@ void Achievement::Parse(const rapidjson::Value& element)
         const char* sMem = element["MemAddr"].GetString();
         ParseTrigger(sMem);
     }
-
-    SetActive(m_pTrigger && IsCoreAchievement());	//	Activate core by default
 }
 #endif
 
@@ -69,29 +68,29 @@ void Achievement::RebuildTrigger()
     m_vConditions.Serialize(sTrigger);
 
     ParseTrigger(sTrigger.c_str());
-    SetDirtyFlag(Dirty_Conditions);
+    SetDirtyFlag(DirtyFlags::Conditions);
 }
 
-static ComparisonVariableSize GetCompVariableSize(char nOperandSize)
+static MemSize GetCompVariableSize(char nOperandSize)
 {
     switch (nOperandSize)
     {
-        case RC_OPERAND_BIT_0: return ComparisonVariableSize::Bit_0;
-        case RC_OPERAND_BIT_1: return ComparisonVariableSize::Bit_1;
-        case RC_OPERAND_BIT_2: return ComparisonVariableSize::Bit_2;
-        case RC_OPERAND_BIT_3: return ComparisonVariableSize::Bit_3;
-        case RC_OPERAND_BIT_4: return ComparisonVariableSize::Bit_4;
-        case RC_OPERAND_BIT_5: return ComparisonVariableSize::Bit_5;
-        case RC_OPERAND_BIT_6: return ComparisonVariableSize::Bit_6;
-        case RC_OPERAND_BIT_7: return ComparisonVariableSize::Bit_7;
-        case RC_OPERAND_LOW: return ComparisonVariableSize::Nibble_Lower;
-        case RC_OPERAND_HIGH: return ComparisonVariableSize::Nibble_Upper;
-        case RC_OPERAND_8_BITS: return ComparisonVariableSize::EightBit;
-        case RC_OPERAND_16_BITS: return ComparisonVariableSize::SixteenBit;
-        case RC_OPERAND_32_BITS: return ComparisonVariableSize::ThirtyTwoBit;
+        case RC_OPERAND_BIT_0: return MemSize::Bit_0;
+        case RC_OPERAND_BIT_1: return MemSize::Bit_1;
+        case RC_OPERAND_BIT_2: return MemSize::Bit_2;
+        case RC_OPERAND_BIT_3: return MemSize::Bit_3;
+        case RC_OPERAND_BIT_4: return MemSize::Bit_4;
+        case RC_OPERAND_BIT_5: return MemSize::Bit_5;
+        case RC_OPERAND_BIT_6: return MemSize::Bit_6;
+        case RC_OPERAND_BIT_7: return MemSize::Bit_7;
+        case RC_OPERAND_LOW: return MemSize::Nibble_Lower;
+        case RC_OPERAND_HIGH: return MemSize::Nibble_Upper;
+        case RC_OPERAND_8_BITS: return MemSize::EightBit;
+        case RC_OPERAND_16_BITS: return MemSize::SixteenBit;
+        case RC_OPERAND_32_BITS: return MemSize::ThirtyTwoBit;
         default:
             ASSERT(!"Unsupported operand size");
-            return ComparisonVariableSize::EightBit;
+            return MemSize::EightBit;
     }
 }
 
@@ -100,25 +99,25 @@ static void SetOperand(CompVariable& var, rc_operand_t& operand)
     switch (operand.type)
     {
         case RC_OPERAND_ADDRESS:
-            var.Set(GetCompVariableSize(operand.size), ComparisonVariableType::Address, operand.value);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value);
             break;
             
         case RC_OPERAND_DELTA:
-            var.Set(GetCompVariableSize(operand.size), ComparisonVariableType::DeltaMem, operand.value);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value);
             break;
 
         case RC_OPERAND_CONST:
-            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, operand.value);
+            var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, operand.value);
             break;
 
         case RC_OPERAND_FP:
             ASSERT(!"Floating point operand not supported");
-            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, 0U);
+            var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, 0U);
             break;
 
         case RC_OPERAND_LUA:
             ASSERT(!"Lua operand not supported");
-            var.Set(ComparisonVariableSize::ThirtyTwoBit, ComparisonVariableType::ValueComparison, 0U);
+            var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, 0U);
             break;
     }
 }
@@ -319,7 +318,7 @@ bool Achievement::Test()
 #endif
     }
 
-    SetDirtyFlag(Dirty_Conditions);
+    SetDirtyFlag(DirtyFlags::Conditions);
     return bRetVal;
 }
 
@@ -396,6 +395,7 @@ void Achievement::Clear()
 {
     m_vConditions.Clear();
 
+
     m_nAchievementID = 0;
     m_pTriggerBuffer.reset();
     m_pTrigger = nullptr;
@@ -437,7 +437,7 @@ void Achievement::RemoveConditionGroup()
 void Achievement::SetID(ra::AchievementID nID)
 {
     m_nAchievementID = nID;
-    SetDirtyFlag(Dirty_ID);
+    SetDirtyFlag(DirtyFlags::ID);
 }
 
 void Achievement::SetActive(BOOL bActive)
@@ -445,7 +445,7 @@ void Achievement::SetActive(BOOL bActive)
     if (m_bActive != bActive)
     {
         m_bActive = bActive;
-        SetDirtyFlag(ra::etoi(Dirty__All));
+        SetDirtyFlag(DirtyFlags::All);
     }
 }
 
@@ -466,13 +466,13 @@ void Achievement::SetModified(BOOL bModified)
     if (m_bModified != bModified)
     {
         m_bModified = bModified;
-        SetDirtyFlag(ra::etoi(Dirty__All));	//	TBD? questionable...
+        SetDirtyFlag(DirtyFlags::All);	//	TBD? questionable...
     }
 }
 
 void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 {
-    SetDirtyFlag(Dirty_Badge);
+    SetDirtyFlag(DirtyFlags::Badge);
 
     if (sBadgeURI.length() > 5 && strcmp(&sBadgeURI[sBadgeURI.length() - 5], "_lock") == 0)
         m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
@@ -487,7 +487,7 @@ void Achievement::Reset()
         rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
         rc_reset_trigger(pTrigger);
 
-        SetDirtyFlag(Dirty_Conditions);
+        SetDirtyFlag(DirtyFlags::Conditions);
     }
 }
 
@@ -498,7 +498,7 @@ size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCo
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
     group.Add(rNewCond);	//	NB. Copy by value	
-    SetDirtyFlag(ra::etoi(Dirty__All));
+    SetDirtyFlag(DirtyFlags::All);
 
     return group.Count();
 }
@@ -510,7 +510,7 @@ size_t Achievement::InsertCondition(size_t nConditionGroup, size_t nIndex, const
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
     group.Insert(nIndex, rNewCond);	//	NB. Copy by value	
-    SetDirtyFlag(ra::etoi(Dirty__All));
+    SetDirtyFlag(DirtyFlags::All);
 
     return group.Count();
 }
@@ -520,7 +520,7 @@ BOOL Achievement::RemoveCondition(size_t nConditionGroup, unsigned int nID)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).RemoveAt(nID);
-        SetDirtyFlag(ra::etoi(Dirty__All));	//	Not Conditions: 
+        SetDirtyFlag(DirtyFlags::All);	//	Not Conditions: 
         return TRUE;
     }
 
@@ -532,7 +532,7 @@ void Achievement::RemoveAllConditions(size_t nConditionGroup)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).Clear();
-        SetDirtyFlag(ra::etoi(Dirty__All));	//	All - not just conditions
+        SetDirtyFlag(DirtyFlags::All);	//	All - not just conditions
     }
 }
 
@@ -571,7 +571,7 @@ void Achievement::Set(const Achievement& rRHS)
             AddCondition(nGrp, group.GetAt(i));
     }
 
-    SetDirtyFlag(ra::etoi(Dirty__All));
+    SetDirtyFlag(DirtyFlags::All);
 }
 
 //int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )
@@ -955,12 +955,12 @@ const char* Achievement::ParseStateString(const char* sBuffer, const std::string
     }
     else
     {
-        // achievment checksum fail
+        // achievement checksum fail
         bSuccess = false;
     }
 
     if (bSuccess)
-        SetDirtyFlag(Dirty_Conditions);
+        SetDirtyFlag(DirtyFlags::Conditions);
     else
         Reset();
 

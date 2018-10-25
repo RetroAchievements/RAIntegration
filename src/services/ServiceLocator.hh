@@ -2,10 +2,11 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
-#include "RA_Log.h"
+#include "services\ILogger.hh"
 
-#include <assert.h>
-#include <memory>
+#ifndef NDEBUG
+#include "RA_StringUtils.h"
+#endif
 
 namespace ra {
 namespace services {
@@ -38,7 +39,17 @@ public:
     {
         return Service<TClass>::Get();
     }
-    
+
+    /// <summary>
+    /// Determines whether or not a service implementing the requested interface was registered.
+    /// </summary>
+    /// <returns><c>true</c> if an implementation exists, <c>false</c> if not.</returns>
+    template <class TClass>
+    static bool Exists()
+    {
+        return Service<TClass>::Exists();
+    }
+
     /// <summary>
     /// Registers a service implementation for an interface
     /// </summary>
@@ -51,7 +62,7 @@ public:
     {
         Service<TClass>::s_pInstance.reset(pInstance);
     }
-    
+
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
     /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
@@ -64,16 +75,16 @@ public:
     {
     public:
         /// <summary>
-        /// Initializes a new instance of the <see cref="ServiceOverride"/> class.
+        /// Initializes a new instance of the <see cref="ServiceOverride" /> class.
         /// </summary>
         /// <param name="pOverride">A pointer to the temporary implementation.</param>
         /// <param name="bDestroy">
-        /// If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride"/> and deleted 
-        /// when the <see cref="ServiceOverride"/> goes out of scope. This should normally be false, as 
-        /// <paramref name="pOverride"/> will typically be a this pointer to the subclass, or the address of a 
-        /// stack variable.
+        /// If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride" /> and deleted 
+        /// when the <see cref="ServiceOverride" /> goes out of scope. This should normally be false, as 
+        /// <paramref name="pOverride" /> will typically be a this pointer to the subclass, or the address
+        /// of a stack variable.
         /// </param>
-        ServiceOverride(TClass* pOverride, bool bDestroy = false)
+        explicit ServiceOverride(TClass* pOverride, bool bDestroy = false) noexcept
             : m_pPrevious(Service<TClass>::s_pInstance.release()), m_bDestroy(bDestroy)
         {
             Service<TClass>::s_pInstance.reset(pOverride);
@@ -81,32 +92,42 @@ public:
 
         ServiceOverride() = delete;
 
-        ~ServiceOverride()
+        ~ServiceOverride() noexcept
         {
             if (!m_bDestroy)
                 Service<TClass>::s_pInstance.release();
 
             Service<TClass>::s_pInstance.reset(m_pPrevious);
         }
-        
+
+        ServiceOverride(const ServiceOverride&) noexcept = delete;
+        ServiceOverride& operator=(const ServiceOverride&) noexcept = delete;
+        ServiceOverride(ServiceOverride&&) noexcept = delete;
+        ServiceOverride& operator=(ServiceOverride&&) noexcept = delete;
+
     private:
-        TClass* m_pPrevious;
+        TClass * m_pPrevious;
         bool m_bDestroy;
     };
-    
+
 private:
     template <class TClass>
     class Service
     {
     public:
-        static TClass& Get() 
+        static TClass& Get()
         {
             if (s_pInstance == nullptr)
                 ThrowNoServiceProvidedException();
 
             return *s_pInstance.get();
         }
-        
+
+        static bool Exists()
+        {
+            return (s_pInstance != nullptr);
+        }
+
         static std::unique_ptr<TClass> s_pInstance;
 
     private:
@@ -128,7 +149,17 @@ private:
             }
             sMessage.insert(0, "No service provided for ");
 
-            RA_LOG("ERROR: %s\n", sMessage.c_str());
+            if (Service<ra::services::ILogger>::Exists())
+            {
+                const auto& pLogger = Service<ra::services::ILogger>::Get();
+                if (pLogger.IsEnabled(ra::services::LogLevel::Error))
+                    pLogger.LogMessage(ra::services::LogLevel::Error, "ERROR: " + sMessage);
+            }
+
+#ifndef NDEBUG
+            // expanded definition of assert macro so we can use the constructed error message
+            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), static_cast<unsigned int>(__LINE__));
+#endif
 
             throw std::runtime_error(sMessage);
         }

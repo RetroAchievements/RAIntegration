@@ -2,15 +2,17 @@
 #define RA_SERVICES_INITIALIZATION_HH
 #pragma once
 
-#include <string>
-
 namespace ra {
 namespace services {
 
 class Initialization
 {
 public:
-    static void RegisterServices(const std::wstring& sHomeDir, const std::string& sClientName);
+    static void RegisterCoreServices();
+
+    static void RegisterServices(const std::string& sClientName);
+
+    static void Shutdown();
 };
 
 } // namespace services

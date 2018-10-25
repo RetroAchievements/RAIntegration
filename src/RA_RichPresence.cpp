@@ -8,6 +8,11 @@
 #include "rcheevos\include\rcheevos.h"
 #pragma warning (pop)
 
+#include "data\GameContext.hh"
+
+#include "services\ILocalStorage.hh"
+#include "services\ServiceLocator.hh"
+
 RA_RichPresenceInterpreter g_RichPresenceInterpreter;
 
 RA_RichPresenceInterpreter::Lookup::Lookup(const std::string& sDesc)
@@ -185,9 +190,9 @@ std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
     return sResult;
 }
 
-static bool GetLine(std::stringstream& stream, std::string& sLine)
+static bool GetLine(ra::services::TextReader& pReader, std::string& sLine)
 {
-    if (!std::getline(stream, sLine, '\n'))
+    if (!pReader.GetLine(sLine))
         return false;
 
     if (!sLine.empty())
@@ -214,7 +219,25 @@ static bool GetLine(std::stringstream& stream, std::string& sLine)
     return true;
 }
 
-void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
+bool RA_RichPresenceInterpreter::Load()
+{
+    m_vLookups.clear();
+    m_vDisplayStrings.clear();
+
+#ifdef RA_UTEST
+    return false;
+#else
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    if (pRich == nullptr)
+        return false;
+
+    return Load(*pRich.get());
+#endif
+}
+
+bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 {
     m_vLookups.clear();
     m_vDisplayStrings.clear();
@@ -224,9 +247,8 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
 
     std::map<std::string, int> mFormats;
 
-    std::stringstream ssRichPresence(sRichPresence);
     std::string sLine;
-    while (GetLine(ssRichPresence, sLine))
+    while (GetLine(pReader, sLine))
     {
         if (strncmp("Lookup:", sLine.c_str(), 7) == 0)
         {
@@ -234,7 +256,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
             Lookup& newLookup = m_vLookups.emplace_back(sLookupName);
             do
             {
-                if (!GetLine(ssRichPresence, sLine) || sLine.length() < 2)
+                if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
                 size_t nIndex = sLine.find('=');
@@ -263,7 +285,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
         else if (strncmp("Format:", sLine.c_str(), 7) == 0)
         {
             std::string sFormatName(sLine, 7);
-            if (GetLine(ssRichPresence, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
+            if (GetLine(pReader, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
             {
                 std::string sFormatType(sLine, 11);
                 int nType = rc_parse_format(sFormatType.c_str());
@@ -276,7 +298,7 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
         {
             do
             {
-                if (!GetLine(ssRichPresence, sLine) || sLine.length() < 2)
+                if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
                 if (sLine[0] == '?')
@@ -298,17 +320,19 @@ void RA_RichPresenceInterpreter::ParseFromString(const char* sRichPresence)
         }
     }
 
-    if (!sDisplayString.empty())
-    {
-        for (std::vector<std::pair<std::string, std::string>>::const_iterator iter = mDisplayStrings.begin(); iter != mDisplayStrings.end(); ++iter)
-        {
-            auto& displayString = m_vDisplayStrings.emplace_back(iter->first);
-            displayString.InitializeParts(iter->second, mFormats, m_vLookups);
-        }
+    if (sDisplayString.empty())
+        return false;
 
-        auto& displayString = m_vDisplayStrings.emplace_back();
-        displayString.InitializeParts(sDisplayString, mFormats, m_vLookups);
+    for (auto& pPair : mDisplayStrings)
+    {
+        auto& displayString = m_vDisplayStrings.emplace_back(pPair.first);
+        displayString.InitializeParts(pPair.second, mFormats, m_vLookups);
     }
+
+    auto& displayString = m_vDisplayStrings.emplace_back();
+    displayString.InitializeParts(sDisplayString, mFormats, m_vLookups);
+
+    return true;
 }
 
 std::string RA_RichPresenceInterpreter::GetRichPresenceString()

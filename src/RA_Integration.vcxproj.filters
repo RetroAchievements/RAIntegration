@@ -28,6 +28,18 @@
     <Filter Include="Data\lua">
       <UniqueIdentifier>{8bf8f543-5155-4587-a22b-0016c9742bc4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI\ViewModels">
+      <UniqueIdentifier>{0badbd6c-a477-4f69-b999-f27b050c3a17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Win32">
+      <UniqueIdentifier>{b7f9a7ef-094b-4e87-b9ae-4ab9356dab74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Win32\Bindings">
+      <UniqueIdentifier>{24415556-accd-41e1-a23a-3ef078909014}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{2e33d92b-6ab7-47c6-9d74-f2802ca48d25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -68,15 +80,6 @@
     </ClCompile>
     <ClCompile Include="RA_Dlg_Memory.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Dlg_RichPresence.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_GameData.cpp">
-      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
@@ -231,6 +234,72 @@
     <ClCompile Include="services\ImageRepository.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsFileSystem.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\WindowViewModelBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ViewModelBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ModelProperty.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\Desktop.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_StringUtils.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Json.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\DialogBase.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\MessageBoxDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\RichPresenceDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\WindowBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\ThreadPool.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\FileLocalStorage.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="data\GameContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -271,15 +340,6 @@
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RichPresence.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RomChecksum.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_GameData.h">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
       <Filter>Data</Filter>
@@ -373,6 +433,138 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>Data\rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IFileSystem.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsFileSystem.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_StringUtils.h">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextReader.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextWriter.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextWriter.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextReader.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextWriter.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextReader.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IThreadPool.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\ThreadPool.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILogger.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileLogger.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClock.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\Clock.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ViewModelBase.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ModelProperty.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\IDesktop.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\Desktop.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\IDialogPresenter.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\WindowBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\DialogBase.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MessageBoxDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\RichPresenceDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\BindingBase.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\WindowManager.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILocalStorage.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileLocalStorage.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IHttpRequester.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Http.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClipboard.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsClipboard.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="data\GameContext.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="windows_nodefines.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_cppcorecheck_suppressions.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch_microsoft_suppressions.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.hh">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

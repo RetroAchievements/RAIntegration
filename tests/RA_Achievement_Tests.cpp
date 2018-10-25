@@ -15,7 +15,7 @@ public:
     class AchievementHarness : public Achievement
     {
     public:
-        void ParseTrigger(const char* pTrigger) { Achievement::ParseTrigger(pTrigger); }
+        void SetTrigger(const char* pTrigger) { Achievement::ParseTrigger(pTrigger); }
 
         void SetState(size_t nGroup, size_t nCondition, unsigned nHits, unsigned nSrcValue, unsigned nSrcPrev, unsigned nCmpValue, unsigned nCmpPrev)
         {
@@ -104,7 +104,7 @@ public:
 
         const char* ptr = sSerialized;
         AchievementHarness ach;
-        ach.ParseTrigger(ptr);
+        ach.SetTrigger(ptr);
 
         std::string sReserialized = ach.CreateMemString();
 
@@ -132,51 +132,51 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18"); // one condition, true
+        ach.SetTrigger("0xH0001=18"); // one condition, true
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(2U, ach.GetConditionHitCount(0, 0));
 
-        ach.ParseTrigger("0xH0001!=18"); // one condition, false
+        ach.SetTrigger("0xH0001!=18"); // one condition, false
         AssertSetTest(ach, false, false, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
 
-        ach.ParseTrigger("0xH0001=18_0xH0002=52"); // two conditions, true
+        ach.SetTrigger("0xH0001=18_0xH0002=52"); // two conditions, true
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
 
-        ach.ParseTrigger("0xH0001=18_0xH0002>52"); // two conditions, false
+        ach.SetTrigger("0xH0001=18_0xH0002>52"); // two conditions, false
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
 
-        ach.ParseTrigger("0xH0001=18_0xH0002=52_0xL0004=6"); // three conditions, true
+        ach.SetTrigger("0xH0001=18_0xH0002=52_0xL0004=6"); // three conditions, true
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 2));
 
-        ach.ParseTrigger("0xH0001=16_0xH0002=52_0xL0004=6"); // three conditions, first false
+        ach.SetTrigger("0xH0001=16_0xH0002=52_0xL0004=6"); // three conditions, first false
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 2));
 
-        ach.ParseTrigger("0xH0001=18_0xH0002=50_0xL0004=6"); // three conditions, first false
+        ach.SetTrigger("0xH0001=18_0xH0002=50_0xL0004=6"); // three conditions, first false
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 2));
 
-        ach.ParseTrigger("0xH0001=18_0xH0002=52_0xL0004=4"); // three conditions, first false
+        ach.SetTrigger("0xH0001=18_0xH0002=52_0xL0004=4"); // three conditions, first false
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 2));
 
-        ach.ParseTrigger("0xH0001=16_0xH0002=50_0xL0004=4"); // three conditions, all false
+        ach.SetTrigger("0xH0001=16_0xH0002=50_0xL0004=4"); // three conditions, all false
         AssertSetTest(ach, false, false, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -189,7 +189,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_P:0xH0002=52_P:0xL0x0004=6");
+        ach.SetTrigger("0xH0001=18_P:0xH0002=52_P:0xL0x0004=6");
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -215,7 +215,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_P:0xH0002=52.1.");
+        ach.SetTrigger("0xH0001=18_P:0xH0002=52.1.");
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -232,7 +232,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_P:0xH0002=52.2.");
+        ach.SetTrigger("0xH0001=18_P:0xH0002=52.2.");
         AssertSetTest(ach, true, true, false);                        // PauseIf counter hasn't reached HitCount target, non-PauseIf condition still true
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -253,7 +253,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_P:0xH0002=52.1._R:0xH0003=1SR:0xH0003=2");
+        ach.SetTrigger("0xH0001=18_P:0xH0002=52.1._R:0xH0003=1SR:0xH0003=2");
         AssertSetTest(ach, false, true, false);                        // Trigger PauseIf, non-PauseIf conditions ignored
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -295,7 +295,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_R:0xH0002=50_R:0xL0x0004=4");
+        ach.SetTrigger("0xH0001=18_R:0xH0002=50_R:0xL0x0004=4");
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -337,7 +337,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=20(2)_0xH0002=52");
+        ach.SetTrigger("0xH0001=20(2)_0xH0002=52");
 
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
@@ -364,7 +364,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4");
+        ach.SetTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4");
 
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -400,7 +400,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4.2.");
+        ach.SetTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4.2.");
 
         AssertSetTest(ach, false, true, false); // HitCounts on conditions 1 and 2 are incremented
         AssertSetTest(ach, true, true, false);  // HitCounts on conditions 1 and 2 are incremented, cond 1 is now true so entire achievement is true
@@ -431,7 +431,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("C:0xH0001=18_R:0xL0004=6(3)"); // never(repeated(3, byte(1) == 18 || low(4) == 6))
+        ach.SetTrigger("C:0xH0001=18_R:0xL0004=6(3)"); // never(repeated(3, byte(1) == 18 || low(4) == 6))
         AssertSetTest(ach, true, true, false); // result is true, no non-reset conditions
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -448,7 +448,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4.1.");
+        ach.SetTrigger("0xH0001=18(2)_0xH0002=52_R:0xL0004=4.1.");
 
         AssertSetTest(ach, false, true, false); // HitCounts on conditions 1 and 2 are incremented
         AssertSetTest(ach, true, true, false);  // HitCounts on conditions 1 and 2 are incremented, cond 1 is now true so entire achievement is true
@@ -473,7 +473,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(2)_0xH0002=52_P:0xL0004=4");
+        ach.SetTrigger("0xH0001=18(2)_0xH0002=52_P:0xL0004=4");
 
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -507,7 +507,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(2)_R:0xH0002=50_P:0xL0004=4");
+        ach.SetTrigger("0xH0001=18(2)_R:0xH0002=50_P:0xL0004=4");
 
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -538,7 +538,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("A:0xH0001=0_0xH0002=22");
+        ach.SetTrigger("A:0xH0001=0_0xH0002=22");
         AssertSetTest(ach, false, false, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -565,7 +565,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("B:0xH0002=0_0xH0001=14"); // NOTE: SubSource subtracts the first value from the second!
+        ach.SetTrigger("B:0xH0002=0_0xH0001=14"); // NOTE: SubSource subtracts the first value from the second!
         AssertSetTest(ach, false, false, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -597,7 +597,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("A:0xH0001=0_B:0xL0002=0_0xL0004=14"); // byte(1) - low(2) + low(4) == 14
+        ach.SetTrigger("A:0xH0001=0_B:0xL0002=0_0xL0004=14"); // byte(1) - low(2) + low(4) == 14
         AssertSetTest(ach, false, false, false);
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -635,7 +635,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("C:0xH0001=18(2)_0xL0004=6(4)"); // repeated(4, byte(1) == 18 || low(4) == 6)
+        ach.SetTrigger("C:0xH0001=18(2)_0xL0004=6(4)"); // repeated(4, byte(1) == 18 || low(4) == 6)
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 1));
@@ -669,7 +669,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=16S0xH0002=52S0xL0004=6");
+        ach.SetTrigger("0xH0001=16S0xH0002=52S0xL0004=6");
 
         // core not true, both alts are
         AssertSetTest(ach, false, true, false);
@@ -709,7 +709,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18(1)_R:0xH0000=1S0xH0002=52(1)S0xL0004=6(1)_R:0xH0000=2");
+        ach.SetTrigger("0xH0001=18(1)_R:0xH0000=1S0xH0002=52(1)S0xL0004=6(1)_R:0xH0000=2");
 
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -742,7 +742,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0001=18_P:0xH0000=1S0xH0002=52S0xL0004=6_P:0xH0000=2");
+        ach.SetTrigger("0xH0001=18_P:0xH0000=1S0xH0002=52S0xL0004=6_P:0xH0000=2");
 
         AssertSetTest(ach, true, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -774,7 +774,7 @@ public:
         InitializeMemory(memory, 5);
 
         AchievementHarness ach;
-        ach.ParseTrigger("0xH0000=0.1._0xH0000=2SP:0xH0001=18_R:0xH0002=52");
+        ach.SetTrigger("0xH0000=0.1._0xH0000=2SP:0xH0001=18_R:0xH0002=52");
 
         AssertSetTest(ach, false, true, false);
         Assert::AreEqual(1U, ach.GetConditionHitCount(0, 0));
@@ -807,7 +807,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=6");
+        ach.SetTrigger("0xh1234=6");
         ach.SetState(0, 0, 4, 12, 12, 12, 12);
 
         std::string sState = ach.CreateStateString("user1");
@@ -830,7 +830,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=d0x1234");
+        ach.SetTrigger("0xh1234=d0x1234");
         ach.SetState(0, 0, 4, 12, 11, 12, 11);
 
         std::string sState = ach.CreateStateString("user1");
@@ -846,7 +846,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
+        ach.SetTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
         ach.SetState(0, 0, 1, 12, 12, 6, 6);
         ach.SetState(0, 1, 0, 32, 32, 32, 32);
         ach.SetState(0, 2, 1700, 0, 0, 0, 0);
@@ -870,7 +870,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345SR:0xh3456=7S0xh4567=0xh5678");
+        ach.SetTrigger("0xh1234=6.1._0xh2345!=d0xh2345SR:0xh3456=7S0xh4567=0xh5678");
         ach.SetState(0, 0, 1, 12, 12, 6, 6);
         ach.SetState(0, 1, 0, 32, 32, 32, 32);
         ach.SetState(1, 0, 1700, 0, 0, 0, 0);
@@ -897,7 +897,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
+        ach.SetTrigger("0xh1234=6.1._0xh2345!=d0xh2345_R:0xh3456=7");
         ach.SetState(0, 0, 1, 12, 12, 6, 6);
         ach.SetState(0, 1, 0, 32, 32, 32, 32);
         ach.SetState(0, 2, 1700, 0, 0, 0, 0);
@@ -925,7 +925,7 @@ public:
     {
         AchievementHarness ach;
         ach.SetID(12345);
-        ach.ParseTrigger("0xh1234=6");
+        ach.SetTrigger("0xh1234=6");
         ach.SetState(0, 0, 4, 12, 12, 12, 12);
 
         std::string sState = ach.CreateStateString("user1");

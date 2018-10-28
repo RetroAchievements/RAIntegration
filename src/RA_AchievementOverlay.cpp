@@ -1222,7 +1222,7 @@ void AchievementOverlay::Render(HDC hRealDC, RECT* rcDest) const
         auto ctSelectChar{ _T('A') };
 
         //	Genesis wouldn't use 'A' for select
-        if (g_EmulatorID == RA_Gens)
+        if (g_EmulatorID == EmulatorID::RA_Gens)
             ctSelectChar = _T('C');
 
         {

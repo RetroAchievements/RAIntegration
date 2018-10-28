@@ -44,8 +44,8 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator; // Uniquely identifies the emulator
+ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;   // Currently active Console ID
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
@@ -91,65 +91,66 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     switch (g_EmulatorID)
     {
-        case RA_Gens:
-            g_ConsoleID = MegaDrive;
+        case EmulatorID::RA_Gens:
+            g_ConsoleID = ConsoleID::MegaDrive;
             g_sClientVersion = sClientVer;
             g_sClientName = "RAGens_REWiND";
             g_sClientDownloadURL = "RAGens.zip";
             g_sClientEXEName = "RAGens.exe";
             break;
-        case RA_Project64:
-            g_ConsoleID = N64;
+        case EmulatorID::RA_Project64:
+            g_ConsoleID = ConsoleID::N64;
             g_sClientVersion = sClientVer;
             g_sClientName = "RAP64";
             g_sClientDownloadURL = "RAP64.zip";
             g_sClientEXEName = "RAP64.exe";
             break;
-        case RA_Snes9x:
-            g_ConsoleID = SNES;
+        case EmulatorID::RA_Snes9x:
+            g_ConsoleID = ConsoleID::SNES;
             g_sClientVersion = sClientVer;
             g_sClientName = "RASnes9X";
             g_sClientDownloadURL = "RASnes9X.zip";
             g_sClientEXEName = "RASnes9X.exe";
             break;
-        case RA_VisualboyAdvance:
-            g_ConsoleID = GB;
+        case EmulatorID::RA_VisualboyAdvance:
+            g_ConsoleID = ConsoleID::GB;
             g_sClientVersion = sClientVer;
             g_sClientName = "RAVisualBoyAdvance";
             g_sClientDownloadURL = "RAVBA.zip";
             g_sClientEXEName = "RAVisualBoyAdvance.exe";
             break;
-        case RA_Nester:
-        case RA_FCEUX:
-            g_ConsoleID = NES;
+        case EmulatorID::RA_Nester:
+            _FALLTHROUGH; /* fallthrough to case EmulatorID::RA_FCEUX */
+        case EmulatorID::RA_FCEUX:
+            g_ConsoleID = ConsoleID::NES;
             g_sClientVersion = sClientVer;
             g_sClientName = "RANes";
             g_sClientDownloadURL = "RANes.zip";
             g_sClientEXEName = "RANes.exe";
             break;
-        case RA_PCE:
-            g_ConsoleID = PCEngine;
+        case EmulatorID::RA_PCE:
+            g_ConsoleID = ConsoleID::PCEngine;
             g_sClientVersion = sClientVer;
             g_sClientName = "RAPCE";
             g_sClientDownloadURL = "RAPCE.zip";
             g_sClientEXEName = "RAPCE.exe";
             break;
-        case RA_Libretro:
-            g_ConsoleID = Atari2600;
+        case EmulatorID::RA_Libretro:
+            g_ConsoleID = ConsoleID::Atari2600;
             g_sClientVersion = sClientVer;
             g_sClientName = "RALibretro";
             g_sClientDownloadURL = "RALibretro.zip";
             g_sClientEXEName = "RALibretro.exe";
             break;
-        case RA_Meka:
-            g_ConsoleID = MasterSystem;
+        case EmulatorID::RA_Meka:
+            g_ConsoleID = ConsoleID::MasterSystem;
             g_sClientVersion = sClientVer;
             g_sClientName = "RAMeka";
             g_sClientDownloadURL = "RAMeka.zip";
             g_sClientEXEName = "RAMeka.exe";
             break;
         default:
-            g_ConsoleID = UnknownConsoleID;
+            g_ConsoleID = ConsoleID::UnknownConsoleID;
             g_sClientVersion = sClientVer;
             g_sClientName = "";
             break;
@@ -839,7 +840,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 static void RA_CheckForUpdate()
 {
     PostArgs args;
-    args['e'] = std::to_string(g_EmulatorID);
+    args['e'] = std::to_string(ra::etoi(g_EmulatorID));
 
     rapidjson::Document doc;
     if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, doc))

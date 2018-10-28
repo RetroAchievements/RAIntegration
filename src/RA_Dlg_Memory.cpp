@@ -262,7 +262,7 @@ void MemoryViewerControl::Invalidate()
 
         // In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force the render by calling UpdateWindow
         // TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for the search results
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == EmulatorID::RA_Libretro)
             UpdateWindow(hOurDlg);
     }
 }
@@ -1555,7 +1555,7 @@ void Dlg_Memory::Invalidate()
     if (hList != nullptr)
     {
         InvalidateRect(hList, nullptr, FALSE);
-        if (g_EmulatorID == RA_Libretro)
+        if (g_EmulatorID == EmulatorID::RA_Libretro)
             UpdateWindow(hList);
     }
 }

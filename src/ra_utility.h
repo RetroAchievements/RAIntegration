@@ -237,4 +237,12 @@ operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept { return (a = a & b); }
 } // namespace bitwise_ops
 } // namespace ra
 
+namespace std {
+
+// Overloaded function template for enums
+template<typename Enum, typename = enable_if_t<is_enum_v<Enum>>>
+_NODISCARD string to_string(_In_ Enum e) { return to_string(ra::etoi(e)); }
+
+} /* namespace std */
+
 #endif // !RA_UTILITY_H

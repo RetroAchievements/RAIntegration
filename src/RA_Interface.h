@@ -2,8 +2,37 @@
 #define RA_INTERFACE_H
 #pragma once
 
-//	NB. Shared between RA_Integration and emulator
-using BOOL = int;
+/* NB. Shared between RA_Integration and emulator */
+
+/*
+    NB. If using MSVC, the compiler switch '/Zc:__cplusplus' must be added manually to correctly identifiy the 
+    C++ standard supported. It doesn't fully implement C99 so __STDC_VERSION__ won't work here but should work
+    with other compilers (GCC/Clang/etc.).
+
+    Visual Studio only has values for C++14/17, but these are standard macros supported by most compilers
+*/
+#if (!defined(__cplusplus) && (defined(__STDC__) && !defined(__STDC_HOSTED__) && !defined(__STDC_VERSION__)))
+
+/* vvv C89 vvv */
+#define _ENUM_CLASS enum
+#define noexcept /* nothing */
+typedef _Bool bool;
+#define false 0
+#define true  1 
+/* ^^^ C89 ^^^ // vvv C99 vvv  */
+
+#elif !defined(__cplusplus) && (__STDC_HOSTED__ || (__STDC_VERSION__ >= 199901L))
+#include <stdbool.h>
+#define _ENUM_CLASS enum
+#define noexcept /* nothing */
+
+#elif (__cplusplus < 201103L) /* ^^^ C99 ^^^ // vvv pre-C++11 vvv */
+#define _ENUM_CLASS enum
+#define noexcept throw() /* error prone version of noexcept, used a type list instead of nothrow condition */
+
+#else /* ^^^ pre-C++11 ^^^  // vvv C++11 onwards vvv */
+#define _ENUM_CLASS enum class
+#endif /* (!defined(__cplusplus) && defined(__STDC__)) */
 
 #ifndef CCONV
 #define CCONV __cdecl
@@ -11,92 +40,99 @@ using BOOL = int;
 
 struct ControllerInput
 {
-    BOOL m_bUpPressed;
-    BOOL m_bDownPressed;
-    BOOL m_bLeftPressed;
-    BOOL m_bRightPressed;
-    BOOL m_bConfirmPressed;	//	Usually C or A
-    BOOL m_bCancelPressed;	//	Usually B
-    BOOL m_bQuitPressed;	//	Usually Start
+#if (defined(__cplusplus) || defined(__STDC__) )
+#if ((__cplusplus < 201103L) || __STDC__)
+    int m_bUpPressed;
+    int m_bDownPressed;
+    int m_bLeftPressed;
+    int m_bRightPressed;
+    int m_bConfirmPressed; /* Usually C or A */
+    int m_bCancelPressed;  /* Usually B */
+    int m_bQuitPressed;    /* Usually Start */
+#else /* ^^^^ pre-C++11 ^^^ // vvv C++11 onwards vvv */
+    int m_bUpPressed{};
+    int m_bDownPressed{};
+    int m_bLeftPressed{};
+    int m_bRightPressed{};
+    int m_bConfirmPressed{}; // Usually C or A
+    int m_bCancelPressed{};  // Usually B
+    int m_bQuitPressed{};    // Usually Start
+#endif /* (__cplusplus < 201103L) */
+#endif /* ((__cplusplus < 201103L) || __STDC__) */
 };
 
-enum EmulatorID
+_ENUM_CLASS EmulatorID
 {
-    RA_Gens = 0,
-    RA_Project64 = 1,
-    RA_Snes9x = 2,
+    RA_Gens             = 0,
+    RA_Project64        = 1,
+    RA_Snes9x           = 2,
     RA_VisualboyAdvance = 3,
-    RA_Nester = 4,
-    RA_FCEUX = 5,
-    RA_PCE = 6,
-    RA_Libretro = 7,
-    RA_Meka = 8,
-
-    NumEmulatorIDs,
-    UnknownEmulator = NumEmulatorIDs
+    RA_Nester           = 4,
+    RA_FCEUX            = 5,
+    RA_PCE              = 6,
+    RA_Libretro         = 7,
+    RA_Meka             = 8,
+    UnknownEmulator
 };
 
-//	Should match DB!
-enum ConsoleID
+/* Should match DB! */
+_ENUM_CLASS ConsoleID
 {
     UnknownConsoleID = 0,
-    MegaDrive = 1,	//	DB
-    N64 = 2,
-    SNES = 3,
-    GB = 4,
-    GBA = 5,
-    GBC = 6,
-    NES = 7,
-    PCEngine = 8,
-    SegaCD = 9,
-    Sega32X = 10,
-    MasterSystem = 11,
-    PlayStation = 12,
-    Lynx = 13,
-    NeoGeoPocket = 14,
-    GameGear = 15,
-    GameCube = 16,
-    Jaguar = 17,
-    DS = 18,
-    WII = 19,
-    WIIU = 20,
-    PlayStation2 = 21,
-    Xbox = 22,
-    Events = 23, // not an actual console
-    XboxOne = 24,
-    Atari2600 = 25,
-    MSDOS = 26,
-    Arcade = 27,
-    VirtualBoy = 28,
-    MSX = 29,
-    C64 = 30,
-    ZX81 = 31,
-    //unused32 = 32,
-    SG1000 = 33,
-    VIC20 = 34,
-    Amiga = 35,
-    AmigaST = 36,
-    AmstradCPC = 37,
-    AppleII = 38,
-    Saturn = 39,
-    Dreamcast = 40,
-    PSP = 41,
-    CDi = 42,
-    ThreeDO = 43,
-    Colecovision = 44,
-    Intellivision = 45,
-    Vectrex = 46,
-    PC8800 = 47,
-    PC9800 = 48,
-    PCFX = 49,
-    Atari5200 = 50,
-    Atari7800 = 51,
-    X68K = 52,
-    WonderSwan = 53,
-
-    NumConsoleIDs
+    MegaDrive        = 1, /* DB */
+    N64              = 2,
+    SNES             = 3,
+    GB               = 4,
+    GBA              = 5,
+    GBC              = 6,
+    NES              = 7,
+    PCEngine         = 8,
+    SegaCD           = 9,
+    Sega32X          = 10,
+    MasterSystem     = 11,
+    PlayStation      = 12,
+    Lynx             = 13,
+    NeoGeoPocket     = 14,
+    GameGear         = 15,
+    GameCube         = 16,
+    Jaguar           = 17,
+    DS               = 18,
+    WII              = 19,
+    WIIU             = 20,
+    PlayStation2     = 21,
+    Xbox             = 22,
+    Events           = 23, /* not an actual console */
+    XboxOne          = 24,
+    Atari2600        = 25,
+    MSDOS            = 26,
+    Arcade           = 27,
+    VirtualBoy       = 28,
+    MSX              = 29,
+    C64              = 30,
+    ZX81             = 31,
+    //unused32       = 32,
+    SG1000           = 33,
+    VIC20            = 34,
+    Amiga            = 35,
+    AmigaST          = 36,
+    AmstradCPC       = 37,
+    AppleII          = 38,
+    Saturn           = 39,
+    Dreamcast        = 40,
+    PSP              = 41,
+    CDi              = 42,
+    ThreeDO          = 43,
+    Colecovision     = 44,
+    Intellivision    = 45,
+    Vectrex          = 46,
+    PC8800           = 47,
+    PC9800           = 48,
+    PCFX             = 49,
+    Atari5200        = 50,
+    Atari7800        = 51,
+    X68K             = 52,
+    WonderSwan       = 53,
 };
-
 
 extern bool(*_RA_GameIsActive)();
 extern void(*_RA_CauseUnpause)();
@@ -106,7 +142,7 @@ extern void(*_RA_GetEstimatedGameTitle)(char* sNameOut);
 extern void(*_RA_ResetEmulation)();
 extern void(*_RA_LoadROM)(const char* sFullPath);
 
-//	Shared funcs, should be implemented by emulator.
+/* Shared funcs, should be implemented by emulator. */
 extern bool RA_GameIsActive();
 extern void RA_CauseUnpause();
 extern void RA_CausePause();

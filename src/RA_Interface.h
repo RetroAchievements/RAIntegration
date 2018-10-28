@@ -13,26 +13,27 @@
 */
 #if (!defined(__cplusplus) && (defined(__STDC__) && !defined(__STDC_HOSTED__) && !defined(__STDC_VERSION__)))
 
-/* vvv C89 vvv */
-#define _ENUM_CLASS enum
-#define noexcept /* nothing */
-typedef _Bool bool;
+/* vvv C89 only vvv */
+#define bool  int
 #define false 0
 #define true  1 
-/* ^^^ C89 ^^^ // vvv C99 vvv  */
+#define inline /* nothing, inline didn't exist until C99 */
 
-#elif !defined(__cplusplus) && (__STDC_HOSTED__ || (__STDC_VERSION__ >= 199901L))
+/* ^^^ C89 only ^^^ // vvv C89 or C99 vvv  */
+#elif (!defined(__cplusplus) && (((defined(__STDC_HOSTED__) || (__STDC_VERSION__  >= 199901L))) || defined(__STDC__)))
+#define _ENUM_CLASS typedef enum
+#define noexcept /* ^^^ C89 or C99 ^^^ // vvv C99 only vvv */
+
+#elif (!defined(__cplusplus) && !defined(__STDC__)) && (__STDC_HOSTED__ || (__STDC_VERSION__ >= 199901L))
 #include <stdbool.h>
-#define _ENUM_CLASS enum
-#define noexcept /* nothing */
 
-#elif (__cplusplus < 201103L) /* ^^^ C99 ^^^ // vvv pre-C++11 vvv */
+#elif (__cplusplus < 201103L) /* ^^^ C99 only ^^^ // vvv pre-C++11 vvv */
 #define _ENUM_CLASS enum
 #define noexcept throw() /* error prone version of noexcept, used a type list instead of nothrow condition */
 
 #else /* ^^^ pre-C++11 ^^^  // vvv C++11 onwards vvv */
 #define _ENUM_CLASS enum class
-#endif /* (!defined(__cplusplus) && defined(__STDC__)) */
+#endif /* (!defined(__cplusplus) && (defined(__STDC__) && !defined(__STDC_HOSTED__) && !defined(__STDC_VERSION__))) */
 
 #ifndef CCONV
 #define CCONV __cdecl
@@ -40,8 +41,8 @@ typedef _Bool bool;
 
 struct ControllerInput
 {
-#if (defined(__cplusplus) || defined(__STDC__) )
-#if ((__cplusplus < 201103L) || __STDC__)
+#if (defined(__cplusplus) || (defined(__STDC__) || defined(__STDC_VERSION__)))
+#if ((__cplusplus < 201103L) || (__STDC__ || (__STDC_VERSION__ >= 199901L)))
     int m_bUpPressed;
     int m_bDownPressed;
     int m_bLeftPressed;
@@ -58,7 +59,7 @@ struct ControllerInput
     int m_bCancelPressed{};  // Usually B
     int m_bQuitPressed{};    // Usually Start
 #endif /* (__cplusplus < 201103L) */
-#endif /* ((__cplusplus < 201103L) || __STDC__) */
+#endif /* (defined(__cplusplus) || (defined(__STDC__) || defined(__STDC_HOSTED__))) */
 };
 
 _ENUM_CLASS EmulatorID
@@ -110,7 +111,7 @@ _ENUM_CLASS ConsoleID
     MSX              = 29,
     C64              = 30,
     ZX81             = 31,
-    //unused32       = 32,
+    /*unused32       = 32,*/
     SG1000           = 33,
     VIC20            = 34,
     Amiga            = 35,
@@ -239,4 +240,4 @@ extern int RA_HardcoreModeIsActive();
 #endif //RA_EXPORTS
 
 
-#endif // !RA_INTERFACE_H
+#endif /* !RA_INTERFACE_H */

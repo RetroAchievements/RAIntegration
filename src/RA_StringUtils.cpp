@@ -1,7 +1,5 @@
 #include "RA_StringUtils.h"
 
-#include "ra_utility.h"
-
 namespace ra {
 
 _Use_decl_annotations_
@@ -95,33 +93,6 @@ std::string& TrimLineEnding(std::string& str) noexcept
         str.resize(nIndex);
 
     return str;
-}
-
-_Use_decl_annotations_
-std::string StringPrintf(const char* const sFormat, ...)
-{
-    std::string sFormatted;
-
-    va_list pArgs;
-    va_start(pArgs, sFormat);
-    const auto nNeeded = std::vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
-    va_end(pArgs);
-
-    if (nNeeded >= 0)
-    {
-        if (ra::to_unsigned(nNeeded) >= sFormatted.size())
-        {
-            sFormatted.resize(ra::to_unsigned(nNeeded + 1));
-
-            va_start(pArgs, sFormat);
-            std::vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
-            va_end(pArgs);
-        }
-
-        sFormatted.resize(ra::to_unsigned(nNeeded));
-    }
-
-    return sFormatted;
 }
 
 } /* namespace ra */

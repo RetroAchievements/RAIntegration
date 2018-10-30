@@ -21,6 +21,29 @@ to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
+/// <summary>Changes the sign of <paramref name="a" />.</summary>
+/// <typeparam name="Arithmetic">
+///   A type that satisfies the <see cref="std::is_arithmetic_v" /> constraint.
+/// </typeparam>
+/// <param name="a">Arithmetic value to change.</param>
+/// <returns>
+///   A new <typeparamref name="Arithmetic" /> with the opposite sign of <paramref name="a" />.
+/// </returns>
+/// <remarks>For floating-point numbers this just makes them either negative or positive.</remarks>
+template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
+flip_sign(_In_ Arithmetic a) noexcept
+{
+    if constexpr (std::is_integral_v<Arithmetic>)
+    {
+        if constexpr (std::is_signed_v<Arithmetic>)
+            return to_unsigned(a);
+        else if constexpr (std::is_unsigned_v<Arithmetic>)
+            return to_signed(a);
+    }
+    if constexpr (std::is_floating_point_v<Arithmetic>)
+        return -a;
+}
+
 /// <summary>
 ///   Converts '<paramref name="from" />' into a <typeparamref name="NarrowedType" />.
 /// </summary>
@@ -48,44 +71,6 @@ template<
 > _NODISCARD _CONSTANT_FN
 narrow_cast(_In_ WideType from) noexcept { return static_cast<NarrowedType>(static_cast<WideType>(from)); }
 #pragma warning(pop)
-
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD inline auto
-to_tstring(_In_ Arithmetic a) noexcept
-{
-#if _MBCS
-    return std::to_string(a);
-#elif _UNICODE
-    return std::to_wstring(a);
-#else
-#error Unknown character set detected, only MultiByte and Unicode character sets are supported!
-#endif // _MBCS
-} // end function to_tstring
-
-/// <summary>Casts <paramref name="a" /> into a <typeparamref name="FloatingPoint" />.</summary>
-/// <typeparam name="Arithmetic">A valid arithmetic type.</typeparam>
-/// <param name="a">The number to be converted.</param>
-/// <returns>
-///   The return type depends on the size of <typeparamref name="Arithmetic" />. If it's 8 bytes, it will
-///   <c>double</c>, if it's anything less it will be float. <c>long double</c> is not considered as it is currently
-///   the same as <c>double</c> size-wise.
-/// </returns>
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
-to_floating(_In_ Arithmetic a) noexcept
-{
-    if constexpr (is_same_size_v<Arithmetic, double>)
-        return static_cast<double>(a);
-    if constexpr (has_smaller_size_than_v<Arithmetic, double>)
-        return static_cast<float>(a);
-}
-
-template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
-_NODISCARD _CONSTANT_FN ftoi(_In_ FloatingPoint fp) noexcept { return std::lround(fp); }
-
-template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
-_NODISCARD _CONSTANT_FN ftou(_In_ FloatingPoint fp) noexcept { return to_unsigned(std::lround(fp)); }
-
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept { return std::pow(a, 2); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_VAR
 etoi(_In_ Enum e) noexcept { return static_cast<std::underlying_type_t<Enum>>(e); }
@@ -135,46 +120,6 @@ filesize(std::basic_string<CharT>&& filename) noexcept
     file_type file{ bstr, std::ios::in | std::ios::ate | std::ios::binary };
     return file.tellg();
 } // end function filesize
-
-// More functions to be Unicode compatible w/o sacrificing MBCS
-_EXTERN_C
-/* A wrapper for converting a string to an unsigned long depending on the character set specified */
-_NODISCARD inline auto __cdecl
-tstrtoul(_In_z_ LPCTSTR _String,
-         _Out_opt_ _Deref_post_z_ LPTSTR* _EndPtr = nullptr,
-         _In_ int _Radix = 10) /* calling functions might throw */
-{
-#if _MBCS
-    return std::strtoul(_String, _EndPtr, _Radix);
-#elif _UNICODE
-    return std::wcstoul(_String, _EndPtr, _Radix);
-#else
-#error Unsupported character set detected.
-#endif /* _MBCS */
-} /* end function tstrtoul */
-
-/*
-    https://docs.microsoft.com/en-us/cpp/c-language/maximum-string-length?view=vs-2017
-    Error Checking: First part might happen in MBCS mode but the standard does not reserve an error code for it.
-    Remarks: The second part is Microsoft Specific. A single null-terminated c string may not exceed 2048 bytes,
-             but may reach a total size of 65,535 bytes after concatenation.
-    This check will only occur during code analysis, the standard does not have data contracts yet,
-    i.e, expects, ensures... (GSL does though however).
-*/
-_Success_((return != SIZE_MAX) && (return <= 2048U))
-/* Returns the length of a null-terminated byte string or wide-character string depending on the character set specified */
-_NODISCARD inline auto __cdecl tstrlen(_In_z_ LPCTSTR _Str) noexcept
-{
-#if _MBCS
-    return std::strlen(_Str);   
-#elif _UNICODE
-    return std::wcslen(_Str);
-#else
-#error Unsupported character set detected.
-#endif /* _MBCS */
-} /* end function tstrlen */
-
-_END_EXTERN_C
 
 // Don't depend on std::rel_ops for stuff here because it assumes each parameter has the same type
 /// <summary>

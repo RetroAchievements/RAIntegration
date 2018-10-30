@@ -449,6 +449,9 @@
     <ClInclude Include="pch_microsoft_suppressions.h">
       <Filter>PCH</Filter>
     </ClInclude>
+    <ClInclude Include="ra_math.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

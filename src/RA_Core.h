@@ -110,7 +110,7 @@ extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
+extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut);
 
 //  Read a file to a std::string. Returns false on error.
 extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);

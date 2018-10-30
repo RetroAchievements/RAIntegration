@@ -1068,9 +1068,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             ra::tstring buffer = nativeBuffer;
                             //	Read hex or dec
                             if (buffer[0] == '0' && buffer[1] == 'x')
-                                nValueQuery = ra::tstrtoul(buffer.c_str() + 2, nullptr, 16);
+                                nValueQuery = std::stoul(buffer.substr(2), nullptr, 16);
                             else
-                                nValueQuery = ra::tstrtoul(buffer.c_str());
+                                nValueQuery = std::stoul(buffer);
                         }
 
                         sr.m_results.Initialize(srPrevious.m_results, nCmpType, nValueQuery);

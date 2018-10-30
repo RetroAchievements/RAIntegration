@@ -183,6 +183,12 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -194,6 +200,9 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports.cpp">
+      <Filter>Interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -422,6 +431,15 @@
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="services\IHttpRequester.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Http.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -448,6 +466,9 @@
     </ClInclude>
     <ClInclude Include="pch_microsoft_suppressions.h">
       <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.hh">
+      <Filter>Interface</Filter>
     </ClInclude>
     <ClInclude Include="ra_math.h">
       <Filter>Helpers</Filter>

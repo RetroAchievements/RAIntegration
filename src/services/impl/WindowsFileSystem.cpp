@@ -34,6 +34,27 @@ bool WindowsFileSystem::CreateDirectory(const std::wstring& sDirectory) const
     return static_cast<bool>(CreateDirectoryW(sDirectory.c_str(), nullptr));
 }
 
+size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const
+{
+    std::wstring sSearchString = sDirectory;
+    sSearchString += L"\\*";
+
+    WIN32_FIND_DATAW ffdFile;
+    HANDLE hFind = FindFirstFileW(sSearchString.c_str(), &ffdFile);
+    if (hFind == INVALID_HANDLE_VALUE)
+        return 0U;
+
+    size_t nInitialSize = vResults.size();
+    do
+    {
+        if (!(ffdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            vResults.emplace_back(ffdFile.cFileName);
+    } while (FindNextFileW(hFind, &ffdFile) != 0);
+
+    FindClose(hFind);
+    return vResults.size() - nInitialSize;
+}
+
 bool WindowsFileSystem::DeleteFile(const std::wstring& sPath) const
 {
     return static_cast<bool>(DeleteFileW(sPath.c_str()));
@@ -69,6 +90,24 @@ int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
 
     const LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
     return nSize.QuadPart;
+}
+
+std::chrono::system_clock::time_point WindowsFileSystem::GetLastModified(const std::wstring& sPath) const
+{
+    WIN32_FILE_ATTRIBUTE_DATA fadFile;
+    if (!GetFileAttributesExW(sPath.c_str(), GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fadFile))
+    {
+        RA_LOG_ERR("Error %d getting last modified for file: %s", GetLastError(), ra::Narrow(sPath).c_str());
+        return std::chrono::system_clock::time_point();
+    }
+
+    // FILETIME (ftLastWriteTime) is 100-nanosecond intervals since Jan 1 1601. time_t is 1-second intervals since
+    // Jan 1 1970. Convert from 100-nanosecond intervals to 1-second intervals, then subtract the number of seconds
+    // between the two dates. See https://www.gamedev.net/forums/topic/565693-converting-filetime-to-time_t-on-windows/
+    ULARGE_INTEGER nFileTime{ fadFile.ftLastWriteTime.dwLowDateTime, fadFile.ftLastWriteTime.dwHighDateTime };
+    time_t tFileTime = static_cast<time_t>((nFileTime.QuadPart / 10000000ULL) - 11644473600ULL);
+
+    return std::chrono::system_clock::from_time_t(tFileTime);
 }
 
 std::unique_ptr<TextReader> WindowsFileSystem::OpenTextFile(const std::wstring& sPath) const

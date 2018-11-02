@@ -137,7 +137,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 sPath += sQueryString;
             }
 
-            auto& sPostData = pRequest.GetPostData();
+            auto sPostData = pRequest.GetPostData();
 
             // open the connection
             auto sPathWide = ra::Widen(sPath);
@@ -174,7 +174,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 {
                     bResults = WinHttpSendRequest(hRequest,
                         sHeaders.c_str(), sHeaders.length(),
-                        reinterpret_cast<LPVOID>(const_cast<char*>(sPostData.data())),
+                        static_cast<LPVOID>(sPostData.data()),
                         sPostData.length(), sPostData.length(),
                         0);
                 }

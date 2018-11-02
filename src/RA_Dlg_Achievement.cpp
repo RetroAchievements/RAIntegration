@@ -53,7 +53,7 @@ void Dlg_Achievements::SetupColumns(HWND hList)
             newColumn.fmt |= LVCFMT_FILL;
         newColumn.cx = COLUMN_SIZE[i];
         ra::tstring sColTitleStr = NativeStr(sColTitle);	//	Take a copy
-        newColumn.pszText = const_cast<LPTSTR>(sColTitleStr.c_str());
+        newColumn.pszText = sColTitleStr.data();
         newColumn.cchTextMax = 255;
         newColumn.iSubItem = i;
 
@@ -179,7 +179,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
         //	Cache this (stack) to ensure it lives until after ListView_*Item
         //	SD: Is this necessary?
         ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
-        item.pszText = const_cast<LPTSTR>((LPCTSTR)sTextData.c_str());
+        item.pszText = sTextData.data();
 
         if (item.iSubItem == 0)
             item.iItem = ListView_InsertItem(hList, &item);

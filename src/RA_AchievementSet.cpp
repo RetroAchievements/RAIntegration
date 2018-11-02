@@ -401,9 +401,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
 
             lb.SetTitle(lbData["Title"].GetString());
             lb.SetDescription(lbData["Description"].GetString());
-
-            const auto nFormat{ MemValue::ParseFormat(lbData["Format"].GetString()) };
-            lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
+            lb.ParseFromString(lbData["Mem"].GetString(), lbData["Format"].GetString());
 
             ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()
                 .AddLeaderboard(std::move(lb));

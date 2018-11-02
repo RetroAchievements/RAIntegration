@@ -118,8 +118,8 @@ public:
     _NODISCARD _CONSTANT_FN IsActive() const noexcept { return(m_nTransitionState != TransitionState::Off); }
     _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
 
-    const int* GetActiveScrollOffset() const;
-    const int* GetActiveSelectedItem() const;
+    int* GetActiveScrollOffset() const;
+    int* GetActiveSelectedItem() const;
 
     void OnLoad_NewRom();
 
@@ -167,17 +167,17 @@ private:
     inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
     inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
 
-    int	m_nAchievementsScrollOffset{};
-    int	m_nFriendsScrollOffset{};
-    int	m_nMessagesScrollOffset{};
-    int	m_nNewsScrollOffset{};
-    int	m_nLeaderboardScrollOffset{};
+    mutable int	m_nAchievementsScrollOffset{};
+    mutable int	m_nFriendsScrollOffset{};
+    mutable int	m_nMessagesScrollOffset{};
+    mutable int	m_nNewsScrollOffset{};
+    mutable int	m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem{};
-    int	m_nFriendsSelectedItem{};
-    int	m_nMessagesSelectedItem{};
-    int	m_nNewsSelectedItem{};
-    int	m_nLeaderboardSelectedItem{};
+    mutable int	m_nAchievementsSelectedItem{};
+    mutable int	m_nFriendsSelectedItem{};
+    mutable int	m_nMessagesSelectedItem{};
+    mutable int	m_nNewsSelectedItem{};
+    mutable int	m_nLeaderboardSelectedItem{};
 
     mutable int m_nNumAchievementsBeingRendered{};
     mutable int m_nNumFriendsBeingRendered{};

@@ -134,8 +134,8 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
     const int nNumLBs = (const int)(pLeaderboardManager.Count());
     //const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
     const int nMsgCount = 0;
-    int* pnScrollOffset = const_cast<int*>(GetActiveScrollOffset());	//	Dirty!
-    int* pnSelectedItem = const_cast<int*>(GetActiveSelectedItem());
+    auto pnScrollOffset = GetActiveScrollOffset();	//	Dirty!
+    auto pnSelectedItem = GetActiveSelectedItem();
 
     const ControllerInput& input = *pInput;
 
@@ -1386,7 +1386,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, const RAUser* pUser, int nX, int
     DeleteObject(hBrush2);
 }
 
-const int* AchievementOverlay::GetActiveScrollOffset() const
+int* AchievementOverlay::GetActiveScrollOffset() const
 {
     switch (m_Pages.at(m_nPageStackPointer))
     {
@@ -1412,7 +1412,7 @@ const int* AchievementOverlay::GetActiveScrollOffset() const
     }
 }
 
-const int* AchievementOverlay::GetActiveSelectedItem() const
+int* AchievementOverlay::GetActiveSelectedItem() const
 {
     switch (m_Pages.at(m_nPageStackPointer))
     {

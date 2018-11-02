@@ -246,7 +246,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
 
     item.iSubItem = 3;
-    ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));
+    ListView_SetItemText(hList, item.iItem, 3, NativeStr(sFilename).data());
 
     m_vGameEntries.push_back(GameEntry(sTitle, sFilename, nGameID));
 }

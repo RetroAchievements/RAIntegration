@@ -179,6 +179,8 @@ const int SERVER_PING_DURATION = 2 * 60;
 
 #include "RA_StringUtils.h"
 
+#include "ra_fwd.h"
+
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 } // namespace ra

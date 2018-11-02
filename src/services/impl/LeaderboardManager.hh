@@ -5,6 +5,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 
+#include "RA_Json.h" // rapidjson::Document
+
 namespace ra {
 namespace services {
 namespace impl {

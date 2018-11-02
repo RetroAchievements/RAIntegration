@@ -5,6 +5,8 @@
 
 #include "ra_utility.h"
 
+#include <algorithm>
+
 namespace ra {
 namespace services {
 

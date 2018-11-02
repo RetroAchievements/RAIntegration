@@ -5,7 +5,6 @@
 #include "ra_utility.h"
 
 #include "RA_Condition.h"
-#include "RA_MemValue.h"
 #include "RA_StringUtils.h"
 
 #include "ui\WindowViewModelBase.hh"
@@ -38,10 +37,6 @@ template<> std::wstring ToString<Condition::ConditionType>(const Condition::Cond
 }
 
 template<> std::wstring ToString<MemValue::Format>(const MemValue::Format& format)
-{
-    return ra::Widen(MemValue::GetFormatString(format));
-}
-
 template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
     switch (result)

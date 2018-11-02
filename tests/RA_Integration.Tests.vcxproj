@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;RA_UTEST;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RA_UTEST;RA_EXPORTS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ShowIncludes>false</ShowIncludes>
@@ -146,7 +146,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;RA_UTEST;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RA_UTEST;RA_EXPORTS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -176,28 +176,66 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\md5.c" />
+    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\src\md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp" />
     <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
     <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
+    <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="RA_RichPresence_Tests.cpp" />
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
+    <ClInclude Include="..\src\RA_Achievement.h" />
+    <ClInclude Include="..\src\RA_Defs.h" />
+    <ClInclude Include="..\src\RA_Leaderboard.h" />
     <ClCompile Include="..\src\ui\ModelProperty.cpp" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
-    <ClCompile Include="RA_Achievement_Tests.cpp" />
-    <ClCompile Include="RA_RichPresence_Tests.cpp" />
+    <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
+    <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\ModelProperty_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
@@ -210,23 +248,26 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="..\src\RA_MemManager.cpp" />
+    <ClCompile Include="RA_Achievement_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
-    <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="mocks\MockClock.hh" />
+    <ClInclude Include="mocks\MockConfiguration.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
+    <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
-    <ClCompile Include="..\src\RA_MemValue.cpp" />
-    <ClCompile Include="RA_CompVariable_Tests.cpp" />
-    <ClCompile Include="RA_ConditionSet_Tests.cpp" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
-    <ClCompile Include="RA_MemValue_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="base.props">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

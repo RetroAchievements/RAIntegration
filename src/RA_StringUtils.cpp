@@ -124,4 +124,22 @@ std::string StringPrintf(const char* const sFormat, ...)
     return sFormatted;
 }
 
+_Use_decl_annotations_
+bool StringStartsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(0, sMatch.length(), sMatch) == 0);
+}
+
+_Use_decl_annotations_
+bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
+}
+
 } /* namespace ra */

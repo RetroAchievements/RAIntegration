@@ -2,7 +2,7 @@
 #define RA_LEADERBOARD_H
 #pragma once
 
-#include "RA_MemValue.h"
+#include "ra_fwd.h"
 
 class RA_Leaderboard
 {
@@ -14,14 +14,12 @@ public:
     RA_Leaderboard(RA_Leaderboard&&) noexcept = default;
     RA_Leaderboard& operator=(RA_Leaderboard&&) noexcept = default;
 
-public:
-    void ParseFromString(const char* sBuffer, MemValue::Format format);
+    void ParseFromString(const char* sBuffer, const char* sFormat);
 
     void Test();
     virtual void Reset();
 
-    unsigned int GetCurrentValue() const { return m_value.GetValue(); } // Gets the final value for submission
-    unsigned int GetCurrentValueProgress() const;                       // Gets the value to display while the leaderboard is active
+    unsigned int GetCurrentValue() const { return m_nCurrentValue; }
 
     ra::LeaderboardID ID() const { return m_nID; }
 
@@ -31,10 +29,7 @@ public:
     const std::string& Description() const { return m_sDescription; }
     void SetDescription(const std::string& sValue) { m_sDescription = sValue; }
 
-    std::string FormatScore(unsigned int nValue) const
-    {
-        return MemValue::FormatValue(nValue, m_nFormat);
-    }
+    std::string FormatScore(unsigned int nValue) const;
 
     struct Entry
     {
@@ -56,23 +51,18 @@ protected:
     virtual void Submit(unsigned int nScore);
 
 private:
-    ra::LeaderboardID m_nID; // DB ID for this LB.
+    const ra::LeaderboardID          m_nID;                 //  DB ID for this LB
 
-    ConditionSet m_startCond;  // Start monitoring if this is true.
-    ConditionSet m_cancelCond; // Cancel monitoring if this is true.
-    ConditionSet m_submitCond; // Submit new score if this is true.
+    void*                            m_pLeaderboard;        //  rc_lboard_t
+    std::shared_ptr<unsigned char[]> m_pLeaderboardBuffer;  //  buffer for rc_lboard_t
+    unsigned int                     m_nCurrentValue = 0;
 
-    bool m_bStarted{ false };   // false = check start condition; true = check cancel or submit conditions.
-    bool m_bSubmitted{ false }; // true if already submitted.
+    int                              m_nFormat = 0;         // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
-    MemValue m_value;    // A collection of memory addresses and values to produce one value.
-    MemValue m_progress; // A collection of memory addresses, used to show progress towards completion.
-    MemValue::Format m_nFormat{ MemValue::Format::Value }; // A format to output. Typically '%d' for score or '%02d:%02d.%02d' for time.
+    std::string                      m_sTitle;              //  The title of the leaderboard
+    std::string                      m_sDescription;        //  A brief description of the leaderboard
 
-    std::string m_sTitle;       // The title of the leaderboard.
-    std::string m_sDescription; // A description of the leaderboard.
-
-    std::vector<Entry> m_RankInfo; // Recent users ranks.
+    std::vector<Entry>               m_RankInfo;            //  Recent users ranks
 };
 
 #endif // !RA_LEADERBOARD_H

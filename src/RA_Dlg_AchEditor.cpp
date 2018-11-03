@@ -1887,6 +1887,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     m_sTooltip = NativeStr(oss.str());
 }
 
+[[gsl::suppress(con.4)]] /* suppresses warning on line 1902 */
 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
 {
     std::string sAchievementBadgeURI;
@@ -1897,7 +1898,9 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         sAchievementBadgeURI = sBackupBadgeToUse;
 
     m_hAchievementBadge.ChangeReference(ra::services::ImageType::Badge, sAchievementBadgeURI);
-    const HBITMAP__* hBitmap = m_hAchievementBadge.GetHBitmap();
+    
+    const auto hBitmap = m_hAchievementBadge.GetHBitmap();
+    static_assert(std::is_same_v<decltype(hBitmap), HBITMAP__* const>);
     if (hBitmap != nullptr)
     {
         HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);

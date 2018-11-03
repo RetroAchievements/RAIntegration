@@ -1636,13 +1636,13 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 
 //	Stubs for non-class based, indirect calling of these functions.
 _Use_decl_annotations_
-API int _RA_UpdateOverlay(const ControllerInput* const pInput, float fDTime, bool Full_Screen, bool Paused)
+API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
 {
     return g_AchievementOverlay.Update(pInput, fDTime, Full_Screen, Paused);
 }
 
 _Use_decl_annotations_
-API void _RA_RenderOverlay(HDC hDC, const RECT* const rcSize)
+API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
 {
     g_AchievementOverlay.Render(hDC, rcSize);
 }

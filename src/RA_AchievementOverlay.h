@@ -200,11 +200,11 @@ extern AchievementOverlay g_AchievementOverlay;
 //	Exposed to DLL
 _EXTERN_C
 // Can't use restrict since the pointer is aliased
-
-_NODISCARD API int _RA_UpdateOverlay(_In_ const ControllerInput* const pInput, _In_ float fDTime,
-                                     _In_ bool Full_Screen, _In_ bool Paused);
-API void _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* const rcSize);
-_NODISCARD API bool _RA_IsOverlayFullyVisible();
+[[gsl::suppress(con.3)]]
+API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen, _In_ bool Paused);
+[[gsl::suppress(con.3)]]
+API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+API bool _RA_IsOverlayFullyVisible();
 _END_EXTERN_C
 
 extern const COLORREF COL_TEXT;

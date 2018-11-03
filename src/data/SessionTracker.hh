@@ -36,6 +36,11 @@ public:
     /// Gets the total captured playtime for the specified game.
     /// </summary>
     std::chrono::seconds GetTotalPlaytime(unsigned int nGameId) const;
+    
+    /// <summary>
+    /// Determines whether any previous session data exists.
+    /// </summary>
+    bool HasSessionData() const { return !m_vGameStats.empty(); }
 
 protected:
     void UpdateSession(time_t tSessionStart);

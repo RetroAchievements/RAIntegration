@@ -21,29 +21,6 @@ to_unsigned(_In_ SignedType st) noexcept { return static_cast<std::make_unsigned
 template<typename UnsignedType, class = std::enable_if_t<std::is_unsigned_v<UnsignedType>>> _NODISCARD _CONSTANT_FN
 to_signed(_In_ UnsignedType st) noexcept { return static_cast<std::make_signed_t<UnsignedType>>(st); }
 
-/// <summary>Changes the sign of <paramref name="a" />.</summary>
-/// <typeparam name="Arithmetic">
-///   A type that satisfies the <see cref="std::is_arithmetic_v" /> constraint.
-/// </typeparam>
-/// <param name="a">Arithmetic value to change.</param>
-/// <returns>
-///   A new <typeparamref name="Arithmetic" /> with the opposite sign of <paramref name="a" />.
-/// </returns>
-/// <remarks>For floating-point numbers this just makes them either negative or positive.</remarks>
-template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>> _NODISCARD _CONSTANT_FN
-flip_sign(_In_ Arithmetic a) noexcept
-{
-    if constexpr (std::is_integral_v<Arithmetic>)
-    {
-        if constexpr (std::is_signed_v<Arithmetic>)
-            return to_unsigned(a);
-        else if constexpr (std::is_unsigned_v<Arithmetic>)
-            return to_signed(a);
-    }
-    if constexpr (std::is_floating_point_v<Arithmetic>)
-        return -a;
-}
-
 /// <summary>
 ///   Converts '<paramref name="from" />' into a <typeparamref name="NarrowedType" />.
 /// </summary>

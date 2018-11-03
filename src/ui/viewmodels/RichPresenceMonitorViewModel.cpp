@@ -74,18 +74,22 @@ void RichPresenceMonitorViewModel::StopMonitoring()
 
 void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
 {
-    if (m_nState == MonitorState::Active)
+    if (m_nState != MonitorState::Active)
+        return;
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(1), [this]()
     {
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(1), [this]()
+        if (m_nState == MonitorState::Deactivated)
+        {
+            // asked to stop, do so now
+            m_nState = MonitorState::None;
+        }
+        else
         {
             UpdateDisplayString();
             ScheduleUpdateDisplayString();
-        });
-    }
-    else if (m_nState == MonitorState::Deactivated)
-    {
-        m_nState = MonitorState::None;
-    }
+        }
+    });
 }
 
 void RichPresenceMonitorViewModel::UpdateDisplayString()

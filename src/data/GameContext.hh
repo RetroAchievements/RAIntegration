@@ -47,12 +47,12 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    bool HasRichPresence() const;
+    virtual bool HasRichPresence() const;
     
     /// <summary>
     /// Gets the current rich presence display string.
     /// </summary>
-    std::wstring GetRichPresenceDisplayString() const;
+    virtual std::wstring GetRichPresenceDisplayString() const;
     
     /// <summary>
     /// Reloads the rich presence script.

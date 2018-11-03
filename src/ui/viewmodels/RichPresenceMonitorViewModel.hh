@@ -27,12 +27,12 @@ public:
     /// Starts periodically updating the display string.
     /// </summary>
     void StartMonitoring();
-    
+
     /// <summary>
     /// Stops periodically updating the display string.
     /// </summary>
     void StopMonitoring();
-    
+
     /// <summary>
     /// Refreshes the display string.
     /// </summary>
@@ -46,7 +46,7 @@ protected:
 
 private:
     void ScheduleUpdateDisplayString();
-    
+
     enum class MonitorState
     {
         None,

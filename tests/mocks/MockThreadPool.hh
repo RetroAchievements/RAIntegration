@@ -26,13 +26,36 @@ public:
 
     void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept override
     {
+        m_vDelayedTasks.emplace_back(nDelay, f);
+    }
 
+    void AdvanceTime(std::chrono::milliseconds nDuration)
+    {
+        std::vector<std::function<void()>> vTasks;
+
+        auto pIter = m_vDelayedTasks.begin();
+        while (pIter != m_vDelayedTasks.end())
+        {
+            if (pIter->nDelay <= nDuration)
+            {
+                vTasks.push_back(std::move(pIter->fTask));
+                pIter = m_vDelayedTasks.erase(pIter);
+            }
+            else
+            {
+                pIter->nDelay -= nDuration;
+                ++pIter;
+            }
+        }
+
+        for (auto fTask : vTasks)
+            fTask();
     }
 
     /// <summary>
     /// Gets the number of outstanding asynchronous tasks are queued
     /// </summary>
-    size_t PendingTasks() const { return m_vTasks.size(); }
+    size_t PendingTasks() const { return m_vTasks.size() + m_vDelayedTasks.size(); }
 
     /// <summary>
     /// Executes the next outstanding task.
@@ -55,6 +78,15 @@ private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::IThreadPool> m_Override;
 
     std::queue<std::function<void()>> m_vTasks;
+
+    struct DelayedTask
+    {
+        DelayedTask(std::chrono::milliseconds nDelay, std::function<void()> fTask) : nDelay(nDelay), fTask(fTask) {};
+
+        std::chrono::milliseconds nDelay;
+        std::function<void()> fTask;
+    };
+    std::vector<DelayedTask> m_vDelayedTasks;
 };
 
 } // namespace mocks

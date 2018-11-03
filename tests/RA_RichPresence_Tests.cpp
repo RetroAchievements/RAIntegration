@@ -407,6 +407,35 @@ public:
         memory[0] = 2; // no entry
         Assert::AreEqual("@", rp.GetRichPresenceString().c_str());
     }
+
+    TEST_METHOD(TestHitCounts)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        RichPresenceInterpreterHarness rp;
+        rp.LoadTest("Display:\n?0xh00=0.1._R:0xh00=2?Zero\n?0xh00=1.1._R:0xh00=3?One\nDefault");
+
+        Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1; // because the hit count is still set on the first condition, it's displayed
+        Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 2; // this clears the hit count on the first condition, and doesn't match the second, so default is displayed
+        Assert::AreEqual("Default", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 1; // the second one captures a hit count
+        Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 0; // the first captures a hit count
+        Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 2; // this clears the hit count on the first, but the second still has a hit count, so it's used
+        Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
+
+        memory[0] = 3; // this clears the hit count on the second, so the default is shown
+        Assert::AreEqual("Default", rp.GetRichPresenceString().c_str());
+    }
 };
 
 } // namespace tests

@@ -3,8 +3,6 @@
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
-#include "RA_RichPresence.h"
-
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 

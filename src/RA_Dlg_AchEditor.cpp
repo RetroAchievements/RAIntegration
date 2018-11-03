@@ -171,7 +171,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
     {
         sMemTypStrSrc = (Cond.CompSource().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize()));
+        sMemSizeStrSrc = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize()))).c_str();
     }
 
     const char* sMemTypStrDst = "Value";
@@ -179,7 +179,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
     {
         sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize()));
+        sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize()))).c_str();
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);

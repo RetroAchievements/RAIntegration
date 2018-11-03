@@ -880,9 +880,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             const std::string& sFirstLine = m_SearchResults[m_nPage].m_results.Summary();
                             if (sFirstLine.empty())
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), "Invalid Range");
+                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), _T("Invalid Range"));
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), sFirstLine.c_str());
+                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(sFirstLine).c_str());
                         }
                         else
                         {

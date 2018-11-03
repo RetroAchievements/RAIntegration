@@ -1,7 +1,5 @@
 #include "Initialization.hh"
 
-#include "RA_RichPresence.h" // required for forward declaration in GameContext when used in ServiceLocator::Provide
-
 #include "data\GameContext.hh"
 
 #include "services\ServiceLocator.hh"

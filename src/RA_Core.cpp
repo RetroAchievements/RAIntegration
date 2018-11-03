@@ -445,7 +445,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     g_nProcessTimer = 0;
 
-    RAWeb::SendKeepAlive();
+    RAWeb::StartKeepAlive();
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
 

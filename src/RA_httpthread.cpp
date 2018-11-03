@@ -101,6 +101,8 @@ time_t RAWeb::ms_tSendNextKeepAliveAt = time(nullptr);
 
 std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
+const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
+
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
@@ -421,7 +423,7 @@ static void DoSendKeepAlive(unsigned int nGameId)
         return;
 
     // schedule the next ping
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::minutes(2), [nGameId]()
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
     {
         DoSendKeepAlive(nGameId);
     });
@@ -466,11 +468,11 @@ static void DoSendKeepAlive(unsigned int nGameId)
     }
 }
 
-void RAWeb::SendKeepAlive()
+void RAWeb::StartKeepAlive()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     int nGameId = pGameContext.GameId();
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::minutes(2), [nGameId]()
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
     {
         DoSendKeepAlive(nGameId);
     });

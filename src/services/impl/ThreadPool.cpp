@@ -15,6 +15,10 @@ void ThreadPool::Initialize(size_t nThreads) noexcept
 {
     assert(m_vThreads.empty());
 
+    // require at least two threads. that way if one thread is reserved for processing timed events, another is still available to execute them.
+    if (nThreads < 2)
+        nThreads = 2; 
+
     RA_LOG_INFO("Initializing %zu worker threads", nThreads);
 
     for (size_t i = 0; i < nThreads; ++i)

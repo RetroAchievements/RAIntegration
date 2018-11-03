@@ -115,17 +115,19 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     int nX = 10;
     int nY = static_cast<int>(fFadeInY);
 
+    const ra::ui::Color nColorBlack(0, 0, 0);
+    const ra::ui::Color nColorPopup(251, 102, 0);
+    const int nShadowOffset = 2;
+
     if (ActiveMessage().Image().Type() != ra::ui::ImageType::None)
     {
+        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
         pSurface.DrawImage(nX, nY, 64, 64, ActiveMessage().Image());
         nX += 64 + 6;
     }
 
-    const ra::ui::Color nColorBlack(0, 0, 0);
-    const ra::ui::Color nColorPopup(251, 102, 0);
-
     auto szTitle = pSurface.MeasureText(nFontTitle, sTitle);
-    pSurface.FillRectangle(nX + 2, nY + 2, szTitle.Width + 8, szTitle.Height, nColorBlack);
+    pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
     pSurface.FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
     pSurface.WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
 
@@ -133,7 +135,7 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     {
         nY += 32 + 2;
         auto szSubTitle = pSurface.MeasureText(nFontSubtitle, sSubTitle);
-        pSurface.FillRectangle(nX + 2, nY + 2, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
+        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
         pSurface.FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
         pSurface.WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
     }

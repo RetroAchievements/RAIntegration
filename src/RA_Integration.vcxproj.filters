@@ -300,9 +300,6 @@
     <ClCompile Include="Exports.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\PopupViewModel.cpp">
-      <Filter>UI\ViewModels</Filter>
-    </ClCompile>
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
@@ -433,9 +430,6 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">
       <Filter>Data\rcheevos</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ImageRepository.h">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>Data\rcheevos</Filter>
@@ -574,9 +568,6 @@
     </ClInclude>
     <ClInclude Include="ra_math.h">
       <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="ui\viewmodels\PopupViewModel.hh">
-      <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\drawing\gdi\GDISurface.hh">
       <Filter>UI\Drawing\GDI</Filter>

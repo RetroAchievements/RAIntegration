@@ -205,6 +205,7 @@ API int CCONV _RA_Shutdown()
 
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
+    g_pActiveAchievements = nullptr;
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
     SAFE_DELETE(g_pLocalAchievements);
@@ -1241,7 +1242,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (RAUsers::LocalUser().IsLoggedIn() && g_pActiveAchievements != nullptr)
     {
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {

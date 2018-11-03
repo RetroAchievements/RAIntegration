@@ -128,6 +128,16 @@ tcslen_s(_In_reads_or_z_(strsz) const CharT* const str, _In_ std::size_t strsz =
     return ret;
 } /* end function tcslen_s */
 
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
 } // namespace ra
 
 #ifdef UNICODE

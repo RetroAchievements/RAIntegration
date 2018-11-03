@@ -2,7 +2,8 @@
 #define RA_MEMMANAGER_H
 #pragma once
 
-#include "RA_Condition.h" // MemSize
+#include "RA_Condition.h" // ComparisonVariableSize
+#include "ra_fwd.h"
 
 typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
 typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
@@ -75,5 +76,6 @@ private:
 
 extern MemManager g_MemManager;
 
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData);
 
 #endif // !RA_MEMMANAGER_H

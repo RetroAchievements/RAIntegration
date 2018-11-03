@@ -3,7 +3,9 @@
 #pragma once
 
 #include "RA_Condition.h"
-#include "RA_MemValue.h"
+
+#include <memory>
+#include <map>
 
 #include "services\TextReader.hh"
 
@@ -13,7 +15,6 @@ public:
     RA_RichPresenceInterpreter() noexcept = default;
 
     bool Load();
-
     std::string GetRichPresenceString();
     
     bool Enabled() const { return !m_vDisplayStrings.empty(); }
@@ -45,7 +46,7 @@ protected:
         DisplayString();
         DisplayString(const std::string& sCondition);
         void InitializeParts(const std::string& sDisplayString,
-            std::map<std::string, MemValue::Format>& mFormats, std::vector<Lookup>& vLookups);
+            std::map<std::string, int>& mFormats, std::vector<Lookup>& vLookups);
 
         bool Test();
         std::string GetDisplayString() const;
@@ -53,19 +54,24 @@ protected:
     protected:
         struct Part
         {
-            std::string m_sDisplayString;
-            MemValue m_memValue;
-            const Lookup* m_pLookup = nullptr;
-            MemValue::Format m_nFormat = MemValue::Format::Value;
+            std::string                      m_sDisplayString;
+
+            void*                            m_pValue;        //  rc_value_t
+            std::shared_ptr<unsigned char[]> m_pValueBuffer;  //  buffer for rc_value_t
+
+            const Lookup*                    m_pLookup = nullptr;
+            int                              m_nFormat = 0;
         };
 
     private:
+        void InitializeValue(Part& part, const char* sValue);
 
-        std::vector<Part> m_vParts;
-        ConditionSet m_conditions;
+        std::vector<Part>                m_vParts;
+
+        void*                            m_pTrigger;        //  rc_trigger_t
+        std::shared_ptr<unsigned char[]> m_pTriggerBuffer;  //  buffer for rc_trigger_t
     };
 
-private:
     std::vector<Lookup> m_vLookups;
     std::vector<DisplayString> m_vDisplayStrings;
 };

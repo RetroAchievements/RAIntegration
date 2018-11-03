@@ -1,13 +1,19 @@
 #include "Initialization.hh"
 
+#include "data\GameContext.hh"
+
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
+#include "services\impl\ThreadPool.hh"
+#include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\WindowViewModelBase.hh"
 
@@ -35,8 +41,12 @@ static void LogHeader(ra::services::ILogger& pLogger, ra::services::IFileSystem&
     pLogger.LogMessage(LogLevel::Info, "BaseDirectory: " + ra::Narrow(pFileSystem.BaseDirectory()));
 }
 
-void Initialization::RegisterServices(const std::string& sClientName)
+void Initialization::RegisterCoreServices()
 {
+    // check to see if already registered
+    if (ra::services::ServiceLocator::Exists<ra::services::IConfiguration>())
+        return;
+
     auto* pClock = new ra::services::impl::Clock();
     ra::services::ServiceLocator::Provide<ra::services::IClock>(pClock);
 
@@ -46,27 +56,54 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pLogger = new ra::services::impl::WindowsDebuggerFileLogger(*pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILogger>(pLogger);
 
-    LogHeader(*pLogger, *pFileSystem, *pClock);  
+    LogHeader(*pLogger, *pFileSystem, *pClock);
 
     auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
-    std::wstring sFilename = pFileSystem->BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
-    pConfiguration->Load(sFilename);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
+}
 
-    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(*pFileSystem);
+void Initialization::RegisterServices(const std::string& sClientName)
+{
+    RegisterCoreServices();
+
+    auto& pFileSystem = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
+
+    auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(&ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
+    std::wstring sFilename = pFileSystem.BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
+    pConfiguration->Load(sFilename);
+
+    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(pLocalStorage);
+
+    auto* pThreadPool = new ra::services::impl::ThreadPool();
+    pThreadPool->Initialize(pConfiguration->GetNumBackgroundThreads());
+    ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(pThreadPool);
+
+    auto* pHttpRequester = new ra::services::impl::WindowsHttpRequester();
+    ra::services::ServiceLocator::Provide<ra::services::IHttpRequester>(pHttpRequester);
+
+    auto* pGameContext = new ra::data::GameContext();
+    ra::services::ServiceLocator::Provide<ra::data::GameContext>(pGameContext);
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
 
+    auto* pClipboard = new ra::services::impl::WindowsClipboard();
+    ra::services::ServiceLocator::Provide<ra::services::IClipboard>(pClipboard);
+
     auto* pDesktop = new ra::ui::win32::Desktop();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
     ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+
+    auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
+    ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
 }
 
 void Initialization::Shutdown()
 {
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
 }
 
 } // namespace services

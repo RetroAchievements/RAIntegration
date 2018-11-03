@@ -2,8 +2,6 @@
 #define RA_SERVICES_ILOGGER_HH
 #pragma once
 
-#include <string>
-
 namespace ra {
 namespace services {
 
@@ -18,6 +16,10 @@ class ILogger
 {
 public:
     virtual ~ILogger() noexcept = default;
+    ILogger(const ILogger&) noexcept = delete;
+    ILogger& operator=(const ILogger&) noexcept = delete;
+    ILogger(ILogger&&) noexcept = delete;
+    ILogger& operator=(ILogger&&) noexcept = delete;
 
     /// <summary>
     /// Determines if a message should be logged for a given level.
@@ -28,6 +30,9 @@ public:
     /// Logs a message.
     /// </summary>
     virtual void LogMessage(LogLevel level, const std::string& sMessage) const = 0;
+
+protected:
+    ILogger() noexcept = default;
 };
 
 } // namespace services

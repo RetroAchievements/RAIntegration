@@ -1,48 +1,26 @@
-#include "CppUnitTest.h"
-
 #include "ui\WindowViewModelBase.hh"
 
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
+#include "tests\mocks\MockDesktop.hh"
 
-#include "RA_UnitTestHelpers.h"
+#include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+using ra::ui::mocks::MockDesktop;
 
 namespace ra {
 namespace ui {
 namespace tests {
 
-TEST_CLASS(UI_WindowViewModelBase_Tests)
+TEST_CLASS(WindowViewModelBase_Tests)
 {
     class WindowViewModelHarness : public WindowViewModelBase
     {
     public:
-        WindowViewModelHarness() noexcept = default;
-    };
-
-    class MockDesktop : public IDesktop, ra::services::ServiceLocator::ServiceOverride<IDesktop>
-    {
-    public:
-        MockDesktop() : ra::services::ServiceLocator::ServiceOverride<IDesktop>(this)
-        {
-        }
-
-        void ShowWindow(WindowViewModelBase& vmViewModel) const override
-        {
-            vmShownWindow = &vmViewModel;
-        }
-
-        ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const override
-        {
-            vmModalWindow = &vmViewModel;
-            return DialogResult::OK;
-        }
-
-        void Shutdown() override {}
-
-        mutable WindowViewModelBase* vmShownWindow = nullptr;
-        mutable WindowViewModelBase* vmModalWindow = nullptr;
+        WindowViewModelHarness()
+            noexcept(std::is_nothrow_default_constructible_v<WindowViewModelBase>) = default;
     };
 
     void AssertPointer(const WindowViewModelBase* pExpected, const WindowViewModelBase* pActual)
@@ -76,20 +54,32 @@ public:
 
     TEST_METHOD(TestShow)
     {
-        MockDesktop mockDesktop;
+        WindowViewModelBase* vmShownWindow = nullptr;
+        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
+        {
+            vmShownWindow = &vmWindow;
+            return DialogResult::OK;
+        });
+
         WindowViewModelHarness vmViewModel;
         vmViewModel.Show();
 
-        AssertPointer(&vmViewModel, mockDesktop.vmShownWindow);
+        AssertPointer(&vmViewModel, vmShownWindow);
     }
 
     TEST_METHOD(TestShowModal)
     {
-        MockDesktop mockDesktop;
+        WindowViewModelBase* vmShownWindow = nullptr;
+        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
+        {
+            vmShownWindow = &vmWindow;
+            return DialogResult::OK;
+        });
+
         WindowViewModelHarness vmViewModel;
         vmViewModel.ShowModal();
 
-        AssertPointer(&vmViewModel, mockDesktop.vmModalWindow);
+        AssertPointer(&vmViewModel, vmShownWindow);
     }
 };
 

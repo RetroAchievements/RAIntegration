@@ -1,9 +1,8 @@
 #include "RA_Defs.h"
 
-#include <iomanip>
-
 namespace ra {
 
+_Use_decl_annotations_
 std::string ByteAddressToString(ByteAddress nAddr)
 {
     std::ostringstream oss;

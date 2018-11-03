@@ -2,18 +2,18 @@
 #define RA_UI_MODEL_PROPERTY_H
 #pragma once
 
-#include <set>
-#include <string>
-#include <map>
-#include <memory>
-#include <mutex>
-
 namespace ra {
 namespace ui {
 
 class ModelPropertyBase
 {
 public:
+    virtual ~ModelPropertyBase() noexcept;
+    ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
+    ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
+    ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
+    ModelPropertyBase& operator=(ModelPropertyBase&&) noexcept = delete;
+
     /// <summary>
     /// Gets the unique identifier of the property.
     /// </summary>
@@ -32,17 +32,22 @@ public:
     /// <summary>
     /// Gets the property for specified unique identifier.
     /// </summary>
-    /// <returns>Associated property, <c>null</c> if not found.</returns>
+    /// <returns>Associated property, <c>nullptr</c> if not found.</returns>
     static const ModelPropertyBase* GetPropertyForKey(int nKey);
 
-    bool operator==(const ModelPropertyBase& that) const { return m_nKey == that.m_nKey; }
-    bool operator!=(const ModelPropertyBase& that) const { return m_nKey != that.m_nKey; }
+    _NODISCARD inline constexpr auto 
+    operator==(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey == that.m_nKey; }
+
+    _NODISCARD inline constexpr auto 
+    operator!=(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey != that.m_nKey; }
+
+    _NODISCARD inline constexpr auto // for sorting if needed
+    operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
 
 protected:
-    explicit ModelPropertyBase(const char* sTypeName, const char* sPropertyName) noexcept;
-    virtual ~ModelPropertyBase() noexcept;
+    explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName) noexcept;
 
-    explicit ModelPropertyBase(int nKey) noexcept { m_nKey = nKey; } // for binary search
+    explicit ModelPropertyBase(_In_ int nKey) noexcept { m_nKey = nKey; } // for binary search
 
 private:
     int m_nKey{};

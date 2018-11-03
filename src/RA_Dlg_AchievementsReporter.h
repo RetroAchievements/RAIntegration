@@ -1,7 +1,8 @@
 #ifndef RA_DLG_ACHIEVEMENTSREPORTER_H
 #define RA_DLG_ACHIEVEMENTSREPORTER_H
 #pragma once
-#include "RA_Defs.h"
+
+#include "ra_fwd.h"
 
 class Achievement;
 
@@ -10,7 +11,7 @@ class Dlg_AchievementsReporter
     inline static constexpr auto MAX_ACHIEVEMENTS{ 200 };
     inline static constexpr auto MAX_TEXT_LEN{ 250 };
 
-    enum class Columns
+    enum class Column : std::size_t
     {
         Checked,
         Title,
@@ -18,7 +19,7 @@ class Dlg_AchievementsReporter
         Author,
         Achieved
     };
-    inline static constexpr std::array<const LPCTSTR, 5> COL_TITLE
+    inline static constexpr std::array<LPCTSTR, 5> COL_TITLE
     {
         _T(""),
         _T("Title"),
@@ -42,10 +43,5 @@ public:
 };
 
 extern Dlg_AchievementsReporter g_AchievementsReporterDialog;
-
-
-
-
-
 
 #endif // !RA_DLG_ACHIEVEMENTSREPORTER_H

@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_Leaderboard.h"
 #include "RA_UnitTestHelpers.h"
 
@@ -53,6 +51,19 @@ private:
 
 TEST_CLASS(RA_Leaderboard_Tests)
 {
+	void AssertValue(const char* sSerialized, unsigned int nExpected)
+	{
+		// NOTE: requires value "1" in $00
+		std::string sString = "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:";
+		sString += sSerialized;
+
+		LeaderboardHarness lb;
+		lb.ParseFromString(sString.c_str(), "VALUE");
+		lb.Test();
+
+		Assert::AreEqual(nExpected, lb.GetCurrentValue(), ra::Widen(sSerialized).c_str());
+	}
+
 public:
     TEST_METHOD(TestSimpleLeaderboard)
     {
@@ -60,7 +71,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
@@ -111,7 +122,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Score);
+        lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "SCORE");
         lb.Test();
 
         memory[0] = 1; // start value
@@ -127,7 +138,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -165,7 +176,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -192,19 +203,17 @@ public:
 
         // if PRO: mapping is available, use that for GetCurrentValueProgress
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", "VALUE");
         lb.Test();
         Assert::IsTrue(lb.IsActive());
-        Assert::AreEqual(0x34U, lb.GetCurrentValue());
-        Assert::AreEqual(0x56U, lb.GetCurrentValueProgress());
+        Assert::AreEqual(0x56U, lb.GetCurrentValue());
 
         // if PRO: mapping is not available, use VAL: for GetCurrentValueProgress
         LeaderboardHarness lb2;
-        lb2.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb2.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         lb2.Test();
         Assert::IsTrue(lb2.IsActive());
         Assert::AreEqual(0x34U, lb2.GetCurrentValue());
-        Assert::AreEqual(0x34U, lb2.GetCurrentValueProgress());
     }
 
     TEST_METHOD(TestStartAndCondition)
@@ -213,7 +222,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -229,7 +238,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -272,7 +281,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -297,7 +306,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -314,7 +323,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", "VALUE");
 
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -341,7 +350,7 @@ public:
         InitializeMemory(memory, 5);
 
         LeaderboardHarness lb;
-        lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", MemValue::Format::Value);
+        lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
@@ -391,6 +400,47 @@ public:
         Assert::AreEqual(4U, lb.GetRankInfo(3).m_nRank);
         Assert::AreEqual(50, lb.GetRankInfo(4).m_nScore);
     }
+
+	TEST_METHOD(TestValue)
+	{
+		unsigned char memory[] = { 0x01, 0x12, 0x34, 0xAB, 0x56 };
+		InitializeMemory(memory, 5);
+
+		// simple accessors
+		AssertValue("0xH0002", 0x34U);
+		AssertValue("0x000002", 0xAB34U);
+		AssertValue("0xL02", 4U);
+		AssertValue("0xU2", 3U);
+
+		// BCD
+		AssertValue("B0xH02", 34U);
+
+		// static values
+		AssertValue("V1234", 1234U);
+		AssertValue("V+1", 1U);
+		AssertValue("V-1", 0xFFFFFFFFU);
+
+		// multiplication
+		AssertValue("0xH02*1", 0x34U);
+		AssertValue("0xH02*3", 156U);
+		AssertValue("0xH02*0.5", 26U);
+		AssertValue("0xH02*-1", 0xFFFFFFCCU);
+		AssertValue("0xH02*0xH01", 936U);
+		AssertValue("0xH02*~0xT02", 0x34U);                // multiply by inverse bit - T02 = 0, inverse = 1
+		AssertValue("0xH02*~0xQ02", 0U);                   // multiply by inverse bit - Q02 = 1, inverse = 0
+		AssertValue("0xH02*~0xH03", 0x34U * 0x54U);        // multiply by inverse byte - H03 = 0xAB, inverse = 0x54
+
+		// addition
+		AssertValue("0xH02_0xH03", 0x34U + 0xABU);
+		AssertValue("0xH02_V10", 0x34U + 10U);
+		AssertValue("0xH02_V-10", 0x34U - 10U);
+		AssertValue("0xH02*100_0xH03*0.5", 0x34U * 100U + 0xABU / 2U);
+
+		// maximum
+		AssertValue("0xH02$0xH03", 0xABU);
+		AssertValue("0xH02*4$0xH03", 0x34U * 4);
+		AssertValue("0xH0001_0xH0004*3$0xH0002*0xL0003", 0x34U * 0xBU); // 0x12 + 0x56 * 3 <> 0x34 * 0xB (0x114 <> 0x23C)
+	}
 };
 
 } // namespace tests

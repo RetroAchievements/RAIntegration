@@ -7,6 +7,12 @@
     <Filter Include="Code">
       <UniqueIdentifier>{c09a9464-e27a-4721-8467-626c7f5e3ab0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Code\rcheevos">
+      <UniqueIdentifier>{633c15ff-4743-416b-9e0b-fa7493d6d969}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Code\lua">
+      <UniqueIdentifier>{ca929deb-dbc0-4ae3-8307-9806dbf4b05f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Tests\UI">
       <UniqueIdentifier>{4f043333-855f-48b9-b8c2-08e3c5f0d576}</UniqueIdentifier>
     </Filter>
@@ -30,12 +36,9 @@
     <ClCompile Include="..\src\RA_Defs.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_MemValue.cpp">
+    <ClInclude Include="..\src\RA_Defs.h">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_MemValue_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClCompile Include="..\src\RA_Leaderboard.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
+      <Filter>Code\rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="RA_RichPresence_Tests.cpp">
       <Filter>Tests</Filter>
@@ -63,9 +69,6 @@
     <ClCompile Include="..\src\RA_md5factory.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="UI_ModelProperty_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\ModelProperty.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -74,15 +77,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="UI_ViewModelBase_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI_WindowViewModelBase_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="VM_MessageBoxViewModel_Tests.cpp">
-      <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>Code</Filter>
@@ -120,22 +114,152 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ModelProperty_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\WindowViewModelBase_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pch.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
+      <Filter>Code\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Achievement_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RA_Achievement.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Condition_Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lapi.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lcode.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lctype.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldebug.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldo.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldump.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lfunc.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lgc.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\llex.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lmem.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lobject.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lopcodes.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lparser.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstate.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstring.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltable.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltm.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lundump.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lvm.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lzio.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lauxlib.c">
+      <Filter>Code\lua</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="RA_UnitTestHelpers.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_CompVariable_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_ConditionSet_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\RA_Leaderboard.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RA_Achievement.h">
+      <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockFileSystem.hh">
       <Filter>Tests\Mocks</Filter>
@@ -143,10 +267,34 @@
     <ClInclude Include="mocks\MockClock.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="mocks\MockDesktop.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
     <ClInclude Include="mocks\MockLocalStorage.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClCompile Include="services\Http_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\Http.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockThreadPool.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockGameContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockConfiguration.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Code\rcheevos</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="base.props" />
   </ItemGroup>
 </Project>

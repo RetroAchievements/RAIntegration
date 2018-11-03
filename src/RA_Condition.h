@@ -39,7 +39,7 @@ inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
 };
 
 
-enum class ComparisonType
+enum class ComparisonType : std::size_t
 {
     Equals,
     LessThan,
@@ -48,8 +48,7 @@ enum class ComparisonType
     GreaterThanOrEqual,
     NotEqualTo
 };
-// 'const LPCTSTR' is the same as const TCHAR* const
-inline constexpr std::array<const LPCTSTR, 6> COMPARISONTYPE_STR
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR
 {
     _T("="),
     _T("<"),
@@ -72,7 +71,7 @@ public:
         DynamicVariable  // a custom user-set variable
     };
 
-    inline static constexpr std::array<const LPCTSTR, 4> TYPE_STR
+    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR
     {
         _T("Memory"),
         _T("Value"),

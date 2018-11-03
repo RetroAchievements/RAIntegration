@@ -23,6 +23,9 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
 std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
+// rvalue reference version for the tests
+std::string TrimLineEnding(std::string&& str) noexcept;
+
 /// <summary>
 /// Constructs a <see cref="std::string" /> from a sprintf format and paramaters
 /// </summary>

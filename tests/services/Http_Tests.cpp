@@ -27,7 +27,7 @@ private:
         {
         }
 
-        void SetUserAgent(const std::string& sUserAgent) override {}
+        void SetUserAgent([[maybe_unused]] const std::string& /*sUserAgent*/) override {}
 
         unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override
         {

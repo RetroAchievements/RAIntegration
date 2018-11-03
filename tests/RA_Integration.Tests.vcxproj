@@ -89,6 +89,7 @@
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ShowIncludes>false</ShowIncludes>
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,37 +177,71 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115;4244;4702</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4310</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4244;4310</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4310</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\format.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4115</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\src\md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -2,11 +2,6 @@
 
 #include "RA_Defs.h"
 
-const char* COMPARISONTYPE_STR[] ={ "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
-const char* CONDITIONTYPE_STR[] ={ "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
-
 _NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)

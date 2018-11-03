@@ -85,16 +85,21 @@ std::string Narrow(const std::string& str)
 _Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
-    auto nIndex = str.length();
-    if (nIndex > 0 && str[nIndex - 1] == '\n')
-        nIndex--;
-    if (nIndex > 0 && str[nIndex - 1] == '\r')
-        nIndex--;
-
-    if (nIndex != str.length())
-        str.resize(nIndex);
-
+    auto sCpy{ str };
+    str = TrimLineEnding(std::move_if_noexcept(sCpy));
     return str;
+}
+
+std::string TrimLineEnding(std::string&& str) noexcept
+{
+    auto sRet{ std::move_if_noexcept(str) };
+    
+    if (const auto pos = sRet.find_last_of('\n'); pos != std::string::npos)
+        sRet.erase(pos);
+    if (const auto pos = sRet.find_last_of('\r'); pos != std::string::npos)
+        sRet.erase(pos);
+
+    return sRet;
 }
 
 _Use_decl_annotations_

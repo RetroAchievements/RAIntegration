@@ -42,7 +42,7 @@ public:
         fTask();
     }
 
-    void Shutdown(bool bWait) noexcept override {}
+    void Shutdown([[maybe_unused]] bool /*bWait*/) noexcept override {}
 
     bool IsShutdownRequested() const noexcept override { return false; }
 

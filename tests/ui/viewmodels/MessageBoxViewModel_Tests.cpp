@@ -14,7 +14,7 @@ namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
 
-template<> static std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
+template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
 {
     switch (icon)
     {
@@ -26,7 +26,7 @@ template<> static std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel:
     }
 }
 
-template<> static std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
+template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
 {
     switch (buttons)
     {

@@ -573,7 +573,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    unsigned char data[16];
+    std::array<std::byte, 16> data{};
     unsigned int notes;
     unsigned int bookmarks;
     unsigned int freeze;
@@ -615,23 +615,25 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             g_MemBookmarkDialog.WriteFrozenValue(*bm);
                     }
                 }
+                std::array<unsigned char, 16> data2{};
+                for (auto i2 = 0U; i < 16; i++)
+                    data2.at(i2) = ra::etoi(data.at(i2));
+                g_MemManager.ActiveBankRAMRead(data2.data(), addr, 16);
 
-                g_MemManager.ActiveBankRAMRead(data, addr, 16);
-
-                TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
+                TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 9, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
                 {
                     case MemSize::EightBit:
                         for (int j = 0; j < 16; ++j)
-                            ptr += wsprintf(ptr, TEXT("%02x "), data[j]);
+                            ptr += _stprintf_s(ptr, 5, TEXT("%02x "), data.at(j));
                         break;
                     case MemSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x "), data[j + 1], data[j]);
+                            ptr += _stprintf_s(ptr, 9, TEXT("%02x%02x "), data.at(j + 1), data.at(j));
                         break;
                     case MemSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x%02x%02x "), data[j + 3], data[j + 2], data[j + 1], data[j]);
+                            ptr += _stprintf_s(ptr, 17, TEXT("%02x%02x%02x%02x "), data.at(j + 3), data.at(j + 2), data.at(j + 1), data.at(j));
                         break;
                 }
 
@@ -799,8 +801,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), NativeStr(COMPARISONTYPE_STR[i]).c_str());
+            for (const auto str : COMPARISONTYPE_STR)
+                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), str);
 
             ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 

@@ -1,8 +1,6 @@
 #include "RA_Achievement.h"
 #include "RA_UnitTestHelpers.h"
 
-#include "rcheevos\include\rcheevos.h"
-
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

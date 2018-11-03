@@ -4,7 +4,7 @@
 
 #include "ra_fwd.h"
 
-enum class MemSize
+enum class MemSize : std::size_t
 {
     Bit_0,
     Bit_1,
@@ -39,7 +39,7 @@ inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
 };
 
 
-enum ComparisonType
+enum ComparisonType : std::size_t
 {
     Equals,
     LessThan,
@@ -50,14 +50,13 @@ enum ComparisonType
 
     NumComparisonTypes
 };
-extern const char* COMPARISONTYPE_STR[];
 
-extern const char* CONDITIONTYPE_STR[];
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR{ _T("="), _T("<"), _T("<="), _T(">"), _T(">="), _T("!=") };
 
 class CompVariable
 {
 public:
-    enum class Type
+    enum class Type : std::size_t
     {
         Address,         // compare to the value of a live address in RAM
         ValueComparison, // a number. assume 32 bit 
@@ -65,7 +64,7 @@ public:
         DynamicVariable  // a custom user-set variable
     };
 
-    inline static constexpr std::array<const LPCTSTR, 4> TYPE_STR
+    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR
     {
         _T("Memory"),
         _T("Value"),
@@ -105,7 +104,7 @@ private:
 class Condition
 {
 public:
-    enum ConditionType
+    enum ConditionType : std::size_t
     {
         Standard,
         PauseIf,
@@ -115,6 +114,16 @@ public:
         AddHits,
 
         NumConditionTypes
+    };
+
+    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
+    {
+        _T(""),
+        _T("Pause If"),
+        _T("Reset If"),
+        _T("Add Source"),
+        _T("Sub Source"),
+        _T("Add Hits")
     };
 
 public:

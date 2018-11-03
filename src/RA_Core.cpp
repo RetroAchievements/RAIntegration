@@ -1,33 +1,27 @@
 #include "RA_Core.h"
 
-#include "RA_Achievement.h"
-#include "RA_AchievementSet.h"
-#include "RA_AchievementOverlay.h"
-#include "RA_BuildVer.h"
+#include "RA_AchievementOverlay.h" // RA_User
 #include "RA_CodeNotes.h"
-#include "RA_Defs.h"
-#include "RA_GameData.h"
 #include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_Interface.h"
 #include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
-#include "RA_User.h"
 
 #include "services\ImageRepository.h"
 
-#include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_AchEditor.h" // RA_httpthread.h, services/ImageRepository.h
+#include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_Dlg_RomChecksum.h"
 #include "RA_Dlg_MemBookmark.h"
+
+#include "data\GameContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -36,26 +30,15 @@
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
-#include "services\impl\LeaderboardManager.hh" // for SubmitEntry callback
+// for SubmitEntry callback
+#include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
+#include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#include <memory>
-#include <direct.h>
-#include <fstream>
-#include <io.h>		//	_access()
-#include <ctime>
-
-#ifdef WIN32_LEAN_AND_MEAN
-#include <ShellAPI.h>
-#include <CommDlg.h>
-#include <Shlwapi.h>
-#endif // WIN32_LEAN_AND_MEAN
-
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
-std::string g_sCurrentROMMD5;	//	Internal
 
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
@@ -75,28 +58,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
         g_hThisDLLInst = hModule;
+
+    ra::services::Initialization::RegisterCoreServices();
+
     return TRUE;
-}
-
-API const char* CCONV _RA_IntegrationVersion()
-{
-    return RA_INTEGRATION_VERSION;
-}
-
-API const char* CCONV _RA_HostName()
-{
-    static std::string sHostName;
-    if (sHostName.empty())
-    {
-        std::ifstream fHost("host.txt", std::ifstream::in);
-        if (fHost.good())
-            fHost >> sHostName;
-
-        if (sHostName.empty())
-            sHostName = "retroachievements.org";
-    }
-
-    return sHostName.c_str();
 }
 
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
@@ -240,6 +205,7 @@ API int CCONV _RA_Shutdown()
 
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
+    g_pActiveAchievements = nullptr;
     SAFE_DELETE(g_pCoreAchievements);
     SAFE_DELETE(g_pUnofficialAchievements);
     SAFE_DELETE(g_pLocalAchievements);
@@ -332,12 +298,6 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
     g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
 }
 
-API int CCONV _RA_HardcoreModeIsActive()
-{
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-}
-
 static void DisableHardcoreMode()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -374,7 +334,7 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-void DownloadAndActivateAchievementData(ra::GameID nGameID)
+void DownloadAndActivateAchievementData(unsigned int nGameID)
 {
     g_pCoreAchievements->Clear();
     g_pUnofficialAchievements->Clear();
@@ -392,34 +352,34 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
 
-    g_sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
-    RA_LOG("Loading new ROM... MD5 is %s\n", (g_sCurrentROMMD5 == sMD5NULL) ? "Null" : g_sCurrentROMMD5.c_str());
+    std::string sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
+    RA_LOG("Loading new ROM... MD5 is %s\n", (sCurrentROMMD5 == sMD5NULL) ? "Null" : sCurrentROMMD5.c_str());
 
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
 
     //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
     //	TBD: local DB of MD5 to ra::GameIDs here
-    ra::GameID nGameID = 0;
+    unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
-        args['m'] = g_sCurrentROMMD5;
+        args['m'] = sCurrentROMMD5;
 
         rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
-            nGameID = static_cast<ra::GameID>(doc["GameID"].GetUint());
+            nGameID = doc["GameID"].GetUint();
             if (nGameID == 0)	//	Unknown
             {
-                RA_LOG("Could not recognise game with MD5 %s\n", g_sCurrentROMMD5.c_str());
+                RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
                 ZeroMemory(buffer, 64);
                 RA_GetEstimatedGameTitle(buffer);
                 std::string sEstimatedGameTitle(buffer);
-                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, g_sCurrentROMMD5, sEstimatedGameTitle, nGameID);
+                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameID);
             }
             else
             {
@@ -441,6 +401,8 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_bRAMTamperedWith = false;
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
     g_PopupWindows.LeaderboardPopups().Reset();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().SetGameHash(sCurrentROMMD5);
 
     if (nGameID != 0)
     {
@@ -1065,8 +1027,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
             else
             {
-                ra::GameID nGameID = g_pCurrentGameData->GetGameID();
-                if (nGameID != 0)
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                if (pGameContext.GameId() != 0)
                 {
                     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
                     vmMessageBox.SetHeader(L"Enable Hardcore mode?");
@@ -1086,8 +1048,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 _RA_OnReset();
 
                 // if a game was loaded, redownload the associated data
-                if (nGameID != 0)
-                    DownloadAndActivateAchievementData(nGameID);
+                if (pGameContext.GameId() != 0)
+                    DownloadAndActivateAchievementData(pGameContext.GameId());
             }
 
             g_PopupWindows.Clear();
@@ -1100,7 +1062,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_GETROMCHECKSUM:
         {
-            RA_Dlg_RomChecksum::DoModalDialog();
+            ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
+            vmGameChecksum.ShowModal();
             break;
         }
 
@@ -1119,10 +1082,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_OPENGAMEPAGE:
-            if (g_pCurrentGameData->GetGameID() != 0)
+        {
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+            if (pGameContext.GameId() != 0)
             {
                 std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/Game/" << g_pCurrentGameData->GetGameID();
+                oss << "http://" << _RA_HostName() << "/Game/" << pGameContext.GameId();
                 ShellExecute(nullptr,
                     TEXT("open"),
                     NativeStr(oss.str()).c_str(),
@@ -1134,7 +1099,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             {
                 MessageBox(nullptr, TEXT("No ROM loaded!"), TEXT("Error!"), MB_ICONWARNING);
             }
-            break;
+        }
+        break;
 
         case IDM_RA_SCANFORGAMES:
 
@@ -1182,8 +1148,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
             else
             {
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                 std::wstring sMessage = L"Leaderboards are now enabled.";
-                if (g_pCurrentGameData->GetGameID() != 0)
+                if (pGameContext.GameId() != 0)
                     sMessage += L"\nYou may need to reload the game to activate them.";
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
             }
@@ -1275,7 +1242,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (RAUsers::LocalUser().IsLoggedIn() && g_pActiveAchievements != nullptr)
     {
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {
@@ -1363,7 +1330,8 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
     ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
-bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
+_Use_decl_annotations_
+bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
 {
     std::ifstream file(sFile);
     if (file.fail())
@@ -1378,6 +1346,7 @@ bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile)
     return true;
 }
 
+_Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
     FILE* pf = nullptr;
@@ -1385,7 +1354,7 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     if (pf == nullptr)
         return nullptr;
 
-    //	Calculate filesize
+    // Calculate filesize
     fseek(pf, 0L, SEEK_END);
     nFileSizeOut = ftell(pf);
     fseek(pf, 0L, SEEK_SET);
@@ -1447,7 +1416,6 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 } /* namespace ra */
 
-_Use_decl_annotations_
 std::string GetFolderFromDialog() noexcept
 {
     auto lpbi{ std::make_unique<BROWSEINFO>() };

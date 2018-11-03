@@ -2,12 +2,8 @@
 #define RA_UI_WIN32_WINDOWBINDING_H
 #pragma once
 
-#include "RA_Defs.h" // windows types
-
 #include "ui/BindingBase.hh"
 #include "ui/WindowViewModelBase.hh"
-
-#include <unordered_map>
 
 namespace ra {
 namespace ui {

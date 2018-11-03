@@ -2,10 +2,6 @@
 #define RA_STRINGUTILS_H
 #pragma once
 
-#include "ra_fwd.h"
-
-#include <string>
-
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
@@ -30,7 +26,17 @@ std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 /// <summary>
 /// Constructs a <see cref="std::string" /> from a sprintf format and paramaters
 /// </summary>
-_NODISCARD std::string StringPrintf(_In_ const char* sFormat, ...);
+_NODISCARD std::string StringPrintf(_In_z_ _Printf_format_string_ const char* const sFormat, ...);
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
 
 } // namespace ra
 

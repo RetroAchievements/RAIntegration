@@ -3,9 +3,11 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <RA_DIR>$(SolutionDir)</RA_DIR>
-    <RapidJSON_IncludeDir>$(RA_DIR)rapidjson/include/</RapidJSON_IncludeDir>
-    <RA_SourceDir>$(RA_DIR)src/</RA_SourceDir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir)</RA_IncludePath>
+    <RapidJSON_IncludeDir>$(RA_DIR)rapidjson\include\</RapidJSON_IncludeDir>
+    <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
+    <rcheevos_IncludePath>$(RA_DIR)rcheevos\include\</rcheevos_IncludePath>
+    <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir)</RA_IncludePath>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -25,6 +27,12 @@
       <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
+      <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <PostBuildEvent>
       <Command>
@@ -48,12 +56,20 @@
       <Value>$(RapidJSON_IncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+    <BuildMacro Include="rcheevos_IncludePath">
+      <Value>$(rcheevos_IncludePath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
     <BuildMacro Include="RA_SourceDir">
       <Value>$(RA_SourceDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="RA_IncludePath">
       <Value>$(RA_IncludePath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="Lua_Dir">
+      <Value>$(Lua_Dir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

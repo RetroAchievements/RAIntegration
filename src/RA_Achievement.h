@@ -3,6 +3,9 @@
 #pragma once
 
 #include "RA_Condition.h"
+#include "ra_utility.h"
+
+#include <memory>
 
 //////////////////////////////////////////////////////////////////////////
 //	Achievement
@@ -31,7 +34,7 @@ public:
 
 public:
     void Clear();
-    BOOL Test();
+    bool Test();
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -90,6 +93,9 @@ public:
     void SetBadgeImage(const std::string& sFilename);
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
+    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
+    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const;
+    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPrevValue);
 
     std::string CreateMemString() const;
     std::string CreateStateString(const std::string& sSalt) const;
@@ -117,9 +123,18 @@ public:
 
     _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = DirtyFlags{}; }
 
+    void RebuildTrigger();
+
+protected:
+    void ParseTrigger(const char* pTrigger);
+
+    void*                             m_pTrigger = nullptr; //  rc_trigger_t
+    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
+
 private:
-    ra::AchievementID m_nAchievementID{};
-    ConditionSet m_vConditions;
+    ra::AchievementID m_nAchievementID;
+
+    ConditionSet                      m_vConditions;        //  UI wrappers for trigger
 
     std::string m_sTitle;
     std::string m_sDescription;

@@ -6,8 +6,6 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#include <fstream>
-
 namespace ra {
 namespace services {
 namespace impl {
@@ -183,6 +181,21 @@ ra::ui::Size JsonFileConfiguration::GetWindowSize(const std::string & sPositionK
 void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, const ra::ui::Size & oSize)
 {
     m_mWindowPositions[sPositionKey].oSize = oSize;
+}
+
+const std::string& JsonFileConfiguration::GetHostName() const
+{
+    if (m_sHostName.empty())
+    {
+        auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().OpenTextFile(L"host.txt");
+        if (pFile != nullptr)
+            pFile->GetLine(m_sHostName);
+
+        if (m_sHostName.empty())
+            m_sHostName = "retroachievements.org";
+    }
+
+    return m_sHostName;
 }
 
 } // namespace impl

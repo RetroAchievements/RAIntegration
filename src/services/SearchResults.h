@@ -1,9 +1,8 @@
+#ifndef SEARCHRESULTS_H
+#define SEARCHRESULTS_H
 #pragma once
 
-#include "RA_Condition.h" // ComparisonVariableSize, ComparisonType
-
-#include <vector>
-#include <functional>
+#include "RA_Condition.h" // MemSize, ComparisonType
 
 namespace ra {
 namespace services {
@@ -17,7 +16,7 @@ public:
     /// <param name="nAddress">The address to start reading from.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <param name="nSize">Size of the entries.</param>
-    void Initialize(unsigned int nAddress, unsigned int nBytes, ComparisonVariableSize nSize);
+    void Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize);
 
     /// <summary>
     /// Initializes a result set by comparing against the previous result set.
@@ -48,7 +47,7 @@ public:
     {
         unsigned int nAddress;
         unsigned int nValue;
-        ComparisonVariableSize nSize;
+        MemSize nSize;
     };
 
     /// <summary>
@@ -81,25 +80,24 @@ protected:
     class MemBlock
     {
     public:
-        MemBlock(unsigned int nAddress, unsigned int nSize)
-            : nAddress(nAddress), nSize(nSize)
+        explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize) noexcept :
+            nAddress{ nAddress }, nSize{ nSize }
         {
             if (nSize > sizeof(m_vBytes))
                 m_pBytes = new unsigned char[nSize];
         }
 
-        MemBlock(const MemBlock& other) noexcept
-            : MemBlock(other.nAddress, other.nSize)
+        MemBlock(const MemBlock& other) noexcept :
+            MemBlock(other.nAddress, other.nSize)
         {
             if (nSize > sizeof(m_vBytes))
-                memcpy(m_pBytes, other.m_pBytes, nSize);
+                std::memcpy(m_pBytes, other.m_pBytes, nSize);
         }
+        MemBlock& operator=(const MemBlock&) noexcept = delete;
 
-        MemBlock(MemBlock&& other) noexcept
+        MemBlock(MemBlock&& other) noexcept :
+            nAddress{ other.nAddress }, nSize{ other.nSize }
         {
-            nAddress = other.nAddress;
-            nSize = other.nSize;
-
             if (other.nSize > sizeof(m_vBytes))
             {
                 m_pBytes = other.m_pBytes;
@@ -108,14 +106,14 @@ protected:
             }
             else
             {
-                memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+                std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
             }
         }
-
-        ~MemBlock()
+        MemBlock& operator=(MemBlock&&) noexcept = delete;
+        ~MemBlock() noexcept
         {
             if (nSize > sizeof(m_vBytes))
-                delete m_pBytes;
+                delete[] m_pBytes;
         }
 
         unsigned char* GetBytes() { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
@@ -146,7 +144,7 @@ private:
 
     std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;
-    ComparisonVariableSize m_nSize = EightBit;
+    MemSize m_nSize = MemSize::EightBit;
 
     std::vector<unsigned int> m_vMatchingAddresses;
     bool m_bUnfiltered = false;
@@ -155,3 +153,6 @@ private:
 } // namespace services
 } // namespace ra
 
+
+
+#endif /* !SEARCHRESULTS_H */

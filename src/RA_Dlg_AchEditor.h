@@ -34,7 +34,6 @@ class Dlg_AchievementEditor
 {
 public:
     Dlg_AchievementEditor();
-    ~Dlg_AchievementEditor();
 
 public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
@@ -74,8 +73,8 @@ private:
     static LRESULT CALLBACK ListViewWndProc(HWND, UINT, WPARAM, LPARAM);
     void GetListViewTooltip();
 
-    const int AddCondition(HWND hList, const Condition& Cond);
-    void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond);
+    const int AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits);
+    void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits);
 
 private:
     static const int m_nNumCols = 10;//;sizeof( g_sColTitles ) / sizeof( g_sColTitles[0] );

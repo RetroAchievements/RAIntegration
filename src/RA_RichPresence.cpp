@@ -1,9 +1,14 @@
 #include "RA_RichPresence.h"
 
 #include "RA_Defs.h"
-#include "RA_GameData.h"
-#include "RA_Log.h"
-#include "RA_MemValue.h"
+#include "RA_MemManager.h"
+
+#pragma warning (push)
+#pragma warning (disable:4201) // nameless struct
+#include "rcheevos\include\rcheevos.h"
+#pragma warning (pop)
+
+#include "data\GameContext.hh"
 
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -26,20 +31,28 @@ const std::string& RA_RichPresenceInterpreter::Lookup::GetText(unsigned int nVal
 
 RA_RichPresenceInterpreter::DisplayString::DisplayString()
 {
-    m_conditions.SetAlwaysTrue();
 }
 
 RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
 {
-    const char* pBuffer = sCondition.data();
-    m_conditions.ParseFromString(pBuffer);
-
-    if (*pBuffer != '\0')
-        m_conditions.SetAlwaysFalse();
+    int nSize = rc_trigger_size(sCondition.c_str());
+    if (nSize < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_trigger_size returned %d", nSize);
+        m_pTrigger = nullptr;
+    }
+    else
+    {
+        // allocate space and parse again
+        m_pTriggerBuffer.reset(new unsigned char[nSize]);
+        auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sCondition.c_str(), nullptr, 0);
+        m_pTrigger = pTrigger;
+    }
 }
 
 void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::string& sDisplayString,
-    std::map<std::string, MemValue::Format>& mFormats, std::vector<Lookup>& vLookups)
+    std::map<std::string, int>& mFormats, std::vector<Lookup>& vLookups)
 {
     bool bHasEscapes = false;
     size_t nIndex = 0;
@@ -107,7 +120,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
         if (iter != mFormats.end())
         {
             part.m_nFormat = iter->second;
-            part.m_memValue.ParseFromString(sMemValue.c_str());
+            InitializeValue(part, sMemValue.c_str());
         }
         else
         {
@@ -116,7 +129,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
                 if (lookup->Description() == sLookup)
                 {
                     part.m_pLookup = &(*lookup);
-                    part.m_memValue.ParseFromString(sMemValue.c_str());
+                    InitializeValue(part, sMemValue.c_str());
                     break;
                 }
             }
@@ -124,10 +137,28 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
     } while (true);
 }
 
+void RA_RichPresenceInterpreter::DisplayString::InitializeValue(RA_RichPresenceInterpreter::DisplayString::Part& part, const char* sValue)
+{
+    int nSize = rc_value_size(sValue);
+    if (nSize < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_value_size returned %d", nSize);
+        part.m_pValue = nullptr;
+    }
+    else
+    {
+        // allocate space and parse again
+        part.m_pValueBuffer.reset(new unsigned char[nSize]);
+        auto* pValue = rc_parse_value(static_cast<void*>(part.m_pValueBuffer.get()), sValue, nullptr, 0);
+        part.m_pValue = pValue;
+    }
+}
+
 bool RA_RichPresenceInterpreter::DisplayString::Test()
 {
-    bool bDirtyConditions, bResetRead; // for HitCounts - not supported in RichPresence
-    return m_conditions.Test(bDirtyConditions, bResetRead);
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    return pTrigger && rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
 }
 
 std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
@@ -138,14 +169,21 @@ std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
         if (!part.m_sDisplayString.empty())
             sResult.append(part.m_sDisplayString);
 
-        if (!part.m_memValue.IsEmpty())
+        if (part.m_pValue)
         {
-            unsigned int nValue = part.m_memValue.GetValue();
+            auto* pValue = static_cast<rc_value_t*>(part.m_pValue);
+            unsigned int nValue = rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr);
 
             if (part.m_pLookup != nullptr)
+            {
                 sResult.append(part.m_pLookup->GetText(nValue));
+            }
             else
-                sResult.append(MemValue::FormatValue(nValue, part.m_nFormat));
+            {
+                char buffer[32];
+                rc_format_value(buffer, sizeof(buffer), nValue, part.m_nFormat);
+                sResult.append(buffer);
+            }
         }
     }
 
@@ -189,8 +227,9 @@ bool RA_RichPresenceInterpreter::Load()
 #ifdef RA_UTEST
     return false;
 #else
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(g_pCurrentGameData->GetGameID()));
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
     if (pRich == nullptr)
         return false;
 
@@ -206,7 +245,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
     std::vector<std::pair<std::string, std::string>> mDisplayStrings;
     std::string sDisplayString;
 
-    std::map<std::string, MemValue::Format> mFormats;
+    std::map<std::string, int> mFormats;
 
     std::string sLine;
     while (GetLine(pReader, sLine))
@@ -249,7 +288,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
             if (GetLine(pReader, sLine) && strncmp("FormatType=", sLine.c_str(), 11) == 0)
             {
                 std::string sFormatType(sLine, 11);
-                MemValue::Format nType = MemValue::ParseFormat(sFormatType);
+                int nType = rc_parse_format(sFormatType.c_str());
 
                 RA_LOG("RP: Adding Formatter %s (%s)\n", sFormatName.c_str(), sFormatType.c_str());
                 mFormats[sFormatName] = nType;
@@ -298,11 +337,14 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 
 std::string RA_RichPresenceInterpreter::GetRichPresenceString()
 {
-    for (auto& displayString : m_vDisplayStrings)
+    if (m_vDisplayStrings.empty())
+        return std::string();
+
+    for (size_t i = 0; i < m_vDisplayStrings.size() - 1; ++i)
     {
-        if (displayString.Test())
-            return displayString.GetDisplayString();
+        if (m_vDisplayStrings[i].Test())
+            return m_vDisplayStrings[i].GetDisplayString();
     }
 
-    return std::string();
+    return m_vDisplayStrings.back().GetDisplayString();
 }

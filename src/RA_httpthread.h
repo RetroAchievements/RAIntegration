@@ -2,10 +2,8 @@
 #define RA_HTTPTHREAD_H
 #pragma once
 
-#include "RA_Defs.h"
-
-typedef void* HANDLE;
-typedef void* LPVOID;
+#include "ra_fwd.h"
+#include "RA_StringUtils.h"
 
 enum HTTPRequestMethod
 {
@@ -47,10 +45,6 @@ enum RequestType
     RequestSubmitAchievementData,
     RequestSubmitTicket,
     RequestSubmitNewTitle,
-
-    //	Media:
-    RequestUserPic,
-    RequestBadge,
 
 
     NumRequestTypes
@@ -106,7 +100,6 @@ public:
     void PushItem(RequestObject* pObj);
     void Clear();
     size_t Count() const;
-    BOOL PageRequestExists(RequestType nType, const std::string& sData) const;
 
 private:
     std::deque<RequestObject*> m_aRequests;
@@ -115,16 +108,10 @@ private:
 class RAWeb
 {
 public:
-    static void LogJSON(const rapidjson::Document& doc);
-
     static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
-    static BOOL HTTPResponseExists(RequestType nType, const std::string& sData);
 
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
-
-    static BOOL DoBlockingHttpGet(const std::string& sRequestedPage, std::string& ResponseOut, bool bIsImageRequest);
-    static BOOL DoBlockingHttpPost(const std::string& sRequestedPage, const std::string& sPostString, std::string& ResponseOut);
 
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 

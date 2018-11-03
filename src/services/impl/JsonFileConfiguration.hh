@@ -4,8 +4,6 @@
 
 #include "services\IConfiguration.hh"
 
-#include <map>
-
 namespace ra {
 namespace services {
 namespace impl {
@@ -33,6 +31,8 @@ public:
     ra::ui::Size GetWindowSize(const std::string& sPositionKey) const override;
     void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override;
 
+    const std::string& GetHostName() const override;
+
     void Save() const override;
 
 private:
@@ -52,6 +52,8 @@ private:
 
     typedef std::map<std::string, WindowPosition> WindowPositionMap;
     WindowPositionMap m_mWindowPositions;
+
+    mutable std::string m_sHostName;
 
     std::wstring m_sFilename;
 };

@@ -3,22 +3,20 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_AchievementSet.h"
 #include "RA_BuildVer.h"
+#include "RA_AchievementSet.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
-#include "RA_GameData.h"
 #include "RA_RichPresence.h"
 
+#include "data\GameContext.hh"
+
+#include "services\Http.hh"
 #include "services\IConfiguration.hh"
+#include "services\IHttpRequester.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
-
-#include <winhttp.h>
-#include <memory>
-#include <fstream>
-#include <time.h>
 
 const char* RequestTypeToString[] =
 {
@@ -48,9 +46,6 @@ const char* RequestTypeToString[] =
     "RequestSubmitAchievementData",
     "RequestSubmitTicket",
     "RequestSubmitNewTitleEntry",
-
-    "RequestUserPic",
-    "RequestBadge",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
@@ -81,9 +76,6 @@ const char* RequestTypeToPost[] =
     "uploadachievement",
     "submitticket",
     "submitgametitle",
-
-    "_requestuserpic_",     //  TBD RequestUserPic
-    "_requestbadge_",       //  TBD RequestBadge
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
@@ -121,113 +113,44 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
     return !rDocOut.HasParseError();
 }
 
-//BOOL RAWeb::DoBlockingHttpGet( const std::string& sRequestedPage, DataStream& ResponseOut )
-//{
-//  RA_LOG( __FUNCTION__ ": (%08x) GET from %s...\n", GetCurrentThreadId(), sRequestedPage );
-//
-//  BOOL bResults = FALSE, bSuccess = FALSE;
-//  HINTERNET hSession = nullptr, hConnect = nullptr, hRequest = nullptr;
-//
-//  WCHAR wBuffer[1024];
-//  size_t nTemp;
-//  //BYTE* sDataDestOffset = &pBufferOut[0];
-//  DWORD nBytesToRead = 0;
-//  DWORD nBytesFetched = 0;
-//
-//  char sClientName[1024];
-//  sprintf_s( sClientName, 1024, "Retro Achievements Client %s %s", g_sClientName, g_sClientVersion );
-//  WCHAR wClientNameBuffer[1024];
-//  mbstowcs_s( &nTemp, wClientNameBuffer, 1024, sClientName, strlen( sClientName )+1 );
-//
-//  // Use WinHttpOpen to obtain a session handle.
-//  hSession = WinHttpOpen( wClientNameBuffer, 
-//      WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-//      WINHTTP_NO_PROXY_NAME, 
-//      WINHTTP_NO_PROXY_BYPASS, 0);
-//
-//  // Specify an HTTP server.
-//  if( hSession != nullptr )
-//  {
-//      if( strncmp( sRequestedPage, "Badge", 5 ) == 0 )
-//          hConnect = WinHttpConnect( hSession, RA_IMG_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0 );
-//      else
-//          hConnect = WinHttpConnect( hSession, RA_HOST_W, INTERNET_DEFAULT_HTTP_PORT, 0 );
-//
-//      // Create an HTTP Request handle.
-//      if( hConnect != nullptr )
-//      {
-//          mbstowcs_s( &nTemp, wBuffer, 1024, sRequestedPage, strlen(sRequestedPage)+1 );
-//
-//          hRequest = WinHttpOpenRequest( hConnect, 
-//              L"GET", 
-//              wBuffer, 
-//              nullptr, 
-//              WINHTTP_NO_REFERER, 
-//              WINHTTP_DEFAULT_ACCEPT_TYPES,
-//              0);
-//
-//          // Send a Request.
-//          if( hRequest != nullptr )
-//          {
-//              bResults = WinHttpSendRequest( hRequest, 
-//                  L"Content-Type: application/x-www-form-urlencoded",
-//                  0, 
-//                  WINHTTP_NO_REQUEST_DATA,
-//                  0, 
-//                  0,
-//                  0 );
-//
-//              if( WinHttpReceiveResponse( hRequest, nullptr ) )
-//              {
-//                  nBytesToRead = 0;
-//                  nBytesRead = 0;
-//                  WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
-//
-//                  std::stringstream sstr;
-//
-//                  while( nBytesToRead > 0 )
-//                  {
-//                      char sHttpReadData[8192];
-//                      ZeroMemory( sHttpReadData, 8192 );
-//
-//                      assert( nBytesToRead <= 8192 );
-//                      if( nBytesToRead <= 8192 )
-//                      {
-//                          nBytesFetched = 0;
-//                          if( WinHttpReadData( hRequest, &sHttpReadData, nBytesToRead, &nBytesFetched ) )
-//                          {
-//                              assert( nBytesToRead == nBytesFetched );
-//
-//                              //Read: parse buffer
-//                              //memcpy( sDataDestOffset, sHttpReadData, nBytesFetched );
-//                              //sDataDestOffset += nBytesFetched;
-//
-//                              sstr.write( sHttpReadData, nBytesFetched );
-//                              nBytesRead += nBytesFetched;
-//                          }
-//                      }
-//
-//                      bSuccess = TRUE;
-//
-//                      WinHttpQueryDataAvailable( hRequest, &nBytesToRead );
-//                  }
-//
-//                  RA_LOG( __FUNCTION__ ": (%08x) success! Read %d bytes...\n", GetCurrentThreadId(), nBytesRead );
-//              }
-//          }
-//      }
-//  }
-//
-//  // Close open handles.
-//  if( hRequest != nullptr )
-//      WinHttpCloseHandle( hRequest );
-//  if( hConnect != nullptr )
-//      WinHttpCloseHandle( hConnect );
-//  if( hSession != nullptr )
-//      WinHttpCloseHandle( hSession );
-//
-//  return bSuccess;
-//}
+static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+{
+    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
+                                       RA_INTEGRATION_VERSION_MODIFIED));
+
+    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
+    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+    sUserAgent.append(sAppend, posFound);
+
+}
+
+static void AppendNTVersion(_Inout_ std::string& sUserAgent)
+{
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    using NTSTATUS = __success(return >= 0) LONG;
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+        const auto RtlGetVersion{
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
+        };
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+            {
+                sUserAgent.append(ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
+                                                   osVersion.dwMinorVersion));
+            }
+        }
+    }
+}
 
 void RAWeb::SetUserAgentString()
 {
@@ -246,54 +169,15 @@ void RAWeb::SetUserAgentString()
     sUserAgent.append(g_sClientVersion);
     sUserAgent.append(" (");
 
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
-    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
-#ifndef NTSTATUS
-    #define NTSTATUS long
-#endif
-    using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW lpVersionInformation);
-    auto RtlGetVersion = (fnRtlGetVersion)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion");
-    if (RtlGetVersion)
-    {
-        RTL_OSVERSIONINFOEXW osVersion = {};
-        RtlGetVersion(&osVersion);
-        if (osVersion.dwMajorVersion > 0)
-        {
-            sUserAgent.append("WindowsNT ");
-            sUserAgent.append(std::to_string(osVersion.dwMajorVersion));
-            sUserAgent.append(".");
-            sUserAgent.append(std::to_string(osVersion.dwMinorVersion));
-        }
-    }
-
+    AppendNTVersion(sUserAgent);
     sUserAgent.append(") Integration/");
-
-    auto buffer{ std::make_unique<char[]>(64U) };
-    sprintf_s(buffer.get(), 64U, "%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
-              RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED);
-    sUserAgent.append(buffer.release());
-
-    const char* ptr = strchr(RA_INTEGRATION_VERSION_PRODUCT, '-');
-    if (ptr != nullptr)
-        sUserAgent.append(ptr);
+    AppendIntegrationVersion(sUserAgent);
 
     RA_LOG("User-Agent: %s", sUserAgent.c_str());
 
+    ra::services::ServiceLocator::GetMutable<ra::services::IHttpRequester>().SetUserAgent(sUserAgent);
+
     SetUserAgent(sUserAgent);
-}
-
-void RAWeb::LogJSON(const rapidjson::Document& doc)
-{
-    //  DebugLog:
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer{ buffer };
-    doc.Accept(writer);
-
-    //  buffer may contain percentage literals!
-    const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
-    if (pLogger.IsEnabled(ra::services::LogLevel::Info))
-        pLogger.LogMessage(ra::services::LogLevel::Info, buffer.GetString());
 }
 
 BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut)
@@ -320,242 +204,50 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapid
 
 BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& Response)
 {
-    PostArgs args = PostData;               //  Take a copy
-    args['r'] = RequestTypeToPost[nType];   //  Embed request type
+    std::string sUrl = _RA_HostName();
+    std::string sPostData = PostArgsToString(PostData);
+    std::string sLogPage;
 
-    switch (nType)
+    if (nType == RequestLogin)
     {
-        case RequestUserPic:
-            return DoBlockingHttpGet(std::string("UserPic/" + PostData.at('u') + ".png"), Response, false); //  UserPic needs migrating to S3...
-        case RequestBadge:
-            return DoBlockingHttpGet(std::string("Badge/" + PostData.at('b') + ".png"), Response, true);
-        case RequestLogin:
-            return DoBlockingHttpPost("login_app.php", PostArgsToString(args), Response);
-        default:
-            return DoBlockingHttpPost("dorequest.php", PostArgsToString(args), Response);
-    }
-}
+        sLogPage = "login_app.php";
+        sUrl += "/";
+        sUrl += sLogPage;
 
-BOOL RAWeb::DoBlockingHttpGet(const std::string& sRequestedPage, std::string& ResponseOut, bool bIsImageRequest)
-{
-    BOOL bSuccess = FALSE;
-
-    RA_LOG(__FUNCTION__ ": (%04x) GET to %s...\n", GetCurrentThreadId(), sRequestedPage.c_str());
-    ResponseOut.clear();
-
-    const char* sHostName = bIsImageRequest ? "i.retroachievements.org" : _RA_HostName();
-
-    size_t nTemp;
-
-    // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
-
-    // Specify an HTTP server.
-    if (hSession != nullptr)
-    {
-        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(sHostName).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
-
-        // Create an HTTP Request handle.
-        if (hConnect != nullptr)
-        {
-            WCHAR wBuffer[1024];
-            mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
-
-            HINTERNET hRequest = WinHttpOpenRequest(hConnect,
-                L"GET",
-                wBuffer,
-                nullptr,
-                WINHTTP_NO_REFERER,
-                WINHTTP_DEFAULT_ACCEPT_TYPES,
-                0);
-
-            // Send a Request.
-            if (hRequest != nullptr)
-            {
-                if (WinHttpSendRequest(hRequest,
-                    L"Content-Type: application/x-www-form-urlencoded",
-                    0,
-                    WINHTTP_NO_REQUEST_DATA, //WINHTTP_NO_REQUEST_DATA,
-                    0,
-                    0,
-                    0) == 0)
-                {
-                    ::WinHttpCloseHandle(hRequest);
-                    ::WinHttpCloseHandle(hConnect);
-                    ::WinHttpCloseHandle(hSession);
-                    return static_cast<BOOL>(ra::to_signed(::GetLastError()));
-                }
-
-                if (WinHttpReceiveResponse(hRequest, nullptr))
-                {
-                    DWORD nBytesToRead = 0;
-                    WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-
-                    //  Note: success is much earlier, as 0 bytes read is VALID
-                    //  i.e. fetch achievements for new game will return 0 bytes.
-                    bSuccess = TRUE;
-
-                    while (nBytesToRead > 0)
-                    {
-                        //if( nBytesToRead <= 32 )
-                        {
-                            DWORD nBytesFetched = 0UL;
-                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
-                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
-                            {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;  //Timed out?
-                            }
-                        }
-
-                        WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-                    }
-
-                    if (ResponseOut.size() > 0)
-                        ResponseOut.push_back('\0');    //  EOS for parsing
-
-                    RA_LOG(__FUNCTION__ ": success! %s Returned %zu bytes.", sRequestedPage.c_str(), ResponseOut.size());
-                }
-
-            }
-
-            if (hRequest != nullptr)
-                WinHttpCloseHandle(hRequest);
-        }
-
-        if (hConnect != nullptr)
-            WinHttpCloseHandle(hConnect);
-    }
-
-    if (hSession != nullptr)
-        WinHttpCloseHandle(hSession);
-
-    return bSuccess;
-}
-
-BOOL RAWeb::DoBlockingHttpPost(const std::string& sRequestedPage, const std::string& sPostString, std::string& ResponseOut)
-{
-    BOOL bSuccess = FALSE;
-    ResponseOut.clear();
-
-    if (sRequestedPage.compare("login_app.php") == 0)
-    {
-        //  Special case: DO NOT LOG raw user credentials!
-        RA_LOG(__FUNCTION__ ": (%04x) POST to %s (LOGIN)...\n", GetCurrentThreadId(), sRequestedPage.c_str());
+        RA_LOG("POST to %s", sLogPage.c_str()); // do not log user credentials (sPostData)
     }
     else
     {
-        RA_LOG(__FUNCTION__ ": (%04x) POST to %s?%s...\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str());
+        sLogPage = "dorequest.php";
+        sUrl += "/";
+        sUrl += sLogPage;
+        sLogPage += "?r=";
+        sLogPage += RequestTypeToPost[nType];
+
+        RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
+
+        if (!sPostData.empty())
+            sPostData.push_back('&');
+        sPostData += "r=";
+        sPostData += RequestTypeToPost[nType];
     }
 
-    HINTERNET hSession = WinHttpOpen(GetUserAgent().c_str(),
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
-    if (hSession != nullptr)
+    ra::services::Http::Request request(sUrl);
+    request.SetPostData(sPostData);
+    auto response = request.Call();
+
+    if (response.StatusCode() != 200)
     {
-        HINTERNET hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
-        if (hConnect != nullptr)
-        {
-            HINTERNET hRequest = WinHttpOpenRequest(hConnect,
-                L"POST",
-                ra::Widen(sRequestedPage).c_str(),
-                nullptr,
-                WINHTTP_NO_REFERER,
-                WINHTTP_DEFAULT_ACCEPT_TYPES,
-                0);
-            if (hRequest != nullptr)
-            {
-                BOOL bSendSuccess = WinHttpSendRequest(hRequest,
-                    L"Content-Type: application/x-www-form-urlencoded",
-                    0,
-                    reinterpret_cast<LPVOID>(const_cast<char*>(sPostString.data())), //WINHTTP_NO_REQUEST_DATA,
-                    strlen(sPostString.c_str()),
-                    strlen(sPostString.c_str()),
-                    0);
-
-                if (bSendSuccess && WinHttpReceiveResponse(hRequest, nullptr))
-                {
-                    //  Note: success is much earlier, as 0 bytes read is VALID
-                    //  i.e. fetch achievements for new game will return 0 bytes.
-                    bSuccess = TRUE;
-
-                    DWORD nBytesToRead = 0;
-                    WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-                    while (nBytesToRead > 0)
-                    {
-                        {
-                            DWORD nBytesFetched = 0;
-                            auto pData{ std::make_unique<char[]>(nBytesToRead) };
-                            if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
-                            {
-                                ASSERT(nBytesToRead == nBytesFetched);
-                                ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                            }
-                            else
-                            {
-                                RA_LOG("Assumed timed out connection?!");
-                                break;  //Timed out?
-                            }
-                        }
-
-                        WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-                    }
-
-                    if (ResponseOut.size() > 0)
-                        ResponseOut.push_back('\0');    //  EOS for parsing
-
-                    if (sPostString.find("r=login") != std::string::npos)
-                    {
-                        //  Special case: DO NOT LOG raw user credentials!
-                        RA_LOG("... " __FUNCTION__ ": (%04x) LOGIN Success: %u bytes read\n", GetCurrentThreadId(), ResponseOut.size());
-                    }
-                    else
-                    {
-                        RA_LOG("-> " __FUNCTION__ ": (%04x) POST to %s?%s Success: %u bytes read\n", GetCurrentThreadId(), sRequestedPage.c_str(), sPostString.c_str(), ResponseOut.size());
-                    }
-                }
-
-                WinHttpCloseHandle(hRequest);
-            }
-
-            WinHttpCloseHandle(hConnect);
-        }
-
-        WinHttpCloseHandle(hSession);
+        RA_LOG("Error %u from %s: %s", response.StatusCode(), sLogPage.c_str(), response.Content().c_str());
+        Response.clear();
+        return false;
     }
 
-    //  Debug logging...
-    if (ResponseOut.size() > 0)
-    {
-        rapidjson::Document doc;
-        doc.Parse(ResponseOut.c_str());
+    Response = response.Content();
 
-        if (doc.HasParseError())
-        {
-            RA_LOG("Cannot parse JSON!\n");
-            RA_LOG(ResponseOut.c_str());
-            RA_LOG("\n");
-        }
-        else
-        {
-            LogJSON(doc);
-        }
-    }
-    else
-    {
-        RA_LOG(__FUNCTION__ ": (%04x) Empty JSON Response\n", GetCurrentThreadId());
-    }
+    RA_LOG("Received %zu bytes from %s: %s", response.Content().length(), sLogPage.c_str(), response.Content().c_str());
 
-    return bSuccess;
+    return TRUE;
 }
 
 BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::string& ResponseOut)
@@ -704,11 +396,6 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
     }
 }
 
-BOOL RAWeb::HTTPResponseExists(RequestType nType, const std::string& sData)
-{
-    return ms_LastHttpResults.PageRequestExists(nType, sData);
-}
-
 //  Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
@@ -737,11 +424,15 @@ void RAWeb::SendKeepAlive()
         return;
 
     ms_tSendNextKeepAliveAt = tNow + SERVER_PING_DURATION;
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+    if (pGameContext.GameId() == 0)
+        return;
 
     PostArgs args;
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    args['g'] = std::to_string(g_pCurrentGameData->GetGameID());
+    args['g'] = std::to_string(pGameContext.GameId());
 
     if (RA_GameIsActive())
     {
@@ -760,19 +451,11 @@ void RAWeb::SendKeepAlive()
         {
             const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
             if (!sRPResponse.empty())
-            {
                 args['m'] = sRPResponse;
-            }
             else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
-            {
                 args['m'] = "Earning Achievements";
-            }
             else
-            {
-                char buffer[128];
-                snprintf(buffer, sizeof(buffer), "Playing %s", g_pCurrentGameData->GameTitle().c_str());
-                args['m'] = buffer;
-            }
+                args['m'] = "Playing " + ra::Narrow(pGameContext.GameTitle());
         }
     }
 
@@ -851,50 +534,20 @@ size_t HttpResults::Count() const
     return nCount;
 }
 
-BOOL HttpResults::PageRequestExists(RequestType nType, const std::string& sData) const
-{
-    BOOL bRetVal = FALSE;
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-    {
-        std::deque<RequestObject*>::const_iterator iter = m_aRequests.begin();
-        while (iter != m_aRequests.end())
-        {
-            const RequestObject* pObj = (*iter);
-            if (pObj->GetRequestType() == nType &&
-                pObj->GetData().compare(sData) == 0)
-            {
-                bRetVal = TRUE;
-                break;
-            }
-
-            iter++;
-        }
-    }
-    ReleaseMutex(RAWeb::Mutex());
-
-    return bRetVal;
-}
-
 std::string PostArgsToString(const PostArgs& args)
 {
-    std::string str = "";
-    PostArgs::const_iterator iter = args.begin();
-    while (iter != args.end())
+    std::string str;
+    str.reserve(args.size() * 32); // estimate 32 bytes per arg/value pair
+
+    for (auto& arg : args)
     {
-        if (iter == args.begin())
-            str += "";//?
-        else
-            str += "&";
+        if (!str.empty())
+            str.push_back('&');
 
-        str += (*iter).first;
-        str += "=";
-        str += (*iter).second;
-
-        iter++;
+        str += arg.first;
+        str.push_back('=');
+        ra::services::Http::UrlEncodeAppend(str, arg.second);
     }
-
-    //  Replace all spaces with '+' (RFC 1738)
-    std::replace(str.begin(), str.end(), ' ', '+');
 
     return str;
 }

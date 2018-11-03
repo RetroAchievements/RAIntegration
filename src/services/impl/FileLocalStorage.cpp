@@ -3,11 +3,11 @@
 #include "ra_fwd.h"
 #include "RA_Json.h"
 #include "RA_Log.h"
+#include "RA_StringUtils.h"
 
+#include "services\IClock.hh"
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
-
-#include <fstream>
 
 namespace ra {
 namespace services {
@@ -19,21 +19,47 @@ _CONSTANT_VAR RA_DIR_DATA = L"RACache\\Data\\";
 _CONSTANT_VAR RA_DIR_USERPIC = L"RACache\\UserPic\\";
 _CONSTANT_VAR RA_DIR_BOOKMARKS = L"RACache\\Bookmarks\\";
 
-static void EnsureDirectoryExists(const ra::services::IFileSystem& pFileSystem, const std::wstring& sDirectory)
+static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const std::wstring& sDirectory, bool bExpireOldFiles)
 {
     if (!pFileSystem.DirectoryExists(sDirectory))
+    {
         pFileSystem.CreateDirectory(sDirectory);
+    }
+    else if (bExpireOldFiles)
+    {
+        std::vector<std::wstring> vFiles;
+        if (pFileSystem.GetFilesInDirectory(sDirectory, vFiles) > 0)
+        {
+            const auto& pClock = ServiceLocator::Get<IClock>();
+            const auto tExpire = pClock.Now() - std::chrono::hours(24 * 30); // 30 days
+            std::wstring sPath;
+
+            for (const auto& sFile : vFiles)
+            {
+                sPath = sDirectory;
+                sPath += sFile;
+
+                // check to see if the file is older than the threshhold
+                if (pFileSystem.GetLastModified(sPath) < tExpire)
+                {
+                    // if it's not a user file, it can be refetched from the server, delete it
+                    if (!ra::StringEndsWith(sFile, L"-User.txt"))
+                        pFileSystem.DeleteFile(sPath);
+                }
+            }
+        }
+    }
 }
 
 FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem) noexcept
     : m_pFileSystem(pFileSystem)
 {
     // Ensure all required directories are created
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BASE);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BADGE);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_DATA);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_USERPIC);
-    EnsureDirectoryExists(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BOOKMARKS);
+    PrepareDirectory(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BASE, false);
+    PrepareDirectory(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BADGE, true);
+    PrepareDirectory(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_DATA, true);
+    PrepareDirectory(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_USERPIC, true);
+    PrepareDirectory(pFileSystem, pFileSystem.BaseDirectory() + RA_DIR_BOOKMARKS, false);
 }
 
 std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring& sKey) const

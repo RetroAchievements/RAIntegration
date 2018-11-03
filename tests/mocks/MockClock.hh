@@ -5,8 +5,6 @@
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
-#include <unordered_map>
-
 namespace ra {
 namespace services {
 namespace mocks {
@@ -25,12 +23,12 @@ public:
         m_tUpTime = std::chrono::steady_clock::time_point();
     }
 
-    std::chrono::system_clock::time_point Now() const
+    std::chrono::system_clock::time_point Now() const override
     {
         return m_tNow;
     }
 
-    std::chrono::steady_clock::time_point UpTime() const
+    std::chrono::steady_clock::time_point UpTime() const override
     {
         return m_tUpTime;
     }

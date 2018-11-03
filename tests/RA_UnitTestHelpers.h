@@ -1,10 +1,11 @@
+#ifndef RA_UNITTESTHELPERS_H
+#define RA_UNITTESTHELPERS_H
 #pragma once
 
-#include "CppUnitTest.h"
+#include "ra_utility.h"
 
 #include "RA_Condition.h"
-#include "RA_Defs.h"
-#include "RA_MemValue.h"
+#include "RA_StringUtils.h"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -14,9 +15,9 @@ namespace CppUnitTestFramework {
 
 // converters for asserting enum values
 
-template<> static std::wstring ToString<ComparisonVariableSize>(const ComparisonVariableSize& t)
+template<> static std::wstring ToString<MemSize>(const MemSize& t)
 {
-    return ra::Widen(COMPARISONVARIABLESIZE_STR[(int)t]);
+    return MEMSIZE_STR.at(ra::etoi(t));
 }
 
 template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
@@ -32,11 +33,6 @@ template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
 template<> static std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
 {
     return ra::Widen(CONDITIONTYPE_STR[(int)t]);
-}
-
-template<> static std::wstring ToString<MemValue::Format>(const MemValue::Format& format)
-{
-    return ra::Widen(MemValue::GetFormatString(format));
 }
 
 template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
@@ -62,3 +58,6 @@ template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::Dial
 void InitializeMemory(unsigned char* pMemory, size_t szMemorySize);
 
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
+
+
+#endif /* !RA_UNITTESTHELPERS_H */

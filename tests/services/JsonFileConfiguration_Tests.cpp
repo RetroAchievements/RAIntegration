@@ -1,11 +1,11 @@
-#include "CppUnitTest.h"
-
 #include "services\impl\JsonFileConfiguration.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockFileSystem.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+using ra::services::mocks::MockFileSystem;
 
 namespace ra {
 namespace services {
@@ -20,7 +20,7 @@ private:
 public:
     TEST_METHOD(TestUsername)
     {
-        ra::services::mocks::MockFileSystem fileSystem;
+        MockFileSystem fileSystem;
 
         // default
         JsonFileConfiguration config;
@@ -51,7 +51,7 @@ public:
 
     TEST_METHOD(TestToken)
     {
-        ra::services::mocks::MockFileSystem fileSystem;
+        MockFileSystem fileSystem;
 
         // default
         JsonFileConfiguration config;
@@ -82,7 +82,7 @@ public:
 
     void TestFeature(ra::services::Feature nFeature, const std::string& sJsonKey, bool bDefault)
     {
-        ra::services::mocks::MockFileSystem fileSystem;
+        MockFileSystem fileSystem;
 
         // uninitialized
         JsonFileConfiguration config;
@@ -141,6 +141,25 @@ public:
     TEST_METHOD(TestPreferDecimal)
     {
         TestFeature(ra::services::Feature::PreferDecimal, "Prefer Decimal", false);
+    }
+
+    TEST_METHOD(TestHostNameNoFile)
+    {
+        MockFileSystem mockFileSystem;
+        JsonFileConfiguration config;
+        Assert::AreEqual(std::string("retroachievements.org"), config.GetHostName());
+    }
+
+    TEST_METHOD(TestHostNameFromFile)
+    {
+        MockFileSystem mockFileSystem;
+        mockFileSystem.MockFile(L"host.txt", "stage.retroachievements.org");
+        JsonFileConfiguration config;
+        Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
+
+        // file should only be read once
+        mockFileSystem.MockFile(L"host.txt", "dev.retroachievements.org");
+        Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
     }
 };
 

@@ -38,7 +38,7 @@ void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
     if (m_fScoreboardShowTimer == SCOREBOARD_FINISH_AT)
     {
         m_fScoreboardShowTimer = 0.0f;
-        m_nState = State_ShowingScoreboard;
+        m_nState = PopupState::ShowingScoreboard;
     }
 }
 
@@ -49,7 +49,7 @@ void LeaderboardPopup::Reset()
         m_vScoreboardQueue.pop();
 
     m_vActiveLBIDs.clear();
-    m_nState = State_ShowingProgress;
+    m_nState = PopupState::ShowingProgress;
 }
 
 void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused)
@@ -76,13 +76,13 @@ void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOO
             else
             {
                 m_fScoreboardShowTimer = SCOREBOARD_FINISH_AT;
-                m_nState = State_ShowingProgress;
+                m_nState = PopupState::ShowingProgress;
             }
         }
         else
         {
             m_fScoreboardShowTimer = SCOREBOARD_FINISH_AT;
-            m_nState = State_ShowingProgress;
+            m_nState = PopupState::ShowingProgress;
         }
     }
     else
@@ -221,7 +221,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
 
     switch (m_nState)
     {
-        case State_ShowingProgress:
+        case PopupState::ShowingProgress:
         {
             if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
                 break;
@@ -235,7 +235,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                 if (pLB != nullptr)
                 {
                     //	Show current progress:
-                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValueProgress())) + std::string(" ");
+                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())) + std::string(" ");
 
                     SIZE szProgress;
                     GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
@@ -259,7 +259,7 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
         }
         break;
 
-        case State_ShowingScoreboard:
+        case PopupState::ShowingScoreboard:
         {
             if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
                 break;
@@ -290,14 +290,15 @@ void LeaderboardPopup::Render(HDC hDC, RECT& rcDest)
                         SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
                     }
 
-                    ra::tstring str;
+                    
                     {
-                        std::basic_ostringstream<TCHAR> oss;
-                        oss << " " << lbInfo.m_nRank << " " << NativeStr(lbInfo.m_sUsername) << " ";
-                        str = oss.str();
-                    }
-                    DrawText(hDC, str.c_str(), ra::to_signed(str.length()), &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                        const auto str{
+                            ra::StringPrintf(" %u %s ", lbInfo.m_nRank, lbInfo.m_sUsername.c_str())
+                        };
 
+                        DrawText(hDC, NativeStr(str).c_str(), ra::narrow_cast<int>(str.length()),
+                                    &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                    }
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
                     DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
 

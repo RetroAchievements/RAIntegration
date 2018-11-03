@@ -1,12 +1,10 @@
 #include "RA_Dlg_GameTitle.h"
 
-#include "RA_Defs.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
-#include "RA_GameData.h"
 
 
 Dlg_GameTitle g_GameTitleDialog;
@@ -55,7 +53,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                             continue;
                         }
 
-                        const ra::GameID nGameID = std::strtoul(iter->name.GetString(), nullptr, 10);	//	Keys cannot be anything but strings
+                        const auto nGameID = std::strtoul(iter->name.GetString(), nullptr, 10);	//	Keys cannot be anything but strings
                         const std::string& sTitle = iter->value.GetString();
                         m_aGameTitles[sTitle] = nGameID;
 
@@ -64,7 +62,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                 }
 
                 {
-                    std::map<std::string, ra::GameID>::const_iterator iter = m_aGameTitles.begin();
+                    std::map<std::string, unsigned int>::const_iterator iter = m_aGameTitles.begin();
                     while (iter != m_aGameTitles.end())
                     {
                         const std::string& sTitle = iter->first;
@@ -97,7 +95,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     ComboBox_GetText(GetDlgItem(hDlg, IDC_RA_KNOWNGAMES), sSelectedTitleBuffer, 512);
                     ra::tstring sSelectedTitle = sSelectedTitleBuffer;
 
-                    ra::GameID nGameID = 0;
+                    unsigned int nGameID = 0U;
                     if (sSelectedTitle == _T("<New Title>"))
                     {
                         //	Add a new title!
@@ -123,13 +121,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     {
                         const rapidjson::Value& Response = doc["Response"];
 
-                        nGameID = static_cast<ra::GameID>(Response["GameID"].GetUint());
-                        const std::string& sGameTitle = Response["GameTitle"].GetString();
-
-                        //	If we're setting the game title here...
-                        //	 surely we could set the game ID here too?
-                        g_pCurrentGameData->SetGameTitle(sGameTitle);
-                        g_pCurrentGameData->SetGameID(nGameID);
+                        nGameID = Response["GameID"].GetUint();
 
                         g_GameTitleDialog.m_nReturnedGameID = nGameID;
 
@@ -209,7 +201,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
     return FALSE;
 }
 
-void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, ra::GameID& nGameIDOut)
+void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, unsigned int& nGameIDOut)
 {
     if (sMD5InOut.length() == 0)
         return;

@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "RA_Condition.h"
 #include "RA_UnitTestHelpers.h"
 
@@ -12,13 +10,70 @@ namespace tests {
 TEST_CLASS(RA_Condition_Tests)
 {
 public:
-    void AssertCompVariable(const CompVariable& var, CompVariable::Type nExpectedType, ComparisonVariableSize nExpectedSize, unsigned int nExpectedRawValue, const char* sSerialized)
+    
+    // ===== CompVariable =====
+
+    void AssertCompVariable(const CompVariable& var, CompVariable::Type nExpectedType, MemSize nExpectedSize, unsigned int nExpectedRawValue, const char* sSerialized)
     {
         std::wstring wsSerialized = Widen(sSerialized);
         Assert::AreEqual(nExpectedType, var.GetType(), wsSerialized.c_str());
-        Assert::AreEqual(nExpectedSize, var.Size(), wsSerialized.c_str());
-        Assert::AreEqual(nExpectedRawValue, var.RawValue(), wsSerialized.c_str());
+        Assert::AreEqual(nExpectedSize, var.GetSize(), wsSerialized.c_str());
+        Assert::AreEqual(nExpectedRawValue, var.GetValue(), wsSerialized.c_str());
     }
+
+    void AssertSerialize(CompVariable::Type nType, MemSize nSize, unsigned int nValue, const char* sExpected)
+    {
+        CompVariable var;
+        var.Set(nSize, nType, nValue);
+
+        std::string sSerialized;
+        var.SerializeAppend(sSerialized);
+
+        Assert::AreEqual(sExpected, sSerialized.c_str(), Widen(sExpected).c_str());
+    }
+
+    TEST_METHOD(TestSerializeVariable)
+    {
+        // sizes
+        AssertSerialize(CompVariable::Type::Address, MemSize::EightBit, 0x1234U, "0xH1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::SixteenBit, 0x1234U, "0x 1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::ThirtyTwoBit, 0x1234U, "0xX1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Nibble_Lower, 0x1234U, "0xL1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Nibble_Upper, 0x1234U, "0xU1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_0, 0x1234U, "0xM1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_1, 0x1234U, "0xN1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_2, 0x1234U, "0xO1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_3, 0x1234U, "0xP1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_4, 0x1234U, "0xQ1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_5, 0x1234U, "0xR1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_6, 0x1234U, "0xS1234");
+        AssertSerialize(CompVariable::Type::Address, MemSize::Bit_7, 0x1234U, "0xT1234");
+
+        // delta
+        AssertSerialize(CompVariable::Type::DeltaMem, MemSize::EightBit, 0x1234U, "d0xH1234");
+
+        // value (size is ignored)
+        AssertSerialize(CompVariable::Type::ValueComparison, MemSize::EightBit, 123, "123");
+    }
+
+    TEST_METHOD(TestVariableSet)
+    {
+        CompVariable var;
+
+        var.Set(MemSize::SixteenBit, CompVariable::Type::DeltaMem, 0x1111);
+        AssertCompVariable(var, CompVariable::Type::DeltaMem, MemSize::SixteenBit, 0x1111, "d0x1111");
+
+        var.SetSize(MemSize::EightBit);
+        AssertCompVariable(var, CompVariable::Type::DeltaMem, MemSize::EightBit, 0x1111, "d0xH1111");
+
+        var.SetType(CompVariable::Type::Address);
+        AssertCompVariable(var, CompVariable::Type::Address, MemSize::EightBit, 0x1111, "0xH1111");
+
+        var.SetValue(0x1234);
+        AssertCompVariable(var, CompVariable::Type::Address, MemSize::EightBit, 0x1234, "0xH1234");
+    }
+
+    // ===== Condition =====
 
     void AssertCondition(const Condition& cond, Condition::ConditionType nExpectedType, ComparisonType nExpectedComparison, unsigned int nExpectedRequiredHits, const char* sSerialized)
     {
@@ -28,144 +83,102 @@ public:
         Assert::AreEqual(nExpectedRequiredHits, cond.RequiredHits(), wsSerialized.c_str());
     }
 
-    void AssertParseCondition(const char* sSerialized, Condition::ConditionType nExpectedConditionType,
-        CompVariable::Type nExpectedLeftType, ComparisonVariableSize nExpectedLeftSize, unsigned int nExpectedLeftValue,
-        ComparisonType nExpectedComparison,
-        CompVariable::Type nExpectedRightType, ComparisonVariableSize nExpectedRightSize, unsigned int nExpectedRightValue,
-        unsigned int nExpectedRequiredHits)
+    void AssertSerialize(Condition::ConditionType nCondType, CompVariable::Type nSrcType, MemSize nSrcSize, unsigned int nSrcValue, ComparisonType nComparisonType,
+        CompVariable::Type nTgtType, MemSize nTgtSize, unsigned int nTgtValue, const char* sExpected, unsigned int nRequiredHits = 0)
     {
-        const char *ptr = sSerialized;
-        Condition cond;
-        cond.ParseFromString(ptr);
-        Assert::AreEqual(*ptr, '\0');
-
-        AssertCondition(cond, nExpectedConditionType, nExpectedComparison, nExpectedRequiredHits, sSerialized);
-        AssertCompVariable(cond.CompSource(), nExpectedLeftType, nExpectedLeftSize, nExpectedLeftValue, sSerialized);
-        AssertCompVariable(cond.CompTarget(), nExpectedRightType, nExpectedRightSize, nExpectedRightValue, sSerialized);
-    }
-
-    void AssertSerialize(const char* sSerialized, const char* sExpected = nullptr)
-    {
-        if (sExpected == nullptr)
-            sExpected = sSerialized;
-
-        const char* ptr = sSerialized;
         Condition condition;
-        condition.ParseFromString(ptr);
+        condition.CompSource().Set(nSrcSize, nSrcType, nSrcValue);
+        condition.CompTarget().Set(nTgtSize, nTgtType, nTgtValue);
+        condition.SetConditionType(nCondType);
+        condition.SetCompareType(nComparisonType);
+        condition.SetRequiredHits(nRequiredHits);
 
-        std::string sReserialized;
-        condition.SerializeAppend(sReserialized);
+        std::string sSerialized;
+        condition.SerializeAppend(sSerialized);
 
-        Assert::AreEqual(sExpected, sReserialized.c_str(), Widen(sExpected).c_str());
-    }
-
-    TEST_METHOD(TestParseConditionMemoryComparisonValue)
-    {
-        // different comparisons
-        AssertParseCondition("0xH1234=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234==8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234!=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::NotEqualTo,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234<8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::LessThan,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234<=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::LessThanOrEqual,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234>8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::GreaterThan,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("0xH1234>=8",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::GreaterThanOrEqual,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-
-        // delta
-        AssertParseCondition("d0xH1234=8",
-            Condition::Standard, CompVariable::Type::DeltaMem, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-
-        // flags
-        AssertParseCondition("R:0xH1234=8",
-            Condition::ResetIf, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("P:0xH1234=8",
-            Condition::PauseIf, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("A:0xH1234=8",
-            Condition::AddSource, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("B:0xH1234=8",
-            Condition::SubSource, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-        AssertParseCondition("C:0xH1234=8",
-            Condition::AddHits, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 0);
-
-        // hit count
-        AssertParseCondition("0xH1234=8(1)",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 1);
-        AssertParseCondition("0xH1234=8.1.", // legacy format
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 1);
-        AssertParseCondition("0xH1234=8(100)",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 8U, 100);
-    }
-
-    TEST_METHOD(TestParseConditionMemoryComparisonHexValue)
-    {
-        // hex value is interpreted as a 16-bit memory reference
-        AssertParseCondition("0xH1234=0x80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::Address, SixteenBit, 0x80U, 0);
-
-        // h prefix indicates hex value
-        AssertParseCondition("0xH1234=h80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 0x80U, 0);
-
-        AssertParseCondition("0xH1234=h0x80",
-            Condition::Standard, CompVariable::Type::Address, EightBit, 0x1234U, ComparisonType::Equals,
-            CompVariable::Type::ValueComparison, EightBit, 0x80U, 0);
-    }
-
-    TEST_METHOD(TestParseConditionMemoryComparisonMemory)
-    {
-        AssertParseCondition("0xL1234!=0xU3456",
-            Condition::Standard, CompVariable::Type::Address, Nibble_Lower, 0x1234U, ComparisonType::NotEqualTo,
-            CompVariable::Type::Address, Nibble_Upper, 0x3456U, 0);
+        Assert::AreEqual(sExpected, sSerialized.c_str(), Widen(sExpected).c_str());
     }
 
     TEST_METHOD(TestSerialize)
     {
         // comparisons
-        AssertSerialize("0xH1234=8");
-        AssertSerialize("0xH1234!=8");
-        AssertSerialize("0xH1234<8");
-        AssertSerialize("0xH1234<=8");
-        AssertSerialize("0xH1234>8");
-        AssertSerialize("0xH1234>=8");
-        AssertSerialize("0xH1234=0xH4321");
+        AssertSerialize(Condition::ConditionType::Standard, 
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U, 
+            ComparisonType::Equals, 
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::NotEqualTo,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234!=8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::LessThan,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234<8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::LessThanOrEqual,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234<=8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::GreaterThan,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234>8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::GreaterThanOrEqual,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234>=8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::Address, MemSize::EightBit, 0x4321U, "0xH1234=0xH4321");
 
         // delta
-        AssertSerialize("d0xH1234=8");
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::DeltaMem, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "d0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::DeltaMem, MemSize::EightBit, 0x4321U, "0xH1234=d0xH4321");
 
         // flags
-        AssertSerialize("R:0xH1234=8");
-        AssertSerialize("P:0xH1234=8");
-        AssertSerialize("A:0xH1234=8");
-        AssertSerialize("B:0xH1234=8");
-        AssertSerialize("C:0xH1234=8");
+        AssertSerialize(Condition::ConditionType::ResetIf,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "R:0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::PauseIf,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "P:0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::AddSource,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "A:0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::SubSource,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "B:0xH1234=8");
+
+        AssertSerialize(Condition::ConditionType::AddHits,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "C:0xH1234=8");
 
         // hit count
-        AssertSerialize("0xH1234=8.1.");
-        AssertSerialize("0xH1234=8(1)", "0xH1234=8.1.");
+        AssertSerialize(Condition::ConditionType::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "0xH1234=8.1.", 1);
     }
 
     TEST_METHOD(TestConditionSet)
@@ -205,108 +218,6 @@ public:
             Assert::AreEqual(cond.IsSubCondition(), (type == Condition::SubSource));
             Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::AddHits));
         }
-    }
-
-    TEST_METHOD(TestConditionHits)
-    {
-        Condition cond;
-        cond.SetRequiredHits(5);
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(0U, cond.CurrentHits());
-
-        cond.IncrHits();
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(1U, cond.CurrentHits());
-
-        cond.IncrHits();
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(2U, cond.CurrentHits());
-
-        cond.IncrHits();
-        cond.IncrHits();
-        cond.IncrHits();
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(5U, cond.CurrentHits());
-
-        cond.IncrHits();
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(6U, cond.CurrentHits());
-
-        cond.OverrideCurrentHits(4U);
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(4U, cond.CurrentHits());
-
-        cond.IncrHits();
-        Assert::AreEqual(5U, cond.RequiredHits());
-        Assert::AreEqual(5U, cond.CurrentHits());
-    }
-
-    void AssertConditionCompare(const char* def, bool expectedResult)
-    {
-        const char* ptr = def;
-        Condition cond;
-        cond.ParseFromString(ptr);
-
-        Assert::AreEqual(cond.Compare(), expectedResult);
-    }
-
-    TEST_METHOD(TestConditionCompare)
-    {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
-
-        // values
-        AssertConditionCompare("0xH0001=18", true);
-        AssertConditionCompare("0xH0001!=18", false);
-        AssertConditionCompare("0xH0001<=18", true);
-        AssertConditionCompare("0xH0001>=18", true);
-        AssertConditionCompare("0xH0001<18", false);
-        AssertConditionCompare("0xH0001>18", false);
-        AssertConditionCompare("0xH0001>0", true);
-        AssertConditionCompare("0xH0001!=0", true);
-
-        // memory
-        AssertConditionCompare("0xH0001<0xH0002", true);
-        AssertConditionCompare("0xH0001>0xH0002", false);
-        AssertConditionCompare("0xH0001=0xH0001", true);
-        AssertConditionCompare("0xH0001!=0xH0002", true);
-    }
-
-    TEST_METHOD(TestConditionCompareDelta)
-    {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
-
-        const char *ptr = "0xH0001>d0xH0001";
-        Condition cond;
-        cond.ParseFromString(ptr);
-
-        Assert::AreEqual(cond.Compare(), true); // initial delta value is 0, 0x12 > 0
-
-        Assert::AreEqual(cond.Compare(), false); // delta value is now 0x12, 0x12 = 0x12
-
-        memory[1] = 0x11;
-        Assert::AreEqual(cond.Compare(), false); // delta value is now 0x12, 0x11 < 0x12
-
-        memory[1] = 0x12;
-        Assert::AreEqual(cond.Compare(), true); // delta value is now 0x13, 0x12 > 0x11
-    }
-
-    TEST_METHOD(TestConditionCompare32Bits)
-    {
-        unsigned char memory[] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
-        InitializeMemory(memory, 6);
-
-        // values
-        AssertConditionCompare("0xX0000=4294967295", false);
-        AssertConditionCompare("0xX0001=4294967295", true);
-        AssertConditionCompare("0xX0002=4294967295", false);
-
-        // memory
-        AssertConditionCompare("0xX0000<0xX0001", true);
-        AssertConditionCompare("0xX0001>0xX0002", true);
-        AssertConditionCompare("0xX0001=0xX0002", false);
-        AssertConditionCompare("0xX0000!=0xH0002", true);
     }
 };
 

@@ -181,5 +181,8 @@
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\pch.h">
+      <Filter>Code</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -33,20 +33,25 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
 {
     assert(sFormat != nullptr);
     std::basic_string<CharT> sFormatted;
-    const auto post_check =[](int nChars) noexcept
-    {
-        assert(nChars >= 0);
-        assert(nChars < RSIZE_MAX/sizeof(CharT));
-    };
+
     va_list pArgs;
     va_start(pArgs, sFormat);
     int nNeeded = 0;
     if constexpr(std::is_same_v<CharT, char>)
+    {
+        assert(std::string_view{ sFormat }.find("%n") == std::string_view::npos);
+        assert(sFormatted.capacity() > 0U && (sFormatted.capacity() < RSIZE_MAX/sizeof(char)));
         nNeeded = std::vsnprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
-    else if constexpr(std::is_same_v<CharT, wchar_t> || std::is_same_v<CharT, char16_t>)
+    }
+    else if constexpr(std::is_same_v<CharT, wchar_t>)
+    {
+        assert(std::wstring_view{ sFormat }.find(L"%n") == std::wstring_view::npos);
+        assert(sFormatted.capacity() > 0U && (sFormatted.capacity() < RSIZE_MAX/sizeof(wchar_t)));
         nNeeded = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
+    }
     va_end(pArgs);
-    post_check(nNeeded);
+    assert(nNeeded >= 0);
+    assert(nNeeded < RSIZE_MAX/sizeof(CharT));
     if (nNeeded >= 0)
     {
         if (ra::to_unsigned(nNeeded) >= sFormatted.size())
@@ -59,7 +64,7 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
             else if constexpr (std::is_same_v<CharT, wchar_t>)
                 nCheck = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
             va_end(pArgs);
-            post_check(nCheck);
+            assert(nCheck == nNeeded);
         }
 
         sFormatted.resize(ra::to_unsigned(nNeeded));
@@ -87,25 +92,17 @@ template<typename CharT, typename = std::enable_if_t<ra::is_char_v<CharT>>>
 _Success_(0 < return < ULONG_MAX) _NODISCARD inline auto __cdecl
 tcstoul(_In_z_                   const CharT* __restrict str,
         _Out_opt_ _Deref_post_z_ CharT**      __restrict endptr = nullptr,
-        _In_                     int                     base   = 10)
+        _In_                     int                     base   = 0 /*auto-detect base*/)
 {
-    const auto post_check = [](unsigned long ret) noexcept
-    {
-        assert((errno != ERANGE) && (ret != ULONG_MAX)); // out of range error
-        assert(ret != 0); // invalid argument, no conversion done
-    };
+    auto ret = 0UL;
     if constexpr (std::is_same_v<CharT, char>)
-    {
-        const auto ret = std::strtoul(str, endptr, base);
-        post_check(ret);
-        return ret;
-    }
-    if constexpr (std::is_same_v<CharT, wchar_t>)
-    {
-        const auto ret = std::wcstoul(str, endptr, base);
-        post_check(ret);
-        return ret;
-    }
+        ret = std::strtoul(str, endptr, base);
+    else if constexpr (std::is_same_v<CharT, wchar_t>)
+        ret = std::wcstoul(str, endptr, base);
+
+    assert((errno != ERANGE) && (ret != ULONG_MAX)); // out of range error
+    assert(ret != 0); // invalid argument, no conversion done
+    return ret;
 } /* end function tcstoul */
 
 /// <summary>
@@ -120,23 +117,15 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl
 tcslen_s(_In_reads_or_z_(strsz) const CharT* const str, _In_ std::size_t strsz = UINT16_MAX) noexcept
 {
     assert(str != nullptr);
-    const auto post_check = [&](std::size_t retVal) noexcept
-    {
-        assert(retVal != 0); // somehow str was a nullptr
-        assert(retVal != strsz); // str isn't null-terminated
-    };
+    std::size_t ret = 0U;
     if constexpr (std::is_same_v<CharT, char>)
-    {
-        const auto ret = strnlen_s(str, strsz);
-        post_check(ret);
-        return ret;
-    }
-    if constexpr (std::is_same_v<CharT, wchar_t>)
-    {
-        const auto ret = wcsnlen_s(str, strsz);
-        post_check(ret);
-        return ret;
-    }
+        ret = strnlen_s(str, strsz);
+    else if constexpr (std::is_same_v<CharT, wchar_t>)
+        ret = wcsnlen_s(str, strsz);
+
+    assert(ret != 0); // somehow str was a nullptr
+    assert(ret != strsz); // str isn't null-terminated
+    return ret;
 } /* end function tcslen_s */
 
 } // namespace ra

@@ -60,15 +60,18 @@ public:
 
             if (m_vDelayedTasks.empty())
             {
+                // first scheduled task - dedicate one of the background threads to timed events
                 m_vQueue.push_front([this]() { ProcessDelayedTasks(); });
                 bStartScheduler = true;
             }
             else if (tWhen < iter->tWhen)
             {
+                // sooner than the next scheduled task, we'll need to wake the timed events thread to reset the wait time
                 bNewPriority = true;
             }
             else
             {
+                // after the next scheduled task, find where to insert it
                 do {
                     ++iter;
                 } while (iter != m_vDelayedTasks.end() && iter->tWhen < tWhen);
@@ -78,10 +81,16 @@ public:
         }
 
         if (bStartScheduler)
+        {
+            // wake one of the background threads to process the timed events
             m_cvWork.notify_one();
+        }
 
         if (bNewPriority)
+        {
+            // wake the timed events thread to recalculate the time until the next event
             m_cvDelayedWork.notify_one();
+        }
     }
 
     void Shutdown(bool bWait) noexcept override;

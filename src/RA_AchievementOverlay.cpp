@@ -12,6 +12,8 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ra_math.h"
+
 namespace ra {
 
 inline constexpr std::array<LPCTSTR, 11> PAGE_TITLES
@@ -1102,10 +1104,10 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         (m_fTransitionTimer / PAGE_TRANSITION_OUT)
     };
 
-    const auto nDX{ ra::ftoi(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left))) };
+    const auto nDX{ ra::ftol(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left))) };
     const auto nDY{ rcTarget.top };
 
-    const auto  nRightPx{ ra::ftoi(rcTarget.right - (fPctOffScreen * rcTarget.right)) };
+    const auto  nRightPx{ ra::ftol(rcTarget.right - (fPctOffScreen * rcTarget.right)) };
 
     RECT rc{ nDX, nDY, nDX + rcTarget.right, rcTarget.bottom };
 
@@ -1192,7 +1194,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     SetTextColor(hDC, COL_TEXT);
 
     const auto& sTitle{ ra::PAGE_TITLES.at(ra::etoi(nCurrentPage)) };
-    TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tstrlen(sTitle)));
+    TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tcslen_s(sTitle)));
 
     }
 

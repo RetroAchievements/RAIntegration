@@ -1333,6 +1333,7 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
 _Use_decl_annotations_
 bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const __restrict sFile)
 {
+    buffer.clear();
     std::ifstream file(sFile);
     if (file.fail())
         return false;
@@ -1348,6 +1349,7 @@ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const __restrict sF
 
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
+    nFileSizeOut = 0L;
     FILE* pf = nullptr;
     _wfopen_s(&pf, sFilename, L"r");
     if (pf == nullptr)

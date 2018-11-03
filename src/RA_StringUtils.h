@@ -28,6 +28,16 @@ std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 /// </summary>
 _NODISCARD std::string StringPrintf(_In_z_ _Printf_format_string_ const char* const sFormat, ...);
 
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
 } // namespace ra
 
 #ifdef UNICODE

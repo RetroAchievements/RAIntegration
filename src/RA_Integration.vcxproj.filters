@@ -22,6 +22,12 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\rcheevos">
+      <UniqueIdentifier>{22424437-af0c-41fb-99ff-d5883c57b62a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data\lua">
+      <UniqueIdentifier>{8bf8f543-5155-4587-a22b-0016c9742bc4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="UI\ViewModels">
       <UniqueIdentifier>{0badbd6c-a477-4f69-b999-f27b050c3a17}</UniqueIdentifier>
     </Filter>
@@ -75,9 +81,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -126,8 +129,98 @@
     <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_MemValue.cpp">
-      <Filter>Data</Filter>
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
+      <Filter>Data\rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lapi.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lcode.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lctype.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldebug.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldo.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldump.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lfunc.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lgc.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\llex.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lmem.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lobject.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lopcodes.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lparser.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstate.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstring.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltable.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltm.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lundump.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lvm.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lzio.c">
+      <Filter>Data\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lauxlib.c">
+      <Filter>Data\lua</Filter>
     </ClCompile>
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
       <Filter>Services\Impl</Filter>
@@ -186,11 +279,26 @@
     <ClCompile Include="services\impl\FileLocalStorage.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
     <ClCompile Include="data\GameContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports.cpp">
+      <Filter>Interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -231,9 +339,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_RomChecksum.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
@@ -284,9 +389,6 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_MemValue.h">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="services\IConfiguration.hh">
       <Filter>Services</Filter>
     </ClInclude>
@@ -320,14 +422,17 @@
     <ClInclude Include="services\SearchResults.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_MemValue.h">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rcheevos.h">
+      <Filter>Data\rcheevos</Filter>
+    </ClInclude>
     <ClInclude Include="services\ImageRepository.h">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Data\rcheevos</Filter>
     </ClInclude>
     <ClInclude Include="services\IFileSystem.hh">
       <Filter>Services</Filter>
@@ -422,6 +527,27 @@
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="services\IHttpRequester.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Http.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClipboard.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsClipboard.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
     <ClInclude Include="data\GameContext.hh">
       <Filter>Data</Filter>
     </ClInclude>
@@ -436,6 +562,9 @@
     </ClInclude>
     <ClInclude Include="pch_microsoft_suppressions.h">
       <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.hh">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -453,5 +582,6 @@
     <None Include="ra_utility.h">
       <Filter>Helpers</Filter>
     </None>
+    <None Include="base.props" />
   </ItemGroup>
 </Project>

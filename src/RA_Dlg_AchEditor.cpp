@@ -94,9 +94,6 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
     }
 }
 
-Dlg_AchievementEditor::~Dlg_AchievementEditor()
-{
-}
 
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
 {
@@ -144,7 +141,7 @@ BOOL Dlg_AchievementEditor::IsActive() const
     return(g_AchievementEditorDialog.GetHWND() != nullptr) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
 }
 
-const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
+const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
     LV_ITEM item;
     ZeroMemory(&item, sizeof(item));
@@ -156,7 +153,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     item.pszText = const_cast<LPTSTR>(sData.c_str());
     item.iItem = ListView_InsertItem(hList, &item);
 
-    UpdateCondition(hList, item, Cond);
+    UpdateCondition(hList, item, Cond, nCurrentHits);
 
     ASSERT(item.iItem == m_nNumOccupiedRows);
 
@@ -164,7 +161,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond)
     return item.iItem;
 }
 
-void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond)
+void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits)
 {
     int nRow = item.iItem;
 
@@ -174,7 +171,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
     {
         sMemTypStrSrc = (Cond.CompSource().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = MEMSIZE_STR.at(ra::etoi(Cond.CompSource().Size()));
+        sMemSizeStrSrc = MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize()));
     }
 
     const char* sMemTypStrDst = "Value";
@@ -182,25 +179,25 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
     {
         sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().Size()));
+        sMemSizeStrDst = MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize()));
     }
 
     sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
     sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))).c_str());
     sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().RawValue());
+    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().GetValue());
     sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s", COMPARISONTYPE_STR[Cond.CompareType()]);
     sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
     sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst);
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().RawValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), Cond.CurrentHits());
+    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().GetValue());
+    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), nCurrentHits);
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
     {
         if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().RawValue());
+            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().GetValue());
     }
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
@@ -1164,7 +1161,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
                         unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
-                        NewCondition.CompSource().SetValues(nVal, nVal);
+                        NewCondition.CompSource().SetValue(nVal);
                     }
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;
@@ -1179,6 +1176,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     LoadAchievement(pActiveAch, FALSE);
                     pActiveAch->ClearDirtyFlag();
+                    pActiveAch->RebuildTrigger();
 
                     //	Select last item
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
@@ -1238,6 +1236,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             LoadAchievement(pActiveAch, FALSE);
                             pActiveAch->ClearDirtyFlag();
+                            pActiveAch->RebuildTrigger();
                         }
                         else
                             return FALSE;
@@ -1281,6 +1280,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Refresh:
                                 LoadAchievement(pActiveAch, TRUE);
+                                pActiveAch->ClearDirtyFlag();
+                                pActiveAch->RebuildTrigger();
                             }
                         }
                     }
@@ -1486,6 +1487,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
 
                     RepopulateGroupList(ActiveAchievement());
+                    ActiveAchievement()->RebuildTrigger();
                 }
                 break;
                 case IDC_RA_ACH_DELGROUP:
@@ -1508,6 +1510,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
 
                     RepopulateGroupList(ActiveAchievement());
+                    ActiveAchievement()->RebuildTrigger();
                 }
                 break;
                 case IDC_RA_ACH_GROUP:
@@ -1614,7 +1617,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Update the text to match
                                 char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().RawValue());
+                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1630,7 +1633,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 //	Update the text to match
                                 char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().RawValue());
+                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 //	Nudge the ComboBox to update the mem note
@@ -1699,8 +1702,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     rCond.SetConditionType(ra::itoe<Condition::Type>(i));
                                 i++;
                             }
-
-                            UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond);
+                            UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond, pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
                             break;
                         }
                         case CSI_TYPE_SRC:
@@ -1769,7 +1771,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
-                            rCond.CompSource().SetValues(nVal, nVal);
+                            rCond.CompSource().SetValue(nVal);
                             break;
                         }
                         case CSI_VALUE_TGT:
@@ -1783,7 +1785,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
 
                             unsigned int nVal = strtoul(sData, nullptr, nBase);
-                            rCond.CompTarget().SetValues(nVal, nVal);
+                            rCond.CompTarget().SetValue(nVal);
                             break;
                         }
                         case CSI_HITCOUNT:
@@ -1800,6 +1802,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     nSelItem = -1;
                     nSelSubItem = -1;
 
+                    pActiveAch->RebuildTrigger();
                 }
                 break;
 
@@ -1862,14 +1865,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             if (rCond.CompSource().GetType() != CompVariable::Type::Address && rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
                 return;
 
-            nAddr = rCond.CompSource().RawValue();
+            nAddr = rCond.CompSource().GetValue();
             break;
 
         case CSI_VALUE_TGT:
             if (rCond.CompTarget().GetType() != CompVariable::Type::Address && rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
                 return;
 
-            nAddr = rCond.CompTarget().RawValue();
+            nAddr = rCond.CompTarget().GetValue();
             break;
 
         default:
@@ -1973,7 +1976,7 @@ void Dlg_AchievementEditor::PopulateConditions(Achievement* pCheevo)
     {
         unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
-            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i));
+            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i), m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
 
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
     }
@@ -2114,7 +2117,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
                     {
                         const Condition& Cond = m_pSelectedAchievement->GetCondition(nGrp, i);
                         item.iItem = i;
-                        UpdateCondition(hCondList, item, Cond);
+                        UpdateCondition(hCondList, item, Cond, m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
                     }
                 }
             }

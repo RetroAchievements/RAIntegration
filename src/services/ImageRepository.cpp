@@ -3,8 +3,9 @@
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 
-#include "services/IThreadPool.hh"
-#include "services/ServiceLocator.hh"
+#include "services\Http.hh"
+#include "services\IFileSystem.hh"
+#include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace services {
@@ -110,12 +111,12 @@ bool ImageRepository::Initialize()
 ImageRepository::~ImageRepository() noexcept
 {
     // clean up anything that's still referenced
-    for (HBitmapMap::iterator iter = m_mBadges.begin(); iter != m_mBadges.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& badge : m_mBadges)
+        DeleteBitmap(badge.second.m_hBitmap);
     m_mBadges.clear();
 
-    for (HBitmapMap::iterator iter = m_mUserPics.begin(); iter != m_mUserPics.end(); ++iter)
-        DeleteObject(iter->second.m_hBitmap);
+    for (auto& userPic : m_mUserPics)
+        DeleteBitmap(userPic.second.m_hBitmap);
     m_mUserPics.clear();
 
     // prevent errors disposing ImageReferences after the repository is disposed.
@@ -164,31 +165,36 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     }
 
     // fetch it
-    RequestType nRequestType;
-    PostArgs args;
-
+    std::string sUrl;
     switch (nType)
     {
         case ImageType::Badge:
-            nRequestType = RequestBadge;
-            args['b'] = sName;
+            sUrl = "http://i.retroachievements.org/Badge/";
             break;
-
         case ImageType::UserPic:
-            nRequestType = RequestUserPic;
-            args['u'] = sName;
+            sUrl = _RA_HostName();
+            sUrl += "/UserPic/";
             break;
-
         default:
             ASSERT(!"Unsupported image type");
             return;
     }
+    sUrl += sName;
+    sUrl += ".png";
 
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([this, nRequestType, args, sFilename]()
+    RA_LOG_INFO("Downloading %s", sUrl.c_str());
+
+    Http::Request request(sUrl);
+    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const Http::Response& response)
     {
-        std::string sResponse;
-        if (RAWeb::DoBlockingRequest(nRequestType, args, sResponse))
-            _WriteBufferToFile(sFilename, sResponse);
+        if (response.StatusCode() == 200)
+        {
+            RA_LOG_INFO("Wrote %zu bytes to %s", ServiceLocator::Get<IFileSystem>().GetFileSize(sFilename), ra::Narrow(sFilename).c_str());
+        }
+        else
+        {
+            RA_LOG_WARN("Error %u fetching %s", response.StatusCode(), sUrl.c_str());
+        }
 
         {
             std::lock_guard<std::mutex> lock(m_oMutex);

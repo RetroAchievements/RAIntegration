@@ -36,6 +36,23 @@ public:
         return true;
     }
     
+    size_t GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const override
+    {
+        size_t nInitialSize = vResults.size();
+
+        for (auto& sFile : m_mFileContents)
+        {
+            size_t nIndex = sFile.first.find_last_of('\\');
+            if (nIndex == sDirectory.length() - 1)
+            {
+                if (sFile.first.compare(0, nIndex, sDirectory.c_str(), 0, nIndex) == 0)
+                    vResults.emplace_back(sFile.first, nIndex + 1, sFile.first.length() - nIndex);
+            }
+        }
+
+        return vResults.size() - nInitialSize;
+    }
+
     /// <summary>
     /// Mocks the contents of a file.
     /// </summary>
@@ -81,9 +98,28 @@ public:
         return -1;
     }
 
+    std::chrono::system_clock::time_point GetLastModified(const std::wstring& sPath) const override
+    {
+        auto pIter = m_mFileModifiedTimes.find(sPath);
+        if (pIter != m_mFileModifiedTimes.end())
+            return pIter->second;
+
+        auto pIter2 = m_mFileContents.find(sPath);
+        if (pIter2 != m_mFileContents.end())
+            return std::chrono::system_clock::now();
+
+        return std::chrono::system_clock::time_point();
+    }
+
+    void MockLastModified(const std::wstring& sPath, std::chrono::system_clock::time_point tLastModified)
+    {
+        m_mFileModifiedTimes.insert_or_assign(sPath, tLastModified);
+    }
+
     bool DeleteFile(const std::wstring& sPath) const override
     {
         m_mFileSizes.erase(sPath);
+        m_mFileModifiedTimes.erase(sPath);
         return m_mFileContents.erase(sPath) != 0;
     }
 
@@ -142,6 +178,7 @@ private:
     mutable std::set<std::wstring> m_vDirectories;
     mutable std::unordered_map<std::wstring, std::string> m_mFileContents;
     mutable std::unordered_map<std::wstring, int64_t> m_mFileSizes;
+    mutable std::unordered_map<std::wstring, std::chrono::system_clock::time_point> m_mFileModifiedTimes;
 };
 
 } // namespace mocks

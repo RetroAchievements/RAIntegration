@@ -4,18 +4,12 @@
 
 MemManager g_MemManager;
 
-MemManager::MemManager()
-    : m_nTotalBankSize(0)
-{
-}
-
-//	virtual
-MemManager::~MemManager()
+MemManager::~MemManager() noexcept
 {
     ClearMemoryBanks();
 }
 
-void MemManager::ClearMemoryBanks()
+void MemManager::ClearMemoryBanks() noexcept
 {
     m_Banks.clear();
     m_nTotalBankSize = 0;
@@ -186,5 +180,20 @@ void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal
     if (bankID < numBanks)
     {
         m_Banks.at(bankID).Writer(nOffs, nVal);
+    }
+}
+
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
+{
+    switch (nBytes)
+    {
+        case 1:
+            return g_MemManager.ActiveBankRAMRead(nAddress, MemSize::EightBit);
+        case 2:
+            return g_MemManager.ActiveBankRAMRead(nAddress, MemSize::SixteenBit);
+        case 4:
+            return g_MemManager.ActiveBankRAMRead(nAddress, MemSize::ThirtyTwoBit);
+        default:
+            return 0;
     }
 }

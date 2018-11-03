@@ -9,6 +9,10 @@ class TextWriter
 {
 public:
     virtual ~TextWriter() noexcept = default;
+    TextWriter(const TextWriter&) noexcept = delete;
+    TextWriter& operator=(const TextWriter&) noexcept = delete;
+    TextWriter(TextWriter&&) noexcept = delete;
+    TextWriter& operator=(TextWriter&&) noexcept = delete;
 
     /// <summary>
     /// Writes text to the output.
@@ -47,6 +51,8 @@ public:
         Write(sText);
         WriteLine();
     }
+protected:
+    TextWriter() noexcept = default;
 };
 
 } // namespace services

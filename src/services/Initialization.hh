@@ -8,6 +8,8 @@ namespace services {
 class Initialization
 {
 public:
+    static void RegisterCoreServices();
+
     static void RegisterServices(const std::string& sClientName);
 
     static void Shutdown();

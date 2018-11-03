@@ -401,11 +401,10 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
 
             lb.SetTitle(lbData["Title"].GetString());
             lb.SetDescription(lbData["Description"].GetString());
+            lb.ParseFromString(lbData["Mem"].GetString(), lbData["Format"].GetString());
 
-            const auto nFormat{ MemValue::ParseFormat(lbData["Format"].GetString()) };
-            lb.ParseFromString(lbData["Mem"].GetString(), nFormat);
-
-            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().AddLeaderboard(lb);
+            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>()
+                .AddLeaderboard(std::move(lb));
         }
 
         // calculate the total number of points for the core set, and pre-fetch badge images

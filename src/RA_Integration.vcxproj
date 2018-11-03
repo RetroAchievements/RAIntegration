@@ -35,8 +35,38 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="data\GameContext.cpp" />
-    <ClCompile Include="md5.c" />
+    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='AnalysisUnicode|Win32'">Create</PrecompiledHeader>
@@ -47,6 +77,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementPopup.cpp" />
@@ -63,7 +94,6 @@
     <ClCompile Include="RA_Dlg_Login.cpp" />
     <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_Dlg_RomChecksum.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Interface.cpp" />
@@ -72,33 +102,40 @@
     <ClCompile Include="RA_LeaderboardPopup.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
-    <ClCompile Include="RA_MemValue.cpp" />
     <ClCompile Include="RA_PopupWindows.cpp" />
     <ClCompile Include="RA_ProgressPopup.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
+    <ClCompile Include="data\GameContext.cpp" />
+    <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\LeaderboardManager.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
+    <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\ImageRepository.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
+    <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
+    <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\rcheevos\include\rcheevos.h" />
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
     <ClInclude Include="data\GameContext.hh" />
+    <ClInclude Include="Exports.hh" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
@@ -120,7 +157,6 @@
     <ClInclude Include="RA_Dlg_Login.h" />
     <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
-    <ClInclude Include="RA_Dlg_RomChecksum.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
@@ -131,16 +167,18 @@
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
-    <ClInclude Include="RA_MemValue.h" />
     <ClInclude Include="RA_PopupWindows.h" />
     <ClInclude Include="RA_ProgressPopup.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\Http.hh" />
+    <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
+    <ClInclude Include="services\IHttpRequester.hh" />
     <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
@@ -154,8 +192,10 @@
     <ClInclude Include="services\impl\StringTextWriter.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\Clock.hh" />
+    <ClInclude Include="services\impl\WindowsClipboard.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
+    <ClInclude Include="services\impl\WindowsHttpRequester.hh" />
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
@@ -167,12 +207,14 @@
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
+    <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
+    <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
@@ -184,6 +226,9 @@
     <ResourceCompile Include="RA_Version.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="base.props">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="ra_type_traits.h" />
     <None Include="ra_utility.h" />
   </ItemGroup>
@@ -284,7 +329,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">
     <TargetName>RA_Integration</TargetName>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>CppCoreCheckClassRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">

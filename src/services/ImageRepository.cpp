@@ -132,6 +132,9 @@ std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sN
         case ImageType::Badge:
             sFilename += RA_DIR_BADGE + ra::Widen(sName) + L".png";
             break;
+        case ImageType::Icon:
+            sFilename += RA_DIR_BADGE + std::wstring(L"i") + ra::Widen(sName) + L".png";
+            break;
         case ImageType::UserPic:
             sFilename += RA_DIR_USERPIC + ra::Widen(sName) + L".png";
             break;
@@ -175,6 +178,9 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             sUrl = _RA_HostName();
             sUrl += "/UserPic/";
             break;
+        case ImageType::Icon:
+            sUrl = "http://i.retroachievements.org/Images/";
+            break;
         default:
             ASSERT(!"Unsupported image type");
             return;
@@ -208,6 +214,7 @@ HBITMAP ImageRepository::DefaultImage(ImageType nType)
     switch (nType)
     {
         case ImageType::Badge:
+        case ImageType::Icon:
             return GetImage(ImageType::Badge, DefaultBadge, false);
 
         case ImageType::UserPic:
@@ -403,6 +410,9 @@ ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType)
 
         case ImageType::Local:
             return &m_mLocal;
+
+        case ImageType::Icon:
+            return &m_mIcons;
 
         default:
             ASSERT(!"Unsupported image type");

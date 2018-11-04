@@ -2,6 +2,8 @@
 
 #include "api/IServer.hh"
 
+#include "ra_fwd.h"
+
 #include <string>
 
 namespace ra {

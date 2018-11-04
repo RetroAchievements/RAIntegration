@@ -65,7 +65,7 @@ void Http::UrlEncodeAppend(std::string& sOutput, const std::string& sInput)
     if (sOutput.capacity() < nNeeded)
         sOutput.reserve(nNeeded);
 
-    for (auto c : sInput)
+    for (unsigned char c : sInput)
     {
         // unreserved characters per RFC3986 (section 2.3)
         if (isalnum(c) || c == '-' || c == '.' || c == '_' || c == '~')

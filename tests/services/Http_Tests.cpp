@@ -4,12 +4,14 @@
 #include "services\IHttpRequester.hh"
 
 #include "tests\mocks\MockFileSystem.hh"
+#include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::services::mocks::MockFileSystem;
+using ra::services::mocks::MockHttpRequester;
 using ra::services::mocks::MockThreadPool;
 
 namespace ra {
@@ -18,30 +20,6 @@ namespace tests {
 
 TEST_CLASS(Http_Tests)
 {
-private:
-    class MockHttpRequester : public IHttpRequester
-    {
-    public:
-        explicit MockHttpRequester(std::function<Http::Response(const Http::Request&)>&& fHandler) noexcept
-            : m_Override(this), m_fHandler(fHandler)
-        {
-        }
-
-        void SetUserAgent(const std::string& sUserAgent) override {}
-
-        unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override
-        {
-            auto response = m_fHandler(pRequest);
-            pContentWriter.Write(response.Content());
-            return response.StatusCode();
-        }
-
-    private:
-        ServiceLocator::ServiceOverride<IHttpRequester> m_Override;
-
-        std::function<Http::Response(const Http::Request&)> m_fHandler;
-    };
-
 public:
     TEST_METHOD(TestUrlEncode)
     {
@@ -92,12 +70,12 @@ public:
         MockHttpRequester mockHttp([](const Http::Request& request)
         {
             Assert::AreEqual(std::string("foo.com"), request.GetUrl());
-            return Http::Response(200, "Hello");
+            return Http::Response(Http::StatusCode::OK, "Hello");
         });
         Http::Request request("foo.com");
         auto response = request.Call();
 
-        Assert::AreEqual(200U, response.StatusCode());
+        Assert::AreEqual(Http::StatusCode::OK, response.StatusCode());
         Assert::AreEqual(std::string("Hello"), response.Content());
     }
 
@@ -106,12 +84,12 @@ public:
         MockHttpRequester mockHttp([](const Http::Request& request)
         {
             Assert::AreEqual(std::string("foo.com"), request.GetUrl());
-            return Http::Response(404, "");
+            return Http::Response(Http::StatusCode::NotFound, "");
         });
         Http::Request request("foo.com");
         auto response = request.Call();
 
-        Assert::AreEqual(404U, response.StatusCode());
+        Assert::AreEqual(Http::StatusCode::NotFound, response.StatusCode());
         Assert::AreEqual(std::string(""), response.Content());
     }
 
@@ -120,7 +98,7 @@ public:
         MockHttpRequester mockHttp([](const Http::Request& request)
         {
             Assert::AreEqual(std::string("foo.com"), request.GetUrl());
-            return Http::Response(200, "Hello");
+            return Http::Response(Http::StatusCode::OK, "Hello");
         });
         Http::Request request("foo.com");
 
@@ -128,7 +106,7 @@ public:
         bool bCallbackCalled = false;
         request.CallAsync([&bCallbackCalled](const Http::Response& response)
         {
-            Assert::AreEqual(200U, response.StatusCode());
+            Assert::AreEqual(Http::StatusCode::OK, response.StatusCode());
             Assert::AreEqual(std::string("Hello"), response.Content());
             bCallbackCalled = true;
         });
@@ -144,12 +122,12 @@ public:
         MockHttpRequester mockHttp([](const Http::Request& request)
         {
             Assert::AreEqual(std::string("foo.com"), request.GetUrl());
-            return Http::Response(200, "Hello");
+            return Http::Response(Http::StatusCode::OK, "Hello");
         });
         Http::Request request("foo.com");
         auto response = request.Download(L".\\test.txt");
 
-        Assert::AreEqual(200U, response.StatusCode());
+        Assert::AreEqual(Http::StatusCode::OK, response.StatusCode());
         Assert::AreEqual(std::string(), response.Content());
         Assert::AreEqual(std::string("Hello"), mockFileSystem.GetFileContents(L".\\test.txt"));
     }
@@ -160,7 +138,7 @@ public:
         MockHttpRequester mockHttp([](const Http::Request& request)
         {
             Assert::AreEqual(std::string("foo.com"), request.GetUrl());
-            return Http::Response(200, "Hello");
+            return Http::Response(Http::StatusCode::OK, "Hello");
         });
         Http::Request request("foo.com");
 
@@ -168,7 +146,7 @@ public:
         bool bCallbackCalled = false;
         request.DownloadAsync(L".\\test.txt", [&bCallbackCalled,&mockFileSystem](const Http::Response& response)
         {
-            Assert::AreEqual(200U, response.StatusCode());
+            Assert::AreEqual(Http::StatusCode::OK, response.StatusCode());
             Assert::AreEqual(std::string(), response.Content());
             Assert::AreEqual(std::string("Hello"), mockFileSystem.GetFileContents(L".\\test.txt"));
             bCallbackCalled = true;

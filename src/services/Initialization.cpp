@@ -1,5 +1,7 @@
 #include "Initialization.hh"
 
+#include "api\impl\DisconnectedServer.hh"
+
 #include "data\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
@@ -97,6 +99,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
+
+    auto* pServer = new ra::api::impl::DisconnectedServer(pConfiguration->GetHostName());
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(pServer);
 }
 
 void Initialization::Shutdown()

@@ -20,8 +20,6 @@
 
 const char* RequestTypeToString[] =
 {
-    "RequestLogin",
-
     "RequestScore",
     "RequestNews",
     "RequestPatch",
@@ -51,7 +49,6 @@ static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match 
 
 const char* RequestTypeToPost[] =
 {
-    "login",
     "score",
     "news",
     "patch",
@@ -208,35 +205,24 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     std::string sPostData = PostArgsToString(PostData);
     std::string sLogPage;
 
-    if (nType == RequestLogin)
-    {
-        sLogPage = "login_app.php";
-        sUrl += "/";
-        sUrl += sLogPage;
+    sLogPage = "dorequest.php";
+    sUrl += "/";
+    sUrl += sLogPage;
+    sLogPage += "?r=";
+    sLogPage += RequestTypeToPost[nType];
 
-        RA_LOG("POST to %s", sLogPage.c_str()); // do not log user credentials (sPostData)
-    }
-    else
-    {
-        sLogPage = "dorequest.php";
-        sUrl += "/";
-        sUrl += sLogPage;
-        sLogPage += "?r=";
-        sLogPage += RequestTypeToPost[nType];
+    RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
-        RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
-
-        if (!sPostData.empty())
-            sPostData.push_back('&');
-        sPostData += "r=";
-        sPostData += RequestTypeToPost[nType];
-    }
+    if (!sPostData.empty())
+        sPostData.push_back('&');
+    sPostData += "r=";
+    sPostData += RequestTypeToPost[nType];
 
     ra::services::Http::Request request(sUrl);
     request.SetPostData(sPostData);
     auto response = request.Call();
 
-    if (response.StatusCode() != 200)
+    if (response.StatusCode() != ra::services::Http::StatusCode::OK)
     {
         RA_LOG("Error %u from %s: %s", response.StatusCode(), sLogPage.c_str(), response.Content().c_str());
         Response.clear();

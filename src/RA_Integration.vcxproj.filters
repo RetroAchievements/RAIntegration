@@ -40,6 +40,12 @@
     <Filter Include="PCH">
       <UniqueIdentifier>{2e33d92b-6ab7-47c6-9d74-f2802ca48d25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="API">
+      <UniqueIdentifier>{afdc6aff-1e7f-46fe-bc7f-ac8c1435a3b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="API\impl">
+      <UniqueIdentifier>{cddf7ac4-2c70-4889-be6d-af4b24d6b492}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -299,6 +305,18 @@
     </ClCompile>
     <ClCompile Include="Exports.cpp">
       <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="api\ApiCall.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
+    <ClCompile Include="api\impl\ConnectedServer.cpp">
+      <Filter>API\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="api\impl\DisconnectedServer.cpp">
+      <Filter>API\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="api\impl\OfflineServer.cpp">
+      <Filter>API\impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -568,6 +586,30 @@
     </ClInclude>
     <ClInclude Include="ra_math.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="api\ApiCall.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\IServer.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\Login.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\Logout.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\impl\ServerBase.hh">
+      <Filter>API\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="api\impl\ConnectedServer.hh">
+      <Filter>API\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="api\impl\DisconnectedServer.hh">
+      <Filter>API\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="api\impl\OfflineServer.hh">
+      <Filter>API\impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

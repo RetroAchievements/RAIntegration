@@ -1,0 +1,28 @@
+#include "DisconnectedServer.hh"
+
+#include "api\impl\ConnectedServer.hh"
+
+#include "services\ServiceLocator.hh"
+
+namespace ra {
+namespace api {
+namespace impl {
+
+Login::Response DisconnectedServer::Login(const Login::Request& request) noexcept
+{
+    // use the normal ServerApi to attempt to connect
+    std::unique_ptr<ConnectedServer> serverApi(new ConnectedServer(m_sHost));
+    Login::Response response = serverApi->Login(request);
+
+    // if successful, update the global IServer instance to the connected API
+    if (response.Result == ApiResult::Success)
+        ra::services::ServiceLocator::Provide<ra::api::IServer>(serverApi.release());
+
+    // pass the server API response back to the caller
+    return std::move(response);
+}
+
+} // namespace impl
+} // namespace api
+} // namespace ra
+

@@ -5,6 +5,10 @@
 #include "RA_httpthread.h"
 #include "RA_PopupWindows.h"
 
+#include "api\Login.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 //static 
 BOOL RA_Dlg_Login::DoModalLogin()
 {
@@ -34,76 +38,46 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
             {
                 case IDOK:
                 {
-                    BOOL bValid = TRUE;
                     TCHAR sUserEntry[64];
-                    bValid &= (GetDlgItemText(hDlg, IDC_RA_USERNAME, sUserEntry, 64) > 0);
-                    TCHAR sPassEntry[64];
-                    bValid &= (GetDlgItemText(hDlg, IDC_RA_PASSWORD, sPassEntry, 64) > 0);
-
-                    if (!bValid || lstrlen(sUserEntry) < 0 || lstrlen(sPassEntry) < 0)
+                    if (GetDlgItemText(hDlg, IDC_RA_USERNAME, sUserEntry, 64) == 0)
                     {
-                        MessageBox(nullptr, TEXT("Username/password not valid! Please check and reenter"), TEXT("Error!"), MB_OK);
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Username is required.");
                         return TRUE;
                     }
 
-                    PostArgs args;
-                    args['u'] = ra::Narrow(sUserEntry);
-                    args['p'] = ra::Narrow(sPassEntry);		//	Plaintext password(!)
-
-                    rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
+                    TCHAR sPassEntry[64];
+                    if (GetDlgItemText(hDlg, IDC_RA_PASSWORD, sPassEntry, 64) == 0)
                     {
-                        std::string sResponse;
-                        std::string sResponseTitle;
-
-                        if (doc["Success"].GetBool())
-                        {
-                            const std::string& sUser = doc["User"].GetString();
-                            const std::string& sToken = doc["Token"].GetString();
-                            const unsigned int nPoints = doc["Score"].GetUint();
-                            const unsigned int nUnreadMessages = doc["Messages"].GetUint();
-
-                            bool bRememberLogin = (IsDlgButtonChecked(hDlg, IDC_RA_SAVEPASSWORD) != BST_UNCHECKED);
-
-                            RAUsers::LocalUser().ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, bRememberLogin);
-
-                            sResponse = "Logged in as " + sUser + ".";
-                            sResponseTitle = "Logged in Successfully!";
-
-                            //g_PopupWindows.AchievementPopups().SuppressNextDeltaUpdate();
-                        }
-                        else
-                        {
-                            sResponse = std::string("Failed!\r\n"
-                                "Response From Server:\r\n") +
-                                doc["Error"].GetString();
-                            sResponseTitle = "Error logging in!";
-                        }
-
-                        MessageBox(hDlg, NativeStr(sResponse).c_str(), NativeStr(sResponseTitle).c_str(), MB_OK);
-
-                        //	If we are now logged in
-                        if (RAUsers::LocalUser().IsLoggedIn())
-                        {
-                            //	Close this dialog
-                            EndDialog(hDlg, TRUE);
-                        }
-
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Password is required.");
                         return TRUE;
+                    }
+
+                    ra::api::Login::Request request;
+                    request.Username = ra::Narrow(sUserEntry);
+                    request.Password = ra::Narrow(sPassEntry);
+
+                    const ra::api::Login::Response response = request.Call();
+
+                    if (response.Succeeded())
+                    {
+                        bool bRememberLogin = (IsDlgButtonChecked(hDlg, IDC_RA_SAVEPASSWORD) != BST_UNCHECKED);
+
+                        RAUsers::LocalUser().ProcessSuccessfulLogin(response.Username, response.ApiToken, response.Score, response.NumUnreadMessages, bRememberLogin);
+
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
+                            std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username)
+                        );
+
+                        EndDialog(hDlg, TRUE);
                     }
                     else
                     {
-                        if (!doc.HasParseError() && doc.HasMember("Error"))
-                        {
-                            MessageBox(hDlg, NativeStr(std::string("Server error: ") + std::string(doc["Error"].GetString())).c_str(), TEXT("Error!"), MB_OK);
-                        }
-                        else
-                        {
-                            MessageBox(hDlg, TEXT("Unknown error connecting... please try again!"), TEXT("Error!"), MB_OK);
-                        }
-
-                        return TRUE;	//	==Handled
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                            L"Failed to login", ra::Widen(response.ErrorMessage)
+                        );
                     }
+
+                    return TRUE;
                 }
                 break;
 

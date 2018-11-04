@@ -66,6 +66,10 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
+    <ClCompile Include="api\ApiCall.cpp" />
+    <ClCompile Include="api\impl\ConnectedServer.cpp" />
+    <ClCompile Include="api\impl\DisconnectedServer.cpp" />
+    <ClCompile Include="api\impl\OfflineServer.cpp" />
     <ClCompile Include="md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
@@ -134,6 +138,14 @@
   <ItemGroup>
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
+    <ClInclude Include="api\ApiCall.hh" />
+    <ClInclude Include="api\impl\ConnectedServer.hh" />
+    <ClInclude Include="api\impl\DisconnectedServer.hh" />
+    <ClInclude Include="api\impl\OfflineServer.hh" />
+    <ClInclude Include="api\impl\ServerBase.hh" />
+    <ClInclude Include="api\IServer.hh" />
+    <ClInclude Include="api\Login.hh" />
+    <ClInclude Include="api\Logout.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="md5.h" />

@@ -16,9 +16,6 @@ enum HTTPRequestMethod
 
 enum RequestType
 {
-    //	Login
-    RequestLogin,
-
     //	Fetch
     RequestScore,
     RequestNews,

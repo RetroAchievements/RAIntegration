@@ -16,7 +16,7 @@ Http::Response Http::Request::Call() const
     ra::services::impl::StringTextWriter pWriter(sResponse);
 
     auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    auto nStatusCode = pHttpRequester.Request(*this, pWriter);
+    auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, pWriter));
 
     return Response(nStatusCode, std::move(sResponse));
 }
@@ -36,7 +36,7 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
     auto pFile = pFileSystem.CreateTextFile(sFilename);
 
     auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    auto nStatusCode = pHttpRequester.Request(*this, *pFile);
+    auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, *pFile));
 
     return Response(nStatusCode, "");
 }

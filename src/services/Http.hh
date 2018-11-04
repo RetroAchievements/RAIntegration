@@ -10,10 +10,16 @@ namespace services {
 class Http
 {
 public:
+    enum class StatusCode
+    {
+        OK = 200,
+        NotFound = 404,
+    };
+
     class Response
     {
     public:
-        explicit Response(int nStatusCode, const std::string& sResponse) noexcept
+        explicit Response(Http::StatusCode nStatusCode, const std::string& sResponse) noexcept
             : m_nStatusCode(nStatusCode), m_sResponse(sResponse)
         {
         }
@@ -27,7 +33,7 @@ public:
         /// <summary>
         /// Gets the HTTP status code returned from the server.
         /// </summary>
-        unsigned int StatusCode() const { return m_nStatusCode; }
+        Http::StatusCode StatusCode() const { return m_nStatusCode; }
 
         /// <summary>
         /// Gets the content returned from the server.
@@ -35,7 +41,7 @@ public:
         const std::string& Content() const { return m_sResponse; }
 
     private:
-        unsigned int m_nStatusCode;
+        Http::StatusCode m_nStatusCode;
         std::string m_sResponse;
     };
 

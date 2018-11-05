@@ -90,7 +90,7 @@ public:
         /// <summary>
         /// Sets the POST data.
         /// </summary>
-        /// <remarks>If not empty, POST request will be made, otherwise GET request wil be made.</remarks>
+        /// <remarks>If not empty, POST request will be made, otherwise GET request will be made.</remarks>
         void SetPostData(const std::string& sValue) { m_sPostData = sValue; }
 
         /// <summary>
@@ -99,12 +99,12 @@ public:
         const std::string& GetPostData() const { return m_sPostData; }
 
         /// <summary>
-        /// Specifies the Content-GetType to send. Default: "application/x-www-form-urlencoded"
+        /// Specifies the Content-Type to send. Default: "application/x-www-form-urlencoded"
         /// </summary>
         void SetContentType(const std::string& sValue) { m_sContentType = sValue; }
 
         /// <summary>
-        /// Gets the Content-GetType to send. Default: "application/x-www-form-urlencoded"
+        /// Gets the Content-Type to send. Default: "application/x-www-form-urlencoded"
         /// </summary>
         const std::string& GetContentType() const { return m_sContentType; }
 

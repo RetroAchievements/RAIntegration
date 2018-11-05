@@ -57,6 +57,7 @@ HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter*
 // to the HWND's DWLP_USER attribute, then switch back to using the normal StaticDialogProc.
 static DialogBase* s_pModalDialog = nullptr;
 
+_Use_decl_annotations_
 static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (s_pModalDialog == nullptr)

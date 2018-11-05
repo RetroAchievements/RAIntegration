@@ -183,7 +183,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementUnlocked,
+                        AchievementUnlocked,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
@@ -191,7 +191,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Modified: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementUnlocked,
+                        AchievementUnlocked,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
@@ -199,7 +199,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementError,
+                        AchievementError,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else

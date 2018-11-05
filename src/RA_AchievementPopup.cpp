@@ -2,42 +2,24 @@
 
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
-
-namespace {
-const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
-const TCHAR* FONT_TO_USE = _T("Tahoma");
-
-const int FONT_SIZE_TITLE = 32;
-const int FONT_SIZE_SUBTITLE = 28;
-
-const float START_AT = 0.0f;
-const float APPEAR_AT = 0.8f;
-const float FADEOUT_AT = 4.2f;
-const float FINISH_AT = 5.0f;
-
-const wchar_t* MSG_SOUND[] =
-{
-    L"login.wav",
-    L"info.wav",
-    L"unlock.wav",
-    L"acherror.wav",
-    L"lb.wav",
-    L"lbcancel.wav",
-    L"message.wav",
-};
-static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
-}
-
-AchievementPopup::AchievementPopup() :
-    m_fTimer(0.0f)
-{
-}
+#include "ra_math.h"
 
 void AchievementPopup::PlayAudio()
 {
+    constexpr std::array<const wchar_t*, 7> MSG_SOUND
+    {
+        L"login.wav",
+        L"info.wav",
+        L"unlock.wav",
+        L"acherror.wav",
+        L"lb.wav",
+        L"lbcancel.wav",
+        L"message.wav",
+    };
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[ActiveMessage().Type()];
+    std::wstring sSoundPath{ g_sHomeDir };
+    sSoundPath += RA_DIR_OVERLAY;
+    sSoundPath += MSG_SOUND.at(ra::etoi(ActiveMessage().GetType()));
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
@@ -51,8 +33,8 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
 {
     if (bPaused)
         fDelta = 0.0F;
-    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
-    if (m_vMessages.size() > 0)
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
+    if (MessagesPresent())
     {
         m_fTimer += fDelta;
         if (m_fTimer >= FINISH_AT)
@@ -65,31 +47,31 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
 
 float AchievementPopup::GetYOffsetPct() const
 {
-    float fVal = 0.0f;
-
+    float fVal{};
+    _CONSTANT_LOC START_AT   = 0.0F;
+    _CONSTANT_LOC APPEAR_AT  = 0.8F;
+    _CONSTANT_LOC FADEOUT_AT = 4.2F;
     if (m_fTimer < APPEAR_AT)
     {
-        //	Fading in.
-        float fDelta = (APPEAR_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = fDelta;
+        // Fading in.
+        const auto fDelta{ APPEAR_AT - m_fTimer };
+        fVal = ra::sqr(fDelta); // Quadratic
     }
     else if (m_fTimer < FADEOUT_AT)
     {
-        //	Faded in - held
-        fVal = 0.0f;
+        // Faded in - held
+        fVal = 0.0F;
     }
     else if (m_fTimer < FINISH_AT)
     {
         //	Fading out
-        float fDelta = (FADEOUT_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = (fDelta);
+        const auto fDelta{ FADEOUT_AT - m_fTimer };
+        fVal = ra::sqr(fDelta); // Quadratic
     }
     else
     {
-        //	Finished!
-        fVal = 1.0f;
+        // Finished!
+        fVal = 1.0F;
     }
 
     return fVal;
@@ -100,32 +82,37 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     if (!MessagesPresent())
         return;
 
-    const int nPixelWidth = rcDest.right - rcDest.left;
+    const auto nPixelWidth = rcDest.right - rcDest.left;
 
     //SetBkColor( hDC, RGB( 0, 212, 0 ) );
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
     SetTextColor(hDC, COL_POPUP);
 
-    HFONT hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    _CONSTANT_LOC FONT_SIZE_TITLE    = 32;
+    _CONSTANT_LOC FONT_TO_USE = _T("Tahoma");
+    const auto hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
         DEFAULT_PITCH, FONT_TO_USE);
 
-    HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    _CONSTANT_LOC FONT_SIZE_SUBTITLE = 28;
+    const auto hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
         DEFAULT_PITCH, FONT_TO_USE);
 
-    int nTitleX = 10;
-    int nDescX = nTitleX + 2;
+    auto nTitleX = 10;
+    auto nDescX  = nTitleX + 2;
 
-    const int nHeight = rcDest.bottom - rcDest.top;
+    const auto nHeight = rcDest.bottom - rcDest.top;
+   
+    _CONSTANT_LOC POPUP_DIST_Y_FROM_PCT = 0.4F; // Amount of screens to travel
+    auto fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * ra::to_floating(nHeight));
+    _CONSTANT_LOC POPUP_DIST_Y_TO_PCT = 0.856F; // Where on screen to end up
+    fFadeInY += (POPUP_DIST_Y_TO_PCT * ra::to_floating(nHeight));
 
-    float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(nHeight));
-    fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(nHeight));
+    const auto nTitleY = ra::ftol(fFadeInY);
+    const auto nDescY  = nTitleY + 32;
 
-    const int nTitleY = static_cast<int>(fFadeInY);
-    const int nDescY = nTitleY + 32;
-
-    HBITMAP hBitmap = ActiveMessage().Image();
+    const auto hBitmap = ActiveMessage().Image();
     if (hBitmap != nullptr)
     { 
         DrawImage(hDC, hBitmap, nTitleX, nTitleY, 64, 64);
@@ -134,39 +121,39 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
         nDescX += 64 + 4;
     }
 
-    const std::string sTitle = std::string(" " + ActiveMessage().Title() + " ");
-    const std::string sSubTitle = std::string(" " + ActiveMessage().Subtitle() + " ");
+    const auto sTitle{ ra::StringPrintf(_T(" %s "), NativeStr(ActiveMessage().Title()).c_str()) };
 
-    SelectObject(hDC, hFontTitle);
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), sTitle.length());
-    SIZE szTitle = { 0, 0 };
-    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &szTitle);
+    SelectFont(hDC, hFontTitle);
+    TextOut(hDC, nTitleX, nTitleY, sTitle.c_str(), sTitle.length());
+    SIZE szTitle{};
+    GetTextExtentPoint32(hDC, sTitle.c_str(), sTitle.length(), &szTitle);
 
-    SIZE szAchievement = { 0, 0 };
-    if (ActiveMessage().Subtitle().length() > 0)
+    SIZE szAchievement{};
+    if (!ActiveMessage().Subtitle().empty())
     {
-        SelectObject(hDC, hFontDesc);
-        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), sSubTitle.length());
-        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), &szAchievement);
+        SelectFont(hDC, hFontDesc);
+        const auto sSubTitle{ ra::StringPrintf(_T(" %s "), NativeStr(ActiveMessage().Subtitle()).c_str()) };
+        TextOut(hDC, nDescX, nDescY, sSubTitle.c_str(), sSubTitle.length());
+        GetTextExtentPoint32(hDC, sSubTitle.c_str(), sSubTitle.length(), &szAchievement);
     }
 
-    HGDIOBJ hPen = CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);
-    SelectObject(hDC, hPen);
+    const auto hPen = ::CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);
+    SelectPen(hDC, hPen);
 
-    MoveToEx(hDC, nTitleX, nTitleY + szTitle.cy, nullptr);
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy);	//	right
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);			//	up
+    ::MoveToEx(hDC, nTitleX, nTitleY + szTitle.cy, nullptr);
+    ::LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy);	//	right
+    ::LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);			//	up
 
     if (ActiveMessage().Subtitle().length() > 0)
     {
-        MoveToEx(hDC, nDescX, nDescY + szAchievement.cy, nullptr);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + 1);
+        ::MoveToEx(hDC, nDescX, nDescY + szAchievement.cy, nullptr);
+        ::LineTo(hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy);
+        ::LineTo(hDC, nDescX + szAchievement.cx, nDescY + 1);
     }
 
-    DeleteObject(hPen);
-    DeleteObject(hFontTitle);
-    DeleteObject(hFontDesc);
+    DeletePen(hPen);
+    DeleteFont(hFontTitle);
+    DeleteFont(hFontDesc);
 }
 
 void AchievementPopup::Clear()

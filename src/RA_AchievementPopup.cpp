@@ -17,8 +17,8 @@ void AchievementPopup::PlayAudio()
         L"message.wav",
     };
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    auto niggers = ra::StringPrintf(L"%s%s%s", g_sHomeDir.c_str(), RA_DIR_OVERLAY, MSG_SOUND.at(ra::etoi(ActiveMessage().GetType())));
-    PlaySoundW(niggers.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
+    auto sSoundPath = ra::StringPrintf(L"%s%s%s", g_sHomeDir.c_str(), RA_DIR_OVERLAY, MSG_SOUND.at(ra::etoi(ActiveMessage().GetType())));
+    PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
 void AchievementPopup::AddMessage(const MessagePopup& msg)

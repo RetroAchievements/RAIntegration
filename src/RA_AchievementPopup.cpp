@@ -17,10 +17,8 @@ void AchievementPopup::PlayAudio()
         L"message.wav",
     };
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    std::wstring sSoundPath{ g_sHomeDir };
-    sSoundPath += RA_DIR_OVERLAY;
-    sSoundPath += MSG_SOUND.at(ra::etoi(ActiveMessage().GetType()));
-    PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
+    auto niggers = ra::StringPrintf(L"%s%s%s", g_sHomeDir.c_str(), RA_DIR_OVERLAY, MSG_SOUND.at(ra::etoi(ActiveMessage().GetType())));
+    PlaySoundW(niggers.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
 void AchievementPopup::AddMessage(const MessagePopup& msg)
@@ -29,7 +27,7 @@ void AchievementPopup::AddMessage(const MessagePopup& msg)
     PlayAudio();
 }
 
-void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
+void AchievementPopup::Update(_UNUSED ControllerInput& __restrict, float fDelta, _UNUSED bool, bool bPaused)
 {
     if (bPaused)
         fDelta = 0.0F;
@@ -45,7 +43,7 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
     }
 }
 
-float AchievementPopup::GetYOffsetPct() const
+float AchievementPopup::GetYOffsetPct() const noexcept
 {
     float fVal{};
     _CONSTANT_LOC START_AT   = 0.0F;
@@ -77,7 +75,7 @@ float AchievementPopup::GetYOffsetPct() const
     return fVal;
 }
 
-void AchievementPopup::Render(HDC hDC, RECT& rcDest)
+void AchievementPopup::Render(HDC__* __restrict hDC, RECT& __restrict rcDest)
 {
     if (!MessagesPresent())
         return;
@@ -88,7 +86,7 @@ void AchievementPopup::Render(HDC hDC, RECT& rcDest)
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
     SetTextColor(hDC, COL_POPUP);
 
-    _CONSTANT_LOC FONT_SIZE_TITLE    = 32;
+    _CONSTANT_LOC FONT_SIZE_TITLE = 32;
     _CONSTANT_LOC FONT_TO_USE = _T("Tahoma");
     const auto hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/

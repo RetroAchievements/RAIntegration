@@ -37,7 +37,7 @@ void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Challenge Available: " + lb.Title(),
             lb.Description(),
-            LeaderboardInfo));
+            MessagePopup::Type::LeaderboardInfo));
     }
 
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
@@ -52,7 +52,7 @@ void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard attempt cancelled!",
             lb.Title(),
-            LeaderboardCancel));
+            MessagePopup::Type::LeaderboardCancel));
     }
 }
 
@@ -64,15 +64,13 @@ void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsign
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Not posting to leaderboard: memory tamper detected!",
-            "Reset game to reenable posting.",
-            Info));
+            "Reset game to reenable posting."));
     }
     else if (!m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Leaderboard submission post cancelled.",
-            "Enable Hardcore Mode to enable posting.",
-            Info));
+            "Enable Hardcore Mode to enable posting."));
     }
     else
     {

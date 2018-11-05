@@ -22,7 +22,7 @@ public:
         Message,
     };
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, Type nMsgType, 
+    explicit MessagePopup(const std::string& sTitle, const std::string& sSubtitle, Type nMsgType,
         ra::services::ImageType nImageType, const std::string& sImageName ) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
@@ -31,11 +31,10 @@ public:
     {
     }
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, Type nMsgType = Type::Info) :
+    explicit MessagePopup(const std::string& sTitle, const std::string& sSubtitle = "", Type nMsgType = Type::Info) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
-        m_nMessageType(nMsgType),
-        m_hMessageImage(ra::services::ImageType::None, "")
+        m_nMessageType(nMsgType)
     {
     }
 
@@ -57,8 +56,8 @@ class AchievementPopup
     // Used by more than one function
     inline static constexpr auto FINISH_AT  = 5.0F;
 public:
-    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
-    void Render(HDC hDC, RECT& rcDest);
+    void Update(_UNUSED ControllerInput& __restrict, float fDelta, _UNUSED bool, bool bPaused);
+    void Render(_In_ HDC__* __restrict hDC, _In_ RECT& __restrict rcDest);
 
     void AddMessage(const MessagePopup& msg);
     _NODISCARD float GetYOffsetPct() const noexcept;

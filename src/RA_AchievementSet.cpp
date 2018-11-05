@@ -183,7 +183,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Test: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        AchievementUnlocked,
+                        MessagePopup::Type::AchievementUnlocked,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
@@ -191,7 +191,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("Modified: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        AchievementUnlocked,
+                        MessagePopup::Type::AchievementUnlocked,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
@@ -199,7 +199,7 @@ void AchievementSet::Test()
                     g_PopupWindows.AchievementPopups().AddMessage(
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        AchievementError,
+                        MessagePopup::Type::AchievementError,
                         ra::services::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else
@@ -439,7 +439,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
                 sSubTitle = oss.str();
             }
             
-            g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup{ sTitle, sSubTitle });
         }
 
         return true;

@@ -566,6 +566,9 @@
     <ClInclude Include="Exports.hh">
       <Filter>Interface</Filter>
     </ClInclude>
+    <ClInclude Include="ra_deleters.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

@@ -235,6 +235,32 @@ template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTAN
 operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept { return (a = a & b); }
 
 } // namespace bitwise_ops
+
+// So we don't have to #define _CRT_SECURE_NO_WARNINGS, C99/11 style (no-alias optimization)
+// To use instead of std::fopen for unique_ptr
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+_NODISCARD FILE* __cdecl fopen_s(_In_z_ const CharT* __restrict filename,
+                                 _In_z_ const CharT* __restrict mode,
+                                 _In_opt_     FILE*  __restrict streamptr = nullptr)
+{
+    assert(filename != nullptr);
+    assert(mode != nullptr);
+    if constexpr (std::is_same_v<CharT, char>)
+    {
+        const auto errnoVal = ::fopen_s(&streamptr, filename, mode);
+        assert(streamptr != nullptr); // we need it as a param so it doesn't alias
+        assert(errnoVal == 0);
+        return streamptr;
+    }
+    else if constexpr (std::is_same_v<CharT, wchar_t>)
+    {
+        const auto errnoVal = ::_wfopen_s(&streamptr, filename, mode);
+        assert(streamptr != nullptr);
+        assert(errnoVal == 0);
+        return streamptr;
+    }
+}
+
 } // namespace ra
 
 #endif // !RA_UTILITY_H

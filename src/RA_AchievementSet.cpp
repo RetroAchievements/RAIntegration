@@ -16,6 +16,7 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ra_deleters.h"
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -456,8 +457,7 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         return;
 
     std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sAchievementStateFile.c_str(), L"w");
+    ra::CFileH pf{ ra::fopen_s(sAchievementStateFile.c_str(), L"wb") };
     if (pf == nullptr)
     {
         ASSERT(!"Could not save progress!");
@@ -470,11 +470,9 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         if (pAch->Active())
         {
             std::string sProgress = pAch->CreateStateString(RAUsers::LocalUser().Username());
-            fwrite(sProgress.data(), sizeof(char), sProgress.length(), pf);
+            fwrite(sProgress.data(), sizeof(char), sProgress.length(), pf.get());
         }
     }
-
-    fclose(pf);
 }
 
 void AchievementSet::LoadProgress(const char* sLoadStateFilename)

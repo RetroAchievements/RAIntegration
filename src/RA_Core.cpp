@@ -37,6 +37,8 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "ra_deleters.h"
+
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 
@@ -734,13 +736,14 @@ API int CCONV _RA_HandleHTTPResults()
 //	Following this function, an app should call AppendMenu to associate this submenu.
 API HMENU CCONV _RA_CreatePopupMenu()
 {
-    HMENU hRA = CreatePopupMenu();
-    HMENU hRA_LB = CreatePopupMenu();
+    // Callers need to claim ownership of hRA, hRA_LB is automatically deleted
+    ra::MenuH hRA{ ::CreatePopupMenu() };
+    ra::MenuH hRA_LB{ ::CreatePopupMenu() };
     if (RAUsers::LocalUser().IsLoggedIn())
     {
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
-        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
+        AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
         UINT nGameFlags = MF_STRING;
         //if( g_pActiveAchievements->ra::GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
@@ -748,38 +751,37 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
-        AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
-        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
-        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA.get(), nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
+        AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA.get(), pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
 
-        AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
-        AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
+        AppendMenu(hRA.get(), MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB.get()), TEXT("Leaderboards"));
+        AppendMenu(hRA_LB.get(), pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA_LB.get(), MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA_LB.get(), pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
+        AppendMenu(hRA_LB.get(), pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
+        AppendMenu(hRA_LB.get(), pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
 
-        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
-        AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
-        AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
-        AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
-        AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
+        AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
+        AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
     }
     else
     {
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA"));
+        AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_LOGIN, TEXT("&Login to RA"));
     }
 
-    AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-    AppendMenu(hRA, MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update"));
+    AppendMenu(hRA.get(), MF_SEPARATOR, 0U, nullptr);
+    AppendMenu(hRA.get(), MF_STRING, IDM_RA_FILES_CHECKFORUPDATE, TEXT("&Check for Emulator Update"));
 
-    return hRA;
+    return hRA.release(); // must be released
 }
 
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
@@ -1349,30 +1351,27 @@ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
 _Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sFilename, L"r");
+    ra::CFileH pf{ ra::fopen_s(sFilename, L"rb") };
     if (pf == nullptr)
         return nullptr;
 
     // Calculate filesize
-    fseek(pf, 0L, SEEK_END);
-    nFileSizeOut = ftell(pf);
-    fseek(pf, 0L, SEEK_SET);
+    fseek(pf.get(), 0L, SEEK_END);
+    nFileSizeOut = ftell(pf.get());
+    fseek(pf.get(), 0L, SEEK_SET);
 
     if (nFileSizeOut <= 0)
     {
-        //	No good content in this file.
-        fclose(pf);
+        // No good content in this file.
         return nullptr;
     }
 
-    //	malloc() must be managed!
-    //	NB. By adding +1, we allow for a single \0 character :)
+    // malloc() must be managed!
+    // NB. By adding +1, we allow for a single \0 character :)
     char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
     ZeroMemory(pRawFileOut, nFileSizeOut + 1);
 
-    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
-    fclose(pf);
+    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf.get());
 
     return pRawFileOut;
 }
@@ -1386,17 +1385,11 @@ std::string _TimeStampToString(time_t nTime)
 
 BOOL _FileExists(const std::wstring& sFileName)
 {
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sFileName.c_str(), L"rb");
-    if (pf != nullptr)
-    {
-        fclose(pf);
+    
+    if (ra::CFileH pf{ ra::fopen_s(sFileName.c_str(), L"rb") }; pf != nullptr)
         return TRUE;
-    }
     else
-    {
         return FALSE;
-    }
 }
 
 namespace ra {

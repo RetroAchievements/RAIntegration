@@ -45,6 +45,9 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     }
     else if constexpr(std::is_same_v<CharT, wchar_t>)
     {
+        // needs to be more than default (7 bytes, "3.5" chars?) (4096 bytes, 2048 chars)
+        // must be a bug in MSVC
+        sFormatted.reserve(4096U);
         assert(std::wstring_view{ sFormat }.find(L"%n") == std::wstring_view::npos);
         assert(sFormatted.capacity() > 0U && (sFormatted.capacity() < RSIZE_MAX/sizeof(wchar_t)));
         nNeeded = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);

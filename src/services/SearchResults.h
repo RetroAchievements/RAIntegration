@@ -23,7 +23,7 @@ public:
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
     /// <param name="nCompareType">Type of comparison to apply.</param>
-    void Initialize(const SearchResults& srSource, ComparisonType nCompareType);
+    void Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType);
 
     /// <summary>
     /// Initializes a result set by comparing against a provided value.

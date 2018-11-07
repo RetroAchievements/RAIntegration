@@ -60,8 +60,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
 
                     if (response.Succeeded())
                     {
-                        bool bRememberLogin = (IsDlgButtonChecked(hDlg, IDC_RA_SAVEPASSWORD) != BST_UNCHECKED);
-
+                        const bool bRememberLogin = (IsDlgButtonChecked(hDlg, IDC_RA_SAVEPASSWORD) != BST_UNCHECKED);
                         RAUsers::LocalUser().ProcessSuccessfulLogin(response.Username, response.ApiToken, response.Score, response.NumUnreadMessages, bRememberLogin);
 
                         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(

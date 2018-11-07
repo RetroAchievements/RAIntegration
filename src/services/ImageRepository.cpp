@@ -435,7 +435,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
         return nullptr;
     }
 
-    size_t nSize = (nType == ImageType::Local) ? 0 : 64;
+    const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
     auto& item = (*mMap)[sName];
     item.m_hBitmap = hBitmap;

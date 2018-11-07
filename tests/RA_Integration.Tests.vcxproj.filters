@@ -279,6 +279,9 @@
     <ClCompile Include="..\src\services\Http.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Code\rcheevos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">
@@ -289,9 +292,6 @@
     </ClInclude>
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
-      <Filter>Code\rcheevos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

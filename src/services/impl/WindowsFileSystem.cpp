@@ -26,7 +26,7 @@ WindowsFileSystem::WindowsFileSystem() noexcept
 
 bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const
 {
-    DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
+    const DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
     return (nAttrib != INVALID_FILE_ATTRIBUTES) && (nAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
@@ -45,7 +45,7 @@ size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _I
     if (hFind.get() == INVALID_HANDLE_VALUE)
         return 0U;
 
-    size_t nInitialSize = vResults.size();
+    const size_t nInitialSize = vResults.size();
     do
     {
         if (!(ffdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -88,7 +88,7 @@ int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
         return -1;
     }
 
-    LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
+    const LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
     return nSize.QuadPart;
 }
 
@@ -104,8 +104,8 @@ std::chrono::system_clock::time_point WindowsFileSystem::GetLastModified(const s
     // FILETIME (ftLastWriteTime) is 100-nanosecond intervals since Jan 1 1601. time_t is 1-second intervals since
     // Jan 1 1970. Convert from 100-nanosecond intervals to 1-second intervals, then subtract the number of seconds
     // between the two dates. See https://www.gamedev.net/forums/topic/565693-converting-filetime-to-time_t-on-windows/
-    ULARGE_INTEGER nFileTime{ fadFile.ftLastWriteTime.dwLowDateTime, fadFile.ftLastWriteTime.dwHighDateTime };
-    time_t tFileTime = static_cast<time_t>((nFileTime.QuadPart / 10000000ULL) - 11644473600ULL);
+    const ULARGE_INTEGER nFileTime{ fadFile.ftLastWriteTime.dwLowDateTime, fadFile.ftLastWriteTime.dwHighDateTime };
+    const time_t tFileTime = static_cast<time_t>((nFileTime.QuadPart / 10000000ULL) - 11644473600ULL);
 
     return std::chrono::system_clock::from_time_t(tFileTime);
 }

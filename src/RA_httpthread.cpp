@@ -118,10 +118,12 @@ static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
     sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
                                        RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
                                        RA_INTEGRATION_VERSION_MODIFIED));
-
-    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-    sUserAgent.append(sAppend, posFound);
+    
+    if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
+    {
+        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+        sUserAgent.append(sAppend, pos);
+    }
 
 }
 
@@ -296,7 +298,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
         const char* mimeBoundary = "---------------------------41184676334";
         const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
-        int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        const int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
         if (nResult != 0)
         {
             // Add the photo to the stream
@@ -419,7 +421,7 @@ void RAWeb::SendKeepAlive()
         return;
 
     //  Post a pingback once every few minutes to keep the server aware of our presence
-    time_t tNow = time(nullptr);
+    const time_t tNow = time(nullptr);
     if (tNow < ms_tSendNextKeepAliveAt)
         return;
 

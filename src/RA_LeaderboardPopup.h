@@ -18,11 +18,11 @@ public:
     LeaderboardPopup();
 
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
-    void Render(HDC hDC, RECT& rcDest);
+    void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
     void Reset();
-    BOOL Activate(ra::LeaderboardID nLBID);
-    BOOL Deactivate(ra::LeaderboardID nLBID);
+    BOOL Activate(_In_ ra::LeaderboardID nLBID);
+    BOOL Deactivate(_In_ ra::LeaderboardID nLBID);
 
     void ShowScoreboard(ra::LeaderboardID nLBID);
 

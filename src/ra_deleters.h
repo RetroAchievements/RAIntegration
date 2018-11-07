@@ -97,6 +97,7 @@ enum class GdiType
     Brush,
     Font,
     Palette,
+    Pen,
     Rgn,
     Obj
 };
@@ -119,6 +120,9 @@ struct GdiDeleter
                 break;
             case GdiType::Palette:
                 DeletePalette(ho);
+                break;
+            case GdiType::Pen:
+                DeletePen(ho);
                 break;
             case GdiType::Rgn:
                 DeleteRgn(ho);
@@ -199,6 +203,7 @@ using BitmapH  = std::unique_ptr<HBITMAP__, detail::GdiDeleter<detail::GdiType::
 using BrushH   = std::unique_ptr<HBRUSH__, detail::GdiDeleter<detail::GdiType::Brush>>;
 using FontH    = std::unique_ptr<HFONT__, detail::GdiDeleter<detail::GdiType::Font>>;
 using PaletteH = std::unique_ptr<HPALETTE__, detail::GdiDeleter<detail::GdiType::Palette>>;
+using PenH     = std::unique_ptr<HPEN__, detail::GdiDeleter<detail::GdiType::Pen>>;
 using RgnH     = std::unique_ptr<HRGN__, detail::GdiDeleter<detail::GdiType::Rgn>>;
 using GdiObjH  = std::unique_ptr<void, detail::GdiDeleter<detail::GdiType::Obj>>;
 

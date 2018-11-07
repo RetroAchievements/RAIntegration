@@ -151,12 +151,12 @@ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
         GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), &szAchievement);
     }
 
-    HGDIOBJ hPen = CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);
-    SelectObject(hDC, hPen);
+    ra::PenH hPen{ ::CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW) };
+    SelectPen(hDC, hPen.get());
 
     MoveToEx(hDC, nTitleX, nTitleY + szTitle.cy, nullptr);
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy);	//	right
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);			//	up
+    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy); // right
+    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);   // up
 
     if (ActiveMessage().Subtitle().length() > 0)
     {
@@ -165,7 +165,6 @@ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
         LineTo(hDC, nDescX + szAchievement.cx, nDescY + 1);
     }
 
-    DeleteObject(hPen);
     DeleteObject(hFontTitle);
     DeleteObject(hFontDesc);
 }

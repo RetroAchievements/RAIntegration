@@ -799,8 +799,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
-            for (size_t i = 0; i < NumComparisonTypes; ++i)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), NativeStr(COMPARISONTYPE_STR[i]).c_str());
+            for (const auto& str : COMPARISONTYPE_STR)
+                ComboBox_AddString(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), str);
 
             ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 
@@ -1863,18 +1863,19 @@ bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal
 
     switch (m_SearchResults[m_nPage].m_nCompareType)
     {
-        case Equals:				bResult = (nCurVal == nVal);    break;
-        case LessThan:				bResult = (nCurVal < nVal);     break;
-        case LessThanOrEqual:		bResult = (nCurVal <= nVal);    break;
-        case GreaterThan:			bResult = (nCurVal > nVal);     break;
-        case GreaterThanOrEqual:	bResult = (nCurVal >= nVal);    break;
-        case NotEqualTo:			bResult = (nCurVal != nVal);    break;
+        case ComparisonType::Equals:             bResult = (nCurVal == nVal); break;
+        case ComparisonType::LessThan:           bResult = (nCurVal < nVal);  break;
+        case ComparisonType::LessThanOrEqual:    bResult = (nCurVal <= nVal); break;
+        case ComparisonType::GreaterThan:        bResult = (nCurVal > nVal);  break;
+        case ComparisonType::GreaterThanOrEqual: bResult = (nCurVal >= nVal); break;
+        case ComparisonType::NotEqualTo:         bResult = (nCurVal != nVal); break;
         default:
             bResult = false;
             break;
     }
     return bResult;
 }
+
 
 void Dlg_Memory::GenerateResizes(HWND hDlg)
 {

@@ -110,14 +110,16 @@ public:
     void Activate();
     void Deactivate();
 
-    void Render(HDC hDC, RECT* rcDest) const;
-    BOOL Update(ControllerInput* input, float fDelta, BOOL bFullScreen, BOOL bPaused);
+    void Render(_In_ HDC hDC, _In_ const RECT* rcDest) const;
+    _Success_(return)
+    _NODISCARD BOOL Update(_In_ const ControllerInput* input, _In_ float fDelta,
+                           _In_ BOOL bFullScreen, _In_ BOOL bPaused);
 
     _NODISCARD _CONSTANT_FN IsActive() const noexcept { return(m_nTransitionState != TransitionState::Off); }
     _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
 
-    const int* GetActiveScrollOffset() const;
-    const int* GetActiveSelectedItem() const;
+    int* GetActiveScrollOffset() const;
+    int* GetActiveSelectedItem() const;
 
     void OnLoad_NewRom();
 
@@ -130,7 +132,9 @@ public:
     void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
 
     void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const;
-    void DrawUserFrame(HDC hDC, RAUser* pUser, int nX, int nY, int nW, int nH) const;
+    void DrawUserFrame(_In_ HDC hDC, _In_ const RAUser* pUser,
+                       _In_ int nX,  _In_ int nY,
+                       _In_ int nW,  _In_ int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
     _NODISCARD _CONSTANT_FN CurrentPage() const noexcept { return m_Pages.at(m_nPageStackPointer); }
@@ -163,17 +167,17 @@ private:
     inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
     inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
 
-    int	m_nAchievementsScrollOffset{};
-    int	m_nFriendsScrollOffset{};
-    int	m_nMessagesScrollOffset{};
-    int	m_nNewsScrollOffset{};
-    int	m_nLeaderboardScrollOffset{};
+    mutable int	m_nAchievementsScrollOffset{};
+    mutable int	m_nFriendsScrollOffset{};
+    mutable int	m_nMessagesScrollOffset{};
+    mutable int	m_nNewsScrollOffset{};
+    mutable int	m_nLeaderboardScrollOffset{};
 
-    int	m_nAchievementsSelectedItem{};
-    int	m_nFriendsSelectedItem{};
-    int	m_nMessagesSelectedItem{};
-    int	m_nNewsSelectedItem{};
-    int	m_nLeaderboardSelectedItem{};
+    mutable int	m_nAchievementsSelectedItem{};
+    mutable int	m_nFriendsSelectedItem{};
+    mutable int	m_nMessagesSelectedItem{};
+    mutable int	m_nNewsSelectedItem{};
+    mutable int	m_nLeaderboardSelectedItem{};
 
     mutable int m_nNumAchievementsBeingRendered{};
     mutable int m_nNumFriendsBeingRendered{};
@@ -194,12 +198,14 @@ private:
 extern AchievementOverlay g_AchievementOverlay;
 
 //	Exposed to DLL
-extern "C"
-{
-    API extern int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused);
-    API extern void _RA_RenderOverlay(HDC hDC, RECT* rcSize);
-    API extern bool _RA_IsOverlayFullyVisible();
-}
+_EXTERN_C
+// Can't use restrict since the pointer is aliased
+[[gsl::suppress(con.3)]]
+API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen, _In_ bool Paused);
+[[gsl::suppress(con.3)]]
+API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+API bool _RA_IsOverlayFullyVisible();
+_END_EXTERN_C
 
 extern const COLORREF COL_TEXT;
 extern const COLORREF COL_TEXT_HIGHLIGHT;

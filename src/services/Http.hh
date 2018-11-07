@@ -44,7 +44,7 @@ public:
     public:
         explicit Request(const std::string& sUrl) noexcept
         {
-            auto nIndex = sUrl.find('?');
+            const auto nIndex = sUrl.find('?');
             if (nIndex == std::string::npos)
             {
                 m_sUrl = sUrl;

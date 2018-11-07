@@ -134,7 +134,8 @@ float ProgressPopup::GetYOffsetPct() const
     return fVal;
 }
 
-void ProgressPopup::Render(HDC hDC, RECT& rcDest)
+_Use_decl_annotations_
+void ProgressPopup::Render(HDC hDC, const RECT& rcDest)
 {
     if (!IsActive())
         return;
@@ -159,8 +160,8 @@ void ProgressPopup::Render(HDC hDC, RECT& rcDest)
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * (float)nHeight);
     fFadeInY += (POPUP_DIST_Y_TO_PCT * (float)nHeight);
 
-    int nTitleY = (int)fFadeInY;
-    int nDescY = nTitleY + 32;
+    const int nTitleY = (int)fFadeInY;
+    const int nDescY = nTitleY + 32;
 
     if (GetMessageType() == 1)
     {

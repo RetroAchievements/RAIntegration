@@ -39,8 +39,8 @@ public:
     TEST_METHOD(TestExpiration)
     {
         MockClock mockClock;
-        auto tNotExpire = mockClock.Now() - std::chrono::hours(24 * 30 - 1);
-        auto tExpire = mockClock.Now() - std::chrono::hours(24 * 30 + 1);
+        const auto tNotExpire = mockClock.Now() - std::chrono::hours(24 * 30 - 1);
+        const auto tExpire = mockClock.Now() - std::chrono::hours(24 * 30 + 1);
 
         MockFileSystem mockFileSystem;
         mockFileSystem.CreateDirectory(L".\\RACache\\Badge\\");

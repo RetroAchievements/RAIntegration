@@ -109,9 +109,9 @@ INT_PTR CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
 
 bool MemoryViewerControl::OnKeyDown(UINT nChar)
 {
-    unsigned int maxNibble = GetMaxNibble(m_nDataSize);
+    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
 
-    bool bShiftHeld = (GetKeyState(VK_SHIFT) & 0x80000000) == 0x80000000;
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) & 0x80000000) == 0x80000000;
 
     switch (nChar)
     {
@@ -163,7 +163,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
 
 void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 {
-    unsigned int maxNibble = GetMaxNibble(m_nDataSize);
+    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
 
     if (offset == 0)
     {
@@ -319,7 +319,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
         //value <<= 4*(maxNibble-m_nEditNibble);
         //unsigned int mask = ~(15 << 4*(maxNibble - m_nEditNibble));
 
-        bool bLowerNibble = (m_nEditNibble % 2 == 1);
+        const bool bLowerNibble = (m_nEditNibble % 2 == 1);
         unsigned int nByteAddress = m_nEditAddress;
 
         if (g_MemBookmarkDialog.GetHWND() != nullptr)
@@ -389,9 +389,9 @@ void MemoryViewerControl::SetCaretPos()
     setWatchedAddress(m_nEditAddress); // update local reference before notifying parent
     g_MemoryDialog.SetWatchingAddress(m_nEditAddress);
 
-    int subAddress = (m_nEditAddress - m_nAddressOffset);
+    const int subAddress = (m_nEditAddress - m_nAddressOffset);
 
-    int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
+    const int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
 
     if (linePosition < 0 || linePosition >(int)m_nDisplayedLines - 1)
 
@@ -446,8 +446,8 @@ void MemoryViewerControl::OnClick(POINT point)
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
 
     int x = point.x;
-    int y = point.y - m_szFontSize.cy;	//	Adjust for header
-    int line = ((y - 3) / m_szFontSize.cy);
+    const int y = point.y - m_szFontSize.cy;	//	Adjust for header
+    const int line = ((y - 3) / m_szFontSize.cy);
 
     if (line == -1 || line >= (int)m_nDisplayedLines)
         return;	//	clicked on header
@@ -475,9 +475,9 @@ void MemoryViewerControl::OnClick(POINT point)
             break;
     }
 
-    int nTopLeft = m_nAddressOffset - 0x40;
+    const int nTopLeft = m_nAddressOffset - 0x40;
 
-    int nAddressRowClicked = (nTopLeft + (line << 4));
+    const int nAddressRowClicked = (nTopLeft + (line << 4));
 
     //	Clamp:
     if (nAddressRowClicked < 0 || nAddressRowClicked >(int)g_MemManager.TotalBankSize())
@@ -510,7 +510,7 @@ void MemoryViewerControl::OnClick(POINT point)
         return;
     }
 
-    unsigned int maxNibble = GetMaxNibble(m_nDataSize);
+    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
     if (m_nEditNibble > maxNibble)
         m_nEditNibble = maxNibble;
 
@@ -527,8 +527,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     RECT rect;
     GetClientRect(hTarget, &rect);
-    int w = rect.right - rect.left;
-    int h = rect.bottom - rect.top - 6;
+    const int w = rect.right - rect.left;
+    const int h = rect.bottom - rect.top - 6;
 
     //	Pick font
     if (m_hViewerFont == nullptr)
@@ -887,7 +887,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         else
                         {
                             SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            unsigned int nMatches = m_SearchResults[m_nPage].m_results.MatchingAddressCount();
+                            const unsigned int nMatches = m_SearchResults[m_nPage].m_results.MatchingAddressCount();
                             if (nMatches > MIN_RESULTS_TO_DUMP)
                                 _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches! (Displaying first %u results)"), nMatches, MIN_RESULTS_TO_DUMP);
                             else if (nMatches == 0)
@@ -964,7 +964,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (((LPNMHDR)lParam)->code == LVN_ITEMCHANGED || ((LPNMHDR)lParam)->code == NM_CLICK)
                     {
-                        int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
+                        const int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 
                         if (nSelect == -1)
                             break;
@@ -1030,7 +1030,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (g_MemManager.TotalBankSize() == 0)
                         return TRUE;	//	Handled
 
-                    ComparisonType nCmpType = static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
+                    const ComparisonType nCmpType = static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
 
                     while (m_SearchResults.size() > m_nPage + 1)
                         m_SearchResults.pop_back();
@@ -1078,7 +1078,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         sr.m_bUseLastValue = false;
                     }
 
-                    unsigned int nMatches = sr.m_results.MatchingAddressCount();
+                    const unsigned int nMatches = sr.m_results.MatchingAddressCount();
                     if (nMatches == srPrevious.m_results.MatchingAddressCount())
                     {
                         // same number of matches, if the same query was used, don't double up on the search results
@@ -1232,7 +1232,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     ComboBox_GetText(hMemWatch, sAddressWide, 16);
                     const std::string sAddress = ra::Narrow(sAddressWide);
 
-                    ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
+                    const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     m_CodeNotes.Remove(nAddr);
 
                     SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
@@ -1343,7 +1343,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         case CBN_SELCHANGE:
                         {
                             HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                            int nSel = ComboBox_GetCurSel(hMemWatch);
+                            const int nSel = ComboBox_GetCurSel(hMemWatch);
                             if (nSel != CB_ERR)
                             {
                                 TCHAR sAddr[64];
@@ -1388,9 +1388,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             RA_LOG("Sel detected!");
                             HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-                            int nSelectedIdx = ComboBox_GetCurSel(hMemBanks);
+                            const int nSelectedIdx = ComboBox_GetCurSel(hMemBanks);
 
-                            unsigned short nBankID = static_cast<unsigned short>(ComboBox_GetItemData(hMemBanks, nSelectedIdx));
+                            const unsigned short nBankID = static_cast<unsigned short>(ComboBox_GetItemData(hMemBanks, nSelectedIdx));
 
                             MemoryViewerControl::m_nActiveMemBank = nBankID;
                             g_MemManager.ChangeActiveMemBank(nBankID);
@@ -1423,7 +1423,7 @@ void Dlg_Memory::OnWatchingMemChange()
     TCHAR sAddrNative[1024];
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
-    ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
+    const ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
     SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
@@ -1438,7 +1438,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     size_t nSize = 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    auto nGameID = pGameContext.GameId();
+    const auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
         nSize = m_CodeNotes.Load(nGameID);
 
@@ -1465,11 +1465,11 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             ComboBox_SetCurSel(hMemWatch, 0);
 
             //	Note: as this is sorted, we should grab the desc again
-            TCHAR sAddrBuffer[64]{};
+            const TCHAR sAddrBuffer[64]{}; // param below expects LPCTSTR
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
 
-            ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
+            const ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {
@@ -1566,8 +1566,8 @@ void Dlg_Memory::UpdateBits() const
 
     if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
     {
-        ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
-        unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
+        const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
+        const unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
 
         _stprintf_s(sNewValue, 64, _T("      %d %d %d %d %d %d %d %d"),
             static_cast<int>((nVal & (1 << 7)) != 0),
@@ -1857,7 +1857,7 @@ void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& r
 
 bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal)
 {
-    unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ?
+    const unsigned int nVal = (m_SearchResults[m_nPage].m_bUseLastValue) ?
         nPrevVal : m_SearchResults[m_nPage].m_nLastQueryVal;
     bool bResult = false;
 

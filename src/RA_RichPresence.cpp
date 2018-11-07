@@ -35,7 +35,7 @@ RA_RichPresenceInterpreter::DisplayString::DisplayString()
 
 RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
 {
-    int nSize = rc_trigger_size(sCondition.c_str());
+    const int nSize = rc_trigger_size(sCondition.c_str());
     if (nSize < 0)
     {
         // parse error occurred
@@ -139,7 +139,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
 
 void RA_RichPresenceInterpreter::DisplayString::InitializeValue(RA_RichPresenceInterpreter::DisplayString::Part& part, const char* sValue)
 {
-    int nSize = rc_value_size(sValue);
+    const int nSize = rc_value_size(sValue);
     if (nSize < 0)
     {
         // parse error occurred
@@ -172,7 +172,7 @@ std::string RA_RichPresenceInterpreter::DisplayString::GetDisplayString() const
         if (part.m_pValue)
         {
             auto* pValue = static_cast<rc_value_t*>(part.m_pValue);
-            unsigned int nValue = rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr);
+            const unsigned int nValue = rc_evaluate_value(pValue, rc_peek_callback, nullptr, nullptr);
 
             if (part.m_pLookup != nullptr)
             {
@@ -259,7 +259,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
-                size_t nIndex = sLine.find('=');
+                const size_t nIndex = sLine.find('=');
                 if (nIndex == std::string::npos)
                     continue;
 
@@ -303,7 +303,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 
                 if (sLine[0] == '?')
                 {
-                    size_t nIndex = sLine.find('?', 1);
+                    const size_t nIndex = sLine.find('?', 1);
                     if (nIndex != std::string::npos)
                     {
                         std::string sCondition(sLine, 1, nIndex - 1);

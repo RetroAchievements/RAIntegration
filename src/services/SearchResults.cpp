@@ -36,7 +36,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     if (nBytes + nAddress > g_MemManager.TotalBankSize())
         nBytes = g_MemManager.TotalBankSize() - nAddress;
 
-    unsigned int nPadding = Padding(nSize);
+    const unsigned int nPadding = Padding(nSize);
     nBytes -= nPadding;
 
     m_sSummary.reserve(64);
@@ -51,7 +51,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
 
     while (nBytes > 0)
     {
-        auto nBlockSize = (nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes;
+        const auto nBlockSize = (nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes;
         auto& block = AddBlock(nAddress, nBlockSize + nPadding);
         g_MemManager.ActiveBankRAMRead(block.GetBytes(), block.GetAddress(), nBlockSize + nPadding);
 
@@ -148,7 +148,7 @@ bool SearchResults::ContainsAddress(unsigned int nAddress) const
         return (iter != m_vMatchingAddresses.end() && (*iter == nAddress || *iter == (nAddress | 1)));
     }
 
-    unsigned int nPadding = Padding(m_nSize);
+    const unsigned int nPadding = Padding(m_nSize);
     for (const auto& block : m_vBlocks)
     {
         if (block.GetAddress() > nAddress)
@@ -162,7 +162,7 @@ bool SearchResults::ContainsAddress(unsigned int nAddress) const
 
 void SearchResults::AddMatches(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches)
 {
-    unsigned int nBlockSize = vMatches.back() - vMatches.front() + Padding(m_nSize) + 1;
+    const unsigned int nBlockSize = vMatches.back() - vMatches.front() + Padding(m_nSize) + 1;
     MemBlock& block = AddBlock(nAddressBase + vMatches.front(), nBlockSize);
     memcpy(block.GetBytes(), pMemory + vMatches.front(), nBlockSize);
 
@@ -174,7 +174,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
 {
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
-    unsigned int nPadding = Padding(m_nSize);
+    const unsigned int nPadding = Padding(m_nSize);
 
     for (auto& block : srSource.m_vBlocks)
     {
@@ -191,7 +191,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
             if (!testIndexFunction(i, pMemory, pPrev))
                 continue;
 
-            unsigned int nAddress = block.GetAddress() + i;
+            const unsigned int nAddress = block.GetAddress() + i;
             if (!srSource.ContainsAddress(nAddress))
                 continue;
 
@@ -214,7 +214,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
 
 void SearchResults::AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches)
 {
-    unsigned int nBlockSize = (vMatches.back() >> 1) - (vMatches.front() >> 1) + Padding(m_nSize) + 1;
+    const unsigned int nBlockSize = (vMatches.back() >> 1) - (vMatches.front() >> 1) + Padding(m_nSize) + 1;
     auto& block = AddBlock((nAddressBase + vMatches.front()) >> 1, nBlockSize);
     memcpy(block.GetBytes(), pMemory + (vMatches.front() >> 1), nBlockSize);
 
@@ -226,7 +226,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 {
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
-    unsigned int nPadding = Padding(m_nSize);
+    const unsigned int nPadding = Padding(m_nSize);
 
     for (auto& block : srSource.m_vBlocks)
     {
@@ -240,12 +240,12 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
-            unsigned int nValue1 = pMemory[i];
+            const unsigned int nValue1 = pMemory[i];
             unsigned int nValue2 = (nTestValue > 15) ? (pPrev[i] & 0x0F) : nTestValue;
 
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
-                unsigned int nAddress = (block.GetAddress() + i) << 1;
+                const unsigned int nAddress = (block.GetAddress() + i) << 1;
                 if (srSource.ContainsAddress(nAddress >> 1))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
@@ -263,7 +263,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {
-                unsigned int nAddress = ((block.GetAddress() + i) << 1) | 1;
+                const unsigned int nAddress = ((block.GetAddress() + i) << 1) | 1;
                 if (srSource.ContainsAddress(nAddress >> 1))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
@@ -306,7 +306,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         case MemSize::SixteenBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
-                unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
+                const unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8);
                 return Compare(nValue, nTestValue, nCompareType);
             });
             break;
@@ -314,7 +314,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         case MemSize::ThirtyTwoBit:
             ProcessBlocks(srSource, [nTestValue, nCompareType](unsigned int nIndex, const unsigned char pMemory[], [[maybe_unused]] const unsigned char[])
             {
-                unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
+                const unsigned int nValue = pMemory[nIndex] | (pMemory[nIndex + 1] << 8) |
                     (pMemory[nIndex + 2] << 16) | (pMemory[nIndex + 3] << 24);
                 return Compare(nValue, nTestValue, nCompareType);
             });
@@ -370,8 +370,8 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
         // generic handling for 16-bit and 32-bit
         ProcessBlocks(srSource, [nCompareType, nSize = m_nSize](unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])
         {
-            auto nValue = GetValue(pMemory, nIndex, nSize);
-            auto nPrevValue = GetValue(pPrev, nIndex, nSize);
+            const auto nValue = GetValue(pMemory, nIndex, nSize);
+            const auto nPrevValue = GetValue(pPrev, nIndex, nSize);
             return Compare(nValue, nPrevValue, nCompareType);
         });
     }
@@ -387,7 +387,7 @@ unsigned int SearchResults::MatchingAddressCount()
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();
 
-    unsigned int nPadding = Padding(m_nSize);
+    const unsigned int nPadding = Padding(m_nSize);
     unsigned int nCount = 0;
     for (auto& block : m_vBlocks)
         nCount += block.GetSize() - nPadding;

@@ -92,7 +92,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
         }
 
-        HRESULT result = pTaskDialog(GetActiveWindow(), nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
+        const HRESULT result = pTaskDialog(GetActiveWindow(), nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
             oMessageBoxViewModel.GetHeader().c_str(), oMessageBoxViewModel.GetMessage().c_str(), dwCommonButtons, pszIcon, &nButton);
 
         if (!SUCCEEDED(result))

@@ -697,7 +697,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 TEXT("ComboBox"),
                 TEXT(""),
                 WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, ra::ftoi(1.6F * nHeight * COMPARISONTYPE_STR.size()),
+                rcSubItem.left, rcSubItem.top, nWidth, static_cast<int>(1.6F * nHeight * COMPARISONTYPE_STR.size()),
                 g_AchievementEditorDialog.GetHWND(),
                 0,
                 GetModuleHandle(nullptr),

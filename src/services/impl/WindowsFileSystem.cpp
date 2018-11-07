@@ -2,6 +2,7 @@
 
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
+#include "ra_deleters.h"
 
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
@@ -39,9 +40,9 @@ size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _I
     std::wstring sSearchString = sDirectory;
     sSearchString += L"\\*";
 
-    WIN32_FIND_DATAW ffdFile;
-    HANDLE hFind = FindFirstFileW(sSearchString.c_str(), &ffdFile);
-    if (hFind == INVALID_HANDLE_VALUE)
+    WIN32_FIND_DATAW ffdFile{};
+    ra::FindFileH hFind{ FindFirstFileW(sSearchString.c_str(), &ffdFile) };
+    if (hFind.get() == INVALID_HANDLE_VALUE)
         return 0U;
 
     size_t nInitialSize = vResults.size();
@@ -49,9 +50,8 @@ size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _I
     {
         if (!(ffdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
             vResults.emplace_back(ffdFile.cFileName);
-    } while (FindNextFileW(hFind, &ffdFile) != 0);
+    } while (FindNextFileW(hFind.get(), &ffdFile) != 0);
 
-    FindClose(hFind);
     return vResults.size() - nInitialSize;
 }
 

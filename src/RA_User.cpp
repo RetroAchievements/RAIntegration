@@ -83,7 +83,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     else
     {
         //	Push dialog to get them to login!
-        DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
+        DialogBox(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd.get(), RA_Dlg_Login::RA_Dlg_LoginProc);
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
     }
 

@@ -888,7 +888,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 case NM_DBLCLK:
                     if (reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem != -1)
                     {
-                        SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
+                        SendMessage(g_RAMainWnd.get(), WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
                         g_AchievementEditorDialog.LoadAchievement(&g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem), FALSE);
                     }
                     return FALSE;	//? TBD ##SD

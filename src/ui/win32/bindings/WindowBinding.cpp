@@ -74,7 +74,7 @@ void WindowBinding::RestoreSizeAndPosition()
     }
 
     RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
+    GetWindowRect(g_RAMainWnd.get(), &rcMainWindow);
 
     if (oPosition.X != INT32_MIN)
     {
@@ -197,7 +197,7 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
 
         // capture position relative to main window
         RECT rcMainWindow;
-        GetWindowRect(g_RAMainWnd, &rcMainWindow);
+        GetWindowRect(g_RAMainWnd.get(), &rcMainWindow);
         ra::ui::Position oRelativePosition{ rcDialog.left - rcMainWindow.left, rcDialog.top - rcMainWindow.top };
 
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(m_sSizeAndPositionKey, oRelativePosition);

@@ -538,11 +538,11 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                 }
 
                 DrawAchievement(hDC,
-                    &g_pActiveAchievements->GetAchievement(nAchIdx),	//	pAch
-                    nDX,												//	X
-                    (nAchTopEdge + (i*nAchSpacing)),				//	Y
-                    bSelected,											//	Selected
-                    TRUE);
+                                &g_pActiveAchievements->GetAchievement(nAchIdx), // pAch
+                                nDX,                                             // X
+                                (nAchTopEdge + (i*nAchSpacing)),                 // Y
+                                bSelected,                                       // Selected
+                                TRUE);
             }
         }
 
@@ -578,18 +578,18 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
 {
 
-    // 		for( size_t i = 0; i < 256; ++i )
-    // 			buffer[i] = (char)(i);
+    // for( size_t i = 0; i < 256; ++i )
+    //      buffer[i] = (char)(i);
     // 
-    // 		SelectObject( hDC, hFontDesc );
-    // 		TextOut( hDC, nDX+8, 40, buffer, 32 );
-    // 		TextOut( hDC, nDX+8, 60, buffer+32, 32 );
-    // 		TextOut( hDC, nDX+8, 80, buffer+64, 32 );
-    // 		TextOut( hDC, nDX+8, 100, buffer+96, 32 );
-    // 		TextOut( hDC, nDX+8, 120, buffer+128, 32 );
-    // 		TextOut( hDC, nDX+8, 140, buffer+160, 32 );
-    // 		TextOut( hDC, nDX+8, 160, buffer+192, 32 );
-    // 		TextOut( hDC, nDX+8, 180, buffer+224, 32 );
+    //  SelectObject( hDC, hFontDesc );
+    //  TextOut( hDC, nDX+8, 40, buffer, 32 );
+    //  TextOut( hDC, nDX+8, 60, buffer+32, 32 );
+    //  TextOut( hDC, nDX+8, 80, buffer+64, 32 );
+    //  TextOut( hDC, nDX+8, 100, buffer+96, 32 );
+    //  TextOut( hDC, nDX+8, 120, buffer+128, 32 );
+    //  TextOut( hDC, nDX+8, 140, buffer+160, 32 );
+    //  TextOut( hDC, nDX+8, 160, buffer+192, 32 );
+    //  TextOut( hDC, nDX+8, 180, buffer+224, 32 );
 
 }
 

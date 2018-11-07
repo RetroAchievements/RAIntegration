@@ -757,7 +757,7 @@ void Dlg_Memory::Init()
     ZeroMemory(&wc, sizeof(wc));
     wc.style = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
     wc.lpfnWndProc = (WNDPROC)MemoryViewerControl::s_MemoryDrawProc;
-    wc.hInstance = g_hThisDLLInst;
+    wc.hInstance = g_hThisDLLInst.get();
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = nullptr;
@@ -1271,7 +1271,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_OPENBOOKMARKS:
                 {
                     if (g_MemBookmarkDialog.GetHWND() == nullptr)
-                        g_MemBookmarkDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMBOOKMARK), hDlg, g_MemBookmarkDialog.s_MemBookmarkDialogProc));
+                        g_MemBookmarkDialog.InstallHWND(CreateDialog(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_MEMBOOKMARK), hDlg, g_MemBookmarkDialog.s_MemBookmarkDialogProc));
                     if (g_MemBookmarkDialog.GetHWND() != nullptr)
                         ShowWindow(g_MemBookmarkDialog.GetHWND(), SW_SHOW);
 

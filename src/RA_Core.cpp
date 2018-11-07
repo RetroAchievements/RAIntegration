@@ -37,14 +37,12 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#include "ra_deleters.h"
-
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 
-HMODULE g_hThisDLLInst = nullptr;
-HINSTANCE g_hRAKeysDLL = nullptr;
-HWND g_RAMainWnd = nullptr;
+ra::InstanceH g_hRAKeysDLL;
+ra::InstanceH g_hThisDLLInst;
+ra::AppWndH g_RAMainWnd;
 EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
 ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 const char* g_sClientVersion = nullptr;
@@ -58,10 +56,23 @@ inline static unsigned int g_nProcessTimer{ 0U };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
-    if (dwReason == DLL_PROCESS_ATTACH)
-        g_hThisDLLInst = hModule;
+    // exceptions can happen here, they must not be allowed to leave
+    try
+    {
+        if (dwReason == DLL_PROCESS_ATTACH)
+        {
+            // resetting it more than once will cause a deadlock or access violation
+            // Library will be freed when the app ends
+            if (!g_hThisDLLInst)
+                g_hThisDLLInst.reset(hModule);
+        }
 
-    ra::services::Initialization::RegisterCoreServices();
+        ra::services::Initialization::RegisterCoreServices();
+    }
+    catch (const std::exception& e)
+    {
+        RA_LOG_ERR("Exception: %s", e.what());
+    }
 
     return TRUE;
 }
@@ -70,7 +81,8 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 {
     // initialize global state
     g_EmulatorID = static_cast<EmulatorID>(nEmulatorID);
-    g_RAMainWnd = hMainHWND;
+    if (!g_RAMainWnd)
+        g_RAMainWnd.reset(hMainHWND);
 
     switch (g_EmulatorID)
     {
@@ -269,7 +281,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd.get(), NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pUnofficialAchievements->HasUnsavedChanges())
     {
@@ -279,7 +291,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd.get(), NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
     if (g_pLocalAchievements->HasUnsavedChanges())
     {
@@ -289,7 +301,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
             "If you %s you will lose these changes.\n"
             "%s", sCurrentAction, sNextAction);
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
+        nResult = MessageBox(g_RAMainWnd.get(), NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
     }
 
     return(nResult == IDYES);
@@ -381,7 +393,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
                 ZeroMemory(buffer, 64);
                 RA_GetEstimatedGameTitle(buffer);
                 std::string sEstimatedGameTitle(buffer);
-                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameID);
+                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst.get(), g_RAMainWnd.get(), sCurrentROMMD5, sEstimatedGameTitle, nGameID);
             }
             else
             {
@@ -810,7 +822,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     if (strcmp(_RA_HostName(), "retroachievements.org") != 0)
         sstr << " [" << _RA_HostName() << "]";
 
-    SetWindowText(g_RAMainWnd, NativeStr(sstr.str()).c_str());
+    SetWindowText(g_RAMainWnd.get(), NativeStr(sstr.str()).c_str());
 }
 
 //	##BLOCKING##
@@ -844,7 +856,7 @@ static void RA_CheckForUpdate()
             //	Error in download
             std::ostringstream oss;
             oss << "Unexpected response from " << _RA_HostName() << ".";
-            MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
+            MessageBox(g_RAMainWnd.get(), NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
         }
     }
     else
@@ -853,7 +865,7 @@ static void RA_CheckForUpdate()
         std::ostringstream oss;
         oss << "Could not connect to " << _RA_HostName() << ".\n" <<
             "Please check your connection settings or RA forums!";
-        MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
+        MessageBox(g_RAMainWnd.get(), NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
     }
 }
 
@@ -907,7 +919,7 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
         oSize.Height = INT32_MIN;
 
     RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
+    GetWindowRect(g_RAMainWnd.get(), &rcMainWindow);
 
     // determine where the window should be placed
     rc.left = (oPosition.X != INT32_MIN) ? (rcMainWindow.left + oPosition.X) : bToRight ? rcMainWindow.right : rcMainWindow.left;
@@ -952,7 +964,7 @@ void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool b
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
 {
     RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
+    GetWindowRect(g_RAMainWnd.get(), &rcMainWindow);
 
     RECT rc;
     GetWindowRect(hDlg, &rc);
@@ -982,21 +994,21 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     {
         case IDM_RA_FILES_ACHIEVEMENTS:
             if (g_AchievementsDialog.GetHWND() == nullptr)
-                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
+                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd.get(), g_AchievementsDialog.s_AchievementsProc));
             if (g_AchievementsDialog.GetHWND() != nullptr)
                 ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
             if (g_AchievementEditorDialog.GetHWND() == nullptr)
-                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
+                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd.get(), g_AchievementEditorDialog.s_AchievementEditorProc));
             if (g_AchievementEditorDialog.GetHWND() != nullptr)
                 ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
             break;
 
         case IDM_RA_FILES_MEMORYFINDER:
             if (g_MemoryDialog.GetHWND() == nullptr)
-                g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
+                g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd.get(), g_MemoryDialog.s_MemoryProc));
             if (g_MemoryDialog.GetHWND() != nullptr)
                 ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
             break;
@@ -1059,7 +1071,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         break;
 
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
-            Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
+            Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst.get(), g_RAMainWnd.get());
             break;
 
         case IDM_RA_GETROMCHECKSUM:
@@ -1119,7 +1131,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     _FetchGameTitlesFromWeb();			//	##BLOCKING##
                     _FetchMyProgressFromWeb();			//	##BLOCKING##
 
-                    g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
+                    g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst.get(), MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd.get(), &Dlg_GameLibrary::s_GameLibraryProc));
                 }
 
                 if (g_GameLibrary.GetHWND() != nullptr)
@@ -1396,7 +1408,7 @@ namespace ra {
 
 _Success_(return == 0)
 _NODISCARD static auto CALLBACK
-BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM, _In_ LPARAM lpData)
 {
     ASSERT(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)
@@ -1404,6 +1416,7 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
         const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
         ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
     }
+
     return 0;
 }
 

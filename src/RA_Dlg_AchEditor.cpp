@@ -894,7 +894,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             // set up the list view tooltip
             m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
-                hDlg, nullptr, GetInstanceModule(g_hThisDLLInst), nullptr);
+                hDlg, nullptr, GetInstanceModule(g_hThisDLLInst.get()), nullptr);
             if (m_hTooltip)
             {
                 TOOLINFO toolInfo;
@@ -1611,7 +1611,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (rCond.CompSource().GetType() != CompVariable::Type::ValueComparison)
                             {
                                 //	Wake up the mem dlg via the main app
-                                SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
+                                SendMessage(g_RAMainWnd.get(), WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 //	Update the text to match
                                 char buffer[16];
@@ -1627,7 +1627,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (rCond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
                             {
                                 //	Wake up the mem dlg via the main app
-                                SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
+                                SendMessage(g_RAMainWnd.get(), WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 //	Update the text to match
                                 char buffer[16];

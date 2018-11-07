@@ -1,6 +1,6 @@
 #include "DialogBase.hh"
 
-#include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
+#include "RA_Core.h" // g_RAMainWnd.get(), g_hThisDLLInst
 
 namespace ra {
 namespace ui {
@@ -41,7 +41,7 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
 _Use_decl_annotations_
 HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
 {
-    m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
+    m_hWnd = ::CreateDialog(g_hThisDLLInst.get(), sResourceId, g_RAMainWnd.get(), StaticDialogProc);
     if (m_hWnd)
     {
         ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
@@ -83,7 +83,7 @@ void DialogBase::CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialog
     m_bModal = true;
 
     s_pModalDialog = this;
-    DialogBox(g_hThisDLLInst, sResourceId, g_RAMainWnd, &StaticModalDialogProc);
+    DialogBox(g_hThisDLLInst.get(), sResourceId, g_RAMainWnd.get(), &StaticModalDialogProc);
 }
 
 _Use_decl_annotations_

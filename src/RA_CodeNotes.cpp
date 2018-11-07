@@ -99,7 +99,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         }
         else
         {
-            MessageBox(g_RAMainWnd, _T("Could not save note! Please check you are online and retry."), _T("Error!"), MB_OK | MB_ICONWARNING);
+            MessageBox(g_RAMainWnd.get(), _T("Could not save note! Please check you are online and retry."), _T("Error!"), MB_OK | MB_ICONWARNING);
         }
     }
 }

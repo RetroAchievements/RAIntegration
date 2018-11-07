@@ -6,13 +6,14 @@
 #include "RA_Interface.h"
 
 #include "Exports.hh"
+#include "ra_deleters.h"
 
 //	Non-exposed:
 extern std::wstring g_sHomeDir;
 
-extern HINSTANCE g_hRAKeysDLL;
-extern HMODULE g_hThisDLLInst;
-extern HWND g_RAMainWnd;
+extern ra::InstanceH g_hRAKeysDLL;
+extern ra::InstanceH g_hThisDLLInst; // Application instance gets destroyed when the application ends
+extern ra::AppWndH g_RAMainWnd; // Application window gets destroyed when the application ends
 extern EmulatorID g_EmulatorID;
 extern ConsoleID g_ConsoleID;
 extern const char* g_sClientVersion;

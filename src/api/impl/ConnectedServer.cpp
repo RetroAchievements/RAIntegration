@@ -30,12 +30,16 @@ _NODISCARD static bool GetJson(_In_ const char* sApiName, _In_ const ra::service
 {
     if (HandleHttpError(httpResponse, pResponse))
     {
+        pDocument.Clear();
+
         RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 
     if (httpResponse.Content().empty())
     {
+        pDocument.Clear();
+
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
         pResponse.Result = ApiResult::Failed;
         pResponse.ErrorMessage = "Empty JSON response";
@@ -76,6 +80,8 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
 {
     if (!pDocument.HasMember(sField))
     {
+        sValue.clear();
+
         response.Result = ApiResult::Error;
         if (response.ErrorMessage.empty())
             response.ErrorMessage = std::string(sField) + " not found in response";
@@ -86,12 +92,12 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetOptionalJsonField(_Out_ unsigned int& value, _In_ const rapidjson::Document& pDocument, _In_ const char* sField, _In_ unsigned int nDefaultValue = 0) noexcept
+static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument, _In_ const char* sField, _In_ unsigned int nDefaultValue = 0) noexcept
 {
     if (pDocument.HasMember(sField))
-        value = pDocument[sField].GetUint();
+        nValue = pDocument[sField].GetUint();
     else
-        value = nDefaultValue;
+        nValue = nDefaultValue;
 }
 
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue) noexcept

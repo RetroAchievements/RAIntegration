@@ -21,14 +21,6 @@ enum class ApiResult
 
 struct ApiRequestBase
 {
-protected:
-    ApiRequestBase() noexcept = default;
-    ~ApiRequestBase() noexcept = default;
-    ApiRequestBase(const ApiRequestBase&) = default;
-    ApiRequestBase& operator=(const ApiRequestBase&) = default;
-    ApiRequestBase(ApiRequestBase&&) noexcept = default;
-    ApiRequestBase& operator=(ApiRequestBase&&) noexcept = default;
-
     template<class TRequest, class TCallback>
     static void CallAsync(const TRequest& request, TCallback&& callback)
     {
@@ -41,19 +33,10 @@ protected:
 
 struct ApiResponseBase
 {
-protected:
-    ApiResponseBase() noexcept = default;
-    ~ApiResponseBase() noexcept = default;
-    ApiResponseBase(const ApiResponseBase&) = default;
-    ApiResponseBase& operator=(const ApiResponseBase&) = default;
-    ApiResponseBase(ApiResponseBase&&) noexcept = default;
-    ApiResponseBase& operator=(ApiResponseBase&&) noexcept = default;
-
-public:
     /// <summary>
     /// The overall result of the API call.
     /// </summary>
-    ApiResult Result;
+    ApiResult Result{ ApiResult::None };
 
     /// <summary>
     /// An error message associated with a failed call.
@@ -95,31 +78,16 @@ namespace api {
 class XXXX
 {
 public:
-    static const char* const Name() { return "XXXX"; }
+    static constexpr const char* const Name() noexcept { return "XXXX"; }
 
     struct Response : ApiResponseBase
     {
         // [RESPONSE PARAMETERS]
-
-        Response() noexcept = default;
-        ~Response() noexcept = default;
-        Response(const Response&) = default;
-        Response& operator=(const Response&) = default;
-        Response(Response&&) noexcept = default;
-        Response& operator=(Response&&) noexcept = default;
     };
 
     struct Request : ApiRequestBase
     {
         // [INPUT PARAMETERS]
-
-        Request() noexcept = default;
-        ~Request() noexcept = default;
-        Request(const Request&) = default;
-        Request& operator=(const Request&) = default;
-        Request(Request&&) noexcept = default;
-        Request& operator=(Request&&) noexcept = default;
-        using Callback = std::function<void(const Response& response)>;
 
         Response Call() const noexcept;
 

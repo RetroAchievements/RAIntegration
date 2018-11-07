@@ -17,6 +17,16 @@ public:
 
     virtual Login::Response Login(const Login::Request& request) noexcept = 0;
     virtual Logout::Response Logout(const Logout::Request& request) noexcept = 0;
+
+protected:
+    IServer() noexcept = default;
+
+public:
+    virtual ~IServer() noexcept = default;
+    IServer(const IServer&) = delete;
+    IServer& operator=(const IServer&) = delete;
+    IServer(IServer&&) noexcept = delete;
+    IServer& operator=(IServer&&) noexcept = delete;
 };
 
 } // namespace api

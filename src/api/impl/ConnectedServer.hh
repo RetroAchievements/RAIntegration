@@ -9,7 +9,7 @@ namespace impl {
 class ConnectedServer : public ServerBase
 {
 public:
-    ConnectedServer(const std::string& sHost) : m_sHost(sHost) {}
+    explicit ConnectedServer(const std::string& sHost) : m_sHost(sHost) {}
 
     const char* Name() const noexcept override { return m_sHost.c_str(); }
 

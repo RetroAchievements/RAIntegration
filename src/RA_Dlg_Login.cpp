@@ -56,7 +56,7 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                     request.Username = ra::Narrow(sUserEntry);
                     request.Password = ra::Narrow(sPassEntry);
 
-                    const ra::api::Login::Response response = request.Call();
+                    const auto response = request.Call();
 
                     if (response.Succeeded())
                     {

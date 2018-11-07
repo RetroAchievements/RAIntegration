@@ -10,27 +10,14 @@ namespace api {
 class Logout
 {
 public:
-    static const char* const Name() { return "Logout"; }
+    static constexpr const char* const Name() noexcept { return "Logout"; }
 
     struct Response : ApiResponseBase
     {
-        Response() noexcept = default;
-        ~Response() noexcept = default;
-        Response(const Response&) = default;
-        Response& operator=(const Response&) = default;
-        Response(Response&&) noexcept = default;
-        Response& operator=(Response&&) noexcept = default;
     };
 
     struct Request : ApiRequestBase
     {
-        Request() noexcept = default;
-        ~Request() noexcept = default;
-        Request(const Request&) = default;
-        Request& operator=(const Request&) = default;
-        Request(Request&&) noexcept = default;
-        Request& operator=(Request&&) noexcept = default;
-
         using Callback = std::function<void(const Response& response)>;
 
         Response Call() const noexcept;

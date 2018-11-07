@@ -11,7 +11,7 @@ namespace impl {
 Login::Response DisconnectedServer::Login(const Login::Request& request) noexcept
 {
     // use the normal ServerApi to attempt to connect
-    std::unique_ptr<ConnectedServer> serverApi(new ConnectedServer(m_sHost));
+    auto serverApi = std::make_unique<ConnectedServer>(m_sHost);
     Login::Response response = serverApi->Login(request);
 
     // if successful, update the global IServer instance to the connected API

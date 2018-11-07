@@ -10,21 +10,14 @@ namespace api {
 class Login
 {
 public:
-    static const char* const Name() { return "Login"; }
+    static constexpr const char* const Name() noexcept { return "Login"; }
 
     struct Response : ApiResponseBase
     {
         std::string Username;
         std::string ApiToken;
-        unsigned int Score{ 0 };
-        unsigned int NumUnreadMessages{ 0 };
-
-        Response() noexcept = default;
-        ~Response() noexcept = default;
-        Response(const Response&) = default;
-        Response& operator=(const Response&) = default;
-        Response(Response&&) noexcept = default;
-        Response& operator=(Response&&) noexcept = default;
+        unsigned int Score{ 0U };
+        unsigned int NumUnreadMessages{ 0U };
     };
 
     struct Request : ApiRequestBase
@@ -32,13 +25,6 @@ public:
         std::string Username;
         std::string Password;
         std::string ApiToken;
-
-        Request() noexcept = default;
-        ~Request() noexcept = default;
-        Request(const Request&) = default;
-        Request& operator=(const Request&) = default;
-        Request(Request&&) noexcept = default;
-        Request& operator=(Request&&) noexcept = default;
 
         using Callback = std::function<void(const Response& response)>;
 

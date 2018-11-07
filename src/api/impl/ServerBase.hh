@@ -15,12 +15,12 @@ class ServerBase : public IServer
 public:
     // === user functions ===
 
-    virtual Login::Response Login(_UNUSED const Login::Request& request) noexcept
+    Login::Response Login(_UNUSED const Login::Request& request) noexcept override
     {
         return UnsupportedApi<Login::Response>(Login::Name());
     }
 
-    virtual Logout::Response Logout(_UNUSED const Logout::Request& request) noexcept
+    Logout::Response Logout(_UNUSED const Logout::Request& request) noexcept override
     {
         return UnsupportedApi<Logout::Response>(Logout::Name());
     }

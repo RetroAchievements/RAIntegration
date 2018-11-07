@@ -1004,8 +1004,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_FILES_LOGOUT:
         {
-            ra::api::Logout::Request request;
-            auto response = request.Call();
+            const ra::api::Logout::Request request;
+            const auto response = request.Call();
             if (response.Succeeded())
             {
                 RAUsers::LocalUser().Clear();

@@ -9,7 +9,7 @@ namespace impl {
 class DisconnectedServer : public OfflineServer
 {
 public:
-    DisconnectedServer(const std::string& sHost) : m_sHost(sHost) {}
+    explicit DisconnectedServer(const std::string& sHost) : m_sHost(sHost) {}
 
     const char* Name() const noexcept override { return "disconnected client"; }
 

@@ -189,7 +189,7 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     {
         if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
-            RA_LOG_INFO("Wrote %zu bytes to %s", ServiceLocator::Get<IFileSystem>().GetFileSize(sFilename), ra::Narrow(sFilename).c_str());
+            RA_LOG_INFO("Wrote %zu bytes to %s", static_cast<size_t>(ServiceLocator::Get<IFileSystem>().GetFileSize(sFilename)), ra::Narrow(sFilename).c_str());
         }
         else
         {

@@ -81,7 +81,7 @@ private:
     void GenerateResizes(HWND hDlg);
     std::wstring ImportDialog();
 
-    void AddBookmarkMap(MemBookmark* bookmark)
+    void AddBookmarkMap(_In_ const MemBookmark* bookmark)
     {
         if (m_BookmarkMap.find(bookmark->Address()) == m_BookmarkMap.end())
             m_BookmarkMap.insert(std::map<ra::ByteAddress, std::vector<const MemBookmark*>>::value_type(bookmark->Address(), std::vector<const MemBookmark*>()));

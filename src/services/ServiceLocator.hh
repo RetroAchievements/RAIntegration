@@ -140,8 +140,8 @@ private:
 #else
             std::string sMessage = __FUNC__;
 #endif
-            size_t index = sMessage.find('<');
-            size_t index2 = sMessage.rfind('>');
+            const size_t index = sMessage.find('<');
+            const size_t index2 = sMessage.rfind('>');
             if (index >= 0 && index2 > index)
             {
                 sMessage.erase(index2);

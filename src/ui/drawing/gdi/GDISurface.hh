@@ -13,9 +13,9 @@ namespace gdi {
 class GDISurface : public ISurface
 {
 public:
-    explicit GDISurface(HDC hDC, RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept;
+    explicit GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept;
 
-    explicit GDISurface(HDC hDC, RECT& rcDEST) noexcept
+    explicit GDISurface(HDC hDC, const RECT& rcDEST) noexcept
         : GDISurface(hDC, rcDEST, m_oResourceRepository)
     {
     }

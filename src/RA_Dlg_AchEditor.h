@@ -66,8 +66,8 @@ public:
     ConditionGroup m_ConditionClipboard;
 
 private:
-    void RepopulateGroupList(Achievement* pCheevo);
-    void PopulateConditions(Achievement* pCheevo);
+    void RepopulateGroupList(_In_ const Achievement* const pCheevo);
+    void PopulateConditions(_In_ const Achievement* const pCheevo);
     void SetupColumns(HWND hList);
 
     static LRESULT CALLBACK ListViewWndProc(HWND, UINT, WPARAM, LPARAM);

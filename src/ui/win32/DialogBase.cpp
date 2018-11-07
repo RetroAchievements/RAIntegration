@@ -63,7 +63,7 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     if (s_pModalDialog == nullptr)
         return StaticDialogProc(hDlg, uMsg, wParam, lParam);
 
-    INT_PTR result = s_pModalDialog->DialogProc(hDlg, uMsg, wParam, lParam);
+    const INT_PTR result = s_pModalDialog->DialogProc(hDlg, uMsg, wParam, lParam);
 
     if (uMsg == WM_INITDIALOG)
     {
@@ -78,7 +78,8 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     return result;
 }
 
-void DialogBase::CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter)
+_Use_decl_annotations_
+void DialogBase::CreateModalWindow(LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
 {
     m_pDialogPresenter = pDialogPresenter;
     m_bModal = true;

@@ -9,13 +9,16 @@
 class PopupWindows
 {
 public:
-    static void Update(ControllerInput* pInput, float fDelta, bool bFullscreen, bool bPaused)
+    static void Update(_In_ const ControllerInput* const __restrict pInput,
+                       _In_ float fDelta,
+                       _In_ bool bFullscreen,
+                       _In_ bool bPaused)
     {
         m_AchievementPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
         m_LeaderboardPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
     }
 
-    static void Render(HDC hDC, RECT* rcDest)
+    static void Render(_In_ HDC hDC, const RECT* const __restrict rcDest)
     {
         m_AchievementPopups.Render(hDC, *rcDest);
         m_LeaderboardPopups.Render(hDC, *rcDest);
@@ -35,11 +38,13 @@ private:
 };
 
 //	Exposed to DLL
-extern "C"
-{
-    API extern int _RA_UpdatePopups(ControllerInput* input, float fDTime, bool Full_Screen, bool Paused);
-    API extern int _RA_RenderPopups(HDC hDC, RECT* rcSize);
-}
+_EXTERN_C
+[[gsl::suppress(con.3)]]
+API int _RA_UpdatePopups(_In_ ControllerInput* __restrict input, _In_ float fDTime,
+                         _In_ bool Full_Screen, _In_ bool Paused);
+[[gsl::suppress(con.3)]]
+API int _RA_RenderPopups(_In_ HDC hDC, _In_ RECT* __restrict rcSize);
+_END_EXTERN_C
 
 extern PopupWindows g_PopupWindows;
 

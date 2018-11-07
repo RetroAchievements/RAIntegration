@@ -97,7 +97,8 @@ float AchievementPopup::GetYOffsetPct() const
     return fVal;
 }
 
-void AchievementPopup::Render(HDC hDC, RECT& rcDest)
+_Use_decl_annotations_
+void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
 {
     if (!MessagesPresent())
         return;

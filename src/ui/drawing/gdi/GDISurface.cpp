@@ -7,7 +7,7 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-GDISurface::GDISurface(HDC hDC, RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept
+GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept
     : m_hDC(hDC), m_nWidth(rcDEST.right - rcDEST.left), m_nHeight(rcDEST.bottom - rcDEST.top), m_pResourceRepository(pResourceRepository)
 {
     SelectObject(hDC, GetStockObject(DC_PEN));

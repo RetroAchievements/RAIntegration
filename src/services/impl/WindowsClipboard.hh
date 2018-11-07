@@ -14,7 +14,7 @@ public:
     void SetText(const std::wstring& sValue) const override
     {
         // allocate memory to be managed by the clipboard
-        SIZE_T nSize = (sValue.length() + 1) * 2; // 16-bit characters, with null terminator
+        const SIZE_T nSize = (sValue.length() + 1) * 2; // 16-bit characters, with null terminator
         const HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
         if (hMem)
         {

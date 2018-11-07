@@ -377,7 +377,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
         return nullptr;
     }
 
-    size_t nSize = (nType == ImageType::Local) ? 0 : 64;
+    const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
 
     // bracket operator appears to be the only way to add an item to the map since

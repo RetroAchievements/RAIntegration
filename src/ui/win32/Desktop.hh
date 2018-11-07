@@ -21,7 +21,8 @@ public:
     void Shutdown() override;
 
 private:
-    ra::ui::win32::IDialogPresenter* GetDialogPresenter(WindowViewModelBase& oViewModel) const;
+    _Success_(return != nullptr)
+    _NODISCARD IDialogPresenter* GetDialogPresenter(_In_ const WindowViewModelBase& oViewModel) const;
 
     std::vector<std::unique_ptr<ra::ui::win32::IDialogPresenter>> m_vDialogPresenters;
 

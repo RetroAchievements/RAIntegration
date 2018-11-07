@@ -184,16 +184,16 @@ public:
     TEST_METHOD(TestConditionSet)
     {
         Condition cond;
-        AssertCondition(cond, Condition::Standard, Equals, 0, "");
+        AssertCondition(cond, Condition::Standard, ComparisonType::Equals, 0, "");
 
-        cond.SetCompareType(NotEqualTo);
-        AssertCondition(cond, Condition::Standard, NotEqualTo, 0, "NotEqualTo");
+        cond.SetCompareType(ComparisonType::NotEqualTo);
+        AssertCondition(cond, Condition::Standard, ComparisonType::NotEqualTo, 0, "NotEqualTo");
 
         cond.SetConditionType(Condition::ResetIf);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 0, "ResetIf");
+        AssertCondition(cond, Condition::ResetIf, ComparisonType::NotEqualTo, 0, "ResetIf");
 
         cond.SetRequiredHits(5);
-        AssertCondition(cond, Condition::ResetIf, NotEqualTo, 5, "5");
+        AssertCondition(cond, Condition::ResetIf, ComparisonType::NotEqualTo, 5, "5");
     }
 
     TEST_METHOD(TestConditionType)
@@ -207,7 +207,7 @@ public:
             Condition::AddHits,
         };
 
-        for (auto type : types)
+        for (const auto type : types)
         {
             Condition cond;
             cond.SetConditionType(type);

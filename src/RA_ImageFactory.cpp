@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 
 //////////////////////////////////////////////////////////////////////////
-
+_Use_decl_annotations_
 void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)
 {
     ASSERT(hBitmap != nullptr);
@@ -26,7 +26,8 @@ void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)
     }
 }
 
-void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
+_Use_decl_annotations_
+void DrawImageStretched(HDC hDC, HBITMAP hBitmap, const RECT& rcSource, const RECT& rcDest)
 {
     ASSERT(hBitmap != nullptr);
     HDC hdcMem = CreateCompatibleDC(hDC);
@@ -56,7 +57,8 @@ void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
     }
 }
 
-void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
+_Use_decl_annotations_
+void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, const RECT& rcDest)
 {
     ASSERT(hBitmap != nullptr);
     HDC hdcMem = CreateCompatibleDC(hDC);
@@ -77,15 +79,15 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
             if (rcSource.top < rcDest.top)
                 rcSource.top += (rcDest.top - rcSource.top);
 
-            int nSourceWidth = rcSource.right - rcSource.left;
-            int nSourceHeight = rcSource.bottom - rcSource.top;
+            const int nSourceWidth = rcSource.right - rcSource.left;
+            const int nSourceHeight = rcSource.bottom - rcSource.top;
 
             for (int nXOffs = rcDest.left; nXOffs < rcDest.right; nXOffs += nSourceWidth)
             {
                 for (int nYOffs = rcDest.top; nYOffs < rcDest.bottom; nYOffs += nSourceHeight)
                 {
-                    int nDestLimitAtX = rcDest.right;
-                    int nDestLimitAtY = rcDest.bottom;
+                    const int nDestLimitAtX = rcDest.right;
+                    const int nDestLimitAtY = rcDest.bottom;
 
                     int nWidthToCopy = nSourceWidth;
                     int nHeightToCopy = nSourceHeight;
@@ -112,3 +114,4 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
         DeleteDC(hdcMem);
     }
 }
+

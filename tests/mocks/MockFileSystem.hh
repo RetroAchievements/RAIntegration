@@ -38,11 +38,11 @@ public:
     
     size_t GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const override
     {
-        size_t nInitialSize = vResults.size();
+        const size_t nInitialSize = vResults.size();
 
         for (auto& sFile : m_mFileContents)
         {
-            size_t nIndex = sFile.first.find_last_of('\\');
+            const size_t nIndex = sFile.first.find_last_of('\\');
             if (nIndex == sDirectory.length() - 1)
             {
                 if (sFile.first.compare(0, nIndex, sDirectory.c_str(), 0, nIndex) == 0)

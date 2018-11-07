@@ -137,7 +137,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         return FALSE;
                     }
 
-                    int nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2 : 0;	// 0==?
+                    const int nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2 : 0;	// 0==?
                     const char* sProblemTypeNice = PROBLEM_STR[nProblemType];
 
                     char sBuggedIDs[1024];

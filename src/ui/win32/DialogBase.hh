@@ -33,7 +33,7 @@ public:
     /// </summary>
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
-    void CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter);
+    void CreateModalWindow(_In_ LPCTSTR sResourceId, _In_ IDialogPresenter* const pDialogPresenter);
 
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.
@@ -60,7 +60,7 @@ protected:
     /// <summary>
     /// Callback for processing <c>WINAPI</c> messages - do not call directly!
     /// </summary>
-    _NODISCARD virtual INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+    _NODISCARD virtual INT_PTR CALLBACK DialogProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
     /// <summary>
     /// Called when the window is created, but before it is shown.

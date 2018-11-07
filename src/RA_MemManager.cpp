@@ -104,7 +104,7 @@ unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
     const BankData* bank = nullptr;
 
     int bankID = 0;
-    int numBanks = m_Banks.size();
+    const int numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
         bank = &m_Banks.at(bankID);
@@ -123,7 +123,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs
     const BankData* bank = nullptr;
 
     int bankID = 0;
-    int numBanks = m_Banks.size();
+    const int numBanks = m_Banks.size();
     do
     {
         if (bankID == numBanks)
@@ -170,7 +170,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs
 void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal)
 {
     int bankID = 0;
-    int numBanks = m_Banks.size();
+    const int numBanks = m_Banks.size();
     while (bankID < numBanks && nOffs >= m_Banks.at(bankID).BankSize)
     {
         nOffs -= m_Banks.at(bankID).BankSize;

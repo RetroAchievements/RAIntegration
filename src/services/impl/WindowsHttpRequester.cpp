@@ -32,7 +32,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
     while (nAvailableBytes > 0)
     {
         DWORD nBytesFetched = 0U;
-        DWORD nBytesToRead = sBuffer.capacity() - nInsertAt;
+        const DWORD nBytesToRead = sBuffer.capacity() - nInsertAt;
         if (WinHttpReadData(hRequest, &sBuffer[nInsertAt], nBytesToRead, &nBytesFetched))
         {
             nInsertAt += nBytesFetched;
@@ -61,7 +61,7 @@ static void ReadIntoWriter(const HINTERNET hRequest, ra::services::TextWriter& p
 
     while (nAvailableBytes > 0)
     {
-        DWORD nBytesToRead = (nAvailableBytes > 4096) ? 4096 : nAvailableBytes;
+        const DWORD nBytesToRead = (nAvailableBytes > 4096) ? 4096 : nAvailableBytes;
         sBuffer.resize(nBytesToRead);
 
         DWORD nBytesFetched = 0U;
@@ -112,7 +112,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
         }
 
         std::string sPath;
-        auto nIndex = sUrl.find('/');
+        const auto nIndex = sUrl.find('/');
         if (nIndex != std::string::npos)
         {
             sPath.assign(sUrl, nIndex + 1, std::string::npos);
@@ -137,7 +137,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 sPath += sQueryString;
             }
 
-            auto& sPostData = pRequest.GetPostData();
+            auto sPostData = pRequest.GetPostData();
 
             // open the connection
             auto sPathWide = ra::Widen(sPath);
@@ -174,7 +174,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 {
                     bResults = WinHttpSendRequest(hRequest,
                         sHeaders.c_str(), sHeaders.length(),
-                        reinterpret_cast<LPVOID>(const_cast<char*>(sPostData.data())),
+                        static_cast<LPVOID>(sPostData.data()),
                         sPostData.length(), sPostData.length(),
                         0);
                 }

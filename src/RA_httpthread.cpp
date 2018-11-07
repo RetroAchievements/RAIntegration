@@ -296,7 +296,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
         const char* mimeBoundary = "---------------------------41184676334";
         const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
-        int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        const int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
         if (nResult != 0)
         {
             // Add the photo to the stream

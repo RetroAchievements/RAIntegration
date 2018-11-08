@@ -1,48 +1,92 @@
 #ifndef RA_DELETERS_H
 #define RA_DELETERS_H
 
-// specialization of std::default_delete doesn't work anymore
+// we need _NODISCARD (instead of straight up [[nodiscard]]) to get rid of browsing errors. it's defined in yvals_core.h
+
 // No need to specify the deleter as it's already taken care of
+// Specializations of std::default_delete can work but have to be in an alias or user-defined type
+// The void* and the ones that need enums can't be specialized
+
+// Deletion results are marked [[maybe_unused]] because assert does nothing in release mode
+
+namespace std {
+
+template<> struct _NODISCARD default_delete<FILE>
+{
+    void operator()(_In_ FILE* const __restrict stream) const noexcept
+    {
+        [[maybe_unused]] const auto result = std::fclose(stream);
+        assert(result != EOF);
+    }
+};
+
+template<> struct _NODISCARD default_delete<HMENU__>
+{
+    void operator()(_In_ HMENU__* const __restrict hMenu) const noexcept
+    {
+        [[maybe_unused]] const auto result = ::DestroyMenu(hMenu);
+        assert(result != 0);
+    }
+};
+
+// can also be used for HMODULE
+template<> struct _NODISCARD default_delete<HINSTANCE__>
+{
+    void operator()(_In_ HINSTANCE__* const  __restrict hInst) const noexcept
+    {
+        [[maybe_unused]] const auto result = ::FreeLibrary(hInst);
+        assert(result != 0);
+    }
+};
+
+template<> struct _NODISCARD default_delete<HACCEL__>
+{
+    void operator()(_In_ HACCEL__* const  __restrict hAccel) const noexcept
+    {
+        [[maybe_unused]] const auto result = ::DestroyAcceleratorTable(hAccel);
+        assert(result != 0);
+    }
+};
+
+// Do not use this with a Window DC
+template<> struct _NODISCARD default_delete<HDC__>
+{
+    void operator()(_In_ HDC__* const __restrict hdc) const noexcept
+    {
+        [[maybe_unused]] const auto result = ::DeleteDC(hdc);
+        assert(result != 0);
+    }
+};
+
+} /* namespace std */
 
 namespace ra {
 /* Users shouldn't use these directly as it'll seem more complicated than it is, use the type aliases instead */
 namespace detail {
 
-// Handles have to types the way they are or restrict won't work
+// Handles have to be typed out the way they are or restrict won't work
 // We can remove the const in front if setting to nullptr is desired
 
-struct CFileDeleter { void operator()(_In_ FILE* const __restrict fp) const noexcept { std::fclose(fp); } };
-struct MenuDeleter { void operator()(_In_ HMENU__* const __restrict hMenu) const noexcept { ::DestroyMenu(hMenu); } };
-
-// can also be used for HMODULE
-struct InstanceDeleter
+struct _NODISCARD InternetDeleter
 {
-    void operator()(_In_ HINSTANCE__* const  __restrict hInst) const noexcept
+    void operator()(_In_ void* const __restrict hInternet) const noexcept
     {
-        ::FreeLibrary(hInst);
+        [[maybe_unused]] const auto result = ::WinHttpCloseHandle(hInternet);
+        assert(result != FALSE);
     }
-};
-
-struct AcceleratorDeleter
-{
-    void operator()(_In_ HACCEL__* const  __restrict hAccel) noexcept
-    {
-        ::DestroyAcceleratorTable(hAccel);
-    }
-};
-
-// Do not use this with a Window DC
-struct DcDeleter { void operator()(_In_ HDC__* const __restrict hdc) const noexcept { ::DeleteDC(hdc); } };
-
-struct InternetDeleter
-{
-    void operator()(_In_ void* const __restrict hInternet) const noexcept { ::WinHttpCloseHandle(hInternet); }
 };
 
 // Can be used with HLOCAL as well since there is no local heap
-struct GlobalDeleter { void operator()(_In_ void* const __restrict hMem) const noexcept { ::GlobalFree(hMem); } };
+struct _NODISCARD GlobalDeleter
+{
+    void operator()(_In_ void* const __restrict hMem) const noexcept
+    {
+        [[maybe_unused]] const auto result = ::GlobalFree(hMem);
+        assert(result == nullptr);
+    }
+};
 
-enum class IconHandle
+enum class _NODISCARD IconHandle
 {
     Icon,
     Cursor
@@ -50,22 +94,24 @@ enum class IconHandle
 
 // HCURSOR's object has the same type as HICON since they're "polymorphic" (kind of)
 template<IconHandle ih>
-struct IconDeleter
+struct _NODISCARD IconDeleter
 {
     void operator()(_In_ HICON__* const  __restrict hIconOrCursor) const noexcept
     {
+        BOOL result = 0;
         switch (ih)
         {
             case IconHandle::Icon:
-                ::DestroyIcon(hIconOrCursor);
+                result = ::DestroyIcon(hIconOrCursor);
                 break;
             case IconHandle::Cursor:
-                ::DestroyCursor(hIconOrCursor);
+                result = ::DestroyCursor(hIconOrCursor);
         }
+        assert(result != 0);
     }
 };
 
-enum class WindowType
+enum class _NODISCARD WindowType
 {
     App,
     Control,
@@ -74,24 +120,26 @@ enum class WindowType
 };
 
 template<WindowType wt>
-struct WindowDeleter
+struct _NODISCARD WindowDeleter
 {
     void operator()(_In_ HWND__* const __restrict hWnd) const noexcept
     {
+        BOOL result = 0;
         switch (wt)
         {
             case WindowType::App:     [[fallthrough]]; /* fallthrough to Control */
             case WindowType::Control: [[fallthrough]]; /* fallthrough to ModelessDialog */
             case WindowType::ModelessDialog:
-                ::DestroyWindow(hWnd);
+                result = ::DestroyWindow(hWnd);
                 break;
             case WindowType::ModalDialog:
-                ::EndDialog(hWnd, IDCLOSE);
+                result = ::EndDialog(hWnd, IDCLOSE);
         }
+        assert(result != 0);
     }
 };
 
-enum class GdiType
+enum class _NODISCARD GdiType
 {
     Bitmap,
     Brush,
@@ -103,37 +151,39 @@ enum class GdiType
 };
 
 template<GdiType gdi_t>
-struct GdiDeleter
+struct _NODISCARD GdiDeleter
 {
     void operator()(_In_ void* const __restrict ho) const noexcept
     {
+        BOOL result = 0;
         switch (gdi_t)
         {
             case GdiType::Bitmap:
-                DeleteBitmap(ho);
+                result = DeleteBitmap(ho);
                 break;
             case GdiType::Brush:
-                DeleteBrush(ho);
+                result = DeleteBrush(ho);
                 break;
             case GdiType::Font:
-                DeleteFont(ho);
+                result = DeleteFont(ho);
                 break;
             case GdiType::Palette:
-                DeletePalette(ho);
+                result = DeletePalette(ho);
                 break;
             case GdiType::Pen:
-                DeletePen(ho);
+                result = DeletePen(ho);
                 break;
             case GdiType::Rgn:
-                DeleteRgn(ho);
+                result = DeleteRgn(ho);
                 break;
             case GdiType::Obj:
-                ::DeleteObject(ho);
+                result = ::DeleteObject(ho);
         }
+        assert(result != 0);
     }
 };
 
-enum class NTKernelObjType /* We say NT because these might not exist in other Operating Systems (most do) */
+enum class _NODISCARD NTKernelObjType /* We say NT because these might not exist in other Operating Systems (most do) */
 {
     ChangeNotification,
     File,
@@ -149,22 +199,23 @@ enum class NTKernelObjType /* We say NT because these might not exist in other O
 };
 
 template<NTKernelObjType ntk_t>
-struct NTKernelDeleter
+struct _NODISCARD NTKernelDeleter
 {
     void operator()(_In_ void* const __restrict hObject) const noexcept
     {
+        BOOL result = 0;
         // many kernel objects use CloseHandle so a lot of cases will be skipped
         // Some kernel objects were not included because they needed more than one parameter when destroying
         switch (ntk_t)
         {
             case NTKernelObjType::ChangeNotification:
-                ::FindCloseChangeNotification(hObject);
+                result = ::FindCloseChangeNotification(hObject);
                 break;
             case NTKernelObjType::FindFile:
-                ::FindClose(hObject);
+                result = ::FindClose(hObject);
                 break;
             case NTKernelObjType::TimerQueue:
-                ::DeleteTimerQueue(hObject);
+                result = ::DeleteTimerQueue(hObject);
                 break;
             case NTKernelObjType::File:     [[fallthrough]]; // all the way to Object
             case NTKernelObjType::Job:      [[fallthrough]];
@@ -174,19 +225,20 @@ struct NTKernelDeleter
             case NTKernelObjType::Process:  [[fallthrough]];
             case NTKernelObjType::Thread:   [[fallthrough]];
             case NTKernelObjType::Object: /*tags above are meant for type aliasing but most aren't used right now */
-                ::CloseHandle(hObject);
+                result = ::CloseHandle(hObject);
         }
+        assert(result != 0);
     }
 };
 
 } /* namespace detail */
 
 // For these types all you need to do is specify the creation function
-using CFileH    = std::unique_ptr<FILE, detail::CFileDeleter>; // there's an HFILE as well so we put CFile
-using MenuH     = std::unique_ptr<HMENU__, detail::MenuDeleter>;
-using InstanceH = std::unique_ptr<HINSTANCE__, detail::InstanceDeleter>;
-using AccelH    = std::unique_ptr<HACCEL__, detail::AcceleratorDeleter>;
-using DCH       = std::unique_ptr<HDC__, detail::DcDeleter>; // Do not use with a Window DC
+using CFileH    = std::unique_ptr<FILE>; // there's an HFILE as well so we put CFile
+using MenuH     = std::unique_ptr<HMENU__>;
+using InstanceH = std::unique_ptr<HINSTANCE__>;
+using AccelH    = std::unique_ptr<HACCEL__>;
+using DCH       = std::unique_ptr<HDC__>; // Do not use with a Window DC
 using InternetH = std::unique_ptr<void, detail::InternetDeleter>;
 using GlobalH   = std::unique_ptr<void, detail::GlobalDeleter>;
 

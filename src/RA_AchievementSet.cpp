@@ -16,7 +16,7 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
-#include "ra_deleters.h"
+#include "ra_handles.h"
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;

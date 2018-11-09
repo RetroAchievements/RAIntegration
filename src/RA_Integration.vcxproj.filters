@@ -569,7 +569,7 @@
     <ClInclude Include="ra_math.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="ra_deleters.h">
+    <ClInclude Include="ra_handles.h">
       <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>

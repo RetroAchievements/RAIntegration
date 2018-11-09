@@ -34,6 +34,14 @@ using TCHAR = wchar_t;
 #define _TCHAR_DEFINED
 #endif /* !_TCHAR_DEFINED */
 
+#ifndef __STDC_VERSION__
+#define __STDC_VERSION__ 0
+#endif /* !__STDC_VERSION__ */
+
+#if (__STDC_VERSION__ < 199901L) 
+#define restrict __restrict
+#endif /* !(__STDC_VERSION__ == 199901L)  */
+
 #ifndef _WINDEF_
 struct HBITMAP__;
 struct HDC__;

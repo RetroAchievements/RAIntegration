@@ -1444,14 +1444,7 @@ std::string GetFolderFromDialog() noexcept
     
     std::string ret;
     {
-        const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
-        {
-            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
-            lpItemIdList = nullptr;
-        };
-
-        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        auto owner = ra::make_itemidlist(lpbi.get());
         if (!owner)
         {
             ::OleUninitialize();

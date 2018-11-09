@@ -205,10 +205,9 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
     //	nDescX += 64+4;
     //}
 
-
-    HGDIOBJ hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
-
-    HBRUSH hBrushBG = CreateSolidBrush(g_ColBG);
+    // As a test
+    auto hPen = ra::make_pen(PS_SOLID, 2, 0UL);
+    auto hBrushBG = ra::make_brush(g_ColBG);
 
     RECT rcScoreboardFrame;
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
@@ -218,7 +217,7 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
     }
     else
         SetRect(&rcScoreboardFrame, 0, 0, 0, 0);
-    FillRect(hDC, &rcScoreboardFrame, hBrushBG);
+    FillRect(hDC, &rcScoreboardFrame, hBrushBG.get());
 
     HGDIOBJ hOld = SelectObject(hDC, hFontDesc);
 
@@ -243,7 +242,7 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
                     SIZE szProgress;
                     GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
 
-                    HGDIOBJ hBkup = SelectObject(hDC, hPen);
+                    HGDIOBJ hBkup = SelectObject(hDC, hPen.get()); // hPen should be empty now
 
                     MoveToEx(hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr);
                     LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);							//	down
@@ -325,8 +324,6 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
     //	Restore old obj
     SelectObject(hDC, hOld);
 
-    DeleteObject(hBrushBG);
-    DeleteObject(hPen);
     DeleteObject(hFontTitle);
     DeleteObject(hFontDesc);
     DeleteObject(hFontText);

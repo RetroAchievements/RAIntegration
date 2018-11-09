@@ -149,7 +149,7 @@
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />
     <ClInclude Include="RA_Defs.h" />
-    <ClInclude Include="ra_deleters.h" />
+    <ClInclude Include="ra_handles.h" />
     <ClInclude Include="RA_Dlg_AchEditor.h" />
     <ClInclude Include="RA_Dlg_Achievement.h" />
     <ClInclude Include="RA_Dlg_AchievementsReporter.h" />

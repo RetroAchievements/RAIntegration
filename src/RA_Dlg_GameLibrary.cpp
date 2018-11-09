@@ -10,7 +10,7 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
-#include "ra_deleters.h"
+#include "ra_handles.h"
 #include "ra_math.h"
 
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
@@ -304,7 +304,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
     sprintf_s(sSearchDir, 2048, "%s\\*.*", sBaseDir.c_str());
 
     WIN32_FIND_DATA ffd{};
-    if (ra::FindFileH hFind{ FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd) }; hFind.get() != INVALID_HANDLE_VALUE)
+    if (auto hFind = ra::make_findfile(NativeStr(sSearchDir).c_str(), &ffd); hFind.get() != INVALID_HANDLE_VALUE)
     {
         constexpr unsigned int ROM_MAX_SIZE = 6U * 1024U * 1024U;
         auto sROMRawData = std::make_unique<std::uint8_t[]>(ROM_MAX_SIZE); // TBD: Use std::byte later? uint8_t is a typedef, would need a lot of work though.
@@ -344,8 +344,8 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                     char sAbsFileDir[2048]{};
                     sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
 
-                    if (ra::FileH hROMReader{ ::CreateFile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
-                        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) };
+                    if (auto hROMReader = ra::make_wfile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL);
                         hROMReader.get() != INVALID_HANDLE_VALUE) // deallocates sooner
                     {
                         BY_HANDLE_FILE_INFORMATION File_Inf{};
@@ -525,7 +525,9 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
     {
         case WM_INITDIALOG:
         {
-            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST);
+            // TODO: Make controls members of type ra::WndControlH to deallocate only when the dialog is destroyed,
+            //       not while it still needs them
+            HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_GAMELIST); 
             SetupColumns(hList);
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);

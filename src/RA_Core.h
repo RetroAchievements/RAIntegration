@@ -6,7 +6,7 @@
 #include "RA_Interface.h"
 
 #include "Exports.hh"
-#include "ra_deleters.h"
+#include "ra_handles.h"
 
 //	Non-exposed:
 extern std::wstring g_sHomeDir;

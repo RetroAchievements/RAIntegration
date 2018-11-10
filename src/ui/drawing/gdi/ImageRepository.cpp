@@ -75,6 +75,9 @@ std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sN
         case ImageType::Badge:
             sFilename += RA_DIR_BADGE + ra::Widen(sName) + L".png";
             break;
+        case ImageType::Icon:
+            sFilename += RA_DIR_BADGE + std::wstring(L"i") + ra::Widen(sName) + L".png";
+            break;
         case ImageType::UserPic:
             sFilename += RA_DIR_USERPIC + ra::Widen(sName) + L".png";
             break;
@@ -119,6 +122,9 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             sUrl = _RA_HostName();
             sUrl += "/UserPic/";
             break;
+        case ImageType::Icon:
+            sUrl = "http://i.retroachievements.org/Images/";
+            break;
         default:
             ASSERT(!"Unsupported image type");
             return;
@@ -153,6 +159,7 @@ HBITMAP ImageRepository::GetDefaultImage(ImageType nType)
     switch (nType)
     {
         case ImageType::Badge:
+        case ImageType::Icon:
             return GetImage(ImageType::Badge, DefaultBadge);
 
         case ImageType::UserPic:
@@ -349,6 +356,9 @@ ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType)
         case ImageType::Local:
             return &m_mLocal;
 
+        case ImageType::Icon:
+            return &m_mIcons;
+
         default:
             ASSERT(!"Unsupported image type");
             return nullptr;
@@ -371,7 +381,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     std::wstring sFilename = GetFilename(nType, sName);
 
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-    if (pFileSystem.GetFileSize(sFilename) < 0)
+    if (pFileSystem.GetFileSize(sFilename) <= 0)
     {
         FetchImage(nType, sName);
         return nullptr;
@@ -379,11 +389,13 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 
     const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
-
-    // bracket operator appears to be the only way to add an item to the map since
-    // std::atomic deleted its move and copy constructors.
-    auto& item = (*mMap)[sName];
-    item.m_hBitmap = hBitmap;
+    if (hBitmap != nullptr)
+    {
+        // bracket operator appears to be the only way to add an item to the map since
+        // std::atomic deleted its move and copy constructors.
+        auto& item = (*mMap)[sName];
+        item.m_hBitmap = hBitmap;
+    }
 
     return hBitmap;
 }

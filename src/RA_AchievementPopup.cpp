@@ -45,6 +45,10 @@ void AchievementPopup::PlayAudio()
 
 void AchievementPopup::AddMessage(const MessagePopup& msg)
 {
+    // request the image now, so it's ready when the popup gets displayed
+    if (msg.Image().Type() != ra::ui::ImageType::None)
+        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(msg.Image().Type(), msg.Image().Name());
+
     m_vMessages.push(msg);
     PlayAudio();
 }

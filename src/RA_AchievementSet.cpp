@@ -440,8 +440,24 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
                 oss << g_pCoreAchievements->NumAchievements() << " achievements, Total Score " << nTotalPoints;
                 sSubTitle = oss.str();
             }
-            
-            g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+
+            if (doc.HasMember("ImageIcon"))
+            {
+                // value will be "/Images/001234.png" - extract the "001234"
+                std::string sImageName = doc["ImageIcon"].GetString();
+                auto nIndex = sImageName.find_last_of('/');
+                if (nIndex != std::string::npos)
+                    sImageName.erase(0, nIndex + 1);
+                nIndex = sImageName.find_last_of('.');
+                if (nIndex != std::string::npos)
+                    sImageName.erase(nIndex);
+
+                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle, PopupMessageType::PopupInfo, ra::ui::ImageType::Icon, sImageName });
+            }
+            else
+            {
+                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+            }
         }
 
         return true;

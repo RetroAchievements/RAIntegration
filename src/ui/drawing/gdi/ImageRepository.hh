@@ -47,6 +47,7 @@ private:
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
     HBitmapMap m_mLocal;
+    HBitmapMap m_mIcons;
 
     HBitmapMap* GetBitmapMap(ImageType nType);
 

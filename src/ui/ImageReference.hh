@@ -13,6 +13,7 @@ enum class ImageType
     Badge,
     UserPic,
     Local,
+    Icon,
 };
 
 class ImageReference;

@@ -5,7 +5,7 @@
 #include "RA_httpthread.h"
 #include "RA_Achievement.h"
 
-#include "services\ImageRepository.h"
+#include "ui\ImageReference.hh"
 
 namespace {
 const size_t MAX_CONDITIONS = 200;
@@ -66,8 +66,8 @@ public:
     ConditionGroup m_ConditionClipboard;
 
 private:
-    void RepopulateGroupList(Achievement* pCheevo);
-    void PopulateConditions(Achievement* pCheevo);
+    void RepopulateGroupList(_In_ const Achievement* const pCheevo);
+    void PopulateConditions(_In_ const Achievement* const pCheevo);
     void SetupColumns(HWND hList);
 
     static LRESULT CALLBACK ListViewWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -93,7 +93,7 @@ private:
 
     Achievement* m_pSelectedAchievement;
     BOOL m_bPopulatingAchievementEditorData;
-    ra::services::ImageReference m_hAchievementBadge;
+    ra::ui::ImageReference m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;
 };

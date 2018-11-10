@@ -144,26 +144,19 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         return FALSE;
                     }
 
-                    char sBuggedIDs[1024];
-                    sprintf_s(sBuggedIDs, 1024, "");
+                    std::string sBuggedIDs;
 
-                    auto nReportCount{ 0 };
-
-                    const auto nListSize = ListView_GetItemCount(hList);
+                    int nReportCount = 0;
+                    const int nListSize = ListView_GetItemCount(hList);
                     for (auto i = 0; i < nListSize; ++i)
                     {
                         if (ListView_GetCheckState(hList, i) != 0)
                         {
-                            //	NASTY big assumption here...
-                            char buffer[1024];
-                            sprintf_s(buffer, 1024, "%u,", g_pActiveAchievements->GetAchievement(i).ID());
-                            strcat_s(sBuggedIDs, 1024, buffer);
-
-                            //ListView_GetItem( hList );	
+                            sBuggedIDs.append(ra::StringPrintf("%zu, ", g_pActiveAchievements->GetAchievement(i).ID()));
                             nReportCount++;
                         }
                     }
-
+                    sBuggedIDs.erase(sBuggedIDs.rfind(',')); // remove extra comma, searches from end
                     if (nReportCount > 5)
                     {
                         if (MessageBox(nullptr, TEXT("You have over 5 achievements selected. Is this OK?"), TEXT("Warning"), MB_YESNO) == IDNO)
@@ -174,26 +167,23 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
-                    const auto nProblemType{ bProblem1Sel ? 1 : bProblem2Sel ? 2 : 0 };	// 0==?
-                    const auto sProblemTypeNice{ PROBLEM_STR.at(nProblemType) };
+                    const auto nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2U : 0u;	// 0==?
+                    const auto sProblemTypeNice = PROBLEM_STR.at(nProblemType);
 
                     //	Intentionally MBCS
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                    std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
-                    sBugReportInFull += ra::Narrow(pGameContext.GameTitle()).c_str();
-                    sBugReportInFull += "\nAchievement IDs: ";
-                    sBugReportInFull += sBuggedIDs;
-                    sBugReportInFull += "\nProblem: ";
-                    sBugReportInFull += sProblemTypeNice;
-                    sBugReportInFull += "\nReporter: ";
-                    sBugReportInFull += RAUsers::LocalUser().Username();
-                    sBugReportInFull += "\nROM Checksum: ";
-                    sBugReportInFull += pGameContext.GameHash().c_str();
-                    sBugReportInFull += "\n\nComment: "; 
-                    sBugReportInFull += sBugReportComment;
-                    sBugReportInFull += "\n\nIs this OK?";
-                        
-                        
+                    const auto sBugReportInFull = ra::StringPrintf(
+                        "--New Bug Report--\n\nGame: %s\n"
+                        "Achievement IDs: %s\n"
+                        "Problem: %s\n"
+                        "Reporter: %s\n"
+                        "ROM Checksum: %s\n\n"
+                        "Comment: %s\n\n"
+                        "Is this OK?",
+                        ra::Narrow(pGameContext.GameTitle()).c_str(), sBuggedIDs.c_str(), sProblemTypeNice,
+                        RAUsers::LocalUser().Username().c_str(), pGameContext.GameHash().c_str(),
+                        sBugReportComment.c_str()
+                    );
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;

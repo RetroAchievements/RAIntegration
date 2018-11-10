@@ -99,9 +99,9 @@ HANDLE RAWeb::ms_hHTTPMutex = nullptr;
 HttpResults RAWeb::ms_LastHttpResults;
 time_t RAWeb::ms_tSendNextKeepAliveAt = time(nullptr);
 
-PostArgs PrevArgs;
-
 std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
+
+const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
@@ -296,7 +296,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
         const char* mimeBoundary = "---------------------------41184676334";
         const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
-        int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        const int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
         if (nResult != 0)
         {
             // Add the photo to the stream
@@ -413,21 +413,20 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
 
 //////////////////////////////////////////////////////////////////////////
 
-void RAWeb::SendKeepAlive()
+static void DoSendKeepAlive(unsigned int nGameId)
 {
     if (!RAUsers::LocalUser().IsLoggedIn())
         return;
 
-    //  Post a pingback once every few minutes to keep the server aware of our presence
-    time_t tNow = time(nullptr);
-    if (tNow < ms_tSendNextKeepAliveAt)
-        return;
-
-    ms_tSendNextKeepAliveAt = tNow + SERVER_PING_DURATION;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-    if (pGameContext.GameId() == 0)
+    if (pGameContext.GameId() != nGameId)
         return;
+
+    // schedule the next ping
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
+    {
+        DoSendKeepAlive(nGameId);
+    });
 
     PostArgs args;
     args['u'] = RAUsers::LocalUser().Username();
@@ -449,9 +448,9 @@ void RAWeb::SendKeepAlive()
         }
         else
         {
-            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
-            if (!sRPResponse.empty())
-                args['m'] = sRPResponse;
+            const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
+            if (pGameContext.HasRichPresence() && !sRPResponse.empty())
+                args['m'] = ra::Narrow(sRPResponse);
             else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
                 args['m'] = "Earning Achievements";
             else
@@ -464,9 +463,19 @@ void RAWeb::SendKeepAlive()
     //   from 'currently playing'.
     //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
     {
-        RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
-        PrevArgs = args;
+        std::string sResponse;
+        RAWeb::DoBlockingRequest(RequestPing, args, sResponse);
     }
+}
+
+void RAWeb::StartKeepAlive()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    int nGameId = pGameContext.GameId();
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
+    {
+        DoSendKeepAlive(nGameId);
+    });
 }
 
 //////////////////////////////////////////////////////////////////////////

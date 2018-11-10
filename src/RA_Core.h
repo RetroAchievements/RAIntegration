@@ -20,10 +20,11 @@ extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 
 //	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut);
+extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut);
 
 //  Read a file to a std::string. Returns false on error.
-extern bool _ReadBufferFromFile(_Out_ std::string& buffer, const wchar_t* sFile);
+_Success_(return)
+_NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* const __restrict sFile);
 
 //	Read file until reaching the end of the file, or the specified char.
 extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
@@ -40,8 +41,6 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-
-extern BOOL _FileExists(const std::wstring& sFileName);
 
 extern std::string _TimeStampToString(time_t nTime);
 

@@ -10,8 +10,6 @@
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 
-#include "services\ImageRepository.h"
-
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
@@ -33,6 +31,7 @@
 // for SubmitEntry callback
 #include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
+#include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -159,8 +158,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////
-    //	Image rendering: Setup image factory and overlay
-    ra::services::g_ImageRepository.Initialize();
+    //	Image rendering: Setup overlay
     g_AchievementOverlay.UpdateImages();
 }
 
@@ -346,6 +344,8 @@ void DownloadAndActivateAchievementData(unsigned int nGameID)
     g_pCoreAchievements->LoadFromFile(nGameID);
     g_pUnofficialAchievements->LoadFromFile(nGameID);
     g_pLocalAchievements->LoadFromFile(nGameID);
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
@@ -443,6 +443,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     g_nProcessTimer = 0;
 
+    RAWeb::StartKeepAlive();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
+
     return 0;
 }
 
@@ -492,21 +496,21 @@ API void CCONV _RA_ClearMemoryBanks()
 static unsigned long long ParseVersion(const char* sVersion)
 {
     char* pPart;
-    unsigned int major = strtoul(sVersion, &pPart, 10);
+    const auto major = strtoull(sVersion, &pPart, 10);
     if (*pPart == '.')
         ++pPart;
 
-    unsigned int minor = strtoul(pPart, &pPart, 10);
+    const auto minor = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
         ++pPart;
 
-    unsigned int patch = strtoul(pPart, &pPart, 10);
+    const auto patch = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
         ++pPart;
 
-    unsigned int revision = strtoul(pPart, &pPart, 10);
+    const auto revision = strtoul(pPart, &pPart, 10);
     // 64-bit max signed value is 9223 37203 68547 75807
-    unsigned long long version = (major * 100000) + minor;
+    auto version = (major * 100000) + minor;
     version = (version * 100000) + patch;
     version = (version * 100000) + revision;
     return version;
@@ -577,8 +581,6 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
-    RAWeb::SendKeepAlive();
-
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
     RequestObject* pObj = RAWeb::PopNextHttpResult();
@@ -607,7 +609,7 @@ API int CCONV _RA_HandleHTTPResults()
                     if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
                     {
                         const std::string& sUser = doc["User"].GetString();
-                        unsigned int nScore = doc["Score"].GetUint();
+                        const unsigned int nScore = doc["Score"].GetUint();
                         RA_LOG("%s's score: %u", sUser.c_str(), nScore);
 
                         if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
@@ -633,8 +635,8 @@ API int CCONV _RA_HandleHTTPResults()
                     if (doc.HasMember("LatestVersion"))
                     {
                         const std::string& sReply = doc["LatestVersion"].GetString();
-                        unsigned long long nServerVersion = ParseVersion(sReply.c_str());
-                        unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
+                        const unsigned long long nServerVersion = ParseVersion(sReply.c_str());
+                        const unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
 
                         if (nLocalVersion < nServerVersion)
                         {
@@ -657,7 +659,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestSubmitAwardAchievement:
                 {
                     //	Response to an achievement being awarded:
-                    ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
+                    const ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
                     const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
                     if (pAch == nullptr)
                         pAch = g_pUnofficialAchievements->Find(nAchID);
@@ -669,7 +671,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementUnlocked,
-                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
+                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
@@ -680,7 +682,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked (Error)",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementError,
-                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
+                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             g_PopupWindows.AchievementPopups().AddMessage(
@@ -742,7 +744,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
-        UINT nGameFlags = MF_STRING;
+        constexpr auto nGameFlags = ra::to_unsigned(MF_STRING);
         //if( g_pActiveAchievements->ra::GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
         //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
@@ -823,8 +825,8 @@ static void RA_CheckForUpdate()
         if (doc.HasMember("LatestVersion"))
         {
             const std::string& sReply = doc["LatestVersion"].GetString();
-            unsigned long long nServerVersion = ParseVersion(sReply.c_str());
-            unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
+            const unsigned long long nServerVersion = ParseVersion(sReply.c_str());
+            const unsigned long long nLocalVersion = ParseVersion(g_sClientVersion);
 
             if (nLocalVersion < nServerVersion)
             {
@@ -891,7 +893,7 @@ void _FetchMyProgressFromWeb()
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    ra::ui::Position oPosition = pConfiguration.GetWindowPosition(std::string(sDlgKey));
+    const ra::ui::Position oPosition = pConfiguration.GetWindowPosition(std::string(sDlgKey));
     ra::ui::Size oSize = pConfiguration.GetWindowSize(std::string(sDlgKey));
 
     // if the remembered size is less than the default size, reset it
@@ -1127,10 +1129,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            g_RichPresenceInterpreter.Load();
+            ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.RichPresenceMonitor.Show();
+            pWindowManager.RichPresenceMonitor.StartMonitoring();
 
             break;
         }
@@ -1138,7 +1141,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         case IDM_RA_TOGGLELEADERBOARDS:
         {
             auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+            const bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
             pConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
             if (!bLeaderboardsActive)
@@ -1331,8 +1334,9 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
 }
 
 _Use_decl_annotations_
-bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
+bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const __restrict sFile)
 {
+    buffer.clear();
     std::ifstream file(sFile);
     if (file.fail())
         return false;
@@ -1346,9 +1350,9 @@ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const sFile)
     return true;
 }
 
-_Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
+    nFileSizeOut = 0L;
     FILE* pf = nullptr;
     _wfopen_s(&pf, sFilename, L"r");
     if (pf == nullptr)
@@ -1369,9 +1373,12 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
     char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
-    ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+    if (pRawFileOut)
+    {
+        ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+        fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
+    }
 
-    fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
     fclose(pf);
 
     return pRawFileOut;
@@ -1382,21 +1389,6 @@ std::string _TimeStampToString(time_t nTime)
     char buffer[64];
     ctime_s(buffer, 64, &nTime);
     return std::string(buffer);
-}
-
-BOOL _FileExists(const std::wstring& sFileName)
-{
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sFileName.c_str(), L"rb");
-    if (pf != nullptr)
-    {
-        fclose(pf);
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
 }
 
 namespace ra {
@@ -1434,7 +1426,7 @@ std::string GetFolderFromDialog() noexcept
     
     std::string ret;
     {
-        auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
+        const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
         {
             ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
             lpItemIdList = nullptr;

@@ -103,7 +103,6 @@
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
     <ClCompile Include="RA_PopupWindows.cpp" />
-    <ClCompile Include="RA_ProgressPopup.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
@@ -116,8 +115,9 @@
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
-    <ClCompile Include="services\ImageRepository.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
+    <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
+    <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
@@ -165,10 +165,10 @@
     <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_LeaderboardPopup.h" />
     <ClInclude Include="RA_Log.h" />
+    <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_PopupWindows.h" />
-    <ClInclude Include="RA_ProgressPopup.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
@@ -199,13 +199,18 @@
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
-    <ClInclude Include="services\ImageRepository.h" />
     <ClInclude Include="services\SearchResults.h" />
     <ClInclude Include="services\TextReader.hh" />
     <ClInclude Include="services\TextWriter.hh" />
     <ClInclude Include="ui\BindingBase.hh" />
+    <ClInclude Include="ui\drawing\gdi\GDISurface.hh" />
+    <ClInclude Include="ui\drawing\gdi\ImageRepository.hh" />
+    <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh" />
+    <ClInclude Include="ui\drawing\ISurface.hh" />
     <ClInclude Include="ui\IDesktop.hh" />
+    <ClInclude Include="ui\ImageReference.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
+    <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
@@ -329,7 +334,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">
     <TargetName>RA_Integration</TargetName>
-    <CodeAnalysisRuleSet>CppCoreCheckClassRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>ra_rules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
@@ -430,6 +435,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -10,6 +10,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ra_math.h"
+
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 
 namespace {
@@ -246,7 +248,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
 
     item.iSubItem = 3;
-    ListView_SetItemText(hList, item.iItem, 3, const_cast<LPTSTR>(NativeStr(sFilename).c_str()));
+    ListView_SetItemText(hList, item.iItem, 3, NativeStr(sFilename).data());
 
     m_vGameEntries.push_back(GameEntry(sTitle, sFilename, nGameID));
 }
@@ -281,7 +283,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
         {
             // obtain file size:
             fseek(pf, 0, SEEK_END);
-            DWORD nSize = ftell(pf);
+            const DWORD nSize = ftell(pf);
             rewind(pf);
 
             // May have caused a buffer overrun, this is way to big to be on the stack
@@ -314,7 +316,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
     HANDLE hFind = FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd);
     if (hFind != INVALID_HANDLE_VALUE)
     {
-        unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
+        constexpr unsigned int ROM_MAX_SIZE = 6 * 1024 * 1024;
         unsigned char* sROMRawData = new unsigned char[ROM_MAX_SIZE];
 
         do

@@ -137,7 +137,7 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     ra::services::Http::Request request(sUrl);
     request.DownloadAsync(sFilename, [this,sFilename,sUrl](const ra::services::Http::Response& response)
     {
-        if (response.StatusCode() == 200)
+        if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
             auto nFileSize = static_cast<size_t>(ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename));
             RA_LOG_INFO("Wrote %zu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());

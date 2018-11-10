@@ -19,6 +19,8 @@
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
 
+#include "api\Logout.hh"
+
 #include "data\GameContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -591,10 +593,6 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestLogin:
-                    RAUsers::LocalUser().HandleSilentLoginResponse(doc);
-                    break;
-
                 case RequestBadgeIter:
                     g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
                     break;
@@ -1007,14 +1005,25 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGOUT:
-            RAUsers::LocalUser().Clear();
-            g_PopupWindows.Clear();
-            ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
-            _RA_UpdateAppTitle();
+        {
+            const ra::api::Logout::Request request;
+            const auto response = request.Call();
+            if (response.Succeeded())
+            {
+                RAUsers::LocalUser().Clear();
+                g_PopupWindows.Clear();
+                ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+                _RA_UpdateAppTitle();
+                _RA_RebuildMenu();
 
-            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
-            _RA_RebuildMenu();
+                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
+            }
+            else
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Logout failed", ra::Widen(response.ErrorMessage));
+            }
             break;
+        }
 
         case IDM_RA_FILES_CHECKFORUPDATE:
             RA_CheckForUpdate();

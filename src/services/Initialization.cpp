@@ -1,5 +1,7 @@
 #include "Initialization.hh"
 
+#include "api\impl\DisconnectedServer.hh"
+
 #include "data\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
@@ -104,6 +106,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pImageRepository = new ra::ui::drawing::gdi::ImageRepository();
     pImageRepository->Initialize();
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(pImageRepository);
+
+    auto* pServer = new ra::api::impl::DisconnectedServer(pConfiguration->GetHostName());
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(pServer);
 }
 
 void Initialization::Shutdown()

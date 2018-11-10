@@ -7,6 +7,10 @@
 #include "RA_Condition.h"
 #include "RA_StringUtils.h"
 
+#include "api\ApiCall.hh"
+
+#include "services\Http.hh"
+
 #include "ui\WindowViewModelBase.hh"
 
 namespace Microsoft {
@@ -35,6 +39,11 @@ template<> static std::wstring ToString<Condition::Type>(const Condition::Type& 
     return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
+template<> static std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
+{
+    return std::to_wstring(ra::etoi(t));
+}
+
 template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
     switch (result)
@@ -45,7 +54,20 @@ template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::Dial
         case ra::ui::DialogResult::Yes: return L"Yes";
         case ra::ui::DialogResult::No: return L"No";
         case ra::ui::DialogResult::Retry: return L"Retry";
-        default: return std::to_wstring(static_cast<int>(result));
+        default: return std::to_wstring(ra::etoi(result));
+    }
+}
+
+template<> static std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
+{
+    switch (result)
+    {
+        case ra::api::ApiResult::None: return L"None";
+        case ra::api::ApiResult::Success: return L"Success";
+        case ra::api::ApiResult::Error: return L"Error";
+        case ra::api::ApiResult::Failed: return L"Failed";
+        case ra::api::ApiResult::Unsupported: return L"Unsupported";
+        default: return std::to_wstring(ra::etoi(result));
     }
 }
 

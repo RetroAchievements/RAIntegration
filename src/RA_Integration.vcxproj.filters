@@ -40,6 +40,12 @@
     <Filter Include="PCH">
       <UniqueIdentifier>{2e33d92b-6ab7-47c6-9d74-f2802ca48d25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI\Drawing">
+      <UniqueIdentifier>{73348d86-3ebd-4b81-91b6-a86ebcd070be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Drawing\GDI">
+      <UniqueIdentifier>{14c5d511-d3e0-450c-961b-e9d2706807fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="md5.c">
@@ -94,9 +100,6 @@
       <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="RA_PopupWindows.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_ProgressPopup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_md5factory.cpp">
@@ -231,9 +234,6 @@
     <ClCompile Include="services\Initialization.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="services\ImageRepository.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="services\impl\WindowsFileSystem.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
@@ -300,6 +300,12 @@
     <ClCompile Include="Exports.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
+    <ClCompile Include="ui\drawing\gdi\GDISurface.cpp">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -354,9 +360,6 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_PopupWindows.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_ProgressPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Resource.h">
@@ -427,9 +430,6 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">
       <Filter>Data\rcheevos</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ImageRepository.h">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>Data\rcheevos</Filter>
@@ -568,6 +568,24 @@
     </ClInclude>
     <ClInclude Include="ra_math.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\GDISurface.hh">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\ISurface.hh">
+      <Filter>UI\Drawing</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\Types.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\ImageRepository.hh">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ImageReference.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh">
+      <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

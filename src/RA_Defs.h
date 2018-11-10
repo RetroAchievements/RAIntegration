@@ -156,7 +156,6 @@ public:
     }
 };
 
-const int SERVER_PING_DURATION = 2 * 60;
 //};
 //using namespace RA;
 

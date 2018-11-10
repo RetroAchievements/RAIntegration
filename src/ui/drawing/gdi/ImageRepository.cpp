@@ -1,76 +1,22 @@
-#include "ImageRepository.h"
+#include "ImageRepository.hh"
 
 #include "RA_Core.h"
 #include "RA_httpthread.h"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
-namespace services {
+namespace ui {
+namespace drawing {
+namespace gdi {
 
 inline constexpr const char* DefaultBadge{ "00000" };
 inline constexpr const char* DefaultUserPic{ "_User" };
 
-ImageRepository g_ImageRepository;
-
 static CComPtr<IWICImagingFactory> g_pIWICFactory;
-static bool g_bImageRepositoryValid = false;
-
-ImageReference::~ImageReference() noexcept
-{
-    Release();
-}
-
-void ImageReference::ChangeReference(ImageType nType, const std::string& sName)
-{
-    Release();
-
-    switch (nType)
-    {
-        case ImageType::None:
-            // nothing to pre-fetch
-            break;
-
-        case ImageType::Local:
-            // no need to pre-fetch local files
-            break;
-
-        default:
-            g_ImageRepository.FetchImage(nType, sName);
-            break;
-    }
-
-    m_nType = nType;
-    m_sName = sName;
-}
-
-HBITMAP ImageReference::GetHBitmap() const
-{
-    // already have the reference, return it
-    if (m_hBitmap != nullptr)
-        return m_hBitmap;
-
-    // nothing referenced yet
-    if (m_nType == ImageType::None)
-        return nullptr;
-
-    // get the reference (and increment the reference count)
-    m_hBitmap = g_ImageRepository.GetImage(m_nType, m_sName, true);
-    if (m_hBitmap != nullptr)
-        return m_hBitmap;
-
-    // reference not yet available, return the default image
-    return g_ImageRepository.DefaultImage(m_nType);
-}
-
-void ImageReference::Release() noexcept
-{
-    if (m_hBitmap != nullptr && g_bImageRepositoryValid)
-        g_ImageRepository.ReleaseReference(m_nType, m_sName);
-    m_hBitmap = nullptr;
-}
 
 bool ImageRepository::Initialize()
 {
@@ -118,9 +64,6 @@ ImageRepository::~ImageRepository() noexcept
     for (auto& userPic : m_mUserPics)
         DeleteBitmap(userPic.second.m_hBitmap);
     m_mUserPics.clear();
-
-    // prevent errors disposing ImageReferences after the repository is disposed.
-    g_bImageRepositoryValid = false;
 }
 
 std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sName)
@@ -155,7 +98,8 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
         return;
 
     std::wstring sFilename = GetFilename(nType, sName);
-    if (_FileExists(sFilename))
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    if (pFileSystem.GetFileSize(sFilename) > 0)
         return;
 
     // check to see if it's already queued
@@ -190,12 +134,13 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
 
     RA_LOG_INFO("Downloading %s", sUrl.c_str());
 
-    Http::Request request(sUrl);
-    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const Http::Response& response)
+    ra::services::Http::Request request(sUrl);
+    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const ra::services::Http::Response& response)
     {
         if (response.StatusCode() == 200)
         {
-            RA_LOG_INFO("Wrote %zu bytes to %s", ServiceLocator::Get<IFileSystem>().GetFileSize(sFilename), ra::Narrow(sFilename).c_str());
+            auto nFileSize = static_cast<size_t>(ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename));
+            RA_LOG_INFO("Wrote %zu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
         }
         else
         {
@@ -209,16 +154,16 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     });
 }
 
-HBITMAP ImageRepository::DefaultImage(ImageType nType)
+HBITMAP ImageRepository::GetDefaultImage(ImageType nType)
 {
     switch (nType)
     {
         case ImageType::Badge:
         case ImageType::Icon:
-            return GetImage(ImageType::Badge, DefaultBadge, false);
+            return GetImage(ImageType::Badge, DefaultBadge);
 
         case ImageType::UserPic:
-            return GetImage(ImageType::UserPic, DefaultUserPic, false);
+            return GetImage(ImageType::UserPic, DefaultUserPic);
 
         default:
             ASSERT(!"Unsupported image type");
@@ -420,26 +365,23 @@ ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType)
     }
 }
 
-HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, bool bAddReference)
+HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 {
-    HBitmapMap* mMap = GetBitmapMap(nType);
-    if (mMap == nullptr)
-        return nullptr;
-    
-    HBitmapMap::iterator iter = mMap->find(sName);
-    if (iter != mMap->end())
-    {
-        if (bAddReference)
-            iter->second.m_nReferences++;
-
-        return iter->second.m_hBitmap;
-    }
-
     if (sName.empty())
         return nullptr;
 
+    HBitmapMap* mMap = GetBitmapMap(nType);
+    if (mMap == nullptr)
+        return nullptr;
+
+    HBitmapMap::iterator iter = mMap->find(sName);
+    if (iter != mMap->end())
+        return iter->second.m_hBitmap;
+
     std::wstring sFilename = GetFilename(nType, sName);
-    if (!_FileExists(sFilename))
+
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    if (pFileSystem.GetFileSize(sFilename) <= 0)
     {
         FetchImage(nType, sName);
         return nullptr;
@@ -447,18 +389,65 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName, boo
 
     const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
-    auto& item = (*mMap)[sName];
-    item.m_hBitmap = hBitmap;
-    item.m_nReferences = bAddReference ? 1 : 0;
+    if (hBitmap != nullptr)
+    {
+        // bracket operator appears to be the only way to add an item to the map since
+        // std::atomic deleted its move and copy constructors.
+        auto& item = (*mMap)[sName];
+        item.m_hBitmap = hBitmap;
+    }
+
     return hBitmap;
 }
 
-void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName) noexcept
+HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
-    HBitmapMap* mMap = GetBitmapMap(nType);
+    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
+    if (hBitmap == nullptr)
+    {
+        auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());
+        if (pImageRepository != nullptr)
+        {
+            hBitmap = pImageRepository->GetImage(pImage.Type(), pImage.Name());
+            if (hBitmap == nullptr)
+                return pImageRepository->GetDefaultImage(pImage.Type());
+
+            auto& pMutableImage = const_cast<ImageReference&>(pImage);
+            pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
+
+            // ImageReference will release the reference
+            pImageRepository->AddReference(pMutableImage);
+        }
+    }
+
+    return hBitmap;
+}
+
+void ImageRepository::AddReference(ImageReference& pImage) noexcept
+{
+    if (pImage.Name().empty())
+        return;
+
+    HBitmapMap* mMap = GetBitmapMap(pImage.Type());
+    if (mMap == nullptr)
+        return;
+
+    HBitmapMap::iterator iter = mMap->find(pImage.Name());
+    ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
+    if (iter != mMap->end())
+        ++iter->second.m_nReferences;
+}
+
+void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
+{
+    // if data isn't set, we don't have a reference to release.
+    if (pImage.GetData() == 0)
+        return;
+
+    HBitmapMap* mMap = GetBitmapMap(pImage.Type());
     if (mMap != nullptr)
     {
-        HBitmapMap::iterator iter = mMap->find(sName);
+        HBitmapMap::iterator iter = mMap->find(pImage.Name());
         if (iter != mMap->end())
         {
             HBITMAP hBitmap = iter->second.m_hBitmap;
@@ -469,7 +458,11 @@ void ImageRepository::ReleaseReference(ImageType nType, const std::string& sName
             }
         }
     }
+
+    pImage.SetData(0ULL);
 }
 
+} // namespace gdi
+} // namespace drawing
 } // namespace services
 } // namespace ra

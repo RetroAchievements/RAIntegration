@@ -6,7 +6,7 @@
 #include "RA_User.h"
 #include "RA_Core.h" // RA_Interface
 
-#include "services\ImageRepository.h" // map, string
+#include "ui\ImageReference.hh"
 
 class LeaderboardExamine
 {
@@ -191,9 +191,9 @@ private:
     std::array<Page, 5>   m_Pages{ Page::Achievements };
     unsigned int          m_nPageStackPointer{};
 
-    ra::services::ImageReference m_hOverlayBackground;
-    ra::services::ImageReference m_hUserImage;
-    mutable std::map<std::string, ra::services::ImageReference> m_mAchievementBadges;
+    ra::ui::ImageReference m_hOverlayBackground;
+    ra::ui::ImageReference m_hUserImage;
+    mutable std::map<std::string, ra::ui::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;
 

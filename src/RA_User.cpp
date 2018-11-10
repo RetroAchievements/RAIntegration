@@ -134,13 +134,14 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
 
     m_aFriends.clear();
 
-    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
     RequestFriendList();
 
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
         "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-        PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
+        PopupMessageType::PopupLogin, ra::ui::ImageType::UserPic, Username()));
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     g_AchievementsDialog.OnLoad_NewRom(pGameContext.GameId());
@@ -191,7 +192,8 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
     RAUser* pUser = RAUsers::GetUser(sUser);
     pUser->SetScore(nScore);
-    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
 
     std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
     while (iter != m_aFriends.end())

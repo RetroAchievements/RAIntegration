@@ -5,7 +5,9 @@
 #include "RA_Defs.h"
 #include "RA_Interface.h"
 
-#include "services\ImageRepository.h"
+#include "ui\ImageReference.hh"
+
+#include "ui\drawing\gdi\ResourceRepository.hh"
 
 //	Graphic to display an obtained achievement
 enum PopupMessageType
@@ -25,7 +27,7 @@ class MessagePopup
 {
 public:
     MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType, 
-        ra::services::ImageType nImageType, const std::string& sImageName ) :
+        ra::ui::ImageType nImageType, const std::string& sImageName ) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
@@ -37,7 +39,7 @@ public:
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
-        m_hMessageImage(ra::services::ImageType::None, "")
+        m_hMessageImage(ra::ui::ImageType::None, "")
     {
     }
 
@@ -45,13 +47,13 @@ public:
     const std::string& Title() const { return m_sMessageTitle; }
     const std::string& Subtitle() const { return m_sMessageSubtitle; }
     PopupMessageType Type() const { return m_nMessageType; }
-    HBITMAP Image() const { return m_hMessageImage.GetHBitmap(); }
+    const ra::ui::ImageReference& Image() const { return m_hMessageImage; }
 
 private:
     const std::string m_sMessageTitle;
     const std::string m_sMessageSubtitle;
     const PopupMessageType m_nMessageType;
-    const ra::services::ImageReference m_hMessageImage;
+    const ra::ui::ImageReference m_hMessageImage;
 };
 
 class AchievementPopup
@@ -75,6 +77,8 @@ public:
     void PlayAudio();
 
 private:
+    ra::ui::drawing::gdi::ResourceRepository m_pResourceRepository;
+
     std::queue<MessagePopup> m_vMessages;
     float m_fTimer;
 };

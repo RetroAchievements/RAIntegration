@@ -10,8 +10,6 @@
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 
-#include "services\ImageRepository.h"
-
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
@@ -33,6 +31,7 @@
 // for SubmitEntry callback
 #include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
+#include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -159,8 +158,7 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////
-    //	Image rendering: Setup image factory and overlay
-    ra::services::g_ImageRepository.Initialize();
+    //	Image rendering: Setup overlay
     g_AchievementOverlay.UpdateImages();
 }
 
@@ -346,6 +344,8 @@ void DownloadAndActivateAchievementData(unsigned int nGameID)
     g_pCoreAchievements->LoadFromFile(nGameID);
     g_pUnofficialAchievements->LoadFromFile(nGameID);
     g_pLocalAchievements->LoadFromFile(nGameID);
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
@@ -442,6 +442,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemBookmarkDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
+
+    RAWeb::StartKeepAlive();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
 
     return 0;
 }
@@ -577,8 +581,6 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
 API int CCONV _RA_HandleHTTPResults()
 {
-    RAWeb::SendKeepAlive();
-
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
     RequestObject* pObj = RAWeb::PopNextHttpResult();
@@ -669,7 +671,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementUnlocked,
-                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
+                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
@@ -680,7 +682,7 @@ API int CCONV _RA_HandleHTTPResults()
                                 MessagePopup("Achievement Unlocked (Error)",
                                     pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
                                     PopupMessageType::PopupAchievementError,
-                                    ra::services::ImageType::Badge, pAch->BadgeImageURI()));
+                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             g_PopupWindows.AchievementPopups().AddMessage(
@@ -1127,10 +1129,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_PARSERICHPRESENCE:
         {
-            g_RichPresenceInterpreter.Load();
+            ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
 
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.RichPresenceMonitor.Show();
+            pWindowManager.RichPresenceMonitor.StartMonitoring();
 
             break;
         }
@@ -1386,21 +1389,6 @@ std::string _TimeStampToString(time_t nTime)
     char buffer[64];
     ctime_s(buffer, 64, &nTime);
     return std::string(buffer);
-}
-
-BOOL _FileExists(const std::wstring& sFileName)
-{
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sFileName.c_str(), L"rb");
-    if (pf != nullptr)
-    {
-        fclose(pf);
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
 }
 
 namespace ra {

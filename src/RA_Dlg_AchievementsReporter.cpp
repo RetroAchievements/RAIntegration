@@ -7,18 +7,15 @@
 #include "RA_User.h"
 
 #include "data\GameContext.hh"
-namespace {
 
-const char* COL_TITLE[] = { "", "Title", "Description", "Author", "Achieved?" };
-const int COL_SIZE[] = { 19, 105, 205, 75, 62 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-
-const char* PROBLEM_STR[] = { "Unknown", "Triggers at wrong time", "Didn't trigger at all" };
-
-}
+inline constexpr std::array<const char* const, 3>  PROBLEM_STR{
+    "Unknown", "Triggers at wrong time", "Didn't trigger at all"
+};
 
 int Dlg_AchievementsReporter::ms_nNumOccupiedRows = 0;
-char Dlg_AchievementsReporter::ms_lbxData[MAX_ACHIEVEMENTS][NumReporterColumns][MAX_TEXT_LEN];
+char Dlg_AchievementsReporter::ms_lbxData[MAX_ACHIEVEMENTS]
+                                         [Dlg_AchievementsReporter::COL_SIZE.size()]
+                                         [MAX_TEXT_LEN];
 
 Dlg_AchievementsReporter g_AchievementsReporterDialog;
 
@@ -30,78 +27,83 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    auto i = 0U;
+    for (const auto& sTitle : COL_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COL_SIZE[i];
-        col.cchTextMax = 255;
-        ra::tstring str = NativeStr(COL_TITLE[i]);	//	Hold the temporary object
-        col.pszText = str.data();
-        col.iSubItem = i;
+        ra::tstring str{ sTitle };
+        LV_COLUMN col
+        {
+            col.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            col.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            col.cx         = COL_SIZE.at(i),
+            col.pszText    = str.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = ra::to_signed(i)
+        };
 
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//If the last element: fill to the end
+        if (i == (COL_TITLE.size() - 1)) //If the last element: fill to the end
             col.fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, reinterpret_cast<LPARAM>(&col));
+        ListView_InsertColumn(hList, i, &col);
+        i++;
     }
 
     ms_nNumOccupiedRows = 0;
 }
 
-int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* pAch)
+_Use_decl_annotations_
+void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* const pAch)
 {
-    for (size_t i = 0; i < NumReporterColumns; ++i)
+    // We aren't actually using the value so we're using iterators
+    for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
-        switch (i)
+        const auto nPos{ std::distance(COL_TITLE.cbegin(), it) };
+        switch (ra::itoe<Column>(nPos))
         {
-            case Checked:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, "");
+            case Column::Checked:
+                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, "");
                 break;
-            case Title:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, pAch->Title().c_str());
+            case Column::Title:
+                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Title().c_str());
                 break;
-            case Desc:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, pAch->Description().c_str());
+            case Column::Desc:
+                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Description().c_str());
                 break;
-            case Author:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, pAch->Author().c_str());
+            case Column::Author:
+                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Author().c_str());
                 break;
-            case Achieved:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][i], MAX_TEXT_LEN, !pAch->Active() ? "Yes" : "No");
+            case Column::Achieved:
+                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, !pAch->Active() ? "Yes" : "No");
                 break;
             default:
                 ASSERT(!"Unknown col!");
-                break;
         }
     }
 
-    LV_ITEM item;
-    ZeroMemory(&item, sizeof(item));
-
-    item.mask = LVIF_TEXT;
-    item.cchTextMax = 256;
-    item.iItem = ms_nNumOccupiedRows;
-
-    for (size_t i = 0; i < NumReporterColumns; ++i)
+    for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
-        item.iSubItem = i;
-        ra::tstring sStr = NativeStr(ms_lbxData[ms_nNumOccupiedRows][i]);	//Scoped cache
-        item.pszText = sStr.data();
+        // difference_type could be 8 bytes.
+        const auto nPos{ ra::narrow_cast<int>(std::distance(COL_TITLE.cbegin(), it)) }; 
+        ra::tstring sStr{ NativeStr(ms_lbxData[ms_nNumOccupiedRows][nPos]) }; // Scoped cache
+        LV_ITEM item
+        {
+            item.mask       = ra::to_unsigned(LVIF_TEXT),
+            item.iItem      = ms_nNumOccupiedRows,
+            item.iSubItem   = nPos,
+            item.state      = 0U,
+            item.stateMask  = 0U,
+            item.pszText    = sStr.data(),
+            item.cchTextMax = 256
+        };
 
-        if (i == 0)
+        if (nPos == 0)
             item.iItem = ListView_InsertItem(hList, &item);
         else
             ListView_SetItem(hList, &item);
+        ASSERT(item.iItem == ms_nNumOccupiedRows);
     }
 
-    ASSERT(item.iItem == ms_nNumOccupiedRows);
-
     ms_nNumOccupiedRows++;	//	Last thing to do!
-    return item.iItem;
 }
 
 INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
@@ -114,7 +116,9 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
             SetupColumns(hList);
 
             for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
+            {
                 AddAchievementToListBox(hList, &g_pActiveAchievements->GetAchievement(i));
+            }
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP);
             SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, NativeStr(RAUsers::LocalUser().Username()).c_str());
@@ -126,10 +130,10 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
             {
                 case IDOK:
                 {
-                    HWND hList = GetDlgItem(hDlg, IDC_RA_REPORTBROKENACHIEVEMENTSLIST);
-
-                    const bool bProblem1Sel = (IsDlgButtonChecked(hDlg, IDC_RA_PROBLEMTYPE1) == BST_CHECKED);
-                    const bool bProblem2Sel = (IsDlgButtonChecked(hDlg, IDC_RA_PROBLEMTYPE2) == BST_CHECKED);
+                    const auto hList{ ::GetDlgItem(hDlg, IDC_RA_REPORTBROKENACHIEVEMENTSLIST) };
+                    
+                    const auto bProblem1Sel{ Button_GetCheck(GetDlgItem(hDlg, IDC_RA_PROBLEMTYPE1)) };
+                    const auto bProblem2Sel{ Button_GetCheck(GetDlgItem(hDlg, IDC_RA_PROBLEMTYPE2)) };
 
                     if ((bProblem1Sel == false) && (bProblem2Sel == false))
                     {
@@ -137,29 +141,19 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         return FALSE;
                     }
 
-                    const int nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2 : 0;	// 0==?
-                    const char* sProblemTypeNice = PROBLEM_STR[nProblemType];
-
-                    char sBuggedIDs[1024];
-                    sprintf_s(sBuggedIDs, 1024, "");
+                    std::string sBuggedIDs;
 
                     int nReportCount = 0;
-
-                    const size_t nListSize = ListView_GetItemCount(hList);
-                    for (size_t i = 0; i < nListSize; ++i)
+                    const int nListSize = ListView_GetItemCount(hList);
+                    for (auto i = 0; i < nListSize; ++i)
                     {
                         if (ListView_GetCheckState(hList, i) != 0)
                         {
-                            //	NASTY big assumption here...
-                            char buffer[1024];
-                            sprintf_s(buffer, 1024, "%u,", g_pActiveAchievements->GetAchievement(i).ID());
-                            strcat_s(sBuggedIDs, 1024, buffer);
-
-                            //ListView_GetItem( hList );	
+                            sBuggedIDs.append(ra::StringPrintf("%zu,", g_pActiveAchievements->GetAchievement(i).ID()));
                             nReportCount++;
                         }
                     }
-
+                    sBuggedIDs.pop_back(); // gets rid of extra comma
                     if (nReportCount > 5)
                     {
                         if (MessageBox(nullptr, TEXT("You have over 5 achievements selected. Is this OK?"), TEXT("Warning"), MB_YESNO) == IDNO)
@@ -170,23 +164,23 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
+                    const auto nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2U : 0u;	// 0==?
+                    const auto sProblemTypeNice = PROBLEM_STR.at(nProblemType);
+
                     //	Intentionally MBCS
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                    std::string sBugReportInFull{ "--New Bug Report--\n\nGame: " };
-                    sBugReportInFull += ra::Narrow(pGameContext.GameTitle()).c_str();
-                    sBugReportInFull += "\nAchievement IDs: ";
-                    sBugReportInFull += sBuggedIDs;
-                    sBugReportInFull += "\nProblem: ";
-                    sBugReportInFull += sProblemTypeNice;
-                    sBugReportInFull += "\nReporter: ";
-                    sBugReportInFull += RAUsers::LocalUser().Username();
-                    sBugReportInFull += "\nROM Checksum: ";
-                    sBugReportInFull += pGameContext.GameHash().c_str();
-                    sBugReportInFull += "\n\nComment: "; 
-                    sBugReportInFull += sBugReportComment;
-                    sBugReportInFull += "\n\nIs this OK?";
-                        
-                        
+                    const auto sBugReportInFull = ra::StringPrintf(
+                        "--New Bug Report--\n\nGame: %s\n"
+                        "Achievement IDs: %s\n"
+                        "Problem: %s\n"
+                        "Reporter: %s\n"
+                        "ROM Checksum: %s\n\n"
+                        "Comment: %s\n\n"
+                        "Is this OK?",
+                        ra::Narrow(pGameContext.GameTitle()).c_str(), sBuggedIDs.c_str(), sProblemTypeNice,
+                        RAUsers::LocalUser().Username().c_str(), pGameContext.GameHash().c_str(),
+                        sBugReportComment.c_str()
+                    );
 
                     if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
                         return FALSE;

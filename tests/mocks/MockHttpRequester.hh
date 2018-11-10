@@ -12,7 +12,7 @@ namespace mocks {
 class MockHttpRequester : public IHttpRequester
 {
 public:
-    explicit MockHttpRequester(std::function<Http::Response(const Http::Request&)>&& fHandler) noexcept
+    explicit MockHttpRequester(std::function<Http::Response(const Http::Request&)>&& fHandler)
         : m_Override(this), m_fHandler(fHandler)
     {
     }

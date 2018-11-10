@@ -19,7 +19,7 @@ public:
     class Response
     {
     public:
-        explicit Response(Http::StatusCode nStatusCode, const std::string& sResponse) noexcept
+        explicit Response(Http::StatusCode nStatusCode, const std::string& sResponse)
             : m_nStatusCode(nStatusCode), m_sResponse(sResponse)
         {
         }

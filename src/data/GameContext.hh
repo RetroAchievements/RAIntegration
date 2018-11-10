@@ -3,6 +3,7 @@
 #pragma once
 
 #include "RA_RichPresence.h"
+#include "RA_AchievementSet.h"
 
 #include <string>
 
@@ -43,7 +44,31 @@ public:
     /// Sets the game hash.
     /// </summary>
     void SetGameHash(const std::string& sGameHash) { m_sGameHash = sGameHash; }
+        
+    /// <summary>
+    /// Gets which achievements are active.
+    /// </summary>
+    virtual AchievementSet::Type ActiveAchievementType() const 
+    {
+#ifdef RA_UTEST
+        return AchievementSet::Type::Core;
+#else
+        return g_nActiveAchievementSet; 
+#endif
+    }
     
+    /// <summary>
+    /// Determines if any achievements are currently active.
+    /// </summary>
+    virtual bool HasActiveAchievements() const 
+    {
+#ifdef RA_UTEST
+        return false;
+#else
+        return g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0; 
+#endif
+    }
+
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>

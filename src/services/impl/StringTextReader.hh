@@ -38,6 +38,11 @@ public:
         return true;
     }
 
+    long GetPosition() const override
+    {
+        return static_cast<long>(const_cast<std::istringstream&>(m_iStream).tellg());
+    }
+
     std::string GetString() { return m_iStream.str(); }
 
 private:

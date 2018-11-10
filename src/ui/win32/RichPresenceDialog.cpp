@@ -13,24 +13,23 @@ bool RichPresenceDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBas
     return (dynamic_cast<const ra::ui::viewmodels::RichPresenceMonitorViewModel*>(&oViewModel) != nullptr);
 }
 
-void RichPresenceDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel)
+void RichPresenceDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    ShowWindow(oViewModel);
+    ShowWindow(vmViewModel);
 }
 
-void RichPresenceDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
+void RichPresenceDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto& oRichPresenceViewModel = reinterpret_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(oViewModel);
+    auto& vmRichPresenceViewModel = reinterpret_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(vmViewModel);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new RichPresenceDialog(oRichPresenceViewModel));
+        m_pDialog.reset(new RichPresenceDialog(vmRichPresenceViewModel));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), this))
             RA_LOG_ERR("Could not create RichPresence dialog!");
     }
-    
-    if (m_pDialog->ShowDialogWindow())
-        m_pDialog->StartTimer();
+
+    m_pDialog->ShowDialogWindow();
 }
 
 void RichPresenceDialog::Presenter::OnClosed()
@@ -54,57 +53,27 @@ RichPresenceDialog::~RichPresenceDialog() noexcept
     DeleteFont(m_hFont);
 }
 
-static void UpdateDisplayString(ra::ui::WindowViewModelBase& vmWindow)
-{
-    auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(vmWindow);
-    vmRichPresence.UpdateDisplayString();
-}
 
 BOOL RichPresenceDialog::OnInitDialog()
 {
     SetWindowFont(::GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), m_hFont, FALSE);
-    UpdateDisplayString(m_vmWindow);
     return DialogBase::OnInitDialog();
+}
+
+void RichPresenceDialog::OnShown()
+{
+    auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(m_vmWindow);
+    vmRichPresence.StartMonitoring();
+
+    DialogBase::OnShown();
 }
 
 void RichPresenceDialog::OnDestroy()
 {
-    StopTimer();
+    auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(m_vmWindow);
+    vmRichPresence.StopMonitoring();
 
     DialogBase::OnDestroy();
-}
-
-INT_PTR CALLBACK RichPresenceDialog::DialogProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (nMsg)
-    {
-        case WM_TIMER:
-        {
-            UpdateDisplayString(m_vmWindow);
-            return TRUE;
-        }
-
-        default:
-            return DialogBase::DialogProc(hDlg, nMsg, wParam, lParam);
-    }
-}
-
-void RichPresenceDialog::StartTimer()
-{
-    if (!m_bTimerActive)
-    {
-        SetTimer(GetHWND(), 1, 1000, nullptr);
-        m_bTimerActive = true;
-    }
-}
-
-void RichPresenceDialog::StopTimer()
-{
-    if (m_bTimerActive)
-    {
-        KillTimer(GetHWND(), 1);
-        m_bTimerActive = false;
-    }
 }
 
 } // namespace win32

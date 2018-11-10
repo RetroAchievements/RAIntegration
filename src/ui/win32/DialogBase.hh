@@ -44,7 +44,7 @@ public:
     /// Shows the dialog window.
     /// </summary>
     /// <returns><c>true</c> if the window was shown, <c>false</c> if CreateDialogWindow has not been called.</returns>
-    _NODISCARD bool ShowDialogWindow() const
+    bool ShowDialogWindow() const
     {
         if (!m_hWnd)
             return false;
@@ -69,7 +69,12 @@ protected:
     virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
-    /// Called when the window is moved.
+    /// Called when the window is shown.
+    /// </summary>
+    virtual void OnShown() {}
+
+    /// <summary>
+    /// Called when the window is destroyed.
     /// </summary>
     virtual void OnDestroy();
 

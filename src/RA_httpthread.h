@@ -112,7 +112,7 @@ public:
 
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
-    static void SendKeepAlive();
+    static void StartKeepAlive();
 
     static HANDLE Mutex() { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }

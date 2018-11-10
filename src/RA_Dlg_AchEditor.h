@@ -5,7 +5,7 @@
 #include "RA_httpthread.h"
 #include "RA_Achievement.h"
 
-#include "services\ImageRepository.h"
+#include "ui\ImageReference.hh"
 
 namespace {
 const size_t MAX_CONDITIONS = 200;
@@ -93,7 +93,7 @@ private:
 
     Achievement* m_pSelectedAchievement;
     BOOL m_bPopulatingAchievementEditorData;
-    ra::services::ImageReference m_hAchievementBadge;
+    ra::ui::ImageReference m_hAchievementBadge;
 
     BadgeNames m_BadgeNames;
 };

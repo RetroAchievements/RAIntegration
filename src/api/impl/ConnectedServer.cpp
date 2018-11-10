@@ -62,7 +62,7 @@ _NODISCARD static bool GetJson(_In_ const char* sApiName, _In_ const ra::service
     {
         pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
-        RA_LOG_ERR("-- %s Error: %s\n", sApiName, pResponse.ErrorMessage.c_str());
+        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 

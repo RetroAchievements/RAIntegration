@@ -152,12 +152,12 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             default:
                 ASSERT(!"Unsupported condition type");
                 _FALLTHROUGH;
-            case RC_CONDITION_STANDARD: cond.SetConditionType(Condition::ConditionType::Standard); break;
-            case RC_CONDITION_RESET_IF: cond.SetConditionType(Condition::ConditionType::ResetIf); break;
-            case RC_CONDITION_PAUSE_IF: cond.SetConditionType(Condition::ConditionType::PauseIf); break;
-            case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::ConditionType::AddSource); break;
-            case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::ConditionType::SubSource); break;
-            case RC_CONDITION_ADD_HITS: cond.SetConditionType(Condition::ConditionType::AddHits); break;
+            case RC_CONDITION_STANDARD:   cond.SetConditionType(Condition::Type::Standard);  break;
+            case RC_CONDITION_RESET_IF:   cond.SetConditionType(Condition::Type::ResetIf);   break;
+            case RC_CONDITION_PAUSE_IF:   cond.SetConditionType(Condition::Type::PauseIf);   break;
+            case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::Type::AddSource); break;
+            case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::Type::SubSource); break;
+            case RC_CONDITION_ADD_HITS:   cond.SetConditionType(Condition::Type::AddHits);   break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);

@@ -138,10 +138,19 @@
     <ClCompile Include="..\src\pch.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
     <ClCompile Include="Exports_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Exports.cpp">
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\GameContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="api\DisconnectedServer_Tests.cpp">

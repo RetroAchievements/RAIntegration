@@ -2,8 +2,6 @@
 
 #include "RA_Defs.h"
 
-const char* CONDITIONTYPE_STR[] ={ "", "Pause If", "Reset If", "Add Source", "Sub Source", "Add Hits" };
-static_assert(SIZEOF_ARRAY(CONDITIONTYPE_STR) == Condition::NumConditionTypes, "Must match!");
 
 _NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
@@ -44,19 +42,19 @@ void Condition::SerializeAppend(std::string& buffer) const
 {
     switch (m_nConditionType)
     {
-        case Condition::ResetIf:
+        case Type::ResetIf:
             buffer.append("R:");
             break;
-        case Condition::PauseIf:
+        case Type::PauseIf:
             buffer.append("P:");
             break;
-        case Condition::AddSource:
+        case Type::AddSource:
             buffer.append("A:");
             break;
-        case Condition::SubSource:
+        case Type::SubSource:
             buffer.append("B:");
             break;
-        case Condition::AddHits:
+        case Type::AddHits:
             buffer.append("C:");
             break;
         default:
@@ -80,17 +78,15 @@ void Condition::SerializeAppend(std::string& buffer) const
 _Use_decl_annotations_
 void CompVariable::SerializeAppend(std::string& buffer) const
 {
-    char valueBuffer[20];
     switch (m_nVarType)
     {
         case Type::ValueComparison:
-            sprintf_s(valueBuffer, sizeof(valueBuffer), "%zu", m_nVal);
-            buffer.append(valueBuffer);
+            buffer.append(std::to_string(m_nVal));
             break;
 
         case Type::DeltaMem:
             buffer.append(1, 'd');
-            // explicit fallthrough to Address
+            _FALLTHROUGH; // explicit fallthrough to Address
 
         case Type::Address:
             buffer.append("0x");
@@ -98,10 +94,9 @@ void CompVariable::SerializeAppend(std::string& buffer) const
             buffer.append(ComparisonSizeToPrefix(m_nVarSize));
 
             if (m_nVal >= 0x10000)
-                sprintf_s(valueBuffer, sizeof(valueBuffer), "%06x", m_nVal);
+                buffer.append(ra::ByteAddressToString(m_nVal));
             else
-                sprintf_s(valueBuffer, sizeof(valueBuffer), "%04x", m_nVal);
-            buffer.append(valueBuffer);
+                buffer.append(ra::ByteAddressToString(m_nVal, 4));
             break;
 
         default:

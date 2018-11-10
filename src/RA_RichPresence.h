@@ -76,6 +76,4 @@ protected:
     std::vector<DisplayString> m_vDisplayStrings;
 };
 
-extern RA_RichPresenceInterpreter g_RichPresenceInterpreter;
-
 #endif // !RA_RICHPRESENCE_H

@@ -35,7 +35,7 @@ public:
 
 public:
     static void SetupColumns(HWND hList);
-    _NODISCARD static int AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* const pAch);
+    static void AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* const pAch);
 
 public:
     static int ms_nNumOccupiedRows;

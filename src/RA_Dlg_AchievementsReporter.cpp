@@ -27,7 +27,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     //	Remove all data.
     ListView_DeleteAllItems(hList);
 
-    auto i{ 0 };
+    auto i = 0U;
     for (const auto& sTitle : COL_TITLE)
     {
         ra::tstring str{ sTitle };
@@ -38,10 +38,10 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
             col.cx         = COL_SIZE.at(i),
             col.pszText    = str.data(),
             col.cchTextMax = 255,
-            col.iSubItem   = i
+            col.iSubItem   = ra::to_signed(i)
         };
 
-        if (i == ra::to_signed(COL_TITLE.size() - 1))	//If the last element: fill to the end
+        if (i == (COL_TITLE.size() - 1)) //If the last element: fill to the end
             col.fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, i, &col);
@@ -52,13 +52,13 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
 }
 
 _Use_decl_annotations_
-int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* const pAch)
+void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* const pAch)
 {
     // We aren't actually using the value so we're using iterators
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
         const auto nPos{ std::distance(COL_TITLE.cbegin(), it) };
-        switch (const auto col{ ra::itoe<Column>(nPos) }; col)
+        switch (ra::itoe<Column>(nPos))
         {
             case Column::Checked:
                 sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, "");
@@ -80,7 +80,6 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
         }
     }
 
-    auto ret{ 0 };
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
         // difference_type could be 8 bytes.
@@ -102,11 +101,9 @@ int Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievem
         else
             ListView_SetItem(hList, &item);
         ASSERT(item.iItem == ms_nNumOccupiedRows);
-        ret = item.iItem;
     }
 
     ms_nNumOccupiedRows++;	//	Last thing to do!
-    return ret;
 }
 
 INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
@@ -120,7 +117,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 
             for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
             {
-                _UNUSED const auto nAdded{ AddAchievementToListBox(hList, &g_pActiveAchievements->GetAchievement(i)) };
+                AddAchievementToListBox(hList, &g_pActiveAchievements->GetAchievement(i));
             }
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP);
@@ -152,11 +149,11 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     {
                         if (ListView_GetCheckState(hList, i) != 0)
                         {
-                            sBuggedIDs.append(ra::StringPrintf("%zu, ", g_pActiveAchievements->GetAchievement(i).ID()));
+                            sBuggedIDs.append(ra::StringPrintf("%zu,", g_pActiveAchievements->GetAchievement(i).ID()));
                             nReportCount++;
                         }
                     }
-                    sBuggedIDs.erase(sBuggedIDs.rfind(',')); // remove extra comma, searches from end
+                    sBuggedIDs.pop_back(); // gets rid of extra comma
                     if (nReportCount > 5)
                     {
                         if (MessageBox(nullptr, TEXT("You have over 5 achievements selected. Is this OK?"), TEXT("Warning"), MB_YESNO) == IDNO)

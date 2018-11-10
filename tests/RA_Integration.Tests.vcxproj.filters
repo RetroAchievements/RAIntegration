@@ -135,10 +135,19 @@
     <ClCompile Include="..\src\pch.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
     <ClCompile Include="Exports_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Exports.cpp">
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\GameContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
@@ -279,6 +288,9 @@
     <ClCompile Include="..\src\services\Http.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>Code\rcheevos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">
@@ -289,9 +301,6 @@
     </ClInclude>
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
-      <Filter>Code\rcheevos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

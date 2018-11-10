@@ -33,7 +33,7 @@ public:
     /// </summary>
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
-    void CreateModalWindow(LPTSTR sResourceId, IDialogPresenter* pDialogPresenter);
+    void CreateModalWindow(_In_ LPCTSTR sResourceId, _In_ IDialogPresenter* const pDialogPresenter);
 
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.
@@ -44,7 +44,7 @@ public:
     /// Shows the dialog window.
     /// </summary>
     /// <returns><c>true</c> if the window was shown, <c>false</c> if CreateDialogWindow has not been called.</returns>
-    _NODISCARD bool ShowDialogWindow() const
+    bool ShowDialogWindow() const
     {
         if (!m_hWnd)
             return false;
@@ -60,7 +60,7 @@ protected:
     /// <summary>
     /// Callback for processing <c>WINAPI</c> messages - do not call directly!
     /// </summary>
-    _NODISCARD virtual INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+    _NODISCARD virtual INT_PTR CALLBACK DialogProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
     /// <summary>
     /// Called when the window is created, but before it is shown.
@@ -69,7 +69,12 @@ protected:
     virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
-    /// Called when the window is moved.
+    /// Called when the window is shown.
+    /// </summary>
+    virtual void OnShown() {}
+
+    /// <summary>
+    /// Called when the window is destroyed.
     /// </summary>
     virtual void OnDestroy();
 

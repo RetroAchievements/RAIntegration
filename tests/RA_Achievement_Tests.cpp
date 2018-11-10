@@ -29,7 +29,7 @@ public:
 
         void AssertState(size_t nGroup, size_t nCondition, unsigned nHits, unsigned nSrcValue, unsigned nSrcPrev, unsigned nCmpValue, unsigned nCmpPrev)
         {
-            rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
+            const rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
             Assert::AreEqual(nHits, pTrigger->current_hits, L"current_hits");
             Assert::AreEqual(nSrcValue, pTrigger->operand1.value, L"source.value");
             Assert::AreEqual(nSrcPrev, pTrigger->operand1.previous, L"source.prev");
@@ -39,7 +39,7 @@ public:
 
         void AssertHits(size_t nGroup, size_t nCondition, unsigned nHits)
         {
-            rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
+            const rc_condition_t* pTrigger = GetTriggerCondition(static_cast<rc_trigger_t*>(m_pTrigger), nGroup, nCondition);
             Assert::AreEqual(nHits, pTrigger->current_hits);
         }
 
@@ -73,7 +73,7 @@ public:
         }
     };
 
-    static int GetHitCount(Achievement& ach)
+    static int GetHitCount(const Achievement& ach)
     {
         int nHitCount = 0;
         for (size_t i = 0; i < ach.NumConditionGroups(); ++i)
@@ -87,11 +87,11 @@ public:
 
     void AssertSetTest(Achievement& ach, bool bExpectedResult, bool bExpectedDirty, bool bExpectedReset)
     {
-        int nTotalHitCountBefore = GetHitCount(ach);
+        const int nTotalHitCountBefore = GetHitCount(ach);
 
         Assert::AreEqual(bExpectedResult, ach.Test(), L"Test");
 
-        int nTotalHitCountAfter = GetHitCount(ach);
+        const int nTotalHitCountAfter = GetHitCount(ach);
 
         Assert::AreEqual(bExpectedDirty, nTotalHitCountAfter != nTotalHitCountBefore, L"bDirtyCondition");
         Assert::AreEqual(bExpectedReset, nTotalHitCountAfter < nTotalHitCountBefore, L"bWasReset");

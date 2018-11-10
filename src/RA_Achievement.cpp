@@ -94,7 +94,7 @@ static MemSize GetCompVariableSize(char nOperandSize)
     }
 }
 
-static void SetOperand(CompVariable& var, rc_operand_t& operand)
+inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& operand) noexcept
 {
     switch (operand.type)
     {
@@ -171,7 +171,7 @@ void Achievement::ParseTrigger(const char* sTrigger)
 {
     m_vConditions.Clear();
 
-    int nSize = rc_trigger_size(sTrigger);
+    const int nSize = rc_trigger_size(sTrigger);
     if (nSize < 0)
     {
         // parse error occurred
@@ -303,9 +303,9 @@ bool Achievement::Test()
 
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
 
-    bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
+    const bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
 
-    bool bRetVal = rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
+    const bool bRetVal = rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
 
     if (bNotifyOnReset && !HasHitCounts(pTrigger))
     {
@@ -356,7 +356,7 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
         return 0U;
 
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+    const rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
     return pCondition ? pCondition->current_hits : 0U;
 }
 
@@ -365,7 +365,7 @@ int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer
     if (m_pTrigger != nullptr)
     {
         rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-        rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+        const rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
         if (pCondition)
         {
             return snprintf(pBuffer, 128, "%u:%u:%u:%u:%u:", pCondition->current_hits, pCondition->operand1.value, pCondition->operand1.previous,
@@ -841,7 +841,7 @@ std::string Achievement::CreateStateString(const std::string& sSalt) const
     // Checksum the progress string (including the salt value)
     std::string sModifiedProgressString;
     sModifiedProgressString.resize(sProgressString.length() + sSalt.length() * 2 + 10);
-    size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
+    const size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
         "%s%s%s%u", sSalt.c_str(), sProgressString.c_str(), sSalt.c_str(), static_cast<unsigned int>(ID()));
     sModifiedProgressString.resize(nNewSize);
     std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
@@ -872,24 +872,24 @@ const char* Achievement::ParseStateString(const char* sBuffer, const std::string
         char* pEnd;
 
         const char* pStart = pIter;
-        unsigned int nID = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+        const unsigned int nID = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
         if (nID != ID())
         {
             pIter = pStart;
             break;
         }
 
-        unsigned int nNumCond = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+        const unsigned int nNumCond = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
         vConditions.reserve(vConditions.size() + nNumCond);
 
         for (size_t i = 0; i < nNumCond; ++i)
         {
             // Parse next condition state
-            unsigned int nHits = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            unsigned int nSourceVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            unsigned int nTargetVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            const unsigned int nHits = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            const unsigned int nSourceVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            const unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            const unsigned int nTargetVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            const unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
 
             rc_condition_t& cond = vConditions.emplace_back();
             cond.current_hits = nHits;
@@ -915,7 +915,7 @@ const char* Achievement::ParseStateString(const char* sBuffer, const std::string
         // regenerate the md5 and see if it sticks
         std::string sModifiedProgressString;
         sModifiedProgressString.resize(pEnd - sBuffer + sSalt.length() * 2 + 10);
-        size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
+        const size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
             "%s%.*s%s%u", sSalt.c_str(), pEnd - sBuffer, sBuffer, sSalt.c_str(), ID());
         sModifiedProgressString.resize(nNewSize);
         std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
@@ -931,7 +931,7 @@ const char* Achievement::ParseStateString(const char* sBuffer, const std::string
                 rc_condition_t* pCondition = pGroup->conditions;
                 while (pCondition != nullptr)
                 {
-                    rc_condition_t& condSource = vConditions.at(nCondition++);
+                    const rc_condition_t& condSource = vConditions.at(nCondition++);
                     pCondition->current_hits = condSource.current_hits;
                     pCondition->operand1.value = condSource.operand1.value;
                     pCondition->operand1.previous = condSource.operand1.previous;

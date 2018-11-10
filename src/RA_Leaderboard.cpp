@@ -23,7 +23,7 @@ RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept 
 void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
 {
     // call with nullptr to determine space required
-    int nSize = rc_lboard_size(sBuffer);
+    const int nSize = rc_lboard_size(sBuffer);
     if (nSize < 0)
     {
         // parse error occurred
@@ -61,7 +61,7 @@ void RA_Leaderboard::Test()
     if (m_pLeaderboard != nullptr)
     {
         rc_lboard_t* pLboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
-        int nResult = rc_evaluate_lboard(pLboard, &m_nCurrentValue, rc_peek_callback, nullptr, nullptr);
+        const int nResult = rc_evaluate_lboard(pLboard, &m_nCurrentValue, rc_peek_callback, nullptr, nullptr);
         switch (nResult)
         {
             default:

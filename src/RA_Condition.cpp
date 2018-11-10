@@ -2,8 +2,6 @@
 
 #include "RA_Defs.h"
 
-const char* COMPARISONTYPE_STR[] ={ "=", "<", "<=", ">", ">=", "!=" };
-static_assert(SIZEOF_ARRAY(COMPARISONTYPE_STR) == NumComparisonTypes, "Must match!");
 
 _NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
@@ -26,16 +24,16 @@ _NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSiz
     }
 }
 
-static const char* ComparisonTypeToStr(ComparisonType nType)
+_NODISCARD _CONSTANT_FN ComparisonTypeToStr(_In_ ComparisonType nType) noexcept
 {
     switch (nType)
     {
-        case Equals:                return "=";
-        case GreaterThan:           return ">";
-        case GreaterThanOrEqual:    return ">=";
-        case LessThan:              return "<";
-        case LessThanOrEqual:       return "<=";
-        case NotEqualTo:            return "!=";
+        case ComparisonType::Equals:             return "=";
+        case ComparisonType::GreaterThan:        return ">";
+        case ComparisonType::GreaterThanOrEqual: return ">=";
+        case ComparisonType::LessThan:           return "<";
+        case ComparisonType::LessThanOrEqual:    return "<=";
+        case ComparisonType::NotEqualTo:         return "!=";
         default:                    return "";
     }
 }

@@ -13,6 +13,7 @@
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\WindowViewModelBase.hh"
@@ -20,12 +21,14 @@
 namespace ra {
 namespace services {
 
-static void LogHeader(ra::services::ILogger& pLogger, ra::services::IFileSystem& pFileSystem, ra::services::IClock& pClock)
+static void LogHeader(_In_ const ra::services::ILogger& pLogger,
+                      _In_ const ra::services::IFileSystem& pFileSystem,
+                      _In_ const ra::services::IClock& pClock)
 {
     pLogger.LogMessage(LogLevel::Info, "================================================================================");
 
-    auto tNow = pClock.Now();
-    auto tTime = std::chrono::system_clock::to_time_t(tNow);
+    const auto tNow = pClock.Now();
+    const auto tTime = std::chrono::system_clock::to_time_t(tNow);
 
     std::tm tTimeStruct;
     localtime_s(&tTimeStruct, &tTime);
@@ -97,6 +100,10 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
+
+    auto* pImageRepository = new ra::ui::drawing::gdi::ImageRepository();
+    pImageRepository->Initialize();
+    ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(pImageRepository);
 }
 
 void Initialization::Shutdown()
@@ -104,6 +111,11 @@ void Initialization::Shutdown()
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
 
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
+
+    // ImageReference destructors will try to use the IImageRepository if they think it still exists.
+    // explicitly deregister it to prevent exceptions when closing down the application.
+    ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
+
 }
 
 } // namespace services

@@ -39,18 +39,24 @@ inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
 };
 
 
-enum ComparisonType
+enum class ComparisonType : std::size_t
 {
     Equals,
     LessThan,
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
-    NotEqualTo,
-
-    NumComparisonTypes
+    NotEqualTo
 };
-extern const char* COMPARISONTYPE_STR[];
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR
+{
+    _T("="),
+    _T("<"),
+    _T("<="),
+    _T(">"),
+    _T(">="),
+    _T("!=")
+};
 
 class CompVariable
 {

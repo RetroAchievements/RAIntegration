@@ -3,6 +3,8 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
+#include "ui\drawing\gdi\GDISurface.hh"
+
 namespace {
 const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
 const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
@@ -95,78 +97,49 @@ float AchievementPopup::GetYOffsetPct() const
     return fVal;
 }
 
-void AchievementPopup::Render(HDC hDC, RECT& rcDest)
+_Use_decl_annotations_
+void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
 {
     if (!MessagesPresent())
         return;
 
-    const int nPixelWidth = rcDest.right - rcDest.left;
+    const auto sTitle = ra::Widen(ActiveMessage().Title());
+    const auto sSubTitle = ra::Widen(ActiveMessage().Subtitle());
 
-    //SetBkColor( hDC, RGB( 0, 212, 0 ) );
-    SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
-    SetTextColor(hDC, COL_POPUP);
+    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest, m_pResourceRepository);
+    auto nFontTitle = pSurface.LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    auto nFontSubtitle = pSurface.LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
 
-    HFONT hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, FONT_TO_USE);
+    float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
+    fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));
 
-    HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, FONT_TO_USE);
+    int nX = 10;
+    int nY = static_cast<int>(fFadeInY);
 
-    int nTitleX = 10;
-    int nDescX = nTitleX + 2;
+    const ra::ui::Color nColorBlack(0, 0, 0);
+    const ra::ui::Color nColorPopup(251, 102, 0);
+    const int nShadowOffset = 2;
 
-    const int nHeight = rcDest.bottom - rcDest.top;
-
-    float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(nHeight));
-    fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(nHeight));
-
-    const int nTitleY = static_cast<int>(fFadeInY);
-    const int nDescY = nTitleY + 32;
-
-    HBITMAP hBitmap = ActiveMessage().Image();
-    if (hBitmap != nullptr)
-    { 
-        DrawImage(hDC, hBitmap, nTitleX, nTitleY, 64, 64);
-
-        nTitleX += 64 + 4 + 2;	//	Negate the 2 from earlier!
-        nDescX += 64 + 4;
-    }
-
-    const std::string sTitle = std::string(" " + ActiveMessage().Title() + " ");
-    const std::string sSubTitle = std::string(" " + ActiveMessage().Subtitle() + " ");
-
-    SelectObject(hDC, hFontTitle);
-    TextOut(hDC, nTitleX, nTitleY, NativeStr(sTitle).c_str(), sTitle.length());
-    SIZE szTitle = { 0, 0 };
-    GetTextExtentPoint32(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &szTitle);
-
-    SIZE szAchievement = { 0, 0 };
-    if (ActiveMessage().Subtitle().length() > 0)
+    if (ActiveMessage().Image().Type() != ra::ui::ImageType::None)
     {
-        SelectObject(hDC, hFontDesc);
-        TextOut(hDC, nDescX, nDescY, NativeStr(sSubTitle).c_str(), sSubTitle.length());
-        GetTextExtentPoint32(hDC, NativeStr(sSubTitle).c_str(), sSubTitle.length(), &szAchievement);
+        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
+        pSurface.DrawImage(nX, nY, 64, 64, ActiveMessage().Image());
+        nX += 64 + 6;
     }
 
-    HGDIOBJ hPen = CreatePen(PS_SOLID, 2, COL_POPUP_SHADOW);
-    SelectObject(hDC, hPen);
+    auto szTitle = pSurface.MeasureText(nFontTitle, sTitle);
+    pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
+    pSurface.FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
+    pSurface.WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
 
-    MoveToEx(hDC, nTitleX, nTitleY + szTitle.cy, nullptr);
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + szTitle.cy);	//	right
-    LineTo(hDC, nTitleX + szTitle.cx, nTitleY + 1);			//	up
-
-    if (ActiveMessage().Subtitle().length() > 0)
+    if (!sSubTitle.empty())
     {
-        MoveToEx(hDC, nDescX, nDescY + szAchievement.cy, nullptr);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + szAchievement.cy);
-        LineTo(hDC, nDescX + szAchievement.cx, nDescY + 1);
+        nY += 32 + 2;
+        auto szSubTitle = pSurface.MeasureText(nFontSubtitle, sSubTitle);
+        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
+        pSurface.FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
+        pSurface.WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
     }
-
-    DeleteObject(hPen);
-    DeleteObject(hFontTitle);
-    DeleteObject(hFontDesc);
 }
 
 void AchievementPopup::Clear()

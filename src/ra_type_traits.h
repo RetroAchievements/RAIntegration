@@ -24,11 +24,10 @@ namespace detail {
 ///   <typeparamref name="CharT" /> is a known character type.
 /// </summary>
 /// <typeparam name="CharT">A type to be evaluated.</typeparam>
-/// <remarks><c>char16_t</c> and <c>char32_t</c> are not considered valid by this type_trait.</remarks>
+/// <remarks><c>char32_t</c> is not considered valid by this type_trait.</remarks>
 template<typename CharT>
 struct _NODISCARD is_char :
-    std::bool_constant<((std::is_same_v<CharT, char> || std::is_same_v<CharT, signed char>)
-        || std::is_same_v<CharT, wchar_t>)>
+    std::bool_constant<(std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>)>
 {
 };
 

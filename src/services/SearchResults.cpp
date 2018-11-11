@@ -234,17 +234,18 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
     for (auto& block : srSource.m_vBlocks)
     {
         if (block.GetSize() > vMemory.capacity())
-            vMemory.reserve(block.GetSize());
+            vMemory.resize(block.GetSize());
 
-        unsigned char* pMemory = vMemory.data();
-        const unsigned char* pPrev = block.GetBytes();
+        std::array<unsigned char, sizeof(MemBlock)> pPrev{};
+        for (auto i = 0U; i < sizeof(MemBlock); i++)
+            pPrev.at(i) = block.GetBytes()[i];
 
-        g_MemManager.ActiveBankRAMRead(pMemory, block.GetAddress(), block.GetSize());
+        g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
-            const unsigned int nValue1 = pMemory[i];
-            unsigned int nValue2 = (nTestValue > 15) ? (pPrev[i] & 0x0F) : nTestValue;
+            unsigned int nValue1 = vMemory.at(i);
+            unsigned int nValue2 = (nTestValue > 15) ? (pPrev.at(i) & 0x0F) : nTestValue;
 
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
@@ -253,7 +254,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, vMemory.data(), vMatches);
                         vMatches.clear();
                     }
 
@@ -262,7 +263,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             }
 
             if (nTestValue > 15)
-                nValue2 = pPrev[i] >> 4;
+                nValue2 = pPrev.at(i) >> 4;
 
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {
@@ -271,7 +272,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
-                        AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+                        AddMatchesNibbles(block.GetAddress() << 1, vMemory.data(), vMatches);
                         vMatches.clear();
                     }
 
@@ -282,7 +283,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
         if (!vMatches.empty())
         {
-            AddMatchesNibbles(block.GetAddress() << 1, pMemory, vMatches);
+            AddMatchesNibbles(block.GetAddress() << 1, vMemory.data(), vMatches);
             vMatches.clear();
         }
     }

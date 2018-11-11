@@ -125,7 +125,7 @@ protected:
     private:
         union // 8 bytes
         {
-            unsigned char m_vBytes[8];
+            unsigned char m_vBytes[8]{};
             unsigned char* m_pBytes;
         };
 

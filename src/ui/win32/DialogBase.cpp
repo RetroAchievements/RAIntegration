@@ -106,6 +106,11 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             OnDestroy();
             return 0;
 
+        case WM_SHOWWINDOW:
+            if (static_cast<BOOL>(wParam))
+                OnShown();
+            return 0;
+
         case WM_COMMAND:
             return OnCommand(LOWORD(wParam));
 

@@ -8,22 +8,26 @@ class Achievement;
 
 class Dlg_AchievementsReporter
 {
-public:
-    static const int MAX_ACHIEVEMENTS = 200;
-    static const int MAX_TEXT_LEN = 250;
+    inline static constexpr auto MAX_ACHIEVEMENTS{ 200 };
+    inline static constexpr auto MAX_TEXT_LEN{ 250 };
 
-public:
-    enum ReporterColumns
+    enum class Column : std::size_t
     {
         Checked,
-        //ID,
         Title,
         Desc,
         Author,
-        Achieved,
-
-        NumReporterColumns
+        Achieved
     };
+    inline static constexpr std::array<LPCTSTR, 5> COL_TITLE
+    {
+        _T(""),
+        _T("Title"),
+        _T("Description"),
+        _T("Author"),
+        _T("Achieved?")
+    };
+    inline static constexpr std::array<int, 5> COL_SIZE{ 19, 105, 205, 75, 62 };
 
 public:
     static void DoModalDialog(HINSTANCE hInst, HWND hParent);
@@ -31,11 +35,11 @@ public:
 
 public:
     static void SetupColumns(HWND hList);
-    static int AddAchievementToListBox(HWND hList, const Achievement* pAch);
+    static void AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* const pAch);
 
 public:
     static int ms_nNumOccupiedRows;
-    static char ms_lbxData[MAX_ACHIEVEMENTS][NumReporterColumns][MAX_TEXT_LEN];
+    static char ms_lbxData[MAX_ACHIEVEMENTS][COL_SIZE.size()][MAX_TEXT_LEN];
 };
 
 extern Dlg_AchievementsReporter g_AchievementsReporterDialog;

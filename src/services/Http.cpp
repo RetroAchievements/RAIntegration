@@ -15,8 +15,8 @@ Http::Response Http::Request::Call() const
     std::string sResponse;
     ra::services::impl::StringTextWriter pWriter(sResponse);
 
-    auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    const auto nStatusCode = pHttpRequester.Request(*this, pWriter);
+    const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+    const auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, pWriter));
 
     return Response(nStatusCode, std::move(sResponse));
 }
@@ -35,8 +35,8 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.CreateTextFile(sFilename);
 
-    auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    const auto nStatusCode = pHttpRequester.Request(*this, *pFile);
+    const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+    const auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, *pFile));
 
     return Response(nStatusCode, "");
 }
@@ -65,7 +65,7 @@ void Http::UrlEncodeAppend(std::string& sOutput, const std::string& sInput)
     if (sOutput.capacity() < nNeeded)
         sOutput.reserve(nNeeded);
 
-    for (auto c : sInput)
+    for (const unsigned char c : sInput)
     {
         // unreserved characters per RFC3986 (section 2.3)
         if (isalnum(c) || c == '-' || c == '.' || c == '_' || c == '~')

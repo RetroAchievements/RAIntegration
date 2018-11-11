@@ -58,12 +58,10 @@ inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR
     _T("!=")
 };
 
-extern const char* CONDITIONTYPE_STR[];
-
 class CompVariable
 {
 public:
-    enum class Type
+    enum class Type : std::size_t
     {
         Address,         // compare to the value of a live address in RAM
         ValueComparison, // a number. assume 32 bit 
@@ -80,8 +78,6 @@ public:
     };
 
 public:
-    inline constexpr CompVariable() noexcept = default;
-
     _CONSTANT_FN Set(_In_ MemSize nSize,
                      _In_ CompVariable::Type nType,
                      _In_ unsigned int nInitialValue) noexcept
@@ -111,20 +107,25 @@ private:
 class Condition
 {
 public:
-    enum ConditionType
+    enum class Type : std::size_t
     {
         Standard,
         PauseIf,
         ResetIf,
         AddSource,
         SubSource,
-        AddHits,
-
-        NumConditionTypes
+        AddHits
     };
 
-public:
-    Condition() = default;
+    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
+    {
+        _T(""),
+        _T("Pause If"),
+        _T("Reset If"),
+        _T("Add Source"),
+        _T("Sub Source"),
+        _T("Add Hits")
+    };
 
     void SerializeAppend(std::string& buffer) const;
 
@@ -140,22 +141,22 @@ public:
     inline unsigned int RequiredHits() const { return m_nRequiredHits; }
     void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
 
-    inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
-    inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
-    inline bool IsAddCondition() const { return(m_nConditionType == AddSource); }
-    inline bool IsSubCondition() const { return(m_nConditionType == SubSource); }
-    inline bool IsAddHitsCondition() const { return(m_nConditionType == AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const { return(m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const { return(m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const { return(m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const { return(m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return(m_nConditionType == Type::AddHits); }
 
-    inline ConditionType GetConditionType() const { return m_nConditionType; }
-    void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }
+    inline Type GetConditionType() const { return m_nConditionType; }
+    void SetConditionType(Type nNewType) { m_nConditionType = nNewType; }
 
 private:
+    Type           m_nConditionType = Type::Standard;
     CompVariable    m_nCompSource;
+    ComparisonType m_nCompareType   = ComparisonType::Equals;
     CompVariable    m_nCompTarget;
 
-    ConditionType   m_nConditionType = ConditionType::Standard;
-    ComparisonType  m_nCompareType = ComparisonType::Equals;
-    unsigned int    m_nRequiredHits = 0U;
+    unsigned int   m_nRequiredHits  = 0U;
 };
 
 class ConditionGroup

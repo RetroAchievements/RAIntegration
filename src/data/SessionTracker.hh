@@ -40,11 +40,14 @@ public:
 protected:
     void UpdateSession(time_t tSessionStart);
     long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
-    std::wstring GetRichPresence() const;
+    std::wstring GetCurrentActivity() const;
 
     virtual bool IsInspectingMemory() const;
 
 private:
+    void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
+    void SortSessions();
+
     unsigned int m_nCurrentGameId = 0;
     std::chrono::steady_clock::time_point m_tpSessionStart{};
     time_t m_tSessionStart{};

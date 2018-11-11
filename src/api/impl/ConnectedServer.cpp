@@ -32,16 +32,12 @@ _NODISCARD static bool GetJson(_In_ const char* sApiName, _In_ const ra::service
 {
     if (HandleHttpError(httpResponse, pResponse))
     {
-        pDocument.Clear();
-
         RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 
     if (httpResponse.Content().empty())
     {
-        pDocument.Clear();
-
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
         pResponse.Result = ApiResult::Failed;
         pResponse.ErrorMessage = "Empty JSON response";
@@ -209,8 +205,8 @@ Ping::Response ConnectedServer::Ping(_UNUSED const Ping::Request& request) noexc
     std::string sPostData;
 
     AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
-    if (!request.RichPresence.empty())
-        AppendUrlParam(sPostData, "m", ra::Narrow(request.RichPresence));
+    if (!request.CurrentActivity.empty())
+        AppendUrlParam(sPostData, "m", ra::Narrow(request.CurrentActivity));
 
     if (DoRequest(m_sHost, Ping::Name(), "ping", sPostData, response, document))
         response.Result = ApiResult::Success;

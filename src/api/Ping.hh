@@ -19,7 +19,7 @@ public:
     struct Request : ApiRequestBase
     {
         unsigned int GameId;
-        std::wstring RichPresence;
+        std::wstring CurrentActivity;
 
         using Callback = std::function<void(const Response& response)>;
 

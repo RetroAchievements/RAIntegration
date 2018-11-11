@@ -530,7 +530,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
     SelectFont(hDC, g_hFontDesc);
     SetTextColor(hDC, COL_TEXT_LOCKED);
-    TextOutA(hDC, nDX + nGameTitleX, nGameSubTitleY, sSubtitle.c_str(), sSubtitle.length());
+    TextOutA(hDC, nDX + nGameTitleX + 8, nGameSubTitleY, sSubtitle.c_str(), sSubtitle.length());
 
     const int nAchievementsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nAchSpacing;
     if (nAchievementsToDraw > 0 && nNumberOfAchievements > 0)

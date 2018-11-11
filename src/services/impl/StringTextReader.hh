@@ -40,7 +40,19 @@ public:
 
     long GetPosition() const override
     {
-        return static_cast<long>(const_cast<std::istringstream&>(m_iStream).tellg());
+        auto& iStream = const_cast<std::istringstream&>(m_iStream);
+
+        if (!m_iStream.good())
+        {
+            // if we've set the eof flag, tellg() will return -1 unless we reset it
+            if (m_iStream.eof())
+            {
+                iStream.clear();
+                iStream.seekg(0, m_iStream.end);
+            }
+        }
+
+        return static_cast<long>(iStream.tellg());
     }
 
     std::string GetString() { return m_iStream.str(); }

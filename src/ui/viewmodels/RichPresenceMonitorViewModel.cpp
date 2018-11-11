@@ -4,9 +4,10 @@
 #include "RA_StringUtils.h"
 
 #include "data\GameContext.hh"
-#include "services\ServiceLocator.hh"
 
+#include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
+#include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace ui {
@@ -19,6 +20,14 @@ RichPresenceMonitorViewModel::RichPresenceMonitorViewModel() noexcept
     SetWindowTitle(L"Rich Presence Monitor");
 }
 
+static time_t GetRichPresenceModified()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto tLastModified = pLocalStorage.GetLastModified(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    return std::chrono::system_clock::to_time_t(tLastModified);
+}
+
 void RichPresenceMonitorViewModel::StartMonitoring()
 {
     switch (m_nState)
@@ -28,6 +37,7 @@ void RichPresenceMonitorViewModel::StartMonitoring()
             // not monitoring - start doing so.
             m_nState = MonitorState::Active;
             UpdateDisplayString();
+            m_tRichPresenceFileTime = GetRichPresenceModified();
             ScheduleUpdateDisplayString();
             break;
 
@@ -86,6 +96,14 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
         }
         else
         {
+            // check to see if the script was updated
+            time_t tRichPresenceFileTime = GetRichPresenceModified();
+            if (tRichPresenceFileTime != m_tRichPresenceFileTime)
+            {
+                ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
+                m_tRichPresenceFileTime = tRichPresenceFileTime;
+            }
+
             UpdateDisplayString();
             ScheduleUpdateDisplayString();
         }

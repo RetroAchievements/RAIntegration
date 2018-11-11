@@ -40,6 +40,11 @@ public:
         return sEmpty;
     }
 
+    std::chrono::system_clock::time_point GetLastModified(StorageItemType nType, const std::wstring& sKey) override
+    {
+        return std::chrono::system_clock::time_point();
+    }
+
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override
     {
         std::string* pText = GetText(nType, sKey, false);

@@ -116,10 +116,11 @@ static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
                                        RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
                                        RA_INTEGRATION_VERSION_MODIFIED));
 
-    _CONSTANT_LOC posFound{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') };
-    constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-    sUserAgent.append(sAppend, posFound);
-
+    if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
+    {
+        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+        sUserAgent.append(sAppend, pos);
+    }
 }
 
 static void AppendNTVersion(_Inout_ std::string& sUserAgent)

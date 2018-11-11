@@ -39,7 +39,7 @@ public:
 
 protected:
     void UpdateSession(time_t tSessionStart);
-    long WriteSessionStats() const;
+    long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetRichPresence() const;
 
     virtual bool IsInspectingMemory() const;
@@ -48,7 +48,6 @@ private:
     unsigned int m_nCurrentGameId = 0;
     std::chrono::steady_clock::time_point m_tpSessionStart{};
     time_t m_tSessionStart{};
-    std::chrono::seconds m_tSessionDuration{ 0 };
 
     struct GameStats
     {

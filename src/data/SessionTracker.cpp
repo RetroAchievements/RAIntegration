@@ -51,7 +51,7 @@ void SessionTracker::Initialize(const std::string& sUsername)
                     {
                         auto nSessionLength = strtoul(&sLine[nIndex2], nullptr, 10);
 
-                        auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex);
+                        auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
                         if (sLine[nIndex + 1] == md5.front() && sLine[nIndex + 2] == md5.back())
                         {
                             auto pIter = m_vGameStats.begin();
@@ -75,6 +75,12 @@ void SessionTracker::Initialize(const std::string& sUsername)
 
         m_nFileWritePosition = pStatsFile->GetPosition();
     }
+
+    // move most recently played items to the front of the list
+    std::sort(m_vGameStats.begin(), m_vGameStats.end(), [](const GameStats& left, const GameStats& right)
+    {
+        return (right.LastSessionStart < left.LastSessionStart);
+    });
 }
 
 void SessionTracker::BeginSession(unsigned int nGameId)
@@ -89,25 +95,30 @@ void SessionTracker::BeginSession(unsigned int nGameId)
     const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
     m_tpSessionStart = pClock.UpTime();
     m_tSessionStart = std::chrono::system_clock::to_time_t(pClock.Now());
-    m_tSessionDuration = std::chrono::seconds(0);
 
     ra::api::StartSession::Request request;
     request.GameId = nGameId;
     request.CallAsync([](const ra::api::StartSession::Response&) {});
 
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.ScheduleAsync(std::chrono::seconds(5), [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
+    pThreadPool.ScheduleAsync(std::chrono::seconds(30), [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
 void SessionTracker::EndSession()
 {
-    RA_LOG_INFO("Ending session for game %u (%zu seconds)", m_nCurrentGameId, m_tSessionDuration.count());
     if (m_nCurrentGameId != 0)
-        m_nFileWritePosition = WriteSessionStats();
+    {
+        // update session duration
+        const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+        const auto tSessionDuration = std::chrono::duration_cast<std::chrono::seconds>(pClock.UpTime() - m_tpSessionStart);
+        RA_LOG_INFO("Ending session for game %u (%zu seconds)", m_nCurrentGameId, static_cast<unsigned int>(tSessionDuration.count()));
+
+        // write session
+        m_nFileWritePosition = WriteSessionStats(tSessionDuration);
+    }
 
     m_nCurrentGameId = 0;
     m_tSessionStart = 0;
-    m_tSessionDuration = std::chrono::seconds(0);
 }
 
 void SessionTracker::UpdateSession(time_t tSessionStart)
@@ -124,23 +135,23 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
 
     // update session duration
     const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-    m_tSessionDuration = std::chrono::duration_cast<std::chrono::seconds>(pClock.UpTime() - m_tpSessionStart);
+    const auto tSessionDuration = std::chrono::duration_cast<std::chrono::seconds>(pClock.UpTime() - m_tpSessionStart);
 
     // ignore sessions less than one minute
-    if (m_tSessionDuration > std::chrono::seconds(5))
-        WriteSessionStats();
+    if (tSessionDuration > std::chrono::seconds(60))
+        WriteSessionStats(tSessionDuration);
 
     // schedule next ping
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.ScheduleAsync(std::chrono::seconds(5), [this, tSessionStart]() { UpdateSession(tSessionStart); });
+    pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
-long SessionTracker::WriteSessionStats() const
+long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
-    auto nSessionDuration = static_cast<unsigned int>(m_tSessionDuration.count());
+    auto nSessionDuration = static_cast<unsigned int>(tSessionDuration.count());
     auto sLine = ra::StringPrintf("%u:%ld:%u:", m_nCurrentGameId, static_cast<long>(m_tSessionStart), nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());

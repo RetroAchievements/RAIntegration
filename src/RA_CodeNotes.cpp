@@ -35,7 +35,7 @@ size_t CodeNotes::Load(unsigned int nID)
             continue;
 
         const std::string& sAddr { note["Address"].GetString() };
-        auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
+        const auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
         const std::string& sAuthor { note["User"].GetString() }; // Author?
 
         m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });

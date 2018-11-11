@@ -15,8 +15,8 @@ Http::Response Http::Request::Call() const
     std::string sResponse;
     ra::services::impl::StringTextWriter pWriter(sResponse);
 
-    auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    auto nStatusCode = pHttpRequester.Request(*this, pWriter);
+    const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+    const auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, pWriter));
 
     return Response(nStatusCode, std::move(sResponse));
 }
@@ -24,9 +24,9 @@ Http::Response Http::Request::Call() const
 void Http::Request::CallAsync(Callback&& fCallback) const
 {
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.RunAsync([request=*this, fCallback]() {
+    pThreadPool.RunAsync([request=*this, f = std::move(fCallback)]() {
         auto response = request.Call();
-        fCallback(response);
+        f(response);
     });
 }
 
@@ -35,8 +35,8 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.CreateTextFile(sFilename);
 
-    auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-    auto nStatusCode = pHttpRequester.Request(*this, *pFile);
+    const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+    const auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, *pFile));
 
     return Response(nStatusCode, "");
 }
@@ -44,9 +44,9 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
 void Http::Request::DownloadAsync(const std::wstring& sFilename, Callback&& fCallback) const
 {
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.RunAsync([request=*this, sFilename, fCallback]() {
+    pThreadPool.RunAsync([request=*this, sFilename, f = std::move(fCallback)]() {
         auto response = request.Download(sFilename);
-        fCallback(response);
+        f(response);
     });
 }
 
@@ -61,11 +61,11 @@ void Http::UrlEncodeAppend(std::string& sOutput, const std::string& sInput)
 {
     static const char hex[] = "0123456789ABCDEF";
 
-    auto nNeeded = sOutput.length() + sInput.length();
+    const auto nNeeded = sOutput.length() + sInput.length();
     if (sOutput.capacity() < nNeeded)
         sOutput.reserve(nNeeded);
 
-    for (auto c : sInput)
+    for (const unsigned char c : sInput)
     {
         // unreserved characters per RFC3986 (section 2.3)
         if (isalnum(c) || c == '-' || c == '.' || c == '_' || c == '~')

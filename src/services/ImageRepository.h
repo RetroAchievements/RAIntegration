@@ -13,6 +13,7 @@ enum class ImageType
     Badge,
     UserPic,
     Local,
+    Icon,
 };
 
 class ImageReference
@@ -136,6 +137,7 @@ private:
     using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
+    HBitmapMap m_mIcons;
     HBitmapMap m_mLocal;
 
     HBitmapMap* GetBitmapMap(ImageType nType);

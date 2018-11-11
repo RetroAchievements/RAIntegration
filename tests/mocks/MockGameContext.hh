@@ -28,8 +28,19 @@ public:
     /// </summary>
     void SetGameTitle(const std::wstring& sTitle) { m_sGameTitle = sTitle; }
 
+    bool HasRichPresence() const override { return !m_sRichPresenceDisplayString.empty(); }
+
+    std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }
+
+    /// <summary>
+    /// Sets the rich presence display string.
+    /// </summary>
+    void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;
+
+    std::wstring m_sRichPresenceDisplayString;
 };
 
 } // namespace mocks

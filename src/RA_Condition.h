@@ -39,19 +39,24 @@ inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
 };
 
 
-enum ComparisonType : std::size_t
+enum class ComparisonType : std::size_t
 {
     Equals,
     LessThan,
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
-    NotEqualTo,
-
-    NumComparisonTypes
+    NotEqualTo
 };
-
-inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR{ _T("="), _T("<"), _T("<="), _T(">"), _T(">="), _T("!=") };
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR
+{
+    _T("="),
+    _T("<"),
+    _T("<="),
+    _T(">"),
+    _T(">="),
+    _T("!=")
+};
 
 class CompVariable
 {
@@ -73,8 +78,6 @@ public:
     };
 
 public:
-    inline constexpr CompVariable() noexcept = default;
-
     _CONSTANT_FN Set(_In_ MemSize nSize,
                      _In_ CompVariable::Type nType,
                      _In_ unsigned int nInitialValue) noexcept
@@ -104,16 +107,14 @@ private:
 class Condition
 {
 public:
-    enum ConditionType : std::size_t
+    enum class Type : std::size_t
     {
         Standard,
         PauseIf,
         ResetIf,
         AddSource,
         SubSource,
-        AddHits,
-
-        NumConditionTypes
+        AddHits
     };
 
     inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
@@ -126,39 +127,35 @@ public:
         _T("Add Hits")
     };
 
-public:
-    Condition() = default;
-
     void SerializeAppend(std::string& buffer) const;
 
-    inline CompVariable& CompSource() { return m_nCompSource; }
-    inline const CompVariable& CompSource() const { return m_nCompSource; }
+    _NODISCARD _CONSTANT_FN& CompSource() noexcept { return m_nCompSource; }
+    _NODISCARD _CONSTANT_FN& CompSource() const noexcept { return m_nCompSource; }
     
-    inline CompVariable& CompTarget() { return m_nCompTarget; }
-    inline const CompVariable& CompTarget() const { return m_nCompTarget; }
+    _NODISCARD _CONSTANT_FN& CompTarget() noexcept { return m_nCompTarget; }
+    _NODISCARD _CONSTANT_FN& CompTarget() const noexcept { return m_nCompTarget; }
 
-    inline ComparisonType CompareType() const { return m_nCompareType; }
-    inline void SetCompareType(ComparisonType nType) { m_nCompareType = nType; }
+    _NODISCARD _CONSTANT_FN CompareType() const noexcept { return m_nCompareType; }
+    _CONSTANT_FN SetCompareType(_In_ ComparisonType nType) noexcept { m_nCompareType = nType; }
 
-    inline unsigned int RequiredHits() const { return m_nRequiredHits; }
-    void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
+    _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
+    _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
-    inline bool IsResetCondition() const { return(m_nConditionType == ResetIf); }
-    inline bool IsPauseCondition() const { return(m_nConditionType == PauseIf); }
-    inline bool IsAddCondition() const { return(m_nConditionType == AddSource); }
-    inline bool IsSubCondition() const { return(m_nConditionType == SubSource); }
-    inline bool IsAddHitsCondition() const { return(m_nConditionType == AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return(m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return(m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return(m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return(m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return(m_nConditionType == Type::AddHits); }
 
-    inline ConditionType GetConditionType() const { return m_nConditionType; }
-    void SetConditionType(ConditionType nNewType) { m_nConditionType = nNewType; }
+    _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
+    _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }
 
 private:
-    CompVariable    m_nCompSource;
-    CompVariable    m_nCompTarget;
-
-    ConditionType   m_nConditionType = ConditionType::Standard;
-    ComparisonType  m_nCompareType = ComparisonType::Equals;
-    unsigned int    m_nRequiredHits = 0U;
+    Type           m_nConditionType = Type::Standard;
+    CompVariable   m_nCompSource;
+    ComparisonType m_nCompareType   = ComparisonType::Equals;
+    CompVariable   m_nCompTarget;
+    unsigned int   m_nRequiredHits  = 0U;
 };
 
 class ConditionGroup

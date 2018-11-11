@@ -19,8 +19,6 @@ public:
     RichPresenceDialog(RichPresenceDialog&&) noexcept = delete;
     RichPresenceDialog& operator=(RichPresenceDialog&&) noexcept = delete;
 
-    INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM) override;
-
     class Presenter : public IClosableDialogPresenter
     {
     public:
@@ -35,14 +33,11 @@ public:
 
 protected:
     BOOL OnInitDialog() override;
+    void OnShown() override;
     void OnDestroy() override;
 
 private:
-    void StartTimer();
-    void StopTimer();
-
     HFONT m_hFont = nullptr;
-    bool m_bTimerActive = false;
 };
 
 } // namespace win32

@@ -7,7 +7,14 @@
 #include "RA_Condition.h"
 #include "RA_StringUtils.h"
 
+#include "api\ApiCall.hh"
+
+#include "services\Http.hh"
+
 #include "ui\WindowViewModelBase.hh"
+
+// The rcheevos nameless struct warning is only affecting the test project, for now we have
+// to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -16,7 +23,7 @@ namespace CppUnitTestFramework {
 // converters for asserting enum values
 
 #pragma warning(push)
-#pragma warning(disable : 4505) // unreferenced inline functions
+#pragma warning(disable : 4505) // unreferenced inline functions, they are referenced. Must be a bug.
 template<> std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
@@ -32,9 +39,14 @@ template<> std::wstring ToString<ComparisonType>(const ComparisonType& t)
     return ra::Widen(COMPARISONTYPE_STR[(int)t]);
 }
 
-template<> std::wstring ToString<Condition::ConditionType>(const Condition::ConditionType& t)
+template<> std::wstring ToString<Condition::Type>(const Condition::Type& t)
 {
-    return ra::Widen(Condition::TYPE_STR.at(ra::etoi(t)));
+    return (Condition::TYPE_STR.at(ra::etoi(t)));
+}
+
+template<> std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
+{
+    return std::to_wstring(ra::etoi(t));
 }
 
 template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
@@ -47,11 +59,24 @@ template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResul
         case ra::ui::DialogResult::Yes: return L"Yes";
         case ra::ui::DialogResult::No: return L"No";
         case ra::ui::DialogResult::Retry: return L"Retry";
-        default: return std::to_wstring(static_cast<int>(result));
+        default: return std::to_wstring(ra::etoi(result));
+    }
+}
+
+
+template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
+{
+    switch (result)
+    {
+        case ra::api::ApiResult::None: return L"None";
+        case ra::api::ApiResult::Success: return L"Success";
+        case ra::api::ApiResult::Error: return L"Error";
+        case ra::api::ApiResult::Failed: return L"Failed";
+        case ra::api::ApiResult::Unsupported: return L"Unsupported";
+        default: return std::to_wstring(ra::etoi(result));
     }
 }
 #pragma warning(pop)
-
 
 } // namespace CppUnitTestFramework
 } // namespace VisualStudio

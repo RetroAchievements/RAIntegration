@@ -10,10 +10,16 @@ namespace services {
 class Http
 {
 public:
+    enum class StatusCode
+    {
+        OK = 200,
+        NotFound = 404,
+    };
+
     class Response
     {
     public:
-        explicit Response(int nStatusCode, const std::string& sResponse) noexcept
+        explicit Response(Http::StatusCode nStatusCode, const std::string& sResponse)
             : m_nStatusCode(nStatusCode), m_sResponse(sResponse)
         {
         }
@@ -27,15 +33,15 @@ public:
         /// <summary>
         /// Gets the HTTP status code returned from the server.
         /// </summary>
-        unsigned int StatusCode() const { return m_nStatusCode; }
+        Http::StatusCode StatusCode() const noexcept { return m_nStatusCode; }
 
         /// <summary>
         /// Gets the content returned from the server.
         /// </summary>
-        const std::string& Content() const { return m_sResponse; }
+        const std::string& Content() const noexcept { return m_sResponse; }
 
     private:
-        unsigned int m_nStatusCode;
+        Http::StatusCode m_nStatusCode{ 0 };
         std::string m_sResponse;
     };
 
@@ -44,7 +50,7 @@ public:
     public:
         explicit Request(const std::string& sUrl) noexcept
         {
-            auto nIndex = sUrl.find('?');
+            const auto nIndex = sUrl.find('?');
             if (nIndex == std::string::npos)
             {
                 m_sUrl = sUrl;
@@ -65,7 +71,7 @@ public:
         /// <summary>
         /// Gets the URL to request data from.
         /// </summary>
-        const std::string& GetUrl() const { return m_sUrl; }
+        const std::string& GetUrl() const noexcept { return m_sUrl; }
 
         /// <summary>
         /// Adds a parameter to the query string.
@@ -85,28 +91,28 @@ public:
         /// <summary>
         /// Gets the query string.
         /// </summary>
-        const std::string& GetQueryString() const { return m_sQueryString; }
+        const std::string& GetQueryString() const noexcept { return m_sQueryString; }
 
         /// <summary>
         /// Sets the POST data.
         /// </summary>
         /// <remarks>If not empty, POST request will be made, otherwise GET request wil be made.</remarks>
-        void SetPostData(const std::string& sValue) { m_sPostData = sValue; }
+        void SetPostData(const std::string& sValue) noexcept { m_sPostData = sValue; }
 
         /// <summary>
         /// Gets the POST data.
         /// </summary>
-        const std::string& GetPostData() const { return m_sPostData; }
+        const std::string& GetPostData() const noexcept { return m_sPostData; }
 
         /// <summary>
         /// Specifies the Content-Type to send. Default: "application/x-www-form-urlencoded"
         /// </summary>
-        void SetContentType(const std::string& sValue) { m_sContentType = sValue; }
+        void SetContentType(const std::string& sValue) noexcept { m_sContentType = sValue; }
 
         /// <summary>
         /// Gets the Content-Type to send. Default: "application/x-www-form-urlencoded"
         /// </summary>
-        const std::string& GetContentType() const { return m_sContentType; }
+        const std::string& GetContentType() const noexcept { return m_sContentType; }
 
         using Callback = std::function<void(const Response& response)>;
 

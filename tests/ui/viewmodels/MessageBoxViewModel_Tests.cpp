@@ -14,15 +14,15 @@ namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
 
-template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
+template<> std::wstring ToString<::ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ::ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
 {
     switch (icon)
     {
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::None: return L"None";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Info: return L"Info";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning: return L"Warning";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Error: return L"Error";
-        default: return std::to_wstring(static_cast<int>(icon));
+        case ::ra::ui::viewmodels::MessageBoxViewModel::Icon::None: return L"None";
+        case ::ra::ui::viewmodels::MessageBoxViewModel::Icon::Info: return L"Info";
+        case ::ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning: return L"Warning";
+        case ::ra::ui::viewmodels::MessageBoxViewModel::Icon::Error: return L"Error";
+        default: return std::to_wstring(::ra::etoi(icon));
     }
 }
 

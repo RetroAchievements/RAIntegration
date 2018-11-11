@@ -147,7 +147,7 @@ bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const
 
 void JsonFileConfiguration::SetFeatureEnabled(Feature nFeature, bool bEnabled)
 {
-    int bit = 1 << static_cast<int>(nFeature);
+    const int bit = 1 << static_cast<int>(nFeature);
 
     if (bEnabled)
         m_vEnabledFeatures |= bit;
@@ -187,9 +187,13 @@ const std::string& JsonFileConfiguration::GetHostName() const
 {
     if (m_sHostName.empty())
     {
-        auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().OpenTextFile(L"host.txt");
-        if (pFile != nullptr)
-            pFile->GetLine(m_sHostName);
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        if (pFileSystem.GetFileSize(L"host.txt") > 0)
+        {
+            auto pFile = pFileSystem.OpenTextFile(L"host.txt");
+            if (pFile != nullptr)
+                pFile->GetLine(m_sHostName);
+        }
 
         if (m_sHostName.empty())
             m_sHostName = "retroachievements.org";

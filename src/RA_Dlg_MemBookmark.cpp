@@ -94,7 +94,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
     PDRAWITEMSTRUCT pdis;
     int nSelect;
     HWND hList;
-    int offset = 2;
+    const int offset = 2;
 
     RECT rcBounds, rcLabel;
 
@@ -314,7 +314,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
-                        LPNMITEMACTIVATE pOnClick = (LPNMITEMACTIVATE)lParam;
+                        // const auto would give 'NMITEMACTIVATE* const', which isn't what we need
+                        const NMITEMACTIVATE* pOnClick = (LPNMITEMACTIVATE)lParam;
 
                         using namespace ra::rel_ops;
                         if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))
@@ -389,7 +390,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     if (m_vBookmarks.size() > 0)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                        unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+                        const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                         if (uSelectedCount > 0)
                         {
@@ -423,7 +424,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     if (m_vBookmarks.size() > 0)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
-                        unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
+                        const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
                         if (uSelectedCount > 0)
                         {
@@ -482,7 +483,7 @@ void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
             continue;
         }
 
-        unsigned int mem_value = GetMemory(bookmark->Address(), bookmark->Type());
+        const unsigned int mem_value = GetMemory(bookmark->Address(), bookmark->Type());
 
         if (bookmark->Value() != mem_value)
         {
@@ -712,7 +713,7 @@ void Dlg_MemBookmark::ExportJSON()
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
     ofn.lpstrDefExt = L"txt"; 
 
-    auto PathTooLong =[]() noexcept
+    const auto PathTooLong =[]() noexcept
     {
         MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
                     MB_OK | MB_ICONERROR);
@@ -842,7 +843,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
     ofn.Flags        = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     ofn.lpstrDefExt  = L"txt";
 
-    auto PathTooLong =[]() noexcept
+    const auto PathTooLong =[]() noexcept
     {
         MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
                    MB_OK | MB_ICONERROR);
@@ -939,8 +940,8 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
     rcSubItem.top += rcOffset.top;
     rcSubItem.bottom += rcOffset.top;
 
-    int nHeight = rcSubItem.bottom - rcSubItem.top;
-    int nWidth = rcSubItem.right - rcSubItem.left;
+    const int nHeight = rcSubItem.bottom - rcSubItem.top;
+    const int nWidth = rcSubItem.right - rcSubItem.left;
 
     ASSERT(g_hIPEEditBM == nullptr);
     if (g_hIPEEditBM) return FALSE;

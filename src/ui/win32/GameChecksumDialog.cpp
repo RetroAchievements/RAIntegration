@@ -39,7 +39,7 @@ BOOL GameChecksumDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDC_RA_COPYCHECKSUMCLIPBOARD)
     {
-        auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(m_vmWindow);
+        const auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(m_vmWindow);
         vmGameChecksum.CopyChecksumToClipboard();
         return TRUE;
     }

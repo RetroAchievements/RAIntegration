@@ -324,6 +324,9 @@
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
+    <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -627,6 +630,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\GDIBitmapSurface.hh">
       <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
   </ItemGroup>

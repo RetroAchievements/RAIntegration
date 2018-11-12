@@ -72,6 +72,14 @@ public:
     /// <param name="pImage">The image to draw.</param>
     virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
 
+    /// <summary>
+    /// Draws a secondary surface onto the surface.
+    /// </summary>
+    /// <param name="nX">The x coordinate to draw at.</param>
+    /// <param name="nY">The y coordinate to draw at.</param>
+    /// <param name="pImage">The surface to draw.</param>
+    virtual void DrawSurface(int nX, int nY, const ISurface& pSurface) = 0;
+
 protected:
     ISurface() noexcept = default;
 };

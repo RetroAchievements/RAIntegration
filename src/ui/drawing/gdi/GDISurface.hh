@@ -20,6 +20,11 @@ public:
     {
     }
 
+    GDISurface(const GDISurface&) noexcept = delete;
+    GDISurface& operator=(const GDISurface&) noexcept = delete;
+    GDISurface(GDISurface&&) noexcept = delete;
+    GDISurface& operator=(GDISurface&&) noexcept = delete;
+
     ~GDISurface() noexcept = default;
 
     size_t GetWidth() const override { return m_nWidth; }
@@ -32,16 +37,20 @@ public:
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
+    void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-private:
+protected:
     void SwitchFont(int nFont) const;
 
-    HDC m_hDC;
-    int m_nWidth;
-    int m_nHeight;
+    HDC m_hDC{};
+
+    ResourceRepository& m_pResourceRepository;
+
+private:
+    int m_nWidth{};
+    int m_nHeight{};
 
     ResourceRepository m_oResourceRepository;
-    ResourceRepository& m_pResourceRepository;
 
     mutable int m_nCurrentFont{};
     Color m_nCurrentTextColor{ 0U };

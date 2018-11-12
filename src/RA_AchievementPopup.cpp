@@ -4,6 +4,7 @@
 #include "RA_ImageFactory.h"
 
 #include "ui\drawing\gdi\GDISurface.hh"
+#include "ui\drawing\gdi\GDIBitmapSurface.hh"
 
 namespace {
 const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
@@ -117,33 +118,44 @@ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
     fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));
 
-    int nX = 10;
-    int nY = static_cast<int>(fFadeInY);
+    int nX = 0;
+    int nY = 0;
+    auto szTitle = pSurface.MeasureText(nFontTitle, sTitle);
+    auto szSubTitle = pSurface.MeasureText(nFontSubtitle, sSubTitle);
+
+    int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
+    int nHeight = 64 + 2;
 
     const ra::ui::Color nColorBlack(0, 0, 0);
     const ra::ui::Color nColorPopup(251, 102, 0);
     const int nShadowOffset = 2;
 
+    ra::ui::drawing::gdi::GDIAlphaBitmapSurface pBitmap(nWidth, nHeight, m_pResourceRepository);
+    pBitmap.FillRectangle(0, 0, nWidth, nHeight, ra::ui::Color(0, 255, 0, 255));
+
     if (ActiveMessage().Image().Type() != ra::ui::ImageType::None)
     {
-        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
-        pSurface.DrawImage(nX, nY, 64, 64, ActiveMessage().Image());
+        pBitmap.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
+        pBitmap.DrawImage(nX, nY, 64, 64, ActiveMessage().Image());
         nX += 64 + 6;
     }
 
-    auto szTitle = pSurface.MeasureText(nFontTitle, sTitle);
-    pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
-    pSurface.FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
-    pSurface.WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
+    pBitmap.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
+    pBitmap.FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
+    pBitmap.WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
 
     if (!sSubTitle.empty())
     {
         nY += 32 + 2;
-        auto szSubTitle = pSurface.MeasureText(nFontSubtitle, sSubTitle);
-        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
-        pSurface.FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
-        pSurface.WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
+        pBitmap.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
+        pBitmap.FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
+        pBitmap.WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
     }
+
+    nX = 10;
+    nY = static_cast<int>(fFadeInY);
+    pBitmap.SetOpacity(216); // 85%
+    pSurface.DrawSurface(nX, nY, pBitmap);
 }
 
 void AchievementPopup::Clear()

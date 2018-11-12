@@ -573,7 +573,6 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    std::array<std::byte, 16> data{};
     unsigned int notes;
     unsigned int bookmarks;
     unsigned int freeze;
@@ -615,10 +614,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             g_MemBookmarkDialog.WriteFrozenValue(*bm);
                     }
                 }
-                std::array<unsigned char, 16> data2{};
-                for (auto i2 = 0U; i < 16; i++)
-                    data2.at(i2) = ra::etoi(data.at(i2));
-                g_MemManager.ActiveBankRAMRead(data2.data(), addr, 16);
+                std::array<unsigned char, 16> data{};
+                g_MemManager.ActiveBankRAMRead(data.data(), addr, 16);
 
                 TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 9, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)

@@ -152,6 +152,7 @@
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4201</DisableSpecificWarnings>
+      <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -221,8 +222,8 @@
     <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="">
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4201;4224</DisableSpecificWarnings>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">4201;4224</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4201;4224;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">4201;4224;4244</DisableSpecificWarnings>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4201;4224;4244</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />

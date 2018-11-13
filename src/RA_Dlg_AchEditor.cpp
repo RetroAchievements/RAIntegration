@@ -1073,7 +1073,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     //	Persist/Update/Inject local LBX data back into LBX (?)
-                                    g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Title, pActiveAch->Title());
+                                    g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Column::Title, pActiveAch->Title());
                                 }
                             }
                         }
@@ -1937,7 +1937,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             {
                 const int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
-                g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Modified, "Yes");
+                g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Column::Modified, "Yes");
             }
         }
     }

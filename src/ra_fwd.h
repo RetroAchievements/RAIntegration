@@ -23,6 +23,14 @@
 #define _CONSTANT_LOC constexpr auto // local vars can't be inline
 #define _CONSTANT_FN  _CONSTANT_VAR
 
+#ifndef __STDC_VERSION__
+#define __STDC_VERSION__ 0 /*prevent undefined macro warning*/
+#endif /* !__STDC_VERSION__ */
+
+#if __STDC_VERSION__ < 199901L
+#define restrict __restrict /*restrict is a keyword from C99, most C++ compilers have a variant*/
+#endif /* __STDC_VERSION__ < 199901L */
+
 #ifndef _TCHAR_DEFINED
 #if _MBCS
 using TCHAR = char;

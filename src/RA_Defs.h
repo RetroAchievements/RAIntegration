@@ -2,7 +2,7 @@
 #define RA_DEFS_H
 #pragma once
 
-#include "ra_utility.h"
+#include "RA_StringUtils.h"
 
 #if !(RA_EXPORTS || RA_UTEST)
 #include "windows_nodefines.h"
@@ -27,8 +27,8 @@
 #else
 
 #include "RA_Log.h"
-
 #include "RA_Json.h"
+
 
 //	RA-Only
 using namespace std::string_literals;
@@ -79,39 +79,42 @@ public:
 class ResizeContent
 {
 public:
-    enum AlignType
+    enum class AlignType
     {
-        NO_ALIGN,
-        ALIGN_RIGHT,
-        ALIGN_BOTTOM,
-        ALIGN_BOTTOM_RIGHT
+        Right,
+        Bottom,
+        BottomRight
     };
 
 public:
-    HWND hwnd;
-    POINT pLT;
-    POINT pRB;
-    AlignType nAlignType;
-    int nDistanceX;
-    int nDistanceY;
-    bool bResize;
+    HWND hwnd{};
+    POINT pLT{};
+    POINT pRB{};
+    AlignType nAlignType{};
+    int nDistanceX{};
+    int nDistanceY{};
+    bool bResize{};
 
-    ResizeContent(HWND parentHwnd, HWND contentHwnd, AlignType newAlignType, bool isResize)
+    explicit ResizeContent(_In_ HWND contentHwnd, _In_ AlignType newAlignType, _In_ bool isResize) noexcept :
+        hwnd{ contentHwnd },
+        nAlignType{ newAlignType },
+        bResize{ isResize }
     {
-        hwnd = contentHwnd;
-        nAlignType = newAlignType;
-        bResize = isResize;
-
         RARect rect;
-        GetWindowRect(hwnd, &rect);
+        auto check = ::GetWindowRect(hwnd, &rect);
+        assert(check != 0);
 
-        pLT.x = rect.left;	pLT.y = rect.top;
-        pRB.x = rect.right; pRB.y = rect.bottom;
+        pLT ={ rect.left, rect.top };
+        pRB ={ rect.right, rect.bottom };
 
-        ScreenToClient(parentHwnd, &pLT);
-        ScreenToClient(parentHwnd, &pRB);
+        HWND__ *restrict parentHwnd = ::GetParent(contentHwnd);
+        check = ::ScreenToClient(parentHwnd, &pLT);
+        assert(check != 0);
+        check = ::ScreenToClient(parentHwnd, &pRB);
+        assert(check != 0);
 
-        GetWindowRect(parentHwnd, &rect);
+        check = ::GetWindowRect(parentHwnd, &rect);
+        assert(check != 0);
         nDistanceX = rect.Width() - pLT.x;
         nDistanceY = rect.Height() - pLT.y;
 
@@ -122,34 +125,39 @@ public:
         }
     }
 
-    void Resize(int width, int height)
+    void Resize(_In_ int width, _In_ int height) noexcept
     {
-        int xPos, yPos;
+        int xPos = 0, yPos = 0;
 
         switch (nAlignType)
         {
-            case ResizeContent::ALIGN_RIGHT:
+            case AlignType::Right:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
                 break;
-            case ResizeContent::ALIGN_BOTTOM:
+            case AlignType::Bottom:
                 xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
-            case ResizeContent::ALIGN_BOTTOM_RIGHT:
+            case AlignType::BottomRight:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
                 yPos = height - nDistanceY - (bResize ? pLT.y : 0);
                 break;
             default:
                 xPos = bResize ? (pRB.x - pLT.x) : pLT.x;
                 yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
-                break;
         }
 
-        if (!bResize)
-            SetWindowPos(hwnd, nullptr, xPos, yPos, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        if (BOOL check = 0; !bResize)
+        {
+            check = ::SetWindowPos(hwnd, nullptr, xPos, yPos, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            assert(check != 0);
+        }
         else
-            SetWindowPos(hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
+        {
+            check = ::SetWindowPos(hwnd, nullptr, 0, 0, xPos, yPos, SWP_NOMOVE | SWP_NOZORDER);
+            assert(check != 0);
+        }
     }
 };
 
@@ -172,10 +180,6 @@ public:
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
-
-#include "RA_StringUtils.h"
-
-#include "ra_fwd.h"
 
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr,

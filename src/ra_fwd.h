@@ -27,9 +27,11 @@
 #define __STDC_VERSION__ 0 /*prevent undefined macro warning*/
 #endif /* !__STDC_VERSION__ */
 
-#if __STDC_VERSION__ < 199901L
-#define restrict __restrict /*restrict is a keyword from C99, most C++ compilers have a variant*/
-#endif /* __STDC_VERSION__ < 199901L */
+#if __STDC_VERSION__ >= 199901L
+/* "restrict" is a keyword */
+#else
+#define restrict __restrict
+#endif /* __STDC_VERSION__ >= 199901L*/
 
 #ifndef _TCHAR_DEFINED
 #if _MBCS

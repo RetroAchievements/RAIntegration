@@ -107,7 +107,7 @@ public:
         pLT ={ rect.left, rect.top };
         pRB ={ rect.right, rect.bottom };
 
-        HWND__ *restrict parentHwnd = ::GetParent(contentHwnd);
+        HWND__* const restrict parentHwnd = ::GetParent(contentHwnd);
         check = ::ScreenToClient(parentHwnd, &pLT);
         assert(check != 0);
         check = ::ScreenToClient(parentHwnd, &pRB);

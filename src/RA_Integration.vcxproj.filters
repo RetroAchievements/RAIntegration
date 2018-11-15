@@ -22,12 +22,6 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Data\rcheevos">
-      <UniqueIdentifier>{22424437-af0c-41fb-99ff-d5883c57b62a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Data\lua">
-      <UniqueIdentifier>{8bf8f543-5155-4587-a22b-0016c9742bc4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI\ViewModels">
       <UniqueIdentifier>{0badbd6c-a477-4f69-b999-f27b050c3a17}</UniqueIdentifier>
     </Filter>
@@ -54,9 +48,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="md5.c">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Achievement.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -137,99 +128,6 @@
     </ClCompile>
     <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
-      <Filter>Data\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lapi.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lcode.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lctype.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldebug.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldo.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldump.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lfunc.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lgc.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\llex.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lmem.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lobject.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lopcodes.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lparser.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lstate.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lstring.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ltable.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ltm.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lundump.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lvm.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lzio.c">
-      <Filter>Data\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lauxlib.c">
-      <Filter>Data\lua</Filter>
     </ClCompile>
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
       <Filter>Services\Impl</Filter>
@@ -326,9 +224,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="md5.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Achievement.h">
       <Filter>Data</Filter>
     </ClInclude>
@@ -445,12 +340,6 @@
     </ClInclude>
     <ClInclude Include="ra_fwd.h">
       <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\include\rcheevos.h">
-      <Filter>Data\rcheevos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
-      <Filter>Data\rcheevos</Filter>
     </ClInclude>
     <ClInclude Include="services\IFileSystem.hh">
       <Filter>Services</Filter>

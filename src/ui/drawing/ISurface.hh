@@ -1,5 +1,6 @@
 #ifndef RA_UI_DRAWING_ISURFACE_HH
 #define RA_UI_DRAWING_ISURFACE_HH
+#pragma once
 
 #include "ui\Types.hh"
 #include "ui\ImageReference.hh"
@@ -80,8 +81,37 @@ public:
     /// <param name="pImage">The surface to draw.</param>
     virtual void DrawSurface(int nX, int nY, const ISurface& pSurface) = 0;
 
+    /// <summary>
+    /// Sets the alpha value of anything that's not currently transparent to the specified value.
+    /// </summary>
+    /// <param name="nAlpha">The new opacity (1-255).</param>
+    virtual void SetOpacity(UINT8 nAlpha) = 0;
+
 protected:
     ISurface() noexcept = default;
+};
+
+class ISurfaceFactory
+{
+public:
+    virtual ~ISurfaceFactory() = default;
+    ISurfaceFactory(const ISurfaceFactory&) noexcept = delete;
+    ISurfaceFactory& operator=(const ISurfaceFactory&) noexcept = delete;
+    ISurfaceFactory(ISurfaceFactory&&) noexcept = delete;
+    ISurfaceFactory& operator=(ISurfaceFactory&&) noexcept = delete;
+
+    /// <summary>
+    /// Creates a new offscren surface.
+    /// </summary>
+    virtual std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const = 0;
+
+    /// <summary>
+    /// Creates a new offscren surface with an alpha channel.
+    /// </summary>
+    virtual std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const = 0;
+
+protected:
+    ISurfaceFactory() noexcept = default;
 };
 
 } // namespace drawing

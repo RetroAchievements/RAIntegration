@@ -91,12 +91,27 @@ public:
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
     void Blend(HDC hTargetDC, int nX, int nY) const;
-    
-    /// <summary>
-    /// Sets the alpha value of anything that's not currently transparent to the specified value.
-    /// </summary>
-    /// <param name="nAlpha">The new opacity (1-255).</param>
-    void SetOpacity(UINT8 nAlpha);
+
+    void SetOpacity(UINT8 nAlpha) override;
+};
+
+class GDISurfaceFactory : public ISurfaceFactory
+{
+public:
+    std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const override
+    {
+        auto pSurface = new GDIBitmapSurface(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface);
+    }
+
+    std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const override
+    {
+        auto pSurface = new GDIAlphaBitmapSurface(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface);
+    }
+
+private:
+    mutable ResourceRepository m_oResourceRepository;
 };
 
 } // namespace gdi

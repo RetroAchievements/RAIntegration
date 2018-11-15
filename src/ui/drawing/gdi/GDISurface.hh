@@ -39,6 +39,11 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
+    void SetOpacity(_UNUSED UINT8 nAlpha) override
+    {
+        assert("This surface does not support opacity");
+    }
+
 protected:
     void SwitchFont(int nFont) const;
 

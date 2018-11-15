@@ -120,5 +120,6 @@
     <ClCompile Include="..\src\md5.c">
       <Filter>md5</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.c" />
   </ItemGroup>
 </Project>

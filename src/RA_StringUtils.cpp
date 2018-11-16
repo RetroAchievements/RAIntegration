@@ -113,4 +113,124 @@ bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noe
     return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
 }
 
+void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
+{
+    size_t nNeeded = 0;
+    for (auto& pPending : m_vPending)
+    {
+        switch (pPending.DataType)
+        {
+            case PendingString::Type::String:
+                nNeeded += pPending.String.length();
+                break;
+
+            case PendingString::Type::WString:
+                pPending.String = ra::Narrow(pPending.WString);
+                pPending.DataType = PendingString::Type::String;
+                nNeeded += pPending.String.length();
+                break;
+
+            case PendingString::Type::StringRef:
+                nNeeded += pPending.Ref.String->length();
+                break;
+
+            case PendingString::Type::WStringRef:
+                pPending.String = ra::Narrow(*pPending.Ref.WString);
+                pPending.DataType = PendingString::Type::String;
+                nNeeded += pPending.String.length();
+                break;
+
+            case PendingString::Type::CharRef:
+                nNeeded += pPending.Ref.Char.Length;
+                break;
+
+            case PendingString::Type::WCharRef:
+                pPending.String = ra::Narrow(std::wstring(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length));
+                pPending.DataType = PendingString::Type::String;
+                nNeeded += pPending.String.length();
+                break;
+        }
+    }
+
+    sResult.reserve(sResult.length() + nNeeded + 1);
+
+    for (auto& pPending : m_vPending)
+    {
+        switch (pPending.DataType)
+        {
+            case PendingString::Type::String:
+                sResult.append(pPending.String);
+                break;
+
+            case PendingString::Type::StringRef:
+                sResult.append(*pPending.Ref.String);
+                break;
+
+            case PendingString::Type::CharRef:
+                sResult.append(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length);
+                break;
+        }
+    }
+}
+
+void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
+{
+    size_t nNeeded = 0;
+    for (auto& pPending : m_vPending)
+    {
+        switch (pPending.DataType)
+        {
+            case PendingString::Type::WString:
+                nNeeded += pPending.WString.length();
+                break;
+
+            case PendingString::Type::String:
+                pPending.WString = ra::Widen(pPending.String);
+                pPending.DataType = PendingString::Type::WString;
+                nNeeded += pPending.WString.length();
+                break;
+
+            case PendingString::Type::WStringRef:
+                nNeeded += pPending.Ref.WString->length();
+                break;
+
+            case PendingString::Type::StringRef:
+                pPending.WString = ra::Widen(*pPending.Ref.String);
+                pPending.DataType = PendingString::Type::WString;
+                nNeeded += pPending.WString.length();
+                break;
+
+            case PendingString::Type::WCharRef:
+                nNeeded += pPending.Ref.WChar.Length;
+                break;
+
+            case PendingString::Type::CharRef:
+                pPending.WString = ra::Widen(std::string(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length));
+                pPending.DataType = PendingString::Type::WString;
+                nNeeded += pPending.WString.length();
+                break;
+        }
+    }
+
+    sResult.reserve(sResult.length() + nNeeded + 1);
+
+    for (auto& pPending : m_vPending)
+    {
+        switch (pPending.DataType)
+        {
+            case PendingString::Type::WString:
+                sResult.append(pPending.WString);
+                break;
+
+            case PendingString::Type::WStringRef:
+                sResult.append(*pPending.Ref.WString);
+                break;
+
+            case PendingString::Type::WCharRef:
+                sResult.append(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length);
+                break;
+        }
+    }
+}
+
 } /* namespace ra */

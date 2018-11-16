@@ -161,9 +161,6 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Achievement_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
     </ClCompile>

@@ -45,9 +45,8 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     }
     else if constexpr(std::is_same_v<CharT, wchar_t>)
     {
-        // starting capacity to reduce the need to reallocate, it could still be too small but is handled below
         sFormatted.reserve(64U);
-        nNeeded = -1; // assume it already failed (usually does)
+        nNeeded = -1;
         assert(std::wstring_view{ sFormat }.find(L"%n") == std::wstring_view::npos);
         assert(sFormatted.capacity() > 0U && (sFormatted.capacity() < RSIZE_MAX/sizeof(wchar_t)));
 

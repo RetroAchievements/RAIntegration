@@ -4,6 +4,8 @@
 
 #include "RA_Interface.h"
 
+#include "ra_fwd.h"
+
 #include "ui\drawing\ISurface.hh"
 
 //	Graphic to display an obtained achievement

@@ -52,7 +52,8 @@ void AchievementPopup::AddMessage(MessagePopup&& msg)
     PlayAudio();
 }
 
-void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
+_Use_decl_annotations_
+void AchievementPopup::Update(ControllerInput, float fDelta, bool, bool bPaused)
 {
     if (bPaused)
         fDelta = 0.0F;

@@ -30,7 +30,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
 {
     if (HandleHttpError(httpResponse, pResponse))
     {
-        pDocument.SetArray(); // Two Debug Assertion Errors, one from RapidJSON and one from Kernel
+        pDocument.SetArray();
 
         RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
@@ -38,7 +38,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
 
     if (httpResponse.Content().empty())
     {
-        pDocument.SetArray(); // Debug Assertion Error
+        pDocument.SetArray();
 
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
         pResponse.Result = ApiResult::Failed;

@@ -40,7 +40,7 @@ void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
     const auto sSoundPath = ra::StringPrintf(L"%s%s%s", g_sHomeDir.c_str(), RA_DIR_OVERLAY,
-                                             MSG_SOUND[ActiveMessage().Type()]); // testing ra::StringPrintf with wchar_t
+                                             MSG_SOUND[ActiveMessage().Type()]);
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 

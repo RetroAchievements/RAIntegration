@@ -118,7 +118,8 @@ protected:
 
         unsigned char* GetBytes() { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
         const unsigned char* GetBytes() const { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
-
+        auto GetByte(std::size_t nIndex) noexcept { return m_vBytes[nIndex]; }
+        auto GetByte(std::size_t nIndex) const noexcept { return m_vBytes[nIndex]; }
         unsigned int GetAddress() const { return nAddress; }
         unsigned int GetSize() const { return nSize; }
 

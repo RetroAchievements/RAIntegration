@@ -91,12 +91,14 @@ std::string& TrimLineEnding(std::string& str) noexcept
 std::string TrimLineEnding(std::string&& str) noexcept
 {
     auto sRet{ std::move_if_noexcept(str) };
-    
-    // using the .back() and .pop_back() strategy doesn't work
-    if (const auto pos = sRet.rfind('\n', sRet.length()); pos != std::string::npos)
-        sRet.erase(pos);
-    if (const auto pos = sRet.rfind('\r', sRet.length()); pos != std::string::npos)
-        sRet.erase(pos);
+
+    if (!sRet.empty())
+    {
+        if (sRet.back() == '\n')
+            sRet.pop_back();
+        if (sRet.back() == '\r')
+            sRet.pop_back();
+    }
 
     return sRet;
 }

@@ -32,12 +32,16 @@ _NODISCARD static bool GetJson(_In_ const char* sApiName, _In_ const ra::service
 {
     if (HandleHttpError(httpResponse, pResponse))
     {
+        pDocument.SetArray();
+
         RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 
     if (httpResponse.Content().empty())
     {
+        pDocument.SetArray();
+
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
         pResponse.Result = ApiResult::Failed;
         pResponse.ErrorMessage = "Empty JSON response";

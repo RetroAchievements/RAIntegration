@@ -17,6 +17,7 @@
 #include "api\Login.hh"
 
 #include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -153,6 +154,9 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
 
+    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
+    pSessionTracker.Initialize(sUser);
+
     RA_RebuildMenu();
     _RA_UpdateAppTitle();
 }
@@ -213,31 +217,6 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
         m_aFriends.push_back(pUser);
 
     return pUser;
-}
-
-void LocalRAUser::PostActivity(ActivityType nActivityType)
-{
-    switch (nActivityType)
-    {
-        case PlayerStartedPlaying:
-        {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-            PostArgs args;
-            args['u'] = Username();
-            args['t'] = Token();
-            args['a'] = std::to_string(nActivityType);
-            args['m'] = std::to_string(pGameContext.GameId());
-
-            RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
-            break;
-        }
-
-        default:
-            //	unhandled
-            ASSERT(!"User isn't designed to handle posting this activity!");
-            break;
-    }
 }
 
 void LocalRAUser::Clear()

@@ -25,6 +25,12 @@
     <Filter Include="Tests\Mocks">
       <UniqueIdentifier>{4623f02c-7135-4cd4-ada2-36fa4b29520c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\API">
+      <UniqueIdentifier>{1e60322d-0fb7-4ef7-ab07-0aafd85db9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Data">
+      <UniqueIdentifier>{17ed66bb-227e-47fb-a220-1813059ee45f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -59,9 +65,6 @@
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Achievement_Tests.cpp">
-      <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\src\md5.c">
       <Filter>Code</Filter>
@@ -135,10 +138,43 @@
     <ClCompile Include="..\src\pch.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Exports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
     <ClCompile Include="Exports_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Exports.cpp">
+    <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\GameContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="api\DisconnectedServer_Tests.cpp">
+      <Filter>Tests\API</Filter>
+    </ClCompile>
+    <ClCompile Include="api\ConnectedServer_Tests.cpp">
+      <Filter>Tests\API</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\api\ApiCall.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\api\impl\OfflineServer.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\api\impl\ConnectedServer.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\SessionTracker_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\SessionTracker.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
@@ -281,6 +317,13 @@
     </ClCompile>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>Code\rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockHttpRequester.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="mocks\MockServer.hh">
+      <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

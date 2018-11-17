@@ -62,11 +62,12 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
     }
 
     // pre-fetch locked images for any achievements the player hasn't earned
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
     for (size_t i = 0U; i < g_pCoreAchievements->NumAchievements(); ++i)
     {
         const auto& ach{ g_pCoreAchievements->GetAchievement(i) };
         if (ach.Active())
-            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI() + "_lock");
+            pImageRepository.FetchImage(ra::ui::ImageType::Badge, ach.BadgeImageURI() + "_lock");
     }
 }
 
@@ -184,7 +185,7 @@ void AchievementSet::Test()
                         MessagePopup("Test: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
                         PopupAchievementUnlocked,
-                        ra::services::ImageType::Badge, ach.BadgeImageURI()));
+                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
                 {
@@ -192,7 +193,7 @@ void AchievementSet::Test()
                         MessagePopup("Modified: Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
                         PopupAchievementUnlocked,
-                        ra::services::ImageType::Badge, ach.BadgeImageURI()));
+                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
                 {
@@ -200,7 +201,7 @@ void AchievementSet::Test()
                         MessagePopup("(RAM tampered with!): Achievement Unlocked",
                         ach.Title() + " (" + sPoints + ") (Unofficial)",
                         PopupAchievementError,
-                        ra::services::ImageType::Badge, ach.BadgeImageURI()));
+                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else
                 {
@@ -408,11 +409,12 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
         }
 
         // calculate the total number of points for the core set, and pre-fetch badge images
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         auto nTotalPoints{0U};
         for (size_t i = 0; i < g_pCoreAchievements->NumAchievements(); ++i)
         {
             const auto& ach{ g_pCoreAchievements->GetAchievement(i) };
-            ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::Badge, ach.BadgeImageURI());
+            pImageRepository.FetchImage(ra::ui::ImageType::Badge, ach.BadgeImageURI());
             nTotalPoints += ach.Points();
         }
 
@@ -438,8 +440,24 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
                 oss << g_pCoreAchievements->NumAchievements() << " achievements, Total Score " << nTotalPoints;
                 sSubTitle = oss.str();
             }
-            
-            g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+
+            if (doc.HasMember("ImageIcon"))
+            {
+                // value will be "/Images/001234.png" - extract the "001234"
+                std::string sImageName = doc["ImageIcon"].GetString();
+                auto nIndex = sImageName.find_last_of('/');
+                if (nIndex != std::string::npos)
+                    sImageName.erase(0, nIndex + 1);
+                nIndex = sImageName.find_last_of('.');
+                if (nIndex != std::string::npos)
+                    sImageName.erase(nIndex);
+
+                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle, PopupMessageType::PopupInfo, ra::ui::ImageType::Icon, sImageName });
+            }
+            else
+            {
+                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+            }
         }
 
         return true;

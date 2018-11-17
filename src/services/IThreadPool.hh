@@ -20,6 +20,11 @@ public:
     virtual void RunAsync(std::function<void()>&& f) noexcept = 0;
 
     /// <summary>
+    /// Queues work for a background thread to be run after a period of time
+    /// </summary>
+    virtual void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept = 0;
+
+    /// <summary>
     /// Sets the <see ref="IsShutdownRequested" /> flag so threads can start winding down.
     /// </summary>
     /// <param name="bWait">

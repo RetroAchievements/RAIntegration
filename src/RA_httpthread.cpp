@@ -20,8 +20,6 @@
 
 const char* RequestTypeToString[] =
 {
-    "RequestLogin",
-
     "RequestScore",
     "RequestNews",
     "RequestPatch",
@@ -38,8 +36,6 @@ const char* RequestTypeToString[] =
     "RequestAllProgress",
     "RequestGameID",
 
-    "RequestPing",
-    "RequestPostActivity",
     "RequestSubmitAwardAchievement",
     "RequestSubmitCodeNote",
     "RequestSubmitLeaderboardEntry",
@@ -51,7 +47,6 @@ static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match 
 
 const char* RequestTypeToPost[] =
 {
-    "login",
     "score",
     "news",
     "patch",
@@ -68,8 +63,6 @@ const char* RequestTypeToPost[] =
     "allprogress",
     "gameid",
 
-    "ping",
-    "postactivity",
     "awardachievement",
     "submitcodenote",
     "submitlbentry",
@@ -99,8 +92,6 @@ HANDLE RAWeb::ms_hHTTPMutex = nullptr;
 HttpResults RAWeb::ms_LastHttpResults;
 time_t RAWeb::ms_tSendNextKeepAliveAt = time(nullptr);
 
-PostArgs PrevArgs;
-
 std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
@@ -124,7 +115,6 @@ static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
         constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
         sUserAgent.append(sAppend, pos);
     }
-
 }
 
 static void AppendNTVersion(_Inout_ std::string& sUserAgent)
@@ -210,35 +200,24 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     std::string sPostData = PostArgsToString(PostData);
     std::string sLogPage;
 
-    if (nType == RequestLogin)
-    {
-        sLogPage = "login_app.php";
-        sUrl += "/";
-        sUrl += sLogPage;
+    sLogPage = "dorequest.php";
+    sUrl += "/";
+    sUrl += sLogPage;
+    sLogPage += "?r=";
+    sLogPage += RequestTypeToPost[nType];
 
-        RA_LOG("POST to %s", sLogPage.c_str()); // do not log user credentials (sPostData)
-    }
-    else
-    {
-        sLogPage = "dorequest.php";
-        sUrl += "/";
-        sUrl += sLogPage;
-        sLogPage += "?r=";
-        sLogPage += RequestTypeToPost[nType];
+    RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
-        RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
-
-        if (!sPostData.empty())
-            sPostData.push_back('&');
-        sPostData += "r=";
-        sPostData += RequestTypeToPost[nType];
-    }
+    if (!sPostData.empty())
+        sPostData.push_back('&');
+    sPostData += "r=";
+    sPostData += RequestTypeToPost[nType];
 
     ra::services::Http::Request request(sUrl);
     request.SetPostData(sPostData);
     auto response = request.Call();
 
-    if (response.StatusCode() != 200)
+    if (response.StatusCode() != ra::services::Http::StatusCode::OK)
     {
         RA_LOG("Error %u from %s: %s", response.StatusCode(), sLogPage.c_str(), response.Content().c_str());
         Response.clear();
@@ -411,64 +390,6 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
         pObj->SetResponse(sResponse);
         ms_LastHttpResults.PushItem(pObj);
     });
-}
-
-//////////////////////////////////////////////////////////////////////////
-
-void RAWeb::SendKeepAlive()
-{
-    if (!RAUsers::LocalUser().IsLoggedIn())
-        return;
-
-    //  Post a pingback once every few minutes to keep the server aware of our presence
-    const time_t tNow = time(nullptr);
-    if (tNow < ms_tSendNextKeepAliveAt)
-        return;
-
-    ms_tSendNextKeepAliveAt = tNow + SERVER_PING_DURATION;
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-    if (pGameContext.GameId() == 0)
-        return;
-
-    PostArgs args;
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    args['g'] = std::to_string(pGameContext.GameId());
-
-    if (RA_GameIsActive())
-    {
-        if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive())
-        {
-            if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
-                args['m'] = "Developing Achievements";
-            else if (_RA_HardcoreModeIsActive())
-                args['m'] = "Inspecting Memory in Hardcore mode";
-            else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-                args['m'] = "Fixing Achievements";
-            else
-                args['m'] = "Developing Achievements";
-        }
-        else
-        {
-            const std::string& sRPResponse = g_RichPresenceInterpreter.GetRichPresenceString();
-            if (!sRPResponse.empty())
-                args['m'] = sRPResponse;
-            else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
-                args['m'] = "Earning Achievements";
-            else
-                args['m'] = "Playing " + ra::Narrow(pGameContext.GameTitle());
-        }
-    }
-
-    //  Scott: Temporarily removed; Ping and RP are merged at current
-    //   and if we don't constantly poll the server, the players are dropped
-    //   from 'currently playing'.
-    //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
-    {
-        RAWeb::CreateThreadedHTTPRequest(RequestPing, args);
-        PrevArgs = args;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////

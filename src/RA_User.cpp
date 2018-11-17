@@ -14,10 +14,15 @@
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
+#include "api\Login.hh"
+
 #include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 //static 
 LocalRAUser RAUsers::ms_LocalUser("");
@@ -57,27 +62,47 @@ LocalRAUser::LocalRAUser(const std::string& sUser) :
 {
 }
 
+static void HandleLoginResponse(LocalRAUser& user, const ra::api::Login::Response& response)
+{
+    if (response.Succeeded())
+    {
+        user.ProcessSuccessfulLogin(response.Username, response.ApiToken, response.Score, response.NumUnreadMessages, true);
+    }
+    else if (!response.ErrorMessage.empty())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"Login Failed", ra::Widen(response.ErrorMessage)
+        );
+    }
+    else
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"Login Failed", L"Please login again."
+        );
+    }
+}
+
 void LocalRAUser::AttemptLogin(bool bBlocking)
 {
     m_bIsLoggedIn = FALSE;
 
     if (!Username().empty() && !Token().empty())
     {
+        ra::api::Login::Request request;
+        request.Username = Username();
+        request.ApiToken = Token();
+
         if (bBlocking)
         {
-            PostArgs args;
-            args['u'] = Username();
-            args['t'] = Token();
-
-            rapidjson::Document doc;
-            if (RAWeb::DoBlockingRequest(RequestLogin, args, doc))
-            {
-                HandleSilentLoginResponse(doc);
-            }
+            ra::api::Login::Response response = request.Call();
+            HandleLoginResponse(*this, response);
         }
         else
         {
-            AttemptSilentLogin();
+            request.CallAsync([this](const ra::api::Login::Response& response)
+            {
+                HandleLoginResponse(*this, response);
+            });
         }
     }
     else
@@ -86,36 +111,17 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
         DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
     }
-
 }
 
 void LocalRAUser::AttemptSilentLogin()
 {
-    //	NB. Don't login here: cause a login when http request returns!
-    PostArgs args;
-    args['u'] = Username();
-    args['t'] = Token();
-    RAWeb::CreateThreadedHTTPRequest(RequestLogin, args);
-}
-
-void LocalRAUser::HandleSilentLoginResponse(rapidjson::Document& doc)
-{
-    if (doc.HasMember("Success") && doc["Success"].GetBool())
+    ra::api::Login::Request request;
+    request.Username = Username();
+    request.ApiToken = Token();
+    request.CallAsync([this](const ra::api::Login::Response& response)
     {
-        const std::string& sUser = doc["User"].GetString();
-        const std::string& sToken = doc["Token"].GetString();
-        const unsigned int nPoints = doc["Score"].GetUint();
-        const unsigned int nUnreadMessages = doc["Messages"].GetUint();
-        ProcessSuccessfulLogin(sUser, sToken, nPoints, nUnreadMessages, TRUE);
-    }
-    else if (doc.HasMember("Error"))
-    {
-        MessageBox(nullptr, NativeStr(doc["Error"].GetString()).c_str(), TEXT("Login Failed"), MB_OK);
-    }
-    else
-    {
-        MessageBox(nullptr, TEXT("Login failed, please login again."), TEXT("Login Failed"), MB_OK);
-    }
+        HandleLoginResponse(*this, response);
+    });
 }
 
 void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin)
@@ -134,18 +140,22 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
 
     m_aFriends.clear();
 
-    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
     RequestFriendList();
 
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
         "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-        PopupMessageType::PopupLogin, ra::services::ImageType::UserPic, Username()));
+        PopupMessageType::PopupLogin, ra::ui::ImageType::UserPic, Username()));
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     g_AchievementsDialog.OnLoad_NewRom(pGameContext.GameId());
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
+
+    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
+    pSessionTracker.Initialize(sUser);
 
     RA_RebuildMenu();
     _RA_UpdateAppTitle();
@@ -191,7 +201,8 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
     RAUser* pUser = RAUsers::GetUser(sUser);
     pUser->SetScore(nScore);
-    ra::services::g_ImageRepository.FetchImage(ra::services::ImageType::UserPic, sUser);
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
 
     std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
     while (iter != m_aFriends.end())
@@ -206,31 +217,6 @@ RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
         m_aFriends.push_back(pUser);
 
     return pUser;
-}
-
-void LocalRAUser::PostActivity(ActivityType nActivityType)
-{
-    switch (nActivityType)
-    {
-        case PlayerStartedPlaying:
-        {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-            PostArgs args;
-            args['u'] = Username();
-            args['t'] = Token();
-            args['a'] = std::to_string(nActivityType);
-            args['m'] = std::to_string(pGameContext.GameId());
-
-            RAWeb::CreateThreadedHTTPRequest(RequestPostActivity, args);
-            break;
-        }
-
-        default:
-            //	unhandled
-            ASSERT(!"User isn't designed to handle posting this activity!");
-            break;
-    }
 }
 
 void LocalRAUser::Clear()

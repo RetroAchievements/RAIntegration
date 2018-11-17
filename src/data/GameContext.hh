@@ -2,6 +2,9 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
+#include "RA_RichPresence.h"
+#include "RA_AchievementSet.h"
+
 #include <string>
 
 namespace ra {
@@ -41,11 +44,52 @@ public:
     /// Sets the game hash.
     /// </summary>
     void SetGameHash(const std::string& sGameHash) { m_sGameHash = sGameHash; }
+        
+    /// <summary>
+    /// Gets which achievements are active.
+    /// </summary>
+    virtual AchievementSet::Type ActiveAchievementType() const 
+    {
+#ifdef RA_UTEST
+        return AchievementSet::Type::Core;
+#else
+        return g_nActiveAchievementSet; 
+#endif
+    }
+    
+    /// <summary>
+    /// Determines if any achievements are currently active.
+    /// </summary>
+    virtual bool HasActiveAchievements() const 
+    {
+#ifdef RA_UTEST
+        return false;
+#else
+        return g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0; 
+#endif
+    }
+
+    /// <summary>
+    /// Gets whether or not the loaded game has a rich presence script.
+    /// </summary>
+    virtual bool HasRichPresence() const;
+    
+    /// <summary>
+    /// Gets the current rich presence display string.
+    /// </summary>
+    virtual std::wstring GetRichPresenceDisplayString() const;
+    
+    /// <summary>
+    /// Reloads the rich presence script.
+    /// </summary>
+    void ReloadRichPresenceScript();
 
 protected:
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
+
+    std::unique_ptr<RA_RichPresenceInterpreter> m_pRichPresenceInterpreter;
 };
 
 } // namespace data

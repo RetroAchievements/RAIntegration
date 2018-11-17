@@ -3,10 +3,13 @@
 namespace ra {
 
 _Use_decl_annotations_
-std::string ByteAddressToString(ByteAddress nAddr)
+std::string ByteAddressToString(ByteAddress nAddr, std::streamsize nPrecision, bool bShowBase)
 {
     std::ostringstream oss;
-    oss << "0x" << std::setfill('0') << std::setw(6) << std::hex << nAddr;
+    auto showingBase = std::showbase;
+    if (!bShowBase)
+        showingBase = std::noshowbase;
+    oss << std::setfill('0') << std::setw(nPrecision) << std::hex << showingBase << nAddr;
     return oss.str();
 }
 

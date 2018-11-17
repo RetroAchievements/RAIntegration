@@ -7,12 +7,15 @@
 #include "RA_ImageFactory.h"
 #include "RA_PopupWindows.h"
 
+#include "ra_math.h"
+
 #include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#include "ra_math.h"
+#include "ui\drawing\gdi\ImageRepository.hh"
 
 namespace ra {
 
@@ -468,14 +471,9 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
     const size_t nNumberOfAchievements = g_pActiveAchievements->NumAchievements();
 
-    unsigned int nMaxPts = 0;
-    unsigned int nUserPts = 0;
-    unsigned int nUserCompleted = 0;
-
     const int nAchTopEdge = 160;//80;
     const int nAchSpacing = 64 + 8;//52;
     const int nAchImageOffset = 28;
-    int nAchIdx = 0;
 
     const int* pnScrollOffset = GetActiveScrollOffset();
     const int* pnSelectedItem = GetActiveSelectedItem();
@@ -484,6 +482,9 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nHeight = rcTarget.bottom - rcTarget.top;
 
     auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto nPlayTime = static_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId()).count());
+
+    // title
     const auto& sGameTitle = pGameContext.GameTitle();
     if (!sGameTitle.empty())
     {
@@ -492,9 +493,21 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         TextOutW(hDC, nGameTitleX + nDX + 8, nGameTitleY + nDY, sGameTitle.c_str(), sGameTitle.length());
     }
 
-    SelectObject(hDC, g_hFontDesc);
-    if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+    // subtitle
+    std::string sSubtitle;
+    if (nNumberOfAchievements == 0)
     {
+        if (!RA_GameIsActive())
+            sSubtitle = "No achievements present";
+        else
+            sSubtitle = ra::StringPrintf("No achievements present - %dh%02dm", nPlayTime / 3600, (nPlayTime / 60) % 60);
+    }
+    else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+    {
+        unsigned int nMaxPts = 0;
+        unsigned int nUserPts = 0;
+        unsigned int nUserCompleted = 0;
+
         for (size_t i = 0; i < nNumberOfAchievements; ++i)
         {
             const Achievement* pAch = &g_pActiveAchievements->GetAchievement(i);
@@ -506,23 +519,25 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
             }
         }
 
-        if (nNumberOfAchievements > 0)
-        {
-            SetTextColor(hDC, COL_TEXT_LOCKED);
-            char buffer[256];
-            sprintf_s(buffer, 256, " %u of %u won (%u/%u) ",
-                nUserCompleted, nNumberOfAchievements,
-                nUserPts, nMaxPts);
-            TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(buffer).c_str(), strlen(buffer));
-        }
+        sSubtitle = ra::StringPrintf("%u of %u won (%u/%u) - %dh%02dm",
+            nUserCompleted, nNumberOfAchievements, nUserPts, nMaxPts, nPlayTime / 3600, (nPlayTime / 60) % 60);
     }
+    else
+    {
+        sSubtitle = ra::StringPrintf("%u achievements present - %dh%02dm",
+            nNumberOfAchievements, nPlayTime / 3600, (nPlayTime / 60) % 60);
+    }
+
+    SelectFont(hDC, g_hFontDesc);
+    SetTextColor(hDC, COL_TEXT_LOCKED);
+    TextOutA(hDC, nDX + nGameTitleX + 8, nGameSubTitleY, sSubtitle.c_str(), sSubtitle.length());
 
     const int nAchievementsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nAchSpacing;
     if (nAchievementsToDraw > 0 && nNumberOfAchievements > 0)
     {
         for (int i = 0; i < nAchievementsToDraw; ++i)
         {
-            nAchIdx = (*pnScrollOffset) + i;
+            int nAchIdx = (*pnScrollOffset) + i;
             if (nAchIdx < static_cast<int>(nNumberOfAchievements))
             {
                 const BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);
@@ -540,12 +555,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
                 }
 
-                DrawAchievement(hDC,
-                    &g_pActiveAchievements->GetAchievement(nAchIdx),	//	pAch
-                    nDX,												//	X
-                    (nAchTopEdge + (i*nAchSpacing)),				//	Y
-                    bSelected,											//	Selected
-                    TRUE);
+                DrawAchievement(hDC, &g_pActiveAchievements->GetAchievement(nAchIdx),
+                    nDX, (nAchTopEdge + (i*nAchSpacing)), bSelected, TRUE);
             }
         }
 
@@ -558,20 +569,6 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                 nAchSpacing*nAchievementsToDraw,
                 nNumberOfAchievements - (nAchievementsToDraw - 1),
                 (*pnScrollOffset));
-        }
-    }
-    else
-    {
-
-        if (!RA_GameIsActive())
-        {
-            const std::string sMsg(" No achievements present... ");
-            TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(sMsg).c_str(), sMsg.length());
-        }
-        else if (nNumberOfAchievements == 0)
-        {
-            const std::string sMsg(" No achievements present... ");
-            TextOut(hDC, nDX + nGameTitleX, nGameSubTitleY, NativeStr(sMsg).c_str(), sMsg.length());
         }
     }
 
@@ -632,8 +629,8 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
             if (pFriend == nullptr)
                 continue;
 
-            ra::services::ImageReference friendImage(ra::services::ImageType::UserPic, pFriend->Username());
-            HBITMAP hBitmap = friendImage.GetHBitmap();
+            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend->Username());
+            HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(friendImage);
             if (hBitmap != nullptr)
                 DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
 
@@ -1119,7 +1116,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     //	Draw background:
     SetBkMode(hDC, TRANSPARENT);
     {
-        auto hBackground{ m_hOverlayBackground.GetHBitmap() };
+        HBITMAP hBackground = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hOverlayBackground);
         if (hBackground)
         {
             RECT rcBGSize{ 0L, 0L, ra::to_signed(OVERLAY_WIDTH), ra::to_signed(OVERLAY_HEIGHT) };
@@ -1319,13 +1316,13 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     auto iter = m_mAchievementBadges.find(sBadgeName);
     if (iter != m_mAchievementBadges.end())
     {
-        hBitmap = iter->second.GetHBitmap();
+        hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(iter->second);
     }
     else
     {
         auto& imageRef = m_mAchievementBadges[sBadgeName];
-        imageRef.ChangeReference(ra::services::ImageType::Badge, sBadgeName);
-        hBitmap = imageRef.GetHBitmap();
+        imageRef.ChangeReference(ra::ui::ImageType::Badge, sBadgeName);
+        hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(imageRef);
     }
 
     if (hBitmap != nullptr)
@@ -1354,7 +1351,7 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, const RAUser* pUser, int nX, int
     SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
     FillRect(hDC, &rcUserFrame, hBrush2);
 
-    HBITMAP hBitmap = m_hUserImage.GetHBitmap();
+    HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
     if (hBitmap != nullptr)
     {
         DrawImage(hDC,
@@ -1498,11 +1495,9 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
 
 void AchievementOverlay::UpdateImages() noexcept
 {
-    using ra::services::ImageReference;
-    m_hOverlayBackground = ImageReference{ ra::services::ImageType::Local, "Overlay\\overlayBG.png" };
-    m_hUserImage         = ImageReference{ ra::services::ImageType::UserPic, RAUsers::LocalUser().Username() };
+    m_hOverlayBackground.ChangeReference(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
+    m_hUserImage.ChangeReference(ra::ui::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
-
 
 AchievementExamine::AchievementExamine() :
     m_pSelectedAchievement(nullptr),

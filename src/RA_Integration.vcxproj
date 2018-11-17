@@ -70,6 +70,7 @@
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
+    <ClCompile Include="data\SessionTracker.cpp" />
     <ClCompile Include="md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
@@ -146,7 +147,10 @@
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\Login.hh" />
     <ClInclude Include="api\Logout.hh" />
+    <ClInclude Include="api\Ping.hh" />
+    <ClInclude Include="api\StartSession.hh" />
     <ClInclude Include="data\GameContext.hh" />
+    <ClInclude Include="data\SessionTracker.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="pch.h" />

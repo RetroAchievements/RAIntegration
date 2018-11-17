@@ -3,6 +3,8 @@
 #include "DisconnectedServer.hh"
 #include "RA_Defs.h"
 
+#include "RA_User.h"
+
 #include "services\Http.hh"
 #include "services\ServiceLocator.hh"
 
@@ -152,6 +154,67 @@ Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& request)
 
     Logout::Response response;
     response.Result = ApiResult::Success;
+    return std::move(response);
+}
+
+static bool DoRequest(const std::string& sHost, const char* sApiName, const char* sRequestName, const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
+{
+    std::string sPostData;
+
+#ifndef RA_UTEST
+    AppendUrlParam(sPostData, "u", RAUsers::LocalUser().Username());
+    AppendUrlParam(sPostData, "t", RAUsers::LocalUser().Token());
+#endif
+    AppendUrlParam(sPostData, "r", sRequestName);
+    if (!sInputParams.empty())
+    {
+        sPostData.push_back('&');
+        sPostData.append(sInputParams);
+    }
+    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
+
+    ra::services::Http::Request httpRequest(sHost + "/dorequest.php");
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
+StartSession::Response ConnectedServer::StartSession(_UNUSED const StartSession::Request& request) noexcept
+{
+    StartSession::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    // activity type enum (only 3 is used )
+    // 1 = earned achievement - handled by awardachievement
+    // 2 = logged in - handled by login
+    // 3 = started playing
+    // 4 = uploaded achievement - handled by uploadachievement
+    // 5 = modified achievmeent - handled by uploadachievement
+    AppendUrlParam(sPostData, "a", "3");
+
+    AppendUrlParam(sPostData, "m", std::to_string(request.GameId));
+
+    if (DoRequest(m_sHost, StartSession::Name(), "postactivity", sPostData, response, document))
+        response.Result = ApiResult::Success;
+
+    return std::move(response);
+}
+
+Ping::Response ConnectedServer::Ping(_UNUSED const Ping::Request& request) noexcept
+{
+    Ping::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    if (!request.CurrentActivity.empty())
+        AppendUrlParam(sPostData, "m", ra::Narrow(request.CurrentActivity));
+
+    if (DoRequest(m_sHost, Ping::Name(), "ping", sPostData, response, document))
+        response.Result = ApiResult::Success;
+
     return std::move(response);
 }
 

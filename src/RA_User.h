@@ -18,16 +18,6 @@ typedef struct
 
 class RequestObject;
 
-enum ActivityType
-{
-    ActivityTypeUnknown = 0,	//	DO NOT USE
-    PlayerEarnedAchievement,	//	DO NOT USE: handled at PHP level
-    PlayerLoggedIn,				//	DO NOT USE: handled at PHP level
-    PlayerStartedPlaying,
-    UserUploadedAchievement,
-    UserModifiedAchievement,
-};
-
 
 class RAUser
 {
@@ -59,7 +49,6 @@ public:
     void AttemptLogin(bool bBlocking);
 
     void AttemptSilentLogin();
-    void HandleSilentLoginResponse(rapidjson::Document& doc);
 
     void ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin);
     void Logout();
@@ -77,8 +66,6 @@ public:
     const std::string& Token() const { return m_sToken; }
 
     BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
-
-    void PostActivity(ActivityType nActivityType);
 
     void Clear();
 

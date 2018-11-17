@@ -34,8 +34,6 @@ enum RequestType
     RequestGameID,
 
     //	Submit
-    RequestPing,
-    RequestPostActivity,
     RequestSubmitAwardAchievement,
     RequestSubmitCodeNote,
     RequestSubmitLeaderboardEntry,
@@ -111,8 +109,6 @@ public:
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
 
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
-
-    static void StartKeepAlive();
 
     static HANDLE Mutex() { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }

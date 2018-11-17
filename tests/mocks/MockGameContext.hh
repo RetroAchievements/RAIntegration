@@ -37,10 +37,26 @@ public:
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
 
+    bool HasActiveAchievements() const override { return m_bHasActiveAchievements;}
+    
+    /// <summary>
+    /// Sets the value for <see cref="HasActiveAchievements" />
+    /// </summary>
+    void SetHasActiveAchievements(bool bValue) { m_bHasActiveAchievements = bValue; }
+
+    AchievementSet::Type ActiveAchievementType() const { return m_nActiveAchievementType; }
+
+    /// <summary>
+    /// Sets the value for <see cref="HasActiveAchievements" />
+    /// </summary>
+    void SetActiveAchievementType(AchievementSet::Type bValue) { m_nActiveAchievementType = bValue; }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;
 
     std::wstring m_sRichPresenceDisplayString;
+    bool m_bHasActiveAchievements{ false };
+    AchievementSet::Type m_nActiveAchievementType{ AchievementSet::Type::Core };
 };
 
 } // namespace mocks

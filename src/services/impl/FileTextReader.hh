@@ -37,6 +37,23 @@ public:
         return true;
     }
 
+    long GetPosition() const override
+    {
+        auto& iStream = const_cast<std::ifstream&>(m_iStream);
+
+        if (!m_iStream.good())
+        {
+            // if we've set the eof flag, tellg() will return -1 unless we reset it
+            if (m_iStream.eof())
+            {
+                iStream.clear();
+                iStream.seekg(0, m_iStream.end);
+            }
+        }
+
+        return static_cast<size_t>(const_cast<std::ifstream&>(m_iStream).tellg());
+    }
+
     std::ifstream& GetFStream() { return m_iStream; }
 
 private:

@@ -105,6 +105,12 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
             sPath.append(L".png");
             break;
 
+        case StorageItemType::SessionStats:
+            sPath.append(RA_DIR_BASE);
+            sPath.append(sKey);
+            sPath.append(L"-history.txt");
+            break;
+
         default:
             assert(!"unhandled StorageItemType");
             sPath.append(RA_DIR_DATA);
@@ -124,6 +130,11 @@ std::unique_ptr<TextReader> FileLocalStorage::ReadText(StorageItemType nType, co
 std::unique_ptr<TextWriter> FileLocalStorage::WriteText(StorageItemType nType, const std::wstring& sKey)
 {
     return m_pFileSystem.CreateTextFile(GetPath(nType, sKey));
+}
+
+std::unique_ptr<TextWriter> FileLocalStorage::AppendText(StorageItemType nType, const std::wstring& sKey)
+{
+    return m_pFileSystem.AppendTextFile(GetPath(nType, sKey));
 }
 
 } // namespace impl

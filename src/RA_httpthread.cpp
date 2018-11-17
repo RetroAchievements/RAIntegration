@@ -36,8 +36,6 @@ const char* RequestTypeToString[] =
     "RequestAllProgress",
     "RequestGameID",
 
-    "RequestPing",
-    "RequestPostActivity",
     "RequestSubmitAwardAchievement",
     "RequestSubmitCodeNote",
     "RequestSubmitLeaderboardEntry",
@@ -65,8 +63,6 @@ const char* RequestTypeToPost[] =
     "allprogress",
     "gameid",
 
-    "ping",
-    "postactivity",
     "awardachievement",
     "submitcodenote",
     "submitlbentry",
@@ -98,8 +94,6 @@ time_t RAWeb::ms_tSendNextKeepAliveAt = time(nullptr);
 
 std::wstring RAWeb::m_sUserAgent = ra::Widen("RetroAchievements Toolkit " RA_INTEGRATION_VERSION_PRODUCT);
 
-const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
-
 BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 {
     rDocOut.Parse(GetResponse().c_str());
@@ -121,7 +115,6 @@ static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
         constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
         sUserAgent.append(sAppend, pos);
     }
-
 }
 
 static void AppendNTVersion(_Inout_ std::string& sUserAgent)
@@ -396,73 +389,6 @@ void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostDat
 
         pObj->SetResponse(sResponse);
         ms_LastHttpResults.PushItem(pObj);
-    });
-}
-
-//////////////////////////////////////////////////////////////////////////
-
-static void DoSendKeepAlive(unsigned int nGameId)
-{
-    if (!RAUsers::LocalUser().IsLoggedIn())
-        return;
-
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    if (pGameContext.GameId() != nGameId)
-        return;
-
-    // schedule the next ping
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
-    {
-        DoSendKeepAlive(nGameId);
-    });
-
-    PostArgs args;
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    args['g'] = std::to_string(pGameContext.GameId());
-
-    if (RA_GameIsActive())
-    {
-        if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive())
-        {
-            if (!g_pActiveAchievements || g_pActiveAchievements->NumAchievements() == 0)
-                args['m'] = "Developing Achievements";
-            else if (_RA_HardcoreModeIsActive())
-                args['m'] = "Inspecting Memory in Hardcore mode";
-            else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-                args['m'] = "Fixing Achievements";
-            else
-                args['m'] = "Developing Achievements";
-        }
-        else
-        {
-            const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
-            if (pGameContext.HasRichPresence() && !sRPResponse.empty())
-                args['m'] = ra::Narrow(sRPResponse);
-            else if (g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0)
-                args['m'] = "Earning Achievements";
-            else
-                args['m'] = "Playing " + ra::Narrow(pGameContext.GameTitle());
-        }
-    }
-
-    //  Scott: Temporarily removed; Ping and RP are merged at current
-    //   and if we don't constantly poll the server, the players are dropped
-    //   from 'currently playing'.
-    //if (args['m'] != PrevArgs['m'] || args['g'] != PrevArgs['g'])
-    {
-        std::string sResponse;
-        RAWeb::DoBlockingRequest(RequestPing, args, sResponse);
-    }
-}
-
-void RAWeb::StartKeepAlive()
-{
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    int nGameId = pGameContext.GameId();
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [nGameId]()
-    {
-        DoSendKeepAlive(nGameId);
     });
 }
 

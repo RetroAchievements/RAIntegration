@@ -222,6 +222,9 @@
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
+    <ClCompile Include="data\SessionTracker.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -517,6 +520,15 @@
     </ClInclude>
     <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh">
       <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
+    <ClInclude Include="data\SessionTracker.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="api\StartSession.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\Ping.hh">
+      <Filter>API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

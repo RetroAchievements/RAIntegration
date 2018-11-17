@@ -15,6 +15,8 @@ public:
 
     Login::Response Login(const Login::Request& request) noexcept override;
     Logout::Response Logout(_UNUSED const Logout::Request& request) noexcept override;
+    StartSession::Response StartSession(_UNUSED const StartSession::Request& request) noexcept override;
+    Ping::Response Ping(_UNUSED const Ping::Request& request) noexcept override;
 
 private:
     const std::string m_sHost;

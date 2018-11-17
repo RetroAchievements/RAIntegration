@@ -22,6 +22,9 @@
     <Filter Include="Tests\API">
       <UniqueIdentifier>{1e60322d-0fb7-4ef7-ab07-0aafd85db9d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Data">
+      <UniqueIdentifier>{17ed66bb-227e-47fb-a220-1813059ee45f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -156,6 +159,12 @@
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="data\SessionTracker_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\SessionTracker.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">
@@ -205,6 +214,7 @@
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="mocks\MockServer.hh">
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">

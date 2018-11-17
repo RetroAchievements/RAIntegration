@@ -21,19 +21,20 @@ public:
 
     void MockStoredData(ra::services::StorageItemType nType, const std::wstring& sKey, const std::string& sContents)
     {
-        auto pMap = m_mStoredData.insert({ nType, {} });
-        pMap.first->second.insert_or_assign(sKey, sContents);
+        auto *pText = GetText(nType, sKey, true);
+        *pText = sContents;
     }
 
-    const std::string& GetStoredData(ra::services::StorageItemType nType, const std::wstring& sKey)
+    bool HasStoredData(ra::services::StorageItemType nType, const std::wstring& sKey) const
     {
-        auto pMap = m_mStoredData.find(nType);
-        if (pMap != m_mStoredData.end())
-        {
-            auto pIter = pMap->second.find(sKey);
-            if (pIter != pMap->second.end())
-                return pIter->second;
-        }
+        return (GetText(nType, sKey, false) != nullptr);
+    }
+
+    const std::string& GetStoredData(ra::services::StorageItemType nType, const std::wstring& sKey) const
+    {
+        const std::string* pText = GetText(nType, sKey, false);
+        if (pText != nullptr)
+            return *pText;
 
         static const std::string sEmpty;
         return sEmpty;
@@ -41,27 +42,56 @@ public:
 
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override
     {
-        auto pMap = m_mStoredData.find(nType);
-        if (pMap == m_mStoredData.end())
+        std::string* pText = GetText(nType, sKey, false);
+        if (pText == nullptr)
             return std::unique_ptr<TextReader>();
 
-        auto pIter = pMap->second.find(sKey);
-        if (pIter == pMap->second.end())
-            return std::unique_ptr<TextReader>();
-
-        auto pReader = std::make_unique<ra::services::impl::StringTextReader>(pIter->second);
+        auto pReader = std::make_unique<ra::services::impl::StringTextReader>(*pText);
         return std::unique_ptr<TextReader>(pReader.release());
     }
 
     std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override
     {
-        auto pMap = m_mStoredData.insert({ nType, {} });
-        auto pIter = pMap.first->second.insert_or_assign(sKey, "");
-        auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(pIter.first->second);
+        std::string* pText = GetText(nType, sKey, true);
+        pText->clear();
+
+        auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
+        return std::unique_ptr<TextWriter>(pWriter.release());
+    }
+
+    std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) override
+    {
+        std::string* pText = GetText(nType, sKey, true);
+        auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
 
 private:
+    std::string* GetText(StorageItemType nType, const std::wstring& sKey, bool bCreateIfMissing) const
+    {
+        auto pMap = m_mStoredData.find(nType);
+        if (pMap == m_mStoredData.end())
+        {
+            if (!bCreateIfMissing)
+                return nullptr;
+
+            m_mStoredData.insert({ nType, {} });
+            pMap = m_mStoredData.find(nType);
+        }
+
+        auto pIter = pMap->second.find(sKey);
+        if (pIter == pMap->second.end())
+        {
+            if (!bCreateIfMissing)
+                return nullptr;
+
+            pMap->second.insert({ sKey, "" });
+            pIter = pMap->second.find(sKey);
+        }
+
+        return &pIter->second;
+    }
+
     ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> m_Override;
     mutable std::unordered_map<StorageItemType, std::unordered_map<std::wstring, std::string>> m_mStoredData;
 };

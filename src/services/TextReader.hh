@@ -27,6 +27,11 @@ public:
     /// <param name="sLine">The string to read the next line into.</param>
     /// <returns><c>true</c> if a line was read, <c>false</c> if the end of the input was reached.</returns>
     virtual bool GetLine(_Out_ std::wstring& sLine) = 0;
+    
+    /// <summary>
+    /// Gets the current read offset within the input.
+    /// </summary>
+    virtual long GetPosition() const = 0;
 
 protected:
     TextReader() noexcept = default;

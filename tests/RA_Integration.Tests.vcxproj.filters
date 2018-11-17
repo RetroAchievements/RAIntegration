@@ -215,6 +215,8 @@
     </ClInclude>
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="mocks\MockServer.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">

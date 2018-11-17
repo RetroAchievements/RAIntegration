@@ -136,15 +136,31 @@ std::unique_ptr<TextWriter> WindowsFileSystem::CreateTextFile(const std::wstring
 
 std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring& sPath) const
 {
-    auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::app);
-    if (!pWriter->GetFStream().is_open())
+    // cannot use std::ios::app, or the SetPosition method doesn't work
+    // have to specify std::ios::in or the previous contents are lost
+    auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::ate | std::ios::in | std::ios::out);
+    auto* oStream = &pWriter->GetFStream();
+    if (!oStream->is_open())
     {
-        if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+        // failed to open the file - try creating it
+        std::ofstream file(sPath, std::ios::out);
+        if (file.is_open())
         {
-            RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
-        }
+            // create succeeded, reopen it
+            file.close();
 
-        return std::unique_ptr<TextWriter>();
+            pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::in | std::ios::out);
+        }
+        else
+        {
+            // create failed
+            if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+            {
+                RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
+            }
+
+            return std::unique_ptr<TextWriter>();
+        }
     }
 
     return std::unique_ptr<TextWriter>(pWriter.release());

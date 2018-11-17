@@ -22,6 +22,7 @@
 #include "api\Logout.hh"
 
 #include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -204,6 +205,8 @@ API int CCONV _RA_Shutdown()
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
 
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
 
     g_pActiveAchievements = nullptr;
     SAFE_DELETE(g_pCoreAchievements);
@@ -412,11 +415,13 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         {
             DownloadAndActivateAchievementData(nGameID);
 
-            RAUsers::LocalUser().PostActivity(PlayerStartedPlaying);
+            ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameID);
         }
     }
     else
     {
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+
         g_pCoreAchievements->Clear();
         g_pUnofficialAchievements->Clear();
         g_pLocalAchievements->Clear();
@@ -444,8 +449,6 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_MemBookmarkDialog.OnLoad_NewRom();
 
     g_nProcessTimer = 0;
-
-    RAWeb::StartKeepAlive();
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
 

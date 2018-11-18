@@ -593,7 +593,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     if (g_MemManager.NumMemoryBanks() > 0)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
-
+        std::array<unsigned char, 16> data{};
         for (int i = 0; i < lines && addr < (int)g_MemManager.TotalBankSize(); ++i, addr += 16)
         {
             if (addr >= 0)
@@ -614,7 +614,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             g_MemBookmarkDialog.WriteFrozenValue(*bm);
                     }
                 }
-                std::array<unsigned char, 16> data{};
+
                 g_MemManager.ActiveBankRAMRead(data.data(), addr, 16);
 
                 TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 9, TEXT("0x%06x  "), addr);

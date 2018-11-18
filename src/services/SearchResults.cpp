@@ -230,16 +230,15 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
     const unsigned int nPadding = Padding(m_nSize);
-    std::array<unsigned char, sizeof(MemBlock)> pPrev{};
+    std::vector<unsigned char> pPrev;
 
     for (auto& block : srSource.m_vBlocks)
     {
         if (block.GetSize() > vMemory.capacity())
             vMemory.resize(block.GetSize());
 
-        
-        for (auto i = 0U; i < sizeof(MemBlock); i++)
-            pPrev.at(i) = block.GetByte(i);
+        for (auto i = 0U; i < block.GetSize(); i++)
+            pPrev.emplace_back(block.GetByte(i));
 
         g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());
 

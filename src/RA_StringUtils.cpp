@@ -83,22 +83,15 @@ std::string Narrow(const std::string& str)
 _Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
-    return (str = TrimLineEnding(std::move_if_noexcept(str)));
-}
-
-std::string TrimLineEnding(std::string&& str) noexcept
-{
-    auto sRet{ std::move_if_noexcept(str) };
-
-    if (!sRet.empty())
+    if (!str.empty())
     {
-        if (sRet.back() == '\n')
-            sRet.pop_back();
-        if (sRet.back() == '\r')
-            sRet.pop_back();
+        if (str.back() == '\n')
+            str.pop_back();
+        if (str.back() == '\r')
+            str.pop_back();
     }
 
-    return sRet;
+    return str;
 }
 
 _Use_decl_annotations_

@@ -83,9 +83,7 @@ std::string Narrow(const std::string& str)
 _Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
-    auto sCpy{ str };
-    str = TrimLineEnding(std::move_if_noexcept(sCpy));
-    return str;
+    return (str = TrimLineEnding(std::move_if_noexcept(str)));
 }
 
 std::string TrimLineEnding(std::string&& str) noexcept

@@ -2252,37 +2252,23 @@ void GenerateResizes(HWND hDlg)
     pDlgAchEditorMin.x = windowRect.Width();
     pDlgAchEditorMin.y = windowRect.Height();
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ResizeContent::ALIGN_BOTTOM, TRUE));
+    using AlignType = ResizeContent::AlignType;
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), AlignType::BottomRight, true);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_GROUP), AlignType::Bottom, true);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), AlignType::BottomRight, false);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADDCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DELETECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_COPYCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_PASTECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ADDCOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_DELETECOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_COPYCOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_PASTECOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MOVECONDUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), AlignType::Bottom, false);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDCLOSE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDCLOSE), AlignType::BottomRight, false);
 }

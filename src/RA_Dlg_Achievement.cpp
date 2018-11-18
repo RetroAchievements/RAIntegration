@@ -143,6 +143,32 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 
 size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 {
+    AddAchievementRow(Ach);
+
+    LV_ITEM item{};
+    item.mask       = ra::to_unsigned(LVIF_TEXT);
+    item.iItem      = ra::narrow_cast<int>(ra::to_signed(m_lbxData.size()));
+    item.cchTextMax = 256;
+
+    for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
+    {
+        // Cache this (stack) to ensure it lives until after ListView_*Item
+        // SD: Is this necessary?
+        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
+        item.pszText = sTextData.data();
+
+        if (item.iSubItem == 0)
+            item.iItem = ListView_InsertItem(hList, &item);
+        else
+            ListView_SetItem(hList, &item);
+    }
+
+    ASSERT(item.iItem == (ra::to_signed(m_lbxData.size()) - 1));
+    return ra::to_unsigned(item.iItem);
+}
+
+void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
+{
     AchievementDlgRow newRow;
 
     // Add to our local array:
@@ -161,47 +187,8 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
         newRow.emplace_back(Ach.Active() ? "Yes" : "No");
         newRow.emplace_back("N/A");
     }
-    static_assert(std::is_nothrow_move_constructible_v<decltype(newRow)>);
+    static_assert(std::is_nothrow_move_constructible_v<AchievementDlgRow>);
     m_lbxData.emplace_back(std::move_if_noexcept(newRow));
-
-    // The most important part is that pointers are initialized, if we don't do it here,
-    // the pointer will be corrupted. We have constructors for structs in C++.
-    LV_ITEM item
-    {
-        item.mask       = ra::to_unsigned(LVIF_TEXT),
-        item.iItem      = ra::narrow_cast<int>(m_lbxData.size()),
-        item.iSubItem   = 0,
-        item.state      = 0U,
-        item.stateMask  = 0U,
-        item.pszText    = nullptr,
-        item.cchTextMax = 256,
-        item.iImage     = 0,
-        item.lParam     = 0L,
-        item.iIndent    = 0,
-        item.iGroupId   = 0,
-        item.cColumns   = 0U,
-        item.puColumns  = nullptr,
-#if _WIN32_WINNT >= 0x0600 // Vista+
-        item.piColFmt   = nullptr,
-        item.iGroup     = 0
-#endif
-    };
-
-    for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
-    {
-        // Cache this (stack) to ensure it lives until after ListView_*Item
-        // SD: Is this necessary?
-        ra::tstring sTextData = NativeStr(m_lbxData.back()[item.iSubItem]);
-        item.pszText = sTextData.data();
-
-        if (item.iSubItem == 0)
-            item.iItem = ListView_InsertItem(hList, &item);
-        else
-            ListView_SetItem(hList, &item);
-    }
-
-    ASSERT(item.iItem == (ra::to_signed(m_lbxData.size()) - 1));
-    return ra::to_unsigned(item.iItem);
 }
 
 _Success_(return)
@@ -1205,27 +1192,12 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
     if (hList != nullptr)
     {
         ra::tstring sStr{ NativeStr(LbxDataAt(nItem, nColumn)) }; // scoped cache
-        LV_ITEM item
-        {
-            item.mask       = ra::to_unsigned(LVIF_TEXT),
-            item.iItem      = nItem,
-            item.iSubItem   = ra::narrow_cast<int>(ra::to_signed(ra::etoi(nColumn))),
-            item.state      = 0U,
-            item.stateMask  = 0U,
-            item.pszText    = sStr.data(),
-            item.cchTextMax = 256,
-            item.iImage     = 0,
-            item.lParam     = 0L,
-            item.iIndent    = 0,
-            item.iGroupId   = 0,
-            item.cColumns   = 0U,
-            item.puColumns  = nullptr,
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-            item.piColFmt   = nullptr, // still needs to be initialized to prevent corruption
-            item.iGroup     = 0
-#endif /* _WIN32_WINNT >= _WIN32_WINNT_VISTA */
-        };
-
+        LV_ITEM item{};
+        item.mask       = ra::to_unsigned(LVIF_TEXT);
+        item.iItem      = nItem;
+        item.iSubItem   = ra::narrow_cast<int>(ra::to_signed(ra::etoi(nColumn)));
+        item.pszText    = sStr.data();
+        item.cchTextMax = 256;
 
         if (ListView_SetItem(hList, &item) == FALSE)
         {

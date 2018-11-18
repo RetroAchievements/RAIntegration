@@ -909,24 +909,17 @@ void Dlg_MemBookmark::GenerateResizes(HWND hDlg)
     pDlgMemBookmarkMin.x = windowRect.Width();
     pDlgMemBookmarkMin.y = windowRect.Height();
 
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
+    using AlignType = ResizeContent::AlignType;
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES), AlignType::BottomRight, true);
 
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADD_BOOKMARK), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DEL_BOOKMARK), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CLEAR_CHANGE), ResizeContent::ALIGN_RIGHT, FALSE));
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ADD_BOOKMARK), AlignType::Right, false);
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_DEL_BOOKMARK), AlignType::Right, false);
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CLEAR_CHANGE), AlignType::Right, false);
 
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_FREEZE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DECIMALBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_SAVEBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
-    vDlgMemBookmarkResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LOADBOOKMARK), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_FREEZE), AlignType::BottomRight, false);
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_DECIMALBOOKMARK), AlignType::BottomRight, false);
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_SAVEBOOKMARK), AlignType::BottomRight, false);
+    vDlgMemBookmarkResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LOADBOOKMARK), AlignType::BottomRight, false);
 }
 
 BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)

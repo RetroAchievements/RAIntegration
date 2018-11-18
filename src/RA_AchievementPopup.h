@@ -2,11 +2,11 @@
 #define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
-#include "RA_Interface.h"
-
 #include "ra_fwd.h"
 
 #include "ui\drawing\ISurface.hh"
+
+#include "RA_Interface.h"
 
 //	Graphic to display an obtained achievement
 enum PopupMessageType
@@ -41,10 +41,6 @@ public:
         m_hMessageImage(ra::ui::ImageType::None, "")
     {
     }
-
-    ~MessagePopup() = default;
-    MessagePopup(const MessagePopup&) = delete;
-    MessagePopup(MessagePopup&&) = default;
 
     const std::string& Title() const { return m_sMessageTitle; }
     const std::string& Subtitle() const { return m_sMessageSubtitle; }

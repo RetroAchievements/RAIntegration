@@ -15,10 +15,7 @@ class GDISurface : public ISurface
 public:
     explicit GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourceRepository) noexcept;
 
-    explicit GDISurface(HDC hDC, const RECT& rcDEST) noexcept
-        : GDISurface(hDC, rcDEST, m_oResourceRepository)
-    {
-    }
+    explicit GDISurface(HDC hDC, const RECT& rcDEST) noexcept : GDISurface(hDC, rcDEST, m_oResourceRepository) {}
 
     GDISurface(const GDISurface&) noexcept = delete;
     GDISurface& operator=(const GDISurface&) noexcept = delete;
@@ -39,10 +36,7 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-    void SetOpacity(_UNUSED UINT8 nAlpha) override
-    {
-        assert("This surface does not support opacity");
-    }
+    void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
 
 protected:
     void SwitchFont(int nFont) const;
@@ -58,7 +52,7 @@ private:
     ResourceRepository m_oResourceRepository;
 
     mutable int m_nCurrentFont{};
-    Color m_nCurrentTextColor{ 0U };
+    Color m_nCurrentTextColor{0U};
 };
 
 } // namespace gdi

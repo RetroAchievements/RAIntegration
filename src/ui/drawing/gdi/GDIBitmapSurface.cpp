@@ -60,9 +60,12 @@ static inline void BlendPixel(UINT32* nTarget, UINT32 nBlend)
     UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget);
     UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
 
-    *pTarget++ = (UINT8)(((UINT32)*pBlend++ * alpha + (UINT32)*pTarget * (256 - alpha)) / 256);
-    *pTarget++ = (UINT8)(((UINT32)*pBlend++ * alpha + (UINT32)*pTarget * (256 - alpha)) / 256);
-    *pTarget   = (UINT8)(((UINT32)*pBlend   * alpha + (UINT32)*pTarget * (256 - alpha)) / 256);
+    *pTarget++ = static_cast<UINT8>(
+        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget++ = static_cast<UINT8>(
+        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget = static_cast<UINT8>(
+        (static_cast<UINT32>(*pBlend) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
 }
 
 void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
@@ -95,7 +98,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
     SetTextColor(hMemDC, 0xFFFFFFFF);
-    RECT rcRect{ 0, 0, szText.cx, szText.cy };
+    RECT rcRect{0, 0, szText.cx, szText.cy};
     TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
@@ -151,7 +154,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     do
     {
         BlendPixel(pBits, *pSrcBits++);
-    } while (++pBits < pEnd);       
+    } while (++pBits < pEnd);
 
     // copy the buffer back onto the target surface
     ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, hMemDC, 0, 0, SRCCOPY);
@@ -160,9 +163,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::SetOpacity(UINT8 nAlpha)
+void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {
-    assert(nAlpha != 0); // setting opacity to 0 is irreversable - caller should just not draw it
+    assert(fAlpha >= 0.0 && fAlpha <= 1.0);
+    const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
+    assert(nAlpha > 0.0); // setting opacity to 0 is irreversable - caller should just not draw it
 
     const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
     UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;

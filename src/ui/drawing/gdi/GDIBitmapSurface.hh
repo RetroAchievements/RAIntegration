@@ -15,27 +15,23 @@ namespace gdi {
 class GDIBitmapSurface : public GDISurface
 {
 public:
-    explicit GDIBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept
-        : GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{ 0, 0, nWidth, nHeight }, pResourceRepository)
-    {
-    }
+    explicit GDIBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept :
+        GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight}, pResourceRepository)
+    {}
 
-    explicit GDIBitmapSurface(const int nWidth, const int nHeight) noexcept
-        : GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT { 0, 0, nWidth, nHeight })
-    {
-    }
+    explicit GDIBitmapSurface(const int nWidth, const int nHeight) noexcept :
+        GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight})
+    {}
 
     GDIBitmapSurface(const GDIBitmapSurface&) noexcept = delete;
     GDIBitmapSurface& operator=(const GDIBitmapSurface&) noexcept = delete;
     GDIBitmapSurface(GDIBitmapSurface&&) noexcept = delete;
     GDIBitmapSurface& operator=(GDIBitmapSurface&&) noexcept = delete;
 
-    ~GDIBitmapSurface()
+    ~GDIBitmapSurface() noexcept
     {
-        if (m_hBitmap)
-            DeleteBitmap(m_hBitmap);
-        if (m_hMemDC)
-            DeleteDC(m_hMemDC);
+        if (m_hBitmap) DeleteBitmap(m_hBitmap);
+        if (m_hMemDC) DeleteDC(m_hMemDC);
     }
 
 protected:
@@ -72,15 +68,12 @@ private:
 class GDIAlphaBitmapSurface : public GDIBitmapSurface
 {
 public:
-    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept
-        : GDIBitmapSurface(nWidth, nHeight, pResourceRepository)
-    {
-    }
+    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight,
+                                   ResourceRepository& pResourceRepository) noexcept :
+        GDIBitmapSurface(nWidth, nHeight, pResourceRepository)
+    {}
 
-    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept
-        : GDIBitmapSurface(nWidth, nHeight)
-    {
-    }
+    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept : GDIBitmapSurface(nWidth, nHeight) {}
 
     GDIAlphaBitmapSurface(const GDIAlphaBitmapSurface&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(const GDIAlphaBitmapSurface&) noexcept = delete;
@@ -92,7 +85,7 @@ public:
 
     void Blend(HDC hTargetDC, int nX, int nY) const;
 
-    void SetOpacity(UINT8 nAlpha) override;
+    void SetOpacity(double fAlpha) override;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory

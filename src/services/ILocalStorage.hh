@@ -17,6 +17,7 @@ enum class StorageItemType
     UserAchievements,
     Badge,
     UserPic,
+    SessionStats,
 };
 
 class ILocalStorage
@@ -41,6 +42,14 @@ public:
     ///   <see cref="TextWriter" /> for writing the data, <c>nullptr</c> if the data cannot be written.
     /// </returns>
     virtual std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) = 0;
+
+    /// <summary>
+    ///   Begins appending stored data for the specified <paramref name="nType" /> and <paramref name="sKey" />.
+    /// </summary>
+    /// <returns>
+    ///   <see cref="TextWriter" /> for writing the data, <c>nullptr</c> if the data cannot be written.
+    /// </returns>
+    virtual std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) = 0;
 
 protected:
     ILocalStorage() noexcept = default;

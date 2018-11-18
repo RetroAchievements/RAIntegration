@@ -25,6 +25,16 @@ public:
         return UnsupportedApi<Logout::Response>(Logout::Name());
     }
 
+    StartSession::Response StartSession(_UNUSED const StartSession::Request& request) noexcept override
+    {
+        return UnsupportedApi<StartSession::Response>(StartSession::Name());
+    }
+
+    Ping::Response Ping(_UNUSED const Ping::Request& request) noexcept override
+    {
+        return UnsupportedApi<Ping::Response>(Ping::Name());
+    }
+
 protected:
     template<typename TResponse>
     inline typename TResponse UnsupportedApi(const char* const apiName) const noexcept

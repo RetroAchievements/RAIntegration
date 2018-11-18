@@ -37,8 +37,8 @@ AchievementPopup::AchievementPopup() :
 
 void AchievementPopup::PlayAudio()
 {
-    ASSERT(MessagesPresent());	//	ActiveMessage() dereferences!
-    std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[m_vMessages.front().Type()];
+    ASSERT(MessagesPresent()); // ActiveMessage() dereferences!
+    const std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[m_vMessages.front().Type()];
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
@@ -52,8 +52,7 @@ void AchievementPopup::AddMessage(MessagePopup&& msg)
     PlayAudio();
 }
 
-_Use_decl_annotations_
-void AchievementPopup::Update(ControllerInput, float fDelta, bool, bool bPaused)
+void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
 {
     if (bPaused)
         fDelta = 0.0F;
@@ -161,14 +160,12 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
         m_pSurface->WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
     }
 
-    // opacity (85%)
-    m_pSurface->SetOpacity(216);
+    m_pSurface->SetOpacity(0.85);
 
     // return final result
     return *m_pSurface;
 }
 
-_Use_decl_annotations_
 void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
 {
     if (!MessagesPresent())

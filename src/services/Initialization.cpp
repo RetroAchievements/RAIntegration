@@ -3,6 +3,7 @@
 #include "api\impl\DisconnectedServer.hh"
 
 #include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
@@ -90,6 +91,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pGameContext = new ra::data::GameContext();
     ra::services::ServiceLocator::Provide<ra::data::GameContext>(pGameContext);
+
+    auto* pSessionTracker = new ra::data::SessionTracker();
+    ra::services::ServiceLocator::Provide<ra::data::SessionTracker>(pSessionTracker);
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);

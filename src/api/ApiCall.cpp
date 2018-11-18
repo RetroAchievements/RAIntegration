@@ -22,5 +22,15 @@ Logout::Response Logout::Request::Call() const noexcept
     return Server().Logout(*this);
 }
 
+StartSession::Response StartSession::Request::Call() const noexcept
+{
+    return Server().StartSession(*this);
+}
+
+Ping::Response Ping::Request::Call() const noexcept
+{
+    return Server().Ping(*this);
+}
+
 } // namespace api
 } // namespace ra

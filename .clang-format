@@ -5,24 +5,26 @@
 AlignAfterOpenBracket: true
 AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: false
 
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 
 AlwaysBreakBeforeMultilineStrings: true
-AlwaysBreakTemplateDeclarations: false #Always?
+AlwaysBreakTemplateDeclarations: true
 BinPackParameters: true #two params per-line if too long
 BreakBeforeBinaryOperators: None #so assignment alignments don't get messed up
 BreakBeforeBraces: Custom
 BraceWrapping:
+  AfterClass: true
   AfterEnum: true
   AfterStruct: true
   AfterControlStatement: true
   AfterNamespace: false
   AfterFunction: true
+  BeforeElse: true
   SplitEmptyFunction: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
@@ -45,6 +47,7 @@ ReflowComments: true
 Standard: Cpp11
 UseTab: Never
 
+AccessModifierOffset: -4
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements

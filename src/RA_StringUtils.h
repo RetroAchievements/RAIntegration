@@ -28,7 +28,7 @@ std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 // ----- ToString -----
 
 template<typename T>
-_NODISCARD inline const std::string ToString(_In_ const T value)
+_NODISCARD inline const std::string ToString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
@@ -45,50 +45,50 @@ _NODISCARD inline const std::string ToString(_In_ const T value)
     }
 }
 
-template<> _NODISCARD inline const std::string ToString(_In_ const std::string value)
+template<>
+_NODISCARD inline const std::string ToString(_In_ const std::string& value)
 {
     return value;
 }
 
-_NODISCARD inline const std::string& ToString(_In_ const std::string& value)
-{
-    return value;
-}
-
-template<> _NODISCARD inline const std::string ToString(_In_ const std::wstring value)
-{
-    return ra::Narrow(value);
-}
-
+template<>
 _NODISCARD inline const std::string ToString(_In_ const std::wstring& value)
 {
     return ra::Narrow(value);
 }
 
-template<> _NODISCARD inline const std::string ToString(_In_ const char* value)
-{
-    return std::string(value);
-}
-
-_NODISCARD inline const std::string ToString(_In_ char* value)
-{
-    return std::string(value);
-}
-
-template<> _NODISCARD inline const std::string ToString(_In_ const char value)
-{
-    return std::string(1, value);
-}
-
-template<> _NODISCARD inline const std::string ToString(_In_ const wchar_t* value)
+template<>
+_NODISCARD inline const std::string ToString(_In_ const wchar_t* const& value)
 {
     return ra::Narrow(value);
 }
 
+template<>
+_NODISCARD inline const std::string ToString(_In_ const char* const& value)
+{
+    return std::string(value);
+}
+
+template<>
+_NODISCARD inline const std::string ToString(_In_ char* const& value)
+{
+    return std::string(value);
+}
+
+template<>
+_NODISCARD inline const std::string ToString(_In_ const char& value)
+{
+    return std::string(1, value);
+}
+
+// literal strings can't be passed by reference, so won't call the templated methods
+_NODISCARD inline const std::string ToString(_In_ const char* value) { return std::string(value); }
+_NODISCARD inline const std::string ToString(_In_ const wchar_t* value) { return ra::Narrow(value); }
+
 // ----- ToWString -----
 
 template<typename T>
-_NODISCARD inline const std::wstring ToWString(_In_ const T value)
+_NODISCARD inline const std::wstring ToWString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
@@ -101,62 +101,59 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T value)
     else
     {
         static_assert(false, "No ToWString implementation for type");
-        return std::string();
+        return std::wstring();
     }
 }
 
-template<> _NODISCARD inline const std::wstring ToWString(_In_ const std::wstring value)
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const std::wstring& value)
 {
     return value;
 }
 
-_NODISCARD inline const std::wstring& ToWString(_In_ const std::wstring& value)
-{
-    return value;
-}
-
-template<> _NODISCARD inline const std::wstring ToWString(_In_ const std::string value)
-{
-    return ra::Widen(value);
-}
-
+template<>
 _NODISCARD inline const std::wstring ToWString(_In_ const std::string& value)
 {
     return ra::Widen(value);
 }
 
-template<> _NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* value)
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* const& value)
 {
     return std::wstring(value);
 }
 
-template<> _NODISCARD inline const std::wstring ToWString(_In_ const char* value)
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const char* const& value)
 {
     return ra::Widen(value);
 }
 
-template<> _NODISCARD inline const std::wstring ToWString(_In_ char* value)
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ char* const& value)
 {
     return ra::Widen(value);
 }
 
-template<> _NODISCARD inline const std::wstring ToWString(_In_ const char value)
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const char& value)
 {
     return std::wstring(1, value);
 }
+
+// literal strings can't be passed by reference, so won't call the templated methods
+_NODISCARD inline const std::wstring ToWString(_In_ const char* value) { return ra::Widen(value); }
+_NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* value) { return std::wstring(value); }
 
 // ----- string building -----
 
 class StringBuilder
 {
 public:
-    StringBuilder(bool bPrepareWide = false)
-        : m_bPrepareWide(bPrepareWide)
-    {
-    }
+    explicit StringBuilder(bool bPrepareWide = false) noexcept : m_bPrepareWide(bPrepareWide) {}
 
     template<typename T>
-    void Append(T arg)
+    void Append(const T& arg)
     {
         PendingString pPending;
         if (m_bPrepareWide)
@@ -190,14 +187,30 @@ public:
         m_vPending.emplace_back(std::move(pPending));
     }
 
+    void Append(const std::string&& arg)
+    {
+        PendingString pPending;
+        pPending.String = std::move(arg);
+        pPending.DataType = PendingString::Type::String;
+        m_vPending.emplace_back(std::move(pPending));
+    }
+
+    void Append(const std::wstring&& arg)
+    {
+        PendingString pPending;
+        pPending.WString = std::move(arg);
+        pPending.DataType = PendingString::Type::WString;
+        m_vPending.emplace_back(std::move(pPending));
+    }
+
     template<>
-    void Append(const char* arg)
+    void Append(const char* const& arg)
     {
         AppendSubString(arg, strlen(arg));
     }
 
     template<>
-    void Append(const wchar_t* arg)
+    void Append(const wchar_t* const& arg)
     {
         AppendSubString(arg, wcslen(arg));
     }
@@ -227,21 +240,21 @@ public:
     }
 
     template<typename T, typename... Ts>
-    void Append(T arg, Ts... args)
+    void Append(const T&& arg, const Ts&&... args)
     {
         Append(arg);
-        Append(std::forward<Ts>(args)...);
+        Append(std::forward<const Ts>(args)...);
     }
 
     template<typename T>
-    void AppendFormat(_UNUSED T arg, _UNUSED const std::string& sFormat)
+    void AppendFormat(_UNUSED const T& arg, _UNUSED const std::string& sFormat)
     {
         // cannot use static_assert here because the code will get generated regardless of if its ever used
         assert(!"Unsupported formatted type");
     }
 
-    template<> 
-    void AppendFormat(float arg, const std::string& sFormat)
+    template<>
+    void AppendFormat(const float& arg, const std::string& sFormat)
     {
         std::ostringstream oss;
 
@@ -250,7 +263,7 @@ public:
             int nIndex = sFormat.find('.');
             if (nIndex != std::string::npos)
             {
-                int nPrecision = atoi(sFormat.c_str() + nIndex + 1);
+                int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
                 oss.precision(nPrecision);
                 oss << std::fixed;
             }
@@ -261,12 +274,12 @@ public:
     }
 
     template<>
-    void AppendFormat(int arg, const std::string& sFormat)
+    void AppendFormat(const int& arg, const std::string& sFormat)
     {
         std::ostringstream oss;
         if (sFormat.front() == '0')
             oss << std::setfill('0');
-        int nDigits = atoi(sFormat.c_str());
+        int nDigits = std::stoi(sFormat.c_str());
         if (nDigits > 0)
             oss << std::setw(nDigits);
 
@@ -280,12 +293,12 @@ public:
     }
 
     template<>
-    void AppendFormat(unsigned int arg, const std::string& sFormat)
+    void AppendFormat(const unsigned int& arg, const std::string& sFormat)
     {
         std::ostringstream oss;
         if (sFormat.front() == '0')
             oss << std::setfill('0');
-        int nDigits = atoi(sFormat.c_str());
+        int nDigits = std::stoi(sFormat.c_str());
         if (nDigits > 0)
             oss << std::setw(nDigits);
 
@@ -303,7 +316,7 @@ public:
     {
         while (*pFormat)
         {
-            const CharT* pScan = pFormat;
+            auto* pScan = pFormat;
             while (*pScan && *pScan != '%')
                 ++pScan;
 
@@ -327,9 +340,9 @@ public:
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintf(const CharT* pFormat, T value, Ts... args)
+    void AppendPrintf(const CharT* const pFormat, const T& value, const Ts... args)
     {
-        const CharT* pScan = pFormat;
+        auto* pScan = pFormat;
         while (*pScan && *pScan != '%')
             ++pScan;
 
@@ -347,7 +360,7 @@ public:
                 break;
             case '%':
                 AppendSubString(pScan - 1, 1);
-                AppendPrintf(++pScan, value, std::forward<Ts>(args)...);
+                AppendPrintf(++pScan, value, std::forward<const Ts>(args)...);
                 break;
             case 'l': // assume ll, or li
             case 'z': // assume zu
@@ -359,7 +372,7 @@ public:
             case 'f':
             case 'g':
                 Append(value);
-                AppendPrintf(++pScan, std::forward<Ts>(args)...);
+                AppendPrintf(++pScan, std::forward<const Ts>(args)...);
                 break;
 
             default:
@@ -383,7 +396,7 @@ public:
                 }
 
                 AppendFormat(value, sFormat);
-                AppendPrintf(++pScan, std::forward<Ts>(args)...);
+                AppendPrintf(++pScan, std::forward<const Ts>(args)...);
                 break;
         }
     }
@@ -411,8 +424,7 @@ private:
 
     struct PendingString
     {
-        union
-        {
+        union {
             const std::string* String;
             const std::wstring* WString;
 
@@ -441,41 +453,41 @@ private:
             CharRef,
             WCharRef,
         };
-        Type DataType{ Type::String };
+        Type DataType{Type::String};
     };
 
     mutable std::vector<PendingString> m_vPending;
-};
+}; // namespace ra
 
 template<typename... Ts>
-void AppendString(std::string& sString, Ts... args)
+void AppendString(std::string& sString, const Ts... args)
 {
     StringBuilder builder;
-    builder.Append(std::forward<Ts>(args)...);
+    builder.Append(std::forward<const Ts>(args)...);
     builder.AppendToString(sString);
 }
 
 template<typename... Ts>
-void AppendWString(std::wstring& sString, Ts... args)
+void AppendWString(std::wstring& sString, const Ts... args)
 {
     StringBuilder builder(true);
-    builder.Append(std::forward<Ts>(args)...);
+    builder.Append(std::forward<const Ts>(args)...);
     builder.AppendToWString(sString);
 }
 
 template<typename... Ts>
-std::string BuildString(Ts... args)
+std::string BuildString(const Ts... args)
 {
     StringBuilder builder;
-    builder.Append(std::forward<Ts>(args)...);
+    builder.Append(std::forward<const Ts>(args)...);
     return builder.ToString();
 }
 
 template<typename... Ts>
-std::wstring BuildWString(Ts... args)
+std::wstring BuildWString(const Ts... args)
 {
     StringBuilder builder(true);
-    builder.Append(std::forward<Ts>(args)...);
+    builder.Append(std::forward<const Ts>(args)...);
     return builder.ToWString();
 }
 
@@ -483,7 +495,7 @@ std::wstring BuildWString(Ts... args)
 /// Constructs a <see cref="std::basic_string" /> from a format string and parameters
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
-_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const __restrict sFormat, Ts... args)
+_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const __restrict sFormat, Ts&&... args)
 {
     assert(sFormat != nullptr);
 
@@ -510,10 +522,10 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
 /* A wrapper for converting a string to an unsigned long depending on _String */
 /* The template parameter does not need to be specified */
 template<typename CharT, typename = std::enable_if_t<ra::is_char_v<CharT>>>
-_Success_(0 < return < ULONG_MAX) _NODISCARD inline auto __cdecl
-tcstoul(_In_z_                   const CharT* __restrict str,
-        _Out_opt_ _Deref_post_z_ CharT**      __restrict endptr = nullptr,
-        _In_                     int                     base   = 0 /*auto-detect base*/)
+_Success_(0 < return < ULONG_MAX) _NODISCARD
+    inline auto __cdecl tcstoul(_In_z_ const CharT* __restrict str,
+                                _Out_opt_ _Deref_post_z_ CharT** __restrict endptr = nullptr,
+                                _In_ int base = 0 /*auto-detect base*/)
 {
     auto ret = 0UL;
     if constexpr (std::is_same_v<CharT, char>)
@@ -522,7 +534,7 @@ tcstoul(_In_z_                   const CharT* __restrict str,
         ret = std::wcstoul(str, endptr, base);
 
     assert((errno != ERANGE) && (ret != ULONG_MAX)); // out of range error
-    assert(ret != 0); // invalid argument, no conversion done
+    assert(ret != 0);                                // invalid argument, no conversion done
     return ret;
 } /* end function tcstoul */
 
@@ -534,8 +546,8 @@ tcstoul(_In_z_                   const CharT* __restrict str,
 /// <returns>Number of characters</returns>
 /// <remarks>The template argument does not have to be specified.</remarks>
 template<typename CharT, typename = std::enable_if_t<ra::is_char_v<CharT>>>
-_NODISCARD _Success_(0 < return < strsz) inline auto __cdecl
-tcslen_s(_In_reads_or_z_(strsz) const CharT* const str, _In_ std::size_t strsz = UINT16_MAX) noexcept
+_NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_or_z_(strsz) const CharT* const str,
+                                                                      _In_ std::size_t strsz = UINT16_MAX) noexcept
 {
     assert(str != nullptr);
     std::size_t ret = 0U;
@@ -544,7 +556,7 @@ tcslen_s(_In_reads_or_z_(strsz) const CharT* const str, _In_ std::size_t strsz =
     else if constexpr (std::is_same_v<CharT, wchar_t>)
         ret = wcsnlen_s(str, strsz);
 
-    assert(ret != 0); // somehow str was a nullptr
+    assert(ret != 0);     // somehow str was a nullptr
     assert(ret != strsz); // str isn't null-terminated
     return ret;
 } /* end function tcslen_s */

@@ -47,16 +47,7 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     {
         assert(std::wstring_view{ sFormat }.find(L"%n") == std::wstring_view::npos);
         assert(sFormatted.capacity() > 0U && (sFormatted.capacity() < RSIZE_MAX/sizeof(wchar_t)));
-
-        while(nNeeded < 0)
-        {
-            nNeeded = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
-            if (nNeeded < 0)
-            {
-                const auto nCap = sFormatted.capacity();
-                sFormatted.reserve(nCap*2); // if it's still too small
-            }
-        }
+        nNeeded = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
     }
     va_end(pArgs);
     assert(nNeeded >= 0);

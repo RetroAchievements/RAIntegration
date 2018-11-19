@@ -60,12 +60,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <ForcedIncludeFiles>%(PrecompiledHeaderFile);%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
@@ -83,8 +81,6 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <ForcedIncludeFiles>
-      </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -106,12 +102,8 @@
     <ClInclude Include="..\src\md5.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\lua\lapi.c">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PrecompiledHeaderFile);%(ForcedIncludeFiles)</ForcedIncludeFiles>
-    </ClCompile>
-    <ClCompile Include="..\lua\lauxlib.c">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PrecompiledHeaderFile);%(ForcedIncludeFiles)</ForcedIncludeFiles>
-    </ClCompile>
+    <ClCompile Include="..\lua\lapi.c" />
+    <ClCompile Include="..\lua\lauxlib.c" />
     <ClCompile Include="..\lua\lcode.c" />
     <ClCompile Include="..\lua\lctype.c" />
     <ClCompile Include="..\lua\ldebug.c" />
@@ -131,29 +123,17 @@
     <ClCompile Include="..\lua\lundump.c" />
     <ClCompile Include="..\lua\lvm.c" />
     <ClCompile Include="..\lua\lzio.c" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\format.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\src\md5.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" />
+    <ClCompile Include="..\src\md5.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

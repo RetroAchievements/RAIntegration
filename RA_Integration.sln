@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration.Tests", "tests\RA_Integration.Tests.vcxproj", "{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rcheevos", "rcheevos\rcheevos.vcxproj", "{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rcheevos", "src\rcheevos.vcxproj", "{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

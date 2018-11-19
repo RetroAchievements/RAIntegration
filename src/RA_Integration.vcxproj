@@ -219,7 +219,7 @@
     <None Include="ra_utility.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\rcheevos\rcheevos.vcxproj">
+    <ProjectReference Include="rcheevos.vcxproj">
       <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
     </ProjectReference>
   </ItemGroup>

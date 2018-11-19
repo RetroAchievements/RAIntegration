@@ -26,7 +26,14 @@ const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 void SessionTracker::Initialize(const std::string& sUsername)
 {
     m_sUsername = ra::Widen(sUsername);
+    m_vGameStats.clear();
 
+    LoadSessions();
+    SortSessions();
+}
+
+void SessionTracker::LoadSessions()
+{
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.ReadText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
@@ -61,8 +68,6 @@ void SessionTracker::Initialize(const std::string& sUsername)
 
         m_nFileWritePosition = pStatsFile->GetPosition();
     }
-
-    SortSessions();
 }
 
 void SessionTracker::AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration)

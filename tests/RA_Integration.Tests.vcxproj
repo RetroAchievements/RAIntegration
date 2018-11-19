@@ -271,7 +271,9 @@
     <ClInclude Include="mocks\MockHttpRequester.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
+    <ClInclude Include="mocks\MockSessionTracker.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />
+    <ClInclude Include="mocks\MockUserContext.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />

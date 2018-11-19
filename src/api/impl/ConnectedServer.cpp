@@ -97,7 +97,11 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
     else
     {
-        sValue = pDocument[sField].GetString();
+        auto& pField = pDocument[sField];
+        if (pField.IsString())
+            sValue = pField.GetString();
+        else
+            sValue.clear();
     }
 }
 
@@ -105,9 +109,17 @@ static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
                                  _In_ const char* sField, _In_ unsigned int nDefaultValue = 0)
 {
     if (pDocument.HasMember(sField))
-        nValue = pDocument[sField].GetUint();
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsNumber())
+            nValue = pDocument[sField].GetUint();
+        else
+            nValue = nDefaultValue;
+    }
     else
+    {
         nValue = nDefaultValue;
+    }
 }
 
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam,

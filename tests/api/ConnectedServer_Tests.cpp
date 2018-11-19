@@ -242,6 +242,29 @@ public:
         Assert::AreEqual(0U, response.NumUnreadMessages);
     }
 
+    TEST_METHOD(TestLoginNullOptionalFields)
+    {
+        MockHttpRequester mockHttp([](const Http::Request& request)
+        {
+            return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":null,\"Messages\":null}");
+        });
+
+        ConnectedServer server("host.com");
+
+        Login::Request request;
+        request.Username = "User";
+        request.Password = "pa$$w0rd";
+
+        auto response = server.Login(request);
+
+        Assert::AreEqual(ApiResult::Success, response.Result);
+        Assert::AreEqual(std::string(), response.ErrorMessage);
+        Assert::AreEqual(std::string("User"), response.Username);
+        Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
+        Assert::AreEqual(0U, response.Score);
+        Assert::AreEqual(0U, response.NumUnreadMessages);
+    }
+
     // ====================================================
     // Logout
 

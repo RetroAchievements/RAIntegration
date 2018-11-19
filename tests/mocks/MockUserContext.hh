@@ -1,5 +1,5 @@
-#ifndef RA_SERVICES_MOCK_USERCONTEXT_HH
-#define RA_SERVICES_MOCK_USERCONTEXT_HH
+#ifndef RA_DATA_MOCK_USERCONTEXT_HH
+#define RA_DATA_MOCK_USERCONTEXT_HH
 #pragma once
 
 #include "data\UserContext.hh"
@@ -26,4 +26,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif // !RA_SERVICES_MOCK_USERCONTEXT_HH
+#endif // !RA_DATA_MOCK_USERCONTEXT_HH

@@ -27,7 +27,6 @@ namespace detail {
 /// <remarks><c>char32_t</c> is not considered valid by this type_trait.</remarks>
 template<typename CharT>
 struct _NODISCARD is_char : std::bool_constant<(std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>)>
-    std::bool_constant<(std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>)>
 {
 };
 
@@ -44,7 +43,6 @@ template<typename T, typename U> struct _NODISCARD is_same_size : std::bool_cons
 template<typename T, typename U> struct _NODISCARD has_smaller_size_than : std::bool_constant<sizeof(T) < sizeof(U)>
 {
 };
-    std::bool_constant<!has_smaller_size_than<U, T>::value> {};
 
 /// <summary>
 ///   This should only be used to compare the sizes of data types and not objects.
@@ -56,7 +54,6 @@ struct _NODISCARD has_smaller_or_same_size_than : std::bool_constant<!has_smalle
 } // namespace detail
 
 template<typename CharacterType> _CONSTANT_VAR is_char_v{detail::is_char<CharacterType>::value};
-is_char_v{ detail::is_char<CharacterType>::value };
 
 template<typename ValueType, typename TestType>
 _CONSTANT_VAR is_same_size_v{detail::is_same_size<ValueType, TestType>::value};
@@ -129,12 +126,10 @@ template<typename LessThanComparable>
 _CONSTANT_VAR is_nothrow_lessthan_comparable_v{detail::is_nothrow_lessthan_comparable<LessThanComparable>::value};
 
 template<typename Comparable> _CONSTANT_VAR is_comparable_v{detail::is_comparable<Comparable>::value};
-is_comparable_v{ detail::is_comparable<Comparable>::value };
 
 template<typename Comparable> _CONSTANT_VAR
 is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
 
-template<typename Comparable> _CONSTANT_VAR is_nothrow_comparable_v{detail::is_nothrow_comparable<Comparable>::value};
 } // namespace ra
 
 #endif // !RA_TYPE_TRAITS_H

@@ -6,11 +6,6 @@
 
 inline constexpr int MAX_TEXT_ITEM_SIZE = 80;
 
-//extern const char* g_sColTitles[];
-//extern const int g_nColSizes[];
-
-//typedef struct Achievement;
-
 class Dlg_Achievements
 {
     using AchievementDlgRow = std::vector<std::string>;
@@ -24,12 +19,9 @@ public:
         Author,
         Achieved,
         Active = Achieved,
-        Modified,       
+        Modified,
         Votes = Modified
     };
-
-public:
-    Dlg_Achievements();
 
 public:
     static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);
@@ -48,7 +40,7 @@ public:
     {
         // we need to check stuff to prevent throwing in release mode
         assert(nRow >= 0 && nRow < m_lbxData.size());
-        auto& rowRef{ m_lbxData.at(nRow) };
+        auto& rowRef{m_lbxData.at(nRow)};
 
         using namespace ra::rel_ops;
         assert(nCol >= 0 && nCol < rowRef.size());
@@ -76,6 +68,5 @@ private:
 };
 
 extern Dlg_Achievements g_AchievementsDialog;
-
 
 #endif // !RA_DLG_ACHIEVEMENT_H

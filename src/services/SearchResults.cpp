@@ -230,22 +230,18 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
     const unsigned int nPadding = Padding(m_nSize);
-    std::vector<unsigned char> pPrev;
 
     for (auto& block : srSource.m_vBlocks)
     {
         if (block.GetSize() > vMemory.capacity())
             vMemory.resize(block.GetSize());
 
-        for (auto i = 0U; i < block.GetSize(); i++)
-            pPrev.emplace_back(block.GetByte(i));
-
         g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
             unsigned int nValue1 = vMemory.at(i);
-            unsigned int nValue2 = (nTestValue > 15) ? (pPrev.at(i) & 0x0F) : nTestValue;
+            unsigned int nValue2 = (nTestValue > 15) ? (block.GetByte(i) & 0x0F) : nTestValue;
 
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
@@ -263,7 +259,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             }
 
             if (nTestValue > 15)
-                nValue2 = pPrev.at(i) >> 4;
+                nValue2 = block.GetByte(i) >> 4;
 
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {

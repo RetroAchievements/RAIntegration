@@ -1886,6 +1886,6 @@ void Dlg_Memory::GenerateResizes(HWND hDlg)
     pDlgMemoryMin.x = windowRect.Width();
     pDlgMemoryMin.y = windowRect.Height();
 
-    vDlgMemoryResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), ResizeContent::ALIGN_BOTTOM, TRUE));
+    using AlignType = ResizeContent::AlignType;
+    vDlgMemoryResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), AlignType::Bottom, true);
 }

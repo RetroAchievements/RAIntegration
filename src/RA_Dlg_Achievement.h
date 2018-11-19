@@ -6,6 +6,11 @@
 
 inline constexpr int MAX_TEXT_ITEM_SIZE = 80;
 
+//extern const char* g_sColTitles[];
+//extern const int g_nColSizes[];
+
+//typedef struct Achievement;
+
 class Dlg_Achievements
 {
     using AchievementDlgRow = std::vector<std::string>;
@@ -19,9 +24,12 @@ public:
         Author,
         Achieved,
         Active = Achieved,
-        Modified,
+        Modified,       
         Votes = Modified
     };
+
+public:
+    Dlg_Achievements();
 
 public:
     static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);

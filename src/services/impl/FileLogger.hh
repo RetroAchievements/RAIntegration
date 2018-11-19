@@ -110,6 +110,13 @@ private:
         pWriter.WriteLine();
     }
 
+        // if writing to a file, flush immediately
+        auto* pFileWriter = dynamic_cast<ra::services::impl::FileTextWriter*>(m_pWriter.get());
+        if (pFileWriter != nullptr)
+            pFileWriter->GetFStream().flush();
+    }
+
+private:
     std::unique_ptr<ra::services::TextWriter> m_pWriter;
     mutable std::mutex m_oMutex;
 };

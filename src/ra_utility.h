@@ -12,6 +12,7 @@
 namespace ra {
 #pragma warning(push)
 
+#pragma warning(push)
 // TODO: Finish narrow_cast in another PR
 // we don't use gsl::narrow_cast, ra::narrow_cast won't trigger this when its
 // done
@@ -55,6 +56,8 @@ _NODISCARD _CONSTANT_FN narrow_cast(_In_ WideType from) noexcept
 {
     return static_cast<NarrowedType>(static_cast<WideType>(from));
 }
+> _NODISCARD _CONSTANT_FN
+narrow_cast(_In_ WideType from) noexcept { return static_cast<NarrowedType>(static_cast<WideType>(from)); }
 #pragma warning(pop)
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
@@ -70,10 +73,13 @@ _NODISCARD _CONSTANT_VAR itoe(_In_ Integral i) noexcept
 {
     return static_cast<Enum>(i);
 }
+> _NODISCARD _CONSTANT_VAR
+itoe(_In_ Integral i) noexcept { return static_cast<Enum>(i); }
 
 // function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
 template<typename Enum> _CONSTANT_VAR to_integral{etoi<Enum>};
 template<typename Enum, typename Integral = std::underlying_type_t<Enum>> _CONSTANT_VAR to_enum{itoe<Enum, Integral>};
+_CONSTANT_VAR to_enum{ itoe<Enum, Integral> };
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>
@@ -182,6 +188,9 @@ _NODISCARD _CONSTANT_FN operator>=(_In_ std::underlying_type_t<Enum> a, _In_ Enu
     return (!(a < etoi(b)));
 }
 
+template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>> _NODISCARD _CONSTANT_FN
+operator>=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept { return (!(etoi(a) < b)); }
+
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _NODISCARD _CONSTANT_FN operator>=(_In_ Enum a, _In_ std::underlying_type_t<Enum> b) noexcept
 {
@@ -207,6 +216,9 @@ _CONSTANT_FN& operator|=(_Inout_ Enum& a, _In_ Enum b) noexcept
 {
     return (a = a | b);
 }
+
+template<typename Enum, class = std::enable_if_t<std::is_enum_v<Enum>>> _CONSTANT_FN&
+operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept { return (a = a & b); }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _CONSTANT_FN& operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept

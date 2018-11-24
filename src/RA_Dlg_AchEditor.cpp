@@ -1,14 +1,14 @@
 #include "RA_Dlg_AchEditor.h"
 
 #include "RA_AchievementSet.h"
-#include "RA_Resource.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
+#include "RA_Resource.h"
 #include "RA_User.h"
+#include "RA_httpthread.h"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -17,26 +17,23 @@
 
 #include "ra_math.h"
 
-namespace {
-const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
-}
+inline constexpr std::array<const char*, 10> COLUMN_TITLE{"ID",  "Flag", "Type", "Size",    "Memory",
+                                                          "Cmp", "Type", "Size", "Mem/Val", "Hits"};
+inline constexpr std::array<int, 10> COLUMN_WIDTH{30, 75, 42, 50, 72, 35, 42, 50, 72, 72};
+static_assert(ra::is_same_size_v<decltype(COLUMN_TITLE), decltype(COLUMN_WIDTH)>, "Must match!");
 
-enum CondSubItems
+enum class CondSubItems : std::size_t
 {
-    CSI_ID,
-    CSI_GROUP,
-    CSI_TYPE_SRC,
-    CSI_SIZE_SRC,
-    CSI_VALUE_SRC,
-    CSI_COMPARISON,
-    CSI_TYPE_TGT,
-    CSI_SIZE_TGT,
-    CSI_VALUE_TGT,
-    CSI_HITCOUNT,
-
-    NumColumns
+    Id,
+    Group,
+    Type_Src,
+    Size_Src,
+    Value_Src,
+    Comparison,
+    Type_Tgt,
+    Size_Tgt,
+    Value_Tgt,
+    Hitcount
 };
 
 Dlg_AchievementEditor g_AchievementEditorDialog;
@@ -60,7 +57,6 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
             switch (LOWORD(wParam))
             {
                 case IDC_RA_ACHPROGRESSENABLE:
-                    //BOOL bEnabled = IsDlgButtonChecked( hDlg, IDC_RA_ACHPROGRESSENABLE );
                     return FALSE;
 
                 case IDOK:
@@ -81,13 +77,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
     return FALSE;
 }
 
-
-
 Dlg_AchievementEditor::Dlg_AchievementEditor()
-    : m_hAchievementEditorDlg(nullptr),
-    m_hICEControl(nullptr),
-    m_pSelectedAchievement(nullptr),
-    m_bPopulatingAchievementEditorData(false)
 {
     for (size_t i = 0; i < MAX_CONDITIONS; ++i)
     {
@@ -98,32 +88,34 @@ Dlg_AchievementEditor::Dlg_AchievementEditor()
     }
 }
 
-
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
 {
-    //	Remove all columns,
-    while (ListView_DeleteColumn(hList, 0)) {}
+    // Remove all columns,
+    while (ListView_DeleteColumn(hList, 0))
+    {
+    }
 
-    //	Remove all data.
+    // Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < m_nNumCols; ++i)
+    auto i = 0U;
+    for (const auto sTitle : COLUMN_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cx = COLUMN_WIDTH[i];
-        ra::tstring colTitle = NativeStr(COLUMN_TITLE[i]);	//	Take non-const copy
-        col.pszText = colTitle.data();
-        col.cchTextMax = 255;
-        col.iSubItem = i;
+        ra::tstring colTitle{NativeStr(sTitle)}; // Take non-const copy
+        LV_COLUMN col{
+            col.mask = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            col.cx = COLUMN_WIDTH.at(i),
+            col.pszText = colTitle.data(),
+            col.cchTextMax = 255,
+            col.iSubItem = ra::to_signed(i),
+        };
 
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == m_nNumCols - 1)
+        if (i == (m_nNumCols - 1))
             col.fmt |= LVCFMT_FILL;
 
-        ListView_InsertColumn(hList, i, (LPARAM)&col);
+        ListView_InsertColumn(hList, i, &col);
+        i++;
     }
 
     ZeroMemory(&m_lbxData, sizeof(m_lbxData));
@@ -133,16 +125,15 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
     bSuccess = ListView_EnableGroupView(hList, FALSE);
 
-    //HWND hGroupList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP );
-    //ListBox_AddString( 
-    //bSuccess = ListView_SetExtendedListViewStyle( hGroupList, LVS_EX_FULLROWSELECT );
-    //bSuccess = ListView_EnableGroupView( hGroupList, FALSE );
-
+    // HWND hGroupList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP );
+    // ListBox_AddString(
+    // bSuccess = ListView_SetExtendedListViewStyle( hGroupList, LVS_EX_FULLROWSELECT );
+    // bSuccess = ListView_EnableGroupView( hGroupList, FALSE );
 }
 
 BOOL Dlg_AchievementEditor::IsActive() const
 {
-    return(g_AchievementEditorDialog.GetHWND() != nullptr) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
+    return (g_AchievementEditorDialog.GetHWND() != nullptr) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
 }
 
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
@@ -153,7 +144,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond,
     item.cchTextMax = 256;
     item.iItem = m_nNumOccupiedRows;
     item.iSubItem = 0;
-    ra::tstring sData = NativeStr(m_lbxData[m_nNumOccupiedRows][CSI_ID]);
+    ra::tstring sData = NativeStr(m_lbxData[m_nNumOccupiedRows][ra::etoi(CondSubItems::Id)]);
     item.pszText = sData.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
@@ -169,7 +160,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 {
     int nRow = item.iItem;
 
-    //	Update our local array:
+    // Update our local array:
     const char* sMemTypStrSrc = "Value";
     std::string sMemSizeStrSrc;
     if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
@@ -186,128 +177,48 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
         sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
     }
 
-    sprintf_s(m_lbxData[nRow][CSI_ID], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
-    sprintf_s(m_lbxData[nRow][CSI_GROUP], MEM_STRING_TEXT_LEN, "%s", ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))).c_str());
-    sprintf_s(m_lbxData[nRow][CSI_TYPE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
-    sprintf_s(m_lbxData[nRow][CSI_SIZE_SRC], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc.c_str());
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_SRC], MEM_STRING_TEXT_LEN, "0x%06x", Cond.CompSource().GetValue());
-    sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "%s",
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Id)], MEM_STRING_TEXT_LEN, "%d", nRow + 1);
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Group)], MEM_STRING_TEXT_LEN, "%s",
+              ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))).c_str());
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Type_Src)], MEM_STRING_TEXT_LEN, "%s", sMemTypStrSrc);
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Size_Src)], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrSrc.c_str());
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Value_Src)], MEM_STRING_TEXT_LEN, "0x%06x",
+              Cond.CompSource().GetValue());
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Comparison)], MEM_STRING_TEXT_LEN, "%s",
               ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))).c_str());
-    sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
-    sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst.c_str());
-    sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "0x%02x", Cond.CompTarget().GetValue());
-    sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(), nCurrentHits);
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Type_Tgt)], MEM_STRING_TEXT_LEN, "%s", sMemTypStrDst);
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Size_Tgt)], MEM_STRING_TEXT_LEN, "%s", sMemSizeStrDst.c_str());
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Value_Tgt)], MEM_STRING_TEXT_LEN, "0x%02x",
+              Cond.CompTarget().GetValue());
+    sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Hitcount)], MEM_STRING_TEXT_LEN, "%u (%u)", Cond.RequiredHits(),
+              nCurrentHits);
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
     {
         if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
-            sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().GetValue());
+            sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Value_Tgt)], MEM_STRING_TEXT_LEN, "%u",
+                      Cond.CompTarget().GetValue());
     }
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
     {
-        sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "");
-        sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "");
-        sprintf_s(m_lbxData[nRow][CSI_SIZE_TGT], MEM_STRING_TEXT_LEN, "");
-        sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "");
-        sprintf_s(m_lbxData[nRow][CSI_HITCOUNT], MEM_STRING_TEXT_LEN, "");
+        sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Comparison)], MEM_STRING_TEXT_LEN, "");
+        sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Type_Tgt)], MEM_STRING_TEXT_LEN, "");
+        sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Size_Tgt)], MEM_STRING_TEXT_LEN, "");
+        sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Value_Tgt)], MEM_STRING_TEXT_LEN, "");
+        sprintf_s(m_lbxData[nRow][ra::etoi(CondSubItems::Hitcount)], MEM_STRING_TEXT_LEN, "");
     }
 
-    for (size_t i = 0; i < NumColumns; ++i)
+    for (auto it = COLUMN_TITLE.cbegin(); it != COLUMN_TITLE.cend(); ++it)
     {
+        const auto i = std::distance(COLUMN_TITLE.cbegin(), it);
         item.iSubItem = i;
-        ra::tstring sData = NativeStr(m_lbxData[nRow][i]);
+        ra::tstring sData{NativeStr(m_lbxData[nRow][ra::to_unsigned(i)])};
         item.pszText = sData.data();
         ListView_SetItem(hList, &item);
     }
 }
-
-
-// LRESULT CALLBACK ICEDialogProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
-// {
-// 	BOOL bFullyHandled = FALSE;
-// 
-// 	switch(uMsg)
-// 	{
-// 	case WM_INITDIALOG:
-// 		{
-// 			//MessageBox( nullptr, "ICEDialogProc init!", "TEST", MB_OK );
-// 
-// // 			{
-// // 				//	Disable the underlying dialog!
-// // 				HWND hDlg2 = g_AchievementEditorDialog.GetHWND();
-// // 				HWND hLbx = GetDlgItem( hDlg2, IDC_RA_LBX_CONDITIONS );
-// // 				DWORD nStyle = GetWindowStyle( hLbx );
-// // 				nStyle &= ~WS_VISIBLE;
-// // 				SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// // 				UpdateWindow( hLbx );
-// // 			}
-// 
-// 			//ComboBox_ShowDropdown( hDlg, TRUE );
-// 			int i = ComboBox_GetCurSel( g_AchievementEditorDialog.GetICEControl() );
-// 
-// 			bFullyHandled = TRUE;
-// 			break;
-// 		}
-// 	case WM_SETFOCUS:
-// 		{
-// 			//BringWindowToTop( hDlg );
-// 
-// 			//EndDialog( hDlg, FALSE );
-// 			//AchievementEditorDialog.SetICEControl( nullptr );
-// 			//m_hICEControl = nullptr;	//	end of life
-// 			bFullyHandled = FALSE;
-// 			break;
-// 		}
-// 	case WM_KILLFOCUS:
-// 		{
-// 			//EndDialog( hDlg, FALSE );
-// 			//g_AchievementEditorDialog.SetICEControl( nullptr );
-// // 
-// // 			{
-// // 				HWND hDlg = g_AchievementEditorDialog.GetHWND();
-// // 				HWND hLbx = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-// // 				DWORD nStyle = GetWindowStyle( hLbx );
-// // 				nStyle |= WS_VISIBLE;
-// // 				SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// // 			}
-// 
-// 			bFullyHandled = TRUE;
-// 			break;
-// 		}
-// 	case WM_COMMAND:
-// 		switch( LOWORD(wParam) )
-// 		{
-// 			case IDC_CBODROPDOWN:
-// 			case CBN_SELENDOK:
-// 			{
-// 				HWND hCbo = GetDlgItem( hDlg, IDC_CBODROPDOWN );
-// 
-// 				char buffer[255];
-// 				sprintf_s( buffer, "NewVal: %d", ComboBox_GetCurSel( hCbo ) );
-// 				MessageBox( nullptr, buffer, "NewVal!", MB_OK );
-// 				bFullyHandled = TRUE;
-// 			}
-// 			break;
-// 		}
-// 			//EndDialog( hDlg, FALSE );
-// 			//g_AchievementEditorDialog.SetICEControl( nullptr );
-// 			// 
-// 			// 			{
-// 			// 				HWND hDlg = g_AchievementEditorDialog.GetHWND();
-// 			// 				HWND hLbx = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-// 			// 				DWORD nStyle = GetWindowStyle( hLbx );
-// 			// 				nStyle |= WS_VISIBLE;
-// 			// 				SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// // 			// 			}
-// // 
-// // 		bFullyHandled = TRUE;
-// // 		break;
-// 	}
-// 	return !bFullyHandled;
-// }
-// 
 
 WNDPROC EOldProc;
 HWND g_hIPEEdit;
@@ -341,15 +252,18 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
-            //	the LV ID and the LVs Parent window's HWND
-            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
+            // the LV ID and the LVs Parent window's HWND
+            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
+                        reinterpret_cast<LPARAM>(&lvDispinfo)); // ##reinterpret? ##SD
 
-            //	Extra validation?
+            // Extra validation?
 
             if (lstrcmp(sEditText, TEXT("Value")))
             {
-                //	Remove the associated 'size' entry
-                strcpy_s(g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, lvDispinfo.item.iSubItem + 1), 32, "");
+                // Remove the associated 'size' entry
+                strcpy_s(g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem,
+                                                             ra::itoe<CondSubItems>(lvDispinfo.item.iSubItem + 1)),
+                         32, "");
             }
 
             DestroyWindow(hwnd);
@@ -360,11 +274,11 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
         {
             if (wParam == VK_RETURN || wParam == VK_ESCAPE)
             {
-                DestroyWindow(hwnd);	//	Causing a killfocus :)
+                DestroyWindow(hwnd); // Causing a killfocus :)
             }
             else
             {
-                //	Ignore keystroke, or pass it into the edit box!
+                // Ignore keystroke, or pass it into the edit box!
                 break;
             }
 
@@ -396,9 +310,10 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             lvDispinfo.item.pszText = sEditText;
             lvDispinfo.item.cchTextMax = lstrlen(sEditText);
 
-            //	the LV ID and the LVs Parent window's HWND
+            // the LV ID and the LVs Parent window's HWND
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
-            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS), reinterpret_cast<LPARAM>(&lvDispinfo));
+            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
+                        reinterpret_cast<LPARAM>(&lvDispinfo));
 
             DestroyWindow(hwnd);
         }
@@ -429,10 +344,10 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
-            //	the LV ID and the LVs Parent window's HWND
+            // the LV ID and the LVs Parent window's HWND
             SendMessage(GetParent(hList), WM_NOTIFY, (WPARAM)IDC_RA_LBX_CONDITIONS, (LPARAM)&lvDispinfo);
 
-            //DestroyWindow(hwnd);
+            // DestroyWindow(hwnd);
             DestroyWindow(hwnd);
             return 0;
         }
@@ -441,36 +356,16 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
             if (wParam == VK_RETURN)
             {
-                // 				LV_DISPINFO lvDispinfo;
-                // 				ZeroMemory(&lvDispinfo,sizeof(LV_DISPINFO));
-                // 				lvDispinfo.hdr.hwndFrom = hwnd;
-                // 				lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-                // 				lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
-                // 				lvDispinfo.item.mask = LVIF_TEXT;
-                // 				lvDispinfo.item.iItem = nSelItem;
-                // 				lvDispinfo.item.iSubItem = nSelSubItem;
-                // 				lvDispinfo.item.pszText = nullptr;
-                // 
-                // 				char szEditText[12];
-                // 				GetWindowText( hwnd, szEditText, 12 );
-                // 				lvDispinfo.item.pszText = szEditText;
-                // 				lvDispinfo.item.cchTextMax = lstrlen(szEditText);
-                // 
-                // 				HWND hList = GetDlgItem( g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS );
-                // 
-                // 				//	the LV ID and the LVs Parent window's HWND
-                // 				SendMessage( GetParent( hList ), WM_NOTIFY, (WPARAM)IDC_RA_LBX_CONDITIONS, (LPARAM)&lvDispinfo );
-
                 DestroyWindow(hwnd);
             }
             else if (wParam == VK_ESCAPE)
             {
-                //	Undo changes: i.e. simply destroy the window!
+                // Undo changes: i.e. simply destroy the window!
                 DestroyWindow(hwnd);
             }
             else
             {
-                //	Ignore keystroke, or pass it into the edit box!
+                // Ignore keystroke, or pass it into the edit box!
             }
 
             break;
@@ -490,14 +385,14 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     return CallWindowProc(EOldProc, hwnd, nMsg, wParam, lParam);
 }
 
-BOOL CreateIPE(int nItem, int nSubItem)
+BOOL CreateIPE(int nItem, CondSubItems nSubItem)
 {
     BOOL bSuccess = FALSE;
 
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
     RECT rcSubItem;
-    ListView_GetSubItemRect(hList, nItem, nSubItem, LVIR_BOUNDS, &rcSubItem);
+    ListView_GetSubItemRect(hList, nItem, ra::etoi(nSubItem), LVIR_BOUNDS, &rcSubItem);
 
     RECT rcOffset;
     GetWindowRect(hList, &rcOffset);
@@ -509,37 +404,31 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
     const int nHeight = rcSubItem.bottom - rcSubItem.top;
     int nWidth = rcSubItem.right - rcSubItem.left;
-    if (nSubItem == 0)
+    if (nSubItem == CondSubItems())
         nWidth = nWidth / 4; /*NOTE: the ListView has 4 columns;
                             when iSubItem == 0 (an item is clicked),
                             the width (largura) is divided by 4,
                             because for items (not subitems) the
                             width returned is that of the whole row.*/
 
-
     switch (nSubItem)
     {
-        case CSI_ID:
-            ASSERT(!"First element does nothing!");	//	nothing we do if we click the first element!
+        case CondSubItems::Id:
+            ASSERT(!"First element does nothing!"); // nothing we do if we click the first element!
             break;
 
-        case CSI_GROUP:
+        case CondSubItems::Group:
         {
-            //	Condition: dropdown
+            // Condition: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            g_hIPEEdit = CreateWindowEx(
-                WS_EX_CLIENTEDGE,
-                TEXT("ComboBox"),
-                TEXT(""),
-                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, ra::ftol(1.6F * nHeight * Condition::TYPE_STR.size()),
-                g_AchievementEditorDialog.GetHWND(),
-                0,
-                GetModuleHandle(nullptr),
-                nullptr);
+            g_hIPEEdit =
+                CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
+                               WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
+                               rcSubItem.top, nWidth, ra::ftol(1.6F * nHeight * Condition::TYPE_STR.size()),
+                               g_AchievementEditorDialog.GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -565,15 +454,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
         }
         break;
 
-        case CSI_TYPE_SRC:
-        case CSI_TYPE_TGT:
+        case CondSubItems::Type_Src:
+        case CondSubItems::Type_Tgt:
         {
-            //	GetType: dropdown
+            // GetType: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            if (nSubItem == CSI_TYPE_TGT)
+            if (nSubItem == CondSubItems::Type_Tgt)
             {
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
@@ -582,18 +471,13 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     break;
             }
 
-            const int nNumItems = 3;	//	"Mem", "Delta" or "Value"
+            const int nNumItems = 3; // "Mem", "Delta" or "Value"
 
-            g_hIPEEdit = CreateWindowEx(
-                WS_EX_CLIENTEDGE,
-                TEXT("ComboBox"),
-                TEXT(""),
-                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, static_cast<int>(1.6f * nHeight * nNumItems),
-                g_AchievementEditorDialog.GetHWND(),
-                0,
-                GetModuleHandle(nullptr),
-                nullptr);
+            g_hIPEEdit =
+                CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
+                               WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
+                               rcSubItem.top, nWidth, static_cast<int>(1.6f * nHeight * nNumItems),
+                               g_AchievementEditorDialog.GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -602,15 +486,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            // 			for( size_t i = 0; i < g_NumMemSizeStrings; ++i )
-            // 			{
-            // 				ComboBox_AddString( g_hIPEEdit, g_MemSizeStrings[i] );
-            // 
-            // 				if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), g_MemSizeStrings[i] ) == 0 )
-            // 					ComboBox_SetCurSel( g_hIPEEdit, i );
-            // 			}
-
-                        /*CB_ERRSPACE*/
+            /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
@@ -631,22 +507,23 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
-        case CSI_SIZE_SRC:
-        case CSI_SIZE_TGT:
+        case CondSubItems::Size_Src:
+        case CondSubItems::Size_Tgt:
         {
-            //	Size: dropdown
+            // Size: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            //	Note: this relies on column order :S
+            // Note: this relies on column order :S
+            using namespace ra::arith_ops;
             if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem - 1), "Value") == 0)
             {
-                //	Values have no size.
+                // Values have no size.
                 break;
             }
 
-            if (nSubItem == CSI_SIZE_TGT)
+            if (nSubItem == CondSubItems::Size_Tgt)
             {
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
@@ -655,16 +532,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     break;
             }
 
-            g_hIPEEdit = CreateWindowEx(
-                WS_EX_CLIENTEDGE,
-                TEXT("ComboBox"),
-                TEXT(""),
-                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.6f * nHeight * MEMSIZE_STR.size()),
-                g_AchievementEditorDialog.GetHWND(),
-                0,
-                GetModuleHandle(nullptr),
-                nullptr);
+            g_hIPEEdit =
+                CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
+                               WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
+                               rcSubItem.top, nWidth, (int)(1.6f * nHeight * MEMSIZE_STR.size()),
+                               g_AchievementEditorDialog.GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -675,7 +547,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             for (auto& str : MEMSIZE_STR)
             {
-                const auto i{ ComboBox_AddString(g_hIPEEdit, str) };
+                const auto i{ComboBox_AddString(g_hIPEEdit, str)};
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
             }
@@ -686,9 +558,9 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
-        case CSI_COMPARISON:
+        case CondSubItems::Comparison:
         {
-            //	Compare: dropdown
+            // Compare: dropdown
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
@@ -698,16 +570,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
             if (Cond.IsAddCondition() || Cond.IsSubCondition())
                 break;
 
-            g_hIPEEdit = CreateWindowEx(
-                WS_EX_CLIENTEDGE,
-                TEXT("ComboBox"),
-                TEXT(""),
-                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-                rcSubItem.left, rcSubItem.top, nWidth, static_cast<int>(1.6F * nHeight * COMPARISONTYPE_STR.size()),
-                g_AchievementEditorDialog.GetHWND(),
-                0,
-                GetModuleHandle(nullptr),
-                nullptr);
+            g_hIPEEdit =
+                CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
+                               WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
+                               rcSubItem.top, nWidth, static_cast<int>(1.6F * nHeight * COMPARISONTYPE_STR.size()),
+                               g_AchievementEditorDialog.GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -717,7 +584,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
             };
             for (const auto& str : COMPARISONTYPE_STR)
             {
-                const auto idx{ ComboBox_AddString(g_hIPEEdit, str) };
+                const auto idx{ComboBox_AddString(g_hIPEEdit, str)};
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, idx);
             }
@@ -728,15 +595,15 @@ BOOL CreateIPE(int nItem, int nSubItem)
             EOldProc = (WNDPROC)SetWindowLong(g_hIPEEdit, GWL_WNDPROC, (LONG)DropDownProc);
         }
         break;
-        case CSI_HITCOUNT:
-        case CSI_VALUE_SRC:	//	Mem/Val: edit
-        case CSI_VALUE_TGT: //	Mem/Val: edit
+        case CondSubItems::Hitcount:
+        case CondSubItems::Value_Src: // Mem/Val: edit
+        case CondSubItems::Value_Tgt: // Mem/Val: edit
         {
             ASSERT(g_hIPEEdit == nullptr);
             if (g_hIPEEdit)
                 break;
 
-            if (nSubItem != CSI_VALUE_SRC)
+            if (nSubItem != CondSubItems::Value_Src)
             {
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
@@ -745,16 +612,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     break;
             }
 
-            g_hIPEEdit = CreateWindowEx(
-                WS_EX_CLIENTEDGE,
-                TEXT("EDIT"),
-                TEXT(""),
-                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
-                rcSubItem.left, rcSubItem.top, nWidth, (int)(1.5f*nHeight),
-                g_AchievementEditorDialog.GetHWND(),
-                0,
-                GetModuleHandle(nullptr),
-                nullptr);
+            g_hIPEEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
+                                        WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
+                                        rcSubItem.left, rcSubItem.top, nWidth, (int)(1.5f * nHeight),
+                                        g_AchievementEditorDialog.GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -768,8 +629,8 @@ BOOL CreateIPE(int nItem, int nSubItem)
             const char* pData = g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem);
             SetWindowText(g_hIPEEdit, NativeStr(pData).c_str());
 
-            //	Special case, hitcounts
-            if (nSubItem == CSI_HITCOUNT)
+            // Special case, hitcounts
+            if (nSubItem == CondSubItems::Hitcount)
             {
                 if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
                 {
@@ -822,10 +683,12 @@ LRESULT CALLBACK Dlg_AchievementEditor::ListViewWndProc(HWND hWnd, UINT uMsg, WP
                 else
                 {
                     // tooltip is not visible. if we told the tooltip to not display in the TTM_GETDISPINFO handler by
-                    // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so now
+                    // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so
+                    // now
                     SendMessage(g_AchievementEditorDialog.m_hTooltip, TTM_POPUP, 0, 0);
                     // but we don't want the tooltip to immediately display when entering a new cell, so immediately
-                    // hide it. the normal hover behavior will make it display as expected after a normal hover wait time.
+                    // hide it. the normal hover behavior will make it display as expected after a normal hover wait
+                    // time.
                     SendMessage(g_AchievementEditorDialog.m_hTooltip, TTM_POP, 0, 0);
                 }
             }
@@ -835,10 +698,10 @@ LRESULT CALLBACK Dlg_AchievementEditor::ListViewWndProc(HWND hWnd, UINT uMsg, WP
     return CallWindowProc(g_AchievementEditorDialog.m_pListViewWndProc, hWnd, uMsg, wParam, lParam);
 }
 
-//static
+// static
 INT_PTR CALLBACK Dlg_AchievementEditor::s_AchievementEditorProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    //	Intercept some msgs?
+    // Intercept some msgs?
     return g_AchievementEditorDialog.AchievementEditorProc(hDlg, uMsg, wParam, lParam);
 }
 
@@ -850,7 +713,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
     {
         case WM_TIMER:
         {
-            //	Ignore if we are currently editing a box!
+            // Ignore if we are currently editing a box!
             if (g_hIPEEdit != nullptr)
                 break;
 
@@ -874,9 +737,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             HWND hList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
             SetupColumns(hList);
             auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS, pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+            CheckDlgButton(hDlg, IDC_RA_CHK_SHOW_DECIMALS,
+                           pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
 
-            //	For scanning changes to achievement conditions (hit counts)
+            // For scanning changes to achievement conditions (hit counts)
             SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
 
             m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
@@ -898,8 +762,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             // set up the list view tooltip
             m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
-                CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
-                hDlg, nullptr, GetInstanceModule(g_hThisDLLInst), nullptr);
+                                        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hDlg, nullptr,
+                                        GetInstanceModule(g_hThisDLLInst), nullptr);
             if (m_hTooltip)
             {
                 TOOLINFO toolInfo;
@@ -915,12 +779,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000); // show for 30 seconds
 
                 // install a mouse hook so we can show different tooltips per cell within the list view
-                m_pListViewWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(hList, GWL_WNDPROC, reinterpret_cast<LONG_PTR>(&ListViewWndProc)));
+                m_pListViewWndProc = reinterpret_cast<WNDPROC>(
+                    SetWindowLongPtr(hList, GWL_WNDPROC, reinterpret_cast<LONG_PTR>(&ListViewWndProc)));
             }
 
             RestoreWindowPosition(hDlg, "Achievement Editor", true, true);
         }
-        return TRUE;
+            return TRUE;
 
         case WM_GETMINMAXINFO:
         {
@@ -958,7 +823,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case IDC_RA_CHK_SHOW_DECIMALS:
                 {
                     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-                    pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, !pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+                    pConfiguration.SetFeatureEnabled(
+                        ra::services::Feature::PreferDecimal,
+                        !pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
                     if (ActiveAchievement() != nullptr)
                     {
                         ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::All);
@@ -996,23 +863,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 }
                 break;
 
-                // 		case ID_SELECT_ALL:
-                // 			{
-                // 				HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-                // 				for( size_t i = 0; i < m_nNumOccupiedRows; ++i )
-                // 					ListView_SetCheckState( hList, i, TRUE );
-                // 				bHandled = TRUE;
-                // 			}
-                // 			break;
-
                 case IDC_RA_BADGENAME:
                 {
-                    // 				if( m_pSelectedAchievement == nullptr )
-                    // 				{
-                    // 					bHandled = TRUE;
-                    // 					break;
-                    // 				}
-
                     HWND hBadgeNameCtrl = GetDlgItem(hDlg, IDC_RA_BADGENAME);
                     switch (HIWORD(wParam))
                     {
@@ -1025,7 +877,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         break;
                         case CBN_SELENDCANCEL:
-                            //	Restore?
+                            // Restore?
                             break;
                     }
 
@@ -1035,8 +887,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_PROGRESSINDICATORS:
                 {
-                    DialogBox((HINSTANCE)(GetModuleHandle(nullptr)), MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg, AchProgressProc);
-                    //DialogBox( ghInstance, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg, AchProgressProc );
+                    DialogBox((HINSTANCE)(GetModuleHandle(nullptr)), MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg,
+                              AchProgressProc);
+                    // DialogBox( ghInstance, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg, AchProgressProc );
                     bHandled = TRUE;
                 }
                 break;
@@ -1054,11 +907,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (pActiveAch == nullptr)
                                 return FALSE;
 
-                            //	Disable all achievement tracking
-                            //g_pActiveAchievements->SetPaused( true );
-                            //CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+                            // Disable all achievement tracking
+                            // g_pActiveAchievements->SetPaused( true );
+                            // CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
 
-                            //	Set this achievement as modified
+                            // Set this achievement as modified
                             pActiveAch->SetModified(TRUE);
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
@@ -1066,14 +919,16 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             const int nSelectedIndex = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
                             if (nSelectedIndex != -1)
                             {
-                                //	Implicit updating:
+                                // Implicit updating:
                                 TCHAR buffer[1024];
                                 if (GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
                                 {
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
-                                    //	Persist/Update/Inject local LBX data back into LBX (?)
-                                    g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Column::Title, pActiveAch->Title());
+                                    // Persist/Update/Inject local LBX data back into LBX (?)
+                                    g_AchievementsDialog.OnEditData(
+                                        g_pActiveAchievements->GetAchievementIndex(*pActiveAch),
+                                        Dlg_Achievements::Column::Title, pActiveAch->Title());
                                 }
                             }
                         }
@@ -1093,11 +948,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (pActiveAch == nullptr)
                                 return FALSE;
 
-                            //	Disable all achievement tracking:
-                            //g_pActiveAchievements->SetPaused( true );
-                            //CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+                            // Disable all achievement tracking:
+                            // g_pActiveAchievements->SetPaused( true );
+                            // CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
 
-                            //	Set this achievement as modified:
+                            // Set this achievement as modified:
                             pActiveAch->SetModified(TRUE);
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
@@ -1106,8 +961,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (nSelectedIndex == -1)
                                 return FALSE;
 
-                            //	Implicit updating:
-                            //char* psDesc = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements:: );
+                            // Implicit updating:
+                            // char* psDesc = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements:: );
                             TCHAR buffer[128];
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_DESC, buffer, 128))
                                 pActiveAch->SetDescription(ra::Narrow(buffer));
@@ -1131,7 +986,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             TCHAR buffer[16];
                             if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer, 16))
                             {
-                                
                                 int nVal = std::stoi(NativeStr(buffer));
                                 if (nVal < 0 || nVal > 100)
                                     return FALSE;
@@ -1155,10 +1009,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     Condition NewCondition;
                     NewCondition.CompSource().Set(MemSize::EightBit, CompVariable::Type::Address, 0x0000);
-                    NewCondition.CompTarget().Set(MemSize::EightBit, CompVariable::Type::ValueComparison, 0);	//	Compare defaults!
+                    NewCondition.CompTarget().Set(MemSize::EightBit, CompVariable::Type::ValueComparison,
+                                                  0); // Compare defaults!
 
-                    //	Helper: guess that the currently watched memory location
-                    //	 is probably what they are about to want to add a cond for.
+                    // Helper: guess that the currently watched memory location
+                    //  is probably what they are about to want to add a cond for.
                     if (g_MemoryDialog.GetHWND() != nullptr)
                     {
                         TCHAR buffer[256];
@@ -1169,11 +1024,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;
 
-                    //	Disable all achievement tracking:
-                    //g_pActiveAchievements->SetPaused( true );
-                    //CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+                    // Disable all achievement tracking:
+                    // g_pActiveAchievements->SetPaused( true );
+                    // CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
 
-                    //	Set this achievement as 'modified'
+                    // Set this achievement as 'modified'
                     pActiveAch->SetModified(TRUE);
                     g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
@@ -1181,7 +1036,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     pActiveAch->ClearDirtyFlag();
                     pActiveAch->RebuildTrigger();
 
-                    //	Select last item
+                    // Select last item
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS);
                     ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
@@ -1200,9 +1055,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             m_ConditionClipboard.Clear();
 
-                            for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
+                            for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0;
+                                 i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                             {
-                                const Condition& CondToCopy = pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>(i));
+                                const Condition& CondToCopy =
+                                    pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>(i));
 
                                 const Condition NewCondition(CondToCopy);
 
@@ -1228,12 +1085,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             for (unsigned int i = 0; i < m_ConditionClipboard.Count(); i++)
                             {
-                                const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), m_ConditionClipboard.GetAt(i)) - 1;
+                                const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(),
+                                                                               m_ConditionClipboard.GetAt(i)) -
+                                                      1;
                                 ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                                 ListView_EnsureVisible(hList, nNewID, FALSE);
                             }
 
-                            //	Update this achievement entry as 'modified':
+                            // Update this achievement entry as 'modified':
                             pActiveAch->SetModified(TRUE);
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
@@ -1277,18 +1136,17 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     items.pop_back();
                                 }
 
-                                //	Set this achievement as 'modified'
+                                // Set this achievement as 'modified'
                                 pActiveAch->SetModified(TRUE);
                                 g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
-                                //	Refresh:
+                                // Refresh:
                                 LoadAchievement(pActiveAch, TRUE);
                                 pActiveAch->ClearDirtyFlag();
                                 pActiveAch->RebuildTrigger();
                             }
                         }
                     }
-
                 }
                 break;
 
@@ -1307,12 +1165,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                             {
-                                // as we remove items, the index within the achievement changes, but not in the UI until we refresh
+                                // as we remove items, the index within the achievement changes, but not in the UI until
+                                // we refresh
                                 const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
 
-                                const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                const Condition& CondToMove = pActiveAch->GetCondition(
+                                    nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
                                 conditionsToMove.push_back(std::move(CondToMove));
-                                pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                pActiveAch->RemoveCondition(nSelectedConditionGroup,
+                                                            static_cast<size_t>(nUpdatedIndex));
                             }
 
                             //  Insert at new location
@@ -1325,17 +1186,18 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 pActiveAch->InsertCondition(nSelectedConditionGroup, nInsertIndex + i, CondToMove);
                             }
 
-                            //	Set this achievement as 'modified'
+                            // Set this achievement as 'modified'
                             pActiveAch->SetModified(TRUE);
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
-                            //	Refresh:
+                            // Refresh:
                             LoadAchievement(pActiveAch, TRUE);
 
                             //  Update selections
                             ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                             for (size_t i = 0; i < nInsertCount; ++i)
-                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
+                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED,
+                                                      ra::to_unsigned(-1));
 
                             ListView_EnsureVisible(hList, nInsertIndex, FALSE);
                         }
@@ -1361,12 +1223,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             for (int i = nSelectedIndex; i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                             {
-                                // as we remove items, the index within the achievement changes, but not in the UI until we refresh
+                                // as we remove items, the index within the achievement changes, but not in the UI until
+                                // we refresh
                                 const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
 
-                                const Condition& CondToMove = pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                const Condition& CondToMove = pActiveAch->GetCondition(
+                                    nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
                                 conditionsToMove.push_back(std::move(CondToMove));
-                                pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                pActiveAch->RemoveCondition(nSelectedConditionGroup,
+                                                            static_cast<size_t>(nUpdatedIndex));
 
                                 // want to insert after last selected item, update nSelectedIndex
                                 nSelectedIndex = nUpdatedIndex;
@@ -1374,7 +1239,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             //  Insert at new location
                             const int nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
-                            const int nInsertIndex = (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
+                            const int nInsertIndex =
+                                (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
                             const size_t nInsertCount = conditionsToMove.size();
 
                             for (size_t i = 0; i < nInsertCount; ++i)
@@ -1383,17 +1249,18 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 pActiveAch->InsertCondition(nSelectedConditionGroup, nInsertIndex + i, CondToMove);
                             }
 
-                            //	Set this achievement as 'modified'
+                            // Set this achievement as 'modified'
                             pActiveAch->SetModified(TRUE);
                             g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
-                            //	Refresh:
+                            // Refresh:
                             LoadAchievement(pActiveAch, TRUE);
 
                             //  Update selections
                             ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                             for (size_t i = 0; i < nInsertCount; ++i)
-                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
+                                ListView_SetItemState(hList, nInsertIndex + i, LVIS_FOCUSED | LVIS_SELECTED,
+                                                      ra::to_unsigned(-1));
 
                             ListView_EnsureVisible(hList, nInsertIndex, FALSE);
                         }
@@ -1418,36 +1285,40 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     ofn.lpstrFile = buffer;
                     ofn.nMaxFile = BUF_SIZE - 1;
 
-                    ofn.lpstrFilter =
-                        TEXT("Image Files\0" "*.png;*.gif;*.jpg;*.jpeg\0")
-                        TEXT("All Files\0" "*.*\0\0");	//	Last element MUST be doubly-terminated: https://msdn.microsoft.com/en-us/library/windows/desktop/ms646839(v=vs.85).aspx
+                    ofn.lpstrFilter = TEXT(
+                        "Image Files\0"
+                        "*.png;*.gif;*.jpg;*.jpeg\0")
+                        TEXT(
+                            "All Files\0"
+                            "*.*\0\0"); // Last element MUST be doubly-terminated:
+                                        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms646839(v=vs.85).aspx
 
                     ofn.nFilterIndex = 1;
                     ofn.lpstrDefExt = TEXT("png");
                     ofn.Flags = OFN_FILEMUSTEXIST;
 
-                    if (GetOpenFileName(&ofn) == 0)	//	0 == cancelled
+                    if (GetOpenFileName(&ofn) == 0) // 0 == cancelled
                         return FALSE;
 
                     if (ofn.lpstrFile != nullptr)
                     {
                         rapidjson::Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
+                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow(ofn.lpstrFile), Response))
                         {
-                            //TBD: ensure that:
-                            //	The image is copied to the cache/badge dir
-                            //	The image doesn't already exist in teh cache/badge dir (ask overwrite)
-                            //	The image is the correct dimensions or can be scaled
-                            //	The image can be uploaded OK
-                            //	The image is not copyright
+                            // TBD: ensure that:
+                            // The image is copied to the cache/badge dir
+                            // The image doesn't already exist in teh cache/badge dir (ask overwrite)
+                            // The image is the correct dimensions or can be scaled
+                            // The image can be uploaded OK
+                            // The image is not copyright
 
                             const rapidjson::Value& ResponseData = Response["Response"];
                             if (ResponseData.HasMember("BadgeIter"))
                             {
                                 const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
 
-                                //pBuffer will contain "OK:" and the number of the uploaded file.
-                                //	Add the value to the available values in the cbo, and it *should* self-populate.
+                                // pBuffer will contain "OK:" and the number of the uploaded file.
+                                // Add the value to the available values in the cbo, and it *should* self-populate.
                                 MessageBox(nullptr, TEXT("Successful!"), TEXT("Upload OK"), MB_OK);
 
                                 m_BadgeNames.AddNewBadgeName(sNewBadgeIter, true);
@@ -1455,11 +1326,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             }
                             else if (ResponseData.HasMember("Error"))
                             {
-                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"), MB_OK);
+                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"),
+                                           MB_OK);
                             }
                             else
                             {
-                                MessageBox(nullptr, TEXT("Error in upload! Try another image format, or maybe smaller image?"), TEXT("Error"), MB_OK);
+                                MessageBox(nullptr,
+                                           TEXT("Error in upload! Try another image format, or maybe smaller image?"),
+                                           TEXT("Error"), MB_OK);
                             }
                         }
                         else
@@ -1501,7 +1375,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     if (ActiveAchievement()->NumConditionGroups() == 3)
                     {
                         ActiveAchievement()->RemoveConditionGroup();
-                        ActiveAchievement()->RemoveConditionGroup();	//	##SD this intentional?
+                        ActiveAchievement()->RemoveConditionGroup(); // ##SD this intentional?
                     }
                     else if (ActiveAchievement()->NumConditionGroups() > 3)
                     {
@@ -1509,7 +1383,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
                     else
                     {
-                        MessageBox(m_hAchievementEditorDlg, TEXT("Cannot remove Core Condition Group!"), TEXT("Warning"), MB_OK);
+                        MessageBox(m_hAchievementEditorDlg, TEXT("Cannot remove Core Condition Group!"),
+                                   TEXT("Warning"), MB_OK);
                     }
 
                     RepopulateGroupList(ActiveAchievement());
@@ -1526,7 +1401,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     break;
             }
 
-            //	Switch also on the highword:
+            // Switch also on the highword:
 
             switch (HIWORD(wParam))
             {
@@ -1536,8 +1411,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 case CBN_CLOSEUP:
                 case CBN_KILLFOCUS:
                 {
-                    //	Only post this if the edit control is not empty:
-                    //	 if it's empty, we're not dealing with THIS edit control!
+                    // Only post this if the edit control is not empty:
+                    //  if it's empty, we're not dealing with THIS edit control!
                     if (g_hIPEEdit != nullptr)
                     {
                         LV_DISPINFO lvDispinfo;
@@ -1557,7 +1432,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         HWND hList = GetDlgItem(GetHWND(), IDC_RA_LBX_CONDITIONS);
 
-                        //	the LV ID and the LVs Parent window's HWND
+                        // the LV ID and the LVs Parent window's HWND
                         SendMessage(GetParent(hList), WM_NOTIFY, (WPARAM)IDC_RA_LBX_CONDITIONS, (LPARAM)&lvDispinfo);
 
                         DestroyWindow(g_hIPEEdit);
@@ -1575,17 +1450,17 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 {
                     const NMITEMACTIVATE* pOnClick = (LPNMITEMACTIVATE)lParam;
 
-                    //	http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
+                    // http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
                     ASSERT(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS) != nullptr);
 
-                    //	Note: first item should be an ID!
+                    // Note: first item should be an ID!
                     if (pOnClick->iItem != -1 && pOnClick->iSubItem != 0)
                     {
                         nSelItem = pOnClick->iItem;
                         nSelSubItem = pOnClick->iSubItem;
 
-                        CreateIPE(pOnClick->iItem, pOnClick->iSubItem);
+                        CreateIPE(pOnClick->iItem, ra::itoe<CondSubItems>(pOnClick->iSubItem));
                     }
                     else
                     {
@@ -1596,51 +1471,54 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         SendMessage(g_hIPEEdit, WM_KILLFOCUS, 0, 0);
                     }
                     return 0;
-
                 }
                 break;
                 case NM_RCLICK:
                 {
                     const NMITEMACTIVATE* pOnClick = (LPNMITEMACTIVATE)lParam;
-                    if (pOnClick->iItem != -1 &&
-                        pOnClick->iSubItem != -1)
+                    if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                     {
-                        if (static_cast<size_t>(pOnClick->iItem) > ActiveAchievement()->NumConditions(GetSelectedConditionGroup()))
+                        if (static_cast<size_t>(pOnClick->iItem) >
+                            ActiveAchievement()->NumConditions(GetSelectedConditionGroup()))
                             return 0;
 
-                        Condition& rCond = ActiveAchievement()->GetCondition(GetSelectedConditionGroup(), pOnClick->iItem);
+                        Condition& rCond =
+                            ActiveAchievement()->GetCondition(GetSelectedConditionGroup(), pOnClick->iItem);
 
-                        //HWND hMem = GetDlgItem( HWndMemoryDlg, IDC_RA_WATCHING );
-                        if (pOnClick->iSubItem == CSI_VALUE_SRC)
+                        // HWND hMem = GetDlgItem( HWndMemoryDlg, IDC_RA_WATCHING );
+                        using namespace ra::rel_ops;
+                        if (pOnClick->iSubItem == CondSubItems::Value_Src)
                         {
                             if (rCond.CompSource().GetType() != CompVariable::Type::ValueComparison)
                             {
-                                //	Wake up the mem dlg via the main app
+                                // Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
-                                //	Update the text to match
+                                // Update the text to match
                                 char buffer[16];
                                 sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
-                                //	Nudge the ComboBox to update the mem note
-                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
+                                // Nudge the ComboBox to update the mem note
+                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND,
+                                            MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
                             }
                         }
-                        else if (pOnClick->iSubItem == CSI_VALUE_TGT)
+                        else if (pOnClick->iSubItem == CondSubItems::Value_Tgt)
                         {
                             if (rCond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
                             {
-                                //	Wake up the mem dlg via the main app
+                                // Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
-                                //	Update the text to match
+                                // Update the text to match
                                 char buffer[16];
                                 sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
-                                //	Nudge the ComboBox to update the mem note
-                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND, MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
+                                // Nudge the ComboBox to update the mem note
+                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND,
+                                            MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
                             }
                         }
                     }
@@ -1656,47 +1534,48 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     if (pActiveAch == nullptr)
                         return FALSE;
 
-                    if (pDispInfo->item.iItem < 0 || pDispInfo->item.iItem >= (int)pActiveAch->NumConditions(GetSelectedConditionGroup()))
+                    if (pDispInfo->item.iItem < 0 ||
+                        pDispInfo->item.iItem >= (int)pActiveAch->NumConditions(GetSelectedConditionGroup()))
                         return FALSE;
 
                     LVITEM lvItem;
                     lvItem.iItem = pDispInfo->item.iItem;
                     lvItem.iSubItem = pDispInfo->item.iSubItem;
                     lvItem.pszText = pDispInfo->item.pszText;
-                    if (pDispInfo->item.iItem == -1 ||
-                        pDispInfo->item.iSubItem == -1)
+                    if (pDispInfo->item.iItem == -1 || pDispInfo->item.iSubItem == -1)
                     {
                         nSelItem = -1;
                         nSelSubItem = -1;
                         break;
                     }
 
-                    //	Get cached data:
-                    char* sData = LbxDataAt(pDispInfo->item.iItem, pDispInfo->item.iSubItem);
+                    // Get cached data:
+                    char* sData = LbxDataAt(pDispInfo->item.iItem, ra::itoe<CondSubItems>(pDispInfo->item.iSubItem));
 
-                    //	Update modified flag:
+                    // Update modified flag:
                     if (strcmp(ra::Narrow(lvItem.pszText).c_str(), sData) != 0)
                     {
-                        //	Disable all achievement tracking:
-                        //g_pActiveAchievements->SetPaused( true );
-                        //CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
+                        // Disable all achievement tracking:
+                        // g_pActiveAchievements->SetPaused( true );
+                        // CheckDlgButton( HWndAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, FALSE );
 
-                        //	Update this achievement as 'modified'
+                        // Update this achievement as 'modified'
                         pActiveAch->SetModified(TRUE);
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
                     }
 
-                    //	Inject the new text into the lbx
-                    SendDlgItemMessage(hDlg, IDC_RA_LBX_CONDITIONS, LVM_SETITEMTEXT, (WPARAM)lvItem.iItem, (LPARAM)&lvItem); // put new text
+                    // Inject the new text into the lbx
+                    SendDlgItemMessage(hDlg, IDC_RA_LBX_CONDITIONS, LVM_SETITEMTEXT, (WPARAM)lvItem.iItem,
+                                       (LPARAM)&lvItem); // put new text
 
-                    //	Update the cached data:
-                    strcpy_s(sData, MEM_STRING_TEXT_LEN, ra::Narrow( pDispInfo->item.pszText).c_str());
+                    // Update the cached data:
+                    strcpy_s(sData, MEM_STRING_TEXT_LEN, ra::Narrow(pDispInfo->item.pszText).c_str());
 
-                    //	Update the achievement data:
+                    // Update the achievement data:
                     Condition& rCond = pActiveAch->GetCondition(GetSelectedConditionGroup(), pDispInfo->item.iItem);
-                    switch (pDispInfo->item.iSubItem)
+                    switch (ra::itoe<CondSubItems>(pDispInfo->item.iSubItem))
                     {
-                        case CSI_GROUP:
+                        case CondSubItems::Group:
                         {
                             auto i = 0;
                             for (const auto& str : Condition::TYPE_STR)
@@ -1705,10 +1584,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     rCond.SetConditionType(ra::itoe<Condition::Type>(i));
                                 i++;
                             }
-                            UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond, pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
+                            UpdateCondition(
+                                GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond,
+                                pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
                             break;
                         }
-                        case CSI_TYPE_SRC:
+                        case CondSubItems::Type_Src:
                         {
                             if (strcmp(sData, "Mem") == 0)
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
@@ -1719,7 +1600,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             break;
                         }
-                        case CSI_TYPE_TGT:
+                        case CondSubItems::Type_Tgt:
                         {
                             if (strcmp(sData, "Mem") == 0)
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);
@@ -1731,45 +1612,49 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             break;
                         }
 
-                        case CSI_SIZE_SRC:
+                        case CondSubItems::Size_Src:
                         {
-                            auto i{ 0 };
+                            auto i{0};
                             for (auto& str : MEMSIZE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.CompSource().SetSize(ra::itoe<MemSize>(i));
                                 i++;
                             }
-                            //	TBD: Limit validation                            
-                        }break;
-                        case CSI_SIZE_TGT:
+                            // TBD: Limit validation
+                        }
+                        break;
+                        case CondSubItems::Size_Tgt:
                         {
-                            auto i{ 0 };
+                            auto i{0};
                             for (auto& str : MEMSIZE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.CompTarget().SetSize(ra::itoe<MemSize>(i));
                                 i++;
                             }
-                            //	TBD: Limit validation                           
-                        }break;
-                        case CSI_COMPARISON:
+                            // TBD: Limit validation
+                        }
+                        break;
+                        case CondSubItems::Comparison:
                         {
-                            auto i{ 0 };
+                            auto i{0};
                             for (const auto& str : COMPARISONTYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetCompareType(ra::itoe<ComparisonType>(i));
                                 i++;
                             }
-                        }break;
+                        }
+                        break;
 
-                        case CSI_VALUE_SRC:
+                        case CondSubItems::Value_Src:
                         {
                             int nBase = 16;
                             if (rCond.CompSource().GetType() == CompVariable::Type::ValueComparison)
                             {
-                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                auto& pConfiguration =
+                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
                                 if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
                                     nBase = 10;
                             }
@@ -1778,12 +1663,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             rCond.CompSource().SetValue(nVal);
                             break;
                         }
-                        case CSI_VALUE_TGT:
+                        case CondSubItems::Value_Tgt:
                         {
                             int nBase = 16;
                             if (rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
                             {
-                                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                                auto& pConfiguration =
+                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
                                 if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
                                     nBase = 10;
                             }
@@ -1792,9 +1678,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             rCond.CompTarget().SetValue(nVal);
                             break;
                         }
-                        case CSI_HITCOUNT:
+                        case CondSubItems::Hitcount:
                         {
-                            //	Always decimal
+                            // Always decimal
                             rCond.SetRequiredHits(strtoul(sData, nullptr, 10));
                             break;
                         }
@@ -1832,14 +1718,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             EndDialog(hDlg, true);
             bHandled = TRUE;
             break;
-            // 	case WM_LBUTTONDOWN:
-            // 		{
-            // 			break;
-            // 		}
     }
 
     return !bHandled;
-    //return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
 void Dlg_AchievementEditor::GetListViewTooltip()
@@ -1863,17 +1744,19 @@ void Dlg_AchievementEditor::GetListViewTooltip()
 
     Condition& rCond = pActiveAch->GetCondition(GetSelectedConditionGroup(), lvHitTestInfo.iItem);
     unsigned int nAddr = 0;
-    switch (lvHitTestInfo.iSubItem)
+    switch (ra::itoe<CondSubItems>(lvHitTestInfo.iSubItem))
     {
-        case CSI_VALUE_SRC:
-            if (rCond.CompSource().GetType() != CompVariable::Type::Address && rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
+        case CondSubItems::Value_Src:
+            if (rCond.CompSource().GetType() != CompVariable::Type::Address &&
+                rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
                 return;
 
             nAddr = rCond.CompSource().GetValue();
             break;
 
-        case CSI_VALUE_TGT:
-            if (rCond.CompTarget().GetType() != CompVariable::Type::Address && rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
+        case CondSubItems::Value_Tgt:
+            if (rCond.CompTarget().GetType() != CompVariable::Type::Address &&
+                rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
                 return;
 
             nAddr = rCond.CompTarget().GetValue();
@@ -1895,8 +1778,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     m_sTooltip = NativeStr(oss.str());
 }
 
-[[gsl::suppress(con.4)]] /* suppress warning about HBITMAP */
-void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
+[[gsl::suppress(con.4)]] void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
 {
     std::string sAchievementBadgeURI;
 
@@ -1916,21 +1798,22 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         InvalidateRect(hCheevoPic, nullptr, TRUE);
     }
 
-    //	Find buffer in the dropdown list
-    const int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0, sAchievementBadgeURI.c_str());
+    // Find buffer in the dropdown list
+    const int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0,
+                                              sAchievementBadgeURI.c_str());
     if (nSel != -1)
-        ComboBox_SetCurSel(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), nSel);	//	Force select
+        ComboBox_SetCurSel(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), nSel); // Force select
 }
 
 void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
 {
-    //	If a change is detected: change it!
+    // If a change is detected: change it!
     if (m_pSelectedAchievement != nullptr)
     {
         if (m_pSelectedAchievement->BadgeImageURI().compare(sNewName) != 0)
         {
-            //	The badge we are about to show is different from the one stored for this achievement.
-            //	This implies that we are changing the badge: this achievement is modified!
+            // The badge we are about to show is different from the one stored for this achievement.
+            // This implies that we are changing the badge: this achievement is modified!
             m_pSelectedAchievement->SetBadgeImage(sNewName);
             m_pSelectedAchievement->SetModified(TRUE);
 
@@ -1942,12 +1825,11 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
         }
     }
 
-    //	Always attempt update.
+    // Always attempt update.
     UpdateSelectedBadgeImage(sNewName.c_str());
 }
 
-_Use_decl_annotations_
-void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo)
+_Use_decl_annotations_ void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo)
 {
     HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
     if (hGroupList == nullptr)
@@ -1955,7 +1837,9 @@ void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo
 
     int nSel = ListBox_GetCurSel(hGroupList);
 
-    while (ListBox_DeleteString(hGroupList, 0) >= 0) {}
+    while (ListBox_DeleteString(hGroupList, 0) >= 0)
+    {
+    }
 
     if (pCheevo != nullptr)
     {
@@ -1964,15 +1848,14 @@ void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo
             ListBox_AddString(hGroupList, m_lbxGroupNames[i]);
         }
 
-        //	Try and restore selection
+        // Try and restore selection
         if (nSel < 0 || nSel >= (int)pCheevo->NumConditionGroups())
-            nSel = 0;	//	Reset to core if unsure
+            nSel = 0; // Reset to core if unsure
         ListBox_SetCurSel(hGroupList, nSel);
     }
 }
 
-_Use_decl_annotations_
-void Dlg_AchievementEditor::PopulateConditions(const Achievement* const pCheevo)
+_Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const pCheevo)
 {
     HWND hCondList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
     if (hCondList == nullptr)
@@ -1985,9 +1868,11 @@ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const pCheevo)
     {
         const unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
-            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i), m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
+            AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i),
+                         m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
 
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
+                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
     }
 }
 
@@ -1999,7 +1884,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     {
         m_pSelectedAchievement = pCheevo;
 
-        //	Just clear data
+        // Just clear data
 
         m_bPopulatingAchievementEditorData = TRUE;
 
@@ -2031,18 +1916,19 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     {
         m_pSelectedAchievement = pCheevo;
 
-        //	New achievement selected.
-        //	Naturally: update everything!
+        // New achievement selected.
+        // Naturally: update everything!
 
         m_bPopulatingAchievementEditorData = TRUE;
 
-        //	Repopulate the group box: 
+        // Repopulate the group box:
         RepopulateGroupList(m_pSelectedAchievement);
-        SetSelectedConditionGroup(0);	//	Select 0 by default
+        SetSelectedConditionGroup(0); // Select 0 by default
         PopulateConditions(m_pSelectedAchievement);
 
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
-        CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, ActiveAchievement()->GetPauseOnTrigger());
+        CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER,
+                       ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
         sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->ID());
@@ -2052,16 +1938,19 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
 
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, NativeStr(m_pSelectedAchievement->Description()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC,
+                       NativeStr(m_pSelectedAchievement->Description()).c_str());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, NativeStr(m_pSelectedAchievement->Author()).c_str());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME,
+                       NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
 
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR), FALSE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_ID), FALSE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(0) < MAX_CONDITIONS);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
+                     m_pSelectedAchievement->NumConditions(0) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2074,7 +1963,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     }
     else
     {
-        //	Same achievement still selected: what's changed?
+        // Same achievement still selected: what's changed?
 
         const BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
         const BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));
@@ -2089,18 +1978,24 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
         using namespace ra::bitwise_ops;
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID,
+                           NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Points) && !bPointsSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS,
+                           NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Title) && !bTitleSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE,
+                           NativeStr(m_pSelectedAchievement->Title()).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Description) && !bDescSelected)
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, NativeStr(m_pSelectedAchievement->Description()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC,
+                           NativeStr(m_pSelectedAchievement->Description()).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Author))
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, NativeStr(m_pSelectedAchievement->Author()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR,
+                           NativeStr(m_pSelectedAchievement->Author()).c_str());
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Badge))
         {
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
+            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME,
+                           NativeStr(m_pSelectedAchievement->BadgeImageURI()).c_str());
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
@@ -2137,7 +2032,8 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
+                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2147,9 +2043,14 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         m_bPopulatingAchievementEditorData = FALSE;
     }
 
-    //InvalidateRect( hList, nullptr, TRUE );
-    //UpdateWindow( hList );
-    //RedrawWindow( hList, nullptr, nullptr, RDW_INVALIDATE );
+    // InvalidateRect( hList, nullptr, TRUE );
+    // UpdateWindow( hList );
+    // RedrawWindow( hList, nullptr, nullptr, RDW_INVALIDATE );
+}
+
+inline char* Dlg_AchievementEditor::LbxDataAt(unsigned int nRow, CondSubItems nCol)
+{
+    return m_lbxData[nRow][ra::etoi(nCol)];
 }
 
 void Dlg_AchievementEditor::OnLoad_NewRom()
@@ -2172,7 +2073,6 @@ void Dlg_AchievementEditor::OnLoad_NewRom()
     }
 }
 
-
 size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
@@ -2192,11 +2092,7 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const
     ListBox_SetCurSel(hList, static_cast<int>(nGrp));
 }
 
-
-void BadgeNames::FetchNewBadgeNamesThreaded()
-{
-    RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
-}
+void BadgeNames::FetchNewBadgeNamesThreaded() { RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter); }
 
 void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {
@@ -2205,7 +2101,7 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 
     SetWindowRedraw(m_hDestComboBox, FALSE);
 
-    //	Clean out cbo
+    // Clean out cbo
     while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
     {
     }
@@ -2220,23 +2116,26 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
     SendMessage(m_hDestComboBox, WM_SETREDRAW, TRUE, LPARAM{});
     RedrawWindow(m_hDestComboBox, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
-    //	Find buffer in the dropdown list
+    // Find buffer in the dropdown list
     if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
     {
-        const int nSel = ComboBox_FindStringExact(m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
+        const int nSel = ComboBox_FindStringExact(
+            m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
         if (nSel != -1)
-            ComboBox_SetCurSel(m_hDestComboBox, nSel);	//	Force select
+            ComboBox_SetCurSel(m_hDestComboBox, nSel); // Force select
     }
 }
 
 void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
 {
     {
-        const auto nSel{ ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str()) };
+        const auto nSel{ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str())};
         if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
         {
-            ::MessageBox(::GetActiveWindow(), _T("An error has occurred or there is insufficient space "
-                "to store the new string"), _T("Error!"), MB_OK | MB_ICONERROR);
+            ::MessageBox(::GetActiveWindow(),
+                         _T("An error has occurred or there is insufficient space "
+                            "to store the new string"),
+                         _T("Error!"), MB_OK | MB_ICONERROR);
             return;
         }
     }

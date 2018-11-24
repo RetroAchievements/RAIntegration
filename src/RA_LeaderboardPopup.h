@@ -4,7 +4,7 @@
 
 #include "RA_AchievementOverlay.h"
 
-//	Graphic to display current leaderboard progress
+// Graphic to display current leaderboard progress
 
 class LeaderboardPopup
 {

@@ -16,48 +16,54 @@
 
 #include <tchar.h>
 
-#include <cassert> 
+#include <cassert>
 
-#include <map>
 #include <array> // algorithm, iterator, tuple
+#include <map>
+#include <queue>   // deque, vector, algorithm
 #include <sstream> // string
-#include <queue> // deque, vector, algorithm
 
-//	Version Information is integrated into tags
+// Version Information is integrated into tags
 #else
 
-#include "RA_Log.h"
 #include "RA_Json.h"
+#include "RA_Log.h"
 
-
-//	RA-Only
+// RA-Only
 using namespace std::string_literals;
-_CONSTANT_VAR BUFSIZ{ 512U }; // ANSI buffer size
-_CONSTANT_VAR BYTESTRING_BUFSIZ{ BUFSIZ*4U }; // should be the same for MultiByte
-_CONSTANT_VAR WIDESTRING_BUFSIZ{ BUFSIZ*8U };
-_CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
-#endif	// RA_EXPORTS
+_CONSTANT_VAR BUFSIZ{512U};                   // ANSI buffer size
+_CONSTANT_VAR BYTESTRING_BUFSIZ{BUFSIZ * 4U}; // should be the same for MultiByte
+_CONSTANT_VAR WIDESTRING_BUFSIZ{BUFSIZ * 8U};
+_CONSTANT_VAR MAX_BUFSIZ{BUFSIZ * 128U}; // Try not to use this one
+#endif // RA_EXPORTS
 
-#define RA_DIR_OVERLAY                  L"Overlay\\"
-#define RA_DIR_BASE                     L"RACache\\"
-#define RA_DIR_DATA                     RA_DIR_BASE L"Data\\"
-#define RA_DIR_BADGE                    RA_DIR_BASE L"Badge\\"
-#define RA_DIR_USERPIC                  RA_DIR_BASE L"UserPic\\"
-#define RA_DIR_BOOKMARKS                RA_DIR_BASE L"Bookmarks\\"
+#define RA_DIR_OVERLAY                          L"Overlay\\"
+#define RA_DIR_BASE                             L"RACache\\"
+#define RA_DIR_DATA RA_DIR_BASE                 L"Data\\"
+#define RA_DIR_BADGE RA_DIR_BASE                L"Badge\\"
+#define RA_DIR_USERPIC RA_DIR_BASE              L"UserPic\\"
+#define RA_DIR_BOOKMARKS RA_DIR_BASE            L"Bookmarks\\"
 
-#define RA_GAME_HASH_FILENAME           RA_DIR_DATA L"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME           RA_DIR_DATA L"gametitles.txt"
-#define RA_MY_PROGRESS_FILENAME         RA_DIR_DATA L"myprogress.txt"
-#define RA_MY_GAME_LIBRARY_FILENAME     RA_DIR_DATA L"mygamelibrary.txt"
+#define RA_GAME_HASH_FILENAME RA_DIR_DATA       L"gamehashlibrary.txt"
+#define RA_GAME_LIST_FILENAME RA_DIR_DATA       L"gametitles.txt"
+#define RA_MY_PROGRESS_FILENAME RA_DIR_DATA     L"myprogress.txt"
+#define RA_MY_GAME_LIBRARY_FILENAME RA_DIR_DATA L"mygamelibrary.txt"
 
-#define RA_NEWS_FILENAME                RA_DIR_DATA L"ra_news.txt"
-#define RA_TITLES_FILENAME              RA_DIR_DATA L"gametitles.txt"
-#define RA_LOG_FILENAME                 RA_DIR_DATA L"RALog.txt"
+#define RA_NEWS_FILENAME RA_DIR_DATA            L"ra_news.txt"
+#define RA_TITLES_FILENAME RA_DIR_DATA          L"gametitles.txt"
+#define RA_LOG_FILENAME RA_DIR_DATA             L"RALog.txt"
 
-#define SIZEOF_ARRAY( ar )  ( sizeof( ar ) / sizeof( ar[ 0 ] ) )
-#define SAFE_DELETE( x )    { if( x != nullptr ) { delete x; x = nullptr; } }
+#define SIZEOF_ARRAY(ar) (sizeof(ar) / sizeof(ar[0]))
+#define SAFE_DELETE(x)    \
+    {                     \
+        if (x != nullptr) \
+        {                 \
+            delete x;     \
+            x = nullptr;  \
+        }                 \
+    }
 
-//namespace RA
+// namespace RA
 //{
 class RARect : public RECT
 {
@@ -65,15 +71,15 @@ public:
     RARect() {}
     RARect(LONG nX, LONG nY, LONG nW, LONG nH)
     {
-        left = nX;
-        right = nX + nW;
-        top = nY;
+        left   = nX;
+        right  = nX + nW;
+        top    = nY;
         bottom = nY + nH;
     }
 
 public:
-    inline int Width() const { return(right - left); }
-    inline int Height() const { return(bottom - top); }
+    inline int Width() const { return (right - left); }
+    inline int Height() const { return (bottom - top); }
 };
 
 class ResizeContent
@@ -96,16 +102,16 @@ public:
     bool bResize{};
 
     explicit ResizeContent(_In_ HWND contentHwnd, _In_ AlignType newAlignType, _In_ bool isResize) noexcept :
-        hwnd{ contentHwnd },
-        nAlignType{ newAlignType },
-        bResize{ isResize }
+        hwnd{contentHwnd},
+        nAlignType{newAlignType},
+        bResize{isResize}
     {
         RARect rect;
         auto check = ::GetWindowRect(hwnd, &rect);
         assert(check != 0);
 
-        pLT ={ rect.left, rect.top };
-        pRB ={ rect.right, rect.bottom };
+        pLT = {rect.left, rect.top};
+        pRB = {rect.right, rect.bottom};
 
         HWND__* const restrict parentHwnd = ::GetParent(contentHwnd);
         check = ::ScreenToClient(parentHwnd, &pLT);
@@ -162,35 +168,38 @@ public:
 };
 
 //};
-//using namespace RA;
+// using namespace RA;
 
 #ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
-#define ASSERT( x ) assert( x )
+#define ASSERT(x) assert(x)
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+#define ASSERT(x) \
+    {             \
+    }
 #endif
 #else
 #undef ASSERT
-#define ASSERT( x ) {}
+#define ASSERT(x) \
+    {             \
+    }
 #endif
 
 #ifndef UNUSED
-#define UNUSED( x ) ( x );
+#define UNUSED(x) (x);
 #endif
 
 namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr,
-                                           _In_ std::streamsize nPrecision = 6LL,
-                                           _In_ bool bShowBase = false);
+_NODISCARD std::string
+    ByteAddressToString(_In_ ByteAddress nAddr, _In_ std::streamsize nPrecision = 6LL, _In_ bool bShowBase = false);
 } // namespace ra
 
 #if _MBCS
-_CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
+_CONSTANT_VAR RA_MAX_PATH{_MAX_PATH}; // MultiByte max path
 #elif _UNICODE
-_CONSTANT_VAR RA_MAX_PATH{ 32767 }; // Unicode max path
+_CONSTANT_VAR RA_MAX_PATH{32767};     // Unicode max path
 #else
 #error Unknown character set detected!
 #endif /* _MBCS */

@@ -64,7 +64,7 @@ public:
     enum class Type : std::size_t
     {
         Address,         // compare to the value of a live address in RAM
-        ValueComparison, // a number. assume 32 bit 
+        ValueComparison, // a number. assume 32 bit
         DeltaMem,        // the value last known at this address.
         DynamicVariable  // a custom user-set variable
     };
@@ -78,13 +78,11 @@ public:
     };
 
 public:
-    _CONSTANT_FN Set(_In_ MemSize nSize,
-                     _In_ CompVariable::Type nType,
-                     _In_ unsigned int nInitialValue) noexcept
+    _CONSTANT_FN Set(_In_ MemSize nSize, _In_ CompVariable::Type nType, _In_ unsigned int nInitialValue) noexcept
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
-        m_nVal     = nInitialValue;
+        m_nVal = nInitialValue;
     }
 
     void SerializeAppend(_Out_ std::string& buffer) const;
@@ -131,7 +129,7 @@ public:
 
     inline CompVariable& CompSource() { return m_nCompSource; }
     inline const CompVariable& CompSource() const { return m_nCompSource; }
-    
+
     inline CompVariable& CompTarget() { return m_nCompTarget; }
     inline const CompVariable& CompTarget() const { return m_nCompTarget; }
 
@@ -141,22 +139,22 @@ public:
     inline unsigned int RequiredHits() const { return m_nRequiredHits; }
     void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
 
-    _NODISCARD _CONSTANT_FN IsResetCondition() const { return(m_nConditionType == Type::ResetIf); }
-    _NODISCARD _CONSTANT_FN IsPauseCondition() const { return(m_nConditionType == Type::PauseIf); }
-    _NODISCARD _CONSTANT_FN IsAddCondition() const { return(m_nConditionType == Type::AddSource); }
-    _NODISCARD _CONSTANT_FN IsSubCondition() const { return(m_nConditionType == Type::SubSource); }
-    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return(m_nConditionType == Type::AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const { return (m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const { return (m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const { return (m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const { return (m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return (m_nConditionType == Type::AddHits); }
 
     inline Type GetConditionType() const { return m_nConditionType; }
     void SetConditionType(Type nNewType) { m_nConditionType = nNewType; }
 
 private:
-    Type           m_nConditionType = Type::Standard;
-    CompVariable    m_nCompSource;
-    ComparisonType m_nCompareType   = ComparisonType::Equals;
-    CompVariable    m_nCompTarget;
+    Type m_nConditionType = Type::Standard;
+    CompVariable m_nCompSource;
+    ComparisonType m_nCompareType = ComparisonType::Equals;
+    CompVariable m_nCompTarget;
 
-    unsigned int   m_nRequiredHits  = 0U;
+    unsigned int m_nRequiredHits = 0U;
 };
 
 class ConditionGroup

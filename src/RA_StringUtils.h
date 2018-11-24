@@ -13,7 +13,7 @@ _NODISCARD std::wstring Widen(_In_ const std::string& str);
 _NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
 
-//	No-ops to help convert:
+// No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);

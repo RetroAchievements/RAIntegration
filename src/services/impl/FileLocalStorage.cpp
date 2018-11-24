@@ -39,10 +39,10 @@ static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const
                 sPath = sDirectory;
                 sPath += sFile;
 
-                // check to see if the file is older than the threshhold
+                // check to see if the file is older than the threshold
                 if (pFileSystem.GetLastModified(sPath) < tExpire)
                 {
-                    // if it's not a user file, it can be refetched from the server, delete it
+                    // if it's not a user file, it can be fetched from the server, delete it
                     if (!ra::StringEndsWith(sFile, L"-User.txt"))
                         pFileSystem.DeleteFile(sPath);
                 }

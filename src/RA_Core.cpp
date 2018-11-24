@@ -45,8 +45,8 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator;	//	Uniquely identifies the emulator
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
+EmulatorID g_EmulatorID = EmulatorID::UnknownEmulator; // Uniquely identifies the emulator
+ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID; // Currently active Console ID
 const char* g_sClientVersion = nullptr;
 const char* g_sClientName = nullptr;
 const char* g_sClientDownloadURL = nullptr;
@@ -150,18 +150,18 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
     RAWeb::SetUserAgentString();
 
     //////////////////////////////////////////////////////////////////////////
-    //	Dialogs:
+    // Dialogs:
     g_MemoryDialog.Init();
 
     //////////////////////////////////////////////////////////////////////////
-    //	Initialize All AchievementSets
+    // Initialize All AchievementSets
     g_pCoreAchievements = new AchievementSet(AchievementSet::Type::Core);
     g_pUnofficialAchievements = new AchievementSet(AchievementSet::Type::Unofficial);
     g_pLocalAchievements = new AchievementSet(AchievementSet::Type::Local);
     g_pActiveAchievements = g_pCoreAchievements;
 
     //////////////////////////////////////////////////////////////////////////
-    //	Image rendering: Setup overlay
+    // Image rendering: Setup overlay
     g_AchievementOverlay.UpdateImages();
 }
 
@@ -176,24 +176,24 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     InitCommon(hMainHWND, nEmulatorID, sClientVer);
 
     //////////////////////////////////////////////////////////////////////////
-    //	Update news:
+    // Update news:
     PostArgs args;
     args['c'] = std::to_string(6);
     RAWeb::CreateThreadedHTTPRequest(RequestNews, args);
 
     //////////////////////////////////////////////////////////////////////////
-    //	Attempt to fetch latest client version:
+    // Attempt to fetch latest client version:
     args.clear();
     args['e'] = std::to_string(nEmulatorID);
-    RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args);	//	g_sGetLatestClientPage
+    RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args); // g_sGetLatestClientPage
 
-    //	TBD:
+    // TBD:
     //if( RAUsers::LocalUser().Username().length() > 0 )
     //{
-    //	args.clear();
-    //	args[ 'u' ] = RAUsers::LocalUser().Username();
-    //	args[ 't' ] = RAUsers::LocalUser().Token();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
+    // args.clear();
+    // args[ 'u' ] = RAUsers::LocalUser().Username();
+    // args[ 't' ] = RAUsers::LocalUser().Token();
+    // RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
     //}
 
     return TRUE;
@@ -256,7 +256,7 @@ API int CCONV _RA_Shutdown()
 
 API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 {
-    //	Returns true if we can go ahead and load the new rom.
+    // Returns true if we can go ahead and load the new ROM.
     int nResult = IDYES;
 
     const char* sCurrentAction = bQuittingApp ? "quit now" : "load a new ROM";
@@ -362,12 +362,12 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     ASSERT(g_MemManager.NumMemoryBanks() > 0);
 
-    //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
-    //	TBD: local DB of MD5 to ra::GameIDs here
+    // Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
+    // TBD: local DB of MD5 to ra::GameIDs here
     unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
-        //	Fetch the gameID from the DB here:
+        // Fetch the gameID from the DB here:
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
@@ -377,9 +377,9 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = doc["GameID"].GetUint();
-            if (nGameID == 0)	//	Unknown
+            if (nGameID == 0) // Unknown
             {
-                RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
+                RA_LOG("Could not recognize game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
                 ZeroMemory(buffer, 64);
                 RA_GetEstimatedGameTitle(buffer);
@@ -393,7 +393,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         }
         else
         {
-            //	Some other fatal error... panic?
+            // Some other fatal error... panic?
             ASSERT(!"Unknown error from requestgameid.php");
 
             std::wstring sErrorMessage = L"Error from " + ra::Widen(_RA_HostName());
@@ -479,23 +479,23 @@ API void CCONV _RA_ClearMemoryBanks()
 
 //void FetchBinaryFromWeb( const char* sFilename )
 //{
-//	const unsigned int nBufferSize = (3*1024*1024);	//	3mb enough?
+// const unsigned int nBufferSize = (3*1024*1024); // 3mb enough?
 //
-//	char* buffer = new char[nBufferSize];	
-//	if( buffer != nullptr )
-//	{
-//		char sAddr[1024];
-//		sprintf_s( sAddr, 1024, "/files/%s", sFilename );
-//		char sOutput[1024];
-//		sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
+// char* buffer = new char[nBufferSize]; 
+// if( buffer != nullptr )
+// {
+//  char sAddr[1024];
+//  sprintf_s( sAddr, 1024, "/files/%s", sFilename );
+//  char sOutput[1024];
+//  sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
 //
-//		DWORD nBytesRead = 0;
-//		if( RAWeb::DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
-//			_WriteBufferToFile( sOutput, buffer, nBytesRead );
+//  DWORD nBytesRead = 0;
+//  if( RAWeb::DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
+//   _WriteBufferToFile( sOutput, buffer, nBytesRead );
 //
-//		delete[] ( buffer );
-//		buffer = nullptr;
-//	}
+//  delete[] ( buffer );
+//  buffer = nullptr;
+// }
 //}
 
 static unsigned long long ParseVersion(const char* sVersion)
@@ -544,28 +544,28 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
         //
         //char sBatchUpdater[2048];
         //sprintf_s( sBatchUpdater, 2048,
-        //	"@echo off\r\n"
-        //	"taskkill /IM %s\r\n"
-        //	"del /f %s\r\n"
-        //	"rename %s.new %s%s.exe\r\n"
-        //	"start %s%s.exe\r\n"
-        //	"del \"%%~f0\"\r\n",
-        //	g_sClientEXEName,
-        //	g_sClientEXEName,
-        //	g_sClientEXEName,
-        //	g_sClientName,
-        //	sNewVer,
-        //	g_sClientName,
-        //	sNewVer );
+        // "@echo off\r\n"
+        // "taskkill /IM %s\r\n"
+        // "del /f %s\r\n"
+        // "rename %s.new %s%s.exe\r\n"
+        // "start %s%s.exe\r\n"
+        // "del \"%%~f0\"\r\n",
+        // g_sClientEXEName,
+        // g_sClientEXEName,
+        // g_sClientEXEName,
+        // g_sClientName,
+        // sNewVer,
+        // g_sClientName,
+        // sNewVer );
 
         //_WriteBufferToFile( "BatchUpdater.bat", sBatchUpdater, strlen( sBatchUpdater ) );
 
         //ShellExecute( nullptr,
-        //	"open",
-        //	"BatchUpdater.bat",
-        //	nullptr,
-        //	nullptr,
-        //	SW_SHOWNORMAL ); 
+        // "open",
+        // "BatchUpdater.bat",
+        // nullptr,
+        // nullptr,
+        // SW_SHOWNORMAL ); 
 
         std::ostringstream oss2;
         oss2 << "http://" << _RA_HostName() << "/download.php";
@@ -619,7 +619,7 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            //	Find friend? Update this information?
+                            // Find friend? Update this information?
                             RAUsers::GetUser(sUser)->SetScore(nScore);
                         }
                     }
@@ -641,7 +641,7 @@ API int CCONV _RA_HandleHTTPResults()
 
                         if (nLocalVersion < nServerVersion)
                         {
-                            //	Update available:
+                            // Update available:
                             RA_OfferNewRAUpdate(sReply.c_str());
                         }
                         else
@@ -659,7 +659,7 @@ API int CCONV _RA_HandleHTTPResults()
 
                 case RequestSubmitAwardAchievement:
                 {
-                    //	Response to an achievement being awarded:
+                    // Response to an achievement being awarded:
                     const ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
                     const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
                     if (pAch == nullptr)
@@ -734,7 +734,7 @@ API int CCONV _RA_HandleHTTPResults()
     return 0;
 }
 
-//	Following this function, an app should call AppendMenu to associate this submenu.
+// Following this function, an app should call AppendMenu to associate this submenu.
 API HMENU CCONV _RA_CreatePopupMenu()
 {
     HMENU hRA = CreatePopupMenu();
@@ -746,8 +746,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_OPENUSERPAGE, TEXT("Open my &User Page"));
 
         constexpr auto nGameFlags = ra::to_unsigned(MF_STRING);
-        //if( g_pActiveAchievements->ra::GameID() == 0 )	//	Disabled til I can get this right: Snes9x doesn't call this?
-        //	nGameFlags |= (MF_GRAYED|MF_DISABLED);
+        //if( g_pActiveAchievements->ra::GameID() == 0 ) // Disabled til I can get this right: Snes9x doesn't call this?
+        // nGameFlags |= (MF_GRAYED|MF_DISABLED);
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
@@ -814,7 +814,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     SetWindowText(g_RAMainWnd, NativeStr(sstr.str()).c_str());
 }
 
-//	##BLOCKING##
+// ##BLOCKING##
 static void RA_CheckForUpdate()
 {
     PostArgs args;
@@ -835,14 +835,14 @@ static void RA_CheckForUpdate()
             }
             else
             {
-                //	Up to date
+                // Up to date
                 std::wstring sMessage = L"You already have the latest version of " + ra::Widen(g_sClientName) + L": " + ra::Widen(sReply);
                 ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(sMessage);
             }
         }
         else
         {
-            //	Error in download
+            // Error in download
             std::ostringstream oss;
             oss << "Unexpected response from " << _RA_HostName() << ".";
             MessageBox(g_RAMainWnd, NativeStr(oss.str()).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
@@ -850,7 +850,7 @@ static void RA_CheckForUpdate()
     }
     else
     {
-        //	Could not connect
+        // Could not connect
         std::ostringstream oss;
         oss << "Could not connect to " << _RA_HostName() << ".\n" <<
             "Please check your connection settings or RA forums!";
@@ -1061,7 +1061,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 _RA_ResetEmulation();
                 _RA_OnReset();
 
-                // if a game was loaded, redownload the associated data
+                // if a game was loaded, re-download the associated data
                 if (pGameContext.GameId() != 0)
                     DownloadAndActivateAchievementData(pGameContext.GameId());
             }
@@ -1127,9 +1127,9 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             {
                 if (g_GameLibrary.GetHWND() == nullptr)
                 {
-                    _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
-                    _FetchGameTitlesFromWeb();			//	##BLOCKING##
-                    _FetchMyProgressFromWeb();			//	##BLOCKING##
+                    _FetchGameHashLibraryFromWeb();  // ##BLOCKING##
+                    _FetchGameTitlesFromWeb();   // ##BLOCKING##
+                    _FetchMyProgressFromWeb();   // ##BLOCKING##
 
                     g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
                 }
@@ -1205,14 +1205,14 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         break;
 
         default:
-            //	Unknown!
+            // Unknown!
             break;
     }
 }
 
 API void CCONV _RA_SetPaused(bool bIsPaused)
 {
-    //	TBD: store this state?? (Rendering?)
+    // TBD: store this state?? (Rendering?)
     if (bIsPaused)
         g_AchievementOverlay.Activate();
     else
@@ -1237,7 +1237,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 
 API void CCONV _RA_OnLoadState(const char* sFilename)
 {
-    //	Save State is being allowed by app (user was warned!)
+    // Save State is being allowed by app (user was warned!)
     if (RAUsers::LocalUser().IsLoggedIn())
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -1279,7 +1279,7 @@ void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpa
 
 void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
 {
-    //	NB. Must be called from within DLL
+    // NB. Must be called from within DLL
     _RA_GameIsActive = fpIsActive;
     _RA_CauseUnpause = fpCauseUnpause;
     _RA_CausePause = fpCausePause;
@@ -1297,7 +1297,7 @@ BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pChars
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
 
-    //	Read title:
+    // Read title:
     (*pCharsReadOut) = 0;
     do
     {
@@ -1377,13 +1377,13 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
 
     if (nFileSizeOut <= 0)
     {
-        //	No good content in this file.
+        // No good content in this file.
         fclose(pf);
         return nullptr;
     }
 
-    //	malloc() must be managed!
-    //	NB. By adding +1, we allow for a single \0 character :)
+    // malloc() must be managed!
+    // NB. By adding +1, we allow for a single \0 character :)
     char* pRawFileOut = (char*)malloc((nFileSizeOut + 1) * sizeof(char));
     if (pRawFileOut)
     {

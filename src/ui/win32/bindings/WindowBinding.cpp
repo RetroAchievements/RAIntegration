@@ -191,7 +191,7 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
 {
     if (!m_sSizeAndPositionKey.empty())
     {
-        // oPosition is topleft corner of client area, we need topleft corner of window (including non-client area)
+        // oPosition is top-left corner of client area, we need top-left corner of window (including non-client area)
         RECT rcDialog;
         GetWindowRect(m_hWnd, &rcDialog);
 

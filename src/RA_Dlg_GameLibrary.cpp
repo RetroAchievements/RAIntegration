@@ -16,8 +16,8 @@
 
 namespace {
 
-const char* COL_TITLE[] = { "ID", "Game Title", "Completion", "File Path" };
-const int COL_SIZE[] = { 30, 230, 110, 170 };
+const char* COL_TITLE[] = {"ID", "Game Title", "Completion", "File Path"};
+const int COL_SIZE[]    = {30, 230, 110, 170};
 static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
 const bool bCancelScan = false;
 
@@ -27,8 +27,8 @@ std::mutex mtx;
 
 //static 
 std::deque<std::string> Dlg_GameLibrary::FilesToScan;
-std::map<std::string, std::string> Dlg_GameLibrary::Results;	//	filepath,md5
-std::map<std::string, std::string> Dlg_GameLibrary::VisibleResults;	//	filepath,md5
+std::map<std::string, std::string> Dlg_GameLibrary::Results; // filepath,md5
+std::map<std::string, std::string> Dlg_GameLibrary::VisibleResults; // filepath,md5
 size_t Dlg_GameLibrary::nNumParsed = 0;
 bool Dlg_GameLibrary::ThreadProcessingAllowed = true;
 bool Dlg_GameLibrary::ThreadProcessingActive = false;
@@ -142,7 +142,7 @@ void ParseGameTitlesFromFile(std::map<unsigned int, std::string>& GameTitlesList
             if (iter->name.IsNull() || iter->value.IsNull())
                 continue;
 
-            //	KEYS ARE STRINGS, must convert afterwards!
+            // KEYS ARE STRINGS, must convert afterwards!
             GameTitlesListOut.try_emplace(std::stoul(iter->name.GetString()), iter->value.GetString());
         }
     }
@@ -188,7 +188,7 @@ void ParseMyProgressFromFile(std::map<unsigned int, std::string>& GameProgressOu
                 const auto fVal{ (fNumEarnedTotal/ra::to_floating(nNumAchievements)) * 100.0F };
                 sstr << std::fixed << std::setw(1) << std::setprecision(1) << std::dec << fVal << '%';
             }
-            //	KEYS MUST BE STRINGS
+            // KEYS MUST BE STRINGS
             GameProgressOut.try_emplace(std::stoul(iter->name.GetString()), sstr.str());
         }
     }
@@ -196,10 +196,10 @@ void ParseMyProgressFromFile(std::map<unsigned int, std::string>& GameProgressOu
 
 void Dlg_GameLibrary::SetupColumns(HWND hList)
 {
-    //	Remove all columns,
+    // Remove all columns,
     while (ListView_DeleteColumn(hList, 0)) {}
 
-    //	Remove all data.
+    // Remove all data.
     ListView_DeleteAllItems(hList);
 
     LV_COLUMN col;
@@ -209,13 +209,13 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     {
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.cchTextMax = 255;
-        ra::tstring sCol = NativeStr(COL_TITLE[i]);	//	scoped cache
+        ra::tstring sCol = NativeStr(COL_TITLE[i]); // scoped cache
         col.pszText = sCol.data();
         col.cx = COL_SIZE[i];
         col.iSubItem = i;
 
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1)	//	Final column should fill
+        if (i == SIZEOF_ARRAY(COL_TITLE) - 1) // Final column should fill
         {
             col.fmt |= LVCFMT_FILL;
         }
@@ -235,9 +235,9 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 
     HWND hList = GetDlgItem(m_hDialogBox, IDC_RA_LBX_GAMELIST);
 
-    //	id:
+    // id:
     item.iSubItem = 0;
-    ra::tstring sID = ra::to_tstring(nGameID);	//scoped cache!
+    ra::tstring sID = ra::to_tstring(nGameID); //scoped cache!
     item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
@@ -289,7 +289,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
             // May have caused a buffer overrun, this is way to big to be on the stack
             auto pBuf{ std::make_unique<unsigned char[]>(6 * 1024 * 1024) };
 
-            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf);	//Check
+            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf); //Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
 
             SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
@@ -324,13 +324,13 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
             if (KEYDOWN(VK_ESCAPE))
                 break;
 
-            memset(sROMRawData, 0, ROM_MAX_SIZE);	//?!??
+            memset(sROMRawData, 0, ROM_MAX_SIZE); //?!??
 
             const std::string sFilename = ra::Narrow(ffd.cFileName);
             if (strcmp(sFilename.c_str(), ".") == 0 ||
                 strcmp(sFilename.c_str(), "..") == 0)
             {
-                //	Ignore 'this'
+                // Ignore 'this'
             }
             else if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
@@ -345,12 +345,12 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                 filesize.HighPart = ffd.nFileSizeHigh;
                 if (filesize.QuadPart < 2048 || filesize.QuadPart > ROM_MAX_SIZE)
                 {
-                    //	Ignore: wrong size
+                    // Ignore: wrong size
                     RA_LOG("Ignoring %s, wrong size\n", sFilename.c_str());
                 }
                 else
                 {
-                    //	Parse as ROM!
+                    // Parse as ROM!
                     RA_LOG("%s looks good: parsing!\n", sFilename.c_str());
 
                     char sAbsFileDir[2048];
@@ -429,10 +429,10 @@ void Dlg_GameLibrary::RefreshList()
 
         if (VisibleResults.find(filepath) == VisibleResults.end())
         {
-            //	Not yet added,
+            // Not yet added,
             if (m_GameHashLibrary.find(md5) != m_GameHashLibrary.end())
             {
-                //	Found in our hash library!
+                // Found in our hash library!
                 const auto nGameID = m_GameHashLibrary[md5];
                 RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
@@ -440,7 +440,7 @@ void Dlg_GameLibrary::RefreshList()
                 AddTitle(sGameTitle, filepath, nGameID);
 
                 SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, NativeStr(sGameTitle).c_str());
-                VisibleResults[filepath] = md5;	//	Copy to VisibleResults
+                VisibleResults[filepath] = md5; // Copy to VisibleResults
             }
         }
         iter++;
@@ -499,7 +499,7 @@ void Dlg_GameLibrary::LoadAll()
                 fileBuf[nCharsRead1 - 1] = '\0';
                 md5Buf[nCharsRead2 - 1] = '\0';
 
-                //	Add
+                // Add
                 std::string file = fileBuf;
                 std::string md5 = md5Buf;
 
@@ -568,7 +568,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             ParseGameTitlesFromFile(m_GameTitlesLibrary);
             ParseMyProgressFromFile(m_ProgressLibrary);
 
-            //int msBetweenRefresh = 1000;	//	auto?
+            //int msBetweenRefresh = 1000; // auto?
             //SetTimer( hDlg, 1, msBetweenRefresh, (TIMERPROC)g_GameLibrary.s_GameLibraryProc );
             RefreshList();
 
@@ -642,7 +642,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 case IDC_RA_RESCAN:
                     ReloadGameListData();
 
-                    mtx.lock();	//?
+                    mtx.lock(); //?
                     SetDlgItemText(m_hDialogBox, IDC_RA_SCANNERFOUNDINFO, TEXT("Scanning..."));
                     mtx.unlock();
                     return FALSE;
@@ -708,5 +708,5 @@ void Dlg_GameLibrary::KillThread()
 ////static
 //void Dlg_GameLibrary::DoModalDialog( HINSTANCE hInst, HWND hParent )
 //{
-//	DialogBox( hInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), hParent, Dlg_GameLibrary::s_GameLibraryProc );
+// DialogBox( hInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), hParent, Dlg_GameLibrary::s_GameLibraryProc );
 //}

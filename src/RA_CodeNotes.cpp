@@ -1,10 +1,10 @@
 #include "RA_CodeNotes.h"
 
+#include "RA_AchievementSet.h" // RA_Achievement
 #include "RA_Core.h"
-#include "RA_httpthread.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_User.h"
-#include "RA_AchievementSet.h" // RA_Achievement
+#include "RA_httpthread.h"
 
 #include "data\GameContext.hh"
 
@@ -34,11 +34,11 @@ size_t CodeNotes::Load(unsigned int nID)
         if (sNote.length() < 2U)
             continue;
 
-        const std::string& sAddr { note["Address"].GetString() };
-        const auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
-        const std::string& sAuthor { note["User"].GetString() }; // Author?
+        const std::string& sAddr{note["Address"].GetString()};
+        const auto nAddr{static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16))};
+        const std::string& sAuthor{note["User"].GetString()}; // Author?
 
-        m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
+        m_CodeNotes.try_emplace(nAddr, CodeNoteObj{sAuthor, sNote});
     }
 
     return m_CodeNotes.size();
@@ -55,10 +55,10 @@ BOOL CodeNotes::ReloadFromWeb(unsigned int nID)
     return TRUE;
 }
 
-//	static
+//  static
 void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
 {
-    //	Persist then reload
+    //  Persist then reload
     const auto nGameID = doc["GameID"].GetUint();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
@@ -94,12 +94,13 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestSubmitCodeNote, args, doc))
         {
-            //	OK!
+            //  OK!
             MessageBeep(0xFFFFFFFF);
         }
         else
         {
-            MessageBox(g_RAMainWnd, _T("Could not save note! Please check you are online and retry."), _T("Error!"), MB_OK | MB_ICONWARNING);
+            MessageBox(g_RAMainWnd, _T("Could not save note! Please check you are online and retry."), _T("Error!"),
+                       MB_OK | MB_ICONWARNING);
         }
     }
 }
@@ -125,7 +126,7 @@ BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
         args['m'] = std::to_string(nAddr);
         args['n'] = "";
 
-        //	faf
+        //  faf
         RAWeb::CreateThreadedHTTPRequest(RequestSubmitCodeNote, args);
     }
 

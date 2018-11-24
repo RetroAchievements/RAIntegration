@@ -17,7 +17,7 @@ public:
 
 public:
     unsigned int m_nLBID;
-    //	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
+    // Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
     bool m_bHasData;
 };
 extern LeaderboardExamine g_LBExamine;
@@ -71,7 +71,7 @@ private:
 
     bool m_bHasData;
 
-    //	Data found:
+    // Data found:
     unsigned int m_nTotalWinners;
     unsigned int m_nPossibleWinners;
 
@@ -167,17 +167,17 @@ private:
     inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
     inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
 
-    mutable int	m_nAchievementsScrollOffset{};
-    mutable int	m_nFriendsScrollOffset{};
-    mutable int	m_nMessagesScrollOffset{};
-    mutable int	m_nNewsScrollOffset{};
-    mutable int	m_nLeaderboardScrollOffset{};
+    mutable int m_nAchievementsScrollOffset{};
+    mutable int m_nFriendsScrollOffset{};
+    mutable int m_nMessagesScrollOffset{};
+    mutable int m_nNewsScrollOffset{};
+    mutable int m_nLeaderboardScrollOffset{};
 
-    mutable int	m_nAchievementsSelectedItem{};
-    mutable int	m_nFriendsSelectedItem{};
-    mutable int	m_nMessagesSelectedItem{};
-    mutable int	m_nNewsSelectedItem{};
-    mutable int	m_nLeaderboardSelectedItem{};
+    mutable int m_nAchievementsSelectedItem{};
+    mutable int m_nFriendsSelectedItem{};
+    mutable int m_nMessagesSelectedItem{};
+    mutable int m_nNewsSelectedItem{};
+    mutable int m_nLeaderboardSelectedItem{};
 
     mutable int m_nNumAchievementsBeingRendered{};
     mutable int m_nNumFriendsBeingRendered{};
@@ -197,7 +197,7 @@ private:
 };
 extern AchievementOverlay g_AchievementOverlay;
 
-//	Exposed to DLL
+// Exposed to DLL
 _EXTERN_C
 // Can't use restrict since the pointer is aliased
 [[gsl::suppress(con.3)]]

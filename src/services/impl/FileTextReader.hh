@@ -26,7 +26,7 @@ public:
         ra::TrimLineEnding(sLine);
         return true;
     }
-	_Success_(return)
+ _Success_(return)
     _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
     {
         std::string sNarrowLine;

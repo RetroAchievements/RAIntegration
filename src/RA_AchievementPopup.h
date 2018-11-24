@@ -9,7 +9,7 @@
 
 #include "ui\drawing\gdi\ResourceRepository.hh"
 
-//	Graphic to display an obtained achievement
+// Graphic to display an obtained achievement
 enum PopupMessageType
 {
     PopupLogin,
@@ -69,7 +69,7 @@ public:
     void AddMessage(const MessagePopup& msg);
     float GetYOffsetPct() const;
 
-    //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
+    //bool IsActive() const      { return( m_vMessages.size() > 0 ); }
     bool MessagesPresent() const { return(m_vMessages.size() > 0); }
     const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
 

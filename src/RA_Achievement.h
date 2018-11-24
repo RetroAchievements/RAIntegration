@@ -8,7 +8,7 @@
 #include <memory>
 
 //////////////////////////////////////////////////////////////////////////
-//	Achievement
+//  Achievement
 //////////////////////////////////////////////////////////////////////////
 
 class Achievement
@@ -82,12 +82,14 @@ public:
     inline const std::string& ProgressFmt() const { return m_sProgressFmt; }
     void SetProgressIndicatorFormat(const std::string& sProgressFmt) { m_sProgressFmt = sProgressFmt; }
 
-
     void AddConditionGroup();
     void RemoveConditionGroup();
 
     inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
-    inline size_t NumConditions(size_t nGroup) const { return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0; }
+    inline size_t NumConditions(size_t nGroup) const
+    {
+        return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0;
+    }
 
     inline const std::string& BadgeImageURI() const { return m_sBadgeImageURI; }
     void SetBadgeImage(const std::string& sFilename);
@@ -95,23 +97,24 @@ public:
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
     unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
     int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const;
-    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPrevValue);
+    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue,
+                               unsigned int nPrevValue);
 
     std::string CreateMemString() const;
     std::string CreateStateString(const std::string& sSalt) const;
 
     void Reset();
 
-    //	Returns the new char* offset after parsing.
+    //  Returns the new char* offset after parsing.
     const char* ParseLine(const char* sBuffer);
     const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 
 #ifndef RA_UTEST
-    //	Parse from json element
+    //  Parse from json element
     void Parse(const rapidjson::Value& element);
 #endif
 
-    //	Used for rendering updates when editing achievements. Usually always false.
+    //  Used for rendering updates when editing achievements. Usually always false.
     _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
     _NODISCARD _CONSTANT_FN IsDirty() const { return (m_nDirtyFlags != DirtyFlags{}); }
 
@@ -128,13 +131,13 @@ public:
 protected:
     void ParseTrigger(const char* pTrigger);
 
-    void*                             m_pTrigger = nullptr; //  rc_trigger_t
-    std::shared_ptr<unsigned char[]>  m_pTriggerBuffer;     //  buffer for rc_trigger_t
+    void* m_pTrigger = nullptr;                        //  rc_trigger_t
+    std::shared_ptr<unsigned char[]> m_pTriggerBuffer; //  buffer for rc_trigger_t
 
 private:
     ra::AchievementID m_nAchievementID;
 
-    ConditionSet                      m_vConditions;        //  UI wrappers for trigger
+    ConditionSet m_vConditions; //  UI wrappers for trigger
 
     std::string m_sTitle;
     std::string m_sDescription;
@@ -147,16 +150,16 @@ private:
     BOOL m_bPauseOnTrigger{};
     BOOL m_bPauseOnReset{};
 
-    //	Progress:
-    BOOL m_bProgressEnabled{};	//	on/off
+    //  Progress:
+    BOOL m_bProgressEnabled{}; //  on/off
 
-    std::string m_sProgress;	//	How to calculate the progress so far (syntactical)
-    std::string m_sProgressMax;	//	Upper limit of the progress (syntactical? value?)
-    std::string m_sProgressFmt;	//	Format of the progress to be shown (currency? step?)
+    std::string m_sProgress;    //  How to calculate the progress so far (syntactical)
+    std::string m_sProgressMax; //  Upper limit of the progress (syntactical? value?)
+    std::string m_sProgressFmt; //  Format of the progress to be shown (currency? step?)
 
-    float m_fProgressLastShown{};	//	The last shown progress
+    float m_fProgressLastShown{}; //  The last shown progress
 
-    DirtyFlags m_nDirtyFlags{};	//	Use for rendering when editing.
+    DirtyFlags m_nDirtyFlags{}; //  Use for rendering when editing.
 
     time_t m_nTimestampCreated{};
     time_t m_nTimestampModified{};

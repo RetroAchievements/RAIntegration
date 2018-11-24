@@ -21,10 +21,10 @@ Dlg_AchievementsReporter g_AchievementsReporterDialog;
 
 void Dlg_AchievementsReporter::SetupColumns(HWND hList)
 {
-    //	Remove all columns,
+    // Remove all columns,
     while (ListView_DeleteColumn(hList, 0)) {}
 
-    //	Remove all data.
+    // Remove all data.
     ListView_DeleteAllItems(hList);
 
     auto i = 0U;
@@ -103,7 +103,7 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
         ASSERT(item.iItem == ms_nNumOccupiedRows);
     }
 
-    ms_nNumOccupiedRows++;	//	Last thing to do!
+    ms_nNumOccupiedRows++; // Last thing to do!
 }
 
 INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
@@ -164,10 +164,10 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     GetDlgItemText(hDlg, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, sBugReportCommentIn, 4096);
                     std::string sBugReportComment = ra::Narrow(sBugReportCommentIn);
 
-                    const auto nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2U : 0u;	// 0==?
+                    const auto nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2U : 0u; // 0==?
                     const auto sProblemTypeNice = PROBLEM_STR.at(nProblemType);
 
-                    //	Intentionally MBCS
+                    // Intentionally MBCS
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     const auto sBugReportInFull = ra::StringPrintf(
                         "--New Bug Report--\n\nGame: %s\n"
@@ -201,7 +201,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                             char buffer[2048];
                             sprintf_s(buffer, 2048, "Submitted OK!\n"
                                 "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n"
                                 "\n"
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"

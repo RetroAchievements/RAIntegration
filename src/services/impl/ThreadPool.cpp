@@ -100,7 +100,7 @@ void ThreadPool::ProcessDelayedTasks() noexcept
         }
 
 
-        // sleep until it's time to do the next work. use a wait_for instead of a sleep so we can can be woken
+        // sleep until it's time to do the next work. use a wait_for instead of a sleep so we can be woken
         // early if new work gets added that needs to occur sooner that we were expecting.
         {
             std::unique_lock<std::mutex> lock(m_oMutex);

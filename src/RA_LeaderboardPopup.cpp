@@ -7,7 +7,7 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-//	No emulator-specific code here please!
+// No emulator-specific code here please!
 
 namespace {
 
@@ -23,13 +23,9 @@ const int FONT_SIZE_TITLE = 28;
 const int FONT_SIZE_SUBTITLE = 22;
 const int FONT_SIZE_TEXT = 16;
 
-}
+} // namespace
 
-
-LeaderboardPopup::LeaderboardPopup()
-{
-    Reset();
-}
+LeaderboardPopup::LeaderboardPopup() { Reset(); }
 
 void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
@@ -55,7 +51,7 @@ void LeaderboardPopup::Reset()
 void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // If not, simply ignore them.
         return;
 
     if (bPaused)
@@ -63,15 +59,15 @@ void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOO
 
     if (m_fScoreboardShowTimer >= SCOREBOARD_FINISH_AT)
     {
-        //	No longer showing the scoreboard
+        // No longer showing the scoreboard
         if (!m_vScoreboardQueue.empty())
         {
             m_vScoreboardQueue.pop();
 
             if (!m_vScoreboardQueue.empty())
             {
-                //	Still not empty: restart timer
-                m_fScoreboardShowTimer = 0.0f;	//	Show next scoreboard
+                // Still not empty: restart timer
+                m_fScoreboardShowTimer = 0.0f; // Show next scoreboard
             }
             else
             {
@@ -91,8 +87,7 @@ void LeaderboardPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOO
     }
 }
 
-_Use_decl_annotations_
-BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
+_Use_decl_annotations_ BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -106,8 +101,7 @@ BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
     return TRUE;
 }
 
-_Use_decl_annotations_
-BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
+_Use_decl_annotations_ BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -131,65 +125,66 @@ float LeaderboardPopup::GetOffsetPct() const
 
     if (m_fScoreboardShowTimer < SCOREBOARD_APPEAR_AT)
     {
-        //	Fading in.
+        // Fading in.
         float fDelta = (SCOREBOARD_APPEAR_AT - m_fScoreboardShowTimer);
 
-        fDelta *= fDelta;	//	Quadratic
+        fDelta *= fDelta; // Quadratic
 
         fVal = fDelta;
     }
     else if (m_fScoreboardShowTimer < (SCOREBOARD_FADEOUT_AT))
     {
-        //	Faded in - held
+        // Faded in - held
         fVal = 0.0f;
     }
     else if (m_fScoreboardShowTimer < (SCOREBOARD_FINISH_AT))
     {
-        //	Fading out
+        // Fading out
         float fDelta = (SCOREBOARD_FADEOUT_AT - m_fScoreboardShowTimer);
 
-        fDelta *= fDelta;	//	Quadratic
+        fDelta *= fDelta; // Quadratic
 
         fVal = (fDelta);
     }
     else
     {
-        //	Finished!
+        // Finished!
         fVal = 1.0f;
     }
 
     return fVal;
 }
 
-_Use_decl_annotations_
-void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
+_Use_decl_annotations_ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // If not, simply ignore them.
         return;
 
     SetBkColor(hDC, COL_TEXT_HIGHLIGHT);
     SetTextColor(hDC, COL_POPUP);
 
-    HFONT hFontTitle = CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+    HFONT hFontTitle =
+        CreateFont(FONT_SIZE_TITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                   CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, /*NONANTIALIASED_QUALITY,*/
+                   DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
 
-    HFONT hFontDesc = CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
+    HFONT hFontDesc =
+        CreateFont(FONT_SIZE_SUBTITLE, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                   CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, /*NONANTIALIASED_QUALITY,*/
+                   DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
 
-    HFONT hFontText = CreateFont(FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY,/*NONANTIALIASED_QUALITY,*/
-        DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
-
+    HFONT hFontText =
+        CreateFont(FONT_SIZE_TEXT, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                   CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, /*NONANTIALIASED_QUALITY,*/
+                   DEFAULT_PITCH, NativeStr(FONT_TO_USE).c_str());
 
     const int nWidth = rcDest.right - rcDest.left;
     const int nHeight = rcDest.bottom - rcDest.top;
 
-    //float fOffscreenAmount = ( GetOffsetPct() * ( POPUP_DIST_FROM_PCT * (float)nWidth ) );
+    // float fOffscreenAmount = ( GetOffsetPct() * ( POPUP_DIST_FROM_PCT * (float)nWidth ) );
     const float fOffscreenAmount = (GetOffsetPct() * 600);
-    //float fFadeOffs = (POPUP_DIST_TO_PCT * (float)nWidth ) + fOffscreenAmount;
+    // float fFadeOffs = (POPUP_DIST_TO_PCT * (float)nWidth ) + fOffscreenAmount;
     const float fFadeOffs = (nWidth - 300) + fOffscreenAmount;
 
     const int nScoreboardX = (int)fFadeOffs;
@@ -197,14 +192,13 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
 
     const int nRightLim = (int)((nWidth - 8) + fOffscreenAmount);
 
-    //if( GetMessageType() == 1 )
+    // if( GetMessageType() == 1 )
     //{
-    //	DrawImage( hDC, GetImage(), nTitleX, nTitleY, 64, 64 );
+    // DrawImage( hDC, GetImage(), nTitleX, nTitleY, 64, 64 );
 
-    //	nTitleX += 64+4+2;	//	Negate the 2 from earlier!
-    //	nDescX += 64+4;
+    // nTitleX += 64+4+2; // Negate the 2 from earlier!
+    // nDescX += 64+4;
     //}
-
 
     HGDIOBJ hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
 
@@ -237,8 +231,10 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
                 const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(*iter);
                 if (pLB != nullptr)
                 {
-                    //	Show current progress:
-                    std::string sScoreSoFar = std::string(" ") + pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())) + std::string(" ");
+                    // Show current progress:
+                    std::string sScoreSoFar = std::string(" ") +
+                                              pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())) +
+                                              std::string(" ");
 
                     SIZE szProgress;
                     GetTextExtentPoint32(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &szProgress);
@@ -246,12 +242,13 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
                     HGDIOBJ hBkup = SelectObject(hDC, hPen);
 
                     MoveToEx(hDC, nWidth - 8, nHeight - 8 - szProgress.cy + nProgressYOffs, nullptr);
-                    LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);							//	down
-                    LineTo(hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs);			//	left
+                    LineTo(hDC, nWidth - 8, nHeight - 8 + nProgressYOffs);                 // down
+                    LineTo(hDC, nWidth - 8 - szProgress.cx, nHeight - 8 + nProgressYOffs); // left
 
                     RECT rcProgress;
                     SetRect(&rcProgress, 0, 0, nWidth - 8, nHeight - 8 + nProgressYOffs);
-                    DrawText(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &rcProgress, DT_BOTTOM | DT_RIGHT | DT_SINGLELINE);
+                    DrawText(hDC, NativeStr(sScoreSoFar).c_str(), sScoreSoFar.length(), &rcProgress,
+                             DT_BOTTOM | DT_RIGHT | DT_SINGLELINE);
 
                     SelectObject(hDC, hBkup);
                     nProgressYOffs -= 26;
@@ -273,11 +270,11 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
             {
                 char buffer[1024];
                 sprintf_s(buffer, 1024, " Results: %s ", pLB->Title().c_str());
-                RECT rcTitle = { nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8 };
+                RECT rcTitle = {nScoreboardX + 2, nScoreboardY + 2, nRightLim - 2, nHeight - 8};
                 DrawText(hDC, NativeStr(buffer).c_str(), strlen(buffer), &rcTitle, DT_TOP | DT_LEFT | DT_SINGLELINE);
 
-                //	Show scoreboard
-                RECT rcScoreboard = { nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16 };
+                // Show scoreboard
+                RECT rcScoreboard = {nScoreboardX + 2, nScoreboardY + 32, nRightLim - 2, nHeight - 16};
                 for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
                 {
                     const RA_Leaderboard::Entry& lbInfo = pLB->GetRankInfo(i);
@@ -293,28 +290,26 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
                         SetTextColor(hDC, COL_TEXT_HIGHLIGHT);
                     }
 
-                    
                     {
-                        const auto str{
-                            ra::StringPrintf(_T(" %u %s "), lbInfo.m_nRank, lbInfo.m_sUsername.c_str())
-                        };
+                        const auto str{ra::StringPrintf(_T(" %u %s "), lbInfo.m_nRank, lbInfo.m_sUsername.c_str())};
 
-                        DrawText(hDC, str.c_str(), ra::narrow_cast<int>(str.length()),
-                                    &rcScoreboard, DT_TOP | DT_LEFT | DT_SINGLELINE);
+                        DrawText(hDC, str.c_str(), ra::narrow_cast<int>(str.length()), &rcScoreboard,
+                                 DT_TOP | DT_LEFT | DT_SINGLELINE);
                     }
                     std::string sScore(" " + pLB->FormatScore(lbInfo.m_nScore) + " ");
-                    DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard, DT_TOP | DT_RIGHT | DT_SINGLELINE);
+                    DrawText(hDC, NativeStr(sScore).c_str(), sScore.length(), &rcScoreboard,
+                             DT_TOP | DT_RIGHT | DT_SINGLELINE);
 
                     rcScoreboard.top += 24;
 
-                    //	If we're about to draw the local, outranked player, offset a little more
+                    // If we're about to draw the local, outranked player, offset a little more
                     if (i == 5)
                         rcScoreboard.top += 4;
                 }
             }
 
-            //	Restore
-            //SetBkMode( hDC, nOldBkMode );
+            // Restore
+            // SetBkMode( hDC, nOldBkMode );
         }
         break;
 
@@ -322,7 +317,7 @@ void LeaderboardPopup::Render(HDC hDC, const RECT& rcDest)
             break;
     }
 
-    //	Restore old obj
+    // Restore old obj
     SelectObject(hDC, hOld);
 
     DeleteObject(hBrushBG);

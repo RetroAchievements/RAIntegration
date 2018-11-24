@@ -5,7 +5,7 @@
 AlignAfterOpenBracket: true
 AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
-AlignConsecutiveAssignments: false
+AlignConsecutiveAssignments: true
 
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: All

@@ -8,9 +8,10 @@ class GameEntry
 {
 public:
     GameEntry(const std::string& sTitle, const std::string& sFile, unsigned int nGameID) :
-        m_sTitle(sTitle), m_sFilename(sFile), m_nGameID(nGameID)
-    {
-    }
+        m_sTitle(sTitle),
+        m_sFilename(sFile),
+        m_nGameID(nGameID)
+    {}
 
     const std::string& Title() const { return m_sTitle; }
     const std::string& Filename() const { return m_sFilename; }
@@ -24,7 +25,7 @@ public:
 class Dlg_GameLibrary
 {
 public:
-    //void DoModalDialog( HINSTANCE hInst, HWND hParent );
+    // void DoModalDialog( HINSTANCE hInst, HWND hParent );
     static INT_PTR CALLBACK s_GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR CALLBACK GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -49,8 +50,8 @@ private:
 
 private:
     static std::deque<std::string> FilesToScan;
-    static std::map<std::string, std::string> Results;			//	filepath,md5 (parsed/persisted)
-    static std::map<std::string, std::string> VisibleResults;	//	filepath,md5 (added to renderable)
+    static std::map<std::string, std::string> Results;        // filepath,md5 (parsed/persisted)
+    static std::map<std::string, std::string> VisibleResults; // filepath,md5 (added to renderable)
     static size_t nNumParsed;
 
     static void ThreadedScanProc();
@@ -66,6 +67,5 @@ private:
     std::vector<GameEntry> m_vGameEntries;
 };
 extern Dlg_GameLibrary g_GameLibrary;
-
 
 #endif // !RA_DLG_GAMELIBRARY_H

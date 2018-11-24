@@ -5,7 +5,7 @@
 #include "ra_fwd.h"
 
 //////////////////////////////////////////////////////////////////////////
-//	RAUser
+// RAUser
 
 typedef struct
 {
@@ -35,9 +35,9 @@ public:
     const std::string& Activity() const { return m_sActivity; }
 
 private:
-    /*const*/std::string	m_sUsername;
-    std::string				m_sActivity;
-    unsigned int			m_nScore;
+    std::string  m_sUsername;
+    std::string  m_sActivity;
+    unsigned int m_nScore;
 };
 
 class LocalRAUser : public RAUser
@@ -70,10 +70,10 @@ public:
     void Clear();
 
 private:
-    std::string				m_sToken;		//	AppToken Issued by server
-    BOOL					m_bIsLoggedIn;
-    std::vector<RAUser*>	m_aFriends;
-    std::vector<RAMessage>	m_aMessages;
+    std::string            m_sToken; // AppToken Issued by server
+    BOOL                   m_bIsLoggedIn;
+    std::vector<RAUser*>   m_aFriends;
+    std::vector<RAMessage> m_aMessages;
 };
 
 class RAUsers

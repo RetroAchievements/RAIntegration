@@ -37,7 +37,7 @@ private:
     static LeaderboardPopup m_LeaderboardPopups;
 };
 
-//	Exposed to DLL
+// Exposed to DLL
 _EXTERN_C
 [[gsl::suppress(con.3)]]
 API int _RA_UpdatePopups(_In_ ControllerInput* __restrict input, _In_ float fDTime,

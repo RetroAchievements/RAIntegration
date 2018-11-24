@@ -88,7 +88,7 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
             m_Pages.at(m_nPageStackPointer) = (bPressedRight ? Page::Achievements : Page::News);
             break;
         default:
-            //	Not on a toplevel page: cannot do anything!
+            // Not on a top-level page: cannot do anything!
             //assert(0);
             break;
     }
@@ -114,7 +114,7 @@ void AchievementOverlay::Deactivate()
     }
 }
 
-//	Returns TRUE if we are ready to exit the overlay.
+// Returns TRUE if we are ready to exit the overlay.
 BOOL AchievementOverlay::GoBack()
 {
     if (m_nPageStackPointer == 0)
@@ -139,19 +139,19 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
     const int nNumLBs = (const int)(pLeaderboardManager.Count());
     //const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
     const int nMsgCount = 0;
-    auto pnScrollOffset = GetActiveScrollOffset();	//	Dirty!
+    auto pnScrollOffset = GetActiveScrollOffset(); // Dirty!
     auto pnSelectedItem = GetActiveSelectedItem();
 
     const ControllerInput& input = *pInput;
 
-    BOOL bCloseOverlay = FALSE;	//	False==close overlay
+    BOOL bCloseOverlay = FALSE; // False==close overlay
 
-    //	FS fix: this thrashes horribly when both are running :S
+    // FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
     {
         if (m_nTransitionState == TransitionState::Out && !bPaused)
         {
-            //	Skip to 'out' if we are full-screen
+            // Skip to 'out' if we are full-screen
             m_fTransitionTimer = PAGE_TRANSITION_OUT;
         }
     }
@@ -175,12 +175,12 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
 
             if (bPaused)
             {
-                //	???
+                // ???
                 //SelectNextTopLevelPage( TRUE );
-// 				//	Still paused, just transition to another page!
-// 				m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
-// 				if( m_nCurrentPage == OP__MAX )
-// 					m_nCurrentPage = OP_ACHIEVEMENTS;
+//     // Still paused, just transition to another page!
+//     m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
+//     if( m_nCurrentPage == OP__MAX )
+//      m_nCurrentPage = OP_ACHIEVEMENTS;
 
                 m_nTransitionState = TransitionState::In;
                 m_fTransitionTimer = PAGE_TRANSITION_IN;
@@ -200,7 +200,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
     if (m_nTransitionState == TransitionState::Off)
         return FALSE;
 
-    //	Inputs! Restrict to ABCULDR+Start
+    // Inputs! Restrict to ABCULDR+Start
     if (!m_bInputLock)
     {
         switch (m_Pages.at(m_nPageStackPointer))
@@ -232,7 +232,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 if ((*pnScrollOffset) > (*pnSelectedItem))
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
@@ -242,7 +242,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
             break;
             case Page::Achievement_Examine:
             {
-                //	Overload:
+                // Overload:
                 pnScrollOffset = &m_nAchievementsScrollOffset;
                 pnSelectedItem = &m_nAchievementsSelectedItem;
 
@@ -265,7 +265,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 if ((*pnScrollOffset) > (*pnSelectedItem))
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
@@ -291,25 +291,25 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 if ((*pnScrollOffset) > (*pnSelectedItem))
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumFriendsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumFriendsBeingRendered - 1);
 
-                // 				//	Lim the selected item to a valid range
-                // 				while( nSelectedItem > nNumElements )
-                // 					nSelectedItem--;
+                //     // Lim the selected item to a valid range
+                //     while( nSelectedItem > nNumElements )
+                //      nSelectedItem--;
                 // 
-                // 				if( nSelectedItem < nScrollOffset )
-                // 					nScrollOffset--;
-                // 				if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
-                // 					nScrollOffset++;
+                //     if( nSelectedItem < nScrollOffset )
+                //      nScrollOffset--;
+                //     if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
+                //      nScrollOffset++;
             }
             break;
             case Page::Messages:
             {
-                //	Select message
+                // Select message
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nAchCount - 1))
@@ -327,11 +327,11 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 //if( (*pnScrollOffset) > (*pnSelectedItem) )
-                //	(*pnScrollOffset) = (*pnSelectedItem);
+                // (*pnScrollOffset) = (*pnSelectedItem);
                 //else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
-                //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
+                // (*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
             }
             break;
             case Page::Message_Viewer:
@@ -341,7 +341,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 break;
             }
             case Page::News:
-                //	Scroll news
+                // Scroll news
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < static_cast<int>(m_LatestNews.size()))
@@ -360,7 +360,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 }
                 break;
             case Page::Leaderboards:
-                //	Scroll news
+                // Scroll news
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nNumLBs - 1))
@@ -385,15 +385,15 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                         g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
                     }
                 }
-                //	Move page to match selection
+                // Move page to match selection
                 if ((*pnScrollOffset) > (*pnSelectedItem))
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
                 break;
             case Page::Leaderboard_Examine:
-                //	Overload from previous
-                //	Overload:
+                // Overload from previous
+                // Overload:
                 pnScrollOffset = &m_nLeaderboardScrollOffset;
                 pnSelectedItem = &m_nLeaderboardSelectedItem;
 
@@ -416,22 +416,22 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 //if( (*pnScrollOffset) > (*pnSelectedItem) )
-                //	(*pnScrollOffset) = (*pnSelectedItem);
+                // (*pnScrollOffset) = (*pnSelectedItem);
                 //else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
-                //	(*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
+                // (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
 
                 break;
             default:
-                assert(0);	//	Unknown page!
+                assert(0); // Unknown page!
                 break;
         }
 
 
         if (input.m_bCancelPressed)
         {
-            //	If TRUE: Close overlay
+            // If TRUE: Close overlay
             bCloseOverlay = GoBack();
             m_bInputLock = TRUE;
         }
@@ -543,7 +543,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                 const BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);
                 if (bSelected)
                 {
-                    //	Draw bounding box around text
+                    // Draw bounding box around text
                     const int nSelBoxXOffs = 28 + 64;
                     const int nSelBoxWidth = nWidth - nAchSpacing - 24;
                     const int nSelBoxHeight = nAchSpacing - 8;
@@ -578,18 +578,18 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
 {
 
-    // 		for( size_t i = 0; i < 256; ++i )
-    // 			buffer[i] = (char)(i);
+    //   for( size_t i = 0; i < 256; ++i )
+    //    buffer[i] = (char)(i);
     // 
-    // 		SelectObject( hDC, hFontDesc );
-    // 		TextOut( hDC, nDX+8, 40, buffer, 32 );
-    // 		TextOut( hDC, nDX+8, 60, buffer+32, 32 );
-    // 		TextOut( hDC, nDX+8, 80, buffer+64, 32 );
-    // 		TextOut( hDC, nDX+8, 100, buffer+96, 32 );
-    // 		TextOut( hDC, nDX+8, 120, buffer+128, 32 );
-    // 		TextOut( hDC, nDX+8, 140, buffer+160, 32 );
-    // 		TextOut( hDC, nDX+8, 160, buffer+192, 32 );
-    // 		TextOut( hDC, nDX+8, 180, buffer+224, 32 );
+    //   SelectObject( hDC, hFontDesc );
+    //   TextOut( hDC, nDX+8, 40, buffer, 32 );
+    //   TextOut( hDC, nDX+8, 60, buffer+32, 32 );
+    //   TextOut( hDC, nDX+8, 80, buffer+64, 32 );
+    //   TextOut( hDC, nDX+8, 100, buffer+96, 32 );
+    //   TextOut( hDC, nDX+8, 120, buffer+128, 32 );
+    //   TextOut( hDC, nDX+8, 140, buffer+160, 32 );
+    //   TextOut( hDC, nDX+8, 160, buffer+192, 32 );
+    //   TextOut( hDC, nDX+8, 180, buffer+224, 32 );
 
 }
 
@@ -655,7 +655,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
                 nYOffs + nFriendSubtitleYOffs + 46);
             DrawText(hDC, NativeStr(pFriend->Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
 
-            //	Restore
+            // Restore
             SelectObject(hDC, hOldObj);
 
             //sprintf_s( buffer, 256, " %d Points ", Friend.Score() );
@@ -719,12 +719,12 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
         return;
 
     ctime_s(bufTime, 256, &tCreated);
-    bufTime[strlen(bufTime) - 1] = '\0';	//	Remove pesky newline
+    bufTime[strlen(bufTime) - 1] = '\0'; // Remove pesky newline
     sprintf_s(buffer, 256, " Created: %s ", bufTime);
     TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), strlen(buffer));
 
     ctime_s(bufTime, 256, &tModified);
-    bufTime[strlen(bufTime) - 1] = '\0';	//	Remove pesky newline
+    bufTime[strlen(bufTime) - 1] = '\0'; // Remove pesky newline
     sprintf_s(buffer, 256, " Modified: %s ", bufTime);
     TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(), strlen(buffer));
 
@@ -750,7 +750,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
                 sUser += data.User();
                 sUser += "      ";
 
-                //	Draw/Fetch user image? //TBD
+                // Draw/Fetch user image? //TBD
                 TextOut(hDC,
                     nDX + nWonByPlayerNameX,
                     nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
@@ -812,41 +812,41 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
 
         SelectObject(hDC, g_hFontDesc2);
 
-        //	Setup initial variables for the rect
+        // Setup initial variables for the rect
         RECT rcNews;
         SetRect(&rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset);
 
-        //	Calculate height of rect, fetch bottom for next rect:
+        // Calculate height of rect, fetch bottom for next rect:
         DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw title:
+        // Draw title:
         DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
-        //	Offset header
+        // Offset header
         nYOffset += nHeaderGap;
 
         SelectObject(hDC, g_hFontTiny);
 
-        //	Setup initial variables for the rect
+        // Setup initial variables for the rect
         SetRect(&rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset);
-        //	Calculate height of rect, fetch and inset bottom:
+        // Calculate height of rect, fetch and inset bottom:
         DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw payload:
+        // Draw payload:
         DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         nYOffset += nArticleGap;
     }
 
-    //	Restore object:
+    // Restore object:
     SelectObject(hDC, hOldObject);
 }
 
@@ -901,7 +901,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             const BOOL bSelected = ((*pnSelectedItem) == ra::to_signed(i));
             if (bSelected)
             {
-                //	Draw bounding box around text
+                // Draw bounding box around text
                 const int nSelBoxXOffs = nLeftAlign - 4;
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
@@ -916,10 +916,10 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
             SelectObject(hDC, g_hFontDesc2);
 
-            //	Setup initial variables for the rect
+            // Setup initial variables for the rect
             RECT rcNews;
             SetRect(&rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset);
-            //	Calculate height of rect, fetch bottom for next rect:
+            // Calculate height of rect, fetch bottom for next rect:
             DrawText(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
             nYOffset = rcNews.bottom;
 
@@ -928,17 +928,17 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
             SetTextColor(hDC, bSelected ? COL_SELECTED : COL_TEXT);
 
-            //	Draw title:
+            // Draw title:
             DrawText(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
-            //	Offset header
+            // Offset header
             nYOffset += nHeaderGap;
 
             SelectObject(hDC, g_hFontTiny);
 
-            //	Setup initial variables for the rect
+            // Setup initial variables for the rect
             SetRect(&rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset);
-            //	Calculate height of rect, fetch and inset bottom:
+            // Calculate height of rect, fetch and inset bottom:
             DrawText(hDC, NativeStr(sPayload).c_str(), sPayload.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
             nYOffset = rcNews.bottom;
 
@@ -947,7 +947,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
             SetTextColor(hDC, COL_SELECTED_LOCKED);
 
-            //	Draw payload:
+            // Draw payload:
             DrawText(hDC, NativeStr(sPayload).c_str(), sPayload.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
 
             nYOffset += nArticleGap;
@@ -967,7 +967,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
         }
     }
 
-    //	Restore object:
+    // Restore object:
     SelectObject(hDC, hOldObject);
 }
 
@@ -1026,7 +1026,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
                 char sScoreText[256];
                 sprintf_s(sScoreText, 256, " %s ", sScoreFormatted.c_str());
 
-                //	Draw/Fetch user image? //TBD
+                // Draw/Fetch user image? //TBD
                 TextOut(hDC,
                     nDX + nWonByPlayerRankX,
                     nLeaderboardYOffs + (i * nLeaderboardYSpacing),
@@ -1067,9 +1067,9 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
 _Use_decl_annotations_
 void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 {
-    //	Rendering:
+    // Rendering:
     if (!RAUsers::LocalUser().IsLoggedIn())
-        return;	//	Not available!
+        return; // Not available!
 
     if (m_nTransitionState == TransitionState::Off)
         return;
@@ -1113,7 +1113,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     auto hBitmap{ ::CreateCompatibleBitmap(hRealDC, rc.right, lHeight) };
     SelectBitmap(hDC, hBitmap);
 
-    //	Draw background:
+    // Draw background:
     SetBkMode(hDC, TRANSPARENT);
     {
         HBITMAP hBackground = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hOverlayBackground);
@@ -1136,7 +1136,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         _CONSTANT_LOC uMinUserFrameWidth{ 300U };
         _CONSTANT_LOC uMinUserFrameHeight{ 64U + 4U + 4U };
 
-        //	Draw user info
+        // Draw user info
         if (rcTarget.right > 360)
         {
             DrawUserFrame(hDC,
@@ -1148,7 +1148,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         }
     }
 
-    //	Draw the bulk of the page:
+    // Draw the bulk of the page:
     {
         const auto nCurrentPage{ m_Pages.at(m_nPageStackPointer) };
         switch (nCurrentPage)
@@ -1182,11 +1182,11 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
                 break;
 
             default:
-                //	Not implemented!
+                // Not implemented!
                 ASSERT(!"Attempting to render an undefined overlay page!");
         }
     
-    //	Title:
+    // Title:
     SelectFont(hDC, g_hFontTitle);
     SetTextColor(hDC, COL_TEXT);
 
@@ -1195,7 +1195,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 
     }
 
-    //	Render controls:
+    // Render controls:
     SelectFont(hDC, g_hFontDesc2);
     {
         const int nControlsX1 = 80 + 80 + 4;
@@ -1203,11 +1203,11 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         const int nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
         const int nControlsY2 = rcTarget.bottom - 30 - 4;
 
-        //	Fill again:
+        // Fill again:
         SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
         FillRect(hDC, &rc, g_hBrushBG);
 
-        //	Draw control text:
+        // Draw control text:
         {
             ra::tstring stNext{ _T(" ->:") };
             stNext += _T("Next ");
@@ -1222,7 +1222,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         _CONSTANT_LOC ctBackChar{ _T('B') };
         auto ctSelectChar{ _T('A') };
 
-        //	Genesis wouldn't use 'A' for select
+        // Genesis wouldn't use 'A' for select
         if (g_EmulatorID == RA_Gens)
             ctSelectChar = _T('C');
 
@@ -1267,7 +1267,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
 
     const int nInnerBarAbsY = (int)(nY + 2.0f + fInnerBarOffsetY);
 
-    //	Draw bar:
+    // Draw bar:
     SetTextColor(hDC, COL_BAR);
     SetBkColor(hDC, COL_BAR_BG);
 
@@ -1416,7 +1416,7 @@ int* AchievementOverlay::GetActiveSelectedItem() const
     switch (m_Pages.at(m_nPageStackPointer))
     {
         case Page::Achievements:
-            return &m_nAchievementsSelectedItem;	//	?
+            return &m_nAchievementsSelectedItem; // ?
         case Page::Friends:
             return &m_nFriendsSelectedItem;
         case Page::Messages:
@@ -1525,17 +1525,17 @@ void AchievementExamine::Initialize(const Achievement* pAch)
 
     if (pAch == nullptr)
     {
-        //	Do nothing.
+        // Do nothing.
     }
     else if (m_pSelectedAchievement->ID() == 0)
     {
-        //	Uncommitted/Exempt ID
-        //	NB. Don't attempt to get anything
+        // Uncommitted/Exempt ID
+        // NB. Don't attempt to get anything
         m_bHasData = true;
     }
     else
     {
-        //	Go fetch data:
+        // Go fetch data:
         m_CreatedDate = _TimeStampToString(pAch->CreatedDate());
         m_LastModifiedDate = _TimeStampToString(pAch->ModifiedDate());
 
@@ -1543,7 +1543,7 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
         args['a'] = std::to_string(m_pSelectedAchievement->ID());
-        args['f'] = true;	//	Friends only?
+        args['f'] = true; // Friends only?
         RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
     }
 }
@@ -1581,14 +1581,14 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 
     if (m_nLBID == nLBIDIn)
     {
-        //	Same ID again: keep existing data
+        // Same ID again: keep existing data
         m_bHasData = true;
         return;
     }
 
     m_nLBID = nLBIDIn;
 
-    const unsigned int nOffset = 0;		//	TBD
+    const unsigned int nOffset = 0;  // TBD
     const unsigned int nCount = 10;
 
     PostArgs args;
@@ -1631,7 +1631,7 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
     m_bHasData = true;
 }
 
-//	Stubs for non-class based, indirect calling of these functions.
+// Stubs for non-class based, indirect calling of these functions.
 _Use_decl_annotations_
 API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
 {

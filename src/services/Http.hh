@@ -96,7 +96,7 @@ public:
         /// <summary>
         /// Sets the POST data.
         /// </summary>
-        /// <remarks>If not empty, POST request will be made, otherwise GET request wil be made.</remarks>
+        /// <remarks>If not empty, POST request will be made, otherwise GET request will be made.</remarks>
         void SetPostData(const std::string& sValue) noexcept { m_sPostData = sValue; }
 
         /// <summary>

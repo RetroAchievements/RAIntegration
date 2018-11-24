@@ -37,14 +37,14 @@ void MemManager::ChangeActiveMemBank(_UNUSED unsigned short)
 
     //if( m_Banks.find( nMemBank ) == m_Banks.end() )
     //{
-    //	ASSERT( !"Cannot find memory bank!" );
-    //	return;
+    // ASSERT( !"Cannot find memory bank!" );
+    // return;
     //}
     //
     //if( m_Candidates != nullptr )
     //{
-    //	delete[] m_Candidates;
-    //	m_Candidates = nullptr;
+    // delete[] m_Candidates;
+    // m_Candidates = nullptr;
     //}
     //
     //Reset( nMemBank, m_nComparisonSizeMode );

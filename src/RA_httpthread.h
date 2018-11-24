@@ -16,7 +16,7 @@ enum HTTPRequestMethod
 
 enum RequestType
 {
-    //	Fetch
+    // Fetch
     RequestScore,
     RequestNews,
     RequestPatch,
@@ -33,7 +33,7 @@ enum RequestType
     RequestAllProgress,
     RequestGameID,
 
-    //	Submit
+    // Submit
     RequestSubmitAwardAchievement,
     RequestSubmitCodeNote,
     RequestSubmitLeaderboardEntry,
@@ -47,7 +47,7 @@ enum RequestType
 
 enum UploadType
 {
-    //	Upload:
+    // Upload:
     RequestUploadBadgeImage,
 
     NumUploadTypes
@@ -89,7 +89,7 @@ private:
 class HttpResults
 {
 public:
-    //	Caller must manage: SAFE_DELETE when finished
+    // Caller must manage: SAFE_DELETE when finished
     RequestObject * PopNextItem();
     const RequestObject* PeekNextItem() const;
     void PushItem(RequestObject* pObj);

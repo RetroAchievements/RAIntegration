@@ -10,18 +10,18 @@ void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {
-        //	Select new bitmap and backup old bitmap
+        // Select new bitmap and backup old bitmap
         HBITMAP hbmOld = SelectBitmap(hdcMem, hBitmap);
 
-        //	Fetch and blit bitmap
+        // Fetch and blit bitmap
         BITMAP bm;
         if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
-            BitBlt(hDC, nX, nY, nW, nH, hdcMem, 0, 0, SRCCOPY);	//	Blit!
+            BitBlt(hDC, nX, nY, nW, nH, hdcMem, 0, 0, SRCCOPY); // Blit!
 
-        //	Restore old bitmap
+        // Restore old bitmap
         SelectBitmap(hdcMem, hbmOld);
 
-        //	Discard MemDC
+        // Discard MemDC
         DeleteDC(hdcMem);
     }
 }
@@ -33,14 +33,14 @@ void DrawImageStretched(HDC hDC, HBITMAP hBitmap, const RECT& rcSource, const RE
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {
-        //	Select new bitmap and backup old bitmap
+        // Select new bitmap and backup old bitmap
         HBITMAP hbmOld = SelectBitmap(hdcMem, hBitmap);
 
-        //	Fetch and blit bitmap
+        // Fetch and blit bitmap
         BITMAP bm;
         if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
         {
-            //	Blit!
+            // Blit!
             SetStretchBltMode(hDC, BLACKONWHITE);
             StretchBlt(hDC,
                 rcDest.left, rcDest.top, (rcDest.right - rcDest.left), (rcDest.bottom - rcDest.top),
@@ -49,10 +49,10 @@ void DrawImageStretched(HDC hDC, HBITMAP hBitmap, const RECT& rcSource, const RE
                 SRCCOPY);
         }
 
-        //	Restore old bitmap
+        // Restore old bitmap
         SelectBitmap(hdcMem, hbmOld);
 
-        //	Discard MemDC
+        // Discard MemDC
         DeleteDC(hdcMem);
     }
 }
@@ -64,15 +64,15 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, const RECT& rcDest
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {
-        //	Select new bitmap and backup old bitmap
+        // Select new bitmap and backup old bitmap
         HBITMAP hbmOld = SelectBitmap(hdcMem, hBitmap);
 
-        //	Fetch and blit bitmap
+        // Fetch and blit bitmap
         BITMAP bm;
         if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
         {
-            //	Blit!
-            //	Truncate the source rect if bigger than container
+            // Blit!
+            // Truncate the source rect if bigger than container
             if (rcSource.left < rcDest.left)
                 rcSource.left += (rcDest.left - rcSource.left);
 
@@ -92,8 +92,8 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, const RECT& rcDest
                     int nWidthToCopy = nSourceWidth;
                     int nHeightToCopy = nSourceHeight;
 
-                    //	If the full width of the source image goes outside the target area,
-                    //		Clip the rightmost/lower end of it by this much
+                    // If the full width of the source image goes outside the target area,
+                    //  Clip the rightmost/lower end of it by this much
 
                     if (nXOffs + nSourceWidth > nDestLimitAtX)
                         nWidthToCopy -= (nXOffs + nSourceWidth - nDestLimitAtX);
@@ -107,10 +107,10 @@ void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, const RECT& rcDest
             }
         }
 
-        //	Restore old bitmap
+        // Restore old bitmap
         SelectBitmap(hdcMem, hbmOld);
 
-        //	Discard MemDC
+        // Discard MemDC
         DeleteDC(hdcMem);
     }
 }

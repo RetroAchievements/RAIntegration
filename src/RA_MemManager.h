@@ -5,39 +5,40 @@
 #include "RA_Condition.h" // ComparisonVariableSize
 #include "ra_fwd.h"
 
-typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
-typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
+typedef unsigned char(_RAMByteReadFn)(unsigned int nOffs);
+typedef void(_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
 
 class MemManager
 {
 private:
-    
     class BankData
     {
     public:
         BankData() noexcept = default;
-        explicit BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize) noexcept
-            : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
-        {
-        }
+        explicit BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize) noexcept :
+            Reader(pReadFn),
+            Writer(pWriteFn),
+            BankSize(nBankSize)
+        {}
         ~BankData() noexcept
         {
             Reader   = nullptr;
             Writer   = nullptr;
             BankSize = 0U;
         }
-        //	Copying disabled
+        // Copying disabled
         BankData(const BankData&) = delete;
         BankData& operator=(BankData&) = delete;
         BankData(BankData&&) = delete;
         BankData& operator=(BankData&&) = delete;
 
     public:
-        _RAMByteReadFn* Reader{ nullptr };
-        _RAMByteWriteFn* Writer{ nullptr };
-        size_t BankSize{ 0U };
+        _RAMByteReadFn* Reader{nullptr};
+        _RAMByteWriteFn* Writer{nullptr};
+        size_t BankSize{0U};
     };
     using Banks = std::map<size_t, BankData>;
+
 public:
     MemManager() noexcept(std::is_nothrow_default_constructible_v<Banks>) = default;
     ~MemManager() noexcept;
@@ -52,8 +53,8 @@ public:
     size_t NumMemoryBanks() const { return m_Banks.size(); }
 
     inline size_t BankSize(unsigned short nBank) const { return m_Banks.at(nBank).BankSize; }
-    //inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
-    //inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
+    // inline size_t ActiveBankSize() const       { return m_Banks.at( m_nActiveMemBank ).BankSize; }
+    // inline unsigned short ActiveBankID() const     { return m_nActiveMemBank; }
     inline size_t TotalBankSize() const { return m_nTotalBankSize; }
 
     std::vector<size_t> GetBankIDs() const;

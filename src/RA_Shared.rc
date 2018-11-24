@@ -160,7 +160,7 @@ EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "Unknown Title"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Unrecognised Title",IDC_STATIC,7,7,234,105
+    GROUPBOX        "Unrecognized Title",IDC_STATIC,7,7,234,105
     LTEXT           "To load existing achievements, please try to locate the game in the following list:",IDC_STATIC,14,18,219,20
     LTEXT           "New Title:",IDC_STATIC,21,91,49,11
     LTEXT           "Checksum:",IDC_STATIC,14,121,36,8

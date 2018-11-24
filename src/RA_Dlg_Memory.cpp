@@ -137,11 +137,11 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             moveAddress(-0x10, 0);
             return true;
 
-        case VK_PRIOR:	//	Page up (!)
+        case VK_PRIOR: // Page up (!)
             moveAddress(-(int)(m_nDisplayedLines << 4), 0);
             return true;
 
-        case VK_NEXT:	//	Page down (!)
+        case VK_NEXT: // Page down (!)
             moveAddress((m_nDisplayedLines << 4), 0);
             return true;
 
@@ -169,7 +169,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
     {
         if (nibbleOff == -1)
         {
-            //	Going left
+            // Going left
             m_nEditNibble--;
             if (m_nEditAddress == 0 && m_nEditNibble == -1)
             {
@@ -185,7 +185,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
         }
         else
         {
-            //	Going right
+            // Going right
             m_nEditNibble++;
             if (m_nEditNibble > maxNibble)
             {
@@ -194,7 +194,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
             }
             if (m_nEditAddress >= g_MemManager.TotalBankSize())
             {
-                //	Undo this movement.
+                // Undo this movement.
                 m_nEditAddress -= (maxNibble + 1) >> 1;
                 m_nEditNibble = maxNibble;
                 MessageBeep((UINT)-1);
@@ -269,27 +269,27 @@ void MemoryViewerControl::Invalidate()
 
 void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
 {
-    //	Immediately invalidate all submissions.
+    // Immediately invalidate all submissions.
     g_bRAMTamperedWith = true;
 
     if (bLowerNibble)
     {
-        //	We're submitting a new lower nibble:
-        //	Fetch existing upper nibble,
+        // We're submitting a new lower nibble:
+        // Fetch existing upper nibble,
         unsigned int nVal = (g_MemManager.ActiveBankRAMByteRead(nByteAddress) >> 4) << 4;
-        //	Merge in given (lower nibble) value,
+        // Merge in given (lower nibble) value,
         nVal |= nNewVal;
-        //	Write value:
+        // Write value:
         g_MemManager.ActiveBankRAMByteWrite(nByteAddress, nVal);
     }
     else
     {
-        //	We're submitting a new upper nibble:
-        //	Fetch existing lower nibble,
+        // We're submitting a new upper nibble:
+        // Fetch existing lower nibble,
         unsigned int nVal = g_MemManager.ActiveBankRAMByteRead(nByteAddress) & 0xf;
-        //	Merge in given value at upper nibble
+        // Merge in given value at upper nibble
         nVal |= (nNewVal << 4);
-        //	Write value:
+        // Write value:
         g_MemManager.ActiveBankRAMByteWrite(nByteAddress, nVal);
     }
 }
@@ -331,17 +331,17 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
         if (m_nDataSize == MemSize::EightBit)
         {
-            //	8 bit
+            // 8 bit
             //nByteAddress = m_nEditAddress;
         }
         else if (m_nDataSize == MemSize::SixteenBit)
         {
-            //	16 bit
+            // 16 bit
             nByteAddress += (1 - (m_nEditNibble >> 1));
         }
         else
         {
-            //	32 bit
+            // 32 bit
             nByteAddress += (3 - (m_nEditNibble >> 1));
         }
 
@@ -405,7 +405,7 @@ void MemoryViewerControl::SetCaretPos()
     int x = 3 + (10 * m_szFontSize.cx) + (m_nEditNibble*m_szFontSize.cx);
     int y = 3 + (nYSpacing*m_szFontSize.cy);
 
-    y += m_szFontSize.cy;	//	Account for header
+    y += m_szFontSize.cy; // Account for header
 
     switch (m_nDataSize)
     {
@@ -446,11 +446,11 @@ void MemoryViewerControl::OnClick(POINT point)
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
 
     int x = point.x;
-    const int y = point.y - m_szFontSize.cy;	//	Adjust for header
+    const int y = point.y - m_szFontSize.cy; // Adjust for header
     const int line = ((y - 3) / m_szFontSize.cy);
 
     if (line == -1 || line >= (int)m_nDisplayedLines)
-        return;	//	clicked on header
+        return; // clicked on header
 
     int rowLengthPx = m_nDataStartXOffset;
     int inc = 1;
@@ -460,18 +460,18 @@ void MemoryViewerControl::OnClick(POINT point)
     {
         case MemSize::EightBit:
             rowLengthPx += 47 * m_szFontSize.cx;
-            inc = 1;					//	increment mem offset by 1 each subset
-            sub = 3 * m_szFontSize.cx;	//	2 char set plus one char space
+            inc = 1;     // increment mem offset by 1 each subset
+            sub = 3 * m_szFontSize.cx; // 2 char set plus one char space
             break;
         case MemSize::SixteenBit:
             rowLengthPx += 39 * m_szFontSize.cx;
-            inc = 2;					//	increment mem offset by 2 each subset
-            sub = 5 * m_szFontSize.cx;	//	4 char set plus one char space
+            inc = 2;     // increment mem offset by 2 each subset
+            sub = 5 * m_szFontSize.cx; // 4 char set plus one char space
             break;
         case MemSize::ThirtyTwoBit:
             rowLengthPx += 35 * m_szFontSize.cx;
-            inc = 4;					//	increment mem offset by 4 each subset
-            sub = 9 * m_szFontSize.cx;	//	8 char set plus one char space
+            inc = 4;     // increment mem offset by 4 each subset
+            sub = 9 * m_szFontSize.cx; // 8 char set plus one char space
             break;
     }
 
@@ -479,10 +479,10 @@ void MemoryViewerControl::OnClick(POINT point)
 
     const int nAddressRowClicked = (nTopLeft + (line << 4));
 
-    //	Clamp:
+    // Clamp:
     if (nAddressRowClicked < 0 || nAddressRowClicked >(int)g_MemManager.TotalBankSize())
     {
-        //	ignore; clicked above limit
+        // ignore; clicked above limit
         return;
     }
 
@@ -496,7 +496,7 @@ void MemoryViewerControl::OnClick(POINT point)
 
         while (x > 0)
         {
-            //	Adjust x by one subset til we find out the correct offset:
+            // Adjust x by one subset til we find out the correct offset:
             x -= sub;
             if (x >= 0)
                 m_nEditAddress += inc;
@@ -530,7 +530,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     const int w = rect.right - rect.left;
     const int h = rect.bottom - rect.top - 6;
 
-    //	Pick font
+    // Pick font
     if (m_hViewerFont == nullptr)
         m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
     HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
@@ -540,7 +540,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
 
-    //	Fill white:
+    // Fill white:
     HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
     FillRect(hMemDC, &rect, hBrush);
     DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
@@ -563,13 +563,13 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     }
 
     int lines = h / m_szFontSize.cy;
-    lines -= 1;	//	Watch out for header
+    lines -= 1; // Watch out for header
     m_nDisplayedLines = lines;
 
     TCHAR bufferNative[64];
 
     int addr = m_nAddressOffset;
-    addr -= (0x40);	//	Offset will be this quantity (push up four lines)...
+    addr -= (0x40); // Offset will be this quantity (push up four lines)...
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
@@ -584,10 +584,10 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.bottom = r.top + m_szFontSize.cy;
     r.right = rect.right - 3;
 
-    //	Draw header:
+    // Draw header:
     DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
-    //	Adjust for header:
+    // Adjust for header:
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
@@ -811,7 +811,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
             SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
 
-            //	8-bit by default:
+            // 8-bit by default:
             CheckDlgButton(hDlg, IDC_RA_CBO_4BIT, BST_UNCHECKED);
             CheckDlgButton(hDlg, IDC_RA_CBO_8BIT, BST_CHECKED);
             CheckDlgButton(hDlg, IDC_RA_CBO_16BIT, BST_UNCHECKED);
@@ -821,7 +821,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_MEMVIEW16BIT, BST_UNCHECKED);
             CheckDlgButton(hDlg, IDC_RA_MEMVIEW32BIT, BST_UNCHECKED);
 
-            MemoryProc(hDlg, WM_COMMAND, IDC_RA_CBO_8BIT, 0);		//	Imitate a buttonpress of '8-bit'
+            MemoryProc(hDlg, WM_COMMAND, IDC_RA_CBO_8BIT, 0);  // Imitate a buttonpress of '8-bit'
             g_MemoryDialog.OnLoad_NewRom();
 
             // Add a single column for list view
@@ -843,7 +843,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             CheckDlgButton(hDlg, IDC_RA_RESULTS_HIGHLIGHT, BST_CHECKED);
 
-            //	Fetch banks
+            // Fetch banks
             ClearBanks();
             std::vector<size_t> bankIDs = g_MemManager.GetBankIDs();
             for (size_t i = 0; i < bankIDs.size(); ++i)
@@ -1025,10 +1025,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_DOTEST:
                 {
                     if (g_MemManager.NumMemoryBanks() == 0)
-                        return TRUE;	//	Ignored
+                        return TRUE; // Ignored
 
                     if (g_MemManager.TotalBankSize() == 0)
-                        return TRUE;	//	Handled
+                        return TRUE; // Handled
 
                     const ComparisonType nCmpType = static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
 
@@ -1066,7 +1066,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer, 1024))
                         {
                             ra::tstring buffer = nativeBuffer;
-                            //	Read hex or dec
+                            // Read hex or dec
                             if (buffer[0] == '0' && buffer[1] == 'x')
                                 nValueQuery = std::stoul(buffer.substr(2), nullptr, 16);
                             else
@@ -1130,7 +1130,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_CBO_16BIT:
                 case IDC_RA_CBO_32BIT:
                 {
-                    MemSize nCompSize = MemSize::Nibble_Lower;	//	or upper, doesn't really matter
+                    MemSize nCompSize = MemSize::Nibble_Lower; // or upper, doesn't really matter
                     if (SendDlgItemMessage(hDlg, IDC_RA_CBO_8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
                         nCompSize = MemSize::EightBit;
                     else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -1190,7 +1190,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
                     {
-                        if (pSavedNote->Note().compare(sNewNote) != 0)	//	New note is different
+                        if (pSavedNote->Note().compare(sNewNote) != 0) // New note is different
                         {
                             char sWarning[4096];
                             sprintf_s(sWarning, 4096,
@@ -1210,12 +1210,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         }
                         else
                         {
-                            //	Already exists and is added exactly as described. Ignore.
+                            // Already exists and is added exactly as described. Ignore.
                         }
                     }
                     else
                     {
-                        //	Doesn't yet exist: add it newly!
+                        // Doesn't yet exist: add it newly!
                         m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
                         const std::string sAddress = ra::ByteAddressToString(nAddr);
                         ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
@@ -1395,7 +1395,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             MemoryViewerControl::m_nActiveMemBank = nBankID;
                             g_MemManager.ChangeActiveMemBank(nBankID);
 
-                            MemoryViewerControl::Invalidate();	//	Force redraw on mem viewer
+                            MemoryViewerControl::Invalidate(); // Force redraw on mem viewer
                             break;
                         }
                     }
@@ -1403,7 +1403,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return TRUE;
 
                 default:
-                    return FALSE;	//	unhandled
+                    return FALSE; // unhandled
             }
         }
 
@@ -1412,7 +1412,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             return TRUE;
 
         default:
-            return FALSE;	//	unhandled
+            return FALSE; // unhandled
     }
 
     return FALSE;
@@ -1450,7 +1450,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
         while (ComboBox_DeleteString(hMemWatch, 0) != CB_ERR) {}
 
-        //	Issue a fetch instead!
+        // Issue a fetch instead!
         std::map<ra::ByteAddress, CodeNotes::CodeNoteObj>::const_iterator iter = m_CodeNotes.FirstNote();
         while (iter != m_CodeNotes.EndOfNotes())
         {
@@ -1461,10 +1461,10 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
         if (nSize > 0)
         {
-            //	Select the first one.
+            // Select the first one.
             ComboBox_SetCurSel(hMemWatch, 0);
 
-            //	Note: as this is sorted, we should grab the desc again
+            // Note: as this is sorted, we should grab the desc again
             const TCHAR sAddrBuffer[64]{}; // param below expects LPCTSTR
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
@@ -1624,7 +1624,7 @@ void Dlg_Memory::AddBank(size_t nBankID)
         ComboBox_SetItemData(hMemBanks, nIndex, nBankID);
     }
 
-    //	Select first element by default ('0')
+    // Select first element by default ('0')
     ComboBox_SetCurSel(hMemBanks, 0);
 }
 
@@ -1736,7 +1736,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 
         case ConsoleID::N64:
             // This range contains the extra 4MB provided by the Expansion Pak.
-            // Only avaliable when memory size is greater than 4MB.
+            // Only available when memory size is greater than 4MB.
             if (g_MemManager.TotalBankSize() > 0x400000)
             {
                 start = 0x400000;

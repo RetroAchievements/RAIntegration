@@ -6,8 +6,8 @@
 #include "ui\drawing\gdi\GDISurface.hh"
 
 namespace {
-const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
+const float POPUP_DIST_Y_TO_PCT = 0.856f;  // Where on screen to end up
+const float POPUP_DIST_Y_FROM_PCT = 0.4f;  // Amount of screens to travel
 const TCHAR* FONT_TO_USE = _T("Tahoma");
 
 const int FONT_SIZE_TITLE = 32;
@@ -57,7 +57,7 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
 {
     if (bPaused)
         fDelta = 0.0F;
-    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
     if (m_vMessages.size() > 0)
     {
         m_fTimer += fDelta;
@@ -75,26 +75,26 @@ float AchievementPopup::GetYOffsetPct() const
 
     if (m_fTimer < APPEAR_AT)
     {
-        //	Fading in.
+        // Fading in.
         float fDelta = (APPEAR_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
+        fDelta *= fDelta; // Quadratic
         fVal = fDelta;
     }
     else if (m_fTimer < FADEOUT_AT)
     {
-        //	Faded in - held
+        // Faded in - held
         fVal = 0.0f;
     }
     else if (m_fTimer < FINISH_AT)
     {
-        //	Fading out
+        // Fading out
         float fDelta = (FADEOUT_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
+        fDelta *= fDelta; // Quadratic
         fVal = (fDelta);
     }
     else
     {
-        //	Finished!
+        // Finished!
         fVal = 1.0f;
     }
 

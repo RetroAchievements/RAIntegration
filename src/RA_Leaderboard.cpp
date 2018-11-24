@@ -119,7 +119,7 @@ void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUser
         iter++;
     }
 
-    //	If not found, add new entry.
+    // If not found, add new entry.
     m_RankInfo.push_back(newEntry);
 }
 

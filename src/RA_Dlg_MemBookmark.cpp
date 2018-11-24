@@ -62,8 +62,8 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
             HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
 
-            //	the LV ID and the LVs Parent window's HWND
-            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo));	//	##reinterpret? ##SD
+            // the LV ID and the LVs Parent window's HWND
+            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_ADDRESSES), reinterpret_cast<LPARAM>(&lvDispinfo)); // ##reinterpret? ##SD
 
             DestroyWindow(hwnd);
             return 0;
@@ -73,11 +73,11 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
         {
             if (wParam == VK_RETURN || wParam == VK_ESCAPE)
             {
-                DestroyWindow(hwnd);	//	Causing a killfocus :)
+                DestroyWindow(hwnd); // Causing a killfocus :)
             }
             else
             {
-                //	Ignore keystroke, or pass it into the edit box!
+                // Ignore keystroke, or pass it into the edit box!
                 break;
             }
 
@@ -286,7 +286,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     }
 
                     //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
-                    //	DrawFocusRect(pdis->hDC, &rcBounds);
+                    // DrawFocusRect(pdis->hDC, &rcBounds);
 
                     break;
 
@@ -533,10 +533,10 @@ void Dlg_MemBookmark::PopulateList()
 
 void Dlg_MemBookmark::SetupColumns(HWND hList)
 {
-    //	Remove all columns,
+    // Remove all columns,
     while (ListView_DeleteColumn(hList, 0)) {}
 
-    //	Remove all data.
+    // Remove all data.
     ListView_DeleteAllItems(hList);
     auto idx{ 0 };
     for (auto& sColTitle : ra::COLUMN_TITLE)

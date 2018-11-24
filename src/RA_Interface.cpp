@@ -1,14 +1,14 @@
 #include "RA_Interface.h"
 
-//	Exposed, shared
-//	App-level:
-bool	(CCONV *_RA_GameIsActive) (void) = nullptr;
-void	(CCONV *_RA_CauseUnpause) (void) = nullptr;
-void	(CCONV *_RA_CausePause) (void) = nullptr;
-void	(CCONV *_RA_RebuildMenu) (void) = nullptr;
-void	(CCONV *_RA_ResetEmulation) (void) = nullptr;
-void	(CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
-void	(CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
+// Exposed, shared
+// App-level:
+bool (CCONV *_RA_GameIsActive) (void) = nullptr;
+void (CCONV *_RA_CauseUnpause) (void) = nullptr;
+void (CCONV *_RA_CausePause) (void) = nullptr;
+void (CCONV *_RA_RebuildMenu) (void) = nullptr;
+void (CCONV *_RA_ResetEmulation) (void) = nullptr;
+void (CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
+void (CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
 
 bool RA_GameIsActive()
 {
@@ -62,15 +62,15 @@ void RA_GetEstimatedGameTitle(char* sNameOut)
 
 //Note: this is ALL public facing! :S tbd tidy up this bit
 
-//	Expose to app:
+// Expose to app:
 
-//	Generic:
+// Generic:
 const char* (CCONV *_RA_IntegrationVersion)() = nullptr;
 const char* (CCONV *_RA_HostName)() = nullptr;
-int		(CCONV *_RA_InitI)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
-int		(CCONV *_RA_InitOffline)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
-int		(CCONV *_RA_Shutdown)() = nullptr;
-//	Load/Save
+int  (CCONV *_RA_InitI)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+int  (CCONV *_RA_InitOffline)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+int  (CCONV *_RA_Shutdown)() = nullptr;
+// Load/Save
 bool    (CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
 int     (CCONV *_RA_OnLoadNewRom)(const BYTE* pROM, unsigned int nROMSize) = nullptr;
 void    (CCONV *_RA_InstallMemoryBank)(int nBankID, void* pReader, void* pWriter, int nBankSize) = nullptr;
@@ -78,11 +78,11 @@ void    (CCONV *_RA_ClearMemoryBanks)() = nullptr;
 void    (CCONV *_RA_OnLoadState)(const char* sFilename) = nullptr;
 void    (CCONV *_RA_OnSaveState)(const char* sFilename) = nullptr;
 void    (CCONV *_RA_OnReset)() = nullptr;
-//	Achievements:
+// Achievements:
 void    (CCONV *_RA_DoAchievementsFrame)() = nullptr;
-//	User:
+// User:
 void    (CCONV *_RA_AttemptLogin)(bool bBlocking) = nullptr;
-//	Tools:
+// Tools:
 void    (CCONV *_RA_SetPaused)(bool bIsPaused) = nullptr;
 HMENU   (CCONV *_RA_CreatePopupMenu)() = nullptr;
 void    (CCONV *_RA_UpdateAppTitle)(const char* pMessage) = nullptr;
@@ -100,7 +100,7 @@ void    (CCONV *_RA_RenderPopups)(HDC hDC, RECT* prcSize) = nullptr;
 bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
 
 
-//	Don't expose to app
+// Don't expose to app
 HINSTANCE g_hRADLL = nullptr;
 
 void RA_AttemptLogin(bool bBlocking)
@@ -117,7 +117,7 @@ void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDeltaTime, 
     if (_RA_RenderPopups != nullptr)
         _RA_RenderPopups(hDC, prcSize);
 
-    //	NB. Render overlay second, on top of popups!
+    // NB. Render overlay second, on top of popups!
     if (_RA_UpdateOverlay != nullptr)
         _RA_UpdateOverlay(pInput, fDeltaTime, Full_Screen, Paused);
 
@@ -441,7 +441,7 @@ static const char* CCONV _RA_InstallIntegration()
         return "0.000";
     }
 
-    //	Install function pointers one by one
+    // Install function pointers one by one
 
     _RA_IntegrationVersion = (const char*(CCONV *)())                                 GetProcAddress(g_hRADLL, "_RA_IntegrationVersion");
     _RA_HostName = (const char*(CCONV *)())                                           GetProcAddress(g_hRADLL, "_RA_HostName");
@@ -500,7 +500,7 @@ static unsigned long long ParseVersion(const char* sVersion)
     return version;
 }
 
-//	Console IDs: see enum EmulatorID in header
+// Console IDs: see enum EmulatorID in header
 void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 {
     const char* sVerInstalled = _RA_InstallIntegration();
@@ -554,7 +554,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
     unsigned long long nVerInstalled = ParseVersion(sVerInstalled);
     if (nVerInstalled < nLatestDLLVer)
     {
-        RA_Shutdown();	//	Unhook the DLL, it's out of date. We may need to overwrite it.
+        RA_Shutdown(); // Unhook the DLL, it's out of date. We may need to overwrite it.
 
         char sErrorMsg[2048];
         sprintf_s(sErrorMsg, 2048, "%s\nLatest Version: %s\n%s",
@@ -607,18 +607,18 @@ void RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(vo
     _RA_ResetEmulation = fpResetEmulation;
     _RA_LoadROM = fpLoadROM;
 
-    //	Also install *within* DLL! FFS
+    // Also install *within* DLL! FFS
     if (_RA_InstallSharedFunctions != nullptr)
         _RA_InstallSharedFunctions(fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
 }
 
 void RA_Shutdown()
 {
-    //	Call shutdown on toolchain
+    // Call shutdown on toolchain
     if (_RA_Shutdown != nullptr)
         _RA_Shutdown();
 
-    //	Clear func ptrs
+    // Clear func ptrs
     _RA_IntegrationVersion = nullptr;
     _RA_InitI = nullptr;
     _RA_Shutdown = nullptr;
@@ -653,7 +653,7 @@ void RA_Shutdown()
     _RA_WarnDisableHardcore = nullptr;
     _RA_AttemptLogin = nullptr;
 
-    //	Uninstall DLL
+    // Uninstall DLL
     if (g_hRADLL)
     {
         FreeLibrary(g_hRADLL);

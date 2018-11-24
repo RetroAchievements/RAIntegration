@@ -50,7 +50,7 @@ void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard attempt cancelled!",
+            MessagePopup("Leaderboard attempt canceled!",
             lb.Title(),
             PopupLeaderboardCancel));
     }
@@ -64,13 +64,13 @@ void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsign
     {
         g_PopupWindows.AchievementPopups().AddMessage(
             MessagePopup("Not posting to leaderboard: memory tamper detected!",
-            "Reset game to reenable posting.",
+            "Reset game to re-enable posting.",
             PopupInfo));
     }
     else if (!m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard submission post cancelled.",
+            MessagePopup("Leaderboard submission post canceled.",
             "Enable Hardcore Mode to enable posting.",
             PopupInfo));
     }
@@ -138,13 +138,13 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     //sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pLB->Title().c_str(), pLB->Description().c_str() );
     //for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
     //{
-    //	const LB_Entry& NextScore = pLB->GetRankInfo( i );
+    // const LB_Entry& NextScore = pLB->GetRankInfo( i );
 
-    //	std::string sScoreFormatted = pLB->FormatScore( NextScore.m_nScore );
+    // std::string sScoreFormatted = pLB->FormatScore( NextScore.m_nScore );
 
-    //	char bufferMessage[ 512 ];
-    //	sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
-    //	strcat_s( sTestData, 4096, bufferMessage );
+    // char bufferMessage[ 512 ];
+    // sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
+    // strcat_s( sTestData, 4096, bufferMessage );
     //}  
 #pragma endregion
     g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
@@ -152,7 +152,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
 
 void LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb)
 {
-    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // If not, simply ignore them.
         m_Leaderboards.emplace_back(std::move(lb));
 }
 

@@ -121,10 +121,10 @@ private:
 #endif
 
     /// <summary>
-    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's impossible to create a set of
+    /// A collection of pointers to other objects. These are not allocated object and do not need to be freed. It's impossible to create a set of
     /// <c>NotifyTarget</c> references.
     /// </summary>
-	NotifyTargetSet m_vNotifyTargets;
+    NotifyTargetSet m_vNotifyTargets;
 };
 
 } // namespace ui

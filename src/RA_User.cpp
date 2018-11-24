@@ -48,7 +48,7 @@ RAUser::RAUser(const std::string& sUsername) :
     m_sUsername(sUsername),
     m_nScore(0)
 {
-    //	Register
+    // Register
     if (sUsername.length() > 2)
     {
         ASSERT(!RAUsers::DatabaseContainsUser(sUsername));
@@ -107,7 +107,7 @@ void LocalRAUser::AttemptLogin(bool bBlocking)
     }
     else
     {
-        //	Push dialog to get them to login!
+        // Push dialog to get them to login!
         DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
     }
@@ -177,7 +177,7 @@ void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
     if (!doc.HasMember("Friends"))
         return;
 
-    const auto& FriendData{ doc["Friends"] };		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+    const auto& FriendData{ doc["Friends"] };  //{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
     for (auto& NextFriend : FriendData.GetArray())
     {
         auto pUser{ RAUsers::GetUser(NextFriend["Friend"].GetString()) };

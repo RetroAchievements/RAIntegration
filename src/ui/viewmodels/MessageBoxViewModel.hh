@@ -13,19 +13,20 @@ class MessageBoxViewModel : public WindowViewModelBase
 public:
     MessageBoxViewModel() noexcept(std::is_nothrow_default_constructible_v<WindowViewModelBase>) = default;
 
-    explicit MessageBoxViewModel(const std::wstring& sMessage) 
-        noexcept(std::is_nothrow_default_constructible_v<WindowViewModelBase>) : WindowViewModelBase{}
+    explicit MessageBoxViewModel(const std::wstring& sMessage) noexcept(
+        std::is_nothrow_default_constructible_v<WindowViewModelBase>) :
+        WindowViewModelBase{}
     {
         SetMessage(sMessage);
     }
-    ~MessageBoxViewModel() noexcept = default;
+    ~MessageBoxViewModel() noexcept                 = default;
     MessageBoxViewModel(const MessageBoxViewModel&) = delete;
     MessageBoxViewModel& operator=(const MessageBoxViewModel&) = delete;
 
-    MessageBoxViewModel(MessageBoxViewModel&&) 
-		noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) = default;
+    MessageBoxViewModel(MessageBoxViewModel&&) noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) =
+        default;
 
-	MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
+    MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
 
     enum class Buttons
     {

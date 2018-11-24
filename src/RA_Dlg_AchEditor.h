@@ -55,8 +55,8 @@ public:
     BOOL IsPopulatingAchievementEditorData() const { return m_bPopulatingAchievementEditorData; }
     void SetIgnoreEdits(BOOL bIgnore) { m_bPopulatingAchievementEditorData = bIgnore; }
 
-    void UpdateBadge(const std::string& sNewName);							//	Call to set/update data
-    void UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse = "");	//	Call to just update the badge image/bitmap
+    void UpdateBadge(const std::string& sNewName);                            // Call to set/update data
+    void UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse = ""); // Call to just update the badge image/bitmap
 
     BadgeNames& GetBadgeNames() { return m_BadgeNames; }
 

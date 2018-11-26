@@ -187,15 +187,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     args['e'] = std::to_string(nEmulatorID);
     RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args); // g_sGetLatestClientPage
 
-    // TBD:
-    //if( RAUsers::LocalUser().Username().length() > 0 )
-    //{
-    // args.clear();
-    // args[ 'u' ] = RAUsers::LocalUser().Username();
-    // args[ 't' ] = RAUsers::LocalUser().Token();
-    // RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
-    //}
-
     return TRUE;
 }
 
@@ -476,28 +467,6 @@ API void CCONV _RA_ClearMemoryBanks()
     g_MemoryDialog.ClearBanks();
 }
 
-
-//void FetchBinaryFromWeb( const char* sFilename )
-//{
-// const unsigned int nBufferSize = (3*1024*1024); // 3mb enough?
-//
-// char* buffer = new char[nBufferSize]; 
-// if( buffer != nullptr )
-// {
-//  char sAddr[1024];
-//  sprintf_s( sAddr, 1024, "/files/%s", sFilename );
-//  char sOutput[1024];
-//  sprintf_s( sOutput, 1024, "%s%s.new", g_sHomeDir, sFilename );
-//
-//  DWORD nBytesRead = 0;
-//  if( RAWeb::DoBlockingHttpGet( sAddr, buffer, nBufferSize, &nBytesRead ) )
-//   _WriteBufferToFile( sOutput, buffer, nBytesRead );
-//
-//  delete[] ( buffer );
-//  buffer = nullptr;
-// }
-//}
-
 static unsigned long long ParseVersion(const char* sVersion)
 {
     char* pPart;
@@ -540,33 +509,6 @@ static bool RA_OfferNewRAUpdate(const char* sNewVer)
 
     if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes)
     {
-        //FetchBinaryFromWeb( g_sClientEXEName );
-        //
-        //char sBatchUpdater[2048];
-        //sprintf_s( sBatchUpdater, 2048,
-        // "@echo off\r\n"
-        // "taskkill /IM %s\r\n"
-        // "del /f %s\r\n"
-        // "rename %s.new %s%s.exe\r\n"
-        // "start %s%s.exe\r\n"
-        // "del \"%%~f0\"\r\n",
-        // g_sClientEXEName,
-        // g_sClientEXEName,
-        // g_sClientEXEName,
-        // g_sClientName,
-        // sNewVer,
-        // g_sClientName,
-        // sNewVer );
-
-        //_WriteBufferToFile( "BatchUpdater.bat", sBatchUpdater, strlen( sBatchUpdater ) );
-
-        //ShellExecute( nullptr,
-        // "open",
-        // "BatchUpdater.bat",
-        // nullptr,
-        // nullptr,
-        // SW_SHOWNORMAL ); 
-
         std::ostringstream oss2;
         oss2 << "http://" << _RA_HostName() << "/download.php";
         ShellExecute(nullptr,

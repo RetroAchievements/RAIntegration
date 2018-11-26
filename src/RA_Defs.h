@@ -31,40 +31,44 @@
 
 // RA-Only
 using namespace std::string_literals;
-_CONSTANT_VAR BUFSIZ{512U};                   // ANSI buffer size
-_CONSTANT_VAR BYTESTRING_BUFSIZ{BUFSIZ * 4U}; // should be the same for MultiByte
-_CONSTANT_VAR WIDESTRING_BUFSIZ{BUFSIZ * 8U};
-_CONSTANT_VAR MAX_BUFSIZ{BUFSIZ * 128U}; // Try not to use this one
+_CONSTANT_VAR BUFSIZ            = 512U;        // ANSI buffer size
+_CONSTANT_VAR BYTESTRING_BUFSIZ = BUFSIZ * 4U; // should be the same for MultiByte
+_CONSTANT_VAR WIDESTRING_BUFSIZ = BUFSIZ * 8U;
+_CONSTANT_VAR MAX_BUFSIZ        = BUFSIZ * 128U; // Try not to use this one
 #endif // RA_EXPORTS
 
-#define RA_DIR_OVERLAY                          L"Overlay\\"
-#define RA_DIR_BASE                             L"RACache\\"
-#define RA_DIR_DATA RA_DIR_BASE                 L"Data\\"
-#define RA_DIR_BADGE RA_DIR_BASE                L"Badge\\"
-#define RA_DIR_USERPIC RA_DIR_BASE              L"UserPic\\"
-#define RA_DIR_BOOKMARKS RA_DIR_BASE            L"Bookmarks\\"
+_CONSTANT_VAR RA_DIR_OVERLAY   = L"Overlay\\";
+_CONSTANT_VAR RA_DIR_BASE      = L"RACache\\";
+_CONSTANT_VAR RA_DIR_DATA      = L"RACache\\Data\\";
+_CONSTANT_VAR RA_DIR_BADGE     = L"RACache\\Badge\\";
+_CONSTANT_VAR RA_DIR_USERPIC   = L"RACache\\UserPic\\";
+_CONSTANT_VAR RA_DIR_BOOKMARKS = L"RACache\\Bookmarks\\";
 
-#define RA_GAME_HASH_FILENAME RA_DIR_DATA       L"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME RA_DIR_DATA       L"gametitles.txt"
-#define RA_MY_PROGRESS_FILENAME RA_DIR_DATA     L"myprogress.txt"
-#define RA_MY_GAME_LIBRARY_FILENAME RA_DIR_DATA L"mygamelibrary.txt"
+_CONSTANT_VAR RA_GAME_HASH_FILENAME       = L"RACache\\Data\\gamehashlibrary.txt";
+_CONSTANT_VAR RA_GAME_LIST_FILENAME       = L"RACache\\Data\\gametitles.txt";
+_CONSTANT_VAR RA_MY_PROGRESS_FILENAME     = L"RACache\\Data\\myprogress.txt";
+_CONSTANT_VAR RA_MY_GAME_LIBRARY_FILENAME = L"RACache\\Data\\mygamelibrary.txt";
 
-#define RA_NEWS_FILENAME RA_DIR_DATA            L"ra_news.txt"
-#define RA_TITLES_FILENAME RA_DIR_DATA          L"gametitles.txt"
-#define RA_LOG_FILENAME RA_DIR_DATA             L"RALog.txt"
+_CONSTANT_VAR RA_NEWS_FILENAME   = L"RACache\\Data\\ra_news.txt";
+_CONSTANT_VAR RA_TITLES_FILENAME = L"RACache\\Data\\gametitles.txt";
+_CONSTANT_VAR RA_LOG_FILENAME    = L"RACache\\Data\\RALog.txt";
 
-#define SIZEOF_ARRAY(ar) (sizeof(ar) / sizeof(ar[0]))
-#define SAFE_DELETE(x)    \
-    {                     \
-        if (x != nullptr) \
-        {                 \
-            delete x;     \
-            x = nullptr;  \
-        }                 \
-    }
+template<typename Array, typename = std::enable_if_t<std::is_array_v<Array>>>
+_NODISCARD _CONSTANT_FN SIZEOF_ARRAY(const Array& arr) noexcept
+{
+    return (sizeof(arr) / sizeof(*arr));
+}
 
-// namespace RA
-//{
+template<typename NullablePointer, typename = std::enable_if_t<ra::is_nullable_pointer_v<NullablePointer>>>
+_CONSTANT_FN SAFE_DELETE(NullablePointer np, bool bIsDynArray = false) noexcept
+{
+    if (bIsDynArray)
+        delete[] np;
+    else
+        delete np;
+    np = nullptr;
+}
+
 class RARect : public RECT
 {
 public:
@@ -114,6 +118,7 @@ public:
         pRB = {rect.right, rect.bottom};
 
         HWND__* const restrict parentHwnd = ::GetParent(contentHwnd);
+
         check = ::ScreenToClient(parentHwnd, &pLT);
         assert(check != 0);
         check = ::ScreenToClient(parentHwnd, &pRB);
@@ -167,24 +172,17 @@ public:
     }
 };
 
-//};
-// using namespace RA;
-
 #ifdef _DEBUG
 #ifndef RA_UTEST
 #undef ASSERT
 #define ASSERT(x) assert(x)
 #else
 #undef ASSERT
-#define ASSERT(x) \
-    {             \
-    }
+#define ASSERT(x) (void)0
 #endif
 #else
 #undef ASSERT
-#define ASSERT(x) \
-    {             \
-    }
+#define ASSERT(x) (void)0
 #endif
 
 #ifndef UNUSED
@@ -192,14 +190,14 @@ public:
 #endif
 
 namespace ra {
-_NODISCARD std::string
-    ByteAddressToString(_In_ ByteAddress nAddr, _In_ std::streamsize nPrecision = 6LL, _In_ bool bShowBase = false);
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr, _In_ std::streamsize nPrecision = 6LL,
+                                           _In_ bool bShowBase = false);
 } // namespace ra
 
 #if _MBCS
-_CONSTANT_VAR RA_MAX_PATH{_MAX_PATH}; // MultiByte max path
+_CONSTANT_VAR RA_MAX_PATH{ra::to_unsigned(_MAX_PATH)}; // MultiByte max path
 #elif _UNICODE
-_CONSTANT_VAR RA_MAX_PATH{32767};     // Unicode max path
+_CONSTANT_VAR RA_MAX_PATH{32767U}; // Unicode max path
 #else
 #error Unknown character set detected!
 #endif /* _MBCS */

@@ -175,13 +175,6 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
 
             if (bPaused)
             {
-                // ???
-                //SelectNextTopLevelPage( TRUE );
-//     // Still paused, just transition to another page!
-//     m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
-//     if( m_nCurrentPage == OP__MAX )
-//      m_nCurrentPage = OP_ACHIEVEMENTS;
-
                 m_nTransitionState = TransitionState::In;
                 m_fTransitionTimer = PAGE_TRANSITION_IN;
             }
@@ -296,15 +289,6 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumFriendsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumFriendsBeingRendered - 1);
-
-                //     // Lim the selected item to a valid range
-                //     while( nSelectedItem > nNumElements )
-                //      nSelectedItem--;
-                // 
-                //     if( nSelectedItem < nScrollOffset )
-                //      nScrollOffset--;
-                //     if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
-                //      nScrollOffset++;
             }
             break;
             case Page::Messages:
@@ -326,18 +310,10 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                         m_bInputLock = TRUE;
                     }
                 }
-
-                // Move page to match selection
-                //if( (*pnScrollOffset) > (*pnSelectedItem) )
-                // (*pnScrollOffset) = (*pnSelectedItem);
-                //else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
-                // (*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
             }
             break;
             case Page::Message_Viewer:
             {
-                //RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
-
                 break;
             }
             case Page::News:
@@ -415,13 +391,6 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                         m_bInputLock = TRUE;
                     }
                 }
-
-                // Move page to match selection
-                //if( (*pnScrollOffset) > (*pnSelectedItem) )
-                // (*pnScrollOffset) = (*pnSelectedItem);
-                //else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
-                // (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
-
                 break;
             default:
                 assert(0); // Unknown page!
@@ -577,20 +546,6 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
 void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
 {
-
-    //   for( size_t i = 0; i < 256; ++i )
-    //    buffer[i] = (char)(i);
-    // 
-    //   SelectObject( hDC, hFontDesc );
-    //   TextOut( hDC, nDX+8, 40, buffer, 32 );
-    //   TextOut( hDC, nDX+8, 60, buffer+32, 32 );
-    //   TextOut( hDC, nDX+8, 80, buffer+64, 32 );
-    //   TextOut( hDC, nDX+8, 100, buffer+96, 32 );
-    //   TextOut( hDC, nDX+8, 120, buffer+128, 32 );
-    //   TextOut( hDC, nDX+8, 140, buffer+160, 32 );
-    //   TextOut( hDC, nDX+8, 160, buffer+192, 32 );
-    //   TextOut( hDC, nDX+8, 180, buffer+224, 32 );
-
 }
 
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const

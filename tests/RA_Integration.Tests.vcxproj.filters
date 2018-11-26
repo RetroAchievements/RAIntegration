@@ -209,9 +209,6 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
       <Filter>Code\rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Achievement_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
     </ClCompile>

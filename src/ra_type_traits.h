@@ -33,14 +33,16 @@ struct _NODISCARD is_char : std::bool_constant<(std::is_same_v<CharT, char> || s
 /// <summary>
 ///   This should only be used to compare the sizes of data types and not objects.
 /// </summary>
-template<typename T, typename U> struct _NODISCARD is_same_size : std::bool_constant<sizeof(T) == sizeof(U)>
+template<typename T, typename U>
+struct _NODISCARD is_same_size : std::bool_constant<sizeof(T) == sizeof(U)>
 {
 };
 
 /// <summary>
 ///   This should only be used to compare the sizes of data types and not objects.
 /// </summary>
-template<typename T, typename U> struct _NODISCARD has_smaller_size_than : std::bool_constant<sizeof(T) < sizeof(U)>
+template<typename T, typename U>
+struct _NODISCARD has_smaller_size_than : std::bool_constant<sizeof(T) < sizeof(U)>
 {
 };
 
@@ -53,7 +55,8 @@ struct _NODISCARD has_smaller_or_same_size_than : std::bool_constant<!has_smalle
 };
 } // namespace detail
 
-template<typename CharacterType> _CONSTANT_VAR is_char_v{detail::is_char<CharacterType>::value};
+template<typename CharacterType>
+_CONSTANT_VAR is_char_v{detail::is_char<CharacterType>::value};
 
 template<typename ValueType, typename TestType>
 _CONSTANT_VAR is_same_size_v{detail::is_same_size<ValueType, TestType>::value};
@@ -65,7 +68,8 @@ template<typename ValueType, typename TestType>
 _CONSTANT_VAR has_smaller_or_same_size_than_v{detail::has_smaller_or_same_size_than<ValueType, TestType>::value};
 
 namespace detail {
-template<typename EqualityComparable, class = std::void_t<>> struct _NODISCARD is_equality_comparable : std::false_type
+template<typename EqualityComparable, class = std::void_t<>>
+struct _NODISCARD is_equality_comparable : std::false_type
 {
 };
 
@@ -83,7 +87,21 @@ struct _NODISCARD is_nothrow_equality_comparable
 {
 };
 
-template<typename LessThanComparable, class = std::void_t<>> struct _NODISCARD is_lessthan_comparable : std::false_type
+template<typename EqualityComparable, typename EqualityComparable2>
+struct _NODISCARD is_equality_comparable_with
+    : std::bool_constant<std::is_convertible_v<
+          decltype(std::declval<EqualityComparable&>() == std::declval<EqualityComparable2&>()), bool>>
+{
+};
+
+template<typename EqualityComparable, typename EqualityComparable2>
+struct _NODISCARD is_nothrow_equality_comparable_with
+    : std::bool_constant<noexcept(is_equality_comparable_with<EqualityComparable, EqualityComparable2>::value)>
+{
+};
+
+template<typename LessThanComparable, class = std::void_t<>>
+struct _NODISCARD is_lessthan_comparable : std::false_type
 {
 };
 
@@ -114,22 +132,53 @@ struct _NODISCARD is_nothrow_comparable : std::bool_constant<noexcept(is_compara
 } // namespace detail
 
 template<typename EqualityComparable>
-_CONSTANT_VAR is_equality_comparable_v{detail::is_equality_comparable<EqualityComparable>::value};
+_CONSTANT_VAR is_equality_comparable_v = detail::is_equality_comparable<EqualityComparable>::value;
 
 template<typename EqualityComparable>
-_CONSTANT_VAR is_nothrow_equality_comparable_v{detail::is_nothrow_equality_comparable<EqualityComparable>::value};
+_CONSTANT_VAR is_nothrow_equality_comparable_v = detail::is_nothrow_equality_comparable<EqualityComparable>::value;
+
+template<typename EqualityComparable, typename EqualityComparable2>
+_CONSTANT_VAR is_equality_comparable_with_v =
+    detail::is_equality_comparable_with<EqualityComparable, EqualityComparable2>::value;
+
+template<typename EqualityComparable, typename EqualityComparable2>
+_CONSTANT_VAR is_nothrow_equality_comparable_with_v =
+    detail::is_nothrow_equality_comparable_with<EqualityComparable, EqualityComparable2>::value;
 
 template<typename LessThanComparable>
-_CONSTANT_VAR is_lessthan_comparable_v{detail::is_lessthan_comparable<LessThanComparable>::value};
+_CONSTANT_VAR is_lessthan_comparable_v = detail::is_lessthan_comparable<LessThanComparable>::value;
 
 template<typename LessThanComparable>
-_CONSTANT_VAR is_nothrow_lessthan_comparable_v{detail::is_nothrow_lessthan_comparable<LessThanComparable>::value};
+_CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_comparable<LessThanComparable>::value;
 
-template<typename Comparable> _CONSTANT_VAR is_comparable_v{detail::is_comparable<Comparable>::value};
+template<typename Comparable>
+_CONSTANT_VAR is_comparable_v = detail::is_comparable<Comparable>::value;
 
-template<typename Comparable> _CONSTANT_VAR
-is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
+template<typename Comparable>
+_CONSTANT_VAR is_nothrow_comparable_v = detail::is_nothrow_comparable<Comparable>::value;
 
-} // namespace ra
+namespace detail {
+
+template<typename T, typename = std::void_t<>>
+struct _NODISCARD is_nullable_pointer : std::false_type
+{
+};
+template<typename T>
+struct is_nullable_pointer<
+    T, std::enable_if_t<ra::detail::is_nothrow_equality_comparable<T>::value &&
+                        ra::detail::is_nothrow_equality_comparable_with<T, std::nullptr_t>::value &&
+                        ra::detail::is_nothrow_equality_comparable_with<std::nullptr_t, T>::value &&
+                        std::is_nothrow_default_constructible_v<T> && std::is_nothrow_copy_constructible_v<T> &&
+                        std::is_nothrow_destructible_v<T> && std::is_nothrow_constructible_v<T, std::nullptr_t>>>
+    : std::true_type
+{
+};
+
+} /* namespace detail */
+
+template<typename NullablePointer>
+_CONSTANT_VAR is_nullable_pointer_v = detail::is_nullable_pointer<NullablePointer>::value;
+
+} /* namespace ra */
 
 #endif // !RA_TYPE_TRAITS_H

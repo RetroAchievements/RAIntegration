@@ -223,92 +223,6 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     }
 }
 
-
-// LRESULT CALLBACK ICEDialogProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
-// {
-//  BOOL bFullyHandled = FALSE;
-// 
-//  switch(uMsg)
-//  {
-//  case WM_INITDIALOG:
-//   {
-//    //MessageBox( nullptr, "ICEDialogProc init!", "TEST", MB_OK );
-// 
-// //    {
-// //     // Disable the underlying dialog!
-// //     HWND hDlg2 = g_AchievementEditorDialog.GetHWND();
-// //     HWND hLbx = GetDlgItem( hDlg2, IDC_RA_LBX_CONDITIONS );
-// //     DWORD nStyle = GetWindowStyle( hLbx );
-// //     nStyle &= ~WS_VISIBLE;
-// //     SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// //     UpdateWindow( hLbx );
-// //    }
-// 
-//    //ComboBox_ShowDropdown( hDlg, TRUE );
-//    int i = ComboBox_GetCurSel( g_AchievementEditorDialog.GetICEControl() );
-// 
-//    bFullyHandled = TRUE;
-//    break;
-//   }
-//  case WM_SETFOCUS:
-//   {
-//    //BringWindowToTop( hDlg );
-// 
-//    //EndDialog( hDlg, FALSE );
-//    //AchievementEditorDialog.SetICEControl( nullptr );
-//    //m_hICEControl = nullptr; // end of life
-//    bFullyHandled = FALSE;
-//    break;
-//   }
-//  case WM_KILLFOCUS:
-//   {
-//    //EndDialog( hDlg, FALSE );
-//    //g_AchievementEditorDialog.SetICEControl( nullptr );
-// // 
-// //    {
-// //     HWND hDlg = g_AchievementEditorDialog.GetHWND();
-// //     HWND hLbx = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-// //     DWORD nStyle = GetWindowStyle( hLbx );
-// //     nStyle |= WS_VISIBLE;
-// //     SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// //    }
-// 
-//    bFullyHandled = TRUE;
-//    break;
-//   }
-//  case WM_COMMAND:
-//   switch( LOWORD(wParam) )
-//   {
-//    case IDC_CBODROPDOWN:
-//    case CBN_SELENDOK:
-//    {
-//     HWND hCbo = GetDlgItem( hDlg, IDC_CBODROPDOWN );
-// 
-//     char buffer[255];
-//     sprintf_s( buffer, "NewVal: %d", ComboBox_GetCurSel( hCbo ) );
-//     MessageBox( nullptr, buffer, "NewVal!", MB_OK );
-//     bFullyHandled = TRUE;
-//    }
-//    break;
-//   }
-//    //EndDialog( hDlg, FALSE );
-//    //g_AchievementEditorDialog.SetICEControl( nullptr );
-//    // 
-//    //    {
-//    //     HWND hDlg = g_AchievementEditorDialog.GetHWND();
-//    //     HWND hLbx = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-//    //     DWORD nStyle = GetWindowStyle( hLbx );
-//    //     nStyle |= WS_VISIBLE;
-//    //     SetWindowLongPtr( hLbx, GWL_EXSTYLE, nStyle );
-// //    //    }
-// // 
-// //   bFullyHandled = TRUE;
-// //   break;
-//  }
-//  return !bFullyHandled;
-// }
-// 
-
 WNDPROC EOldProc;
 HWND g_hIPEEdit;
 int nSelItem;
@@ -441,26 +355,6 @@ long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
             if (wParam == VK_RETURN)
             {
-                //     LV_DISPINFO lvDispinfo;
-                //     ZeroMemory(&lvDispinfo,sizeof(LV_DISPINFO));
-                //     lvDispinfo.hdr.hwndFrom = hwnd;
-                //     lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-                //     lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
-                //     lvDispinfo.item.mask = LVIF_TEXT;
-                //     lvDispinfo.item.iItem = nSelItem;
-                //     lvDispinfo.item.iSubItem = nSelSubItem;
-                //     lvDispinfo.item.pszText = nullptr;
-                // 
-                //     char szEditText[12];
-                //     GetWindowText( hwnd, szEditText, 12 );
-                //     lvDispinfo.item.pszText = szEditText;
-                //     lvDispinfo.item.cchTextMax = lstrlen(szEditText);
-                // 
-                //     HWND hList = GetDlgItem( g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS );
-                // 
-                //     // the LV ID and the LVs Parent window's HWND
-                //     SendMessage( GetParent( hList ), WM_NOTIFY, (WPARAM)IDC_RA_LBX_CONDITIONS, (LPARAM)&lvDispinfo );
-
                 DestroyWindow(hwnd);
             }
             else if (wParam == VK_ESCAPE)
@@ -602,15 +496,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            //    for( size_t i = 0; i < g_NumMemSizeStrings; ++i )
-            //    {
-            //     ComboBox_AddString( g_hIPEEdit, g_MemSizeStrings[i] );
-            // 
-            //     if( strcmp( g_AchievementEditorDialog.LbxDataAt( nItem, nSubItem ), g_MemSizeStrings[i] ) == 0 )
-            //      ComboBox_SetCurSel( g_hIPEEdit, i );
-            //    }
-
-                        /*CB_ERRSPACE*/
+            /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
@@ -996,23 +882,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 }
                 break;
 
-                //   case ID_SELECT_ALL:
-                //    {
-                //     HWND hList = GetDlgItem( hDlg, IDC_RA_LBX_CONDITIONS );
-                //     for( size_t i = 0; i < m_nNumOccupiedRows; ++i )
-                //      ListView_SetCheckState( hList, i, TRUE );
-                //     bHandled = TRUE;
-                //    }
-                //    break;
-
                 case IDC_RA_BADGENAME:
                 {
-                    //     if( m_pSelectedAchievement == nullptr )
-                    //     {
-                    //      bHandled = TRUE;
-                    //      break;
-                    //     }
-
                     HWND hBadgeNameCtrl = GetDlgItem(hDlg, IDC_RA_BADGENAME);
                     switch (HIWORD(wParam))
                     {
@@ -1832,14 +1703,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             EndDialog(hDlg, true);
             bHandled = TRUE;
             break;
-            //  case WM_LBUTTONDOWN:
-            //   {
-            //    break;
-            //   }
     }
 
     return !bHandled;
-    //return DefWindowProc( hDlg, uMsg, wParam, lParam );
 }
 
 void Dlg_AchievementEditor::GetListViewTooltip()

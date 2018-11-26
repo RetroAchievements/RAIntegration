@@ -25,7 +25,7 @@
 #define _CONSTANT_FN _CONSTANT_VAR
 
 #ifndef __STDC_VERSION__
-#define __STDC_VERSION__ 0 /*prevent undefined macro warning*/
+#define __STDC_VERSION__ 0
 #endif /* !__STDC_VERSION__ */
 
 #if __STDC_VERSION__ >= 199901L

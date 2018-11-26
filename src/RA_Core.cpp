@@ -2,22 +2,22 @@
 
 #include "RA_AchievementOverlay.h" // RA_User
 #include "RA_CodeNotes.h"
-#include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
-#include "RA_md5factory.h"
 #include "RA_MemManager.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
+#include "RA_httpthread.h"
+#include "RA_md5factory.h"
 
-#include "RA_Dlg_AchEditor.h" // RA_httpthread.h, services/ImageRepository.h
+#include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_Login.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
+#include "RA_Dlg_Memory.h"
 
 #include "api\Logout.hh"
 
@@ -669,25 +669,23 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::AchievementUnlocked,
-                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                                             ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
+                                             PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge,
+                                             pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
                         }
                         else
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked (Error)",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::AchievementError,
-                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                                "Achievement Unlocked (Error)",
+                                ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
+                                PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Error submitting achievement:",
-                                    doc["Error"].GetString())); //?
+                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Error submitting achievement:",
+                                                                                       doc["Error"].GetString())); //?
                         }
                     }
                     else

@@ -33,14 +33,16 @@ struct _NODISCARD is_char : std::bool_constant<(std::is_same_v<CharT, char> || s
 /// <summary>
 ///   This should only be used to compare the sizes of data types and not objects.
 /// </summary>
-template<typename T, typename U> struct _NODISCARD is_same_size : std::bool_constant<sizeof(T) == sizeof(U)>
+template<typename T, typename U>
+struct _NODISCARD is_same_size : std::bool_constant<sizeof(T) == sizeof(U)>
 {
 };
 
 /// <summary>
 ///   This should only be used to compare the sizes of data types and not objects.
 /// </summary>
-template<typename T, typename U> struct _NODISCARD has_smaller_size_than : std::bool_constant<sizeof(T) < sizeof(U)>
+template<typename T, typename U>
+struct _NODISCARD has_smaller_size_than : std::bool_constant<sizeof(T) < sizeof(U)>
 {
 };
 
@@ -53,7 +55,8 @@ struct _NODISCARD has_smaller_or_same_size_than : std::bool_constant<!has_smalle
 };
 } // namespace detail
 
-template<typename CharacterType> _CONSTANT_VAR is_char_v{detail::is_char<CharacterType>::value};
+template<typename CharacterType>
+_CONSTANT_VAR is_char_v{detail::is_char<CharacterType>::value};
 
 template<typename ValueType, typename TestType>
 _CONSTANT_VAR is_same_size_v{detail::is_same_size<ValueType, TestType>::value};
@@ -65,7 +68,8 @@ template<typename ValueType, typename TestType>
 _CONSTANT_VAR has_smaller_or_same_size_than_v{detail::has_smaller_or_same_size_than<ValueType, TestType>::value};
 
 namespace detail {
-template<typename EqualityComparable, class = std::void_t<>> struct _NODISCARD is_equality_comparable : std::false_type
+template<typename EqualityComparable, class = std::void_t<>>
+struct _NODISCARD is_equality_comparable : std::false_type
 {
 };
 
@@ -83,7 +87,8 @@ struct _NODISCARD is_nothrow_equality_comparable
 {
 };
 
-template<typename LessThanComparable, class = std::void_t<>> struct _NODISCARD is_lessthan_comparable : std::false_type
+template<typename LessThanComparable, class = std::void_t<>>
+struct _NODISCARD is_lessthan_comparable : std::false_type
 {
 };
 
@@ -125,10 +130,11 @@ _CONSTANT_VAR is_lessthan_comparable_v{detail::is_lessthan_comparable<LessThanCo
 template<typename LessThanComparable>
 _CONSTANT_VAR is_nothrow_lessthan_comparable_v{detail::is_nothrow_lessthan_comparable<LessThanComparable>::value};
 
-template<typename Comparable> _CONSTANT_VAR is_comparable_v{detail::is_comparable<Comparable>::value};
+template<typename Comparable>
+_CONSTANT_VAR is_comparable_v{detail::is_comparable<Comparable>::value};
 
-template<typename Comparable> _CONSTANT_VAR
-is_nothrow_comparable_v{ detail::is_nothrow_comparable<Comparable>::value };
+template<typename Comparable>
+_CONSTANT_VAR is_nothrow_comparable_v{detail::is_nothrow_comparable<Comparable>::value};
 
 } // namespace ra
 

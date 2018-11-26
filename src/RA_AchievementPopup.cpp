@@ -5,21 +5,21 @@
 
 #include "ui\drawing\gdi\GDISurface.hh"
 
-namespace {
-const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
-const TCHAR* FONT_TO_USE = _T("Tahoma");
+#include "ra_math.h"
 
-const int FONT_SIZE_TITLE = 32;
-const int FONT_SIZE_SUBTITLE = 28;
+_CONSTANT_VAR POPUP_DIST_Y_TO_PCT   = 0.856F; // Where on screen to end up
+_CONSTANT_VAR POPUP_DIST_Y_FROM_PCT = 0.4F;   // Amount of screens to travel
+_CONSTANT_VAR FONT_TO_USE           = _T("Tahoma");
 
-const float START_AT = 0.0f;
-const float APPEAR_AT = 0.8f;
-const float FADEOUT_AT = 4.2f;
-const float FINISH_AT = 5.0f;
+_CONSTANT_VAR FONT_SIZE_TITLE    = 32;
+_CONSTANT_VAR FONT_SIZE_SUBTITLE = 28;
 
-const wchar_t* MSG_SOUND[] =
-{
+_CONSTANT_VAR START_AT   = 0.0F;
+_CONSTANT_VAR APPEAR_AT  = 0.8F;
+_CONSTANT_VAR FADEOUT_AT = 4.2F;
+_CONSTANT_VAR FINISH_AT  = 5.0F;
+
+inline constexpr std::array<const wchar_t*, 7> MSG_SOUND{
     L"login.wav",
     L"info.wav",
     L"unlock.wav",
@@ -28,18 +28,11 @@ const wchar_t* MSG_SOUND[] =
     L"lbcancel.wav",
     L"message.wav",
 };
-static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
-}
-
-AchievementPopup::AchievementPopup() :
-    m_fTimer(0.0f)
-{
-}
 
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent()); // ActiveMessage() dereferences!
-    const std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[ActiveMessage().Type()];
+    const std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND.at(ra::etoi(ActiveMessage().Type()));
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
@@ -47,7 +40,8 @@ void AchievementPopup::AddMessage(const MessagePopup& msg)
 {
     // request the image now, so it's ready when the popup gets displayed
     if (msg.Image().Type() != ra::ui::ImageType::None)
-        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(msg.Image().Type(), msg.Image().Name());
+        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(msg.Image().Type(),
+                                                                                        msg.Image().Name());
 
     m_vMessages.push(msg);
     PlayAudio();
@@ -57,7 +51,7 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
 {
     if (bPaused)
         fDelta = 0.0F;
-    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
     if (m_vMessages.size() > 0)
     {
         m_fTimer += fDelta;
@@ -71,38 +65,33 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
 
 float AchievementPopup::GetYOffsetPct() const
 {
-    float fVal = 0.0f;
+    float fVal = 0.0F;
 
     if (m_fTimer < APPEAR_AT)
     {
-        //	Fading in.
-        float fDelta = (APPEAR_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = fDelta;
+        // Fading in.
+        fVal = ra::sqr(APPEAR_AT - m_fTimer); // Quadratic
     }
     else if (m_fTimer < FADEOUT_AT)
     {
-        //	Faded in - held
+        // Faded in - held
         fVal = 0.0f;
     }
     else if (m_fTimer < FINISH_AT)
     {
-        //	Fading out
-        float fDelta = (FADEOUT_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = (fDelta);
+        // Fading out
+        fVal = ra::sqr(FADEOUT_AT - m_fTimer); // Quadratic
     }
     else
     {
-        //	Finished!
-        fVal = 1.0f;
+        // Finished!
+        fVal = 1.0F;
     }
 
     return fVal;
 }
 
-_Use_decl_annotations_
-void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
+_Use_decl_annotations_ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
 {
     if (!MessagesPresent())
         return;
@@ -117,12 +106,12 @@ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
     fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));
 
-    int nX = 10;
-    int nY = static_cast<int>(fFadeInY);
+    auto nX = 10;
+    auto nY = ra::ftol(fFadeInY);
 
     const ra::ui::Color nColorBlack(0, 0, 0);
     const ra::ui::Color nColorPopup(251, 102, 0);
-    const int nShadowOffset = 2;
+    _CONSTANT_LOC nShadowOffset = 2;
 
     if (ActiveMessage().Image().Type() != ra::ui::ImageType::None)
     {
@@ -140,7 +129,8 @@ void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
     {
         nY += 32 + 2;
         auto szSubTitle = pSurface.MeasureText(nFontSubtitle, sSubTitle);
-        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
+        pSurface.FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height,
+                               nColorBlack);
         pSurface.FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
         pSurface.WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
     }

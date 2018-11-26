@@ -9,39 +9,36 @@
 
 #include "ui\drawing\gdi\ResourceRepository.hh"
 
-//	Graphic to display an obtained achievement
-enum PopupMessageType
+// Graphic to display an obtained achievement
+enum class PopupMessageType : std::size_t
 {
-    PopupLogin,
-    PopupInfo,
-    PopupAchievementUnlocked,
-    PopupAchievementError,
-    PopupLeaderboardInfo,
-    PopupLeaderboardCancel,
-    PopupMessage,
-
-    NumMessageTypes
+    Login,
+    Info,
+    AchievementUnlocked,
+    AchievementError,
+    LeaderboardInfo,
+    LeaderboardCancel,
+    Message,
 };
 
 class MessagePopup
 {
 public:
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType, 
-        ra::ui::ImageType nImageType, const std::string& sImageName ) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType,
+                 ra::ui::ImageType nImageType, const std::string& sImageName) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(nImageType, sImageName)
-    {
-    }
+    {}
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
+                 PopupMessageType nMsgType = PopupMessageType::Info) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(ra::ui::ImageType::None, "")
-    {
-    }
+    {}
 
 public:
     const std::string& Title() const { return m_sMessageTitle; }
@@ -59,18 +56,13 @@ private:
 class AchievementPopup
 {
 public:
-
-public:
-    AchievementPopup();
-
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
     void AddMessage(const MessagePopup& msg);
     float GetYOffsetPct() const;
 
-    //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
-    bool MessagesPresent() const { return(m_vMessages.size() > 0); }
+    bool MessagesPresent() const { return (m_vMessages.size() > 0); }
     const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
 
     void Clear();
@@ -80,7 +72,7 @@ private:
     ra::ui::drawing::gdi::ResourceRepository m_pResourceRepository;
 
     std::queue<MessagePopup> m_vMessages;
-    float m_fTimer;
+    float m_fTimer{};
 };
 
 #endif // !RA_ACHIEVEMENTPOPUP_H

@@ -147,7 +147,7 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     g_PopupWindows.AchievementPopups().AddMessage(
         MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
         "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-        PopupMessageType::PopupLogin, ra::ui::ImageType::UserPic, Username()));
+        PopupMessageType::Login, ra::ui::ImageType::UserPic, Username()));
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     g_AchievementsDialog.OnLoad_NewRom(pGameContext.GameId());

@@ -1,6 +1,8 @@
 ﻿DisableFormat: false
 
 #Some settings are unavailable but should be already taken care of
+#NB: Try not to format a test file at once as Macro statements need Clang 7/8 and it reads TEST_CLASS incorrectly
+#    It's better to do it one at a time if it's desired
 
 AlignAfterOpenBracket: true
 AlignEscapedNewlinesLeft: true
@@ -11,11 +13,12 @@ AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
 
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
 BinPackParameters: true #two params per-line if too long
-BreakBeforeBinaryOperators: None #so assignment alignments don't get messed up
+BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass: true

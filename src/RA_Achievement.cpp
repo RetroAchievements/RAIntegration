@@ -76,35 +76,20 @@ static MemSize GetCompVariableSize(char nOperandSize)
 {
     switch (nOperandSize)
     {
-        case RC_OPERAND_BIT_0:
-            return MemSize::Bit_0;
-        case RC_OPERAND_BIT_1:
-            return MemSize::Bit_1;
-        case RC_OPERAND_BIT_2:
-            return MemSize::Bit_2;
-        case RC_OPERAND_BIT_3:
-            return MemSize::Bit_3;
-        case RC_OPERAND_BIT_4:
-            return MemSize::Bit_4;
-        case RC_OPERAND_BIT_5:
-            return MemSize::Bit_5;
-        case RC_OPERAND_BIT_6:
-            return MemSize::Bit_6;
-        case RC_OPERAND_BIT_7:
-            return MemSize::Bit_7;
-        case RC_OPERAND_LOW:
-            return MemSize::Nibble_Lower;
-        case RC_OPERAND_HIGH:
-            return MemSize::Nibble_Upper;
-        case RC_OPERAND_8_BITS:
-            return MemSize::EightBit;
-        case RC_OPERAND_16_BITS:
-            return MemSize::SixteenBit;
-        case RC_OPERAND_32_BITS:
-            return MemSize::ThirtyTwoBit;
-        default:
-            ASSERT(!"Unsupported operand size");
-            return MemSize::EightBit;
+        case RC_OPERAND_BIT_0: return MemSize::Bit_0;
+        case RC_OPERAND_BIT_1: return MemSize::Bit_1;
+        case RC_OPERAND_BIT_2: return MemSize::Bit_2;
+        case RC_OPERAND_BIT_3: return MemSize::Bit_3;
+        case RC_OPERAND_BIT_4: return MemSize::Bit_4;
+        case RC_OPERAND_BIT_5: return MemSize::Bit_5;
+        case RC_OPERAND_BIT_6: return MemSize::Bit_6;
+        case RC_OPERAND_BIT_7: return MemSize::Bit_7;
+        case RC_OPERAND_LOW: return MemSize::Nibble_Lower;
+        case RC_OPERAND_HIGH: return MemSize::Nibble_Upper;
+        case RC_OPERAND_8_BITS: return MemSize::EightBit;
+        case RC_OPERAND_16_BITS: return MemSize::SixteenBit;
+        case RC_OPERAND_32_BITS: return MemSize::ThirtyTwoBit;
+        default: ASSERT(!"Unsupported operand size"); return MemSize::EightBit;
     }
 }
 
@@ -150,52 +135,24 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
 
         switch (pCondition->oper)
         {
-            default:
-                ASSERT(!"Unsupported operator");
-                _FALLTHROUGH;
-            case RC_CONDITION_EQ:
-                cond.SetCompareType(ComparisonType::Equals);
-                break;
-            case RC_CONDITION_NE:
-                cond.SetCompareType(ComparisonType::NotEqualTo);
-                break;
-            case RC_CONDITION_LT:
-                cond.SetCompareType(ComparisonType::LessThan);
-                break;
-            case RC_CONDITION_LE:
-                cond.SetCompareType(ComparisonType::LessThanOrEqual);
-                break;
-            case RC_CONDITION_GT:
-                cond.SetCompareType(ComparisonType::GreaterThan);
-                break;
-            case RC_CONDITION_GE:
-                cond.SetCompareType(ComparisonType::GreaterThanOrEqual);
-                break;
+            default: ASSERT(!"Unsupported operator"); _FALLTHROUGH;
+            case RC_CONDITION_EQ: cond.SetCompareType(ComparisonType::Equals); break;
+            case RC_CONDITION_NE: cond.SetCompareType(ComparisonType::NotEqualTo); break;
+            case RC_CONDITION_LT: cond.SetCompareType(ComparisonType::LessThan); break;
+            case RC_CONDITION_LE: cond.SetCompareType(ComparisonType::LessThanOrEqual); break;
+            case RC_CONDITION_GT: cond.SetCompareType(ComparisonType::GreaterThan); break;
+            case RC_CONDITION_GE: cond.SetCompareType(ComparisonType::GreaterThanOrEqual);
         }
 
         switch (pCondition->type)
         {
-            default:
-                ASSERT(!"Unsupported condition type");
-                _FALLTHROUGH;
-            case RC_CONDITION_STANDARD:
-                cond.SetConditionType(Condition::Type::Standard);
-                break;
-            case RC_CONDITION_RESET_IF:
-                cond.SetConditionType(Condition::Type::ResetIf);
-                break;
-            case RC_CONDITION_PAUSE_IF:
-                cond.SetConditionType(Condition::Type::PauseIf);
-                break;
-            case RC_CONDITION_ADD_SOURCE:
-                cond.SetConditionType(Condition::Type::AddSource);
-                break;
-            case RC_CONDITION_SUB_SOURCE:
-                cond.SetConditionType(Condition::Type::SubSource);
-                break;
-            case RC_CONDITION_ADD_HITS:
-                cond.SetConditionType(Condition::Type::AddHits);
-                break;
+            default: ASSERT(!"Unsupported condition type"); _FALLTHROUGH;
+            case RC_CONDITION_STANDARD: cond.SetConditionType(Condition::Type::Standard); break;
+            case RC_CONDITION_RESET_IF: cond.SetConditionType(Condition::Type::ResetIf); break;
+            case RC_CONDITION_PAUSE_IF: cond.SetConditionType(Condition::Type::PauseIf); break;
+            case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::Type::AddSource); break;
+            case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::Type::SubSource); break;
+            case RC_CONDITION_ADD_HITS: cond.SetConditionType(Condition::Type::AddHits); break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);

@@ -95,15 +95,9 @@ private:
         // mark the level
         switch (level)
         {
-            case LogLevel::Info:
-                pWriter.Write("INFO");
-                break;
-            case LogLevel::Warn:
-                pWriter.Write("WARN");
-                break;
-            case LogLevel::Error:
-                pWriter.Write("ERR ");
-                break;
+            case LogLevel::Info: pWriter.Write("INFO"); break;
+            case LogLevel::Warn: pWriter.Write("WARN"); break;
+            case LogLevel::Error: pWriter.Write("ERR "); break;
         }
         pWriter.Write("| ");
 

@@ -5,14 +5,14 @@
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"
-#include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Login.h"
-#include "RA_httpthread.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
+#include "RA_httpthread.h"
 
 #include "api\Login.hh"
 
@@ -145,9 +145,9 @@ void LocalRAUser::ProcessSuccessfulLogin(const std::string& sUser, const std::st
     RequestFriendList();
 
     g_PopupWindows.AchievementPopups().AddMessage(
-        MessagePopup("Welcome back " + Username() + " (" + std::to_string(nPoints) + ")",
-        "You have " + std::to_string(nMessages) + " new " + std::string((nMessages == 1) ? "message" : "messages") + ".",
-        PopupMessageType::Login, ra::ui::ImageType::UserPic, Username()));
+        MessagePopup(ra::StringPrintf("Welcome back %s (%u)", Username().c_str(), nPoints),
+                     ra::StringPrintf("You have %u new %s.", nMessages, (nMessages == 1) ? "message" : "messages"),
+                     PopupMessageType::Login, ra::ui::ImageType::UserPic, Username()));
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     g_AchievementsDialog.OnLoad_NewRom(pGameContext.GameId());

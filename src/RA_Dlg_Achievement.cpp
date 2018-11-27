@@ -286,7 +286,7 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     args['b'] = Ach.BadgeImageURI();
     args['h'] = sPostCodeHash;
 
-    return(RAWeb::DoBlockingRequest(RequestSubmitAchievementData, args, doc));
+    return (RAWeb::DoBlockingRequest(RequestType::SubmitAchievementData, args, doc));
 }
 
 _Use_decl_annotations_

@@ -194,7 +194,7 @@ void LocalRAUser::RequestFriendList()
     args['u'] = Username();
     args['t'] = Token();
 
-    RAWeb::CreateThreadedHTTPRequest(RequestType::RequestFriendList, args);
+    RAWeb::CreateThreadedHTTPRequest(RequestType::FriendList, args);
 }
 
 RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)

@@ -1544,7 +1544,7 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         args['t'] = RAUsers::LocalUser().Token();
         args['a'] = std::to_string(m_pSelectedAchievement->ID());
         args['f'] = true;	//	Friends only?
-        RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
+        RAWeb::CreateThreadedHTTPRequest(RequestType::AchievementInfo, args);
     }
 }
 
@@ -1596,7 +1596,7 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
     args['o'] = std::to_string(nOffset);
     args['c'] = std::to_string(nCount);
 
-    RAWeb::CreateThreadedHTTPRequest(RequestLeaderboardInfo, args);
+    RAWeb::CreateThreadedHTTPRequest(RequestType::LeaderboardInfo, args);
 }
 
 //static 

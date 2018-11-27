@@ -194,35 +194,33 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     args['m'] = pGameContext.GameHash();
 
                     rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))
+                    if (RAWeb::DoBlockingRequest(RequestType::SubmitTicket, args, doc))
                     {
                         if (doc["Success"].GetBool())
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048, "Submitted OK!\n"
-                                "\n"
-                                "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-                                "\n"
+                            const std::string sMsg
+                            {
+                                "Submitted OK!\n\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n\n"
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"
-                                "as soon as we have a solution.\n"
-                                "\n"
-                                "Thanks again!");
+                                "as soon as we have a solution.\n\n"
+                                "Thanks again!"
+                            };
 
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
+                            MessageBox(hDlg, NativeStr(sMsg).c_str(), TEXT("Success!"), MB_OK);
                             EndDialog(hDlg, TRUE);
                             return TRUE;
                         }
                         else
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
-                                "Failed!\n"
-                                "\n"
-                                "Response From Server:\n"
-                                "\n"
-                                "Error code: %d", doc.GetParseError());
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
+                            const auto buffer = ra::StringPrintf(
+                                "Failed!\n\n"
+                                "Response From Server:\n\n"
+                                "Error code: %d",
+                                doc.GetParseError());
+                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"),
+                                       MB_OK | MB_ICONERROR);
                             return FALSE;
                         }
                     }
@@ -233,7 +231,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                             TEXT("\n")
                             TEXT("Cannot reach server... are you online?\n")
                             TEXT("\n"),
-                            TEXT("Error!"), MB_OK);
+                            TEXT("Error!"), MB_OK | MB_ICONERROR);
                         return FALSE;
                     }
                 }

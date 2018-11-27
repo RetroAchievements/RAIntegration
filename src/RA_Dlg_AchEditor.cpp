@@ -1426,20 +1426,20 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     ofn.lpstrDefExt = TEXT("png");
                     ofn.Flags = OFN_FILEMUSTEXIST;
 
-                    if (GetOpenFileName(&ofn) == 0)	//	0 == cancelled
+                    if (GetOpenFileName(&ofn) == 0)	// 0 == cancelled
                         return FALSE;
 
                     if (ofn.lpstrFile != nullptr)
                     {
                         rapidjson::Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow( ofn.lpstrFile), Response))
+                        if (RAWeb::DoBlockingImageUpload(UploadType::BadgeImage, ra::Narrow( ofn.lpstrFile), Response))
                         {
-                            //TBD: ensure that:
-                            //	The image is copied to the cache/badge dir
-                            //	The image doesn't already exist in teh cache/badge dir (ask overwrite)
-                            //	The image is the correct dimensions or can be scaled
-                            //	The image can be uploaded OK
-                            //	The image is not copyright
+                            // TBD: ensure that:
+                            // The image is copied to the cache/badge dir
+                            // The image doesn't already exist in the cache/badge dir (ask overwrite)
+                            // The image is the correct dimensions or can be scaled
+                            // The image can be uploaded OK
+                            // The image is not copyright
 
                             const rapidjson::Value& ResponseData = Response["Response"];
                             if (ResponseData.HasMember("BadgeIter"))
@@ -2193,10 +2193,7 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const
 }
 
 
-void BadgeNames::FetchNewBadgeNamesThreaded()
-{
-    RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter);
-}
+void BadgeNames::FetchNewBadgeNamesThreaded() { RAWeb::CreateThreadedHTTPRequest(RequestType::BadgeIter); }
 
 void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
 {

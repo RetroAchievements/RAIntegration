@@ -5,57 +5,74 @@
 #include "ra_fwd.h"
 #include "RA_StringUtils.h"
 
-enum HTTPRequestMethod
+enum class HTTPRequestMethod
 {
     Post,
     Get,
-    _TerminateThread,
-
-    NumHTTPRequestMethods
+    _TerminateThread
 };
 
-enum RequestType
+enum class RequestType : std::size_t
 {
-    //	Fetch
-    RequestScore,
-    RequestNews,
-    RequestPatch,
-    RequestLatestClientPage,
-    RequestRichPresence,
-    RequestAchievementInfo,
-    RequestLeaderboardInfo,
-    RequestCodeNotes,
-    RequestFriendList,
-    RequestBadgeIter,
-    RequestUnlocks,
-    RequestHashLibrary,
-    RequestGamesList,
-    RequestAllProgress,
-    RequestGameID,
+    // Fetch
+    Score,
+    News,
+    Patch,
+    LatestClientPage,
+    RichPresence,
+    AchievementInfo,
+    LeaderboardInfo,
+    CodeNotes,
+    FriendList,
+    BadgeIter,
+    Unlocks,
+    HashLibrary,
+    GamesList,
+    AllProgress,
+    GameID,
 
-    //	Submit
-    RequestSubmitAwardAchievement,
-    RequestSubmitCodeNote,
-    RequestSubmitLeaderboardEntry,
-    RequestSubmitAchievementData,
-    RequestSubmitTicket,
-    RequestSubmitNewTitle,
-
-
-    NumRequestTypes
+    // Submit
+    SubmitAwardAchievement,
+    SubmitCodeNote,
+    SubmitLeaderboardEntry,
+    SubmitAchievementData,
+    SubmitTicket,
+    SubmitNewTitle,
 };
 
-enum UploadType
+enum class UploadType
 {
-    //	Upload:
-    RequestUploadBadgeImage,
-
-    NumUploadTypes
+    // Upload:
+    BadgeImage
 };
 
-extern const char* RequestTypeToString[];
+inline constexpr std::array<const char*, 21> RequestTypeToString
+{
+    "RequestScore",
+    "RequestNews",
+    "RequestPatch",
+    "RequestLatestClientPage",
+    "RequestRichPresence",
+    "RequestAchievementInfo",
+    "RequestLeaderboardInfo",
+    "RequestCodeNotes",
+    "RequestFriendList",
+    "RequestBadgeIter",
+    "RequestUnlocks",
+    "RequestHashLibrary",
+    "RequestGamesList",
+    "RequestAllProgress",
+    "RequestGameID",
 
-typedef std::map<char, std::string> PostArgs;
+    "RequestSubmitAwardAchievement",
+    "RequestSubmitCodeNote",
+    "RequestSubmitLeaderboardEntry",
+    "RequestSubmitAchievementData",
+    "RequestSubmitTicket",
+    "RequestSubmitNewTitleEntry",
+};
+
+using PostArgs = std::map<char, std::string>;
 
 extern std::string PostArgsToString(const PostArgs& args);
 

@@ -176,16 +176,16 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     InitCommon(hMainHWND, nEmulatorID, sClientVer);
 
     //////////////////////////////////////////////////////////////////////////
-    //	Update news:
+    // Update news:
     PostArgs args;
     args['c'] = std::to_string(6);
-    RAWeb::CreateThreadedHTTPRequest(RequestNews, args);
+    RAWeb::CreateThreadedHTTPRequest(RequestType::News, args);
 
     //////////////////////////////////////////////////////////////////////////
-    //	Attempt to fetch latest client version:
+    // Attempt to fetch latest client version:
     args.clear();
     args['e'] = std::to_string(nEmulatorID);
-    RAWeb::CreateThreadedHTTPRequest(RequestLatestClientPage, args);	//	g_sGetLatestClientPage
+    RAWeb::CreateThreadedHTTPRequest(RequestType::LatestClientPage, args); // g_sGetLatestClientPage
 
     //	TBD:
     //if( RAUsers::LocalUser().Username().length() > 0 )
@@ -367,19 +367,19 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
-        //	Fetch the gameID from the DB here:
+        // Fetch the gameID from the DB here:
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
         args['m'] = sCurrentROMMD5;
 
         rapidjson::Document doc;
-        if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
+        if (RAWeb::DoBlockingRequest(RequestType::GameID, args, doc))
         {
             nGameID = doc["GameID"].GetUint();
-            if (nGameID == 0)	//	Unknown
+            if (nGameID == 0) // Unknown
             {
-                RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
+                RA_LOG("Could not recognize game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
                 ZeroMemory(buffer, 64);
                 RA_GetEstimatedGameTitle(buffer);
@@ -596,15 +596,15 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestBadgeIter:
+                case RequestType::BadgeIter:
                     g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
                     break;
 
-                case RequestFriendList:
+                case RequestType::FriendList:
                     RAUsers::LocalUser().OnFriendListResponse(doc);
                     break;
 
-                case RequestScore:
+                case RequestType::Score:
                 {
                     ASSERT(doc["Success"].GetBool());
                     if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
@@ -631,7 +631,7 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestLatestClientPage:
+                case RequestType::LatestClientPage:
                 {
                     if (doc.HasMember("LatestVersion"))
                     {
@@ -657,7 +657,7 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestSubmitAwardAchievement:
+                case RequestType::SubmitAwardAchievement:
                 {
                     //	Response to an achievement being awarded:
                     const ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
@@ -699,28 +699,28 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestNews:
+                case RequestType::News:
                     _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
                     g_AchievementOverlay.InstallNewsArticlesFromFile();
                     break;
 
-                case RequestAchievementInfo:
+                case RequestType::AchievementInfo:
                     g_AchExamine.OnReceiveData(doc);
                     break;
 
-                case RequestCodeNotes:
+                case RequestType::CodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
                     break;
 
-                case RequestSubmitLeaderboardEntry:
+                case RequestType::SubmitLeaderboardEntry:
                     ra::services::impl::LeaderboardManager::OnSubmitEntry(doc);
                     break;
 
-                case RequestLeaderboardInfo:
+                case RequestType::LeaderboardInfo:
                     g_LBExamine.OnReceiveData(doc);
                     break;
 
-                case RequestUnlocks:
+                case RequestType::Unlocks:
                     AchievementSet::OnRequestUnlocks(doc);
                     break;
             }
@@ -821,7 +821,7 @@ static void RA_CheckForUpdate()
     args['e'] = std::to_string(g_EmulatorID);
 
     rapidjson::Document doc;
-    if (RAWeb::DoBlockingRequest(RequestLatestClientPage, args, doc))
+    if (RAWeb::DoBlockingRequest(RequestType::LatestClientPage, args, doc))
     {
         if (doc.HasMember("LatestVersion"))
         {
@@ -865,7 +865,7 @@ void _FetchGameHashLibraryFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
+    if (RAWeb::DoBlockingRequest(RequestType::HashLibrary, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
 }
 
@@ -876,7 +876,7 @@ void _FetchGameTitlesFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestGamesList, args, Response))
+    if (RAWeb::DoBlockingRequest(RequestType::GamesList, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_GAME_LIST_FILENAME, Response);
 }
 
@@ -887,7 +887,7 @@ void _FetchMyProgressFromWeb()
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
+    if (RAWeb::DoBlockingRequest(RequestType::AllProgress, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);
 }
 

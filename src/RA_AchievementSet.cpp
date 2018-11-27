@@ -211,7 +211,7 @@ void AchievementSet::Test()
                     args['a'] = std::to_string(ach.ID());
                     args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
-                    RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
+                    RAWeb::CreateThreadedHTTPRequest(RequestType::SubmitAwardAchievement, args);
                 }
             }
 
@@ -287,7 +287,7 @@ BOOL AchievementSet::FetchFromWebBlocking(unsigned int nGameID)
     args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
 
     rapidjson::Document doc;
-    if (RAWeb::DoBlockingRequest(RequestPatch, args, doc) &&
+    if (RAWeb::DoBlockingRequest(RequestType::Patch, args, doc) &&
         doc.HasMember("Success") &&
         doc["Success"].GetBool() &&
         doc.HasMember("PatchData"))
@@ -430,7 +430,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
             args['g'] = std::to_string(nGameID);
             args['h'] = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? "1" : "0";
 
-            RAWeb::CreateThreadedHTTPRequest(RequestUnlocks, args);
+            RAWeb::CreateThreadedHTTPRequest(RequestType::Unlocks, args);
             std::string sTitle{ "Loaded " };
             sTitle += ra::Narrow(pGameContext.GameTitle());
 

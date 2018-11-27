@@ -38,7 +38,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
             args['c'] = std::to_string(g_ConsoleID);
 
             rapidjson::Document doc;
-            if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
+            if (RAWeb::DoBlockingRequest(RequestType::GamesList, args, doc))
             {
                 const rapidjson::Value& Data = doc["Response"];
 
@@ -117,7 +117,8 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     args['c'] = std::to_string(g_ConsoleID);
 
                     rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
+                    if (RAWeb::DoBlockingRequest(RequestType::SubmitNewTitle, args, doc) && doc.HasMember("Success") &&
+                        doc["Success"].GetBool())
                     {
                         const rapidjson::Value& Response = doc["Response"];
 
@@ -125,7 +126,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
 
                         g_GameTitleDialog.m_nReturnedGameID = nGameID;
 
-                        //	Close this dialog
+                        // Close this dialog
                         EndDialog(hDlg, TRUE);
                         return TRUE;
                     }

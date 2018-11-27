@@ -3,11 +3,11 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_BuildVer.h"
 #include "RA_AchievementSet.h"
+#include "RA_BuildVer.h"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
+#include "RA_Dlg_Memory.h"
 #include "RA_RichPresence.h"
 
 #include "data\GameContext.hh"
@@ -18,34 +18,7 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
-const char* RequestTypeToString[] =
-{
-    "RequestScore",
-    "RequestNews",
-    "RequestPatch",
-    "RequestLatestClientPage",
-    "RequestRichPresence",
-    "RequestAchievementInfo",
-    "RequestLeaderboardInfo",
-    "RequestCodeNotes",
-    "RequestFriendList",
-    "RequestBadgeIter",
-    "RequestUnlocks",
-    "RequestHashLibrary",
-    "RequestGamesList",
-    "RequestAllProgress",
-    "RequestGameID",
-
-    "RequestSubmitAwardAchievement",
-    "RequestSubmitCodeNote",
-    "RequestSubmitLeaderboardEntry",
-    "RequestSubmitAchievementData",
-    "RequestSubmitTicket",
-    "RequestSubmitNewTitleEntry",
-};
-static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
-
-const char* RequestTypeToPost[] =
+inline constexpr std::array<const char*, 21> RequestTypeToPost
 {
     "score",
     "news",
@@ -70,21 +43,20 @@ const char* RequestTypeToPost[] =
     "submitticket",
     "submitgametitle",
 };
-static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
-const char* UploadTypeToString[] =
+
+inline constexpr std::array<const char*, 1> UploadTypeToString
 {
     "RequestUploadBadgeImage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
 
-const char* UploadTypeToPost[] =
+
+inline constexpr std::array<const char*, 1> UploadTypeToPost
 {
     "uploadbadgeimage",
 };
-static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
 
-//  No game-specific code here please!
+// No game-specific code here please!
 
 std::vector<HANDLE> g_vhHTTPThread;
 
@@ -99,7 +71,8 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
     rDocOut.Parse(GetResponse().c_str());
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()),
+               RequestTypeToString.at(ra::etoi(m_nType)));
 
     return !rDocOut.HasParseError();
 }
@@ -204,14 +177,14 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     sUrl += "/";
     sUrl += sLogPage;
     sLogPage += "?r=";
-    sLogPage += RequestTypeToPost[nType];
+    sLogPage += RequestTypeToPost.at(ra::etoi(nType));
 
     RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
     if (!sPostData.empty())
         sPostData.push_back('&');
     sPostData += "r=";
-    sPostData += RequestTypeToPost[nType];
+    sPostData += RequestTypeToPost.at(ra::etoi(nType));
 
     ra::services::Http::Request request(sUrl);
     request.SetPostData(sPostData);
@@ -233,10 +206,10 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
 
 BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::string& ResponseOut)
 {
-    ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
+    ASSERT(nType == UploadType::BadgeImage); // Others not yet supported, see "r=" below
 
     const std::string sRequestedPage = "doupload.php";
-    const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
+    const std::string sRTarget = UploadTypeToPost.at(ra::etoi(nType)); //"uploadbadgeimage";
 
     RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str());
 

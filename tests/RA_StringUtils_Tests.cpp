@@ -125,6 +125,7 @@ public:
             StringPrintf("'Twas the %s before %s and all through the %s, not a %s was %s, not even a %s.", "night", "Christmas", "house", "creature", "stirring", "mouse"));
         Assert::AreEqual(std::string("01AE"), StringPrintf("%04X", 0x1AEU));
         Assert::AreEqual(std::string("01ae"), StringPrintf("%04x", 0x1AEU));
+        Assert::AreEqual(std::string("01ae"), StringPrintf("%04x", 0x1AEUL));
         Assert::AreEqual(std::string("0080"), StringPrintf("%04d", 80));
         Assert::AreEqual(std::string("  80"), StringPrintf("%4d", 80));
     }

@@ -249,66 +249,46 @@ public:
     template<typename T>
     void AppendFormat(_UNUSED const T& arg, _UNUSED const std::string& sFormat)
     {
-        // cannot use static_assert here because the code will get generated regardless of if its ever used
-        assert(!"Unsupported formatted type");
-    }
-
-    template<>
-    void AppendFormat(const float& arg, const std::string& sFormat)
-    {
-        std::ostringstream oss;
-
-        if (sFormat.back() == 'f' || sFormat.back() == 'F')
+        if constexpr (std::is_integral_v<T>)
         {
-            int nIndex = sFormat.find('.');
-            if (nIndex != std::string::npos)
-            {
-                int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
-                oss.precision(nPrecision);
-                oss << std::fixed;
-            }
+            std::ostringstream oss;
+            if (sFormat.front() == '0')
+                oss << std::setfill('0');
+            int nDigits = std::stoi(sFormat.c_str());
+            if (nDigits > 0)
+                oss << std::setw(nDigits);
+
+            if (sFormat.back() == 'X')
+                oss << std::uppercase << std::hex;
+            else if (sFormat.back() == 'x')
+                oss << std::hex;
+
+            oss << arg;
+            Append(oss.str());
         }
+        else if constexpr (std::is_floating_point_v<T>)
+        {
+            std::ostringstream oss;
 
-        oss << arg;
-        Append(oss.str());
-    }
+            if (sFormat.back() == 'f' || sFormat.back() == 'F')
+            {
+                int nIndex = sFormat.find('.');
+                if (nIndex != std::string::npos)
+                {
+                    int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
+                    oss.precision(nPrecision);
+                    oss << std::fixed;
+                }
+            }
 
-    template<>
-    void AppendFormat(const int& arg, const std::string& sFormat)
-    {
-        std::ostringstream oss;
-        if (sFormat.front() == '0')
-            oss << std::setfill('0');
-        int nDigits = std::stoi(sFormat.c_str());
-        if (nDigits > 0)
-            oss << std::setw(nDigits);
-
-        if (sFormat.back() == 'X')
-            oss << std::uppercase << std::hex;
-        else if (sFormat.back() == 'x')
-            oss << std::hex;
-
-        oss << arg;
-        Append(oss.str());
-    }
-
-    template<>
-    void AppendFormat(const unsigned int& arg, const std::string& sFormat)
-    {
-        std::ostringstream oss;
-        if (sFormat.front() == '0')
-            oss << std::setfill('0');
-        int nDigits = std::stoi(sFormat.c_str());
-        if (nDigits > 0)
-            oss << std::setw(nDigits);
-
-        if (sFormat.back() == 'X')
-            oss << std::uppercase << std::hex;
-        else if (sFormat.back() == 'x')
-            oss << std::hex;
-
-        oss << arg;
-        Append(oss.str());
+            oss << arg;
+            Append(oss.str());
+        }
+        else
+        {
+            // cannot use static_assert here because the code will get generated regardless of if its ever used
+            assert(!"Unsupported formatted type");
+        }
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>

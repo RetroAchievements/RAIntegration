@@ -187,7 +187,7 @@ public:
         m_vPending.emplace_back(std::move(pPending));
     }
 
-    void Append(const std::string&& arg)
+    void Append(std::string&& arg)
     {
         PendingString pPending;
         pPending.String = std::move(arg);
@@ -195,7 +195,7 @@ public:
         m_vPending.emplace_back(std::move(pPending));
     }
 
-    void Append(const std::wstring&& arg)
+    void Append(std::wstring&& arg)
     {
         PendingString pPending;
         pPending.WString = std::move(arg);
@@ -239,11 +239,16 @@ public:
         m_vPending.emplace_back(std::move(pPending));
     }
 
+    void Append()
+    {
+        // just in case one of the variadic methods gets called with 0 parameters
+    }
+
     template<typename T, typename... Ts>
-    void Append(const T&& arg, const Ts&&... args)
+    void Append(const T&& arg, Ts&&... args)
     {
         Append(arg);
-        Append(std::forward<const Ts>(args)...);
+        Append(std::forward<Ts>(args)...);
     }
 
     template<typename T>
@@ -320,7 +325,7 @@ public:
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintf(const CharT* const pFormat, const T& value, const Ts... args)
+    void AppendPrintf(const CharT* const pFormat, const T& value, Ts&&... args)
     {
         auto* pScan = pFormat;
         while (*pScan && *pScan != '%')
@@ -340,7 +345,7 @@ public:
                 break;
             case '%':
                 AppendSubString(pScan - 1, 1);
-                AppendPrintf(++pScan, value, std::forward<const Ts>(args)...);
+                AppendPrintf(++pScan, value, std::forward<Ts>(args)...);
                 break;
             case 'l': // assume ll, or li
             case 'z': // assume zu
@@ -352,7 +357,7 @@ public:
             case 'f':
             case 'g':
                 Append(value);
-                AppendPrintf(++pScan, std::forward<const Ts>(args)...);
+                AppendPrintf(++pScan, std::forward<Ts>(args)...);
                 break;
 
             default:
@@ -376,7 +381,7 @@ public:
                 }
 
                 AppendFormat(value, sFormat);
-                AppendPrintf(++pScan, std::forward<const Ts>(args)...);
+                AppendPrintf(++pScan, std::forward<Ts>(args)...);
                 break;
         }
     }
@@ -440,34 +445,34 @@ private:
 }; // namespace ra
 
 template<typename... Ts>
-void AppendString(std::string& sString, const Ts... args)
+void AppendString(std::string& sString, Ts&&... args)
 {
     StringBuilder builder;
-    builder.Append(std::forward<const Ts>(args)...);
+    builder.Append(std::forward<Ts>(args)...);
     builder.AppendToString(sString);
 }
 
 template<typename... Ts>
-void AppendWString(std::wstring& sString, const Ts... args)
+void AppendWString(std::wstring& sString, Ts&&... args)
 {
     StringBuilder builder(true);
-    builder.Append(std::forward<const Ts>(args)...);
+    builder.Append(std::forward<Ts>(args)...);
     builder.AppendToWString(sString);
 }
 
 template<typename... Ts>
-std::string BuildString(const Ts... args)
+std::string BuildString(Ts&&... args)
 {
     StringBuilder builder;
-    builder.Append(std::forward<const Ts>(args)...);
+    builder.Append(std::forward<Ts>(args)...);
     return builder.ToString();
 }
 
 template<typename... Ts>
-std::wstring BuildWString(const Ts... args)
+std::wstring BuildWString(Ts&&... args)
 {
     StringBuilder builder(true);
-    builder.Append(std::forward<const Ts>(args)...);
+    builder.Append(std::forward<Ts>(args)...);
     return builder.ToWString();
 }
 

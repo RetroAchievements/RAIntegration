@@ -29,7 +29,7 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
     return false;
 }
 
-_NODISCARD static bool GetJson(_In_ const char* sApiName, _In_ const ra::services::Http::Response& httpResponse,
+_NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ const ra::services::Http::Response& httpResponse,
                                _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument) noexcept
 {
     if (HandleHttpError(httpResponse, pResponse))

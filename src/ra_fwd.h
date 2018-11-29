@@ -82,12 +82,14 @@ using LPTSTR  = TCHAR*;
 #endif // !_WINNT_
 
 namespace ra {
+
 using tstring = std::basic_string<TCHAR>;
 
 using ARGB          = DWORD;
 using ByteAddress   = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
+
 } /* namespace ra */
 
 #endif /* !RA_FWD_H */

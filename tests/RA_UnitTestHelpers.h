@@ -14,38 +14,43 @@
 #include "ui\WindowViewModelBase.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+// The rcheevos nameless struct warning is only affecting the test project, for now we have
+// to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.
+
 namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
 
 // converters for asserting enum values
 
-template<> static std::wstring ToString<MemSize>(const MemSize& t)
+#pragma warning(push)
+#pragma warning(disable : 4505) // unreferenced inline functions, they are referenced. Must be a bug.
+template<> std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
 }
 
-template<> static std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
+template<> std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 {
     return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ComparisonType>(const ComparisonType& t)
+template<> std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
     return ra::Widen(COMPARISONTYPE_STR[(int)t]);
 }
 
-template<> static std::wstring ToString<Condition::Type>(const Condition::Type& t)
+template<> std::wstring ToString<Condition::Type>(const Condition::Type& t)
 {
     return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> static std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
+template<> std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
 {
     return std::to_wstring(ra::etoi(t));
 }
 
-template<> static std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
+template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
     switch (result)
     {
@@ -96,6 +101,7 @@ template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& r
         default: return std::to_wstring(ra::etoi(result));
     }
 }
+#pragma warning(pop)
 
 } // namespace CppUnitTestFramework
 } // namespace VisualStudio

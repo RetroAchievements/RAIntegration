@@ -121,6 +121,7 @@
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
+    <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
@@ -220,6 +221,7 @@
     <ClInclude Include="services\TextReader.hh" />
     <ClInclude Include="services\TextWriter.hh" />
     <ClInclude Include="ui\BindingBase.hh" />
+    <ClInclude Include="ui\drawing\gdi\GDIBitmapSurface.hh" />
     <ClInclude Include="ui\drawing\gdi\GDISurface.hh" />
     <ClInclude Include="ui\drawing\gdi\ImageRepository.hh" />
     <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh" />
@@ -400,6 +402,7 @@
       <ShowIncludes>false</ShowIncludes>
       <ConformanceMode>true</ConformanceMode>
       <EnablePREfast>false</EnablePREfast>
+      <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -504,6 +507,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>

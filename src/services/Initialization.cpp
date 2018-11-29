@@ -19,6 +19,7 @@
 
 #include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
+#include "ui\drawing\gdi\GDIBitmapSurface.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
@@ -109,6 +110,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pDesktop = new ra::ui::win32::Desktop();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(pDesktop);
     ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+
+    auto* pSurfaceFactory = new ra::ui::drawing::gdi::GDISurfaceFactory();
+    ra::services::ServiceLocator::Provide<ra::ui::drawing::ISurfaceFactory>(pSurfaceFactory);
 
     auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);

@@ -21,6 +21,7 @@ inline constexpr std::array<const char*, 10> COLUMN_TITLE{"ID",  "Flag", "Type",
                                                           "Cmp", "Type", "Size", "Mem/Val", "Hits"};
 inline constexpr std::array<int, 10> COLUMN_WIDTH{30, 75, 42, 50, 72, 35, 42, 50, 72, 72};
 static_assert(ra::is_same_size_v<decltype(COLUMN_TITLE), decltype(COLUMN_WIDTH)>, "Must match!");
+static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
 enum class CondSubItems : std::size_t
 {
@@ -437,14 +438,11 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 break;
             };
 
-            auto i = 0;
-            for (const auto& str : Condition::TYPE_STR)
+            for (const auto str : Condition::TYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, str);
-
+                const auto i = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
-                i++;
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -582,9 +580,10 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 MessageBox(nullptr, TEXT("Could not create combo box."), TEXT("Error"), MB_OK | MB_ICONERROR);
                 break;
             };
-            for (const auto& str : COMPARISONTYPE_STR)
+
+            for (const auto str : COMPARISONTYPE_STR)
             {
-                const auto idx{ComboBox_AddString(g_hIPEEdit, str)};
+                const auto idx = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, idx);
             }
@@ -1577,8 +1576,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CondSubItems::Group:
                         {
-                            auto i = 0;
-                            for (const auto& str : Condition::TYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : Condition::TYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetConditionType(ra::itoe<Condition::Type>(i));
@@ -1638,8 +1637,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         break;
                         case CondSubItems::Comparison:
                         {
-                            auto i{0};
-                            for (const auto& str : COMPARISONTYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : COMPARISONTYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetCompareType(ra::itoe<ComparisonType>(i));

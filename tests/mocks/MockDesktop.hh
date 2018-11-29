@@ -15,21 +15,21 @@ using DialogHandler = std::function<ra::ui::DialogResult(WindowViewModelBase&)>;
 class MockDesktop : public IDesktop
 {
 public:
-    explicit MockDesktop(DialogHandler&& pHandler) noexcept
-        : m_Override(this), m_pHandler(pHandler)
+    explicit MockDesktop() noexcept
+        : m_Override(this)
     {
     }
 
     void ShowWindow(WindowViewModelBase& vmViewModel) const override
     {
-        m_pHandler(vmViewModel);
+        Handle(vmViewModel);
         m_bDialogShown = true;
     }
 
     ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const override
     {
         m_bDialogShown = true;
-        return m_pHandler(vmViewModel);
+        return Handle(vmViewModel);
     }
 
     bool WasDialogShown() { return m_bDialogShown; }
@@ -42,9 +42,36 @@ public:
 
     void Shutdown() override {}
 
+    template<typename T>
+    void ExpectWindow(std::function<ra::ui::DialogResult(T&)>&& fnHandler)
+    {
+        auto pHandler = [fnHandler = std::move(fnHandler)](WindowViewModelBase& vmWindow)
+        {
+            auto* pWindow = dynamic_cast<T*>(&vmWindow);
+            if (pWindow != nullptr)
+                return fnHandler(*pWindow);
+
+            return ra::ui::DialogResult::None;
+        };
+
+        m_vHandlers.emplace_back(pHandler);
+    }
+
 private:
+    ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
+    {
+        for (auto& pHandler : m_vHandlers)
+        {
+            auto nResult = pHandler(vmViewModel);
+            if (nResult != ra::ui::DialogResult::None)
+                return nResult;
+        }
+
+        return ra::ui::DialogResult::None;
+    }
+
     ra::services::ServiceLocator::ServiceOverride<IDesktop> m_Override;
-    DialogHandler m_pHandler = nullptr;
+    std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
 };
 

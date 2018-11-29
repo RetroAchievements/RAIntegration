@@ -26,8 +26,8 @@ void InitializeMemory(unsigned char* pMemory, size_t nMemorySize)
     g_pMemoryBuffer = pMemory;
     g_nMemorySize = nMemorySize;
 
-    g_MemManager.ClearMemoryBanks();
-    g_MemManager.AddMemoryBank(0, ReadMemory, SetMemory, nMemorySize);
+    ::g_MemManager.ClearMemoryBanks();
+    ::g_MemManager.AddMemoryBank(0, ReadMemory, SetMemory, nMemorySize);
 }
 
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle)

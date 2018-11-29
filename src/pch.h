@@ -1,6 +1,5 @@
 #ifndef PCH_H
 #define PCH_H
-#pragma once
 
 /*
     Only put files that never change or are rarely changed in this file.
@@ -77,6 +76,11 @@
 #pragma warning(pop)
 #endif /* RA_UTEST */
 
+/* rcheevos stuff */
+#pragma warning (push)
+#pragma warning (disable:4201) // nameless struct
+#include "rcheevos\include\rcheevos.h"
+#pragma warning (pop)
 
 #pragma warning(pop)
 

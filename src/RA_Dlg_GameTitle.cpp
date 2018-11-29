@@ -1,11 +1,12 @@
 #include "RA_Dlg_GameTitle.h"
 
+#include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
-#include "RA_AchievementSet.h"
 #include "RA_httpthread.h"
 
+#include "data\UserContext.hh"
 
 Dlg_GameTitle g_GameTitleDialog;
 
@@ -53,7 +54,8 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                             continue;
                         }
 
-                        const auto nGameID = std::strtoul(iter->name.GetString(), nullptr, 10);	//	Keys cannot be anything but strings
+                        // Keys cannot be anything but strings
+                        const auto nGameID = std::strtoul(iter->name.GetString(), nullptr, 10); 
                         const std::string& sTitle = iter->value.GetString();
                         m_aGameTitles[sTitle] = nGameID;
 
@@ -77,7 +79,6 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
 
                         iter++;
                     }
-
                 }
             }
 
@@ -117,7 +118,8 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     args['c'] = std::to_string(g_ConsoleID);
 
                     rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") && doc["Success"].GetBool())
+                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && 
+                        doc.HasMember("Success") && doc["Success"].GetBool())
                     {
                         const rapidjson::Value& Response = doc["Response"];
 
@@ -133,18 +135,16 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     {
                         if (!doc.HasParseError() && doc.HasMember("Error"))
                         {
-                            //Error given
+                            // Error given
                             MessageBox(hDlg,
-                                NativeStr(std::string("Could not add new title: ") + std::string(doc["Error"].GetString())).c_str(),
-                                TEXT("Errors encountered"),
-                                MB_OK);
+                                       NativeStr(std::string("Could not add new title: ") +
+                                                 std::string(doc["Error"].GetString())).c_str(),
+                                       TEXT("Errors encountered"),
+                                       MB_OK);
                         }
                         else
                         {
-                            MessageBox(hDlg,
-                                TEXT("Cannot contact server!"),
-                                TEXT("Error in connection"),
-                                MB_OK);
+                            MessageBox(hDlg, TEXT("Cannot contact server!"), TEXT("Error in connection"), MB_OK);
                         }
 
                         return TRUE;
@@ -159,7 +159,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     switch (HIWORD(wParam))
                     {
                         case EN_CHANGE:
-                            if (!bUpdatingTextboxTitle)	//	Note: use barrier to prevent automatic switching off.
+                            if (!bUpdatingTextboxTitle) // Note: use barrier to prevent automatic switching off.
                             {
                                 //	If the user has started to enter a value, set the upper combo to 'new entry'
                                 HWND hKnownGamesCbo = GetDlgItem(hDlg, IDC_RA_KNOWNGAMES);
@@ -186,7 +186,6 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                         break;
                     }
                     break;
-
             }
             break;
 
@@ -201,12 +200,16 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
     return FALSE;
 }
 
-void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, unsigned int& nGameIDOut)
+void Dlg_GameTitle::DoModalDialog(HINSTANCE hInst,
+                                  HWND hParent,
+                                  std::string& sMD5InOut,
+                                  std::string& sEstimatedGameTitleInOut,
+                                  unsigned int& nGameIDOut)
 {
     if (sMD5InOut.length() == 0)
         return;
 
-    if (!RAUsers::LocalUser().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         return;
 
     g_GameTitleDialog.m_sMD5 = sMD5InOut;

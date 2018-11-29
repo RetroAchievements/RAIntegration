@@ -2,7 +2,6 @@
 
 #include "RA_Defs.h"
 
-
 _NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
@@ -68,11 +67,7 @@ void Condition::SerializeAppend(std::string& buffer) const
     m_nCompTarget.SerializeAppend(buffer);
 
     if (m_nRequiredHits > 0)
-    {
-        char reqHitsBuffer[24];
-        snprintf(reqHitsBuffer, sizeof(reqHitsBuffer), ".%zu.", m_nRequiredHits);
-        buffer.append(reqHitsBuffer);
-    }
+        buffer.append(ra::StringPrintf(".%zu.", m_nRequiredHits));
 }
 
 _Use_decl_annotations_

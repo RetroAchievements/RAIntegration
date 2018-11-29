@@ -36,13 +36,21 @@ public:
     /// Gets the total captured playtime for the specified game.
     /// </summary>
     std::chrono::seconds GetTotalPlaytime(unsigned int nGameId) const;
+    
+    /// <summary>
+    /// Determines whether any previous session data exists.
+    /// </summary>
+    bool HasSessionData() const { return !m_vGameStats.empty(); }
 
 protected:
+    virtual void LoadSessions();
     void UpdateSession(time_t tSessionStart);
     long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetCurrentActivity() const;
 
     virtual bool IsInspectingMemory() const;
+
+    std::wstring m_sUsername;
 
 private:
     void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
@@ -61,7 +69,6 @@ private:
 
     std::vector<GameStats> m_vGameStats;
 
-    std::wstring m_sUsername;
     long m_nFileWritePosition{};
 };
 

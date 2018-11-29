@@ -1,4 +1,5 @@
 #include "GDISurface.hh"
+#include "GDIBitmapSurface.hh"
 
 #include "ui\drawing\gdi\ImageRepository.hh"
 
@@ -16,16 +17,10 @@ GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourc
 
 void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
 {
-    if (nColor.Channel.A != 0xFF)
-    {
-
-    }
-    else
-    {
-        SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
-        SetDCPenColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
-        Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
-    }
+    assert(nColor.Channel.A == 0xFF);
+    SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
+    SetDCPenColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
+    Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
 }
 
 int GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
@@ -89,6 +84,23 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     SelectBitmap(hdcMem, hOldBitmap);
 
     DeleteDC(hdcMem);
+}
+
+void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
+{
+    auto* pAlphaSurface = dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface);
+    if (pAlphaSurface != nullptr)
+    {
+        pAlphaSurface->Blend(m_hDC, nX, nY);
+        return;
+    }
+
+    auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
+    assert(pGDISurface != nullptr);
+
+    ::BitBlt(m_hDC, nX, nY,
+        static_cast<int>(pSurface.GetWidth()), static_cast<int>(pSurface.GetHeight()),
+        pGDISurface->m_hDC, 0, 0, SRCCOPY);        
 }
 
 } // namespace gdi

@@ -11,6 +11,7 @@
 
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
@@ -67,7 +68,6 @@ const COLORREF COL_WARNING_BG = RGB(80, 0, 0);
 const unsigned int OVERLAY_WIDTH = 1024;
 const unsigned int OVERLAY_HEIGHT = 1024;
 
-
 void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
 {
     switch (m_Pages.at(m_nPageStackPointer))
@@ -89,7 +89,7 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
             break;
         default:
             //	Not on a toplevel page: cannot do anything!
-            //assert(0);
+            // assert(0);
             break;
     }
 }
@@ -237,7 +237,6 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered - 1);
-
             }
             break;
             case Page::Achievement_Examine:
@@ -428,7 +427,6 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 break;
         }
 
-
         if (input.m_bCancelPressed)
         {
             //	If TRUE: Close overlay
@@ -577,7 +575,6 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
 void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
 {
-
     // 		for( size_t i = 0; i < 256; ++i )
     // 			buffer[i] = (char)(i);
     // 
@@ -590,7 +587,6 @@ void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int,
     // 		TextOut( hDC, nDX+8, 140, buffer+160, 32 );
     // 		TextOut( hDC, nDX+8, 160, buffer+192, 32 );
     // 		TextOut( hDC, nDX+8, 180, buffer+224, 32 );
-
 }
 
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
@@ -808,7 +804,6 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
     {
         const char* sTitle = m_LatestNews[i].m_sTitle.c_str();
         const char* sPayload = m_LatestNews[i].m_sPayload.c_str();
-
 
         SelectObject(hDC, g_hFontDesc2);
 
@@ -1068,8 +1063,8 @@ _Use_decl_annotations_
 void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 {
     //	Rendering:
-    if (!RAUsers::LocalUser().IsLoggedIn())
-        return;	//	Not available!
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+        return; //	Not available!
 
     if (m_nTransitionState == TransitionState::Off)
         return;
@@ -1140,7 +1135,6 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         if (rcTarget.right > 360)
         {
             DrawUserFrame(hDC,
-                &RAUsers::LocalUser(),
                 (nDX + (rcTarget.right - ra::to_signed(uMinUserFrameWidth))) - 4,
                 4 + nBorder,
                 ra::to_signed(uMinUserFrameWidth),
@@ -1337,9 +1331,11 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
 }
 
-_Use_decl_annotations_
-void AchievementOverlay::DrawUserFrame(HDC hDC, const RAUser* pUser, int nX, int nY, int nW, int nH) const
+_Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW,
+                                                              int nH) const
 {
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+
     char buffer[256];
     HBRUSH hBrush2 = CreateSolidBrush(COL_USER_FRAME_BG);
     RECT rcUserFrame;
@@ -1354,20 +1350,16 @@ void AchievementOverlay::DrawUserFrame(HDC hDC, const RAUser* pUser, int nX, int
     HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
     if (hBitmap != nullptr)
     {
-        DrawImage(hDC,
-            hBitmap,
-            nX + ((nW - 64) - 4),
-            nY + 4,
-            64, 64);
+        DrawImage(hDC, hBitmap, nX + ((nW - 64) - 4), nY + 4, 64, 64);
     }
 
     SetTextColor(hDC, COL_TEXT);
     SelectObject(hDC, g_hFontDesc);
 
-    sprintf_s(buffer, 256, " %s ", pUser->Username().c_str());
+    sprintf_s(buffer, 256, " %s ", pUserContext.GetUsername().c_str());
     TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
 
-    sprintf_s(buffer, 256, " %u Points ", pUser->GetScore());
+    sprintf_s(buffer, 256, " %u Points ", pUserContext.GetScore());
     TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
 
     if (_RA_HardcoreModeIsActive())

@@ -50,7 +50,6 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
         nNeeded = std::vswprintf(sFormatted.data(), sFormatted.capacity(), sFormat, pArgs);
     }
     va_end(pArgs);
-    assert(nNeeded >= 0);
     assert(nNeeded < RSIZE_MAX/sizeof(CharT));
     if (nNeeded >= 0)
     {

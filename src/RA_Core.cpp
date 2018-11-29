@@ -23,6 +23,7 @@
 
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -142,10 +143,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();
-
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    RAUsers::LocalUser().SetUsername(pConfiguration.GetUsername());
-    RAUsers::LocalUser().SetToken(pConfiguration.GetApiToken());
 
     RAWeb::SetUserAgentString();
 
@@ -368,16 +365,17 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     if (pROM != nullptr)
     {
         //	Fetch the gameID from the DB here:
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
         PostArgs args;
-        args['u'] = RAUsers::LocalUser().Username();
-        args['t'] = RAUsers::LocalUser().Token();
+        args['u'] = pUserContext.GetUsername();
+        args['t'] = pUserContext.GetApiToken();
         args['m'] = sCurrentROMMD5;
 
         rapidjson::Document doc;
         if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
         {
             nGameID = doc["GameID"].GetUint();
-            if (nGameID == 0)	//	Unknown
+            if (nGameID == 0) //	Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
@@ -411,7 +409,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     if (nGameID != 0)
     {
-        if (RAUsers::LocalUser().IsLoggedIn())
+        if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         {
             DownloadAndActivateAchievementData(nGameID);
 
@@ -612,9 +610,10 @@ API int CCONV _RA_HandleHTTPResults()
                         const unsigned int nScore = doc["Score"].GetUint();
                         RA_LOG("%s's score: %u", sUser.c_str(), nScore);
 
-                        if (sUser.compare(RAUsers::LocalUser().Username()) == 0)
+                        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+                        if (sUser.compare(pUserContext.GetUsername()) == 0)
                         {
-                            RAUsers::LocalUser().SetScore(nScore);
+                            pUserContext.SetScore(nScore);
                         }
                         else
                         {
@@ -674,7 +673,8 @@ API int CCONV _RA_HandleHTTPResults()
                                              pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
-                            RAUsers::LocalUser().SetScore(doc["Score"].GetUint());
+                            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+                            pUserContext.SetScore(doc["Score"].GetUint());
                         }
                         else
                         {
@@ -736,7 +736,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 {
     HMENU hRA = CreatePopupMenu();
     HMENU hRA_LB = CreatePopupMenu();
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
@@ -802,8 +802,9 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     if (sMessage != nullptr && *sMessage)
         sstr << " - " << sMessage;
 
-    if (RAUsers::LocalUser().IsLoggedIn())
-        sstr << " - " << RAUsers::LocalUser().Username();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    if (pUserContext.IsLoggedIn())
+        sstr << " - " << pUserContext.GetUsername();
 
     if (strcmp(_RA_HostName(), "retroachievements.org") != 0)
         sstr << " [" << _RA_HostName() << "]";
@@ -1010,11 +1011,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto response = request.Call();
             if (response.Succeeded())
             {
-                RAUsers::LocalUser().Clear();
+                ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Initialize("", "");
                 g_PopupWindows.Clear();
                 ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
                 _RA_UpdateAppTitle();
-                _RA_RebuildMenu();
+                RA_RebuildMenu();
 
                 ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
             }
@@ -1079,10 +1080,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         }
 
         case IDM_RA_OPENUSERPAGE:
-            if (RAUsers::LocalUser().IsLoggedIn())
+        {
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+            if (pUserContext.IsLoggedIn())
             {
                 std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/User/" << RAUsers::LocalUser().Username();
+                oss << "http://" << _RA_HostName() << "/User/" << pUserContext.GetUsername();
                 ShellExecute(nullptr,
                     TEXT("open"),
                     NativeStr(oss.str()).c_str(),
@@ -1091,6 +1094,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     SW_SHOWNORMAL);
             }
             break;
+        }
 
         case IDM_RA_OPENGAMEPAGE:
         {
@@ -1216,14 +1220,9 @@ API void CCONV _RA_SetPaused(bool bIsPaused)
         g_AchievementOverlay.Deactivate();
 }
 
-API void CCONV _RA_AttemptLogin(bool bBlocking)
-{
-    RAUsers::LocalUser().AttemptLogin(bBlocking);
-}
-
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         if (!g_bRAMTamperedWith)
         {
@@ -1235,7 +1234,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 API void CCONV _RA_OnLoadState(const char* sFilename)
 {
     //	Save State is being allowed by app (user was warned!)
-    if (RAUsers::LocalUser().IsLoggedIn())
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
@@ -1254,7 +1253,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
 API void CCONV _RA_DoAchievementsFrame()
 {
-    if (RAUsers::LocalUser().IsLoggedIn() && g_pActiveAchievements != nullptr)
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn() && g_pActiveAchievements != nullptr)
     {
         if (g_nProcessTimer >= PROCESS_WAIT_TIME)
         {

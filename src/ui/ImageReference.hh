@@ -42,6 +42,14 @@ public:
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     virtual void ReleaseReference(ImageReference& pImage) noexcept = 0;
+    
+    /// <summary>
+    /// Determines whether the referenced image has changed.
+    /// </summary>
+    /// <remarks>    
+    /// Updates the internal state of the <see cref="ImageReference" /> if <c>true</c>.
+    /// </remarks>
+    virtual bool HasReferencedImageChanged(ImageReference& pImage) const noexcept = 0;
 
 protected:
     IImageRepository() noexcept = default;

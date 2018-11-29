@@ -30,6 +30,8 @@ public:
     void AddReference(ImageReference& pImage) noexcept override;
     void ReleaseReference(ImageReference& pImage) noexcept override;
 
+    bool HasReferencedImageChanged(ImageReference& pImage) const noexcept override;
+
 private:
     static std::wstring GetFilename(ImageType nType, const std::string& sName);
     static HBITMAP LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight);

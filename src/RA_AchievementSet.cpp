@@ -10,12 +10,12 @@
 #include "RA_md5factory.h"
 
 #include "data\GameContext.hh"
+#include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
-
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -175,7 +175,7 @@ void AchievementSet::Test()
                     g_AchievementEditorDialog.LoadAchievement(&ach, TRUE);
             }
 
-            if (RAUsers::LocalUser().IsLoggedIn())
+            if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
             {
                 if (g_nActiveAchievementSet != Type::Core)
                 {
@@ -413,7 +413,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
             nTotalPoints += ach.Points();
         }
 
-        if (RAUsers::LocalUser().IsLoggedIn())
+        if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         {
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
@@ -462,7 +462,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
 
 void AchievementSet::SaveProgress(const char* sSaveStateFilename)
 {
-    if (!RAUsers::LocalUser().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         return;
 
     if (sSaveStateFilename == nullptr)
@@ -494,7 +494,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 {
     long nFileSize;
 
-    if (!RAUsers::LocalUser().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         return;
 
     if (sLoadStateFilename == nullptr)
@@ -564,4 +564,3 @@ BOOL AchievementSet::HasUnsavedChanges()
 
     return FALSE;
 }
-

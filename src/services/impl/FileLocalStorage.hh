@@ -14,6 +14,8 @@ class FileLocalStorage : public ILocalStorage
 public:
     explicit FileLocalStorage(IFileSystem& pFileSystem) noexcept;
 
+    std::chrono::system_clock::time_point GetLastModified(StorageItemType nType, const std::wstring& sKey) override;
+
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override;
     std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override;
     std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) override;

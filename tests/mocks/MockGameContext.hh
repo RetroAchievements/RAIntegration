@@ -1,5 +1,5 @@
-#ifndef RA_SERVICES_MOCK_GAMECONTEXT_HH
-#define RA_SERVICES_MOCK_GAMECONTEXT_HH
+#ifndef RA_DATA_MOCK_GAMECONTEXT_HH
+#define RA_DATA_MOCK_GAMECONTEXT_HH
 #pragma once
 
 #include "data\GameContext.hh"
@@ -60,7 +60,7 @@ private:
 };
 
 } // namespace mocks
-} // namespace services
+} // namespace data
 } // namespace ra
 
-#endif // !RA_SERVICES_MOCK_GAMECONTEXT_HH
+#endif // !RA_DATA_MOCK_GAMECONTEXT_HH

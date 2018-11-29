@@ -4,6 +4,7 @@
 
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
@@ -12,15 +13,15 @@
 #include "services\impl\LeaderboardManager.hh"
 #include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsClipboard.hh"
-#include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
-#include "ui\WindowViewModelBase.hh"
 
 namespace ra {
 namespace services {
@@ -29,7 +30,8 @@ static void LogHeader(_In_ const ra::services::ILogger& pLogger,
                       _In_ const ra::services::IFileSystem& pFileSystem,
                       _In_ const ra::services::IClock& pClock)
 {
-    pLogger.LogMessage(LogLevel::Info, "================================================================================");
+    pLogger.LogMessage(LogLevel::Info,
+                       "================================================================================");
 
     const auto tNow = pClock.Now();
     const auto tTime = std::chrono::system_clock::to_time_t(tNow);
@@ -75,11 +77,12 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto& pFileSystem = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
 
-    auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(&ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
+    auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
+        &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
     std::wstring sFilename = pFileSystem.BaseDirectory() + L"RAPrefs_" + ra::Widen(sClientName) + L".cfg";
     pConfiguration->Load(sFilename);
 
-    auto *pLocalStorage = new ra::services::impl::FileLocalStorage(pFileSystem);
+    auto* pLocalStorage = new ra::services::impl::FileLocalStorage(pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(pLocalStorage);
 
     auto* pThreadPool = new ra::services::impl::ThreadPool();
@@ -88,6 +91,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pHttpRequester = new ra::services::impl::WindowsHttpRequester();
     ra::services::ServiceLocator::Provide<ra::services::IHttpRequester>(pHttpRequester);
+
+    auto* pUserContext = new ra::data::UserContext();
+    ra::services::ServiceLocator::Provide<ra::data::UserContext>(pUserContext);
 
     auto* pGameContext = new ra::data::GameContext();
     ra::services::ServiceLocator::Provide<ra::data::GameContext>(pGameContext);
@@ -128,7 +134,6 @@ void Initialization::Shutdown()
     // ImageReference destructors will try to use the IImageRepository if they think it still exists.
     // explicitly deregister it to prevent exceptions when closing down the application.
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
-
 }
 
 } // namespace services

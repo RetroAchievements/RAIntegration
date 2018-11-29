@@ -12,6 +12,7 @@
 #include "services\Http.hh"
 
 #include "ui\WindowViewModelBase.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 // The rcheevos nameless struct warning is only affecting the test project, for now we have
 // to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.
@@ -63,6 +64,30 @@ template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResul
     }
 }
 
+template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
+{
+    switch (icon)
+    {
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::None: return L"None";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Info: return L"Info";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning: return L"Warning";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Error: return L"Error";
+        default: return std::to_wstring(static_cast<int>(icon));
+    }
+}
+
+template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
+{
+    switch (buttons)
+    {
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK: return L"OK";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OKCancel: return L"OKCancel";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo: return L"YesNo";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNoCancel: return L"YesNoCancel";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel: return L"RetryCancel";
+        default: return std::to_wstring(static_cast<int>(buttons));
+    }
+}
 
 template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
 {

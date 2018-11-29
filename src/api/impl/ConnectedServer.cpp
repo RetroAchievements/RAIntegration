@@ -16,7 +16,8 @@ namespace ra {
 namespace api {
 namespace impl {
 
-_NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& httpResponse, _Inout_ ApiResponseBase& pResponse) noexcept
+_NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& httpResponse,
+                                       _Inout_ ApiResponseBase& pResponse) noexcept
 {
     if (httpResponse.StatusCode() != ra::services::Http::StatusCode::OK)
     {
@@ -28,7 +29,8 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
     return false;
 }
 
-_NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ const ra::services::Http::Response& httpResponse, _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument) noexcept
+_NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ const ra::services::Http::Response& httpResponse,
+                               _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument) noexcept
 {
     if (HandleHttpError(httpResponse, pResponse))
     {
@@ -56,7 +58,8 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
         RA_LOG_ERR("-- %s: JSON Parse Error encountered!", sApiName);
 
         pResponse.Result = ApiResult::Error;
-        pResponse.ErrorMessage = std::string(GetParseError_En(pDocument.GetParseError())) + " (" + std::to_string(pDocument.GetErrorOffset()) + ")";
+        pResponse.ErrorMessage = std::string(GetParseError_En(pDocument.GetParseError())) + " (" +
+                                 std::to_string(pDocument.GetErrorOffset()) + ")";
         return false;
     }
 
@@ -78,7 +81,8 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
     return true;
 }
 
-static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Document& pDocument, _In_ const char* const sField, _Inout_ ApiResponseBase& response) noexcept
+static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Document& pDocument,
+                                 _In_ const char* const sField, _Inout_ ApiResponseBase& response) noexcept
 {
     if (!pDocument.HasMember(sField))
     {
@@ -94,7 +98,8 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument, _In_ const char* sField, _In_ unsigned int nDefaultValue = 0) noexcept
+static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument,
+                                 _In_ const char* sField, _In_ unsigned int nDefaultValue = 0) noexcept
 {
     if (pDocument.HasMember(sField))
         nValue = pDocument[sField].GetUint();
@@ -102,7 +107,8 @@ static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
         nValue = nDefaultValue;
 }
 
-static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue) noexcept
+static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam,
+                           _In_ const std::string& sValue) noexcept
 {
     if (!sParams.empty() && sParams.back() != '?')
         sParams.push_back('&');
@@ -157,14 +163,14 @@ Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& request)
     return std::move(response);
 }
 
-static bool DoRequest(const std::string& sHost, const char* sApiName, const char* sRequestName, const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
+static bool DoRequest(const std::string& sHost, const char* sApiName, const char* sRequestName,
+                      const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
 {
     std::string sPostData;
 
-#ifndef RA_UTEST
-    AppendUrlParam(sPostData, "u", RAUsers::LocalUser().Username());
-    AppendUrlParam(sPostData, "t", RAUsers::LocalUser().Token());
-#endif
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
+    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
     AppendUrlParam(sPostData, "r", sRequestName);
     if (!sInputParams.empty())
     {

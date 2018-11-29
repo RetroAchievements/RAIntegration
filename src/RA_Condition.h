@@ -139,11 +139,11 @@ public:
     _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
     _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
-    _NODISCARD _CONSTANT_FN IsResetCondition() const { return (m_nConditionType == Type::ResetIf); }
-    _NODISCARD _CONSTANT_FN IsPauseCondition() const { return (m_nConditionType == Type::PauseIf); }
-    _NODISCARD _CONSTANT_FN IsAddCondition() const { return (m_nConditionType == Type::AddSource); }
-    _NODISCARD _CONSTANT_FN IsSubCondition() const { return (m_nConditionType == Type::SubSource); }
-    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return (m_nConditionType == Type::AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return (m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return (m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return (m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return (m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return (m_nConditionType == Type::AddHits); }
 
     _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
     _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }
@@ -151,9 +151,9 @@ public:
 private:
     Type m_nConditionType = Type::Standard;
     CompVariable m_nCompSource;
-    ComparisonType m_nCompareType   = ComparisonType::Equals;
+    ComparisonType m_nCompareType = ComparisonType::Equals;
     CompVariable m_nCompTarget;
-    unsigned int m_nRequiredHits  = 0U;
+    unsigned int m_nRequiredHits = 0U;
 };
 
 class ConditionGroup

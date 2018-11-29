@@ -12,6 +12,7 @@
 namespace ra {
 #pragma warning(push)
 
+#pragma warning(push)
 // TODO: Finish narrow_cast in another PR
 // we don't use gsl::narrow_cast, ra::narrow_cast won't trigger this when its
 // done
@@ -70,6 +71,7 @@ _NODISCARD _CONSTANT_VAR itoe(_In_ Integral i) noexcept
 {
     return static_cast<Enum>(i);
 }
+
 
 // function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
 template<typename Enum> _CONSTANT_VAR to_integral{etoi<Enum>};

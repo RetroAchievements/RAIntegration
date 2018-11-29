@@ -40,7 +40,7 @@ public:
     {
         // we need to check stuff to prevent throwing in release mode
         assert(nRow >= 0 && nRow < m_lbxData.size());
-        auto& rowRef{ m_lbxData.at(nRow) };
+        auto& rowRef{m_lbxData.at(nRow)};
 
         using namespace ra::rel_ops;
         assert(nCol >= 0 && nCol < rowRef.size());
@@ -68,6 +68,5 @@ private:
 };
 
 extern Dlg_Achievements g_AchievementsDialog;
-
 
 #endif // !RA_DLG_ACHIEVEMENT_H

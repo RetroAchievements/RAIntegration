@@ -10,6 +10,10 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
+namespace bindings {
+class ControlBinding; // forward declaration
+}
+
 class DialogBase
 {
 public:
@@ -25,8 +29,7 @@ public:
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
-    _NODISCARD HWND CreateDialogWindow(_In_ const LPCTSTR sResourceId,
-        _In_ IDialogPresenter* const pDialogPresenter);
+    _NODISCARD HWND CreateDialogWindow(_In_ const LPCTSTR sResourceId, _In_ IDialogPresenter* const pDialogPresenter);
 
     /// <summary>
     /// Creates the dialog window and does not return until the window is closed.
@@ -65,7 +68,8 @@ protected:
     /// <summary>
     /// Called when the window is created, but before it is shown.
     /// </summary>
-    /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return <c>FALSE</c>.</returns>
+    /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return
+    /// <c>FALSE</c>.</returns>
     virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
@@ -102,12 +106,35 @@ protected:
 
 private:
     // Allows access to `DialogProc` from static helper
-    friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
-    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+    friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
+                                                    _In_ UINT uMsg,
+                                                    _In_ WPARAM wParam,
+                                                    _In_ LPARAM lParam);
+    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg,
+                                                         _In_ UINT uMsg,
+                                                         _In_ WPARAM wParam,
+                                                         _In_ LPARAM lParam);
 
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
     bool m_bModal = false;
+
+    // allow ControlBinding to access AddControlBinding and RemoveControlBinding methods
+    friend class ra::ui::win32::bindings::ControlBinding;
+    void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding)
+    {
+        m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
+    }
+
+    void RemoveControlBinding(HWND hControl) { m_mControlBindings.erase(hControl); }
+
+    ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
+    {
+        const auto pIter = m_mControlBindings.find(hControl);
+        return (pIter != m_mControlBindings.end() ? pIter->second : nullptr);
+    }
+
+    std::unordered_map<HWND, ra::ui::win32::bindings::ControlBinding*> m_mControlBindings;
 };
 
 } // namespace win32

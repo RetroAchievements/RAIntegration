@@ -1,5 +1,7 @@
 #include "DialogBase.hh"
 
+#include "ui\win32\bindings\ControlBinding.hh"
+
 #include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
 namespace ra {
@@ -112,6 +114,24 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return 0;
 
         case WM_COMMAND:
+            switch (HIWORD(wParam))
+            {
+                case EN_KILLFOCUS:
+                {
+                    auto* pControlBinding = FindControlBinding((HWND)(lParam));
+                    if (pControlBinding)
+                        pControlBinding->LostFocus();
+                    return TRUE;
+                }
+
+                case 0:
+                {
+                    auto* pControlBinding = FindControlBinding((HWND)(lParam));
+                    if (pControlBinding)
+                        pControlBinding->OnCommand();
+                    break;
+                }
+            }
             return OnCommand(LOWORD(wParam));
 
         case WM_MOVE:

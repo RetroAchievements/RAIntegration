@@ -84,9 +84,6 @@
     <ClCompile Include="RA_Dlg_GameTitle.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_Login.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_MemBookmark.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -330,6 +327,12 @@
     <ClCompile Include="data\SessionTracker.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\LoginViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\LoginDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h">
@@ -360,9 +363,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameTitle.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_Login.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_MemBookmark.h">
@@ -649,6 +649,21 @@
     </ClInclude>
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\LoginViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\LoginDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\ControlBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

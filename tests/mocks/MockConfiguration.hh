@@ -68,7 +68,6 @@ public:
 
     void Save() const override
     {
-        assert(!"Not implemented");
     }
 
 private:

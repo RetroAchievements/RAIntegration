@@ -108,7 +108,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request& request, ra::api::Login::Response& response)
+        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.ErrorMessage = "Invalid user/password combination. Please try again.";
             response.Result = ra::api::ApiResult::Error;

@@ -4,7 +4,7 @@
 
 #include "ra_fwd.h"
 
-enum class MemSize
+enum class MemSize : std::size_t
 {
     Bit_0,
     Bit_1,
@@ -127,17 +127,17 @@ public:
 
     void SerializeAppend(std::string& buffer) const;
 
-    inline CompVariable& CompSource() { return m_nCompSource; }
-    inline const CompVariable& CompSource() const { return m_nCompSource; }
+    _NODISCARD _CONSTANT_FN& CompSource() noexcept { return m_nCompSource; }
+    _NODISCARD _CONSTANT_FN& CompSource() const noexcept { return m_nCompSource; }
 
-    inline CompVariable& CompTarget() { return m_nCompTarget; }
-    inline const CompVariable& CompTarget() const { return m_nCompTarget; }
+    _NODISCARD _CONSTANT_FN& CompTarget() noexcept { return m_nCompTarget; }
+    _NODISCARD _CONSTANT_FN& CompTarget() const noexcept { return m_nCompTarget; }
 
-    inline ComparisonType CompareType() const { return m_nCompareType; }
-    inline void SetCompareType(ComparisonType nType) { m_nCompareType = nType; }
+    _NODISCARD _CONSTANT_FN CompareType() const noexcept { return m_nCompareType; }
+    _CONSTANT_FN SetCompareType(_In_ ComparisonType nType) noexcept { m_nCompareType = nType; }
 
-    inline unsigned int RequiredHits() const { return m_nRequiredHits; }
-    void SetRequiredHits(unsigned int nHits) { m_nRequiredHits = nHits; }
+    _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
+    _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
     _NODISCARD _CONSTANT_FN IsResetCondition() const { return (m_nConditionType == Type::ResetIf); }
     _NODISCARD _CONSTANT_FN IsPauseCondition() const { return (m_nConditionType == Type::PauseIf); }
@@ -145,16 +145,15 @@ public:
     _NODISCARD _CONSTANT_FN IsSubCondition() const { return (m_nConditionType == Type::SubSource); }
     _NODISCARD _CONSTANT_FN IsAddHitsCondition() const { return (m_nConditionType == Type::AddHits); }
 
-    inline Type GetConditionType() const { return m_nConditionType; }
-    void SetConditionType(Type nNewType) { m_nConditionType = nNewType; }
+    _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
+    _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }
 
 private:
     Type m_nConditionType = Type::Standard;
     CompVariable m_nCompSource;
-    ComparisonType m_nCompareType = ComparisonType::Equals;
+    ComparisonType m_nCompareType   = ComparisonType::Equals;
     CompVariable m_nCompTarget;
-
-    unsigned int m_nRequiredHits = 0U;
+    unsigned int m_nRequiredHits  = 0U;
 };
 
 class ConditionGroup

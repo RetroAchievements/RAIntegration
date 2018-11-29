@@ -31,7 +31,7 @@ public:
         m_mHandlers.insert_or_assign(std::string(TApi::Name()), [fHandler=std::move(fHandler)](void* pRequest, void* pResponse)
         {
             const TApi::Request* pTRequest = reinterpret_cast<const TApi::Request*>(pRequest);
-            TApi::Response* pTResponse = reinterpret_cast<TApi::Response*>(pResponse);
+            auto pTResponse = reinterpret_cast<typename TApi::Response*>(pResponse);
             return fHandler(*pTRequest, *pTResponse);
         });
     }
@@ -60,9 +60,9 @@ public:
 
 protected:
     template<typename TApi>
-    inline typename TApi::Response HandleRequest(const ApiRequestBase& pRequest) const noexcept
+    inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
-        TApi::Response response;
+        typename TApi::Response response;
         std::string sApiName(TApi::Name());
 
         auto pIter = m_mHandlers.find(sApiName);
@@ -74,6 +74,7 @@ protected:
 
         response.Result = ApiResult::Unsupported;
         response.ErrorMessage = sApiName + " is not supported by " + Name();
+
         return std::move(response);
     }
 

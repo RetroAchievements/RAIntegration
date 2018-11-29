@@ -8,10 +8,9 @@
 
 #include "data\GameContext.hh"
 
-inline constexpr std::array<const char* const, 3>  PROBLEM_STR{
+inline constexpr std::array<const char*, 3>  PROBLEM_STR{
     "Unknown", "Triggers at wrong time", "Didn't trigger at all"
 };
-
 int Dlg_AchievementsReporter::ms_nNumOccupiedRows = 0;
 char Dlg_AchievementsReporter::ms_lbxData[MAX_ACHIEVEMENTS]
                                          [Dlg_AchievementsReporter::COL_SIZE.size()]
@@ -40,7 +39,7 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
             col.cchTextMax = 255,
             col.iSubItem   = ra::to_signed(i)
         };
-
+        
         if (i == (COL_TITLE.size() - 1)) //If the last element: fill to the end
             col.fmt |= LVCFMT_FILL;
 

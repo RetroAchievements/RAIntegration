@@ -55,7 +55,8 @@ public:
     TEST_METHOD(TestShow)
     {
         WindowViewModelBase* vmShownWindow = nullptr;
-        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop;
+        mockDesktop.ExpectWindow<WindowViewModelHarness>([&vmShownWindow](WindowViewModelHarness& vmWindow)
         {
             vmShownWindow = &vmWindow;
             return DialogResult::OK;
@@ -70,7 +71,8 @@ public:
     TEST_METHOD(TestShowModal)
     {
         WindowViewModelBase* vmShownWindow = nullptr;
-        MockDesktop mockDesktop([&vmShownWindow](WindowViewModelBase& vmWindow)
+        MockDesktop mockDesktop;
+        mockDesktop.ExpectWindow<WindowViewModelHarness>([&vmShownWindow](WindowViewModelHarness& vmWindow)
         {
             vmShownWindow = &vmWindow;
             return DialogResult::OK;

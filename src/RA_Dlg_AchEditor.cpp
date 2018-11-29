@@ -17,11 +17,12 @@
 
 #include "ra_math.h"
 
-namespace {
-const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
-}
+inline constexpr std::array<LPCTSTR, 10> COLUMN_TITLE{
+    _T("ID"), _T("Flag"), _T("Type"), _T("Size"), _T("Memory"), _T("Cmp"), _T("Type"), _T("Size"), _T("Mem/Val"),
+    _T("Hits")
+};
+inline constexpr std::array<int, 10>  COLUMN_WIDTH{ 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
+static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
 enum CondSubItems
 {
@@ -442,14 +443,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            auto i = 0;
-            for (const auto& str : Condition::TYPE_STR)
+            for (const auto str : Condition::TYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, str);
-
+                const auto i = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
-                i++;
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -601,9 +599,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 MessageBox(nullptr, TEXT("Could not create combo box."), TEXT("Error"), MB_OK | MB_ICONERROR);
                 break;
             };
-            for (const auto& str : COMPARISONTYPE_STR)
+
+            for (const auto str : COMPARISONTYPE_STR)
             {
-                const auto idx{ ComboBox_AddString(g_hIPEEdit, str) };
+                const auto idx = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, idx);
             }
@@ -1569,13 +1568,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CSI_GROUP:
                         {
-                            auto i = 0;
-                            for (const auto& str : Condition::TYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : Condition::TYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetConditionType(ra::itoe<Condition::Type>(i));
                                 i++;
                             }
+
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond, pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
                             break;
                         }
@@ -1626,8 +1626,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }break;
                         case CSI_COMPARISON:
                         {
-                            auto i{ 0 };
-                            for (const auto& str : COMPARISONTYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : COMPARISONTYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetCompareType(ra::itoe<ComparisonType>(i));

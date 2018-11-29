@@ -566,14 +566,13 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     lines -= 1; // Watch out for header
     m_nDisplayedLines = lines;
 
-    TCHAR bufferNative[64];
+    TCHAR bufferNative[64]{};
 
     int addr = m_nAddressOffset;
     addr -= (0x40); // Offset will be this quantity (push up four lines)...
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    unsigned char data[16];
     unsigned int notes;
     unsigned int bookmarks;
     unsigned int freeze;
@@ -594,7 +593,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     if (g_MemManager.NumMemoryBanks() > 0)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
-
+        std::array<unsigned char, 16> data{};
         for (int i = 0; i < lines && addr < (int)g_MemManager.TotalBankSize(); ++i, addr += 16)
         {
             if (addr >= 0)
@@ -616,22 +615,25 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     }
                 }
 
-                g_MemManager.ActiveBankRAMRead(data, addr, 16);
+                g_MemManager.ActiveBankRAMRead(data.data(), addr, 16);
 
-                TCHAR* ptr = bufferNative + wsprintf(bufferNative, TEXT("0x%06x  "), addr);
+                TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 11, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
                 {
                     case MemSize::EightBit:
                         for (int j = 0; j < 16; ++j)
-                            ptr += wsprintf(ptr, TEXT("%02x "), data[j]);
+                            ptr += _stprintf_s(ptr, 4, TEXT("%02x "), data.at(j));
                         break;
                     case MemSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x "), data[j + 1], data[j]);
+                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(j + 1), data.at(j));
                         break;
                     case MemSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
-                            ptr += wsprintf(ptr, TEXT("%02x%02x%02x%02x "), data[j + 3], data[j + 2], data[j + 1], data[j]);
+                        {
+                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(j + 3), data.at(j + 2),
+                                               data.at(j + 1), data.at(j));
+                        }
                         break;
                 }
 
@@ -799,8 +801,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
 
-            for (const auto& str : COMPARISONTYPE_STR)
-                ComboBox_AddString(::GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), str);
+            for (const auto str : COMPARISONTYPE_STR)
+                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), str);
 
             ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
 
@@ -1499,11 +1501,11 @@ void Dlg_Memory::OnLoad_NewRom()
         ra::ByteAddress start, end;
         if (GetSystemMemoryRange(start, end))
         {
-            TCHAR label[64];
+            TCHAR label[64]{};
             if (g_MemManager.TotalBankSize() > 0x10000)
-                wsprintf(label, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
             else
-                wsprintf(label, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
+                _stprintf_s(label, 64, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
 
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), TRUE);
@@ -1516,11 +1518,11 @@ void Dlg_Memory::OnLoad_NewRom()
 
         if (GetGameMemoryRange(start, end))
         {
-            TCHAR label[64];
+            TCHAR label[64]{};
             if (g_MemManager.TotalBankSize() > 0x10000)
-                wsprintf(label, TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
             else
-                wsprintf(label, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
+                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
 
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);

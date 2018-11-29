@@ -16,10 +16,10 @@
 
 namespace {
 
-const char* COL_TITLE[] = {"ID", "Game Title", "Completion", "File Path"};
-const int COL_SIZE[]    = {30, 230, 110, 170};
+inline constexpr std::array<LPCTSTR, 4> COL_TITLE{ _T("ID"), _T("Game Title"), _T("Completion"), _T("File Path") };
+inline constexpr std::array<int, 4> COL_SIZE{ 30, 230, 110, 170 };
 static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
-const bool bCancelScan = false;
+inline constexpr auto bCancelScan = false;
 
 std::mutex mtx;
 
@@ -202,25 +202,25 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
     // Remove all data.
     ListView_DeleteAllItems(hList);
 
-    LV_COLUMN col;
-    ZeroMemory(&col, sizeof(col));
-
-    for (size_t i = 0; i < SIZEOF_ARRAY(COL_TITLE); ++i)
+    auto i = 0;
+    for (const auto title : COL_TITLE)
     {
-        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.cchTextMax = 255;
-        ra::tstring sCol = NativeStr(COL_TITLE[i]); // scoped cache
-        col.pszText = sCol.data();
-        col.cx = COL_SIZE[i];
-        col.iSubItem = i;
-
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == SIZEOF_ARRAY(COL_TITLE) - 1) // Final column should fill
+        ra::tstring sCol{ title }; // scoped cache
+        LV_COLUMN col
         {
-            col.fmt |= LVCFMT_FILL;
-        }
+            col.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            col.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            col.cx         = COL_SIZE.at(i),
+            col.pszText    = sCol.data(),
+            col.cchTextMax = 255,
+            col.iSubItem   = i
+        };
 
-        ListView_InsertColumn(hList, i, reinterpret_cast<LPARAM>(&col));
+        if (i == ra::to_signed(COL_TITLE.size() - 1)) // Final column should fill
+            col.fmt |= LVCFMT_FILL;
+
+        ListView_InsertColumn(hList, i, &col);
+        i++;
     }
 }
 
@@ -237,7 +237,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 
     // id:
     item.iSubItem = 0;
-    ra::tstring sID = ra::to_tstring(nGameID); //scoped cache!
+    auto sID = NativeStr(ra::ToString(nGameID)); //scoped cache!
     item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);
 

@@ -132,7 +132,7 @@ public:
     void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
 
     void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const;
-    void DrawUserFrame(_In_ HDC hDC, _In_ const RAUser* pUser,
+    void DrawUserFrame(_In_ HDC hDC,
                        _In_ int nX,  _In_ int nY,
                        _In_ int nW,  _In_ int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;

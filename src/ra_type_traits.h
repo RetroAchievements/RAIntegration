@@ -76,8 +76,9 @@ struct _NODISCARD is_equality_comparable : std::false_type
 template<typename EqualityComparable>
 struct _NODISCARD is_equality_comparable<
     EqualityComparable,
-    std::enable_if_t<std::is_convertible_v<
-        decltype(std::declval<EqualityComparable&>() == std::declval<EqualityComparable&>()), bool>>> : std::true_type
+    std::enable_if_t<
+        std::is_convertible_v<decltype(std::declval<EqualityComparable&>() == std::declval<EqualityComparable&>()),
+                              bool>>> : std::true_type
 {
 };
 
@@ -107,9 +108,10 @@ struct _NODISCARD is_lessthan_comparable : std::false_type
 
 template<typename LessThanComparable>
 struct _NODISCARD is_lessthan_comparable<
-    LessThanComparable, std::enable_if_t<std::is_convertible_v<
-                            decltype(std::declval<LessThanComparable&>() < std::declval<LessThanComparable&>()), bool>>>
-    : std::true_type
+    LessThanComparable,
+    std::enable_if_t<
+        std::is_convertible_v<decltype(std::declval<LessThanComparable&>() < std::declval<LessThanComparable&>()),
+                              bool>>> : std::true_type
 {
 };
 
@@ -153,6 +155,25 @@ _CONSTANT_VAR is_nothrow_lessthan_comparable_v = detail::is_nothrow_lessthan_com
 
 template<typename Comparable>
 _CONSTANT_VAR is_comparable_v = detail::is_comparable<Comparable>::value;
+
+template<typename Comparable>
+_CONSTANT_VAR is_nothrow_comparable_v{detail::is_nothrow_comparable<Comparable>::value};
+
+namespace detail {
+
+template<typename T>
+struct _NODISCARD is_literal_type
+    : std::bool_constant<(std::is_scalar_v<T> || std::is_reference_v<T>) ||
+                         (std::is_aggregate_v<T> && std::is_scalar_v<typename T::value_type>) ||
+                         (std::is_class_v<T> && std::is_trivially_destructible_v<T> &&
+                          std::is_nothrow_constructible_v<T>)>
+{
+};
+
+} /* namespace detail */
+
+template<typename LiteralType>
+_CONSTANT_VAR is_literal_type_v{detail::is_literal_type<LiteralType>::value};
 
 template<typename Comparable>
 _CONSTANT_VAR is_nothrow_comparable_v = detail::is_nothrow_comparable<Comparable>::value;

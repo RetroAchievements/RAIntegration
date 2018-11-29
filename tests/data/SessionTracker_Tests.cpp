@@ -79,7 +79,7 @@ public:
         Assert::IsFalse(tracker.HasStoredData());
 
         bool bSessionStarted = false;
-        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, ra::api::StartSession::Response& response)
+        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, _UNUSED ra::api::StartSession::Response& /*response*/)
         {
             Assert::AreEqual(1234U, request.GameId);
             bSessionStarted = true;
@@ -128,7 +128,7 @@ public:
         Assert::IsTrue(tracker.HasStoredData());
 
         bool bSessionStarted = false;
-        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, ra::api::StartSession::Response& response)
+        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, _UNUSED ra::api::StartSession::Response& /*response*/)
         {
             Assert::AreEqual(1234U, request.GameId);
             bSessionStarted = true;
@@ -249,7 +249,7 @@ public:
         tracker.Initialize("User");
 
         int nPings = 0;
-        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, ra::api::Ping::Response& response)
+        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, _UNUSED ra::api::Ping::Response& /*response*/)
         {
             Assert::AreEqual(1234U, request.GameId);
             Assert::AreEqual(std::wstring(L"Playing Banana"), request.CurrentActivity);

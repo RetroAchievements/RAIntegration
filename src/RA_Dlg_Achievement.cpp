@@ -33,29 +33,33 @@ void Dlg_Achievements::SetupColumns(HWND hList)
     while (ListView_DeleteColumn(hList, 0) == TRUE) {}
     ListView_DeleteAllItems(hList);
 
-    for (int i = 0; i < NUM_COLS; ++i)
+    auto i = 0;
+    for (const auto& col_size : COLUMN_SIZE)
     {
-        const char* sColTitle{ "" };
+        LPCTSTR sColTitle{ _T("") };
         if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-            sColTitle = COLUMN_TITLES_CORE[i];
+            sColTitle = COLUMN_TITLES_CORE.at(i);
         else if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
-            sColTitle = COLUMN_TITLES_UNOFFICIAL[i];
+            sColTitle = COLUMN_TITLES_UNOFFICIAL.at(i);
         else if (g_nActiveAchievementSet == AchievementSet::Type::Local)
-            sColTitle = COLUMN_TITLES_LOCAL[i];
+            sColTitle = COLUMN_TITLES_LOCAL.at(i);
 
-        LV_COLUMN newColumn;
-        ZeroMemory(&newColumn, sizeof(newColumn));
-        newColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        newColumn.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
-        if (i == (NUM_COLS - 1))
+        ra::tstring sColTitleStr = sColTitle; // Take a copy
+        LV_COLUMN newColumn
+        {
+            newColumn.mask       = ra::to_unsigned(LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT),
+            newColumn.fmt        = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH,
+            newColumn.cx         = col_size,
+            newColumn.pszText    = sColTitleStr.data(),
+            newColumn.cchTextMax = 255,
+            newColumn.iSubItem   = i
+        };
+
+        if (i == (::NUM_COLS - 1))
             newColumn.fmt |= LVCFMT_FILL;
-        newColumn.cx = COLUMN_SIZE[i];
-        ra::tstring sColTitleStr = NativeStr(sColTitle);    //  Take a copy
-        newColumn.pszText = sColTitleStr.data();
-        newColumn.cchTextMax = 255;
-        newColumn.iSubItem = i;
 
         ListView_InsertColumn(hList, i, &newColumn);
+        i++;
     }
 
     m_lbxData.clear();
@@ -192,12 +196,11 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
 }
 
 _Success_(return)
-_NODISCARD BOOL LocalValidateAchievementsBeforeCommit(_In_reads_(1) const int nLbxItems[1])
+_NODISCARD BOOL LocalValidateAchievementsBeforeCommit(_In_reads_(1) const std::array<int, 1> nLbxItems)
 {
     char buffer[2048];
-    for (size_t i = 0; i < 1; ++i)
+    for (auto& nIter : nLbxItems)
     {
-        const int nIter = nLbxItems[i];
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
         if (Ach.Title().length() < 2)
         {
@@ -920,11 +923,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
 INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 {
-    const int nMaxUploadLimit = 1;
+    constexpr int nMaxUploadLimit = 1;
 
     size_t nNumChecked = 0;
     int nIDsChecked[nMaxUploadLimit];
-    int nLbxItemsChecked[nMaxUploadLimit];
+    std::array<int, nMaxUploadLimit> nLbxItemsChecked{};
 
     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
     const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
@@ -964,9 +967,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     if (MessageBox(hDlg, NativeStr(message).c_str(), NativeStr(title).c_str(), MB_YESNO | MB_ICONWARNING) == IDYES)
     {
-        for (size_t i = 0; i < nNumChecked; ++i)
+        for (const auto check : nLbxItemsChecked)
         {
-            Achievement& NextAch = g_pActiveAchievements->GetAchievement(nLbxItemsChecked[i]);
+            Achievement& NextAch = g_pActiveAchievements->GetAchievement(check);
 
             const BOOL bMovedFromUserToUnofficial = (g_nActiveAchievementSet == AchievementSet::Type::Local);
 
@@ -988,12 +991,12 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
                     // Update listbox on achievements dlg
 
-                    LbxDataAt(nLbxItemsChecked[i], Column::Id) = std::to_string(nAchID);
+                    LbxDataAt(check, Column::Id) = std::to_string(nAchID);
 
                     if (bMovedFromUserToUnofficial)
                     {
                         //  Remove the achievement from the local/user achievement set,
-                        //   add it to the unofficial set.
+                        //  add it to the unofficial set.
                         Achievement& NewAch = g_pUnofficialAchievements->AddAchievement();
                         NewAch.Set(NextAch);
                         NewAch.SetModified(FALSE);
@@ -1032,6 +1035,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                 }
             }
         }
+
 
         if (bErrorsEncountered)
         {

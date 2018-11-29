@@ -462,6 +462,16 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     pImage.SetData(0ULL);
 }
 
+bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const noexcept
+{
+    if (pImage.Type() == ra::ui::ImageType::None)
+        return false;
+
+    const auto hBitmapBefore = pImage.GetData();
+    GetHBitmap(pImage);
+    return (pImage.GetData() != hBitmapBefore);
+}
+
 } // namespace gdi
 } // namespace drawing
 } // namespace ui

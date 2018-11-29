@@ -324,6 +324,9 @@
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
+    <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClCompile>
     <ClCompile Include="data\SessionTracker.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -632,6 +635,9 @@
     <ClInclude Include="ui\drawing\gdi\ResourceRepository.hh">
       <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
+    <ClInclude Include="ui\drawing\gdi\GDIBitmapSurface.hh">
+      <Filter>UI\Drawing\GDI</Filter>
+    </ClInclude>
     <ClInclude Include="data\SessionTracker.hh">
       <Filter>Data</Filter>
     </ClInclude>
@@ -640,6 +646,9 @@
     </ClInclude>
     <ClInclude Include="api\Ping.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="data\UserContext.hh">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

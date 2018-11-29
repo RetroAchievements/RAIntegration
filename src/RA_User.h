@@ -4,6 +4,10 @@
 
 #include "ra_fwd.h"
 
+#include "data\UserContext.hh"
+
+#include "services\ServiceLocator.hh"
+
 //////////////////////////////////////////////////////////////////////////
 // RAUser
 
@@ -15,9 +19,6 @@ typedef struct
     char m_sMessage[256];
     BOOL m_bRead;
 } RAMessage;
-
-class RequestObject;
-
 
 class RAUser
 {
@@ -40,18 +41,13 @@ private:
     unsigned int m_nScore;
 };
 
-class LocalRAUser : public RAUser
+class LocalRAUser
 {
 public:
-    LocalRAUser(const std::string& sUser);
-
-public:
-    void AttemptLogin(bool bBlocking);
-
-    void AttemptSilentLogin();
-
-    void ProcessSuccessfulLogin(const std::string& sUser, const std::string& sToken, unsigned int nPoints, unsigned int nMessages, BOOL bRememberLogin);
-    void Logout();
+    const std::string& Username() const
+    {
+        return ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+    }
 
     void RequestFriendList();
     void OnFriendListResponse(const rapidjson::Document& doc);
@@ -62,17 +58,13 @@ public:
     RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends[nOffs] : nullptr; }
     const size_t NumFriends() const { return m_aFriends.size(); }
 
-    void SetToken(const std::string& sToken) { m_sToken = sToken; }
-    const std::string& Token() const { return m_sToken; }
-
-    BOOL IsLoggedIn() const { return m_bIsLoggedIn; }
-
-    void Clear();
+    const std::string& Token() const
+    {
+        return ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
+    }
 
 private:
-    std::string            m_sToken; // AppToken Issued by server
-    BOOL                   m_bIsLoggedIn;
-    std::vector<RAUser*>   m_aFriends;
+    std::vector<RAUser*> m_aFriends;
     std::vector<RAMessage> m_aMessages;
 };
 
@@ -90,6 +82,5 @@ private:
     static LocalRAUser ms_LocalUser;
     static std::map<std::string, RAUser*> UserDatabase;
 };
-
 
 #endif // !RA_USER_H

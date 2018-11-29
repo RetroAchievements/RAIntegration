@@ -6,11 +6,6 @@
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
-#pragma warning (push)
-#pragma warning (disable:4201) // nameless struct
-#include "rcheevos\include\rcheevos.h"
-#pragma warning (pop)
-
 #include <ctime>
 
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept :

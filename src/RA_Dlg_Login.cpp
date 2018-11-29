@@ -7,6 +7,10 @@
 
 #include "api\Login.hh"
 
+#include "data\UserContext.hh"
+
+#include "services\IConfiguration.hh"
+
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 // static
@@ -61,9 +65,11 @@ INT_PTR CALLBACK RA_Dlg_Login::RA_Dlg_LoginProc(HWND hDlg, UINT uMsg, WPARAM wPa
                     if (response.Succeeded())
                     {
                         const bool bRememberLogin = (IsDlgButtonChecked(hDlg, IDC_RA_SAVEPASSWORD) != BST_UNCHECKED);
-                        RAUsers::LocalUser().ProcessSuccessfulLogin(response.Username, response.ApiToken,
-                                                                    response.Score, response.NumUnreadMessages,
-                                                                    bRememberLogin);
+                        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                        pConfiguration.SetApiToken(bRememberLogin ? response.ApiToken : "");
+
+                        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+                        pUserContext.Initialize(response.Username, response.ApiToken);
 
                         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
                             std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));

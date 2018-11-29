@@ -122,6 +122,11 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
     return sPath;
 }
 
+std::chrono::system_clock::time_point FileLocalStorage::GetLastModified(StorageItemType nType, const std::wstring& sKey)
+{
+    return m_pFileSystem.GetLastModified(GetPath(nType, sKey));
+}
+
 std::unique_ptr<TextReader> FileLocalStorage::ReadText(StorageItemType nType, const std::wstring& sKey)
 {
     return m_pFileSystem.OpenTextFile(GetPath(nType, sKey));

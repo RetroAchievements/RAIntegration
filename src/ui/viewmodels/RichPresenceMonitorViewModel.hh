@@ -56,6 +56,8 @@ private:
     };
 
     MonitorState m_nState{ MonitorState::None };
+
+    time_t m_tRichPresenceFileTime{ 0 };
 };
 
 } // namespace viewmodels

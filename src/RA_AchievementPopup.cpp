@@ -31,7 +31,8 @@ inline constexpr std::array<const wchar_t*, 7> MSG_SOUND{
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent()); // ActiveMessage() dereferences!
-    const std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND.at(ra::etoi(ActiveMessage().Type()));
+    const auto sSoundPath =
+        ra::StringPrintf(L"%s%s%s", g_sHomeDir, RA_DIR_OVERLAY, MSG_SOUND.at(ra::etoi(m_vMessages.front().Type())));
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
@@ -74,7 +75,7 @@ float AchievementPopup::GetYOffsetPct() const
     else if (m_fTimer < FADEOUT_AT)
     {
         // Faded in - held
-        fVal = 0.0f;
+        fVal = 0.0F;
     }
     else if (m_fTimer < FINISH_AT)
     {
@@ -123,6 +124,7 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
     const ra::ui::Color nColorBlack(0, 0, 0);
     const ra::ui::Color nColorPopup(251, 102, 0);
     const ra::ui::Color nColorBackground(0, 255, 0, 255);
+    constexpr int nShadowOffset = 2;
 
     // background
     m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);

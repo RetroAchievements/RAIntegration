@@ -17,11 +17,12 @@
 
 #include "ra_math.h"
 
-namespace {
-const char* COLUMN_TITLE[] = { "ID", "Flag", "Type", "Size", "Memory", "Cmp", "Type", "Size", "Mem/Val", "Hits" };
-const int COLUMN_WIDTH[] = { 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
-static_assert(SIZEOF_ARRAY(COLUMN_TITLE) == SIZEOF_ARRAY(COLUMN_WIDTH), "Must match!");
-}
+inline constexpr std::array<LPCTSTR, 10> COLUMN_TITLE{
+    _T("ID"), _T("Flag"), _T("Type"), _T("Size"), _T("Memory"), _T("Cmp"), _T("Type"), _T("Size"), _T("Mem/Val"),
+    _T("Hits")
+};
+inline constexpr std::array<int, 10>  COLUMN_WIDTH{ 30, 75, 42, 50, 72, 35, 42, 50, 72, 72 };
+static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
 enum CondSubItems
 {
@@ -548,14 +549,11 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 break;
             };
 
-            auto i = 0;
-            for (const auto& str : Condition::TYPE_STR)
+            for (const auto str : Condition::TYPE_STR)
             {
-                ComboBox_AddString(g_hIPEEdit, str);
-
+                const auto i = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, i);
-                i++;
             }
 
             SendMessage(g_hIPEEdit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
@@ -715,9 +713,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 MessageBox(nullptr, TEXT("Could not create combo box."), TEXT("Error"), MB_OK | MB_ICONERROR);
                 break;
             };
-            for (const auto& str : COMPARISONTYPE_STR)
+
+            for (const auto str : COMPARISONTYPE_STR)
             {
-                const auto idx{ ComboBox_AddString(g_hIPEEdit, str) };
+                const auto idx = ComboBox_AddString(g_hIPEEdit, str);
                 if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == ra::Narrow(str))
                     ComboBox_SetCurSel(g_hIPEEdit, idx);
             }
@@ -1073,7 +1072,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     //	Persist/Update/Inject local LBX data back into LBX (?)
-                                    g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Title, pActiveAch->Title());
+                                    g_AchievementsDialog.OnEditData(g_pActiveAchievements->GetAchievementIndex(*pActiveAch), Dlg_Achievements::Column::Title, pActiveAch->Title());
                                 }
                             }
                         }
@@ -1698,13 +1697,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         case CSI_GROUP:
                         {
-                            auto i = 0;
-                            for (const auto& str : Condition::TYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : Condition::TYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetConditionType(ra::itoe<Condition::Type>(i));
                                 i++;
                             }
+
                             UpdateCondition(GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), pDispInfo->item, rCond, pActiveAch->GetConditionHitCount(GetSelectedConditionGroup(), pDispInfo->item.iItem));
                             break;
                         }
@@ -1755,8 +1755,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }break;
                         case CSI_COMPARISON:
                         {
-                            auto i{ 0 };
-                            for (const auto& str : COMPARISONTYPE_STR)
+                            auto i = 0U;
+                            for (const auto str : COMPARISONTYPE_STR)
                             {
                                 if (sData == ra::Narrow(str))
                                     rCond.SetCompareType(ra::itoe<ComparisonType>(i));
@@ -1937,7 +1937,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             if (g_nActiveAchievementSet == AchievementSet::Type::Core)
             {
                 const int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
-                g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Modified, "Yes");
+                g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Column::Modified, "Yes");
             }
         }
     }
@@ -2252,37 +2252,23 @@ void GenerateResizes(HWND hDlg)
     pDlgAchEditorMin.x = windowRect.Width();
     pDlgAchEditorMin.y = windowRect.Height();
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), ResizeContent::ALIGN_BOTTOM_RIGHT, TRUE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_GROUP), ResizeContent::ALIGN_BOTTOM, TRUE));
+    using AlignType = ResizeContent::AlignType;
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), AlignType::BottomRight, true);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_GROUP), AlignType::Bottom, true);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), ResizeContent::ALIGN_RIGHT, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_ACH_ACTIVE), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS), AlignType::BottomRight, false);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_ADDCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_DELETECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_COPYCOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_PASTECOND), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDUP), ResizeContent::ALIGN_BOTTOM, FALSE));
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), ResizeContent::ALIGN_BOTTOM, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_ADDGROUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_DELGROUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ADDCOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_DELETECOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_COPYCOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_PASTECOND), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MOVECONDUP), AlignType::Bottom, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MOVECONDDOWN), AlignType::Bottom, false);
 
-    vDlgAchEditorResize.push_back(ResizeContent(hDlg,
-        GetDlgItem(hDlg, IDCLOSE), ResizeContent::ALIGN_BOTTOM_RIGHT, FALSE));
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDCLOSE), AlignType::BottomRight, false);
 }

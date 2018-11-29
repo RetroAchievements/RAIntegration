@@ -4,32 +4,24 @@
 
 #include "RA_AchievementSet.h"
 
-const int MAX_TEXT_ITEM_SIZE = 80;
-
-//extern const char* g_sColTitles[];
-//extern const int g_nColSizes[];
-
-//typedef struct Achievement;
+inline constexpr int MAX_TEXT_ITEM_SIZE = 80;
 
 class Dlg_Achievements
 {
+    using AchievementDlgRow = std::vector<std::string>;
+
 public:
-    enum Column
+    enum class Column : std::size_t
     {
-        ID,
+        Id,
         Title,
         Points,
         Author,
         Achieved,
         Active = Achieved,
         Modified,
-        Votes = Modified,
-
-        NUM_COLS
+        Votes = Modified
     };
-
-public:
-    Dlg_Achievements();
 
 public:
     static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);
@@ -44,7 +36,16 @@ public:
     void OnEditAchievement(const Achievement& ach);
     void OnClickAchievementSet(_In_ AchievementSet::Type nAchievementSet);
 
-    inline std::string& LbxDataAt(size_t nRow, Column nCol) { return(m_lbxData[nRow])[nCol]; }
+    _NODISCARD inline auto& LbxDataAt(_In_ std::size_t nRow, _In_ Column nCol)
+    {
+        // we need to check stuff to prevent throwing in release mode
+        assert(nRow >= 0 && nRow < m_lbxData.size());
+        auto& rowRef{m_lbxData.at(nRow)};
+
+        using namespace ra::rel_ops;
+        assert(nCol >= 0 && nCol < rowRef.size());
+        return rowRef.at(ra::etoi(nCol));
+    }
 
     inline HWND GetHWND() const { return m_hAchievementsDlg; }
     void InstallHWND(HWND hWnd) { m_hAchievementsDlg = hWnd; }
@@ -55,18 +56,17 @@ private:
 
     void RemoveAchievement(HWND hList, int nIter);
     size_t AddAchievement(HWND hList, const Achievement& Ach);
+    void AddAchievementRow(const Achievement& Ach);
 
     INT_PTR CommitAchievements(HWND hDlg);
 
     void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
 
 private:
-    HWND m_hAchievementsDlg;
-    typedef std::vector< std::string > AchievementDlgRow;
-    std::vector< AchievementDlgRow > m_lbxData;
+    HWND m_hAchievementsDlg = nullptr;
+    std::vector<AchievementDlgRow> m_lbxData;
 };
 
 extern Dlg_Achievements g_AchievementsDialog;
-
 
 #endif // !RA_DLG_ACHIEVEMENT_H

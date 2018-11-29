@@ -25,7 +25,7 @@ public:
 
     TEST_METHOD(TestLoginInvalid)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
         });
@@ -48,7 +48,7 @@ public:
 
     TEST_METHOD(TestLoginFailed)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":false}");
         });
@@ -72,7 +72,7 @@ public:
 
     TEST_METHOD(TestLoginUnknownServer)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::NotFound, "");
         });
@@ -95,7 +95,7 @@ public:
 
     TEST_METHOD(TestLoginEmptyResponse)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "");
         });
@@ -118,7 +118,7 @@ public:
 
     TEST_METHOD(TestLoginInvalidJson)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "You do not have access to that resource");
         });
@@ -141,7 +141,7 @@ public:
 
     TEST_METHOD(TestLoginNoRequiredFields)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true}");
         });
@@ -221,7 +221,7 @@ public:
 
     TEST_METHOD(TestLoginNoOptionalFields)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\"}");
         });

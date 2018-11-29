@@ -1,0 +1,65 @@
+﻿DisableFormat: false
+
+#Some settings are unavailable but should be already taken care of
+
+AlignAfterOpenBracket: true
+AlignEscapedNewlinesLeft: true
+AlignTrailingComments: true
+AlignConsecutiveAssignments: false
+
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: true
+BinPackParameters: true #two params per-line if too long
+BreakBeforeBinaryOperators: None #so assignment alignments don't get messed up
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterEnum: true
+  AfterStruct: true
+  AfterControlStatement: true
+  AfterNamespace: false
+  AfterFunction: true
+  BeforeElse: true
+  SplitEmptyFunction: false
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: AfterColon
+
+ColumnLimit: 120 #should between 80-120 so it'll be easier to see diffs
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+Cpp11BracedListStyle: true
+DerivePointerAlignment: true #Tries to stay consistent with existing code
+ExperimentalAutoDetectBinPacking: true
+IndentCaseLabels: true
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+PointerAlignment: Left
+ReflowComments: true
+
+Standard: Cpp11
+UseTab: Never
+
+AccessModifierOffset: -4
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInCStyleCastParentheses: false
+SpacesInSquareBrackets: false
+
+SortUsingDeclarations: true
+SortIncludes: true
+IncludeBlocks: Preserve #Sorts includes separately
+FixNamespaceComments: true
+CompactNamespaces: false #Puts em all on the same line

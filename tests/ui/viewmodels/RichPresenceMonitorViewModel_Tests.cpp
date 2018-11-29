@@ -8,11 +8,13 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockThreadPool.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::data::mocks::MockGameContext;
+using ra::services::mocks::MockLocalStorage;
 using ra::services::mocks::MockThreadPool;
 
 namespace ra {
@@ -54,6 +56,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         // with no game loaded, message should be static and no callback registered
@@ -66,6 +69,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         // with no rich presence, message should be static and no callback registered
@@ -79,6 +83,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         mockGameContext.SetGameId(1);
@@ -107,6 +112,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         mockGameContext.SetGameId(1);
@@ -130,6 +136,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         // with no game loaded, message should be static and no callback registered
@@ -160,6 +167,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         MockGameContext mockGameContext;
         MockThreadPool mockThreadPool;
+        MockLocalStorage mockLocalStorage;
         RichPresenceMonitorViewModel vmRichPresence;
 
         mockGameContext.SetGameId(1);

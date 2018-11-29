@@ -9,10 +9,6 @@
 #include "RA_ImageFactory.h"
 #endif
 
-#pragma warning (push)
-#pragma warning (disable:4201) // nameless struct
-#include "rcheevos\include\rcheevos.h"
-#pragma warning (pop)
 
 #ifndef RA_UTEST
 #include "RA_Core.h"

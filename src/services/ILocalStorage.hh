@@ -28,6 +28,12 @@ public:
     ILocalStorage& operator=(const ILocalStorage&) noexcept = delete;
     ILocalStorage(ILocalStorage&&) noexcept = delete;
     ILocalStorage& operator=(ILocalStorage&&) noexcept = delete;
+    
+    /// <summary>
+    /// Gets the last time the stored data was modified.
+    /// </summary>
+    /// <returns>Time the stored data was last modified, <c>0</c> if it doesn't exist.</returns>
+    virtual std::chrono::system_clock::time_point GetLastModified(StorageItemType nType, const std::wstring& sKey) = 0;
 
     /// <summary>
     ///   Begins reading stored data for the specified <paramref name="nType" /> and <paramref name="sKey" />.

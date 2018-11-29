@@ -217,6 +217,12 @@
     <ClInclude Include="mocks\MockServer.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClInclude Include="mocks\MockUserContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockSessionTracker.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">

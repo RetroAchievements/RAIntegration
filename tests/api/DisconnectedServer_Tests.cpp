@@ -62,7 +62,7 @@ public:
         ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new DisconnectedServer("host.com"), true);
         auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
         });

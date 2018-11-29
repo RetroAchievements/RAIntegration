@@ -2,12 +2,11 @@
 #define RA_ACHIEVEMENTPOPUP_H
 #pragma once
 
-#include "RA_Defs.h"
+#include "ra_fwd.h"
+
+#include "ui\drawing\ISurface.hh"
+
 #include "RA_Interface.h"
-
-#include "ui\ImageReference.hh"
-
-#include "ui\drawing\gdi\ResourceRepository.hh"
 
 //	Graphic to display an obtained achievement
 enum PopupMessageType
@@ -43,42 +42,38 @@ public:
     {
     }
 
-public:
     const std::string& Title() const { return m_sMessageTitle; }
     const std::string& Subtitle() const { return m_sMessageSubtitle; }
     PopupMessageType Type() const { return m_nMessageType; }
     const ra::ui::ImageReference& Image() const { return m_hMessageImage; }
 
+    const ra::ui::drawing::ISurface& GetRendered();
+
 private:
     const std::string m_sMessageTitle;
     const std::string m_sMessageSubtitle;
     const PopupMessageType m_nMessageType;
-    const ra::ui::ImageReference m_hMessageImage;
+    ra::ui::ImageReference m_hMessageImage;
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
 };
 
 class AchievementPopup
 {
-public:
-
 public:
     AchievementPopup();
 
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
-    void AddMessage(const MessagePopup& msg);
+    void AddMessage(MessagePopup&& msg);
     float GetYOffsetPct() const;
 
-    //bool IsActive() const						{ return( m_vMessages.size() > 0 ); }
     bool MessagesPresent() const { return(m_vMessages.size() > 0); }
-    const MessagePopup& ActiveMessage() const { return m_vMessages.front(); }
 
     void Clear();
     void PlayAudio();
 
 private:
-    ra::ui::drawing::gdi::ResourceRepository m_pResourceRepository;
-
     std::queue<MessagePopup> m_vMessages;
     float m_fTimer;
 };

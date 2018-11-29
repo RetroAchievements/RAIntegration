@@ -3,6 +3,13 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
+
+_NODISCARD static std::string TrimLineEnding(std::string&& str) noexcept
+{
+    auto sRet{ std::move_if_noexcept(str) };
+    return TrimLineEnding(sRet);
+}
+
 namespace services {
 namespace tests {
 
@@ -41,7 +48,6 @@ public:
         // invalid UTF-8 replaced with placeholder U+FFFD
         Assert::AreEqual(std::wstring(L"T\xFFFDst"), Widen("T\xA9st")); // should be \xC3\xA9
     }
-
     TEST_METHOD(TestTrimLineEnding)
     {
         Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test")));
@@ -123,11 +129,17 @@ public:
         Assert::AreEqual(std::string(), StringPrintf(""));
         Assert::AreEqual(std::string("'Twas the night before Christmas and all through the house, not a creature was stirring, not even a mouse."), 
             StringPrintf("'Twas the %s before %s and all through the %s, not a %s was %s, not even a %s.", "night", "Christmas", "house", "creature", "stirring", "mouse"));
+
         Assert::AreEqual(std::string("01AE"), StringPrintf("%04X", 0x1AEU));
         Assert::AreEqual(std::string("01ae"), StringPrintf("%04x", 0x1AEU));
         Assert::AreEqual(std::string("01ae"), StringPrintf("%04x", 0x1AEUL));
+        Assert::AreEqual(std::string("01ae"), StringPrintf("%0*x", 4, 0x1AEUL));
         Assert::AreEqual(std::string("0080"), StringPrintf("%04d", 80));
         Assert::AreEqual(std::string("  80"), StringPrintf("%4d", 80));
+        Assert::AreEqual(std::string("Appl"), StringPrintf("%.4s", "Apple"));
+        Assert::AreEqual(std::string("Appl"), StringPrintf("%.*s", 4, "Apple"));
+        Assert::AreEqual(std::string("Apple"), StringPrintf("%4s", "Apple"));
+        Assert::AreEqual(std::string(" Boo"), StringPrintf("%4s", "Boo"));
     }
 
     TEST_METHOD(TestWStringPrintf)

@@ -252,11 +252,12 @@ public:
     }
 
     template<typename T>
-    void AppendFormat(_UNUSED const T& arg, _UNUSED const std::string& sFormat)
+    void AppendFormat([[maybe_unused]] const T& arg, [[maybe_unused]] const std::string& sFormat)
     {
+        std::ostringstream oss;
+
         if constexpr (std::is_integral_v<T>)
         {
-            std::ostringstream oss;
             if (sFormat.front() == '0')
                 oss << std::setfill('0');
             int nDigits = std::stoi(sFormat.c_str());
@@ -269,12 +270,9 @@ public:
                 oss << std::hex;
 
             oss << arg;
-            Append(oss.str());
         }
         else if constexpr (std::is_floating_point_v<T>)
         {
-            std::ostringstream oss;
-
             if (sFormat.back() == 'f' || sFormat.back() == 'F')
             {
                 int nIndex = sFormat.find('.');
@@ -287,12 +285,40 @@ public:
             }
 
             oss << arg;
-            Append(oss.str());
         }
         else
         {
             // cannot use static_assert here because the code will get generated regardless of if its ever used
             assert(!"Unsupported formatted type");
+        }
+
+        PendingString pPending;
+        pPending.String = oss.str();
+        pPending.DataType = PendingString::Type::String;
+        m_vPending.emplace_back(std::move(pPending));
+    }
+
+    void AppendFormat(const char* arg, const std::string& sFormat)
+    {
+        if (sFormat.front() == '.')
+        {
+            int nCharacters = std::stoi(&sFormat.at(1));
+            AppendSubString(arg, nCharacters);
+        }
+        else
+        {
+            int nLength = strlen(arg);
+            int nPadding = std::stoi(sFormat.c_str());
+            nPadding -= nLength;
+            if (nPadding > 0)
+            {
+                PendingString pPending;
+                pPending.String = std::string(nPadding, ' ');
+                pPending.DataType = PendingString::Type::String;
+                m_vPending.emplace_back(std::move(pPending));
+            }
+
+            AppendSubString(arg, nLength);
         }
     }
 
@@ -380,8 +406,29 @@ public:
                     break;
                 }
 
-                AppendFormat(value, sFormat);
-                AppendPrintf(++pScan, std::forward<Ts>(args)...);
+                if (sFormat.length() > 2 && sFormat.at(sFormat.length() - 2) == '*')
+                {
+                    char c = sFormat.back();
+                    sFormat.pop_back(); // remove 's'/'x'
+                    sFormat.pop_back(); // remove '*'
+                    sFormat.append(ra::ToString(value));
+                    sFormat.push_back(c); // replace 's'/'x'
+
+                    if constexpr (sizeof...(args) > 0)
+                    {
+                        AppendPrintfParameterizedFormat(++pScan, sFormat, std::forward<Ts>(args)...);
+                    }
+                    else
+                    {
+                        assert(!"not enough parameters provided");
+                        Append(sFormat);
+                    }
+                }
+                else
+                {
+                    AppendFormat(value, sFormat);
+                    AppendPrintf(++pScan, std::forward<Ts>(args)...);
+                }
                 break;
         }
     }
@@ -405,6 +452,13 @@ public:
     void AppendToWString(_Inout_ std::wstring& sResult) const;
 
 private:
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
+    void AppendPrintfParameterizedFormat(const CharT* const pFormat, const std::string& sFormat, const T& value, Ts&&... args)
+    {
+        AppendFormat(value, sFormat);
+        AppendPrintf(pFormat, std::forward<Ts>(args)...);
+    }
+
     bool m_bPrepareWide;
 
     struct PendingString

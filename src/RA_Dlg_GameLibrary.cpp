@@ -237,7 +237,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
 
     //	id:
     item.iSubItem = 0;
-    ra::tstring sID = ra::to_tstring(nGameID);	//scoped cache!
+    auto sID = NativeStr(ra::ToString(nGameID)); //scoped cache!
     item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);
 

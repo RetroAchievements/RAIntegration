@@ -175,9 +175,6 @@ struct _NODISCARD is_literal_type
 template<typename LiteralType>
 _CONSTANT_VAR is_literal_type_v{detail::is_literal_type<LiteralType>::value};
 
-template<typename Comparable>
-_CONSTANT_VAR is_nothrow_comparable_v = detail::is_nothrow_comparable<Comparable>::value;
-
 namespace detail {
 
 template<typename T, typename = std::void_t<>>

@@ -53,6 +53,7 @@ _CONSTANT_VAR RA_NEWS_FILENAME   = L"RACache\\Data\\ra_news.txt";
 _CONSTANT_VAR RA_TITLES_FILENAME = L"RACache\\Data\\gametitles.txt";
 _CONSTANT_VAR RA_LOG_FILENAME    = L"RACache\\Data\\RALog.txt";
 
+// NB: This only works on C arrays, but we shouldn't use them; std::array is more of an array wrapper
 template<typename Array, typename = std::enable_if_t<std::is_array_v<Array>>>
 _NODISCARD _CONSTANT_FN SIZEOF_ARRAY(const Array& arr) noexcept
 {

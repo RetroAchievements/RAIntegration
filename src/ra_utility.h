@@ -37,11 +37,10 @@ _NODISCARD _CONSTANT_VAR itoe(_In_ Integral i) noexcept
     return static_cast<Enum>(i);
 }
 
+
 // function alias templates for etoi (EnumToIntegral) and itoe (IntegralToEnum)
-template<typename Enum>
-_CONSTANT_VAR to_integral{etoi<Enum>};
-template<typename Enum, typename Integral = std::underlying_type_t<Enum>>
-_CONSTANT_VAR to_enum{itoe<Enum, Integral>};
+template<typename Enum> _CONSTANT_VAR to_integral{etoi<Enum>};
+template<typename Enum, typename Integral = std::underlying_type_t<Enum>> _CONSTANT_VAR to_enum{itoe<Enum, Integral>};
 
 /// <summary>Calculates the size of any standard fstream.</summary>
 /// <param name="filename">The filename.</param>

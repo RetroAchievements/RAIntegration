@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\md5.c">
+      <Filter>md5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lapi.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lauxlib.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lcode.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lctype.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldebug.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldo.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ldump.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lfunc.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lgc.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\llex.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lmem.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lobject.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lopcodes.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lparser.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstate.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lstring.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltable.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\ltm.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lundump.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lvm.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lua\lzio.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\rcheevos\include\rcheevos.h">
+      <Filter>rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
+      <Filter>rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\md5.h">
+      <Filter>md5</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="lua">
+      <UniqueIdentifier>{34c1cfa0-13ee-4122-b223-0bbc286865e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rcheevos">
+      <UniqueIdentifier>{551d7e10-0699-4da6-9d2d-d992d7b26a3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="md5">
+      <UniqueIdentifier>{0d89b82c-19cc-4151-b2f6-c54895534c95}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

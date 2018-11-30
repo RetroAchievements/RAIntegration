@@ -7,12 +7,6 @@
     <Filter Include="Code">
       <UniqueIdentifier>{c09a9464-e27a-4721-8467-626c7f5e3ab0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code\rcheevos">
-      <UniqueIdentifier>{633c15ff-4743-416b-9e0b-fa7493d6d969}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Code\lua">
-      <UniqueIdentifier>{ca929deb-dbc0-4ae3-8307-9806dbf4b05f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests\UI">
       <UniqueIdentifier>{4f043333-855f-48b9-b8c2-08e3c5f0d576}</UniqueIdentifier>
     </Filter>
@@ -54,9 +48,6 @@
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
     <ClCompile Include="RA_RichPresence_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -64,9 +55,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\md5.c">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_md5factory.cpp">
@@ -182,101 +170,11 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\value.c">
-      <Filter>Code\rcheevos</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lapi.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lcode.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lctype.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldebug.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldo.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ldump.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lfunc.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lgc.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\llex.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lmem.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lobject.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lopcodes.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lparser.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lstate.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lstring.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ltable.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\ltm.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lundump.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lvm.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lzio.c">
-      <Filter>Code\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua\lauxlib.c">
-      <Filter>Code\lua</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -312,9 +210,6 @@
     <ClCompile Include="..\src\services\Http.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
-      <Filter>Code\rcheevos</Filter>
-    </ClInclude>
     <ClInclude Include="mocks\MockHttpRequester.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>

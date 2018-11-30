@@ -206,7 +206,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
             sprintf_s(m_lbxData[nRow][CSI_VALUE_TGT], MEM_STRING_TEXT_LEN, "%u", Cond.CompTarget().GetValue());
     }
 
-    if (Cond.IsAddCondition() || Cond.IsSubCondition())
+    if (Cond.IsSingleOperandConditionType())
     {
         sprintf_s(m_lbxData[nRow][CSI_COMPARISON], MEM_STRING_TEXT_LEN, "");
         sprintf_s(m_lbxData[nRow][CSI_TYPE_TGT], MEM_STRING_TEXT_LEN, "");
@@ -576,7 +576,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -649,7 +649,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -693,7 +693,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
 
             const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
             const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-            if (Cond.IsAddCondition() || Cond.IsSubCondition())
+            if (Cond.IsSingleOperandConditionType())
                 break;
 
             g_hIPEEdit = CreateWindowEx(
@@ -740,7 +740,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 

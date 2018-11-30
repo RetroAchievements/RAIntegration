@@ -205,6 +205,7 @@ public:
             Condition::Type::AddSource,
             Condition::Type::SubSource,
             Condition::Type::AddHits,
+            Condition::Type::AndNext,
         };
 
         for (const auto type : types)
@@ -212,11 +213,7 @@ public:
             Condition cond;
             cond.SetConditionType(type);
 
-            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::Type::ResetIf));
-            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::Type::PauseIf));
-            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::Type::AddSource));
-            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::Type::SubSource));
-            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::Type::AddHits));
+            Assert::AreEqual(cond.GetConditionType(), type);
         }
     }
 };

@@ -154,6 +154,7 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::Type::AddSource); break;
             case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::Type::SubSource); break;
             case RC_CONDITION_ADD_HITS:   cond.SetConditionType(Condition::Type::AddHits);   break;
+            case RC_CONDITION_AND_NEXT:   cond.SetConditionType(Condition::Type::AndNext);   break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);
@@ -209,7 +210,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
 
     //	parse conditions
     const char* pTrigger = pBuffer;
-    while (*pBuffer && (pBuffer[0] != ':' || strchr("ABCPRabcpr", pBuffer[-1]) != nullptr))
+    while (*pBuffer && (pBuffer[0] != ':' || strchr("ABCNPRabcnpr", pBuffer[-1]) != nullptr))
         pBuffer++;
     ParseTrigger(pTrigger);
 

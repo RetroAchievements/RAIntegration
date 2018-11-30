@@ -114,17 +114,19 @@ public:
         ResetIf,
         AddSource,
         SubSource,
-        AddHits
+        AddHits,
+        AndNext
     };
 
-    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
+    inline static constexpr std::array<LPCTSTR, 7> TYPE_STR
     {
         _T(""),
         _T("Pause If"),
         _T("Reset If"),
         _T("Add Source"),
         _T("Sub Source"),
-        _T("Add Hits")
+        _T("Add Hits"),
+        _T("And Next")
     };
 
     void SerializeAppend(std::string& buffer) const;
@@ -141,11 +143,7 @@ public:
     _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
     _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
-    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return(m_nConditionType == Type::ResetIf); }
-    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return(m_nConditionType == Type::PauseIf); }
-    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return(m_nConditionType == Type::AddSource); }
-    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return(m_nConditionType == Type::SubSource); }
-    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return(m_nConditionType == Type::AddHits); }
+    _NODISCARD _CONSTANT_FN IsSingleOperandConditionType() const noexcept { return(m_nConditionType == Type::AddSource || m_nConditionType==Type::SubSource); }
 
     _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
     _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }

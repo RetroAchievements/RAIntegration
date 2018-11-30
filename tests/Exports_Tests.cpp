@@ -108,12 +108,12 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request& request, ra::api::Login::Response& response)
-        {
-            response.ErrorMessage = "Invalid user/password combination. Please try again.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        mockServer.HandleRequest<api::Login>(
+            [](_UNUSED const ra::api::Login::Request&/*request*/, ra::api::Login::Response& response) {
+                response.ErrorMessage = "Invalid user/password combination. Please try again.";
+                response.Result = ra::api::ApiResult::Error;
+                return true;
+            });
 
         mockConfiguration.SetUsername("User");
         mockConfiguration.SetApiToken("ApiToken");

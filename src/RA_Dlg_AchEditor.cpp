@@ -166,6 +166,25 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond,
     return item.iItem;
 }
 
+static const char* GetVariableTypeString(CompVariable::Type type)
+{
+    switch (type)
+    {
+        default:
+        case CompVariable::Type::ValueComparison:
+            return "";
+
+        case CompVariable::Type::Address:
+            return "Mem";
+
+        case CompVariable::Type::DeltaMem:
+            return "Delta";
+
+        case CompVariable::Type::PriorMem:
+            return "Prior";
+    }
+}
+
 void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits)
 {
     int nRow = item.iItem;
@@ -173,17 +192,17 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     //	Update our local array:
     const char* sMemTypStrSrc = "Value";
     std::string sMemSizeStrSrc;
-    if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
+    if (Cond.CompSource().IsMemoryType())
     {
-        sMemTypStrSrc = (Cond.CompSource().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
+        sMemTypStrSrc = GetVariableTypeString(Cond.CompSource().GetType());
         sMemSizeStrSrc = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize())));
     }
 
     const char* sMemTypStrDst = "Value";
     std::string sMemSizeStrDst;
-    if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
+    if (Cond.CompTarget().IsMemoryType())
     {
-        sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
+        sMemTypStrDst = GetVariableTypeString(Cond.CompTarget().GetType());
         sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
     }
 
@@ -580,7 +599,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                     break;
             }
 
-            const int nNumItems = 3;	//	"Mem", "Delta" or "Value"
+            const int nNumItems = 4;	//	"Mem", "Delta", "Prior" or "Value"
 
             g_hIPEEdit = CreateWindowEx(
                 WS_EX_CLIENTEDGE,
@@ -611,6 +630,7 @@ BOOL CreateIPE(int nItem, int nSubItem)
                         /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
+            ComboBox_AddString(g_hIPEEdit, NativeStr("Prior").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
 
             int nSel;
@@ -618,8 +638,10 @@ BOOL CreateIPE(int nItem, int nSubItem)
                 nSel = 0;
             else if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Delta") == 0)
                 nSel = 1;
-            else
+            else if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Prior") == 0)
                 nSel = 2;
+            else
+                nSel = 3;
 
             ComboBox_SetCurSel(g_hIPEEdit, nSel);
 
@@ -1714,6 +1736,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
                             else if (strcmp(sData, "Delta") == 0)
                                 rCond.CompSource().SetType(CompVariable::Type::DeltaMem);
+                            else if (strcmp(sData, "Prior") == 0)
+                                rCond.CompSource().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompSource().SetType(CompVariable::Type::ValueComparison);
 
@@ -1725,6 +1749,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);
                             else if (strcmp(sData, "Delta") == 0)
                                 rCond.CompTarget().SetType(CompVariable::Type::DeltaMem);
+                            else if (strcmp(sData, "Prior") == 0)
+                                rCond.CompTarget().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompTarget().SetType(CompVariable::Type::ValueComparison);
 
@@ -1866,14 +1892,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     switch (lvHitTestInfo.iSubItem)
     {
         case CSI_VALUE_SRC:
-            if (rCond.CompSource().GetType() != CompVariable::Type::Address && rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompSource().GetValue();
             break;
 
         case CSI_VALUE_TGT:
-            if (rCond.CompTarget().GetType() != CompVariable::Type::Address && rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompTarget().GetValue();

@@ -77,27 +77,32 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     {
         case Type::ValueComparison:
             buffer.append(std::to_string(m_nVal));
-            break;
+            return;
 
         case Type::DeltaMem:
             buffer.append(1, 'd');
-            _FALLTHROUGH; // explicit fallthrough to Address
+            break;
+
+        case Type::PriorMem:
+            buffer.append(1, 'p');
+            break;
 
         case Type::Address:
-            buffer.append("0x");
-
-            buffer.append(ComparisonSizeToPrefix(m_nVarSize));
-
-            if (m_nVal >= 0x10000)
-                buffer.append(ra::ByteAddressToString(m_nVal));
-            else
-                buffer.append(ra::ByteAddressToString(m_nVal, 4));
             break;
 
         default:
-            ASSERT(!"Unknown type? (DynMem)?");
+            ASSERT(!"Unknown type");
             break;
     }
+
+    buffer.append("0x");
+
+    buffer.append(ComparisonSizeToPrefix(m_nVarSize));
+
+    if (m_nVal >= 0x10000)
+        buffer.append(ra::ByteAddressToString(m_nVal));
+    else
+        buffer.append(ra::ByteAddressToString(m_nVal, 4));
 }
 
 void ConditionGroup::RemoveAt(size_t nID)

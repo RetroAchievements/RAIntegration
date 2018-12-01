@@ -177,31 +177,26 @@ void AchievementSet::Test()
 
             if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
             {
-                const std::string sPoints = std::to_string(ach.Points());
-
                 if (g_nActiveAchievementSet != Type::Core)
                 {
-                    g_PopupWindows.AchievementPopups().AddMessage(
-                        MessagePopup("Test: Achievement Unlocked",
-                        ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementUnlocked,
-                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
+                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                        "Test: Achievement Unlocked",
+                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
+                        PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (ach.Modified())
                 {
-                    g_PopupWindows.AchievementPopups().AddMessage(
-                        MessagePopup("Modified: Achievement Unlocked",
-                        ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementUnlocked,
-                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
+                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                        "Modified: Achievement Unlocked",
+                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
+                        PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else if (g_bRAMTamperedWith)
                 {
-                    g_PopupWindows.AchievementPopups().AddMessage(
-                        MessagePopup("(RAM tampered with!): Achievement Unlocked",
-                        ach.Title() + " (" + sPoints + ") (Unofficial)",
-                        PopupAchievementError,
-                        ra::ui::ImageType::Badge, ach.BadgeImageURI()));
+                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                        "(RAM tampered with!): Achievement Unlocked",
+                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
+                        PopupMessageType::AchievementError, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
                 }
                 else
                 {
@@ -452,7 +447,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
                 if (nIndex != std::string::npos)
                     sImageName.erase(nIndex);
 
-                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle, PopupMessageType::PopupInfo, ra::ui::ImageType::Icon, sImageName });
+                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle, PopupMessageType::Info, ra::ui::ImageType::Icon, sImageName });
             }
             else
             {

@@ -8,6 +8,7 @@
     <rcheevos_IncludePath>$(RA_DIR)rcheevos\include\</rcheevos_IncludePath>
     <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
     <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir)</RA_IncludePath>
+    <XPDeprecationWarning>false</XPDeprecationWarning>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -70,6 +71,10 @@
     </BuildMacro>
     <BuildMacro Include="Lua_Dir">
       <Value>$(Lua_Dir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="XPDeprecationWarning">
+      <Value>$(XPDeprecationWarning)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

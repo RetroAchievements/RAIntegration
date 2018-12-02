@@ -210,7 +210,7 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const
+bool SessionTracker::IsInspectingMemory() const noexcept
 {
 #ifdef RA_UTEST
     return false;

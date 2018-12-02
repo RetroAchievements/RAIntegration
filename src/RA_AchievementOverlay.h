@@ -3,8 +3,8 @@
 #pragma once
 
 #include "RA_Achievement.h"
-#include "RA_User.h"
 #include "RA_Core.h" // RA_Interface
+#include "RA_User.h"
 
 #include "ui\ImageReference.hh"
 
@@ -12,7 +12,7 @@ class LeaderboardExamine
 {
 public:
     void Initialize(const unsigned int nLBIDIn);
-    //static void CB_OnReceiveData( void* pRequestObject );
+    // static void CB_OnReceiveData( void* pRequestObject );
     void OnReceiveData(const rapidjson::Document& doc);
 
 public:
@@ -22,19 +22,14 @@ public:
 };
 extern LeaderboardExamine g_LBExamine;
 
-
 class AchievementExamine
 {
 public:
     class RecentWinnerData
     {
     public:
-        RecentWinnerData(const std::string& sUser, const std::string& sWonAt) :
-            m_sUser(sUser), m_sWonAt(sWonAt)
-        {
-        }
-        const std::string& User() const { return m_sUser; }
-        const std::string& WonAt() const { return m_sWonAt; }
+        const std::string& User() const noexcept { return m_sUser; }
+        const std::string& WonAt() const noexcept { return m_sWonAt; }
 
     private:
         const std::string m_sUser;
@@ -42,22 +37,18 @@ public:
     };
 
 public:
-    AchievementExamine();
-
-public:
     void Initialize(const Achievement* pAchIn);
     void Clear();
     void OnReceiveData(rapidjson::Document& doc);
 
-    bool HasData() const { return m_bHasData; }
-    const std::string& CreatedDate() const { return m_CreatedDate; }
-    const std::string& ModifiedDate() const { return m_LastModifiedDate; }
-    size_t NumRecentWinners() const { return RecentWinners.size(); }
+    bool HasData() const noexcept { return m_bHasData; }
+    const std::string& CreatedDate() const noexcept { return m_CreatedDate; }
+    const std::string& ModifiedDate() const noexcept { return m_LastModifiedDate; }
+    size_t NumRecentWinners() const noexcept { return RecentWinners.size(); }
     const RecentWinnerData& GetRecentWinner(size_t nOffs) const { return RecentWinners.at(nOffs); }
 
-    unsigned int TotalWinners() const { return m_nTotalWinners; }
-    unsigned int PossibleWinners() const { return m_nPossibleWinners; }
-
+    unsigned int TotalWinners() const noexcept { return m_nTotalWinners; }
+    unsigned int PossibleWinners() const noexcept { return m_nPossibleWinners; }
 
     _NODISCARD inline auto begin() noexcept { return RecentWinners.begin(); }
     _NODISCARD inline auto begin() const noexcept { return RecentWinners.begin(); }
@@ -65,20 +56,19 @@ public:
     _NODISCARD inline auto end() const noexcept { return RecentWinners.end(); }
 
 private:
-    const Achievement* m_pSelectedAchievement;
+    const Achievement* m_pSelectedAchievement{};
     std::string m_CreatedDate;
     std::string m_LastModifiedDate;
 
-    bool m_bHasData;
+    bool m_bHasData{};
 
     //	Data found:
-    unsigned int m_nTotalWinners;
-    unsigned int m_nPossibleWinners;
+    unsigned int m_nTotalWinners{};
+    unsigned int m_nPossibleWinners{};
 
     std::vector<RecentWinnerData> RecentWinners;
 };
 extern AchievementExamine g_AchExamine;
-
 
 class AchievementOverlay
 {
@@ -111,11 +101,10 @@ public:
     void Deactivate();
 
     void Render(_In_ HDC hDC, _In_ const RECT* rcDest) const;
-    _Success_(return)
-    _NODISCARD BOOL Update(_In_ const ControllerInput* input, _In_ float fDelta,
-                           _In_ BOOL bFullScreen, _In_ BOOL bPaused);
+    _Success_(return ) _NODISCARD BOOL
+        Update(_In_ const ControllerInput* input, _In_ float fDelta, _In_ BOOL bFullScreen, _In_ BOOL bPaused);
 
-    _NODISCARD _CONSTANT_FN IsActive() const noexcept { return(m_nTransitionState != TransitionState::Off); }
+    _NODISCARD _CONSTANT_FN IsActive() const noexcept { return (m_nTransitionState != TransitionState::Off); }
     _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
 
     int* GetActiveScrollOffset() const;
@@ -132,9 +121,7 @@ public:
     void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
 
     void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const;
-    void DrawUserFrame(_In_ HDC hDC,
-                       _In_ int nX,  _In_ int nY,
-                       _In_ int nW,  _In_ int nH) const;
+    void DrawUserFrame(_In_ HDC hDC, _In_ int nX, _In_ int nY, _In_ int nW, _In_ int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
     _NODISCARD _CONSTANT_FN CurrentPage() const noexcept { return m_Pages.at(m_nPageStackPointer); }
@@ -164,32 +151,32 @@ public:
     };
 
 private:
-    inline static constexpr auto PAGE_TRANSITION_IN{ -0.200F };
-    inline static constexpr auto PAGE_TRANSITION_OUT{ 0.2F };
+    inline static constexpr auto PAGE_TRANSITION_IN{-0.200F};
+    inline static constexpr auto PAGE_TRANSITION_OUT{0.2F};
 
-    mutable int	m_nAchievementsScrollOffset{};
-    mutable int	m_nFriendsScrollOffset{};
-    mutable int	m_nMessagesScrollOffset{};
-    mutable int	m_nNewsScrollOffset{};
-    mutable int	m_nLeaderboardScrollOffset{};
+    mutable int m_nAchievementsScrollOffset{};
+    mutable int m_nFriendsScrollOffset{};
+    mutable int m_nMessagesScrollOffset{};
+    mutable int m_nNewsScrollOffset{};
+    mutable int m_nLeaderboardScrollOffset{};
 
-    mutable int	m_nAchievementsSelectedItem{};
-    mutable int	m_nFriendsSelectedItem{};
-    mutable int	m_nMessagesSelectedItem{};
-    mutable int	m_nNewsSelectedItem{};
-    mutable int	m_nLeaderboardSelectedItem{};
+    mutable int m_nAchievementsSelectedItem{};
+    mutable int m_nFriendsSelectedItem{};
+    mutable int m_nMessagesSelectedItem{};
+    mutable int m_nNewsSelectedItem{};
+    mutable int m_nLeaderboardSelectedItem{};
 
     mutable int m_nNumAchievementsBeingRendered{};
     mutable int m_nNumFriendsBeingRendered{};
     mutable int m_nNumLeaderboardsBeingRendered{};
 
-    BOOL                  m_bInputLock{}; // Waiting for pad release
+    BOOL m_bInputLock{}; // Waiting for pad release
     std::vector<NewsItem> m_LatestNews{};
-    TransitionState       m_nTransitionState{};
-    float                 m_fTransitionTimer{ PAGE_TRANSITION_IN };
+    TransitionState m_nTransitionState{};
+    float m_fTransitionTimer{PAGE_TRANSITION_IN};
 
-    std::array<Page, 5>   m_Pages{ Page::Achievements };
-    unsigned int          m_nPageStackPointer{};
+    std::array<Page, 5> m_Pages{Page::Achievements};
+    unsigned int m_nPageStackPointer{};
 
     ra::ui::ImageReference m_hOverlayBackground;
     ra::ui::ImageReference m_hUserImage;
@@ -199,11 +186,10 @@ extern AchievementOverlay g_AchievementOverlay;
 
 //	Exposed to DLL
 _EXTERN_C
-// Can't use restrict since the pointer is aliased
-[[gsl::suppress(con.3)]]
-API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen, _In_ bool Paused);
-[[gsl::suppress(con.3)]]
-API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+    // Can't use restrict since the pointer is aliased
+    [[gsl::suppress(con .3)]] API int
+    _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen, _In_ bool Paused);
+[[gsl::suppress(con .3)]] API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
 API bool _RA_IsOverlayFullyVisible();
 _END_EXTERN_C
 
@@ -215,6 +201,5 @@ extern const COLORREF COL_BLACK;
 extern const COLORREF COL_POPUP;
 extern const COLORREF COL_POPUP_BG;
 extern const COLORREF COL_POPUP_SHADOW;
-
 
 #endif // !RA_ACHIEVEMENTOVERLAY_H

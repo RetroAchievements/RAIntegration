@@ -15,7 +15,7 @@ public:
 
     Login::Response Login(const Login::Request& request) noexcept override;
 
-    const std::string& Host() const { return m_sHost; }
+    const std::string& Host() const noexcept { return m_sHost; }
 
 private:
     const std::string m_sHost;

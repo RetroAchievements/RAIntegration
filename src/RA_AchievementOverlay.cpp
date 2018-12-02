@@ -1491,14 +1491,6 @@ void AchievementOverlay::UpdateImages() noexcept
     m_hUserImage.ChangeReference(ra::ui::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
-AchievementExamine::AchievementExamine() :
-    m_pSelectedAchievement(nullptr),
-    m_bHasData(false),
-    m_nTotalWinners(0),
-    m_nPossibleWinners(0)
-{
-}
-
 void AchievementExamine::Clear()
 {
     m_pSelectedAchievement = nullptr;

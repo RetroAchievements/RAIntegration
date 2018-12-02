@@ -163,13 +163,13 @@ class ConditionGroup
 public:
     void SerializeAppend(std::string& buffer) const;
 
-    size_t Count() const { return m_Conditions.size(); }
+    size_t Count() const noexcept { return m_Conditions.size(); }
 
     void Add(const Condition& newCond) { m_Conditions.push_back(newCond); }
     void Insert(size_t i, const Condition& newCond) { m_Conditions.insert(m_Conditions.begin() + i, newCond); }
     Condition& GetAt(size_t i) { return m_Conditions[i]; }
     const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
-    void Clear() { m_Conditions.clear(); }
+    void Clear() noexcept { m_Conditions.clear(); }
     void RemoveAt(size_t i);
 
 protected:
@@ -181,8 +181,8 @@ class ConditionSet
 public:
     void Serialize(std::string& buffer) const;
 
-    void Clear() { m_vConditionGroups.clear(); }
-    size_t GroupCount() const { return m_vConditionGroups.size(); }
+    void Clear() noexcept { m_vConditionGroups.clear(); }
+    size_t GroupCount() const noexcept { return m_vConditionGroups.size(); }
     void AddGroup() { m_vConditionGroups.emplace_back(); }
     void RemoveLastGroup() { m_vConditionGroups.pop_back(); }
     ConditionGroup& GetGroup(size_t i) { return m_vConditionGroups[i]; }

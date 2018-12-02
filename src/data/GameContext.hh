@@ -28,17 +28,17 @@ public:
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
     /// </summary>
-    unsigned int GameId() const { return m_nGameId; }       
+    unsigned int GameId() const noexcept { return m_nGameId; }       
 
     /// <summary>
     /// Gets the title of the currently loaded game.
     /// </summary>
-    const std::wstring& GameTitle() const { return m_sGameTitle; }
+    const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
 
     /// <summary>
     /// Gets the hash of the currently loaded game.
     /// </summary>
-    const std::string& GameHash() const { return m_sGameHash; }
+    const std::string& GameHash() const noexcept { return m_sGameHash; }
 
     /// <summary>
     /// Sets the game hash.
@@ -48,7 +48,7 @@ public:
     /// <summary>
     /// Gets which achievements are active.
     /// </summary>
-    virtual AchievementSet::Type ActiveAchievementType() const 
+    virtual AchievementSet::Type ActiveAchievementType() const noexcept
     {
 #ifdef RA_UTEST
         return AchievementSet::Type::Core;
@@ -60,7 +60,7 @@ public:
     /// <summary>
     /// Determines if any achievements are currently active.
     /// </summary>
-    virtual bool HasActiveAchievements() const 
+    virtual bool HasActiveAchievements() const noexcept
     {
 #ifdef RA_UTEST
         return false;

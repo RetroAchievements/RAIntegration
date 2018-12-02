@@ -40,7 +40,7 @@ public:
     /// <summary>
     /// Determines whether any previous session data exists.
     /// </summary>
-    bool HasSessionData() const { return !m_vGameStats.empty(); }
+    bool HasSessionData() const noexcept { return !m_vGameStats.empty(); }
 
 protected:
     virtual void LoadSessions();

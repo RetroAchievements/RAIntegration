@@ -67,7 +67,7 @@ void Achievement::RebuildTrigger()
     SetDirtyFlag(DirtyFlags::Conditions);
 }
 
-static MemSize GetCompVariableSize(char nOperandSize)
+static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
 {
     switch (nOperandSize)
     {
@@ -203,9 +203,9 @@ const char* Achievement::ParseLine(const char* pBuffer)
     if (pBuffer[0] == '/' || pBuffer[0] == '\\')
         return pBuffer;
 
-    //	Read ID of achievement:
+    // Read ID of achievement:
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetID((unsigned int)atol(sTemp.c_str()));
+    SetID(std::stoul(sTemp));
 
     //	parse conditions
     const char* pTrigger = pBuffer;
@@ -241,13 +241,13 @@ const char* Achievement::ParseLine(const char* pBuffer)
     SetAuthor(sTemp);
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetPoints((unsigned int)atol(sTemp.c_str()));
+    SetPoints(std::stoul(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetCreatedDate((time_t)atol(sTemp.c_str()));
+    SetCreatedDate(std::stoll(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetModifiedDate((time_t)atol(sTemp.c_str()));
+    SetModifiedDate(std::stoll(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
     // SetUpvotes( (unsigned short)atol( sTemp.c_str() ) );
@@ -261,7 +261,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
     return pBuffer;
 }
 
-static bool HasHitCounts(const rc_condset_t* pCondSet)
+static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
 {
     rc_condition_t* condition = pCondSet->conditions;
     while (condition != nullptr)
@@ -318,7 +318,7 @@ bool Achievement::Test()
     return bRetVal;
 }
 
-static rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex)
+static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex) noexcept
 {
     rc_condset_t* pGroup = pTrigger->requirement;
     if (nGroup > 0)
@@ -430,13 +430,13 @@ void Achievement::RemoveConditionGroup()
     m_vConditions.RemoveLastGroup();
 }
 
-void Achievement::SetID(ra::AchievementID nID)
+void Achievement::SetID(ra::AchievementID nID) noexcept
 {
     m_nAchievementID = nID;
     SetDirtyFlag(DirtyFlags::ID);
 }
 
-void Achievement::SetActive(BOOL bActive)
+void Achievement::SetActive(BOOL bActive) noexcept
 {
     if (m_bActive != bActive)
     {
@@ -457,12 +457,12 @@ void Achievement::SetActive(BOOL bActive)
 //	SetDirtyFlag( Dirty_Votes );
 //}
 
-void Achievement::SetModified(BOOL bModified)
+void Achievement::SetModified(BOOL bModified) noexcept
 {
     if (m_bModified != bModified)
     {
         m_bModified = bModified;
-        SetDirtyFlag(DirtyFlags::All);	//	TBD? questionable...
+        SetDirtyFlag(DirtyFlags::All); // TBD? questionable...
     }
 }
 
@@ -476,7 +476,7 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
         m_sBadgeImageURI = sBadgeURI;
 }
 
-void Achievement::Reset()
+void Achievement::Reset() noexcept
 {
     if (m_pTrigger)
     {

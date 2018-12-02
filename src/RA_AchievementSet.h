@@ -41,7 +41,7 @@ public:
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
-    inline size_t NumAchievements() const { return m_Achievements.size(); }
+    inline size_t NumAchievements() const noexcept { return m_Achievements.size(); }
 
     // Get Points Total
     inline unsigned int PointTotal()
@@ -72,8 +72,8 @@ public:
 
     unsigned int NumActive() const;
 
-    BOOL ProcessingActive() const { return m_bProcessingActive; }
-    void SetPaused(BOOL bIsPaused) { m_bProcessingActive = !bIsPaused; }
+    BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }
+    void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
 
     BOOL HasUnsavedChanges();
 

@@ -249,7 +249,8 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     item.iSubItem = 3;
     ListView_SetItemText(hList, item.iItem, 3, NativeStr(sFilename).data());
 
-    m_vGameEntries.emplace_back(sTitle, sFilename, nGameID);
+    // NB: Perfect forwarding seems to cause an access violation here, so it's using an rvalue instead
+    m_vGameEntries.emplace_back(GameEntry(sTitle, sFilename, nGameID));
 }
 
 void Dlg_GameLibrary::ClearTitles() noexcept

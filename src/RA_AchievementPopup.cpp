@@ -47,10 +47,8 @@ void AchievementPopup::AddMessage(MessagePopup&& msg)
     PlayAudio();
 }
 
-void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
+void AchievementPopup::Update(float fDelta)
 {
-    if (bPaused)
-        fDelta = 0.0F;
     fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
     if (m_vMessages.size() > 0)
     {
@@ -157,12 +155,10 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
     return *m_pSurface;
 }
 
-void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
+void AchievementPopup::Render(ra::ui::drawing::ISurface& pSurface)
 {
     if (!MessagesPresent())
         return;
-
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest);
 
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
     fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));

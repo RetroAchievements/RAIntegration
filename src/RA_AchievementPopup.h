@@ -57,8 +57,8 @@ private:
 class AchievementPopup
 {
 public:
-    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
-    void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
+    void Update(float fDelta);
+    void Render(ra::ui::drawing::ISurface& pSurface);
 
     void AddMessage(MessagePopup&& msg);
     float GetYOffsetPct() const;

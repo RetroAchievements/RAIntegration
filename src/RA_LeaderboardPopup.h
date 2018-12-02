@@ -4,6 +4,8 @@
 
 #include "RA_AchievementOverlay.h"
 
+#include "ui\drawing\ISurface.hh"
+
 //	Graphic to display current leaderboard progress
 
 class LeaderboardPopup
@@ -17,8 +19,8 @@ class LeaderboardPopup
 public:
     LeaderboardPopup();
 
-    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
-    void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
+    void Update(float fDelta);
+    void Render(ra::ui::drawing::ISurface& pSurface);
 
     void Reset();
     BOOL Activate(_In_ ra::LeaderboardID nLBID);

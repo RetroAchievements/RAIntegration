@@ -10,7 +10,10 @@ LeaderboardPopup PopupWindows::m_LeaderboardPopups;
 _Use_decl_annotations_
 API int _RA_UpdatePopups(ControllerInput* __restrict input, float fDTime, bool Full_Screen, bool Paused)
 {
-    PopupWindows::Update(input, fDTime, Full_Screen, Paused);
+    if (Paused)
+        fDTime = 0.0F;
+
+    PopupWindows::Update(fDTime);
     return 0;
 }
 

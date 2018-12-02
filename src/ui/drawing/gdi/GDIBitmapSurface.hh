@@ -30,12 +30,14 @@ public:
 
     ~GDIBitmapSurface() noexcept
     {
-        if (m_hBitmap) DeleteBitmap(m_hBitmap);
-        if (m_hMemDC) DeleteDC(m_hMemDC);
+        if (m_hBitmap)
+            DeleteBitmap(m_hBitmap);
+        if (m_hMemDC)
+            DeleteDC(m_hMemDC);
     }
 
 protected:
-    UINT32* m_pBits;
+    UINT32* m_pBits; // see note below about initializing this
 
 private:
     HDC CreateBitmapHDC(const int nWidth, const int nHeight)
@@ -55,14 +57,18 @@ private:
 
         LPVOID pBits{};
         m_hBitmap = CreateDIBSection(m_hMemDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
+        assert(m_hBitmap != nullptr);
+        assert(pBits != nullptr);
         m_pBits = reinterpret_cast<UINT32*>(pBits);
 
         SelectObject(m_hMemDC, m_hBitmap);
         return m_hMemDC;
     }
 
-    HBITMAP m_hBitmap{};
-    HDC m_hMemDC{};
+    // IMPORTANT: m_hBitmap, m_hMemDC, and m_pBits are set by CreateBitmapHDC, which is called from the constructor.
+    // explicitly setting an initial value causes the constructor calculated values to be overridden.
+    HBITMAP m_hBitmap;
+    HDC m_hMemDC;
 };
 
 class GDIAlphaBitmapSurface : public GDIBitmapSurface

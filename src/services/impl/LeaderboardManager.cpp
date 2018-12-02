@@ -35,9 +35,9 @@ void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Challenge Available: " + lb.Title(),
-            lb.Description(),
-            PopupLeaderboardInfo));
+            MessagePopup(ra::StringPrintf("Challenge Available: %s", lb.Title().c_str()),
+                         lb.Description(),
+                         PopupMessageType::LeaderboardInfo));
     }
 
     g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
@@ -50,9 +50,7 @@ void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard attempt cancelled!",
-            lb.Title(),
-            PopupLeaderboardCancel));
+            MessagePopup("Leaderboard attempt canceled!", lb.Title(), PopupMessageType::LeaderboardCancel));
     }
 }
 
@@ -63,16 +61,12 @@ void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsign
     if (g_bRAMTamperedWith)
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Not posting to leaderboard: memory tamper detected!",
-            "Reset game to reenable posting.",
-            PopupInfo));
+            MessagePopup("Not posting to leaderboard: memory tamper detected!", "Reset game to re-enable posting."));
     }
     else if (!m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard submission post cancelled.",
-            "Enable Hardcore Mode to enable posting.",
-            PopupInfo));
+            MessagePopup("Leaderboard submission post canceled.", "Enable Hardcore Mode to enable posting."));
     }
     else
     {

@@ -431,12 +431,11 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
         {
             g_PopupWindows.AchievementPopups().AddMessage(
-                MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled.", PopupInfo));
+                MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled."));
         }
         else
         {
-            g_PopupWindows.AchievementPopups().AddMessage(
-                MessagePopup("Playing in Softcore Mode", "", PopupInfo));
+            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Playing in Softcore Mode", ""));
         }
     }
 
@@ -669,9 +668,9 @@ API int CCONV _RA_HandleHTTPResults()
                         {
                             g_PopupWindows.AchievementPopups().AddMessage(
                                 MessagePopup("Achievement Unlocked",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementUnlocked,
-                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                                             ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
+                                             PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge,
+                                             pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
@@ -679,16 +678,14 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked (Error)",
-                                    pAch->Title() + " (" + std::to_string(pAch->Points()) + ")",
-                                    PopupMessageType::PopupAchievementError,
-                                    ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                                "Achievement Unlocked (Error)",
+                                ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
+                                PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Error submitting achievement:",
-                                    doc["Error"].GetString())); //?
+                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Error submitting achievement:",
+                                                                                       doc["Error"].GetString())); //?
                         }
                     }
                     else

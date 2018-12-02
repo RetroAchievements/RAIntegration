@@ -8,39 +8,36 @@
 
 #include "RA_Interface.h"
 
-//	Graphic to display an obtained achievement
-enum PopupMessageType
+// Graphic to display an obtained achievement
+enum class PopupMessageType : std::size_t
 {
-    PopupLogin,
-    PopupInfo,
-    PopupAchievementUnlocked,
-    PopupAchievementError,
-    PopupLeaderboardInfo,
-    PopupLeaderboardCancel,
-    PopupMessage,
-
-    NumMessageTypes
+    Login,
+    Info,
+    AchievementUnlocked,
+    AchievementError,
+    LeaderboardInfo,
+    LeaderboardCancel,
+    Message,
 };
 
 class MessagePopup
 {
 public:
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType, 
-        ra::ui::ImageType nImageType, const std::string& sImageName ) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType,
+                 ra::ui::ImageType nImageType, const std::string& sImageName) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(nImageType, sImageName)
-    {
-    }
+    {}
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
+                 PopupMessageType nMsgType = PopupMessageType::Info) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(ra::ui::ImageType::None, "")
-    {
-    }
+    {}
 
     const std::string& Title() const noexcept { return m_sMessageTitle; }
     const std::string& Subtitle() const noexcept { return m_sMessageSubtitle; }
@@ -60,22 +57,20 @@ private:
 class AchievementPopup
 {
 public:
-    AchievementPopup();
-
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
     void AddMessage(MessagePopup&& msg);
     float GetYOffsetPct() const;
 
-    bool MessagesPresent() const { return(m_vMessages.size() > 0); }
+    bool MessagesPresent() const { return (m_vMessages.size() > 0); }
 
     void Clear();
     void PlayAudio();
 
 private:
     std::queue<MessagePopup> m_vMessages;
-    float m_fTimer;
+    float m_fTimer{};
 };
 
 #endif // !RA_ACHIEVEMENTPOPUP_H

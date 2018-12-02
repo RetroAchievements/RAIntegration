@@ -46,9 +46,9 @@ _NODISCARD inline auto ftoull(_In_ FloatingPoint fp) noexcept
 }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD inline auto sqr(_In_ Arithmetic a) noexcept
+_NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept
 {
-    return std::pow(a, 2);
+    return (a*a);
 }
 } /* namespace ra */
 

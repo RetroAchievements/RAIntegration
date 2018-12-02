@@ -51,12 +51,12 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
                          (response.NumUnreadMessages == 1)
                              ? "You have 1 new message"
                              : ra::StringPrintf("You have %u new messages", response.NumUnreadMessages),
-                         PopupMessageType::PopupLogin, ra::ui::ImageType::UserPic, response.Username));
+                         PopupMessageType::Login, ra::ui::ImageType::UserPic, response.Username));
 
         // notify the client to update the RetroAchievements menu
         RA_RebuildMenu();
 
-        // update the client titlebar to include the user name
+        // update the client title-bar to include the user name
         _RA_UpdateAppTitle();
 
         // notify the overlay of the new user image

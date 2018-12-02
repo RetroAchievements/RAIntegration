@@ -18,7 +18,6 @@ namespace {
 
 inline constexpr std::array<LPCTSTR, 4> COL_TITLE{ _T("ID"), _T("Game Title"), _T("Completion"), _T("File Path") };
 inline constexpr std::array<int, 4> COL_SIZE{ 30, 230, 110, 170 };
-static_assert(SIZEOF_ARRAY(COL_TITLE) == SIZEOF_ARRAY(COL_SIZE), "Must match!");
 inline constexpr auto bCancelScan = false;
 
 std::mutex mtx;
@@ -250,7 +249,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     item.iSubItem = 3;
     ListView_SetItemText(hList, item.iItem, 3, NativeStr(sFilename).data());
 
-    m_vGameEntries.push_back(GameEntry(sTitle, sFilename, nGameID));
+    m_vGameEntries.emplace_back(sTitle, sFilename, nGameID);
 }
 
 void Dlg_GameLibrary::ClearTitles() noexcept
@@ -289,7 +288,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
             // May have caused a buffer overrun, this is way to big to be on the stack
             auto pBuf{ std::make_unique<unsigned char[]>(6 * 1024 * 1024) };
 
-            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf);	//Check
+            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf); //Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
 
             SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);

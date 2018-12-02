@@ -17,7 +17,7 @@ namespace impl {
 class FileLogger : public ra::services::ILogger
 {
 public:
-    explicit FileLogger(const ra::services::IFileSystem& pFileSystem) noexcept
+    explicit FileLogger(const ra::services::IFileSystem& pFileSystem)
     {
         std::wstring sLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog.txt";
 
@@ -35,7 +35,7 @@ public:
             m_pWriter->WriteLine();
     }
 
-    bool IsEnabled([[maybe_unused]] LogLevel level) const override { return true; }
+    bool IsEnabled([[maybe_unused]] LogLevel level) const noexcept override { return true; }
 
     void LogMessage(LogLevel level, const std::string& sMessage) const override
     {

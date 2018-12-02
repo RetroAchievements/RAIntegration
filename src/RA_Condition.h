@@ -183,7 +183,8 @@ public:
 
     void Clear() noexcept { m_vConditionGroups.clear(); }
     size_t GroupCount() const noexcept { return m_vConditionGroups.size(); }
-    void AddGroup() { m_vConditionGroups.emplace_back(); }
+    // TODO: Put in a type_trait for nothrow EmplaceConstructible to give a nothrow guarantee
+    [[gsl::suppress(f.6)]] void AddGroup() noexcept { m_vConditionGroups.emplace_back(); }
     void RemoveLastGroup() { m_vConditionGroups.pop_back(); }
     ConditionGroup& GetGroup(size_t i) { return m_vConditionGroups[i]; }
     const ConditionGroup& GetGroup(size_t i) const { return m_vConditionGroups[i]; }

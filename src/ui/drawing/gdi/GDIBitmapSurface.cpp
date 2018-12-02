@@ -7,7 +7,7 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
+void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     assert(nWidth != 0);
     assert(nHeight != 0);
@@ -40,7 +40,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static inline void BlendPixel(UINT32* nTarget, UINT32 nBlend)
+static constexpr void BlendPixel(UINT32* nTarget, UINT32 nBlend) noexcept
 {
     const auto alpha = nBlend >> 24;
 
@@ -125,7 +125,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 {
     int nWidth = static_cast<int>(GetWidth());
     int nHeight = static_cast<int>(GetHeight());
@@ -163,11 +163,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
+void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
     const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
-    assert(nAlpha > 0.0); // setting opacity to 0 is irreversable - caller should just not draw it
+    assert(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
     const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
     UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;

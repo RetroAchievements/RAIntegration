@@ -4,8 +4,9 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response OfflineServer::Login(const Login::Request& request) noexcept
+Login::Response OfflineServer::Login(const Login::Request& request)
 {
+    
     Login::Response response;
     response.Result = ApiResult::Success;
     response.Username = request.Username;

@@ -10,6 +10,9 @@ public:
     class CodeNoteObj
     {
     public:
+        explicit CodeNoteObj(const std::string& sAuthor, const std::string& sNote) : m_sAuthor{sAuthor}, m_sNote{sNote}
+        {}
+
         const std::string& Author() const noexcept { return m_sAuthor; }
         const std::string& Note() const noexcept { return m_sNote; }
 

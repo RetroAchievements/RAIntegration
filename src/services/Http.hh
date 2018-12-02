@@ -48,7 +48,7 @@ public:
     class Request
     {
     public:
-        explicit Request(const std::string& sUrl) noexcept
+        explicit Request(const std::string& sUrl)
         {
             const auto nIndex = sUrl.find('?');
             if (nIndex == std::string::npos)
@@ -97,7 +97,7 @@ public:
         /// Sets the POST data.
         /// </summary>
         /// <remarks>If not empty, POST request will be made, otherwise GET request wil be made.</remarks>
-        void SetPostData(const std::string& sValue) noexcept { m_sPostData = sValue; }
+        void SetPostData(const std::string& sValue) { m_sPostData = sValue; }
 
         /// <summary>
         /// Gets the POST data.
@@ -107,7 +107,7 @@ public:
         /// <summary>
         /// Specifies the Content-Type to send. Default: "application/x-www-form-urlencoded"
         /// </summary>
-        void SetContentType(const std::string& sValue) noexcept { m_sContentType = sValue; }
+        void SetContentType(const std::string& sValue) { m_sContentType = sValue; }
 
         /// <summary>
         /// Gets the Content-Type to send. Default: "application/x-www-form-urlencoded"

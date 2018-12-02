@@ -48,27 +48,19 @@ AchievementOverlay g_AchievementOverlay;
 AchievementExamine g_AchExamine;
 LeaderboardExamine g_LBExamine;
 
-const COLORREF COL_TEXT = RGB(17, 102, 221);
-const COLORREF COL_TEXT_HIGHLIGHT = RGB(251, 102, 0);
-const COLORREF COL_SELECTED = RGB(255, 255, 255);
-const COLORREF COL_TEXT_LOCKED = RGB(137, 137, 137);
-const COLORREF COL_SELECTED_LOCKED = RGB(202, 202, 202);
-const COLORREF COL_BLACK = RGB(0, 0, 0);
-const COLORREF COL_WHITE = RGB(255, 255, 255);
-const COLORREF COL_BAR = RGB(0, 40, 0);
-const COLORREF COL_BAR_BG = RGB(0, 212, 0);
-const COLORREF COL_POPUP = RGB(0, 0, 40);
-const COLORREF COL_POPUP_BG = RGB(212, 212, 212);
-const COLORREF COL_POPUP_SHADOW = RGB(0, 0, 0);
-const COLORREF COL_USER_FRAME_BG = RGB(32, 32, 32);
-const COLORREF COL_SELECTED_BOX_BG = RGB(22, 22, 60);
-const COLORREF COL_WARNING = RGB(255, 0, 0);
-const COLORREF COL_WARNING_BG = RGB(80, 0, 0);
+_CONSTANT_VAR COL_TEXT_LOCKED     = RGB(137, 137, 137);
+_CONSTANT_VAR COL_SELECTED_LOCKED = RGB(202, 202, 202);
+_CONSTANT_VAR COL_BAR             = RGB(0, 40, 0);
+_CONSTANT_VAR COL_BAR_BG          = RGB(0, 212, 0);
+_CONSTANT_VAR COL_USER_FRAME_BG   = RGB(32, 32, 32);
+_CONSTANT_VAR COL_SELECTED_BOX_BG = RGB(22, 22, 60);
+_CONSTANT_VAR COL_WARNING         = RGB(255, 0, 0);
+_CONSTANT_VAR COL_WARNING_BG      = RGB(80, 0, 0);
 
-const unsigned int OVERLAY_WIDTH = 1024;
-const unsigned int OVERLAY_HEIGHT = 1024;
+_CONSTANT_VAR OVERLAY_WIDTH  = 1024U;
+_CONSTANT_VAR OVERLAY_HEIGHT = 1024U;
 
-void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
+void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight) noexcept
 {
     switch (m_Pages.at(m_nPageStackPointer))
     {
@@ -94,7 +86,7 @@ void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight)
     }
 }
 
-void AchievementOverlay::Activate()
+void AchievementOverlay::Activate() noexcept
 {
     if (m_nTransitionState != TransitionState::Hold)
     {
@@ -103,7 +95,7 @@ void AchievementOverlay::Activate()
     }
 }
 
-void AchievementOverlay::Deactivate()
+void AchievementOverlay::Deactivate() noexcept
 {
     if (m_nTransitionState != TransitionState::Off && m_nTransitionState != TransitionState::Out)
     {
@@ -115,7 +107,7 @@ void AchievementOverlay::Deactivate()
 }
 
 //	Returns TRUE if we are ready to exit the overlay.
-BOOL AchievementOverlay::GoBack()
+BOOL AchievementOverlay::GoBack() noexcept
 {
     if (m_nPageStackPointer == 0)
     {
@@ -573,20 +565,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     m_nNumAchievementsBeingRendered = nAchievementsToDraw;
 }
 
-void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const
+void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const noexcept
 {
-    // 		for( size_t i = 0; i < 256; ++i )
-    // 			buffer[i] = (char)(i);
-    // 
-    // 		SelectObject( hDC, hFontDesc );
-    // 		TextOut( hDC, nDX+8, 40, buffer, 32 );
-    // 		TextOut( hDC, nDX+8, 60, buffer+32, 32 );
-    // 		TextOut( hDC, nDX+8, 80, buffer+64, 32 );
-    // 		TextOut( hDC, nDX+8, 100, buffer+96, 32 );
-    // 		TextOut( hDC, nDX+8, 120, buffer+128, 32 );
-    // 		TextOut( hDC, nDX+8, 140, buffer+160, 32 );
-    // 		TextOut( hDC, nDX+8, 160, buffer+192, 32 );
-    // 		TextOut( hDC, nDX+8, 180, buffer+224, 32 );
 }
 
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
@@ -1249,7 +1229,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     ::DeleteDC(hDC);
 }
 
-void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const
+void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const noexcept
 {
     HBRUSH hBarBack = static_cast<HBRUSH>(GetStockObject(DKGRAY_BRUSH));
     HBRUSH hBarFront = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
@@ -1377,7 +1357,7 @@ _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, i
     DeleteObject(hBrush2);
 }
 
-int* AchievementOverlay::GetActiveScrollOffset() const
+int* AchievementOverlay::GetActiveScrollOffset() const noexcept
 {
     switch (m_Pages.at(m_nPageStackPointer))
     {
@@ -1403,7 +1383,7 @@ int* AchievementOverlay::GetActiveScrollOffset() const
     }
 }
 
-int* AchievementOverlay::GetActiveSelectedItem() const
+int* AchievementOverlay::GetActiveSelectedItem() const noexcept
 {
     switch (m_Pages.at(m_nPageStackPointer))
     {
@@ -1429,7 +1409,7 @@ int* AchievementOverlay::GetActiveSelectedItem() const
     }
 }
 
-void AchievementOverlay::OnLoad_NewRom()
+void AchievementOverlay::OnLoad_NewRom() noexcept
 {
     m_nAchievementsSelectedItem = 0;
     m_nAchievementsScrollOffset = 0;
@@ -1491,7 +1471,7 @@ void AchievementOverlay::UpdateImages() noexcept
     m_hUserImage.ChangeReference(ra::ui::ImageType::UserPic, RAUsers::LocalUser().Username());
 }
 
-void AchievementExamine::Clear()
+void AchievementExamine::Clear() noexcept
 {
     m_pSelectedAchievement = nullptr;
     m_CreatedDate.clear();
@@ -1553,7 +1533,7 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
         const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.push_back({ oss.str(), _TimeStampToString(nDateAwarded) });
+        RecentWinners.emplace_back(oss.str(), _TimeStampToString(nDateAwarded));
     }
 
     m_bHasData = true;

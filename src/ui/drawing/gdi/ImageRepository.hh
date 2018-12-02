@@ -12,14 +12,14 @@ namespace gdi {
 class ImageRepository : public IImageRepository
 {
 public:
-    ImageRepository() = default;
-    ~ImageRepository() noexcept;
+    ImageRepository() noexcept {};
+    [[gsl::suppress(f .6)]] ~ImageRepository() noexcept;
 
     /// <summary>
     /// Initializes the repository.
     /// </summary>
     bool Initialize();
-    
+
     /// <summary>
     /// Gets the <see cref="HBITMAP" /> from an <see cref="ImageReference" />.
     /// </summary>
@@ -27,10 +27,10 @@ public:
 
     void FetchImage(ImageType nType, const std::string& sName) override;
 
-    void AddReference(ImageReference& pImage) noexcept override;
-    void ReleaseReference(ImageReference& pImage) noexcept override;
+    void AddReference(ImageReference& pImage) override;
+    [[gsl::suppress(f .6)]] void ReleaseReference(ImageReference& pImage) noexcept override;
 
-    bool HasReferencedImageChanged(ImageReference& pImage) const noexcept override;
+    bool HasReferencedImageChanged(ImageReference& pImage) const override;
 
 private:
     static std::wstring GetFilename(ImageType nType, const std::string& sName);
@@ -51,7 +51,7 @@ private:
     HBitmapMap m_mLocal;
     HBitmapMap m_mIcons;
 
-    HBitmapMap* GetBitmapMap(ImageType nType);
+    HBitmapMap* GetBitmapMap(ImageType nType) noexcept;
 
     std::mutex m_oMutex;
     std::set<std::wstring> m_vRequestedImages;

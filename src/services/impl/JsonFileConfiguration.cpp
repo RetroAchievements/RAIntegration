@@ -140,14 +140,14 @@ void JsonFileConfiguration::Save() const
         SaveDocument(doc, *pWriter);
 }
 
-bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const
+bool JsonFileConfiguration::IsFeatureEnabled(Feature nFeature) const noexcept
 {
-    return (m_vEnabledFeatures & (1 << static_cast<int>(nFeature)));
+    return (m_vEnabledFeatures & (1 << ra::etoi(nFeature)));
 }
 
-void JsonFileConfiguration::SetFeatureEnabled(Feature nFeature, bool bEnabled)
+void JsonFileConfiguration::SetFeatureEnabled(Feature nFeature, bool bEnabled) noexcept
 {
-    const int bit = 1 << static_cast<int>(nFeature);
+    const auto bit = 1 << ra::etoi(nFeature);
 
     if (bEnabled)
         m_vEnabledFeatures |= bit;

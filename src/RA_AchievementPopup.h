@@ -61,7 +61,7 @@ public:
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
     void AddMessage(MessagePopup&& msg);
-    float GetYOffsetPct() const;
+    float GetYOffsetPct() const noexcept;
 
     bool MessagesPresent() const { return (m_vMessages.size() > 0); }
 

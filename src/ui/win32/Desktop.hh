@@ -11,14 +11,14 @@ namespace win32 {
 class Desktop : public IDesktop
 {
 public:
-    Desktop() noexcept;
+    [[gsl::suppress(f.6)]] Desktop() noexcept;
 
     void ShowWindow(WindowViewModelBase& oViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& oViewModel) const override;
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override;
 
-    void Shutdown() override;
+    void Shutdown() noexcept override;
 
 private:
     _Success_(return != nullptr)

@@ -72,7 +72,7 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    virtual bool HasRichPresence() const;
+    virtual bool HasRichPresence() const noexcept;
     
     /// <summary>
     /// Gets the current rich presence display string.

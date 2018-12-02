@@ -7,11 +7,12 @@
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_Inout_ std::wstring&& wstr) noexcept;
 _NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
-_NODISCARD std::wstring Widen(_Inout_ std::string&& str) noexcept;
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
+
+[[gsl::suppress(f.6), nodiscard]] std::string Narrow(std::wstring&& wstr) noexcept;
+[[gsl::suppress(f.6), nodiscard]] std::wstring Widen(std::string&& str) noexcept;
 
 //	No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
@@ -23,7 +24,7 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
-std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
+[[gsl::suppress(f.6)]] std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
 // ----- ToString -----
 
@@ -239,7 +240,7 @@ public:
         m_vPending.emplace_back(std::move(pPending));
     }
 
-    void Append()
+    void Append() noexcept
     {
         // just in case one of the variadic methods gets called with 0 parameters
     }
@@ -603,12 +604,14 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+[[gsl::suppress(f.6), nodiscard]]
+bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+[[gsl::suppress(f.6), nodiscard]]
+bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
 
 } // namespace ra
 

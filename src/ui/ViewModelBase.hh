@@ -24,13 +24,16 @@ public:
         NotifyTarget(NotifyTarget&&) noexcept = default;
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
+        [[gsl::suppress(f.6)]] /*Overrides can throw, we should either make this pure or suppress*/
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) {}
+        [[gsl::suppress(f.6)]] 
         virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) {}
+        [[gsl::suppress(f.6)]] 
         virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
+    [[gsl::suppress(f.6)]] void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

@@ -48,7 +48,7 @@ protected:
     long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetCurrentActivity() const;
 
-    virtual bool IsInspectingMemory() const;
+    virtual bool IsInspectingMemory() const noexcept;
 
     std::wstring m_sUsername;
 

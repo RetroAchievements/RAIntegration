@@ -275,7 +275,7 @@ static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
     return false;
 }
 
-static bool HasHitCounts(const rc_trigger_t* pTrigger)
+static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
 {
     if (HasHitCounts(pTrigger->requirement))
         return true;
@@ -292,7 +292,7 @@ static bool HasHitCounts(const rc_trigger_t* pTrigger)
     return false;
 }
 
-bool Achievement::Test()
+bool Achievement::Test() noexcept
 {
     if (m_pTrigger == nullptr)
         return false;
@@ -346,7 +346,7 @@ static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, siz
     return pCondition;
 }
 
-unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const
+unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const noexcept
 {
     if (m_pTrigger == nullptr)
         return 0U;
@@ -356,7 +356,7 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer) const
+int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char* pBuffer) const noexcept
 {
     if (m_pTrigger != nullptr)
     {
@@ -372,7 +372,8 @@ int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer
     return snprintf(pBuffer, 128, "0:0:0:0:0:");
 }
 
-void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPreviousValue)
+void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue,
+                                        unsigned int nPreviousValue) noexcept
 {
     if (m_pTrigger == nullptr)
         return;
@@ -387,7 +388,7 @@ void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned i
     pCondition->operand2.previous = nPreviousValue;
 }
 
-void Achievement::Clear()
+void Achievement::Clear() noexcept
 {
     m_vConditions.Clear();
 
@@ -409,10 +410,10 @@ void Achievement::Clear()
     ClearDirtyFlag();
 
     m_bProgressEnabled = FALSE;
-    m_sProgress[0] = '\0';
-    m_sProgressMax[0] = '\0';
-    m_sProgressFmt[0] = '\0';
-    m_fProgressLastShown = 0.0f;
+    m_sProgress.clear();
+    m_sProgressMax.clear();
+    m_sProgressFmt.clear();
+    m_fProgressLastShown = 0.0F;
 
     m_nTimestampCreated = 0;
     m_nTimestampModified = 0;
@@ -420,15 +421,8 @@ void Achievement::Clear()
     //m_nDownvotes = 0;
 }
 
-void Achievement::AddConditionGroup()
-{
-    m_vConditions.AddGroup();
-}
-
-void Achievement::RemoveConditionGroup()
-{
-    m_vConditions.RemoveLastGroup();
-}
+void Achievement::AddConditionGroup() noexcept { m_vConditions.AddGroup(); }
+void Achievement::RemoveConditionGroup() { m_vConditions.RemoveLastGroup(); }
 
 void Achievement::SetID(ra::AchievementID nID) noexcept
 {

@@ -63,7 +63,7 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
     }
 }
 
-float AchievementPopup::GetYOffsetPct() const
+float AchievementPopup::GetYOffsetPct() const noexcept
 {
     float fVal = 0.0F;
 

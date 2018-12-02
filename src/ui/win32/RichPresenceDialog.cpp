@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-bool RichPresenceDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel)
+bool RichPresenceDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept
 {
     return (dynamic_cast<const ra::ui::viewmodels::RichPresenceMonitorViewModel*>(&oViewModel) != nullptr);
 }
@@ -32,20 +32,19 @@ void RichPresenceDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmVi
     m_pDialog->ShowDialogWindow();
 }
 
-void RichPresenceDialog::Presenter::OnClosed()
-{
-    m_pDialog.reset();
-}
+void RichPresenceDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 _Use_decl_annotations_
-RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept
+RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay)
     : DialogBase(vmRichPresenceDisplay)
 {
     m_hFont = CreateFont(15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, nullptr);
 
-    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::After, ra::ui::win32::bindings::RelativePosition::Far, "Rich Presence Monitor");
-    m_bindWindow.BindLabel(IDC_RA_RICHPRESENCERESULTTEXT, ra::ui::viewmodels::RichPresenceMonitorViewModel::DisplayStringProperty);
+    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::After,
+                                    ra::ui::win32::bindings::RelativePosition::Far, "Rich Presence Monitor");
+    m_bindWindow.BindLabel(IDC_RA_RICHPRESENCERESULTTEXT,
+                           ra::ui::viewmodels::RichPresenceMonitorViewModel::DisplayStringProperty);
 }
 
 RichPresenceDialog::~RichPresenceDialog() noexcept

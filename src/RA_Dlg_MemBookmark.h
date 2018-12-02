@@ -57,7 +57,7 @@ public:
 
     void InstallHWND(HWND hWnd) noexcept { m_hMemBookmarkDialog = hWnd; }
     HWND GetHWND() const noexcept { return m_hMemBookmarkDialog; }
-    BOOL IsActive() const;
+    BOOL IsActive() const noexcept;
 
     std::vector<MemBookmark*> Bookmarks() { return m_vBookmarks; }
     void UpdateBookmarks(bool bForceWrite);

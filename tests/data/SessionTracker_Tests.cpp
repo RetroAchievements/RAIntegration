@@ -25,7 +25,7 @@ public:
     class SessionTrackerHarness : public SessionTracker
     {
     public:
-        SessionTrackerHarness(const char* sUsername = "User") noexcept
+        [[gsl::suppress(f.6)]] SessionTrackerHarness(const char* sUsername = "User") noexcept
             : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
         {
         }
@@ -52,7 +52,7 @@ public:
             mockStorage.MockStoredData(StorageItemType::SessionStats, m_sUsernameWide, sContents);
         }
 
-        void MockInspectingMemory(bool bInspectingMemory)
+        void MockInspectingMemory(bool bInspectingMemory) noexcept 
         {
             m_bInspectingMemory = bInspectingMemory;
         }
@@ -63,7 +63,7 @@ public:
         }
 
     protected:
-        bool IsInspectingMemory() const override { return m_bInspectingMemory; }
+        bool IsInspectingMemory() const noexcept override { return m_bInspectingMemory; }
 
     private:
         bool m_bInspectingMemory{ false };

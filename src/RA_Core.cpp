@@ -495,7 +495,7 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-static unsigned long long ParseVersion(const char* sVersion)
+static unsigned long long ParseVersion(const char* sVersion) noexcept
 {
     char* pPart;
     const auto major = strtoull(sVersion, &pPart, 10);
@@ -1288,7 +1288,7 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile)
+BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile) noexcept
 {
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
@@ -1307,7 +1307,7 @@ BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pChars
     return ((*pCharsReadOut) > 0);
 }
 
-char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate)
+char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept
 {
     char* pStartString = pOffsetInOut;
 
@@ -1341,8 +1341,7 @@ void _WriteBufferToFile(const std::wstring& sFileName, const std::string& raw)
     ofile.write(raw.c_str(), ra::to_signed(raw.length()));
 }
 
-_Use_decl_annotations_
-bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const __restrict sFile)
+_Use_decl_annotations_ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const restrict sFile)
 {
     buffer.clear();
     std::ifstream file(sFile);
@@ -1358,7 +1357,7 @@ bool _ReadBufferFromFile(std::string& buffer, const wchar_t* const __restrict sF
     return true;
 }
 
-char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
+char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut) noexcept
 {
     nFileSizeOut = 0L;
     FILE* pf = nullptr;
@@ -1416,7 +1415,7 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 } /* namespace ra */
 
-std::string GetFolderFromDialog() noexcept
+std::string GetFolderFromDialog()
 {
     auto lpbi{ std::make_unique<BROWSEINFO>() };
     lpbi->hwndOwner = ::GetActiveWindow();
@@ -1426,7 +1425,7 @@ std::string GetFolderFromDialog() noexcept
     lpbi->lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
-        return "";
+        return std::string();
 
     lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
     lpbi->lpfn    = ra::BrowseCallbackProc;
@@ -1445,13 +1444,13 @@ std::string GetFolderFromDialog() noexcept
         if (!owner)
         {
             ::OleUninitialize();
-            return "";
+            return std::string();
         }
 
         if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
         {
             ::OleUninitialize();
-            return "";
+            return std::string();
         }
         ret = ra::Narrow(lpbi->pszDisplayName);
     }
@@ -1459,7 +1458,7 @@ std::string GetFolderFromDialog() noexcept
     return ret;
 }
 
-BOOL CanCausePause()
+BOOL CanCausePause() noexcept
 {
     return (_RA_CausePause != nullptr);
 }

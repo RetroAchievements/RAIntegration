@@ -22,10 +22,6 @@ const std::string& RA_RichPresenceInterpreter::Lookup::GetText(unsigned int nVal
     return m_sDefault;
 }
 
-RA_RichPresenceInterpreter::DisplayString::DisplayString()
-{
-}
-
 RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCondition)
 {
     const int nSize = rc_trigger_size(sCondition.c_str());
@@ -148,7 +144,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeValue(RA_RichPresenceI
     }
 }
 
-bool RA_RichPresenceInterpreter::DisplayString::Test()
+bool RA_RichPresenceInterpreter::DisplayString::Test() noexcept
 {
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     return pTrigger && rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);

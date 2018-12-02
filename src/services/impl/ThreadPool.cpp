@@ -25,7 +25,7 @@ void ThreadPool::Initialize(size_t nThreads) noexcept
         m_vThreads.emplace_back(&ThreadPool::RunThread, this);
 }
 
-void ThreadPool::RunThread() noexcept
+void ThreadPool::RunThread()
 {
     do
     {
@@ -62,7 +62,7 @@ void ThreadPool::RunThread() noexcept
     } while (!m_bShutdownInitiated);
 }
 
-void ThreadPool::ProcessDelayedTasks() noexcept
+void ThreadPool::ProcessDelayedTasks()
 {
     auto& pClock = ServiceLocator::Get<IClock>();
     constexpr auto tZeroMilliseconds = std::chrono::milliseconds(0);

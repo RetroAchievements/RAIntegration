@@ -445,7 +445,7 @@ void HttpResults::Clear()
     ReleaseMutex(RAWeb::Mutex());
 }
 
-size_t HttpResults::Count() const
+size_t HttpResults::Count() const noexcept
 {
     size_t nCount = 0;
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);

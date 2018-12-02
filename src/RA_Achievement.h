@@ -33,8 +33,8 @@ public:
     Achievement() noexcept;
 
 public:
-    void Clear();
-    bool Test();
+    void Clear() noexcept;
+    [[gsl::suppress(f.6)]] bool Test() noexcept;
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -82,10 +82,10 @@ public:
     inline const std::string& ProgressFmt() const noexcept { return m_sProgressFmt; }
     void SetProgressIndicatorFormat(const std::string& sProgressFmt) { m_sProgressFmt = sProgressFmt; }
 
-    void AddConditionGroup();
+    void AddConditionGroup() noexcept;
     void RemoveConditionGroup();
 
-    inline size_t NumConditionGroups() const { return m_vConditions.GroupCount(); }
+    inline size_t NumConditionGroups() const noexcept { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const
     {
         return nGroup < m_vConditions.GroupCount() ? m_vConditions.GetGroup(nGroup).Count() : 0;
@@ -95,10 +95,10 @@ public:
     void SetBadgeImage(const std::string& sFilename);
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
-    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
-    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const;
+    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
+    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const noexcept;
     void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue,
-                               unsigned int nPrevValue);
+                               unsigned int nPrevValue) noexcept;
 
     std::string CreateMemString() const;
     std::string CreateStateString(const std::string& sSalt) const;

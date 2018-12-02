@@ -8,7 +8,7 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response DisconnectedServer::Login(const Login::Request& request) noexcept
+Login::Response DisconnectedServer::Login(const Login::Request& request)
 {
     // use the normal ServerApi to attempt to connect
     auto serverApi = std::make_unique<ConnectedServer>(m_sHost);

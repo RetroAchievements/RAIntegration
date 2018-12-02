@@ -383,7 +383,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_sSummary.append(" last known value...");
 }
 
-unsigned int SearchResults::MatchingAddressCount()
+unsigned int SearchResults::MatchingAddressCount() noexcept
 {
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();

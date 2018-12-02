@@ -28,6 +28,11 @@ public:
     class RecentWinnerData
     {
     public:
+        explicit RecentWinnerData(const std::string& sUser, const std::string& sWonAt) :
+            m_sUser{sUser},
+            m_sWonAt{sWonAt}
+        {}
+
         const std::string& User() const noexcept { return m_sUser; }
         const std::string& WonAt() const noexcept { return m_sWonAt; }
 
@@ -38,7 +43,7 @@ public:
 
 public:
     void Initialize(const Achievement* pAchIn);
-    void Clear();
+    void Clear() noexcept;
     void OnReceiveData(rapidjson::Document& doc);
 
     bool HasData() const noexcept { return m_bHasData; }
@@ -97,8 +102,8 @@ class AchievementOverlay
     };
 
 public:
-    void Activate();
-    void Deactivate();
+    void Activate() noexcept;
+    void Deactivate() noexcept;
 
     void Render(_In_ HDC hDC, _In_ const RECT* rcDest) const;
     _Success_(return ) _NODISCARD BOOL
@@ -107,20 +112,20 @@ public:
     _NODISCARD _CONSTANT_FN IsActive() const noexcept { return (m_nTransitionState != TransitionState::Off); }
     _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
 
-    int* GetActiveScrollOffset() const;
-    int* GetActiveSelectedItem() const;
+    int* GetActiveScrollOffset() const noexcept;
+    int* GetActiveSelectedItem() const noexcept;
 
-    void OnLoad_NewRom();
+    void OnLoad_NewRom() noexcept;
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
     void DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
-    void DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const;
+    void DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const noexcept;
     void DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
     void DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
     void DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
     void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
 
-    void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const;
+    void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const noexcept;
     void DrawUserFrame(_In_ HDC hDC, _In_ int nX, _In_ int nY, _In_ int nW, _In_ int nH) const;
     void DrawAchievement(HDC hDC, const Achievement* Ach, int nX, int nY, BOOL bSelected, BOOL bCanLock) const;
 
@@ -131,11 +136,11 @@ public:
         m_Pages.at(m_nPageStackPointer) = NewPage;
     }
 
-    BOOL GoBack();
-    void SelectNextTopLevelPage(BOOL bPressedRight);
+    BOOL GoBack() noexcept;
+    void SelectNextTopLevelPage(BOOL bPressedRight) noexcept;
     void InstallNewsArticlesFromFile();
 
-    void UpdateImages() noexcept;
+    [[gsl::suppress(f.6)]] void UpdateImages() noexcept;
 
 public:
     struct NewsItem
@@ -193,13 +198,13 @@ _EXTERN_C
 API bool _RA_IsOverlayFullyVisible();
 _END_EXTERN_C
 
-extern const COLORREF COL_TEXT;
-extern const COLORREF COL_TEXT_HIGHLIGHT;
-extern const COLORREF COL_SELECTED;
-extern const COLORREF COL_WHITE;
-extern const COLORREF COL_BLACK;
-extern const COLORREF COL_POPUP;
-extern const COLORREF COL_POPUP_BG;
-extern const COLORREF COL_POPUP_SHADOW;
+_CONSTANT_VAR COL_TEXT           = RGB(17, 102, 221);
+_CONSTANT_VAR COL_TEXT_HIGHLIGHT = RGB(251, 102, 0);
+_CONSTANT_VAR COL_SELECTED       = RGB(255, 255, 255);
+_CONSTANT_VAR COL_BLACK          = RGB(0, 0, 0);
+_CONSTANT_VAR COL_WHITE          = RGB(255, 255, 255);
+_CONSTANT_VAR COL_POPUP          = RGB(0, 0, 40);
+_CONSTANT_VAR COL_POPUP_BG       = RGB(212, 212, 212);
+_CONSTANT_VAR COL_POPUP_SHADOW   = RGB(0, 0, 0);
 
 #endif // !RA_ACHIEVEMENTOVERLAY_H

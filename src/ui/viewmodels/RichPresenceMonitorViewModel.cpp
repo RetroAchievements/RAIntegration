@@ -57,7 +57,7 @@ void RichPresenceMonitorViewModel::StartMonitoring()
     }
 }
 
-void RichPresenceMonitorViewModel::StopMonitoring()
+void RichPresenceMonitorViewModel::StopMonitoring() noexcept
 {
     switch (m_nState)
     {

@@ -20,7 +20,7 @@ public:
     BindingBase& operator=(BindingBase&&) noexcept = delete;
 
 protected:
-    explicit BindingBase(_Inout_ ViewModelBase& vmViewModel) noexcept :
+    explicit BindingBase(_Inout_ ViewModelBase& vmViewModel) :
         m_vmViewModel{ vmViewModel }
     {
         vmViewModel.AddNotifyTarget(*this);

@@ -36,6 +36,8 @@ private:
     float m_fScoreboardShowTimer;
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
+
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pScoreboardSurface;
 };
 
 

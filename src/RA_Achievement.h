@@ -17,14 +17,14 @@ public:
     enum class DirtyFlags
     {
         Clean,
-        Title = 1 << 0,
-        Desc = 1 << 1,
-        Points = 1 << 2,
-        Author = 1 << 3,
-        ID = 1 << 4,
-        Badge = 1 << 5,
-        Conditions = 1 << 6,
-        Votes = 1 << 7,
+        Title       = 1 << 0,
+        Desc        = 1 << 1,
+        Points      = 1 << 2,
+        Author      = 1 << 3,
+        ID          = 1 << 4,
+        Badge       = 1 << 5,
+        Conditions  = 1 << 6,
+        Votes       = 1 << 7,
         Description = 1 << 8,
 
         All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
@@ -107,7 +107,7 @@ public:
 
     // Returns the new char* offset after parsing.
     [[gsl::suppress(f.6)]] const char*
-        ParseLine(const char* sBuffer); /*Doesn't throw in tests but does in Integration */
+        ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
     const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 
 #ifndef RA_UTEST

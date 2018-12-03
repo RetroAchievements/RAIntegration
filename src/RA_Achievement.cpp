@@ -192,7 +192,7 @@ void Achievement::ParseTrigger(const char* sTrigger)
     }
 }
 
-const char* Achievement::ParseLine(const char* pBuffer)
+const char* Achievement::ParseLine(const char* restrict pBuffer)
 {
 #ifndef RA_UTEST
     std::string sTemp;

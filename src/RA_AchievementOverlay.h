@@ -106,8 +106,8 @@ public:
     void Deactivate() noexcept;
 
     void Render(_In_ HDC hDC, _In_ const RECT* rcDest) const;
-    _Success_(return ) _NODISCARD BOOL
-        Update(_In_ const ControllerInput* input, _In_ float fDelta, _In_ BOOL bFullScreen, _In_ BOOL bPaused);
+    _NODISCARD BOOL Update(_In_ const ControllerInput* input, _In_ float fDelta, _In_ BOOL bFullScreen,
+                           _In_ BOOL bPaused);
 
     _NODISCARD _CONSTANT_FN IsActive() const noexcept { return (m_nTransitionState != TransitionState::Off); }
     _NODISCARD _CONSTANT_FN IsFullyVisible() const noexcept { return (m_nTransitionState == TransitionState::Hold); }
@@ -140,7 +140,7 @@ public:
     void SelectNextTopLevelPage(BOOL bPressedRight) noexcept;
     void InstallNewsArticlesFromFile();
 
-    [[gsl::suppress(f.6)]] void UpdateImages() noexcept;
+    [[gsl::suppress(f .6)]] void UpdateImages() noexcept;
 
 public:
     struct NewsItem
@@ -189,14 +189,13 @@ private:
 };
 extern AchievementOverlay g_AchievementOverlay;
 
-//	Exposed to DLL
-_EXTERN_C
-    // Can't use restrict since the pointer is aliased
-    [[gsl::suppress(con .3)]] API int
-    _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen, _In_ bool Paused);
-[[gsl::suppress(con .3)]] API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+// Exposed to DLL
+extern "C" {
+[[gsl::suppress(con.3)]] API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime,
+                                                   _In_ bool Full_Screen, _In_ bool Paused);
+[[gsl::suppress(con.3)]] API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
 API bool _RA_IsOverlayFullyVisible();
-_END_EXTERN_C
+}
 
 _CONSTANT_VAR COL_TEXT           = RGB(17, 102, 221);
 _CONSTANT_VAR COL_TEXT_HIGHLIGHT = RGB(251, 102, 0);

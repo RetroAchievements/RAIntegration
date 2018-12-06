@@ -242,7 +242,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
     for (auto& block : srSource.m_vBlocks)
     {
-        if (block.GetSize() > vMemory.capacity())
+        if (block.GetSize() > vMemory.size())
             vMemory.resize(block.GetSize());
 
         g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());

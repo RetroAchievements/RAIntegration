@@ -65,7 +65,7 @@ public:
     /// <c>true</c> if the user was successfully logged in and the dialog should be closed, 
     /// <c>false</c> if not.
     /// </returns>
-    bool DoLogin() const;
+    bool Login() const;
 
 protected:
     LoginViewModel(const std::wstring&& sUsername); // alternate costructor for unit tests

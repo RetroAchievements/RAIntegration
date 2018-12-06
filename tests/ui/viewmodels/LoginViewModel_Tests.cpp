@@ -44,7 +44,7 @@ public:
         Assert::IsFalse(vmLogin.IsPasswordRemembered());
     }
 
-    TEST_METHOD(TestDoLoginNoUsername)
+    TEST_METHOD(TestLoginNoUsername)
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
@@ -61,11 +61,11 @@ public:
 
         vmLogin.SetUsername(L"");
         vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsFalse(vmLogin.DoLogin());
+        Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
     }
 
-    TEST_METHOD(TestDoLoginNoPassword)
+    TEST_METHOD(TestLoginNoPassword)
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
@@ -82,11 +82,11 @@ public:
 
         vmLogin.SetUsername(L"User");
         vmLogin.SetPassword(L"");
-        Assert::IsFalse(vmLogin.DoLogin());
+        Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
     }
 
-    TEST_METHOD(TestDoLoginSuccessful)
+    TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
@@ -106,7 +106,7 @@ public:
 
         vmLogin.SetUsername(L"user");
         vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsTrue(vmLogin.DoLogin());
+        Assert::IsTrue(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
 
         // expect case of username to be corrected by API response
@@ -120,7 +120,7 @@ public:
         Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
     }
 
-    TEST_METHOD(TestDoLoginInvalidPassword)
+    TEST_METHOD(TestLoginInvalidPassword)
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
@@ -139,11 +139,11 @@ public:
 
         vmLogin.SetUsername(L"User");
         vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsFalse(vmLogin.DoLogin());
+        Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
     }
 
-    TEST_METHOD(TestDoLoginSuccessfulRememberPassword)
+    TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
@@ -164,7 +164,7 @@ public:
         vmLogin.SetUsername(L"user");
         vmLogin.SetPassword(L"Pa$$w0rd");
         vmLogin.SetPasswordRemembered(true);
-        Assert::IsTrue(vmLogin.DoLogin());
+        Assert::IsTrue(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
 
         Assert::AreEqual(std::string("User"), vmLogin.mockConfiguration.GetUsername());

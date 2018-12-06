@@ -53,7 +53,7 @@ BOOL LoginDialog::OnCommand(WORD nCommand)
     if (nCommand == IDOK)
     {
         auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(m_vmWindow);
-        if (!vmLogin.DoLogin())
+        if (!vmLogin.Login())
             return TRUE;
     }
 

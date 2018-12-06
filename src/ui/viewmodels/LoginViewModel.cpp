@@ -27,7 +27,7 @@ LoginViewModel::LoginViewModel(const std::wstring&& sUsername)
     SetUsername(sUsername);
 }
 
-bool LoginViewModel::DoLogin() const
+bool LoginViewModel::Login() const
 {
     if (GetUsername().empty())
     {

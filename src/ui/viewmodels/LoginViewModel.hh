@@ -57,7 +57,14 @@ public:
     /// Sets whether the password should be remembered.
     /// </summary>
     void SetPasswordRemembered(bool bValue) { SetValue(IsPasswordRememberedProperty, bValue); }
-
+    
+    /// <summary>
+    /// Command handler for Login button.
+    /// </summary>    
+    /// <returns>
+    /// <c>true</c> if the user was successfully logged in and the dialog should be closed, 
+    /// <c>false</c> if not.
+    /// </returns>
     bool DoLogin() const;
 
 protected:

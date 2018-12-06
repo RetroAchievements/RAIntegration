@@ -11,6 +11,7 @@
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -53,6 +54,38 @@ public:
 
         mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(0, _RA_HardcoreModeIsActive());
+    }
+
+    TEST_METHOD(TestAttemptLoginNewUser)
+    {
+        MockUserContext mockUserContext;
+        MockSessionTracker mockSessionTracker;
+        MockConfiguration mockConfiguration;
+        MockServer mockServer;
+
+        MockDesktop mockDesktop;
+
+        bool bLoginDialogShown = false;
+        mockDesktop.ExpectWindow<ra::ui::viewmodels::LoginViewModel>([&bLoginDialogShown](_UNUSED ra::ui::viewmodels::LoginViewModel&)
+        {
+            bLoginDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
+        {
+            Assert::IsFalse(true, L"API called without user info");
+            return false;
+        });
+
+        Assert::IsFalse(mockUserContext.IsLoggedIn());
+
+        _RA_AttemptLogin(true);
+
+        Assert::IsFalse(mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
+        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::IsTrue(bLoginDialogShown);
     }
 
     TEST_METHOD(TestAttemptLoginSuccess)

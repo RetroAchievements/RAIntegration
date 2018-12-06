@@ -78,11 +78,9 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetApiToken().empty() || pConfiguration.GetUsername().empty())
     {
-#ifndef RA_UTEST
         // show the login dialog box
         ra::ui::viewmodels::LoginViewModel vmLogin;
         vmLogin.ShowModal();
-#endif
     }
     else
     {

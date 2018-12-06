@@ -105,7 +105,7 @@ public:
     /// <summary>
     /// Releases this reference image.
     /// </summary>
-    [[gsl::suppress(f.6)]] void Release() noexcept
+    GSL_SUPPRESS(f.6) void Release() noexcept
     {
         if (m_nType != ImageType::None)
         {

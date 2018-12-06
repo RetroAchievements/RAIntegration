@@ -63,7 +63,7 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
 protected:
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
 

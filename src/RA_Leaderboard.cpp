@@ -98,6 +98,7 @@ void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUser
 
 bool RA_Leaderboard::EntryExists(unsigned int nRank)
 {
+    SortRankInfo();
     return (std::binary_search(m_RankInfo.begin(), m_RankInfo.end(), nRank));
 }
 

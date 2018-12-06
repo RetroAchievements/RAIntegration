@@ -7,7 +7,7 @@
 namespace ra {
 namespace api {
 
-[[gsl::suppress(f.6)]] static ra::api::IServer& Server() noexcept /*Service expected to exist*/
+GSL_SUPPRESS(f.6) static ra::api::IServer& Server() noexcept /*Service expected to exist*/
 {
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }

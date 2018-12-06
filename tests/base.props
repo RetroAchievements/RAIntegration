@@ -2,13 +2,14 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
+    <MSTest_IncludePath>$(VCInstallDir)UnitTest\include\</MSTest_IncludePath>
     <RA_DIR>$(SolutionDir)</RA_DIR>
     <RapidJSON_IncludeDir>$(RA_DIR)rapidjson\include\</RapidJSON_IncludeDir>
-    <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
     <rcheevos_IncludePath>$(RA_DIR)rcheevos\include\</rcheevos_IncludePath>
+    <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
+    <GSL_IncludeDir>$(RA_DIR)GSL\include\</GSL_IncludeDir>
     <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
-    <MSTest_IncludePath>$(VCInstallDir)UnitTest\include\</MSTest_IncludePath>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(MSTest_IncludePath)</RA_IncludePath>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(MSTest_IncludePath);$(GSL_IncludeDir)</RA_IncludePath>
     <XPDeprecationWarning>false</XPDeprecationWarning>
   </PropertyGroup>
   <PropertyGroup>
@@ -59,12 +60,16 @@
       <Value>$(RA_SourceDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
-    <BuildMacro Include="RA_IncludePath">
-      <Value>$(RA_IncludePath)</Value>
+    <BuildMacro Include="GSL_IncludeDir">
+      <Value>$(GSL_IncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="Lua_Dir">
       <Value>$(Lua_Dir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RA_IncludePath">
+      <Value>$(RA_IncludePath)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="XPDeprecationWarning">

@@ -53,13 +53,13 @@ RichPresenceDialog::~RichPresenceDialog() noexcept
 }
 
 
-BOOL RichPresenceDialog::OnInitDialog()
+BOOL RichPresenceDialog::OnInitDialog() noexcept
 {
     SetWindowFont(::GetDlgItem(GetHWND(), IDC_RA_RICHPRESENCERESULTTEXT), m_hFont, FALSE);
     return DialogBase::OnInitDialog();
 }
 
-void RichPresenceDialog::OnShown()
+void RichPresenceDialog::OnShown() noexcept
 {
     auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(m_vmWindow);
     vmRichPresence.StartMonitoring();

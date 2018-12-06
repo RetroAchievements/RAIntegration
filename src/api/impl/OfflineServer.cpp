@@ -4,7 +4,7 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response OfflineServer::Login(const Login::Request& request)
+Login::Response OfflineServer::Login(const Login::Request& request) noexcept
 {
     
     Login::Response response;
@@ -14,7 +14,7 @@ Login::Response OfflineServer::Login(const Login::Request& request)
     return std::move(response);
 }
 
-Logout::Response OfflineServer::Logout(_UNUSED const Logout::Request& request) noexcept
+Logout::Response OfflineServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
 {
     Logout::Response response;
     response.Result = ApiResult::Success;

@@ -36,7 +36,7 @@ TEST_CLASS(ViewModelBase_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
         {
             m_sLastPropertyChanged = args.Property.GetPropertyName();
             m_bOldValue = args.tOldValue;
@@ -52,7 +52,7 @@ TEST_CLASS(ViewModelBase_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
+        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
         {
             m_sLastPropertyChanged = args.Property.GetPropertyName();
             m_sOldValue = args.tOldValue;
@@ -68,7 +68,7 @@ TEST_CLASS(ViewModelBase_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
         {
             m_sLastPropertyChanged = args.Property.GetPropertyName();
             m_nOldValue = args.tOldValue;

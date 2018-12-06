@@ -11,7 +11,7 @@ namespace viewmodels {
 class RichPresenceMonitorViewModel : public WindowViewModelBase
 {
 public:
-    [[gsl::suppress(f.6)]] RichPresenceMonitorViewModel() noexcept;
+    GSL_SUPPRESS(f.6) RichPresenceMonitorViewModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.

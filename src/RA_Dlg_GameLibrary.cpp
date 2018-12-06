@@ -78,7 +78,7 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 
 namespace ra {
 
-[[gsl::suppress(f.6)]] inline static void LogErrno() noexcept
+GSL_SUPPRESS(f.6) inline static void LogErrno() noexcept
 {
     char buf[2048U]{};
     strerror_s(buf, errno);

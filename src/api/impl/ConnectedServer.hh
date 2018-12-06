@@ -13,10 +13,10 @@ public:
 
     const char* Name() const noexcept override { return m_sHost.c_str(); }
 
-    Login::Response Login(const Login::Request& request) override;
-    Logout::Response Logout(_UNUSED const Logout::Request& request) override;
-    StartSession::Response StartSession(_UNUSED const StartSession::Request& request) override;
-    Ping::Response Ping(_UNUSED const Ping::Request& request) override;
+    Login::Response Login(const Login::Request& request) noexcept override;
+    Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
+    StartSession::Response StartSession(const StartSession::Request& request) noexcept override;
+    Ping::Response Ping(const Ping::Request& request) noexcept override;
 
 private:
     const std::string m_sHost;

@@ -18,7 +18,7 @@
 
 namespace {
 
-const size_t MIN_RESULTS_TO_DUMP  = 500000;
+const size_t MIN_RESULTS_TO_DUMP = 500000;
 const size_t MIN_SEARCH_PAGE_SIZE = 50;
 
 } // namespace
@@ -32,16 +32,16 @@ HWND Dlg_Memory::m_hWnd = nullptr;
 HFONT MemoryViewerControl::m_hViewerFont = nullptr;
 SIZE MemoryViewerControl::m_szFontSize;
 unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
-unsigned int MemoryViewerControl::m_nAddressOffset    = 0;
-unsigned int MemoryViewerControl::m_nWatchedAddress   = 0;
-MemSize MemoryViewerControl::m_nDataSize              = MemSize::EightBit;
-unsigned int MemoryViewerControl::m_nEditAddress      = 0;
-unsigned int MemoryViewerControl::m_nEditNibble       = 0;
-bool MemoryViewerControl::m_bHasCaret                 = 0;
-unsigned int MemoryViewerControl::m_nCaretWidth       = 0;
-unsigned int MemoryViewerControl::m_nCaretHeight      = 0;
-unsigned int MemoryViewerControl::m_nDisplayedLines   = 8;
-unsigned short MemoryViewerControl::m_nActiveMemBank  = 0;
+unsigned int MemoryViewerControl::m_nAddressOffset = 0;
+unsigned int MemoryViewerControl::m_nWatchedAddress = 0;
+MemSize MemoryViewerControl::m_nDataSize = MemSize::EightBit;
+unsigned int MemoryViewerControl::m_nEditAddress = 0;
+unsigned int MemoryViewerControl::m_nEditNibble = 0;
+bool MemoryViewerControl::m_bHasCaret = 0;
+unsigned int MemoryViewerControl::m_nCaretWidth = 0;
+unsigned int MemoryViewerControl::m_nCaretHeight = 0;
+unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
+unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
 unsigned int m_nPage = 0;
 
@@ -57,9 +57,12 @@ _NODISCARD _CONSTANT_FN GetMaxNibble(_In_ MemSize size) noexcept
     switch (size)
     {
         default:
-        case MemSize::EightBit: return 1U;
-        case MemSize::SixteenBit: return 3U;
-        case MemSize::ThirtyTwoBit: return 7U;
+        case MemSize::EightBit:
+            return 1U;
+        case MemSize::SixteenBit:
+            return 3U;
+        case MemSize::ThirtyTwoBit:
+            return 7U;
     }
 }
 
@@ -68,13 +71,18 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
     switch (uMsg)
     {
         case WM_NCCREATE:
-        case WM_NCDESTROY: return TRUE;
+        case WM_NCDESTROY:
+            return TRUE;
 
-        case WM_CREATE: return TRUE;
+        case WM_CREATE:
+            return TRUE;
 
-        case WM_PAINT: RenderMemViewer(hDlg); return 0;
+        case WM_PAINT:
+            RenderMemViewer(hDlg);
+            return 0;
 
-        case WM_ERASEBKGND: return TRUE;
+        case WM_ERASEBKGND:
+            return TRUE;
 
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
@@ -83,11 +91,15 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
                 setAddress(m_nAddressOffset + 32);
             return FALSE;
 
-        case WM_LBUTTONUP: OnClick({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)}); return FALSE;
+        case WM_LBUTTONUP:
+            OnClick({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+            return FALSE;
 
-        case WM_KEYDOWN: return (!OnKeyDown(static_cast<UINT>(LOWORD(wParam))));
+        case WM_KEYDOWN:
+            return (!OnKeyDown(static_cast<UINT>(LOWORD(wParam))));
 
-        case WM_CHAR: return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
+        case WM_CHAR:
+            return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
     }
 
     return DefWindowProc(hDlg, uMsg, wParam, lParam);
@@ -116,9 +128,13 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
                 moveAddress(0, -1);
             return true;
 
-        case VK_DOWN: moveAddress(0x10, 0); return true;
+        case VK_DOWN:
+            moveAddress(0x10, 0);
+            return true;
 
-        case VK_UP: moveAddress(-0x10, 0); return true;
+        case VK_UP:
+            moveAddress(-0x10, 0);
+            return true;
 
         case VK_PRIOR: //	Page up (!)
             moveAddress(-(int)(m_nDisplayedLines << 4), 0);
@@ -130,13 +146,13 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
 
         case VK_HOME:
             m_nEditAddress = 0;
-            m_nEditNibble  = 0;
+            m_nEditNibble = 0;
             setAddress(0);
             return true;
 
         case VK_END:
             m_nEditAddress = g_MemManager.TotalBankSize() - 0x10;
-            m_nEditNibble  = 0;
+            m_nEditNibble = 0;
             setAddress(m_nEditAddress);
             return true;
     }
@@ -303,7 +319,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
         // value <<= 4*(maxNibble-m_nEditNibble);
         // unsigned int mask = ~(15 << 4*(maxNibble - m_nEditNibble));
 
-        const bool bLowerNibble   = (m_nEditNibble % 2 == 1);
+        const bool bLowerNibble = (m_nEditNibble % 2 == 1);
         unsigned int nByteAddress = m_nEditAddress;
 
         if (g_MemBookmarkDialog.GetHWND() != nullptr)
@@ -345,8 +361,8 @@ void MemoryViewerControl::createEditCaret(int w, int h) noexcept
 {
     if (!m_bHasCaret || ra::to_signed(m_nCaretWidth) != w || ra::to_signed(m_nCaretHeight) != h)
     {
-        m_bHasCaret    = true;
-        m_nCaretWidth  = w;
+        m_bHasCaret = true;
+        m_nCaretWidth = w;
         m_nCaretHeight = h;
         ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), (HBITMAP)0, w, h);
     }
@@ -393,9 +409,15 @@ void MemoryViewerControl::SetCaretPos()
 
     switch (m_nDataSize)
     {
-        case MemSize::EightBit: x += 3 * m_szFontSize.cx * (subAddress & 15); break;
-        case MemSize::SixteenBit: x += 5 * m_szFontSize.cx * ((subAddress >> 1) & 7); break;
-        case MemSize::ThirtyTwoBit: x += 9 * m_szFontSize.cx * ((subAddress >> 2) & 3); break;
+        case MemSize::EightBit:
+            x += 3 * m_szFontSize.cx * (subAddress & 15);
+            break;
+        case MemSize::SixteenBit:
+            x += 5 * m_szFontSize.cx * ((subAddress >> 1) & 7);
+            break;
+        case MemSize::ThirtyTwoBit:
+            x += 9 * m_szFontSize.cx * ((subAddress >> 2) & 3);
+            break;
     }
 
     RECT r;
@@ -423,33 +445,33 @@ void MemoryViewerControl::OnClick(POINT point)
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
 
-    int x          = point.x;
-    const int y    = point.y - m_szFontSize.cy; //	Adjust for header
+    int x = point.x;
+    const int y = point.y - m_szFontSize.cy; //	Adjust for header
     const int line = ((y - 3) / m_szFontSize.cy);
 
     if (line == -1 || line >= (int)m_nDisplayedLines)
         return; //	clicked on header
 
     int rowLengthPx = m_nDataStartXOffset;
-    int inc         = 1;
-    int sub         = 3 * m_szFontSize.cx;
+    int inc = 1;
+    int sub = 3 * m_szFontSize.cx;
 
     switch (m_nDataSize)
     {
         case MemSize::EightBit:
             rowLengthPx += 47 * m_szFontSize.cx;
-            inc = 1;                   //	increment mem offset by 1 each subset
-            sub = 3 * m_szFontSize.cx; //	2 char set plus one char space
+            inc = 1;                   // increment mem offset by 1 each subset
+            sub = 3 * m_szFontSize.cx; // 2 char set plus one char space
             break;
         case MemSize::SixteenBit:
             rowLengthPx += 39 * m_szFontSize.cx;
-            inc = 2;                   //	increment mem offset by 2 each subset
-            sub = 5 * m_szFontSize.cx; //	4 char set plus one char space
+            inc = 2;                   // increment mem offset by 2 each subset
+            sub = 5 * m_szFontSize.cx; // 4 char set plus one char space
             break;
         case MemSize::ThirtyTwoBit:
             rowLengthPx += 35 * m_szFontSize.cx;
-            inc = 4;                   //	increment mem offset by 4 each subset
-            sub = 9 * m_szFontSize.cx; //	8 char set plus one char space
+            inc = 4;                   // increment mem offset by 4 each subset
+            sub = 9 * m_szFontSize.cx; // 8 char set plus one char space
             break;
     }
 
@@ -457,10 +479,10 @@ void MemoryViewerControl::OnClick(POINT point)
 
     const int nAddressRowClicked = (nTopLeft + (line << 4));
 
-    //	Clamp:
+    // Clamp:
     if (nAddressRowClicked < 0 || nAddressRowClicked > (int)g_MemManager.TotalBankSize())
     {
-        //	ignore; clicked above limit
+        // ignore; clicked above limit
         return;
     }
 
@@ -473,7 +495,7 @@ void MemoryViewerControl::OnClick(POINT point)
 
         while (x > 0)
         {
-            //	Adjust x by one subset til we find out the correct offset:
+            // Adjust x by one subset til we find out the correct offset:
             x -= sub;
             if (x >= 0)
                 m_nEditAddress += inc;
@@ -511,7 +533,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
         m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
     HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
 
-    HBITMAP hBitmap    = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
+    HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
     HGDIOBJ hOldBitmap = SelectObject(hMemDC, hBitmap);
 
     GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
@@ -524,12 +546,18 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     const char* sHeader;
     switch (m_nDataSize)
     {
-        case MemSize::ThirtyTwoBit: sHeader = "          0        4        8        c"; break;
-        case MemSize::SixteenBit: sHeader = "          0    2    4    6    8    a    c    e"; break;
+        case MemSize::ThirtyTwoBit:
+            sHeader = "          0        4        8        c";
+            break;
+        case MemSize::SixteenBit:
+            sHeader = "          0    2    4    6    8    a    c    e";
+            break;
         default:
             m_nDataSize = MemSize::EightBit;
             // fallthrough to MemSize::EightBit
-        case MemSize::EightBit: sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"; break;
+        case MemSize::EightBit:
+            sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
+            break;
     }
 
     int lines = h / m_szFontSize.cy;
@@ -548,10 +576,10 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     unsigned int freeze;
 
     RECT r;
-    r.top    = 3;
-    r.left   = 3;
+    r.top = 3;
+    r.left = 3;
     r.bottom = r.top + m_szFontSize.cy;
-    r.right  = rect.right - 3;
+    r.right = rect.right - 3;
 
     //	Draw header:
     DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
@@ -568,9 +596,9 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
         {
             if (addr >= 0)
             {
-                notes     = 0;
+                notes = 0;
                 bookmarks = 0;
-                freeze    = 0;
+                freeze = 0;
                 for (int j = 0; j < 16; ++j)
                 {
                     notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
@@ -618,15 +646,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     switch (m_nDataSize)
                     {
                         case MemSize::EightBit:
-                            ptr    = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
+                            ptr = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
                             stride = 2;
                             break;
                         case MemSize::SixteenBit:
-                            ptr    = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
+                            ptr = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
                             stride = 4;
                             break;
                         case MemSize::ThirtyTwoBit:
-                            ptr    = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
+                            ptr = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
                             stride = 8;
                             break;
                     }
@@ -669,15 +697,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             switch (m_nDataSize)
                             {
                                 case MemSize::EightBit:
-                                    ptr    = bufferNative + 10 + 3 * j;
+                                    ptr = bufferNative + 10 + 3 * j;
                                     stride = 2;
                                     break;
                                 case MemSize::SixteenBit:
-                                    ptr    = bufferNative + 10 + 5 * (j / 2);
+                                    ptr = bufferNative + 10 + 5 * (j / 2);
                                     stride = 4;
                                     break;
                                 case MemSize::ThirtyTwoBit:
-                                    ptr    = bufferNative + 10 + 9 * (j / 4);
+                                    ptr = bufferNative + 10 + 9 * (j / 4);
                                     stride = 8;
                                     break;
                             }
@@ -703,7 +731,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     }
 
     {
-        HPEN hPen       = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
         HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
 
         MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
@@ -727,10 +755,10 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 void Dlg_Memory::Init() noexcept
 {
     WNDCLASSEX wc{sizeof(WNDCLASSEX)};
-    wc.style         = ra::to_unsigned(CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS);
-    wc.lpfnWndProc   = MemoryViewerControl::s_MemoryDrawProc;
-    wc.hInstance     = g_hThisDLLInst;
-    wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+    wc.style = ra::to_unsigned(CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS);
+    wc.lpfnWndProc = MemoryViewerControl::s_MemoryDrawProc;
+    wc.hInstance = g_hThisDLLInst;
+    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = GetStockBrush(WHITE_BRUSH);
     wc.lpszClassName = TEXT("MemoryViewerControl");
 
@@ -801,15 +829,15 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RECT rc;
             LVCOLUMN Col;
             Col.mask = LVCF_FMT | LVCF_ORDER | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH;
-            Col.fmt  = LVCFMT_CENTER;
+            Col.fmt = LVCFMT_CENTER;
             GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEM_LIST), &rc);
             for (int i = 0; i < 1; i++)
             {
-                Col.iOrder   = i;
+                Col.iOrder = i;
                 Col.iSubItem = i;
                 ra::tstring str{_T("Search Result")};
                 Col.pszText = str.data();
-                Col.cx      = rc.right - rc.left - 24;
+                Col.cx = rc.right - rc.left - 24;
                 ListView_InsertColumn(GetDlgItem(hDlg, IDC_RA_MEM_LIST), i, &Col);
             }
             ListView_SetExtendedListViewStyle(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
@@ -829,15 +857,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_MEASUREITEM:
             PMEASUREITEMSTRUCT pmis;
-            pmis             = (PMEASUREITEMSTRUCT)lParam;
+            pmis = (PMEASUREITEMSTRUCT)lParam;
             pmis->itemHeight = 16;
             return TRUE;
 
         case WM_DRAWITEM:
+        {
             LPDRAWITEMSTRUCT pDIS;
             HWND hListbox;
 
-            pDIS     = (LPDRAWITEMSTRUCT)lParam;
+            pDIS = (LPDRAWITEMSTRUCT)lParam;
             hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
             if (pDIS->hwndItem == hListbox)
             {
@@ -933,6 +962,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 }
             }
             return TRUE;
+        }
 
         case WM_NOTIFY:
         {
@@ -977,9 +1007,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_GETMINMAXINFO:
         {
-            LPMINMAXINFO lpmmi      = (LPMINMAXINFO)lParam;
+            LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
             lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
-            lpmmi->ptMinTrackSize   = pDlgMemoryMin;
+            lpmmi->ptMinTrackSize = pDlgMemoryMin;
         }
             return TRUE;
 
@@ -988,14 +1018,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RARect winRect;
             GetWindowRect(hDlg, &winRect);
 
-            for (ResizeContent content : vDlgMemoryResize)
+            for (ResizeContent& content : vDlgMemoryResize)
                 content.Resize(winRect.Width(), winRect.Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
-        }
             return TRUE;
+        }
 
-        case WM_MOVE: RememberWindowPosition(hDlg, "Memory Inspector"); break;
+        case WM_MOVE:
+            RememberWindowPosition(hDlg, "Memory Inspector");
+            break;
 
         case WM_COMMAND:
         {
@@ -1030,8 +1062,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), FALSE);
 
                     SearchResult& srPrevious = *(m_SearchResults.end() - 2);
-                    SearchResult& sr         = m_SearchResults.back();
-                    sr.m_nCompareType        = nCmpType;
+                    SearchResult& sr = m_SearchResults.back();
+                    sr.m_nCompareType = nCmpType;
 
                     if (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_UNCHECKED)
                     {
@@ -1082,8 +1114,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), nMatches + 2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), nMatches > 0);
-                }
                     return TRUE;
+                }
 
                 case IDC_RA_MEMVIEW8BIT:
                     MemoryViewerControl::SetDataSize(MemSize::EightBit);
@@ -1131,8 +1163,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     ra::ByteAddress start, end;
                     if (GetSelectedMemoryRange(start, end))
                     {
-                        m_nStart       = start;
-                        m_nEnd         = end;
+                        m_nStart = start;
+                        m_nEnd = end;
                         m_nCompareSize = nCompSize;
 
                         sr.m_results.Initialize(start, end - start + 1, nCompSize);
@@ -1143,7 +1175,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return FALSE;
                 }
 
-                case ID_OK: EndDialog(hDlg, TRUE); return TRUE;
+                case ID_OK:
+                    EndDialog(hDlg, TRUE);
+                    return TRUE;
 
                 case IDC_RA_CBO_GIVENVAL:
                 case IDC_RA_CBO_LASTKNOWNVAL:
@@ -1167,7 +1201,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
                     const std::string sNewNote = ra::Narrow(sNewNoteWide);
 
-                    const ra::ByteAddress nAddr              = MemoryViewerControl::getWatchedAddress();
+                    const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
                     {
@@ -1293,7 +1327,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_RESULTS_REMOVE:
                 {
                     HWND hList = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
-                    int nSel   = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
                     if (nSel != -1)
                     {
@@ -1373,7 +1407,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         case LBN_SELCHANGE:
                         {
                             RA_LOG("Sel detected!");
-                            HWND hMemBanks         = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
+                            HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
                             const int nSelectedIdx = ComboBox_GetCurSel(hMemBanks);
 
                             const unsigned short nBankID =
@@ -1389,13 +1423,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     return TRUE;
 
-                default: return FALSE; //	unhandled
+                default:
+                    return FALSE; //	unhandled
             }
         }
 
-        case WM_CLOSE: EndDialog(hDlg, 0); return TRUE;
+        case WM_CLOSE:
+            EndDialog(hDlg, 0);
+            return TRUE;
 
-        default: return FALSE; //	unhandled
+        default:
+            return FALSE; //	unhandled
     }
 
     return FALSE;
@@ -1405,7 +1443,7 @@ void Dlg_Memory::OnWatchingMemChange()
 {
     TCHAR sAddrNative[1024];
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
-    std::string sAddr           = ra::Narrow(sAddrNative);
+    std::string sAddr = ra::Narrow(sAddrNative);
     const ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
@@ -1421,7 +1459,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     size_t nSize = 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto nGameID       = pGameContext.GameId();
+    const auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
         nSize = m_CodeNotes.Load(nGameID);
 
@@ -1551,7 +1589,7 @@ void Dlg_Memory::UpdateBits() const
     if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
     {
         const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
-        const unsigned char nVal    = g_MemManager.ActiveBankRAMByteRead(nAddr);
+        const unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
 
         _stprintf_s(sNewValue, 64, _T("      %d %d %d %d %d %d %d %d"), static_cast<int>((nVal & (1 << 7)) != 0),
                     static_cast<int>((nVal & (1 << 6)) != 0), static_cast<int>((nVal & (1 << 5)) != 0),
@@ -1600,7 +1638,7 @@ void Dlg_Memory::AddBank(size_t nBankID)
         return;
 
     HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-    int nIndex     = ComboBox_AddString(hMemBanks, NativeStr(std::to_string(nBankID)).c_str());
+    int nIndex = ComboBox_AddString(hMemBanks, NativeStr(std::to_string(nBankID)).c_str());
     if (nIndex != CB_ERR)
     {
         ComboBox_SetItemData(hMemBanks, nIndex, nBankID);
@@ -1617,7 +1655,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
         case ConsoleID::NES:
             // $0000-$07FF are the 2KB internal RAM for the NES. It's mirrored every 2KB until $1FFF.
             start = 0x0000;
-            end   = 0x07FF;
+            end = 0x07FF;
             return TRUE;
 
         case ConsoleID::SNES:
@@ -1626,7 +1664,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
             // addresses this data from $000000-$1FFFFF. For simplicity, we'll treat LowRAM and HighRAM
             // as system memory and Expanded RAM as game memory.
             start = 0x0000;
-            end   = 0x7FFF;
+            end = 0x7FFF;
             return TRUE;
 
         case ConsoleID::GB:
@@ -1634,7 +1672,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
             // $C000-$CFFF is fixed internal RAM, $D000-$DFFF is banked internal RAM. $C000-$DFFF is
             // mirrored to $E000-$FDFF.
             start = 0xC000;
-            end   = 0xDFFF;
+            end = 0xDFFF;
             return TRUE;
 
         case ConsoleID::GBA:
@@ -1643,7 +1681,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
             // game pak RAM. The Memory Manager sees the in-chip RAM as $00000-$07FF0, and the
             // on-board as $8000-$47FFF
             start = 0x8000;
-            end   = 0x47FFF;
+            end = 0x47FFF;
             return TRUE;
 
         case ConsoleID::MegaDrive:
@@ -1651,25 +1689,25 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
             // each $E0-$FF lead byte. Typically, it's only accessed from $FFxxxx. I'm not sure
             // what memory is represented by $10000-$1FFFF in the Memory Manager.
             start = 0x0000;
-            end   = 0xFFFF;
+            end = 0xFFFF;
             return TRUE;
 
         case ConsoleID::MasterSystem:
             // $C000-$DFFF is system RAM. It's mirrored at $E000-$FFFF.
             start = 0xC000;
-            end   = 0xDFFF;
+            end = 0xDFFF;
             return TRUE;
 
         case ConsoleID::N64:
             // $00000-$3FFFFF covers the standard 4MB RDRAM.
             // $00000-$1FFFFF is RDRAM range 0, while $200000-$3FFFFF is RDRAM range 1.
             start = 0x000000;
-            end   = 0x3FFFFF;
+            end = 0x3FFFFF;
             return TRUE;
 
         default:
             start = 0;
-            end   = 0;
+            end = 0;
             return FALSE;
     }
 }
@@ -1682,7 +1720,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
             // $4020-$FFFF is cartridge memory and subranges will vary by mapper. The most common mappers reference
             // battery-backed RAM or additional work RAM in the $6000-$7FFF range. $8000-$FFFF is usually read-only.
             start = 0x4020;
-            end   = 0xFFFF;
+            end = 0xFFFF;
             return TRUE;
 
         case ConsoleID::SNES:
@@ -1691,14 +1729,14 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
             // addresses this data from $000000-$1FFFFF. For simplicity, we'll treat LowRAM and HighRAM
             // as system memory and Expanded RAM as game memory.
             start = 0x008000;
-            end   = 0x1FFFFF;
+            end = 0x1FFFFF;
             return TRUE;
 
         case ConsoleID::GB:
         case ConsoleID::GBC:
             // $A000-$BFFF is 8KB is external RAM (in cartridge)
             start = 0xA000;
-            end   = 0xBFFF;
+            end = 0xBFFF;
             return TRUE;
 
         case ConsoleID::GBA:
@@ -1707,13 +1745,13 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
             // game pak RAM. The Memory Manager sees the in-chip RAM as $00000-$07FF0, and the
             // on-board as $8000-$47FFF
             start = 0x0000;
-            end   = 0x7FFF;
+            end = 0x7FFF;
             return TRUE;
 
         case ConsoleID::MasterSystem:
             // $0000-$BFFF is cartridge ROM/RAM
             start = 0x0000;
-            end   = 0xBFFF;
+            end = 0xBFFF;
             return TRUE;
 
         case ConsoleID::N64:
@@ -1722,7 +1760,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
             if (g_MemManager.TotalBankSize() > 0x400000)
             {
                 start = 0x400000;
-                end   = 0x7FFFFF;
+                end = 0x7FFFFF;
                 return TRUE;
             }
             else
@@ -1732,7 +1770,7 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
 
         default:
             start = 0;
-            end   = 0;
+            end = 0;
             return FALSE;
     }
 }
@@ -1779,7 +1817,7 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     {
         // all items are in "All" range
         start = 0;
-        end   = g_MemManager.TotalBankSize() - 1;
+        end = g_MemManager.TotalBankSize() - 1;
         return TRUE;
     }
 
@@ -1846,13 +1884,27 @@ bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal
 
     switch (m_SearchResults[m_nPage].m_nCompareType)
     {
-        case ComparisonType::Equals: bResult = (nCurVal == nVal); break;
-        case ComparisonType::LessThan: bResult = (nCurVal < nVal); break;
-        case ComparisonType::LessThanOrEqual: bResult = (nCurVal <= nVal); break;
-        case ComparisonType::GreaterThan: bResult = (nCurVal > nVal); break;
-        case ComparisonType::GreaterThanOrEqual: bResult = (nCurVal >= nVal); break;
-        case ComparisonType::NotEqualTo: bResult = (nCurVal != nVal); break;
-        default: bResult = false; break;
+        case ComparisonType::Equals:
+            bResult = (nCurVal == nVal);
+            break;
+        case ComparisonType::LessThan:
+            bResult = (nCurVal < nVal);
+            break;
+        case ComparisonType::LessThanOrEqual:
+            bResult = (nCurVal <= nVal);
+            break;
+        case ComparisonType::GreaterThan:
+            bResult = (nCurVal > nVal);
+            break;
+        case ComparisonType::GreaterThanOrEqual:
+            bResult = (nCurVal >= nVal);
+            break;
+        case ComparisonType::NotEqualTo:
+            bResult = (nCurVal != nVal);
+            break;
+        default:
+            bResult = false;
+            break;
     }
     return bResult;
 }

@@ -34,7 +34,7 @@ public:
 
 public:
     void Clear() noexcept;
-    [[gsl::suppress(f.6)]] bool Test() noexcept;
+    GSL_SUPPRESS(f.6) bool Test() noexcept;
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -106,7 +106,7 @@ public:
     void Reset() noexcept;
 
     // Returns the new char* offset after parsing.
-    [[gsl::suppress(f.6)]] const char*
+    GSL_SUPPRESS(f.6) const char*
         ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
     const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 

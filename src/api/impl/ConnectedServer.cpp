@@ -52,7 +52,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         return false;
     }
 
-    RA_LOG_INFO("-- %s Response: %s", sApiName, httpResponse.Content().c_str());
+    RA_LOG_INFO("-- %s Response: %s", sApiName, httpResponse.Content());
 
     pDocument.Parse(httpResponse.Content());
     if (pDocument.HasParseError())
@@ -69,7 +69,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     {
         pResponse.Result       = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
-        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage.c_str());
+        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
         return false;
     }
 
@@ -121,9 +121,9 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
     ra::services::Http::UrlEncodeAppend(sParams, sValue);
 }
 
-Login::Response ConnectedServer::Login(const Login::Request& request)
+Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
 {
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/login_app.php", m_sHost.c_str()));
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/login_app.php", m_sHost));
 
     std::string sPostData;
     AppendUrlParam(sPostData, "u", request.Username);
@@ -156,7 +156,7 @@ Login::Response ConnectedServer::Login(const Login::Request& request)
     return std::move(response);
 }
 
-Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& request)
+Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
 {
     // update the global API pointer to a disconnected API
     ra::services::ServiceLocator::Provide<ra::api::IServer>(new (std::nothrow) DisconnectedServer(m_sHost));
@@ -166,7 +166,7 @@ Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& request)
     return std::move(response);
 }
 
-static bool DoRequest(const std::string& sHost, const char* sApiName, const char* sRequestName,
+static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
                       const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
 {
     std::string sPostData;
@@ -182,14 +182,14 @@ static bool DoRequest(const std::string& sHost, const char* sApiName, const char
     }
     RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
 
-    ra::services::Http::Request httpRequest(sHost + "/dorequest.php");
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
     httpRequest.SetPostData(sPostData);
 
     const auto httpResponse = httpRequest.Call();
     return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
-StartSession::Response ConnectedServer::StartSession(_UNUSED const StartSession::Request& request)
+StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request) noexcept
 {
     StartSession::Response response;
     rapidjson::Document document;
@@ -211,7 +211,7 @@ StartSession::Response ConnectedServer::StartSession(_UNUSED const StartSession:
     return std::move(response);
 }
 
-Ping::Response ConnectedServer::Ping(_UNUSED const Ping::Request& request)
+Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
 {
     Ping::Response response;
     rapidjson::Document document;

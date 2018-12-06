@@ -16,12 +16,10 @@ public:
     virtual const char* Name() const noexcept = 0;
 
     // === user functions ===
-    // TBD: Overrides can throw
-    [[gsl::suppress(f.6)]] virtual Login::Response Login(const Login::Request& request)    = 0;
-    [[gsl::suppress(f.6)]] virtual Logout::Response Logout(const Logout::Request& request) = 0;
-    [[gsl::suppress(f.6)]] 
-    virtual StartSession::Response StartSession(const StartSession::Request& request) = 0;
-    [[gsl::suppress(f.6)]] virtual Ping::Response Ping(const Ping::Request& request) = 0;
+    virtual Login::Response Login(const Login::Request& request) noexcept = 0;
+    virtual Logout::Response Logout(const Logout::Request& request) noexcept = 0;
+    virtual StartSession::Response StartSession(const StartSession::Request& request) noexcept = 0;
+    virtual Ping::Response Ping(const Ping::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

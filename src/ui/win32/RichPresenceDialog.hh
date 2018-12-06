@@ -32,8 +32,8 @@ public:
     };
 
 protected:
-    BOOL OnInitDialog() override;
-    void OnShown() override;
+    BOOL OnInitDialog() noexcept override;
+    void OnShown() noexcept override;
     void OnDestroy() override;
 
 private:

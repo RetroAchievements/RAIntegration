@@ -67,12 +67,12 @@ protected:
     /// Called when the window is created, but before it is shown.
     /// </summary>
     /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return <c>FALSE</c>.</returns>
-    [[gsl::suppress(f.6)]] virtual BOOL OnInitDialog() { return TRUE; } /*overrides might throw*/
+    virtual BOOL OnInitDialog() noexcept { return TRUE; }
 
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    [[gsl::suppress(f.6)]] virtual void OnShown() {}
+    virtual void OnShown() noexcept {}
 
     /// <summary>
     /// Called when the window is destroyed.

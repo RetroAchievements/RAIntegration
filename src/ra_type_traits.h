@@ -154,6 +154,7 @@ struct _NODISCARD is_literal_type
 template<typename LiteralType>
 _CONSTANT_VAR is_literal_type_v{detail::is_literal_type<LiteralType>::value};
 
+
 } // namespace ra
 
 #endif // !RA_TYPE_TRAITS_H

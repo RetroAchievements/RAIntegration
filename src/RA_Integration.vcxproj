@@ -35,43 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\lua\lapi.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lauxlib.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lcode.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lctype.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\ldebug.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\ldo.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\ldump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lfunc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lgc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\llex.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lmem.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lobject.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lopcodes.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lparser.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lstate.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lstring.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\ltable.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\ltm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lundump.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lvm.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\lua\lzio.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\format.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\value.c" CompileAs="CompileAsC" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" WarningLevel="Level3" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
     <ClCompile Include="data\SessionTracker.cpp" />
-    <ClCompile Include="md5.c" PrecompiledHeader="NotUsing" ForcedIncludeFiles="" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='AnalysisUnicode|Win32'">Create</PrecompiledHeader>
@@ -139,8 +107,6 @@
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\rcheevos\include\rcheevos.h" />
-    <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
@@ -155,7 +121,6 @@
     <ClInclude Include="data\SessionTracker.hh" />
     <ClInclude Include="data\UserContext.hh" />
     <ClInclude Include="Exports.hh" />
-    <ClInclude Include="md5.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
     <ClInclude Include="pch_microsoft_suppressions.h" />
@@ -260,6 +225,11 @@
     </None>
     <None Include="ra_type_traits.h" />
     <None Include="ra_utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="rcheevos.vcxproj">
+      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
@@ -517,7 +487,6 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -542,7 +511,6 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
@@ -566,8 +534,6 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration>
-      </LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -591,8 +557,6 @@
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LinkTimeCodeGeneration>
-      </LinkTimeCodeGeneration>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>

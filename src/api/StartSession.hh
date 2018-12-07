@@ -22,7 +22,7 @@ public:
 
         using Callback = std::function<void(const Response& response)>;
 
-        Response Call() const;
+        Response Call() const noexcept;
 
         void CallAsync(Callback&& callback) const
         {

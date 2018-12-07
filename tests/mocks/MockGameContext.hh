@@ -44,7 +44,7 @@ public:
     /// </summary>
     void SetHasActiveAchievements(bool bValue) noexcept { m_bHasActiveAchievements = bValue; }
 
-    AchievementSet::Type ActiveAchievementType() const noexcept { return m_nActiveAchievementType; }
+    AchievementSet::Type ActiveAchievementType() const noexcept override { return m_nActiveAchievementType; }
 
     /// <summary>
     /// Sets the value for <see cref="HasActiveAchievements" />

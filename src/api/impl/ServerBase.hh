@@ -14,22 +14,22 @@ class ServerBase : public IServer
 {
 public:
     // === user functions ===
-    Login::Response Login(_UNUSED const Login::Request& /*request*/) noexcept override
+    GSL_SUPPRESS(f.6) Login::Response Login(_UNUSED const Login::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<Login::Response>(Login::Name());
     }
 
-    Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
+    GSL_SUPPRESS(f.6) Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<Logout::Response>(Logout::Name());
     }
 
-    StartSession::Response StartSession(_UNUSED const StartSession::Request& /*request*/) noexcept override
+    GSL_SUPPRESS(f.6) StartSession::Response StartSession(_UNUSED const StartSession::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<StartSession::Response>(StartSession::Name());
     }
 
-    Ping::Response Ping(_UNUSED const Ping::Request& /*request*/) noexcept override
+    GSL_SUPPRESS(f.6) Ping::Response Ping(_UNUSED const Ping::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }

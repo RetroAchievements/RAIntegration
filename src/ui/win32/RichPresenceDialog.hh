@@ -33,7 +33,7 @@ public:
 
 protected:
     BOOL OnInitDialog() noexcept override;
-    void OnShown() noexcept override;
+    GSL_SUPPRESS(f.6) void OnShown() noexcept override;
     void OnDestroy() override;
 
 private:

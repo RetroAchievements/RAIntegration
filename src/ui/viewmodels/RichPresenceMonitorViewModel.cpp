@@ -24,7 +24,8 @@ static time_t GetRichPresenceModified()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto tLastModified = pLocalStorage.GetLastModified(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    const auto tLastModified = pLocalStorage.GetLastModified(ra::services::StorageItemType::RichPresence,
+                                                             std::to_wstring(pGameContext.GameId()));
     return std::chrono::system_clock::to_time_t(tLastModified);
 }
 
@@ -97,7 +98,7 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
         else
         {
             // check to see if the script was updated
-            time_t tRichPresenceFileTime = GetRichPresenceModified();
+            const time_t tRichPresenceFileTime = GetRichPresenceModified();
             if (tRichPresenceFileTime != m_tRichPresenceFileTime)
             {
                 ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();

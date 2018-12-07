@@ -3,4 +3,25 @@
   <Include Path="cppcorecheckclassrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckconstrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckfuncrules.ruleset" Action="Default" />
+  <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
+    <Rule Id="C26432" Action="Warning" />
+    <Rule Id="C26433" Action="Warning" />
+    <Rule Id="C26434" Action="Warning" />
+    <Rule Id="C26435" Action="Warning" />
+    <Rule Id="C26436" Action="Warning" />
+    <Rule Id="C26439" Action="Warning" />
+    <Rule Id="C26440" Action="Warning" />
+    <Rule Id="C26443" Action="Warning" />
+    <Rule Id="C26447" Action="Warning" />
+    <Rule Id="C26455" Action="Warning" />
+    <Rule Id="C26456" Action="Warning" />
+    <Rule Id="C26460" Action="Warning" />
+    <Rule Id="C26461" Action="Warning" />
+    <Rule Id="C26462" Action="Warning" />
+    <Rule Id="C26463" Action="Warning" />
+    <Rule Id="C26464" Action="Warning" />
+    <Rule Id="C26496" Action="Warning" />
+    <Rule Id="C26497" Action="Warning" />
+    <Rule Id="C26498" Action="Warning" />
+  </Rules>
 </RuleSet>

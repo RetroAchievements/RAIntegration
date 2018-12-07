@@ -276,7 +276,7 @@ public:
         {
             if (sFormat.back() == 'f' || sFormat.back() == 'F')
             {
-                int nIndex = sFormat.find('.');
+                const int nIndex = sFormat.find('.');
                 if (nIndex != std::string::npos)
                 {
                     int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
@@ -308,7 +308,7 @@ public:
         }
         else
         {
-            int nLength = strlen(arg);
+            const int nLength = strlen(arg);
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)
@@ -393,7 +393,7 @@ public:
                 const CharT* pStart = pScan;
                 while (*pScan)
                 {
-                    char c = static_cast<char>(*pScan);
+                    const char c = static_cast<char>(*pScan);
                     sFormat.push_back(c);
                     if (isalpha(c))
                         break;
@@ -409,7 +409,7 @@ public:
 
                 if (sFormat.length() > 2 && sFormat.at(sFormat.length() - 2) == '*')
                 {
-                    char c = sFormat.back();
+                    const char c = sFormat.back();
                     sFormat.pop_back(); // remove 's'/'x'
                     sFormat.pop_back(); // remove '*'
                     sFormat.append(ra::ToString(value));

@@ -472,7 +472,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nHeight = rcTarget.bottom - rcTarget.top;
 
     auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    auto nPlayTime = static_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId()).count());
+    const auto nPlayTime = static_cast<unsigned int>(
+        ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId()).count());
 
     // title
     const auto& sGameTitle = pGameContext.GameTitle();
@@ -527,7 +528,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     {
         for (int i = 0; i < nAchievementsToDraw; ++i)
         {
-            int nAchIdx = (*pnScrollOffset) + i;
+            const int nAchIdx = (*pnScrollOffset) + i;
             if (nAchIdx < static_cast<int>(nNumberOfAchievements))
             {
                 const BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);

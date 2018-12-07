@@ -106,11 +106,11 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
 
     auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     const auto sTitle = ra::Widen(Title());
-    auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
+    const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
     auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
     const auto sSubTitle = ra::Widen(Subtitle());
-    auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
+    const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
     // create the actual surface
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;

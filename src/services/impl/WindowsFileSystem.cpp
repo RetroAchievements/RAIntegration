@@ -142,7 +142,7 @@ std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring
     // cannot use std::ios::app, or the SetPosition method doesn't work
     // have to specify std::ios::in or the previous contents are lost
     auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::ate | std::ios::in | std::ios::out);
-    auto* oStream = &pWriter->GetFStream();
+    const std::ofstream* oStream = &pWriter->GetFStream();
     if (!oStream->is_open())
     {
         // failed to open the file - try creating it

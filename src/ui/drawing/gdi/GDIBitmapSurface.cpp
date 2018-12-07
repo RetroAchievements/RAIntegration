@@ -18,7 +18,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
-        auto pEnd = pBits + nWidth * nHeight;
+        const UINT32* pEnd = pBits + nWidth * nHeight;
         do
         {
             *pBits++ = nColor.ARGB;
@@ -29,7 +29,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
         // partial scanlines, have to fill in strips
         while (nHeight--)
         {
-            auto pEnd = pBits + nWidth;
+            const UINT32* pEnd = pBits + nWidth;
             do
             {
                 *pBits++ = nColor.ARGB;
@@ -109,11 +109,11 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     auto nLines = szText.cy;
     while (nLines--)
     {
-        auto pEnd = pBits + szText.cx;
+        const UINT32* pEnd = pBits + szText.cx;
         do
         {
-            UINT8 nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
-            UINT32 pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
+            const UINT8 nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
+            const UINT32 pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
             BlendPixel(pBits, pColor);
             ++pBits;
         } while (pBits < pEnd);
@@ -127,8 +127,8 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
 void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 {
-    int nWidth = static_cast<int>(GetWidth());
-    int nHeight = static_cast<int>(GetHeight());
+    const int nWidth = static_cast<int>(GetWidth());
+    const int nHeight = static_cast<int>(GetHeight());
 
     // copy a portion of the target surface into a buffer
     HDC hMemDC = CreateCompatibleDC(hTargetDC);

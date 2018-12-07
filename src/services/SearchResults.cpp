@@ -240,7 +240,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
-            unsigned int nValue1 = vMemory.at(i);
+            const unsigned int nValue1 = vMemory.at(i);
             unsigned int nValue2 = (nTestValue > 15) ? (block.GetByte(i) & 0x0F) : nTestValue;
 
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))

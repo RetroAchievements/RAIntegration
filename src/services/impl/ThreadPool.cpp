@@ -75,7 +75,7 @@ void ThreadPool::ProcessDelayedTasks()
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
 
-            auto tNow = pClock.UpTime();
+            const auto tNow = pClock.UpTime();
             while (!m_vDelayedTasks.empty() && m_vDelayedTasks.front().tWhen <= tNow)
             {
                 m_vQueue.emplace_front(std::move(m_vDelayedTasks.front().fTask));
@@ -109,7 +109,7 @@ void ThreadPool::ProcessDelayedTasks()
             if (m_vDelayedTasks.empty())
                 break;
 
-            auto tNext = m_vDelayedTasks.front().tWhen - pClock.UpTime();
+            const auto tNext = m_vDelayedTasks.front().tWhen - pClock.UpTime();
             if (tNext > tZeroMilliseconds)
                 m_cvDelayedWork.wait_for(lock, tNext);
         }

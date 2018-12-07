@@ -87,7 +87,7 @@ public:
     }
 
 private:
-    static void LogMessage(ra::services::TextWriter& pWriter, char* sTimestamp, LogLevel level,
+    static void LogMessage(ra::services::TextWriter& pWriter, const char* const sTimestamp, LogLevel level,
                            const std::string& sMessage)
     {
         pWriter.Write(sTimestamp);

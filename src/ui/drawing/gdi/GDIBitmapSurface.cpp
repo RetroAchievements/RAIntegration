@@ -94,6 +94,8 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
     UINT32* pTextBits{};
     HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+    assert(hBitmap != nullptr);
+    assert(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
@@ -104,6 +106,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
     auto nStride = GetWidth();
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
+    assert(ra::to_signed(nFirstScanline) >= 0);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
 
     auto nLines = szText.cy;

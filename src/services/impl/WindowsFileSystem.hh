@@ -15,14 +15,14 @@ namespace impl {
 class WindowsFileSystem : public IFileSystem
 {
 public:
-    WindowsFileSystem() noexcept;
+    GSL_SUPPRESS(f.6) WindowsFileSystem() noexcept;
 
-    const std::wstring& BaseDirectory() const override { return m_sBaseDirectory; }
-    bool DirectoryExists(const std::wstring& sDirectory) const override;
-    bool CreateDirectory(const std::wstring& sDirectory) const override;
+    const std::wstring& BaseDirectory() const noexcept override { return m_sBaseDirectory; }
+    bool DirectoryExists(const std::wstring& sDirectory) const noexcept override;
+    bool CreateDirectory(const std::wstring& sDirectory) const noexcept override;
     size_t GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const override;
-    bool DeleteFile(const std::wstring& sPath) const override;
-    bool MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const override;
+    bool DeleteFile(const std::wstring& sPath) const noexcept override;
+    bool MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const noexcept override;
     int64_t GetFileSize(const std::wstring& sPath) const override;
     std::chrono::system_clock::time_point GetLastModified(const std::wstring& sPath) const override;
     std::unique_ptr<TextReader> OpenTextFile(const std::wstring& sPath) const override;

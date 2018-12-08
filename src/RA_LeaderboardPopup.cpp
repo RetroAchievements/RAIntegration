@@ -24,12 +24,6 @@ const int FONT_SIZE_TEXT = 22;
 
 }
 
-
-LeaderboardPopup::LeaderboardPopup()
-{
-    Reset();
-}
-
 void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
     m_vScoreboardQueue.push(nID);
@@ -123,7 +117,7 @@ BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
     return FALSE;
 }
 
-float LeaderboardPopup::GetOffsetPct() const
+float LeaderboardPopup::GetOffsetPct() const noexcept
 {
     float fVal = 0.0f;
 

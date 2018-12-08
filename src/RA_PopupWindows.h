@@ -30,15 +30,15 @@ public:
         m_AchievementPopups.Clear();
     }
 
-    static AchievementPopup& AchievementPopups() { return m_AchievementPopups; }
-    static LeaderboardPopup& LeaderboardPopups() { return m_LeaderboardPopups; }
+    static AchievementPopup& AchievementPopups() noexcept { return m_AchievementPopups; }
+    static LeaderboardPopup& LeaderboardPopups() noexcept { return m_LeaderboardPopups; }
 
 private:
     static AchievementPopup m_AchievementPopups;
     static LeaderboardPopup m_LeaderboardPopups;
 };
 
-//	Exposed to DLL
+// Exposed to DLL
 _EXTERN_C
 [[gsl::suppress(con.3)]]
 API int _RA_UpdatePopups(_In_ ControllerInput* __restrict input, _In_ float fDTime,

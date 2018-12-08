@@ -45,7 +45,7 @@ public:
     /// </summary>
     /// <returns><c>true</c> if an implementation exists, <c>false</c> if not.</returns>
     template <class TClass>
-    static bool Exists()
+    static bool Exists() noexcept
     {
         return Service<TClass>::Exists();
     }
@@ -58,7 +58,7 @@ public:
     /// pointer and delete it at the end of execution or when a different implementation is provided.
     /// </param>
     template <class TClass>
-    static void Provide(TClass* pInstance)
+    static void Provide(TClass* pInstance) noexcept
     {
         Service<TClass>::s_pInstance.reset(pInstance);
     }
@@ -123,7 +123,7 @@ private:
             return *s_pInstance.get();
         }
 
-        static bool Exists()
+        static bool Exists() noexcept
         {
             return (s_pInstance != nullptr);
         }

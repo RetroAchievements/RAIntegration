@@ -23,7 +23,7 @@ enum class RelativePosition
 class WindowBinding : protected BindingBase
 {
 public:
-    explicit WindowBinding(WindowViewModelBase& vmWindowViewModel) noexcept
+    explicit WindowBinding(WindowViewModelBase& vmWindowViewModel)
         : BindingBase(vmWindowViewModel)
     {
     }
@@ -63,7 +63,7 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
 protected:
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    GSL_SUPPRESS(f.6) void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
 

@@ -11,7 +11,7 @@ namespace impl {
 class WindowsDebuggerFileLogger : public FileLogger
 {
 public:
-    explicit WindowsDebuggerFileLogger(const ra::services::IFileSystem& pFileSystem) noexcept
+    explicit WindowsDebuggerFileLogger(const ra::services::IFileSystem& pFileSystem)
         : FileLogger(pFileSystem)
     {
     }

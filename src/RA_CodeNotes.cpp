@@ -39,7 +39,7 @@ size_t CodeNotes::Load(unsigned int nID)
         const auto nAddr { static_cast<ra::ByteAddress>(std::stoul(sAddr, nullptr, 16)) };
         const std::string& sAuthor { note["User"].GetString() }; // Author?
 
-        m_CodeNotes.try_emplace(nAddr, CodeNoteObj{ sAuthor, sNote });
+        m_CodeNotes.try_emplace(nAddr, CodeNoteObj(sAuthor, sNote));
     }
 
     return m_CodeNotes.size();
@@ -77,7 +77,7 @@ void CodeNotes::OnCodeNotesResponse(rapidjson::Document& doc)
 void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
-        m_CodeNotes.insert(std::map<ra::ByteAddress, CodeNoteObj>::value_type(nAddr, CodeNoteObj(sAuthor, sNote)));
+        m_CodeNotes.try_emplace(nAddr, CodeNoteObj(sAuthor, sNote));
     else
         m_CodeNotes.at(nAddr).SetNote(sNote);
 

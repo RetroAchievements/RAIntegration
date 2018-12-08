@@ -129,14 +129,10 @@ unsigned int AchievementSet::NumActive() const
     return nNumActive;
 }
 
-void AchievementSet::Clear()
+void AchievementSet::Clear() noexcept
 {
-    std::vector<Achievement>::iterator iter = m_Achievements.begin();
-    while (iter != m_Achievements.end())
-    {
-        iter->Clear();
-        iter++;
-    }
+    for (auto& ach : m_Achievements)
+        ach.Clear();
 
     m_Achievements.clear();
     m_bProcessingActive = TRUE;
@@ -222,7 +218,7 @@ void AchievementSet::Test()
     }
 }
 
-void AchievementSet::Reset()
+void AchievementSet::Reset() noexcept
 {
     for (Achievement& ach : m_Achievements)
         ach.Reset();

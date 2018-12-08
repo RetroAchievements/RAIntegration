@@ -12,9 +12,9 @@ public:
     {
     }
 
-    const std::string& Title() const { return m_sTitle; }
-    const std::string& Filename() const { return m_sFilename; }
-    unsigned int GameID() const { return m_nGameID; }
+    const std::string& Title() const noexcept { return m_sTitle; }
+    const std::string& Filename() const noexcept { return m_sFilename; }
+    unsigned int GameID() const noexcept { return m_nGameID; }
 
     const std::string m_sTitle;
     const std::string m_sFilename;
@@ -29,11 +29,11 @@ public:
     INT_PTR CALLBACK GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
 
 public:
-    void InstallHWND(HWND hWnd) { m_hDialogBox = hWnd; }
-    HWND GetHWND() const { return m_hDialogBox; }
+    void InstallHWND(HWND hWnd) noexcept { m_hDialogBox = hWnd; }
+    HWND GetHWND() const noexcept { return m_hDialogBox; }
 
     void AddTitle(const std::string& sTitle, const std::string& sFilename, unsigned int nGameID);
-    void ClearTitles();
+    void ClearTitles() noexcept;
 
     void LoadAll();
     void SaveAll();

@@ -47,19 +47,19 @@ void SessionTracker::LoadSessions()
             if (nIndex == std::string::npos)
                 continue;
 
-            auto nGameId = strtoul(sLine.c_str(), nullptr, 10);
+            const auto nGameId = std::stoul(sLine);
 
             auto nIndex2 = sLine.find(':', ++nIndex);
             if (nIndex2 == std::string::npos)
                 continue;
 
-            auto nSessionStart = strtoul(&sLine[nIndex], nullptr, 10);
+            const auto nSessionStart = strtoul(&sLine[nIndex], nullptr, 10);
 
             nIndex = sLine.find(':', ++nIndex2);
             if (nIndex == std::string::npos)
                 continue;
 
-            auto nSessionLength = strtoul(&sLine[nIndex2], nullptr, 10);
+            const auto nSessionLength = strtoul(&sLine[nIndex2], nullptr, 10);
 
             auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
             if (sLine[nIndex + 1] == md5.front() && sLine[nIndex + 2] == md5.back())
@@ -210,7 +210,7 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const
+bool SessionTracker::IsInspectingMemory() const noexcept
 {
 #ifdef RA_UTEST
     return false;

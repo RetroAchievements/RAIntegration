@@ -407,6 +407,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PreBuildEvent>
       <Command>..\MakeBuildVer.bat</Command>

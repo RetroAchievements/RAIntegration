@@ -458,7 +458,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
     return FALSE;
 }
 
-BOOL Dlg_MemBookmark::IsActive() const
+BOOL Dlg_MemBookmark::IsActive() const noexcept
 {
     return(g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }

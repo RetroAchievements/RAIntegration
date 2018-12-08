@@ -38,28 +38,29 @@ public:
 
     // === user functions ===
 
-    Login::Response Login(_UNUSED const Login::Request& request) noexcept override
+    Login::Response Login(const Login::Request& request) noexcept override
     {
         return HandleRequest<ra::api::Login>(request);
     }
 
-    Logout::Response Logout(_UNUSED const Logout::Request& request) noexcept override
+    Logout::Response Logout(const Logout::Request& request) noexcept override
     {
         return HandleRequest<ra::api::Logout>(request);
     }
 
-    StartSession::Response StartSession(_UNUSED const StartSession::Request& request) noexcept override
+    StartSession::Response StartSession(const StartSession::Request& request) noexcept override
     {
         return HandleRequest<ra::api::StartSession>(request);
     }
 
-    Ping::Response Ping(_UNUSED const Ping::Request& request) noexcept override
+    Ping::Response Ping(const Ping::Request& request) noexcept override
     {
         return HandleRequest<ra::api::Ping>(request);
     }
 
 protected:
     template<typename TApi>
+    GSL_SUPPRESS(f.6)
     inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
         typename TApi::Response response;

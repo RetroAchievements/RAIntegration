@@ -51,7 +51,7 @@ static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const
     }
 }
 
-FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem) noexcept
+FileLocalStorage::FileLocalStorage(IFileSystem& pFileSystem)
     : m_pFileSystem(pFileSystem)
 {
     // Ensure all required directories are created

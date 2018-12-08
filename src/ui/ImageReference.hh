@@ -24,8 +24,9 @@ public:
     virtual ~IImageRepository() noexcept = default;
 
     IImageRepository(const IImageRepository&) noexcept = delete;
+    IImageRepository& operator=(const IImageRepository&) noexcept = delete;
     IImageRepository(IImageRepository&&) noexcept = delete;
-
+    IImageRepository& operator=(IImageRepository&&) noexcept = delete;
     /// <summary>
     /// Ensures an image is available locally.
     /// </summary>
@@ -36,7 +37,7 @@ public:
     /// <summary>Adds a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
-    virtual void AddReference(ImageReference& pImage) noexcept = 0;
+    virtual void AddReference(ImageReference& pImage) = 0;
 
     /// <summary>Releases a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
@@ -49,7 +50,7 @@ public:
     /// <remarks>    
     /// Updates the internal state of the <see cref="ImageReference" /> if <c>true</c>.
     /// </remarks>
-    virtual bool HasReferencedImageChanged(ImageReference& pImage) const noexcept = 0;
+    virtual bool HasReferencedImageChanged(ImageReference& pImage) const = 0;
 
 protected:
     IImageRepository() noexcept = default;
@@ -65,7 +66,7 @@ public:
             Release();
     }
 
-    explicit ImageReference(ImageType nType, const std::string& sName) noexcept
+    explicit ImageReference(ImageType nType, const std::string& sName)
         : m_nType(nType), m_sName(sName)
     {
     }
@@ -78,12 +79,12 @@ public:
     /// <summary>
     /// Get the image type.
     /// </summary>
-    ImageType Type() const { return m_nType; }
+    ImageType Type() const noexcept { return m_nType; }
     
     /// <summary>
     /// Get the image name.
     /// </summary>
-    const std::string& Name() const { return m_sName; }
+    const std::string& Name() const noexcept { return m_sName; }
 
     /// <summary>
     /// Updates the referenced image.
@@ -104,7 +105,7 @@ public:
     /// <summary>
     /// Releases this reference image.
     /// </summary>
-    void Release()
+    GSL_SUPPRESS(f.6) void Release() noexcept
     {
         if (m_nType != ImageType::None)
         {
@@ -116,12 +117,12 @@ public:
     /// <summary>
     /// Gets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
     /// </summary>
-    unsigned long GetData() const { return m_nData; }
+    unsigned long GetData() const noexcept { return m_nData; }
 
     /// <summary>
     /// Sets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
     /// </summary>
-    void SetData(unsigned long nValue) { m_nData = nValue; }
+    void SetData(unsigned long nValue) noexcept { m_nData = nValue; }
 
 private:
     ImageType m_nType = ImageType::None;

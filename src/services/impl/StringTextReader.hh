@@ -13,7 +13,7 @@ namespace impl {
 class StringTextReader : public ra::services::TextReader
 {
 public:
-    explicit StringTextReader(const std::string& sInput) noexcept
+    explicit StringTextReader(const std::string& sInput)
         : m_iStream(sInput)
     {
     }

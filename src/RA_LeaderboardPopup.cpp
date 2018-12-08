@@ -188,7 +188,7 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
                 if (pLB != nullptr)
                 {
                     const auto sScoreSoFar = ra::Widen(pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())));
-                    auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
+                    const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
 
                     auto pRenderSurface = pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
 
@@ -255,7 +255,7 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
                         m_pScoreboardSurface->WriteText(24, nY, nFontText, nTextColor, ra::Widen(lbInfo.m_sUsername));
 
                         const auto sScore = ra::Widen(pLB->FormatScore(lbInfo.m_nScore));
-                        auto szScore = m_pScoreboardSurface->MeasureText(nFontText, sScore);
+                        const auto szScore = m_pScoreboardSurface->MeasureText(nFontText, sScore);
                         m_pScoreboardSurface->WriteText(m_pScoreboardSurface->GetWidth() - 4 - szScore.Width - 8, nY, nFontText, nTextColor, sScore);
 
                         nY += FONT_SIZE_TEXT + 2;

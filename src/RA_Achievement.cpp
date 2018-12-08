@@ -5,10 +5,12 @@
 
 #include "RA_Defs.h"
 
+#include "services\AchievementRuntime.hh"
+#include "services\ServiceLocator.hh"
+
 #ifndef RA_UTEST
 #include "RA_ImageFactory.h"
 #endif
-
 
 #ifndef RA_UTEST
 #include "RA_Core.h"
@@ -292,32 +294,6 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     return false;
 }
 
-bool Achievement::Test() noexcept
-{
-    if (m_pTrigger == nullptr)
-        return false;
-
-    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-
-    const bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
-
-    const bool bRetVal = rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
-
-    if (bNotifyOnReset && !HasHitCounts(pTrigger))
-    {
-#ifndef RA_UTEST
-        RA_CausePause();
-
-        char buffer[256];
-        sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
-        MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
-#endif
-    }
-
-    SetDirtyFlag(DirtyFlags::Conditions);
-    return bRetVal;
-}
-
 static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex) noexcept
 {
     rc_condset_t* pGroup = pTrigger->requirement;
@@ -436,20 +412,33 @@ void Achievement::SetActive(BOOL bActive) noexcept
     {
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
+
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        if (!m_bActive)
+            pRuntime.DeactivateAchievement(ID());
+        else if (m_bPauseOnReset)
+            pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        else
+            pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
     }
 }
 
-//void Achievement::SetUpvotes( unsigned short nVal )
-//{
-//	m_nUpvotes = nVal;
-//	SetDirtyFlag( Dirty_Votes );
-//}
-//
-//void Achievement::SetDownvotes( unsigned short nVal )
-//{
-//	m_nDownvotes = nVal;
-//	SetDirtyFlag( Dirty_Votes );
-//}
+void Achievement::SetPauseOnReset(BOOL bPause) noexcept
+{
+    if (m_bPauseOnReset != bPause)
+    {
+        m_bPauseOnReset = bPause;
+
+        if (m_bActive)
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            if (m_bPauseOnReset)
+                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+            else
+                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        }
+    }
+}
 
 void Achievement::SetModified(BOOL bModified) noexcept
 {

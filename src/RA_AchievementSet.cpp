@@ -12,10 +12,13 @@
 #include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -34,8 +37,30 @@ AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 _Use_decl_annotations_
 void RASetAchievementCollection(AchievementSet::Type Type) noexcept
 {
+    if (g_nActiveAchievementSet == Type)
+        return;
+
+    auto& pAchievementRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    for (size_t i = 0U; i < g_pActiveAchievements->NumAchievements(); ++i)
+    {
+        auto& pAchievement = g_pActiveAchievements->GetAchievement(i);
+        if (pAchievement.Active())
+            pAchievementRuntime.DeactivateAchievement(pAchievement.ID());
+    }
+
     g_nActiveAchievementSet = Type;
     g_pActiveAchievements = *ACH_SETS.at(ra::etoi(Type));
+
+    for (size_t i = 0U; i < g_pActiveAchievements->NumAchievements(); ++i)
+    {
+        auto& pAchievement = g_pActiveAchievements->GetAchievement(i);
+        if (pAchievement.Active())
+        {
+            // deactivate and reactivate to re-register the achievement with the runtime
+            pAchievement.SetActive(false);
+            pAchievement.SetActive(true);
+        }
+    }
 }
 
 //static 
@@ -51,23 +76,40 @@ void AchievementSet::OnRequestUnlocks(const rapidjson::Document& doc)
     const auto bHardcoreMode{ doc["HardcoreMode"].GetBool() };
     const auto& UserUnlocks{ doc["UserUnlocks"] };
 
-    for (const auto& unlocked : UserUnlocks.GetArray())
-    {
-        //	IDs could be present in either core or unofficial:
-        const auto nNextAchID{ static_cast<ra::AchievementID>(unlocked.GetUint()) };
-        if (g_pCoreAchievements->Find(nNextAchID) != nullptr)
-            g_pCoreAchievements->Unlock(nNextAchID);
-        else if (g_pUnofficialAchievements->Find(nNextAchID) != nullptr)
-            g_pUnofficialAchievements->Unlock(nNextAchID);
-    }
-
-    // pre-fetch locked images for any achievements the player hasn't earned
-    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    std::set<unsigned int> nLockedCoreAchievements;
     for (size_t i = 0U; i < g_pCoreAchievements->NumAchievements(); ++i)
     {
-        const auto& ach{ g_pCoreAchievements->GetAchievement(i) };
-        if (ach.Active())
-            pImageRepository.FetchImage(ra::ui::ImageType::Badge, ach.BadgeImageURI() + "_lock");
+        auto& pAchievement = g_pCoreAchievements->GetAchievement(i);
+        pAchievement.SetActive(false);
+        nLockedCoreAchievements.insert(pAchievement.ID());
+    }
+
+    std::set<unsigned int> nLockedUnofficialAchievements;
+    for (size_t i = 0U; i < g_pUnofficialAchievements->NumAchievements(); ++i)
+    {
+        auto& pAchievement = g_pUnofficialAchievements->GetAchievement(i);
+        pAchievement.SetActive(false);
+        nLockedUnofficialAchievements.insert(pAchievement.ID());
+    }
+
+    for (const auto& unlocked : UserUnlocks.GetArray())
+    {
+        // IDs could be present in either core or unofficial:
+        const auto nUnlockedAchievementId = unlocked.GetUint();
+        nLockedCoreAchievements.erase(nUnlockedAchievementId);
+        nLockedUnofficialAchievements.erase(nUnlockedAchievementId);
+    }
+
+    // activate any core achievements the player hasn't earned and pre-fetch the locked image
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    for (auto nAchievementId : nLockedCoreAchievements)
+    {
+        auto* pAchievement = g_pCoreAchievements->Find(nAchievementId);
+        if (pAchievement)
+        {
+            pAchievement->SetActive(true);
+            pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
+        }
     }
 }
 
@@ -143,76 +185,99 @@ void AchievementSet::Test()
     if (!m_bProcessingActive)
         return;
 
-    for (std::vector<Achievement>::iterator iter = m_Achievements.begin(); iter != m_Achievements.end(); ++iter)
+    for (auto& pAchievement : m_Achievements)
     {
-        Achievement& ach = (*iter);
-        if (!ach.Active())
-            continue;
+        if (pAchievement.Active())
+            pAchievement.SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+    }
 
-        if (ach.Test() == TRUE)
+    std::vector<ra::services::AchievementRuntime::Change> vChanges;
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    pRuntime.Process(vChanges);
+
+    for (const auto& pChange : vChanges)
+    {
+        switch (pChange.nType)
         {
-            //	Award. If can award or have already awarded, set inactive:
-            ach.SetActive(FALSE);
-
-            //	Reverse find where I am in the list:
-            unsigned int nOffset = 0;
-            for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
+            case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
-                if (&ach == &g_pActiveAchievements->GetAchievement(nOffset))
-                    break;
-            }
-
-            ASSERT(nOffset < NumAchievements());
-            if (nOffset < NumAchievements())
-            {
-                g_AchievementsDialog.ReloadLBXData(nOffset);
-
-                if (g_AchievementEditorDialog.ActiveAchievement() == &ach)
-                    g_AchievementEditorDialog.LoadAchievement(&ach, TRUE);
-            }
-
-            if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-            {
-                if (g_nActiveAchievementSet != Type::Core)
-                {
-                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                        "Test: Achievement Unlocked",
-                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
-                        PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
-                }
-                else if (ach.Modified())
-                {
-                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                        "Modified: Achievement Unlocked",
-                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
-                        PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
-                }
-                else if (g_bRAMTamperedWith)
-                {
-                    g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                        "(RAM tampered with!): Achievement Unlocked",
-                        ra::StringPrintf("%s (%u) (Unofficial)", ach.Title().c_str(), ach.Points()),
-                        PopupMessageType::AchievementError, ra::ui::ImageType::Badge, ach.BadgeImageURI()));
-                }
-                else
-                {
-                    PostArgs args;
-                    args['u'] = RAUsers::LocalUser().Username();
-                    args['t'] = RAUsers::LocalUser().Token();
-                    args['a'] = std::to_string(ach.ID());
-                    args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
-
-                    RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
-                }
-            }
-
-            if (ach.GetPauseOnTrigger())
-            {
+#ifndef RA_UTEST
                 RA_CausePause();
+#endif
+                std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", Find(pChange.nId)->Title());
+                ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                break;
+            }
 
-                char buffer[256];
-                sprintf_s(buffer, 256, "Pause on Trigger: %s", ach.Title().c_str());
-                MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
+            case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
+            {
+                auto* pAchievement = Find(pChange.nId);
+                pAchievement->SetActive(false);
+
+#ifndef RA_UTEST
+                //	Reverse find where I am in the list:
+                unsigned int nOffset = 0;
+                for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
+                {
+                    if (pAchievement == &g_pActiveAchievements->GetAchievement(nOffset))
+                        break;
+                }
+
+                ASSERT(nOffset < NumAchievements());
+                if (nOffset < NumAchievements())
+                {
+                    g_AchievementsDialog.ReloadLBXData(nOffset);
+
+                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
+                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
+                }
+
+                if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+                {
+                    if (g_nActiveAchievementSet != Type::Core)
+                    {
+                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                            "Test: Achievement Unlocked",
+                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
+                            PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                    }
+                    else if (pAchievement->Modified())
+                    {
+                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                            "Modified: Achievement Unlocked",
+                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
+                            PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                    }
+                    else if (g_bRAMTamperedWith)
+                    {
+                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
+                            "(RAM tampered with!): Achievement Unlocked",
+                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
+                            PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                    }
+                    else
+                    {
+                        PostArgs args;
+                        args['u'] = RAUsers::LocalUser().Username();
+                        args['t'] = RAUsers::LocalUser().Token();
+                        args['a'] = std::to_string(pAchievement->ID());
+                        args['h'] = _RA_HardcoreModeIsActive() ? "1" : "0";
+
+                        RAWeb::CreateThreadedHTTPRequest(RequestSubmitAwardAchievement, args);
+                    }
+                }
+#endif
+
+                if (pAchievement->GetPauseOnTrigger())
+                {
+#ifndef RA_UTEST
+                    RA_CausePause();
+#endif
+                    std::wstring sMessage = ra::StringPrintf(L"Pause on Trigger: %s", pAchievement->Title());
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                }
+
+                break;
             }
         }
     }
@@ -373,7 +438,6 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
             {
                 auto& newAch{ AddAchievement() };
                 newAch.Parse(achData);
-                newAch.SetActive(TRUE); // Activate core by default
             }
             else if ((nFlags == 5) && (m_nSetType == Type::Unofficial))
             {
@@ -533,21 +597,6 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
     newAch.SetActive(FALSE);
 
     return newAch;
-}
-
-BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
-{
-    for (size_t i = 0; i < NumAchievements(); ++i)
-    {
-        if (m_Achievements[i].ID() == nAchID)
-        {
-            m_Achievements[i].SetActive(FALSE);
-            return TRUE;	//	Update Dlg? //TBD
-        }
-    }
-
-    RA_LOG("Attempted to unlock achievement %u but failed!\n", nAchID);
-    return FALSE;//??
 }
 
 BOOL AchievementSet::HasUnsavedChanges()

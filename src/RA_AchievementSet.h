@@ -68,8 +68,6 @@ public:
     void SaveProgress(const char* sRomName);
     void LoadProgress(const char* sRomName);
 
-    BOOL Unlock(ra::AchievementID nAchievementID);
-
     unsigned int NumActive() const;
 
     BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }

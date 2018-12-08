@@ -228,6 +228,9 @@
     <ClCompile Include="data\SessionTracker.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementRuntime.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -538,6 +541,9 @@
     </ClInclude>
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\AchievementRuntime.hh">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

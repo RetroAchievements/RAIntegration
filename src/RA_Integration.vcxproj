@@ -80,6 +80,7 @@
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
+    <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
+    <ClInclude Include="services\AchievementRuntime.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IClock.hh" />

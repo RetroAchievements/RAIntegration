@@ -34,7 +34,6 @@ public:
 
 public:
     void Clear() noexcept;
-    GSL_SUPPRESS(f.6) bool Test() noexcept;
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -53,7 +52,7 @@ public:
     void SetPauseOnTrigger(BOOL bPause) noexcept { m_bPauseOnTrigger = bPause; }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause) noexcept { m_bPauseOnReset = bPause; }
+    void SetPauseOnReset(BOOL bPause) noexcept;
 
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }

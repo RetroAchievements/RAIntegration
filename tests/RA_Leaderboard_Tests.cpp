@@ -10,14 +10,14 @@ namespace tests {
 class LeaderboardHarness : public RA_Leaderboard
 {
 public:
-    LeaderboardHarness() : RA_Leaderboard(1) {}
+    LeaderboardHarness() noexcept : RA_Leaderboard(1) {}
 
-    bool IsActive() const { return m_bActive; }
-    bool IsScoreSubmitted() const { return m_bScoreSubmitted; }
-    unsigned int SubmittedScore() const { return m_nSubmittedScore; }
+    bool IsActive() const noexcept { return m_bActive; }
+    bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
+    unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
 
 public:
-    void Reset() override
+    void Reset() noexcept override
     {
         RA_Leaderboard::Reset();
 
@@ -26,17 +26,17 @@ public:
         m_nSubmittedScore = 0;
     }
 
-    void Start() override
+    void Start() noexcept override
     {
         m_bActive = true;
     }
 
-    void Cancel() override
+    void Cancel() noexcept override
     {
         m_bActive = false;
     }
 
-    void Submit(unsigned int nScore) override
+    void Submit(unsigned int nScore) noexcept override
     {
         m_bActive = false;
         m_bScoreSubmitted = true;

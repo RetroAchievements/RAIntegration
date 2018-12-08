@@ -39,10 +39,10 @@ public:
         m_hMessageImage(ra::ui::ImageType::None, "")
     {}
 
-    const std::string& Title() const { return m_sMessageTitle; }
-    const std::string& Subtitle() const { return m_sMessageSubtitle; }
-    PopupMessageType Type() const { return m_nMessageType; }
-    const ra::ui::ImageReference& Image() const { return m_hMessageImage; }
+    const std::string& Title() const noexcept { return m_sMessageTitle; }
+    const std::string& Subtitle() const noexcept { return m_sMessageSubtitle; }
+    PopupMessageType Type() const noexcept { return m_nMessageType; }
+    const ra::ui::ImageReference& Image() const noexcept { return m_hMessageImage; }
 
     const ra::ui::drawing::ISurface& GetRendered();
 
@@ -61,7 +61,7 @@ public:
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
     void AddMessage(MessagePopup&& msg);
-    float GetYOffsetPct() const;
+    float GetYOffsetPct() const noexcept;
 
     bool MessagesPresent() const { return (m_vMessages.size() > 0); }
 

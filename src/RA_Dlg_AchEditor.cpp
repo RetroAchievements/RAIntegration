@@ -43,7 +43,7 @@ Dlg_AchievementEditor g_AchievementEditorDialog;
 std::vector<ResizeContent> vDlgAchEditorResize;
 POINT pDlgAchEditorMin;
 
-INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM)
+INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM) noexcept
 {
     switch (nMsg)
     {
@@ -78,7 +78,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
     return FALSE;
 }
 
-Dlg_AchievementEditor::Dlg_AchievementEditor()
+Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
 {
     for (size_t i = 0; i < MAX_CONDITIONS; ++i)
     {
@@ -132,7 +132,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     // bSuccess = ListView_EnableGroupView( hGroupList, FALSE );
 }
 
-BOOL Dlg_AchievementEditor::IsActive() const
+BOOL Dlg_AchievementEditor::IsActive() const noexcept
 {
     return (g_AchievementEditorDialog.GetHWND() != nullptr) && (IsWindowVisible(g_AchievementEditorDialog.GetHWND()));
 }
@@ -226,7 +226,7 @@ HWND g_hIPEEdit;
 int nSelItem;
 int nSelSubItem;
 
-long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
     switch (nMsg)
     {
@@ -290,7 +290,7 @@ long _stdcall EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     return CallWindowProc(EOldProc, hwnd, nMsg, wParam, lParam);
 }
 
-long _stdcall DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
     if (nMsg == WM_COMMAND)
     {
@@ -656,7 +656,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
 }
 
 // static
-LRESULT CALLBACK Dlg_AchievementEditor::ListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Dlg_AchievementEditor::ListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
     switch (uMsg)
     {
@@ -1828,7 +1828,8 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
     UpdateSelectedBadgeImage(sNewName.c_str());
 }
 
-_Use_decl_annotations_ void Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const pCheevo)
+_Use_decl_annotations_ void
+Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const restrict pCheevo) noexcept
 {
     HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
     if (hGroupList == nullptr)
@@ -1854,7 +1855,7 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::RepopulateGroupList(const Ach
     }
 }
 
-_Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const pCheevo)
+_Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const restrict pCheevo)
 {
     HWND hCondList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS);
     if (hCondList == nullptr)
@@ -2047,7 +2048,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     // RedrawWindow( hList, nullptr, nullptr, RDW_INVALIDATE );
 }
 
-inline char* Dlg_AchievementEditor::LbxDataAt(unsigned int nRow, CondSubItems nCol)
+inline char* Dlg_AchievementEditor::LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept
 {
     return m_lbxData[nRow][ra::etoi(nCol)];
 }
@@ -2072,7 +2073,7 @@ void Dlg_AchievementEditor::OnLoad_NewRom()
     }
 }
 
-size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const
+size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const noexcept
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
     const int nSel = ListBox_GetCurSel(hList);
@@ -2085,7 +2086,7 @@ size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const
     return static_cast<size_t>(nSel);
 }
 
-void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const
+void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcept
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
     ListBox_SetCurSel(hList, static_cast<int>(nGrp));

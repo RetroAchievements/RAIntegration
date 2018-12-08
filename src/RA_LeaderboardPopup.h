@@ -15,8 +15,6 @@ class LeaderboardPopup
     };
 
 public:
-    LeaderboardPopup();
-
     void Update(_UNUSED ControllerInput, float fDelta, _UNUSED BOOL, BOOL bPaused);
     void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
 
@@ -27,14 +25,13 @@ public:
     void ShowScoreboard(ra::LeaderboardID nLBID);
 
 private:
-    float GetOffsetPct() const;
+    float GetOffsetPct() const noexcept;
 
 private:
-    PopupState m_nState;
-    float m_fScoreboardShowTimer;
+    PopupState m_nState{};
+    float m_fScoreboardShowTimer{};
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 };
-
 
 #endif // !RA_LEADERBOARDPOPUP_H

@@ -1055,7 +1055,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     return TRUE;
 }
 
-void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* Cheevo)
+void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo) noexcept
 {
     if (Cheevo == nullptr)
     {
@@ -1216,7 +1216,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
     }
 }
 
-int Dlg_Achievements::GetSelectedAchievementIndex()
+int Dlg_Achievements::GetSelectedAchievementIndex() noexcept
 {
     HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
     return ListView_GetSelectionMark(hList);

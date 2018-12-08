@@ -40,7 +40,7 @@ public:
     /// <summary>
     /// Determines whether any previous session data exists.
     /// </summary>
-    bool HasSessionData() const { return !m_vGameStats.empty(); }
+    bool HasSessionData() const noexcept { return !m_vGameStats.empty(); }
 
 protected:
     virtual void LoadSessions();
@@ -48,7 +48,7 @@ protected:
     long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetCurrentActivity() const;
 
-    virtual bool IsInspectingMemory() const;
+    virtual bool IsInspectingMemory() const noexcept;
 
     std::wstring m_sUsername;
 

@@ -15,21 +15,24 @@ namespace impl {
 WindowsFileSystem::WindowsFileSystem() noexcept
 {
     // determine the home directory from the executable's path
-    wchar_t sBuffer[MAX_PATH];
+    wchar_t sBuffer[MAX_PATH]{};
     GetModuleFileNameW(0, sBuffer, MAX_PATH);
     PathRemoveFileSpecW(sBuffer);
     m_sBaseDirectory = sBuffer;
-    if (m_sBaseDirectory.back() != '\\')
-        m_sBaseDirectory.push_back('\\');
+    if (!m_sBaseDirectory.empty())
+    {
+        if (m_sBaseDirectory.back() != L'\\')
+            m_sBaseDirectory.push_back(L'\\');
+    }
 }
 
-bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const
+bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const noexcept
 {
     const DWORD nAttrib = GetFileAttributesW(sDirectory.c_str());
     return (nAttrib != INVALID_FILE_ATTRIBUTES) && (nAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-bool WindowsFileSystem::CreateDirectory(const std::wstring& sDirectory) const
+bool WindowsFileSystem::CreateDirectory(const std::wstring& sDirectory) const noexcept
 {
     return static_cast<bool>(CreateDirectoryW(sDirectory.c_str(), nullptr));
 }
@@ -55,12 +58,12 @@ size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _I
     return vResults.size() - nInitialSize;
 }
 
-bool WindowsFileSystem::DeleteFile(const std::wstring& sPath) const
+bool WindowsFileSystem::DeleteFile(const std::wstring& sPath) const noexcept
 {
     return static_cast<bool>(DeleteFileW(sPath.c_str()));
 }
 
-bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const
+bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const noexcept
 {
     return static_cast<bool>(MoveFileW(sOldPath.c_str(), sNewPath.c_str()));
 }
@@ -139,7 +142,7 @@ std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring
     // cannot use std::ios::app, or the SetPosition method doesn't work
     // have to specify std::ios::in or the previous contents are lost
     auto pWriter = std::make_unique<FileTextWriter>(sPath, std::ios::ate | std::ios::in | std::ios::out);
-    auto* oStream = &pWriter->GetFStream();
+    const std::ofstream* oStream = &pWriter->GetFStream();
     if (!oStream->is_open())
     {
         // failed to open the file - try creating it

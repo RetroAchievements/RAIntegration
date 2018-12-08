@@ -16,7 +16,6 @@ public:
     virtual const char* Name() const noexcept = 0;
 
     // === user functions ===
-
     virtual Login::Response Login(const Login::Request& request) noexcept = 0;
     virtual Logout::Response Logout(const Logout::Request& request) noexcept = 0;
     virtual StartSession::Response StartSession(const StartSession::Request& request) noexcept = 0;

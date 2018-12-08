@@ -254,7 +254,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 }
 
 //static
-void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent)
+void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent) noexcept
 {
     if (g_pActiveAchievements->NumAchievements() == 0)
         MessageBox(hParent, TEXT("No ROM loaded!"), TEXT("Error"), MB_OK);

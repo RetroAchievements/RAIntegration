@@ -25,7 +25,7 @@ void ThreadPool::Initialize(size_t nThreads) noexcept
         m_vThreads.emplace_back(&ThreadPool::RunThread, this);
 }
 
-void ThreadPool::RunThread() noexcept
+void ThreadPool::RunThread()
 {
     do
     {
@@ -62,7 +62,7 @@ void ThreadPool::RunThread() noexcept
     } while (!m_bShutdownInitiated);
 }
 
-void ThreadPool::ProcessDelayedTasks() noexcept
+void ThreadPool::ProcessDelayedTasks()
 {
     auto& pClock = ServiceLocator::Get<IClock>();
     constexpr auto tZeroMilliseconds = std::chrono::milliseconds(0);
@@ -75,7 +75,7 @@ void ThreadPool::ProcessDelayedTasks() noexcept
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
 
-            auto tNow = pClock.UpTime();
+            const auto tNow = pClock.UpTime();
             while (!m_vDelayedTasks.empty() && m_vDelayedTasks.front().tWhen <= tNow)
             {
                 m_vQueue.emplace_front(std::move(m_vDelayedTasks.front().fTask));
@@ -109,7 +109,7 @@ void ThreadPool::ProcessDelayedTasks() noexcept
             if (m_vDelayedTasks.empty())
                 break;
 
-            auto tNext = m_vDelayedTasks.front().tWhen - pClock.UpTime();
+            const auto tNext = m_vDelayedTasks.front().tWhen - pClock.UpTime();
             if (tNext > tZeroMilliseconds)
                 m_cvDelayedWork.wait_for(lock, tNext);
         }

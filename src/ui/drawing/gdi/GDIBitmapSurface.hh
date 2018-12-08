@@ -38,7 +38,7 @@ protected:
     UINT32* m_pBits;
 
 private:
-    HDC CreateBitmapHDC(const int nWidth, const int nHeight)
+    HDC CreateBitmapHDC(const int nWidth, const int nHeight) noexcept
     {
         BITMAPINFO bmi{};
         bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -80,12 +80,12 @@ public:
     GDIAlphaBitmapSurface(GDIAlphaBitmapSurface&&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(GDIAlphaBitmapSurface&&) noexcept = delete;
 
-    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) override;
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const;
+    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
 
-    void SetOpacity(double fAlpha) override;
+    void SetOpacity(double fAlpha) noexcept override;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory

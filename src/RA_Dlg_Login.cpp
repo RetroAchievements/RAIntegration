@@ -14,7 +14,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 // static
-BOOL RA_Dlg_Login::DoModalLogin()
+INT_PTR RA_Dlg_Login::DoModalLogin() noexcept
 {
     return DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
 }

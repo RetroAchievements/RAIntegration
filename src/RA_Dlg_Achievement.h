@@ -28,7 +28,7 @@ public:
     INT_PTR AchievementsProc(HWND, UINT, WPARAM, LPARAM);
 
 public:
-    int GetSelectedAchievementIndex();
+    int GetSelectedAchievementIndex() noexcept;
     void OnLoad_NewRom(unsigned int nGameID);
     void OnGet_Achievement(const Achievement& ach);
     void ReloadLBXData(int nOffset);
@@ -47,8 +47,8 @@ public:
         return rowRef.at(ra::etoi(nCol));
     }
 
-    inline HWND GetHWND() const { return m_hAchievementsDlg; }
-    void InstallHWND(HWND hWnd) { m_hAchievementsDlg = hWnd; }
+    inline HWND GetHWND() const noexcept { return m_hAchievementsDlg; }
+    void InstallHWND(HWND hWnd) noexcept { m_hAchievementsDlg = hWnd; }
 
 private:
     void SetupColumns(HWND hList);
@@ -60,7 +60,7 @@ private:
 
     INT_PTR CommitAchievements(HWND hDlg);
 
-    void UpdateSelectedAchievementButtons(const Achievement* Cheevo);
+    void UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo) noexcept;
 
 private:
     HWND m_hAchievementsDlg = nullptr;

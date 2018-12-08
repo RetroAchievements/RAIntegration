@@ -24,7 +24,7 @@ void GameContext::LoadGame(unsigned int nGameId, const std::wstring& sGameTitle)
     m_sGameTitle = sGameTitle;
 }
 
-bool GameContext::HasRichPresence() const
+bool GameContext::HasRichPresence() const noexcept
 {
     return (m_pRichPresenceInterpreter != nullptr && m_pRichPresenceInterpreter->Enabled());
 }

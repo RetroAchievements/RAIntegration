@@ -21,7 +21,7 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
 {
     if (httpResponse.StatusCode() != ra::services::Http::StatusCode::OK)
     {
-        pResponse.Result       = ApiResult::Error;
+        pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage = ra::StringPrintf("HTTP error code: %d", ra::etoi(httpResponse.StatusCode()));
         return true;
     }
@@ -47,7 +47,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         pDocument.SetArray();
 
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
-        pResponse.Result       = ApiResult::Failed;
+        pResponse.Result = ApiResult::Failed;
         pResponse.ErrorMessage = "Empty JSON response";
         return false;
     }
@@ -59,7 +59,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     {
         RA_LOG_ERR("-- %s: JSON Parse Error encountered!", sApiName);
 
-        pResponse.Result       = ApiResult::Error;
+        pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage =
             ra::StringPrintf("%s (%zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
         return false;
@@ -67,7 +67,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 
     if (pDocument.HasMember("Error"))
     {
-        pResponse.Result       = ApiResult::Error;
+        pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
         RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
         return false;
@@ -86,7 +86,6 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Document& pDocument,
                                  _In_ const char* const sField, _Inout_ ApiResponseBase& response)
 {
-    
     if (!pDocument.HasMember(sField))
     {
         sValue.clear();
@@ -102,6 +101,27 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
             sValue = pField.GetString();
         else
             sValue.clear();
+    }
+}
+
+static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument,
+    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
+{
+    if (!pDocument.HasMember(sField))
+    {
+        nValue = 0;
+
+        response.Result = ApiResult::Error;
+        if (response.ErrorMessage.empty())
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
+    }
+    else
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsUint())
+            nValue = pField.GetUint();
+        else
+            nValue = 0;
     }
 }
 
@@ -122,8 +142,7 @@ static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
     }
 }
 
-static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam,
-                           _In_ const std::string& sValue)
+static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')
         sParams.push_back('&');
@@ -235,6 +254,23 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
 
     if (DoRequest(m_sHost, Ping::Name(), "ping", sPostData, response, document))
         response.Result = ApiResult::Success;
+
+    return std::move(response);
+}
+
+ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request) noexcept
+{
+    ResolveHash::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "m", request.Hash);
+
+    if (DoRequest(m_sHost, ResolveHash::Name(), "gameid", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+        GetRequiredJsonField(response.GameId, document, "GameID", response);
+    }
 
     return std::move(response);
 }

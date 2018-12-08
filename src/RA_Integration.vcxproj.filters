@@ -539,6 +539,9 @@
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="api\ResolveHash.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

@@ -17,6 +17,7 @@ public:
     GSL_SUPPRESS(f.6) Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
     GSL_SUPPRESS(f.6) StartSession::Response StartSession(const StartSession::Request& request) noexcept override;
     GSL_SUPPRESS(f.6) Ping::Response Ping(const Ping::Request& request) noexcept override;
+    GSL_SUPPRESS(f.6) ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override;
 
 private:
     const std::string m_sHost;

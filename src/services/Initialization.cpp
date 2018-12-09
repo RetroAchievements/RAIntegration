@@ -12,6 +12,7 @@
 #include "services\impl\JsonFileConfiguration.hh"
 #include "services\impl\LeaderboardManager.hh"
 #include "services\impl\ThreadPool.hh"
+#include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
 #include "services\impl\WindowsFileSystem.hh"
@@ -20,6 +21,7 @@
 #include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
@@ -104,6 +106,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);
 
+    auto *pAudioSystem = new ra::services::impl::WindowsAudioSystem();
+    ra::services::ServiceLocator::Provide<ra::services::IAudioSystem>(pAudioSystem);
+
     auto* pClipboard = new ra::services::impl::WindowsClipboard();
     ra::services::ServiceLocator::Provide<ra::services::IClipboard>(pClipboard);
 
@@ -116,6 +121,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pWindowManager = new ra::ui::viewmodels::WindowManager();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(pWindowManager);
+
+    auto* pOverlayManager = new ra::ui::viewmodels::OverlayManager();
+    ra::services::ServiceLocator::Provide<ra::ui::viewmodels::OverlayManager>(pOverlayManager);
 
     auto* pImageRepository = new ra::ui::drawing::gdi::ImageRepository();
     pImageRepository->Initialize();

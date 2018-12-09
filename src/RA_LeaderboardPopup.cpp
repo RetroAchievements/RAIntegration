@@ -45,7 +45,7 @@ void LeaderboardPopup::Reset()
     m_nState = PopupState::ShowingProgress;
 }
 
-void LeaderboardPopup::Update(float fDelta)
+void LeaderboardPopup::Update(double fDelta)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.

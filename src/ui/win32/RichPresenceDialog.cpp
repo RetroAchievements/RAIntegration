@@ -41,8 +41,7 @@ RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorVi
 {
     m_hFont = CreateFont(15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, nullptr);
 
-    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::After,
-                                    ra::ui::win32::bindings::RelativePosition::Far, "Rich Presence Monitor");
+    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Far, "Rich Presence Monitor");
     m_bindWindow.BindLabel(IDC_RA_RICHPRESENCERESULTTEXT,
                            ra::ui::viewmodels::RichPresenceMonitorViewModel::DisplayStringProperty);
 }

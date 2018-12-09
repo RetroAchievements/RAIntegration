@@ -5,7 +5,6 @@
 #include "RA_httpthread.h"
 #include "RA_Resource.h"
 #include "RA_ImageFactory.h"
-#include "RA_PopupWindows.h"
 
 #include "ra_math.h"
 

@@ -65,7 +65,6 @@ public:
 
     bool MessagesPresent() const { return (m_vMessages.size() > 0); }
 
-    void Clear();
     void PlayAudio();
 
 private:

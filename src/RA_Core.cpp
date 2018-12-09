@@ -4,7 +4,6 @@
 #include "RA_CodeNotes.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
-#include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 #include "RA_httpthread.h"
@@ -25,6 +24,7 @@
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
@@ -38,6 +38,7 @@
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 std::wstring g_sHomeDir;
@@ -307,8 +308,6 @@ static void DisableHardcoreMode()
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     pLeaderboardManager.Reset();
-
-    g_PopupWindows.LeaderboardPopups().Reset();
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -403,7 +402,6 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     g_bRAMTamperedWith = false;
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
-    g_PopupWindows.LeaderboardPopups().Reset();
 
     ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().SetGameHash(sCurrentROMMD5);
 
@@ -428,15 +426,12 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
-        {
-            g_PopupWindows.AchievementPopups().AddMessage(
-                MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled."));
-        }
-        else
-        {
-            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Playing in Softcore Mode", ""));
-        }
+        bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Playing in Softcore Mode",
+            bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled.": L"");
     }
 
     g_AchievementsDialog.OnLoad_NewRom(nGameID);
@@ -456,7 +451,6 @@ API void CCONV _RA_OnReset()
 {
     g_pActiveAchievements->Reset();
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
-    g_PopupWindows.LeaderboardPopups().Reset();
 
     g_nProcessTimer = 0;
 }
@@ -666,11 +660,10 @@ API int CCONV _RA_HandleHTTPResults()
                     {
                         if (!doc.HasMember("Error"))
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked",
-                                             ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
-                                             PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge,
-                                             pAch->BadgeImageURI()));
+                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Achievement Unlocked", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
@@ -678,14 +671,15 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                                "Achievement Unlocked (Error)",
-                                ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
-                                PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Achievement Unlocked (Error)", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
-                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Error submitting achievement:",
-                                                                                       doc["Error"].GetString())); //?
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Error submitting achievement", ra::Widen(doc["Error"].GetString()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                         }
                     }
                     else
@@ -1012,7 +1006,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (response.Succeeded())
             {
                 ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Initialize("", "");
-                g_PopupWindows.Clear();
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
                 ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
                 _RA_UpdateAppTitle();
                 RA_RebuildMenu();
@@ -1064,7 +1058,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     DownloadAndActivateAchievementData(pGameContext.GameId());
             }
 
-            g_PopupWindows.Clear();
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
         }
         break;
 
@@ -1160,7 +1154,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                g_PopupWindows.LeaderboardPopups().Reset();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
             }
             else
             {
@@ -1245,7 +1239,6 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
         g_pCoreAchievements->LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
-        g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
     }

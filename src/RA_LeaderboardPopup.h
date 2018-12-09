@@ -17,7 +17,7 @@ class LeaderboardPopup
     };
 
 public:
-    void Update(_In_ float fDelta);
+    void Update(_In_ double fDelta);
     void Render(_In_ ra::ui::drawing::ISurface& pSurface);
 
     void Reset();

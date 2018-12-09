@@ -10,16 +10,6 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
-enum class RelativePosition
-{
-    None = 0,
-    Before,    // To the left of, or above the target
-    Near,      // Aligned with the target's left or top side
-    Center,    // Centered relative to the target
-    Far,       // Aligned with the target's right or bottom side
-    After,     // To the right of, or below the target
-};
-
 class WindowBinding : protected BindingBase
 {
 public:

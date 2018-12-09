@@ -1,8 +1,8 @@
 #include "Exports.hh"
 
+#include "RA_AchievementOverlay.h"
 #include "RA_BuildVer.h"
 #include "RA_Dlg_Login.h"
-#include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
 #include "api\Login.hh"
@@ -11,10 +11,13 @@
 #include "data\UserContext.hh"
 
 #include "services\Http.hh"
+#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\drawing\gdi\GDISurface.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
@@ -43,16 +46,19 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
         pSessionTracker.Initialize(response.Username);
 
-#ifndef RA_UTEST
         // show the welcome message
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup(ra::StringPrintf("Welcome %s%s (%u)", pSessionTracker.HasSessionData() ? "back " : "",
-                                          response.Username.c_str(), response.Score),
-                         (response.NumUnreadMessages == 1)
-                             ? "You have 1 new message"
-                             : ra::StringPrintf("You have %u new messages", response.NumUnreadMessages),
-                         PopupMessageType::Login, ra::ui::ImageType::UserPic, response.Username));
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
+        ra::ui::viewmodels::PopupMessageViewModel message;
+        message.SetTitle(ra::StringPrintf(L"Welcome %s%s (%u)", pSessionTracker.HasSessionData() ? L"back " : L"",
+            response.Username.c_str(), response.Score));
+        message.SetDescription((response.NumUnreadMessages == 1)
+            ? L"You have 1 new message"
+            : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
+        message.SetImage(ra::ui::ImageType::UserPic, response.Username);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(message));
+
+#ifndef RA_UTEST
         // notify the client to update the RetroAchievements menu
         RA_RebuildMenu();
 
@@ -99,4 +105,28 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
             request.CallAsync(HandleLoginResponse);
         }
     }
+}
+
+_Use_decl_annotations_
+API int _RA_UpdatePopups(ControllerInput* pInput, float fElapsedSeconds, bool bFullScreen, bool bPaused)
+{
+    if (bPaused)
+        fElapsedSeconds = 0.0;
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(fElapsedSeconds);
+    return 0;
+}
+
+_Use_decl_annotations_
+API int _RA_RenderPopups(HDC hDC, RECT* rcSize)
+{
+#ifndef RA_UTEST
+    if (!g_AchievementOverlay.IsFullyVisible())
+    {
+        ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
+        ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
+    }
+#endif
+
+    return 0;
 }

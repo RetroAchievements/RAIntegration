@@ -165,8 +165,3 @@ void AchievementPopup::Render(ra::ui::drawing::ISurface& pSurface)
     pSurface.DrawSurface(10, static_cast<int>(fFadeInY), m_vMessages.front().GetRendered());
 }
 
-void AchievementPopup::Clear()
-{
-    while (!m_vMessages.empty())
-        m_vMessages.pop();
-}

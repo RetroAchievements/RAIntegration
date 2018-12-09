@@ -75,7 +75,6 @@
     <ClCompile Include="RA_LeaderboardPopup.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
-    <ClCompile Include="RA_PopupWindows.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
@@ -96,6 +95,8 @@
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
@@ -151,12 +152,12 @@
     <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
-    <ClInclude Include="RA_PopupWindows.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\Http.hh" />
+    <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
@@ -175,6 +176,7 @@
     <ClInclude Include="services\impl\StringTextWriter.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\Clock.hh" />
+    <ClInclude Include="services\impl\WindowsAudioSystem.hh" />
     <ClInclude Include="services\impl\WindowsClipboard.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
@@ -198,6 +200,9 @@
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />

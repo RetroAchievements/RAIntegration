@@ -86,6 +86,10 @@ extern "C" {
     API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
 
+    struct ControllerInput;
+    API int CCONV _RA_UpdatePopups(_In_ ControllerInput* pInput, _In_ float fElapsedSeconds, _In_ bool bFullScreen, _In_ bool bPaused);
+    API int CCONV _RA_RenderPopups(_In_ HDC hDC, _In_ RECT* rcSize);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,6 +1,6 @@
 #include "RA_Dlg_Login.h"
 
-#include "RA_PopupWindows.h"
+#include "RA_Core.h"
 #include "RA_Resource.h"
 #include "RA_User.h"
 #include "RA_httpthread.h"

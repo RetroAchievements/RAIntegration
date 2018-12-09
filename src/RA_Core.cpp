@@ -1225,7 +1225,8 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 {
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
-        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
+        if (!g_bRAMTamperedWith)
+            ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
     }
 }
 

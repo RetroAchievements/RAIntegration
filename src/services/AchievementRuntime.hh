@@ -24,7 +24,7 @@ public:
     /// <summary>
     /// Adds an achievement to the processing queue.
     /// </summary>
-    void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+    void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger)
     {
         AddEntry(m_vActiveAchievements, nId, pTrigger);
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
@@ -33,7 +33,7 @@ public:
     /// <summary>
     /// Adds an achievement to the processing queue and enables the AchievementReset change type for it.
     /// </summary>
-    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger)
     {
         AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
         RemoveEntry(m_vActiveAchievements, nId);
@@ -42,7 +42,7 @@ public:
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void DeactivateAchievement(unsigned int nId) noexcept
+    void DeactivateAchievement(unsigned int nId)
     {
         RemoveEntry(m_vActiveAchievements, nId);
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
@@ -64,20 +64,20 @@ public:
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    void Process(_Inout_ std::vector<Change>& changes) const noexcept;
+    void Process(_Inout_ std::vector<Change>& changes) const;
     
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>    
     /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
-    bool LoadProgress(const char* sLoadStateFilename) const noexcept;
+    bool LoadProgress(const char* sLoadStateFilename) const;
 
     /// <summary>
     /// Writes HitCount data for active achievements to a save state file.
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>
-    void SaveProgress(const char* sSaveStateFilename) const noexcept;
+    void SaveProgress(const char* sSaveStateFilename) const;
 
 protected:
     struct ActiveAchievement

@@ -390,7 +390,7 @@ void Achievement::SetID(ra::AchievementID nID) noexcept
     SetDirtyFlag(DirtyFlags::ID);
 }
 
-void Achievement::SetActive(BOOL bActive) noexcept
+void Achievement::SetActive(BOOL bActive)
 {
     if (m_bActive != bActive)
     {
@@ -407,7 +407,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
     }
 }
 
-void Achievement::SetPauseOnReset(BOOL bPause) noexcept
+void Achievement::SetPauseOnReset(BOOL bPause)
 {
     if (m_bPauseOnReset != bPause)
     {

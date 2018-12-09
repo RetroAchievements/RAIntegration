@@ -35,7 +35,7 @@ AchievementSet::Type g_nActiveAchievementSet = AchievementSet::Type::Core;
 AchievementSet* g_pActiveAchievements = g_pCoreAchievements;
 
 _Use_decl_annotations_
-void RASetAchievementCollection(AchievementSet::Type Type) noexcept
+void RASetAchievementCollection(AchievementSet::Type Type)
 {
     if (g_nActiveAchievementSet == Type)
         return;
@@ -43,7 +43,7 @@ void RASetAchievementCollection(AchievementSet::Type Type) noexcept
     auto& pAchievementRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     for (size_t i = 0U; i < g_pActiveAchievements->NumAchievements(); ++i)
     {
-        auto& pAchievement = g_pActiveAchievements->GetAchievement(i);
+        const auto& pAchievement = g_pActiveAchievements->GetAchievement(i);
         if (pAchievement.Active())
             pAchievementRuntime.DeactivateAchievement(pAchievement.ID());
     }

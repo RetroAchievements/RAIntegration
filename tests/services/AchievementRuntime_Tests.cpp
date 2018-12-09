@@ -39,7 +39,7 @@ namespace tests {
 class AchievementRuntimeHarness : public AchievementRuntime
 {
 public:
-    AchievementRuntimeHarness() : m_Override(this)
+    GSL_SUPPRESS(f.6) AchievementRuntimeHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
     }
@@ -57,7 +57,7 @@ TEST_CLASS(AchievementRuntime_Tests)
 private:
     unsigned char sTriggerBuffer[1024];
 
-    rc_trigger_t* ParseTrigger(const char* sTrigger, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
+    rc_trigger_t* ParseTrigger(const char* sTrigger, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U) noexcept
     {
         if (sBuffer == nullptr)
         {

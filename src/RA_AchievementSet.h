@@ -88,7 +88,7 @@ extern AchievementSet* g_pLocalAchievements;
 extern AchievementSet* g_pActiveAchievements;
 extern AchievementSet::Type g_nActiveAchievementSet;
 
-void RASetAchievementCollection(_In_ AchievementSet::Type Type) noexcept;
+void RASetAchievementCollection(_In_ AchievementSet::Type Type);
 
 
 #endif // !RA_ACHIEVEMENTSET_H

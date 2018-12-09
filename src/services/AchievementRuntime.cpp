@@ -46,7 +46,7 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     return false;
 }
 
-void AchievementRuntime::Process(std::vector<Change>& changes) const noexcept
+void AchievementRuntime::Process(std::vector<Change>& changes) const
 {
     for (auto& pAchievement : m_vActiveAchievements)
     {
@@ -175,7 +175,7 @@ static const char* ProcessStateString(const char* pIter, unsigned int nId, rc_tr
     return pIter;
 }
 
-bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const noexcept
+bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
 {
     if (sLoadStateFilename == nullptr)
         return false;
@@ -233,7 +233,7 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const noex
         }
         else
         {
-            auto* pAchievement = pGameContext.FindAchievement(nId);
+            const auto* pAchievement = pGameContext.FindAchievement(nId);
             std::string sMemString = pAchievement ? pAchievement->CreateMemString() : "";
             pIter = ProcessStateString(pIter, nId, pTrigger, pUserContext.GetUsername(), sMemString);
         }
@@ -305,7 +305,7 @@ static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, c
     return sProgressString;
 }
 
-void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const noexcept
+void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
 {
     if (sSaveStateFilename == nullptr)
         return;

@@ -43,7 +43,7 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    void SetActive(BOOL bActive) noexcept;
+    void SetActive(BOOL bActive);
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;
@@ -52,7 +52,7 @@ public:
     void SetPauseOnTrigger(BOOL bPause) noexcept { m_bPauseOnTrigger = bPause; }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause) noexcept;
+    void SetPauseOnReset(BOOL bPause);
 
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }

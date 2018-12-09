@@ -165,6 +165,12 @@
     <ClCompile Include="..\src\data\SessionTracker.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementRuntime_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\AchievementRuntime.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">

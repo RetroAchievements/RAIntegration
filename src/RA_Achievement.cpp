@@ -67,6 +67,13 @@ void Achievement::RebuildTrigger()
 
     ParseTrigger(sTrigger.c_str());
     SetDirtyFlag(DirtyFlags::Conditions);
+
+    if (m_bActive)
+    {
+        // disassociate the old trigger and register the new one
+        SetActive(false);
+        SetActive(true);
+    }
 }
 
 static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
@@ -196,7 +203,6 @@ void Achievement::ParseTrigger(const char* sTrigger)
 
 const char* Achievement::ParseLine(const char* restrict pBuffer)
 {
-#ifndef RA_UTEST
     std::string sTemp;
 
     if (pBuffer == nullptr || pBuffer[0] == '\0')
@@ -259,7 +265,7 @@ const char* Achievement::ParseLine(const char* restrict pBuffer)
 
     _ReadStringTil(sTemp, ':', pBuffer);
     SetBadgeImage(sTemp);
-#endif
+
     return pBuffer;
 }
 
@@ -332,42 +338,20 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char* pBuffer) const noexcept
-{
-    if (m_pTrigger != nullptr)
-    {
-        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-        const rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
-        if (pCondition)
-        {
-            return snprintf(pBuffer, 128, "%u:%u:%u:%u:%u:", pCondition->current_hits, pCondition->operand1.value, pCondition->operand1.previous,
-                pCondition->operand2.value, pCondition->operand2.previous);
-        }
-    }
-
-    return snprintf(pBuffer, 128, "0:0:0:0:0:");
-}
-
-void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue,
-                                        unsigned int nPreviousValue) noexcept
+void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nHitCount) const noexcept
 {
     if (m_pTrigger == nullptr)
         return;
 
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
-    if (!pCondition)
-        return;
-
-    pCondition->current_hits = nCurrentHits;
-    pCondition->operand2.value = nValue;
-    pCondition->operand2.previous = nPreviousValue;
+    if (pCondition)
+        pCondition->current_hits = nHitCount;
 }
 
 void Achievement::Clear() noexcept
 {
     m_vConditions.Clear();
-
 
     m_nAchievementID = 0;
     m_pTriggerBuffer.reset();

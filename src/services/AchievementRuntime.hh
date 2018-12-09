@@ -88,6 +88,8 @@ protected:
 
     static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger)
     {
+        assert(pTrigger != nullptr);
+
         for (const auto& pAchievement : vEntries)
         {
             if (pAchievement.nId == nId)

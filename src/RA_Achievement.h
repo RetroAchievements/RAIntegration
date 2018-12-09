@@ -95,9 +95,7 @@ public:
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
     unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
-    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const noexcept;
-    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue,
-                               unsigned int nPrevValue) noexcept;
+    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nHitCount) const noexcept;
 
     std::string CreateMemString() const;
 

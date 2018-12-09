@@ -69,6 +69,15 @@ public:
 #endif
     }
 
+    virtual Achievement* FindAchievement(_UNUSED unsigned int nAchievementId) const noexcept
+    {
+#ifdef RA_UTEST
+        return nullptr;
+#else
+        return g_pActiveAchievements->Find(nAchievementId);
+#endif
+    }
+
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>

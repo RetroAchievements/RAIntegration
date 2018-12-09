@@ -6,6 +6,7 @@
 
 #include "RA_md5factory.h"
 
+#include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
 #include "services\IFileSystem.hh"
@@ -192,11 +193,15 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const noex
     if (!pFile->GetLine(sContents))
         return false;
 
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    std::set<unsigned int> vProcessedAchievementIds;
+
     const char* pIter = sContents.c_str();
     while (*pIter)
     {
         char* pUnused;
         const unsigned int nId = strtoul(pIter, &pUnused, 10);
+        vProcessedAchievementIds.insert(nId);
 
         rc_trigger_t *pTrigger = nullptr;
         for (const auto& pActiveAchievement : m_vActiveAchievements)
@@ -228,11 +233,23 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const noex
         }
         else
         {
-            // achievement active, attempt to merge state into achievement
-            auto* pAchievement = g_pActiveAchievements->Find(nId);
+            auto* pAchievement = pGameContext.FindAchievement(nId);
             std::string sMemString = pAchievement ? pAchievement->CreateMemString() : "";
             pIter = ProcessStateString(pIter, nId, pTrigger, pUserContext.GetUsername(), sMemString);
         }
+    }
+
+    // reset any active achievements that weren't in the file
+    for (auto& pActiveAchievement : m_vActiveAchievements)
+    {
+        if (vProcessedAchievementIds.find(pActiveAchievement.nId) == vProcessedAchievementIds.end())
+            rc_reset_trigger(pActiveAchievement.pTrigger);
+    }
+
+    for (auto& pActiveAchievement : m_vActiveAchievementsMonitorReset)
+    {
+        if (vProcessedAchievementIds.find(pActiveAchievement.nId) == vProcessedAchievementIds.end())
+            rc_reset_trigger(pActiveAchievement.pTrigger);
     }
 
     return true;
@@ -305,16 +322,18 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const noex
         return;
     }
 
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
     for (const auto& pAchievement : m_vActiveAchievements)
     {
-        std::string sMemString = g_pActiveAchievements->Find(pAchievement.nId)->CreateMemString();
+        std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
         std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }
 
     for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
     {
-        std::string sMemString = g_pActiveAchievements->Find(pAchievement.nId)->CreateMemString();
+        std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
         std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }

@@ -65,9 +65,6 @@ public:
 
     BOOL RemoveAchievement(size_t nIter);
 
-    void SaveProgress(const char* sRomName);
-    void LoadProgress(const char* sRomName);
-
     unsigned int NumActive() const;
 
     BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }

@@ -25,6 +25,7 @@
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
@@ -1224,10 +1225,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 {
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
-        if (!g_bRAMTamperedWith)
-        {
-            g_pCoreAchievements->SaveProgress(sFilename);
-        }
+        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
     }
 }
 
@@ -1243,11 +1241,14 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
             DisableHardcoreMode();
         }
 
-        g_pCoreAchievements->LoadProgress(sFilename);
+        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
+
+        for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
+            g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 }
 

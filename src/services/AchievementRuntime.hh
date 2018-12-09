@@ -65,10 +65,19 @@ public:
     /// Processes all active achievements for the current frame.
     /// </summary>
     void Process(_Inout_ std::vector<Change>& changes) const noexcept;
+    
+    /// <summary>
+    /// Loads HitCount data for active achievements from a save state file.
+    /// </summary>
+    /// <param name="sLoadStateFilename">The name of the save state file.</param>    
+    /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
+    bool LoadProgress(const char* sLoadStateFilename) const noexcept;
 
-    //void LoadProgress(const char* sLoadStateFilename) noexcept;
-
-    //void SaveProgress(const char* sSaveStateFilename) noexcept;
+    /// <summary>
+    /// Writes HitCount data for active achievements to a save state file.
+    /// </summary>
+    /// <param name="sLoadStateFilename">The name of the save state file.</param>
+    void SaveProgress(const char* sSaveStateFilename) const noexcept;
 
 protected:
     struct ActiveAchievement

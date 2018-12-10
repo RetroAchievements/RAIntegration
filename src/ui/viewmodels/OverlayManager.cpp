@@ -66,6 +66,12 @@ void OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
     if (m_vPopupMessages.empty())
         pMessage.BeginAnimation();
 
+    if (pMessage.GetImage().Type() != ra::ui::ImageType::None)
+    {
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        pImageRepository.FetchImage(pMessage.GetImage().Type(), pMessage.GetImage().Name());
+    }
+
     m_vPopupMessages.emplace(std::move(pMessage));
 }
 

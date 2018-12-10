@@ -63,6 +63,11 @@ public:
     {
         m_hImage.ChangeReference(nImageType, sImageName);
     }
+
+    /// <summary>
+    /// Gets the image to display.
+    /// </summary>
+    const ra::ui::ImageReference& GetImage() const noexcept { return m_hImage; }
     
     /// <summary>
     /// Begins the animation cycle.

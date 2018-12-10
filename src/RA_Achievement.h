@@ -31,6 +31,7 @@ public:
     };
 
     Achievement() noexcept;
+    ~Achievement() noexcept;
 
 public:
     void Clear() noexcept;

@@ -37,6 +37,18 @@ Achievement::Achievement() noexcept
     m_vConditions.AddGroup();
 }
 
+Achievement::~Achievement() noexcept
+{
+    if (m_bActive)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.DeactivateAchievement(ID());
+        }
+    }
+}
+
 #ifndef RA_UTEST
 void Achievement::Parse(const rapidjson::Value& element)
 {
@@ -189,6 +201,12 @@ void Achievement::ParseTrigger(const char* sTrigger)
         m_pTriggerBuffer.reset(new unsigned char[nSize]);
         auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sTrigger, nullptr, 0);
         m_pTrigger = pTrigger;
+
+        if (m_bActive)
+        {
+            SetActive(false);
+            SetActive(true);
+        }
 
         // wrap rc_trigger_t in a ConditionSet for the UI
         MakeConditionGroup(m_vConditions, pTrigger->requirement);
@@ -351,6 +369,8 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
 
 void Achievement::Clear() noexcept
 {
+    SetActive(false);
+
     m_vConditions.Clear();
 
     m_nAchievementID = 0;
@@ -363,7 +383,6 @@ void Achievement::Clear() noexcept
     m_sBadgeImageURI.clear();
 
     m_nPointValue = 0;
-    m_bActive = FALSE;
     m_bModified = FALSE;
     m_bPauseOnTrigger = FALSE;
     m_bPauseOnReset = FALSE;

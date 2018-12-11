@@ -17,21 +17,23 @@ namespace api {
 namespace impl {
 
 _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& httpResponse,
-                                       _Inout_ ApiResponseBase& pResponse) noexcept
+                                       _Inout_ ApiResponseBase& pResponse)
 {
     if (httpResponse.StatusCode() != ra::services::Http::StatusCode::OK)
     {
-        pResponse.Result = ApiResult::Error;
-        pResponse.ErrorMessage = "HTTP error code " + std::to_string(ra::etoi(httpResponse.StatusCode()));
+        pResponse.Result       = ApiResult::Error;
+        pResponse.ErrorMessage = ra::StringPrintf("HTTP error code: %d", ra::etoi(httpResponse.StatusCode()));
         return true;
     }
 
     return false;
 }
 
-_NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ const ra::services::Http::Response& httpResponse,
-                               _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument) noexcept
+_NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
+                               _In_ const ra::services::Http::Response& httpResponse,
+                               _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument)
 {
+    /*this function can throw std::bad_alloc (from the strings allocator) but very low chance*/
     if (HandleHttpError(httpResponse, pResponse))
     {
         pDocument.SetArray();
@@ -45,29 +47,29 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
         pDocument.SetArray();
 
         RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
-        pResponse.Result = ApiResult::Failed;
+        pResponse.Result       = ApiResult::Failed;
         pResponse.ErrorMessage = "Empty JSON response";
         return false;
     }
 
-    RA_LOG_INFO("-- %s Response: %s", sApiName, httpResponse.Content().c_str());
+    RA_LOG_INFO("-- %s Response: %s", sApiName, httpResponse.Content());
 
     pDocument.Parse(httpResponse.Content());
     if (pDocument.HasParseError())
     {
         RA_LOG_ERR("-- %s: JSON Parse Error encountered!", sApiName);
 
-        pResponse.Result = ApiResult::Error;
-        pResponse.ErrorMessage = std::string(GetParseError_En(pDocument.GetParseError())) + " (" +
-                                 std::to_string(pDocument.GetErrorOffset()) + ")";
+        pResponse.Result       = ApiResult::Error;
+        pResponse.ErrorMessage =
+            ra::StringPrintf("%s (%zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
         return false;
     }
 
     if (pDocument.HasMember("Error"))
     {
-        pResponse.Result = ApiResult::Error;
+        pResponse.Result       = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
-        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage.c_str());
+        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
         return false;
     }
 
@@ -82,15 +84,16 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName, _In_ 
 }
 
 static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Document& pDocument,
-                                 _In_ const char* const sField, _Inout_ ApiResponseBase& response) noexcept
+                                 _In_ const char* const sField, _Inout_ ApiResponseBase& response)
 {
+    
     if (!pDocument.HasMember(sField))
     {
         sValue.clear();
 
         response.Result = ApiResult::Error;
         if (response.ErrorMessage.empty())
-            response.ErrorMessage = std::string(sField) + " not found in response";
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
     }
     else
     {
@@ -99,7 +102,7 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
 }
 
 static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument,
-                                 _In_ const char* sField, _In_ unsigned int nDefaultValue = 0) noexcept
+                                 _In_ const char* sField, _In_ unsigned int nDefaultValue = 0)
 {
     if (pDocument.HasMember(sField))
         nValue = pDocument[sField].GetUint();
@@ -108,7 +111,7 @@ static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
 }
 
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam,
-                           _In_ const std::string& sValue) noexcept
+                           _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')
         sParams.push_back('&');
@@ -120,7 +123,7 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
 
 Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
 {
-    ra::services::Http::Request httpRequest(m_sHost + "/login_app.php");
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/login_app.php", m_sHost));
 
     std::string sPostData;
     AppendUrlParam(sPostData, "u", request.Username);
@@ -153,17 +156,17 @@ Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
     return std::move(response);
 }
 
-Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& request) noexcept
+Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
 {
     // update the global API pointer to a disconnected API
-    ra::services::ServiceLocator::Provide<ra::api::IServer>(new DisconnectedServer(m_sHost));
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(new (std::nothrow) DisconnectedServer(m_sHost));
 
     Logout::Response response;
     response.Result = ApiResult::Success;
     return std::move(response);
 }
 
-static bool DoRequest(const std::string& sHost, const char* sApiName, const char* sRequestName,
+static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
                       const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
 {
     std::string sPostData;
@@ -179,14 +182,14 @@ static bool DoRequest(const std::string& sHost, const char* sApiName, const char
     }
     RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
 
-    ra::services::Http::Request httpRequest(sHost + "/dorequest.php");
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
     httpRequest.SetPostData(sPostData);
 
     const auto httpResponse = httpRequest.Call();
     return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
-StartSession::Response ConnectedServer::StartSession(_UNUSED const StartSession::Request& request) noexcept
+StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request) noexcept
 {
     StartSession::Response response;
     rapidjson::Document document;
@@ -208,7 +211,7 @@ StartSession::Response ConnectedServer::StartSession(_UNUSED const StartSession:
     return std::move(response);
 }
 
-Ping::Response ConnectedServer::Ping(_UNUSED const Ping::Request& request) noexcept
+Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
 {
     Ping::Response response;
     rapidjson::Document document;

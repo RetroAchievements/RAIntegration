@@ -24,13 +24,15 @@ public:
         NotifyTarget(NotifyTarget&&) noexcept = default;
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
-        virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) {}
-        virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) {}
-        virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) {}
+        virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept {}
+        virtual void OnViewModelStringValueChanged([
+            [maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
+        {}
+        virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.erase(&pTarget); }
+    GSL_SUPPRESS(f.6) void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

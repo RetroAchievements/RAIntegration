@@ -10,14 +10,11 @@ public:
     class CodeNoteObj
     {
     public:
-        CodeNoteObj(const std::string& sAuthor, std::string sNote) :
-            m_sAuthor(sAuthor), m_sNote(sNote)
-        {
-        }
+        explicit CodeNoteObj(const std::string& sAuthor, const std::string& sNote) : m_sAuthor{sAuthor}, m_sNote{sNote}
+        {}
 
-    public:
-        const std::string& Author() const { return m_sAuthor; }
-        const std::string& Note() const { return m_sNote; }
+        const std::string& Author() const noexcept { return m_sAuthor; }
+        const std::string& Note() const noexcept { return m_sNote; }
 
         void SetNote(const std::string& sNote) { m_sNote = sNote; }
 
@@ -43,8 +40,8 @@ public:
         return(iter != m_CodeNotes.end()) ? &iter->second : nullptr;
     }
 
-    std::map<ra::ByteAddress, CodeNoteObj>::const_iterator FirstNote() const { return m_CodeNotes.begin(); }
-    std::map<ra::ByteAddress, CodeNoteObj>::const_iterator EndOfNotes() const { return m_CodeNotes.end(); }
+    _NODISCARD inline auto begin() const noexcept { return m_CodeNotes.cbegin(); }
+    _NODISCARD inline auto end() const noexcept { return m_CodeNotes.cend(); }
 
 private:
     std::map<ra::ByteAddress, CodeNoteObj> m_CodeNotes;

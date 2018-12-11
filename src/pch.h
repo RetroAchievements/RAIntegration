@@ -12,12 +12,12 @@
 #pragma warning(disable : 4091 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
 /* Windows Stuff */
 #include "windows_nodefines.h"
+#include <ShlObj.h> // CommCtrl
+#include <WindowsX.h>
 #include <atlbase.h> // atldef.h (Windows.h), atlcore.h (tchar.h), Shlwapi.h
 #include <direct.h>
 #include <io.h>
-#include <ShlObj.h> // CommCtrl
 #include <wincodec.h>
-#include <WindowsX.h>
 #include <winhttp.h>
 
 #if WIN32_LEAN_AND_MEAN
@@ -60,10 +60,10 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
 #include <rapidjson\document.h> // has reader.h
-#include <rapidjson\writer.h> // has stringbuffer.h
+#include <rapidjson\error\en.h>
 #include <rapidjson\istreamwrapper.h>
 #include <rapidjson\ostreamwrapper.h>
-#include <rapidjson\error\en.h>  
+#include <rapidjson\writer.h> // has stringbuffer.h
 #pragma warning(pop)
 
 #include <md5.h>
@@ -77,10 +77,13 @@
 #endif /* RA_UTEST */
 
 /* rcheevos stuff */
-#pragma warning (push)
-#pragma warning (disable:4201) // nameless struct
-#include "rcheevos\include\rcheevos.h"
-#pragma warning (pop)
+#pragma warning(push)
+#pragma warning(disable : 4201) // nameless struct
+#include <rcheevos.h>
+#pragma warning(pop)
+
+/* gsl stuff */
+#include <gsl\gsl>
 
 #pragma warning(pop)
 

@@ -4,7 +4,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 
-_NODISCARD static std::string TrimLineEnding(std::string&& str) noexcept
+[[gsl::suppress(f.6), nodiscard]]
+static std::string TrimLineEnding(std::string&& str) noexcept
 {
     auto sRet{ std::move_if_noexcept(str) };
     return TrimLineEnding(sRet);

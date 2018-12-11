@@ -48,18 +48,18 @@ public:
         Write(std::string("\n"));
     }
 
-    long GetPosition() const override
+    long GetPosition() const noexcept override
     {
         return m_nWritePosition;
     }
 
-    void SetPosition(long nNewPosition) override
+    void SetPosition(long nNewPosition) noexcept override
     {
         assert(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
         m_nWritePosition = static_cast<size_t>(nNewPosition);
     }
 
-    std::string& GetString() { return m_sOutput; }
+    std::string& GetString() noexcept { return m_sOutput; }
 
 private:
     std::string& m_sOutput;

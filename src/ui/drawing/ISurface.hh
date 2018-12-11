@@ -15,9 +15,10 @@ class ISurface
 {
 public:
     virtual ~ISurface() noexcept = default;
-
     ISurface(const ISurface&) noexcept = delete;
+    ISurface& operator=(const ISurface&) noexcept = delete;
     ISurface(ISurface&&) noexcept = delete;
+    ISurface& operator=(ISurface&&) noexcept = delete;
 
     /// <summary>
     /// Gets the width of the surface.

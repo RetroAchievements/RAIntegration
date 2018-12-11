@@ -5,10 +5,10 @@
 class RA_Dlg_Login
 {
 public:
-    static BOOL DoModalLogin();
+    static INT_PTR DoModalLogin() noexcept;
 
 public:
-    static INT_PTR CALLBACK RA_Dlg_LoginProc(HWND, UINT, WPARAM, LPARAM);
+    static INT_PTR CALLBACK RA_Dlg_LoginProc(HWND, UINT, WPARAM, [[maybe_unused]] LPARAM);
 };
 
 

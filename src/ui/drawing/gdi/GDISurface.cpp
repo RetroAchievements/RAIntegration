@@ -15,7 +15,7 @@ GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourc
     SelectObject(hDC, GetStockObject(DC_BRUSH));
 }
 
-void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
+void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     assert(nColor.Channel.A == 0xFF);
     SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));

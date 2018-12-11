@@ -19,12 +19,12 @@ public:
     {
     }
 
-    void RunAsync(std::function<void()>&& f) noexcept override
+    void RunAsync(std::function<void()>&& f) override
     {
         m_vTasks.emplace(f);
     }
 
-    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept override
+    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) override
     {
         m_vDelayedTasks.emplace_back(nDelay, f);
     }

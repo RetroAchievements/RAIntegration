@@ -30,7 +30,7 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
     m_Banks[nBankID].Writer = pWriter;
 }
 
-void MemManager::ChangeActiveMemBank(_UNUSED unsigned short)
+void MemManager::ChangeActiveMemBank(_UNUSED unsigned short) noexcept
 {
     ASSERT(!"Not Implemented!");
     return;

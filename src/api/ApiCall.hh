@@ -24,10 +24,8 @@ struct ApiRequestBase
     template<class TRequest, class TCallback>
     static void CallAsync(const TRequest& request, TCallback&& callback)
     {
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([request, callback = std::move(callback)]
-            {
-                callback(request.Call());
-            });
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
+            [request, callback = std::move(callback)] { callback(request.Call()); });
     }
 };
 

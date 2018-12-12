@@ -26,8 +26,8 @@ void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
     else
     {
         // allocate space and parse again
-        m_pLeaderboardBuffer.reset(new unsigned char[nSize]);
-        m_pLeaderboard = rc_parse_lboard(static_cast<void*>(m_pLeaderboardBuffer.get()), sBuffer, nullptr, 0);
+        m_pLeaderboardBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
+        m_pLeaderboard = rc_parse_lboard(m_pLeaderboardBuffer.get()->data(), sBuffer, nullptr, 0);
 
         m_nFormat = rc_parse_format(sFormat);
     }

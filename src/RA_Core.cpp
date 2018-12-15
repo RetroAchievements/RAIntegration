@@ -1417,10 +1417,11 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 std::string GetFolderFromDialog()
 {
-    auto lpbi = std::make_unique<BROWSEINFO>();
+    auto lpbi{ std::make_unique<BROWSEINFO>() };
     lpbi->hwndOwner = ::GetActiveWindow();
 
-    auto pDisplayName = std::make_unique<TCHAR[]>(RA_MAX_PATH);
+    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
+    lpbi->pszDisplayName = pDisplayName.get();
     lpbi->lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)

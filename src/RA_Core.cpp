@@ -497,18 +497,27 @@ API void CCONV _RA_ClearMemoryBanks()
 
 static unsigned long long ParseVersion(const char* sVersion) noexcept
 {
-    char* pPart;
+    char* pPart{};
     const auto major = strtoull(sVersion, &pPart, 10);
+    Expects(pPart != nullptr);
     if (*pPart == '.')
+    {
         ++pPart;
-
+        Ensures(pPart != nullptr);
+    }
     const auto minor = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
+    {
         ++pPart;
+        Ensures(pPart != nullptr);
+    }
 
     const auto patch = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
+    {
         ++pPart;
+        Ensures(pPart != nullptr);
+    }
 
     const auto revision = strtoul(pPart, &pPart, 10);
     // 64-bit max signed value is 9223 37203 68547 75807
@@ -1288,8 +1297,13 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile) noexcept
+BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize, DWORD* restrict pCharsReadOut,
+              FILE* restrict pFile) noexcept
 {
+    Expects(buffer != nullptr);
+    Expects(pCharsReadOut != nullptr);
+    Expects(pFile != nullptr);
+
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
 
@@ -1301,6 +1315,9 @@ BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsR
             break;
 
         buffer[(*pCharsReadOut)++] = pNextChar;
+        Ensures(buffer != nullptr);
+        Ensures(pCharsReadOut != nullptr);
+        Ensures(pFile != nullptr);
     } while (pNextChar != nChar && (*pCharsReadOut) < nSize && !feof(pFile));
 
     //return ( !feof( pFile ) );
@@ -1309,26 +1326,35 @@ BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsR
 
 char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept
 {
+    Expects(pOffsetInOut != nullptr);
     char* pStartString = pOffsetInOut;
 
     while ((*pOffsetInOut) != '\0' && (*pOffsetInOut) != nChar)
+    {
         pOffsetInOut++;
-
+        Ensures(pOffsetInOut != nullptr);
+    }
     if (bTerminate)
+    {
         (*pOffsetInOut) = '\0';
-
+        Ensures(pOffsetInOut != nullptr);
+    }
     pOffsetInOut++;
 
     return (pStartString);
 }
 
+GSL_SUPPRESS(f.23)
 void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 {
+    Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)
+    {
         pSource++;
-
+        Ensures(pSource != nullptr);
+    }
     value.assign(pStartString, pSource - pStartString);
     pSource++;
 }

@@ -12,10 +12,7 @@ namespace mocks {
 class MockServer : public IServer
 {
 public:
-    MockServer() noexcept
-        : m_Override(this)
-    {
-    }
+    MockServer() noexcept : m_Override(this) {}
 
     const char* Name() const noexcept override { return "MockServer"; }
 
@@ -23,15 +20,17 @@ public:
     /// Registers a callback method to handle the associated request type.
     /// </summary>
     /// <remarks>
-    /// Callback should return <c>true</c> if it populated the response, <c>false</c> to return the default response (unsupported)
+    /// Callback should return <c>true</c> if it populated the response, <c>false</c> to return the default response
+    /// (unsupported)
     /// </remarks>
     template<typename TApi>
     void HandleRequest(std::function<bool(const typename TApi::Request&, typename TApi::Response&)>&& fHandler)
     {
-        m_mHandlers.insert_or_assign(std::string(TApi::Name()), [fHandler=std::move(fHandler)](void* pRequest, void* pResponse)
+        m_mHandlers.insert_or_assign(std::string(TApi::Name()), [fHandler = std::move(fHandler)](
+                                                                    void* restrict pRequest, void* restrict pResponse)
         {
-            const TApi::Request* pTRequest = reinterpret_cast<const TApi::Request*>(pRequest);
-            auto pTResponse = reinterpret_cast<typename TApi::Response*>(pResponse);
+            const auto pTRequest = gsl::make_not_null(static_cast<const typename TApi::Request*>(pRequest));
+            const auto pTResponse = gsl::make_not_null(static_cast<typename TApi::Response*>(pResponse));
             return fHandler(*pTRequest, *pTResponse);
         });
     }
@@ -69,7 +68,8 @@ protected:
         auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
-            if (pIter->second(reinterpret_cast<void*>(const_cast<ApiRequestBase*>(&pRequest)), reinterpret_cast<void*>(&response)))
+            if (pIter->second(reinterpret_cast<void*>(const_cast<ApiRequestBase*>(&pRequest)),
+                              reinterpret_cast<void*>(&response)))
                 return std::move(response);
         }
 
@@ -80,7 +80,7 @@ protected:
     }
 
 private:
-    std::unordered_map<std::string, std::function<bool(void*, void*)>> m_mHandlers;
+    std::unordered_map<std::string, std::function<bool(void* restrict, void* restrict)>> m_mHandlers;
 
     ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> m_Override;
 };

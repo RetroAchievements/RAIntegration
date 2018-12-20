@@ -21,7 +21,7 @@ public:
 
     void MockStoredData(ra::services::StorageItemType nType, const std::wstring& sKey, const std::string& sContents)
     {
-        auto *pText = GetText(nType, sKey, true);
+         const auto pText = gsl::make_not_null(GetText(nType, sKey, true));
         *pText = sContents;
     }
 
@@ -32,7 +32,7 @@ public:
 
     const std::string& GetStoredData(ra::services::StorageItemType nType, const std::wstring& sKey) const
     {
-        const std::string* pText = GetText(nType, sKey, false);
+        const std::string* const pText = GetText(nType, sKey, false);
         if (pText != nullptr)
             return *pText;
 
@@ -48,7 +48,8 @@ public:
 
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, false);
+		// std::string* const
+        const auto pText = GetText(nType, sKey, false);
         if (pText == nullptr)
             return std::unique_ptr<TextReader>();
 
@@ -58,7 +59,7 @@ public:
 
     std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, true);
+        const auto pText = gsl::make_not_null(GetText(nType, sKey, true));
         pText->clear();
 
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
@@ -67,7 +68,7 @@ public:
 
     std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, true);
+        const auto pText = gsl::make_not_null(GetText(nType, sKey, true));
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }

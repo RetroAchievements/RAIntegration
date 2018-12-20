@@ -18,8 +18,8 @@
 #include "services\impl\WindowsHttpRequester.hh"
 
 #include "ui\WindowViewModelBase.hh"
-#include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
+#include "ui\drawing\gdi\ImageRepository.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
@@ -56,19 +56,17 @@ void Initialization::RegisterCoreServices()
     if (ra::services::ServiceLocator::Exists<ra::services::IConfiguration>())
         return;
 
-    auto* pClock = new ra::services::impl::Clock();
-    ra::services::ServiceLocator::Provide<ra::services::IClock>(pClock);
-
-    auto* pFileSystem = new ra::services::impl::WindowsFileSystem();
-    ra::services::ServiceLocator::Provide<ra::services::IFileSystem>(pFileSystem);
-
-    auto* pLogger = new ra::services::impl::WindowsDebuggerFileLogger(*pFileSystem);
-    ra::services::ServiceLocator::Provide<ra::services::ILogger>(pLogger);
-
+    auto pClock = std::make_unique<ra::services::impl::Clock>();
+    auto pFileSystem = std::make_unique<ra::services::impl::WindowsFileSystem>();
+    auto pLogger = std::make_unique<ra::services::impl::WindowsDebuggerFileLogger>(*pFileSystem);
     LogHeader(*pLogger, *pFileSystem, *pClock);
 
-    auto* pConfiguration = new ra::services::impl::JsonFileConfiguration();
-    ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration);
+    ra::services::ServiceLocator::Provide<ra::services::IClock>(pClock.release());
+    ra::services::ServiceLocator::Provide<ra::services::IFileSystem>(pFileSystem.release());
+    ra::services::ServiceLocator::Provide<ra::services::ILogger>(pLogger.release());
+
+    auto pConfiguration = std::make_unique<ra::services::impl::JsonFileConfiguration>();
+    ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(pConfiguration.release());
 }
 
 void Initialization::RegisterServices(const std::string& sClientName)

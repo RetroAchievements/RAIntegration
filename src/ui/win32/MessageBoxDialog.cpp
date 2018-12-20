@@ -1,5 +1,7 @@
 #include "MessageBoxDialog.hh"
 
+#include "RA_StringUtils.h"
+
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 
 namespace ra {
@@ -39,12 +41,12 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
     if (pTaskDialog == nullptr || oMessageBoxViewModel.GetHeader().empty())
     {
         std::wstring sMessage;
-        const std::wstring* pMessage = &oMessageBoxViewModel.GetMessage();
+        auto pMessage = gsl::make_not_null(&oMessageBoxViewModel.GetMessage());
         if (pTaskDialog == nullptr && !oMessageBoxViewModel.GetHeader().empty())
         {
             sMessage.reserve(oMessageBoxViewModel.GetHeader().length() + pMessage->length() + 2);
-            sMessage = oMessageBoxViewModel.GetHeader() + L"\n\n" + *pMessage;
-            pMessage = &sMessage;
+            sMessage = StringPrintf(L"%s\n\n%s", oMessageBoxViewModel.GetHeader(), *pMessage);
+            pMessage = gsl::make_not_null(&sMessage);
         }
 
         UINT uType;

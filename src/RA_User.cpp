@@ -64,7 +64,7 @@ void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
     const auto& FriendData{ doc["Friends"] };		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
     for (auto& NextFriend : FriendData.GetArray())
     {
-        auto pUser{ RAUsers::GetUser(NextFriend["Friend"].GetString()) };
+        const auto pUser = gsl::make_not_null(RAUsers::GetUser(NextFriend["Friend"].GetString()));
         pUser->SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());
 
@@ -83,7 +83,7 @@ void LocalRAUser::RequestFriendList()
 
 RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
-    RAUser* pUser = RAUsers::GetUser(sUser);
+    const auto pUser = gsl::make_not_null(RAUsers::GetUser(sUser));
     pUser->SetScore(nScore);
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
     pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);

@@ -99,14 +99,14 @@ class GDISurfaceFactory : public ISurfaceFactory
 public:
     std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
     std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIAlphaBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIAlphaBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
 private:

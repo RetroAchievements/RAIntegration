@@ -2,8 +2,8 @@
 #define RA_HTTPTHREAD_H
 #pragma once
 
-#include "ra_fwd.h"
 #include "RA_StringUtils.h"
+#include "ra_fwd.h"
 
 enum HTTPRequestMethod
 {
@@ -41,7 +41,6 @@ enum RequestType
     RequestSubmitTicket,
     RequestSubmitNewTitle,
 
-
     NumRequestTypes
 };
 
@@ -63,9 +62,10 @@ class RequestObject
 {
 public:
     RequestObject(RequestType nType, const PostArgs& PostArgs = PostArgs(), const std::string& sData = "") :
-        m_nType(nType), m_PostArgs(PostArgs), m_sData(sData)
-    {
-    }
+        m_nType(nType),
+        m_PostArgs(PostArgs),
+        m_sData(sData)
+    {}
 
 public:
     const RequestType GetRequestType() const noexcept { return m_nType; }
@@ -90,9 +90,10 @@ class HttpResults
 {
 public:
     //	Caller must manage: SAFE_DELETE when finished
-    RequestObject * PopNextItem();
+    RequestObject* PopNextItem();
     const RequestObject* PeekNextItem() const;
     void PushItem(RequestObject* pObj);
+    void PushItem(std::unique_ptr<RequestObject> pOwner);
     void Clear();
     size_t Count() const noexcept;
 
@@ -103,7 +104,8 @@ private:
 class RAWeb
 {
 public:
-    static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(), const std::string& sData = "");
+    static void CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData = PostArgs(),
+                                          const std::string& sData = "");
 
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
@@ -124,6 +126,5 @@ private:
 
     static std::wstring m_sUserAgent;
 };
-
 
 #endif // !RA_HTTPTHREAD_H

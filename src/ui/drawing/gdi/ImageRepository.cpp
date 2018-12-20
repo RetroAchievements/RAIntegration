@@ -216,8 +216,10 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
     return hr;
 }
 
-static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource *pToRenderBitmapSource, _Inout_ HBITMAP& hBitmapInOut)
+static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapSource,
+                                         _Inout_ HBITMAP& hBitmapInOut)
 {
+    Expects(pToRenderBitmapSource != nullptr);
     // Get BitmapSource format and size
     WICPixelFormatGUID pixelFormat;
     UINT nWidth = 0U;

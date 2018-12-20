@@ -64,6 +64,9 @@
 #include <rapidjson\istreamwrapper.h>
 #include <rapidjson\ostreamwrapper.h>
 #include <rapidjson\writer.h> // has stringbuffer.h
+
+/* gsl stuff */
+#include <gsl\gsl>
 #pragma warning(pop)
 
 #include <md5.h>
@@ -81,10 +84,6 @@
 #pragma warning(disable : 4201) // nameless struct
 #include <rcheevos.h>
 #pragma warning(pop)
-
-/* gsl stuff */
-#include <gsl\gsl>
-
 #pragma warning(pop)
 
 #endif /* !PCH_H */

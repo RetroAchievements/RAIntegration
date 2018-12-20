@@ -51,8 +51,9 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
 }
 
 _Use_decl_annotations_
-void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* const pAch)
+void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* restrict pAch)
 {
+    Expects(pAch != nullptr);
     // We aren't actually using the value so we're using iterators
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
@@ -77,6 +78,7 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
             default:
                 ASSERT(!"Unknown col!");
         }
+        Ensures(pAch != nullptr);
     }
 
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
@@ -99,7 +101,8 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
             item.iItem = ListView_InsertItem(hList, &item);
         else
             ListView_SetItem(hList, &item);
-        ASSERT(item.iItem == ms_nNumOccupiedRows);
+        Ensures(item.iItem == ms_nNumOccupiedRows);
+        Ensures(pAch != nullptr);
     }
 
     ms_nNumOccupiedRows++;	//	Last thing to do!

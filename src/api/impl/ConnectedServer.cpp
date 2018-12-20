@@ -159,11 +159,11 @@ Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
 Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
 {
     // update the global API pointer to a disconnected API
-    ra::services::ServiceLocator::Provide<ra::api::IServer>(new (std::nothrow) DisconnectedServer(m_sHost));
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<DisconnectedServer>(m_sHost).release());
 
     Logout::Response response;
     response.Result = ApiResult::Success;
-    return std::move(response);
+    return response;
 }
 
 static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,

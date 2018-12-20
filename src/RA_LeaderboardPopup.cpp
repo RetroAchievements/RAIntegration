@@ -246,6 +246,7 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
                     while (i < pLB->GetRankInfoCount() && nY + FONT_SIZE_TEXT < m_pScoreboardSurface->GetHeight())
                     {
                         const RA_Leaderboard::Entry& lbInfo = pLB->GetRankInfo(i++);
+                        GSL_SUPPRESS(con.4) // nTextColor might be assigned can't be const
                         ra::ui::Color nTextColor = nColorPopup;
 
                         if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)

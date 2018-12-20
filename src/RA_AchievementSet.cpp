@@ -239,27 +239,25 @@ bool AchievementSet::SaveToFile() const
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
     pData->WriteLine(pGameContext.GameTitle());
 
-    for (size_t i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
+    for (auto& ach : *g_pLocalAchievements)
     {
-        const Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
-
-        pData->Write(std::to_string(pAch->ID()));
+        pData->Write(std::to_string(ach.ID()));
         pData->Write(":");
-        pData->Write(pAch->CreateMemString());
+        pData->Write(ach.CreateMemString());
         pData->Write(":");
-        pData->Write(pAch->Title()); // TODO: escape colons
+        pData->Write(ach.Title()); // TODO: escape colons
         pData->Write(":");
-        pData->Write(pAch->Description()); // TODO: escape colons
-        pData->Write("::::"); // progress indicator/max/format
-        pData->Write(pAch->Author());
+        pData->Write(ach.Description()); // TODO: escape colons
+        pData->Write("::::");            // progress indicator/max/format
+        pData->Write(ach.Author());
         pData->Write(":");
-        pData->Write(std::to_string(pAch->Points()));
+        pData->Write(std::to_string(ach.Points()));
         pData->Write(":");
-        pData->Write(std::to_string(pAch->CreatedDate()));
+        pData->Write(std::to_string(ach.CreatedDate()));
         pData->Write(":");
-        pData->Write(std::to_string(pAch->ModifiedDate()));
+        pData->Write(std::to_string(ach.ModifiedDate()));
         pData->Write(":::"); // upvotes/downvotes
-        pData->Write(pAch->BadgeImageURI());
+        pData->Write(ach.BadgeImageURI());
 
         pData->WriteLine();
     }
@@ -464,26 +462,22 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
     if (sSaveStateFilename == nullptr)
         return;
 
-    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sAchievementStateFile.c_str(), L"w");
-    if (pf == nullptr)
+    std::wstring sAchievementStateFile = ra::StringPrintf(L"%s.rap", ra::Widen(sSaveStateFilename));
+    std::ofstream ofile{sAchievementStateFile, std::ios::binary};
+    if (!ofile.is_open())
     {
         ASSERT(!"Could not save progress!");
         return;
     }
 
-    for (size_t i = 0; i < NumAchievements(); ++i)
+    for (auto& ach : m_Achievements)
     {
-        const Achievement* pAch = &m_Achievements[i];
-        if (pAch->Active())
+        if (ach.Active())
         {
-            std::string sProgress = pAch->CreateStateString(RAUsers::LocalUser().Username());
-            fwrite(sProgress.data(), sizeof(char), sProgress.length(), pf);
+            const std::string sProgress = ach.CreateStateString(RAUsers::LocalUser().Username());
+            ofile.write(sProgress.c_str(), ra::to_signed(sProgress.length()));
         }
     }
-
-    fclose(pf);
 }
 
 void AchievementSet::LoadProgress(const char* sLoadStateFilename)
@@ -501,7 +495,7 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
     char* pRawFile = _MallocAndBulkReadFileToBuffer(sAchievementStateFile.c_str(), nFileSize);
     if (pRawFile != nullptr)
     {
-        const char* pIter = pRawFile;
+        auto pIter = gsl::make_not_null(pRawFile);
         while (*pIter)
         {
             char* pUnused;
@@ -509,14 +503,15 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
             Achievement* pAch = Find(nID);
             if (pAch != nullptr && pAch->Active())
             {
-                pIter = pAch->ParseStateString(pIter, RAUsers::LocalUser().Username());
+                pIter = gsl::make_not_null(
+                    std::string{pAch->ParseStateString(pIter, RAUsers::LocalUser().Username())}.data());
             }
             else
             {
                 // achievement no longer exists, or is no longer active, skip to next one
                 Achievement ach;
                 ach.SetID(nID);
-                pIter = ach.ParseStateString(pIter, "");
+                pIter = gsl::make_not_null(std::string{ach.ParseStateString(pIter, "")}.data());
             }
         }
 

@@ -42,6 +42,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
 
 static constexpr void BlendPixel(UINT32* nTarget, UINT32 nBlend) noexcept
 {
+    Expects(nTarget != nullptr);
     const auto alpha = nBlend >> 24;
 
     // fully transparent - do nothing
@@ -52,13 +53,16 @@ static constexpr void BlendPixel(UINT32* nTarget, UINT32 nBlend) noexcept
     if (alpha == 255)
     {
         *nTarget = nBlend;
+        Ensures(nTarget != nullptr);
         return;
     }
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
     UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget);
+    Expects(pTarget != nullptr);
     UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
+    Expects(pBlend != nullptr);
 
     *pTarget++ = static_cast<UINT8>(
         (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
@@ -154,9 +158,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
     const UINT32* pEnd = pBits + nWidth * nHeight;
     UINT32* pSrcBits = m_pBits;
+    Expects(pSrcBits != nullptr);
     do
     {
         BlendPixel(pBits, *pSrcBits++);
+        Ensures(pSrcBits != nullptr);
     } while (++pBits < pEnd);
 
     // copy the buffer back onto the target surface
@@ -170,17 +176,21 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
     const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
-    assert(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
+    Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
     const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-    UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
+    UINT8* pBits{reinterpret_cast<UINT8*>(m_pBits) + 3};
+    Expects(pBits != nullptr);
     do
     {
         // only update the alpha for non-transparent pixels
         if (*pBits)
+        {
             *pBits = nAlpha;
-
+            Ensures(pBits != nullptr);
+        }
         pBits += 4;
+        Ensures(pBits != nullptr);
     } while (pBits < pEnd);
 }
 

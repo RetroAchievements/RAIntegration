@@ -23,15 +23,16 @@ extern bool g_bRAMTamperedWith;
 extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut) noexcept;
 
 // Read a file to a std::string. Returns false on error.
-_Success_(return) _NODISCARD
-bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* restrict sFile);
+_Success_(return ) _NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* restrict sFile);
 
 // Read file until reaching the end of the file, or the specified char.
-extern BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsRead, FILE* pFile) noexcept;
+extern BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize, DWORD* restrict pCharsReadOut,
+                     FILE* restrict pFile) noexcept;
 
 // Read a string til the end of the string, or nChar. bTerminate==TRUE replaces that char with \0.
+GSL_SUPPRESS(f.23)
 extern char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept;
-extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
+extern void _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 
 // Write out the buffer to a file
 extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);
@@ -40,7 +41,6 @@ extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string&
 extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
-
 
 extern std::string _TimeStampToString(time_t nTime);
 

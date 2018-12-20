@@ -18,11 +18,7 @@ public:
         Local
     };
 
-    explicit AchievementSet(_In_ Type eType) noexcept :
-        m_nSetType{ eType }
-    {
-        Clear();
-    }
+    explicit AchievementSet(_In_ Type eType) noexcept : m_nSetType{eType} { Clear(); }
 
 public:
     static BOOL FetchFromWebBlocking(unsigned int nGameID);
@@ -35,19 +31,28 @@ public:
     void Test();
     void Reset() noexcept;
 
-    _Success_(return)
-    bool LoadFromFile(_Inout_ unsigned int nGameID);
+    _Success_(return ) bool LoadFromFile(_Inout_ unsigned int nGameID);
     bool SaveToFile() const;
 
     //	Get Achievement at offset
-    Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
+    Achievement& GetAchievement(size_t nIter)
+    {
+        Ensures((nIter >= 0) && (nIter < m_Achievements.size()));
+        return m_Achievements.at(nIter);
+    }
+    const Achievement& GetAchievement(size_t nIter) const
+    {
+        Ensures((nIter >= 0) && (nIter < m_Achievements.size()));
+        return m_Achievements.at(nIter);
+    }
     inline size_t NumAchievements() const noexcept { return m_Achievements.size(); }
 
     // Get Points Total
     inline unsigned int PointTotal() noexcept
     {
         unsigned int total = 0U;
-        for (auto& ach : m_Achievements) total += ach.Points();
+        for (auto& ach : m_Achievements)
+            total += ach.Points();
         return total;
     }
 
@@ -77,12 +82,17 @@ public:
 
     BOOL HasUnsavedChanges();
 
+    // ranged-for
+    inline auto begin() noexcept { return m_Achievements.begin(); }
+    inline auto begin() const noexcept { return m_Achievements.begin(); }
+    inline auto end() noexcept { return m_Achievements.end(); }
+    inline auto end() const noexcept { return m_Achievements.end(); }
+
 private:
     const Type m_nSetType{};
     std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive{ TRUE };
+    BOOL m_bProcessingActive{TRUE};
 };
-
 
 //	Externals:
 
@@ -94,6 +104,5 @@ extern AchievementSet* g_pActiveAchievements;
 extern AchievementSet::Type g_nActiveAchievementSet;
 
 void RASetAchievementCollection(_In_ AchievementSet::Type Type) noexcept;
-
 
 #endif // !RA_ACHIEVEMENTSET_H

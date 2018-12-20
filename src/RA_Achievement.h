@@ -108,7 +108,7 @@ public:
     // Returns the new char* offset after parsing.
     GSL_SUPPRESS(f.6) const char*
         ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
-    const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
+    const char* ParseStateString(const char* restrict sBuffer, const std::string& restrict sSalt);
 
 #ifndef RA_UTEST
     //	Parse from json element

@@ -143,7 +143,7 @@ namespace detail {
 template<typename T>
 struct _NODISCARD is_literal_type
     : std::bool_constant<(std::is_scalar_v<T> || std::is_reference_v<T>) ||
-                         (std::is_aggregate_v<T> && std::is_scalar_v<typename T::value_type>) ||
+                         (std::is_aggregate_v<T>) ||
                          (std::is_class_v<T> && std::is_trivially_destructible_v<T> &&
                           std::is_nothrow_constructible_v<T>)>
 {

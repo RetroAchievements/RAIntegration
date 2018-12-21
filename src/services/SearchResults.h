@@ -147,6 +147,7 @@ private:
                     const std::vector<unsigned int>& vMatches);
     void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[],
                            const std::vector<unsigned int>& vMatches);
+    bool ContainsNibble(unsigned int nAddress) const;
 
     std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;

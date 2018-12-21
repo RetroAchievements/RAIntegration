@@ -221,7 +221,7 @@ public:
 
     TEST_METHOD(TestLoginNoOptionalFields)
     {
-        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request&)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\"}");
         });
@@ -244,7 +244,7 @@ public:
 
     TEST_METHOD(TestLoginNullOptionalFields)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request&)
         {
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":null,\"Messages\":null}");
         });

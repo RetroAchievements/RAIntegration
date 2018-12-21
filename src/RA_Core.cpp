@@ -15,7 +15,6 @@
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_GameTitle.h"
-#include "RA_Dlg_Login.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
@@ -38,6 +37,7 @@
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -998,9 +998,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGIN:
-            RA_Dlg_Login::DoModalLogin();
-            ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+        {
+            ra::ui::viewmodels::LoginViewModel vmLogin;
+            vmLogin.ShowModal();
             break;
+        }
 
         case IDM_RA_FILES_LOGOUT:
         {

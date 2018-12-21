@@ -28,7 +28,7 @@ void GameChecksumDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oVie
 
 // ------------------------------------
 
-GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum) noexcept
+GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum)
     : DialogBase(vmGameChecksum)
 {
     m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::Center,

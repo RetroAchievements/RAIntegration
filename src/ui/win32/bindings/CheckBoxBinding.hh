@@ -32,7 +32,7 @@ public:
 
     void OnCommand() override
     {
-        auto nState = Button_GetCheck(m_hWnd);
+        const auto nState = Button_GetCheck(m_hWnd);
         SetValue(*m_pIsCheckedProperty, (nState == BST_CHECKED));
     }
 

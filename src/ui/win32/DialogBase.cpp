@@ -9,7 +9,7 @@ namespace ui {
 namespace win32 {
 
 _Use_decl_annotations_
-DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) :
+DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept :
     m_vmWindow{ vmWindow },
     m_bindWindow{ vmWindow }
 {

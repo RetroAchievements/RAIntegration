@@ -59,7 +59,7 @@ public:
     }
 
 protected:
-    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow);
+    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
     ~DialogBase() noexcept;
 
     /// <summary>
@@ -72,12 +72,12 @@ protected:
     /// </summary>
     /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return
     /// <c>FALSE</c>.</returns>
-    virtual BOOL OnInitDialog() { return TRUE; }
+    GSL_SUPPRESS(f.6) virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    virtual void OnShown() noexcept {}
+    GSL_SUPPRESS(f.6) virtual void OnShown() {}
 
     /// <summary>
     /// Called when the window is destroyed.
@@ -123,12 +123,12 @@ private:
 
     // allow ControlBinding to access AddControlBinding and RemoveControlBinding methods
     friend class ra::ui::win32::bindings::ControlBinding;
-    void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding)
+    void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding) noexcept
     {
-        m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
+        GSL_SUPPRESS(f.6) m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
     }
 
-    void RemoveControlBinding(HWND hControl) { m_mControlBindings.erase(hControl); }
+    void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS(f .6) m_mControlBindings.erase(hControl); }
 
     ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
     {

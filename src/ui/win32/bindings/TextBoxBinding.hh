@@ -47,7 +47,7 @@ public:
 private:
     void UpdateSourceText()
     {
-        int nLength = GetWindowTextLengthW(m_hWnd);
+        const int nLength = GetWindowTextLengthW(m_hWnd);
 
         std::wstring sBuffer;
         sBuffer.resize(nLength + 1);

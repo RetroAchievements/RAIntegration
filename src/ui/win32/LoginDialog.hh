@@ -17,7 +17,7 @@ namespace win32 {
 class LoginDialog : public DialogBase
 {
 public:
-    explicit LoginDialog(ra::ui::viewmodels::LoginViewModel& vmLogin) noexcept;
+    explicit LoginDialog(ra::ui::viewmodels::LoginViewModel& vmLogin);
     virtual ~LoginDialog() noexcept = default;
     LoginDialog(const LoginDialog&) noexcept = delete;
     LoginDialog& operator=(const LoginDialog&) noexcept = delete;
@@ -27,7 +27,7 @@ public:
     class Presenter : public IDialogPresenter
     {
     public:
-        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) override;
+        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) noexcept override;
         void ShowWindow(ra::ui::WindowViewModelBase& viewModel) override;
         void ShowModal(ra::ui::WindowViewModelBase& viewModel) override;
     };

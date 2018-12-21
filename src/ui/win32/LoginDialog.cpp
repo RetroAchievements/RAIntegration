@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-bool LoginDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel)
+bool LoginDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
     return (dynamic_cast<const ra::ui::viewmodels::LoginViewModel*>(&vmViewModel) != nullptr);
 }
@@ -25,7 +25,7 @@ void LoginDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
 
 // ------------------------------------
 
-LoginDialog::LoginDialog(ra::ui::viewmodels::LoginViewModel& vmLogin) noexcept :
+LoginDialog::LoginDialog(ra::ui::viewmodels::LoginViewModel& vmLogin) :
     DialogBase(vmLogin),
     m_bindUsername(vmLogin),
     m_bindPassword(vmLogin),
@@ -52,7 +52,7 @@ BOOL LoginDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDOK)
     {
-        auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(m_vmWindow);
+        const auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(m_vmWindow);
         if (!vmLogin.Login())
             return TRUE;
     }

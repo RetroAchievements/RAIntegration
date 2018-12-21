@@ -11,7 +11,7 @@ namespace viewmodels {
 class LoginViewModel : public WindowViewModelBase
 {
 public:
-    LoginViewModel();
+    GSL_SUPPRESS(f.6) LoginViewModel();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the username.

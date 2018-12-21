@@ -41,7 +41,7 @@ public:
     /// </summary>
     /// <param name="pDialog">The dialog containing the control.</param>
     /// <param name="hControl">The control handle.</param>
-    virtual void SetHWND(DialogBase& pDialog, HWND hControl)
+    GSL_SUPPRESS(f.6) virtual void SetHWND(DialogBase& pDialog, HWND hControl)
     {
         m_hWnd = hControl;
         m_pDialog = &pDialog;
@@ -51,12 +51,12 @@ public:
     /// <summary>
     /// Called when the bound control loses keyboard focus.
     /// </summary>
-    virtual void LostFocus() {}
+    GSL_SUPPRESS(f.6) virtual void LostFocus() {}
     
     /// <summary>
     /// Called when the bound control's command is activated.
     /// </summary>
-    virtual void OnCommand() {}
+    GSL_SUPPRESS(f.6) virtual void OnCommand() {}
 
 protected:
     HWND m_hWnd{};

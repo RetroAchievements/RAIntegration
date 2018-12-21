@@ -23,29 +23,45 @@ public:
     /// <summary>
     /// Queues a popup message.
     /// </summary>
-    void QueueMessage(PopupMessageViewModel&& pMessage);
+    int QueueMessage(PopupMessageViewModel&& pMessage);
 
     /// <summary>
     /// Queues a popup message.
     /// </summary>
-    void QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription)
+    int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription)
     {
         PopupMessageViewModel vmMessage;
         vmMessage.SetTitle(sTitle);
         vmMessage.SetDescription(sDescription);
-        QueueMessage(std::move(vmMessage));
+        return QueueMessage(std::move(vmMessage));
     }
 
     /// <summary>
     /// Queues a popup message with an image.
     /// </summary>
-    void QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, ra::ui::ImageType nImageType, const std::string& sImageName)
+    int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, ra::ui::ImageType nImageType, const std::string& sImageName)
     {
         PopupMessageViewModel vmMessage;
         vmMessage.SetTitle(sTitle);
         vmMessage.SetDescription(sDescription);
         vmMessage.SetImage(nImageType, sImageName);
-        QueueMessage(std::move(vmMessage));
+        return QueueMessage(std::move(vmMessage));
+    }
+    
+    /// <summary>
+    /// Gets the message associated to the specified unique identifier.
+    /// </summary>
+    /// <param name="nId">The unique identifier of the popup.</param>
+    /// <returns>Requested popup view model, <c>nullptr</c> if not found.</returns>
+    PopupMessageViewModel* GetMessage(int nId)
+    {
+        for (auto& pMessage : m_vPopupMessages)
+        {
+            if (pMessage.GetPopupId() == nId)
+                return &pMessage;
+        }
+
+        return nullptr;
     }
 
     /// <summary>
@@ -56,7 +72,8 @@ public:
 private:
     void UpdateActiveMessage(double fElapsed);
 
-    std::queue<PopupMessageViewModel> m_vPopupMessages;
+    std::deque<PopupMessageViewModel> m_vPopupMessages;
+    std::atomic<int> m_nPopupId{ 0 };
 };
 
 } // namespace viewmodels

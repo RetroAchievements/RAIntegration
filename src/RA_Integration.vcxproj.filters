@@ -75,9 +75,6 @@
     <ClCompile Include="RA_Dlg_GameTitle.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_Login.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_MemBookmark.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -231,6 +228,15 @@
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementRuntime.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\LoginViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\LoginDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -258,9 +264,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameTitle.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_Login.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_MemBookmark.h">
@@ -553,6 +556,27 @@
     </ClInclude>
     <ClInclude Include="services\impl\WindowsAudioSystem.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\AchievementRuntime.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="api\ResolveHash.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\LoginViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\LoginDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\ControlBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

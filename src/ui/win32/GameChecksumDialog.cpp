@@ -28,8 +28,8 @@ void GameChecksumDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oVie
 
 // ------------------------------------
 
-GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmRichPresenceDisplay)
-    : DialogBase(vmRichPresenceDisplay)
+GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum)
+    : DialogBase(vmGameChecksum)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
     m_bindWindow.BindLabel(IDC_RA_ROMCHECKSUMTEXT, ra::ui::viewmodels::GameChecksumViewModel::ChecksumProperty);

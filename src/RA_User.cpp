@@ -6,8 +6,6 @@
 #include "RA_Core.h"
 #include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_Login.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
 #include "RA_Resource.h"

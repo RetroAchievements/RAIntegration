@@ -11,6 +11,7 @@
 
 #include "services\Http.hh"
 
+#include "ui\ImageReference.hh"
 #include "ui\WindowViewModelBase.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -99,6 +100,19 @@ template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& r
         case ra::api::ApiResult::Failed: return L"Failed";
         case ra::api::ApiResult::Unsupported: return L"Unsupported";
         default: return std::to_wstring(ra::etoi(result));
+    }
+}
+
+template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& type)
+{
+    switch (type)
+    {
+        case ra::ui::ImageType::None: return L"None";
+        case ra::ui::ImageType::Badge: return L"Badge";
+        case ra::ui::ImageType::UserPic: return L"UserPic";
+        case ra::ui::ImageType::Local: return L"Local";
+        case ra::ui::ImageType::Icon: return L"Icon";
+        default: return std::to_wstring(ra::etoi(type));
     }
 }
 #pragma warning(pop)

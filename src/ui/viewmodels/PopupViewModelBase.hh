@@ -93,9 +93,20 @@ public:
     /// Updates the image to render.
     /// </summary>
     virtual void UpdateRenderImage(double fElapsed) = 0;
+    
+    /// <summary>
+    /// Gets the unique identifier of the popup.
+    /// </summary>
+    int GetPopupId() const noexcept { return m_nPopupId; }
+
+    /// <summary>
+    /// Sets the unique identifier of the popup.
+    /// </summary>
+    void SetPopupId(int nPopupId) noexcept { m_nPopupId = nPopupId; }
 
 protected:
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
+    int m_nPopupId{ 0 };
 };
 
 } // namespace viewmodels

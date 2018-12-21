@@ -61,24 +61,30 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
 #endif
 }
 
-void OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
+int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
 {
     if (m_vPopupMessages.empty())
         pMessage.BeginAnimation();
 
+#ifndef RA_UTEST
     if (pMessage.GetImage().Type() != ra::ui::ImageType::None)
     {
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.FetchImage(pMessage.GetImage().Type(), pMessage.GetImage().Name());
     }
+#endif
 
-    m_vPopupMessages.emplace(std::move(pMessage));
+    pMessage.SetPopupId(++m_nPopupId);
+
+    m_vPopupMessages.emplace_back(std::move(pMessage));
+
+    return pMessage.GetPopupId();
 }
 
 void OverlayManager::ClearPopups()
 {
     while (!m_vPopupMessages.empty())
-        m_vPopupMessages.pop();
+        m_vPopupMessages.pop_front();
 }
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)
@@ -91,7 +97,7 @@ void OverlayManager::UpdateActiveMessage(double fElapsed)
         if (!pActiveMessage->IsAnimationComplete())
             return;
 
-        m_vPopupMessages.pop();
+        m_vPopupMessages.pop_front();
         if (m_vPopupMessages.empty())
             return;
 

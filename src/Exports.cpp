@@ -2,7 +2,6 @@
 
 #include "RA_AchievementOverlay.h"
 #include "RA_BuildVer.h"
-#include "RA_Dlg_Login.h"
 #include "RA_Resource.h"
 
 #include "api\Login.hh"
@@ -16,6 +15,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 
@@ -84,10 +84,9 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetApiToken().empty() || pConfiguration.GetUsername().empty())
     {
-#ifndef RA_UTEST
         // show the login dialog box
-        DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-#endif
+        ra::ui::viewmodels::LoginViewModel vmLogin;
+        vmLogin.ShowModal();
     }
     else
     {
@@ -108,7 +107,7 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 }
 
 _Use_decl_annotations_
-API int _RA_UpdatePopups(ControllerInput* pInput, float fElapsedSeconds, bool bFullScreen, bool bPaused)
+API int _RA_UpdatePopups(_UNUSED ControllerInput* pInput, float fElapsedSeconds, _UNUSED bool bFullScreen, bool bPaused)
 {
     if (bPaused)
         fElapsedSeconds = 0.0;
@@ -117,16 +116,16 @@ API int _RA_UpdatePopups(ControllerInput* pInput, float fElapsedSeconds, bool bF
     return 0;
 }
 
+#ifndef RA_UTEST
 _Use_decl_annotations_
 API int _RA_RenderPopups(HDC hDC, RECT* rcSize)
 {
-#ifndef RA_UTEST
     if (!g_AchievementOverlay.IsFullyVisible())
     {
         ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
         ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
     }
-#endif
 
     return 0;
 }
+#endif

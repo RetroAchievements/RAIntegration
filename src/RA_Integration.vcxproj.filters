@@ -539,6 +539,9 @@
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="api\ResolveHash.hh">
+      <Filter>API</Filter>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

@@ -19,6 +19,7 @@
 #include "RA_Dlg_Memory.h"
 
 #include "api\Logout.hh"
+#include "api\ResolveHash.hh"
 
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -364,18 +365,15 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
-        //	Fetch the gameID from the DB here:
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
-        PostArgs args;
-        args['u'] = pUserContext.GetUsername();
-        args['t'] = pUserContext.GetApiToken();
-        args['m'] = sCurrentROMMD5;
+        // Fetch the gameID from the DB
+        ra::api::ResolveHash::Request request;
+        request.Hash = sCurrentROMMD5;
 
-        rapidjson::Document doc;
-        if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
+        const auto response = request.Call();
+        if (response.Succeeded())
         {
-            nGameID = doc["GameID"].GetUint();
-            if (nGameID == 0) //	Unknown
+            nGameID = response.GameId;
+            if (nGameID == 0) // Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
@@ -391,11 +389,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         }
         else
         {
-            //	Some other fatal error... panic?
-            ASSERT(!"Unknown error from requestgameid.php");
-
-            std::wstring sErrorMessage = L"Error from " + ra::Widen(_RA_HostName());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage.c_str());
+            std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
+            if (sErrorMessage.empty())
+                sErrorMessage = ra::StringPrintf(L"Error from %s" , _RA_HostName());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage);
         }
     }
 

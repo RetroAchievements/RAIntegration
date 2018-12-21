@@ -3,6 +3,7 @@
 // Win32 specific implementation of Desktop.hh
 
 #include "ui/win32/GameChecksumDialog.hh"
+#include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
 
@@ -14,9 +15,11 @@ namespace win32 {
 
 Desktop::Desktop() noexcept
 {
+    // most common first
     m_vDialogPresenters.emplace_back(new (std::nothrow) MessageBoxDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) RichPresenceDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
 }
 
 void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const

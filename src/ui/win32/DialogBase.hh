@@ -10,6 +10,10 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
+namespace bindings {
+class ControlBinding; // forward declaration
+}
+
 class DialogBase
 {
 public:
@@ -55,7 +59,7 @@ public:
     }
 
 protected:
-    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow);
+    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
     ~DialogBase() noexcept;
 
     /// <summary>
@@ -66,13 +70,14 @@ protected:
     /// <summary>
     /// Called when the window is created, but before it is shown.
     /// </summary>
-    /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return <c>FALSE</c>.</returns>
-    virtual BOOL OnInitDialog() noexcept { return TRUE; }
+    /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return
+    /// <c>FALSE</c>.</returns>
+    GSL_SUPPRESS(f.6) virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    virtual void OnShown() noexcept {}
+    GSL_SUPPRESS(f.6) virtual void OnShown() {}
 
     /// <summary>
     /// Called when the window is destroyed.
@@ -103,12 +108,35 @@ protected:
 
 private:
     // Allows access to `DialogProc` from static helper
-    friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
-    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+    friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
+                                                    _In_ UINT uMsg,
+                                                    _In_ WPARAM wParam,
+                                                    _In_ LPARAM lParam);
+    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg,
+                                                         _In_ UINT uMsg,
+                                                         _In_ WPARAM wParam,
+                                                         _In_ LPARAM lParam);
 
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
     bool m_bModal = false;
+
+    // allow ControlBinding to access AddControlBinding and RemoveControlBinding methods
+    friend class ra::ui::win32::bindings::ControlBinding;
+    void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding) noexcept
+    {
+        GSL_SUPPRESS(f.6) m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
+    }
+
+    void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS(f .6) m_mControlBindings.erase(hControl); }
+
+    ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
+    {
+        const auto pIter = m_mControlBindings.find(hControl);
+        return (pIter != m_mControlBindings.end() ? pIter->second : nullptr);
+    }
+
+    std::unordered_map<HWND, ra::ui::win32::bindings::ControlBinding*> m_mControlBindings;
 };
 
 } // namespace win32

@@ -25,13 +25,12 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept {}
-        virtual void OnViewModelStringValueChanged([
-            [maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
-        {}
+        virtual void OnViewModelStringValueChanged(
+            [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept {}
         virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) { m_vNotifyTargets.insert(&pTarget); }
+    GSL_SUPPRESS(f.6) void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.insert(&pTarget); }
     GSL_SUPPRESS(f.6) void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
 
 private:

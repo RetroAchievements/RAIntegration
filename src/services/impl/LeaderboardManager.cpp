@@ -182,7 +182,7 @@ void LeaderboardManager::Reset()
 #endif
 }
 
-void LeaderboardManager::Clear() noexcept
+void LeaderboardManager::Clear()
 {
     m_Leaderboards.clear();
 

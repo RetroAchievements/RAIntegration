@@ -20,8 +20,8 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     if (m_fAnimationProgress < INOUT_TIME)
     {
         // fading in
-        auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        const auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
+        const auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
         SetRenderLocationY(static_cast<int>(nY));
     }
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME - INOUT_TIME)
@@ -32,8 +32,8 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME)
     {
         // fading out
-        auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        const auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
+        const auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
         SetRenderLocationY(static_cast<int>(nY));
     }
     else
@@ -62,11 +62,11 @@ void PopupMessageViewModel::CreateRenderImage()
 
     auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     const auto sTitle = GetTitle();
-    auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
+    const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
     auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
     const auto sSubTitle = GetDescription();
-    auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
+    const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
     // create the actual surface
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;

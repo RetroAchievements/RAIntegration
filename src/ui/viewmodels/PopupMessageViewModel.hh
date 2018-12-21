@@ -94,7 +94,7 @@ public:
     /// <summary>
     /// Determines whether the animation cycle has completed.
     /// </summary>
-    bool IsAnimationComplete() const
+    bool IsAnimationComplete() const noexcept
     {
         return (m_fAnimationProgress >= TOTAL_ANIMATION_TIME);
     }

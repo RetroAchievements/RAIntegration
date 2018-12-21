@@ -13,7 +13,7 @@ namespace impl {
 class WindowsAudioSystem : public ra::services::IAudioSystem
 {
 public:
-    void PlayAudioFile(const std::wstring& sPath) const
+    void PlayAudioFile(const std::wstring& sPath) const override
     {
         const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
         std::wstring sFullPath = pFileSystem.BaseDirectory() + sPath;

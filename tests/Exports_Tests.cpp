@@ -133,7 +133,7 @@ public:
 
         // popup notification and sound
         Assert::IsTrue(mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
-        auto* pPopup = mockOverlayManager.GetMessage(1);
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Welcome User (12345)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
@@ -165,7 +165,7 @@ public:
 
         _RA_AttemptLogin(true);
 
-        auto* pPopup = mockOverlayManager.GetMessage(1);
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Welcome User (0)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
@@ -194,11 +194,11 @@ public:
         mockConfiguration.SetUsername("User");
         mockConfiguration.SetApiToken("ApiToken");
 
-        mockSessionTracker.AddSession(6U, 123456789, std::chrono::hours(2));
+        mockSessionTracker.MockSession(6U, 123456789, std::chrono::hours(2));
 
         _RA_AttemptLogin(true);
 
-        auto* pPopup = mockOverlayManager.GetMessage(1);
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Welcome back User (12345)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());

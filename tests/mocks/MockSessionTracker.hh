@@ -24,7 +24,7 @@ public:
 
     const std::wstring& GetUsername() const noexcept { return m_sUsername; }
 
-    void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration)
+    void MockSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration)
     {
         SessionTracker::AddSession(nGameId, tSessionStart, tSessionDuration);
     }

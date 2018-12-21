@@ -88,7 +88,7 @@ extern "C" {
 
     struct ControllerInput;
     API int CCONV _RA_UpdatePopups(_In_ ControllerInput* pInput, _In_ float fElapsedSeconds, _In_ bool bFullScreen, _In_ bool bPaused);
-    API int CCONV _RA_RenderPopups(_In_ HDC hDC, _In_ RECT* rcSize);
+    API int CCONV _RA_RenderPopups(_In_ HDC hDC, const _In_ RECT* rcSize);
 
 #ifdef __cplusplus
 }

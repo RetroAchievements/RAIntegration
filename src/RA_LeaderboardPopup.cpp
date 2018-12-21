@@ -22,7 +22,7 @@ const char* FONT_TO_USE = "Tahoma";
 const int FONT_SIZE_TITLE = 22;
 const int FONT_SIZE_TEXT = 22;
 
-}
+} // namespace
 
 void LeaderboardPopup::ShowScoreboard(ra::LeaderboardID nID)
 {
@@ -48,7 +48,7 @@ void LeaderboardPopup::Reset()
 void LeaderboardPopup::Update(double fDelta)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) //	If not, simply ignore them.
         return;
 
     if (m_fScoreboardShowTimer >= SCOREBOARD_FINISH_AT)
@@ -63,7 +63,7 @@ void LeaderboardPopup::Update(double fDelta)
             if (!m_vScoreboardQueue.empty())
             {
                 //	Still not empty: restart timer
-                m_fScoreboardShowTimer = 0.0f;	//	Show next scoreboard
+                m_fScoreboardShowTimer = 0.0f; //	Show next scoreboard
             }
             else
             {
@@ -83,8 +83,7 @@ void LeaderboardPopup::Update(double fDelta)
     }
 }
 
-_Use_decl_annotations_
-BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
+_Use_decl_annotations_ BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -98,8 +97,7 @@ BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
     return TRUE;
 }
 
-_Use_decl_annotations_
-BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
+_Use_decl_annotations_ BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
 {
     std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
     while (iter != m_vActiveLBIDs.end())
@@ -117,18 +115,16 @@ BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
     return FALSE;
 }
 
-float LeaderboardPopup::GetOffsetPct() const noexcept
+double LeaderboardPopup::GetOffsetPct() const noexcept
 {
-    float fVal = 0.0f;
+    double fVal = 0.0f;
 
     if (m_fScoreboardShowTimer < SCOREBOARD_APPEAR_AT)
     {
-        //	Fading in.
-        float fDelta = (SCOREBOARD_APPEAR_AT - m_fScoreboardShowTimer);
+        // Fading in.
+        const auto fDelta = (SCOREBOARD_APPEAR_AT - m_fScoreboardShowTimer);
 
-        fDelta *= fDelta;	//	Quadratic
-
-        fVal = fDelta;
+        fVal = fDelta * fDelta; // Quadratic
     }
     else if (m_fScoreboardShowTimer < (SCOREBOARD_FADEOUT_AT))
     {
@@ -138,11 +134,9 @@ float LeaderboardPopup::GetOffsetPct() const noexcept
     else if (m_fScoreboardShowTimer < (SCOREBOARD_FINISH_AT))
     {
         //	Fading out
-        float fDelta = (SCOREBOARD_FADEOUT_AT - m_fScoreboardShowTimer);
+        const auto fDelta = (SCOREBOARD_FADEOUT_AT - m_fScoreboardShowTimer);
 
-        fDelta *= fDelta;	//	Quadratic
-
-        fVal = (fDelta);
+        fVal = fDelta * fDelta; // Quadratic
     }
     else
     {
@@ -153,11 +147,10 @@ float LeaderboardPopup::GetOffsetPct() const noexcept
     return fVal;
 }
 
-_Use_decl_annotations_
-void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
+_Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) //	If not, simply ignore them.
         return;
 
     const int nWidth = pSurface.GetWidth();
@@ -190,13 +183,16 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
                     const auto sScoreSoFar = ra::Widen(pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())));
                     const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
 
-                    auto pRenderSurface = pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
+                    auto pRenderSurface =
+                        pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
 
                     // background
-                    pRenderSurface->FillRectangle(0, 0, pRenderSurface->GetWidth(), pRenderSurface->GetHeight(), nColorBackground);
+                    pRenderSurface->FillRectangle(0, 0, pRenderSurface->GetWidth(), pRenderSurface->GetHeight(),
+                                                  nColorBackground);
 
                     // text
-                    pRenderSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8, szScoreSoFar.Height, nColorBlack);
+                    pRenderSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8,
+                                                  szScoreSoFar.Height, nColorBlack);
                     pRenderSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, nColorPopup);
                     pRenderSurface->WriteText(4, 0, nFontText, nColorBlack, sScoreSoFar);
 
@@ -227,17 +223,24 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
 
                     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
                     m_pScoreboardSurface = pSurfaceFactory.CreateTransparentSurface(300, 200);
-                    auto nFontTitle = m_pScoreboardSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
-                    auto nFontText = m_pScoreboardSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
+                    auto nFontTitle =
+                        m_pScoreboardSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+                    auto nFontText =
+                        m_pScoreboardSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
 
                     // background
-                    m_pScoreboardSurface->FillRectangle(0, 0, m_pScoreboardSurface->GetWidth(), m_pScoreboardSurface->GetHeight(), nColorBackground);
-                    m_pScoreboardSurface->FillRectangle(2, 2, m_pScoreboardSurface->GetWidth() - nShadowOffset, m_pScoreboardSurface->GetHeight() - nShadowOffset, nColorBlack);
-                    m_pScoreboardSurface->FillRectangle(0, 0, m_pScoreboardSurface->GetWidth() - nShadowOffset, m_pScoreboardSurface->GetHeight() - nShadowOffset, nColorBackgroundFill);
+                    m_pScoreboardSurface->FillRectangle(0, 0, m_pScoreboardSurface->GetWidth(),
+                                                        m_pScoreboardSurface->GetHeight(), nColorBackground);
+                    m_pScoreboardSurface->FillRectangle(2, 2, m_pScoreboardSurface->GetWidth() - nShadowOffset,
+                                                        m_pScoreboardSurface->GetHeight() - nShadowOffset, nColorBlack);
+                    m_pScoreboardSurface->FillRectangle(0, 0, m_pScoreboardSurface->GetWidth() - nShadowOffset,
+                                                        m_pScoreboardSurface->GetHeight() - nShadowOffset,
+                                                        nColorBackgroundFill);
 
                     // title
                     const auto sResultsTitle = ra::StringPrintf(L"Results: %s", pLB->Title());
-                    m_pScoreboardSurface->FillRectangle(4, 4, m_pScoreboardSurface->GetWidth() - nShadowOffset - 8, FONT_SIZE_TITLE, nColorPopup);
+                    m_pScoreboardSurface->FillRectangle(4, 4, m_pScoreboardSurface->GetWidth() - nShadowOffset - 8,
+                                                        FONT_SIZE_TITLE, nColorPopup);
                     m_pScoreboardSurface->WriteText(8, 3, nFontTitle, nColorBlack, sResultsTitle);
 
                     // scoreboard
@@ -256,7 +259,8 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
 
                         const auto sScore = ra::Widen(pLB->FormatScore(lbInfo.m_nScore));
                         const auto szScore = m_pScoreboardSurface->MeasureText(nFontText, sScore);
-                        m_pScoreboardSurface->WriteText(m_pScoreboardSurface->GetWidth() - 4 - szScore.Width - 8, nY, nFontText, nTextColor, sScore);
+                        m_pScoreboardSurface->WriteText(m_pScoreboardSurface->GetWidth() - 4 - szScore.Width - 8, nY,
+                                                        nFontText, nTextColor, sScore);
 
                         nY += FONT_SIZE_TEXT + 2;
                     }
@@ -267,10 +271,10 @@ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
 
             if (m_pScoreboardSurface != nullptr)
             {
-                const float fOffscreenAmount = (GetOffsetPct() * 600);
-                const float fFadeOffs = (nWidth - 300 - 10) + fOffscreenAmount;
-                const int nScoreboardX = (int)fFadeOffs;
-                const int nScoreboardY = (int)nHeight - 200 - 10;
+                const auto fOffscreenAmount = (GetOffsetPct() * 600);
+                const auto fFadeOffs = (nWidth - 300 - 10) + fOffscreenAmount;
+                const int nScoreboardX = static_cast<int>(fFadeOffs);
+                const int nScoreboardY = nHeight - 200 - 10;
                 pSurface.DrawSurface(nScoreboardX, nScoreboardY, *m_pScoreboardSurface);
             }
         }

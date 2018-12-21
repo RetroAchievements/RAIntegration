@@ -107,7 +107,7 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 }
 
 _Use_decl_annotations_
-API int _RA_UpdatePopups(_UNUSED ControllerInput* pInput, float fElapsedSeconds, _UNUSED bool bFullScreen, bool bPaused)
+API int _RA_UpdatePopups(ControllerInput*, float fElapsedSeconds, bool, bool bPaused)
 {
     if (bPaused)
         fElapsedSeconds = 0.0;
@@ -118,7 +118,7 @@ API int _RA_UpdatePopups(_UNUSED ControllerInput* pInput, float fElapsedSeconds,
 
 #ifndef RA_UTEST
 _Use_decl_annotations_
-API int _RA_RenderPopups(HDC hDC, RECT* rcSize)
+API int _RA_RenderPopups(HDC hDC, const RECT* rcSize)
 {
     if (!g_AchievementOverlay.IsFullyVisible())
     {

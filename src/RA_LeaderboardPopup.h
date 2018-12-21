@@ -27,11 +27,11 @@ public:
     void ShowScoreboard(ra::LeaderboardID nLBID);
 
 private:
-    float GetOffsetPct() const noexcept;
+    double GetOffsetPct() const noexcept;
 
 private:
     PopupState m_nState{};
-    float m_fScoreboardShowTimer{};
+    double m_fScoreboardShowTimer{};
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 

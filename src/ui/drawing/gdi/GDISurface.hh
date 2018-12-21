@@ -38,7 +38,7 @@ public:
 
     void SetOpacity(_UNUSED double) noexcept override { assert("This surface does not support opacity"); }
 
-    HDC GetHDC() const { return m_hDC; }
+    HDC GetHDC() const noexcept { return m_hDC; }
 
 protected:
     void SwitchFont(int nFont) const;

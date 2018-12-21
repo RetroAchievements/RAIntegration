@@ -21,7 +21,7 @@ public:
         m_vAudioFilesPlayed.emplace_back(sPath);
     }
 
-    bool WasAudioFilePlayed(const std::wstring& sPath) const
+    bool WasAudioFilePlayed(const std::wstring& sPath) const noexcept
     {
         for (const auto& sFile : m_vAudioFilesPlayed)
         {

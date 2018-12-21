@@ -108,9 +108,6 @@
     <ClCompile Include="RA_Defs.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
-    <ClCompile Include="RA_AchievementPopup.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_AchievementOverlay.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -304,9 +301,6 @@
     </ClInclude>
     <ClInclude Include="RA_BuildVer.h">
       <Filter>Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_AchievementPopup.h">
-      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_AchievementOverlay.h">
       <Filter>UI</Filter>

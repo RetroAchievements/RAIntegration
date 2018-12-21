@@ -1418,45 +1418,44 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 std::string GetFolderFromDialog()
 {
-    auto lpbi{ std::make_unique<BROWSEINFO>() };
-    lpbi->hwndOwner = ::GetActiveWindow();
+    BROWSEINFO bi{};
+    bi.hwndOwner = ::GetActiveWindow();
 
-    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
-    lpbi->pszDisplayName = pDisplayName.get();
-    lpbi->lpszTitle = _T("Select ROM folder...");
+    std::array<TCHAR, RA_MAX_PATH> pDisplayName{};
+    bi.pszDisplayName = pDisplayName.data();
+    bi.lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
         return std::string();
 
-    lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
-    lpbi->lpfn    = ra::BrowseCallbackProc;
-    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+    bi.lpfn    = ra::BrowseCallbackProc;
+    bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {
         const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
         {
-            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            ::CoTaskMemFree(lpItemIdList);
             lpItemIdList = nullptr;
         };
 
         using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
         if (!owner)
         {
             ::OleUninitialize();
             return std::string();
         }
 
-        if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
+        if (::SHGetPathFromIDList(owner.get(), bi.pszDisplayName) == 0)
         {
             ::OleUninitialize();
             return std::string();
         }
-        ret = ra::Narrow(lpbi->pszDisplayName);
+        ret = ra::Narrow(bi.pszDisplayName);
     }
     ::OleUninitialize();
-    pDisplayName.reset();
     return ret;
 }
 

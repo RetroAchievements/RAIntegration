@@ -9,9 +9,9 @@ static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
 static _CONSTANT_VAR FONT_SIZE_TITLE = 32;
 static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 28;
 
-const StringModelProperty PopupMessageViewModel::TitleProperty("MessageBoxViewModel", "Title", L"");
-const StringModelProperty PopupMessageViewModel::DescriptionProperty("MessageBoxViewModel", "Description", L"");
-const StringModelProperty PopupMessageViewModel::DetailProperty("MessageBoxViewModel", "Detail", L"");
+const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageViewModel", "Title", L"");
+const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
+const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 
 void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 {

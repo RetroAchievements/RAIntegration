@@ -225,6 +225,9 @@
     <ClCompile Include="data\SessionTracker.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementRuntime.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -538,6 +541,9 @@
     </ClInclude>
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\AchievementRuntime.hh">
+      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="api\ResolveHash.hh">
       <Filter>API</Filter>

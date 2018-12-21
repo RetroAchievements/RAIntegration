@@ -28,7 +28,7 @@ public:
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
     /// </summary>
-    unsigned int GameId() const noexcept { return m_nGameId; }       
+    unsigned int GameId() const noexcept { return m_nGameId; }
 
     /// <summary>
     /// Gets the title of the currently loaded game.
@@ -44,7 +44,7 @@ public:
     /// Sets the game hash.
     /// </summary>
     void SetGameHash(const std::string& sGameHash) { m_sGameHash = sGameHash; }
-        
+
     /// <summary>
     /// Gets which achievements are active.
     /// </summary>
@@ -53,10 +53,10 @@ public:
 #ifdef RA_UTEST
         return AchievementSet::Type::Core;
 #else
-        return g_nActiveAchievementSet; 
+        return g_nActiveAchievementSet;
 #endif
     }
-    
+
     /// <summary>
     /// Determines if any achievements are currently active.
     /// </summary>
@@ -65,9 +65,25 @@ public:
 #ifdef RA_UTEST
         return false;
 #else
-        return g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0; 
+        return g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0;
 #endif
     }
+
+    /// <summary>
+    /// Finds the achievement associated to the specified unique identifier.
+    /// </summary>
+    /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>
+#ifdef RA_UTEST
+    virtual Achievement* FindAchievement(_UNUSED unsigned int nAchievementId) const noexcept
+    {
+        return nullptr;
+    }
+#else
+    Achievement* FindAchievement(unsigned int nAchievementId) const
+    {
+        return g_pActiveAchievements->Find(nAchievementId);
+    }
+#endif
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.

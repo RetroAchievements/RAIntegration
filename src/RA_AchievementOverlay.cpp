@@ -1,11 +1,11 @@
 #include "RA_AchievementOverlay.h"
 
-#include "RA_Interface.h"
 #include "RA_AchievementSet.h"
-#include "RA_httpthread.h"
-#include "RA_Resource.h"
 #include "RA_ImageFactory.h"
+#include "RA_Interface.h"
 #include "RA_PopupWindows.h"
+#include "RA_Resource.h"
+#include "RA_httpthread.h"
 
 #include "ra_math.h"
 
@@ -20,20 +20,17 @@
 
 namespace ra {
 
-inline constexpr std::array<LPCTSTR, 11> PAGE_TITLES
-{
-    _T(" Achievements "),
-    _T(" Friends "),
-    _T(" Messages "),
-    _T(" News "),
-    _T(" Leaderboards "),
-    _T(" Achievement Info "),
-    _T(" Achievement Compare "),
-    _T(" Friend Info "),
-    _T(" Friend Add "),
-    _T(" Leaderboard Examine "),
-    _T(" Message Viewer ")
-};
+inline constexpr std::array<LPCTSTR, 11> PAGE_TITLES{_T(" Achievements "),
+                                                     _T(" Friends "),
+                                                     _T(" Messages "),
+                                                     _T(" News "),
+                                                     _T(" Leaderboards "),
+                                                     _T(" Achievement Info "),
+                                                     _T(" Achievement Compare "),
+                                                     _T(" Friend Info "),
+                                                     _T(" Friend Add "),
+                                                     _T(" Leaderboard Examine "),
+                                                     _T(" Message Viewer ")};
 
 } // namespace ra
 
@@ -48,16 +45,16 @@ AchievementOverlay g_AchievementOverlay;
 AchievementExamine g_AchExamine;
 LeaderboardExamine g_LBExamine;
 
-_CONSTANT_VAR COL_TEXT_LOCKED     = RGB(137, 137, 137);
+_CONSTANT_VAR COL_TEXT_LOCKED = RGB(137, 137, 137);
 _CONSTANT_VAR COL_SELECTED_LOCKED = RGB(202, 202, 202);
-_CONSTANT_VAR COL_BAR             = RGB(0, 40, 0);
-_CONSTANT_VAR COL_BAR_BG          = RGB(0, 212, 0);
-_CONSTANT_VAR COL_USER_FRAME_BG   = RGB(32, 32, 32);
+_CONSTANT_VAR COL_BAR = RGB(0, 40, 0);
+_CONSTANT_VAR COL_BAR_BG = RGB(0, 212, 0);
+_CONSTANT_VAR COL_USER_FRAME_BG = RGB(32, 32, 32);
 _CONSTANT_VAR COL_SELECTED_BOX_BG = RGB(22, 22, 60);
-_CONSTANT_VAR COL_WARNING         = RGB(255, 0, 0);
-_CONSTANT_VAR COL_WARNING_BG      = RGB(80, 0, 0);
+_CONSTANT_VAR COL_WARNING = RGB(255, 0, 0);
+_CONSTANT_VAR COL_WARNING_BG = RGB(80, 0, 0);
 
-_CONSTANT_VAR OVERLAY_WIDTH  = 1024U;
+_CONSTANT_VAR OVERLAY_WIDTH = 1024U;
 _CONSTANT_VAR OVERLAY_HEIGHT = 1024U;
 
 void AchievementOverlay::SelectNextTopLevelPage(BOOL bPressedRight) noexcept
@@ -121,22 +118,22 @@ BOOL AchievementOverlay::GoBack() noexcept
     }
 }
 
-_Use_decl_annotations_
-BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOOL bFullScreen, BOOL bPaused)
+_Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOOL bFullScreen,
+                                                       BOOL bPaused)
 {
     auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
 
     const int nAchCount = (const int)(g_pActiveAchievements->NumAchievements());
     const int nNumFriends = (const int)(RAUsers::LocalUser().NumFriends());
     const int nNumLBs = (const int)(pLeaderboardManager.Count());
-    //const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
+    // const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
     const int nMsgCount = 0;
-    auto pnScrollOffset = GetActiveScrollOffset();	//	Dirty!
+    auto pnScrollOffset = GetActiveScrollOffset(); //	Dirty!
     auto pnSelectedItem = GetActiveSelectedItem();
 
     const ControllerInput& input = *pInput;
 
-    BOOL bCloseOverlay = FALSE;	//	False==close overlay
+    BOOL bCloseOverlay = FALSE; //	False==close overlay
 
     //	FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
@@ -168,11 +165,11 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
             if (bPaused)
             {
                 //	???
-                //SelectNextTopLevelPage( TRUE );
-// 				//	Still paused, just transition to another page!
-// 				m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
-// 				if( m_nCurrentPage == OP__MAX )
-// 					m_nCurrentPage = OP_ACHIEVEMENTS;
+                // SelectNextTopLevelPage( TRUE );
+                // 				//	Still paused, just transition to another page!
+                // 				m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
+                // 				if( m_nCurrentPage == OP__MAX )
+                // 					m_nCurrentPage = OP_ACHIEVEMENTS;
 
                 m_nTransitionState = TransitionState::In;
                 m_fTransitionTimer = PAGE_TRANSITION_IN;
@@ -291,7 +288,7 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 // 				//	Lim the selected item to a valid range
                 // 				while( nSelectedItem > nNumElements )
                 // 					nSelectedItem--;
-                // 
+                //
                 // 				if( nSelectedItem < nScrollOffset )
                 // 					nScrollOffset--;
                 // 				if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
@@ -319,15 +316,15 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 }
 
                 //	Move page to match selection
-                //if( (*pnScrollOffset) > (*pnSelectedItem) )
+                // if( (*pnScrollOffset) > (*pnSelectedItem) )
                 //	(*pnScrollOffset) = (*pnSelectedItem);
-                //else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
+                // else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
                 //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
             }
             break;
             case Page::Message_Viewer:
             {
-                //RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
+                // RAMessage Msg = RAUsers::LocalUser().GetMessage( m_nMessagesSelectedItem );
 
                 break;
             }
@@ -408,14 +405,14 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
                 }
 
                 //	Move page to match selection
-                //if( (*pnScrollOffset) > (*pnSelectedItem) )
+                // if( (*pnScrollOffset) > (*pnSelectedItem) )
                 //	(*pnScrollOffset) = (*pnSelectedItem);
-                //else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
+                // else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
                 //	(*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
 
                 break;
             default:
-                assert(0);	//	Unknown page!
+                assert(0); //	Unknown page!
                 break;
         }
 
@@ -437,8 +434,8 @@ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOO
     }
     else
     {
-        if (!input.m_bUpPressed && !input.m_bDownPressed && !input.m_bLeftPressed &&
-            !input.m_bRightPressed && !input.m_bConfirmPressed && !input.m_bCancelPressed)
+        if (!input.m_bUpPressed && !input.m_bDownPressed && !input.m_bLeftPressed && !input.m_bRightPressed &&
+            !input.m_bConfirmPressed && !input.m_bCancelPressed)
         {
             m_bInputLock = FALSE;
         }
@@ -461,8 +458,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
     const size_t nNumberOfAchievements = g_pActiveAchievements->NumAchievements();
 
-    const int nAchTopEdge = 160;//80;
-    const int nAchSpacing = 64 + 8;//52;
+    const int nAchTopEdge = 160;    // 80;
+    const int nAchSpacing = 64 + 8; // 52;
     const int nAchImageOffset = 28;
 
     const int* pnScrollOffset = GetActiveScrollOffset();
@@ -510,13 +507,13 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
             }
         }
 
-        sSubtitle = ra::StringPrintf("%u of %u won (%u/%u) - %dh%02dm",
-            nUserCompleted, nNumberOfAchievements, nUserPts, nMaxPts, nPlayTime / 3600, (nPlayTime / 60) % 60);
+        sSubtitle = ra::StringPrintf("%u of %u won (%u/%u) - %dh%02dm", nUserCompleted, nNumberOfAchievements, nUserPts,
+                                     nMaxPts, nPlayTime / 3600, (nPlayTime / 60) % 60);
     }
     else
     {
-        sSubtitle = ra::StringPrintf("%u achievements present - %dh%02dm",
-            nNumberOfAchievements, nPlayTime / 3600, (nPlayTime / 60) % 60);
+        sSubtitle = ra::StringPrintf("%u achievements present - %dh%02dm", nNumberOfAchievements, nPlayTime / 3600,
+                                     (nPlayTime / 60) % 60);
     }
 
     SelectFont(hDC, g_hFontDesc);
@@ -539,50 +536,47 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     const int nSelBoxWidth = nWidth - nAchSpacing - 24;
                     const int nSelBoxHeight = nAchSpacing - 8;
 
-                    RECT rcSelected ={ (nDX + nSelBoxXOffs),
-                                        (nAchTopEdge + (i * nAchSpacing)),
-                                        (nDX + nSelBoxXOffs + nSelBoxWidth),
-                                        (nAchTopEdge + (i * nAchSpacing)) + nSelBoxHeight };
+                    RECT rcSelected = {(nDX + nSelBoxXOffs), (nAchTopEdge + (i * nAchSpacing)),
+                                       (nDX + nSelBoxXOffs + nSelBoxWidth),
+                                       (nAchTopEdge + (i * nAchSpacing)) + nSelBoxHeight};
                     FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
                 }
 
-                DrawAchievement(hDC, &g_pActiveAchievements->GetAchievement(nAchIdx),
-                    nDX, (nAchTopEdge + (i*nAchSpacing)), bSelected, TRUE);
+                DrawAchievement(hDC, &g_pActiveAchievements->GetAchievement(nAchIdx), nDX,
+                                (nAchTopEdge + (i * nAchSpacing)), bSelected, TRUE);
             }
         }
 
         if (nNumberOfAchievements > static_cast<size_t>(nAchievementsToDraw - 1))
         {
             DrawBar(hDC,
-                nDX + 8,
-                nAchTopEdge,
-                12,
-                nAchSpacing*nAchievementsToDraw,
-                nNumberOfAchievements - (nAchievementsToDraw - 1),
-                (*pnScrollOffset));
+                    nDX + 8,
+                    nAchTopEdge,
+                    12,
+                    nAchSpacing * nAchievementsToDraw,
+                    nNumberOfAchievements - (nAchievementsToDraw - 1),
+                    (*pnScrollOffset));
         }
     }
 
     m_nNumAchievementsBeingRendered = nAchievementsToDraw;
 }
 
-void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const noexcept
-{
-}
+void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int, _UNUSED const RECT&) const noexcept {}
 
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
     const int* pnScrollOffset = GetActiveScrollOffset();
 
-    const unsigned int nFriendSpacing = 64 + 8;//80;
+    const unsigned int nFriendSpacing = 64 + 8; // 80;
     const unsigned int nFriendsToDraw = ((rcTarget.bottom - rcTarget.top) - 140) / nFriendSpacing;
 
-    const unsigned int nFriendLeftOffsetImage = 32;//16;
-    const unsigned int nFriendLeftOffsetText = 84;//64;
+    const unsigned int nFriendLeftOffsetImage = 32; // 16;
+    const unsigned int nFriendLeftOffsetText = 84;  // 64;
 
-    const unsigned int nFriendTopEdge = 120;//44;
+    const unsigned int nFriendTopEdge = 120; // 44;
     const unsigned int nFriendSubtitleYOffs = 24;
-    const unsigned int nFriendSpacingText = 36;//18;
+    const unsigned int nFriendSpacingText = 36; // 18;
 
     char buffer[256];
 
@@ -623,32 +617,32 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
             SelectObject(hDC, g_hFontTiny);
             sprintf_s(buffer, 256, " %s ", pFriend->Activity().c_str());
-            //RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
+            // RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
-                nXOffs + nFriendLeftOffsetText + 16,
-                nYOffs + nFriendSubtitleYOffs,
-                nDX + rcTarget.right - 40,
-                nYOffs + nFriendSubtitleYOffs + 46);
+                    nXOffs + nFriendLeftOffsetText + 16,
+                    nYOffs + nFriendSubtitleYOffs,
+                    nDX + rcTarget.right - 40,
+                    nYOffs + nFriendSubtitleYOffs + 46);
             DrawText(hDC, NativeStr(pFriend->Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
 
             //	Restore
             SelectObject(hDC, hOldObj);
 
-            //sprintf_s( buffer, 256, " %d Points ", Friend.Score() );
-            //TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSpacingText, buffer, strlen( buffer ) );
+            // sprintf_s( buffer, 256, " %d Points ", Friend.Score() );
+            // TextOut( hDC, nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSpacingText, buffer, strlen( buffer ) );
         }
     }
 
     if (nNumFriends > (nFriendsToDraw))
     {
         DrawBar(hDC,
-            nDX + 8,
-            nFriendTopEdge,
-            12,
-            nFriendSpacing*nFriendsToDraw,
-            nNumFriends - (nFriendsToDraw - 1),
-            (*pnScrollOffset));
+                nDX + 8,
+                nFriendTopEdge,
+                12,
+                nFriendSpacing * nFriendsToDraw,
+                nNumFriends - (nFriendsToDraw - 1),
+                (*pnScrollOffset));
     }
 
     m_nNumFriendsBeingRendered = nFriendsToDraw;
@@ -656,8 +650,6 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
 void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
 {
-    char buffer[256];
-
     const unsigned int nNumAchievements = g_pActiveAchievements->NumAchievements();
 
     const int nAchievementStartX = 0;
@@ -678,70 +670,54 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     const int nWonByPlayerNameX = 20;
     const int nWonByPlayerDateX = 220;
 
-    char bufTime[256];
-
     const Achievement* pAch = &g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem);
 
     const time_t tCreated = pAch->CreatedDate();
     const time_t tModified = pAch->ModifiedDate();
 
-    DrawAchievement(hDC,
-        pAch,
-        nDX + nAchievementStartX,
-        nAchievementStartY,
-        TRUE,
-        FALSE);
+    DrawAchievement(hDC, pAch, nDX + nAchievementStartX, nAchievementStartY, TRUE, FALSE);
 
     if (m_nAchievementsSelectedItem >= (int)nNumAchievements)
         return;
 
-    ctime_s(bufTime, 256, &tCreated);
-    bufTime[strlen(bufTime) - 1] = '\0';	//	Remove pesky newline
-    sprintf_s(buffer, 256, " Created: %s ", bufTime);
-    TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), strlen(buffer));
+    auto buffer = ra::StringPrintf(" Created: %s ", _TimeStampToString(tCreated));
+    TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
-    ctime_s(bufTime, 256, &tModified);
-    bufTime[strlen(bufTime) - 1] = '\0';	//	Remove pesky newline
-    sprintf_s(buffer, 256, " Modified: %s ", bufTime);
-    TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(), strlen(buffer));
+    buffer = ra::StringPrintf(" Modified: %s ", _TimeStampToString(tModified));
+    TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(),
+            gsl::narrow<int>(buffer.length()));
 
     if (g_AchExamine.HasData())
     {
-        sprintf_s(buffer, 256, " Won by %u of %u (%1.0f%%)",
-            g_AchExamine.TotalWinners(),
-            g_AchExamine.PossibleWinners(),
-            static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
-        TextOut(hDC, nDX + 20, nCoreDetailsY + (nCoreDetailsSpacing * 2), NativeStr(buffer).c_str(), strlen(buffer));
+        buffer = ra::StringPrintf(" Won by %u of %u (%1.0f%%)",
+                                  g_AchExamine.TotalWinners(),
+                                  g_AchExamine.PossibleWinners(),
+                                  ra::to_floating(g_AchExamine.TotalWinners() * 100) /
+                                      ra::to_floating(g_AchExamine.PossibleWinners()));
+        TextOut(hDC, nDX + 20, nCoreDetailsY + (nCoreDetailsSpacing * 2), NativeStr(buffer).c_str(),
+                gsl::narrow<int>(buffer.length()));
 
         if (g_AchExamine.NumRecentWinners() > 0)
         {
-            sprintf_s(buffer, 256, " Recent winners: ");
-            TextOut(hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, NativeStr(buffer).c_str(), strlen(buffer));
+            buffer = " Recent winners: ";
+            TextOut(hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, NativeStr(buffer).c_str(),
+                    gsl::narrow<int>(buffer.length()));
         }
 
-        auto i{ 0U };
+        gsl::index i{0};
         for (const auto& data : g_AchExamine)
         {
             {
-                std::string sUser{ " " };
-                sUser += data.User();
-                sUser += "      ";
-
-                //	Draw/Fetch user image? //TBD
-                TextOut(hDC,
-                    nDX + nWonByPlayerNameX,
-                    nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
-                    NativeStr(sUser).c_str(), ra::narrow_cast<int>(sUser.length()));
+                const auto sUser = ra::StringPrintf(" %s       ", data.User());
+                // Draw/Fetch user image? //TBD
+                TextOut(hDC, nDX + nWonByPlayerNameX, nWonByPlayerYOffs + (gsl::narrow<int>(i) * nWonByPlayerYSpacing),
+                        NativeStr(sUser).c_str(), gsl::narrow<int>(sUser.length()));
             }
 
-            std::string sWonAt{ "       " };
-            sWonAt += data.WonAt();
-            sWonAt += " ";
+            const auto sWonAt = ra::StringPrintf("       %s ", data.WonAt());
 
-            TextOut(hDC,
-                nDX + nWonByPlayerDateX,
-                nWonByPlayerYOffs + (ra::to_signed(i)*nWonByPlayerYSpacing),
-                NativeStr(sWonAt).c_str(), ra::narrow_cast<int>(sWonAt.length()));
+            TextOut(hDC, nDX + nWonByPlayerDateX, nWonByPlayerYOffs + (gsl::narrow<int>(i) * nWonByPlayerYSpacing),
+                    NativeStr(sWonAt).c_str(), gsl::narrow<int>(sWonAt.length()));
             i++;
         }
     }
@@ -753,76 +729,80 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
             nDots = 0;
 
         const int nDotCount = nDots / 25;
-        sprintf_s(buffer, 256, " Loading.%c%c%c ",
-            nDotCount >= 1 ? '.' : ' ',
-            nDotCount >= 2 ? '.' : ' ',
-            nDotCount >= 3 ? '.' : ' ');
-
-        TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
+        // we need to reallocate buffer or heap corruption will happen
+        buffer = std::string(13, char());
+        // TODO: ra::StringPrintf needs a handler for "%c"
+        // Size is 13 but capacity is larger
+        Ensures(sprintf_s(buffer.data(), buffer.capacity(), " Loading.%c%c%c ", nDotCount >= 1 ? '.' : ' ',
+                          nDotCount >= 2 ? '.' : ' ', nDotCount >= 3 ? '.' : ' ') >= 0);
+        TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(),
+                gsl::narrow<int>(buffer.length()));
     }
 }
 
 void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
-    unsigned int nYOffset = 90;
+    auto nYOffset = 90;
 
-    const unsigned int nHeaderGap = 4;
-    const unsigned int nArticleGap = 10;
+    constexpr auto nHeaderGap = 4;
+    constexpr auto nArticleGap = 10;
 
-    const unsigned int nBorder = 32;
+    constexpr auto nBorder = 32;
 
-    const unsigned int nLeftAlign = nDX + nBorder;
-    const unsigned int nRightAlign = nDX + (rcTarget.right - nBorder);
+    const auto nLeftAlign = nDX + nBorder;
+    const auto nRightAlign = nDX + (rcTarget.right - nBorder);
 
-    const unsigned int nArticleIndent = 20;
+    constexpr auto nArticleIndent = 20;
 
-    const int nWidth = rcTarget.right - rcTarget.left;
-    const int nHeight = rcTarget.bottom - rcTarget.top;
+    const auto nWidth = rcTarget.right - rcTarget.left;
+    const auto nHeight = rcTarget.bottom - rcTarget.top;
 
     HGDIOBJ hOldObject = SelectObject(hDC, g_hFontDesc2);
 
-    for (int i = m_nNewsSelectedItem; i < static_cast<int>(m_LatestNews.size()); ++i)
+    for (auto it = std::next(m_LatestNews.begin(), m_nNewsSelectedItem); it != m_LatestNews.end(); ++it)
     {
-        const char* sTitle = m_LatestNews[i].m_sTitle.c_str();
-        const char* sPayload = m_LatestNews[i].m_sPayload.c_str();
+        gsl::cstring_span<> sTitle{it->m_sTitle};
+        gsl::cstring_span<> sPayload{it->m_sPayload};
 
         SelectObject(hDC, g_hFontDesc2);
 
-        //	Setup initial variables for the rect
-        RECT rcNews;
-        SetRect(&rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset);
+        //vSetup initial variables for the rect
+        RECT rcNews{nLeftAlign, nYOffset, nRightAlign, nYOffset};
 
-        //	Calculate height of rect, fetch bottom for next rect:
-        DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+        // Calculate height of rect, fetch bottom for next rect:
+        DrawText(hDC, NativeStr(gsl::to_string(sTitle)).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw title:
-        DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+        // Draw title:
+        DrawText(hDC, NativeStr(gsl::to_string(sTitle)).c_str(), sTitle.length(), &rcNews,
+                 DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         //	Offset header
         nYOffset += nHeaderGap;
 
         SelectObject(hDC, g_hFontTiny);
 
-        //	Setup initial variables for the rect
-        SetRect(&rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset);
-        //	Calculate height of rect, fetch and inset bottom:
-        DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+        // Setup initial variables for the rect
+        rcNews = {nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset};
+        // Calculate height of rect, fetch and inset bottom:
+        DrawText(hDC, NativeStr(gsl::to_string(sPayload)).c_str(), sPayload.length(), &rcNews,
+                 DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw payload:
-        DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+        // Draw payload:
+        DrawText(hDC, NativeStr(gsl::to_string(sPayload)).c_str(), sPayload.length(), &rcNews,
+                 DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         nYOffset += nArticleGap;
     }
 
-    //	Restore object:
+    // Restore object:
     SelectObject(hDC, hOldObject);
 }
 
@@ -882,10 +862,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
 
-                RECT rcSelected ={ nDX + nSelBoxXOffs,
-                                    static_cast<LONG>(nYOffset),
-                                    nDX + nSelBoxXOffs + nSelBoxWidth,
-                                    static_cast<LONG>(nYOffset + nSelBoxHeight) };
+                RECT rcSelected = {nDX + nSelBoxXOffs, static_cast<LONG>(nYOffset), nDX + nSelBoxXOffs + nSelBoxWidth,
+                                   static_cast<LONG>(nYOffset + nSelBoxHeight)};
 
                 FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
             }
@@ -934,12 +912,12 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
         if (nNumLBs > (nNumLBsToDraw - 1))
         {
             DrawBar(hDC,
-                nDX + 8,
-                nYOffsetTop,
-                12,
-                nLBSpacing * m_nNumLeaderboardsBeingRendered,
-                nNumLBs - (nNumLBsToDraw - 1),
-                (*pnScrollOffset));
+                    nDX + 8,
+                    nYOffsetTop,
+                    12,
+                    nLBSpacing * m_nNumLeaderboardsBeingRendered,
+                    nNumLBs - (nNumLBsToDraw - 1),
+                    (*pnScrollOffset));
         }
     }
 
@@ -1003,20 +981,14 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
                 sprintf_s(sScoreText, 256, " %s ", sScoreFormatted.c_str());
 
                 //	Draw/Fetch user image? //TBD
-                TextOut(hDC,
-                    nDX + nWonByPlayerRankX,
-                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                    NativeStr(sRankText).c_str(), strlen(sRankText));
+                TextOut(hDC, nDX + nWonByPlayerRankX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                        NativeStr(sRankText).c_str(), strlen(sRankText));
 
-                TextOut(hDC,
-                    nDX + nWonByPlayerUserX,
-                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                    NativeStr(sNameText).c_str(), strlen(sNameText));
+                TextOut(hDC, nDX + nWonByPlayerUserX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                        NativeStr(sNameText).c_str(), strlen(sNameText));
 
-                TextOut(hDC,
-                    nDX + nWonByPlayerScoreX,
-                    nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                    NativeStr(sScoreText).c_str(), strlen(sScoreText));
+                TextOut(hDC, nDX + nWonByPlayerScoreX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
+                        NativeStr(sScoreText).c_str(), strlen(sScoreText));
             }
         }
         else
@@ -1030,18 +1002,15 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
             nDotCount = nDots / 25;
 
             char buffer[256];
-            sprintf_s(buffer, 256, " Loading.%c%c%c ",
-                nDotCount > 1 ? '.' : ' ',
-                nDotCount > 2 ? '.' : ' ',
-                nDotCount > 3 ? '.' : ' ');
+            sprintf_s(buffer, 256, " Loading.%c%c%c ", nDotCount > 1 ? '.' : ' ', nDotCount > 2 ? '.' : ' ',
+                      nDotCount > 3 ? '.' : ' ');
 
             TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
         }
     }
 }
 
-_Use_decl_annotations_
-void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
+_Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 {
     //	Rendering:
     if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
@@ -1050,43 +1019,45 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     if (m_nTransitionState == TransitionState::Off)
         return;
 
-    const RECT rcTarget{ *rcDest };
-    const auto lHeight{ rcTarget.bottom - rcTarget.top };
+    const RECT rcTarget{*rcDest};
+    const auto lHeight{rcTarget.bottom - rcTarget.top};
     {
-        _CONSTANT_LOC nFontSize1{ 32 };
-        _CONSTANT_LOC nFontSize2{ 26 };
-        _CONSTANT_LOC nFontSize3{ 22 };
-        _CONSTANT_LOC nFontSize4{ 16 };
-        _CONSTANT_LOC FONT_TO_USE{ _T("Tahoma") };
+        _CONSTANT_LOC nFontSize1{32};
+        _CONSTANT_LOC nFontSize2{26};
+        _CONSTANT_LOC nFontSize3{22};
+        _CONSTANT_LOC nFontSize4{16};
+        _CONSTANT_LOC FONT_TO_USE{_T("Tahoma")};
 
-        g_hFontTitle = CreateFont(nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
+        g_hFontTitle =
+            CreateFont(nFontSize1, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                       CLIP_CHARACTER_PRECIS, /*NON*/ ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-        g_hFontDesc = CreateFont(nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
+        g_hFontDesc =
+            CreateFont(nFontSize2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                       CLIP_CHARACTER_PRECIS, /*NON*/ ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-        g_hFontDesc2 = CreateFont(nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
+        g_hFontDesc2 =
+            CreateFont(nFontSize3, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                       CLIP_CHARACTER_PRECIS, /*NON*/ ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
 
-        g_hFontTiny = CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-            CLIP_CHARACTER_PRECIS, /*NON*/ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
+        g_hFontTiny =
+            CreateFont(nFontSize4, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                       CLIP_CHARACTER_PRECIS, /*NON*/ ANTIALIASED_QUALITY, VARIABLE_PITCH, FONT_TO_USE);
     }
 
-    const auto fPctOffScreen{ (m_nTransitionState == TransitionState::In) ?
-        (m_fTransitionTimer / PAGE_TRANSITION_IN) :
-        (m_fTransitionTimer / PAGE_TRANSITION_OUT)
-    };
+    const auto fPctOffScreen{(m_nTransitionState == TransitionState::In) ? (m_fTransitionTimer / PAGE_TRANSITION_IN)
+                                                                         : (m_fTransitionTimer / PAGE_TRANSITION_OUT)};
 
-    const auto nDX{ ra::ftol(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left))) };
-    const auto nDY{ rcTarget.top };
+    const auto nDX{ra::ftol(0 - (fPctOffScreen * (rcTarget.right - rcTarget.left)))};
+    const auto nDY{rcTarget.top};
 
-    const auto  nRightPx{ ra::ftol(rcTarget.right - (fPctOffScreen * rcTarget.right)) };
+    const auto nRightPx{ra::ftol(rcTarget.right - (fPctOffScreen * rcTarget.right))};
 
-    RECT rc{ nDX, nDY, nDX + rcTarget.right, rcTarget.bottom };
+    RECT rc{nDX, nDY, nDX + rcTarget.right, rcTarget.bottom};
 
     // create backbuffer
-    auto hDC{ ::CreateCompatibleDC(hRealDC) };
-    auto hBitmap{ ::CreateCompatibleBitmap(hRealDC, rc.right, lHeight) };
+    auto hDC{::CreateCompatibleDC(hRealDC)};
+    auto hBitmap{::CreateCompatibleBitmap(hRealDC, rc.right, lHeight)};
     SelectBitmap(hDC, hBitmap);
 
     //	Draw background:
@@ -1095,7 +1066,7 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
         HBITMAP hBackground = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hOverlayBackground);
         if (hBackground)
         {
-            RECT rcBGSize{ 0L, 0L, ra::to_signed(OVERLAY_WIDTH), ra::to_signed(OVERLAY_HEIGHT) };
+            RECT rcBGSize{0L, 0L, ra::to_signed(OVERLAY_WIDTH), ra::to_signed(OVERLAY_HEIGHT)};
             OffsetRect(&rcBGSize, -(ra::to_signed(OVERLAY_WIDTH) - rc.right), 0);
             DrawImageTiled(hDC, hBackground, rcBGSize, rc);
         }
@@ -1107,25 +1078,25 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
     ::SetTextColor(hDC, COL_TEXT);
     SelectFont(hDC, g_hFontDesc);
 
-    _CONSTANT_LOC nBorder{ 8 };
+    _CONSTANT_LOC nBorder{8};
     {
-        _CONSTANT_LOC uMinUserFrameWidth{ 300U };
-        _CONSTANT_LOC uMinUserFrameHeight{ 64U + 4U + 4U };
+        _CONSTANT_LOC uMinUserFrameWidth{300U};
+        _CONSTANT_LOC uMinUserFrameHeight{64U + 4U + 4U};
 
         //	Draw user info
         if (rcTarget.right > 360)
         {
             DrawUserFrame(hDC,
-                (nDX + (rcTarget.right - ra::to_signed(uMinUserFrameWidth))) - 4,
-                4 + nBorder,
-                ra::to_signed(uMinUserFrameWidth),
-                ra::to_signed(uMinUserFrameHeight));
+                          (nDX + (rcTarget.right - ra::to_signed(uMinUserFrameWidth))) - 4,
+                          4 + nBorder,
+                          ra::to_signed(uMinUserFrameWidth),
+                          ra::to_signed(uMinUserFrameHeight));
         }
     }
 
     //	Draw the bulk of the page:
     {
-        const auto nCurrentPage{ m_Pages.at(m_nPageStackPointer) };
+        const auto nCurrentPage{m_Pages.at(m_nPageStackPointer)};
         switch (nCurrentPage)
         {
             case Page::Achievements:
@@ -1160,14 +1131,13 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
                 //	Not implemented!
                 ASSERT(!"Attempting to render an undefined overlay page!");
         }
-    
-    //	Title:
-    SelectFont(hDC, g_hFontTitle);
-    SetTextColor(hDC, COL_TEXT);
 
-    const auto& sTitle{ ra::PAGE_TITLES.at(ra::etoi(nCurrentPage)) };
-    TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tcslen_s(sTitle)));
+        //	Title:
+        SelectFont(hDC, g_hFontTitle);
+        SetTextColor(hDC, COL_TEXT);
 
+        const auto& sTitle{ra::PAGE_TITLES.at(ra::etoi(nCurrentPage))};
+        TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tcslen_s(sTitle)));
     }
 
     //	Render controls:
@@ -1184,36 +1154,37 @@ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 
         //	Draw control text:
         {
-            ra::tstring stNext{ _T(" ->:") };
+            ra::tstring stNext{_T(" ->:")};
             stNext += _T("Next ");
             TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::narrow_cast<int>(stNext.length()));
         }
         {
-            ra::tstring stPrev{ _T(" <-:") };
+            ra::tstring stPrev{_T(" <-:")};
             stPrev += _T("Prev ");
             TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::narrow_cast<int>(stPrev.length()));
         }
 
-        _CONSTANT_LOC ctBackChar{ _T('B') };
-        auto ctSelectChar{ _T('A') };
+        _CONSTANT_LOC ctBackChar{_T('B')};
+        auto ctSelectChar{_T('A')};
 
         //	Genesis wouldn't use 'A' for select
         if (g_EmulatorID == RA_Gens)
             ctSelectChar = _T('C');
 
         {
-            ra::tstring stBack{ _T(" ") };
+            ra::tstring stBack{_T(" ")};
             stBack += ctBackChar;
             stBack += _T(":");
             stBack += _T("Back ");
             TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::narrow_cast<int>(stBack.length()));
         }
         {
-            ra::tstring stSelect{ _T(" ") };
+            ra::tstring stSelect{_T(" ")};
             stSelect += ctSelectChar;
             stSelect += _T(":");
             stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::narrow_cast<int>(stSelect.length()));
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(),
+                    ra::narrow_cast<int>(stSelect.length()));
         }
     }
 
@@ -1263,7 +1234,8 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
     DeleteObject(hBarBack);
 }
 
-void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int nX, int nY, BOOL bSelected, BOOL bCanLock) const
+void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int nX, int nY, BOOL bSelected,
+                                         BOOL bCanLock) const
 {
     const int nAchImageOffset = 28;
     const int nAchLeftOffset1 = 28 + 64 + 6;
@@ -1312,8 +1284,7 @@ void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int n
     TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
 }
 
-_Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW,
-                                                              int nH) const
+_Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW, int nH) const
 {
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
 
@@ -1389,7 +1360,7 @@ int* AchievementOverlay::GetActiveSelectedItem() const noexcept
     switch (m_Pages.at(m_nPageStackPointer))
     {
         case Page::Achievements:
-            return &m_nAchievementsSelectedItem;	//	?
+            return &m_nAchievementsSelectedItem; //	?
         case Page::Friends:
             return &m_nFriendsSelectedItem;
         case Page::Messages:
@@ -1427,21 +1398,20 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
     auto sNewsFile{g_sHomeDir};
     sNewsFile += RA_NEWS_FILENAME;
 
-    std::ifstream ifile{ sNewsFile };
+    std::ifstream ifile{sNewsFile};
     if (!ifile.is_open())
         return;
 
     rapidjson::Document doc;
-    rapidjson::IStreamWrapper isw{ ifile };
+    rapidjson::IStreamWrapper isw{ifile};
     doc.ParseStream(isw);
 
     if (doc.HasMember("Success") && doc["Success"].GetBool())
     {
-        const auto& News{ doc["News"] };
+        const auto& News{doc["News"]};
         for (const auto& NextNewsArticle : News.GetArray())
         {
-            NewsItem nNewsItem
-            {
+            NewsItem nNewsItem{
                 NextNewsArticle["ID"].GetUint(),
                 NextNewsArticle["Title"].GetString(),
                 NextNewsArticle["Payload"].GetString(),
@@ -1508,7 +1478,7 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
         args['a'] = std::to_string(m_pSelectedAchievement->ID());
-        args['f'] = true;	//	Friends only?
+        args['f'] = true; //	Friends only?
         RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
     }
 }
@@ -1516,22 +1486,22 @@ void AchievementExamine::Initialize(const Achievement* pAch)
 void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
 {
     ASSERT(doc["Success"].GetBool());
-    const auto nOffset{ doc["Offset"].GetUint() };
-    const auto nCount{ doc["Count"].GetUint() };
-    const auto nFriendsOnly{ doc["FriendsOnly"].GetUint() };
-    const auto nAchievementID{ doc["AchievementID"].GetUint() };
-    const auto& ResponseData{ doc["Response"] };
+    const auto nOffset{doc["Offset"].GetUint()};
+    const auto nCount{doc["Count"].GetUint()};
+    const auto nFriendsOnly{doc["FriendsOnly"].GetUint()};
+    const auto nAchievementID{doc["AchievementID"].GetUint()};
+    const auto& ResponseData{doc["Response"]};
 
-    const auto nGameID{ ResponseData["GameID"].GetUint() };
+    const auto nGameID{ResponseData["GameID"].GetUint()};
 
-    m_nTotalWinners    = ResponseData["NumEarned"].GetUint();
+    m_nTotalWinners = ResponseData["NumEarned"].GetUint();
     m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
 
-    const auto& RecentWinnerData{ ResponseData["RecentWinner"] };
+    const auto& RecentWinnerData{ResponseData["RecentWinner"]};
     ASSERT(RecentWinnerData.IsArray());
     for (auto& NextWinner : RecentWinnerData.GetArray())
     {
-        const auto nDateAwarded{ static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint())) };
+        const auto nDateAwarded{static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint()))};
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
         RecentWinners.emplace_back(oss.str(), _TimeStampToString(nDateAwarded));
@@ -1553,7 +1523,7 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 
     m_nLBID = nLBIDIn;
 
-    const unsigned int nOffset = 0;		//	TBD
+    const unsigned int nOffset = 0; //	TBD
     const unsigned int nCount = 10;
 
     PostArgs args;
@@ -1564,30 +1534,30 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
     RAWeb::CreateThreadedHTTPRequest(RequestLeaderboardInfo, args);
 }
 
-//static 
+// static
 void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 {
     ASSERT(doc.HasMember("LeaderboardData"));
-    const auto& LBData{ doc["LeaderboardData"] };
+    const auto& LBData{doc["LeaderboardData"]};
 
-    const auto nLBID{ LBData["LBID"].GetUint() };
-    const auto nGameID{ LBData["GameID"].GetUint() };
-    const auto sConsoleID{ LBData["ConsoleID"].GetUint() };
-    const auto nLowerIsBetter{ LBData["LowerIsBetter"].GetUint() };
+    const auto nLBID{LBData["LBID"].GetUint()};
+    const auto nGameID{LBData["GameID"].GetUint()};
+    const auto sConsoleID{LBData["ConsoleID"].GetUint()};
+    const auto nLowerIsBetter{LBData["LowerIsBetter"].GetUint()};
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
     if (!pLB)
         return;
 
-    const auto& Entries{ LBData["Entries"] };
+    const auto& Entries{LBData["Entries"]};
     ASSERT(Entries.IsArray());
     for (auto& NextLBData : Entries.GetArray())
     {
-        const auto nRank{ NextLBData["Rank"].GetUint() };
-        const std::string& sUser{ NextLBData["User"].GetString() };
-        const auto nScore{ NextLBData["Score"].GetInt() };
-        const auto nDate{ NextLBData["DateSubmitted"].GetUint() };
+        const auto nRank{NextLBData["Rank"].GetUint()};
+        const std::string& sUser{NextLBData["User"].GetString()};
+        const auto nScore{NextLBData["Score"].GetInt()};
+        const auto nDate{NextLBData["DateSubmitted"].GetUint()};
 
         RA_LOG("LB Entry: %u: %s earned %d at %u\n", nRank, sUser.c_str(), nScore, nDate);
         pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, static_cast<time_t>(ra::to_signed(nDate)));
@@ -1597,19 +1567,11 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 }
 
 //	Stubs for non-class based, indirect calling of these functions.
-_Use_decl_annotations_
-API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
+_Use_decl_annotations_ API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
 {
     return g_AchievementOverlay.Update(pInput, fDTime, Full_Screen, Paused);
 }
 
-_Use_decl_annotations_
-API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
-{
-    g_AchievementOverlay.Render(hDC, rcSize);
-}
+_Use_decl_annotations_ API void _RA_RenderOverlay(HDC hDC, RECT* rcSize) { g_AchievementOverlay.Render(hDC, rcSize); }
 
-API bool _RA_IsOverlayFullyVisible()
-{
-    return g_AchievementOverlay.IsFullyVisible();
-}
+API bool _RA_IsOverlayFullyVisible() { return g_AchievementOverlay.IsFullyVisible(); }

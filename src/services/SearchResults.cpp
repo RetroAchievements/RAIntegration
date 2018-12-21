@@ -423,13 +423,13 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
     {
         if (m_nSize == MemSize::Nibble_Lower)
         {
-            result.nAddress = (nIndex >> 1) + m_vBlocks[0].GetAddress();
+            result.nAddress = (nIndex >> 1) + m_vBlocks.front().GetAddress();
             if (nIndex & 1)
                 result.nSize = MemSize::Nibble_Upper;
         }
         else
         {
-            result.nAddress = nIndex + m_vBlocks[0].GetAddress();
+            result.nAddress = nIndex + m_vBlocks.front().GetAddress();
         }
 
         // in unfiltered mode, blocks are padded so we don't have to cross blocks to read multi-byte values
@@ -440,7 +440,7 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
         if (nIndex >= m_vMatchingAddresses.size())
             return false;
 
-        result.nAddress = m_vMatchingAddresses[nIndex];
+        result.nAddress = m_vMatchingAddresses.at(nIndex);
 
         if (m_nSize == MemSize::Nibble_Lower)
         {
@@ -453,13 +453,13 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
 
     size_t nBlockIndex = 0;
 
-    MemBlock* block = &m_vBlocks[nBlockIndex];
+    MemBlock* block = &m_vBlocks.at(nBlockIndex);
     while (result.nAddress >= block->GetAddress() + block->GetSize() - nPadding)
     {
         if (++nBlockIndex == m_vBlocks.size())
             return false;
 
-        block = &m_vBlocks[nBlockIndex];
+        block = &m_vBlocks.at(nBlockIndex);
     }
 
     result.nValue = GetValue(block->GetBytes(), result.nAddress - block->GetAddress(), result.nSize);

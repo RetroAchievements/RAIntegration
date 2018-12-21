@@ -35,7 +35,7 @@ public:
     void LoadAchievement(Achievement* pCheevo, _UNUSED BOOL);
 
     inline void SetICEControl(HWND hIce) noexcept { m_hICEControl = hIce; }
-    inline char* LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept;
+    inline constexpr char* LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept;
 
     HWND GetICEControl() const noexcept { return m_hICEControl; }
 

@@ -1,7 +1,10 @@
+#ifndef SERVERBASE_HH
+#define SERVERBASE_HH
 #pragma once
 
 #include "api/IServer.hh"
 
+#include "RA_StringUtils.h"
 #include "ra_fwd.h"
 
 #include <string>
@@ -24,7 +27,8 @@ public:
         return UnsupportedApi<Logout::Response>(Logout::Name());
     }
 
-    GSL_SUPPRESS(f.6) StartSession::Response StartSession(_UNUSED const StartSession::Request& /*request*/) noexcept override
+    GSL_SUPPRESS(f.6)
+    StartSession::Response StartSession(_UNUSED const StartSession::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<StartSession::Response>(StartSession::Name());
     }
@@ -36,18 +40,20 @@ public:
 
 protected:
     template<typename TResponse>
-    GSL_SUPPRESS(f.6) 
+    GSL_SUPPRESS(f.6)
     inline typename TResponse UnsupportedApi(const char* const restrict apiName) const
     {
         static_assert(std::is_base_of<ApiResponseBase, TResponse>::value, "TResponse must derive from ApiResponseBase");
 
         TResponse response;
-        response.Result       = ApiResult::Unsupported;
+        response.Result = ApiResult::Unsupported;
         response.ErrorMessage = ra::StringPrintf("%s is not supported by %s.", apiName, Name());
-        return std::move(response);
+        return response;
     }
 };
 
 } // namespace impl
 } // namespace api
 } // namespace ra
+
+#endif /* !SERVERBASE_HH */

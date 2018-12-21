@@ -473,13 +473,13 @@ void AchievementSet::SaveProgress(const char* sSaveStateFilename)
         return;
     }
 
-    for (size_t i = 0; i < NumAchievements(); ++i)
+
+    for (const auto& ach : m_Achievements)
     {
-        const Achievement* pAch = &m_Achievements[i];
-        if (pAch->Active())
+        if (ach.Active())
         {
-            std::string sProgress = pAch->CreateStateString(RAUsers::LocalUser().Username());
-            fwrite(sProgress.data(), sizeof(char), sProgress.length(), pf);
+            const auto sProgress{ach.CreateStateString(RAUsers::LocalUser().Username())};
+            std::fwrite(sProgress.c_str(), sizeof(char), sProgress.length(), pf);
         }
     }
 
@@ -526,8 +526,8 @@ void AchievementSet::LoadProgress(const char* sLoadStateFilename)
 
 Achievement& AchievementSet::Clone(unsigned int nIter)
 {
-    Achievement& newAch = AddAchievement();		//	Create a brand new achievement
-    newAch.Set(m_Achievements[nIter]);		//	Copy in all values from the clone src
+    Achievement& newAch = AddAchievement(); // Create a brand new achievement
+    newAch.Set(m_Achievements.at(nIter));      // Copy in all values from the clone src
     newAch.SetID(0);
     newAch.SetModified(TRUE);
     newAch.SetActive(FALSE);
@@ -537,24 +537,24 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
 
 BOOL AchievementSet::Unlock(ra::AchievementID nAchID)
 {
-    for (size_t i = 0; i < NumAchievements(); ++i)
+    for (auto& ach : m_Achievements)
     {
-        if (m_Achievements[i].ID() == nAchID)
+        if (ach.ID() == nAchID)
         {
-            m_Achievements[i].SetActive(FALSE);
-            return TRUE;	//	Update Dlg? //TBD
+            ach.SetActive(FALSE);
+            return TRUE; // Update Dlg? //TBD
         }
     }
 
-    RA_LOG("Attempted to unlock achievement %u but failed!\n", nAchID);
+    RA_LOG("Attempted to unlock achievement %zu but failed!\n", nAchID);
     return FALSE;//??
 }
 
-BOOL AchievementSet::HasUnsavedChanges()
+BOOL AchievementSet::HasUnsavedChanges() const
 {
-    for (size_t i = 0; i < NumAchievements(); ++i)
+    for (const auto& ach : m_Achievements)
     {
-        if (m_Achievements[i].Modified())
+        if (ach.Modified())
             return TRUE;
     }
 

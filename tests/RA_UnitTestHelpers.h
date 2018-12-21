@@ -37,7 +37,7 @@ template<> std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t
 
 template<> std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
-    return ra::Widen(COMPARISONTYPE_STR[(int)t]);
+    return ra::Widen(COMPARISONTYPE_STR.at(ra::etoi(t)));
 }
 
 template<> std::wstring ToString<Condition::Type>(const Condition::Type& t)

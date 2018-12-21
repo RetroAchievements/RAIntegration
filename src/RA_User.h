@@ -55,7 +55,7 @@ public:
     RAUser* AddFriend(const std::string& sFriend, unsigned int nScore);
     RAUser* FindFriend(const std::string& sName);
 
-    RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends[nOffs] : nullptr; }
+    RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends.at(nOffs) : nullptr; }
     const size_t NumFriends() const noexcept { return m_aFriends.size(); }
 
     const std::string& Token() const

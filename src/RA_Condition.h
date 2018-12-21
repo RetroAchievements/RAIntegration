@@ -21,23 +21,9 @@ enum class MemSize : std::size_t
     ThirtyTwoBit
 };
 
-inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR
-{
-    _T("Bit0"),
-    _T("Bit1"),
-    _T("Bit2"),
-    _T("Bit3"),
-    _T("Bit4"),
-    _T("Bit5"),
-    _T("Bit6"),
-    _T("Bit7"),
-    _T("Lower4"),
-    _T("Upper4"),
-    _T("8-bit"),
-    _T("16-bit"),
-    _T("32-bit")
-};
-
+inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR{
+    _T("Bit0"), _T("Bit1"),   _T("Bit2"),   _T("Bit3"),  _T("Bit4"),   _T("Bit5"),  _T("Bit6"),
+    _T("Bit7"), _T("Lower4"), _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("32-bit")};
 
 enum class ComparisonType : std::size_t
 {
@@ -48,15 +34,7 @@ enum class ComparisonType : std::size_t
     GreaterThanOrEqual,
     NotEqualTo
 };
-inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR
-{
-    _T("="),
-    _T("<"),
-    _T("<="),
-    _T(">"),
-    _T(">="),
-    _T("!=")
-};
+inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR{_T("="), _T("<"), _T("<="), _T(">"), _T(">="), _T("!=")};
 
 class CompVariable
 {
@@ -64,27 +42,19 @@ public:
     enum class Type : std::size_t
     {
         Address,         // compare to the value of a live address in RAM
-        ValueComparison, // a number. assume 32 bit 
+        ValueComparison, // a number. assume 32 bit
         DeltaMem,        // the value last known at this address.
         DynamicVariable  // a custom user-set variable
     };
 
-    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR
-    {
-        _T("Memory"),
-        _T("Value"),
-        _T("Delta"),
-        _T("DynVar")
-    };
+    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR{_T("Memory"), _T("Value"), _T("Delta"), _T("DynVar")};
 
 public:
-    _CONSTANT_FN Set(_In_ MemSize nSize,
-                     _In_ CompVariable::Type nType,
-                     _In_ unsigned int nInitialValue) noexcept
+    _CONSTANT_FN Set(_In_ MemSize nSize, _In_ CompVariable::Type nType, _In_ unsigned int nInitialValue) noexcept
     {
         m_nVarSize = nSize;
         m_nVarType = nType;
-        m_nVal     = nInitialValue;
+        m_nVal = nInitialValue;
     }
 
     void SerializeAppend(_Out_ std::string& buffer) const;
@@ -117,21 +87,14 @@ public:
         AddHits
     };
 
-    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR
-    {
-        _T(""),
-        _T("Pause If"),
-        _T("Reset If"),
-        _T("Add Source"),
-        _T("Sub Source"),
-        _T("Add Hits")
-    };
+    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR{_T(""),           _T("Pause If"),   _T("Reset If"),
+                                                            _T("Add Source"), _T("Sub Source"), _T("Add Hits")};
 
     void SerializeAppend(std::string& buffer) const;
 
     _NODISCARD _CONSTANT_FN& CompSource() noexcept { return m_nCompSource; }
     _NODISCARD _CONSTANT_FN& CompSource() const noexcept { return m_nCompSource; }
-    
+
     _NODISCARD _CONSTANT_FN& CompTarget() noexcept { return m_nCompTarget; }
     _NODISCARD _CONSTANT_FN& CompTarget() const noexcept { return m_nCompTarget; }
 
@@ -141,21 +104,21 @@ public:
     _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
     _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
-    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return(m_nConditionType == Type::ResetIf); }
-    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return(m_nConditionType == Type::PauseIf); }
-    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return(m_nConditionType == Type::AddSource); }
-    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return(m_nConditionType == Type::SubSource); }
-    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return(m_nConditionType == Type::AddHits); }
+    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return (m_nConditionType == Type::ResetIf); }
+    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return (m_nConditionType == Type::PauseIf); }
+    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return (m_nConditionType == Type::AddSource); }
+    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return (m_nConditionType == Type::SubSource); }
+    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return (m_nConditionType == Type::AddHits); }
 
     _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
     _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }
 
 private:
-    Type           m_nConditionType = Type::Standard;
-    CompVariable   m_nCompSource;
-    ComparisonType m_nCompareType   = ComparisonType::Equals;
-    CompVariable   m_nCompTarget;
-    unsigned int   m_nRequiredHits  = 0U;
+    Type m_nConditionType = Type::Standard;
+    CompVariable m_nCompSource;
+    ComparisonType m_nCompareType = ComparisonType::Equals;
+    CompVariable m_nCompTarget;
+    unsigned int m_nRequiredHits = 0U;
 };
 
 class ConditionGroup
@@ -163,13 +126,17 @@ class ConditionGroup
 public:
     void SerializeAppend(std::string& buffer) const;
 
-    size_t Count() const noexcept { return m_Conditions.size(); }
-
-    void Add(const Condition& newCond) { m_Conditions.push_back(newCond); }
-    void Insert(size_t i, const Condition& newCond) { m_Conditions.insert(m_Conditions.begin() + i, newCond); }
-    Condition& GetAt(size_t i) { return m_Conditions[i]; }
-    const Condition& GetAt(size_t i) const { return m_Conditions[i]; }
-    void Clear() noexcept { m_Conditions.clear(); }
+    _NODISCARD auto Count() const noexcept { return m_Conditions.size(); }
+    _NODISCARD auto Empty() const noexcept { return m_Conditions.empty(); }
+    auto Add(const Condition& newCond) { m_Conditions.push_back(newCond); }
+    auto Add(Condition&& newCond) { m_Conditions.push_back(std::move(newCond)); }
+    auto Insert(size_t offs, const Condition& newCond)
+    {
+        m_Conditions.insert(std::next(m_Conditions.begin(), offs), newCond);
+    }
+    _NODISCARD auto& GetAt(size_t nPos) { return m_Conditions.at(nPos); }
+    _NODISCARD auto& GetAt(size_t nPos) const { return m_Conditions.at(nPos); }
+    auto Clear() noexcept { m_Conditions.clear(); }
     void RemoveAt(size_t i);
 
 protected:
@@ -181,13 +148,14 @@ class ConditionSet
 public:
     void Serialize(std::string& buffer) const;
 
-    void Clear() noexcept { m_vConditionGroups.clear(); }
-    size_t GroupCount() const noexcept { return m_vConditionGroups.size(); }
+    auto Clear() noexcept { m_vConditionGroups.clear(); }
+    _NODISCARD auto GroupCount() const noexcept { return m_vConditionGroups.size(); }
+    _NODISCARD auto EmptyGroup() const noexcept { return m_vConditionGroups.empty(); }
     // TODO: Put in a type_trait for nothrow EmplaceConstructible to give a nothrow guarantee
     GSL_SUPPRESS(f.6) void AddGroup() noexcept { m_vConditionGroups.emplace_back(); }
-    void RemoveLastGroup() { m_vConditionGroups.pop_back(); }
-    ConditionGroup& GetGroup(size_t i) { return m_vConditionGroups[i]; }
-    const ConditionGroup& GetGroup(size_t i) const { return m_vConditionGroups[i]; }
+    auto RemoveLastGroup() { m_vConditionGroups.pop_back(); }
+    _NODISCARD auto& GetGroup(size_t nPos) { return m_vConditionGroups.at(nPos); }
+    _NODISCARD auto& GetGroup(size_t nPos) const { return m_vConditionGroups.at(nPos); }
 
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;

@@ -56,9 +56,9 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             lvDispinfo.item.iSubItem = nSelSubItemBM;
             lvDispinfo.item.pszText = nullptr;
 
-            wchar_t sEditText[256];
-            GetWindowTextW(hwnd, sEditText, 256);
-            g_MemBookmarkDialog.Bookmarks()[nSelItemBM]->SetDescription(sEditText);
+            std::wstring sEditText(256, wchar_t());
+            GetWindowTextW(hwnd, sEditText.data(), 256);
+            g_MemBookmarkDialog.Bookmarks().at(nSelItemBM)->SetDescription(sEditText);
 
             HWND hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
 
@@ -167,7 +167,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             {
                 case ODA_SELECT:
                 case ODA_DRAWENTIRE:
-
+                {
                     hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
                     ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
@@ -176,11 +176,11 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
 
                     // Draw Item Label - Column 0
-                    wchar_t buffer[512];
-                    if (m_vBookmarks[pdis->itemID]->Decimal())
-                        swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                    wchar_t buffer[512]{};
+                    if (m_vBookmarks.at(pdis->itemID)->Decimal())
+                        swprintf_s(buffer, 512, L"(D)%s", m_vBookmarks.at(pdis->itemID)->Description().c_str());
                     else
-                        swprintf_s(buffer, 512, L"%s", m_vBookmarks[pdis->itemID]->Description().c_str());
+                        swprintf_s(buffer, 512, L"%s", m_vBookmarks.at(pdis->itemID)->Description().c_str());
 
                     if (pdis->itemState & ODS_SELECTED)
                     {
@@ -194,7 +194,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                         COLORREF color;
 
-                        if (m_vBookmarks[pdis->itemID]->Frozen())
+                        if (m_vBookmarks.at(pdis->itemID)->Frozen())
                             color = RGB(255, 255, 160);
                         else
                             color = GetSysColor(COLOR_WINDOW);
@@ -210,7 +210,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcLabel.left += (offset / 2);
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel,
+                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
                     // Draw Item Label for remaining columns
@@ -222,40 +223,52 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcCol.left = rcCol.right;
                         rcCol.right += lvc.cx;
 
-                        const auto eSubItem{ ra::itoe<SubItems>(i) };
+                        const auto eSubItem{ra::itoe<SubItems>(i)};
                         switch (eSubItem)
                         {
                             case SubItems::Address:
-                                swprintf_s(buffer, 512, L"%06x", m_vBookmarks[pdis->itemID]->Address());
+                                swprintf_s(buffer, 512, L"%06x", m_vBookmarks.at(pdis->itemID)->Address());
                                 break;
                             case SubItems::Value:
-                                if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Value());
+                                if (m_vBookmarks.at(pdis->itemID)->Decimal())
+                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks.at(pdis->itemID)->Value());
                                 else
                                 {
-                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    switch (m_vBookmarks.at(pdis->itemID)->Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Value()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Value()); break;
+                                        case 1:
+                                            swprintf_s(buffer, 512, L"%02x", m_vBookmarks.at(pdis->itemID)->Value());
+                                            break;
+                                        case 2:
+                                            swprintf_s(buffer, 512, L"%04x", m_vBookmarks.at(pdis->itemID)->Value());
+                                            break;
+                                        case 3:
+                                            swprintf_s(buffer, 512, L"%08x", m_vBookmarks.at(pdis->itemID)->Value());
+                                            break;
                                     }
                                 }
                                 break;
                             case SubItems::Previous:
-                                if (m_vBookmarks[pdis->itemID]->Decimal())
-                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Previous());
+                                if (m_vBookmarks.at(pdis->itemID)->Decimal())
+                                    swprintf_s(buffer, 512, L"%u", m_vBookmarks.at(pdis->itemID)->Previous());
                                 else
                                 {
-                                    switch (m_vBookmarks[pdis->itemID]->Type())
+                                    switch (m_vBookmarks.at(pdis->itemID)->Type())
                                     {
-                                        case 1: swprintf_s(buffer, 512, L"%02x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 2: swprintf_s(buffer, 512, L"%04x", m_vBookmarks[pdis->itemID]->Previous()); break;
-                                        case 3: swprintf_s(buffer, 512, L"%08x", m_vBookmarks[pdis->itemID]->Previous()); break;
+                                        case 1:
+                                            swprintf_s(buffer, 512, L"%02x", m_vBookmarks.at(pdis->itemID)->Previous());
+                                            break;
+                                        case 2:
+                                            swprintf_s(buffer, 512, L"%04x", m_vBookmarks.at(pdis->itemID)->Previous());
+                                            break;
+                                        case 3:
+                                            swprintf_s(buffer, 512, L"%08x", m_vBookmarks.at(pdis->itemID)->Previous());
+                                            break;
                                     }
                                 }
                                 break;
                             case SubItems::Changes:
-                                swprintf_s(buffer, 512, L"%u", m_vBookmarks[pdis->itemID]->Count());
+                                swprintf_s(buffer, 512, L"%u", m_vBookmarks.at(pdis->itemID)->Count());
                                 break;
                             default:
                                 swprintf_s(buffer, 512, L"");
@@ -282,14 +295,15 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         rcLabel.left += offset;
                         rcLabel.right -= offset;
 
-                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel, nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
+                        DrawTextW(pdis->hDC, buffer, wcslen(buffer), &rcLabel,
+                                  nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
                     }
 
-                    //if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
+                    // if (pdis->itemState & ODS_SELECTED) //&& (GetFocus() == this)
                     //	DrawFocusRect(pdis->hDC, &rcBounds);
 
                     break;
-
+                }
                 case ODA_FOCUS:
                     break;
             }
@@ -327,8 +341,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         }
                         else if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Address))
                         {
-                            g_MemoryDialog.SetWatchingAddress(m_vBookmarks[pOnClick->iItem]->Address());
-                            MemoryViewerControl::setAddress((m_vBookmarks[pOnClick->iItem]->Address() &
+                            g_MemoryDialog.SetWatchingAddress(m_vBookmarks.at(pOnClick->iItem)->Address());
+                            MemoryViewerControl::setAddress((m_vBookmarks.at(pOnClick->iItem)->Address() &
                                 ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                         }
                     }
@@ -361,7 +375,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     {
                         while (nSel >= 0)
                         {
-                            MemBookmark* pBookmark = m_vBookmarks[nSel];
+                            MemBookmark* pBookmark = m_vBookmarks.at(ra::to_unsigned(nSel));
 
                             // Remove from vector
                             m_vBookmarks.erase(m_vBookmarks.begin() + nSel);
@@ -395,7 +409,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (uSelectedCount > 0)
                         {
                             for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                                m_vBookmarks[i]->SetFrozen(!m_vBookmarks[i]->Frozen());
+                                m_vBookmarks.at(i)->SetFrozen(!m_vBookmarks.at(i)->Frozen());
                         }
                         ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                     }
@@ -429,7 +443,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (uSelectedCount > 0)
                         {
                             for (int i = ListView_GetNextItem(hList, -1, LVNI_SELECTED); i >= 0; i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
-                                m_vBookmarks[i]->SetDecimal(!m_vBookmarks[i]->Decimal());
+                                m_vBookmarks.at(i)->SetDecimal(!m_vBookmarks.at(i)->Decimal());
                         }
                         ListView_SetItemState(hList, -1, LVIF_STATE, LVIS_SELECTED);
                     }
@@ -608,7 +622,7 @@ void Dlg_MemBookmark::ClearAllBookmarks()
 {
     while (m_vBookmarks.size() > 0)
     {
-        MemBookmark* pBookmark = m_vBookmarks[0];
+        MemBookmark* pBookmark = m_vBookmarks.front();
 
         // Remove from vector
         m_vBookmarks.erase(m_vBookmarks.begin());
@@ -958,7 +972,7 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
     };
 
     SendMessage(g_hIPEEditBM, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks[nItem]->Description()).c_str());
+    SetWindowText(g_hIPEEditBM, NativeStr(m_vBookmarks.at(nItem)->Description()).c_str());
 
     SendMessage(g_hIPEEditBM, EM_SETSEL, 0, -1);
     SetFocus(g_hIPEEditBM);

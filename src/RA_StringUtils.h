@@ -261,7 +261,7 @@ public:
         {
             if (sFormat.front() == '0')
                 oss << std::setfill('0');
-            int nDigits = std::stoi(sFormat.c_str());
+            int nDigits = std::stoi(sFormat);
             if (nDigits > 0)
                 oss << std::setw(nDigits);
 

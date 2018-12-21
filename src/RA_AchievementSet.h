@@ -40,7 +40,11 @@ public:
     bool SaveToFile() const;
 
     //	Get Achievement at offset
-    Achievement& GetAchievement(size_t nIter) { return m_Achievements[nIter]; }
+    Achievement& GetAchievement(size_t nPos)
+    {
+        Ensures((nPos >= 0) && (nPos < m_Achievements.size()));
+        return m_Achievements.at(nPos);
+    }
     inline size_t NumAchievements() const noexcept { return m_Achievements.size(); }
 
     // Get Points Total
@@ -75,7 +79,7 @@ public:
     BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }
     void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
 
-    BOOL HasUnsavedChanges();
+    BOOL HasUnsavedChanges() const;
 
 private:
     const Type m_nSetType{};

@@ -13,9 +13,9 @@ public:
 
     const char* Name() const noexcept override { return "disconnected client"; }
 
-    Login::Response Login(const Login::Request& request) noexcept override;
+    GSL_SUPPRESS(f.6) Login::Response Login(const Login::Request& request) noexcept override;
 
-    const std::string& Host() const { return m_sHost; }
+    const std::string& Host() const noexcept { return m_sHost; }
 
 private:
     const std::string m_sHost;

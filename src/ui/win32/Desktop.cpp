@@ -16,10 +16,10 @@ namespace win32 {
 Desktop::Desktop() noexcept
 {
     // most common first
-    m_vDialogPresenters.emplace_back(new MessageBoxDialog::Presenter());
-    m_vDialogPresenters.emplace_back(new RichPresenceDialog::Presenter());
-    m_vDialogPresenters.emplace_back(new LoginDialog::Presenter());
-    m_vDialogPresenters.emplace_back(new GameChecksumDialog::Presenter());
+    m_vDialogPresenters.emplace_back(new (std::nothrow) MessageBoxDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) RichPresenceDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
 }
 
 void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
@@ -87,7 +87,7 @@ IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewMo
     return nullptr;
 }
 
-void Desktop::Shutdown()
+void Desktop::Shutdown() noexcept
 {
 }
 

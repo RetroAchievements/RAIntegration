@@ -8,7 +8,7 @@ namespace ui {
 class ModelPropertyBase
 {
 public:
-    virtual ~ModelPropertyBase() noexcept;
+    GSL_SUPPRESS(f.6) virtual ~ModelPropertyBase() noexcept;
     ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
@@ -17,17 +17,17 @@ public:
     /// <summary>
     /// Gets the unique identifier of the property.
     /// </summary>
-    int GetKey() const { return m_nKey; }
+    int GetKey() const noexcept { return m_nKey; }
 
     /// <summary>
     /// Gets the name of the type that owns the property.
     /// </summary>
-    const char* GetTypeName() const { return m_sTypeName; }
+    const char* GetTypeName() const noexcept { return m_sTypeName; }
 
     /// <summary>
     /// Gets the name of the property.
     /// </summary>
-    const char* GetPropertyName() const { return m_sPropertyName; }
+    const char* GetPropertyName() const noexcept { return m_sPropertyName; }
 
     /// <summary>
     /// Gets the property for specified unique identifier.
@@ -45,7 +45,7 @@ public:
     operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
 
 protected:
-    explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName) noexcept;
+    explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName);
 
     explicit ModelPropertyBase(_In_ int nKey) noexcept { m_nKey = nKey; } // for binary search
 
@@ -62,7 +62,7 @@ template<class T>
 class ModelProperty : public ModelPropertyBase
 {
 public:
-    explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue) noexcept
+    explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue)
         : ModelPropertyBase(sTypeName, sPropertyName), m_tDefaultValue(tDefaultValue)
     {
     }
@@ -70,13 +70,13 @@ public:
     /// <summary>
     /// Gets the default value for the property.
     /// </summary>
-    const T& GetDefaultValue() const { return m_tDefaultValue; }
+    const T& GetDefaultValue() const noexcept { return m_tDefaultValue; }
 
     /// <summary>
     /// Sets the default value for the property.
     /// </summary>
     /// <remarks>Affects all existing instances where a value has not been set, not just new instances.</remarks>
-    void SetDefaultValue(const T& tValue) { m_tDefaultValue = tValue; }
+    void SetDefaultValue(const T& tValue) noexcept(std::is_nothrow_copy_assignable_v<T>) { m_tDefaultValue = tValue; }
 
     using ValueMap = std::unordered_map<int, T>;
 

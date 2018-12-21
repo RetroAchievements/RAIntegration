@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel)
+bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
     return (dynamic_cast<const ra::ui::viewmodels::GameChecksumViewModel*>(&vmViewModel) != nullptr);
 }
@@ -31,7 +31,8 @@ void GameChecksumDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oVie
 GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum) noexcept
     : DialogBase(vmGameChecksum)
 {
-    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::Center, ra::ui::win32::bindings::RelativePosition::Center);
+    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::Center,
+                                    ra::ui::win32::bindings::RelativePosition::Center);
     m_bindWindow.BindLabel(IDC_RA_ROMCHECKSUMTEXT, ra::ui::viewmodels::GameChecksumViewModel::ChecksumProperty);
 }
 

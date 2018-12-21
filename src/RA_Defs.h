@@ -62,8 +62,8 @@ _CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
 class RARect : public RECT
 {
 public:
-    RARect() {}
-    RARect(LONG nX, LONG nY, LONG nW, LONG nH)
+    RARect() noexcept = default;
+    explicit RARect(LONG nX, LONG nY, LONG nW, LONG nH) noexcept
     {
         left = nX;
         right = nX + nW;
@@ -72,8 +72,8 @@ public:
     }
 
 public:
-    inline int Width() const { return(right - left); }
-    inline int Height() const { return(bottom - top); }
+    _NODISCARD _CONSTANT_FN Width() const noexcept { return (right - left); }
+    _NODISCARD _CONSTANT_FN Height() const noexcept { return (bottom - top); }
 };
 
 class ResizeContent

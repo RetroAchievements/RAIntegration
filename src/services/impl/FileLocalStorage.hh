@@ -12,7 +12,7 @@ namespace impl {
 class FileLocalStorage : public ILocalStorage
 {
 public:
-    explicit FileLocalStorage(IFileSystem& pFileSystem) noexcept;
+    explicit FileLocalStorage(IFileSystem& pFileSystem);
 
     std::chrono::system_clock::time_point GetLastModified(StorageItemType nType, const std::wstring& sKey) override;
 

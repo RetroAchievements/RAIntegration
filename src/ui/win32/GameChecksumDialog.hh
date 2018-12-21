@@ -15,7 +15,7 @@ namespace win32 {
 class GameChecksumDialog : public DialogBase
 {
 public:
-    explicit GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum) noexcept;
+    explicit GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum);
     virtual ~GameChecksumDialog() noexcept = default;
     GameChecksumDialog(const GameChecksumDialog&) noexcept = delete;
     GameChecksumDialog& operator=(const GameChecksumDialog&) noexcept = delete;
@@ -25,7 +25,7 @@ public:
     class Presenter : public IDialogPresenter
     {
     public:
-        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) override;
+        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) noexcept override;
         void ShowWindow(ra::ui::WindowViewModelBase& viewModel) override;
         void ShowModal(ra::ui::WindowViewModelBase& viewModel) override;
     };

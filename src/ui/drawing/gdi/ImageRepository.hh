@@ -11,15 +11,27 @@ namespace gdi {
 
 class ImageRepository : public IImageRepository
 {
+    struct HBitmapReference
+    {
+        HBITMAP m_hBitmap{};
+        std::atomic<unsigned int> m_nReferences;
+    };
+
+    using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
 public:
-    ImageRepository() = default;
-    ~ImageRepository() noexcept;
+    ImageRepository() noexcept(std::is_nothrow_default_constructible_v<HBitmapMap> &&
+                               std::is_nothrow_default_constructible_v<std::set<std::wstring>>) = default;
+    GSL_SUPPRESS(f.6) ~ImageRepository() noexcept;
+    ImageRepository(const ImageRepository&) = delete;
+    ImageRepository& operator=(const ImageRepository&) = delete;
+    ImageRepository(ImageRepository&&) = delete;
+    ImageRepository& operator=(ImageRepository&&) = delete;
 
     /// <summary>
     /// Initializes the repository.
     /// </summary>
     bool Initialize();
-    
+
     /// <summary>
     /// Gets the <see cref="HBITMAP" /> from an <see cref="ImageReference" />.
     /// </summary>
@@ -27,10 +39,10 @@ public:
 
     void FetchImage(ImageType nType, const std::string& sName) override;
 
-    void AddReference(ImageReference& pImage) noexcept override;
-    void ReleaseReference(ImageReference& pImage) noexcept override;
+    void AddReference(ImageReference& pImage) override;
+    GSL_SUPPRESS(f.6) void ReleaseReference(ImageReference& pImage) noexcept override;
 
-    bool HasReferencedImageChanged(ImageReference& pImage) const noexcept override;
+    bool HasReferencedImageChanged(ImageReference& pImage) const override;
 
 private:
     static std::wstring GetFilename(ImageType nType, const std::string& sName);
@@ -39,19 +51,12 @@ private:
     HBITMAP GetImage(ImageType nType, const std::string& sName);
     HBITMAP GetDefaultImage(ImageType nType);
 
-    struct HBitmapReference
-    {
-        HBITMAP m_hBitmap{};
-        std::atomic<unsigned int> m_nReferences;
-    };
-
-    using HBitmapMap = std::unordered_map<std::string, HBitmapReference>;
     HBitmapMap m_mBadges;
     HBitmapMap m_mUserPics;
     HBitmapMap m_mLocal;
     HBitmapMap m_mIcons;
 
-    HBitmapMap* GetBitmapMap(ImageType nType);
+    HBitmapMap* GetBitmapMap(ImageType nType) noexcept;
 
     std::mutex m_oMutex;
     std::set<std::wstring> m_vRequestedImages;

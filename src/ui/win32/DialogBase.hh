@@ -29,25 +29,27 @@ public:
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
-    _NODISCARD HWND CreateDialogWindow(_In_ const LPCTSTR sResourceId, _In_ IDialogPresenter* const pDialogPresenter);
+    _NODISCARD HWND CreateDialogWindow(_In_ const TCHAR* restrict sResourceId,
+                                       _In_ IDialogPresenter* const restrict pDialogPresenter);
 
     /// <summary>
     /// Creates the dialog window and does not return until the window is closed.
     /// </summary>
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogClosed">Callback to call when the dialog is closed.</param>
-    void CreateModalWindow(_In_ LPCTSTR sResourceId, _In_ IDialogPresenter* const pDialogPresenter);
+    void CreateModalWindow(_In_ const TCHAR* restrict sResourceId,
+                           _In_ IDialogPresenter* const restrict pDialogPresenter) noexcept;
 
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.
     /// </summary>
-    _NODISCARD HWND GetHWND() const { return m_hWnd; }
+    _NODISCARD HWND GetHWND() const noexcept { return m_hWnd; }
 
     /// <summary>
     /// Shows the dialog window.
     /// </summary>
     /// <returns><c>true</c> if the window was shown, <c>false</c> if CreateDialogWindow has not been called.</returns>
-    bool ShowDialogWindow() const
+    bool ShowDialogWindow() const noexcept
     {
         if (!m_hWnd)
             return false;
@@ -57,7 +59,7 @@ public:
     }
 
 protected:
-    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
+    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow);
     ~DialogBase() noexcept;
 
     /// <summary>
@@ -75,7 +77,7 @@ protected:
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    virtual void OnShown() {}
+    virtual void OnShown() noexcept {}
 
     /// <summary>
     /// Called when the window is destroyed.

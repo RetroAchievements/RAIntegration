@@ -343,7 +343,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
     return hBitmap;
 }
 
-ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType)
+ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType) noexcept
 {
     switch (nType)
     {
@@ -423,7 +423,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
     return hBitmap;
 }
 
-void ImageRepository::AddReference(ImageReference& pImage) noexcept
+void ImageRepository::AddReference(ImageReference& pImage)
 {
     if (pImage.Name().empty())
         return;
@@ -462,13 +462,13 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     pImage.SetData(0ULL);
 }
 
-bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const noexcept
+bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
 {
     if (pImage.Type() == ra::ui::ImageType::None)
         return false;
 
     const auto hBitmapBefore = pImage.GetData();
-    GetHBitmap(pImage);
+    GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
     return (pImage.GetData() != hBitmapBefore);
 }
 

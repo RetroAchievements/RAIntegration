@@ -32,15 +32,15 @@ public:
         return Handle(vmViewModel);
     }
 
-    bool WasDialogShown() { return m_bDialogShown; }
+    bool WasDialogShown() noexcept { return m_bDialogShown; }
 
-    void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override
+    void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const noexcept override
     {
         oUpperLeftCorner = { 0, 0 };
         oSize = { 1920, 1080 };
     }
 
-    void Shutdown() override {}
+    void Shutdown() noexcept override {}
 
     template<typename T>
     void ExpectWindow(std::function<ra::ui::DialogResult(T&)>&& fnHandler)

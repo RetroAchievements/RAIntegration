@@ -24,10 +24,10 @@ public:
 
     ~GDISurface() noexcept = default;
 
-    size_t GetWidth() const override { return m_nWidth; }
-    size_t GetHeight() const override { return m_nHeight; }
+    size_t GetWidth() const noexcept override { return m_nWidth; }
+    size_t GetHeight() const noexcept override { return m_nHeight; }
 
-    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) override;
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
     int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) override;
     ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const override;
@@ -36,7 +36,7 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-    void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+    void SetOpacity(_UNUSED double) noexcept override { assert("This surface does not support opacity"); }
 
 protected:
     void SwitchFont(int nFont) const;

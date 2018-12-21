@@ -21,14 +21,14 @@ public:
     /// <summary>
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
-    void SetGameId(unsigned int nGameId) { m_nGameId = nGameId; }
+    void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
     /// <summary>
     /// Sets the title of the currently loaded game.
     /// </summary>
     void SetGameTitle(const std::wstring& sTitle) { m_sGameTitle = sTitle; }
 
-    bool HasRichPresence() const override { return !m_sRichPresenceDisplayString.empty(); }
+    bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
 
     std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }
 
@@ -37,19 +37,19 @@ public:
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
 
-    bool HasActiveAchievements() const override { return m_bHasActiveAchievements;}
+    bool HasActiveAchievements() const noexcept override { return m_bHasActiveAchievements; }
     
     /// <summary>
     /// Sets the value for <see cref="HasActiveAchievements" />
     /// </summary>
-    void SetHasActiveAchievements(bool bValue) { m_bHasActiveAchievements = bValue; }
+    void SetHasActiveAchievements(bool bValue) noexcept { m_bHasActiveAchievements = bValue; }
 
-    AchievementSet::Type ActiveAchievementType() const { return m_nActiveAchievementType; }
+    AchievementSet::Type ActiveAchievementType() const noexcept override { return m_nActiveAchievementType; }
 
     /// <summary>
     /// Sets the value for <see cref="HasActiveAchievements" />
     /// </summary>
-    void SetActiveAchievementType(AchievementSet::Type bValue) { m_nActiveAchievementType = bValue; }
+    void SetActiveAchievementType(AchievementSet::Type bValue) noexcept { m_nActiveAchievementType = bValue; }
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;

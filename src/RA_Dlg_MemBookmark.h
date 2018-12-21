@@ -8,25 +8,25 @@ class MemBookmark
 {
 public:
     void SetDescription(const std::wstring& string) { m_sDescription = string; }
-    void SetAddress(unsigned int nVal) { m_nAddress = nVal; }
-    void SetType(unsigned int nVal) { m_nType = nVal; }
-    void SetValue(unsigned int nVal) { m_sValue = nVal; }
-    void SetPrevious(unsigned int nVal) { m_sPrevious = nVal; }
-    void IncreaseCount() { m_nCount++; }
-    void ResetCount() { m_nCount = 0; }
+    void SetAddress(unsigned int nVal) noexcept { m_nAddress = nVal; }
+    void SetType(unsigned int nVal) noexcept { m_nType = nVal; }
+    void SetValue(unsigned int nVal) noexcept { m_sValue = nVal; }
+    void SetPrevious(unsigned int nVal) noexcept { m_sPrevious = nVal; }
+    void IncreaseCount() noexcept { m_nCount++; }
+    void ResetCount() noexcept { m_nCount = 0; }
 
-    void SetFrozen(bool b) { m_bFrozen = b; }
-    void SetDecimal(bool b) { m_bDecimal = b; }
+    void SetFrozen(bool b) noexcept { m_bFrozen = b; }
+    void SetDecimal(bool b) noexcept { m_bDecimal = b; }
 
-    inline const std::wstring& Description() const { return m_sDescription; }
-    unsigned int Address() const { return m_nAddress; }
-    unsigned int Type() const { return m_nType; }
-    unsigned int Value() const { return m_sValue; }
-    unsigned int Previous() const { return m_sPrevious; }
-    unsigned int Count() const { return m_nCount; }
+    inline const std::wstring& Description() const noexcept { return m_sDescription; }
+    unsigned int Address() const noexcept { return m_nAddress; }
+    unsigned int Type() const noexcept { return m_nType; }
+    unsigned int Value() const noexcept { return m_sValue; }
+    unsigned int Previous() const noexcept { return m_sPrevious; }
+    unsigned int Count() const noexcept { return m_nCount; }
 
-    bool Frozen() const { return m_bFrozen; }
-    bool Decimal() const { return m_bDecimal; }
+    bool Frozen() const noexcept { return m_bFrozen; }
+    bool Decimal() const noexcept { return m_bDecimal; }
 
 private:
     std::wstring m_sDescription;
@@ -55,9 +55,9 @@ public:
     static INT_PTR CALLBACK s_MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemBookmarkDialogProc(HWND, UINT, WPARAM, LPARAM);
 
-    void InstallHWND(HWND hWnd) { m_hMemBookmarkDialog = hWnd; }
-    HWND GetHWND() const { return m_hMemBookmarkDialog; }
-    BOOL IsActive() const;
+    void InstallHWND(HWND hWnd) noexcept { m_hMemBookmarkDialog = hWnd; }
+    HWND GetHWND() const noexcept { return m_hMemBookmarkDialog; }
+    BOOL IsActive() const noexcept;
 
     std::vector<MemBookmark*> Bookmarks() { return m_vBookmarks; }
     void UpdateBookmarks(bool bForceWrite);

@@ -17,12 +17,12 @@ public:
     /// <summary>
     /// Queues work for a background thread
     /// </summary>
-    virtual void RunAsync(std::function<void()>&& f) noexcept = 0;
+    virtual void RunAsync(std::function<void()>&& f) = 0;
 
     /// <summary>
     /// Queues work for a background thread to be run after a period of time
     /// </summary>
-    virtual void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept = 0;
+    virtual void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) = 0;
 
     /// <summary>
     /// Sets the <see ref="IsShutdownRequested" /> flag so threads can start winding down.

@@ -9,7 +9,7 @@ namespace ui {
 namespace win32 {
 
 _Use_decl_annotations_
-DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept :
+DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) :
     m_vmWindow{ vmWindow },
     m_bindWindow{ vmWindow }
 {
@@ -40,8 +40,8 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
     return result;
 }
 
-_Use_decl_annotations_
-HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
+_Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,
+                                                           IDialogPresenter* const restrict pDialogPresenter)
 {
     m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
     if (m_hWnd)
@@ -80,8 +80,8 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     return result;
 }
 
-_Use_decl_annotations_
-void DialogBase::CreateModalWindow(LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
+_Use_decl_annotations_ void DialogBase::CreateModalWindow(const TCHAR* restrict sResourceId,
+                                                          IDialogPresenter* const restrict pDialogPresenter) noexcept
 {
     m_pDialogPresenter = pDialogPresenter;
     m_bModal = true;

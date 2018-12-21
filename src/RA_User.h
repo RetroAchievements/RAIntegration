@@ -23,17 +23,17 @@ typedef struct
 class RAUser
 {
 public:
-    RAUser(const std::string& sUsername);
+    explicit RAUser(const std::string& sUsername);
 
 public:
-    unsigned int GetScore() const { return m_nScore; }
-    void SetScore(unsigned int nScore) { m_nScore = nScore; }
+    unsigned int GetScore() const noexcept { return m_nScore; }
+    void SetScore(unsigned int nScore) noexcept { m_nScore = nScore; }
 
     void SetUsername(const std::string& sUser) { m_sUsername = sUser; }
-    const std::string& Username() const { return m_sUsername; }
+    const std::string& Username() const noexcept { return m_sUsername; }
 
     void UpdateActivity(const std::string& sAct) { m_sActivity = sAct; }
-    const std::string& Activity() const { return m_sActivity; }
+    const std::string& Activity() const noexcept { return m_sActivity; }
 
 private:
     /*const*/ std::string m_sUsername;
@@ -56,7 +56,7 @@ public:
     RAUser* FindFriend(const std::string& sName);
 
     RAUser* GetFriendByIter(size_t nOffs) { return nOffs < m_aFriends.size() ? m_aFriends[nOffs] : nullptr; }
-    const size_t NumFriends() const { return m_aFriends.size(); }
+    const size_t NumFriends() const noexcept { return m_aFriends.size(); }
 
     const std::string& Token() const
     {
@@ -71,7 +71,7 @@ private:
 class RAUsers
 {
 public:
-    static LocalRAUser& LocalUser() { return ms_LocalUser; }
+    static LocalRAUser& LocalUser() noexcept { return ms_LocalUser; }
     static BOOL DatabaseContainsUser(const std::string& sUser);
 
     static void RegisterUser(const std::string& sUsername, RAUser* pUser) { UserDatabase[sUsername] = pUser; }

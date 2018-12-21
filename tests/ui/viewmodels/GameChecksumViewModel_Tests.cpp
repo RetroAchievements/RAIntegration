@@ -28,7 +28,7 @@ private:
         }
 
         void SetText(const std::wstring& sValue) const override { m_sText = sValue; }
-        const std::wstring& GetText() const { return m_sText; }
+        const std::wstring& GetText() const noexcept { return m_sText; }
 
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::IClipboard> m_Override;

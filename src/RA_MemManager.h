@@ -49,16 +49,14 @@ public:
 public:
     void ClearMemoryBanks() noexcept;
     void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
-    size_t NumMemoryBanks() const { return m_Banks.size(); }
+    size_t NumMemoryBanks() const noexcept { return m_Banks.size(); }
 
     inline size_t BankSize(unsigned short nBank) const { return m_Banks.at(nBank).BankSize; }
-    //inline size_t ActiveBankSize() const							{ return m_Banks.at( m_nActiveMemBank ).BankSize; }
-    //inline unsigned short ActiveBankID() const					{ return m_nActiveMemBank; }
-    inline size_t TotalBankSize() const { return m_nTotalBankSize; }
+    inline size_t TotalBankSize() const noexcept { return m_nTotalBankSize; }
 
     std::vector<size_t> GetBankIDs() const;
 
-    void ChangeActiveMemBank(_UNUSED unsigned short);
+    void ChangeActiveMemBank(_UNUSED unsigned short) noexcept;
 
     unsigned char ActiveBankRAMByteRead(ra::ByteAddress nOffs) const;
     void ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal);

@@ -7,15 +7,15 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 static unsigned char* g_pMemoryBuffer;
 static size_t g_nMemorySize;
 
-static unsigned char ReadMemory(unsigned int nAddress)
+static constexpr unsigned char ReadMemory(unsigned int nAddress) noexcept
 {
     if (nAddress <= g_nMemorySize)
         return g_pMemoryBuffer[nAddress];
 
-    return '\0';
+    return unsigned char();
 }
 
-static void SetMemory(unsigned int nAddress, unsigned int nValue)
+static constexpr void SetMemory(unsigned int nAddress, unsigned int nValue) noexcept
 {
     if (nAddress <= g_nMemorySize)
         g_pMemoryBuffer[nAddress] = static_cast<unsigned char>(nValue);

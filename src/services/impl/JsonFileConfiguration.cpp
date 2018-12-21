@@ -2,6 +2,7 @@
 
 #include "RA_Json.h"
 #include "RA_Log.h"
+#include "ra_utility.h"
 
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"

@@ -1,5 +1,7 @@
 #include "LoginViewModel.hh"
 
+#include "RA_StringUtils.h"
+
 #include "api\Login.hh"
 
 #include "data\UserContext.hh"

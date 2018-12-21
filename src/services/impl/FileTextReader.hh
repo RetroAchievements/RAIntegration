@@ -13,7 +13,7 @@ namespace impl {
 class FileTextReader : public ra::services::TextReader
 {
 public:
-    explicit FileTextReader(const std::wstring& sFilename) noexcept
+    explicit FileTextReader(const std::wstring& sFilename)
         : m_iStream(sFilename)
     {
     }
@@ -54,7 +54,7 @@ public:
         return static_cast<size_t>(const_cast<std::ifstream&>(m_iStream).tellg());
     }
 
-    std::ifstream& GetFStream() { return m_iStream; }
+    std::ifstream& GetFStream() noexcept { return m_iStream; }
 
 private:
     std::ifstream m_iStream;

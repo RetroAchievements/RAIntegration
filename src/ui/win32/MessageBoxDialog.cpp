@@ -21,7 +21,7 @@ MessageBoxDialog::Presenter::Presenter() noexcept
         pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
 }
 
-bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel)
+bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept
 {
     return (dynamic_cast<const ra::ui::viewmodels::MessageBoxViewModel*>(&oViewModel) != nullptr);
 }

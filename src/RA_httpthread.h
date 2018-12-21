@@ -68,12 +68,12 @@ public:
     }
 
 public:
-    const RequestType GetRequestType() const { return m_nType; }
-    const PostArgs& GetPostArgs() const { return m_PostArgs; }
-    const std::string& GetData() const { return m_sData; }
+    const RequestType GetRequestType() const noexcept { return m_nType; }
+    const PostArgs& GetPostArgs() const noexcept { return m_PostArgs; }
+    const std::string& GetData() const noexcept { return m_sData; }
 
-    std::string& GetResponse() { return m_sResponse; }
-    const std::string& GetResponse() const { return m_sResponse; }
+    std::string& GetResponse() noexcept { return m_sResponse; }
+    const std::string& GetResponse() const noexcept { return m_sResponse; }
     void SetResponse(const std::string& sResponse) { m_sResponse = sResponse; }
 
     BOOL ParseResponseToJSON(rapidjson::Document& rDocOut);
@@ -94,7 +94,7 @@ public:
     const RequestObject* PeekNextItem() const;
     void PushItem(RequestObject* pObj);
     void Clear();
-    size_t Count() const;
+    size_t Count() const noexcept;
 
 private:
     std::deque<RequestObject*> m_aRequests;
@@ -110,12 +110,12 @@ public:
 
     static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
-    static HANDLE Mutex() { return ms_hHTTPMutex; }
+    static HANDLE Mutex() noexcept { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }
 
     static void SetUserAgentString();
     static void SetUserAgent(const std::string& sValue) { m_sUserAgent = ra::Widen(sValue); }
-    static const std::wstring& GetUserAgent() { return m_sUserAgent; }
+    static const std::wstring& GetUserAgent() noexcept { return m_sUserAgent; }
 
 private:
     static HANDLE ms_hHTTPMutex;

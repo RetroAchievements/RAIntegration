@@ -11,7 +11,7 @@ int ModelPropertyBase::s_nNextKey = 1;
 std::vector<ModelPropertyBase*> ModelPropertyBase::s_vProperties;
 
 _Use_decl_annotations_
-ModelPropertyBase::ModelPropertyBase(const char* const sTypeName, const char* const sPropertyName) noexcept :
+ModelPropertyBase::ModelPropertyBase(const char* const sTypeName, const char* const sPropertyName) :
     m_sTypeName{ sTypeName },
     m_sPropertyName{ sPropertyName }
 {
@@ -32,7 +32,8 @@ ModelPropertyBase::~ModelPropertyBase() noexcept
 const ModelPropertyBase* ModelPropertyBase::GetPropertyForKey(int nKey)
 {
     ModelPropertyBase search(nKey);
-    auto iter = std::lower_bound(s_vProperties.begin(), s_vProperties.end(), &search, [](const ModelPropertyBase* left, const ModelPropertyBase* right)
+    auto iter = std::lower_bound(s_vProperties.begin(), s_vProperties.end(),
+                                 &search, [](const ModelPropertyBase* left, const ModelPropertyBase* right) noexcept
     {
         return left->GetKey() < right->GetKey();
     });

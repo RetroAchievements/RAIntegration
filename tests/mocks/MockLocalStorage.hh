@@ -40,7 +40,8 @@ public:
         return sEmpty;
     }
 
-    std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType, _UNUSED const std::wstring& sKey) override
+    std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType,
+                                                          _UNUSED const std::wstring& sKey) noexcept override
     {
         return std::chrono::system_clock::time_point();
     }

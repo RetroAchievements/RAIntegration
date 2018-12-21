@@ -18,11 +18,11 @@ public:
     {
     }
 
-    void LoadSessions() override
+    void LoadSessions() noexcept override
     {
     }
 
-    const std::wstring& GetUsername() const { return m_sUsername; }
+    const std::wstring& GetUsername() const noexcept { return m_sUsername; }
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::SessionTracker> m_Override;

@@ -204,7 +204,7 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
     }
 }
 
-void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept
 {
     if (args.Property == WindowViewModelBase::WindowTitleProperty)
     {

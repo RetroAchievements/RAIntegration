@@ -36,18 +36,18 @@ public:
     /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
-    unsigned int MatchingAddressCount();
+    unsigned int MatchingAddressCount() noexcept;
 
     /// <summary>
     /// Gets a summary of the results
     /// </summary>
-    const std::string& Summary() const { return m_sSummary; }
+    const std::string& Summary() const noexcept { return m_sSummary; }
 
     struct Result
     {
-        unsigned int nAddress;
-        unsigned int nValue;
-        MemSize nSize;
+        unsigned int nAddress{};
+        unsigned int nValue{};
+        MemSize nSize{};
     };
 
     /// <summary>
@@ -61,7 +61,8 @@ public:
     /// Determines whether the specified address appears in the matching address list.
     /// </summary>
     /// <param name="nAddress">The n address.</param>
-    /// <returns><c>true</c> if the specified address is in the matching address list; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> if the specified address is in the matching address list; otherwise,
+    /// <c>false</c>.</returns>
     bool ContainsAddress(unsigned int nAddress) const;
 
     /// <summary>
@@ -81,28 +82,27 @@ protected:
     {
     public:
         explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize) noexcept :
-            nAddress{ nAddress }, nSize{ nSize }
+            nAddress{nAddress},
+            nSize{nSize}
         {
             if (nSize > sizeof(m_vBytes))
-                m_pBytes = new unsigned char[nSize];
+                m_pBytes = new (std::nothrow) unsigned char[nSize];
         }
 
-        MemBlock(const MemBlock& other) noexcept :
-            MemBlock(other.nAddress, other.nSize)
+        MemBlock(const MemBlock& other) noexcept : MemBlock(other.nAddress, other.nSize)
         {
             if (nSize > sizeof(m_vBytes))
                 std::memcpy(m_pBytes, other.m_pBytes, nSize);
         }
         MemBlock& operator=(const MemBlock&) noexcept = delete;
 
-        MemBlock(MemBlock&& other) noexcept :
-            nAddress{ other.nAddress }, nSize{ other.nSize }
+        MemBlock(MemBlock&& other) noexcept : nAddress{other.nAddress}, nSize{other.nSize}
         {
             if (other.nSize > sizeof(m_vBytes))
             {
-                m_pBytes = other.m_pBytes;
+                m_pBytes       = other.m_pBytes;
                 other.m_pBytes = nullptr;
-                other.nSize = 0;
+                other.nSize    = 0;
             }
             else
             {
@@ -116,12 +116,12 @@ protected:
                 delete[] m_pBytes;
         }
 
-        unsigned char* GetBytes() { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
-        const unsigned char* GetBytes() const { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+        unsigned char* GetBytes() noexcept { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+        const unsigned char* GetBytes() const noexcept { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
         unsigned char GetByte(std::size_t nIndex) noexcept { return GetBytes()[nIndex]; }
         unsigned char GetByte(std::size_t nIndex) const noexcept { return GetBytes()[nIndex]; }
-        unsigned int GetAddress() const { return nAddress; }
-        unsigned int GetSize() const { return nSize; }
+        unsigned int GetAddress() const noexcept { return nAddress; }
+        unsigned int GetSize() const noexcept { return nSize; }
 
     private:
         union // 8 bytes
@@ -138,10 +138,15 @@ protected:
     MemBlock& AddBlock(unsigned int nAddress, unsigned int nSize);
 
 private:
-    void ProcessBlocks(const SearchResults& srSource, std::function<bool(unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])> testIndexFunction);
+    void ProcessBlocks(
+        const SearchResults& srSource,
+        std::function<bool(unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])>
+            testIndexFunction);
     void ProcessBlocksNibbles(const SearchResults& srSource, unsigned int nTestValue, ComparisonType nCompareType);
-    void AddMatches(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
-    void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[], const std::vector<unsigned int>& vMatches);
+    void AddMatches(unsigned int nAddressBase, const unsigned char pMemory[],
+                    const std::vector<unsigned int>& vMatches);
+    void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[],
+                           const std::vector<unsigned int>& vMatches);
     bool ContainsNibble(unsigned int nAddress) const;
 
     std::string m_sSummary;
@@ -154,7 +159,5 @@ private:
 
 } // namespace services
 } // namespace ra
-
-
 
 #endif /* !SEARCHRESULTS_H */

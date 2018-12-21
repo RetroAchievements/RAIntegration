@@ -6,22 +6,23 @@
 #include "RA_LeaderboardPopup.h"
 #include "RA_Core.h"
 
+#include "ui\drawing\gdi\GDISurface.hh"
+
 class PopupWindows
 {
 public:
-    static void Update(_In_ const ControllerInput* const __restrict pInput,
-                       _In_ float fDelta,
-                       _In_ bool bFullscreen,
-                       _In_ bool bPaused)
+    static void Update( _In_ float fDelta)
     {
-        m_AchievementPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
-        m_LeaderboardPopups.Update(*pInput, fDelta, bFullscreen, bPaused);
+        m_AchievementPopups.Update(fDelta);
+        m_LeaderboardPopups.Update(fDelta);
     }
 
     static void Render(_In_ HDC hDC, const RECT* const __restrict rcDest)
     {
-        m_AchievementPopups.Render(hDC, *rcDest);
-        m_LeaderboardPopups.Render(hDC, *rcDest);
+        ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcDest);
+
+        m_AchievementPopups.Render(pSurface);
+        m_LeaderboardPopups.Render(pSurface);
     }
 
     static void Clear()
@@ -29,15 +30,15 @@ public:
         m_AchievementPopups.Clear();
     }
 
-    static AchievementPopup& AchievementPopups() { return m_AchievementPopups; }
-    static LeaderboardPopup& LeaderboardPopups() { return m_LeaderboardPopups; }
+    static AchievementPopup& AchievementPopups() noexcept { return m_AchievementPopups; }
+    static LeaderboardPopup& LeaderboardPopups() noexcept { return m_LeaderboardPopups; }
 
 private:
     static AchievementPopup m_AchievementPopups;
     static LeaderboardPopup m_LeaderboardPopups;
 };
 
-//	Exposed to DLL
+// Exposed to DLL
 _EXTERN_C
 [[gsl::suppress(con.3)]]
 API int _RA_UpdatePopups(_In_ ControllerInput* __restrict input, _In_ float fDTime,

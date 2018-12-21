@@ -47,10 +47,8 @@ void AchievementPopup::AddMessage(MessagePopup&& msg)
     PlayAudio();
 }
 
-void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
+void AchievementPopup::Update(float fDelta)
 {
-    if (bPaused)
-        fDelta = 0.0F;
     fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
     if (m_vMessages.size() > 0)
     {
@@ -63,7 +61,7 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
     }
 }
 
-float AchievementPopup::GetYOffsetPct() const
+float AchievementPopup::GetYOffsetPct() const noexcept
 {
     float fVal = 0.0F;
 
@@ -106,11 +104,11 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
 
     auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     const auto sTitle = ra::Widen(Title());
-    auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
+    const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
     auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
     const auto sSubTitle = ra::Widen(Subtitle());
-    auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
+    const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
     // create the actual surface
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
@@ -157,12 +155,10 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
     return *m_pSurface;
 }
 
-void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
+void AchievementPopup::Render(ra::ui::drawing::ISurface& pSurface)
 {
     if (!MessagesPresent())
         return;
-
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest);
 
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
     fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));

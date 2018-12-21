@@ -67,7 +67,7 @@ void Achievement::RebuildTrigger()
     SetDirtyFlag(DirtyFlags::Conditions);
 }
 
-static MemSize GetCompVariableSize(char nOperandSize)
+static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
 {
     switch (nOperandSize)
     {
@@ -192,7 +192,7 @@ void Achievement::ParseTrigger(const char* sTrigger)
     }
 }
 
-const char* Achievement::ParseLine(const char* pBuffer)
+const char* Achievement::ParseLine(const char* restrict pBuffer)
 {
 #ifndef RA_UTEST
     std::string sTemp;
@@ -203,9 +203,9 @@ const char* Achievement::ParseLine(const char* pBuffer)
     if (pBuffer[0] == '/' || pBuffer[0] == '\\')
         return pBuffer;
 
-    //	Read ID of achievement:
+    // Read ID of achievement:
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetID((unsigned int)atol(sTemp.c_str()));
+    SetID(std::stoul(sTemp));
 
     //	parse conditions
     const char* pTrigger = pBuffer;
@@ -241,13 +241,13 @@ const char* Achievement::ParseLine(const char* pBuffer)
     SetAuthor(sTemp);
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetPoints((unsigned int)atol(sTemp.c_str()));
+    SetPoints(std::stoul(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetCreatedDate((time_t)atol(sTemp.c_str()));
+    SetCreatedDate(std::stoll(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
-    SetModifiedDate((time_t)atol(sTemp.c_str()));
+    SetModifiedDate(std::stoll(sTemp));
 
     _ReadStringTil(sTemp, ':', pBuffer);
     // SetUpvotes( (unsigned short)atol( sTemp.c_str() ) );
@@ -261,7 +261,7 @@ const char* Achievement::ParseLine(const char* pBuffer)
     return pBuffer;
 }
 
-static bool HasHitCounts(const rc_condset_t* pCondSet)
+static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
 {
     rc_condition_t* condition = pCondSet->conditions;
     while (condition != nullptr)
@@ -275,7 +275,7 @@ static bool HasHitCounts(const rc_condset_t* pCondSet)
     return false;
 }
 
-static bool HasHitCounts(const rc_trigger_t* pTrigger)
+static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
 {
     if (HasHitCounts(pTrigger->requirement))
         return true;
@@ -292,7 +292,7 @@ static bool HasHitCounts(const rc_trigger_t* pTrigger)
     return false;
 }
 
-bool Achievement::Test()
+bool Achievement::Test() noexcept
 {
     if (m_pTrigger == nullptr)
         return false;
@@ -318,7 +318,7 @@ bool Achievement::Test()
     return bRetVal;
 }
 
-static rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex)
+static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex) noexcept
 {
     rc_condset_t* pGroup = pTrigger->requirement;
     if (nGroup > 0)
@@ -346,7 +346,7 @@ static rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup
     return pCondition;
 }
 
-unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const
+unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const noexcept
 {
     if (m_pTrigger == nullptr)
         return 0U;
@@ -356,7 +356,7 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer) const
+int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char* pBuffer) const noexcept
 {
     if (m_pTrigger != nullptr)
     {
@@ -372,7 +372,8 @@ int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char *pBuffer
     return snprintf(pBuffer, 128, "0:0:0:0:0:");
 }
 
-void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue, unsigned int nPreviousValue)
+void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue,
+                                        unsigned int nPreviousValue) noexcept
 {
     if (m_pTrigger == nullptr)
         return;
@@ -387,7 +388,7 @@ void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned i
     pCondition->operand2.previous = nPreviousValue;
 }
 
-void Achievement::Clear()
+void Achievement::Clear() noexcept
 {
     m_vConditions.Clear();
 
@@ -409,10 +410,10 @@ void Achievement::Clear()
     ClearDirtyFlag();
 
     m_bProgressEnabled = FALSE;
-    m_sProgress[0] = '\0';
-    m_sProgressMax[0] = '\0';
-    m_sProgressFmt[0] = '\0';
-    m_fProgressLastShown = 0.0f;
+    m_sProgress.clear();
+    m_sProgressMax.clear();
+    m_sProgressFmt.clear();
+    m_fProgressLastShown = 0.0F;
 
     m_nTimestampCreated = 0;
     m_nTimestampModified = 0;
@@ -420,23 +421,16 @@ void Achievement::Clear()
     //m_nDownvotes = 0;
 }
 
-void Achievement::AddConditionGroup()
-{
-    m_vConditions.AddGroup();
-}
+void Achievement::AddConditionGroup() noexcept { m_vConditions.AddGroup(); }
+void Achievement::RemoveConditionGroup() { m_vConditions.RemoveLastGroup(); }
 
-void Achievement::RemoveConditionGroup()
-{
-    m_vConditions.RemoveLastGroup();
-}
-
-void Achievement::SetID(ra::AchievementID nID)
+void Achievement::SetID(ra::AchievementID nID) noexcept
 {
     m_nAchievementID = nID;
     SetDirtyFlag(DirtyFlags::ID);
 }
 
-void Achievement::SetActive(BOOL bActive)
+void Achievement::SetActive(BOOL bActive) noexcept
 {
     if (m_bActive != bActive)
     {
@@ -457,12 +451,12 @@ void Achievement::SetActive(BOOL bActive)
 //	SetDirtyFlag( Dirty_Votes );
 //}
 
-void Achievement::SetModified(BOOL bModified)
+void Achievement::SetModified(BOOL bModified) noexcept
 {
     if (m_bModified != bModified)
     {
         m_bModified = bModified;
-        SetDirtyFlag(DirtyFlags::All);	//	TBD? questionable...
+        SetDirtyFlag(DirtyFlags::All); // TBD? questionable...
     }
 }
 
@@ -476,7 +470,7 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
         m_sBadgeImageURI = sBadgeURI;
 }
 
-void Achievement::Reset()
+void Achievement::Reset() noexcept
 {
     if (m_pTrigger)
     {

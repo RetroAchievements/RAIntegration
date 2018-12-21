@@ -86,7 +86,7 @@ public:
         auto response = server.Login(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("HTTP error code 404"), response.ErrorMessage);
+        Assert::AreEqual(std::string("HTTP error code: 404"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);

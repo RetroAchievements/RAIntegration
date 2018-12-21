@@ -12,28 +12,21 @@ namespace mocks {
 class MockClock : public IClock
 {
 public:
-    MockClock() noexcept
-        : m_Override(this)
+    MockClock() noexcept : m_Override(this)
     {
         // force GMT timezone for unit tests
         _putenv("TZ=GMT");
         _tzset();
 
-        m_tNow = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18
+        m_tNow    = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18
         m_tUpTime = std::chrono::steady_clock::time_point();
     }
 
-    std::chrono::system_clock::time_point Now() const override
-    {
-        return m_tNow;
-    }
+    std::chrono::system_clock::time_point Now() const noexcept override { return m_tNow; }
 
-    std::chrono::steady_clock::time_point UpTime() const override
-    {
-        return m_tUpTime;
-    }
+    std::chrono::steady_clock::time_point UpTime() const noexcept override { return m_tUpTime; }
 
-    void AdvanceTime(std::chrono::milliseconds nDuration)
+    void AdvanceTime(std::chrono::milliseconds nDuration) noexcept
     {
         m_tNow += nDuration;
         m_tUpTime += nDuration;

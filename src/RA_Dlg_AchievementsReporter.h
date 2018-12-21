@@ -30,7 +30,7 @@ class Dlg_AchievementsReporter
     inline static constexpr std::array<int, 5> COL_SIZE{ 19, 105, 205, 75, 62 };
 
 public:
-    static void DoModalDialog(HINSTANCE hInst, HWND hParent);
+    static void DoModalDialog(HINSTANCE hInst, HWND hParent) noexcept;
     static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, _UNUSED LPARAM);
 
 public:

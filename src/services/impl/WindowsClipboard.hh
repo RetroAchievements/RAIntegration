@@ -11,7 +11,7 @@ namespace impl {
 class WindowsClipboard : public ra::services::IClipboard
 {
 public:
-    void SetText(const std::wstring& sValue) const override
+    void SetText(const std::wstring& sValue) const noexcept override
     {
         // allocate memory to be managed by the clipboard
         const SIZE_T nSize = (sValue.length() + 1) * 2; // 16-bit characters, with null terminator

@@ -31,7 +31,11 @@ public:
     };
 
     Achievement() noexcept;
-    ~Achievement() noexcept;
+    GSL_SUPPRESS(f.6) ~Achievement() noexcept;
+    Achievement(const Achievement&) noexcept = default;
+    Achievement& operator=(const Achievement&) noexcept = default;
+    Achievement(Achievement&&) noexcept = default;
+    Achievement& operator=(Achievement&&) noexcept = default;
 
 public:
     void Clear() noexcept;
@@ -44,7 +48,7 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    void SetActive(BOOL bActive);
+    GSL_SUPPRESS(f.6) void SetActive(BOOL bActive) noexcept;
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;

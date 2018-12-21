@@ -5,6 +5,7 @@
 #include "api/Login.hh"
 #include "api/Logout.hh"
 #include "api/Ping.hh"
+#include "api/ResolveHash.hh"
 #include "api/StartSession.hh"
 
 namespace ra {
@@ -20,6 +21,9 @@ public:
     virtual Logout::Response Logout(const Logout::Request& request) noexcept = 0;
     virtual StartSession::Response StartSession(const StartSession::Request& request) noexcept = 0;
     virtual Ping::Response Ping(const Ping::Request& request) noexcept = 0;
+
+    // === game functions ===
+    virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

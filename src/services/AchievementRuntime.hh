@@ -24,7 +24,7 @@ public:
     /// <summary>
     /// Adds an achievement to the processing queue.
     /// </summary>
-    void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger)
+    void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
         AddEntry(m_vActiveAchievements, nId, pTrigger);
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
@@ -33,7 +33,7 @@ public:
     /// <summary>
     /// Adds an achievement to the processing queue and enables the AchievementReset change type for it.
     /// </summary>
-    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger)
+    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
         AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
         RemoveEntry(m_vActiveAchievements, nId);
@@ -42,7 +42,7 @@ public:
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void DeactivateAchievement(unsigned int nId)
+    void DeactivateAchievement(unsigned int nId) noexcept
     {
         RemoveEntry(m_vActiveAchievements, nId);
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
@@ -82,11 +82,13 @@ public:
 protected:
     struct ActiveAchievement
     {
+        ActiveAchievement(rc_trigger_t* pTrigger, unsigned int nId) noexcept : pTrigger(pTrigger), nId(nId) {}
+
         rc_trigger_t* pTrigger;
         unsigned int nId;
     };
 
-    static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger)
+    static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
         assert(pTrigger != nullptr);
 
@@ -96,10 +98,10 @@ protected:
                 return;
         }
 
-        vEntries.emplace_back(ActiveAchievement{pTrigger, nId});
+        GSL_SUPPRESS(f.6) vEntries.emplace_back(pTrigger, nId);
     }
 
-    static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId)
+    GSL_SUPPRESS(f.6) static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
     {
         for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {

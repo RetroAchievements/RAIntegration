@@ -409,7 +409,7 @@ void Achievement::SetID(ra::AchievementID nID) noexcept
     SetDirtyFlag(DirtyFlags::ID);
 }
 
-void Achievement::SetActive(BOOL bActive)
+void Achievement::SetActive(BOOL bActive) noexcept
 {
     if (m_bActive != bActive)
     {

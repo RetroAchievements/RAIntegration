@@ -31,10 +31,14 @@ public:
     };
 
     Achievement() noexcept;
+    GSL_SUPPRESS(f.6) ~Achievement() noexcept;
+    Achievement(const Achievement&) noexcept = default;
+    Achievement& operator=(const Achievement&) noexcept = default;
+    Achievement(Achievement&&) noexcept = default;
+    Achievement& operator=(Achievement&&) noexcept = default;
 
 public:
     void Clear() noexcept;
-    GSL_SUPPRESS(f.6) bool Test() noexcept;
 
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
@@ -44,7 +48,7 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    void SetActive(BOOL bActive) noexcept;
+    GSL_SUPPRESS(f.6) void SetActive(BOOL bActive) noexcept;
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;
@@ -53,7 +57,7 @@ public:
     void SetPauseOnTrigger(BOOL bPause) noexcept { m_bPauseOnTrigger = bPause; }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause) noexcept { m_bPauseOnReset = bPause; }
+    void SetPauseOnReset(BOOL bPause);
 
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
@@ -96,19 +100,15 @@ public:
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
     unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
-    int StoreConditionState(size_t nCondGroup, size_t i, char* pBuffer) const noexcept;
-    void RestoreConditionState(size_t nCondGroup, size_t i, unsigned int nCurrentHits, unsigned int nValue,
-                               unsigned int nPrevValue) noexcept;
+    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nHitCount) const noexcept;
 
     std::string CreateMemString() const;
-    std::string CreateStateString(const std::string& sSalt) const;
 
     void Reset() noexcept;
 
     // Returns the new char* offset after parsing.
     GSL_SUPPRESS(f.6) const char*
         ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
-    const char* ParseStateString(const char* sBuffer, const std::string& sSalt);
 
 #ifndef RA_UTEST
     //	Parse from json element

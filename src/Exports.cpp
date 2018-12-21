@@ -1,7 +1,6 @@
 #include "Exports.hh"
 
 #include "RA_BuildVer.h"
-#include "RA_Dlg_Login.h"
 #include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 
@@ -14,6 +13,7 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
@@ -78,10 +78,9 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetApiToken().empty() || pConfiguration.GetUsername().empty())
     {
-#ifndef RA_UTEST
         // show the login dialog box
-        DialogBox(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_LOGIN), g_RAMainWnd, RA_Dlg_Login::RA_Dlg_LoginProc);
-#endif
+        ra::ui::viewmodels::LoginViewModel vmLogin;
+        vmLogin.ShowModal();
     }
     else
     {

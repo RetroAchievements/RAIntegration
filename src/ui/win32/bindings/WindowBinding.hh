@@ -23,7 +23,7 @@ enum class RelativePosition
 class WindowBinding : protected BindingBase
 {
 public:
-    explicit WindowBinding(WindowViewModelBase& vmWindowViewModel)
+    explicit WindowBinding(WindowViewModelBase& vmWindowViewModel) noexcept
         : BindingBase(vmWindowViewModel)
     {
     }

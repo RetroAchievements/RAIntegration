@@ -31,7 +31,6 @@ enum RequestType
     RequestHashLibrary,
     RequestGamesList,
     RequestAllProgress,
-    RequestGameID,
 
     //	Submit
     RequestSubmitAwardAchievement,

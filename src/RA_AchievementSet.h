@@ -70,11 +70,6 @@ public:
 
     BOOL RemoveAchievement(size_t nIter);
 
-    void SaveProgress(const char* sRomName);
-    void LoadProgress(const char* sRomName);
-
-    BOOL Unlock(ra::AchievementID nAchievementID);
-
     unsigned int NumActive() const;
 
     BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }
@@ -103,6 +98,6 @@ extern AchievementSet* g_pLocalAchievements;
 extern AchievementSet* g_pActiveAchievements;
 extern AchievementSet::Type g_nActiveAchievementSet;
 
-void RASetAchievementCollection(_In_ AchievementSet::Type Type) noexcept;
+void RASetAchievementCollection(_In_ AchievementSet::Type Type);
 
 #endif // !RA_ACHIEVEMENTSET_H

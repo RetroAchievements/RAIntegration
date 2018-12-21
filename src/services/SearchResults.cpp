@@ -168,6 +168,15 @@ bool SearchResults::ContainsAddress(unsigned int nAddress) const
     return false;
 }
 
+bool SearchResults::ContainsNibble(unsigned int nAddress) const
+{
+    if (!m_bUnfiltered)
+        return std::binary_search(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress);
+
+    // an unfiltered collection implicitly contains both nibbles of an address
+    return ContainsAddress(nAddress >> 1);
+}
+
 void SearchResults::AddMatches(unsigned int nAddressBase, const unsigned char* restrict pMemory, const std::vector<unsigned int>& vMatches)
 {
     const unsigned int nBlockSize = vMatches.back() - vMatches.front() + Padding(m_nSize) + 1;
@@ -238,7 +247,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
 
     for (auto& block : srSource.m_vBlocks)
     {
-        if (block.GetSize() > vMemory.capacity())
+        if (block.GetSize() > vMemory.size())
             vMemory.resize(block.GetSize());
 
         g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());
@@ -251,7 +260,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             if (Compare(nValue1 & 0x0F, nValue2, nCompareType))
             {
                 const unsigned int nAddress = (block.GetAddress() + i) << 1;
-                if (srSource.ContainsAddress(nAddress >> 1))
+                if (srSource.ContainsNibble(nAddress))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {
@@ -269,7 +278,7 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
             if (Compare(nValue1 >> 4, nValue2, nCompareType))
             {
                 const unsigned int nAddress = ((block.GetAddress() + i) << 1) | 1;
-                if (srSource.ContainsAddress(nAddress >> 1))
+                if (srSource.ContainsNibble(nAddress))
                 {
                     if (!vMatches.empty() && (i - (vMatches.back() >> 1)) > 16)
                     {

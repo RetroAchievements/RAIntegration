@@ -3,6 +3,7 @@
 #include "api/IServer.hh"
 
 #include "RA_StringUtils.h"
+#include "RA_StringUtils.h"
 
 #include <string>
 
@@ -33,6 +34,11 @@ public:
     GSL_SUPPRESS(f .6) Ping::Response Ping(_UNUSED const Ping::Request& /*request*/) noexcept override
     {
         return UnsupportedApi<Ping::Response>(Ping::Name());
+    }
+
+    GSL_SUPPRESS(f.6) ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override
+    {
+        return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
 protected:

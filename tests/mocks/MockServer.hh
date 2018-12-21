@@ -57,6 +57,11 @@ public:
         return HandleRequest<ra::api::Ping>(request);
     }
 
+    ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::ResolveHash>(request);
+    }
+
 protected:
     template<typename TApi>
     GSL_SUPPRESS(f.6)

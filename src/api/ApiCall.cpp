@@ -16,6 +16,7 @@ Login::Response Login::Request::Call() const noexcept { return Server().Login(*t
 Logout::Response Logout::Request::Call() const noexcept { return Server().Logout(*this); }
 StartSession::Response StartSession::Request::Call() const noexcept { return Server().StartSession(*this); }
 Ping::Response Ping::Request::Call() const noexcept { return Server().Ping(*this); }
+ResolveHash::Response ResolveHash::Request::Call() const noexcept { return Server().ResolveHash(*this); }
 
 } // namespace api
 } // namespace ra

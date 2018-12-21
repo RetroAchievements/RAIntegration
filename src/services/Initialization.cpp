@@ -6,6 +6,7 @@
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -98,6 +99,9 @@ void Initialization::RegisterServices(const std::string& sClientName)
 
     auto* pSessionTracker = new ra::data::SessionTracker();
     ra::services::ServiceLocator::Provide<ra::data::SessionTracker>(pSessionTracker);
+
+    auto* pAchievementRuntime = new ra::services::AchievementRuntime();
+    ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(pAchievementRuntime);
 
     auto* pLeaderboardManager = new ra::services::impl::LeaderboardManager(*pConfiguration);
     ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(pLeaderboardManager);

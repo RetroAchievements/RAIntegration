@@ -5,6 +5,9 @@
 
 #include "RA_Defs.h"
 
+#include "services\AchievementRuntime.hh"
+#include "services\ServiceLocator.hh"
+
 #ifndef RA_UTEST
 #include "RA_ImageFactory.h"
 #endif
@@ -38,6 +41,18 @@ Achievement::Achievement() noexcept
     m_vConditions.AddGroup();
 }
 
+Achievement::~Achievement() noexcept
+{
+    if (m_bActive)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.DeactivateAchievement(ID());
+        }
+    }
+}
+
 #ifndef RA_UTEST
 void Achievement::Parse(const rapidjson::Value& element)
 {
@@ -69,6 +84,13 @@ void Achievement::RebuildTrigger()
 
     ParseTrigger(sTrigger.c_str());
     SetDirtyFlag(DirtyFlags::Conditions);
+
+    if (m_bActive)
+    {
+        // disassociate the old trigger and register the new one
+        SetActive(false);
+        SetActive(true);
+    }
 }
 
 static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
@@ -222,6 +244,12 @@ void Achievement::ParseTrigger(const char* sTrigger)
         auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sTrigger, nullptr, 0);
         m_pTrigger = pTrigger;
 
+        if (m_bActive)
+        {
+            SetActive(false);
+            SetActive(true);
+        }
+
         // wrap rc_trigger_t in a ConditionSet for the UI
         MakeConditionGroup(m_vConditions, pTrigger->requirement);
         rc_condset_t* alternative = pTrigger->alternative;
@@ -235,7 +263,6 @@ void Achievement::ParseTrigger(const char* sTrigger)
 
 const char* Achievement::ParseLine(const char* restrict pBuffer)
 {
-#ifndef RA_UTEST
     std::string sTemp;
 
     if (pBuffer == nullptr || pBuffer[0] == '\0')
@@ -298,7 +325,7 @@ const char* Achievement::ParseLine(const char* restrict pBuffer)
 
     _ReadStringTil(sTemp, ':', pBuffer);
     SetBadgeImage(sTemp);
-#endif
+
     return pBuffer;
 }
 
@@ -331,32 +358,6 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     }
 
     return false;
-}
-
-bool Achievement::Test() noexcept
-{
-    if (m_pTrigger == nullptr)
-        return false;
-
-    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-
-    const bool bNotifyOnReset = GetPauseOnReset() && HasHitCounts(pTrigger);
-
-    const bool bRetVal = rc_test_trigger(pTrigger, rc_peek_callback, nullptr, nullptr);
-
-    if (bNotifyOnReset && !HasHitCounts(pTrigger))
-    {
-#ifndef RA_UTEST
-        RA_CausePause();
-
-        char buffer[256];
-        sprintf_s(buffer, 256, "Pause on Reset: %s", Title().c_str());
-        MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Paused"), MB_OK);
-#endif
-    }
-
-    SetDirtyFlag(DirtyFlags::Conditions);
-    return bRetVal;
 }
 
 static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex) noexcept
@@ -397,42 +398,22 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-int Achievement::StoreConditionState(size_t nGroup, size_t nIndex, char* pBuffer) const noexcept
-{
-    if (m_pTrigger != nullptr)
-    {
-        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-        const rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
-        if (pCondition)
-        {
-            return snprintf(pBuffer, 128, "%u:%u:%u:%u:%u:", pCondition->current_hits, pCondition->operand1.value,
-                            pCondition->operand1.previous, pCondition->operand2.value, pCondition->operand2.previous);
-        }
-    }
-
-    return snprintf(pBuffer, 128, "0:0:0:0:0:");
-}
-
-void Achievement::RestoreConditionState(size_t nGroup, size_t nIndex, unsigned int nCurrentHits, unsigned int nValue,
-                                        unsigned int nPreviousValue) noexcept
+void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nHitCount) const noexcept
 {
     if (m_pTrigger == nullptr)
         return;
 
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
-    if (!pCondition)
-        return;
-
-    pCondition->current_hits = nCurrentHits;
-    pCondition->operand2.value = nValue;
-    pCondition->operand2.previous = nPreviousValue;
+    if (pCondition)
+        pCondition->current_hits = nHitCount;
 }
 
 void Achievement::Clear() noexcept
 {
-    m_vConditions.Clear();
+    SetActive(false);
 
+    m_vConditions.Clear();
     m_nAchievementID = 0;
     m_pTriggerBuffer.reset();
     m_pTrigger = nullptr;
@@ -443,7 +424,6 @@ void Achievement::Clear() noexcept
     m_sBadgeImageURI.clear();
 
     m_nPointValue = 0;
-    m_bActive = FALSE;
     m_bModified = FALSE;
     m_bPauseOnTrigger = FALSE;
     m_bPauseOnReset = FALSE;
@@ -476,20 +456,33 @@ void Achievement::SetActive(BOOL bActive) noexcept
     {
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
+
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        if (!m_bActive)
+            pRuntime.DeactivateAchievement(ID());
+        else if (m_bPauseOnReset)
+            pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        else
+            pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
     }
 }
 
-// void Achievement::SetUpvotes( unsigned short nVal )
-//{
-//	m_nUpvotes = nVal;
-//	SetDirtyFlag( Dirty_Votes );
-//}
-//
-// void Achievement::SetDownvotes( unsigned short nVal )
-//{
-//	m_nDownvotes = nVal;
-//	SetDirtyFlag( Dirty_Votes );
-//}
+void Achievement::SetPauseOnReset(BOOL bPause)
+{
+    if (m_bPauseOnReset != bPause)
+    {
+        m_bPauseOnReset = bPause;
+
+        if (m_bActive)
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            if (m_bPauseOnReset)
+                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+            else
+                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        }
+    }
+}
 
 void Achievement::SetModified(BOOL bModified) noexcept
 {
@@ -825,183 +818,7 @@ void Achievement::Set(const Achievement& rRHS)
 //	}
 // }
 
-std::string Achievement::CreateStateString(const std::string& sSalt) const
-{
-    // build the progress string
-    std::ostringstream oss;
 
-    auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    if (pTrigger == nullptr)
-    {
-        oss << ID() << ":0:";
-    }
-    else
-    {
-        rc_condset_t* pGroup = pTrigger->requirement;
-        while (pGroup != nullptr)
-        {
-            size_t nGroups = 0;
-            rc_condition_t* pCondition = pGroup->conditions;
-            while (pCondition)
-            {
-                ++nGroups;
-                pCondition = pCondition->next;
-            }
-            oss << ID() << ':' << nGroups << ':';
 
-            pCondition = pGroup->conditions;
-            while (pCondition != nullptr)
-            {
-                oss << pCondition->current_hits << ':' << pCondition->operand1.value << ':'
-                    << pCondition->operand1.previous << ':' << pCondition->operand2.value << ':'
-                    << pCondition->operand2.previous << ':';
 
-                pCondition = pCondition->next;
-            }
 
-            if (pGroup == pTrigger->requirement)
-                pGroup = pTrigger->alternative;
-            else
-                pGroup = pGroup->next;
-        }
-    }
-
-    std::string sProgressString = oss.str();
-
-    // Checksum the progress string (including the salt value)
-    std::string sModifiedProgressString;
-    sModifiedProgressString.resize(sProgressString.length() + sSalt.length() * 2 + 10);
-    const size_t nNewSize =
-        sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(), "%s%s%s%u", sSalt.c_str(),
-                  sProgressString.c_str(), sSalt.c_str(), static_cast<unsigned int>(ID()));
-    sModifiedProgressString.resize(nNewSize);
-    std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
-
-    sProgressString.append(sMD5Progress);
-    sProgressString.push_back(':');
-
-    // Also checksum the achievement string itself
-    std::string sMD5Achievement = RAGenerateMD5(CreateMemString());
-    sProgressString.append(sMD5Achievement);
-    sProgressString.push_back(':');
-
-    return sProgressString;
-}
-
-const char* Achievement::ParseStateString(const char* restrict sBuffer, const std::string& restrict sSalt)
-{
-    std::vector<rc_condition_t> vConditions;
-    auto pIter = gsl::make_not_null(sBuffer);
-    bool bSuccess = true;
-
-    // recalculate the current achievement checksum
-    std::string sMD5Achievement = RAGenerateMD5(CreateMemString());
-
-    // parse achievement id and conditions
-    while (*pIter)
-    {
-        char* pEnd{};
-
-        const auto pStart = pIter;
-        const unsigned int nID = strtoul(pIter, &pEnd, 10);
-        pIter = gsl::make_not_null(pEnd + 1);
-        if (nID != ID())
-        {
-            pIter = pStart;
-            break;
-        }
-
-        const unsigned int nNumCond = strtoul(pIter, &pEnd, 10);
-        pIter = gsl::make_not_null(pEnd + 1);
-        vConditions.reserve(vConditions.size() + nNumCond);
-
-        for (size_t i = 0; i < nNumCond; ++i)
-        {
-            // Parse next condition state
-            const unsigned int nHits = strtoul(pIter, &pEnd, 10);
-            pIter = gsl::make_not_null(pEnd + 1);
-            const unsigned int nSourceVal = strtoul(pIter, &pEnd, 10);
-            pIter = gsl::make_not_null(pEnd + 1);
-            const unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10);
-            pIter = gsl::make_not_null(pEnd + 1);
-            const unsigned int nTargetVal = strtoul(pIter, &pEnd, 10);
-            pIter = gsl::make_not_null(pEnd + 1);
-            const unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10);
-            pIter = gsl::make_not_null(pEnd + 1);
-
-            rc_condition_t& cond = vConditions.emplace_back();
-            cond.current_hits = nHits;
-            cond.operand1.value = nSourceVal;
-            cond.operand1.previous = nSourcePrev;
-            cond.operand2.value = nTargetVal;
-            cond.operand2.previous = nTargetPrev;
-        }
-    }
-
-    const auto pEnd = pIter;
-
-    // read the given md5s
-    std::string sGivenMD5Progress;
-    gsl::czstring<> iterView{pIter}; // TODO: we should try using istringstream for safety
-    _ReadStringTil(sGivenMD5Progress, ':', iterView);
-
-    std::string sGivenMD5Achievement;
-    _ReadStringTil(sGivenMD5Achievement, ':', iterView);
-
-    // if the achievement is still compatible
-    if (sGivenMD5Achievement == sMD5Achievement)
-    {
-        // regenerate the md5 and see if it sticks
-        std::string sModifiedProgressString;
-        sModifiedProgressString.resize(pEnd - sBuffer + sSalt.length() * 2 + 10);
-        const size_t nNewSize = sprintf_s(sModifiedProgressString.data(), sModifiedProgressString.capacity(),
-                                          "%s%.*s%s%u", sSalt.c_str(), pEnd - sBuffer, sBuffer, sSalt.c_str(), ID());
-        sModifiedProgressString.resize(nNewSize);
-        std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
-        if (sMD5Progress == sGivenMD5Progress)
-        {
-            // compatible - merge
-            size_t nCondition = 0;
-
-            auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-            rc_condset_t* pGroup = pTrigger->requirement;
-            while (pGroup != nullptr)
-            {
-                rc_condition_t* pCondition = pGroup->conditions;
-                while (pCondition != nullptr)
-                {
-                    const rc_condition_t& condSource = vConditions.at(nCondition++);
-                    pCondition->current_hits = condSource.current_hits;
-                    pCondition->operand1.value = condSource.operand1.value;
-                    pCondition->operand1.previous = condSource.operand1.previous;
-                    pCondition->operand2.value = condSource.operand2.value;
-                    pCondition->operand2.previous = condSource.operand2.previous;
-
-                    pCondition = pCondition->next;
-                }
-
-                if (pGroup == pTrigger->requirement)
-                    pGroup = pTrigger->alternative;
-                else
-                    pGroup = pGroup->next;
-            }
-        }
-        else
-        {
-            // state checksum fail
-            bSuccess = false;
-        }
-    }
-    else
-    {
-        // achievement checksum fail
-        bSuccess = false;
-    }
-
-    if (bSuccess)
-        SetDirtyFlag(DirtyFlags::Conditions);
-    else
-        Reset();
-
-    return pIter;
-}

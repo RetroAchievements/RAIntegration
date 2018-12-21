@@ -60,9 +60,19 @@ public:
         return HandleRequest<ra::api::Ping>(request);
     }
 
+    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::FetchUserUnlocks>(request);
+    }
+
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override
     {
         return HandleRequest<ra::api::ResolveHash>(request);
+    }
+
+    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::FetchGameData>(request);
     }
 
 protected:

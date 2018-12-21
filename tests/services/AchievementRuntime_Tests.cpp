@@ -177,8 +177,12 @@ public:
     TEST_METHOD(TestPersistProgress)
     {
         AchievementRuntimeHarness runtime;
-        runtime.mockGameContext.AddAchivement(3U, "1=1.10.");
-        runtime.mockGameContext.AddAchivement(5U, "1=1.2.");
+        auto& ach1 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach1.SetID(3U);
+        ach1.ParseTrigger("1=1.10.");
+        auto& ach2 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach2.SetID(5U);
+        ach2.ParseTrigger("1=1.2.");
 
         const gsl::not_null<Achievement*> pAchievement3{
             gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};

@@ -1,27 +1,365 @@
 #include "GameContext.hh"
 
+#include "Exports.hh"
+
+#include "RA_Dlg_Achievement.h"
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
+#include "api\FetchGameData.hh"
+#include "api\FetchUserUnlocks.hh"
+
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
+#include "services\impl\StringTextReader.hh"
+#include "services\IAudioSystem.hh"
+#include "services\IConfiguration.hh"
+#include "services\ILeaderboardManager.hh"
+#include "services\ILocalStorage.hh"
+
+#include "ui\ImageReference.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
 namespace data {
 
-void GameContext::LoadGame(unsigned int nGameId, const std::wstring& sGameTitle)
+static void CopyAchievementData(Achievement& pAchievement, const ra::api::FetchGameData::Response::Achievement& pAchievementData)
 {
+    pAchievement.SetTitle(pAchievementData.Title);
+    pAchievement.SetDescription(pAchievementData.Description);
+    pAchievement.SetPoints(pAchievementData.Points);
+    pAchievement.SetAuthor(pAchievementData.Author);
+    pAchievement.SetCreatedDate(pAchievementData.Created);
+    pAchievement.SetModifiedDate(pAchievementData.Updated);
+    pAchievement.SetBadgeImage(pAchievementData.BadgeName);
+    pAchievement.ParseTrigger(pAchievementData.Definition.c_str());
+}
+
+void GameContext::LoadGame(unsigned int nGameId)
+{
+    m_nGameId = nGameId;
+    m_sGameTitle.clear();
+    m_pRichPresenceInterpreter.reset();
+
+    if (!m_vAchievements.empty())
+    {
+        for (auto& pAchievement : m_vAchievements)
+            pAchievement->SetActive(false);
+        m_vAchievements.clear();
+
+#ifndef RA_UTEST
+        // temporary code for compatibility until global collections are eliminated
+        g_pCoreAchievements->Clear();
+        g_pLocalAchievements->Clear();
+        g_pUnofficialAchievements->Clear();
+#endif
+    }
+
+    auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+    pLeaderboardManager.Clear();
+
     if (nGameId == 0)
     {
-        m_nGameId = 0;
-        m_sGameTitle.clear();
         m_sGameHash.clear();
-        m_pRichPresenceInterpreter.reset();
         return;
     }
 
-    m_nGameId = nGameId;
-    m_sGameTitle = sGameTitle;
+    ra::api::FetchGameData::Request request;
+    request.GameId = nGameId;
+
+    const auto response = request.Call();
+    if (response.Failed())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data", ra::Widen(response.ErrorMessage));
+        return;
+    }
+
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
+    // game properties
+    m_sGameTitle = response.Title;
+
+    // rich presence
+    if (!response.RichPresence.empty())
+    {
+        ra::services::impl::StringTextReader pRichPresenceTextReader(response.RichPresence);
+
+        m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
+        if (!m_pRichPresenceInterpreter->Load(pRichPresenceTextReader))
+            m_pRichPresenceInterpreter.reset();
+
+        // TODO: this file is written so devs can modify the rich presence without having to restart
+        // the game. if the user doesn't have dev permission, there's no reason to write it.
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(nGameId));
+        pRich->Write(response.RichPresence);
+    }
+
+    // achievements
+    unsigned int nNumCoreAchievements = 0;
+    unsigned int nTotalCoreAchievementPoints = 0;
+    for (const auto& pAchievementData : response.Achievements)
+    {
+        auto& pAchievement = NewAchievement(ra::itoe<AchievementSet::Type>(pAchievementData.CategoryId));
+        pAchievement.SetID(pAchievementData.Id);
+        CopyAchievementData(pAchievement, pAchievementData);
+
+        // prefetch the achievement image
+        pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
+
+        if (pAchievementData.CategoryId == static_cast<unsigned int>(AchievementSet::Type::Core))
+        {
+            ++nNumCoreAchievements;
+            nTotalCoreAchievementPoints += pAchievementData.Points;
+        }
+    }
+
+    // leaderboards
+    for (const auto& pLeaderboardData : response.Leaderboards)
+    {
+        RA_Leaderboard leaderboard(pLeaderboardData.Id);
+        leaderboard.SetTitle(pLeaderboardData.Title);
+        leaderboard.SetDescription(pLeaderboardData.Description);
+        leaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
+
+        pLeaderboardManager.AddLeaderboard(std::move(leaderboard));
+    }
+
+    // merge local achievements
+    MergeLocalAchievements();
+
+    // get user unlocks asynchronously
+    ra::api::FetchUserUnlocks::Request request2;
+    request2.GameId = nGameId;
+    request2.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    request2.CallAsync([this](const ra::api::FetchUserUnlocks::Response& response)
+    {
+        std::set<unsigned int> vLockedAchievements;
+        for (auto& pAchievement : m_vAchievements)
+        {
+            vLockedAchievements.insert(pAchievement->ID());
+            pAchievement->SetActive(false);
+        }
+
+        for (const auto nUnlockedAchievement : response.UnlockedAchievements)
+            vLockedAchievements.erase(nUnlockedAchievement);
+
+        // activate any core achievements the player hasn't earned and pre-fetch the locked image
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        for (auto nAchievementId : vLockedAchievements)
+        {
+            auto* pAchievement = FindAchievement(nAchievementId);
+            if (pAchievement && pAchievement->Category() == static_cast<unsigned int>(AchievementSet::Type::Core))
+            {
+                pAchievement->SetActive(true);
+
+                if (!pAchievement->BadgeImageURI().empty())
+                    pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
+            }
+        }
+
+#ifndef RA_UTEST
+        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+        {
+            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
+            if (Ach.Active())
+                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, "No");
+        }
+#endif
+    });
+
+#ifndef RA_UTEST
+    // show "game loaded" popup
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+        ra::StringPrintf(L"Loaded %s", response.Title),
+        ra::StringPrintf(L"%u achievements, Total Score %u", nNumCoreAchievements, nTotalCoreAchievementPoints),
+        ra::ui::ImageType::Icon, response.ImageIcon);
+#endif
+}
+
+void GameContext::MergeLocalAchievements()
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(m_nGameId));
+    if (pData == nullptr)
+        return;
+
+    std::string sLine;
+    pData->GetLine(sLine); // version used to create the file
+    pData->GetLine(sLine); // game title
+
+    while (pData->GetLine(sLine))
+    {
+        // achievement lines start with the achievement id
+        if (sLine.empty() || !isdigit(sLine.front()))
+            continue;
+
+        auto pAchievement = std::make_unique<Achievement>();
+        pAchievement->ParseLine(sLine.c_str());
+
+        Achievement* pExistingAchievement = nullptr;
+        if (pAchievement->ID() != 0)
+            pExistingAchievement = FindAchievement(pAchievement->ID());
+
+        if (pExistingAchievement)
+        {
+            // merge local data into existing achievement
+            if (pExistingAchievement->Title() != pAchievement->Title())
+            {
+                pExistingAchievement->SetTitle(pAchievement->Title());
+                pExistingAchievement->SetModified(true);
+            }
+
+            if (pExistingAchievement->Description() != pAchievement->Description())
+            {
+                pExistingAchievement->SetDescription(pAchievement->Description());
+                pExistingAchievement->SetModified(true);
+            }
+
+            if (pExistingAchievement->Points() != pAchievement->Points())
+            {
+                pExistingAchievement->SetPoints(pAchievement->Points());
+                pExistingAchievement->SetModified(true);
+            }
+
+            if (pExistingAchievement->BadgeImageURI() != pAchievement->BadgeImageURI())
+            {
+                pExistingAchievement->SetBadgeImage(pAchievement->BadgeImageURI());
+                pExistingAchievement->SetModified(true);
+            }
+
+            pExistingAchievement->SetModifiedDate(pAchievement->ModifiedDate());
+
+            auto sExistingTrigger = pExistingAchievement->CreateMemString();
+            auto sNewTrigger = pAchievement->CreateMemString();
+            if (sExistingTrigger != sNewTrigger)
+            {
+                pExistingAchievement->ParseTrigger(sNewTrigger.c_str());
+                pExistingAchievement->SetModified(true);
+            }
+        }
+        else
+        {
+#ifndef RA_UTEST
+            g_pLocalAchievements->AddAchievement(pAchievement.get());
+#endif
+            // append local achievmeent
+            pAchievement->SetCategory(static_cast<unsigned int>(AchievementSet::Type::Local));
+            m_vAchievements.emplace_back(std::move(pAchievement));
+        }
+    }
+}
+
+Achievement& GameContext::NewAchievement(AchievementSet::Type nType) noexcept
+{
+    Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
+    pAchievement.SetCategory(ra::etoi(nType));
+
+#ifndef RA_UTEST
+    // temporary code for compatibility until global collections are eliminated
+    switch (nType)
+    {
+        case AchievementSet::Type::Core:
+            g_pCoreAchievements->AddAchievement(&pAchievement);
+            break;
+
+        default:
+        case AchievementSet::Type::Unofficial:
+            g_pUnofficialAchievements->AddAchievement(&pAchievement);
+            break;
+
+        case AchievementSet::Type::Local:
+            g_pLocalAchievements->AddAchievement(&pAchievement);
+            break;
+    }
+#endif
+
+    return pAchievement;
+}
+
+void GameContext::ReloadAchievements(unsigned int nCategory)
+{
+    if (nCategory == static_cast<unsigned int>(AchievementSet::Type::Local))
+    {
+        auto pIter = m_vAchievements.begin();
+        while (pIter != m_vAchievements.end())
+        {
+            if ((*pIter)->Category() == nCategory)
+            {
+#ifndef RA_UTEST
+                g_pLocalAchievements->RemoveAchievement(pIter->get());
+#endif
+                pIter = m_vAchievements.erase(pIter);
+            }
+            else
+            {
+                ++pIter;
+            }
+        }
+
+        MergeLocalAchievements();
+    }
+    else
+    {
+        // TODO
+    }
+}
+
+bool GameContext::ReloadAchievement(unsigned int nAchievementId)
+{
+    auto pIter = m_vAchievements.begin();
+    while (pIter != m_vAchievements.end())
+    {
+        if ((*pIter)->ID() == nAchievementId)
+        {
+            if (ReloadAchievement(*pIter->get()))
+                return true;
+
+            m_vAchievements.erase(pIter);
+            break;
+        }
+
+        ++pIter;
+    }
+
+    return false; 
+}
+
+bool GameContext::ReloadAchievement(Achievement& pAchievement)
+{
+    if (pAchievement.Category() == static_cast<unsigned int>(AchievementSet::Type::Local))
+    {
+        // TODO
+    }
+    else
+    {
+        ra::api::FetchGameData::Request request;
+        request.GameId = m_nGameId;
+
+        const auto response = request.Call();
+        if (response.Failed())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data", ra::Widen(response.ErrorMessage));
+            return true; // prevent deleting achievement if server call failed
+        }
+
+        for (const auto& pAchievementData : response.Achievements)
+        {
+            if (pAchievementData.Id != pAchievement.ID())
+                continue;
+
+            CopyAchievementData(pAchievement, pAchievementData);
+            pAchievement.SetDirtyFlag(Achievement::DirtyFlags::All);
+            pAchievement.SetModified(false);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool GameContext::HasRichPresence() const noexcept

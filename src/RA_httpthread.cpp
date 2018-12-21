@@ -22,7 +22,6 @@ const char* RequestTypeToString[] =
 {
     "RequestScore",
     "RequestNews",
-    "RequestPatch",
     "RequestLatestClientPage",
     "RequestRichPresence",
     "RequestAchievementInfo",
@@ -30,7 +29,6 @@ const char* RequestTypeToString[] =
     "RequestCodeNotes",
     "RequestFriendList",
     "RequestBadgeIter",
-    "RequestUnlocks",
     "RequestHashLibrary",
     "RequestGamesList",
     "RequestAllProgress",
@@ -48,7 +46,6 @@ const char* RequestTypeToPost[] =
 {
     "score",
     "news",
-    "patch",
     "latestclient",
     "richpresencepatch",
     "achievementwondata",
@@ -56,7 +53,6 @@ const char* RequestTypeToPost[] =
     "codenotes2",
     "getfriendlist",
     "badgeiter",
-    "unlocks",
     "hashlibrary",
     "gameslist",
     "allprogress",

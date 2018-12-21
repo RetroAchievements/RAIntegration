@@ -13,6 +13,8 @@ public:
 
     GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
     Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
+
+    GSL_SUPPRESS(f.6) FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override;
 };
 
 } // namespace impl

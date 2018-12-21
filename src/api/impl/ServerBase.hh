@@ -39,10 +39,20 @@ public:
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }
 
+    GSL_SUPPRESS(f.6) FetchUserUnlocks::Response FetchUserUnlocks(_UNUSED const FetchUserUnlocks::Request& /*request*/) noexcept override
+    {
+        return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
+    }
+
     ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override
     {
         GSL_SUPPRESS_F6
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
+    }
+
+    GSL_SUPPRESS(f.6) FetchGameData::Response FetchGameData(_UNUSED const FetchGameData::Request& /*request*/) noexcept override
+    {
+        return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
 protected:

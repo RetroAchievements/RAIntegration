@@ -484,12 +484,12 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         unsigned int nUserPts = 0;
         unsigned int nUserCompleted = 0;
 
-        for (auto& ach : *g_pActiveAchievements)
+        for (auto& pAchievement : *g_pActiveAchievements)
         {
-            nMaxPts += ach.Points();
-            if (!ach.Active())
+            nMaxPts += pAchievement->Points();
+            if (!pAchievement->Active())
             {
-                nUserPts += ach.Points();
+                nUserPts += pAchievement->Points();
                 nUserCompleted++;
             }
         }

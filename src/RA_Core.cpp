@@ -382,28 +382,18 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         }
     }
 
-    //g_PopupWindows.Clear(); //TBD
-
     g_bRAMTamperedWith = false;
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.SetGameHash(sCurrentROMMD5);
+    pGameContext.LoadGame(nGameID);
 
-    if (nGameID != 0U)
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
-        if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-        {
-            pGameContext.LoadGame(nGameID);
-
+        if (nGameID != 0U)
             ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameID);
-        }
-    }
-    else
-    {
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
-
-        pGameContext.LoadGame(0U);
+        else
+            ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
     }
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

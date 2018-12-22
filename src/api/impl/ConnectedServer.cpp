@@ -308,7 +308,7 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
     AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
     AppendUrlParam(sPostData, "h", request.Hardcore ? "1" : "0");
 
-    if (DoRequest(m_sHost, FetchGameData::Name(), "unlocks", sPostData, response, document))
+    if (DoRequest(m_sHost, FetchUserUnlocks::Name(), "unlocks", sPostData, response, document))
     {
         if (!document.HasMember("UserUnlocks"))
         {

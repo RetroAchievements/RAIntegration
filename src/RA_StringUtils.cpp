@@ -8,7 +8,6 @@ std::string Narrow(const std::wstring& wstr)
     return Narrow(wstr.c_str());
 }
 
-_Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
     const auto wwstr{ std::move_if_noexcept(wstr) };
@@ -37,7 +36,6 @@ std::wstring Widen(const std::string& str)
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_
 std::wstring Widen(std::string&& str) noexcept
 {
     const auto sstr{ std::move_if_noexcept(str) };

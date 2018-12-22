@@ -32,8 +32,6 @@ void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 
 Achievement::Achievement() noexcept
 {
-    Clear();
-
     m_vConditions.AddGroup();
 }
 

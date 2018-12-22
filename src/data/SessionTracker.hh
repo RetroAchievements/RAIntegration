@@ -62,7 +62,7 @@ private:
 
     struct GameStats
     {
-        unsigned int GameId;
+        unsigned int GameId{};
         std::chrono::seconds TotalPlaytime;
         std::chrono::system_clock::time_point LastSessionStart;
     };

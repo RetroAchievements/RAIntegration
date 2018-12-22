@@ -130,13 +130,13 @@ public:
             return false;
 
         hNode.key() = sNewPath;
-        m_mFileContents.insert(std::move(hNode));
+        (void)m_mFileContents.insert(std::move(hNode));
 
         auto hNode2 = m_mFileSizes.extract(sOldPath);
         if (!hNode2.empty())
         {
             hNode2.key() = sNewPath;
-            m_mFileSizes.insert(std::move(hNode2));
+            (void)m_mFileSizes.insert(std::move(hNode2));
         }
 
         return true;

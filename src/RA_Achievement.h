@@ -17,21 +17,21 @@ public:
     enum class DirtyFlags
     {
         Clean,
-        Title       = 1 << 0,
-        Desc        = 1 << 1,
-        Points      = 1 << 2,
-        Author      = 1 << 3,
-        ID          = 1 << 4,
-        Badge       = 1 << 5,
-        Conditions  = 1 << 6,
-        Votes       = 1 << 7,
+        Title = 1 << 0,
+        Desc = 1 << 1,
+        Points = 1 << 2,
+        Author = 1 << 3,
+        ID = 1 << 4,
+        Badge = 1 << 5,
+        Conditions = 1 << 6,
+        Votes = 1 << 7,
         Description = 1 << 8,
 
         All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
     };
 
     Achievement() noexcept;
-    GSL_SUPPRESS(f.6) ~Achievement() noexcept;
+    GSL_SUPPRESS(f .6) ~Achievement() noexcept;
     Achievement(const Achievement&) noexcept = default;
     Achievement& operator=(const Achievement&) noexcept = default;
     Achievement(Achievement&&) noexcept = default;
@@ -48,7 +48,7 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    GSL_SUPPRESS(f.6) void SetActive(BOOL bActive) noexcept;
+    GSL_SUPPRESS(f .6) void SetActive(BOOL bActive) noexcept;
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;
@@ -107,8 +107,8 @@ public:
     void Reset() noexcept;
 
     // Returns the new char* offset after parsing.
-    GSL_SUPPRESS(f.6) const char*
-        ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
+    GSL_SUPPRESS(f .6)
+    const char* ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
 
 #ifndef RA_UTEST
     //	Parse from json element
@@ -132,11 +132,11 @@ public:
 protected:
     void ParseTrigger(const char* pTrigger);
 
-    void* m_pTrigger = nullptr;                        //  rc_trigger_t
+    void* m_pTrigger = nullptr;                                   //  rc_trigger_t
     std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; //  buffer for rc_trigger_t
 
 private:
-    ra::AchievementID m_nAchievementID;
+    ra::AchievementID m_nAchievementID{};
 
     ConditionSet m_vConditions; //  UI wrappers for trigger
 

@@ -46,6 +46,7 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     return false;
 }
 
+_Use_decl_annotations_
 void AchievementRuntime::Process(std::vector<Change>& changes) const
 {
     for (auto& pAchievement : m_vActiveAchievements)

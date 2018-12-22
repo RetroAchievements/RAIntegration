@@ -88,8 +88,8 @@ TEST_CLASS(ViewModelBase_Tests)
     private:
         std::string m_sLastPropertyChanged;
         std::wstring m_sOldValue, m_sNewValue;
-        int m_nOldValue, m_nNewValue;
-        bool m_bOldValue, m_bNewValue;
+        int m_nOldValue{}, m_nNewValue{};
+        bool m_bOldValue{}, m_bNewValue{};
     };
 
 public:

@@ -4,10 +4,7 @@
 
 MemManager g_MemManager;
 
-MemManager::~MemManager() noexcept
-{
-    ClearMemoryBanks();
-}
+MemManager::~MemManager() noexcept { ClearMemoryBanks(); }
 
 void MemManager::ClearMemoryBanks() noexcept
 {
@@ -25,9 +22,7 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
 
     m_nTotalBankSize += nBankSize;
 
-    m_Banks[nBankID].BankSize = nBankSize;
-    m_Banks[nBankID].Reader = pReader;
-    m_Banks[nBankID].Writer = pWriter;
+    m_Banks.try_emplace(nBankID, pReader, pWriter, nBankSize);
 }
 
 void MemManager::ChangeActiveMemBank(_UNUSED unsigned short) noexcept
@@ -35,19 +30,19 @@ void MemManager::ChangeActiveMemBank(_UNUSED unsigned short) noexcept
     ASSERT(!"Not Implemented!");
     return;
 
-    //if( m_Banks.find( nMemBank ) == m_Banks.end() )
+    // if( m_Banks.find( nMemBank ) == m_Banks.end() )
     //{
     //	ASSERT( !"Cannot find memory bank!" );
     //	return;
     //}
     //
-    //if( m_Candidates != nullptr )
+    // if( m_Candidates != nullptr )
     //{
     //	delete[] m_Candidates;
     //	m_Candidates = nullptr;
     //}
     //
-    //Reset( nMemBank, m_nComparisonSizeMode );
+    // Reset( nMemBank, m_nComparisonSizeMode );
 }
 
 std::vector<size_t> MemManager::GetBankIDs() const
@@ -101,19 +96,16 @@ unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) 
 
 unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 {
-    const BankData* bank = nullptr;
-
     auto bankID = 0U;
     const auto numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
-        bank = &m_Banks.at(bankID);
-        Expects(bank != nullptr);
+        const auto bank = &m_Banks.at(bankID);
+        if (bank == nullptr)
+            continue;
+
         if (nOffs < bank->BankSize)
-        {
-            Ensures(bank != nullptr);
             return bank->Reader(nOffs);
-        }
         nOffs -= bank->BankSize;
         bankID++;
     }
@@ -132,7 +124,7 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
     {
         if (bankID == numBanks)
         {
-            buffer ={};
+            buffer = {};
             return;
         }
 

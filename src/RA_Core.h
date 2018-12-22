@@ -29,8 +29,9 @@ _Success_(return ) _NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer
 extern BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize, DWORD* restrict pCharsReadOut,
                      FILE* restrict pFile) noexcept;
 
-// Read a string til the end of the string, or nChar. bTerminate==TRUE replaces that char with \0.
+/* clang-format off */
 GSL_SUPPRESS(f.23)
+/* clang-format on */
 extern char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept;
 extern void _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
 

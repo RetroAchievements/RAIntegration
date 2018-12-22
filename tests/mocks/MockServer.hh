@@ -64,7 +64,9 @@ public:
 
 protected:
     template<typename TApi>
+    /* clang-format off */
     GSL_SUPPRESS(f.6)
+    /* clang-format on */
     inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
         typename TApi::Response response;

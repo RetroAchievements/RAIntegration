@@ -110,6 +110,13 @@ public:
     void UpdateBookmarks(bool bForceWrite);
     inline auto AddBookmark(MemBookmark&& newBookmark)
     {
+        if (BookmarkExists(newBookmark.Address()))
+        {
+            auto duplicate = std::move(newBookmark); // move it so it can be destroyed
+            ::MessageBox(::GetActiveWindow(), _T("A bookmark with the same address has already been added"),
+                         _T("Error!"), MB_OK | MB_ICONERROR);
+            return;
+        }
         m_vBookmarks.push_back(std::move(newBookmark));
         Sort(); // sort after adding
     }
@@ -136,7 +143,7 @@ private:
     std::wstring ImportDialog();
 
 public:
-    auto BookmarkExists(const ra::ByteAddress& nAddr) const
+    bool BookmarkExists(const ra::ByteAddress& nAddr) const
     {
         // Should be sorted
         return (std::binary_search(m_vBookmarks.cbegin(), m_vBookmarks.cend(), nAddr));

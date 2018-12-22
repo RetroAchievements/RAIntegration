@@ -11,8 +11,10 @@ _NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
 
-[[ gsl::suppress(f .6), nodiscard ]] std::string Narrow(std::wstring&& wstr) noexcept;
-[[ gsl::suppress(f .6), nodiscard ]] std::wstring Widen(std::string&& str) noexcept;
+/* clang-format off */
+GSL_SUPPRESS(f.6) _NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
+GSL_SUPPRESS(f.6) _NODISCARD std::wstring Widen(std::string&& str) noexcept;
+/* clang-format on */
 
 //	No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
@@ -20,11 +22,13 @@ _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 
+/* clang-format off */
 /// <summary>
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
-GSL_SUPPRESS(f .6) std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
+GSL_SUPPRESS(f.6) std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
+/* clang-format on */
 
 // ----- ToString -----
 
@@ -37,7 +41,7 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
     }
     else if constexpr (std::is_enum_v<T>)
     {
-        return std::to_string(static_cast<std::underlying_type_t<T>>(value));
+        return std::to_string(etoi(value));
     }
     else
     {
@@ -329,35 +333,31 @@ public:
         while (*pFormat)
         {
             auto* pScan = pFormat;
-            Expects(pScan != nullptr);
-            while (*pScan && *pScan != '%')
+            if (pScan == nullptr)
             {
-                ++pScan;
-                Ensures(pScan != nullptr);
+                ::MessageBox(::GetActiveWindow(), _T("Invalid format string!"), _T("Error!"), MB_OK | MB_ICONERROR);
+                break;
             }
+            while (*pScan && *pScan != '%')
+                ++pScan;
 
             if (*pScan == '%')
             {
                 ++pScan;
                 AppendSubString(pFormat, pScan - pFormat);
-                Expects(pScan != nullptr);
                 if (*pScan == '%')
                 {
                     ++pScan;
-                    Ensures(pScan != nullptr);
                 }
                 else if (*pScan != '\0')
                 {
                     assert(!"not enough parameters provided");
-                    Ensures(pScan != nullptr);
                 }
             }
             else if (pScan > pFormat)
             {
                 AppendSubString(pFormat, pScan - pFormat);
-                Ensures(pScan != nullptr);
             }
-            Ensures(pScan != nullptr);
             pFormat = pScan;
         }
     }
@@ -366,22 +366,24 @@ public:
     void AppendPrintf(const CharT* const restrict pFormat, const T& restrict value, Ts&&... args)
     {
         auto* pScan = pFormat;
-        Expects(pScan != nullptr);
+        if (pScan == nullptr)
+        {
+            ::MessageBox(::GetActiveWindow(), _T("Invalid format string!"), _T("Error!"), MB_OK | MB_ICONERROR);
+            return;
+        }
+
         while (*pScan && *pScan != '%')
         {
             ++pScan;
-            Ensures(pScan != nullptr);
         }
 
         if (pScan > pFormat)
         {
             AppendSubString(pFormat, pScan - pFormat);
-            Ensures(pScan != nullptr);
         }
 
         if (*pScan == CharT()) // Dereferencing null pointers is bad
         {
-            Ensures(pScan != nullptr);
             return;
         }
         ++pScan;
@@ -389,17 +391,14 @@ public:
         {
             case '\0':
                 AppendSubString(pScan - 1, 1);
-                Ensures(pScan != nullptr);
                 break;
             case '%':
                 AppendSubString(pScan - 1, 1);
                 AppendPrintf(++pScan, value, std::forward<Ts>(args)...);
-                Ensures(pScan != nullptr);
                 break;
             case 'l': // assume ll, or li
             case 'z': // assume zu
                 ++pScan;
-                Ensures(pScan != nullptr);
                 _FALLTHROUGH;
             case 's':
             case 'd':
@@ -408,28 +407,24 @@ public:
             case 'g':
                 Append(value);
                 AppendPrintf(++pScan, std::forward<Ts>(args)...);
-                Ensures(pScan != nullptr);
                 break;
 
             default:
                 std::string sFormat;
-                Expects(pScan != nullptr);
                 const CharT* pStart = pScan;
                 while (*pScan)
                 {
-                    const char c = static_cast<char>(*pScan);
+                    const char c = gsl::narrow<char>(*pScan);
                     sFormat.push_back(c);
                     if (isalpha(c))
                         break;
 
                     ++pScan;
-                    Ensures(pScan != nullptr);
                 }
 
                 if (!*pScan)
                 {
                     AppendSubString(pStart, pScan - pStart);
-                    Ensures(pScan != nullptr);
                     break;
                 }
 
@@ -440,24 +435,21 @@ public:
                     sFormat.pop_back(); // remove '*'
                     sFormat.append(ra::ToString(value));
                     sFormat.push_back(c); // replace 's'/'x'
-                    Expects(pScan != nullptr);
+
                     if constexpr (sizeof...(args) > 0)
                     {
                         AppendPrintfParameterizedFormat(++pScan, sFormat, std::forward<Ts>(args)...);
-                        Ensures(pScan != nullptr);
                     }
                     else
                     {
                         assert(!"not enough parameters provided");
                         Append(sFormat);
-                        Ensures(pScan != nullptr);
                     }
                 }
                 else
                 {
                     AppendFormat(value, sFormat);
                     AppendPrintf(++pScan, std::forward<Ts>(args)...);
-                    Ensures(pScan != nullptr);
                 }
                 break;
         }
@@ -569,7 +561,7 @@ std::wstring BuildWString(Ts&&... args)
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
 _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const __restrict sFormat, Ts&&... args)
 {
-    assert(sFormat != nullptr);
+    Expects(sFormat != nullptr);
 
     if constexpr (std::is_same_v<CharT, char>)
     {
@@ -633,17 +625,20 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
     return ret;
 } /* end function tcslen_s */
 
+/* clang - format off */ 
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-[[ gsl::suppress(f .6), nodiscard ]] bool StringStartsWith(_In_ const std::wstring& sString,
-                                                           _In_ const std::wstring& sMatch) noexcept;
+GSL_SUPPRESS(f.6) _NODISCARD bool
+StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-[[ gsl::suppress(f .6), nodiscard ]] bool StringEndsWith(_In_ const std::wstring& sString,
-                                                         _In_ const std::wstring& sMatch) noexcept;
+GSL_SUPPRESS(f.6)
+_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+/* clang - format on */
 
 } // namespace ra
 

@@ -98,10 +98,14 @@ protected:
                 return;
         }
 
-        GSL_SUPPRESS(f.6) vEntries.emplace_back(pTrigger, nId);
+        /* clang-format off */
+        GSL_SUPPRESS(f.6)
+        /* clang-format on */ vEntries.emplace_back(pTrigger, nId);
     }
 
-    GSL_SUPPRESS(f.6) static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
     {
         for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {

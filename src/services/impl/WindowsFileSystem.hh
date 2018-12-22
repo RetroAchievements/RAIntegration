@@ -15,7 +15,9 @@ namespace impl {
 class WindowsFileSystem : public IFileSystem
 {
 public:
-    GSL_SUPPRESS(f.6) WindowsFileSystem() noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ WindowsFileSystem() noexcept;
 
     const std::wstring& BaseDirectory() const noexcept override { return m_sBaseDirectory; }
     bool DirectoryExists(const std::wstring& sDirectory) const noexcept override;

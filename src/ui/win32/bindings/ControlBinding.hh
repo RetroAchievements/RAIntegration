@@ -35,19 +35,22 @@ public:
     {
         SetHWND(pDialog, GetDlgItem(pDialog.GetHWND(), nControlResourceId));
     }
-
+    
+    /* clang-format off */
     /// <summary>
     /// Associates the control for binding.
     /// </summary>
     /// <param name="pDialog">The dialog containing the control.</param>
     /// <param name="hControl">The control handle.</param>
     GSL_SUPPRESS(f.6) virtual void SetHWND(DialogBase& pDialog, HWND hControl)
+    /* clang-format on */
     {
         m_hWnd = hControl;
         m_pDialog = &pDialog;
         m_pDialog->AddControlBinding(hControl, *this);
     }
     
+    /* clang-format off */
     /// <summary>
     /// Called when the bound control loses keyboard focus.
     /// </summary>
@@ -57,6 +60,7 @@ public:
     /// Called when the bound control's command is activated.
     /// </summary>
     GSL_SUPPRESS(f.6) virtual void OnCommand() {}
+    /* clang-format on */
 
 protected:
     HWND m_hWnd{};

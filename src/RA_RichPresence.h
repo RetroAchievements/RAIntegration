@@ -12,7 +12,9 @@
 class RA_RichPresenceInterpreter
 {
 public:
-    GSL_SUPPRESS(f.6) bool Load(); /*Test won't throw but Integration might*/
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ bool Load(); /*Test won't throw but Integration might*/
     std::string GetRichPresenceString();
 
     bool Enabled() const noexcept { return !m_vDisplayStrings.empty(); }

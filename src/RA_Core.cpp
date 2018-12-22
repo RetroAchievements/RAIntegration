@@ -1345,7 +1345,9 @@ char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) 
     return (pStartString);
 }
 
+/* clang-format off */
 GSL_SUPPRESS(f.23)
+/* clang-format on */
 void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 {
     Expects(pSource != nullptr);

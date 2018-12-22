@@ -30,8 +30,10 @@ public:
         virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
     };
 
+    /* clang-format off */
     GSL_SUPPRESS(f.6) void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.insert(&pTarget); }
     GSL_SUPPRESS(f.6) void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
+    /* clang-format on */
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
@@ -125,7 +127,7 @@ private:
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's impossible to create a set of
     /// <c>NotifyTarget</c> references.
     /// </summary>
-	NotifyTargetSet m_vNotifyTargets;
+    NotifyTargetSet m_vNotifyTargets;
 };
 
 } // namespace ui

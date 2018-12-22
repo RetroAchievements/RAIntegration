@@ -31,7 +31,9 @@ public:
     };
 
     Achievement() noexcept;
-    GSL_SUPPRESS(f.6) ~Achievement() noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ ~Achievement() noexcept;
     Achievement(const Achievement&) noexcept = default;
     Achievement& operator=(const Achievement&) noexcept = default;
     Achievement(Achievement&&) noexcept = default;
@@ -48,7 +50,9 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    GSL_SUPPRESS(f.6) void SetActive(BOOL bActive) noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ void SetActive(BOOL bActive) noexcept;
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;
@@ -107,7 +111,9 @@ public:
     void Reset() noexcept;
 
     // Returns the new char* offset after parsing.
-    GSL_SUPPRESS(f.6) const char*
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ const char*
         ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
 
 #ifndef RA_UTEST
@@ -151,16 +157,16 @@ private:
     BOOL m_bPauseOnTrigger{};
     BOOL m_bPauseOnReset{};
 
-    //	Progress:
-    BOOL m_bProgressEnabled{}; //	on/off
+    // Progress:
+    BOOL m_bProgressEnabled{}; // on/off
 
-    std::string m_sProgress;    //	How to calculate the progress so far (syntactical)
-    std::string m_sProgressMax; //	Upper limit of the progress (syntactical? value?)
-    std::string m_sProgressFmt; //	Format of the progress to be shown (currency? step?)
+    std::string m_sProgress;    // How to calculate the progress so far (syntactical)
+    std::string m_sProgressMax; // Upper limit of the progress (syntactical? value?)
+    std::string m_sProgressFmt; // Format of the progress to be shown (currency? step?)
 
-    float m_fProgressLastShown{}; //	The last shown progress
+    float m_fProgressLastShown{}; // The last shown progress
 
-    DirtyFlags m_nDirtyFlags{}; //	Use for rendering when editing.
+    DirtyFlags m_nDirtyFlags{}; // Use for rendering when editing.
 
     time_t m_nTimestampCreated{};
     time_t m_nTimestampModified{};

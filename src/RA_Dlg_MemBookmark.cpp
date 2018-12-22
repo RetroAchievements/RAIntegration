@@ -306,7 +306,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
                 else if (pnmhdr->code == NM_DBLCLK)
                 {
-                    const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(pnmhdr);
+                    // const NMITEMACTIVATE* const
+                    const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
 
                     using namespace ra::rel_ops;
                     if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))
@@ -335,9 +336,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
         switch (id)
         {
             case IDOK:
-                [[fallthrough]];
             case IDCLOSE:
-                [[fallthrough]];
             case IDCANCEL:
                 return EndDialog(hDlg, IDCANCEL);
 
@@ -555,11 +554,11 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
     }
     m_nNumOccupiedRows = 0;
 
-#if _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     if (ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER) != 0UL)
         ::MessageBox(::GetActiveWindow(), _T("The styles specified could not be set."), _T("Error!"),
                      MB_OK | MB_ICONERROR);
-#endif // _WIN32_WINNT >= _WIN32_WINNT_LONGHORN
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 }
 
 void Dlg_MemBookmark::AddAddress()

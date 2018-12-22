@@ -25,7 +25,9 @@ private:
     class LoginViewModelHarness : public LoginViewModel
     {
     public:
+        /* clang-format off */
         GSL_SUPPRESS(f.6) LoginViewModelHarness() : LoginViewModel(L"User") {}
+        /* clang-format on */
 
         MockConfiguration mockConfiguration;
         MockDesktop mockDesktop;

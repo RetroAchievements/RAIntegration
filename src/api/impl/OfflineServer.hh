@@ -11,7 +11,10 @@ class OfflineServer : public ServerBase
 public:
     const char* Name() const noexcept override { return "offline client"; }
 
-    GSL_SUPPRESS(f.6) Login::Response Login(const Login::Request& request) noexcept override;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */
+    Login::Response Login(const Login::Request& request) noexcept override;
     Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
 };
 

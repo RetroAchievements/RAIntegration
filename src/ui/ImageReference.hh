@@ -102,10 +102,12 @@ public:
         }
     }
 
+    /* clang-format off */
     /// <summary>
     /// Releases this reference image.
     /// </summary>
     GSL_SUPPRESS(f.6) void Release() noexcept
+    /* clang-format on */
     {
         if (m_nType != ImageType::None)
         {

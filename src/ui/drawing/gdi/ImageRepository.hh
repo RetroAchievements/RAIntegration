@@ -21,7 +21,10 @@ class ImageRepository : public IImageRepository
 public:
     ImageRepository() noexcept(std::is_nothrow_default_constructible_v<HBitmapMap> &&
                                std::is_nothrow_default_constructible_v<std::set<std::wstring>>) = default;
-    GSL_SUPPRESS(f.6) ~ImageRepository() noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */
+    ~ImageRepository() noexcept;
     ImageRepository(const ImageRepository&) = delete;
     ImageRepository& operator=(const ImageRepository&) = delete;
     ImageRepository(ImageRepository&&) = delete;
@@ -40,7 +43,10 @@ public:
     void FetchImage(ImageType nType, const std::string& sName) override;
 
     void AddReference(ImageReference& pImage) override;
-    GSL_SUPPRESS(f.6) void ReleaseReference(ImageReference& pImage) noexcept override;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */
+    void ReleaseReference(ImageReference& pImage) noexcept override;
 
     bool HasReferencedImageChanged(ImageReference& pImage) const override;
 

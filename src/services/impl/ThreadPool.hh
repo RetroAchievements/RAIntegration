@@ -25,7 +25,9 @@ public:
     ThreadPool(ThreadPool&&) noexcept                 = delete;
     ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
-    GSL_SUPPRESS(f.6) void Initialize(size_t nThreads) noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ void Initialize(size_t nThreads) noexcept;
 
     void RunAsync(std::function<void()>&& f) override
     {
@@ -95,7 +97,9 @@ public:
         }
     }
 
-    GSL_SUPPRESS(f.6) void Shutdown(bool bWait) noexcept override;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */ void Shutdown(bool bWait) noexcept override;
 
     bool IsShutdownRequested() const noexcept override { return m_bShutdownInitiated; }
 

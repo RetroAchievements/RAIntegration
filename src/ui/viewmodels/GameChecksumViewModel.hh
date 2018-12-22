@@ -11,7 +11,10 @@ namespace viewmodels {
 class GameChecksumViewModel : public WindowViewModelBase
 {
 public:
-    GSL_SUPPRESS(f.6) GameChecksumViewModel() noexcept;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */
+    GameChecksumViewModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.

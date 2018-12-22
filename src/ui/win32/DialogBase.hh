@@ -67,6 +67,7 @@ protected:
     /// </summary>
     _NODISCARD virtual INT_PTR CALLBACK DialogProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
+    /* clang-format off */
     /// <summary>
     /// Called when the window is created, but before it is shown.
     /// </summary>
@@ -78,6 +79,8 @@ protected:
     /// Called when the window is shown.
     /// </summary>
     GSL_SUPPRESS(f.6) virtual void OnShown() {}
+    /* clang-format on */
+
 
     /// <summary>
     /// Called when the window is destroyed.
@@ -125,10 +128,17 @@ private:
     friend class ra::ui::win32::bindings::ControlBinding;
     void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding) noexcept
     {
+        /* clang-format off */
         GSL_SUPPRESS(f.6) m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
+        /* clang-format on */
     }
 
-    void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS(f .6) m_mControlBindings.erase(hControl); }
+    void RemoveControlBinding(HWND hControl) noexcept
+    {   
+        /* clang-format off */
+        GSL_SUPPRESS(f.6) m_mControlBindings.erase(hControl);
+        /* clang-format on */
+    }
 
     ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
     {

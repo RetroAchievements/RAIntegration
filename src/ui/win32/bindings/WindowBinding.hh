@@ -63,7 +63,10 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
 protected:
-    GSL_SUPPRESS(f.6) void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
+    /* clang-format off */
+    GSL_SUPPRESS(f.6)
+    /* clang-format on */
+    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
 

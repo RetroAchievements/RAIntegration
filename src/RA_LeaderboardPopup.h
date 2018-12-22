@@ -18,8 +18,12 @@ class LeaderboardPopup
 
 public:
     void Update(_In_ float fDelta);
-    GSL_SUPPRESS(con.4) // line 249
+    /* clang-format off */
+    // Mark nTextColorr as const. It's assigned so it can't be const.
+    // Comment the suppression out if changes are made then put it back if it still gives a false alarm
+    GSL_SUPPRESS(con.4) 
     void Render(_In_ ra::ui::drawing::ISurface& pSurface);
+    /* clang-format on */
 
     void Reset();
     BOOL Activate(_In_ ra::LeaderboardID nLBID);

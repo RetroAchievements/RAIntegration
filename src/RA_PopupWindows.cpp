@@ -6,9 +6,12 @@ PopupWindows g_PopupWindows;
 AchievementPopup PopupWindows::m_AchievementPopups;
 LeaderboardPopup PopupWindows::m_LeaderboardPopups;
 
-//	Stubs for non-class based, indirect calling of these functions.
+// Stubs for non-class based, indirect calling of these functions.
 _Use_decl_annotations_
-API int _RA_UpdatePopups(_UNUSED ControllerInput* __restrict input, float fDTime, _UNUSED bool Full_Screen, bool Paused)
+/* clang-format off */
+GSL_SUPPRESS(con.3)
+/* clang-format on */
+API int _RA_UpdatePopups(_UNUSED ControllerInput* restrict, float fDTime, _UNUSED bool, bool Paused)
 {
     if (Paused)
         fDTime = 0.0F;
@@ -18,10 +21,15 @@ API int _RA_UpdatePopups(_UNUSED ControllerInput* __restrict input, float fDTime
 }
 
 _Use_decl_annotations_
-API int _RA_RenderPopups(HDC hDC, RECT* __restrict rcSize)
+/* clang-format off */
+GSL_SUPPRESS(con.3)
+/* clang-format on */
+API int _RA_RenderPopups(HDC hDC, RECT* restrict rcSize)
 {
     if (!g_AchievementOverlay.IsFullyVisible())
         PopupWindows::Render(hDC, rcSize);
 
     return 0;
 }
+
+

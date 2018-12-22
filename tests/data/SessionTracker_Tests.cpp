@@ -25,10 +25,13 @@ public:
     class SessionTrackerHarness : public SessionTracker
     {
     public:
+        /* clang-format off */
         GSL_SUPPRESS(f.6) SessionTrackerHarness(const char* sUsername = "User") noexcept
             : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
         {
         }
+        /* clang-format on */
+
 
         ra::api::mocks::MockServer mockServer;
         ra::data::mocks::MockGameContext mockGameContext;

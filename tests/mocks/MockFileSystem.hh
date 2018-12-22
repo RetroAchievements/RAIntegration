@@ -14,10 +14,12 @@ namespace mocks {
 class MockFileSystem : public IFileSystem
 {
 public:
+    /* clang-format off */
     GSL_SUPPRESS(f.6) MockFileSystem() noexcept 
         : m_Override(this)
     {
     }
+    /* clang-format on */
 
     const std::wstring& BaseDirectory() const noexcept override { return m_sBaseDirectory; }
     void SetBaseDirectory(const std::wstring& sBaseDirectory)

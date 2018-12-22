@@ -6,8 +6,10 @@
 
 namespace ra {
 namespace api {
-
-GSL_SUPPRESS(f.6) static ra::api::IServer& Server() noexcept /*Service expected to exist*/
+/* clang-format off */
+GSL_SUPPRESS(f.6)
+/* clang-format on */
+static ra::api::IServer& Server() noexcept
 {
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }

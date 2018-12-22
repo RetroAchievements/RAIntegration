@@ -73,11 +73,13 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 
 namespace ra {
 
-GSL_SUPPRESS(f .6) inline static void LogErrno() noexcept
+inline static void LogErrno() noexcept
 {
     char buf[2048U]{};
     strerror_s(buf, errno);
-    RA_LOG("Error: %s", buf);
+    /* clang-format off */
+    GSL_SUPPRESS(f.6) RA_LOG("Error: %s", buf);
+    /* clang-format on */
 }
 
 } /* namespace ra */

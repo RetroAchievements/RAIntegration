@@ -223,7 +223,7 @@ bool SessionTracker::IsInspectingMemory() const noexcept
 static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
 {
     bool bResult = false;
-    pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement)
+    pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
     {
         if (pAchievement.Category() == static_cast<unsigned int>(AchievementSet::Type::Core))
         {

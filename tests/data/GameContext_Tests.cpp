@@ -97,7 +97,7 @@ public:
 
         game.LoadGame(1U);
 
-        auto* pAch1 = game.FindAchievement(5U);
+        const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
         Assert::AreEqual(std::string("Ach1"), pAch1->Title());
         Assert::AreEqual(std::string("Desc1"), pAch1->Description());
@@ -109,7 +109,7 @@ public:
         Assert::AreEqual(5U, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->CreateMemString());
 
-        auto* pAch2 = game.FindAchievement(7U);
+        const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
         Assert::AreEqual(std::string("Ach2"), pAch2->Title());
         Assert::AreEqual(std::string("Desc2"), pAch2->Description());
@@ -162,7 +162,7 @@ public:
 
         game.LoadGame(1U);
 
-        auto* pAch1 = game.FindAchievement(5U);
+        const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
         Assert::AreEqual(std::string("Ach1"), pAch1->Title());
         Assert::AreEqual(std::string("Desc1"), pAch1->Description());
@@ -174,7 +174,7 @@ public:
         Assert::AreEqual(5U, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->CreateMemString());
 
-        auto* pAch2 = game.FindAchievement(7U);
+        const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
         Assert::AreEqual(std::string("Ach2b"), pAch2->Title());
         Assert::AreEqual(std::string("Desc2b"), pAch2->Description());
@@ -186,7 +186,7 @@ public:
         Assert::AreEqual(25U, pAch2->Points());
         Assert::AreEqual(std::string("1=2"), pAch2->CreateMemString());
 
-        auto* pAch3 = game.FindAchievement(0U);
+        const auto* pAch3 = game.FindAchievement(0U);
         Assert::IsNotNull(pAch3);
         Assert::AreEqual(std::string("Ach3"), pAch3->Title());
         Assert::AreEqual(std::string("Desc3"), pAch3->Description());
@@ -226,11 +226,11 @@ public:
         game.LoadGame(1U);
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
 
-        auto* pAch1 = game.FindAchievement(5U);
+        const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
         Assert::IsTrue(pAch1->Active());
 
-        auto* pAch2 = game.FindAchievement(7U);
+        const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
         Assert::IsFalse(pAch2->Active());
     }

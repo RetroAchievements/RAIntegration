@@ -86,7 +86,7 @@ bool AchievementSet::RemoveAchievement(const Achievement* pAchievement)
     return false;
 }
 
-Achievement* AchievementSet::Find(unsigned int nAchievementID)
+Achievement* AchievementSet::Find(unsigned int nAchievementID) const noexcept
 {
     for (auto pAchievement : m_Achievements)
         if (pAchievement->ID() == nAchievementID)
@@ -266,7 +266,7 @@ bool AchievementSet::SaveToFile() const
     return true;
 }
 
-bool AchievementSet::HasUnsavedChanges()
+bool AchievementSet::HasUnsavedChanges() const noexcept
 {
     for (auto pAchievement : m_Achievements)
     {

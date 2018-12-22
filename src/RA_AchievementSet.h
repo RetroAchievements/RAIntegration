@@ -48,7 +48,7 @@ public:
     }
 
     //	Find achievement with ID, or nullptr if it can't be found.
-    Achievement* Find(unsigned int nID);
+    Achievement* Find(unsigned int nID) const noexcept;
 
     //	Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
@@ -63,7 +63,7 @@ public:
     bool ProcessingActive() const noexcept { return m_bProcessingActive; }
     void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
 
-    bool HasUnsavedChanges();
+    bool HasUnsavedChanges() const noexcept;
 
     // ranged-for
     inline auto begin() noexcept { return m_Achievements.begin(); }

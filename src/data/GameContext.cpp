@@ -266,7 +266,7 @@ void GameContext::MergeLocalAchievements()
     }
 }
 
-Achievement& GameContext::NewAchievement(AchievementSet::Type nType) noexcept
+Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
 {
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
     pAchievement.SetCategory(ra::etoi(nType));

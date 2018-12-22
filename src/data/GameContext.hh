@@ -63,7 +63,7 @@ public:
     /// <remarks>
     /// <paramref name="callback" /> is called for each known achievement. If it returns <c>false</c> enumeration stops.
     /// </remarks>
-    void EnumerateAchievements(std::function<bool(const Achievement&)> callback) const noexcept
+    void EnumerateAchievements(std::function<bool(const Achievement&)> callback) const
     {
         for (auto& pAchievement : m_vAchievements)
         {
@@ -87,7 +87,7 @@ public:
         return nullptr;
     }
 
-    Achievement& NewAchievement(AchievementSet::Type nType) noexcept;
+    Achievement& NewAchievement(AchievementSet::Type nType);
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.

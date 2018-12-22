@@ -736,6 +736,8 @@ public:
         Assert::AreEqual(BIG_BLOCK_SIZE - 1, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xFFU, result.nValue);
+
+        memory.reset();
     }
 
     TEST_METHOD(TestInitializeFromMemorySixteenBitLargeMemory)
@@ -770,6 +772,8 @@ public:
         Assert::AreEqual(BIG_BLOCK_SIZE - 2, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xFFFEU, result.nValue);
+
+        memory.reset();
     }
 };
 

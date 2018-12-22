@@ -397,13 +397,16 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        if (!m_bActive)
-            pRuntime.DeactivateAchievement(ID());
-        else if (m_bPauseOnReset)
-            pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
-        else
-            pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            if (!m_bActive)
+                pRuntime.DeactivateAchievement(ID());
+            else if (m_bPauseOnReset)
+                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+            else
+                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        }
     }
 }
 

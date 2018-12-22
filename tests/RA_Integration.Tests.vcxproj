@@ -208,6 +208,7 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
+    <ClCompile Include="data\GameContext_Tests.cpp" />
     <ClCompile Include="data\SessionTracker_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClInclude Include="..\src\RA_Achievement.h" />

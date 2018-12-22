@@ -337,25 +337,6 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-void DownloadAndActivateAchievementData(unsigned int nGameID)
-{
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    pGameContext.LoadGame(nGameID);
-
-    //g_pCoreAchievements->Clear();
-    //g_pUnofficialAchievements->Clear();
-    //g_pLocalAchievements->Clear();
-
-    //// fetch remotely then load from file
-    //AchievementSet::FetchFromWebBlocking(nGameID);
-
-    //g_pCoreAchievements->LoadFromFile(nGameID);
-    //g_pUnofficialAchievements->LoadFromFile(nGameID);
-    //g_pLocalAchievements->LoadFromFile(nGameID);
-
-    //ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
-}
-
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
@@ -409,7 +390,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.SetGameHash(sCurrentROMMD5);
 
-    if (nGameID != 0)
+    if (nGameID != 0U)
     {
         if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
         {
@@ -422,7 +403,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     {
         ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
 
-        pGameContext.LoadGame(0);
+        pGameContext.LoadGame(0U);
     }
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -1034,7 +1015,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
             else
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                 if (pGameContext.GameId() != 0)
                 {
                     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -1054,9 +1035,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 _RA_ResetEmulation();
                 _RA_OnReset();
 
-                // if a game was loaded, redownload the associated data
-                if (pGameContext.GameId() != 0)
-                    DownloadAndActivateAchievementData(pGameContext.GameId());
+                // redownload the associated game data (if any)
+                pGameContext.LoadGame(pGameContext.GameId());
             }
 
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();

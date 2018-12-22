@@ -10,7 +10,7 @@ namespace api {
 class FetchUserUnlocks
 {
 public:
-    static constexpr const char* const Name() noexcept { return "FetchGameData"; }
+    static constexpr const char* const Name() noexcept { return "FetchUserUnlocks"; }
 
     struct Response : ApiResponseBase
     {

@@ -57,8 +57,10 @@ void GameContext::LoadGame(unsigned int nGameId)
 #endif
     }
 
+#ifndef RA_UTEST
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     pLeaderboardManager.Clear();
+#endif
 
     if (nGameId == 0)
     {
@@ -76,7 +78,9 @@ void GameContext::LoadGame(unsigned int nGameId)
         return;
     }
 
+#ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+#endif
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
     // game properties
@@ -107,8 +111,10 @@ void GameContext::LoadGame(unsigned int nGameId)
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 
+#ifndef RA_UTEST
         // prefetch the achievement image
         pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
+#endif
 
         if (pAchievementData.CategoryId == static_cast<unsigned int>(AchievementSet::Type::Core))
         {
@@ -118,6 +124,7 @@ void GameContext::LoadGame(unsigned int nGameId)
     }
 
     // leaderboards
+#ifndef RA_UTEST
     for (const auto& pLeaderboardData : response.Leaderboards)
     {
         RA_Leaderboard leaderboard(pLeaderboardData.Id);
@@ -127,6 +134,7 @@ void GameContext::LoadGame(unsigned int nGameId)
 
         pLeaderboardManager.AddLeaderboard(std::move(leaderboard));
     }
+#endif
 
     // merge local achievements
     MergeLocalAchievements();
@@ -148,7 +156,9 @@ void GameContext::LoadGame(unsigned int nGameId)
             vLockedAchievements.erase(nUnlockedAchievement);
 
         // activate any core achievements the player hasn't earned and pre-fetch the locked image
+#ifndef RA_UTEST
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+#endif
         for (auto nAchievementId : vLockedAchievements)
         {
             auto* pAchievement = FindAchievement(nAchievementId);
@@ -156,8 +166,10 @@ void GameContext::LoadGame(unsigned int nGameId)
             {
                 pAchievement->SetActive(true);
 
+#ifndef RA_UTEST
                 if (!pAchievement->BadgeImageURI().empty())
                     pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
+#endif
             }
         }
 

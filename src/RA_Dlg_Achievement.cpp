@@ -528,11 +528,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             "This will overwrite any changes that you have made with fresh achievements from the server";
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
-                                DownloadAndActivateAchievementData(nGameID);
+                                pGameContext.LoadGame(nGameID);
 
                                 //  Refresh dialog contents:
                                 OnLoad_NewRom(nGameID);

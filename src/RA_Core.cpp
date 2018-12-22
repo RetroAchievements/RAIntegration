@@ -15,16 +15,17 @@
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_GameTitle.h"
-#include "RA_Dlg_Login.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
 #include "api\Logout.hh"
+#include "api\ResolveHash.hh"
 
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
@@ -37,6 +38,7 @@
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -364,18 +366,15 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     unsigned int nGameID = 0U;
     if (pROM != nullptr)
     {
-        //	Fetch the gameID from the DB here:
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
-        PostArgs args;
-        args['u'] = pUserContext.GetUsername();
-        args['t'] = pUserContext.GetApiToken();
-        args['m'] = sCurrentROMMD5;
+        // Fetch the gameID from the DB
+        ra::api::ResolveHash::Request request;
+        request.Hash = sCurrentROMMD5;
 
-        rapidjson::Document doc;
-        if (RAWeb::DoBlockingRequest(RequestGameID, args, doc))
+        const auto response = request.Call();
+        if (response.Succeeded())
         {
-            nGameID = doc["GameID"].GetUint();
-            if (nGameID == 0) //	Unknown
+            nGameID = response.GameId;
+            if (nGameID == 0) // Unknown
             {
                 RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
                 char buffer[64];
@@ -391,11 +390,10 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         }
         else
         {
-            //	Some other fatal error... panic?
-            ASSERT(!"Unknown error from requestgameid.php");
-
-            std::wstring sErrorMessage = L"Error from " + ra::Widen(_RA_HostName());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage.c_str());
+            std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
+            if (sErrorMessage.empty())
+                sErrorMessage = ra::StringPrintf(L"Error from %s" , _RA_HostName());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage);
         }
     }
 
@@ -1001,9 +999,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_LOGIN:
-            RA_Dlg_Login::DoModalLogin();
-            ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+        {
+            ra::ui::viewmodels::LoginViewModel vmLogin;
+            vmLogin.ShowModal();
             break;
+        }
 
         case IDM_RA_FILES_LOGOUT:
         {
@@ -1225,9 +1225,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         if (!g_bRAMTamperedWith)
-        {
-            g_pCoreAchievements->SaveProgress(sFilename);
-        }
+            ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
     }
 }
 
@@ -1243,11 +1241,14 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
             DisableHardcoreMode();
         }
 
-        g_pCoreAchievements->LoadProgress(sFilename);
+        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
+
+        for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
+            g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 }
 
@@ -1417,42 +1418,42 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 std::string GetFolderFromDialog()
 {
-    auto lpbi{ std::make_unique<BROWSEINFO>() };
-    lpbi->hwndOwner = ::GetActiveWindow();
+    BROWSEINFO bi{};
+    bi.hwndOwner = ::GetActiveWindow();
 
-    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
-    lpbi->pszDisplayName = pDisplayName.get();
-    lpbi->lpszTitle = _T("Select ROM folder...");
+    std::array<TCHAR, RA_MAX_PATH> pDisplayName{};
+    bi.pszDisplayName = pDisplayName.data();
+    bi.lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
         return std::string();
 
-    lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
-    lpbi->lpfn    = ra::BrowseCallbackProc;
-    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+    bi.lpfn    = ra::BrowseCallbackProc;
+    bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {
         const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
         {
-            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            ::CoTaskMemFree(lpItemIdList);
             lpItemIdList = nullptr;
         };
 
         using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
         if (!owner)
         {
             ::OleUninitialize();
             return std::string();
         }
 
-        if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
+        if (::SHGetPathFromIDList(owner.get(), bi.pszDisplayName) == 0)
         {
             ::OleUninitialize();
             return std::string();
         }
-        ret = ra::Narrow(lpbi->pszDisplayName);
+        ret = ra::Narrow(bi.pszDisplayName);
     }
     ::OleUninitialize();
     return ret;

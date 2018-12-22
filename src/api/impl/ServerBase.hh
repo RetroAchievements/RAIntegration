@@ -3,6 +3,7 @@
 #include "api/IServer.hh"
 
 #include "ra_fwd.h"
+#include "RA_StringUtils.h"
 
 #include <string>
 
@@ -34,6 +35,11 @@ public:
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }
 
+    GSL_SUPPRESS(f.6) ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override
+    {
+        return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
+    }
+
 protected:
     template<typename TResponse>
     GSL_SUPPRESS(f.6) 
@@ -42,7 +48,7 @@ protected:
         static_assert(std::is_base_of<ApiResponseBase, TResponse>::value, "TResponse must derive from ApiResponseBase");
 
         TResponse response;
-        response.Result       = ApiResult::Unsupported;
+        response.Result = ApiResult::Unsupported;
         response.ErrorMessage = ra::StringPrintf("%s is not supported by %s.", apiName, Name());
         return std::move(response);
     }

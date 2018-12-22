@@ -501,20 +501,17 @@ static unsigned long long ParseVersion(const char* sVersion) noexcept
     if (*pPart == '.')
     {
         ++pPart;
-        Ensures(pPart != nullptr);
     }
     const auto minor = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
     {
         ++pPart;
-        Ensures(pPart != nullptr);
     }
 
     const auto patch = strtoul(pPart, &pPart, 10);
     if (*pPart == '.')
     {
         ++pPart;
-        Ensures(pPart != nullptr);
     }
 
     const auto revision = strtoul(pPart, &pPart, 10);

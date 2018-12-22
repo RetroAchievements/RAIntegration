@@ -565,7 +565,7 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
 class Tokenizer
 {
 public:
-    Tokenizer(const std::string& sString) : m_sString(sString) {}
+    Tokenizer(const std::string& sString) noexcept : m_sString(sString) {}
 
     /// <summary>
     /// Returns <c>true</c> if the entire string has been processed.
@@ -575,7 +575,7 @@ public:
     /// <summary>
     /// Returns the next character without advancing the position.
     /// </summary>
-    char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+    GSL_SUPPRESS(f.6) char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
 
     /// <summary>
     /// Get the current position of the cursor within the string.
@@ -585,12 +585,12 @@ public:
     /// <summary>
     /// Sets the cursor position.
     /// </summary>
-    void Seek(size_t nPosition) { m_nPosition = std::min(nPosition, m_sString.length()); }
+    void Seek(size_t nPosition) noexcept { m_nPosition = std::min(nPosition, m_sString.length()); }
 
     /// <summary>
     /// Advances the cursor one character.
     /// </summary>
-    void Advance()
+    void Advance() noexcept
     {
         if (m_nPosition < m_sString.length())
             ++m_nPosition;
@@ -599,7 +599,7 @@ public:
     /// <summary>
     /// Advances the cursor the specified number of characters.
     /// </summary>
-    void Advance(size_t nCount)
+    void Advance(size_t nCount) noexcept
     {
         m_nPosition += nCount;
         if (m_nPosition > m_sString.length())
@@ -622,7 +622,7 @@ public:
     /// </summary>
     std::string ReadTo(char cStop)
     {
-        size_t nStart = m_nPosition;
+        const size_t nStart = m_nPosition;
         AdvanceTo(cStop);
         return std::string(m_sString, nStart, m_nPosition - nStart);
     }
@@ -636,7 +636,7 @@ public:
             return 0;
 
         char* pEnd;
-        auto nResult = strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+        const auto nResult = strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
         m_nPosition = pEnd - m_sString.c_str();
         return nResult;
     }
@@ -656,7 +656,7 @@ public:
     /// <summary>
     /// Gets the raw pointer to the specified offset within the string.
     /// </summary>
-    const char* GetPointer(size_t nPosition) const noexcept
+    GSL_SUPPRESS(f.6) const char* GetPointer(size_t nPosition) const noexcept
     {
         if (nPosition >= m_sString.length())
             return &m_sString.back() + 1;

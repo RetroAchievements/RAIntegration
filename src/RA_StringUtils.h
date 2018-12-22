@@ -560,6 +560,117 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     }
 }
 
+// ----- string parsing -----
+
+class Tokenizer
+{
+public:
+    Tokenizer(const std::string& sString) : m_sString(sString) {}
+
+    /// <summary>
+    /// Returns <c>true</c> if the entire string has been processed.
+    /// </summary>
+    bool EndOfString() const noexcept { return m_nPosition >= m_sString.length(); }
+
+    /// <summary>
+    /// Returns the next character without advancing the position.
+    /// </summary>
+    char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+
+    /// <summary>
+    /// Get the current position of the cursor within the string.
+    /// </summary>
+    size_t CurrentPosition() const noexcept { return m_nPosition; }
+
+    /// <summary>
+    /// Sets the cursor position.
+    /// </summary>
+    void Seek(size_t nPosition) { m_nPosition = std::min(nPosition, m_sString.length()); }
+
+    /// <summary>
+    /// Advances the cursor one character.
+    /// </summary>
+    void Advance()
+    {
+        if (m_nPosition < m_sString.length())
+            ++m_nPosition;
+    }
+
+    /// <summary>
+    /// Advances the cursor the specified number of characters.
+    /// </summary>
+    void Advance(size_t nCount)
+    {
+        m_nPosition += nCount;
+        if (m_nPosition > m_sString.length())
+            m_nPosition = m_sString.length();
+    }
+
+    /// <summary>
+    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
+    /// occurances are found.
+    /// </summary>
+    void AdvanceTo(char cStop)
+    {
+        while (m_nPosition < m_sString.length() && m_sString.at(m_nPosition) != cStop)
+            ++m_nPosition;
+    }
+
+    /// <summary>
+    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
+    /// occurances are found and returns a string containing all of the characters advanced over.
+    /// </summary>
+    std::string ReadTo(char cStop)
+    {
+        size_t nStart = m_nPosition;
+        AdvanceTo(cStop);
+        return std::string(m_sString, nStart, m_nPosition - nStart);
+    }
+
+    /// <summary>
+    /// Advances the cursor over digits and returns the number they represent.
+    /// </summary>
+    unsigned int ReadNumber()
+    {
+        if (EndOfString())
+            return 0;
+
+        char* pEnd;
+        auto nResult = strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+        m_nPosition = pEnd - m_sString.c_str();
+        return nResult;
+    }
+
+    /// <summary>
+    /// Returns the number represented by the next series of digits.
+    /// </summary>
+    unsigned int PeekNumber()
+    {
+        if (EndOfString())
+            return 0;
+
+        char* pEnd;
+        return strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+    }
+
+    /// <summary>
+    /// Gets the raw pointer to the specified offset within the string.
+    /// </summary>
+    const char* GetPointer(size_t nPosition) const noexcept
+    {
+        if (nPosition >= m_sString.length())
+            return &m_sString.back() + 1;
+
+        return &m_sString.at(nPosition);
+    }
+
+private:
+    const std::string& m_sString;
+    size_t m_nPosition = 0;
+};
+
+// ----- other -----
+
 // More functions to be Unicode compatible w/o sacrificing MBCS
 /* A wrapper for converting a string to an unsigned long depending on _String */
 /* The template parameter does not need to be specified */

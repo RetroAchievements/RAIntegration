@@ -134,6 +134,13 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             g_sClientDownloadURL = "RAMeka.zip";
             g_sClientEXEName = "RAMeka.exe";
             break;
+        case RA_QUASI88:
+            g_ConsoleID = PC8800;
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAQUASI88";
+            g_sClientDownloadURL = "RAQUASI88.zip";
+            g_sClientEXEName = "RAQUASI88.exe";
+            break;
         default:
             g_ConsoleID = UnknownConsoleID;
             g_sClientVersion = sClientVer;

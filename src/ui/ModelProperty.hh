@@ -8,9 +8,7 @@ namespace ui {
 class ModelPropertyBase
 {
 public:
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) virtual ~ModelPropertyBase() noexcept;
-    /* clang-format on */
+    GSL_SUPPRESS_F6 virtual ~ModelPropertyBase() noexcept;
     ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;

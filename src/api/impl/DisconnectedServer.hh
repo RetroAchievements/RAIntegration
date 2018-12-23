@@ -12,11 +12,8 @@ public:
     explicit DisconnectedServer(const std::string& sHost) : m_sHost(sHost) {}
 
     const char* Name() const noexcept override { return "disconnected client"; }
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) 
-    /* clang-format on */
-    Login::Response Login(const Login::Request& request) noexcept override;
 
+    GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
     const std::string& Host() const noexcept { return m_sHost; }
 
 private:

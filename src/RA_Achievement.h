@@ -31,9 +31,7 @@ public:
     };
 
     Achievement() noexcept;
-    /* clang-format off */
-    GSL_SUPPRESS(f.6)
-    /* clang-format on */ ~Achievement() noexcept;
+    GSL_SUPPRESS_F6 ~Achievement() noexcept;
     Achievement(const Achievement&) noexcept = default;
     Achievement& operator=(const Achievement&) noexcept = default;
     Achievement(Achievement&&) noexcept = default;
@@ -50,9 +48,7 @@ public:
     void Set(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
-    /* clang-format off */
-    GSL_SUPPRESS(f.6)
-    /* clang-format on */ void SetActive(BOOL bActive) noexcept;
+    GSL_SUPPRESS_F6 void SetActive(BOOL bActive) noexcept;
 
     inline BOOL Modified() const noexcept { return m_bModified; }
     void SetModified(BOOL bModified) noexcept;
@@ -111,10 +107,7 @@ public:
     void Reset() noexcept;
 
     // Returns the new char* offset after parsing.
-    /* clang-format off */
-    GSL_SUPPRESS(f.6)
-    /* clang-format on */ const char*
-        ParseLine(const char* restrict sBuffer); /*Doesn't throw in tests but might in Integration */
+    GSL_SUPPRESS_F6 const char* ParseLine(const char* restrict sBuffer);
 
 #ifndef RA_UTEST
     //	Parse from json element

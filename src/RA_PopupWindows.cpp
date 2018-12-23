@@ -8,9 +8,7 @@ LeaderboardPopup PopupWindows::m_LeaderboardPopups;
 
 // Stubs for non-class based, indirect calling of these functions.
 _Use_decl_annotations_
-/* clang-format off */
-GSL_SUPPRESS(con.3)
-/* clang-format on */
+GSL_SUPPRESS_CON3
 API int _RA_UpdatePopups(_UNUSED ControllerInput* restrict, float fDTime, _UNUSED bool, bool Paused)
 {
     if (Paused)
@@ -21,9 +19,7 @@ API int _RA_UpdatePopups(_UNUSED ControllerInput* restrict, float fDTime, _UNUSE
 }
 
 _Use_decl_annotations_
-/* clang-format off */
-GSL_SUPPRESS(con.3)
-/* clang-format on */
+GSL_SUPPRESS_CON3
 API int _RA_RenderPopups(HDC hDC, RECT* restrict rcSize)
 {
     if (!g_AchievementOverlay.IsFullyVisible())

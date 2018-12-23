@@ -1,5 +1,7 @@
 #include "ui\ViewModelBase.hh"
 
+#include "ra_fwd.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -38,9 +40,7 @@ TEST_CLASS(ViewModelBase_Tests)
 
         void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
         {
-            /* clang-format off */
-            GSL_SUPPRESS(f.6) m_sLastPropertyChanged = args.Property.GetPropertyName();
-            /* clang-format on */
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
 
             m_bOldValue = args.tOldValue;
             m_bNewValue = args.tNewValue;
@@ -57,12 +57,10 @@ TEST_CLASS(ViewModelBase_Tests)
         
         void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
         {
-           /* clang-format off */
-           GSL_SUPPRESS(f.6) m_sLastPropertyChanged = args.Property.GetPropertyName();
+           GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
 
-           GSL_SUPPRESS(f.6) m_sOldValue = args.tOldValue;
-           GSL_SUPPRESS(f.6) m_sNewValue = args.tNewValue;
-           /* clang-format on */
+           GSL_SUPPRESS_F6 m_sOldValue = args.tOldValue;
+           GSL_SUPPRESS_F6 m_sNewValue = args.tNewValue;
         }
 
         void AssertStringChanged(const StringModelProperty& pProperty, const std::wstring& sOldValue, const std::wstring& sNewValue)
@@ -76,9 +74,7 @@ TEST_CLASS(ViewModelBase_Tests)
 
         void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
         {
-            /* clang-format off */
-            GSL_SUPPRESS(f.6) m_sLastPropertyChanged = args.Property.GetPropertyName();
-            /* clang-format on */
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
 
             m_nOldValue = args.tOldValue;
             m_nNewValue = args.tNewValue;

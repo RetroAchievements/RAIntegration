@@ -67,20 +67,17 @@ protected:
     /// </summary>
     _NODISCARD virtual INT_PTR CALLBACK DialogProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
 
-    /* clang-format off */
     /// <summary>
     /// Called when the window is created, but before it is shown.
     /// </summary>
     /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return
     /// <c>FALSE</c>.</returns>
-    GSL_SUPPRESS(f.6) virtual BOOL OnInitDialog() { return TRUE; }
+    GSL_SUPPRESS_F6 virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    GSL_SUPPRESS(f.6) virtual void OnShown() {}
-    /* clang-format on */
-
+    GSL_SUPPRESS_F6 virtual void OnShown() {}
 
     /// <summary>
     /// Called when the window is destroyed.
@@ -128,17 +125,10 @@ private:
     friend class ra::ui::win32::bindings::ControlBinding;
     void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding) noexcept
     {
-        /* clang-format off */
-        GSL_SUPPRESS(f.6) m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
-        /* clang-format on */
+        GSL_SUPPRESS_F6 m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
     }
 
-    void RemoveControlBinding(HWND hControl) noexcept
-    {   
-        /* clang-format off */
-        GSL_SUPPRESS(f.6) m_mControlBindings.erase(hControl);
-        /* clang-format on */
-    }
+    void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS_F6 m_mControlBindings.erase(hControl); }
 
     ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
     {

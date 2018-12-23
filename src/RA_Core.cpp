@@ -1343,18 +1343,14 @@ char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) 
 }
 
 /* clang-format off */
-GSL_SUPPRESS(f.23)
-/* clang-format on */
 void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
 {
     Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)
-    {
         pSource++;
-        Ensures(pSource != nullptr);
-    }
+
     value.assign(pStartString, pSource - pStartString);
     pSource++;
 }

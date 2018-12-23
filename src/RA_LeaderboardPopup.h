@@ -6,7 +6,7 @@
 
 #include "ui\drawing\ISurface.hh"
 
-//	Graphic to display current leaderboard progress
+// Graphic to display current leaderboard progress
 
 class LeaderboardPopup
 {
@@ -18,12 +18,9 @@ class LeaderboardPopup
 
 public:
     void Update(_In_ float fDelta);
-    /* clang-format off */
-    // Mark nTextColorr as const. It's assigned so it can't be const.
-    // Comment the suppression out if changes are made then put it back if it still gives a false alarm
-    GSL_SUPPRESS(con.4) 
+
+    GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
     void Render(_In_ ra::ui::drawing::ISurface& pSurface);
-    /* clang-format on */
 
     void Reset();
     BOOL Activate(_In_ ra::LeaderboardID nLBID);

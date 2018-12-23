@@ -39,12 +39,10 @@ namespace tests {
 class AchievementRuntimeHarness : public AchievementRuntime
 {
 public:
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) AchievementRuntimeHarness() : m_Override(this)
+    GSL_SUPPRESS_F6 AchievementRuntimeHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
     }
-    /* clang-format on */
 
     ra::data::mocks::MockGameContext mockGameContext;
     ra::data::mocks::MockUserContext mockUserContext;

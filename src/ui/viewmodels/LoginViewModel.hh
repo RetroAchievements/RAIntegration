@@ -11,10 +11,7 @@ namespace viewmodels {
 class LoginViewModel : public WindowViewModelBase
 {
 public:
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) 
-    /* clang-format on */
-    LoginViewModel();
+    GSL_SUPPRESS_F6 LoginViewModel();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the username.

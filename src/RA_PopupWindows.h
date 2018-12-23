@@ -38,11 +38,9 @@ private:
 
 // Exposed to DLL
 _EXTERN_C
-/* clang-format off */
-GSL_SUPPRESS(con.3) API int _RA_UpdatePopups(_In_ _UNUSED ControllerInput* restrict, _In_ float fDTime,
-                                             _In_ _UNUSED bool, _In_ bool Paused);
-GSL_SUPPRESS(con.3) API int _RA_RenderPopups(_In_ HDC hDC, _In_ RECT* restrict rcSize);
-/* clang-format on */
+GSL_SUPPRESS_CON3 API int _RA_UpdatePopups(_In_ _UNUSED ControllerInput* restrict, _In_ float fDTime,
+                                           _In_ _UNUSED bool, _In_ bool Paused);
+GSL_SUPPRESS_CON3 API int _RA_RenderPopups(_In_ HDC hDC, _In_ RECT* restrict rcSize);
 _END_EXTERN_C
 
 extern PopupWindows g_PopupWindows;

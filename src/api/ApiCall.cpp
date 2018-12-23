@@ -6,11 +6,10 @@
 
 namespace ra {
 namespace api {
-/* clang-format off */
-GSL_SUPPRESS(f.6)
-/* clang-format on */
+
 static ra::api::IServer& Server() noexcept
 {
+    GSL_SUPPRESS_F6
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }
 

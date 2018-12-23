@@ -11,10 +11,8 @@ _NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
 
-/* clang-format off */
-GSL_SUPPRESS(f.6) _NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
-GSL_SUPPRESS(f.6) _NODISCARD std::wstring Widen(std::string&& str) noexcept;
-/* clang-format on */
+GSL_SUPPRESS_F6 _NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
+GSL_SUPPRESS_F6 _NODISCARD std::wstring Widen(std::string&& str) noexcept;
 
 //	No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
@@ -22,13 +20,11 @@ _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 
-/* clang-format off */
 /// <summary>
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
-GSL_SUPPRESS(f.6) std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
-/* clang-format on */
+GSL_SUPPRESS_F6 std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
 // ----- ToString -----
 
@@ -625,20 +621,17 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
     return ret;
 } /* end function tcslen_s */
 
-/* clang - format off */ 
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS(f.6) _NODISCARD bool
-StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
-
+GSL_SUPPRESS_F6
+_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS(f.6)
+GSL_SUPPRESS_F6
 _NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
-/* clang - format on */
 
 } // namespace ra
 

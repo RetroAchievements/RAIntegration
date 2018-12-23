@@ -90,7 +90,7 @@ protected:
 
     static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
-        assert(pTrigger != nullptr);
+        Expects(pTrigger != nullptr);
 
         for (const auto& pAchievement : vEntries)
         {
@@ -98,20 +98,16 @@ protected:
                 return;
         }
 
-        /* clang-format off */
-        GSL_SUPPRESS(f.6)
-        /* clang-format on */ vEntries.emplace_back(pTrigger, nId);
+        GSL_SUPPRESS_F6 vEntries.emplace_back(pTrigger, nId);
     }
 
-    /* clang-format off */
-    GSL_SUPPRESS(f.6)
-    /* clang-format on */ static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
+    static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
     {
         for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {
             if (pIter->nId == nId)
             {
-                vEntries.erase(pIter);
+                GSL_SUPPRESS_F6 vEntries.erase(pIter);
                 break;
             }
         }

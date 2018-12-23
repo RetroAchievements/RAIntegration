@@ -64,26 +64,23 @@ public:
 
 protected:
     template<typename TApi>
-    /* clang-format off */
-    GSL_SUPPRESS(f.6)
-    /* clang-format on */
     inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
         typename TApi::Response response;
-        std::string sApiName(TApi::Name());
+        GSL_SUPPRESS_F6 std::string sApiName(TApi::Name());
 
-        auto pIter = m_mHandlers.find(sApiName);
+        GSL_SUPPRESS_F6 auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
-            if (pIter->second(reinterpret_cast<void*>(const_cast<ApiRequestBase*>(&pRequest)),
-                              reinterpret_cast<void*>(&response)))
-                return std::move(response);
+
+            if (pIter->second(const_cast<ApiRequestBase*>(&pRequest), &response))
+                return response;
         }
 
         response.Result = ApiResult::Unsupported;
-        response.ErrorMessage = sApiName + " is not supported by " + Name();
+        GSL_SUPPRESS_F6 response.ErrorMessage = ra::StringPrintf("% is not supported by ", sApiName, Name());
 
-        return std::move(response);
+        return response;
     }
 
 private:

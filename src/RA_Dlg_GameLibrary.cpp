@@ -75,11 +75,9 @@ namespace ra {
 
 inline static void LogErrno() noexcept
 {
-    char buf[2048U]{};
-    strerror_s(buf, errno);
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) RA_LOG("Error: %s", buf);
-    /* clang-format on */
+    std::array<char, 2048> buf{};
+    strerror_s(buf.data(), sizeof(buf), errno);
+    GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf);
 }
 
 } /* namespace ra */

@@ -11,9 +11,7 @@ namespace win32 {
 class Desktop : public IDesktop
 {
 public:
-    /* clang-format off */
-    GSL_SUPPRESS(f.6) Desktop() noexcept;
-    /* clang-format on */
+    GSL_SUPPRESS_F6 Desktop() noexcept;
 
     void ShowWindow(WindowViewModelBase& oViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& oViewModel) const override;

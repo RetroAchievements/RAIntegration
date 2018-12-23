@@ -45,7 +45,6 @@ public:
 
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override
     {
-        // std::string* const
         const auto pText = GetText(nType, sKey, false);
         if (pText == nullptr)
             return std::unique_ptr<TextReader>();

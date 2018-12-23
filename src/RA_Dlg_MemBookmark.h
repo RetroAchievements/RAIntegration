@@ -5,6 +5,8 @@
 #include "ra_fwd.h"
 #include "ra_type_traits.h"
 
+#include "ui/viewmodels/MessageBoxViewModel.hh"
+
 class MemBookmark
 {
 public: // Too much trouble making this a literal type
@@ -39,9 +41,11 @@ public: // Too much trouble making this a literal type
     _NODISCARD _CONSTANT_FN Frozen() const noexcept { return m_bFrozen; }
     _NODISCARD _CONSTANT_FN Decimal() const noexcept { return m_bDecimal; }
 
+    static constexpr auto INVALID_ADDRESS = std::numeric_limits<unsigned int>::max();
+
 private:
     std::wstring m_sDescription;
-    unsigned int m_nAddress = 0U;
+    unsigned int m_nAddress = INVALID_ADDRESS;
     unsigned int m_nType = 0U;
     unsigned int m_sValue = 0U;
     unsigned int m_sPrevious = 0U;
@@ -113,8 +117,9 @@ public:
         if (BookmarkExists(newBookmark.Address()))
         {
             auto duplicate = std::move(newBookmark); // move it so it can be destroyed
-            ::MessageBox(::GetActiveWindow(), _T("A bookmark with the same address has already been added"),
-                         _T("Error!"), MB_OK | MB_ICONERROR);
+            using ra::ui::viewmodels::MessageBoxViewModel;
+            MessageBoxViewModel::ShowWarningMessage(L"A bookmark with the same address has already been added!");
+
             return;
         }
         m_vBookmarks.push_back(std::move(newBookmark));
@@ -152,10 +157,13 @@ public:
     auto& FindBookmark(const ra::ByteAddress& nAddr) const
     {
         static const MemBookmark dummyBookmark;
+
         if (BookmarkExists(nAddr)) // Should be sorted when it was added (if it exists)
             // TBD: There could be a better algorithm but this should be OK
             return *std::find(m_vBookmarks.cbegin(), m_vBookmarks.cend(), nAddr);
-        return dummyBookmark; // throw?
+        static MemBookmark dummyBookmark{};
+
+        return dummyBookmark;
     }
 
     void Sort() { std::sort(m_vBookmarks.begin(), m_vBookmarks.end()); }

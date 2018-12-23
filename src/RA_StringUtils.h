@@ -329,11 +329,7 @@ public:
         while (*pFormat)
         {
             auto* pScan = pFormat;
-            if (pScan == nullptr)
-            {
-                ::MessageBox(::GetActiveWindow(), _T("Invalid format string!"), _T("Error!"), MB_OK | MB_ICONERROR);
-                break;
-            }
+            Expects(pScan != nullptr); // can't use pointer arithmetic on not_null
             while (*pScan && *pScan != '%')
                 ++pScan;
 
@@ -342,13 +338,9 @@ public:
                 ++pScan;
                 AppendSubString(pFormat, pScan - pFormat);
                 if (*pScan == '%')
-                {
                     ++pScan;
-                }
                 else if (*pScan != '\0')
-                {
                     assert(!"not enough parameters provided");
-                }
             }
             else if (pScan > pFormat)
             {
@@ -369,19 +361,13 @@ public:
         }
 
         while (*pScan && *pScan != '%')
-        {
             ++pScan;
-        }
 
         if (pScan > pFormat)
-        {
             AppendSubString(pFormat, pScan - pFormat);
-        }
 
-        if (*pScan == CharT()) // Dereferencing null pointers is bad
-        {
+        if (*pScan == CharT()) // w/e "0" is
             return;
-        }
         ++pScan;
         switch (*pScan)
         {

@@ -111,7 +111,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
         if (pGameContext.GameId() != 0)
             ImportFromFile(
-                ra::StringPrintf(L"%s%s%s-Bookmarks.txt", g_sHomeDir, RA_DIR_BOOKMARKS, pGameContext.GameId()));
+                ra::StringPrintf(L"%s%s%u-Bookmarks.txt", g_sHomeDir, RA_DIR_BOOKMARKS, pGameContext.GameId()));
 
         RestoreWindowPosition(hDlg, "Memory Bookmarks", true, false);
         return TRUE;
@@ -593,7 +593,7 @@ void Dlg_MemBookmark::AddAddress()
     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
         NewBookmark.SetDescription(ra::Widen(pSavedNote->Note()));
 
-    // Add Bookmark to vector and map
+    // Add Bookmark to vector
     AddBookmark(std::move(NewBookmark));
 
     PopulateList();
@@ -669,14 +669,14 @@ void Dlg_MemBookmark::ExportJSON()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
     {
-        MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"ROM not loaded: please load a ROM first!");
         return;
     }
 
     if (m_vBookmarks.size() == 0)
     {
-        MessageBox(nullptr, _T("No bookmarks to save: please create a bookmark before attempting to save."),
-                   _T("Error!"), MB_OK);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"No bookmarks to save: please create a bookmark before attempting to save.");
         return;
     }
 
@@ -693,8 +693,7 @@ void Dlg_MemBookmark::ExportJSON()
 
     const auto PathTooLong = []() noexcept
     {
-        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
-                   MB_OK | MB_ICONERROR);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Path to file is too long, it needs to be less than 1023 characters!");
     };
 
     // TODO: With all known options, only a raw array works. We'll have suppress bounds.1 when running that ruleset
@@ -765,7 +764,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring&& sFilename)
     if (doc.HasParseError())
     {
         ASSERT(" !Invalid Bookmark File...");
-        MessageBox(nullptr, _T("Could not load properly. Invalid Bookmark file."), _T("Error"), MB_OK | MB_ICONERROR);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not load properly. Invalid Bookmark file!");
         return;
     }
 
@@ -817,8 +816,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
 
     const auto PathTooLong = []() noexcept
     {
-        MessageBox(nullptr, _T("Path to file is too long, it needs to be less than 1023 characters!"), _T("Error!"),
-                   MB_OK | MB_ICONERROR);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Path to file is too long, it needs to be less than 1023 characters!");
         return std::wstring();
     };
 

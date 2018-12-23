@@ -321,7 +321,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
         if (g_MemBookmarkDialog.GetHWND() != nullptr)
         {
             const auto& Bookmark{g_MemBookmarkDialog.FindBookmark(nByteAddress)};
-            if (Bookmark.Address() != 0) // 0 is the value for dummyBookmark
+            if (Bookmark.Address() != MemBookmark::INVALID_ADDRESS)
                 g_MemBookmarkDialog.WriteFrozenValue(Bookmark);
         }
 

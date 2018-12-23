@@ -126,11 +126,14 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
             return;
         }
 
-        bank = &m_Banks.at(bankID);
-        if (nOffs < bank->BankSize)
+        const gsl::not_null<const BankData* const> bankTmp{&m_Banks.at(bankID)};
+        if (nOffs < bankTmp->BankSize)
+        {
+            bank = bankTmp.get();
             break;
+        }
 
-        nOffs -= bank->BankSize;
+        nOffs -= bankTmp->BankSize;
         bankID++;
     } while (true);
 

@@ -40,9 +40,8 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static constexpr void BlendPixel(UINT32* nTarget, UINT32 nBlend) noexcept
+static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32 nBlend) noexcept
 {
-    Expects(nTarget != nullptr);
     const auto alpha = nBlend >> 24;
 
     // fully transparent - do nothing
@@ -53,13 +52,12 @@ static constexpr void BlendPixel(UINT32* nTarget, UINT32 nBlend) noexcept
     if (alpha == 255)
     {
         *nTarget = nBlend;
-        Ensures(nTarget != nullptr);
         return;
     }
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
-    UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget);
+    UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget.get());
     Expects(pTarget != nullptr);
     UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
     Expects(pBlend != nullptr);
@@ -121,7 +119,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
         {
             const UINT8 nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
             const UINT32 pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
-            BlendPixel(pBits, pColor);
+            BlendPixel(gsl::make_not_null(pBits), pColor);
             ++pBits;
         } while (pBits < pEnd);
 
@@ -161,9 +159,9 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     Expects(pSrcBits != nullptr);
     do
     {
-        BlendPixel(pBits, *pSrcBits++);
-        Ensures(pSrcBits != nullptr);
+        BlendPixel(gsl::make_not_null(pBits), *pSrcBits++);
     } while (++pBits < pEnd);
+    Ensures(pSrcBits != nullptr);
 
     // copy the buffer back onto the target surface
     ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, hMemDC, 0, 0, SRCCOPY);
@@ -185,12 +183,8 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
     {
         // only update the alpha for non-transparent pixels
         if (*pBits)
-        {
             *pBits = nAlpha;
-            Ensures(pBits != nullptr);
-        }
         pBits += 4;
-        Ensures(pBits != nullptr);
     } while (pBits < pEnd);
 }
 

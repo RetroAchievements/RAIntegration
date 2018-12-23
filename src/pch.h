@@ -66,6 +66,7 @@
 #include <rapidjson\writer.h> // has stringbuffer.h
 
 /* gsl stuff */
+#define GSL_THROW_ON_CONTRACT_VIOLATION
 #include <gsl\gsl>
 #pragma warning(pop)
 

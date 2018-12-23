@@ -701,7 +701,7 @@ void Dlg_MemBookmark::ExportJSON()
     wchar_t buf[BUF_SIZE + 16UL]{}; // Extra capacity to prevent buffer overrun
     {
         const auto sDefaultFilename{ra::StringPrintf(L"%u-Bookmarks.txt", pGameContext.GameId())};
-        Ensures(swprintf_s(buf, BUF_SIZE, L"%s", sDefaultFilename.c_str()) >= 0);
+        Expects(swprintf_s(buf, BUF_SIZE, L"%s", sDefaultFilename.c_str()) >= 0);
 
         if (std::wcslen(buf) > ofn.nMaxFile)
         {

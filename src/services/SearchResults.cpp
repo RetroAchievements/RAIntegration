@@ -116,31 +116,27 @@ _NODISCARD inline static constexpr auto GetValue(_In_ const unsigned char* const
                                                  _In_ unsigned int nOffset,
                                                  _In_ MemSize nSize) noexcept
 {
-    Expects(pBuffer);
+    Expects(pBuffer != nullptr);
     auto ret{ 0U };
     switch (nSize)
     {
         case MemSize::EightBit:
-            Ensures(pBuffer);
             ret = pBuffer[nOffset];
             break;
         case MemSize::SixteenBit:
-            Ensures(pBuffer);
             ret = pBuffer[nOffset] | (pBuffer[nOffset + 1U] << 8U);
             break;
         case MemSize::ThirtyTwoBit:
-            Ensures(pBuffer);
             ret = (pBuffer[nOffset] | (pBuffer[nOffset + 1] << 8U) |
                 (pBuffer[nOffset + 2] << 16U) | (pBuffer[nOffset + 3] << 24U));
             break;
         case MemSize::Nibble_Upper:
-            Ensures(pBuffer);
             ret = pBuffer[nOffset] >> 4U;
             break;
         case MemSize::Nibble_Lower:
-            Ensures(pBuffer);
             ret = pBuffer[nOffset] & 0x0FU;
     }
+
     return ret;
 }
 
@@ -315,7 +311,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
                           [nTestValue, nCompareType](unsigned int nIndex, const unsigned char* restrict pMemory,
                                                      [[maybe_unused]] const unsigned char* restrict)
             {
-                Ensures(pMemory != nullptr);
+                Expects(pMemory != nullptr);
                 return Compare(pMemory[nIndex], nTestValue, nCompareType);
             });
             break;

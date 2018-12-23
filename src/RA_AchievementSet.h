@@ -37,12 +37,12 @@ public:
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)
     {
-        Ensures((nIter >= 0) && (nIter < m_Achievements.size()));
+        Expects((nIter >= 0) && (nIter < m_Achievements.size()));
         return m_Achievements.at(nIter);
     }
     const Achievement& GetAchievement(size_t nIter) const
     {
-        Ensures((nIter >= 0) && (nIter < m_Achievements.size()));
+        Expects((nIter >= 0) && (nIter < m_Achievements.size()));
         return m_Achievements.at(nIter);
     }
     inline size_t NumAchievements() const noexcept { return m_Achievements.size(); }

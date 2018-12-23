@@ -26,11 +26,11 @@ extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Ou
 _Success_(return ) _NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* restrict sFile);
 
 // Read file until reaching the end of the file, or the specified char.
-extern BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize, DWORD* restrict pCharsReadOut,
-                     FILE* restrict pFile) noexcept;
+extern BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize,
+                     gsl::not_null<DWORD* restrict> pCharsReadOut, gsl::not_null<FILE* restrict> pFile) noexcept;
 
 extern char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept;
-extern void _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
+extern void _ReadStringTil(std::string& sValue, char nChar, const char* restrict& pOffsetInOut);
 
 // Write out the buffer to a file
 extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);

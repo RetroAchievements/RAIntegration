@@ -604,7 +604,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //  Clone TO the user achievements
                     const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
-                    NewClone.Set(Ach);
+                    NewClone.CopyFrom(Ach);
                     NewClone.SetID(0);
                     NewClone.SetAuthor(RAUsers::LocalUser().Username());
                     NewClone.SetTitle(ra::StringPrintf("%s (copy)", Ach.Title()));

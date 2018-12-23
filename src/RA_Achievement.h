@@ -43,7 +43,7 @@ public:
     BOOL RemoveCondition(size_t nConditionGroup, unsigned int nConditionID);
     void RemoveAllConditions(size_t nConditionGroup);
 
-    void Set(const Achievement& rRHS);
+    void CopyFrom(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
     GSL_SUPPRESS_F6 void SetActive(BOOL bActive) noexcept;

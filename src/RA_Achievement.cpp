@@ -509,7 +509,7 @@ std::string Achievement::CreateMemString() const
     return buffer;
 }
 
-void Achievement::Set(const Achievement& rRHS)
+void Achievement::CopyFrom(const Achievement& rRHS)
 {
     SetID(rRHS.m_nAchievementID);
     SetAuthor(rRHS.m_sAuthor);

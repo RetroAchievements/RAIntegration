@@ -132,7 +132,7 @@ protected:
     void ParseTrigger(const char* pTrigger);
 
     void* m_pTrigger = nullptr;                        //  rc_trigger_t
-    std::shared_ptr<unsigned char[]> m_pTriggerBuffer; //  buffer for rc_trigger_t
+    std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; //  buffer for rc_trigger_t
 
 private:
     ra::AchievementID m_nAchievementID;

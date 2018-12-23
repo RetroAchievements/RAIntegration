@@ -275,11 +275,11 @@ void Dlg_GameLibrary::ThreadedScanProc()
             const DWORD nSize = ftell(pf);
             rewind(pf);
 
-            // May have caused a buffer overrun, this is way to big to be on the stack
-            auto pBuf{std::make_unique<unsigned char[]>(6 * 1024 * 1024)};
+            auto pBuf = std::make_unique<unsigned char[]>(6 * 1024 * 1024);
 
             fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf); // Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
+            pBuf.reset();
 
             SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
 

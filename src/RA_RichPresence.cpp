@@ -34,8 +34,8 @@ RA_RichPresenceInterpreter::DisplayString::DisplayString(const std::string& sCon
     else
     {
         // allocate space and parse again
-        m_pTriggerBuffer.reset(new unsigned char[nSize]);
-        auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()), sCondition.c_str(), nullptr, 0);
+        m_pTriggerBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
+        auto* pTrigger = rc_parse_trigger(m_pTriggerBuffer.get()->data(), sCondition.c_str(), nullptr, 0);
         m_pTrigger = pTrigger;
     }
 }
@@ -138,8 +138,8 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeValue(RA_RichPresenceI
     else
     {
         // allocate space and parse again
-        part.m_pValueBuffer.reset(new unsigned char[nSize]);
-        auto* pValue = rc_parse_value(static_cast<void*>(part.m_pValueBuffer.get()), sValue, nullptr, 0);
+        part.m_pValueBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
+        auto* pValue = rc_parse_value(part.m_pValueBuffer.get()->data(), sValue, nullptr, 0);
         part.m_pValue = pValue;
     }
 }

@@ -528,7 +528,6 @@ std::string Achievement::CreateMemString() const
 void Achievement::Set(const Achievement& rRHS)
 {
     SetID(rRHS.m_nAchievementID);
-    SetActive(rRHS.m_bActive);
     SetAuthor(rRHS.m_sAuthor);
     SetDescription(rRHS.m_sDescription);
     SetPoints(rRHS.m_nPointValue);
@@ -540,18 +539,7 @@ void Achievement::Set(const Achievement& rRHS)
     SetModifiedDate(rRHS.m_nTimestampModified);
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
-    for (size_t i = 0; i < NumConditionGroups(); ++i)
-        RemoveAllConditions(i);
-    m_vConditions.Clear();
-
-    for (size_t nGrp = 0; nGrp < rRHS.NumConditionGroups(); ++nGrp)
-    {
-        m_vConditions.AddGroup();
-
-        const ConditionGroup& group = rRHS.m_vConditions.GetGroup(nGrp);
-        for (size_t i = 0; i < group.Count(); ++i)
-            AddCondition(nGrp, group.GetAt(i));
-    }
+    ParseTrigger(rRHS.CreateMemString().c_str());
 
     SetDirtyFlag(DirtyFlags::All);
 }

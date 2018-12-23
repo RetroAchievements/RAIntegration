@@ -176,7 +176,7 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
     AchievementDlgRow newRow;
 
     // Add to our local array:
-    newRow.emplace_back(std::to_string(Ach.ID()));
+    newRow.emplace_back((Ach.Category() == ra::etoi(AchievementSet::Type::Local)) ? "0" : std::to_string(Ach.ID()));
     newRow.emplace_back(Ach.Title());
     newRow.emplace_back(std::to_string(Ach.Points()));
     newRow.emplace_back(Ach.Author());
@@ -605,7 +605,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
                     NewClone.CopyFrom(Ach);
-                    NewClone.SetID(0);
                     NewClone.SetAuthor(RAUsers::LocalUser().Username());
                     NewClone.SetTitle(ra::StringPrintf("%s (copy)", Ach.Title()));
 

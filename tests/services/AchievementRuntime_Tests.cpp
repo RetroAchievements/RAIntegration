@@ -250,7 +250,7 @@ public:
         pAchievement1.ParseLine("1:1=1:Title:Desc::::Auth:5:1234567890:1234567890:::12345");
 
         pAchievement1.SetActive(true);
-        pAchievement2.Set(pAchievement1);
+        pAchievement2.CopyFrom(pAchievement1);
         pAchievement2.SetID(12);
         Assert::IsFalse(pAchievement2.Active()); // clone should not be immediately active
         pAchievement2.SetActive(true);

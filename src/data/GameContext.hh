@@ -124,6 +124,9 @@ protected:
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
 
+    unsigned int m_nNextLocalId = 0;
+    static const unsigned int FirstLocalId = 111000001;
+
     std::unique_ptr<RA_RichPresenceInterpreter> m_pRichPresenceInterpreter;
 
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;

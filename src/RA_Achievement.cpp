@@ -511,7 +511,6 @@ std::string Achievement::CreateMemString() const
 
 void Achievement::CopyFrom(const Achievement& rRHS)
 {
-    SetID(rRHS.m_nAchievementID);
     SetAuthor(rRHS.m_sAuthor);
     SetDescription(rRHS.m_sDescription);
     SetPoints(rRHS.m_nPointValue);

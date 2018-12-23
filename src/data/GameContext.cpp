@@ -42,6 +42,7 @@ void GameContext::LoadGame(unsigned int nGameId)
     m_nGameId = nGameId;
     m_sGameTitle.clear();
     m_pRichPresenceInterpreter.reset();
+    m_nNextLocalId = GameContext::FirstLocalId;
 
     if (!m_vAchievements.empty())
     {
@@ -137,6 +138,7 @@ void GameContext::LoadGame(unsigned int nGameId)
 #endif
 
     // merge local achievements
+    m_nNextLocalId = GameContext::FirstLocalId;
     MergeLocalAchievements();
 
     // get user unlocks asynchronously
@@ -259,10 +261,19 @@ void GameContext::MergeLocalAchievements()
 #ifndef RA_UTEST
             g_pLocalAchievements->AddAchievement(pAchievement.get());
 #endif
-            // append local achievmeent
+            if (pAchievement->ID() >= m_nNextLocalId)
+                m_nNextLocalId = pAchievement->ID() + 1;
+
+            // append local achievement
             pAchievement->SetCategory(static_cast<unsigned int>(AchievementSet::Type::Local));
             m_vAchievements.emplace_back(std::move(pAchievement));
         }
+    }
+
+    for (auto& pAchievement : m_vAchievements)
+    {
+        if (pAchievement->ID() == 0)
+            pAchievement->SetID(m_nNextLocalId++);
     }
 }
 
@@ -270,6 +281,7 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
 {
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
     pAchievement.SetCategory(ra::etoi(nType));
+    pAchievement.SetID(m_nNextLocalId++);
 
 #ifndef RA_UTEST
     // temporary code for compatibility until global collections are eliminated

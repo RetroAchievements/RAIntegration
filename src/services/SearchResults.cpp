@@ -475,8 +475,7 @@ bool SearchResults::GetMatchingAddress(unsigned int nIndex, _Out_ SearchResults:
     }
 
     size_t nBlockIndex = 0;
-
-    auto block = gsl::make_not_null(&m_vBlocks[nBlockIndex]);
+    gsl::not_null<MemBlock*> block{gsl::make_not_null(&m_vBlocks[nBlockIndex])};
     while (result.nAddress >= block->GetAddress() + block->GetSize() - nPadding)
     {
         if (++nBlockIndex == m_vBlocks.size())

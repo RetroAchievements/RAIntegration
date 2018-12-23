@@ -59,10 +59,10 @@ void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
     if (!doc.HasMember("Friends"))
         return;
 
-    const auto& FriendData{ doc["Friends"] };		//{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+    const auto& FriendData{ doc["Friends"] }; //{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
     for (auto& NextFriend : FriendData.GetArray())
     {
-        const auto pUser = gsl::make_not_null(RAUsers::GetUser(NextFriend["Friend"].GetString()));
+        const gsl::not_null<RAUser*> pUser{gsl::make_not_null(RAUsers::GetUser(NextFriend["Friend"].GetString()))};
         pUser->SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
         pUser->UpdateActivity(NextFriend["LastSeen"].GetString());
 
@@ -81,7 +81,7 @@ void LocalRAUser::RequestFriendList()
 
 RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
-    const auto pUser = gsl::make_not_null(RAUsers::GetUser(sUser));
+    const gsl::not_null<RAUser*> pUser{gsl::make_not_null(RAUsers::GetUser(sUser))};
     pUser->SetScore(nScore);
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
     pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);

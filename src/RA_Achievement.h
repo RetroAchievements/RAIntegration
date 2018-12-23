@@ -8,7 +8,7 @@
 #include <memory>
 
 //////////////////////////////////////////////////////////////////////////
-//	Achievement
+// Achievement
 //////////////////////////////////////////////////////////////////////////
 
 class Achievement
@@ -114,9 +114,9 @@ public:
     void Parse(const rapidjson::Value& element);
 #endif
 
-    //	Used for rendering updates when editing achievements. Usually always false.
-    _NODISCARD _CONSTANT_FN GetDirtyFlags() const { return m_nDirtyFlags; }
-    _NODISCARD _CONSTANT_FN IsDirty() const { return (m_nDirtyFlags != DirtyFlags{}); }
+    // Used for rendering updates when editing achievements. Usually always false.
+    _NODISCARD _CONSTANT_FN GetDirtyFlags() const noexcept { return m_nDirtyFlags; }
+    _NODISCARD _CONSTANT_FN IsDirty() const noexcept { return (m_nDirtyFlags != DirtyFlags()); }
 
     _CONSTANT_FN SetDirtyFlag(_In_ DirtyFlags nFlags) noexcept
     {
@@ -131,8 +131,8 @@ public:
 protected:
     void ParseTrigger(const char* pTrigger);
 
-    void* m_pTrigger = nullptr;                        //  rc_trigger_t
-    std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; //  buffer for rc_trigger_t
+    void* m_pTrigger = nullptr;                                   // rc_trigger_t
+    std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; // buffer for rc_trigger_t
 
 private:
     ra::AchievementID m_nAchievementID;

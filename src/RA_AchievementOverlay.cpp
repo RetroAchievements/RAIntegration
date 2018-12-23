@@ -187,8 +187,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
         {
             case Page::Achievements:
             {
-                const auto pnScrollOffset = gsl::make_not_null(GetActiveScrollOffset());
-                const auto pnSelectedItem = gsl::make_not_null(GetActiveSelectedItem());
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nAchCount - 1))
@@ -224,8 +224,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             case Page::Achievement_Examine:
             {
                 // Overload:
-                const auto pnScrollOffset = gsl::make_not_null(&m_nAchievementsScrollOffset);
-                const auto pnSelectedItem = gsl::make_not_null(&m_nAchievementsSelectedItem);
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(&m_nAchievementsScrollOffset)};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(&m_nAchievementsSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {
@@ -255,8 +255,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             break;
             case Page::Friends:
             {
-                const auto pnScrollOffset = gsl::make_not_null(GetActiveScrollOffset()); // Dirty!
-                const auto pnSelectedItem = gsl::make_not_null(GetActiveSelectedItem());
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())}; // Dirty!
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nNumFriends - 1))
@@ -283,8 +283,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             break;
             case Page::Messages:
             {
-                const auto pnScrollOffset = gsl::make_not_null(GetActiveScrollOffset());
-                const auto pnSelectedItem = gsl::make_not_null(GetActiveSelectedItem());
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Select message
                 if (input.m_bDownPressed)
                 {
@@ -312,8 +312,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             }
             case Page::News:
             {
-                const auto pnScrollOffset = gsl::make_not_null(GetActiveScrollOffset());
-                const auto pnSelectedItem = gsl::make_not_null(GetActiveSelectedItem());
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -335,8 +335,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             }
             case Page::Leaderboards:
             {
-                const auto pnScrollOffset = gsl::make_not_null(GetActiveScrollOffset());
-                const auto pnSelectedItem = gsl::make_not_null(GetActiveSelectedItem());
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -373,8 +373,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             {
                 // Overload from previous
                 // Overload:
-                const auto pnScrollOffset = gsl::make_not_null(&m_nLeaderboardScrollOffset);
-                const auto pnSelectedItem = gsl::make_not_null(&m_nLeaderboardSelectedItem);
+                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(&m_nLeaderboardScrollOffset)};
+                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(&m_nLeaderboardSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {

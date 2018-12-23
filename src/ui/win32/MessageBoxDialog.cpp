@@ -41,7 +41,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
     if (pTaskDialog == nullptr || oMessageBoxViewModel.GetHeader().empty())
     {
         std::wstring sMessage;
-        auto pMessage = gsl::make_not_null(&oMessageBoxViewModel.GetMessage());
+        gsl::not_null<const std::wstring*> pMessage{gsl::make_not_null(&oMessageBoxViewModel.GetMessage())};
         if (pTaskDialog == nullptr && !oMessageBoxViewModel.GetHeader().empty())
         {
             sMessage.reserve(oMessageBoxViewModel.GetHeader().length() + pMessage->length() + 2);

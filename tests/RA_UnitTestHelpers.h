@@ -25,80 +25,115 @@ namespace CppUnitTestFramework {
 
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced inline functions, they are referenced. Must be a bug.
-template<> std::wstring ToString<MemSize>(const MemSize& t)
+template<>
+std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
 }
 
-template<> std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
+template<>
+std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 {
     return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> std::wstring ToString<ComparisonType>(const ComparisonType& t)
+template<>
+std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
     return ra::Widen(COMPARISONTYPE_STR[(int)t]);
 }
 
-template<> std::wstring ToString<Condition::Type>(const Condition::Type& t)
+template<>
+std::wstring ToString<Condition::Type>(const Condition::Type& t)
 {
     return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
-template<> std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
+template<>
+std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
 {
     return std::to_wstring(ra::etoi(t));
 }
 
-template<> std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
+template<>
+std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {
     switch (result)
     {
-        case ra::ui::DialogResult::None: return L"None";
-        case ra::ui::DialogResult::OK: return L"OK";
-        case ra::ui::DialogResult::Cancel: return L"Cancel";
-        case ra::ui::DialogResult::Yes: return L"Yes";
-        case ra::ui::DialogResult::No: return L"No";
-        case ra::ui::DialogResult::Retry: return L"Retry";
-        default: return std::to_wstring(ra::etoi(result));
+        case ra::ui::DialogResult::None:
+            return L"None";
+        case ra::ui::DialogResult::OK:
+            return L"OK";
+        case ra::ui::DialogResult::Cancel:
+            return L"Cancel";
+        case ra::ui::DialogResult::Yes:
+            return L"Yes";
+        case ra::ui::DialogResult::No:
+            return L"No";
+        case ra::ui::DialogResult::Retry:
+            return L"Retry";
+        default:
+            return std::to_wstring(ra::etoi(result));
     }
 }
 
-template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
+template<>
+std::wstring
+    ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
 {
     switch (icon)
     {
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::None: return L"None";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Info: return L"Info";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning: return L"Warning";
-        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Error: return L"Error";
-        default: return std::to_wstring(static_cast<int>(icon));
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::None:
+            return L"None";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Info:
+            return L"Info";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning:
+            return L"Warning";
+        case ra::ui::viewmodels::MessageBoxViewModel::Icon::Error:
+            return L"Error";
+        default:
+            return std::to_wstring(static_cast<int>(icon));
     }
 }
 
-template<> std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
+template<>
+std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(
+    const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
 {
     switch (buttons)
     {
-        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK: return L"OK";
-        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OKCancel: return L"OKCancel";
-        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo: return L"YesNo";
-        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNoCancel: return L"YesNoCancel";
-        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel: return L"RetryCancel";
-        default: return std::to_wstring(static_cast<int>(buttons));
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK:
+            return L"OK";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::OKCancel:
+            return L"OKCancel";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo:
+            return L"YesNo";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNoCancel:
+            return L"YesNoCancel";
+        case ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel:
+            return L"RetryCancel";
+        default:
+            return std::to_wstring(static_cast<int>(buttons));
     }
 }
 
-template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
+template<>
+std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
 {
     switch (result)
     {
-        case ra::api::ApiResult::None: return L"None";
-        case ra::api::ApiResult::Success: return L"Success";
-        case ra::api::ApiResult::Error: return L"Error";
-        case ra::api::ApiResult::Failed: return L"Failed";
-        case ra::api::ApiResult::Unsupported: return L"Unsupported";
-        default: return std::to_wstring(ra::etoi(result));
+        case ra::api::ApiResult::None:
+            return L"None";
+        case ra::api::ApiResult::Success:
+            return L"Success";
+        case ra::api::ApiResult::Error:
+            return L"Error";
+        case ra::api::ApiResult::Failed:
+            return L"Failed";
+        case ra::api::ApiResult::Unsupported:
+            return L"Unsupported";
+        default:
+            return std::to_wstring(ra::etoi(result));
     }
 }
 #pragma warning(pop)
@@ -107,11 +142,9 @@ template<> std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& r
 } // namespace VisualStudio
 } // namespace Microsoft
 
-
 // Loads memory into the MemoryManager
-void InitializeMemory(unsigned char* pMemory, size_t szMemorySize);
-
+void InitializeMemory(unsigned char* const pMemory, size_t szMemorySize);
+void InitializeMemory(std::unique_ptr<unsigned char[]> pMemory, size_t szMemorySize);
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
-
 
 #endif /* !RA_UNITTESTHELPERS_H */

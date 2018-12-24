@@ -450,10 +450,12 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     if (mMap != nullptr)
     {
         HBitmapMap::iterator iter = mMap->find(pImage.Name());
-        if (iter != mMap->end())
+
+        if(iter != mMap->end())
         {
             HBITMAP hBitmap = iter->second.m_hBitmap;
-            if (--iter->second.m_nReferences == 0)
+
+            if(--iter->second.m_nReferences == 0)
             {
                 mMap->erase(iter);
                 DeleteObject(hBitmap);

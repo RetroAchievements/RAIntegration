@@ -100,11 +100,11 @@ unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
     const auto numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
-        const gsl::not_null<const BankData* const> bank{gsl::make_not_null(&m_Banks.at(bankID))};
+        const auto& bank = m_Banks.at(bankID);
 
-        if (nOffs < bank->BankSize)
-            return bank->Reader(nOffs);
-        nOffs -= bank->BankSize;
+        if (nOffs < bank.BankSize)
+            return bank.Reader(nOffs);
+        nOffs -= bank.BankSize;
         bankID++;
     }
 
@@ -114,10 +114,10 @@ unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddress nOffs, size_t count) const
 {
     Expects(buffer != nullptr);
-    const BankData* bank = nullptr;
+    GSL_SUPPRESS_F23 const BankData* bank = nullptr;
 
-    int bankID = 0;
-    const int numBanks = m_Banks.size();
+    auto bankID = 0U;
+    const auto numBanks = m_Banks.size();
     do
     {
         if (bankID == numBanks)
@@ -126,14 +126,11 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
             return;
         }
 
-        const gsl::not_null<const BankData* const> bankTmp{&m_Banks.at(bankID)};
-        if (nOffs < bankTmp->BankSize)
-        {
-            bank = bankTmp.get();
+        bank = &m_Banks.at(bankID);
+        if (nOffs < bank->BankSize)
             break;
-        }
 
-        nOffs -= bankTmp->BankSize;
+        nOffs -= bank->BankSize;
         bankID++;
     } while (true);
 

@@ -130,7 +130,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
     const int nWidth = static_cast<int>(GetWidth());
     const int nHeight = static_cast<int>(GetHeight());
@@ -170,14 +170,14 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
+void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
     const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
     const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-    UINT8* pBits{reinterpret_cast<UINT8*>(m_pBits) + 3};
+    UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
     Expects(pBits != nullptr);
     do
     {
@@ -185,6 +185,7 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
         if (*pBits)
             *pBits = nAlpha;
         pBits += 4;
+        Ensures(pBits != nullptr);
     } while (pBits < pEnd);
 }
 

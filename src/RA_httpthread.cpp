@@ -419,15 +419,6 @@ const RequestObject* HttpResults::PeekNextItem() const
     return pRetVal;
 }
 
-void HttpResults::PushItem(RequestObject* pObj)
-{
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-    {
-        m_aRequests.push_front(pObj);
-    }
-    ReleaseMutex(RAWeb::Mutex());
-}
-
 void HttpResults::PushItem(std::unique_ptr<RequestObject> pObj)
 {
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);

@@ -89,9 +89,9 @@ public:
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
+    void Blend(HDC hTargetDC, int nX, int nY) const;
 
-    void SetOpacity(double fAlpha) noexcept override;
+    void SetOpacity(double fAlpha) override;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory

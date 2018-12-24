@@ -1,5 +1,7 @@
 #include "ApiCall.hh"
 
+#include "ra_fwd.h"
+
 #include "api\IServer.hh"
 
 #include "services\ServiceLocator.hh"

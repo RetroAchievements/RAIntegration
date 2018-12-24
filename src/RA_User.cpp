@@ -22,35 +22,30 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-//static 
+// static
 LocalRAUser RAUsers::ms_LocalUser;
-std::map<std::string, RAUser*> RAUsers::UserDatabase;
+std::vector<RAUser> RAUsers::UserDatabase;
 
-//static 
-BOOL RAUsers::DatabaseContainsUser(const std::string& sUser)
-{
-    return(UserDatabase.find(sUser) != UserDatabase.end());
-}
+// static
+BOOL RAUsers::DatabaseContainsUser(const std::string& sUser) { return (FindUser(sUser) != UserDatabase.end()); }
 
-//static 
-RAUser* RAUsers::GetUser(const std::string& sUser)
+// static
+RAUser& RAUsers::GetUser(const std::string& sUser)
 {
     if (DatabaseContainsUser(sUser) == FALSE)
-        UserDatabase[sUser] = new RAUser(sUser);
+        RegisterUser(RAUser{sUser});
 
-    return UserDatabase[sUser];
+    // don't need to check here since it was already
+    return *FindUser(sUser);
 }
 
-
-RAUser::RAUser(const std::string& sUsername) :
-    m_sUsername(sUsername),
-    m_nScore(0)
+RAUser::RAUser(const std::string& sUsername) : m_sUsername{sUsername}
 {
-    //	Register
+    // Register
     if (sUsername.length() > 2)
     {
-        ASSERT(!RAUsers::DatabaseContainsUser(sUsername));
-        RAUsers::RegisterUser(sUsername, this);
+        Expects(!RAUsers::DatabaseContainsUser(sUsername));
+        RAUsers::RegisterUser(std::move(*this));
     }
 }
 
@@ -59,14 +54,14 @@ void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
     if (!doc.HasMember("Friends"))
         return;
 
-    const auto& FriendData{ doc["Friends"] }; //{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
+    const auto& FriendData{doc["Friends"]}; //{"Friend":"LucasBarcelos5","RAPoints":"355","LastSeen":"Unknown"}
     for (auto& NextFriend : FriendData.GetArray())
     {
-        const gsl::not_null<RAUser*> pUser{gsl::make_not_null(RAUsers::GetUser(NextFriend["Friend"].GetString()))};
-        pUser->SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
-        pUser->UpdateActivity(NextFriend["LastSeen"].GetString());
+        auto& pUser{RAUsers::GetUser(NextFriend["Friend"].GetString())};
+        pUser.SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
+        pUser.UpdateActivity(NextFriend["LastSeen"].GetString());
 
-        AddFriend(pUser->Username(), pUser->GetScore());
+        AddFriend(pUser.Username(), pUser.GetScore());
     }
 }
 
@@ -79,35 +74,21 @@ void LocalRAUser::RequestFriendList()
     RAWeb::CreateThreadedHTTPRequest(RequestType::RequestFriendList, args);
 }
 
-RAUser* LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
+void LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
-    const gsl::not_null<RAUser*> pUser{gsl::make_not_null(RAUsers::GetUser(sUser))};
-    pUser->SetScore(nScore);
+    auto& pUser{RAUsers::GetUser(sUser)};
+    pUser.SetScore(nScore);
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
     pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
 
-    std::vector<RAUser*>::const_iterator iter = m_aFriends.begin();
-    while (iter != m_aFriends.end())
-    {
-        if ((*iter) == pUser)
-            break;
-
-        iter++;
-    }
-
-    if (iter == m_aFriends.end())
-        m_aFriends.push_back(pUser);
-
-    return pUser;
+    if (!FriendExists(sUser))
+        m_aFriends.push_back(std::move(pUser));
 }
 
-RAUser* LocalRAUser::FindFriend(const std::string& sName)
+const RAUser& LocalRAUser::FindFriend(const std::string& sName) const
 {
-    std::vector<RAUser*>::iterator iter = m_aFriends.begin();
-    while (iter != m_aFriends.end())
-    {
-        if (sName.compare((*iter)->Username()) == 0)
-            return *iter;
-    }
-    return nullptr;
+    if (FriendExists(sName))
+        return *std::find(m_aFriends.begin(), m_aFriends.end(), sName);
+    static const RAUser dummyUser{""};
+    return dummyUser;
 }

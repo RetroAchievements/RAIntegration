@@ -18,7 +18,7 @@ public:
 
     void MockStoredData(ra::services::StorageItemType nType, const std::wstring& sKey, const std::string& sContents)
     {
-        const gsl::not_null<std::string* const> pText{gsl::make_not_null(GetText(nType, sKey, true))};
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         *pText = sContents;
     }
 
@@ -55,7 +55,7 @@ public:
 
     std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override
     {
-        const gsl::not_null<std::string* const> pText{gsl::make_not_null(GetText(nType, sKey, true))};
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         pText->clear();
 
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
@@ -64,7 +64,7 @@ public:
 
     std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) override
     {
-        const gsl::not_null<std::string* const> pText{gsl::make_not_null(GetText(nType, sKey, true))};
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }

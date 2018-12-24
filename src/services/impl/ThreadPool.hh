@@ -2,6 +2,8 @@
 #define RA_SERVICES_THREADPOOL_HH
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "services\IClock.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"

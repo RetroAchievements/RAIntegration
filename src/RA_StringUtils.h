@@ -354,11 +354,7 @@ public:
     void AppendPrintf(const CharT* const restrict pFormat, const T& restrict value, Ts&&... args)
     {
         auto* pScan = pFormat;
-        if (pScan == nullptr)
-        {
-            ::MessageBox(::GetActiveWindow(), _T("Invalid format string!"), _T("Error!"), MB_OK | MB_ICONERROR);
-            return;
-        }
+        Expects(pScan != nullptr);
 
         while (*pScan && *pScan != '%')
             ++pScan;

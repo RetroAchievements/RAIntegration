@@ -40,7 +40,7 @@ public:
     void FetchImage(ImageType nType, const std::string& sName) override;
 
     void AddReference(ImageReference& pImage) override;
-    void ReleaseReference(ImageReference& pImage) noexcept override;
+    GSL_SUPPRESS_F6 void ReleaseReference(ImageReference& pImage) noexcept override;
 
     bool HasReferencedImageChanged(ImageReference& pImage) const override;
 

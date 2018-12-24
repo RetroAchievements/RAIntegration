@@ -161,7 +161,6 @@ public:
         if (BookmarkExists(nAddr)) // Should be sorted when it was added (if it exists)
             // TBD: There could be a better algorithm but this should be OK
             return *std::find(m_vBookmarks.cbegin(), m_vBookmarks.cend(), nAddr);
-        static MemBookmark dummyBookmark{};
 
         return dummyBookmark;
     }

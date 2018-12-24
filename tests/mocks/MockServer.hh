@@ -2,6 +2,8 @@
 #define RA_SERVICES_MOCK_SERVER_HH
 #pragma once
 
+#include "RA_StringUtils.h"
+
 #include "api\IServer.hh"
 #include "services\ServiceLocator.hh"
 
@@ -65,12 +67,13 @@ public:
 
 protected:
     template<typename TApi>
+    GSL_SUPPRESS_F6
     inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
         typename TApi::Response response;
-        GSL_SUPPRESS_F6 std::string sApiName(TApi::Name());
+        std::string sApiName(TApi::Name());
 
-        GSL_SUPPRESS_F6 auto pIter = m_mHandlers.find(sApiName);
+        auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
             if (pIter->second(const_cast<ApiRequestBase*>(&pRequest), &response))
@@ -78,7 +81,7 @@ protected:
         }
 
         response.Result = ApiResult::Unsupported;
-        GSL_SUPPRESS_F6 response.ErrorMessage = ra::StringPrintf("% is not supported by ", sApiName, Name());
+        response.ErrorMessage = ra::StringPrintf("%s is not supported by %s", sApiName, Name());
 
         return response;
     }

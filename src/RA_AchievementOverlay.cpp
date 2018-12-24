@@ -187,8 +187,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
         {
             case Page::Achievements:
             {
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nAchCount - 1))
@@ -224,8 +224,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             case Page::Achievement_Examine:
             {
                 // Overload:
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(&m_nAchievementsScrollOffset)};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(&m_nAchievementsSelectedItem)};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(&m_nAchievementsScrollOffset)};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(&m_nAchievementsSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {
@@ -255,8 +255,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             break;
             case Page::Friends:
             {
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())}; // Dirty!
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())}; // Dirty!
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nNumFriends - 1))
@@ -283,8 +283,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             break;
             case Page::Messages:
             {
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Select message
                 if (input.m_bDownPressed)
                 {
@@ -312,8 +312,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             }
             case Page::News:
             {
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -335,8 +335,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             }
             case Page::Leaderboards:
             {
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 // Scroll news
                 if (input.m_bDownPressed)
                 {
@@ -373,8 +373,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
             {
                 // Overload from previous
                 // Overload:
-                const gsl::not_null<int* const> pnScrollOffset{gsl::make_not_null(&m_nLeaderboardScrollOffset)};
-                const gsl::not_null<int* const> pnSelectedItem{gsl::make_not_null(&m_nLeaderboardSelectedItem)};
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(&m_nLeaderboardScrollOffset)};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(&m_nLeaderboardSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {
@@ -585,11 +585,9 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
         if ((i + nOffset) < ra::to_signed(nNumFriends))
         {
-            const RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
-            if (pFriend == nullptr)
-                continue;
+            const auto& pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
 
-            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend->Username());
+            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend.Username());
             HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(friendImage);
             if (hBitmap != nullptr)
                 DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
@@ -601,12 +599,12 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
             HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
 
-            auto buffer = ra::StringPrintf(" %s (%u) ", pFriend->Username(), pFriend->GetScore());
+            auto buffer = ra::StringPrintf(" %s (%u) ", pFriend.Username(), pFriend.GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(),
                     buffer.length());
 
             SelectObject(hDC, g_hFontTiny);
-            buffer = ra::StringPrintf(" %s ", pFriend->Activity());
+            buffer = ra::StringPrintf(" %s ", pFriend.Activity());
             // RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
@@ -614,7 +612,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
                     nYOffs + nFriendSubtitleYOffs,
                     nDX + rcTarget.right - 40,
                     nYOffs + nFriendSubtitleYOffs + 46);
-            DrawText(hDC, NativeStr(pFriend->Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(pFriend.Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
 
             //	Restore
             SelectObject(hDC, hOldObj);

@@ -693,7 +693,8 @@ void Dlg_MemBookmark::ExportJSON()
 
     const auto PathTooLong = []() noexcept
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Path to file is too long, it needs to be less than 1023 characters!");
+        GSL_SUPPRESS_F6 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+            L"Path to file is too long, it needs to be less than 1023 characters!");
     };
 
     // TODO: With all known options, only a raw array works. We'll have suppress bounds.1 when running that ruleset
@@ -816,7 +817,8 @@ std::wstring Dlg_MemBookmark::ImportDialog()
 
     const auto PathTooLong = []() noexcept
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Path to file is too long, it needs to be less than 1023 characters!");
+        GSL_SUPPRESS_F6 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+            L"Path to file is too long, it needs to be less than 1023 characters!");
         return std::wstring();
     };
 

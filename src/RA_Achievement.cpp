@@ -16,6 +16,7 @@
 #include "RA_Core.h"
 #else
 // duplicate of code in RA_Core, but RA_Core needs to be cleaned up before it can be pulled into the unit test build
+GSL_SUPPRESS_F23
 void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSource)
 {
     Expects(pSource != nullptr);

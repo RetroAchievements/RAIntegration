@@ -77,7 +77,8 @@ inline static void LogErrno() noexcept
 {
     std::array<char, 2048> buf{};
     strerror_s(buf.data(), sizeof(buf), errno);
-    GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf);
+    // TODO: Make StringPrintf support std::array
+    GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf.data());
 }
 
 } /* namespace ra */

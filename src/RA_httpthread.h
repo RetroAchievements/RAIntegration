@@ -91,7 +91,6 @@ public:
     //	Caller must manage: SAFE_DELETE when finished
     RequestObject* PopNextItem();
     const RequestObject* PeekNextItem() const;
-    void PushItem(RequestObject* pObj);
     void PushItem(std::unique_ptr<RequestObject> pOwner);
     void Clear();
     size_t Count() const noexcept;

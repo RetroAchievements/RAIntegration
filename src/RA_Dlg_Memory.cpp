@@ -1816,7 +1816,7 @@ inline static constexpr auto ParseAddress(TCHAR* ptr, ra::ByteAddress& address) 
     return ptr;
 }
 
-bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end) noexcept
+bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end)
 {
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
     {

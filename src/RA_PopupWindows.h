@@ -26,7 +26,7 @@ public:
         m_LeaderboardPopups.Render(pSurface);
     }
 
-    static void Clear() { m_AchievementPopups.Clear(); }
+    static void Clear() noexcept { m_AchievementPopups.Clear(); }
 
     static AchievementPopup& AchievementPopups() noexcept { return m_AchievementPopups; }
     static LeaderboardPopup& LeaderboardPopups() noexcept { return m_LeaderboardPopups; }

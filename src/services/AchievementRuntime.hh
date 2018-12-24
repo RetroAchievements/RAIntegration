@@ -26,7 +26,7 @@ public:
     /// </summary>
     void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
-        AddEntry(m_vActiveAchievements, nId, pTrigger);
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievements, nId, pTrigger);
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
     }
 
@@ -35,7 +35,7 @@ public:
     /// </summary>
     void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
     {
-        AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
         RemoveEntry(m_vActiveAchievements, nId);
     }
 
@@ -88,7 +88,7 @@ protected:
         unsigned int nId;
     };
 
-    static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger) noexcept
+    static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger)
     {
         Expects(pTrigger != nullptr);
 
@@ -98,16 +98,17 @@ protected:
                 return;
         }
 
-        GSL_SUPPRESS_F6 vEntries.emplace_back(pTrigger, nId);
+        vEntries.emplace_back(pTrigger, nId);
     }
 
+    GSL_SUPPRESS_F6
     static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
     {
-        for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
+        for(auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {
             if (pIter->nId == nId)
             {
-                GSL_SUPPRESS_F6 vEntries.erase(pIter);
+                vEntries.erase(pIter);
                 break;
             }
         }

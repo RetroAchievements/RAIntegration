@@ -65,7 +65,7 @@ public:
 
 protected:
     template<typename TApi>
-    GSL_SUPPRESS(f.6)
+    GSL_SUPPRESS_F6
     inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
     {
         typename TApi::Response response;

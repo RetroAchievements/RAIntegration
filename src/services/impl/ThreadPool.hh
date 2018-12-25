@@ -2,6 +2,8 @@
 #define RA_SERVICES_THREADPOOL_HH
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "services\IClock.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -25,7 +27,7 @@ public:
     ThreadPool(ThreadPool&&) noexcept                 = delete;
     ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
-    GSL_SUPPRESS(f.6) void Initialize(size_t nThreads) noexcept;
+    GSL_SUPPRESS_F6 void Initialize(size_t nThreads) noexcept;
 
     void RunAsync(std::function<void()>&& f) override
     {
@@ -95,7 +97,7 @@ public:
         }
     }
 
-    GSL_SUPPRESS(f.6) void Shutdown(bool bWait) noexcept override;
+    GSL_SUPPRESS_F6 void Shutdown(bool bWait) noexcept override;
 
     bool IsShutdownRequested() const noexcept override { return m_bShutdownInitiated; }
 

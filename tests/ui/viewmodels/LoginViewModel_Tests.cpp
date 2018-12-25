@@ -25,7 +25,7 @@ private:
     class LoginViewModelHarness : public LoginViewModel
     {
     public:
-        GSL_SUPPRESS(f.6) LoginViewModelHarness() : LoginViewModel(L"User") {}
+        GSL_SUPPRESS_F6 LoginViewModelHarness() : LoginViewModel(L"User") {}
 
         MockConfiguration mockConfiguration;
         MockDesktop mockDesktop;

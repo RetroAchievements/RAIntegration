@@ -2,6 +2,8 @@
 #define RA_UI_VIEW_MODEL_BASE_H
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "ModelProperty.hh"
 
 namespace ra {
@@ -25,33 +27,32 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept {}
-        virtual void OnViewModelStringValueChanged(
-            [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept {}
+        virtual void OnViewModelStringValueChanged([
+            [maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
+        {}
         virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
     };
 
-    GSL_SUPPRESS(f.6) void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.insert(&pTarget); }
-    GSL_SUPPRESS(f.6) void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
+    GSL_SUPPRESS_F6 void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.insert(&pTarget); }
+    GSL_SUPPRESS_F6 void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
 
 public:
     // Class is nothrow move assignable but not nothrow move constructible.
-    ViewModelBase(ViewModelBase&&)
-        noexcept(std::is_nothrow_move_constructible_v<NotifyTargetSet> &&
-                 std::is_nothrow_move_constructible_v<StringModelProperty::ValueMap> &&
-                 std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap> &&
-                 std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
+    ViewModelBase(ViewModelBase&&) noexcept(
+        std::is_nothrow_move_constructible_v<NotifyTargetSet>&& std::is_nothrow_move_constructible_v<
+            StringModelProperty::ValueMap>&& std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap>&&
+            std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
 
     ViewModelBase& operator=(ViewModelBase&&) noexcept = default;
 
 protected:
-    ViewModelBase()
-        noexcept(std::is_nothrow_default_constructible_v<NotifyTargetSet> &&
-                 std::is_nothrow_default_constructible_v<StringModelProperty::ValueMap> &&
-                 std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap> &&
-                 std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
+    ViewModelBase() noexcept(
+        std::is_nothrow_default_constructible_v<NotifyTargetSet>&& std::is_nothrow_default_constructible_v<
+            StringModelProperty::ValueMap>&& std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap>&&
+            std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
 
     /// <summary>
     /// Gets the value associated to the requested boolean property.
@@ -122,10 +123,10 @@ private:
 #endif
 
     /// <summary>
-    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's impossible to create a set of
-    /// <c>NotifyTarget</c> references.
+    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
+    /// impossible to create a set of <c>NotifyTarget</c> references.
     /// </summary>
-	NotifyTargetSet m_vNotifyTargets;
+    NotifyTargetSet m_vNotifyTargets;
 };
 
 } // namespace ui

@@ -30,9 +30,20 @@
 
 #if __STDC_VERSION__ >= 199901L
 /* "restrict" is a keyword */
-#else
+#elif defined(__GNUC__) || defined(__clang__)
+#define restrict __restrict__
+#elif defined(_MSC_VER)
 #define restrict __restrict
-#endif /* __STDC_VERSION__ >= 199901L*/
+#else
+#define restrict
+#endif /* __STDC_VERSION__ >= 199901L */
+
+/* clang-format off */
+#define GSL_SUPPRESS_CON3 GSL_SUPPRESS(con.3)
+#define GSL_SUPPRESS_CON4 GSL_SUPPRESS(con.4)
+#define GSL_SUPPRESS_F6 GSL_SUPPRESS(f.6)
+#define GSL_SUPPRESS_F23 GSL_SUPPRESS(f.23)
+/* clang-format on */
 
 #ifndef _TCHAR_DEFINED
 #if _MBCS
@@ -54,39 +65,39 @@ struct HWND__;
 struct HINSTANCE__;
 
 using HBITMAP = HBITMAP__*;
-using HDC     = HDC__*;
-using HPEN    = HPEN__*;
-using HBRUSH  = HBRUSH__*;
+using HDC = HDC__*;
+using HPEN = HPEN__*;
+using HBRUSH = HBRUSH__*;
 
-using HWND      = HWND__*;
+using HWND = HWND__*;
 using HINSTANCE = HINSTANCE__*;
-using HMODULE   = HINSTANCE__*;
+using HMODULE = HINSTANCE__*;
 
 struct tagRECT;
 struct tagSIZE;
 using RECT = tagRECT;
 using SIZE = tagSIZE;
 
-using BOOL    = int;
-using BYTE    = unsigned char;
-using DWORD   = unsigned long;
+using BOOL = int;
+using BYTE = unsigned char;
+using DWORD = unsigned long;
 using HGDIOBJ = void*;
-using LPVOID  = void*;
-using WORD    = unsigned short;
+using LPVOID = void*;
+using WORD = unsigned short;
 #endif // !_WINDEF_
 
 #ifndef _WINNT_
-using HANDLE  = void*;
+using HANDLE = void*;
 using LPCTSTR = const TCHAR*;
-using LPTSTR  = TCHAR*;
+using LPTSTR = TCHAR*;
 #endif // !_WINNT_
 
 namespace ra {
 
 using tstring = std::basic_string<TCHAR>;
 
-using ARGB          = DWORD;
-using ByteAddress   = std::size_t;
+using ARGB = DWORD;
+using ByteAddress = std::size_t;
 using AchievementID = std::size_t;
 using LeaderboardID = std::size_t;
 

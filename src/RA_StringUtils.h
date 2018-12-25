@@ -11,8 +11,8 @@ _NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
 _NODISCARD std::wstring Widen(_In_z_ const char* str);
 
-[[gsl::suppress(f.6), nodiscard]] std::string Narrow(std::wstring&& wstr) noexcept;
-[[gsl::suppress(f.6), nodiscard]] std::wstring Widen(std::string&& str) noexcept;
+GSL_SUPPRESS_F6 _NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
+GSL_SUPPRESS_F6 _NODISCARD std::wstring Widen(std::string&& str) noexcept;
 
 //	No-ops to help convert:
 _NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
@@ -24,7 +24,7 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
-GSL_SUPPRESS(f.6) std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
+GSL_SUPPRESS_F6 std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
 // ----- ToString -----
 

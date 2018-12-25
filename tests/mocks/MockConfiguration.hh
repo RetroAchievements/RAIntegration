@@ -70,7 +70,6 @@ public:
 
     void Save() const noexcept override
     {
-        assert(!"Not implemented");
     }
 
 private:

@@ -585,6 +585,43 @@ public:
         Assert::AreEqual(5U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsFourBitEqualsSameByte)
+    {
+        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory, 5);
+
+        SearchResults results;
+        results.Initialize(1U, 3U, MemSize::Nibble_Lower);
+        Assert::AreEqual(6U, results.MatchingAddressCount());
+
+        SearchResults filtered1;
+        filtered1.Initialize(results, ComparisonType::Equals, 1);
+        Assert::AreEqual(1U, filtered1.MatchingAddressCount());
+
+        SearchResults::Result result;
+        Assert::IsTrue(filtered1.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(1U, result.nValue);
+
+        // Nibble_Upper no longer matches, but Nibble_Lower does. Neither should not be returned.
+        memory[1] = 0x21;
+        SearchResults filtered2;
+        filtered2.Initialize(filtered1, ComparisonType::Equals, 1);
+        Assert::AreEqual(0U, filtered2.MatchingAddressCount());
+
+        // Both nibbles match, only previously matched one should be returned
+        memory[1] = 0x11;
+        SearchResults filtered3;
+        filtered3.Initialize(filtered1, ComparisonType::Equals, 1);
+        Assert::AreEqual(1U, filtered3.MatchingAddressCount());
+
+        Assert::IsTrue(filtered3.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
+        Assert::AreEqual(1U, result.nValue);
+    }
+
     TEST_METHOD(TestExcludeAddressEightBit)
     {
         unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
@@ -699,6 +736,8 @@ public:
         Assert::AreEqual(BIG_BLOCK_SIZE - 1, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0xFFU, result.nValue);
+
+        memory.reset();
     }
 
     TEST_METHOD(TestInitializeFromMemorySixteenBitLargeMemory)
@@ -733,6 +772,8 @@ public:
         Assert::AreEqual(BIG_BLOCK_SIZE - 2, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xFFFEU, result.nValue);
+
+        memory.reset();
     }
 };
 

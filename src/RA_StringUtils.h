@@ -575,7 +575,7 @@ public:
     /// <summary>
     /// Returns the next character without advancing the position.
     /// </summary>
-    GSL_SUPPRESS(f.6) char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+    GSL_SUPPRESS_F6 char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
 
     /// <summary>
     /// Get the current position of the cursor within the string.
@@ -656,7 +656,7 @@ public:
     /// <summary>
     /// Gets the raw pointer to the specified offset within the string.
     /// </summary>
-    GSL_SUPPRESS(f.6) const char* GetPointer(size_t nPosition) const noexcept
+    GSL_SUPPRESS_F6 const char* GetPointer(size_t nPosition) const noexcept
     {
         if (nPosition >= m_sString.length())
             return &m_sString.back() + 1;

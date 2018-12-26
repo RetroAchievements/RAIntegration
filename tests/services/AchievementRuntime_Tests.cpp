@@ -39,7 +39,7 @@ namespace tests {
 class AchievementRuntimeHarness : public AchievementRuntime
 {
 public:
-    GSL_SUPPRESS(f.6) AchievementRuntimeHarness() : m_Override(this)
+    GSL_SUPPRESS_F6 AchievementRuntimeHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
     }
@@ -180,8 +180,10 @@ public:
         runtime.mockGameContext.AddAchivement(3U, "1=1.10.");
         runtime.mockGameContext.AddAchivement(5U, "1=1.2.");
 
-        auto* pAchievement3 = runtime.mockGameContext.FindAchievement(3U);
-        auto* pAchievement5 = runtime.mockGameContext.FindAchievement(5U);
+        const gsl::not_null<Achievement*> pAchievement3{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
+        const gsl::not_null<Achievement*> pAchievement5{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U))};
 
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);

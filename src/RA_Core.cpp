@@ -487,10 +487,11 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-static unsigned long long ParseVersion(const char* sVersion) noexcept
+static unsigned long long ParseVersion(const char* sVersion)
 {
-    char* pPart;
+    char* pPart{};
     const auto major = strtoull(sVersion, &pPart, 10);
+    Expects(pPart != nullptr);
     if (*pPart == '.')
         ++pPart;
 
@@ -609,8 +610,8 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            //	Find friend? Update this information?
-                            RAUsers::GetUser(sUser)->SetScore(nScore);
+                            // Find friend? Update this information?
+                            RAUsers::GetUser(sUser).SetScore(nScore);
                         }
                     }
                     else
@@ -1282,12 +1283,14 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile) noexcept
+BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize,
+              gsl::not_null<DWORD* restrict> pCharsReadOut, gsl::not_null<FILE* restrict> pFile)
 {
+    Expects(buffer != nullptr);
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
 
-    //	Read title:
+    // Read title:
     (*pCharsReadOut) = 0;
     do
     {
@@ -1296,18 +1299,18 @@ BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsR
 
         buffer[(*pCharsReadOut)++] = pNextChar;
     } while (pNextChar != nChar && (*pCharsReadOut) < nSize && !feof(pFile));
-
-    //return ( !feof( pFile ) );
+    
+    Ensures(buffer != nullptr);
     return ((*pCharsReadOut) > 0);
 }
 
-char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept
+char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate)
 {
+    Expects(pOffsetInOut != nullptr);
     char* pStartString = pOffsetInOut;
 
     while ((*pOffsetInOut) != '\0' && (*pOffsetInOut) != nChar)
         pOffsetInOut++;
-
     if (bTerminate)
         (*pOffsetInOut) = '\0';
 
@@ -1316,8 +1319,9 @@ char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) 
     return (pStartString);
 }
 
-void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSource)
 {
+    Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)
@@ -1411,42 +1415,42 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 std::string GetFolderFromDialog()
 {
-    auto lpbi{ std::make_unique<BROWSEINFO>() };
-    lpbi->hwndOwner = ::GetActiveWindow();
+    BROWSEINFO bi{};
+    bi.hwndOwner = ::GetActiveWindow();
 
-    auto pDisplayName{ std::make_unique<TCHAR[]>(RA_MAX_PATH) }; // max path could be 32,767. It needs to survive.
-    lpbi->pszDisplayName = pDisplayName.get();
-    lpbi->lpszTitle = _T("Select ROM folder...");
+    std::array<TCHAR, RA_MAX_PATH> pDisplayName{};
+    bi.pszDisplayName = pDisplayName.data();
+    bi.lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
         return std::string();
 
-    lpbi->ulFlags = BIF_USENEWUI | BIF_VALIDATE;
-    lpbi->lpfn    = ra::BrowseCallbackProc;
-    lpbi->lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+    bi.lpfn    = ra::BrowseCallbackProc;
+    bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {
         const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
         {
-            ::CoTaskMemFree(static_cast<LPVOID>(lpItemIdList));
+            ::CoTaskMemFree(lpItemIdList);
             lpItemIdList = nullptr;
         };
 
         using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        ItemListOwner owner{ ::SHBrowseForFolder(lpbi.get()), idlist_deleter };
+        ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
         if (!owner)
         {
             ::OleUninitialize();
             return std::string();
         }
 
-        if (::SHGetPathFromIDList(owner.get(), lpbi->pszDisplayName) == 0)
+        if (::SHGetPathFromIDList(owner.get(), bi.pszDisplayName) == 0)
         {
             ::OleUninitialize();
             return std::string();
         }
-        ret = ra::Narrow(lpbi->pszDisplayName);
+        ret = ra::Narrow(bi.pszDisplayName);
     }
     ::OleUninitialize();
     return ret;

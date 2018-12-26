@@ -249,7 +249,8 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
                     while (i < pLB->GetRankInfoCount() && nY + FONT_SIZE_TEXT < m_pScoreboardSurface->GetHeight())
                     {
                         const RA_Leaderboard::Entry& lbInfo = pLB->GetRankInfo(i++);
-                        ra::ui::Color nTextColor = nColorPopup;
+                        // Suppress isn't working, suppress this by function
+                        GSL_SUPPRESS_CON4 ra::ui::Color nTextColor = nColorPopup;
 
                         if (lbInfo.m_sUsername.compare(RAUsers::LocalUser().Username()) == 0)
                             nTextColor = ra::ui::Color(255, 192, 128);

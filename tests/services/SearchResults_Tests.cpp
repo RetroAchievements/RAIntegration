@@ -7,8 +7,8 @@ namespace ra {
 namespace services {
 namespace tests {
 
-const unsigned int MAX_BLOCK_SIZE = 256 * 1024; // assert: matches value in SearchResults.cpp
-const unsigned int BIG_BLOCK_SIZE = MAX_BLOCK_SIZE + MAX_BLOCK_SIZE + (MAX_BLOCK_SIZE / 2);
+_CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024U; // assert: matches value in SearchResults.cpp
+_CONSTANT_VAR BIG_BLOCK_SIZE = MAX_BLOCK_SIZE + MAX_BLOCK_SIZE + (MAX_BLOCK_SIZE / 2);
 
 TEST_CLASS(SearchResults_Tests)
 {
@@ -708,8 +708,8 @@ public:
     {
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
-            memory.get()[i] = (i % 256);
-        InitializeMemory(memory.get(), BIG_BLOCK_SIZE);
+            memory[i] = (i % 256);
+        InitializeMemory(std::move(memory), BIG_BLOCK_SIZE);
 
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::EightBit);
@@ -742,8 +742,8 @@ public:
     {
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
-            memory.get()[i] = (i % 256);
-        InitializeMemory(memory.get(), BIG_BLOCK_SIZE);
+            memory[i] = (i % 256);
+        InitializeMemory(std::move(memory), BIG_BLOCK_SIZE);
 
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::SixteenBit);

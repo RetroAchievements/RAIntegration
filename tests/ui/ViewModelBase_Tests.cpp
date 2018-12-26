@@ -1,5 +1,7 @@
 #include "ui\ViewModelBase.hh"
 
+#include "ra_fwd.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -36,9 +38,10 @@ TEST_CLASS(ViewModelBase_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        GSL_SUPPRESS(f.6) void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
         {
-            m_sLastPropertyChanged = args.Property.GetPropertyName();
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
+
             m_bOldValue = args.tOldValue;
             m_bNewValue = args.tNewValue;
         }
@@ -51,13 +54,13 @@ TEST_CLASS(ViewModelBase_Tests)
 
             m_sLastPropertyChanged.clear();
         }
-
-        GSL_SUPPRESS(f.6)
+        
         void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
         {
-            m_sLastPropertyChanged = args.Property.GetPropertyName();
-            m_sOldValue = args.tOldValue;
-            m_sNewValue = args.tNewValue;
+           GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
+
+           GSL_SUPPRESS_F6 m_sOldValue = args.tOldValue;
+           GSL_SUPPRESS_F6 m_sNewValue = args.tNewValue;
         }
 
         void AssertStringChanged(const StringModelProperty& pProperty, const std::wstring& sOldValue, const std::wstring& sNewValue)
@@ -69,9 +72,10 @@ TEST_CLASS(ViewModelBase_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        GSL_SUPPRESS(f.6) void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
         {
-            m_sLastPropertyChanged = args.Property.GetPropertyName();
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = args.Property.GetPropertyName();
+
             m_nOldValue = args.tOldValue;
             m_nNewValue = args.tNewValue;
         }

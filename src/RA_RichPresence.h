@@ -12,7 +12,7 @@
 class RA_RichPresenceInterpreter
 {
 public:
-    GSL_SUPPRESS(f.6) bool Load(); /*Test won't throw but Integration might*/
+    GSL_SUPPRESS_F6 bool Load(); /*Test won't throw but Integration might*/
     std::string GetRichPresenceString();
 
     bool Enabled() const noexcept { return !m_vDisplayStrings.empty(); }
@@ -54,11 +54,11 @@ protected:
         {
             std::string m_sDisplayString;
 
-            void* m_pValue;                                  //  rc_value_t
-            std::shared_ptr<unsigned char[]> m_pValueBuffer; //  buffer for rc_value_t
+            void* m_pValue = nullptr;                                   //  rc_value_t
+            std::shared_ptr<std::vector<unsigned char>> m_pValueBuffer; //  buffer for rc_value_t
 
             const Lookup* m_pLookup = nullptr;
-            int m_nFormat           = 0;
+            int m_nFormat = 0;
         };
 
     private:
@@ -66,8 +66,8 @@ protected:
 
         std::vector<Part> m_vParts;
 
-        void* m_pTrigger;                                  //  rc_trigger_t
-        std::shared_ptr<unsigned char[]> m_pTriggerBuffer; //  buffer for rc_trigger_t
+        void* m_pTrigger{};                                           //  rc_trigger_t
+        std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; //  buffer for rc_trigger_t
     };
 
     std::vector<Lookup> m_vLookups;

@@ -140,12 +140,12 @@ protected:
 private:
     void ProcessBlocks(
         const SearchResults& srSource,
-        std::function<bool(unsigned int nIndex, const unsigned char pMemory[], const unsigned char pPrev[])>
+        std::function<bool(unsigned int, const unsigned char* restrict, const unsigned char* restrict)>
             testIndexFunction);
     void ProcessBlocksNibbles(const SearchResults& srSource, unsigned int nTestValue, ComparisonType nCompareType);
-    void AddMatches(unsigned int nAddressBase, const unsigned char pMemory[],
+    void AddMatches(unsigned int nAddressBase, const unsigned char* restrict pMemory,
                     const std::vector<unsigned int>& vMatches);
-    void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char pMemory[],
+    void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char* restrict pMemory,
                            const std::vector<unsigned int>& vMatches);
     bool ContainsNibble(unsigned int nAddress) const;
 

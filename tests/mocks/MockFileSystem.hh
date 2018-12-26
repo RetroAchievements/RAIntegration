@@ -14,7 +14,7 @@ namespace mocks {
 class MockFileSystem : public IFileSystem
 {
 public:
-    GSL_SUPPRESS(f.6) MockFileSystem() noexcept 
+    GSL_SUPPRESS_F6 MockFileSystem() noexcept 
         : m_Override(this)
     {
     }

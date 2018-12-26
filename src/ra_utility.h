@@ -10,23 +10,17 @@
    as it will be auto-deduced unless stated otherwise.
 */
 namespace ra {
-#pragma warning(push)
 
-#pragma warning(push)
-// TODO: Finish narrow_cast in another PR
-// we don't use gsl::narrow_cast, ra::narrow_cast won't trigger this when its
-// done
-#pragma warning(disable : 26472)
 template<typename SignedType, typename = std::enable_if_t<std::is_signed_v<SignedType>>>
 _NODISCARD _CONSTANT_FN to_unsigned(_In_ SignedType st) noexcept
 {
-    return static_cast<std::make_unsigned_t<SignedType>>(st);
+    return gsl::narrow_cast<std::make_unsigned_t<SignedType>>(st);
 }
 
 template<typename UnsignedType, typename = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
 _NODISCARD _CONSTANT_FN to_signed(_In_ UnsignedType st) noexcept
 {
-    return static_cast<std::make_signed_t<UnsignedType>>(st);
+    return gsl::narrow_cast<std::make_signed_t<UnsignedType>>(st);
 }
 
 /// <summary>
@@ -56,7 +50,6 @@ _NODISCARD _CONSTANT_FN narrow_cast(_In_ WideType from) noexcept
 {
     return static_cast<NarrowedType>(static_cast<WideType>(from));
 }
-#pragma warning(pop)
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _NODISCARD _CONSTANT_VAR etoi(_In_ Enum e) noexcept

@@ -3,7 +3,27 @@
   <Include Path="cppcorecheckclassrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckconstrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckfuncrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckownerpointerrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckstlrules.ruleset" Action="Default" />
+  <Include Path="cppcorechecksharedpointerrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckuniquepointerrules.ruleset" Action="Default" />
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
+    <Rule Id="C26402" Action="Warning" />
+    <Rule Id="C26403" Action="Warning" />
+    <Rule Id="C26404" Action="Warning" />
+    <Rule Id="C26405" Action="Warning" />
+    <Rule Id="C26406" Action="Warning" />
+    <Rule Id="C26407" Action="Warning" />
+    <Rule Id="C26429" Action="Warning" />
+    <Rule Id="C26410" Action="Warning" />
+    <Rule Id="C26411" Action="Warning" />
+    <Rule Id="C26414" Action="Warning" />
+    <Rule Id="C26415" Action="Warning" />
+    <Rule Id="C26416" Action="Warning" />
+    <Rule Id="C26417" Action="Warning" />
+    <Rule Id="C26418" Action="Warning" />
+    <Rule Id="C26430" Action="Warning" />
+    <Rule Id="C26431" Action="Warning" />
     <Rule Id="C26432" Action="Warning" />
     <Rule Id="C26433" Action="Warning" />
     <Rule Id="C26434" Action="Warning" />
@@ -15,6 +35,7 @@
     <Rule Id="C26447" Action="Warning" />
     <Rule Id="C26455" Action="Warning" />
     <Rule Id="C26456" Action="Warning" />
+    <Rule Id="C26459" Action="Warning" />
     <Rule Id="C26460" Action="Warning" />
     <Rule Id="C26461" Action="Warning" />
     <Rule Id="C26462" Action="Warning" />

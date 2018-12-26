@@ -11,7 +11,7 @@ namespace win32 {
 class Desktop : public IDesktop
 {
 public:
-    GSL_SUPPRESS(f.6) Desktop() noexcept;
+    GSL_SUPPRESS_F6 Desktop() noexcept;
 
     void ShowWindow(WindowViewModelBase& oViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& oViewModel) const override;

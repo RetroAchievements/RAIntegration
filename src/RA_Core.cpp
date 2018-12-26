@@ -1358,6 +1358,7 @@ _Use_decl_annotations_ bool _ReadBufferFromFile(std::string& buffer, const wchar
     return true;
 }
 
+_Use_decl_annotations_
 char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut) noexcept
 {
     nFileSizeOut = 0L;

@@ -98,7 +98,7 @@ public:
     }
 
 private:
-    HWND m_hMemBookmarkDialog;
+    HWND m_hMemBookmarkDialog{};
     std::map<ra::ByteAddress, std::vector<const MemBookmark*>> m_BookmarkMap;
     std::vector<MemBookmark*> m_vBookmarks;
 };

@@ -114,7 +114,7 @@ private:
 
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;
-    MemSize m_nCompareSize;
+    MemSize m_nCompareSize = MemSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

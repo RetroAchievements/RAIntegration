@@ -45,6 +45,7 @@ void LeaderboardPopup::Reset()
     m_nState = PopupState::ShowingProgress;
 }
 
+_Use_decl_annotations_
 void LeaderboardPopup::Update(float fDelta)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

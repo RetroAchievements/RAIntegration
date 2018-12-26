@@ -147,6 +147,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 
     UINT32* pBits;
     HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
+    Expects(hBitmap != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
     BitBlt(hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);

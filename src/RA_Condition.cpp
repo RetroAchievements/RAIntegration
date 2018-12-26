@@ -73,8 +73,6 @@ void Condition::SerializeAppend(std::string& buffer) const
 _Use_decl_annotations_
 void CompVariable::SerializeAppend(std::string& buffer) const
 {
-    ;
-    buffer.clear()
     switch (m_nVarType)
     {
         case Type::ValueComparison:

@@ -87,7 +87,7 @@ public:
         m_nVal     = nInitialValue;
     }
 
-    void SerializeAppend(_Out_ std::string& buffer) const;
+    void SerializeAppend(_Inout_ std::string& buffer) const;
 
     _CONSTANT_FN SetSize(_In_ MemSize nSize) noexcept { m_nVarSize = nSize; }
     _NODISCARD _CONSTANT_FN GetSize() const noexcept { return m_nVarSize; }

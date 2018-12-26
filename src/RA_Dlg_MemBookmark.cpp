@@ -50,7 +50,7 @@ long _stdcall EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItemBM;
             lvDispinfo.item.iSubItem = nSelSubItemBM;
@@ -301,6 +301,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             switch (LOWORD(wParam))
             {
                 case IDC_RA_LBX_ADDRESSES:
+                    GSL_SUPPRESS(io.5)
                     if (((LPNMHDR)lParam)->code == NM_CLICK)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
@@ -310,6 +311,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                         if (nSelect == -1)
                             break;
                     }
+#pragma warning(suppress: 26454) // io.5; arithmetic overflow
                     else if (((LPNMHDR)lParam)->code == NM_DBLCLK)
                     {
                         hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);

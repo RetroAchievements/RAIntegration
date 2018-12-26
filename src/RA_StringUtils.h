@@ -393,9 +393,9 @@ public:
                 const CharT* pStart = pScan;
                 while (*pScan)
                 {
-                    const char c = static_cast<char>(*pScan);
+                    char c = gsl::narrow<char>(*pScan);
                     sFormat.push_back(c);
-                    if (isalpha(c))
+                    if (isalpha(gsl::narrow<int>(c)))
                         break;
 
                     ++pScan;

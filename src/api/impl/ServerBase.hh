@@ -21,7 +21,7 @@ public:
         return UnsupportedApi<Login::Response>(Login::Name());
     }
 
-    GSL_SUPPRESS_F6 Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
+    Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
     {
         GSL_SUPPRESS_F6
         return UnsupportedApi<Logout::Response>(Logout::Name());
@@ -39,8 +39,9 @@ public:
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }
 
-    GSL_SUPPRESS(f.6) FetchUserUnlocks::Response FetchUserUnlocks(_UNUSED const FetchUserUnlocks::Request& /*request*/) noexcept override
+    FetchUserUnlocks::Response FetchUserUnlocks(_UNUSED const FetchUserUnlocks::Request& /*request*/) noexcept override
     {
+        GSL_SUPPRESS_F6
         return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
     }
 
@@ -50,14 +51,15 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
-    GSL_SUPPRESS(f.6) FetchGameData::Response FetchGameData(_UNUSED const FetchGameData::Request& /*request*/) noexcept override
+    FetchGameData::Response FetchGameData(_UNUSED const FetchGameData::Request& /*request*/) noexcept override
     {
+        GSL_SUPPRESS_F6
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
 protected:
     template<typename TResponse>
-    inline typename TResponse UnsupportedApi(const char* const restrict apiName) const
+    inline typename TResponse UnsupportedApi(const char* const restrict apiName) const noexcept
     {
         static_assert(std::is_base_of<ApiResponseBase, TResponse>::value, "TResponse must derive from ApiResponseBase");
 

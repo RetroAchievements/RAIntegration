@@ -134,6 +134,7 @@ void AchievementSet::Test()
         {
             case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
+                // we only watch for AchievementReset if PauseOnReset is set, so handle that now.
 #ifndef RA_UTEST
                 RA_CausePause();
 #endif

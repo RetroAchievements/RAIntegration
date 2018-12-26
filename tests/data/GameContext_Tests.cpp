@@ -101,6 +101,7 @@ public:
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
+        Ensures(pAch1 != nullptr);
         Assert::AreEqual(std::string("Ach1"), pAch1->Title());
         Assert::AreEqual(std::string("Desc1"), pAch1->Description());
         Assert::AreEqual(std::string("Auth1"), pAch1->Author());
@@ -113,6 +114,7 @@ public:
 
         const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
         Assert::AreEqual(std::string("Ach2"), pAch2->Title());
         Assert::AreEqual(std::string("Desc2"), pAch2->Description());
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
@@ -167,6 +169,7 @@ public:
 
         auto* pAch = game.FindAchievement(5U);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::string("Ach1"), pAch->Title());
         Assert::AreEqual(std::string("Desc1"), pAch->Description());
         Assert::AreEqual(std::string("Auth1"), pAch->Author());
@@ -242,6 +245,7 @@ public:
         // 7 is not a known ID for this game, it should be loaded into a local achievement (we'll check later)
         auto* pAch = game.FindAchievement(7U);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::string("Ach2b"), pAch->Title());
         Assert::AreEqual(std::string("Desc2b"), pAch->Description());
         Assert::AreEqual(std::string("Auth2b"), pAch->Author());
@@ -255,6 +259,7 @@ public:
         // explicit ID should be recognized
         pAch = game.FindAchievement(999000001U);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::string("Ach3"), pAch->Title());
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
@@ -268,6 +273,7 @@ public:
         // explicit ID should be recognized
         pAch = game.FindAchievement(999000003U);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::string("Ach4"), pAch->Title());
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
@@ -313,10 +319,12 @@ public:
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
+        Ensures(pAch1 != nullptr);
         Assert::IsTrue(pAch1->Active());
 
         const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
         Assert::IsFalse(pAch2->Active());
     }
 };

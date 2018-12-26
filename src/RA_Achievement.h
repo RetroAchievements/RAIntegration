@@ -132,7 +132,7 @@ protected:
 
 private:
     ra::AchievementID m_nAchievementID{};
-    unsigned int m_nCategoryID{};
+    int m_nCategoryID{};
 
     ConditionSet m_vConditions; //  UI wrappers for trigger
 

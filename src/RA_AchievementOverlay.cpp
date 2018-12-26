@@ -484,7 +484,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         unsigned int nUserPts = 0;
         unsigned int nUserCompleted = 0;
 
-        for (auto& pAchievement : *g_pActiveAchievements)
+        for (const auto pAchievement : *g_pActiveAchievements)
         {
             nMaxPts += pAchievement->Points();
             if (!pAchievement->Active())

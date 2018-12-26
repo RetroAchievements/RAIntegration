@@ -63,7 +63,7 @@ public:
 
     unsigned int ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) const;
 
-    void ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const;
+    void ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddress nOffs, size_t count) const;
 
 private:
     std::map<size_t, BankData> m_Banks;

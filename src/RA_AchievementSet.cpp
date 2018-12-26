@@ -304,27 +304,25 @@ bool AchievementSet::SaveToFile() const
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
     pData->WriteLine(pGameContext.GameTitle());
 
-    for (size_t i = 0; i < g_pLocalAchievements->NumAchievements(); ++i)
+    for (auto& ach : *g_pLocalAchievements)
     {
-        const Achievement* pAch = &g_pLocalAchievements->GetAchievement(i);
-
-        pData->Write(std::to_string(pAch->ID()));
+        pData->Write(std::to_string(ach.ID()));
         pData->Write(":");
-        pData->Write(pAch->CreateMemString());
+        pData->Write(ach.CreateMemString());
         pData->Write(":");
-        pData->Write(pAch->Title()); // TODO: escape colons
+        pData->Write(ach.Title()); // TODO: escape colons
         pData->Write(":");
-        pData->Write(pAch->Description()); // TODO: escape colons
-        pData->Write("::::"); // progress indicator/max/format
-        pData->Write(pAch->Author());
+        pData->Write(ach.Description()); // TODO: escape colons
+        pData->Write("::::");            // progress indicator/max/format
+        pData->Write(ach.Author());
         pData->Write(":");
-        pData->Write(std::to_string(pAch->Points()));
+        pData->Write(std::to_string(ach.Points()));
         pData->Write(":");
-        pData->Write(std::to_string(pAch->CreatedDate()));
+        pData->Write(std::to_string(ach.CreatedDate()));
         pData->Write(":");
-        pData->Write(std::to_string(pAch->ModifiedDate()));
+        pData->Write(std::to_string(ach.ModifiedDate()));
         pData->Write(":::"); // upvotes/downvotes
-        pData->Write(pAch->BadgeImageURI());
+        pData->Write(ach.BadgeImageURI());
 
         pData->WriteLine();
     }
@@ -519,6 +517,7 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
     }
 
 }
+
 
 Achievement& AchievementSet::Clone(unsigned int nIter)
 {

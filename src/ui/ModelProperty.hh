@@ -2,13 +2,15 @@
 #define RA_UI_MODEL_PROPERTY_H
 #pragma once
 
+#include "ra_fwd.h"
+
 namespace ra {
 namespace ui {
 
 class ModelPropertyBase
 {
 public:
-    GSL_SUPPRESS(f.6) virtual ~ModelPropertyBase() noexcept;
+    GSL_SUPPRESS_F6 virtual ~ModelPropertyBase() noexcept;
     ModelPropertyBase(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase& operator=(const ModelPropertyBase&) noexcept = delete;
     ModelPropertyBase(ModelPropertyBase&&) noexcept = delete;
@@ -35,14 +37,21 @@ public:
     /// <returns>Associated property, <c>nullptr</c> if not found.</returns>
     static const ModelPropertyBase* GetPropertyForKey(int nKey);
 
-    _NODISCARD inline constexpr auto 
-    operator==(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey == that.m_nKey; }
+    _NODISCARD inline constexpr auto operator==(_In_ const ModelPropertyBase& that) const noexcept
+    {
+        return m_nKey == that.m_nKey;
+    }
 
-    _NODISCARD inline constexpr auto 
-    operator!=(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey != that.m_nKey; }
+    _NODISCARD inline constexpr auto operator!=(_In_ const ModelPropertyBase& that) const noexcept
+    {
+        return m_nKey != that.m_nKey;
+    }
 
     _NODISCARD inline constexpr auto // for sorting if needed
-    operator<(_In_ const ModelPropertyBase& that) const noexcept { return m_nKey < that.m_nKey; }
+        operator<(_In_ const ModelPropertyBase& that) const noexcept
+    {
+        return m_nKey < that.m_nKey;
+    }
 
 protected:
     explicit ModelPropertyBase(_In_ const char* const sTypeName, _In_ const char* const sPropertyName);
@@ -62,10 +71,10 @@ template<class T>
 class ModelProperty : public ModelPropertyBase
 {
 public:
-    explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue)
-        : ModelPropertyBase(sTypeName, sPropertyName), m_tDefaultValue(tDefaultValue)
-    {
-    }
+    explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue) :
+        ModelPropertyBase(sTypeName, sPropertyName),
+        m_tDefaultValue(tDefaultValue)
+    {}
 
     /// <summary>
     /// Gets the default value for the property.

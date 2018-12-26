@@ -67,106 +67,124 @@ void AchievementRuntime::Process(std::vector<Change>& changes) const
     }
 }
 
-static const char* ProcessStateString(const char* pIter, unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt, const std::string& sMemString)
+static const char* ProcessStateString(const char* pIter, unsigned int nId, rc_trigger_t* pTrigger,
+                                      const std::string& sSalt, const std::string& sMemString)
 {
     std::vector<rc_condition_t> vConditions;
-    const char* pStart = pIter;
-
-    // each group appears as an entry for the current nId
-    while (*pIter)
+    if (pIter != nullptr)
     {
-        char* pEnd;
-        const unsigned int nGroupId = strtoul(pIter, &pEnd, 10);
-        if (nGroupId != nId)
-            break;
-        pIter = pEnd + 1;
+        const char* pStart = pIter;
 
-        const unsigned int nNumCond = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-        vConditions.reserve(vConditions.size() + nNumCond);
-
-        for (size_t i = 0; i < nNumCond; ++i)
+        // each group appears as an entry for the current nId
+        while (*pIter)
         {
-            // Parse next condition state
-            const unsigned int nHits = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            const unsigned int nSourceVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            const unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            const unsigned int nTargetVal = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
-            const unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10); pIter = pEnd + 1;
+            char* pEnd{};
+            const unsigned int nGroupId = strtoul(pIter, &pEnd, 10);
 
-            rc_condition_t& cond = vConditions.emplace_back();
-            cond.current_hits = nHits;
-            cond.operand1.value = nSourceVal;
-            cond.operand1.previous = nSourcePrev;
-            cond.operand2.value = nTargetVal;
-            cond.operand2.previous = nTargetPrev;
-        }
-    }
-
-    const char* pConditionEnd = pIter;
-
-    // read the given md5s
-    const char* pMd5End = pIter;
-    while (*pMd5End && *pMd5End != ':')
-        ++pMd5End;
-    std::string sGivenMD5Progress(pIter, pMd5End - pIter);
-    if (*pMd5End == ':')
-        pIter = ++pMd5End;
-
-    while (*pMd5End && *pMd5End != ':')
-        ++pMd5End;
-    std::string sGivenMD5Achievement(pIter, pMd5End - pIter);
-    if (*pMd5End == ':')
-        ++pMd5End;
-    pIter = pMd5End;
-
-    if (!pTrigger)
-    {
-        // achievement wasn't found, ignore it. still had to parse to advance pIter
-    }
-    else
-    {
-        // recalculate the current achievement checksum
-        std::string sMD5Achievement = RAGenerateMD5(sMemString);
-        if (sGivenMD5Achievement != sMD5Achievement)
-        {
-            // achievement has been modified since data was captured, can't apply, just reset
-            rc_reset_trigger(pTrigger);
-        }
-        else
-        {
-            // regenerate the md5 and see if it sticks
-            std::string sModifiedProgressString = ra::StringPrintf("%s%.*s%s%u", sSalt, pConditionEnd - pStart, pStart, sSalt, nId);
-            std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
-            if (sMD5Progress != sGivenMD5Progress)
+            if (pEnd != nullptr)
             {
-                // state checksum fail - assume user tried to modify it and ignore, just reset
-                rc_reset_trigger(pTrigger);
+                if (nGroupId != nId)
+                    break;
+                pIter = pEnd + 1;
+
+                const unsigned int nNumCond = strtoul(pIter, &pEnd, 10);
+                pIter = pEnd + 1;
+                vConditions.reserve(vConditions.size() + nNumCond);
+
+                for (size_t i = 0; i < nNumCond; ++i)
+                {
+                    // Parse next condition state
+                    const unsigned int nHits = strtoul(pIter, &pEnd, 10);
+                    pIter = pEnd + 1;
+                    const unsigned int nSourceVal = strtoul(pIter, &pEnd, 10);
+                    pIter = pEnd + 1;
+                    const unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10);
+                    pIter = pEnd + 1;
+                    const unsigned int nTargetVal = strtoul(pIter, &pEnd, 10);
+                    pIter = pEnd + 1;
+                    const unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10);
+                    pIter = pEnd + 1;
+
+                    rc_condition_t& cond = vConditions.emplace_back();
+                    cond.current_hits = nHits;
+                    cond.operand1.value = nSourceVal;
+                    cond.operand1.previous = nSourcePrev;
+                    cond.operand2.value = nTargetVal;
+                    cond.operand2.previous = nTargetPrev;
+                }
+            }
+        }
+
+        const char* pConditionEnd = pIter;
+
+        // read the given md5s
+        const char* pMd5End = pIter;
+        if (pMd5End != nullptr)
+        {
+            while (*pMd5End && *pMd5End != ':')
+                ++pMd5End;
+            std::string sGivenMD5Progress(pIter, pMd5End - pIter);
+            if (*pMd5End == ':')
+                pIter = ++pMd5End;
+
+            while (*pMd5End && *pMd5End != ':')
+                ++pMd5End;
+            std::string sGivenMD5Achievement(pIter, pMd5End - pIter);
+            if (*pMd5End == ':')
+                ++pMd5End;
+            pIter = pMd5End;
+
+            if (!pTrigger)
+            {
+                // achievement wasn't found, ignore it. still had to parse to advance pIter
             }
             else
             {
-                // compatible - merge
-                size_t nCondition = 0;
-
-                rc_condset_t* pGroup = pTrigger->requirement;
-                while (pGroup != nullptr)
+                // recalculate the current achievement checksum
+                std::string sMD5Achievement = RAGenerateMD5(sMemString);
+                if (sGivenMD5Achievement != sMD5Achievement)
                 {
-                    rc_condition_t* pCondition = pGroup->conditions;
-                    while (pCondition != nullptr)
+                    // achievement has been modified since data was captured, can't apply, just reset
+                    rc_reset_trigger(pTrigger);
+                }
+                else
+                {
+                    // regenerate the md5 and see if it sticks
+                    std::string sModifiedProgressString =
+                        ra::StringPrintf("%s%.*s%s%u", sSalt, pConditionEnd - pStart, pStart, sSalt, nId);
+                    std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
+                    if (sMD5Progress != sGivenMD5Progress)
                     {
-                        const rc_condition_t& condSource = vConditions.at(nCondition++);
-                        pCondition->current_hits = condSource.current_hits;
-                        pCondition->operand1.value = condSource.operand1.value;
-                        pCondition->operand1.previous = condSource.operand1.previous;
-                        pCondition->operand2.value = condSource.operand2.value;
-                        pCondition->operand2.previous = condSource.operand2.previous;
-
-                        pCondition = pCondition->next;
+                        // state checksum fail - assume user tried to modify it and ignore, just reset
+                        rc_reset_trigger(pTrigger);
                     }
-
-                    if (pGroup == pTrigger->requirement)
-                        pGroup = pTrigger->alternative;
                     else
-                        pGroup = pGroup->next;
+                    {
+                        // compatible - merge
+                        size_t nCondition = 0;
+
+                        rc_condset_t* pGroup = pTrigger->requirement;
+                        while (pGroup != nullptr)
+                        {
+                            rc_condition_t* pCondition = pGroup->conditions;
+                            while (pCondition != nullptr)
+                            {
+                                const rc_condition_t& condSource = vConditions.at(nCondition++);
+                                pCondition->current_hits = condSource.current_hits;
+                                pCondition->operand1.value = condSource.operand1.value;
+                                pCondition->operand1.previous = condSource.operand1.previous;
+                                pCondition->operand2.value = condSource.operand2.value;
+                                pCondition->operand2.previous = condSource.operand2.previous;
+
+                                pCondition = pCondition->next;
+                            }
+
+                            if (pGroup == pTrigger->requirement)
+                                pGroup = pTrigger->alternative;
+                            else
+                                pGroup = pGroup->next;
+                        }
+                    }
                 }
             }
         }

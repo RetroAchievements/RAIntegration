@@ -63,9 +63,9 @@ public:
     void AddMessage(MessagePopup&& msg);
     float GetYOffsetPct() const noexcept;
 
-    bool MessagesPresent() const { return (m_vMessages.size() > 0); }
+    GSL_SUPPRESS_F6 bool MessagesPresent() const noexcept { return (!m_vMessages.empty()); }
 
-    void Clear();
+    void Clear() noexcept;
     void PlayAudio();
 
 private:

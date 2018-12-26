@@ -1,5 +1,7 @@
 #include "ApiCall.hh"
 
+#include "ra_fwd.h"
+
 #include "api\IServer.hh"
 
 #include "services\ServiceLocator.hh"
@@ -7,8 +9,9 @@
 namespace ra {
 namespace api {
 
-GSL_SUPPRESS(f.6) static ra::api::IServer& Server() noexcept /*Service expected to exist*/
+static ra::api::IServer& Server() noexcept
 {
+    GSL_SUPPRESS_F6
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }
 

@@ -493,10 +493,11 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-static unsigned long long ParseVersion(const char* sVersion) noexcept
+static unsigned long long ParseVersion(const char* sVersion)
 {
-    char* pPart;
+    char* pPart{};
     const auto major = strtoull(sVersion, &pPart, 10);
+    Expects(pPart != nullptr);
     if (*pPart == '.')
         ++pPart;
 
@@ -615,8 +616,8 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            //	Find friend? Update this information?
-                            RAUsers::GetUser(sUser)->SetScore(nScore);
+                            // Find friend? Update this information?
+                            RAUsers::GetUser(sUser).SetScore(nScore);
                         }
                     }
                     else
@@ -1289,12 +1290,14 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile) noexcept
+BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize,
+              gsl::not_null<DWORD* restrict> pCharsReadOut, gsl::not_null<FILE* restrict> pFile)
 {
+    Expects(buffer != nullptr);
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
 
-    //	Read title:
+    // Read title:
     (*pCharsReadOut) = 0;
     do
     {
@@ -1303,18 +1306,18 @@ BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsR
 
         buffer[(*pCharsReadOut)++] = pNextChar;
     } while (pNextChar != nChar && (*pCharsReadOut) < nSize && !feof(pFile));
-
-    //return ( !feof( pFile ) );
+    
+    Ensures(buffer != nullptr);
     return ((*pCharsReadOut) > 0);
 }
 
-char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept
+char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate)
 {
+    Expects(pOffsetInOut != nullptr);
     char* pStartString = pOffsetInOut;
 
     while ((*pOffsetInOut) != '\0' && (*pOffsetInOut) != nChar)
         pOffsetInOut++;
-
     if (bTerminate)
         (*pOffsetInOut) = '\0';
 
@@ -1323,8 +1326,9 @@ char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) 
     return (pStartString);
 }
 
-void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSource)
 {
+    Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)

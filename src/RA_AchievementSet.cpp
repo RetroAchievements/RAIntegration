@@ -4,7 +4,6 @@
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
 #include "RA_User.h"
-#include "RA_PopupWindows.h"
 #include "RA_httpthread.h"
 #include "RA_RichPresence.h"
 #include "RA_md5factory.h"
@@ -13,12 +12,14 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 AchievementSet* g_pCoreAchievements = nullptr;
 AchievementSet* g_pUnofficialAchievements = nullptr;
@@ -236,24 +237,27 @@ void AchievementSet::Test()
                 {
                     if (g_nActiveAchievementSet != Type::Core)
                     {
-                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                            "Test: Achievement Unlocked",
-                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
-                            PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                            L"Test: Achievement Unlocked",
+                            ra::StringPrintf(L"%s (%u) (Unofficial)", pAchievement->Title(), pAchievement->Points()),
+                            ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                     }
                     else if (pAchievement->Modified())
                     {
-                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                            "Modified: Achievement Unlocked",
-                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
-                            PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                            L"Modified: Achievement Unlocked",
+                            ra::StringPrintf(L"%s (%u) (Unofficial)", pAchievement->Title(), pAchievement->Points()),
+                            ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                     }
                     else if (g_bRAMTamperedWith)
                     {
-                        g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                            "(RAM tampered with!): Achievement Unlocked",
-                            ra::StringPrintf("%s (%u) (Unofficial)", pAchievement->Title().c_str(), pAchievement->Points()),
-                            PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI()));
+                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                            L"(RAM tampered with!): Achievement Unlocked",
+                            ra::StringPrintf(L"%s (%u) (Unofficial)", pAchievement->Title(), pAchievement->Points()),
+                            ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                     }
                     else
                     {
@@ -360,10 +364,7 @@ BOOL AchievementSet::FetchFromWebBlocking(unsigned int nGameID)
     else
     {
         //	Could not connect...
-        std::ostringstream oss;
-        oss << "Could not connect to " << _RA_HostName();
-        PopupWindows::AchievementPopups().AddMessage(MessagePopup{ oss.str(), "Working offline..." });
-
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Error downloading achievement data");
         return FALSE;
     }
 }
@@ -505,11 +506,13 @@ bool AchievementSet::LoadFromFile(unsigned int nGameID)
                 if (nIndex != std::string::npos)
                     sImageName.erase(nIndex);
 
-                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle, PopupMessageType::Info, ra::ui::ImageType::Icon, sImageName });
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                    ra::Widen(sTitle), ra::Widen(sSubTitle), ra::ui::ImageType::Icon, sImageName);
             }
             else
             {
-                g_PopupWindows.AchievementPopups().AddMessage({ sTitle, sSubTitle });
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                    ra::Widen(sTitle), ra::Widen(sSubTitle));
             }
         }
 

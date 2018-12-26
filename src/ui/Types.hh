@@ -72,6 +72,16 @@ union Color {
 };
 static_assert(sizeof(Color) == sizeof(unsigned int));
 
+enum class RelativePosition
+{
+    None = 0,
+    Before,    // To the left of, or above the target
+    Near,      // Aligned with the target's left or top side
+    Center,    // Centered relative to the target
+    Far,       // Aligned with the target's right or bottom side
+    After,     // To the right of, or below the target
+};
+
 } // namespace ui
 } // namespace ra
 

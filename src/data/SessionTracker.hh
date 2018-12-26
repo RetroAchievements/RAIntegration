@@ -44,6 +44,8 @@ public:
 
 protected:
     virtual void LoadSessions();
+    void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
+
     void UpdateSession(time_t tSessionStart);
     long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetCurrentActivity() const;
@@ -53,7 +55,6 @@ protected:
     std::wstring m_sUsername;
 
 private:
-    void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
     void SortSessions();
 
     unsigned int m_nCurrentGameId = 0;

@@ -1,11 +1,18 @@
 #include "LeaderboardManager.hh"
 
 #include "RA_MemManager.h"
-#include "RA_PopupWindows.h"
 #include "RA_md5factory.h"
 #include "RA_httpthread.h"
+#include "RA_LeaderboardPopup.h"
 
+#include "services\IAudioSystem.hh"
 #include "services\ServiceLocator.hh"
+
+#include "ui\viewmodels\OverlayManager.hh"
+
+#ifndef RA_UTEST
+extern LeaderboardPopup g_LeaderboardPopups;
+#endif
 
 namespace ra {
 namespace services {
@@ -34,39 +41,48 @@ void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup(ra::StringPrintf("Challenge Available: %s", lb.Title().c_str()),
-                         lb.Description(),
-                         PopupMessageType::LeaderboardInfo));
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            ra::StringPrintf(L"Challenge Available: %s", lb.Title()),
+            ra::Widen(lb.Description()));
     }
 
-    g_PopupWindows.LeaderboardPopups().Activate(lb.ID());
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Activate(lb.ID());
+#endif
 }
 
 void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
 {
-    g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Deactivate(lb.ID());
+#endif
 
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
     {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard attempt canceled!", lb.Title(), PopupMessageType::LeaderboardCancel));
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Leaderboard attempt canceled!", ra::Widen(lb.Title()));
     }
 }
 
 void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const
 {
-    g_PopupWindows.LeaderboardPopups().Deactivate(lb.ID());
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Deactivate(lb.ID());
+#endif
 
     if (g_bRAMTamperedWith)
     {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Not posting to leaderboard: memory tamper detected!", "Reset game to re-enable posting."));
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Not posting to leaderboard: memory tamper detected!", L"Reset game to re-enable posting.");
     }
     else if (!m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        g_PopupWindows.AchievementPopups().AddMessage(
-            MessagePopup("Leaderboard submission post canceled.", "Enable Hardcore Mode to enable posting."));
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Leaderboard submission post canceled.", L"Enable Hardcore Mode to enable posting.");
     }
     else
     {
@@ -127,21 +143,10 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     }
 
     pLB->SortRankInfo();
-#pragma region TBD
-    //char sTestData[ 4096 ];
-    //sprintf_s( sTestData, 4096, "Leaderboard for %s (%s)\n\n", pLB->Title().c_str(), pLB->Description().c_str() );
-    //for( size_t i = 0; i < pLB->GetRankInfoCount(); ++i )
-    //{
-    //	const LB_Entry& NextScore = pLB->GetRankInfo( i );
 
-    //	std::string sScoreFormatted = pLB->FormatScore( NextScore.m_nScore );
-
-    //	char bufferMessage[ 512 ];
-    //	sprintf_s( bufferMessage, 512, "%02d: %s - %s\n", NextScore.m_nRank, NextScore.m_sUsername, sScoreFormatted.c_str() );
-    //	strcat_s( sTestData, 4096, bufferMessage );
-    //}  
-#pragma endregion
-    g_PopupWindows.LeaderboardPopups().ShowScoreboard(pLB->ID());
+#ifndef RA_UTEST
+    g_LeaderboardPopups.ShowScoreboard(pLB->ID());
+#endif
 }
 
 void LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb)
@@ -171,6 +176,19 @@ void LeaderboardManager::Reset()
         (*iter).Reset();
         iter++;
     }
+
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Reset();
+#endif
+}
+
+void LeaderboardManager::Clear()
+{
+    m_Leaderboards.clear();
+
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Reset();
+#endif
 }
 
 } // namespace impl

@@ -24,6 +24,11 @@ public:
 
     const std::wstring& GetUsername() const noexcept { return m_sUsername; }
 
+    void MockSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration)
+    {
+        SessionTracker::AddSession(nGameId, tSessionStart, tSessionDuration);
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::SessionTracker> m_Override;
 };

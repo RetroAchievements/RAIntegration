@@ -4,8 +4,10 @@
 
 #include "RA_BuildVer.h"
 
+#include "tests\mocks\\MockAudioSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -19,9 +21,11 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::api::mocks::MockServer;
 using ra::data::mocks::MockSessionTracker;
 using ra::data::mocks::MockUserContext;
+using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockConfiguration;
 using ra::ui::mocks::MockDesktop;
 using ra::ui::viewmodels::MessageBoxViewModel;
+using ra::ui::viewmodels::mocks::MockOverlayManager;
 
 namespace ra {
 namespace tests {
@@ -93,7 +97,9 @@ public:
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
+        MockAudioSystem mockAudioSystem;
         MockServer mockServer;
+        MockOverlayManager mockOverlayManager;
 
         bool bLoggedIn = false;
         mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
@@ -116,12 +122,88 @@ public:
 
         _RA_AttemptLogin(true);
 
+        // user context
         Assert::IsTrue(mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), mockUserContext.GetUsername());
         Assert::AreEqual(std::string("ApiToken"), mockUserContext.GetApiToken());
         Assert::AreEqual(12345U, mockUserContext.GetScore());
 
+        // session context
         Assert::AreEqual(std::wstring(L"User"), mockSessionTracker.GetUsername());
+
+        // popup notification and sound
+        Assert::IsTrue(mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Welcome User (12345)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestAttemptLoginSuccessWithMessages)
+    {
+        MockUserContext mockUserContext;
+        MockSessionTracker mockSessionTracker;
+        MockConfiguration mockConfiguration;
+        MockAudioSystem mockAudioSystem;
+        MockServer mockServer;
+        MockOverlayManager mockOverlayManager;
+
+        mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
+        {
+            response.Username = "User";
+            response.ApiToken = "ApiToken";
+            response.NumUnreadMessages = 3;
+            response.Score = 0U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        mockConfiguration.SetUsername("User");
+        mockConfiguration.SetApiToken("ApiToken");
+
+        _RA_AttemptLogin(true);
+
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Welcome User (0)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionData)
+    {
+        MockUserContext mockUserContext;
+        MockSessionTracker mockSessionTracker;
+        MockConfiguration mockConfiguration;
+        MockAudioSystem mockAudioSystem;
+        MockServer mockServer;
+        MockOverlayManager mockOverlayManager;
+
+        mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
+        {
+            response.Username = "User";
+            response.ApiToken = "ApiToken";
+            response.Score = 12345U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        mockConfiguration.SetUsername("User");
+        mockConfiguration.SetApiToken("ApiToken");
+
+        mockSessionTracker.MockSession(6U, 123456789, std::chrono::hours(2));
+
+        _RA_AttemptLogin(true);
+
+        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Welcome back User (12345)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestAttemptLoginInvalid)

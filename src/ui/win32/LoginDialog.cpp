@@ -31,8 +31,7 @@ LoginDialog::LoginDialog(ra::ui::viewmodels::LoginViewModel& vmLogin) :
     m_bindPassword(vmLogin),
     m_bindRememberMe(vmLogin)
 {
-    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::Center,
-                                    ra::ui::win32::bindings::RelativePosition::Center);
+    m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
 
     m_bindUsername.BindText(ra::ui::viewmodels::LoginViewModel::UsernameProperty);
     m_bindPassword.BindText(ra::ui::viewmodels::LoginViewModel::PasswordProperty);

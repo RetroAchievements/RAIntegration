@@ -17,9 +17,9 @@ class LeaderboardPopup
     };
 
 public:
-    void Update(_In_ float fDelta);
+    void Update(_In_ double fDelta);
 
-    GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
+//    GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
     void Render(_In_ ra::ui::drawing::ISurface& pSurface);
 
     void Reset();
@@ -29,11 +29,11 @@ public:
     void ShowScoreboard(ra::LeaderboardID nLBID);
 
 private:
-    float GetOffsetPct() const noexcept;
+    double GetOffsetPct() const noexcept;
 
 private:
     PopupState m_nState{};
-    float m_fScoreboardShowTimer{};
+    double m_fScoreboardShowTimer{};
     std::vector<unsigned int> m_vActiveLBIDs;
     std::queue<unsigned int> m_vScoreboardQueue;
 

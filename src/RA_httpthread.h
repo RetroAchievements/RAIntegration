@@ -20,7 +20,6 @@ enum RequestType
     RequestScore,
     RequestNews,
     RequestPatch,
-    RequestLatestClientPage,
     RequestRichPresence,
     RequestAchievementInfo,
     RequestLeaderboardInfo,

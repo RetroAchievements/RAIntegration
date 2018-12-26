@@ -248,7 +248,7 @@ void AchievementSet::Test()
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
                             L"Modified: Achievement Unlocked",
-                            ra::StringPrintf(L"%s (%u) (Unofficial)", pAchievement->Title(), pAchievement->Points()),
+                            ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()),
                             ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                     }
                     else if (g_bRAMTamperedWith)
@@ -256,7 +256,7 @@ void AchievementSet::Test()
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
                             L"(RAM tampered with!): Achievement Unlocked",
-                            ra::StringPrintf(L"%s (%u) (Unofficial)", pAchievement->Title(), pAchievement->Points()),
+                            ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()),
                             ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                     }
                     else

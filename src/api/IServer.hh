@@ -2,6 +2,7 @@
 #define RA_API_ISERVER_HH
 #pragma once
 
+#include "api/LatestClient.hh"
 #include "api/Login.hh"
 #include "api/Logout.hh"
 #include "api/Ping.hh"
@@ -24,6 +25,9 @@ public:
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept = 0;
+
+    // === other functions ===
+    virtual LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

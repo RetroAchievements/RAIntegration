@@ -18,6 +18,8 @@ public:
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override;
 
+    void OpenUrl(const std::string& sUrl) const override;
+
     void Shutdown() noexcept override;
 
 private:

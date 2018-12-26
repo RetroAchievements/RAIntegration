@@ -10,6 +10,7 @@
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -23,6 +24,7 @@ using ra::data::mocks::MockSessionTracker;
 using ra::data::mocks::MockUserContext;
 using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockConfiguration;
+using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
 using ra::ui::viewmodels::MessageBoxViewModel;
 using ra::ui::viewmodels::mocks::MockOverlayManager;
@@ -239,6 +241,55 @@ public:
         _RA_AttemptLogin(true);
 
         Assert::IsTrue(mockDesktop.WasDialogShown());
+        Assert::IsFalse(mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
+        Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
+        Assert::AreEqual(0U, mockUserContext.GetScore());
+
+        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+    }
+
+    TEST_METHOD(TestAttemptLoginDisabled)
+    {
+        MockUserContext mockUserContext;
+        MockSessionTracker mockSessionTracker;
+        MockConfiguration mockConfiguration;
+        MockServer mockServer;
+        MockDesktop mockDesktop;
+
+        mockConfiguration.SetUsername("User");
+        mockConfiguration.SetApiToken("ApiToken");
+
+        mockUserContext.DisableLogin();
+        _RA_AttemptLogin(true);
+
+        Assert::IsFalse(mockDesktop.WasDialogShown());
+        Assert::IsFalse(mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
+        Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
+        Assert::AreEqual(0U, mockUserContext.GetScore());
+
+        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+    }
+
+    TEST_METHOD(TestAttemptLoginDisabledDuringRequest)
+    {
+        MockUserContext mockUserContext;
+        MockSessionTracker mockSessionTracker;
+        MockConfiguration mockConfiguration;
+        MockServer mockServer;
+        MockDesktop mockDesktop;
+        MockThreadPool mockThreadPool;
+
+        mockConfiguration.SetUsername("User");
+        mockConfiguration.SetApiToken("ApiToken");
+
+        _RA_AttemptLogin(false);
+
+        mockUserContext.DisableLogin();
+        mockThreadPool.ExecuteNextTask();
+
+        Assert::IsFalse(mockDesktop.WasDialogShown());
         Assert::IsFalse(mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());

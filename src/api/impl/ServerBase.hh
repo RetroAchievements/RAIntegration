@@ -45,6 +45,14 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
+    // === other functions ===
+
+    LatestClient::Response LatestClient(_UNUSED const LatestClient::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
+    }
+
 protected:
     template<typename TResponse>
     inline typename TResponse UnsupportedApi(const char* const restrict apiName) const

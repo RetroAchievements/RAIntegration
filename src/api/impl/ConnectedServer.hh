@@ -18,7 +18,8 @@ public:
     GSL_SUPPRESS_F6 StartSession::Response StartSession(const StartSession::Request& request) noexcept override;
     GSL_SUPPRESS_F6 Ping::Response Ping(const Ping::Request& request) noexcept override;
     GSL_SUPPRESS_F6 ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override;
-
+    GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;
+    
 private:
     const std::string m_sHost;
 };

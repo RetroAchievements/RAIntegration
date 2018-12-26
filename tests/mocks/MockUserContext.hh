@@ -18,6 +18,13 @@ public:
     {
     }
 
+    void Logout() override
+    {
+        m_sUsername.clear();
+        m_sApiToken.clear();
+        m_nScore = 0U;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::UserContext> m_Override;
 };

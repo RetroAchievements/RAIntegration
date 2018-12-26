@@ -65,6 +65,13 @@ public:
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
+    // === other functions ===
+
+    LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::LatestClient>(request);
+    }
+
 protected:
     template<typename TApi>
     GSL_SUPPRESS_F6

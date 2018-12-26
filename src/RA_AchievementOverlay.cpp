@@ -6,6 +6,7 @@
 
 #include "ra_math.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
@@ -1156,7 +1157,7 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
         auto ctSelectChar{_T('A')};
 
         //	Genesis wouldn't use 'A' for select
-        if (g_EmulatorID == RA_Gens)
+        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
             ctSelectChar = _T('C');
 
         {

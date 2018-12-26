@@ -183,6 +183,15 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="data\EmulatorContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\EmulatorContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\UserContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">

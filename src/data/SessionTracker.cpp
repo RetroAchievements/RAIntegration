@@ -225,7 +225,7 @@ static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
     bool bResult = false;
     pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
     {
-        if (pAchievement.Category() == static_cast<unsigned int>(AchievementSet::Type::Core))
+        if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Core))
         {
             bResult = true;
             return false;

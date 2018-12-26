@@ -117,7 +117,7 @@ void GameContext::LoadGame(unsigned int nGameId)
         pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
 #endif
 
-        if (pAchievementData.CategoryId == static_cast<unsigned int>(AchievementSet::Type::Core))
+        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(AchievementSet::Type::Core)))
         {
             ++nNumCoreAchievements;
             nTotalCoreAchievementPoints += pAchievementData.Points;
@@ -164,7 +164,7 @@ void GameContext::LoadGame(unsigned int nGameId)
         for (auto nAchievementId : vLockedAchievements)
         {
             auto* pAchievement = FindAchievement(nAchievementId);
-            if (pAchievement && pAchievement->Category() == static_cast<unsigned int>(AchievementSet::Type::Core))
+            if (pAchievement && pAchievement->Category() == ra::etoi(AchievementSet::Type::Core))
             {
                 pAchievement->SetActive(true);
 
@@ -265,7 +265,7 @@ void GameContext::MergeLocalAchievements()
                 m_nNextLocalId = pAchievement->ID() + 1;
 
             // append local achievement
-            pAchievement->SetCategory(static_cast<unsigned int>(AchievementSet::Type::Local));
+            pAchievement->SetCategory(ra::etoi(AchievementSet::Type::Local));
             m_vAchievements.emplace_back(std::move(pAchievement));
         }
     }
@@ -305,9 +305,9 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
-void GameContext::ReloadAchievements(unsigned int nCategory)
+void GameContext::ReloadAchievements(int nCategory)
 {
-    if (nCategory == static_cast<unsigned int>(AchievementSet::Type::Local))
+    if (nCategory == ra::etoi(AchievementSet::Type::Local))
     {
         auto pIter = m_vAchievements.begin();
         while (pIter != m_vAchievements.end())
@@ -355,7 +355,7 @@ bool GameContext::ReloadAchievement(unsigned int nAchievementId)
 
 bool GameContext::ReloadAchievement(Achievement& pAchievement)
 {
-    if (pAchievement.Category() == static_cast<unsigned int>(AchievementSet::Type::Local))
+    if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Local))
     {
         // TODO
     }

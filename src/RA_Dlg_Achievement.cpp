@@ -511,7 +511,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
-                                pGameContext.ReloadAchievements(static_cast<unsigned int>(AchievementSet::Type::Local));
+                                pGameContext.ReloadAchievements(ra::etoi(AchievementSet::Type::Local));
 
                                 //  Refresh dialog contents:
                                 OnLoad_NewRom(nGameID);

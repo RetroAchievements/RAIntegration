@@ -518,7 +518,7 @@ void Achievement::CopyFrom(const Achievement& rRHS)
     SetModified(rRHS.m_bModified);
     SetBadgeImage(rRHS.m_sBadgeImageURI);
 
-    //	TBD: move to 'now'?
+    // TBD: set to 'now'?
     SetModifiedDate(rRHS.m_nTimestampModified);
     SetCreatedDate(rRHS.m_nTimestampCreated);
 

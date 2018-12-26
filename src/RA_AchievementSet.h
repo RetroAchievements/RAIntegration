@@ -43,7 +43,10 @@ public:
     {
         unsigned int total = 0U;
         for (auto pAchievement : m_Achievements)
-            total += pAchievement->Points();
+        {
+            if (pAchievement)
+                total += pAchievement->Points();
+        }
         return total;
     }
 
@@ -55,6 +58,7 @@ public:
 
     void AddAchievement(const Achievement* pAchievement)
     {
+        Expects(pAchievement != nullptr);
         m_Achievements.push_back(const_cast<Achievement*>(pAchievement));
     }
 

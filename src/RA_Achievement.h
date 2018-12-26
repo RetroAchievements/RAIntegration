@@ -60,8 +60,8 @@ public:
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
 
-    void SetCategory(unsigned int nID) noexcept { m_nCategoryID = nID; }
-    inline unsigned int Category() const noexcept { return m_nCategoryID; }
+    void SetCategory(int nID) noexcept { m_nCategoryID = nID; }
+    inline int Category() const noexcept { return m_nCategoryID; }
 
     inline const std::string& Title() const noexcept { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }

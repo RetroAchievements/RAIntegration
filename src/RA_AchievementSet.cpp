@@ -89,7 +89,7 @@ bool AchievementSet::RemoveAchievement(const Achievement* pAchievement)
 Achievement* AchievementSet::Find(unsigned int nAchievementID) const noexcept
 {
     for (auto pAchievement : m_Achievements)
-        if (pAchievement->ID() == nAchievementID)
+        if (pAchievement && pAchievement->ID() == nAchievementID)
             return pAchievement;
 
     return nullptr;
@@ -222,7 +222,10 @@ void AchievementSet::Test()
 void AchievementSet::Reset() noexcept
 {
     for (auto pAchievement : m_Achievements)
-        pAchievement->Reset();
+    {
+        if (pAchievement)
+            pAchievement->Reset();
+    }
 
     m_bProcessingActive = true;
 }
@@ -242,6 +245,9 @@ bool AchievementSet::SaveToFile() const
 
     for (const auto pAchievement : g_pLocalAchievements->m_Achievements)
     {
+        if (!pAchievement)
+            continue;
+
         pData->Write(std::to_string(pAchievement->ID()));
         pData->Write(":");
         pData->Write(pAchievement->CreateMemString());
@@ -270,7 +276,7 @@ bool AchievementSet::HasUnsavedChanges() const noexcept
 {
     for (auto pAchievement : m_Achievements)
     {
-        if (pAchievement->Modified())
+        if (pAchievement && pAchievement->Modified())
             return true;
     }
 

@@ -107,7 +107,7 @@ public:
     /// <summary>
     /// Reloads all achievements of the specified category from local storage.
     /// </summary>
-    void ReloadAchievements(unsigned int nCategory);
+    void ReloadAchievements(int nCategory);
 
     /// <summary>
     /// Reloads a specific achievement from local storage.

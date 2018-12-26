@@ -19,7 +19,7 @@ class LeaderboardPopup
 public:
     void Update(_In_ double fDelta);
 
-//    GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
+    GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
     void Render(_In_ ra::ui::drawing::ISurface& pSurface);
 
     void Reset();

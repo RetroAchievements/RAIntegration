@@ -135,6 +135,7 @@ public:
         Assert::IsTrue(mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
         const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome User (12345)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -167,6 +168,7 @@ public:
 
         const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome User (0)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -200,6 +202,7 @@ public:
 
         const auto* pPopup = mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome back User (12345)"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());

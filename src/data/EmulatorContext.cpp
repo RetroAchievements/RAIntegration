@@ -16,6 +16,12 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#ifdef RA_UTEST
+API void CCONV _RA_SetConsoleID(unsigned int)
+{
+}
+#endif
+
 namespace ra {
 namespace data {
 
@@ -27,31 +33,48 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
     {
         case RA_Gens:
             m_sClientName = "RAGens_REWiND";
+            _RA_SetConsoleID(ConsoleID::MegaDrive);
             break;
+
         case RA_Project64:
             m_sClientName = "RAP64";
+            _RA_SetConsoleID(ConsoleID::N64);
             break;
+
         case RA_Snes9x:
             m_sClientName = "RASnes9X";
+            _RA_SetConsoleID(ConsoleID::SNES);
             break;
+
         case RA_VisualboyAdvance:
             m_sClientName = "RAVisualBoyAdvance";
+            _RA_SetConsoleID(ConsoleID::GB);
             break;
+
         case RA_Nester:
         case RA_FCEUX:
             m_sClientName = "RANes";
+            _RA_SetConsoleID(ConsoleID::NES);
             break;
+
         case RA_PCE:
             m_sClientName = "RAPCE";
+            _RA_SetConsoleID(ConsoleID::PCEngine);
             break;
+
         case RA_Libretro:
             m_sClientName = "RALibRetro";
+            // don't provide a default console - wait for user to load core
             break;
+
         case RA_Meka:
             m_sClientName = "RAMeka";
+            _RA_SetConsoleID(ConsoleID::MasterSystem);
             break;
+
         case RA_QUASI88:
             m_sClientName = "RAQUASI88";
+            _RA_SetConsoleID(ConsoleID::PC8800);
             break;
     }
 }

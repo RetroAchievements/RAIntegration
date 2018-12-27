@@ -274,6 +274,13 @@ void DownloadAndActivateAchievementData(unsigned int nGameID)
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
+            L"You must be logged in to load achievements. Please reload the game after logging in.");
+        return 0;
+    }
+
     static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
 
     std::string sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);

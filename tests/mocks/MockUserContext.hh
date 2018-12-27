@@ -18,7 +18,7 @@ public:
     {
     }
 
-    void Logout() override
+    void Logout() noexcept override
     {
         m_sUsername.clear();
         m_sApiToken.clear();

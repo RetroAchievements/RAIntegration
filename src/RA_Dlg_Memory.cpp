@@ -239,7 +239,7 @@ void MemoryViewerControl::setAddress(unsigned int address)
     Invalidate();
 }
 
-void MemoryViewerControl::setWatchedAddress(unsigned int address) noexcept
+void MemoryViewerControl::setWatchedAddress(unsigned int address)
 {
     if (m_nWatchedAddress != address)
     {
@@ -248,7 +248,7 @@ void MemoryViewerControl::setWatchedAddress(unsigned int address) noexcept
     }
 }
 
-void MemoryViewerControl::Invalidate() noexcept
+void MemoryViewerControl::Invalidate()
 {
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
     if (hOurDlg != nullptr)

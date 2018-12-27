@@ -45,7 +45,7 @@ public:
         m_sLastOpenedUrl = sUrl;
     }
 
-    const std::string& LastOpenedUrl() const { return m_sLastOpenedUrl; }
+    const std::string& LastOpenedUrl() const noexcept { return m_sLastOpenedUrl; }
 
     void Shutdown() noexcept override {}
 

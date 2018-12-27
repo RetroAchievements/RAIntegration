@@ -30,7 +30,7 @@ private:
     static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, _UNUSED LPARAM);
 
     static void SetupColumns(HWND hList);
-    static void AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* const pAch);
+    static void AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* restrict pAch);
 
     inline static constexpr auto LbxDataAt(gsl::index row, gsl::index column) noexcept
     {

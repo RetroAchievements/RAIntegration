@@ -152,7 +152,7 @@ public:
     _NODISCARD auto GroupCount() const noexcept { return m_vConditionGroups.size(); }
     _NODISCARD auto EmptyGroup() const noexcept { return m_vConditionGroups.empty(); }
     // TODO: Put in a type_trait for nothrow EmplaceConstructible to give a nothrow guarantee
-    GSL_SUPPRESS(f.6) void AddGroup() noexcept { m_vConditionGroups.emplace_back(); }
+    void AddGroup() noexcept { GSL_SUPPRESS_F6 m_vConditionGroups.emplace_back(); }
     auto RemoveLastGroup() { m_vConditionGroups.pop_back(); }
     _NODISCARD auto& GetGroup(size_t nPos) { return m_vConditionGroups.at(nPos); }
     _NODISCARD auto& GetGroup(size_t nPos) const { return m_vConditionGroups.at(nPos); }

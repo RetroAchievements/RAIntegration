@@ -14,15 +14,11 @@
 
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
 
-namespace {
-
 inline constexpr std::array<LPCTSTR, 4> COL_TITLE{_T("ID"), _T("Game Title"), _T("Completion"), _T("File Path")};
 inline constexpr std::array<int, 4> COL_SIZE{30, 230, 110, 170};
 inline constexpr auto bCancelScan = false;
 
 std::mutex mtx;
-
-} // namespace
 
 // static
 std::deque<std::string> Dlg_GameLibrary::FilesToScan;
@@ -77,11 +73,12 @@ bool ListFiles(std::string path, std::string mask, std::deque<std::string>& rFil
 
 namespace ra {
 
-GSL_SUPPRESS(f .6) inline static void LogErrno() noexcept
+inline static void LogErrno() noexcept
 {
-    char buf[2048U]{};
-    strerror_s(buf, errno);
-    RA_LOG("Error: %s", buf);
+    std::array<char, 2048> buf{};
+    strerror_s(buf.data(), sizeof(buf), errno);
+    // TODO: Make StringPrintf support std::array
+    GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf.data());
 }
 
 } /* namespace ra */
@@ -473,8 +470,8 @@ void Dlg_GameLibrary::LoadAll()
             {
                 nCharsRead1 = 0;
                 nCharsRead2 = 0;
-                std::string fileBuf(2048, char());
-                std::string md5Buf(64, char());
+                std::array<char, 2048> fileBuf{};
+                std::array<char, 64> md5Buf{};
 
                 ifile.getline(fileBuf.data(), 2048);
                 nCharsRead1 = ifile.gcount();
@@ -488,10 +485,10 @@ void Dlg_GameLibrary::LoadAll()
                 if (fileBuf.front() != '\0' && md5Buf.front() != '\0' && nCharsRead1 > 0 && nCharsRead2 > 0)
                 {
                     // Add
-                    auto file = std::move(fileBuf);
-                    auto md5 = std::move(md5Buf);
+                    std::string file{fileBuf.data()};
+                    std::string md5{md5Buf.data()};
 
-                    Results.try_emplace(std::move(file), std::move(md5));
+                    Results.try_emplace(file, md5);
                 }
 
             } while (nCharsRead1 > 0 && nCharsRead2 > 0);

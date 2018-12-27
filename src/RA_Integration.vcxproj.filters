@@ -93,9 +93,6 @@
     <ClCompile Include="RA_httpthread.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_PopupWindows.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -110,9 +107,6 @@
     </ClCompile>
     <ClCompile Include="RA_Defs.cpp">
       <Filter>Interface</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_AchievementPopup.cpp">
-      <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_AchievementOverlay.cpp">
       <Filter>UI</Filter>
@@ -225,6 +219,12 @@
     <ClCompile Include="data\SessionTracker.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayManager.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="services\AchievementRuntime.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -281,9 +281,6 @@
     <ClInclude Include="RA_httpthread.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_PopupWindows.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
@@ -304,9 +301,6 @@
     </ClInclude>
     <ClInclude Include="RA_BuildVer.h">
       <Filter>Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_AchievementPopup.h">
-      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_AchievementOverlay.h">
       <Filter>UI</Filter>
@@ -541,6 +535,21 @@
     </ClInclude>
     <ClInclude Include="data\UserContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayManager.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IAudioSystem.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsAudioSystem.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="services\AchievementRuntime.hh">
       <Filter>Services</Filter>

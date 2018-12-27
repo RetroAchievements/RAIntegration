@@ -31,6 +31,7 @@ enum EmulatorID
     RA_PCE = 6,
     RA_Libretro = 7,
     RA_Meka = 8,
+    RA_QUASI88 = 9,
 
     NumEmulatorIDs,
     UnknownEmulator = NumEmulatorIDs

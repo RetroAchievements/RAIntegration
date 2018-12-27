@@ -45,8 +45,10 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     ms_nNumOccupiedRows = 0;
 }
 
-_Use_decl_annotations_ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* const pAch)
+_Use_decl_annotations_
+void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* restrict pAch)
 {
+    Expects(pAch != nullptr);
     // We aren't actually using the value so we're using iterators
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {

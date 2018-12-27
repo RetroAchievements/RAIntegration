@@ -203,6 +203,8 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
@@ -239,6 +241,7 @@
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="mocks\MockAudioSystem.hh" />
     <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockConfiguration.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
@@ -246,6 +249,7 @@
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
+    <ClInclude Include="mocks\MockOverlayManager.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />

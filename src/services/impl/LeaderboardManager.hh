@@ -34,7 +34,7 @@ public:
         return m_Leaderboards.at(iter);
     }
     RA_Leaderboard* FindLB(ra::LeaderboardID nID) override;
-    void Clear() noexcept override { m_Leaderboards.clear(); }
+    void Clear() override;
 
 private:
     std::vector<RA_Leaderboard> m_Leaderboards;

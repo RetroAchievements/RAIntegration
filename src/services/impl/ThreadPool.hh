@@ -24,7 +24,7 @@ public:
     ~ThreadPool() noexcept;
     ThreadPool(const ThreadPool&) noexcept = delete;
     ThreadPool& operator=(const ThreadPool&) noexcept = delete;
-    ThreadPool(ThreadPool&&) noexcept                 = delete;
+    ThreadPool(ThreadPool&&) noexcept = delete;
     ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
     GSL_SUPPRESS_F6 void Initialize(size_t nThreads) noexcept;

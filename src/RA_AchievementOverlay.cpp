@@ -3,7 +3,6 @@
 #include "RA_AchievementSet.h"
 #include "RA_ImageFactory.h"
 #include "RA_Interface.h"
-#include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_httpthread.h"
 
@@ -118,24 +117,22 @@ BOOL AchievementOverlay::GoBack() noexcept
     }
 }
 
-_Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pInput, float fDelta, BOOL bFullScreen,
-                                                       BOOL bPaused)
+_Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const ControllerInput*> pInput, float fDelta,
+                                                       BOOL bFullScreen, BOOL bPaused)
 {
     auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
 
-    const int nAchCount = (const int)(g_pActiveAchievements->NumAchievements());
-    const int nNumFriends = (const int)(RAUsers::LocalUser().NumFriends());
-    const int nNumLBs = (const int)(pLeaderboardManager.Count());
+    const auto nAchCount = gsl::narrow<int>(g_pActiveAchievements->NumAchievements());
+    const int nNumFriends = gsl::narrow<int>(RAUsers::LocalUser().NumFriends());
+    const int nNumLBs = gsl::narrow<int>(pLeaderboardManager.Count());
     // const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
-    const int nMsgCount = 0;
-    auto pnScrollOffset = GetActiveScrollOffset(); //	Dirty!
-    auto pnSelectedItem = GetActiveSelectedItem();
+    constexpr auto nMsgCount = 0;
 
-    const ControllerInput& input = *pInput;
+    const auto& input = *pInput;
 
-    BOOL bCloseOverlay = FALSE; //	False==close overlay
+    BOOL bCloseOverlay = FALSE; // False==close overlay
 
-    //	FS fix: this thrashes horribly when both are running :S
+    // FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
     {
         if (m_nTransitionState == TransitionState::Out && !bPaused)
@@ -164,13 +161,6 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
 
             if (bPaused)
             {
-                //	???
-                // SelectNextTopLevelPage( TRUE );
-                // 				//	Still paused, just transition to another page!
-                // 				m_nCurrentPage = (OverlayPage)((int)(m_nCurrentPage)+1);
-                // 				if( m_nCurrentPage == OP__MAX )
-                // 					m_nCurrentPage = OP_ACHIEVEMENTS;
-
                 m_nTransitionState = TransitionState::In;
                 m_fTransitionTimer = PAGE_TRANSITION_IN;
             }
@@ -196,6 +186,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
         {
             case Page::Achievements:
             {
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nAchCount - 1))
@@ -230,9 +222,9 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
             break;
             case Page::Achievement_Examine:
             {
-                //	Overload:
-                pnScrollOffset = &m_nAchievementsScrollOffset;
-                pnSelectedItem = &m_nAchievementsSelectedItem;
+                // Overload:
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(&m_nAchievementsScrollOffset)};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(&m_nAchievementsSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {
@@ -262,6 +254,8 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
             break;
             case Page::Friends:
             {
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())}; // Dirty!
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nNumFriends - 1))
@@ -279,25 +273,18 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                     }
                 }
 
-                //	Move page to match selection
+                // Move page to match selection
                 if ((*pnScrollOffset) > (*pnSelectedItem))
                     (*pnScrollOffset) = (*pnSelectedItem);
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumFriendsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumFriendsBeingRendered - 1);
-
-                // 				//	Lim the selected item to a valid range
-                // 				while( nSelectedItem > nNumElements )
-                // 					nSelectedItem--;
-                //
-                // 				if( nSelectedItem < nScrollOffset )
-                // 					nScrollOffset--;
-                // 				if( nSelectedItem >= nScrollOffset+m_nNumFriendsBeingRendered )
-                // 					nScrollOffset++;
             }
             break;
             case Page::Messages:
             {
-                //	Select message
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                // Select message
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nAchCount - 1))
@@ -314,12 +301,6 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                         m_bInputLock = TRUE;
                     }
                 }
-
-                //	Move page to match selection
-                // if( (*pnScrollOffset) > (*pnSelectedItem) )
-                //	(*pnScrollOffset) = (*pnSelectedItem);
-                // else if( (*pnSelectedItem) > (*pnScrollOffset)+(NUM_MESSAGES_TO_DRAW) )
-                //	(*pnScrollOffset) = (*pnSelectedItem) - (NUM_MESSAGES_TO_DRAW);
             }
             break;
             case Page::Message_Viewer:
@@ -329,10 +310,13 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                 break;
             }
             case Page::News:
-                //	Scroll news
+            {
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                // Scroll news
                 if (input.m_bDownPressed)
                 {
-                    if ((*pnSelectedItem) < static_cast<int>(m_LatestNews.size()))
+                    if ((*pnSelectedItem) < ra::to_signed(m_LatestNews.size()))
                     {
                         (*pnSelectedItem)++;
                         m_bInputLock = TRUE;
@@ -347,8 +331,12 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                     }
                 }
                 break;
+            }
             case Page::Leaderboards:
-                //	Scroll news
+            {
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(GetActiveScrollOffset())};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(GetActiveSelectedItem())};
+                // Scroll news
                 if (input.m_bDownPressed)
                 {
                     if ((*pnSelectedItem) < (nNumLBs - 1))
@@ -379,11 +367,13 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                 else if ((*pnSelectedItem) > (*pnScrollOffset) + (m_nNumLeaderboardsBeingRendered - 1))
                     (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumLeaderboardsBeingRendered - 1);
                 break;
+            }
             case Page::Leaderboard_Examine:
-                //	Overload from previous
-                //	Overload:
-                pnScrollOffset = &m_nLeaderboardScrollOffset;
-                pnSelectedItem = &m_nLeaderboardSelectedItem;
+            {
+                // Overload from previous
+                // Overload:
+                const gsl::not_null<int*> pnScrollOffset{gsl::make_not_null(&m_nLeaderboardScrollOffset)};
+                const gsl::not_null<int*> pnSelectedItem{gsl::make_not_null(&m_nLeaderboardSelectedItem)};
 
                 if (input.m_bDownPressed)
                 {
@@ -404,21 +394,22 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(const ControllerInput* pI
                     }
                 }
 
-                //	Move page to match selection
+                //  Move page to match selection
                 // if( (*pnScrollOffset) > (*pnSelectedItem) )
-                //	(*pnScrollOffset) = (*pnSelectedItem);
+                //  (*pnScrollOffset) = (*pnSelectedItem);
                 // else if( (*pnSelectedItem) > (*pnScrollOffset) + (m_nNumAchievementsBeingRendered-1) )
-                //	(*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
+                //  (*pnScrollOffset) = (*pnSelectedItem) - (m_nNumAchievementsBeingRendered-1);
 
                 break;
+            }
             default:
-                assert(0); //	Unknown page!
+                assert(0); // Unknown page!
                 break;
         }
 
         if (input.m_bCancelPressed)
         {
-            //	If TRUE: Close overlay
+            // If TRUE: Close overlay
             bCloseOverlay = GoBack();
             m_bInputLock = TRUE;
         }
@@ -456,8 +447,6 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nGameTitleY = 80;
     const int nGameSubTitleY = nGameTitleY + 36;
 
-    const size_t nNumberOfAchievements = g_pActiveAchievements->NumAchievements();
-
     const int nAchTopEdge = 160;    // 80;
     const int nAchSpacing = 64 + 8; // 52;
     const int nAchImageOffset = 28;
@@ -483,6 +472,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
     // subtitle
     std::string sSubtitle;
+    const size_t nNumberOfAchievements = g_pActiveAchievements->NumAchievements();
     if (nNumberOfAchievements == 0)
     {
         if (!RA_GameIsActive())
@@ -496,13 +486,12 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         unsigned int nUserPts = 0;
         unsigned int nUserCompleted = 0;
 
-        for (size_t i = 0; i < nNumberOfAchievements; ++i)
+        for (auto& ach : *g_pActiveAchievements)
         {
-            const Achievement* pAch = &g_pActiveAchievements->GetAchievement(i);
-            nMaxPts += pAch->Points();
-            if (!pAch->Active())
+            nMaxPts += ach.Points();
+            if (!ach.Active())
             {
-                nUserPts += pAch->Points();
+                nUserPts += ach.Points();
                 nUserCompleted++;
             }
         }
@@ -542,7 +531,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
                 }
 
-                DrawAchievement(hDC, &g_pActiveAchievements->GetAchievement(nAchIdx), nDX,
+                DrawAchievement(hDC, gsl::make_not_null(&g_pActiveAchievements->GetAchievement(nAchIdx)), nDX,
                                 (nAchTopEdge + (i * nAchSpacing)), bSelected, TRUE);
             }
         }
@@ -566,57 +555,55 @@ void AchievementOverlay::DrawMessagesPage(_UNUSED HDC, _UNUSED int, _UNUSED int,
 
 void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
-    const int* pnScrollOffset = GetActiveScrollOffset();
+    // NB: You can add const but not remove it
+    const auto pnScrollOffset = gsl::make_not_null<const int*>(GetActiveScrollOffset());
 
-    const unsigned int nFriendSpacing = 64 + 8; // 80;
-    const unsigned int nFriendsToDraw = ((rcTarget.bottom - rcTarget.top) - 140) / nFriendSpacing;
+    _CONSTANT_LOC nFriendSpacing = 64 + 8; // 80;
+    const auto nFriendsToDraw = ((rcTarget.bottom - rcTarget.top) - 140) / nFriendSpacing;
 
-    const unsigned int nFriendLeftOffsetImage = 32; // 16;
-    const unsigned int nFriendLeftOffsetText = 84;  // 64;
+    _CONSTANT_LOC nFriendLeftOffsetImage = 32; // 16;
+    _CONSTANT_LOC nFriendLeftOffsetText = 84;  // 64;
 
-    const unsigned int nFriendTopEdge = 120; // 44;
-    const unsigned int nFriendSubtitleYOffs = 24;
-    const unsigned int nFriendSpacingText = 36; // 18;
+    _CONSTANT_LOC nFriendTopEdge = 120; // 44;
+    _CONSTANT_LOC nFriendSubtitleYOffs = 24;
+    _CONSTANT_LOC nFriendSpacingText = 36; // 18;
 
-    char buffer[256];
+    const auto nOffset = m_nFriendsScrollOffset;
 
-    const unsigned int nOffset = m_nFriendsScrollOffset;
-
-    const unsigned int nNumFriends = RAUsers::LocalUser().NumFriends();
+    const auto nNumFriends = RAUsers::LocalUser().NumFriends();
 
     // TODO: friends list/activity is captured at time of login. eliminate that call as most
     // people don't care and fetch the data when switching to the friends page in the overlay
-    for (unsigned int i = 0; i < nFriendsToDraw; ++i)
+    for (auto i = 0; i < nFriendsToDraw; ++i)
     {
-        const int nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
-        const int nYOffs = nFriendTopEdge + nFriendSpacing * i;
+        const auto nXOffs = nDX + (rcTarget.left + nFriendLeftOffsetImage);
+        const auto nYOffs = nFriendTopEdge + nFriendSpacing * i;
 
-        if (i > nNumFriends)
+        if (i > ra::to_signed(nNumFriends))
             break;
 
-        if ((i + nOffset) < nNumFriends)
+        if ((i + nOffset) < ra::to_signed(nNumFriends))
         {
-            const RAUser* pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
-            if (pFriend == nullptr)
-                continue;
+            const auto& pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
 
-            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend->Username());
+            ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend.Username());
             HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(friendImage);
             if (hBitmap != nullptr)
                 DrawImage(hDC, hBitmap, nXOffs, nYOffs, 64, 64);
 
-            if ((m_nFriendsSelectedItem - m_nFriendsScrollOffset) == ra::to_signed(i))
+            if ((m_nFriendsSelectedItem - m_nFriendsScrollOffset) == i)
                 SetTextColor(hDC, COL_SELECTED);
             else
                 SetTextColor(hDC, COL_TEXT);
 
             HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
 
-            sprintf_s(buffer, 256, " %s (%u) ", pFriend->Username().c_str(), pFriend->GetScore());
-            TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), strlen(buffer));
+            auto buffer = ra::StringPrintf(" %s (%u) ", pFriend.Username(), pFriend.GetScore());
+            TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(),
+                    buffer.length());
 
             SelectObject(hDC, g_hFontTiny);
-            sprintf_s(buffer, 256, " %s ", pFriend->Activity().c_str());
+            buffer = ra::StringPrintf(" %s ", pFriend.Activity());
             // RARect rcDest( nXOffs+nFriendLeftOffsetText, nYOffs+nFriendSubtitleYOffs )
             RECT rcDest;
             SetRect(&rcDest,
@@ -624,7 +611,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
                     nYOffs + nFriendSubtitleYOffs,
                     nDX + rcTarget.right - 40,
                     nYOffs + nFriendSubtitleYOffs + 46);
-            DrawText(hDC, NativeStr(pFriend->Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(pFriend.Activity()).c_str(), -1, &rcDest, DT_LEFT | DT_WORDBREAK);
 
             //	Restore
             SelectObject(hDC, hOldObj);
@@ -634,7 +621,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
         }
     }
 
-    if (nNumFriends > (nFriendsToDraw))
+    if (ra::to_signed(nNumFriends) > nFriendsToDraw)
     {
         DrawBar(hDC,
                 nDX + 8,
@@ -670,14 +657,15 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     const int nWonByPlayerNameX = 20;
     const int nWonByPlayerDateX = 220;
 
-    const Achievement* pAch = &g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem);
+    const auto pAch =
+        gsl::make_not_null<const Achievement*>(&g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem));
 
     const time_t tCreated = pAch->CreatedDate();
     const time_t tModified = pAch->ModifiedDate();
 
     DrawAchievement(hDC, pAch, nDX + nAchievementStartX, nAchievementStartY, TRUE, FALSE);
 
-    if (m_nAchievementsSelectedItem >= (int)nNumAchievements)
+    if (m_nAchievementsSelectedItem >= ra::to_signed(nNumAchievements))
         return;
 
     auto buffer = ra::StringPrintf(" Created: %s ", _TimeStampToString(tCreated));
@@ -686,6 +674,8 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     buffer = ra::StringPrintf(" Modified: %s ", _TimeStampToString(tModified));
     TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(),
             gsl::narrow<int>(buffer.length()));
+
+            
 
     if (g_AchExamine.HasData())
     {
@@ -808,28 +798,27 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
 
 void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
-    const unsigned int nYOffsetTop = 90;
-    unsigned int nYOffset = nYOffsetTop;
+    _CONSTANT_LOC nYOffsetTop = 90;
+    auto nYOffset = nYOffsetTop;
 
-    const unsigned int nHeaderGap = 4;
-    const unsigned int nArticleGap = 10;
+    _CONSTANT_LOC nHeaderGap = 4;
+    _CONSTANT_LOC nArticleGap = 10;
 
-    const unsigned int nBorder = 32;
+    _CONSTANT_LOC nBorder = 32;
 
-    const unsigned int nLeftAlign = nDX + nBorder;
-    const unsigned int nRightAlign = nDX + (rcTarget.right - nBorder);
+    const auto nLeftAlign = nDX + nBorder;
+    const auto nRightAlign = nDX + (rcTarget.right - nBorder);
 
-    const unsigned int nArticleIndent = 20;
+    _CONSTANT_LOC nArticleIndent = 20;
 
-    const int nWidth = rcTarget.right - rcTarget.left;
-    const int nHeight = rcTarget.bottom - rcTarget.top;
+    const auto nWidth = rcTarget.right - rcTarget.left;
+    const auto nHeight = rcTarget.bottom - rcTarget.top;
 
-    const int* pnScrollOffset = GetActiveScrollOffset();
-    const int* pnSelectedItem = GetActiveSelectedItem();
+    const auto pnScrollOffset = gsl::make_not_null<const int*>(GetActiveScrollOffset());
+    const auto pnSelectedItem = gsl::make_not_null<const int*>(GetActiveSelectedItem());
 
-    const int nLBSpacing = 52;
-
-    const int nItemSpacing = 48;
+    _CONSTANT_LOC nLBSpacing = 52;
+    _CONSTANT_LOC nItemSpacing = 48;
 
     HGDIOBJ hOldObject = SelectObject(hDC, g_hFontDesc2);
 
@@ -1234,8 +1223,8 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
     DeleteObject(hBarBack);
 }
 
-void AchievementOverlay::DrawAchievement(HDC hDC, const Achievement* pAch, int nX, int nY, BOOL bSelected,
-                                         BOOL bCanLock) const
+void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievement*> pAch, int nX, int nY,
+                                         BOOL bSelected, BOOL bCanLock) const
 {
     const int nAchImageOffset = 28;
     const int nAchLeftOffset1 = 28 + 64 + 6;
@@ -1347,7 +1336,7 @@ int* AchievementOverlay::GetActiveScrollOffset() const noexcept
         case Page::Leaderboard_Examine:
             _FALLTHROUGH;
         case Page::Achievement_Examine:
-            return nullptr;
+            return std::add_pointer_t<int>();
 
         default:
             ASSERT(!"Unknown page");
@@ -1373,7 +1362,7 @@ int* AchievementOverlay::GetActiveSelectedItem() const noexcept
         case Page::Achievement_Examine:
             _FALLTHROUGH;
         case Page::Leaderboard_Examine:
-            return nullptr;
+            return std::add_pointer_t<int>();
 
         default:
             ASSERT(!"Unknown page");
@@ -1478,7 +1467,7 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         args['u'] = RAUsers::LocalUser().Username();
         args['t'] = RAUsers::LocalUser().Token();
         args['a'] = std::to_string(m_pSelectedAchievement->ID());
-        args['f'] = true; //	Friends only?
+        args['f'] = true; // Friends only?
         RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
     }
 }
@@ -1569,7 +1558,7 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
 //	Stubs for non-class based, indirect calling of these functions.
 _Use_decl_annotations_ API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
 {
-    return g_AchievementOverlay.Update(pInput, fDTime, Full_Screen, Paused);
+    return g_AchievementOverlay.Update(gsl::make_not_null(pInput), fDTime, Full_Screen, Paused);
 }
 
 _Use_decl_annotations_ API void _RA_RenderOverlay(HDC hDC, RECT* rcSize) { g_AchievementOverlay.Render(hDC, rcSize); }

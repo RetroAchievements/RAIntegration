@@ -38,6 +38,7 @@
 #define restrict
 #endif /* __STDC_VERSION__ >= 199901L */
 
+/* Use these for code analysis suppressions if needed */
 /* clang-format off */
 #define GSL_SUPPRESS_CON3 GSL_SUPPRESS(con.3)
 #define GSL_SUPPRESS_CON4 GSL_SUPPRESS(con.4)

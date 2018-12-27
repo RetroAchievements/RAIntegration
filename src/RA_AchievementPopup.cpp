@@ -165,8 +165,8 @@ void AchievementPopup::Render(ra::ui::drawing::ISurface& pSurface)
     pSurface.DrawSurface(10, static_cast<int>(fFadeInY), m_vMessages.front().GetRendered());
 }
 
-void AchievementPopup::Clear()
+void AchievementPopup::Clear() noexcept
 {
-    while (!m_vMessages.empty())
-        m_vMessages.pop();
+    while (MessagesPresent())
+        GSL_SUPPRESS_F6 m_vMessages.pop(); // shouldn't throw if not empty
 }

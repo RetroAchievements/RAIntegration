@@ -33,8 +33,8 @@ public:
         virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
     };
 
-    GSL_SUPPRESS_F6 void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.insert(&pTarget); }
-    GSL_SUPPRESS_F6 void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.erase(&pTarget); }
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

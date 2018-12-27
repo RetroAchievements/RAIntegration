@@ -36,7 +36,9 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-    void SetOpacity(_UNUSED double) noexcept override { assert("This surface does not support opacity"); }
+    GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+
+    HDC GetHDC() const noexcept { return m_hDC; }
 
 protected:
     void SwitchFont(int nFont) const;

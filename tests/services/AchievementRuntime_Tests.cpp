@@ -39,7 +39,7 @@ namespace tests {
 class AchievementRuntimeHarness : public AchievementRuntime
 {
 public:
-    GSL_SUPPRESS(f.6) AchievementRuntimeHarness() : m_Override(this)
+    GSL_SUPPRESS_F6 AchievementRuntimeHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
     }
@@ -180,8 +180,10 @@ public:
         runtime.mockGameContext.AddAchivement(3U, "1=1.10.");
         runtime.mockGameContext.AddAchivement(5U, "1=1.2.");
 
-        auto* pAchievement3 = runtime.mockGameContext.FindAchievement(3U);
-        auto* pAchievement5 = runtime.mockGameContext.FindAchievement(5U);
+        const gsl::not_null<Achievement*> pAchievement3{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
+        const gsl::not_null<Achievement*> pAchievement5{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U))};
 
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);
@@ -233,6 +235,30 @@ public:
         Assert::IsTrue(pAchievement3->Active());
         runtime.LoadProgress("test.sav");
         Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+    }
+
+    TEST_METHOD(TestActivateClonedAchievement)
+    {
+        AchievementRuntime runtime;
+        ra::services::ServiceLocator::ServiceOverride<AchievementRuntime> svcOverride(&runtime, false);
+
+        Achievement pAchievement1, pAchievement2;
+        pAchievement1.ParseLine("1:1=1:Title:Desc::::Auth:5:1234567890:1234567890:::12345");
+
+        pAchievement1.SetActive(true);
+        pAchievement2.Set(pAchievement1);
+        pAchievement2.SetID(12);
+        Assert::IsFalse(pAchievement2.Active()); // clone should not be immediately active
+        pAchievement2.SetActive(true);
+
+        // both achievements should trigger
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.Process(vChanges);
+        Assert::AreEqual(2U, vChanges.size());
+        Assert::AreEqual(pAchievement1.ID(), vChanges[0].nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges[0].nType);
+        Assert::AreEqual(pAchievement2.ID(), vChanges[1].nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges[1].nType);
     }
 };
 

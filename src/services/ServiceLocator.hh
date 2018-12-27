@@ -58,9 +58,9 @@ public:
     /// pointer and delete it at the end of execution or when a different implementation is provided.
     /// </param>
     template <class TClass>
-    static void Provide(TClass* pInstance) noexcept
+    static void Provide(std::unique_ptr<TClass> pInstance) noexcept
     {
-        Service<TClass>::s_pInstance.reset(pInstance);
+        Service<TClass>::s_pInstance = std::move(pInstance);
     }
 
     /// <summary>

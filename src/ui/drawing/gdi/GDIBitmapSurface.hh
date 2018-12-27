@@ -91,9 +91,9 @@ public:
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
+    void Blend(HDC hTargetDC, int nX, int nY) const;
 
-    void SetOpacity(double fAlpha) noexcept override;
+    void SetOpacity(double fAlpha) override;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory
@@ -101,14 +101,14 @@ class GDISurfaceFactory : public ISurfaceFactory
 public:
     std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
     std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIAlphaBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIAlphaBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
 private:

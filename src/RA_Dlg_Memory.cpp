@@ -16,12 +16,8 @@
 #define ID_CANCEL 1025
 #endif
 
-namespace {
-
-const size_t MIN_RESULTS_TO_DUMP = 500000;
-const size_t MIN_SEARCH_PAGE_SIZE = 50;
-
-} // namespace
+_CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
+_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
 Dlg_Memory g_MemoryDialog;
 
@@ -324,9 +320,9 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
         if (g_MemBookmarkDialog.GetHWND() != nullptr)
         {
-            const MemBookmark* Bookmark = g_MemBookmarkDialog.FindBookmark(nByteAddress);
-            if (Bookmark != nullptr)
-                g_MemBookmarkDialog.WriteFrozenValue(*Bookmark);
+            const auto& Bookmark{g_MemBookmarkDialog.FindBookmark(nByteAddress)};
+            if (Bookmark.Address() != MemBookmark::INVALID_ADDRESS)
+                g_MemBookmarkDialog.WriteFrozenValue(Bookmark);
         }
 
         if (m_nDataSize == MemSize::EightBit)
@@ -592,7 +588,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
-        for (int i = 0; i < lines && addr < (int)g_MemManager.TotalBankSize(); ++i, addr += 16)
+        for (auto i = 0; i < lines && addr < ra::to_signed(g_MemManager.TotalBankSize()); ++i, addr += 16)
         {
             if (addr >= 0)
             {
@@ -602,14 +598,18 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 for (int j = 0; j < 16; ++j)
                 {
                     notes |= (g_MemoryDialog.Notes().FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
-                    const MemBookmark* bm = g_MemBookmarkDialog.FindBookmark(addr + j);
-                    bookmarks |= (bm != nullptr) ? (1 << j) : 0;
-                    freeze |= (bm != nullptr && bm->Frozen()) ? (1 << j) : 0;
 
-                    if (bm != nullptr && bm->Frozen())
+                    if (g_MemBookmarkDialog.BookmarkExists(addr + j))
                     {
-                        if (g_MemBookmarkDialog.GetHWND() != nullptr)
-                            g_MemBookmarkDialog.WriteFrozenValue(*bm);
+                        const auto& bm = g_MemBookmarkDialog.FindBookmark(addr + j);
+                        bookmarks |= (1 << j);
+                        freeze |= (bm.Frozen()) ? (1 << j) : 0;
+
+                        if (bm.Frozen())
+                        {
+                            if (g_MemBookmarkDialog.GetHWND() != nullptr)
+                                g_MemBookmarkDialog.WriteFrozenValue(bm);
+                        }
                     }
                 }
 
@@ -939,7 +939,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 if (!currentSearch.WasModified(result.nAddress))
                                     currentSearch.m_modifiedAddresses.push_back(result.nAddress);
                             }
-                            else if (g_MemBookmarkDialog.FindBookmark(result.nAddress) != nullptr)
+                            else if (g_MemBookmarkDialog.BookmarkExists(result.nAddress))
                                 color = RGB(220, 255, 220); // Green if Bookmark is found.
                             else if (g_MemoryDialog.Notes().FindCodeNote(result.nAddress) != nullptr)
                                 color = RGB(220, 240, 255); // Blue if Code Note is found.
@@ -1776,12 +1776,19 @@ bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end
     }
 }
 
-static TCHAR* ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
+inline static constexpr auto ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
 {
+    if (ptr == nullptr)
+        return ptr;
+
     if (*ptr == '$')
+    {
         ++ptr;
+    }
     else if (ptr[0] == '0' && ptr[1] == 'x')
+    {
         ptr += 2;
+    }
 
     address = 0;
     while (*ptr)
@@ -1802,9 +1809,7 @@ static TCHAR* ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
             address += (*ptr - 'A' + 10);
         }
         else
-        {
             break;
-        }
 
         ++ptr;
     }
@@ -1812,14 +1817,14 @@ static TCHAR* ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
     return ptr;
 }
 
-bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end) noexcept
+bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end)
 {
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
     {
         // all items are in "All" range
         start = 0;
         end = g_MemManager.TotalBankSize() - 1;
-        return TRUE;
+        return true;
     }
 
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM) == BST_CHECKED)
@@ -1830,25 +1835,25 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
 
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
     {
-        TCHAR buffer[128];
-        GetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_SEARCHRANGE, buffer, 128);
+        std::array<TCHAR, 128> buffer{};
+        GetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_SEARCHRANGE, buffer.data(), 128);
 
-        TCHAR* ptr = ParseAddress(buffer, start);
+        auto ptr = ParseAddress(buffer.data(), start);
+        Expects(ptr != nullptr);
         while (iswspace(*ptr))
             ++ptr;
-
         if (*ptr != '-')
-            return FALSE;
+            return false;
         ++ptr;
 
         while (iswspace(*ptr))
             ++ptr;
 
         ptr = ParseAddress(ptr, end);
+        Ensures(ptr != nullptr);
         return (*ptr == '\0');
     }
-
-    return FALSE;
+    return false;
 }
 
 void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,

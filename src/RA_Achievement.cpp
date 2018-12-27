@@ -16,8 +16,10 @@
 #include "RA_Core.h"
 #else
 // duplicate of code in RA_Core, but RA_Core needs to be cleaned up before it can be pulled into the unit test build
-void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+GSL_SUPPRESS_F23
+void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSource)
 {
+    Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)
@@ -50,7 +52,8 @@ Achievement::~Achievement() noexcept
 #ifndef RA_UTEST
 void Achievement::Parse(const rapidjson::Value& element)
 {
-    //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50 rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
+    //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50
+    //rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
     m_nAchievementID = element["ID"].GetUint();
     m_sTitle = element["Title"].GetString();
     m_sDescription = element["Description"].GetString();
@@ -58,9 +61,9 @@ void Achievement::Parse(const rapidjson::Value& element)
     m_sAuthor = element["Author"].GetString();
     m_nTimestampModified = element["Modified"].GetUint();
     m_nTimestampCreated = element["Created"].GetUint();
-    //m_sBadgeImageURI = element["BadgeName"].GetString();
+    // m_sBadgeImageURI = element["BadgeName"].GetString();
     SetBadgeImage(element["BadgeName"].GetString());
-    //unsigned int nFlags = element["Flags"].GetUint();
+    // unsigned int nFlags = element["Flags"].GetUint();
 
     if (element["MemAddr"].IsString())
     {
@@ -90,19 +93,32 @@ static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
 {
     switch (nOperandSize)
     {
-        case RC_OPERAND_BIT_0: return MemSize::Bit_0;
-        case RC_OPERAND_BIT_1: return MemSize::Bit_1;
-        case RC_OPERAND_BIT_2: return MemSize::Bit_2;
-        case RC_OPERAND_BIT_3: return MemSize::Bit_3;
-        case RC_OPERAND_BIT_4: return MemSize::Bit_4;
-        case RC_OPERAND_BIT_5: return MemSize::Bit_5;
-        case RC_OPERAND_BIT_6: return MemSize::Bit_6;
-        case RC_OPERAND_BIT_7: return MemSize::Bit_7;
-        case RC_OPERAND_LOW: return MemSize::Nibble_Lower;
-        case RC_OPERAND_HIGH: return MemSize::Nibble_Upper;
-        case RC_OPERAND_8_BITS: return MemSize::EightBit;
-        case RC_OPERAND_16_BITS: return MemSize::SixteenBit;
-        case RC_OPERAND_32_BITS: return MemSize::ThirtyTwoBit;
+        case RC_OPERAND_BIT_0:
+            return MemSize::Bit_0;
+        case RC_OPERAND_BIT_1:
+            return MemSize::Bit_1;
+        case RC_OPERAND_BIT_2:
+            return MemSize::Bit_2;
+        case RC_OPERAND_BIT_3:
+            return MemSize::Bit_3;
+        case RC_OPERAND_BIT_4:
+            return MemSize::Bit_4;
+        case RC_OPERAND_BIT_5:
+            return MemSize::Bit_5;
+        case RC_OPERAND_BIT_6:
+            return MemSize::Bit_6;
+        case RC_OPERAND_BIT_7:
+            return MemSize::Bit_7;
+        case RC_OPERAND_LOW:
+            return MemSize::Nibble_Lower;
+        case RC_OPERAND_HIGH:
+            return MemSize::Nibble_Upper;
+        case RC_OPERAND_8_BITS:
+            return MemSize::EightBit;
+        case RC_OPERAND_16_BITS:
+            return MemSize::SixteenBit;
+        case RC_OPERAND_32_BITS:
+            return MemSize::ThirtyTwoBit;
         default:
             ASSERT(!"Unsupported operand size");
             return MemSize::EightBit;
@@ -116,7 +132,7 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
         case RC_OPERAND_ADDRESS:
             var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value);
             break;
-            
+
         case RC_OPERAND_DELTA:
             var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value);
             break;
@@ -154,12 +170,24 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             default:
                 ASSERT(!"Unsupported operator");
                 _FALLTHROUGH;
-            case RC_CONDITION_EQ: cond.SetCompareType(ComparisonType::Equals); break;
-            case RC_CONDITION_NE: cond.SetCompareType(ComparisonType::NotEqualTo); break;
-            case RC_CONDITION_LT: cond.SetCompareType(ComparisonType::LessThan); break;
-            case RC_CONDITION_LE: cond.SetCompareType(ComparisonType::LessThanOrEqual); break;
-            case RC_CONDITION_GT: cond.SetCompareType(ComparisonType::GreaterThan); break;
-            case RC_CONDITION_GE: cond.SetCompareType(ComparisonType::GreaterThanOrEqual); break;
+            case RC_CONDITION_EQ:
+                cond.SetCompareType(ComparisonType::Equals);
+                break;
+            case RC_CONDITION_NE:
+                cond.SetCompareType(ComparisonType::NotEqualTo);
+                break;
+            case RC_CONDITION_LT:
+                cond.SetCompareType(ComparisonType::LessThan);
+                break;
+            case RC_CONDITION_LE:
+                cond.SetCompareType(ComparisonType::LessThanOrEqual);
+                break;
+            case RC_CONDITION_GT:
+                cond.SetCompareType(ComparisonType::GreaterThan);
+                break;
+            case RC_CONDITION_GE:
+                cond.SetCompareType(ComparisonType::GreaterThanOrEqual);
+                break;
         }
 
         switch (pCondition->type)
@@ -167,12 +195,24 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             default:
                 ASSERT(!"Unsupported condition type");
                 _FALLTHROUGH;
-            case RC_CONDITION_STANDARD:   cond.SetConditionType(Condition::Type::Standard);  break;
-            case RC_CONDITION_RESET_IF:   cond.SetConditionType(Condition::Type::ResetIf);   break;
-            case RC_CONDITION_PAUSE_IF:   cond.SetConditionType(Condition::Type::PauseIf);   break;
-            case RC_CONDITION_ADD_SOURCE: cond.SetConditionType(Condition::Type::AddSource); break;
-            case RC_CONDITION_SUB_SOURCE: cond.SetConditionType(Condition::Type::SubSource); break;
-            case RC_CONDITION_ADD_HITS:   cond.SetConditionType(Condition::Type::AddHits);   break;
+            case RC_CONDITION_STANDARD:
+                cond.SetConditionType(Condition::Type::Standard);
+                break;
+            case RC_CONDITION_RESET_IF:
+                cond.SetConditionType(Condition::Type::ResetIf);
+                break;
+            case RC_CONDITION_PAUSE_IF:
+                cond.SetConditionType(Condition::Type::PauseIf);
+                break;
+            case RC_CONDITION_ADD_SOURCE:
+                cond.SetConditionType(Condition::Type::AddSource);
+                break;
+            case RC_CONDITION_SUB_SOURCE:
+                cond.SetConditionType(Condition::Type::SubSource);
+                break;
+            case RC_CONDITION_ADD_HITS:
+                cond.SetConditionType(Condition::Type::AddHits);
+                break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);
@@ -370,7 +410,6 @@ void Achievement::Clear() noexcept
     SetActive(false);
 
     m_vConditions.Clear();
-
     m_nAchievementID = 0;
     m_pTriggerBuffer.reset();
     m_pTrigger = nullptr;
@@ -394,8 +433,8 @@ void Achievement::Clear() noexcept
 
     m_nTimestampCreated = 0;
     m_nTimestampModified = 0;
-    //m_nUpvotes = 0;
-    //m_nDownvotes = 0;
+    // m_nUpvotes = 0;
+    // m_nDownvotes = 0;
 }
 
 void Achievement::AddConditionGroup() noexcept { m_vConditions.AddGroup(); }
@@ -473,11 +512,11 @@ void Achievement::Reset() noexcept
 
 size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCond)
 {
-    while (NumConditionGroups() <= nConditionGroup)	//	ENSURE this is a legal op!
+    while (NumConditionGroups() <= nConditionGroup) //	ENSURE this is a legal op!
         m_vConditions.AddGroup();
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
-    group.Add(rNewCond);	//	NB. Copy by value	
+    group.Add(rNewCond); //	NB. Copy by value
     SetDirtyFlag(DirtyFlags::All);
 
     return group.Count();
@@ -485,11 +524,11 @@ size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCo
 
 size_t Achievement::InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& rNewCond)
 {
-    while (NumConditionGroups() <= nConditionGroup)	//	ENSURE this is a legal op!
+    while (NumConditionGroups() <= nConditionGroup) //	ENSURE this is a legal op!
         m_vConditions.AddGroup();
 
     ConditionGroup& group = m_vConditions.GetGroup(nConditionGroup);
-    group.Insert(nIndex, rNewCond);	//	NB. Copy by value	
+    group.Insert(nIndex, rNewCond); //	NB. Copy by value
     SetDirtyFlag(DirtyFlags::All);
 
     return group.Count();
@@ -500,7 +539,7 @@ BOOL Achievement::RemoveCondition(size_t nConditionGroup, unsigned int nID)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).RemoveAt(nID);
-        SetDirtyFlag(DirtyFlags::All);	//	Not Conditions: 
+        SetDirtyFlag(DirtyFlags::All); //	Not Conditions:
         return TRUE;
     }
 
@@ -512,7 +551,7 @@ void Achievement::RemoveAllConditions(size_t nConditionGroup)
     if (nConditionGroup < m_vConditions.GroupCount())
     {
         m_vConditions.GetGroup(nConditionGroup).Clear();
-        SetDirtyFlag(DirtyFlags::All);	//	All - not just conditions
+        SetDirtyFlag(DirtyFlags::All); //	All - not just conditions
     }
 }
 
@@ -526,7 +565,6 @@ std::string Achievement::CreateMemString() const
 void Achievement::Set(const Achievement& rRHS)
 {
     SetID(rRHS.m_nAchievementID);
-    SetActive(rRHS.m_bActive);
     SetAuthor(rRHS.m_sAuthor);
     SetDescription(rRHS.m_sDescription);
     SetPoints(rRHS.m_nPointValue);
@@ -538,36 +576,25 @@ void Achievement::Set(const Achievement& rRHS)
     SetModifiedDate(rRHS.m_nTimestampModified);
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
-    for (size_t i = 0; i < NumConditionGroups(); ++i)
-        RemoveAllConditions(i);
-    m_vConditions.Clear();
-
-    for (size_t nGrp = 0; nGrp < rRHS.NumConditionGroups(); ++nGrp)
-    {
-        m_vConditions.AddGroup();
-
-        const ConditionGroup& group = rRHS.m_vConditions.GetGroup(nGrp);
-        for (size_t i = 0; i < group.Count(); ++i)
-            AddCondition(nGrp, group.GetAt(i));
-    }
+    ParseTrigger(rRHS.CreateMemString().c_str());
 
     SetDirtyFlag(DirtyFlags::All);
 }
 
-//int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )
+// int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )
 //{
 //	ASSERT( m_nNumDynamicVars < 5 );
-// 	
+//
 //	//m_nDynamicVars[m_nNumDynamicVars].m_nVar = nVar;
 //	//strcpy_s( m_nDynamicVars[m_nNumDynamicVars].m_sName, 16, pVarName );
-// 	
+//
 //	m_nNumDynamicVars++;
-// 
+//
 //	return m_nNumDynamicVars;
 //}
 //
 //
-//float Achievement::ProgressGetNextStep( char* sFormat, float fLastKnownProgress )
+// float Achievement::ProgressGetNextStep( char* sFormat, float fLastKnownProgress )
 //{
 //	const float fStep = ( (float)strtol( sFormat, nullptr, 10 ) / 100.0f );
 //	int nIter = 1;	//	Progress of 0% doesn't require a popup...
@@ -577,32 +604,32 @@ void Achievement::Set(const Achievement& rRHS)
 //		nIter++;
 //		fStepAt = fStep * nIter;
 //	}
-// 
+//
 //	if( fStepAt >= 1.0f )
 //		fStepAt = 1.0f;
-// 
+//
 //	return fStepAt;
 //}
 //
-//float Achievement::ParseProgressExpression( char* pExp )
+// float Achievement::ParseProgressExpression( char* pExp )
 //{
 //	if( pExp == nullptr )
 //		return 0.0f;
-// 
+//
 //	int nOperator = 0;	//	0=add, 1=mult, 2=sub
-// 
+//
 //	while( *pExp == ' ' )
 //		++pExp; //	Trim
-// 
+//
 //	float fProgressValue = 0.0f;
 //	char* pStrIter = &pExp[0];
-// 
+//
 //	int nIterations = 0;
-// 
+//
 //	while( *pStrIter != nullptr && nIterations < 20 )
 //	{
 //		float fNextVal = 0.0f;
-// 
+//
 //		//	Parse operator
 //		if( pStrIter == pExp )
 //		{
@@ -622,20 +649,20 @@ void Achievement::Set(const Achievement& rRHS)
 //				char buffer[256];
 //				sprintf_s( buffer, 256, "Unrecognised operator character at %d",
 //					(&pStrIter) - (&pExp) );
-// 
+//
 //				ASSERT(!"Unrecognised operator in format expression!");
 //				return 0.0f;
 //			}
-//			
+//
 //			pStrIter++;
 //		}
-// 
+//
 //		//	Parse value:
 //		if( strncmp( pStrIter, "Cond:", 5 ) == 0 )
 //		{
 //			//	Get the specified condition, and the value from it.
 //			unsigned int nCondIter = strtol( pStrIter+5, nullptr, 10 );
-//			
+//
 //			if( nCondIter < NumConditions() )
 //			{
 //				Condition& Cond = GetCondition( nCondIter );
@@ -673,7 +700,7 @@ void Achievement::Set(const Achievement& rRHS)
 //			//	Assume value, assume base 10
 //			fNextVal = (float)( strtol( pStrIter, &pStrIter, 10 ) );
 //		}
-// 
+//
 //		switch( nOperator )
 //		{
 //		case 0:	//	Add
@@ -689,41 +716,41 @@ void Achievement::Set(const Achievement& rRHS)
 //			ASSERT(!"Unrecognised operator?!");
 //			break;
 //		}
-// 
+//
 //		while( *pExp == ' ' )
 //			++pExp; //	Trim any whitespace
-// 
+//
 //		nIterations++;
 //	}
-// 
+//
 //	if( nIterations == 20 )
 //	{
 //		ASSERT(!"Bugger... can't parse this 'progress' thing. Too many iterations!");
 //	}
-// 
+//
 //	return fProgressValue;
 //}
 
-//void Achievement::UpdateProgress()
+// void Achievement::UpdateProgress()
 // {
 //	//	Produce a float which represents the current progress.
-//	//	Compare to m_sProgressFmt. If greater and 
+//	//	Compare to m_sProgressFmt. If greater and
 //	//	Compare to m_fProgressLastShown
-// 
+//
 //	//	TBD: Don't forget backslashes!
 //	//sprintf_s( m_sProgress, 256,	"0xfe20", 10 );	//	every 10 percent
 //	//sprintf_s( m_sProgressMax, 256, "200", 10 );	//	every 10 percent
 //	//sprintf_s( m_sProgressFmt, 50,	"%d,%%01.f,%%01.f,,", 10 );	//	every 10 percent
-//	
+//
 //	const float fProgressValue = ParseProgressExpression( m_sProgress );
 //	const float fMaxValue = ParseProgressExpression( m_sProgressMax );
-// 
+//
 //	if( fMaxValue == 0.0f )
 //		return;
-// 
+//
 //	const float fProgressPercent = ( fProgressValue / fMaxValue );
 //	const float fNextStep = ProgressGetNextStep( m_sProgressFmt, fProgressPercent );
-// 
+//
 //	if( fProgressPercent >= m_fProgressLastShown && m_fProgressLastShown < fNextStep )
 //	{
 //		if( m_fProgressLastShown == 0.0f )
@@ -735,42 +762,47 @@ void Achievement::Set(const Achievement& rRHS)
 //		{
 //			return;	//	Don't show final indicator!
 //		}
-// 
+//
 //		m_fProgressLastShown = fNextStep;
-//		
+//
 //		char formatSpareBuffer[256];
 //		strcpy_s( formatSpareBuffer, 256, m_sProgressFmt );
-// 
+//
 //		//	DO NOT USE Sprintf!! this will interpret the format!
-//		//	sprintf_s( formatSpareBuffer, 256, m_sProgressFmt ); 
-// 
+//		//	sprintf_s( formatSpareBuffer, 256, m_sProgressFmt );
+//
 //		char* pUnused = &formatSpareBuffer[0];
 //		char* pUnused2 = nullptr;
 //		char* pFirstFmt = nullptr;
 //		char* pSecondFmt = nullptr;
 //		strtok_s( pUnused, ",", &pFirstFmt );
 //		strtok_s( pFirstFmt, ",", &pSecondFmt );
-//		strtok_s( pSecondFmt, ",\0\n:", &pUnused2 );	//	Adds a very useful '\0' to pSecondFmt 
-//		
+//		strtok_s( pSecondFmt, ",\0\n:", &pUnused2 );	//	Adds a very useful '\0' to pSecondFmt
+//
 //		if( pFirstFmt==nullptr || pSecondFmt==nullptr )
 //		{
 //			ASSERT(!"FUCK. Format string is fucked");
 //			return;
 //		}
-//		
+//
 //		//	Display progress message:
-//		
+//
 //		char bufferVal1[64];
 //		sprintf_s( bufferVal1, 64, pFirstFmt, fProgressValue );
-//		
+//
 //		char bufferVal2[64];
 //		sprintf_s( bufferVal2, 64, pSecondFmt, fMaxValue );
-// 
+//
 //		char progressTitle[256];
 //		sprintf_s( progressTitle, 256, " Progress: %s ", Title() );
-// 
+//
 //		char progressDesc[256];
 //		sprintf_s( progressDesc, 256, " %s of %s ", bufferVal1, bufferVal2 );
 //		g_PopupWindows.ProgressPopups().AddMessage( progressTitle, progressDesc );
 //	}
 // }
+
+
+
+
+

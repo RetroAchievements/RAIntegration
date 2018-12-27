@@ -165,6 +165,12 @@
     <ClCompile Include="..\src\data\SessionTracker.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
     <ClCompile Include="services\AchievementRuntime_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
@@ -233,6 +239,12 @@
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockSessionTracker.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockAudioSystem.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockOverlayManager.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
   </ItemGroup>

@@ -16,10 +16,10 @@ Login::Response DisconnectedServer::Login(const Login::Request& request) noexcep
 
     // if successful, update the global IServer instance to the connected API
     if (response.Result == ApiResult::Success)
-        ra::services::ServiceLocator::Provide<ra::api::IServer>(serverApi.release());
+        ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(serverApi));
 
     // pass the server API response back to the caller
-    return std::move(response);
+    return response;
 }
 
 } // namespace impl

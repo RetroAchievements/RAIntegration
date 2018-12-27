@@ -2,6 +2,8 @@
 #define RA_UI_IMAGEREPOSITORY_H
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -105,11 +107,12 @@ public:
     /// <summary>
     /// Releases this reference image.
     /// </summary>
-    GSL_SUPPRESS(f.6) void Release() noexcept
+    GSL_SUPPRESS_F6 void Release() noexcept
     {
         if (m_nType != ImageType::None)
         {
-            auto& pRepository = ra::services::ServiceLocator::GetMutable<IImageRepository>();
+            // Supress not working inline, but should
+            GSL_SUPPRESS_F6 auto& pRepository = ra::services::ServiceLocator::GetMutable<IImageRepository>();
             pRepository.ReleaseReference(*this);
         }
     }

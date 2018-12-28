@@ -126,7 +126,13 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
                 case 0:
                 {
-                    auto* pControlBinding = FindControlBinding((HWND)(lParam));
+                    // a command triggered by the keyboard will not move focus to the associated button. ensure any
+                    // lostfocus logic is applied for the currently focused control before executing the command.
+                    auto* pControlBinding = FindControlBinding(GetFocus());
+                    if (pControlBinding)
+                        pControlBinding->LostFocus();
+
+                    pControlBinding = FindControlBinding((HWND)(lParam));
                     if (pControlBinding)
                         pControlBinding->OnCommand();
                     break;

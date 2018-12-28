@@ -32,6 +32,7 @@ enum EmulatorID
     RA_Libretro = 7,
     RA_Meka = 8,
     RA_QUASI88 = 9,
+    RA_AppleWin = 10,
 
     NumEmulatorIDs,
     UnknownEmulator = NumEmulatorIDs

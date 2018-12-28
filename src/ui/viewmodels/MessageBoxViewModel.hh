@@ -23,9 +23,9 @@ public:
     MessageBoxViewModel& operator=(const MessageBoxViewModel&) = delete;
 
     MessageBoxViewModel(MessageBoxViewModel&&) 
-		noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) = default;
+        noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) = default;
 
-	MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
+    MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
 
     enum class Buttons
     {

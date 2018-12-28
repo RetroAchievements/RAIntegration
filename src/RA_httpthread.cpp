@@ -378,15 +378,14 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
 //  Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
-    auto* pObj = new RequestObject(nType, PostData, sData);
-
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([pObj]()
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([nType, PostData, sData]() mutable
     {
+        auto pObj = std::make_unique<RequestObject>(nType, PostData, sData);
         std::string sResponse;
         DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), sResponse);
 
         pObj->SetResponse(sResponse);
-        ms_LastHttpResults.PushItem(pObj);
+        ms_LastHttpResults.PushItem(std::move(pObj)); // pointer gets corrupted if released here
     });
 }
 
@@ -420,11 +419,11 @@ const RequestObject* HttpResults::PeekNextItem() const
     return pRetVal;
 }
 
-void HttpResults::PushItem(RequestObject* pObj)
+void HttpResults::PushItem(std::unique_ptr<RequestObject> pObj)
 {
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
     {
-        m_aRequests.push_front(pObj);
+        m_aRequests.push_front(pObj.release());
     }
     ReleaseMutex(RAWeb::Mutex());
 }

@@ -4,7 +4,6 @@
 #include "RA_CodeNotes.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
-#include "RA_PopupWindows.h"
 #include "RA_Resource.h"
 #include "RA_RichPresence.h"
 #include "RA_httpthread.h"
@@ -26,6 +25,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILeaderboardManager.hh"
@@ -40,6 +40,7 @@
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 std::wstring g_sHomeDir;
@@ -133,6 +134,13 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const
             g_sClientName = "RAMeka";
             g_sClientDownloadURL = "RAMeka.zip";
             g_sClientEXEName = "RAMeka.exe";
+            break;
+        case RA_QUASI88:
+            g_ConsoleID = PC8800;
+            g_sClientVersion = sClientVer;
+            g_sClientName = "RAQUASI88";
+            g_sClientDownloadURL = "RAQUASI88.zip";
+            g_sClientEXEName = "RAQUASI88.exe";
             break;
         default:
             g_ConsoleID = UnknownConsoleID;
@@ -309,8 +317,6 @@ static void DisableHardcoreMode()
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     pLeaderboardManager.Reset();
-
-    g_PopupWindows.LeaderboardPopups().Reset();
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -401,7 +407,6 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     g_bRAMTamperedWith = false;
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
-    g_PopupWindows.LeaderboardPopups().Reset();
 
     ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().SetGameHash(sCurrentROMMD5);
 
@@ -426,15 +431,12 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
-        {
-            g_PopupWindows.AchievementPopups().AddMessage(
-                MessagePopup("Playing in Softcore Mode", "Leaderboard submissions will be canceled."));
-        }
-        else
-        {
-            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Playing in Softcore Mode", ""));
-        }
+        const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Playing in Softcore Mode",
+            bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled.": L"");
     }
 
     g_AchievementsDialog.OnLoad_NewRom(nGameID);
@@ -454,7 +456,6 @@ API void CCONV _RA_OnReset()
 {
     g_pActiveAchievements->Reset();
     ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
-    g_PopupWindows.LeaderboardPopups().Reset();
 
     g_nProcessTimer = 0;
 }
@@ -493,10 +494,11 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-static unsigned long long ParseVersion(const char* sVersion) noexcept
+static unsigned long long ParseVersion(const char* sVersion)
 {
-    char* pPart;
+    char* pPart{};
     const auto major = strtoull(sVersion, &pPart, 10);
+    Expects(pPart != nullptr);
     if (*pPart == '.')
         ++pPart;
 
@@ -615,8 +617,8 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            //	Find friend? Update this information?
-                            RAUsers::GetUser(sUser)->SetScore(nScore);
+                            // Find friend? Update this information?
+                            RAUsers::GetUser(sUser).SetScore(nScore);
                         }
                     }
                     else
@@ -664,11 +666,10 @@ API int CCONV _RA_HandleHTTPResults()
                     {
                         if (!doc.HasMember("Error"))
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(
-                                MessagePopup("Achievement Unlocked",
-                                             ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
-                                             PopupMessageType::AchievementUnlocked, ra::ui::ImageType::Badge,
-                                             pAch->BadgeImageURI()));
+                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Achievement Unlocked", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
                             auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
@@ -676,14 +677,15 @@ API int CCONV _RA_HandleHTTPResults()
                         }
                         else
                         {
-                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup(
-                                "Achievement Unlocked (Error)",
-                                ra::StringPrintf("%s (%u)", pAch->Title().c_str(), pAch->Points()),
-                                PopupMessageType::AchievementError, ra::ui::ImageType::Badge, pAch->BadgeImageURI()));
+                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Achievement Unlocked (Error)", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                             g_AchievementsDialog.OnGet_Achievement(*pAch);
 
-                            g_PopupWindows.AchievementPopups().AddMessage(MessagePopup("Error submitting achievement:",
-                                                                                       doc["Error"].GetString())); //?
+                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                                L"Error submitting achievement", ra::Widen(doc["Error"].GetString()),
+                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
                         }
                     }
                     else
@@ -1012,7 +1014,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (response.Succeeded())
             {
                 ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Initialize("", "");
-                g_PopupWindows.Clear();
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
                 ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
                 _RA_UpdateAppTitle();
                 RA_RebuildMenu();
@@ -1064,7 +1066,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     DownloadAndActivateAchievementData(pGameContext.GameId());
             }
 
-            g_PopupWindows.Clear();
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
         }
         break;
 
@@ -1160,7 +1162,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                g_PopupWindows.LeaderboardPopups().Reset();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
             }
             else
             {
@@ -1243,7 +1245,6 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
-        g_PopupWindows.LeaderboardPopups().Reset();
         g_MemoryDialog.Invalidate();
         g_nProcessTimer = PROCESS_WAIT_TIME;
 
@@ -1289,12 +1290,14 @@ void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseU
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsReadOut, FILE* pFile) noexcept
+BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize,
+              gsl::not_null<DWORD* restrict> pCharsReadOut, gsl::not_null<FILE* restrict> pFile)
 {
+    Expects(buffer != nullptr);
     char pNextChar = '\0';
     memset(buffer, '\0', nSize);
 
-    //	Read title:
+    // Read title:
     (*pCharsReadOut) = 0;
     do
     {
@@ -1303,18 +1306,18 @@ BOOL _ReadTil(const char nChar, char* buffer, unsigned int nSize, DWORD* pCharsR
 
         buffer[(*pCharsReadOut)++] = pNextChar;
     } while (pNextChar != nChar && (*pCharsReadOut) < nSize && !feof(pFile));
-
-    //return ( !feof( pFile ) );
+    
+    Ensures(buffer != nullptr);
     return ((*pCharsReadOut) > 0);
 }
 
-char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) noexcept
+char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate)
 {
+    Expects(pOffsetInOut != nullptr);
     char* pStartString = pOffsetInOut;
 
     while ((*pOffsetInOut) != '\0' && (*pOffsetInOut) != nChar)
         pOffsetInOut++;
-
     if (bTerminate)
         (*pOffsetInOut) = '\0';
 
@@ -1323,8 +1326,9 @@ char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate) 
     return (pStartString);
 }
 
-void _ReadStringTil(std::string& value, char nChar, const char*& pSource)
+void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSource)
 {
+    Expects(pSource != nullptr);
     const char* pStartString = pSource;
 
     while (*pSource != '\0' && *pSource != nChar)

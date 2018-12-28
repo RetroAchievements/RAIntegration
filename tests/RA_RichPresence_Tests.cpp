@@ -410,8 +410,8 @@ public:
 
     TEST_METHOD(TestHitCounts)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory.data(), 5);
 
         RichPresenceInterpreterHarness rp;
         rp.LoadTest("Display:\n?0xh00=0.1._R:0xh00=2?Zero\n?0xh00=1.1._R:0xh00=3?One\nDefault");

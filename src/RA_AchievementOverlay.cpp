@@ -748,8 +748,8 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
 
     for (auto it = std::next(m_LatestNews.begin(), m_nNewsSelectedItem); it != m_LatestNews.end(); ++it)
     {
-        gsl::cstring_span<> sTitle{it->m_sTitle};
-        gsl::cstring_span<> sPayload{it->m_sPayload};
+        const auto& sTitle{it->m_sTitle};
+        const auto& sPayload{it->m_sPayload};
 
         SelectObject(hDC, g_hFontDesc2);
 
@@ -757,14 +757,15 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
         RECT rcNews{nLeftAlign, nYOffset, nRightAlign, nYOffset};
 
         // Calculate height of rect, fetch bottom for next rect:
-        DrawText(hDC, NativeStr(gsl::to_string(sTitle)).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+        DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow<int>(sTitle.length()), &rcNews,
+                 DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
         // Draw title:
-        DrawText(hDC, NativeStr(gsl::to_string(sTitle)).c_str(), sTitle.length(), &rcNews,
+        DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow<int>(sTitle.length()), &rcNews,
                  DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         //	Offset header
@@ -775,7 +776,7 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
         // Setup initial variables for the rect
         rcNews = {nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset};
         // Calculate height of rect, fetch and inset bottom:
-        DrawText(hDC, NativeStr(gsl::to_string(sPayload)).c_str(), sPayload.length(), &rcNews,
+        DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow<int>(sPayload.length()), &rcNews,
                  DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
@@ -783,7 +784,7 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
             rcNews.bottom = nHeight;
 
         // Draw payload:
-        DrawText(hDC, NativeStr(gsl::to_string(sPayload)).c_str(), sPayload.length(), &rcNews,
+        DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow<int>(sPayload.length()), &rcNews,
                  DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         nYOffset += nArticleGap;

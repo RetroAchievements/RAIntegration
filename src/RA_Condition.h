@@ -157,6 +157,12 @@ public:
     _NODISCARD auto& GetGroup(size_t nPos) { return m_vConditionGroups.at(nPos); }
     _NODISCARD auto& GetGroup(size_t nPos) const { return m_vConditionGroups.at(nPos); }
 
+    // range for
+    _NODISCARD inline auto begin() noexcept { return m_vConditionGroups.begin(); }
+    _NODISCARD inline auto begin() const noexcept { return m_vConditionGroups.begin(); }
+    _NODISCARD inline auto end() noexcept { return m_vConditionGroups.end(); }
+    _NODISCARD inline auto end() const noexcept { return m_vConditionGroups.end(); }
+
 protected:
     std::vector<ConditionGroup> m_vConditionGroups;
 };

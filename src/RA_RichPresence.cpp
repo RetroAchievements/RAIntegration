@@ -193,7 +193,7 @@ static bool GetLine(ra::services::TextReader& pReader, std::string& sLine)
         if (index != std::string::npos)
         {
             // if a comment marker was found, remove it and any trailing whitespace
-            while (index > 0 && isspace(gsl::narrow<int>(sLine.at(index - 1))))
+            while (index > 0 && isspace(ra::to_unsigned(sLine.at(index - 1))))
                 index--;
 
             sLine.resize(index);

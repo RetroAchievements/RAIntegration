@@ -15,6 +15,8 @@
 
 #include "ui\drawing\gdi\ImageRepository.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #include "ra_math.h"
 
 inline constexpr std::array<const char*, 10> COLUMN_TITLE{"ID",  "Flag", "Type", "Size",    "Memory",
@@ -237,9 +239,8 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             lvDispinfo.item.iSubItem = nSelSubItem;
             lvDispinfo.item.pszText = nullptr;
 
-            ra::tstring sEditText(12, TCHAR());
-            GetWindowText(hwnd, sEditText.data(), 12);
-            sEditText.shrink_to_fit();
+            std::string sEditText(12, '\0');
+            GetWindowTextA(hwnd, sEditText.data(), 12);
             lvDispinfo.item.pszText = sEditText.data();
             lvDispinfo.item.cchTextMax = gsl::narrow<int>(sEditText.length());
 
@@ -249,17 +250,22 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
                         reinterpret_cast<LPARAM>(&lvDispinfo)); // ##reinterpret? ##SD
 
-            // Extra validation? - Yes
-            // This function doesn't seem to do what it's supposed to do
-            if (lstrcmp(sEditText.c_str(), TEXT("Value")))
+            if(nSelItem < 0 || nSelItem > 9)
+
+
+            if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt) == "Value")
             {
+                constexpr std::array<unsigned char, 25> valid_chars{"0123456789ABCDEFabcdefXx"};
                 // Remove the associated 'size' entry
-                for (const auto& c : sEditText)
+                for (const unsigned char& c : sEditText)
                 {
-                    if (c == char())
+                    if (c == unsigned char())
                         break;
-                    if (!std::isdigit(c))
+                    if (!std::any_of(valid_chars.begin(), valid_chars.end(),
+                                     [&c](unsigned char valid) { return c == valid; }))
                     {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                            L"Only values that can be represented as hex or dec are allowed.");
                         DestroyWindow(hwnd);
                         return 0;
                     }
@@ -987,14 +993,18 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (pActiveAch == nullptr)
                                 return FALSE;
 
-                            ra::tstring buffer(16, TCHAR());
-                            if (GetDlgItemText(hDlg, IDC_RA_ACH_POINTS, buffer.data(), 16))
+                            std::string buffer(16, '\0');
+                            if (GetDlgItemTextA(hDlg, IDC_RA_ACH_POINTS, buffer.data(), 16))
                             {
-                                // TODO: Put some error messages in message boxes to tell users what happend
-                                for (const auto& c : buffer)
+                                for (const unsigned char& c : buffer)
                                 {
+                                    if(c == unsigned char())
+                                        break;
                                     if (!std::isdigit(c))
                                     {
+                                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                            L"The points field may only contain digits.");
+
                                         // Set it back to 0 immediately, it won't change back by itself
                                         SetWindowText(::GetDlgItem(hDlg, IDC_RA_ACH_POINTS), _T("0"));
                                         return FALSE;
@@ -1696,7 +1706,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case CondSubItems::Hitcount:
                         {
                             // Always decimal
-                            rCond.SetRequiredHits(std::stoul(sData));
+                            if (std::all_of(sData.begin(),
+                                            sData.end(), [](unsigned char c) noexcept { return std::isdigit(c); }))
+                                rCond.SetRequiredHits(std::stoul(sData));
+                            else
+                            {
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    L"Only digits are allowed in this field!");
+                                rCond.SetRequiredHits(0);
+                            }
                             break;
                         }
                         default:

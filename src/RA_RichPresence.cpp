@@ -265,8 +265,8 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 }
 
                 unsigned int nVal;
-                if (sLine.substr(0, 2) == "0x")
-                    nVal = std::stoul(&sLine.at(2), nullptr, 16);
+                if (ra::StringStartsWith(sLine, "0x"))
+                    nVal = std::stoul(sLine.substr(2), nullptr, 16);
                 else
                     nVal = std::stoul(sLine);
 

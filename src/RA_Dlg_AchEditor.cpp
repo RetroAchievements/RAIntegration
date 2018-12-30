@@ -1811,7 +1811,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     m_sTooltip = NativeStr(oss.str());
 }
 
-[[gsl::suppress(con .4)]] void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse) {
+void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse) {
     std::string sAchievementBadgeURI;
 
     if (m_pSelectedAchievement != nullptr)
@@ -1820,8 +1820,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
         sAchievementBadgeURI = sBackupBadgeToUse;
 
     m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
-    const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
-    static_assert(std::is_same_v<decltype(hBitmap), HBITMAP__* const>);
+    GSL_SUPPRESS_CON4 const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
 
     if (hBitmap != nullptr)
     {

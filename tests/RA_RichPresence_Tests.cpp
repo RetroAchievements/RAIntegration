@@ -60,10 +60,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -77,10 +77,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2;
+        memory.at(0) = 2;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
     }
 
@@ -97,7 +97,7 @@ public:
         memory.at(1) = 1;
         Assert::AreEqual("At Zero, Near One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One, Near One", rp.GetRichPresenceString().c_str());
     }
 
@@ -111,10 +111,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -128,10 +128,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At Star", rp.GetRichPresenceString().c_str());
     }
 
@@ -145,10 +145,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -162,10 +162,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -179,7 +179,7 @@ public:
 
         Assert::AreEqual("At ' Zero ' ", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At ' One ' ", rp.GetRichPresenceString().c_str());
     }
 
@@ -197,10 +197,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -217,10 +217,10 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("At ", rp.GetRichPresenceString().c_str());
     }
 
@@ -234,10 +234,10 @@ public:
 
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("Other", rp.GetRichPresenceString().c_str());
     }
 
@@ -278,13 +278,13 @@ public:
 
         Assert::AreEqual("At Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("At One", rp.GetRichPresenceString().c_str());
 
         memory.at(1) = 17;
         Assert::AreEqual("Near One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 0;
+        memory.at(0) = 0;
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
     }
 
@@ -302,10 +302,10 @@ public:
         memory.at(1) = 1;
         Assert::AreEqual("Second", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 0;
+        memory.at(0) = 0;
         memory.at(1) = 18;
         rp.LoadTest("Display:\n?0xH0000=0?First\n?0xH0000=0_0xH0001=18?Second\nThird");
 
@@ -314,7 +314,7 @@ public:
         memory.at(1) = 1;
         Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
     }
 
@@ -329,7 +329,7 @@ public:
 
         Assert::AreEqual("First", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("Third", rp.GetRichPresenceString().c_str());
     }
 
@@ -345,13 +345,13 @@ public:
 
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("Near One", rp.GetRichPresenceString().c_str());
 
         memory.at(1) = 17;
         Assert::AreEqual("Near One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 0;
+        memory.at(0) = 0;
         Assert::AreEqual("Near Zero", rp.GetRichPresenceString().c_str());
     }
 
@@ -409,10 +409,10 @@ public:
 
         Assert::AreEqual("@Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1;
+        memory.at(0) = 1;
         Assert::AreEqual("@One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // no entry
+        memory.at(0) = 2; // no entry
         Assert::AreEqual("@", rp.GetRichPresenceString().c_str());
     }
 
@@ -426,24 +426,24 @@ public:
 
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1; // because the hit count is still set on the first condition, it's displayed
+        memory.at(0) = 1; // because the hit count is still set on the first condition, it's displayed
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 2; // this clears the hit count on the first condition, and doesn't match the second, so
+        memory.at(0) = 2; // this clears the hit count on the first condition, and doesn't match the second, so
                             // default is displayed
         Assert::AreEqual("Default", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 1; // the second one captures a hit count
+        memory.at(0) = 1; // the second one captures a hit count
         Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 0; // the first captures a hit count
+        memory.at(0) = 0; // the first captures a hit count
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.front() =
+        memory.at(0) =
             2; // this clears the hit count on the first, but the second still has a hit count, so it's used
         Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
 
-        memory.front() = 3; // this clears the hit count on the second, so the default is shown
+        memory.at(0) = 3; // this clears the hit count on the second, so the default is shown
         Assert::AreEqual("Default", rp.GetRichPresenceString().c_str());
     }
 };

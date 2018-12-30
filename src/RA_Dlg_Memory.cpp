@@ -886,7 +886,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(sFirstLine).c_str());
                             } catch (const std::out_of_range& e)
                             {
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), _T(e.what()));
+                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(e.what()).c_str());
                             }
                         }
                         else
@@ -1076,12 +1076,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         unsigned int nValueQuery = 0;
 
-                        TCHAR nativeBuffer[1024];
-                        if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer, 1024))
+                        std::array<TCHAR, 1024> nativeBuffer{};
+                        if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), 1024))
                         {
-                            ra::tstring buffer = nativeBuffer;
-                            //	Read hex or dec
-                            if (buffer.substr(0, 2) == "0x")
+                            ra::tstring buffer{nativeBuffer.data()};
+                            // Read hex or dec
+                            if (ra::StringStartsWith(buffer, "0x"))
                                 nValueQuery = std::stoul(buffer.substr(2), nullptr, 16);
                             else
                                 nValueQuery = std::stoul(buffer);

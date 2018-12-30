@@ -280,18 +280,23 @@ public:
 
         if constexpr (std::is_integral_v<T>)
         {
-            if (sFormat.front() == '0')
-                oss << std::setfill('0');
-            int nDigits = std::stoi(sFormat);
-            if (nDigits > 0)
-                oss << std::setw(nDigits);
+            if constexpr (!is_char_v<T>)
+            {
+                if (sFormat.front() == '0')
+                    oss << std::setfill('0');
+                int nDigits = std::stoi(sFormat);
+                if (nDigits > 0)
+                    oss << std::setw(nDigits);
 
-            if (sFormat.back() == 'X')
-                oss << std::uppercase << std::hex;
-            else if (sFormat.back() == 'x')
-                oss << std::hex;
+                if (sFormat.back() == 'X')
+                    oss << std::uppercase << std::hex;
+                else if (sFormat.back() == 'x')
+                    oss << std::hex;
 
-            oss << arg;
+                oss << arg;
+            }
+            else
+                oss << arg;
         }
         else if constexpr (std::is_floating_point_v<T>)
         {

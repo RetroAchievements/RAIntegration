@@ -63,6 +63,10 @@ public:
     {
         Assert::AreEqual(std::string("0"), ToString(0));
         Assert::AreEqual(std::string("1"), ToString(1));
+        Assert::AreEqual(std::string{'a'}, ToString('a'));
+        Assert::AreEqual(std::string{'a'}, ToString(L'a'));
+        Assert::AreEqual(std::string{'3'}, ToString('3'));
+        Assert::AreEqual(std::string{'3'}, ToString(L'3'));
         Assert::AreEqual(std::string("99"), ToString(99));
         Assert::AreEqual(std::string("-3"), ToString(-3));
         Assert::AreEqual(std::string("0"), ToString(0U));
@@ -76,6 +80,10 @@ public:
 
     TEST_METHOD(TestToWString)
     {
+        Assert::AreEqual(std::wstring(1, L'a'), ToWString(L'a'));
+        Assert::AreEqual(std::wstring(1, L'a'), ToWString('a'));
+        Assert::AreEqual(std::wstring(1, L'3'), ToWString(L'3'));
+        Assert::AreEqual(std::wstring(1, L'3'), ToWString('3'));
         Assert::AreEqual(std::wstring(L"0"), ToWString(0));
         Assert::AreEqual(std::wstring(L"1"), ToWString(1));
         Assert::AreEqual(std::wstring(L"99"), ToWString(99));

@@ -33,7 +33,18 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_string(value);
+        if constexpr (std::is_same_v<T, wchar_t>)
+        {
+            int status = 0;
+            std::string mb(MB_CUR_MAX, '\0');
+            Expects(wctomb_s(&status, mb.data(), MB_CUR_MAX, value) == 0);
+            Ensures(to_unsigned(status) != to_unsigned(-1));
+            return mb;
+        }
+        else if constexpr (std::is_same_v<T, char>)
+            return value;
+        else
+            return std::to_string(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
@@ -93,11 +104,21 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_wstring(value);
+        if constexpr (std::is_same_v<T, char>)
+        {
+            std::wstring wc{value};
+            std::string mb(MB_CUR_MAX, '\0');
+            Ensures(std::mbtowc(wc.data(), mb.data(), 8) != -1);
+            return wc;
+        }
+        else if constexpr (std::is_same_v<T, wchar_t>)
+            return std::wstring(1, value);
+        else
+            return std::to_wstring(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
-        return std::to_wstring(static_cast<std::underlying_type_t<T>>(value));
+        return std::to_wstring(etoi(value));
     }
     else
     {
@@ -623,11 +644,23 @@ template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
 GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
                                                  _In_ const CharT* restrict sMatch) noexcept
 {
-    const std::basic_string_view<CharT> svMatch{sMatch};
-    if (svMatch.length() > sString.length())
+    if (tcslen_s(sMatch) > sString.length())
         return false;
 
-    return (sString.compare(0, tcslen_s(sMatch), svMatch) == 0);
+    return (sString.compare(0, tcslen_s(sMatch), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const CharT* restrict sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    if (tcslen_s(sMatch) > tcslen_s(sString))
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(0, tcslen_s(sMatch), sMatch) == 0);
 }
 
 /// <summary>
@@ -650,11 +683,24 @@ template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
 GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
                                                _In_ const CharT* restrict sMatch) noexcept
 {
-    std::basic_string_view<CharT> svMatch{sMatch};
-    if (svMatch.length() > sString.length())
+    if (tcslen_s(sMatch) > sString.length())
         return false;
 
-    return (sString.compare(sString.length() - svMatch.length(), svMatch.length(), svMatch) == 0);
+    return (sString.compare(sString.length() - tcslen_s(sMatch), tcslen_s(sMatch), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    if (tcslen_s(sMatch) > tcslen_s(sString))
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(tcslen_s(sString) - tcslen_s(sMatch), tcslen_s(sMatch), sMatch) ==
+            0);
 }
 
 } // namespace ra

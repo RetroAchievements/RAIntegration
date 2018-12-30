@@ -719,12 +719,9 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
             nDots = 0;
 
         const int nDotCount = nDots / 25;
-        // we need to reallocate buffer or heap corruption will happen
-        buffer = std::string(13, char());
-        // TODO: ra::StringPrintf needs a handler for "%c"
-        // Size is 13 but capacity is larger
-        Ensures(sprintf_s(buffer.data(), buffer.capacity(), " Loading.%c%c%c ", nDotCount >= 1 ? '.' : ' ',
-                          nDotCount >= 2 ? '.' : ' ', nDotCount >= 3 ? '.' : ' ') >= 0);
+
+        buffer = ra::StringPrintf(" Loading.%c%c%c ", nDotCount >= 1 ? '.' : ' ', nDotCount >= 2 ? '.' : ' ',
+                                  nDotCount >= 3 ? '.' : ' ');
         TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(),
                 gsl::narrow<int>(buffer.length()));
     }

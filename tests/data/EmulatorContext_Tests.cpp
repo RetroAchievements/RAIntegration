@@ -300,6 +300,28 @@ public:
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 
+    TEST_METHOD(TestValidateClientVersionUnknownClient)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.SetClientVersion("1.0");
+        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
+        {
+            response.ErrorMessage = "Unknown client! (EmulatorID: 999)";
+            response.Result = ra::api::ApiResult::Error;
+            return true;
+        });
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Unknown client! (EmulatorID: 999)"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+    }
+
     TEST_METHOD(TestDisableHardcoreMode)
     {
         EmulatorContextHarness emulator;

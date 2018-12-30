@@ -112,8 +112,18 @@ bool EmulatorContext::ValidateClientVersion()
         auto response = request.Call();
         if (!response.Succeeded())
         {
-            m_sLatestVersion = "Unknown";
-            m_sLatestVersionError = response.ErrorMessage;
+            if (ra::StringStartsWith(response.ErrorMessage, "Unknown client!"))
+            {
+                // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
+                // assume it's a new emulator that hasn't been released yet.
+                m_sLatestVersion = "0.0.0.0";
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::Widen(response.ErrorMessage));
+            }
+            else
+            {
+                m_sLatestVersion = "Unknown";
+                m_sLatestVersionError = response.ErrorMessage;
+            }
         }
         else
         {

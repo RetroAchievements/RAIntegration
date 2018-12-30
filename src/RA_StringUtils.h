@@ -607,6 +607,18 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
 GSL_SUPPRESS_F6
+_NODISCARD bool StringStartsWith(_In_ const std::string& sString, _In_ const std::string& sMatch) noexcept;
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+GSL_SUPPRESS_F6
+_NODISCARD bool StringEndsWith(_In_ const std::string& sString, _In_ const std::string& sMatch) noexcept;
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+GSL_SUPPRESS_F6
 _NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
 
 /// <summary>

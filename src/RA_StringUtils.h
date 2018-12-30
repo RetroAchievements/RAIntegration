@@ -582,7 +582,7 @@ _Success_(0 < return < ULONG_MAX) _NODISCARD
 
 /// <summary>
 ///   Returns the number of characters of a null-terminated byte string or wide-character string depending on
-///   the character set specified
+///   the character type specified
 /// </summary>
 /// <param name="_Str">The string.</param>
 /// <returns>Number of characters</returns>
@@ -606,14 +606,56 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(0, sMatch.length(), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    const std::basic_string_view<CharT> svMatch{sMatch};
+    if (svMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(0, tcslen_s(sMatch), svMatch) == 0);
+}
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    std::basic_string_view<CharT> svMatch{sMatch};
+    if (svMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - svMatch.length(), svMatch.length(), svMatch) == 0);
+}
 
 } // namespace ra
 

@@ -495,7 +495,7 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 {
     SetDirtyFlag(DirtyFlags::Badge);
 
-    if (sBadgeURI.length() > 5 && sBadgeURI.rfind("_lock") != std::string::npos)
+    if (sBadgeURI.length() > 5 && ra::StringEndsWith(sBadgeURI, "_lock"))
         m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
     else
         m_sBadgeImageURI = sBadgeURI;

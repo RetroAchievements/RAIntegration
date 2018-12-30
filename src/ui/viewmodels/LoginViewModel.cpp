@@ -1,5 +1,6 @@
 #include "LoginViewModel.hh"
 
+#include "Exports.hh"
 #include "RA_Interface.h"
 #include "RA_StringUtils.h"
 
@@ -71,6 +72,7 @@ bool LoginViewModel::Login() const
 
 #ifndef RA_UTEST
     RA_RebuildMenu();
+    _RA_UpdateAppTitle();
 #endif
 
     return true;

@@ -33,7 +33,7 @@ public:
     std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override;
 
 private:
-    const std::wstring& MakeAbsolute(std::wstring& sBuffer, const std::wstring& sPath) const;
+    const std::wstring& MakeAbsolute(std::wstring& sBuffer, const std::wstring& sPath) const noexcept;
 
     std::wstring m_sBaseDirectory;
 };

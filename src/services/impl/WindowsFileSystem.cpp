@@ -26,7 +26,8 @@ WindowsFileSystem::WindowsFileSystem() noexcept
     }
 }
 
-const std::wstring& WindowsFileSystem::MakeAbsolute(std::wstring& sBuffer, const std::wstring& sPath) const
+GSL_SUPPRESS_F6
+const std::wstring& WindowsFileSystem::MakeAbsolute(std::wstring& sBuffer, const std::wstring& sPath) const noexcept
 {
     if (!PathIsRelativeW(sPath.c_str()))
         return sPath;

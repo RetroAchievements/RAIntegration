@@ -996,22 +996,21 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             std::string buffer(16, '\0');
                             if (GetDlgItemTextA(hDlg, IDC_RA_ACH_POINTS, buffer.data(), 16))
                             {
-                                for (const unsigned char& c : buffer)
+                                int nVal = 0;
+                                try
                                 {
-                                    if(c == unsigned char())
-                                        break;
-                                    if (!std::isdigit(c))
-                                    {
-                                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                                            L"The points field may only contain digits.");
+                                    nVal = std::stoi(NativeStr(buffer));
+                                } catch (const std::invalid_argument& e)
+                                {
+                                    RA_LOG_ERR("Invalid Argument: %s", e.what());
+                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                        L"The points field may only contain digits."); // for users
 
-                                        // Set it back to 0 immediately, it won't change back by itself
-                                        SetWindowText(::GetDlgItem(hDlg, IDC_RA_ACH_POINTS), _T("0"));
-                                        return FALSE;
-                                    }
+                                    // Set it back to 0 immediately, it won't change back by itself
+                                    SetWindowText(::GetDlgItem(hDlg, IDC_RA_ACH_POINTS), _T("0"));
+                                    return FALSE;
                                 }
 
-                                int nVal = std::stoi(NativeStr(buffer));
                                 if (nVal < 0 || nVal > 100)
                                     return FALSE;
 
@@ -1706,11 +1705,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         case CondSubItems::Hitcount:
                         {
                             // Always decimal
-                            if (std::all_of(sData.begin(),
-                                            sData.end(), [](unsigned char c) noexcept { return std::isdigit(c); }))
-                                rCond.SetRequiredHits(std::stoul(sData));
-                            else
+                            try
                             {
+                                rCond.SetRequiredHits(std::stoul(sData));
+                            } catch (const std::invalid_argument& e)
+                            {
+                                RA_LOG_ERR("invalid_argument: %s", e.what());
                                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                                     L"Only digits are allowed in this field!");
                                 rCond.SetRequiredHits(0);

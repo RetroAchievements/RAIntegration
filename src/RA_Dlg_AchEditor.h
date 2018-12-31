@@ -24,7 +24,7 @@ enum class CondSubItems : std::size_t;
 class Dlg_AchievementEditor
 {
 public:
-    Dlg_AchievementEditor() noexcept;
+    GSL_SUPPRESS_F6 Dlg_AchievementEditor() noexcept;
 
 public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);

@@ -75,7 +75,7 @@ public:
     BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }
     void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
 
-    BOOL HasUnsavedChanges() const;
+    BOOL HasUnsavedChanges() const noexcept;
 
     // ranged-for
     inline auto begin() noexcept { return m_Achievements.begin(); }

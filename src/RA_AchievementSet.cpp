@@ -533,7 +533,7 @@ Achievement& AchievementSet::Clone(unsigned int nIter)
     return newAch;
 }
 
-BOOL AchievementSet::HasUnsavedChanges() const
+BOOL AchievementSet::HasUnsavedChanges() const noexcept
 {
     for (const auto& ach : m_Achievements)
     {

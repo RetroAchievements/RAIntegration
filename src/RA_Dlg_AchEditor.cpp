@@ -158,7 +158,7 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond,
 
 void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits)
 {
-    int nRow = item.iItem;
+    const int nRow = item.iItem;
 
     // Update our local array:
     const char* sMemTypStrSrc = "Value";
@@ -239,10 +239,10 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             lvDispinfo.item.iSubItem = nSelSubItem;
             lvDispinfo.item.pszText = nullptr;
 
-            std::string sEditText(12, '\0');
+            std::array<char, 12> sEditText{};
             GetWindowTextA(hwnd, sEditText.data(), 12);
             lvDispinfo.item.pszText = sEditText.data();
-            lvDispinfo.item.cchTextMax = gsl::narrow<int>(sEditText.length());
+            lvDispinfo.item.cchTextMax = gsl::narrow_cast<int>(std::strlen(sEditText.data()));
 
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
@@ -250,10 +250,7 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
                         reinterpret_cast<LPARAM>(&lvDispinfo)); // ##reinterpret? ##SD
 
-            if(nSelItem < 0 || nSelItem > 9)
-
-
-            if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt) == "Value")
+            if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt).compare("Value") == 0)
             {
                 constexpr std::array<unsigned char, 25> valid_chars{"0123456789ABCDEFabcdefXx"};
                 // Remove the associated 'size' entry
@@ -261,9 +258,12 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
                 {
                     if (c == unsigned char())
                         break;
-                    if (!std::any_of(valid_chars.begin(), valid_chars.end(),
-                                     [&c](unsigned char valid) { return c == valid; }))
+                    
+#pragma warning(suppress: 26447) // f.6, inline suppression not working here but works for message box
+                     if (!std::any_of(valid_chars.begin(), valid_chars.end(),
+                                     [&c](unsigned char valid) noexcept { return c == valid; }))
                     {
+                        GSL_SUPPRESS_F6
                         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                             L"Only values that can be represented as hex or dec are allowed.");
                         DestroyWindow(hwnd);
@@ -1811,7 +1811,9 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     m_sTooltip = NativeStr(oss.str());
 }
 
-void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse) {
+GSL_SUPPRESS_CON4
+void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
+{
     std::string sAchievementBadgeURI;
 
     if (m_pSelectedAchievement != nullptr)
@@ -1820,7 +1822,8 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         sAchievementBadgeURI = sBackupBadgeToUse;
 
     m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
-    GSL_SUPPRESS_CON4 const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
+    GSL_SUPPRESS_CON4 // inline suppression for this currently not working
+    const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
 
     if (hBitmap != nullptr)
     {
@@ -1879,7 +1882,7 @@ _Use_decl_annotations_ void
             ListBox_AddString(hGroupList, m_lbxGroupNames.at(i).c_str());
 
         // Try and restore selection
-        if (nSel < 0 || nSel >= gsl::narrow<int>(pCheevo->NumConditionGroups()))
+        if (nSel < 0 || nSel >= gsl::narrow_cast<int>(pCheevo->NumConditionGroups()))
             nSel = 0; // Reset to core if unsure
         ListBox_SetCurSel(hGroupList, nSel);
     }

@@ -40,6 +40,13 @@ public:
         oSize = { 1920, 1080 };
     }
 
+    void OpenUrl(const std::string& sUrl) const override
+    {
+        m_sLastOpenedUrl = sUrl;
+    }
+
+    const std::string& LastOpenedUrl() const noexcept { return m_sLastOpenedUrl; }
+
     void Shutdown() noexcept override {}
 
     template<typename T>
@@ -73,6 +80,7 @@ private:
     ra::services::ServiceLocator::ServiceOverride<IDesktop> m_Override;
     std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
+    mutable std::string m_sLastOpenedUrl;
 };
 
 } // namespace mocks

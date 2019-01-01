@@ -185,8 +185,10 @@
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\OfflineServer.cpp" />
+    <ClCompile Include="..\src\data\EmulatorContext.cpp" />
     <ClCompile Include="..\src\data\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\GameContext.cpp" />
+    <ClCompile Include="..\src\data\UserContext.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">Create</PrecompiledHeader>
@@ -208,6 +210,8 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
+    <ClCompile Include="data\EmulatorContext_Tests.cpp" />
+    <ClCompile Include="data\GameContext_Tests.cpp" />
     <ClCompile Include="data\SessionTracker_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClInclude Include="..\src\RA_Achievement.h" />

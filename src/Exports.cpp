@@ -6,6 +6,7 @@
 
 #include "api\Login.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
@@ -35,10 +36,13 @@ API int CCONV _RA_HardcoreModeIsActive()
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)
 {
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+    if (pUserContext.IsLoginDisabled())
+        return;
+
     if (response.Succeeded())
     {
         // initialize the user context
-        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
         pUserContext.Initialize(response.Username, response.ApiToken);
         pUserContext.SetScore(response.Score);
 
@@ -81,6 +85,10 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
 
 API void CCONV _RA_AttemptLogin(bool bBlocking)
 {
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+    if (pUserContext.IsLoginDisabled())
+        return;
+
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetApiToken().empty() || pConfiguration.GetUsername().empty())
     {
@@ -105,6 +113,14 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
         }
     }
 }
+
+#ifndef RA_UTEST
+API void CCONV _RA_UpdateAppTitle(const char* sMessage)
+{
+    std::string sTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
+    SetWindowText(g_RAMainWnd, NativeStr(sTitle).c_str());
+}
+#endif
 
 _Use_decl_annotations_
 API int _RA_UpdatePopups(ControllerInput*, float fElapsedSeconds, bool, bool bPaused)

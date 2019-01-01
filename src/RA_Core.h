@@ -41,7 +41,6 @@ extern std::string _TimeStampToString(time_t nTime);
 
 _NODISCARD std::string GetFolderFromDialog();
 
-void DownloadAndActivateAchievementData(unsigned int nGameID);
 BOOL CanCausePause() noexcept;
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

@@ -584,6 +584,12 @@
     <ClInclude Include="data\EmulatorContext.hh">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchGameData.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchUserUnlocks.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

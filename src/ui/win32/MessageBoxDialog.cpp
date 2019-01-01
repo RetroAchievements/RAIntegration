@@ -4,6 +4,8 @@
 
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 
+extern HWND g_RAMainWnd;
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -69,7 +71,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: uType |= MB_RETRYCANCEL; break;
         }
 
-        nButton = MessageBoxW(GetActiveWindow(), pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
+        nButton = MessageBoxW(g_RAMainWnd, pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
     }
     else
     {
@@ -94,7 +96,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
         }
 
-        const HRESULT result = pTaskDialog(GetActiveWindow(), nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
+        const HRESULT result = pTaskDialog(g_RAMainWnd, nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
             oMessageBoxViewModel.GetHeader().c_str(), oMessageBoxViewModel.GetMessage().c_str(), dwCommonButtons, pszIcon, &nButton);
 
         if (!SUCCEEDED(result))

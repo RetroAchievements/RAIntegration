@@ -234,6 +234,12 @@
     <ClCompile Include="ui\win32\LoginDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="data\EmulatorContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\UserContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -571,6 +577,18 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="api\LatestClient.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="data\EmulatorContext.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchGameData.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchUserUnlocks.hh">
+      <Filter>API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -23,13 +23,13 @@ public:
     static bool OnEditInput(UINT c);
 
     static void setAddress(unsigned int nAddr);
-    static void setWatchedAddress(unsigned int nAddr) noexcept;
+    static void setWatchedAddress(unsigned int nAddr);
     static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
     static void moveAddress(int offset, int nibbleOff);
     static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
-    static void Invalidate() noexcept;
+    static void Invalidate();
 
-    static void SetDataSize(MemSize value) noexcept
+    static void SetDataSize(MemSize value)
     {
         m_nDataSize = value;
         Invalidate();

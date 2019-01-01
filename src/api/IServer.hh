@@ -2,6 +2,9 @@
 #define RA_API_ISERVER_HH
 #pragma once
 
+#include "api/FetchGameData.hh"
+#include "api/FetchUserUnlocks.hh"
+#include "api/LatestClient.hh"
 #include "api/Login.hh"
 #include "api/Logout.hh"
 #include "api/Ping.hh"
@@ -21,9 +24,14 @@ public:
     virtual Logout::Response Logout(const Logout::Request& request) noexcept = 0;
     virtual StartSession::Response StartSession(const StartSession::Request& request) noexcept = 0;
     virtual Ping::Response Ping(const Ping::Request& request) noexcept = 0;
+    virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept = 0;
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept = 0;
+    virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept = 0;
+
+    // === other functions ===
+    virtual LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

@@ -1938,8 +1938,10 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
                        ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->ID());
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID, NativeStr(buffer).c_str());
+        if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+            SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
+        else
+            SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
 
         sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
@@ -1985,8 +1987,12 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
         using namespace ra::bitwise_ops;
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
-            SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_ID,
-                           NativeStr(std::to_string(m_pSelectedAchievement->ID())).c_str());
+        {
+            if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+                SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
+            else
+                SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
+        }
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Points) && !bPointsSelected)
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS,
                            NativeStr(std::to_string(m_pSelectedAchievement->Points())).c_str());

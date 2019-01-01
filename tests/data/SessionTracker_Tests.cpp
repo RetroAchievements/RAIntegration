@@ -302,7 +302,7 @@ public:
     TEST_METHOD(TestCurrentActivityNoRichPresence)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         Assert::AreEqual(std::wstring(L"Earning Achievements"), tracker.GetActivity());
     }
 
@@ -332,7 +332,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
     }
@@ -341,7 +341,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Core);
         Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
@@ -351,7 +351,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Unofficial);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
@@ -361,7 +361,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());

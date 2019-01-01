@@ -7,6 +7,7 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
 #ifndef ID_OK
@@ -238,7 +239,7 @@ void MemoryViewerControl::setAddress(unsigned int address)
     Invalidate();
 }
 
-void MemoryViewerControl::setWatchedAddress(unsigned int address) noexcept
+void MemoryViewerControl::setWatchedAddress(unsigned int address)
 {
     if (m_nWatchedAddress != address)
     {
@@ -247,7 +248,7 @@ void MemoryViewerControl::setWatchedAddress(unsigned int address) noexcept
     }
 }
 
-void MemoryViewerControl::Invalidate() noexcept
+void MemoryViewerControl::Invalidate()
 {
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
     if (hOurDlg != nullptr)
@@ -258,7 +259,7 @@ void MemoryViewerControl::Invalidate() noexcept
         // the render by calling UpdateWindow
         // TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for
         // the search results
-        if (g_EmulatorID == RA_Libretro)
+        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Libretro)
             UpdateWindow(hOurDlg);
     }
 }
@@ -1577,7 +1578,7 @@ void Dlg_Memory::Invalidate()
     if (hList != nullptr)
     {
         InvalidateRect(hList, nullptr, FALSE);
-        if (g_EmulatorID == RA_Libretro)
+        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Libretro)
             UpdateWindow(hList);
     }
 }

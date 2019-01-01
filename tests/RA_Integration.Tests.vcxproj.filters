@@ -183,6 +183,9 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="data\GameContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Condition_Tests.cpp">

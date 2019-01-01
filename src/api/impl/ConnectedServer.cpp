@@ -6,6 +6,7 @@
 #include "RA_User.h"
 
 #include "services\Http.hh"
+#include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
 #include <future>
@@ -83,7 +84,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     return true;
 }
 
-static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Document& pDocument,
+static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
                                  _In_ const char* const sField, _Inout_ ApiResponseBase& response)
 {
     if (!pDocument.HasMember(sField))
@@ -104,7 +105,45 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument,
+static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
+    _In_ const char* const sField, _In_ const char* const sDefaultValue = "")
+{
+    if (pDocument.HasMember(sField))
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsString())
+            sValue = pField.GetString();
+        else
+            sValue = sDefaultValue;
+    }
+    else
+    {
+        sValue = sDefaultValue;
+    }
+}
+
+static void GetRequiredJsonField(_Out_ std::wstring& sValue, _In_ const rapidjson::Value& pDocument,
+    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
+{
+    if (!pDocument.HasMember(sField))
+    {
+        sValue.clear();
+
+        response.Result = ApiResult::Error;
+        if (response.ErrorMessage.empty())
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
+    }
+    else
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsString())
+            sValue = ra::Widen(pField.GetString());
+        else
+            sValue.clear();
+    }
+}
+
+static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
     _In_ const char* const sField, _Inout_ ApiResponseBase& response)
 {
     if (!pDocument.HasMember(sField))
@@ -125,7 +164,7 @@ static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
     }
 }
 
-static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Document& pDocument,
+static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
                                  _In_ const char* sField, _In_ unsigned int nDefaultValue = 0)
 {
     if (pDocument.HasMember(sField))
@@ -151,6 +190,8 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
     sParams.push_back('=');
     ra::services::Http::UrlEncodeAppend(sParams, sValue);
 }
+
+// === APIs ===
 
 Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
 {
@@ -258,6 +299,35 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
     return std::move(response);
 }
 
+FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept
+{
+    FetchUserUnlocks::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "h", request.Hardcore ? "1" : "0");
+
+    if (DoRequest(m_sHost, FetchUserUnlocks::Name(), "unlocks", sPostData, response, document))
+    {
+        if (!document.HasMember("UserUnlocks"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "UserUnlocks");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& UserUnlocks{ document["UserUnlocks"] };
+            for (const auto& unlocked : UserUnlocks.GetArray())
+                response.UnlockedAchievements.insert(unlocked.GetUint());
+        }
+    }
+
+    return std::move(response);
+}
+
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request) noexcept
 {
     ResolveHash::Response response;
@@ -273,6 +343,97 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     }
 
     return std::move(response);
+}
+
+FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request) noexcept
+{
+    FetchGameData::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+
+    if (DoRequest(m_sHost, FetchGameData::Name(), "patch", sPostData, response, document))
+    {
+        if (!document.HasMember("PatchData"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "PatchData");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& PatchData = document["PatchData"];
+
+            // store a copy in the cache for offline mode
+            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+            auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(request.GameId));
+            if (pData != nullptr)
+            {
+                rapidjson::Document patchData;
+                patchData.CopyFrom(PatchData, document.GetAllocator());
+                SaveDocument(patchData, *pData.get());
+            }
+
+            // process it
+            ProcessGamePatchData(response, PatchData);
+        }
+    }
+
+    return std::move(response);
+}
+
+void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
+{
+    GetRequiredJsonField(response.Title, PatchData, "Title", response);
+    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
+    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
+    GetOptionalJsonField(response.Flags, PatchData, "Flags");
+    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
+    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
+
+    if (!response.ImageIcon.empty())
+    {
+        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
+        auto nIndex = response.ImageIcon.find_last_of('/');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(0, nIndex + 1);
+        nIndex = response.ImageIcon.find_last_of('.');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(nIndex);
+    }
+
+    const auto& AchievementsData{ PatchData["Achievements"] };
+    for (const auto& achData : AchievementsData.GetArray())
+    {
+        auto& pAchievement = response.Achievements.emplace_back();
+        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
+        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
+        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
+        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
+        GetOptionalJsonField(pAchievement.Points, achData, "Points");
+        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
+        GetOptionalJsonField(pAchievement.Author, achData, "Author");
+        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
+
+        unsigned int time;
+        GetRequiredJsonField(time, achData, "Created", response);
+        pAchievement.Created = static_cast<time_t>(time);
+        GetRequiredJsonField(time, achData, "Modified", response);
+        pAchievement.Updated = static_cast<time_t>(time);
+    }
+
+    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
+    for (const auto& lbData : LeaderboardsData.GetArray())
+    {
+        auto& pLeaderboard = response.Leaderboards.emplace_back();
+        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
+        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
+        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
+        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
+        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
+    }
 }
 
 } // namespace impl

@@ -176,7 +176,7 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
     AchievementDlgRow newRow;
 
     // Add to our local array:
-    newRow.emplace_back(std::to_string(Ach.ID()));
+    newRow.emplace_back((Ach.Category() == ra::etoi(AchievementSet::Type::Local)) ? "0" : std::to_string(Ach.ID()));
     newRow.emplace_back(Ach.Title());
     newRow.emplace_back(std::to_string(Ach.Points()));
     newRow.emplace_back(Ach.Author());
@@ -444,7 +444,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                            //TEXT("will have to earn this again now it is in the core group.\n"),
                                            TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING) == IDYES)
                             {
-                                const Achievement& selectedAch = g_pActiveAchievements->GetAchievement(nSel);
+                                Achievement& selectedAch = g_pActiveAchievements->GetAchievement(nSel);
 
                                 unsigned int nFlags = 1 << 0;   //  Active achievements! : 1
                                 if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
@@ -460,12 +460,12 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                                         //  Remove the achievement from the local/user achievement set,
                                         //   add it to the unofficial set.
-                                        Achievement& newAch = g_pCoreAchievements->AddAchievement();
-                                        newAch.Set(selectedAch);
-                                        g_pUnofficialAchievements->RemoveAchievement(nSel);
+                                        g_pUnofficialAchievements->RemoveAchievement(&selectedAch);
+                                        g_pCoreAchievements->AddAchievement(&selectedAch);
+                                        selectedAch.SetCategory(ra::etoi(AchievementSet::Type::Core));
                                         RemoveAchievement(hList, nSel);
 
-                                        newAch.SetActive(TRUE); //  Disable it: all promoted ach must be reachieved
+                                        selectedAch.SetActive(TRUE); //  Disable it: all promoted ach must be reachieved
 
                                         //CoreAchievements->Save();
                                         //UnofficialAchievements->Save();
@@ -507,12 +507,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                        TEXT("Refresh from Disk"),
                                        MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
-                                g_pLocalAchievements->Clear();
-                                g_pLocalAchievements->LoadFromFile(nGameID);
+                                pGameContext.ReloadAchievements(ra::etoi(AchievementSet::Type::Local));
 
                                 //  Refresh dialog contents:
                                 OnLoad_NewRom(nGameID);
@@ -529,11 +528,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             "This will overwrite any changes that you have made with fresh achievements from the server";
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"), MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
-                                DownloadAndActivateAchievementData(nGameID);
+                                pGameContext.LoadGame(nGameID);
 
                                 //  Refresh dialog contents:
                                 OnLoad_NewRom(nGameID);
@@ -555,7 +554,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
 
                     //  Add a new achievement with default params
-                    Achievement& Cheevo = g_pActiveAchievements->AddAchievement();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    Achievement& Cheevo = pGameContext.NewAchievement(AchievementSet::Type::Local);
                     Cheevo.SetAuthor(RAUsers::LocalUser().Username());
                     Cheevo.SetBadgeImage("00000");
 
@@ -598,17 +598,15 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         return FALSE;
 
                     //  switch to LocalAchievements
-                    Achievement& NewClone = g_pLocalAchievements->AddAchievement();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    Achievement& NewClone = pGameContext.NewAchievement(AchievementSet::Type::Local);
 
                     //  Clone TO the user achievements
                     const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
-                    NewClone.Set(Ach);
-                    NewClone.SetID(0);
+                    NewClone.CopyFrom(Ach);
                     NewClone.SetAuthor(RAUsers::LocalUser().Username());
-                    char buffer[256];
-                    sprintf_s(buffer, 256, "%s (copy)", NewClone.Title().c_str());
-                    NewClone.SetTitle(buffer);
+                    NewClone.SetTitle(ra::StringPrintf("%s (copy)", Ach.Title()));
 
                     OnClickAchievementSet(AchievementSet::Type::Local);
 
@@ -646,7 +644,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             //  Local achievement
                             if (MessageBox(hDlg, TEXT("Are you sure that you want to remove this achievement?"), TEXT("Remove Achievement"), MB_YESNO | MB_ICONWARNING) == IDYES)
                             {
-                                g_pActiveAchievements->RemoveAchievement(nSel);
+                                g_pActiveAchievements->RemoveAchievement(&Ach);
                                 RemoveAchievement(hList, nSel);
                             }
                         }
@@ -716,48 +714,21 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             // Find Achievement with Ach.Id()
                             const unsigned int nID = Cheevo.ID();
 
-                            BOOL bFound = FALSE;
-
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                            AchievementSet TempSet(g_nActiveAchievementSet);
-                            if (TempSet.LoadFromFile(pGameContext.GameId()))
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                            if (pGameContext.ReloadAchievement(nID))
                             {
-                                const Achievement* pAchBackup = TempSet.Find(nID);
-                                if (pAchBackup != nullptr)
-                                {
-                                    Cheevo.Set(*pAchBackup);
+                                // Reverse find where I am in the list:
+                                const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+                                assert(nIndex < g_pActiveAchievements->NumAchievements());
+                                if (nIndex < g_pActiveAchievements->NumAchievements())
+                                    ReloadLBXData(nIndex);
 
-                                    Cheevo.SetActive(TRUE);
-                                    Cheevo.SetModified(FALSE);
-                                    //Cheevo.SetDirtyFlag();
-
-                                    // Reverse find where I am in the list:
-                                    const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
-                                    assert(nIndex < g_pActiveAchievements->NumAchievements());
-                                    if (nIndex < g_pActiveAchievements->NumAchievements())
-                                    {
-                                        if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-                                            OnEditData(nIndex, Column::Achieved, "Yes");
-                                        else
-                                            OnEditData(nIndex, Column::Active, "No");
-
-                                        ReloadLBXData(nIndex);
-                                    }
-
-                                    // Finally, reselect to update AchEditor
-                                    g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
-
-                                    bFound = TRUE;
-                                }
-                            }
-
-                            if (!bFound)
-                            {
-                                MessageBox(hDlg, TEXT("Couldn't find this achievement!"), TEXT("Error!"), MB_OK);
+                                // Finally, reselect to update AchEditor
+                                g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
                             }
                             else
                             {
-                                //MessageBox( HWnd, "Reverted", "OK!", MB_OK );
+                                MessageBox(hDlg, TEXT("Couldn't find this achievement!"), TEXT("Error!"), MB_OK);
                             }
                         }
                     }
@@ -997,10 +968,10 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                     {
                         //  Remove the achievement from the local/user achievement set,
                         //  add it to the unofficial set.
-                        Achievement& NewAch = g_pUnofficialAchievements->AddAchievement();
-                        NewAch.Set(NextAch);
-                        NewAch.SetModified(FALSE);
-                        g_pLocalAchievements->RemoveAchievement(nLbxItemsChecked[0]);
+                        g_pLocalAchievements->RemoveAchievement(&NextAch);
+                        g_pUnofficialAchievements->AddAchievement(&NextAch);
+                        NextAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+                        NextAch.SetModified(FALSE);
                         RemoveAchievement(hList, nLbxItemsChecked[0]);
 
                         //LocalAchievements->Save();

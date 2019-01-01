@@ -129,7 +129,11 @@ std::chrono::system_clock::time_point FileLocalStorage::GetLastModified(StorageI
 
 std::unique_ptr<TextReader> FileLocalStorage::ReadText(StorageItemType nType, const std::wstring& sKey)
 {
-    return m_pFileSystem.OpenTextFile(GetPath(nType, sKey));
+    std::wstring sPath = GetPath(nType, sKey);
+    if (m_pFileSystem.GetFileSize(sPath) > 0)
+        return m_pFileSystem.OpenTextFile(sPath);
+
+    return std::unique_ptr<TextReader>();
 }
 
 std::unique_ptr<TextWriter> FileLocalStorage::WriteText(StorageItemType nType, const std::wstring& sKey)

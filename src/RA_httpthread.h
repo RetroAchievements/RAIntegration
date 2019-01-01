@@ -19,7 +19,6 @@ enum RequestType
     //	Fetch
     RequestScore,
     RequestNews,
-    RequestPatch,
     RequestLatestClientPage,
     RequestRichPresence,
     RequestAchievementInfo,
@@ -27,7 +26,6 @@ enum RequestType
     RequestCodeNotes,
     RequestFriendList,
     RequestBadgeIter,
-    RequestUnlocks,
     RequestHashLibrary,
     RequestGamesList,
     RequestAllProgress,

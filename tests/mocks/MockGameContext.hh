@@ -37,13 +37,6 @@ public:
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
 
-    bool HasActiveAchievements() const noexcept override { return m_bHasActiveAchievements; }
-    
-    /// <summary>
-    /// Sets the value for <see cref="HasActiveAchievements" />
-    /// </summary>
-    void SetHasActiveAchievements(bool bValue) noexcept { m_bHasActiveAchievements = bValue; }
-
     AchievementSet::Type ActiveAchievementType() const noexcept override { return m_nActiveAchievementType; }
 
     /// <summary>
@@ -51,39 +44,12 @@ public:
     /// </summary>
     void SetActiveAchievementType(AchievementSet::Type bValue) noexcept { m_nActiveAchievementType = bValue; }
 
-    Achievement* FindAchievement(unsigned int nAchievementId) const noexcept override
-    {
-        for (auto& pAchievement : m_vAchievements)
-        {
-            if (pAchievement.ID() == nAchievementId)
-                return const_cast<Achievement*>(&pAchievement);
-        }
-
-        return nullptr;
-    }
-    
-    /// <summary>
-    /// Adds an achivement.
-    /// </summary>
-    /// <param name="nId">The unique identifier of the achievement.</param>
-    /// <param name="sTrigger">The trigger string.</param>
-    void AddAchivement(unsigned int nId, const char* sTrigger)
-    {
-        Achievement achievement;
-
-        std::string sLine = ra::StringPrintf("%zu:%s:Title:Desc::::Author:5:1234567890:1234567890:::", nId, sTrigger);
-        achievement.ParseLine(sLine.c_str());
-        m_vAchievements.emplace_back(std::move(achievement));
-    }
-
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;
 
     std::wstring m_sRichPresenceDisplayString;
     bool m_bHasActiveAchievements{ false };
     AchievementSet::Type m_nActiveAchievementType{ AchievementSet::Type::Core };
-
-    std::vector<Achievement> m_vAchievements;
 };
 
 } // namespace mocks

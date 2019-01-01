@@ -109,6 +109,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="api\ApiCall.hh" />
+    <ClInclude Include="api\FetchGameData.hh" />
+    <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
     <ClInclude Include="api\impl\OfflineServer.hh" />

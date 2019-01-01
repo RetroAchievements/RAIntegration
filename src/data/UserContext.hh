@@ -52,10 +52,26 @@ public:
     /// </summary>
     void SetScore(unsigned int nValue) noexcept { m_nScore = nValue; }
 
+    /// <summary>
+    /// Gets whether login has been disabled.
+    /// </summary>
+    bool IsLoginDisabled() const noexcept { return m_bDisableLogin; }
+
+    /// <summary>
+    /// Disables the ability to login.
+    /// </summary>
+    void DisableLogin() noexcept { m_bDisableLogin = true; }
+
+    /// <summary>
+    /// Logs the user out.
+    /// </summary>
+    virtual void Logout();
+
 protected:
     std::string m_sUsername;
     std::string m_sApiToken;
-    unsigned int m_nScore{0U};
+    unsigned int m_nScore{ 0U };
+    bool m_bDisableLogin{ false };
 };
 
 } // namespace data

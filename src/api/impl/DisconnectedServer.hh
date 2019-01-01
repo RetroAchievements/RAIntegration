@@ -16,6 +16,8 @@ public:
     GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
     const std::string& Host() const noexcept { return m_sHost; }
 
+    GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;
+
 private:
     const std::string m_sHost;
 };

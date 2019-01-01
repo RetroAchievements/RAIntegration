@@ -34,8 +34,6 @@ void _ReadStringTil(std::string& value, char nChar, const char* restrict& pSourc
 
 Achievement::Achievement() noexcept
 {
-    Clear();
-
     m_vConditions.AddGroup();
 }
 
@@ -50,30 +48,6 @@ Achievement::~Achievement() noexcept
         }
     }
 }
-
-#ifndef RA_UTEST
-void Achievement::Parse(const rapidjson::Value& element)
-{
-    //{"ID":"36","MemAddr":"0xfe20>=50","Title":"Fifty Rings","Description":"Collect 50
-    //rings","Points":"0","Author":"Scott","Modified":"1351868953","Created":"1351814592","BadgeName":"00083","Flags":"5"},
-    m_nAchievementID = element["ID"].GetUint();
-    m_sTitle = element["Title"].GetString();
-    m_sDescription = element["Description"].GetString();
-    m_nPointValue = element["Points"].GetUint();
-    m_sAuthor = element["Author"].GetString();
-    m_nTimestampModified = element["Modified"].GetUint();
-    m_nTimestampCreated = element["Created"].GetUint();
-    // m_sBadgeImageURI = element["BadgeName"].GetString();
-    SetBadgeImage(element["BadgeName"].GetString());
-    // unsigned int nFlags = element["Flags"].GetUint();
-
-    if (element["MemAddr"].IsString())
-    {
-        const char* sMem = element["MemAddr"].GetString();
-        ParseTrigger(sMem);
-    }
-}
-#endif
 
 void Achievement::RebuildTrigger()
 {
@@ -407,38 +381,6 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
         pCondition->current_hits = nHitCount;
 }
 
-void Achievement::Clear() noexcept
-{
-    SetActive(false);
-
-    m_vConditions.Clear();
-    m_nAchievementID = 0;
-    m_pTriggerBuffer.reset();
-    m_pTrigger = nullptr;
-
-    m_sTitle.clear();
-    m_sDescription.clear();
-    m_sAuthor.clear();
-    m_sBadgeImageURI.clear();
-
-    m_nPointValue = 0;
-    m_bModified = FALSE;
-    m_bPauseOnTrigger = FALSE;
-    m_bPauseOnReset = FALSE;
-    ClearDirtyFlag();
-
-    m_bProgressEnabled = FALSE;
-    m_sProgress.clear();
-    m_sProgressMax.clear();
-    m_sProgressFmt.clear();
-    m_fProgressLastShown = 0.0F;
-
-    m_nTimestampCreated = 0;
-    m_nTimestampModified = 0;
-    // m_nUpvotes = 0;
-    // m_nDownvotes = 0;
-}
-
 void Achievement::AddConditionGroup() noexcept { m_vConditions.AddGroup(); }
 void Achievement::RemoveConditionGroup() { m_vConditions.RemoveLastGroup(); }
 
@@ -455,13 +397,16 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        if (!m_bActive)
-            pRuntime.DeactivateAchievement(ID());
-        else if (m_bPauseOnReset)
-            pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
-        else
-            pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            if (!m_bActive)
+                pRuntime.DeactivateAchievement(ID());
+            else if (m_bPauseOnReset)
+                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+            else
+                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+        }
     }
 }
 
@@ -495,7 +440,7 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 {
     SetDirtyFlag(DirtyFlags::Badge);
 
-    if (sBadgeURI.length() > 5 && ra::StringEndsWith(sBadgeURI, "_lock"))
+    if (ra::StringEndsWith(sBadgeURI, "_lock"))
         m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
     else
         m_sBadgeImageURI = sBadgeURI;
@@ -564,9 +509,8 @@ std::string Achievement::CreateMemString() const
     return buffer;
 }
 
-void Achievement::Set(const Achievement& rRHS)
+void Achievement::CopyFrom(const Achievement& rRHS)
 {
-    SetID(rRHS.m_nAchievementID);
     SetAuthor(rRHS.m_sAuthor);
     SetDescription(rRHS.m_sDescription);
     SetPoints(rRHS.m_nPointValue);
@@ -574,7 +518,7 @@ void Achievement::Set(const Achievement& rRHS)
     SetModified(rRHS.m_bModified);
     SetBadgeImage(rRHS.m_sBadgeImageURI);
 
-    //	TBD: move to 'now'?
+    // TBD: set to 'now'?
     SetModifiedDate(rRHS.m_nTimestampModified);
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
@@ -582,229 +526,3 @@ void Achievement::Set(const Achievement& rRHS)
 
     SetDirtyFlag(DirtyFlags::All);
 }
-
-// int Achievement::StoreDynamicVar( char* pVarName, CompVariable nVar )
-//{
-//	ASSERT( m_nNumDynamicVars < 5 );
-//
-//	//m_nDynamicVars[m_nNumDynamicVars].m_nVar = nVar;
-//	//strcpy_s( m_nDynamicVars[m_nNumDynamicVars].m_sName, 16, pVarName );
-//
-//	m_nNumDynamicVars++;
-//
-//	return m_nNumDynamicVars;
-//}
-//
-//
-// float Achievement::ProgressGetNextStep( char* sFormat, float fLastKnownProgress )
-//{
-//	const float fStep = ( (float)strtol( sFormat, nullptr, 10 ) / 100.0f );
-//	int nIter = 1;	//	Progress of 0% doesn't require a popup...
-//	float fStepAt = fStep * nIter;
-//	while( (fLastKnownProgress >= fStepAt) && (fStepAt < 1.0f) && (nIter < 20) )
-//	{
-//		nIter++;
-//		fStepAt = fStep * nIter;
-//	}
-//
-//	if( fStepAt >= 1.0f )
-//		fStepAt = 1.0f;
-//
-//	return fStepAt;
-//}
-//
-// float Achievement::ParseProgressExpression( char* pExp )
-//{
-//	if( pExp == nullptr )
-//		return 0.0f;
-//
-//	int nOperator = 0;	//	0=add, 1=mult, 2=sub
-//
-//	while( *pExp == ' ' )
-//		++pExp; //	Trim
-//
-//	float fProgressValue = 0.0f;
-//	char* pStrIter = &pExp[0];
-//
-//	int nIterations = 0;
-//
-//	while( *pStrIter != nullptr && nIterations < 20 )
-//	{
-//		float fNextVal = 0.0f;
-//
-//		//	Parse operator
-//		if( pStrIter == pExp )
-//		{
-//			//	Start of string: assume operator of 'add'
-//			nOperator = 0;
-//		}
-//		else
-//		{
-//			if( *pStrIter == '+' )
-//				nOperator = 0;
-//			else if( *pStrIter == '*' )
-//				nOperator = 1;
-//			else if( *pStrIter == '-' )
-//				nOperator = 2;
-//			else
-//			{
-//				char buffer[256];
-//				sprintf_s( buffer, 256, "Unrecognised operator character at %d",
-//					(&pStrIter) - (&pExp) );
-//
-//				ASSERT(!"Unrecognised operator in format expression!");
-//				return 0.0f;
-//			}
-//
-//			pStrIter++;
-//		}
-//
-//		//	Parse value:
-//		if( strncmp( pStrIter, "Cond:", 5 ) == 0 )
-//		{
-//			//	Get the specified condition, and the value from it.
-//			unsigned int nCondIter = strtol( pStrIter+5, nullptr, 10 );
-//
-//			if( nCondIter < NumConditions() )
-//			{
-//				Condition& Cond = GetCondition( nCondIter );
-//				if( Cond.CompSource().m_nVarType != CMPTYPE_VALUE )
-//				{
-//					fNextVal = (float)Cond.CompSource().m_nVal;
-//				}
-//				else if( Cond.CompTarget().m_nVarType != CMPTYPE_VALUE )
-//				{
-//					//	Best guess?
-//					fNextVal = (float)Cond.CompTarget().m_nVal;
-//				}
-//				else
-//				{
-//					//wtf? Both elements are 'value'?
-//					ASSERT(!"Bolloxed");
-//					fNextVal = 0.0f;
-//				}
-//			}
-//			else
-//			{
-//				//	Report error?
-//				ASSERT(!"Bolloxed2");
-//				return 0.0f;
-//			}
-//		}
-//		else if( pStrIter[0] == '0' && pStrIter[1] == 'x' )
-//		{
-//			CompVariable Var;							//	Memory location
-//			Var.ParseVariable( pStrIter );				//	Automatically pushes pStrIter
-//			fNextVal = (float)( Var.GetValue() );
-//		}
-//		else
-//		{
-//			//	Assume value, assume base 10
-//			fNextVal = (float)( strtol( pStrIter, &pStrIter, 10 ) );
-//		}
-//
-//		switch( nOperator )
-//		{
-//		case 0:	//	Add
-//			fProgressValue += fNextVal;
-//			break;
-//		case 1:	//	Mult
-//			fProgressValue *= fNextVal;
-//			break;
-//		case 2:	//	Sub
-//			fProgressValue -= fNextVal;
-//			break;
-//		default:
-//			ASSERT(!"Unrecognised operator?!");
-//			break;
-//		}
-//
-//		while( *pExp == ' ' )
-//			++pExp; //	Trim any whitespace
-//
-//		nIterations++;
-//	}
-//
-//	if( nIterations == 20 )
-//	{
-//		ASSERT(!"Bugger... can't parse this 'progress' thing. Too many iterations!");
-//	}
-//
-//	return fProgressValue;
-//}
-
-// void Achievement::UpdateProgress()
-// {
-//	//	Produce a float which represents the current progress.
-//	//	Compare to m_sProgressFmt. If greater and
-//	//	Compare to m_fProgressLastShown
-//
-//	//	TBD: Don't forget backslashes!
-//	//sprintf_s( m_sProgress, 256,	"0xfe20", 10 );	//	every 10 percent
-//	//sprintf_s( m_sProgressMax, 256, "200", 10 );	//	every 10 percent
-//	//sprintf_s( m_sProgressFmt, 50,	"%d,%%01.f,%%01.f,,", 10 );	//	every 10 percent
-//
-//	const float fProgressValue = ParseProgressExpression( m_sProgress );
-//	const float fMaxValue = ParseProgressExpression( m_sProgressMax );
-//
-//	if( fMaxValue == 0.0f )
-//		return;
-//
-//	const float fProgressPercent = ( fProgressValue / fMaxValue );
-//	const float fNextStep = ProgressGetNextStep( m_sProgressFmt, fProgressPercent );
-//
-//	if( fProgressPercent >= m_fProgressLastShown && m_fProgressLastShown < fNextStep )
-//	{
-//		if( m_fProgressLastShown == 0.0f )
-//		{
-//			m_fProgressLastShown = fNextStep;
-//			return;	//	Don't show first indicator!
-//		}
-//		else if( fNextStep == 1.0f )
-//		{
-//			return;	//	Don't show final indicator!
-//		}
-//
-//		m_fProgressLastShown = fNextStep;
-//
-//		char formatSpareBuffer[256];
-//		strcpy_s( formatSpareBuffer, 256, m_sProgressFmt );
-//
-//		//	DO NOT USE Sprintf!! this will interpret the format!
-//		//	sprintf_s( formatSpareBuffer, 256, m_sProgressFmt );
-//
-//		char* pUnused = &formatSpareBuffer[0];
-//		char* pUnused2 = nullptr;
-//		char* pFirstFmt = nullptr;
-//		char* pSecondFmt = nullptr;
-//		strtok_s( pUnused, ",", &pFirstFmt );
-//		strtok_s( pFirstFmt, ",", &pSecondFmt );
-//		strtok_s( pSecondFmt, ",\0\n:", &pUnused2 );	//	Adds a very useful '\0' to pSecondFmt
-//
-//		if( pFirstFmt==nullptr || pSecondFmt==nullptr )
-//		{
-//			ASSERT(!"FUCK. Format string is fucked");
-//			return;
-//		}
-//
-//		//	Display progress message:
-//
-//		char bufferVal1[64];
-//		sprintf_s( bufferVal1, 64, pFirstFmt, fProgressValue );
-//
-//		char bufferVal2[64];
-//		sprintf_s( bufferVal2, 64, pSecondFmt, fMaxValue );
-//
-//		char progressTitle[256];
-//		sprintf_s( progressTitle, 256, " Progress: %s ", Title() );
-//
-//		char progressDesc[256];
-//		sprintf_s( progressDesc, 256, " %s of %s ", bufferVal1, bufferVal2 );
-//		g_PopupWindows.ProgressPopups().AddMessage( progressTitle, progressDesc );
-//	}
-// }
-
-
-
-
-

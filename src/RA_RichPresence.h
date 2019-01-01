@@ -13,12 +13,13 @@ class RA_RichPresenceInterpreter
 {
 public:
     GSL_SUPPRESS_F6 bool Load(); /*Test won't throw but Integration might*/
+    bool Load(ra::services::TextReader& pReader);
+
     std::string GetRichPresenceString();
 
     bool Enabled() const noexcept { return !m_vDisplayStrings.empty(); }
 
 protected:
-    bool Load(ra::services::TextReader& pReader);
 
     class Lookup
     {

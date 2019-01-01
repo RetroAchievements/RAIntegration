@@ -219,13 +219,30 @@ bool SessionTracker::IsInspectingMemory() const noexcept
 #endif
 }
 
+static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
+{
+    bool bResult = false;
+    pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
+    {
+        if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Core))
+        {
+            bResult = true;
+            return false;
+        }
+
+        return true;
+    });
+
+    return bResult;
+}
+
 std::wstring SessionTracker::GetCurrentActivity() const
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
     if (IsInspectingMemory())
     {
-        if (!pGameContext.HasActiveAchievements())
+        if (!HasCoreAchievements(pGameContext))
             return L"Developing Achievements";
 
         if (_RA_HardcoreModeIsActive())
@@ -244,7 +261,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
             return sRPResponse;
     }
 
-    if (pGameContext.HasActiveAchievements())
+    if (HasCoreAchievements(pGameContext))
         return L"Earning Achievements";
 
     return L"Playing " + pGameContext.GameTitle();

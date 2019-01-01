@@ -402,7 +402,7 @@ public:
 
     TEST_METHOD(TestValue)
     {
-        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        std::array<unsigned char, 5> memory{0x01, 0x12, 0x34, 0xAB, 0x56};
         InitializeMemory(memory);
 
         // simple accessors

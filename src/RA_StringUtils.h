@@ -394,7 +394,7 @@ public:
                 {
                     const char c = gsl::narrow<char>(*pScan);
                     sFormat.push_back(c);
-                    if (isalpha(gsl::narrow<int>(c)))
+                    if (isalpha(to_unsigned(c)))
                         break;
 
                     ++pScan;

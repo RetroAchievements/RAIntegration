@@ -2,6 +2,8 @@
 #define RA_SERVICES_MOCK_CLOCK_HH
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
@@ -15,7 +17,7 @@ public:
     MockClock() noexcept : m_Override(this)
     {
         // force GMT timezone for unit tests
-        Expects(_putenv("TZ=GMT") == 0);
+        GSL_SUPPRESS_F6 Expects(_putenv("TZ=GMT") == 0);
         _tzset();
 
         m_tNow    = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18

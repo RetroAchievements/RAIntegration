@@ -1,5 +1,7 @@
 #include "LoginViewModel.hh"
 
+#include "Exports.hh"
+#include "RA_Interface.h"
 #include "RA_StringUtils.h"
 
 #include "api\Login.hh"
@@ -67,6 +69,11 @@ bool LoginViewModel::Login() const
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
         std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
+
+#ifndef RA_UTEST
+    RA_RebuildMenu();
+    _RA_UpdateAppTitle();
+#endif
 
     return true;
 }

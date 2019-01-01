@@ -10,6 +10,7 @@
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_RichPresence.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
 #include "services\Http.hh"
@@ -22,7 +23,6 @@ const char* RequestTypeToString[] =
 {
     "RequestScore",
     "RequestNews",
-    "RequestLatestClientPage",
     "RequestRichPresence",
     "RequestAchievementInfo",
     "RequestLeaderboardInfo",
@@ -46,7 +46,6 @@ const char* RequestTypeToPost[] =
 {
     "score",
     "news",
-    "latestclient",
     "richpresencepatch",
     "achievementwondata",
     "lbinfo",
@@ -143,16 +142,18 @@ void RAWeb::SetUserAgentString()
     std::string sUserAgent;
     sUserAgent.reserve(128U);
 
-    if (g_sClientName != nullptr)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& sClientName = pEmulatorContext.GetClientName();
+    if (!sClientName.empty())
     {
-        sUserAgent.append(g_sClientName);
+        sUserAgent.append(sClientName);
         sUserAgent.append("/");
     }
     else
     {
         sUserAgent.append("UnknownClient/");
     }
-    sUserAgent.append(g_sClientVersion);
+    sUserAgent.append(pEmulatorContext.GetClientVersion());
     sUserAgent.append(" (");
 
     AppendNTVersion(sUserAgent);

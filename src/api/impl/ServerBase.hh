@@ -45,6 +45,8 @@ public:
         return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
     }
 
+    // === game functions ===
+
     ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override
     {
         GSL_SUPPRESS_F6
@@ -55,6 +57,14 @@ public:
     {
         GSL_SUPPRESS_F6
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
+    }
+
+    // === other functions ===
+
+    LatestClient::Response LatestClient(_UNUSED const LatestClient::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
     }
 
 protected:

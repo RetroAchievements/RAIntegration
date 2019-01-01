@@ -32,6 +32,12 @@ public:
     /// <param name="oSize">The size of the work area.</param>
     virtual void GetWorkArea(_Out_ ra::ui::Position& oUpperLeftCorner, _Out_ ra::ui::Size& oSize) const = 0;
 
+    /// <summary>
+    /// Opens the specified URL using the default browser.
+    /// </summary>
+    /// <param name="sUrl">The URL to open.</param>
+    virtual void OpenUrl(const std::string& sUrl) const = 0;
+
     virtual void Shutdown() = 0;
 
 protected:

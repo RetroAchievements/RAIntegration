@@ -2,6 +2,7 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
@@ -70,15 +71,20 @@ void Initialization::RegisterCoreServices()
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(std::move(pConfiguration));
 }
 
-void Initialization::RegisterServices(const std::string& sClientName)
+void Initialization::RegisterServices(EmulatorID nEmulatorId)
 {
     RegisterCoreServices();
 
     auto& pFileSystem = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
 
+    auto pEmulatorContext = std::make_unique<ra::data::EmulatorContext>();
+    pEmulatorContext->Initialize(nEmulatorId);
+    auto& sClientName = pEmulatorContext->GetClientName();
+    ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
+
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
-    const auto sFilename = ra::StringPrintf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), ra::Widen(sClientName));
+    const auto sFilename = ra::StringPrintf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
     pConfiguration->Load(sFilename);
 
     auto pLocalStorage = std::make_unique<ra::services::impl::FileLocalStorage>(pFileSystem);

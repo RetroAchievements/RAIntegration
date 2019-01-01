@@ -436,6 +436,30 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
     }
 }
 
+LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request) noexcept
+{
+    LatestClient::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    // LatestClient doesn't require User/Password, so the next few lines are a subset of DoRequest
+    AppendUrlParam(sPostData, "r", "latestclient");
+    AppendUrlParam(sPostData, "e", std::to_string(request.EmulatorId));
+    RA_LOG_INFO("%s Request: %s", LatestClient::Name(), sPostData.c_str());
+
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", m_sHost));
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    if (GetJson(LatestClient::Name(), httpResponse, response, document))
+    {
+        response.Result = ApiResult::Success;
+        GetRequiredJsonField(response.LatestVersion, document, "LatestVersion", response);
+    }
+
+    return response;
+}
+
 } // namespace impl
 } // namespace api
 } // namespace ra

@@ -65,6 +65,8 @@ public:
         return HandleRequest<ra::api::FetchUserUnlocks>(request);
     }
 
+    // === game functions ===
+
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override
     {
         return HandleRequest<ra::api::ResolveHash>(request);
@@ -73,6 +75,13 @@ public:
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override
     {
         return HandleRequest<ra::api::FetchGameData>(request);
+    }
+
+    // === other functions ===
+
+    LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::LatestClient>(request);
     }
 
 protected:

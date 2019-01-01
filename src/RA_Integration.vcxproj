@@ -39,7 +39,9 @@
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
+    <ClCompile Include="data\EmulatorContext.cpp" />
     <ClCompile Include="data\SessionTracker.cpp" />
+    <ClCompile Include="data\UserContext.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='AnalysisUnicode|Win32'">Create</PrecompiledHeader>
@@ -116,11 +118,13 @@
     <ClInclude Include="api\impl\OfflineServer.hh" />
     <ClInclude Include="api\impl\ServerBase.hh" />
     <ClInclude Include="api\IServer.hh" />
+    <ClInclude Include="api\LatestClient.hh" />
     <ClInclude Include="api\Login.hh" />
     <ClInclude Include="api\Logout.hh" />
     <ClInclude Include="api\Ping.hh" />
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />
+    <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="data\SessionTracker.hh" />
     <ClInclude Include="data\UserContext.hh" />

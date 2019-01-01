@@ -19,7 +19,6 @@ enum RequestType
     //	Fetch
     RequestScore,
     RequestNews,
-    RequestLatestClientPage,
     RequestRichPresence,
     RequestAchievementInfo,
     RequestLeaderboardInfo,

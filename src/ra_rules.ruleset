@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RuleSet Name="ra_rules" ToolsVersion="15.0">
+  <Include Path="cppcorecheckarithmeticrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckclassrules.ruleset" Action="Warning" />
   <Include Path="cppcorecheckconstrules.ruleset" Action="Warning" />
   <Include Path="cppcorecheckfuncrules.ruleset" Action="Warning" />
@@ -14,15 +15,14 @@
     <Rule Id="C26112" Action="Warning" />
     <Rule Id="C26115" Action="Warning" />
     <Rule Id="C26116" Action="Warning" />
+    <Rule Id="C26117" Action="Warning" />
+    <Rule Id="C26140" Action="Warning" />
     <Rule Id="C26402" Action="Warning" />
     <Rule Id="C26403" Action="Warning" />
     <Rule Id="C26404" Action="Warning" />
     <Rule Id="C26405" Action="Warning" />
     <Rule Id="C26406" Action="Warning" />
     <Rule Id="C26407" Action="Warning" />
-    <Rule Id="C26429" Action="Warning" />
-    <Rule Id="C26117" Action="Warning" />
-    <Rule Id="C26140" Action="Warning" />
     <Rule Id="C26410" Action="Warning" />
     <Rule Id="C26411" Action="Warning" />
     <Rule Id="C26414" Action="Warning" />
@@ -30,6 +30,7 @@
     <Rule Id="C26416" Action="Warning" />
     <Rule Id="C26417" Action="Warning" />
     <Rule Id="C26418" Action="Warning" />
+    <Rule Id="C26429" Action="Warning" />
     <Rule Id="C26430" Action="Warning" />
     <Rule Id="C26431" Action="Warning" />
     <Rule Id="C26432" Action="Warning" />

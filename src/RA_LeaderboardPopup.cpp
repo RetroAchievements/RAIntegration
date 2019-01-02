@@ -276,7 +276,7 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
             if (m_pScoreboardSurface != nullptr)
             {
                 const auto fOffscreenAmount = (GetOffsetPct() * 600);
-                const auto fFadeOffs = (gsl::narrow<std::int64_t>(nWidth - 300 - 10) + fOffscreenAmount);
+                const auto fFadeOffs = (ra::to_unsigned(nWidth) - 300 - 10 + fOffscreenAmount);
                 const auto nScoreboardX = ra::ftoi(fFadeOffs);
                 const auto nScoreboardY = nHeight - 200 - 10;
                 pSurface.DrawSurface(nScoreboardX, nScoreboardY, *m_pScoreboardSurface);

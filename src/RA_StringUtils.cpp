@@ -147,21 +147,21 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 break;
 
             case PendingString::Type::StringRef:
-                nNeeded += pPending.Ref.String->length();
+                nNeeded += std::get<const std::string*>(pPending.Ref)->length();
                 break;
 
             case PendingString::Type::WStringRef:
-                pPending.String = ra::Narrow(*pPending.Ref.WString);
+                pPending.String = ra::Narrow(*std::get<const std::wstring*>(pPending.Ref));
                 pPending.DataType = PendingString::Type::String;
                 nNeeded += pPending.String.length();
                 break;
 
             case PendingString::Type::CharRef:
-                nNeeded += pPending.Ref.Char.Length;
+                nNeeded += std::get<gsl::cstring_span<>>(pPending.Ref).size();
                 break;
 
             case PendingString::Type::WCharRef:
-                pPending.String = ra::Narrow(std::wstring(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length));
+                pPending.String = ra::Narrow(gsl::to_string(std::get<gsl::cwstring_span<>>(pPending.Ref)));
                 pPending.DataType = PendingString::Type::String;
                 nNeeded += pPending.String.length();
                 break;
@@ -179,11 +179,11 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 break;
 
             case PendingString::Type::StringRef:
-                sResult.append(*pPending.Ref.String);
+                sResult.append(*std::get<const std::string*>(pPending.Ref));
                 break;
 
             case PendingString::Type::CharRef:
-                sResult.append(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length);
+                sResult.append(gsl::to_string(std::get<gsl::cstring_span<>>(pPending.Ref)));
                 break;
         }
     }
@@ -207,21 +207,21 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 break;
 
             case PendingString::Type::WStringRef:
-                nNeeded += pPending.Ref.WString->length();
+                nNeeded += std::get<const std::wstring*>(pPending.Ref)->length();
                 break;
 
             case PendingString::Type::StringRef:
-                pPending.WString = ra::Widen(*pPending.Ref.String);
+                pPending.WString = ra::Widen(*std::get<const std::string*>(pPending.Ref));
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
 
             case PendingString::Type::WCharRef:
-                nNeeded += pPending.Ref.WChar.Length;
+                nNeeded += std::get<gsl::cwstring_span<>>(pPending.Ref).size();
                 break;
 
             case PendingString::Type::CharRef:
-                pPending.WString = ra::Widen(std::string(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length));
+                pPending.WString = ra::Widen(gsl::to_string(std::get<gsl::cstring_span<>>(pPending.Ref)));
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
@@ -239,11 +239,11 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 break;
 
             case PendingString::Type::WStringRef:
-                sResult.append(*pPending.Ref.WString);
+                sResult.append(*std::get<const std::wstring*>(pPending.Ref));
                 break;
 
             case PendingString::Type::WCharRef:
-                sResult.append(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length);
+                sResult.append(gsl::to_string(std::get<gsl::cwstring_span<>>(pPending.Ref)));
                 break;
         }
     }

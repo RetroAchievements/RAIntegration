@@ -174,7 +174,7 @@ public:
     void Append(const std::string& arg)
     {
         PendingString pPending;
-        pPending.Ref.String = &arg;
+        pPending.Ref = &arg;
         pPending.DataType = PendingString::Type::StringRef;
         m_vPending.emplace_back(std::move(pPending));
     }
@@ -183,7 +183,7 @@ public:
     void Append(const std::wstring& arg)
     {
         PendingString pPending;
-        pPending.Ref.WString = &arg;
+        pPending.Ref = &arg;
         pPending.DataType = PendingString::Type::WStringRef;
         m_vPending.emplace_back(std::move(pPending));
     }
@@ -222,8 +222,7 @@ public:
             return;
 
         PendingString pPending;
-        pPending.Ref.Char.Pointer = pStart;
-        pPending.Ref.Char.Length = nLength;
+        pPending.Ref = gsl::make_span(pStart, nLength);
         pPending.DataType = PendingString::Type::CharRef;
         m_vPending.emplace_back(std::move(pPending));
     }
@@ -234,8 +233,7 @@ public:
             return;
 
         PendingString pPending;
-        pPending.Ref.WChar.Pointer = pStart;
-        pPending.Ref.WChar.Length = nLength;
+        pPending.Ref = gsl::make_span(pStart, nLength);
         pPending.DataType = PendingString::Type::WCharRef;
         m_vPending.emplace_back(std::move(pPending));
     }
@@ -466,22 +464,7 @@ private:
 
     struct PendingString
     {
-        union {
-            const std::string* String;
-            const std::wstring* WString;
-
-            struct
-            {
-                const char* Pointer;
-                size_t Length;
-            } Char;
-
-            struct
-            {
-                const wchar_t* Pointer;
-                size_t Length;
-            } WChar;
-        } Ref{};
+        std::variant<const std::string*, const std::wstring*, gsl::cstring_span<>, gsl::cwstring_span<>> Ref;
 
         std::string String;
         std::wstring WString;

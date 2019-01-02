@@ -284,12 +284,15 @@ public:
                 oss << arg;
             else
             {
-                if (sFormat.front() == '0')
-                    oss << std::setfill('0');
-                const int nDigits = std::stoi(sFormat);
-                if (nDigits > 0)
-                    oss << std::setw(nDigits);
+                if(std::isdigit(ra::to_unsigned(sFormat.front())))
+                {
+                    if (sFormat.front() == '0')
+                        oss << std::setfill('0');
 
+                    const int nDigits = std::stoi(sFormat);
+                    if (nDigits > 0)
+                        oss << std::setw(nDigits);
+                }
                 if (sFormat.back() == 'X')
                     oss << std::uppercase << std::hex;
                 else if (sFormat.back() == 'x')

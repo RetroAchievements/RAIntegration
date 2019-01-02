@@ -252,24 +252,7 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
 
             if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt).compare("Value") == 0)
             {
-                constexpr std::array<unsigned char, 25> valid_chars{"0123456789ABCDEFabcdefXx"};
                 // Remove the associated 'size' entry
-                for (const unsigned char& c : sEditText)
-                {
-                    if (c == unsigned char())
-                        break;
-                    
-#pragma warning(suppress: 26447) // f.6, inline suppression not working here but works for message box
-                     if (!std::any_of(valid_chars.begin(), valid_chars.end(),
-                                     [&c](unsigned char valid) noexcept { return c == valid; }))
-                    {
-                        GSL_SUPPRESS_F6
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                            L"Only values that can be represented as hex or dec are allowed.");
-                        DestroyWindow(hwnd);
-                        return 0;
-                    }
-                }
                 if ((lvDispinfo.item.iItem >= 0) && (lvDispinfo.item.iSubItem >= 1))
                 {
                     g_AchievementEditorDialog
@@ -1697,9 +1680,43 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
                                     nBase = 10;
                             }
-
-                            const auto nVal = std::strtoul(sData.c_str(), nullptr, nBase);
-                            rCond.CompTarget().SetValue(nVal);
+                            
+                            auto lVal = 0UL;
+                            auto lineErrNumber = 0;
+                            try
+                            {
+                                lineErrNumber = __LINE__ + 1;
+                                lVal = std::stoul(sData.c_str(), nullptr, nBase);
+                            } catch (const std::invalid_argument& e)
+                            {
+                                RA_LOG_ERR("\nFunction: %s\nLine: %d\nMessage: %s\n\n", __FUNCTION__, lineErrNumber,
+                                           e.what());
+                                const auto bIsDecimal = Button_GetCheck(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS));
+                                if (bIsDecimal)
+                                {
+                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                                        L"Only values that can be represented as decimal are allowed while the 'show "
+                                        L"decimal values' checkbox is "
+                                        L"checked.\n\nPlease try again!");
+                                }
+                                else
+                                {
+                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                                        L"Only values that can be represented as hexadecimal are allowed while the "
+                                        L"'show decimal values' checkbox is unchecked.\n\nPlease try again!");
+                                }
+                            } catch (const std::out_of_range& e)
+                            {
+                                RA_LOG_ERR("Function: %s\nLine: %d\nMessage: %s", __FUNCTION__, lineErrNumber,
+                                           e.what());
+                                constexpr auto maxUlong = std::numeric_limits<unsigned long>::max();
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    L"Too Large",
+                                    ra::StringPrintf(L"Value supplied is negative or too large!\nIt must be "
+                                                     L"non-negative and less than %lu (decimal) or 0x%X (hexadecimal)",
+                                                     maxUlong, maxUlong));
+                            }
+                            rCond.CompTarget().SetValue(lVal);
                             break;
                         }
                         case CondSubItems::Hitcount:

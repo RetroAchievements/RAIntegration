@@ -149,9 +149,13 @@ public:
         Assert::AreEqual(std::string("Appl"), StringPrintf("%.*s", 4, "Apple"));
         Assert::AreEqual(std::string("Apple"), StringPrintf("%4s", "Apple"));
         Assert::AreEqual(std::string(" Boo"), StringPrintf("%4s", "Boo"));
-
+        
         Assert::AreEqual(std::string("abc"), StringPrintf("%c%c%c", 'a', 'b', 'c'));
         Assert::AreEqual(std::string("616263"), StringPrintf("%02x%02x%02x", 'a', 'b', 'c'));
+        Assert::AreEqual(std::string("52E331"), StringPrintf("%X", 5432113));
+        Assert::AreEqual(std::string("52e331"), StringPrintf("%x", 5432113));
+        Assert::AreEqual(std::string("70AF4E"), StringPrintf("%X", 0b11100001010111101001110));
+        Assert::AreEqual(std::string("70af4e"), StringPrintf("%x", 0b11100001010111101001110));
     }
 
     TEST_METHOD(TestWStringPrintf)

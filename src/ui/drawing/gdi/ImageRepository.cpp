@@ -206,7 +206,8 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
 
                                                             // Store the converted bitmap as ppToRenderBitmapSource 
             if (SUCCEEDED(hr))
-                pConverter->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pToRenderBitmapSource));
+                GSL_SUPPRESS_TYPE1 pConverter->QueryInterface(IID_IWICBitmapSource,
+                                                              reinterpret_cast<void**>(&pToRenderBitmapSource));
         }
 
         pConverter.Release();
@@ -319,7 +320,8 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
     CComPtr<IWICBitmapSource> pOriginalBitmapSource;
     if (SUCCEEDED(hr))
     {
-        hr = pFrame->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pOriginalBitmapSource));
+        GSL_SUPPRESS_TYPE1 hr =
+            pFrame->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pOriginalBitmapSource));
         if (SUCCEEDED(hr))
         {
             if (nWidth == 0 || nHeight == 0)
@@ -404,7 +406,8 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
-    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
     if (hBitmap == nullptr)
     {
         auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());
@@ -415,7 +418,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
             auto& pMutableImage = const_cast<ImageReference&>(pImage);
-            pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
+            GSL_SUPPRESS_TYPE1 pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pMutableImage);

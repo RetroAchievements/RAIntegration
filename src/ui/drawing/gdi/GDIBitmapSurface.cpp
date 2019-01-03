@@ -57,9 +57,11 @@ static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
-    UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget.get());
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget.get());
     Expects(pTarget != nullptr);
-    UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
     Expects(pBlend != nullptr);
 
     *pTarget++ = static_cast<UINT8>(
@@ -95,7 +97,9 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     HDC hMemDC = CreateCompatibleDC(m_hDC);
 
     UINT32* pTextBits{};
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 HBITMAP hBitmap =
+        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
     assert(hBitmap != nullptr);
     assert(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
@@ -148,7 +152,10 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     bmi.bmiHeader.biSizeImage = nWidth * nHeight * 4;
 
     UINT32* pBits;
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
+
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 HBITMAP hBitmap =
+        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
     Expects(hBitmap != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
@@ -177,8 +184,10 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
     const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
-    const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-    UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
     Expects(pBits != nullptr);
     do
     {

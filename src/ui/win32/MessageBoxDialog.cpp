@@ -22,7 +22,7 @@ MessageBoxDialog::Presenter::Presenter() noexcept
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
     const auto hDll = LoadLibraryA("comctl32");
     if (hDll)
-        pTaskDialog = reinterpret_cast<fnTaskDialog>(::GetProcAddress(hDll, "TaskDialog"));
+        GSL_SUPPRESS_TYPE1 pTaskDialog = reinterpret_cast<fnTaskDialog>(::GetProcAddress(hDll, "TaskDialog"));
 }
 
 bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept

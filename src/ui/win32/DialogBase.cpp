@@ -27,7 +27,8 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
+#pragma warning(suppress: 26490)
+    GSL_SUPPRESS_TYPE1 DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
@@ -46,7 +47,7 @@ _Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict
     m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
     if (m_hWnd)
     {
-        ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
+        GSL_SUPPRESS_TYPE1 ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
         m_pDialogPresenter = pDialogPresenter;
         m_bindWindow.SetHWND(m_hWnd);
     }
@@ -71,9 +72,9 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     {
         // Once we've seen the WM_INITDIALOG message, we've associated the HWND to the DialogBase and
         // can use the normal StaticDialogProc handler.
-        SetWindowLongPtr(hDlg, DWLP_DLGPROC, reinterpret_cast<LONG_PTR>(&StaticDialogProc));
+        SubclassDialog(hDlg, StaticDialogProc);
 
-        SetWindowLongPtr(hDlg, DWLP_USER, reinterpret_cast<LONG_PTR>(s_pModalDialog));
+        GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hDlg, DWLP_USER, reinterpret_cast<LONG_PTR>(s_pModalDialog));
         s_pModalDialog = nullptr;
     }
 

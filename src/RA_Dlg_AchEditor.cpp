@@ -258,8 +258,7 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
             // the LV ID and the LVs Parent window's HWND
-            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
-                        reinterpret_cast<LPARAM>(&lvDispinfo)); // ##reinterpret? ##SD
+            FORWARD_WM_NOTIFY(::GetParent(hList), IDC_RA_LBX_CONDITIONS, &lvDispinfo, ::SendMessage);
 
             // Extra validation?
 
@@ -318,8 +317,7 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
 
             // the LV ID and the LVs Parent window's HWND
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
-            SendMessage(GetParent(hList), WM_NOTIFY, static_cast<WPARAM>(IDC_RA_LBX_CONDITIONS),
-                        reinterpret_cast<LPARAM>(&lvDispinfo));
+            FORWARD_WM_NOTIFY(::GetParent(hList), IDC_RA_LBX_CONDITIONS, &lvDispinfo, ::SendMessage);
 
             DestroyWindow(hwnd);
         }
@@ -1378,7 +1376,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         {
             case NM_CLICK:
             {
-                const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(suppress: 26490)
+                GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
 
                 // http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
@@ -1405,7 +1404,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             break;
             case NM_RCLICK:
             {
-                const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(suppress: 26490)
+                GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
                 if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                 {
                     if (static_cast<size_t>(pOnClick->iItem) >
@@ -1457,7 +1457,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             case LVN_ENDLABELEDIT:
             {
-                const auto pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pnmhdr);
+#pragma warning(suppress: 26490)
+                GSL_SUPPRESS_TYPE1 const auto pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pnmhdr);
 
                 Achievement* pActiveAch = ActiveAchievement();
                 if (pActiveAch == nullptr)
@@ -1626,7 +1627,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             case TTN_GETDISPINFO:
             {
-                const auto lpDispInfo = reinterpret_cast<NMTTDISPINFO*>(pnmhdr);
+#pragma warning(suppress: 26490)
+                GSL_SUPPRESS_TYPE1 const auto lpDispInfo = reinterpret_cast<NMTTDISPINFO*>(pnmhdr);
                 GetListViewTooltip();
                 if (!m_sTooltip.empty())
                 {
@@ -1703,16 +1705,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
                 toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
                 toolInfo.hwnd = hDlg;
-                toolInfo.uId = reinterpret_cast<UINT_PTR>(hList);
+                GSL_SUPPRESS_TYPE1 toolInfo.uId = reinterpret_cast<UINT_PTR>(hList);
                 toolInfo.lpszText = LPSTR_TEXTCALLBACK;
-                SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
+                GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
                 SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
                 SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, 320);
                 SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000); // show for 30 seconds
 
                 // install a mouse hook so we can show different tooltips per cell within the list view
-                m_pListViewWndProc = reinterpret_cast<WNDPROC>(
-                    SetWindowLongPtr(hList, GWL_WNDPROC, reinterpret_cast<LONG_PTR>(&ListViewWndProc)));
+                m_pListViewWndProc = SubclassWindow(hList, ListViewWndProc);
             }
 
             RestoreWindowPosition(hDlg, "Achievement Editor", true, true);
@@ -1822,6 +1823,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     if (hBitmap != nullptr)
     {
         HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
+        GSL_SUPPRESS_TYPE1
         SendMessage(hCheevoPic, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
         InvalidateRect(hCheevoPic, nullptr, TRUE);
     }

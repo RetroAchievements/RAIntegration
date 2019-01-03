@@ -312,8 +312,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 #pragma warning(suppress: 26454) // io.5; arithmetic overflow
                 else if (pnmhdr->code == NM_DBLCLK)
                 {
-                    // const NMITEMACTIVATE* const
-                    const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(suppress: 26490)
+                    GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
 
                     using namespace ra::rel_ops;
                     if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))

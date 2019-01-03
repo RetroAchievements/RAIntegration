@@ -636,41 +636,39 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
 void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
 {
-    char buffer[256];
+    const auto nNumAchievements = g_pActiveAchievements->NumAchievements();
 
-    const unsigned int nNumAchievements = g_pActiveAchievements->NumAchievements();
+    constexpr auto nAchievementStartX = 0;
+    constexpr auto nAchievementStartY = 80;
 
-    const int nAchievementStartX = 0;
-    const int nAchievementStartY = 80;
+    constexpr auto nLoadingMessageX = 120;
+    constexpr auto nLoadingMessageY = 300;
 
-    const int nLoadingMessageX = 120;
-    const int nLoadingMessageY = 300;
+    constexpr auto nCoreDetailsY = 150;
+    constexpr auto nCoreDetailsSpacing = 32;
 
-    const int nCoreDetailsY = 150;
-    const int nCoreDetailsSpacing = 32;
+    constexpr auto nWonByPlayerYOffs = 300;
+    constexpr auto nWonByPlayerYSpacing = 28;
 
-    const int nWonByPlayerYOffs = 300;
-    const int nWonByPlayerYSpacing = 28;
+    constexpr auto nRecentWinnersSubtitleX = 20;
+    constexpr auto nRecentWinnersSubtitleY = 250;
 
-    const int nRecentWinnersSubtitleX = 20;
-    const int nRecentWinnersSubtitleY = 250;
-
-    const int nWonByPlayerNameX = 20;
-    const int nWonByPlayerDateX = 220;
-
-    char bufTime[256];
+    constexpr auto nWonByPlayerNameX = 20;
+    constexpr auto nWonByPlayerDateX = 220;
 
     const auto pAch =
         gsl::make_not_null<const Achievement*>(&g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem));
 
-    const time_t tCreated = pAch->CreatedDate();
-    const time_t tModified = pAch->ModifiedDate();
+    const auto tCreated = pAch->CreatedDate();
+    const auto tModified = pAch->ModifiedDate();
 
     DrawAchievement(hDC, pAch, nDX + nAchievementStartX, nAchievementStartY, TRUE, FALSE);
 
     if (m_nAchievementsSelectedItem >= ra::to_signed(nNumAchievements))
         return;
 
+    char bufTime[256]{};
+    char buffer[256]{};
     ctime_s(bufTime, 256, &tCreated);
     bufTime[strlen(bufTime) - 1] = '\0'; //	Remove pesky newline
     sprintf_s(buffer, 256, " Created: %s ", bufTime);
@@ -990,7 +988,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
 
             nDotCount = nDots / 25;
 
-            char buffer[256];
+            char buffer[256]{};
             sprintf_s(buffer, 256, " Loading.%c%c%c ", nDotCount > 1 ? '.' : ' ', nDotCount > 2 ? '.' : ' ',
                       nDotCount > 3 ? '.' : ' ');
 
@@ -1230,7 +1228,6 @@ void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievemen
     const int nAchLeftOffset2 = 28 + 64 + 6 + 4;
     const int nAchSpacingDesc = 24;
     BOOL bLocked = FALSE;
-    char buffer[1024];
 
     if (bCanLock)
     {
@@ -1263,31 +1260,30 @@ void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievemen
     if (hBitmap != nullptr)
         DrawImage(hDC, hBitmap, nX + nAchImageOffset, nY, 64, 64);
 
-    sprintf_s(buffer, 1024, " %s ", pAch->Description().c_str());
+    auto buffer = ra::StringPrintf(" %s ", pAch->Description());
     SelectObject(hDC, g_hFontDesc2);
-    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(),
+            gsl::narrow<int>(buffer.length()));
 
-    sprintf_s(buffer, 1024, " %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
+    buffer = ra::StringPrintf(" %s (%u Points) ", pAch->Title(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
-    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 }
 
 _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW, int nH) const
 {
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
 
-    char buffer[256];
-    HBRUSH hBrush2 = CreateSolidBrush(COL_USER_FRAME_BG);
-    RECT rcUserFrame;
+    const auto hBrush2 = CreateSolidBrush(COL_USER_FRAME_BG);
 
-    const int nTextX = nX + 4;
-    const int nTextY1 = nY + 4;
-    const int nTextY2 = nTextY1 + 36;
+    const auto nTextX = nX + 4;
+    const auto nTextY1 = nY + 4;
+    const auto nTextY2 = nTextY1 + 36;
 
-    SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
+    RECT rcUserFrame{nX, nY, nX + nW, nY + nH};
     FillRect(hDC, &rcUserFrame, hBrush2);
 
-    HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
+    const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
     if (hBitmap != nullptr)
     {
         DrawImage(hDC, hBitmap, nX + ((nW - 64) - 4), nY + 4, 64, 64);
@@ -1296,19 +1292,19 @@ _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, i
     SetTextColor(hDC, COL_TEXT);
     SelectObject(hDC, g_hFontDesc);
 
-    sprintf_s(buffer, 256, " %s ", pUserContext.GetUsername().c_str());
-    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
+    auto buffer = ra::StringPrintf(" %s ", pUserContext.GetUsername());
+    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
-    sprintf_s(buffer, 256, " %u Points ", pUserContext.GetScore());
-    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
+    buffer = ra::StringPrintf(" %u Points ", pUserContext.GetScore());
+    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
     if (_RA_HardcoreModeIsActive())
     {
-        const COLORREF nLastColor = SetTextColor(hDC, COL_WARNING);
-        const COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
+        const auto nLastColor = SetTextColor(hDC, COL_WARNING);
+        const auto nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
 
-        sprintf_s(buffer, 256, " HARDCORE ");
-        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), strlen(buffer));
+        buffer = " HARDCORE ";
+        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
         SetTextColor(hDC, nLastColor);
         SetBkColor(hDC, nLastColorBk);

@@ -10,8 +10,8 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
 {
     static char buffer[33];
 
-    md5_state_t pms;
-    md5_byte_t digest[16];
+    md5_state_t pms{};
+    std::array<md5_byte_t, 16> digest{};
 
     md5_byte_t* pDataBuffer = new md5_byte_t[sStringToMD5.length()];
     ASSERT(pDataBuffer != nullptr);
@@ -22,7 +22,7 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
 
     md5_init(&pms);
     md5_append(&pms, pDataBuffer, sStringToMD5.length());
-    md5_finish(&pms, digest);
+    md5_finish(&pms, digest.data());
 
     memset(buffer, 0, MD5_STRING_LEN + 1);
     sprintf_s(buffer, MD5_STRING_LEN + 1,

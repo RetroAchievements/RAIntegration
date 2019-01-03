@@ -260,7 +260,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                     continue;
                 }
 
-                unsigned int nVal;
+                unsigned int nVal{};
                 if (sLine[0] == '0' && sLine[1] == 'x')
                     nVal = strtoul(&sLine[2], nullptr, 16);
                 else

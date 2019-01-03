@@ -398,7 +398,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
 
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
-    RECT rcSubItem;
+    RECT rcSubItem{};
     GSL_SUPPRESS_ES47 ListView_GetSubItemRect(hList, nItem, ra::etoi(nSubItem), LVIR_BOUNDS, &rcSubItem);
 
     RECT rcOffset;
@@ -495,7 +495,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
 
-            int nSel;
+            int nSel{};
             if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Mem") == 0)
                 nSel = 0;
             else if (strcmp(g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Delta") == 0)
@@ -1907,8 +1907,6 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achi
 
 void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 {
-    char buffer[1024];
-
     if (pCheevo == nullptr)
     {
         m_pSelectedAchievement = pCheevo;
@@ -1965,7 +1963,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         else
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
 
-        sprintf_s(buffer, 1024, "%u", m_pSelectedAchievement->Points());
+        auto buffer = std::to_string(m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
 
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, NativeStr(m_pSelectedAchievement->Title()).c_str());

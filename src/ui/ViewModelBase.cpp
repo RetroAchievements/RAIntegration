@@ -99,7 +99,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
 void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
 {
     IntModelProperty::ValueMap::iterator iter = m_mIntValues.find(pProperty.GetKey());
-    int nOldValue;
+    int nOldValue{};
 
     if (nValue == pProperty.GetDefaultValue())
     {

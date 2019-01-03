@@ -1098,9 +1098,11 @@ std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, long& nF
 
 std::string _TimeStampToString(time_t nTime)
 {
-    char buffer[64];
-    ctime_s(buffer, 64, &nTime);
-    return std::string(buffer);
+    std::tm tm{};
+    Expects(localtime_s(&tm, &nTime) == 0);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%c"); // 12/31/18 16:54:69
+    return oss.str();
 }
 
 namespace ra {

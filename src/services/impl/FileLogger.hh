@@ -43,8 +43,8 @@ public:
             return;
 
         // write a timestamp
-        time_t tTime;
-        unsigned int tMilliseconds;
+        time_t tTime{};
+        unsigned int tMilliseconds{};
         if (ServiceLocator::Exists<IClock>())
         {
             const auto tNow = ServiceLocator::Get<IClock>().Now();

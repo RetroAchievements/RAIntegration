@@ -541,7 +541,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     FillRect(hMemDC, &rect, hBrush);
     DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
-    const char* sHeader;
+    const char* sHeader{};
     switch (m_nDataSize)
     {
         case MemSize::ThirtyTwoBit:
@@ -569,9 +569,9 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    unsigned int notes;
-    unsigned int bookmarks;
-    unsigned int freeze;
+    unsigned int notes{};
+    unsigned int bookmarks{};
+    unsigned int freeze{};
 
     RECT r;
     r.top = 3;
@@ -851,7 +851,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         _tcscat_s(buffer, NativeStr(oss.str()).c_str());
                     }
 
-                    COLORREF color;
+                    COLORREF color{};
 
                     if (lpDrawItem->itemState & ODS_SELECTED)
                     {
@@ -1273,11 +1273,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         const int nSel = ComboBox_GetCurSel(hwndCtl);
                         if (nSel != CB_ERR)
                         {
-                            TCHAR sAddr[64];
-                            if (ComboBox_GetLBText(hwndCtl, nSel, sAddr) > 0)
+                            std::array<TCHAR, 64> sAddr{};
+                            if (ComboBox_GetLBText(hwndCtl, nSel, sAddr.data()) > 0)
                             {
-                                ra::ByteAddress nAddr =
-                                    static_cast<ra::ByteAddress>(std::strtoul(ra::Narrow(sAddr).c_str(), nullptr, 16));
+                                ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(
+                                    std::strtoul(ra::Narrow(sAddr.data()).c_str(), nullptr, 16));
                                 const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                                 if (pSavedNote != nullptr && pSavedNote->Note().length() > 0)
                                     SetDlgItemTextW(hwnd, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
@@ -1385,7 +1385,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             g_MemoryDialog.OnLoad_NewRom();
 
             // Add a single column for list view
-            RECT rc;
+            RECT rc{};
             LVCOLUMN Col;
             Col.mask = LVCF_FMT | LVCF_ORDER | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH;
             Col.fmt = LVCFMT_CENTER;

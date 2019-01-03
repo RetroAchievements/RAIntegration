@@ -23,20 +23,24 @@
 #include <sstream> // string
 #include <queue> // deque, vector, algorithm
 
-//	Version Information is integrated into tags
+// Version Information is integrated into tags
 #else
 
 #include "RA_Log.h"
 #include "RA_Json.h"
 
 
-//	RA-Only
+// RA-Only
 using namespace std::string_literals;
-_CONSTANT_VAR BUFSIZ{ 512U }; // ANSI buffer size
-_CONSTANT_VAR BYTESTRING_BUFSIZ{ BUFSIZ*4U }; // should be the same for MultiByte
-_CONSTANT_VAR WIDESTRING_BUFSIZ{ BUFSIZ*8U };
-_CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
-#endif	// RA_EXPORTS
+_CONSTANT_VAR BUFSIZ = 512U; // ANSI buffer size
+_CONSTANT_VAR STRING_BUFSIZ = BUFSIZ*4U; // For any string, the number is more if not a byte-string
+_CONSTANT_VAR MAX_BUFSIZ = BUFSIZ*128U; // Try not to use this one
+
+_CONSTANT_VAR WINHTTP_NO_PROXY_NAME = nullptr;
+_CONSTANT_VAR WINHTTP_NO_PROXY_BYPASS = nullptr;
+_CONSTANT_VAR WINHTTP_HEADER_NAME_BY_INDEX = nullptr;
+_CONSTANT_VAR WINHTTP_NO_HEADER_INDEX = nullptr;
+#endif // RA_EXPORTS
 
 #define RA_DIR_OVERLAY                  L"Overlay\\"
 #define RA_DIR_BASE                     L"RACache\\"

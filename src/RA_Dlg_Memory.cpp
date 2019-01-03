@@ -361,7 +361,7 @@ void MemoryViewerControl::createEditCaret(int w, int h) noexcept
         m_bHasCaret = true;
         m_nCaretWidth = w;
         m_nCaretHeight = h;
-        ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), (HBITMAP)0, w, h);
+        ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), nullptr, w, h);
     }
 }
 

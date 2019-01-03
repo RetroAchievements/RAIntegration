@@ -33,6 +33,12 @@
 #undef CreateDirectory
 #undef GetMessage
 
+/* These will be compile-time constants in RA_Defs for RA only */
+#undef WINHTTP_NO_PROXY_NAME
+#undef WINHTTP_NO_PROXY_BYPASS
+#undef WINHTTP_HEADER_NAME_BY_INDEX
+#undef WINHTTP_NO_HEADER_INDEX
+
 /* C Stuff */
 #include <cctype>
 #undef BUFSIZ // make it constexpr in RA_Defs

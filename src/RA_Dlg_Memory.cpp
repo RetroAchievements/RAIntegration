@@ -900,6 +900,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         {
             case IDC_RA_MEM_LIST:
             {
+                GSL_SUPPRESS_IO5
+#pragma warning(suppress: 26454)
                 if ((pnmhdr->code == LVN_ITEMCHANGED) || (pnmhdr->code == NM_CLICK))
                 {
                     const int nSelect = ListView_GetNextItem(GetDlgItem(hwnd, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);

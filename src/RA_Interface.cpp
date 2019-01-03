@@ -73,6 +73,8 @@ int		(CCONV *_RA_Shutdown)() = nullptr;
 //	Load/Save
 bool    (CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
 int     (CCONV *_RA_OnLoadNewRom)(const BYTE* pROM, unsigned int nROMSize) = nullptr;
+unsigned int (CCONV *_RA_IdentifyRom)(const BYTE* pROM, unsigned int nROMSize) = nullptr;
+void    (CCONV *_RA_ActivateGame)(unsigned int nGameId) = nullptr;
 void    (CCONV *_RA_InstallMemoryBank)(int nBankID, void* pReader, void* pWriter, int nBankSize) = nullptr;
 void    (CCONV *_RA_ClearMemoryBanks)() = nullptr;
 void    (CCONV *_RA_OnLoadState)(const char* sFilename) = nullptr;
@@ -131,6 +133,20 @@ bool RA_IsOverlayFullyVisible()
         return _RA_IsOverlayFullyVisible();
 
     return false;
+}
+
+unsigned int RA_IdentifyRom(BYTE* pROMData, unsigned int nROMSize)
+{
+    if (_RA_IdentifyRom != nullptr)
+        return _RA_IdentifyRom(pROMData, nROMSize);
+
+    return 0;
+}
+
+void RA_ActivateGame(unsigned int nGameId)
+{
+    if (_RA_ActivateGame != nullptr)
+        _RA_ActivateGame(nGameId);
 }
 
 void RA_OnLoadNewRom(BYTE* pROMData, unsigned int nROMSize)
@@ -455,6 +471,8 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_IsOverlayFullyVisible = (bool(CCONV *)())                                     GetProcAddress(g_hRADLL, "_RA_IsOverlayFullyVisible");
     _RA_RenderPopups = (void(CCONV *)(HDC, RECT*))                                    GetProcAddress(g_hRADLL, "_RA_RenderPopups");
     _RA_OnLoadNewRom = (int(CCONV *)(const BYTE*, unsigned int))                      GetProcAddress(g_hRADLL, "_RA_OnLoadNewRom");
+    _RA_IdentifyRom = (unsigned int(CCONV *)(const BYTE*, unsigned int))              GetProcAddress(g_hRADLL, "_RA_IdentifyRom");
+    _RA_ActivateGame = (void(CCONV *)(unsigned int))                                  GetProcAddress(g_hRADLL, "_RA_ActivateGame");
     _RA_InstallMemoryBank = (void(CCONV *)(int, void*, void*, int))                   GetProcAddress(g_hRADLL, "_RA_InstallMemoryBank");
     _RA_ClearMemoryBanks = (void(CCONV *)())                                          GetProcAddress(g_hRADLL, "_RA_ClearMemoryBanks");
     _RA_UpdateAppTitle = (void(CCONV *)(const char*))                                 GetProcAddress(g_hRADLL, "_RA_UpdateAppTitle");
@@ -627,6 +645,8 @@ void RA_Shutdown()
     _RA_RenderOverlay = nullptr;
     _RA_RenderPopups = nullptr;
     _RA_OnLoadNewRom = nullptr;
+    _RA_IdentifyRom = nullptr;
+    _RA_ActivateGame = nullptr;
     _RA_InstallMemoryBank = nullptr;
     _RA_ClearMemoryBanks = nullptr;
     _RA_UpdateAppTitle = nullptr;

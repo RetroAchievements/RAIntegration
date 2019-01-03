@@ -258,27 +258,20 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
+static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5)
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    unsigned int nGameId = 0U;
+
+    if (pROM == nullptr || nROMSize == 0)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
-            L"You must be logged in to load achievements. Please reload the game after logging in.");
-        return 0;
+        sCurrentROMMD5 = RAGenerateMD5(nullptr, 0);
     }
-
-    static std::string sMD5NULL = RAGenerateMD5(nullptr, 0);
-
-    std::string sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
-    RA_LOG("Loading new ROM... MD5 is %s\n", (sCurrentROMMD5 == sMD5NULL) ? "Null" : sCurrentROMMD5.c_str());
-
-    ASSERT(g_MemManager.NumMemoryBanks() > 0);
-
-    //	Go ahead and load: RA_ConfirmLoadNewRom has allowed it.
-    //	TBD: local DB of MD5 to ra::GameIDs here
-    unsigned int nGameID = 0U;
-    if (pROM != nullptr)
+    else
     {
+        sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
+
+        // TBD: local DB of MD5 to ra::GameIDs here
+
         // Fetch the gameID from the DB
         ra::api::ResolveHash::Request request;
         request.Hash = sCurrentROMMD5;
@@ -286,56 +279,76 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
         const auto response = request.Call();
         if (response.Succeeded())
         {
-            nGameID = response.GameId;
-            if (nGameID == 0) // Unknown
+            nGameId = response.GameId;
+            if (nGameId == 0) // Unknown
             {
-                RA_LOG("Could not recognise game with MD5 %s\n", sCurrentROMMD5.c_str());
+                RA_LOG("Could not identify game with MD5 %s\n", sCurrentROMMD5.c_str());
+
                 char buffer[64];
                 ZeroMemory(buffer, 64);
                 RA_GetEstimatedGameTitle(buffer);
+                buffer[sizeof(buffer) - 1] = '\0'; // ensure buffer is null terminated
                 std::string sEstimatedGameTitle(buffer);
-                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameID);
+
+                 Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
             }
             else
             {
-                RA_LOG("Successfully looked up game with ID %u\n", nGameID);
+                RA_LOG("Successfully looked up game with ID %u\n", nGameId);
             }
         }
         else
         {
             std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
             if (sErrorMessage.empty())
-                sErrorMessage = ra::StringPrintf(L"Error from %s" , _RA_HostName());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Game not loaded.", sErrorMessage);
+                sErrorMessage = ra::StringPrintf(L"Error from %s", _RA_HostName());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
         }
+    }
+
+    return nGameId;
+}
+
+API void CCONV _RA_ActivateGame(unsigned int nGameId)
+{
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
+            L"You must be logged in to load achievements. Please reload the game after logging in.");
+        return;
     }
 
     g_bRAMTamperedWith = false;
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    pGameContext.SetGameHash(sCurrentROMMD5);
-    pGameContext.LoadGame(nGameID);
+    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
 
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    if (nGameId != 0)
     {
-        if (nGameID != 0U)
-            ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameID);
-        else
-            ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        RA_LOG("Loading game %u", nGameId);
+
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(nGameId);
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
+
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        {
+            const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                L"Playing in Softcore Mode",
+                bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+        }
+    }
+    else
+    {
+        RA_LOG("Unloading current game");
+
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
     }
 
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-    {
-        const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
-
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-            L"Playing in Softcore Mode",
-            bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled.": L"");
-    }
-
-    g_AchievementsDialog.OnLoad_NewRom(nGameID);
+    g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_MemoryDialog.OnLoad_NewRom();
     g_AchievementOverlay.OnLoad_NewRom();
@@ -344,7 +357,33 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
     g_nProcessTimer = 0;
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
+}
 
+API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
+{
+    std::string sCurrentROMMD5;
+    const auto nGameId = IdentifyRom(pROM, nROMSize, sCurrentROMMD5);
+
+    // update the game hash if no game is loaded (new game) or the hash also resolves to the same game (new disc)
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    if (pGameContext.GameHash().empty() || pGameContext.GameId() == nGameId)
+        pGameContext.SetGameHash(sCurrentROMMD5);
+
+    return nGameId;
+}
+
+API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
+{
+    std::string sCurrentROMMD5;
+    const auto nGameId = IdentifyRom(pROM, nROMSize, sCurrentROMMD5);
+
+    if (nGameId != 0)
+    {
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        pGameContext.SetGameHash(sCurrentROMMD5);
+    }
+
+    _RA_ActivateGame(nGameId);
     return 0;
 }
 
@@ -1034,6 +1073,7 @@ _Use_decl_annotations_ bool _ReadBufferFromFile(std::string& buffer, const wchar
     return true;
 }
 
+_Use_decl_annotations_
 std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
     nFileSizeOut = 0L;

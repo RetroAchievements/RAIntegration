@@ -240,7 +240,11 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            // inline suppression not working, and by function not working, have to disable it by code
+
+#pragma warning(suppress: 26454)
+            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -300,7 +304,8 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress: 26454)
+            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -332,7 +337,8 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-            lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress: 26454)
+            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1342,7 +1348,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     LV_DISPINFO lvDispinfo{};
                     lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                     lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
-                    lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress: 26454)
+                    GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
                     lvDispinfo.item.mask = LVIF_TEXT;
                     lvDispinfo.item.iItem = nSelItem;
                     lvDispinfo.item.iSubItem = nSelSubItem;

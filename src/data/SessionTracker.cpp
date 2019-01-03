@@ -62,7 +62,7 @@ void SessionTracker::LoadSessions()
 
             const auto nSessionLength = strtoul(&sLine[nIndex2], nullptr, 10);
 
-            auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
+            auto md5 = RAGenerateMD5(gsl::make_span(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1));
             if (sLine[nIndex + 1] == md5.front() && sLine[nIndex + 2] == md5.back())
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }

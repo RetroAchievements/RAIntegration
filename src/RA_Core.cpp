@@ -268,7 +268,7 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
     }
     else
     {
-        sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
+        sCurrentROMMD5 = RAGenerateMD5(gsl::make_span(pROM, nROMSize));
 
         // TBD: local DB of MD5 to ra::GameIDs here
 

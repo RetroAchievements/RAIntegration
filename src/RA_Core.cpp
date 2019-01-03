@@ -397,8 +397,9 @@ API void CCONV _RA_OnReset()
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
-    g_MemManager.AddMemoryBank(static_cast<size_t>(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, static_cast<size_t>(nBankSize));
-    g_MemoryDialog.AddBank(nBankID);
+    g_MemManager.AddMemoryBank(ra::to_unsigned(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter,
+                               ra::to_unsigned(nBankSize));
+    g_MemoryDialog.AddBank(ra::to_unsigned(nBankID));
 }
 
 API void CCONV _RA_ClearMemoryBanks()
@@ -480,7 +481,7 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestSubmitAwardAchievement:
                 {
                     //	Response to an achievement being awarded:
-                    const ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
+                    const ra::AchievementID nAchID{doc["AchievementID"].GetUint()};
                     const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
                     if (pAch == nullptr)
                         pAch = g_pUnofficialAchievements->Find(nAchID);

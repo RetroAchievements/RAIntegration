@@ -21,7 +21,7 @@ inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_LOCAL{
 };
 
 inline constexpr std::array<int, 6> COLUMN_SIZE{ 45, 200, 45, 80, 65, 65 };
-inline constexpr auto NUM_COLS = ra::narrow_cast<int>(ra::to_signed(COLUMN_SIZE.size()));
+inline constexpr auto NUM_COLS = gsl::narrow_cast<int>(ra::to_signed(COLUMN_SIZE.size()));
 
 auto iSelect = -1;
 
@@ -80,9 +80,9 @@ LRESULT ProcessCustomDraw(LPARAM lParam)
 
         case CDDS_ITEMPREPAINT: //Before an item is drawn
         {
-            const int nNextItem = static_cast<int>(lplvcd->nmcd.dwItemSpec);
+            const int nNextItem = gsl::narrow<int>(lplvcd->nmcd.dwItemSpec);
 
-            if (static_cast<size_t>(nNextItem) < g_pActiveAchievements->NumAchievements())
+            if (ra::to_unsigned(nNextItem) < g_pActiveAchievements->NumAchievements())
             {
                 //if (((int)lplvcd->nmcd.dwItemSpec%2)==0)
                 const BOOL bSelected = &g_pActiveAchievements->GetAchievement(nNextItem) == g_AchievementEditorDialog.ActiveAchievement();
@@ -152,7 +152,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 
     LV_ITEM item{};
     item.mask       = ra::to_unsigned(LVIF_TEXT);
-    item.iItem      = ra::narrow_cast<int>(ra::to_signed(m_lbxData.size()));
+    item.iItem      = gsl::narrow_cast<int>(ra::to_signed(m_lbxData.size()));
     item.cchTextMax = 256;
 
     for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
@@ -1178,7 +1178,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         LV_ITEM item{};
         item.mask       = ra::to_unsigned(LVIF_TEXT);
         item.iItem      = nItem;
-        item.iSubItem   = ra::narrow_cast<int>(ra::to_signed(ra::etoi(nColumn)));
+        item.iSubItem   = gsl::narrow_cast<int>(ra::to_signed(ra::etoi(nColumn)));
         item.pszText    = sStr.data();
         item.cchTextMax = 256;
 

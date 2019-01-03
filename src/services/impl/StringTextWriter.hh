@@ -13,7 +13,7 @@ namespace impl {
 class StringTextWriter : public ra::services::TextWriter
 {
 public:
-    StringTextWriter() noexcept
+    GSL_SUPPRESS_F6 StringTextWriter() noexcept
         : StringTextWriter(m_sBuffer)
     {
     }
@@ -28,7 +28,7 @@ public:
     {
         if (m_nWritePosition < m_sOutput.length())
         {
-            m_sOutput.replace(m_nWritePosition, sText.length(), sText.c_str());
+            m_sOutput.replace(gsl::narrow<std::size_t>(m_nWritePosition), sText.length(), sText.c_str());
             m_nWritePosition += sText.length();
         }
         else
@@ -48,15 +48,15 @@ public:
         Write(std::string("\n"));
     }
 
-    long GetPosition() const noexcept override
+    std::streampos GetPosition() const noexcept override
     {
         return m_nWritePosition;
     }
 
-    void SetPosition(long nNewPosition) noexcept override
+    void SetPosition(std::streampos nNewPosition) noexcept override
     {
-        assert(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
-        m_nWritePosition = static_cast<size_t>(nNewPosition);
+        Expects(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
+        m_nWritePosition = nNewPosition;
     }
 
     std::string& GetString() noexcept { return m_sOutput; }
@@ -64,7 +64,7 @@ public:
 private:
     std::string& m_sOutput;
     std::string m_sBuffer;
-    size_t m_nWritePosition;
+    std::streampos m_nWritePosition;
 };
 
 } // namespace impl

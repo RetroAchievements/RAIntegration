@@ -171,12 +171,12 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
-long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
+std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
-    auto nSessionDuration = static_cast<unsigned int>(tSessionDuration.count());
+    auto nSessionDuration = gsl::narrow<unsigned int>(tSessionDuration.count());
     auto sLine = ra::StringPrintf("%u:%ld:%u:", m_nCurrentGameId, static_cast<long>(m_tSessionStart), nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());

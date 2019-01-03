@@ -987,7 +987,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                              i = ListView_GetNextItem(hList, i, LVNI_SELECTED))
                         {
                             const Condition& CondToCopy =
-                                pActiveAch->GetCondition(GetSelectedConditionGroup(), static_cast<size_t>(i));
+                                pActiveAch->GetCondition(GetSelectedConditionGroup(), ra::to_unsigned(i));
 
                             const Condition NewCondition(CondToCopy);
 
@@ -1101,12 +1101,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             // as we remove items, the index within the achievement changes, but not in the UI until
                             // we refresh
-                            const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
+                            const size_t nUpdatedIndex = ra::to_unsigned(i) - conditionsToMove.size();
 
                             const Condition& CondToMove =
-                                pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                pActiveAch->GetCondition(nSelectedConditionGroup, nUpdatedIndex);
                             conditionsToMove.push_back(std::move(CondToMove));
-                            pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                            pActiveAch->RemoveCondition(nSelectedConditionGroup, nUpdatedIndex);
                         }
 
                         //  Insert at new location
@@ -1158,12 +1158,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             // as we remove items, the index within the achievement changes, but not in the UI until
                             // we refresh
-                            const size_t nUpdatedIndex = static_cast<size_t>(i) - conditionsToMove.size();
+                            const size_t nUpdatedIndex = ra::to_unsigned(i) - conditionsToMove.size();
 
                             const Condition& CondToMove =
-                                pActiveAch->GetCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                                pActiveAch->GetCondition(nSelectedConditionGroup, nUpdatedIndex);
                             conditionsToMove.push_back(std::move(CondToMove));
-                            pActiveAch->RemoveCondition(nSelectedConditionGroup, static_cast<size_t>(nUpdatedIndex));
+                            pActiveAch->RemoveCondition(nSelectedConditionGroup, nUpdatedIndex);
 
                             // want to insert after last selected item, update nSelectedIndex
                             nSelectedIndex = nUpdatedIndex;
@@ -1408,7 +1408,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
                 if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                 {
-                    if (static_cast<size_t>(pOnClick->iItem) >
+                    if (ra::to_unsigned(pOnClick->iItem) >
                         ActiveAchievement()->NumConditions(GetSelectedConditionGroup()))
                         return 0;
 
@@ -2118,7 +2118,7 @@ size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const noexcept
         return 0;
     }
 
-    return static_cast<size_t>(nSel);
+    return ra::to_unsigned(nSel);
 }
 
 void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcept

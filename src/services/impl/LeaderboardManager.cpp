@@ -117,28 +117,28 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
         return;
     }
 
-    const auto& Response{ doc["Response"] };
-    const auto& LBData{ Response["LBData"] };
+    const auto& Response{doc["Response"]};
+    const auto& LBData{Response["LBData"]};
 
-    const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
-    const auto nGameID{ LBData["GameID"].GetUint() };
-    const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
+    const ra::LeaderboardID nLBID{LBData["LeaderboardID"].GetUint()};
+    const auto nGameID{LBData["GameID"].GetUint()};
+    const auto bLowerIsBetter{LBData["LowerIsBetter"].GetUint() == 1U};
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-    RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
+    const auto pLB = pLeaderboardManager.FindLB(nLBID);
 
-    const auto nSubmittedScore{ Response["Score"].GetInt() };
-    const auto nBestScore{ Response["BestScore"].GetInt() };
+    const auto nSubmittedScore{Response["Score"].GetInt()};
+    const auto nBestScore{Response["BestScore"].GetInt()};
     pLB->ClearRankInfo();
 
     RA_LOG("LB Data, Top Entries:\n");
     const auto& TopEntries{ Response["TopEntries"] };
     for (auto& NextEntry : TopEntries.GetArray())
     {
-        const auto nRank{ NextEntry["Rank"].GetUint() };
-        const std::string& sUser{ NextEntry["User"].GetString() };
-        const auto nUserScore{ NextEntry["Score"].GetInt() };
-        const auto nSubmitted{ static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint())) };
+        const auto nRank{NextEntry["Rank"].GetUint()};
+        const std::string& sUser{NextEntry["User"].GetString()};
+        const auto nUserScore{NextEntry["Score"].GetInt()};
+        const auto nSubmitted{static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint()))};
 
         {
             std::ostringstream oss;

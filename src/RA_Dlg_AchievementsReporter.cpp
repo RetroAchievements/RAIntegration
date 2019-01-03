@@ -83,7 +83,7 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
         // difference_type could be 8 bytes.
-        const auto nPos{ ra::narrow_cast<int>(std::distance(COL_TITLE.cbegin(), it)) }; 
+        const auto nPos{ gsl::narrow_cast<int>(std::distance(COL_TITLE.cbegin(), it)) }; 
         ra::tstring sStr{ NativeStr(ms_lbxData[ms_nNumOccupiedRows][nPos]) }; // Scoped cache
         LV_ITEM item
         {

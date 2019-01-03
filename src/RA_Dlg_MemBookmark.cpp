@@ -688,7 +688,7 @@ void Dlg_MemBookmark::ExportJSON()
 
     constexpr auto BUF_SIZE{1024UL};
     OPENFILENAMEW ofn{};
-    ofn.lStructSize = static_cast<DWORD>(sizeof(OPENFILENAMEW));
+    ofn.lStructSize = sizeof(OPENFILENAMEW);
     ofn.hwndOwner = m_hMemBookmarkDialog;
     ofn.lpstrFilter = c_rgFileTypes;
     ofn.nFilterIndex = 1UL;

@@ -40,7 +40,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32 nBlend) noexcept
+static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32 nBlend)
 {
     const auto alpha = nBlend >> 24;
 
@@ -64,12 +64,12 @@ static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32
     GSL_SUPPRESS_TYPE1 UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
     Expects(pBlend != nullptr);
 
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget++ = gsl::narrow<UINT8>(
+        (gsl::narrow<UINT32>(*pBlend++) * alpha + gsl::narrow<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget++ = gsl::narrow<UINT8>(
+        (gsl::narrow<UINT32>(*pBlend++) * alpha + gsl::narrow<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget = gsl::narrow<UINT8>(
+        (gsl::narrow<UINT32>(*pBlend) * alpha + gsl::narrow<UINT32>(*pTarget) * (256 - alpha)) / 256);
 }
 
 void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
@@ -136,8 +136,8 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
 void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
-    const int nWidth = static_cast<int>(GetWidth());
-    const int nHeight = static_cast<int>(GetHeight());
+    const int nWidth = gsl::narrow<int>(GetWidth());
+    const int nHeight = gsl::narrow<int>(GetHeight());
 
     // copy a portion of the target surface into a buffer
     HDC hMemDC = CreateCompatibleDC(hTargetDC);

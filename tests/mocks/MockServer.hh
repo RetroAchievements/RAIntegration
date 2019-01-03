@@ -2,6 +2,7 @@
 #define RA_SERVICES_MOCK_SERVER_HH
 #pragma once
 
+#include "ra_fwd.h"
 #include "RA_StringUtils.h"
 
 #include "api\IServer.hh"
@@ -95,6 +96,22 @@ protected:
         auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
+            // TBD: This const_cast will eventually need to go away as it likely will result in undefined behavior, 
+            // so success for the test won't always mean success during runtime (bug).
+            // 7 tests rely on this undefined behavior currently so it will be suppressed for the time being. 
+            // There are many ways to go about this, but unsure what is the "best" way
+            //
+            // The tests are:
+            //  - EmulatorContext::TestValidateClientVersionCurrent
+            //  - GameContext
+            //      - TestLoadGameTitle
+            //      - TestLoadGameUserUnlocks
+            //  - SessionTracker
+            //      - TestEmptyFile
+            //      - TestNonEmptyFile
+            //      - TestPing
+            //  - Export_Tests::TestAtemptLoginSuccess
+            GSL_SUPPRESS_TYPE3
             if (pIter->second(const_cast<ApiRequestBase*>(&pRequest), &response))
                 return response;
         }

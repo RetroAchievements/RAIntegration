@@ -27,7 +27,7 @@ public:
     virtual size_t Count() const = 0;
     virtual const RA_Leaderboard& GetLB(size_t index) const = 0;
     virtual RA_Leaderboard* FindLB(LeaderboardID nID) = 0;
-    const RA_Leaderboard* FindLB(LeaderboardID nID) const { return const_cast<ILeaderboardManager*>(this)->FindLB(nID); }
+    virtual const RA_Leaderboard* FindLB(LeaderboardID nID) const = 0;
     virtual void Clear() = 0;
 
 protected:

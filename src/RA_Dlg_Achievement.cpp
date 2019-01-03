@@ -639,7 +639,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     {
                         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
-                        if (Ach.ID() == 0)
+                        if (Ach.Category() == ra::etoi(AchievementSet::Type::Local))
                         {
                             //  Local achievement
                             if (MessageBox(hDlg, TEXT("Are you sure that you want to remove this achievement?"), TEXT("Remove Achievement"), MB_YESNO | MB_ICONWARNING) == IDYES)

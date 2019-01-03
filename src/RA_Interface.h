@@ -161,7 +161,13 @@ extern bool RA_IsOverlayFullyVisible();
 //	Attempts to login, or show login dialog.
 extern void RA_AttemptLogin(bool bBlocking);
 
-//	Should be called immediately after a new ROM is loaded.
+//  Gets the unique identifier of the game associated to the provided ROM data
+extern unsigned int RA_IdentifyRom(BYTE* pROMData, unsigned int nROMSize);
+
+//  Downloads and activates the achievements for the specified game.
+extern void RA_ActivateGame(unsigned int nGameId);
+
+//	Downloads and activates the achievements for the game associated to the provided ROM data
 extern void RA_OnLoadNewRom(BYTE* pROMData, unsigned int nROMSize);
 
 //	Clear all memory banks before installing any new ones!

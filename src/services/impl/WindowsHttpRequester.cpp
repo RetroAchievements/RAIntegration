@@ -17,7 +17,8 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
 {
     DWORD dwSize = sizeof(DWORD);
     DWORD nContentLength = 0;
-    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX))
+    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                             WINHTTP_HEADER_NAME_BY_INDEX, &nContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX))
         return false;
 
     // allocate enough space in the string for the whole content
@@ -187,7 +188,8 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 {
                     // get the http status code
                     DWORD dwSize = sizeof(DWORD);
-                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
+                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                                        WINHTTP_HEADER_NAME_BY_INDEX, &nStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
 
                     // read the response
                     auto* pStringWriter = dynamic_cast<StringTextWriter*>(&pContentWriter);

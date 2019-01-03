@@ -16,8 +16,8 @@ extern HWND g_RAMainWnd;
 extern ConsoleID g_ConsoleID;
 extern bool g_bRAMTamperedWith;
 
-// Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut) noexcept;
+// Read a file to a managed buffer. Returns nullptr on error.
+_NODISCARD std::unique_ptr<char[]> _BulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut);
 
 // Read a file to a std::string. Returns false on error.
 _Success_(return ) _NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* restrict sFile);

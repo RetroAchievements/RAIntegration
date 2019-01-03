@@ -668,7 +668,7 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
 
     DrawAchievement(hDC, pAch, nDX + nAchievementStartX, nAchievementStartY, TRUE, FALSE);
 
-    if (m_nAchievementsSelectedItem >= (int)nNumAchievements)
+    if (m_nAchievementsSelectedItem >= ra::to_signed(nNumAchievements))
         return;
 
     ctime_s(bufTime, 256, &tCreated);
@@ -1192,22 +1192,21 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
 
 void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const noexcept
 {
-    HBRUSH hBarBack = static_cast<HBRUSH>(GetStockObject(DKGRAY_BRUSH));
-    HBRUSH hBarFront = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
-    float fNumMax = (float)(nMax);
-    const float fInnerBarMaxSizePx = (float)nH - 4.0f;
+    auto hBarBack = GetStockBrush(DKGRAY_BRUSH);
+    auto hBarFront = GetStockBrush(LTGRAY_BRUSH);
+    auto fNumMax = ra::to_floating(nMax);
+    const auto fInnerBarMaxSizePx = ra::to_floating(nH) - 4.0f;
 
-    const float fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);
-    const float fInnerBarOffsetY = fInnerBarSizePx * nSel;
+    const auto fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);
+    const auto fInnerBarOffsetY = fInnerBarSizePx * nSel;
 
-    const int nInnerBarAbsY = (int)(nY + 2.0f + fInnerBarOffsetY);
+    const int nInnerBarAbsY = ra::ftoi(nY + 2.0f + fInnerBarOffsetY);
 
     //	Draw bar:
     SetTextColor(hDC, COL_BAR);
     SetBkColor(hDC, COL_BAR_BG);
 
-    RECT rc;
-    SetRect(&rc, nX, nY, nX + nW, nY + nH);
+    RECT rc{nX, nY, nX + nW, nY + nH};
     if (FillRect(hDC, &rc, hBarBack))
     {
         SetTextColor(hDC, COL_TEXT);
@@ -1215,7 +1214,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
         if (fNumMax <= 0.0f)
             fNumMax = 1.0f;
 
-        SetRect(&rc, nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + (int)(fInnerBarSizePx));
+        rc ={nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + ra::ftoi(fInnerBarSizePx)};
         FillRect(hDC, &rc, hBarFront);
     }
 

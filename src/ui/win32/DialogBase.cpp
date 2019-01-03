@@ -93,9 +93,54 @@ _Use_decl_annotations_ void DialogBase::CreateModalWindow(const TCHAR* restrict 
 _Use_decl_annotations_
 INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    // Message handlers made to reduce explicit casting only
+    const auto _OnCommand = [this]([[maybe_unused]] HWND /*hwnd*/, int id, HWND hwndCtl, UINT codeNotify)
+    {
+        switch (codeNotify)
+        {
+            case EN_KILLFOCUS:
+            {
+                auto* pControlBinding = FindControlBinding(hwndCtl);
+                if (pControlBinding)
+                    pControlBinding->LostFocus();
+                return TRUE;
+            }
+
+            case 0:
+            {
+                // a command triggered by the keyboard will not move focus to the associated button. ensure any
+                // lost focus logic is applied for the currently focused control before executing the command.
+                auto* pControlBinding = FindControlBinding(GetFocus());
+                if (pControlBinding)
+                    pControlBinding->LostFocus();
+
+                pControlBinding = FindControlBinding(hwndCtl);
+                if (pControlBinding)
+                    pControlBinding->OnCommand();
+                break;
+            }
+        }
+        return this->OnCommand(gsl::narrow<WORD>(id));
+    };
+
+    const auto _OnMove = [this]([[maybe_unused]] HWND, int x, int y) noexcept
+    {
+        ra::ui::Position oPosition{x, y};
+        this->OnMove(oPosition);
+        return 0;
+    };
+
+    const auto _OnSize = [this]([[maybe_unused]] HWND, UINT /*state*/, int cx, int cy) noexcept
+    {
+        ra::ui::Size oSize{cx, cy};
+        this->OnSize(oSize);
+        return 0;
+    };
+
     switch (uMsg)
     {
         case WM_INITDIALOG:
+        {
             if (m_hWnd == nullptr)
             {
                 m_hWnd = hDlg;
@@ -103,6 +148,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             }
 
             return OnInitDialog();
+        }
 
         case WM_DESTROY:
             OnDestroy();
@@ -113,51 +159,12 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 OnShown();
             return 0;
 
-        case WM_COMMAND:
-            switch (HIWORD(wParam))
-            {
-                case EN_KILLFOCUS:
-                {
-                    auto* pControlBinding = FindControlBinding((HWND)(lParam));
-                    if (pControlBinding)
-                        pControlBinding->LostFocus();
-                    return TRUE;
-                }
-
-                case 0:
-                {
-                    // a command triggered by the keyboard will not move focus to the associated button. ensure any
-                    // lostfocus logic is applied for the currently focused control before executing the command.
-                    auto* pControlBinding = FindControlBinding(GetFocus());
-                    if (pControlBinding)
-                        pControlBinding->LostFocus();
-
-                    pControlBinding = FindControlBinding((HWND)(lParam));
-                    if (pControlBinding)
-                        pControlBinding->OnCommand();
-                    break;
-                }
-            }
-            return OnCommand(LOWORD(wParam));
-
-        case WM_MOVE:
-        {
-            ra::ui::Position oPosition{ LOWORD(lParam), HIWORD(lParam) };
-            OnMove(oPosition);
-            return 0;
-        }
-
-        case WM_SIZE:
-        {
-            ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
-            OnSize(oSize);
-            return 0;
-        }
-
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
+        HANDLE_MSG(hDlg, WM_MOVE, _OnMove);
+        HANDLE_MSG(hDlg, WM_SIZE, _OnSize);
         default:
             return 0;
     }
-
 }
 
 void DialogBase::OnDestroy()

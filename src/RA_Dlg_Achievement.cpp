@@ -355,6 +355,52 @@ void Dlg_Achievements::OnClickAchievementSet(AchievementSet::Type nAchievementSe
 
 INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
+    const auto OnNotify = [this](HWND hwnd, [[maybe_unused]] int /*idFrom*/, NMHDR* restrict pnmhdr)
+    {
+        Expects((hwnd != nullptr) && (pnmhdr != nullptr));
+        switch (pnmhdr->code)
+        {
+            case LVN_ITEMCHANGED: //!?? LVN on a LPNMHDR?
+            {
+                iSelect = -1;
+                // MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
+                const auto pLVInfo = reinterpret_cast<NMLISTVIEW*>(pnmhdr);
+                if (pLVInfo->iItem != -1)
+                {
+                    iSelect = pLVInfo->iItem;
+                    if ((pLVInfo->uNewState &= LVIS_SELECTED) != 0)
+                    {
+                        const int nNewIndexSelected = pLVInfo->iItem;
+                        Achievement& Cheevo = g_pActiveAchievements->GetAchievement(nNewIndexSelected);
+                        g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
+
+                        UpdateSelectedAchievementButtons(&Cheevo);
+                    }
+                }
+                else
+                {
+                    UpdateSelectedAchievementButtons(nullptr);
+                }
+            }
+            break;
+
+            case NM_DBLCLK:
+                if (reinterpret_cast<LPNMITEMACTIVATE>(pnmhdr)->iItem != -1)
+                {
+                    SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
+                    g_AchievementEditorDialog.LoadAchievement(
+                        &g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(pnmhdr)->iItem),
+                        FALSE);
+                }
+                return FALSE; //? TBD ##SD
+
+            case NM_CUSTOMDRAW:
+                SetDlgMsgResult(hwnd, DWLP_MSGRESULT, ProcessCustomDraw(reinterpret_cast<LPARAM>(pnmhdr)));
+                return TRUE;
+        }
+        return FALSE;
+    };
+
     switch (nMsg)
     {
         case WM_INITDIALOG:
@@ -832,49 +878,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             }
             break;
 
-        case WM_NOTIFY:
-        {
-            switch ((reinterpret_cast<LPNMHDR>(lParam)->code))
-            {
-                case LVN_ITEMCHANGED:   //!?? LVN on a LPNMHDR?
-                {
-                    iSelect = -1;
-                    //MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
-                    LPNMLISTVIEW pLVInfo = (LPNMLISTVIEW)lParam;
-                    if (pLVInfo->iItem != -1)
-                    {
-                        iSelect = pLVInfo->iItem;
-                        if ((pLVInfo->uNewState &= LVIS_SELECTED) != 0)
-                        {
-                            const int nNewIndexSelected = pLVInfo->iItem;
-                            Achievement& Cheevo = g_pActiveAchievements->GetAchievement(nNewIndexSelected);
-                            g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
-
-                            UpdateSelectedAchievementButtons(&Cheevo);
-                        }
-                    }
-                    else
-                    {
-                        UpdateSelectedAchievementButtons(nullptr);
-                    }
-                }
-                break;
-
-                case NM_DBLCLK:
-                    if (reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem != -1)
-                    {
-                        SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
-                        g_AchievementEditorDialog.LoadAchievement(&g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem), FALSE);
-                    }
-                    return FALSE;   //? TBD ##SD
-
-                case NM_CUSTOMDRAW:
-                    SetWindowLong(hDlg, DWL_MSGRESULT, static_cast<LONG>(ProcessCustomDraw(lParam)));
-                    return TRUE;
-            }
-
-            break;
-        }
+        HANDLE_MSG(hDlg, WM_NOTIFY, OnNotify);
 
         case WM_CLOSE:
             EndDialog(hDlg, TRUE);

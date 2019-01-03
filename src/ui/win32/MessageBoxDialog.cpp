@@ -20,9 +20,9 @@ static fnTaskDialog pTaskDialog = nullptr;
 MessageBoxDialog::Presenter::Presenter() noexcept
 {
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
-    auto hDll = LoadLibraryA("comctl32");
+    const auto hDll = LoadLibraryA("comctl32");
     if (hDll)
-        pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
+        pTaskDialog = reinterpret_cast<fnTaskDialog>(::GetProcAddress(hDll, "TaskDialog"));
 }
 
 bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept

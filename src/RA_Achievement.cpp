@@ -403,9 +403,9 @@ void Achievement::SetActive(BOOL bActive) noexcept
             if (!m_bActive)
                 pRuntime.DeactivateAchievement(ID());
             else if (m_bPauseOnReset)
-                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+                pRuntime.MonitorAchievementReset(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
             else
-                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+                pRuntime.ActivateAchievement(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
         }
     }
 }
@@ -420,9 +420,9 @@ void Achievement::SetPauseOnReset(BOOL bPause)
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (m_bPauseOnReset)
-                pRuntime.MonitorAchievementReset(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+                pRuntime.MonitorAchievementReset(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
             else
-                pRuntime.ActivateAchievement(ID(), reinterpret_cast<rc_trigger_t*>(m_pTrigger));
+                pRuntime.ActivateAchievement(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
         }
     }
 }

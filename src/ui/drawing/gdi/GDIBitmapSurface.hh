@@ -61,7 +61,7 @@ private:
         m_hBitmap = CreateDIBSection(m_hMemDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
         assert(m_hBitmap != nullptr);
         assert(pBits != nullptr);
-        m_pBits = reinterpret_cast<UINT32*>(pBits);
+        m_pBits = static_cast<UINT32*>(pBits);
 
         SelectObject(m_hMemDC, m_hBitmap);
         return m_hMemDC;

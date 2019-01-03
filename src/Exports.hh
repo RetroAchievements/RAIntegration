@@ -33,7 +33,13 @@ extern "C" {
     // Check all achievement sets for changes, and displays a dlg box to warn lost changes.
     API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp);
 
-    // On or immediately after a new ROM is loaded, including if the ROM is reset.
+    //  Gets the unique identifier of the game associated to the provided ROM data
+    API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROMData, unsigned int nROMSize);
+
+    //  Downloads and activates the achievements for the specified game.
+    API void CCONV _RA_ActivateGame(unsigned int nGameId);
+
+    //	Downloads and activates the achievements for the game associated to the provided ROM data
     API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize);
 
     // On or immediately after a new ROM is loaded, for each memory bank found

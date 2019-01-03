@@ -48,7 +48,9 @@ LRESULT CALLBACK EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     // hwndNewFocus -> wParam
     const auto OnKillFocus = [](HWND hwnd, [[maybe_unused]] HWND /*hwndNewFocus*/)
     {
-        NMHDR hdr{hwnd, gsl::narrow<UINT_PTR>(GetDlgCtrlID(hwnd)), LVN_ENDLABELEDIT};
+        GSL_SUPPRESS_IO5
+#pragma warning(suppress: 26454)
+        NMHDR hdr{hwnd, ra::to_unsigned(GetDlgCtrlID(hwnd)), LVN_ENDLABELEDIT};
 
         LVITEM item{};
         item.mask = LVIF_TEXT;
@@ -288,12 +290,15 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
     };
 
     // idFrom->wParam; pnmhdr->lParam
+    GSL_SUPPRESS_IO5
     const auto OnNotify = [ this, &nSelect ](HWND hDlg, int idFrom, NMHDR* pnmhdr) noexcept
     {
         switch (idFrom)
         {
             case IDC_RA_LBX_ADDRESSES:
             {
+                GSL_SUPPRESS_IO5
+#pragma warning(suppress: 26454)
                 if (pnmhdr->code == NM_CLICK)
                 {
                     auto hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
@@ -303,6 +308,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     if (nSelect == -1)
                         break;
                 }
+#pragma warning(suppress: 26454) // io.5; arithmetic overflow
                 else if (pnmhdr->code == NM_DBLCLK)
                 {
                     // const NMITEMACTIVATE* const

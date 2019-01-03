@@ -31,8 +31,8 @@ public:
             std::string Definition;
             std::string Author;
             std::string BadgeName;
-            time_t Created;
-            time_t Updated;
+            time_t Created{};
+            time_t Updated{};
         };
         std::vector<Achievement> Achievements;
 

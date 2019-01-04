@@ -22,9 +22,9 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     {
         // fading in
         const auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        const auto nY =
-            gsl::narrow<std::int64_t>(m_nTargetY - (m_nTargetY - m_nInitialY)) * (fPercentage * fPercentage);
-        SetRenderLocationY(ftol(nY));
+        Expects(m_nTargetY > m_nInitialY);
+        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        SetRenderLocationY(ftol(m_nTargetY - nY));
     }
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME - INOUT_TIME)
     {
@@ -35,9 +35,9 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     {
         // fading out
         const auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        const auto nY =
-            gsl::narrow<std::int64_t>(m_nTargetY - (m_nTargetY - m_nInitialY)) * (fPercentage * fPercentage);
-        SetRenderLocationY(ftoi(nY));
+        Expects(m_nTargetY > m_nInitialY);
+        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        SetRenderLocationY(ftoi(m_nTargetY - nY));
     }
     else
     {

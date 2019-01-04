@@ -1067,7 +1067,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     nCompSize = MemSize::EightBit;
                 else if (SendDlgItemMessage(hwnd, IDC_RA_CBO_16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
                     nCompSize = MemSize::SixteenBit;
-                else if (Button_GetCheck(hwndCtl))
+                else if (SendDlgItemMessage(hwnd, IDC_RA_CBO_32BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
                     nCompSize = MemSize::ThirtyTwoBit;
                 else // if (SendDlgItemMessage(hwnd, IDC_RA_CBO_4BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
                     nCompSize = MemSize::Nibble_Lower;

@@ -1,13 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RuleSet Name="ra_rules" ToolsVersion="15.0">
   <Include Path="cppcorecheckarithmeticrules.ruleset" Action="Default" />
-  <Include Path="cppcorecheckclassrules.ruleset" Action="Warning" />
-  <Include Path="cppcorecheckconstrules.ruleset" Action="Warning" />
-  <Include Path="cppcorecheckfuncrules.ruleset" Action="Warning" />
+  <Include Path="cppcorecheckclassrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckconcurrencyrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckconstrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckfuncrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckownerpointerrules.ruleset" Action="Default" />
+  <Include Path="cppcorechecksharedpointerrules.ruleset" Action="Default" />
   <Include Path="cppcorecheckstlrules.ruleset" Action="Default" />
+  <Include Path="cppcorecheckstylerules.ruleset" Action="Default" />
   <Include Path="cppcorechecktyperules.ruleset" Action="Default" />
-  <Include Path="nativerecommendedrules.ruleset" Action="Warning" />
+  <Include Path="cppcorecheckuniquepointerrules.ruleset" Action="Default" />
+  <Include Path="nativerecommendedrules.ruleset" Action="Default" />
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
     <Rule Id="C26100" Action="Warning" />
     <Rule Id="C26101" Action="Warning" />
@@ -40,6 +44,7 @@
     <Rule Id="C26435" Action="Warning" />
     <Rule Id="C26436" Action="Warning" />
     <Rule Id="C26437" Action="Warning" />
+    <Rule Id="C26438" Action="Warning" />
     <Rule Id="C26439" Action="Warning" />
     <Rule Id="C26440" Action="Warning" />
     <Rule Id="C26441" Action="Warning" />

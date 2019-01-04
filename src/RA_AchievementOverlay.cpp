@@ -1446,7 +1446,7 @@ void AchievementExamine::Initialize(const Achievement* pAch)
     {
         //	Do nothing.
     }
-    else if (m_pSelectedAchievement->ID() == 0)
+    else if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
     {
         //	Uncommitted/Exempt ID
         //	NB. Don't attempt to get anything

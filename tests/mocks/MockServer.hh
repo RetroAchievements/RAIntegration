@@ -29,11 +29,13 @@ public:
     template<typename TApi>
     void HandleRequest(std::function<bool(const typename TApi::Request&, typename TApi::Response&)>&& fHandler)
     {
-        m_mHandlers.insert_or_assign(std::string(TApi::Name()), [fHandler = std::move(fHandler)](
-                                                                    void* restrict pRequest, void* restrict pResponse) {
-            const gsl::not_null<const typename TApi::Request* const> pTRequest{
+        m_mHandlers.insert_or_assign(
+            std::string(TApi::Name()),
+            [fHandler = std::move(fHandler)](const void* restrict pRequest, void* restrict pResponse) 
+        {
+            const gsl::not_null<const typename TApi::Request*> pTRequest{
                 gsl::make_not_null(static_cast<const typename TApi::Request*>(pRequest))};
-            const gsl::not_null<typename TApi::Response* const> pTResponse{
+            const gsl::not_null<typename TApi::Response*> pTResponse{
                 gsl::make_not_null(static_cast<typename TApi::Response*>(pResponse))};
             return fHandler(*pTRequest, *pTResponse);
         });
@@ -96,23 +98,7 @@ protected:
         auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
-            // TBD: This const_cast will eventually need to go away as it likely will result in undefined behavior, 
-            // so success for the test won't always mean success during runtime (bug).
-            // 7 tests rely on this undefined behavior currently so it will be suppressed for the time being. 
-            // There are many ways to go about this, but unsure what is the "best" way
-            //
-            // The tests are:
-            //  - EmulatorContext::TestValidateClientVersionCurrent
-            //  - GameContext
-            //      - TestLoadGameTitle
-            //      - TestLoadGameUserUnlocks
-            //  - SessionTracker
-            //      - TestEmptyFile
-            //      - TestNonEmptyFile
-            //      - TestPing
-            //  - Export_Tests::TestAtemptLoginSuccess
-            GSL_SUPPRESS_TYPE3
-            if (pIter->second(const_cast<ApiRequestBase*>(&pRequest), &response))
+            if (pIter->second(&pRequest, &response))
                 return response;
         }
 
@@ -123,7 +109,7 @@ protected:
     }
 
 private:
-    std::unordered_map<std::string, std::function<bool(void* restrict, void* restrict)>> m_mHandlers;
+    std::unordered_map<std::string, std::function<bool(const void* restrict, void* restrict)>> m_mHandlers;
 
     ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> m_Override;
 };

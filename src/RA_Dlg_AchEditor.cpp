@@ -1880,7 +1880,7 @@ Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const restrict pCh
         }
 
         // Try and restore selection
-        if (nSel < 0 || nSel >= gsl::narrow<int>(pCheevo->NumConditionGroups()))
+        if (nSel < 0 || nSel >= gsl::narrow_cast<int>(pCheevo->NumConditionGroups()))
             nSel = 0; // Reset to core if unsure
         ListBox_SetCurSel(hGroupList, nSel);
     }

@@ -1110,14 +1110,14 @@ namespace ra {
 
 _Success_(return == 0)
 _NODISCARD static auto CALLBACK
-BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _UNUSED LPARAM, _In_ LPARAM lpData) noexcept // it might
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _UNUSED LPARAM, _In_ LPARAM lpData)
 {
     Expects(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)
     {
         // inline and function suppression not working, sometimes it does and sometimes it doesn't
 #pragma warning(suppress: 26490)
-        GSL_SUPPRESS_TYPE1 const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        GSL_SUPPRESS_TYPE1 const auto path{reinterpret_cast<LPCTSTR>(lpData)};
         GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
     }
     return 0;

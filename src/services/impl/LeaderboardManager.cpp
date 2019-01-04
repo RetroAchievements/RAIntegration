@@ -23,7 +23,7 @@ LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConf
 {
 }
 
-RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID)
+RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID) noexcept
 {
     for (auto& lb : m_Leaderboards)
     {
@@ -34,7 +34,7 @@ RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID)
     return nullptr;
 }
 
-const RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID) const
+const RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID) const noexcept
 {
     for (const auto& lb : m_Leaderboards)
     {

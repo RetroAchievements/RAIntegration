@@ -53,9 +53,9 @@ public:
         return m_nWritePosition;
     }
 
-    void SetPosition(std::streampos nNewPosition) noexcept override
+    void SetPosition(std::streampos nNewPosition) override
     {
-        Expects(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
+        Expects((nNewPosition >= 0) && (nNewPosition <= ra::to_signed(m_sOutput.length())));
         m_nWritePosition = nNewPosition;
     }
 

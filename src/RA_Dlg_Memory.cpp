@@ -795,7 +795,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
     const auto OnDrawItem = [this](HWND hwnd, const DRAWITEMSTRUCT* restrict lpDrawItem)
     {
         Expects((hwnd != nullptr) && (lpDrawItem != nullptr));
-        const auto hListbox = GetDlgItem(hwnd, IDC_RA_MEM_LIST);
+#pragma warning(suppress: 26462)
+        GSL_SUPPRESS_CON4 const auto hListbox = GetDlgItem(hwnd, IDC_RA_MEM_LIST);
         if (lpDrawItem->hwndItem == hListbox)
         {
             if (lpDrawItem->itemID == -1)

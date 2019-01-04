@@ -124,14 +124,14 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
         return this->OnCommand(gsl::narrow<WORD>(id));
     };
 
-    const auto _OnMove = [this]([[maybe_unused]] HWND, int x, int y) noexcept
+    const auto _OnMove = [this](HWND, int x, int y)
     {
         ra::ui::Position oPosition{x, y};
         this->OnMove(oPosition);
         return 0;
     };
 
-    const auto _OnSize = [this]([[maybe_unused]] HWND, UINT /*state*/, int cx, int cy) noexcept
+    const auto _OnSize = [this](HWND, UINT /*state*/, int cx, int cy)
     {
         ra::ui::Size oSize{cx, cy};
         this->OnSize(oSize);

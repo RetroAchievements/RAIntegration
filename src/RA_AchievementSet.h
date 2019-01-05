@@ -5,7 +5,7 @@
 #include "RA_Achievement.h" // RA_Condition.h (ra_fwd.h)
 
 //////////////////////////////////////////////////////////////////////////
-//	AchievementSet
+// AchievementSet
 //////////////////////////////////////////////////////////////////////////
 
 class AchievementSet
@@ -24,7 +24,7 @@ public:
 
     bool SaveToFile() const;
 
-    //	Get Achievement at offset
+    // Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)
     {
         Expects((nIter >= 0) && (nIter < m_Achievements.size()));
@@ -50,16 +50,16 @@ public:
         return total;
     }
 
-    //	Find achievement with ID, or nullptr if it can't be found.
+    // Find achievement with ID, or nullptr if it can't be found.
     Achievement* Find(unsigned int nID) const noexcept;
 
-    //	Find index of the given achievement in the array list (useful for LBX lookups)
+    // Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
 
-    void AddAchievement(const Achievement* pAchievement)
+    void AddAchievement(_In_ Achievement* const pAchievement)
     {
         Expects(pAchievement != nullptr);
-        m_Achievements.push_back(const_cast<Achievement*>(pAchievement));
+        m_Achievements.push_back(pAchievement);
     }
 
     bool RemoveAchievement(const Achievement* pAchievement);
@@ -81,7 +81,7 @@ private:
     bool m_bProcessingActive{ TRUE };
 };
 
-//	Externals:
+// Externals:
 
 extern AchievementSet* g_pCoreAchievements;
 extern AchievementSet* g_pUnofficialAchievements;

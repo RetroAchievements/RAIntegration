@@ -38,9 +38,9 @@ public:
         return true;
     }
 
-    long GetPosition() const override
+    std::streampos GetPosition() const override
     {
-        auto& iStream = const_cast<std::istringstream&>(m_iStream);
+        auto& iStream = m_iStream;
 
         if (!m_iStream.good())
         {
@@ -52,13 +52,13 @@ public:
             }
         }
 
-        return static_cast<long>(iStream.tellg());
+        return iStream.tellg();
     }
 
     std::string GetString() { return m_iStream.str(); }
 
 private:
-    std::istringstream m_iStream;
+    mutable std::istringstream m_iStream;
 };
 
 } // namespace impl

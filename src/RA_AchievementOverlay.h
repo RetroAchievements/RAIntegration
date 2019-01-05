@@ -184,8 +184,8 @@ private:
     std::array<Page, 5> m_Pages{Page::Achievements};
     unsigned int m_nPageStackPointer{};
 
-    ra::ui::ImageReference m_hOverlayBackground;
-    ra::ui::ImageReference m_hUserImage;
+    mutable ra::ui::ImageReference m_hOverlayBackground;
+    mutable ra::ui::ImageReference m_hUserImage;
     mutable std::map<std::string, ra::ui::ImageReference> m_mAchievementBadges;
 };
 extern AchievementOverlay g_AchievementOverlay;

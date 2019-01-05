@@ -404,7 +404,8 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     return hBitmap;
 }
 
-HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
+_Use_decl_annotations_
+HBITMAP ImageRepository::GetHBitmap(ImageReference& pImage)
 {
 #pragma warning(suppress: 26490)
     GSL_SUPPRESS_TYPE1 HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
@@ -417,7 +418,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            auto& pMutableImage = const_cast<ImageReference&>(pImage);
+            auto& pMutableImage = pImage;
             GSL_SUPPRESS_TYPE1 pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
 
             // ImageReference will release the reference

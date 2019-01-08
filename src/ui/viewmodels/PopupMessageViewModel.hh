@@ -92,6 +92,14 @@ public:
     void UpdateRenderImage(double fElapsed) override;
     
     /// <summary>
+    /// Determines whether the animation cycle has started.
+    /// </summary>
+    bool IsAnimationStarted() const noexcept
+    {
+        return (m_fAnimationProgress >= 0.0);
+    }
+
+    /// <summary>
     /// Determines whether the animation cycle has completed.
     /// </summary>
     bool IsAnimationComplete() const noexcept
@@ -102,7 +110,7 @@ public:
 private:
     void CreateRenderImage();
 
-    double m_fAnimationProgress = 0.0;
+    double m_fAnimationProgress = -1.0;
     int m_nInitialY = 0;
     int m_nTargetY = 0;
 

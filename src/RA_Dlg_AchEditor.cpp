@@ -1120,6 +1120,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         // Set this achievement as 'modified'
                         pActiveAch->SetModified(TRUE);
+                            pActiveAch->RebuildTrigger();
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                         // Refresh:
@@ -1182,6 +1183,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         // Set this achievement as 'modified'
                         pActiveAch->SetModified(TRUE);
+                            pActiveAch->RebuildTrigger();
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                         // Refresh:

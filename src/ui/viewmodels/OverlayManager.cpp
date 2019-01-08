@@ -63,9 +63,6 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
 
 int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
 {
-    if (m_vPopupMessages.empty())
-        pMessage.BeginAnimation();
-
 #ifndef RA_UTEST
     if (pMessage.GetImage().Type() != ra::ui::ImageType::None)
     {
@@ -91,19 +88,25 @@ void OverlayManager::UpdateActiveMessage(double fElapsed)
 {
     assert(!m_vPopupMessages.empty());
     auto* pActiveMessage = &m_vPopupMessages.front();
-    do
-    {
-        pActiveMessage->UpdateRenderImage(fElapsed);
-        if (!pActiveMessage->IsAnimationComplete())
-            return;
 
+    if (!pActiveMessage->IsAnimationStarted())
+    {
+        pActiveMessage->BeginAnimation();
+        fElapsed = 0.0;
+    }
+
+    pActiveMessage->UpdateRenderImage(fElapsed);
+
+    while (pActiveMessage->IsAnimationComplete())
+    {
         m_vPopupMessages.pop_front();
         if (m_vPopupMessages.empty())
-            return;
+            break;
 
         pActiveMessage = &m_vPopupMessages.front();
         pActiveMessage->BeginAnimation();
-    } while (true);
+        pActiveMessage->UpdateRenderImage(0.0);
+    }
 }
 
 } // namespace viewmodels

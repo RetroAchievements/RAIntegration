@@ -43,8 +43,25 @@ Dlg_AchievementEditor g_AchievementEditorDialog;
 std::vector<ResizeContent> vDlgAchEditorResize;
 POINT pDlgAchEditorMin;
 
-INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM) noexcept
+INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LPARAM lParam) noexcept
 {
+    const auto OnCommand = [](HWND hDlg, int id, HWND, UINT)
+    {
+        Expects(hDlg != nullptr);
+        switch (id)
+        {
+            case IDC_RA_ACHPROGRESSENABLE:
+                return FALSE;
+
+            case IDOK:
+            case IDCLOSE:
+                EndDialog(hDlg, id);
+                return TRUE;
+
+            default:
+                return FALSE;
+        }
+    };
     switch (nMsg)
     {
         case WM_INITDIALOG:
@@ -53,22 +70,7 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
 
             return TRUE;
 
-        case WM_COMMAND:
-        {
-            switch (LOWORD(wParam))
-            {
-                case IDC_RA_ACHPROGRESSENABLE:
-                    return FALSE;
-
-                case IDOK:
-                case IDCLOSE:
-                    EndDialog(hDlg, true);
-                    return TRUE;
-
-                default:
-                    return FALSE;
-            }
-        }
+        HANDLE_MSG(hDlg, WM_COMMAND, OnCommand);
 
         case WM_DESTROY:
             EndDialog(hDlg, true);
@@ -236,19 +238,16 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
 
         case WM_KILLFOCUS:
         {
-            LV_DISPINFO lvDispinfo;
-            ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
+            LV_DISPINFO lvDispinfo{};
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
             // inline suppression not working, and by function not working, have to disable it by code
-
 #pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+            GSL_SUPPRESS_IO5 lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
-            lvDispinfo.item.pszText = nullptr;
 
             TCHAR sEditText[12];
             GetWindowText(hwnd, sEditText, 12);
@@ -293,35 +292,42 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
     return CallWindowProc(EOldProc, hwnd, nMsg, wParam, lParam);
 }
 
-LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (nMsg == WM_COMMAND)
+    const auto _OnCommand = [](HWND hwnd, int, HWND, UINT codeNotify)
     {
-        if (HIWORD(wParam) == CBN_SELCHANGE)
+        Expects(hwnd != nullptr);
+        switch (codeNotify)
         {
-            LV_DISPINFO lvDispinfo;
-            ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
-            lvDispinfo.hdr.hwndFrom = hwnd;
-            lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-#pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
-            lvDispinfo.item.mask = LVIF_TEXT;
-            lvDispinfo.item.iItem = nSelItem;
-            lvDispinfo.item.iSubItem = nSelSubItem;
-            lvDispinfo.item.pszText = nullptr;
+            case CBN_SELENDOK:
+            case CBN_SELENDCANCEL:
+            case CBN_CLOSEUP:
+            case CBN_KILLFOCUS:
+            case CBN_SELCHANGE:
+            {
+                LV_DISPINFO lvDispinfo{};
+                lvDispinfo.hdr.hwndFrom = hwnd;
+                lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
+#pragma warning(suppress : 26454)
+                GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+                lvDispinfo.item.mask = LVIF_TEXT;
+                lvDispinfo.item.iItem = nSelItem;
+                lvDispinfo.item.iSubItem = nSelSubItem;
+                lvDispinfo.item.pszText = nullptr;
 
-            TCHAR sEditText[32];
-            GetWindowText(hwnd, sEditText, 32);
-            lvDispinfo.item.pszText = sEditText;
-            lvDispinfo.item.cchTextMax = lstrlen(sEditText);
+                TCHAR sEditText[32];
+                GetWindowText(hwnd, sEditText, 32);
+                lvDispinfo.item.pszText = sEditText;
+                lvDispinfo.item.cchTextMax = lstrlen(sEditText);
 
-            // the LV ID and the LVs Parent window's HWND
-            HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
-            FORWARD_WM_NOTIFY(::GetParent(hList), IDC_RA_LBX_CONDITIONS, &lvDispinfo, ::SendMessage);
+                // the LV ID and the LVs Parent window's HWND
+                HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
+                FORWARD_WM_NOTIFY(::GetParent(hList), IDC_RA_LBX_CONDITIONS, &lvDispinfo, ::SendMessage);
 
-            DestroyWindow(hwnd);
+                DestroyWindow(hwnd);
+            }
         }
-    }
+    };
 
     switch (nMsg)
     {
@@ -331,8 +337,7 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
 
         case WM_KILLFOCUS:
         {
-            LV_DISPINFO lvDispinfo;
-            ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
+            LV_DISPINFO lvDispinfo{};
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
 #pragma warning(suppress: 26454)
@@ -340,7 +345,6 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
-            lvDispinfo.item.pszText = nullptr;
 
             TCHAR sEditText[32];
             GetWindowText(hwnd, sEditText, 32);
@@ -375,16 +379,8 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
 
             break;
 
-        case WM_COMMAND:
-            switch (HIWORD(wParam))
-            {
-                case CBN_SELENDOK:
-                case CBN_SELENDCANCEL:
-                case CBN_SELCHANGE:
-                case CBN_CLOSEUP:
-                case CBN_KILLFOCUS:
-                    break;
-            }
+        HANDLE_MSG(hwnd, WM_COMMAND, _OnCommand);
+            
     }
 
     return CallWindowProc(EOldProc, hwnd, nMsg, wParam, lParam);
@@ -708,24 +704,25 @@ INT_PTR CALLBACK Dlg_AchievementEditor::s_AchievementEditorProc(HWND hDlg, UINT 
     return g_AchievementEditorDialog.AchievementEditorProc(hDlg, uMsg, wParam, lParam);
 }
 
+
 INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     BOOL bHandled = TRUE;
 
     // Message handlers here are only to prevent necessary casting
     // TRANSITION: These message handlers can be moved to use the ViewModel logic as long as casting is minimized
-    const auto OnGetMinMaxInfo = []([[maybe_unused]] HWND, MINMAXINFO* restrict lpMinMaxInfo) noexcept
+    const auto _OnGetMinMaxInfo = [](HWND, MINMAXINFO* restrict lpMinMaxInfo) noexcept
     {
         lpMinMaxInfo->ptMinTrackSize = pDlgAchEditorMin;
     };
 
     // hwndCtl depends on id
-    const auto OnCommand = [this, &bHandled](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+    const auto _OnCommand = [this, &bHandled](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     {
         switch (id)
         {
             case IDCLOSE:
-                EndDialog(hwnd, true);
+                EndDialog(hwnd, id);
                 bHandled = TRUE;
                 break;
 
@@ -746,13 +743,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             }
 
             case IDC_RA_CHK_ACH_ACTIVE:
+            {
                 if (ActiveAchievement() != nullptr)
                 {
                     SendMessage(g_AchievementsDialog.GetHWND(), WM_COMMAND, IDC_RA_RESET_ACH, 0L);
-                    CheckDlgButton(hwnd, IDC_RA_CHK_ACH_ACTIVE, ActiveAchievement()->Active());
+                    Button_SetCheck(hwndCtl, ActiveAchievement()->Active());
                 }
                 bHandled = TRUE;
-                break;
+            }
+            break;
 
             case IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER:
             {
@@ -1370,7 +1369,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         return bHandled;
     };
 
-    const auto OnNotify = [this, &bHandled](HWND hwnd, [[maybe_unused]] int /*idFrom*/, NMHDR* restrict pnmhdr)
+    const auto _OnNotify = [this, &bHandled](HWND hwnd, int, NMHDR* restrict pnmhdr)
     {
         switch (pnmhdr->code)
         {
@@ -1644,25 +1643,31 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         return FALSE;
     };
 
+    // Only captureless lambdas can be converted to function pointers
+    const auto TimerProc = [](HWND = g_hIPEEdit, UINT uMsg = WM_TIMER, UINT_PTR = 0U,
+                              DWORD = gsl::narrow<DWORD>(::GetTickCount64())) 
+    {
+        Expects(uMsg == WM_TIMER);
+        // Ignore if we are currently editing a box!
+        if (g_hIPEEdit != nullptr) // unsure if we want to apply it to all handles
+            return;
+
+        Achievement* pActiveAch = g_AchievementEditorDialog.ActiveAchievement();
+        if (pActiveAch == nullptr)
+            return;
+
+        if (pActiveAch->IsDirty())
+        {
+            g_AchievementEditorDialog.LoadAchievement(pActiveAch, TRUE);
+            pActiveAch->ClearDirtyFlag();
+        }
+    };
+
     switch (uMsg)
     {
         case WM_TIMER:
-        {
-            // Ignore if we are currently editing a box!
-            if (g_hIPEEdit != nullptr)
-                break;
-
-            Achievement* pActiveAch = ActiveAchievement();
-            if (pActiveAch == nullptr)
-                break;
-
-            if (pActiveAch->IsDirty())
-            {
-                LoadAchievement(pActiveAch, TRUE);
-                pActiveAch->ClearDirtyFlag();
-            }
-        }
-        break;
+            TimerProc();
+            break;
 
         case WM_INITDIALOG:
         {
@@ -1676,7 +1681,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                            pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
 
             // For scanning changes to achievement conditions (hit counts)
-            SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
+            Expects(SetTimer(m_hAchievementEditorDlg, 1, 200, TimerProc) != 0);
 
             m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
             m_BadgeNames.FetchNewBadgeNamesThreaded();
@@ -1720,7 +1725,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         }
             return TRUE;
 
-        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, OnGetMinMaxInfo);
+        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, _OnGetMinMaxInfo);
 
         case WM_SIZE:
         {
@@ -1740,8 +1745,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             RememberWindowPosition(hDlg, "Achievement Editor");
             break;
 
-        HANDLE_MSG(hDlg, WM_COMMAND, OnCommand);
-        HANDLE_MSG(hDlg, WM_NOTIFY, OnNotify);
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
+        HANDLE_MSG(hDlg, WM_NOTIFY, _OnNotify);
 
         case WM_CLOSE:
             EndDialog(hDlg, true);
@@ -1807,7 +1812,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     m_sTooltip = NativeStr(oss.str());
 }
 
-[[gsl::suppress(con.4)]] void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
+GSL_SUPPRESS_CON4 void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupBadgeToUse)
 {
     std::string sAchievementBadgeURI;
 
@@ -2148,7 +2153,7 @@ void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
         ComboBox_AddString(m_hDestComboBox, buffer);
     }
 
-    SendMessage(m_hDestComboBox, WM_SETREDRAW, TRUE, LPARAM{});
+    SetWindowRedraw(m_hDestComboBox, TRUE);
     RedrawWindow(m_hDestComboBox, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
     // Find buffer in the dropdown list

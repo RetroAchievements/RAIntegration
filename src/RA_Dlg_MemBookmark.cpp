@@ -28,13 +28,14 @@ static_assert(is_same_size_v<ColumnTitles, ColumnWidths>);
 
 } // namespace ra
 
-_CONSTANT_VAR c_rgFileTypes{
-    L"Text Document (*.txt)\x0"
-    "*.txt\x0"
-    "JSON File (*.json)\x0"
-    "*.json\x0"
-    "All files (*.*)\x0"
-    "*.*\x0\x0"};
+// clang-format off
+_CONSTANT_VAR c_rgFileTypes
+{
+    L"Text Document (*.txt)\x0" "*.txt\x0"
+    "JSON File (*.json)\x0" "*.json\x0"
+    "All files (*.*)\x0" "*.*\x0\x0"
+};
+// clang-format on
 
 _NODISCARD INT_PTR CALLBACK Dlg_MemBookmark::s_MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -43,10 +44,10 @@ _NODISCARD INT_PTR CALLBACK Dlg_MemBookmark::s_MemBookmarkDialogProc(HWND hDlg, 
 
 LRESULT CALLBACK EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-    const auto OnDestroy = []([[maybe_unused]] HWND) noexcept { g_hIPEEditBM = nullptr; };
+    const auto _OnDestroy = [](HWND) noexcept { g_hIPEEditBM = nullptr; };
 
     // hwndNewFocus -> wParam
-    const auto OnKillFocus = [](HWND hwnd, [[maybe_unused]] HWND /*hwndNewFocus*/)
+    const auto _OnKillFocus = [](HWND hwnd, HWND /*hwndNewFocus*/)
     {
         GSL_SUPPRESS_IO5
 #pragma warning(suppress: 26454)
@@ -82,8 +83,8 @@ LRESULT CALLBACK EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
     switch (nMsg)
     {
-        HANDLE_MSG(hwnd, WM_DESTROY, OnDestroy);
-        HANDLE_MSG(hwnd, WM_KILLFOCUS, OnKillFocus);
+        HANDLE_MSG(hwnd, WM_DESTROY, _OnDestroy);
+        HANDLE_MSG(hwnd, WM_KILLFOCUS, _OnKillFocus);
         HANDLE_MSG(hwnd, WM_KEYDOWN, OnKeyDown);
     }
 
@@ -97,8 +98,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
     RECT rcBounds{}, rcLabel{};
     // hwndFocus->wParam
-    const auto OnInitDialog = [this](HWND hDlg, [[maybe_unused]] HWND /*hwndFocus*/,
-                                     [[maybe_unused]] LPARAM /*lParam*/)
+    const auto _OnInitDialog = [this](HWND hDlg, HWND /*hwndFocus*/, LPARAM /*lParam*/)
 
     {
         GenerateResizes(hDlg);
@@ -119,27 +119,30 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
         return TRUE;
     };
 
-    const auto OnGetMinMaxInfo = []([[maybe_unused]] HWND, MINMAXINFO* restrict lpmmi) noexcept
+    const auto _OnGetMinMaxInfo = [](HWND, MINMAXINFO* restrict lpmmi)
     {
+        Expects(lpmmi != nullptr);
         lpmmi->ptMinTrackSize = pDlgMemBookmarkMin;
     };
-    const auto OnSize = [](HWND hDlg, [[maybe_unused]] UINT, int cx, int cy)
+    const auto _OnSize = [](HWND hDlg, UINT, int cx, int cy)
     {
+        Expects(hDlg != nullptr);
         for (auto& content : vDlgMemBookmarkResize)
-            content.Resize(cx, cy); // cy, cx are new coordinaes
+            content.Resize(cx, cy); // cy, cx are new coordinates
 
         // InvalidateRect( hDlg, nullptr, TRUE );
         RememberWindowSize(hDlg, "Memory Bookmarks");
     };
 
-    const auto OnMeasureItem = []([[maybe_unused]] HWND, MEASUREITEMSTRUCT* restrict pmis) noexcept
+    const auto _OnMeasureItem = [](HWND, MEASUREITEMSTRUCT* restrict pmis)
     {
+        Expects(pmis != nullptr);
         pmis->itemHeight = 16;
     };
-    const auto OnDrawItem =
-        [ this, rcBounds, &rcLabel, offset ](HWND hDlg, const DRAWITEMSTRUCT* restrict pdis) noexcept
-
+    const auto _OnDrawItem =
+        [ this, rcBounds, &rcLabel, offset ](HWND hDlg, const DRAWITEMSTRUCT* restrict pdis)
     {
+        Expects((hDlg != nullptr) && (pdis != nullptr));
         // If there are no list items, skip this message.
         if (pdis->itemID == -1)
             return;
@@ -292,8 +295,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
     // idFrom->wParam; pnmhdr->lParam
     GSL_SUPPRESS_IO5
-    const auto OnNotify = [ this, &nSelect ](HWND hDlg, int idFrom, NMHDR* pnmhdr) noexcept
+    const auto _OnNotify = [ this, &nSelect ](HWND hDlg, int idFrom, NMHDR* restrict pnmhdr)
     {
+        Expects((hDlg != nullptr) && (pnmhdr != nullptr)); // strong guarantee
         switch (idFrom)
         {
             case IDC_RA_LBX_ADDRESSES:
@@ -333,18 +337,19 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 }
             }
         }
-        return LRESULT{TRUE};
+        return TRUE;
     };
 
     // id->LOWORD(wParam), hwndCtl->lParam, codeNotify->HIWORD(wParam)
-    const auto OnCommand = [this](HWND hDlg, int id, [[maybe_unused]] HWND /*hwndCtl*/,
-                            [[maybe_unused]] UINT /*codeNotify*/) {
+    const auto _OnCommand = [this](HWND hDlg, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
+    {
+        Expects(hDlg != nullptr);
         switch (id)
         {
             case IDOK:
             case IDCLOSE:
             case IDCANCEL:
-                return EndDialog(hDlg, IDCANCEL);
+                return EndDialog(hDlg, id);
 
             case IDC_RA_ADD_BOOKMARK:
             {
@@ -444,13 +449,13 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
     switch (uMsg)
     {
-        HANDLE_MSG(hDlg, WM_INITDIALOG, OnInitDialog);
-        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, OnGetMinMaxInfo);
-        HANDLE_MSG(hDlg, WM_SIZE, OnSize);
-        HANDLE_MSG(hDlg, WM_MEASUREITEM, OnMeasureItem);
-        HANDLE_MSG(hDlg, WM_DRAWITEM, OnDrawItem);
-        HANDLE_MSG(hDlg, WM_NOTIFY, OnNotify);
-        HANDLE_MSG(hDlg, WM_COMMAND, OnCommand);
+        HANDLE_MSG(hDlg, WM_INITDIALOG, _OnInitDialog);
+        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, _OnGetMinMaxInfo);
+        HANDLE_MSG(hDlg, WM_SIZE, _OnSize);
+        HANDLE_MSG(hDlg, WM_MEASUREITEM, _OnMeasureItem);
+        HANDLE_MSG(hDlg, WM_DRAWITEM, _OnDrawItem);
+        HANDLE_MSG(hDlg, WM_NOTIFY, _OnNotify);
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
 
         case WM_MOVE:
             RememberWindowPosition(hDlg, "Memory Bookmarks");

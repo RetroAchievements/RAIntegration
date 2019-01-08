@@ -216,8 +216,7 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
 // static
 void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, unsigned int nGameID)
 {
-    LV_ITEM item;
-    ZeroMemory(&item, sizeof(item));
+    LV_ITEM item{};
     item.mask = LVIF_TEXT;
     item.cchTextMax = 255;
     item.iItem = m_vGameEntries.size();
@@ -266,8 +265,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
                 break;
         }
 
-        std::basic_ifstream<unsigned char> ifile{FilesToScan.front(), std::ios::binary};
-        if (ifile.is_open())
+        if (std::basic_ifstream<unsigned char> ifile{FilesToScan.front(), std::ios::binary}; ifile.is_open())
         {
             // obtain file size:
             const auto nSize = ra::filesize(FilesToScan.front());
@@ -521,7 +519,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::s_GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM
 
 INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    const auto OnNotify = [this](HWND hwnd, int idFrom, NMHDR* restrict pnmhdr)
+    const auto _OnNotify = [this](HWND hwnd, int idFrom, NMHDR* restrict pnmhdr)
     {
         Expects((hwnd != nullptr) && (pnmhdr != nullptr));
         switch (idFrom)
@@ -568,7 +566,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
         }
     };
 
-    const auto OnCommand = [this](HWND hwnd, int id, HWND hwndCtl, [[maybe_unused]] UINT /*codeNotify*/)
+    const auto _OnCommand = [this](HWND hwnd, int id, HWND hwndCtl, UINT /*codeNotify*/)
     {
         Expects((hwnd != nullptr) && (hwndCtl != nullptr));
         switch (id)
@@ -576,7 +574,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             case IDOK:
                 if (LaunchSelected())
                 {
-                    EndDialog(hwnd, IDOK);
+                    EndDialog(hwnd, id);
                     return TRUE;
                 }
                 else
@@ -658,8 +656,8 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             // ReloadGameListData();
             return FALSE;
 
-        HANDLE_MSG(hDlg, WM_NOTIFY, OnNotify);
-        HANDLE_MSG(hDlg, WM_COMMAND, OnCommand);
+        HANDLE_MSG(hDlg, WM_NOTIFY, _OnNotify);
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
 
         case WM_PAINT:
             if (nNumParsed != Results.size())

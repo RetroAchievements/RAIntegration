@@ -15,9 +15,116 @@ INT_PTR CALLBACK s_GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
     return g_GameTitleDialog.GameTitleProc(hDlg, uMsg, wParam, lParam);
 }
 
-INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM)
+INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, [[maybe_unused]] LPARAM lParam)
 {
     static bool bUpdatingTextboxTitle = false;
+    const auto _OnCommand = [this](HWND hDlg, int id, HWND hwndCtl, UINT codeNotify)
+    {
+        Expects((hDlg != nullptr) && (hwndCtl != nullptr));
+        switch (id)
+        {
+            case IDOK:
+            {
+                // Fetch input data:
+                TCHAR sSelectedTitleBuffer[512];
+                ComboBox_GetText(GetDlgItem(hDlg, IDC_RA_KNOWNGAMES), sSelectedTitleBuffer, 512);
+                ra::tstring sSelectedTitle = sSelectedTitleBuffer;
+
+                unsigned int nGameID = 0U;
+                if (sSelectedTitle == _T("<New Title>"))
+                {
+                    //	Add a new title!
+                    GetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitleBuffer, 512);
+                    sSelectedTitle = sSelectedTitleBuffer;
+                }
+                else
+                {
+                    //	Existing title
+                    ASSERT(m_aGameTitles.find(ra::Narrow(sSelectedTitle)) != m_aGameTitles.end());
+                    nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
+                }
+
+                PostArgs args;
+                args['u'] = RAUsers::LocalUser().Username();
+                args['t'] = RAUsers::LocalUser().Token();
+                args['m'] = m_sMD5;
+                args['i'] = ra::Narrow(sSelectedTitle);
+                args['c'] = std::to_string(g_ConsoleID);
+
+                rapidjson::Document doc;
+                if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && doc.HasMember("Success") &&
+                    doc["Success"].GetBool())
+                {
+                    const rapidjson::Value& Response = doc["Response"];
+
+                    nGameID = Response["GameID"].GetUint();
+
+                    g_GameTitleDialog.m_nReturnedGameID = nGameID;
+
+                    // Close this dialog
+                    EndDialog(hDlg, id);
+                    return TRUE;
+                }
+                else
+                {
+                    if (!doc.HasParseError() && doc.HasMember("Error"))
+                    {
+                        // Error given
+                        MessageBox(
+                            hDlg,
+                            NativeStr(std::string("Could not add new title: ") + std::string(doc["Error"].GetString()))
+                                .c_str(),
+                            TEXT("Errors encountered"),
+                            MB_OK);
+                    }
+                    else
+                    {
+                        MessageBox(hDlg, TEXT("Cannot contact server!"), TEXT("Error in connection"), MB_OK);
+                    }
+
+                    return TRUE;
+                }
+            }
+
+            case IDCANCEL:
+                return EndDialog(hDlg, id);
+
+            case IDC_RA_GAMETITLE:
+                switch (codeNotify)
+                {
+                    case EN_CHANGE:
+                        if (!bUpdatingTextboxTitle) // Note: use barrier to prevent automatic switching off.
+                        {
+                            //	If the user has started to enter a value, set the upper combo to 'new entry'
+                            HWND hKnownGamesCbo = GetDlgItem(hDlg, IDC_RA_KNOWNGAMES);
+                            ComboBox_SetCurSel(hKnownGamesCbo, 0);
+                        }
+                        break;
+                }
+                break;
+
+            case IDC_RA_KNOWNGAMES:
+            {
+                switch (codeNotify)
+                {
+                    case CBN_SELCHANGE:
+                    {
+                        //	If the user has selected a value, copy this text to the bottom textbox.
+                        bUpdatingTextboxTitle = TRUE;
+
+                        TCHAR sSelectedTitle[512];
+                        GetWindowText(hwndCtl, sSelectedTitle, 512);
+                        SetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitle);
+
+                        bUpdatingTextboxTitle = FALSE;
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+        return FALSE;
+    };
 
     switch (uMsg)
     {
@@ -86,108 +193,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
         }
         break;
 
-        case WM_COMMAND:
-            switch (LOWORD(wParam))
-            {
-                case IDOK:
-                {
-                    //	Fetch input data:
-                    TCHAR sSelectedTitleBuffer[512];
-                    ComboBox_GetText(GetDlgItem(hDlg, IDC_RA_KNOWNGAMES), sSelectedTitleBuffer, 512);
-                    ra::tstring sSelectedTitle = sSelectedTitleBuffer;
-
-                    unsigned int nGameID = 0U;
-                    if (sSelectedTitle == _T("<New Title>"))
-                    {
-                        //	Add a new title!
-                        GetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitleBuffer, 512);
-                        sSelectedTitle = sSelectedTitleBuffer;
-                    }
-                    else
-                    {
-                        //	Existing title
-                        ASSERT(m_aGameTitles.find(ra::Narrow(sSelectedTitle)) != m_aGameTitles.end());
-                        nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
-                    }
-
-                    PostArgs args;
-                    args['u'] = RAUsers::LocalUser().Username();
-                    args['t'] = RAUsers::LocalUser().Token();
-                    args['m'] = m_sMD5;
-                    args['i'] = ra::Narrow(sSelectedTitle);
-                    args['c'] = std::to_string(g_ConsoleID);
-
-                    rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && 
-                        doc.HasMember("Success") && doc["Success"].GetBool())
-                    {
-                        const rapidjson::Value& Response = doc["Response"];
-
-                        nGameID = Response["GameID"].GetUint();
-
-                        g_GameTitleDialog.m_nReturnedGameID = nGameID;
-
-                        //	Close this dialog
-                        EndDialog(hDlg, TRUE);
-                        return TRUE;
-                    }
-                    else
-                    {
-                        if (!doc.HasParseError() && doc.HasMember("Error"))
-                        {
-                            // Error given
-                            MessageBox(hDlg,
-                                       NativeStr(std::string("Could not add new title: ") +
-                                                 std::string(doc["Error"].GetString())).c_str(),
-                                       TEXT("Errors encountered"),
-                                       MB_OK);
-                        }
-                        else
-                        {
-                            MessageBox(hDlg, TEXT("Cannot contact server!"), TEXT("Error in connection"), MB_OK);
-                        }
-
-                        return TRUE;
-                    }
-                }
-
-                case IDCANCEL:
-                    EndDialog(hDlg, TRUE);
-                    return TRUE;
-
-                case IDC_RA_GAMETITLE:
-                    switch (HIWORD(wParam))
-                    {
-                        case EN_CHANGE:
-                            if (!bUpdatingTextboxTitle) // Note: use barrier to prevent automatic switching off.
-                            {
-                                //	If the user has started to enter a value, set the upper combo to 'new entry'
-                                HWND hKnownGamesCbo = GetDlgItem(hDlg, IDC_RA_KNOWNGAMES);
-                                ComboBox_SetCurSel(hKnownGamesCbo, 0);
-                            }
-                            break;
-                    }
-                    break;
-
-                case IDC_RA_KNOWNGAMES:
-                    switch (HIWORD(wParam))
-                    {
-                        case CBN_SELCHANGE:
-                        {
-                            //	If the user has selected a value, copy this text to the bottom textbox.
-                            bUpdatingTextboxTitle = TRUE;
-
-                            TCHAR sSelectedTitle[512];
-                            GetDlgItemText(hDlg, IDC_RA_KNOWNGAMES, sSelectedTitle, 512);
-                            SetDlgItemText(hDlg, IDC_RA_GAMETITLE, sSelectedTitle);
-
-                            bUpdatingTextboxTitle = FALSE;
-                        }
-                        break;
-                    }
-                    break;
-            }
-            break;
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
 
         case WM_KEYDOWN:
             break;

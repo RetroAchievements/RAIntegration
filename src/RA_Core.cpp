@@ -397,8 +397,9 @@ API void CCONV _RA_OnReset()
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
-    g_MemManager.AddMemoryBank(ra::to_unsigned(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter,
-                               ra::to_unsigned(nBankSize));
+    _RAMByteReadFn myReader{static_cast<std::add_pointer_t<unsigned char(unsigned int)>>(pReader)};
+    _RAMByteWriteFn myWriter{static_cast<std::add_pointer_t<void(unsigned int, unsigned int)>>(pWriter)};
+    g_MemManager.AddMemoryBank(ra::to_unsigned(nBankID), myReader, myWriter, ra::to_unsigned(nBankSize));
     g_MemoryDialog.AddBank(ra::to_unsigned(nBankID));
 }
 

@@ -5,8 +5,8 @@
 #include "RA_Condition.h" // ComparisonVariableSize
 #include "ra_fwd.h"
 
-typedef unsigned char (_RAMByteReadFn)(unsigned int nOffs);
-typedef void (_RAMByteWriteFn)(unsigned int nOffs, unsigned int nVal);
+using _RAMByteReadFn = std::function<unsigned char(unsigned int nOffs)>;
+using _RAMByteWriteFn = std::function<void(unsigned int nOffs, unsigned int nVal)>;
 
 class MemManager
 {
@@ -16,25 +16,21 @@ private:
     {
     public:
         BankData() noexcept = default;
-        explicit BankData(_RAMByteReadFn* pReadFn, _RAMByteWriteFn* pWriteFn, size_t nBankSize) noexcept
+        explicit BankData(const _RAMByteReadFn& pReadFn, const _RAMByteWriteFn& pWriteFn, size_t nBankSize)
             : Reader(pReadFn), Writer(pWriteFn), BankSize(nBankSize)
         {
         }
-        ~BankData() noexcept
-        {
-            Reader   = nullptr;
-            Writer   = nullptr;
-            BankSize = 0U;
-        }
-        //	Copying disabled
+        ~BankData() noexcept = default;
+
+        // Copying disabled
         BankData(const BankData&) = delete;
         BankData& operator=(BankData&) = delete;
         BankData(BankData&&) = delete;
         BankData& operator=(BankData&&) = delete;
 
     public:
-        _RAMByteReadFn* Reader{ nullptr };
-        _RAMByteWriteFn* Writer{ nullptr };
+        _RAMByteReadFn Reader;
+        _RAMByteWriteFn Writer;
         size_t BankSize{ 0U };
     };
     using Banks = std::map<size_t, BankData>;
@@ -48,7 +44,7 @@ public:
 
 public:
     void ClearMemoryBanks() noexcept;
-    void AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize);
+    void AddMemoryBank(size_t nBankID, const _RAMByteReadFn& pReader, const _RAMByteWriteFn& pWriter, size_t nBankSize);
     size_t NumMemoryBanks() const noexcept { return m_Banks.size(); }
 
     inline size_t BankSize(unsigned short nBank) const { return m_Banks.at(nBank).BankSize; }

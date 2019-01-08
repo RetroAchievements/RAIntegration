@@ -785,14 +785,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 {
     // Handlers are made to reduce unnecessary casting only
     // TRANSITION: These message handlers can be moved to use ViewModel logic as long as casting is minimized
-    const auto OnMeasureItem = []([[maybe_unused]] HWND, MEASUREITEMSTRUCT* restrict lpMeasureItem)
+    const auto _OnMeasureItem = []([[maybe_unused]] HWND, MEASUREITEMSTRUCT* restrict lpMeasureItem)
     {
         Expects(lpMeasureItem != nullptr);
         lpMeasureItem->itemHeight = 16;
         return TRUE;
     };
 
-    const auto OnDrawItem = [this](HWND hwnd, const DRAWITEMSTRUCT* restrict lpDrawItem)
+    const auto _OnDrawItem = [this](HWND hwnd, const DRAWITEMSTRUCT* restrict lpDrawItem)
     {
         Expects((hwnd != nullptr) && (lpDrawItem != nullptr));
 #pragma warning(suppress: 26462)
@@ -894,7 +894,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         return TRUE;
     };
 
-    const auto OnNotify = [this](HWND hwnd, int idFrom, NMHDR* restrict pnmhdr)
+    const auto _OnNotify = [this](HWND hwnd, int idFrom, NMHDR* restrict pnmhdr)
     {
         Expects((hwnd != nullptr) && (pnmhdr != nullptr));
         switch (idFrom)
@@ -940,7 +940,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         return FALSE;
     };
 
-    const auto OnGetMinMaxInfo = []([[maybe_unused]] HWND, MINMAXINFO* restrict lpMinMaxInfo)
+    const auto _OnGetMinMaxInfo = [](HWND, MINMAXINFO* restrict lpMinMaxInfo)
     {
         Expects(lpMinMaxInfo != nullptr);
         lpMinMaxInfo->ptMaxTrackSize.x = pDlgMemoryMin.x;
@@ -948,9 +948,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         return TRUE;
     };
 
-    const auto OnCommand = [this](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+    const auto _OnCommand = [this](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     {
-        Expects((hwnd != nullptr) && (hwndCtl != nullptr));
+        // hwndCtl might be null but it's supposed to be an "in" param, just check where it can't be
+        Expects(hwnd != nullptr);
         switch (id)
         {
             case IDC_RA_DOTEST:
@@ -1209,6 +1210,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             case IDC_RA_RESULTS_BACK:
             {
+                Expects(hwndCtl != nullptr);
                 m_nPage--;
                 EnableWindow(hwndCtl, m_nPage > 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_RA_RESULTS_FORWARD), TRUE);
@@ -1225,6 +1227,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             case IDC_RA_RESULTS_FORWARD:
             {
+                Expects(hwndCtl != nullptr);
                 m_nPage++;
                 EnableWindow(GetDlgItem(hwnd, IDC_RA_RESULTS_BACK), TRUE);
                 EnableWindow(hwndCtl, m_nPage + 1 < m_SearchResults.size());
@@ -1267,6 +1270,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             }
 
             case IDC_RA_WATCHING:
+            {
+                Expects(hwndCtl != nullptr);
                 switch (codeNotify)
                 {
                     case CBN_SELCHANGE:
@@ -1283,8 +1288,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                     SetDlgItemTextW(hwnd, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
 
                                 MemoryViewerControl::setAddress(
-                                    (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
-                                    (0x50));
+                                    (nAddr & ~(0xf)) -
+                                    (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                                 MemoryViewerControl::setWatchedAddress(nAddr);
                                 UpdateBits();
                             }
@@ -1312,8 +1317,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         return FALSE;
                         // return DefWindowProc( hwnd, nMsg, wParam, lParam );
                 }
+            }
 
             case IDC_RA_MEMBANK:
+            {
+                Expects(hwndCtl != nullptr);
                 switch (codeNotify)
                 {
                     case LBN_SELCHANGE:
@@ -1332,6 +1340,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 }
 
                 return TRUE;
+            }
 
             default:
                 return FALSE; // unhandled
@@ -1410,10 +1419,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             return TRUE;
         }
 
-        HANDLE_MSG(hDlg, WM_MEASUREITEM, OnMeasureItem);
-        HANDLE_MSG(hDlg, WM_DRAWITEM, OnDrawItem);
-        HANDLE_MSG(hDlg, WM_NOTIFY, OnNotify);
-        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, OnGetMinMaxInfo);
+        HANDLE_MSG(hDlg, WM_MEASUREITEM, _OnMeasureItem);
+        HANDLE_MSG(hDlg, WM_DRAWITEM, _OnDrawItem);
+        HANDLE_MSG(hDlg, WM_NOTIFY, _OnNotify);
+        HANDLE_MSG(hDlg, WM_GETMINMAXINFO, _OnGetMinMaxInfo);
 
         case WM_SIZE:
         {
@@ -1431,7 +1440,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RememberWindowPosition(hDlg, "Memory Inspector");
             break;
 
-        HANDLE_MSG(hDlg, WM_COMMAND, OnCommand);
+        HANDLE_MSG(hDlg, WM_COMMAND, _OnCommand);
 
         case WM_CLOSE:
             EndDialog(hDlg, 0);

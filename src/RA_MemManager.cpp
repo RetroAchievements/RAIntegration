@@ -12,7 +12,8 @@ void MemManager::ClearMemoryBanks() noexcept
     m_nTotalBankSize = 0;
 }
 
-void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByteWriteFn* pWriter, size_t nBankSize)
+void MemManager::AddMemoryBank(size_t nBankID, const _RAMByteReadFn& pReader, const _RAMByteWriteFn& pWriter,
+                               size_t nBankSize)
 {
     if (m_Banks.find(nBankID) != m_Banks.end())
     {
@@ -21,7 +22,6 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
     }
 
     m_nTotalBankSize += nBankSize;
-
     m_Banks.try_emplace(nBankID, pReader, pWriter, nBankSize);
 }
 
@@ -134,7 +134,7 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
         bankID++;
     } while (true);
 
-    gsl::not_null<_RAMByteReadFn*> reader{gsl::make_not_null(bank->Reader)};
+    _RAMByteReadFn reader{bank->Reader};
 
     while (nOffs + count >= bank->BankSize)
     {
@@ -154,7 +154,7 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
         }
 
         bank = &m_Banks.at(bankID);
-        reader = gsl::make_not_null(bank->Reader);
+        reader = bank->Reader;
     }
 
     while (count-- > 0)

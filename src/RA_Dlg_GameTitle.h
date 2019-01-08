@@ -10,7 +10,7 @@ public:
     std::string CleanRomName(const std::string& sTryName);
     static void DoModalDialog(HINSTANCE hInst, HWND hParent, std::string& sMD5InOut, std::string& sEstimatedGameTitleInOut, unsigned int& nGameIDOut);
 
-    INT_PTR GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSED LPARAM);
+    INT_PTR GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, [[maybe_unused]] LPARAM lParam);
 
 private:
     unsigned int m_nReturnedGameID{};

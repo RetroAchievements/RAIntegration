@@ -11,7 +11,7 @@
 
 #include "ui\drawing\ISurface.hh"
 
-//	No emulator-specific code here please!
+// No emulator-specific code here please!
 
 namespace {
 

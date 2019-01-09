@@ -284,7 +284,6 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
                 break;
             }
-
             case ODA_FOCUS:
                 break;
         }

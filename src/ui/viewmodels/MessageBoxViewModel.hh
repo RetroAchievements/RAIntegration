@@ -139,10 +139,33 @@ public:
     /// <summary>
     /// Shows a warning message.
     /// </summary>
+    static void ShowWarningMessage(std::wstring&& sMessage)
+    {
+        MessageBoxViewModel viewModel(std::move(sMessage));
+        viewModel.SetIcon(Icon::Warning);
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
+    /// Shows a warning message.
+    /// </summary>
     static void ShowWarningMessage(const std::wstring& sHeader, const std::wstring& sMessage)
     {
         MessageBoxViewModel viewModel(sMessage);
         viewModel.SetHeader(sHeader);
+        viewModel.SetIcon(Icon::Warning);
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
+    /// Shows a warning message.
+    /// </summary>
+    static void ShowWarningMessage(std::wstring&& sHeader, std::wstring&& sMessage)
+    {
+        const auto _sMessage = std::move(sMessage);
+        MessageBoxViewModel viewModel(_sMessage);
+        const auto _sHeader = std::move(sHeader);
+        viewModel.SetHeader(_sHeader);
         viewModel.SetIcon(Icon::Warning);
         viewModel.ShowModal();
     }

@@ -4,14 +4,14 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-static unsigned char* g_pMemoryBuffer;
+static gsl::span<std::byte> g_pMemoryBuffer; // non-owning (stack)
 static std::unique_ptr<unsigned char[]> g_pDynMemoryBuffer;
-static size_t g_nMemorySize;
+static unsigned int g_nMemorySize;
 
-static constexpr unsigned char ReadMemory(unsigned int nAddress) noexcept
+static constexpr auto ReadMemory(unsigned int nAddress)
 {
     if (nAddress <= g_nMemorySize)
-       return g_pMemoryBuffer[nAddress];
+        return ra::etoi(g_pMemoryBuffer.at(nAddress));
 
     return unsigned char();
 }
@@ -24,10 +24,10 @@ inline static auto ReadDynMemory(unsigned int nAddress)
     return unsigned char();
 }
 
-static constexpr void SetMemory(unsigned int nAddress, unsigned int nValue) noexcept
+static constexpr void SetMemory(unsigned int nAddress, unsigned int nValue)
 {
     if (nAddress <= g_nMemorySize)
-        g_pMemoryBuffer[nAddress] = gsl::narrow_cast<unsigned char>(nValue);
+        g_pMemoryBuffer.at(nAddress) = ra::itoe<std::byte>(nValue);
 }
 
 inline static void SetDynMemory(unsigned int nAddress, unsigned int nValue)
@@ -36,14 +36,13 @@ inline static void SetDynMemory(unsigned int nAddress, unsigned int nValue)
         g_pDynMemoryBuffer[nAddress] = gsl::narrow<unsigned char>(nValue);
 }
 
-// TODO: restrict speeds up the tests significantly but there is pointer aliasing in some tests which makes it fail in release mode. We'll have to look into it later.
-void InitializeMemory(unsigned char* const pMemory, size_t nMemorySize)
+void InitializeMemory(gsl::span<unsigned char> pMemory)
 {
-    g_pMemoryBuffer = pMemory;
-    g_nMemorySize = nMemorySize;
+    g_pMemoryBuffer = gsl::as_writeable_bytes(pMemory);
+    g_nMemorySize = gsl::narrow<unsigned int>(pMemory.size_bytes());
 
     g_MemManager.ClearMemoryBanks();
-    g_MemManager.AddMemoryBank(0, ReadMemory, SetMemory, nMemorySize);
+    g_MemManager.AddMemoryBank(0, ReadMemory, SetMemory, ra::to_unsigned(pMemory.size_bytes()));
 }
 
 void InitializeMemory(std::unique_ptr<unsigned char[]> pMemory, size_t nMemorySize)

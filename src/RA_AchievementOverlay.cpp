@@ -2,6 +2,8 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_ImageFactory.h"
+#include "RA_Interface.h"
+#include "RA_Resource.h"
 #include "RA_httpthread.h"
 
 #include "ra_math.h"
@@ -636,8 +638,6 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
 void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
 {
-    char buffer[256];
-
     const unsigned int nNumAchievements = g_pActiveAchievements->NumAchievements();
 
     const int nAchievementStartX = 0;
@@ -658,8 +658,6 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     const int nWonByPlayerNameX = 20;
     const int nWonByPlayerDateX = 220;
 
-    char bufTime[256];
-
     const auto pAch =
         gsl::make_not_null<const Achievement*>(&g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem));
 
@@ -668,52 +666,49 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
 
     DrawAchievement(hDC, pAch, nDX + nAchievementStartX, nAchievementStartY, TRUE, FALSE);
 
-    if (m_nAchievementsSelectedItem >= (int)nNumAchievements)
+    if (m_nAchievementsSelectedItem >= ra::to_signed(nNumAchievements))
         return;
 
-    ctime_s(bufTime, 256, &tCreated);
-    bufTime[strlen(bufTime) - 1] = '\0'; //	Remove pesky newline
-    sprintf_s(buffer, 256, " Created: %s ", bufTime);
-    TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), strlen(buffer));
+    auto buffer = ra::StringPrintf(" Created: %s ", _TimeStampToString(tCreated));
+    TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
-    ctime_s(bufTime, 256, &tModified);
-    bufTime[strlen(bufTime) - 1] = '\0'; //	Remove pesky newline
-    sprintf_s(buffer, 256, " Modified: %s ", bufTime);
-    TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(), strlen(buffer));
+    buffer = ra::StringPrintf(" Modified: %s ", _TimeStampToString(tModified));
+    TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(),
+            gsl::narrow<int>(buffer.length()));
+
+            
 
     if (g_AchExamine.HasData())
     {
-        sprintf_s(
-            buffer, 256, " Won by %u of %u (%1.0f%%)", g_AchExamine.TotalWinners(), g_AchExamine.PossibleWinners(),
-            static_cast<float>(g_AchExamine.TotalWinners() * 100) / static_cast<float>(g_AchExamine.PossibleWinners()));
-        TextOut(hDC, nDX + 20, nCoreDetailsY + (nCoreDetailsSpacing * 2), NativeStr(buffer).c_str(), strlen(buffer));
+        buffer = ra::StringPrintf(" Won by %u of %u (%1.0f%%)",
+                                  g_AchExamine.TotalWinners(),
+                                  g_AchExamine.PossibleWinners(),
+                                  ra::to_floating(g_AchExamine.TotalWinners() * 100) /
+                                      ra::to_floating(g_AchExamine.PossibleWinners()));
+        TextOut(hDC, nDX + 20, nCoreDetailsY + (nCoreDetailsSpacing * 2), NativeStr(buffer).c_str(),
+                gsl::narrow<int>(buffer.length()));
 
         if (g_AchExamine.NumRecentWinners() > 0)
         {
-            sprintf_s(buffer, 256, " Recent winners: ");
+            buffer = " Recent winners: ";
             TextOut(hDC, nDX + nRecentWinnersSubtitleX, nRecentWinnersSubtitleY, NativeStr(buffer).c_str(),
-                    strlen(buffer));
+                    gsl::narrow<int>(buffer.length()));
         }
 
-        auto i{0U};
+        gsl::index i{0};
         for (const auto& data : g_AchExamine)
         {
             {
-                std::string sUser{" "};
-                sUser += data.User();
-                sUser += "      ";
-
-                //	Draw/Fetch user image? //TBD
-                TextOut(hDC, nDX + nWonByPlayerNameX, nWonByPlayerYOffs + (ra::to_signed(i) * nWonByPlayerYSpacing),
-                        NativeStr(sUser).c_str(), ra::narrow_cast<int>(sUser.length()));
+                const auto sUser = ra::StringPrintf(" %s       ", data.User());
+                // Draw/Fetch user image? //TBD
+                TextOut(hDC, nDX + nWonByPlayerNameX, nWonByPlayerYOffs + (gsl::narrow<int>(i) * nWonByPlayerYSpacing),
+                        NativeStr(sUser).c_str(), gsl::narrow<int>(sUser.length()));
             }
 
-            std::string sWonAt{"       "};
-            sWonAt += data.WonAt();
-            sWonAt += " ";
+            const auto sWonAt = ra::StringPrintf("       %s ", data.WonAt());
 
-            TextOut(hDC, nDX + nWonByPlayerDateX, nWonByPlayerYOffs + (ra::to_signed(i) * nWonByPlayerYSpacing),
-                    NativeStr(sWonAt).c_str(), ra::narrow_cast<int>(sWonAt.length()));
+            TextOut(hDC, nDX + nWonByPlayerDateX, nWonByPlayerYOffs + (gsl::narrow<int>(i) * nWonByPlayerYSpacing),
+                    NativeStr(sWonAt).c_str(), gsl::narrow<int>(sWonAt.length()));
             i++;
         }
     }
@@ -725,74 +720,78 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
             nDots = 0;
 
         const int nDotCount = nDots / 25;
-        sprintf_s(buffer, 256, " Loading.%c%c%c ", nDotCount >= 1 ? '.' : ' ', nDotCount >= 2 ? '.' : ' ',
-                  nDotCount >= 3 ? '.' : ' ');
 
-        TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
+        buffer = ra::StringPrintf(" Loading.%c%c%c ", nDotCount >= 1 ? '.' : ' ', nDotCount >= 2 ? '.' : ' ',
+                                  nDotCount >= 3 ? '.' : ' ');
+        TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(),
+                gsl::narrow<int>(buffer.length()));
     }
 }
 
 void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const
 {
-    unsigned int nYOffset = 90;
+    auto nYOffset = 90;
 
-    const unsigned int nHeaderGap = 4;
-    const unsigned int nArticleGap = 10;
+    constexpr auto nHeaderGap = 4;
+    constexpr auto nArticleGap = 10;
 
-    const unsigned int nBorder = 32;
+    constexpr auto nBorder = 32;
 
-    const unsigned int nLeftAlign = nDX + nBorder;
-    const unsigned int nRightAlign = nDX + (rcTarget.right - nBorder);
+    const auto nLeftAlign = nDX + nBorder;
+    const auto nRightAlign = nDX + (rcTarget.right - nBorder);
 
-    const unsigned int nArticleIndent = 20;
+    constexpr auto nArticleIndent = 20;
 
-    const int nWidth = rcTarget.right - rcTarget.left;
-    const int nHeight = rcTarget.bottom - rcTarget.top;
+    const auto nWidth = rcTarget.right - rcTarget.left;
+    const auto nHeight = rcTarget.bottom - rcTarget.top;
 
     HGDIOBJ hOldObject = SelectObject(hDC, g_hFontDesc2);
 
-    for (int i = m_nNewsSelectedItem; i < static_cast<int>(m_LatestNews.size()); ++i)
+    for (auto it = std::next(m_LatestNews.begin(), m_nNewsSelectedItem); it != m_LatestNews.end(); ++it)
     {
-        const char* sTitle = m_LatestNews[i].m_sTitle.c_str();
-        const char* sPayload = m_LatestNews[i].m_sPayload.c_str();
+        const auto& sTitle{it->m_sTitle};
+        const auto& sPayload{it->m_sPayload};
 
         SelectObject(hDC, g_hFontDesc2);
 
-        //	Setup initial variables for the rect
-        RECT rcNews;
-        SetRect(&rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset);
+        //vSetup initial variables for the rect
+        RECT rcNews{nLeftAlign, nYOffset, nRightAlign, nYOffset};
 
-        //	Calculate height of rect, fetch bottom for next rect:
-        DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+        // Calculate height of rect, fetch bottom for next rect:
+        DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow<int>(sTitle.length()), &rcNews,
+                 DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw title:
-        DrawText(hDC, NativeStr(sTitle).c_str(), strlen(sTitle), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+        // Draw title:
+        DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow<int>(sTitle.length()), &rcNews,
+                 DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         //	Offset header
         nYOffset += nHeaderGap;
 
         SelectObject(hDC, g_hFontTiny);
 
-        //	Setup initial variables for the rect
-        SetRect(&rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset);
-        //	Calculate height of rect, fetch and inset bottom:
-        DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+        // Setup initial variables for the rect
+        rcNews = {nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset};
+        // Calculate height of rect, fetch and inset bottom:
+        DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow<int>(sPayload.length()), &rcNews,
+                 DT_CALCRECT | DT_WORDBREAK);
         nYOffset = rcNews.bottom;
 
         if (rcNews.bottom > nHeight)
             rcNews.bottom = nHeight;
 
-        //	Draw payload:
-        DrawText(hDC, NativeStr(sPayload).c_str(), strlen(sPayload), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+        // Draw payload:
+        DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow<int>(sPayload.length()), &rcNews,
+                 DT_TOP | DT_LEFT | DT_WORDBREAK);
 
         nYOffset += nArticleGap;
     }
 
-    //	Restore object:
+    // Restore object:
     SelectObject(hDC, hOldObject);
 }
 

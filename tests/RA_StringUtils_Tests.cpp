@@ -63,6 +63,10 @@ public:
     {
         Assert::AreEqual(std::string("0"), ToString(0));
         Assert::AreEqual(std::string("1"), ToString(1));
+        Assert::AreEqual(std::string{'a'}, ToString('a'));
+        Assert::AreEqual(std::string{'a'}, ToString(L'a'));
+        Assert::AreEqual(std::string{'3'}, ToString('3'));
+        Assert::AreEqual(std::string{'3'}, ToString(L'3'));
         Assert::AreEqual(std::string("99"), ToString(99));
         Assert::AreEqual(std::string("-3"), ToString(-3));
         Assert::AreEqual(std::string("0"), ToString(0U));
@@ -76,6 +80,10 @@ public:
 
     TEST_METHOD(TestToWString)
     {
+        Assert::AreEqual(std::wstring(1, L'a'), ToWString(L'a'));
+        Assert::AreEqual(std::wstring(1, L'a'), ToWString('a'));
+        Assert::AreEqual(std::wstring(1, L'3'), ToWString(L'3'));
+        Assert::AreEqual(std::wstring(1, L'3'), ToWString('3'));
         Assert::AreEqual(std::wstring(L"0"), ToWString(0));
         Assert::AreEqual(std::wstring(L"1"), ToWString(1));
         Assert::AreEqual(std::wstring(L"99"), ToWString(99));
@@ -141,6 +149,13 @@ public:
         Assert::AreEqual(std::string("Appl"), StringPrintf("%.*s", 4, "Apple"));
         Assert::AreEqual(std::string("Apple"), StringPrintf("%4s", "Apple"));
         Assert::AreEqual(std::string(" Boo"), StringPrintf("%4s", "Boo"));
+        
+        Assert::AreEqual(std::string("abc"), StringPrintf("%c%c%c", 'a', 'b', 'c'));
+        Assert::AreEqual(std::string("616263"), StringPrintf("%02x%02x%02x", 'a', 'b', 'c'));
+        Assert::AreEqual(std::string("52E331"), StringPrintf("%X", 5432113));
+        Assert::AreEqual(std::string("52e331"), StringPrintf("%x", 5432113));
+        Assert::AreEqual(std::string("70AF4E"), StringPrintf("%X", 0b11100001010111101001110));
+        Assert::AreEqual(std::string("70af4e"), StringPrintf("%x", 0b11100001010111101001110));
     }
 
     TEST_METHOD(TestWStringPrintf)
@@ -152,6 +167,9 @@ public:
         Assert::AreEqual(std::wstring(), StringPrintf(L""));
         Assert::AreEqual(std::wstring(L"'Twas the night before Christmas and all through the house, not a creature was stirring, not even a mouse."),
             StringPrintf(L"'Twas the %s before %s and all through the %s, not a %s was %s, not even a %s.", "night", "Christmas", "house", "creature", "stirring", "mouse"));
+
+        Assert::AreEqual(std::wstring(L"abc"), StringPrintf(L"%c%c%c", 'a', 'b', 'c'));
+        Assert::AreEqual(std::wstring(L"616263"), StringPrintf(L"%02x%02x%02x", 'a', 'b', 'c'));
     }
 
     TEST_METHOD(TestStringStartsWith)

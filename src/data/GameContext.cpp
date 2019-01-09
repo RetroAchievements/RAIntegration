@@ -9,6 +9,7 @@
 #include "api\FetchGameData.hh"
 #include "api\FetchUserUnlocks.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 #include "services\impl\StringTextReader.hh"
@@ -104,6 +105,10 @@ void GameContext::LoadGame(unsigned int nGameId)
     }
 
     // achievements
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    const bool bWasPaused = pRuntime.IsPaused();
+    pRuntime.SetPaused(true);
+
     unsigned int nNumCoreAchievements = 0;
     unsigned int nTotalCoreAchievementPoints = 0;
     for (const auto& pAchievementData : response.Achievements)
@@ -145,7 +150,7 @@ void GameContext::LoadGame(unsigned int nGameId)
     ra::api::FetchUserUnlocks::Request request2;
     request2.GameId = nGameId;
     request2.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    request2.CallAsync([this](const ra::api::FetchUserUnlocks::Response& response)
+    request2.CallAsync([this, bWasPaused](const ra::api::FetchUserUnlocks::Response& response)
     {
         std::set<unsigned int> vLockedAchievements;
         for (auto& pAchievement : m_vAchievements)
@@ -174,6 +179,8 @@ void GameContext::LoadGame(unsigned int nGameId)
 #endif
             }
         }
+
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(bWasPaused);
 
 #ifndef RA_UTEST
         for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)

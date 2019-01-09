@@ -110,12 +110,12 @@ size_t AchievementSet::GetAchievementIndex(const Achievement& Ach)
 void AchievementSet::Clear() noexcept
 {
     m_Achievements.clear();
-    m_bProcessingActive = true;
 }
 
 void AchievementSet::Test()
 {
-    if (!m_bProcessingActive)
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    if (pRuntime.IsPaused())
         return;
 
     for (auto pAchievement : m_Achievements)
@@ -125,7 +125,6 @@ void AchievementSet::Test()
     }
 
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     pRuntime.Process(vChanges);
 
     for (const auto& pChange : vChanges)
@@ -218,17 +217,6 @@ void AchievementSet::Test()
             }
         }
     }
-}
-
-void AchievementSet::Reset() noexcept
-{
-    for (auto pAchievement : m_Achievements)
-    {
-        if (pAchievement)
-            pAchievement->Reset();
-    }
-
-    m_bProcessingActive = true;
 }
 
 bool AchievementSet::SaveToFile() const

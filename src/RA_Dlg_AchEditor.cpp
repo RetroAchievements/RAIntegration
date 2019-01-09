@@ -179,12 +179,12 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 
     LbxDataAt(nRow, CondSubItems::Id) = std::to_string(nRow + 1);;
     LbxDataAt(nRow, CondSubItems::Group) = ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType())));
-    LbxDataAt(nRow, CondSubItems::Type_Src) = sMemTypStrSrc;
-    LbxDataAt(nRow, CondSubItems::Size_Src) = sMemSizeStrSrc;
+    LbxDataAt(nRow, CondSubItems::Type_Src) = ra::Narrow(sMemTypStrSrc);
+    LbxDataAt(nRow, CondSubItems::Size_Src) = ra::Narrow(sMemSizeStrSrc);
     LbxDataAt(nRow, CondSubItems::Value_Src) = ra::StringPrintf("0x%06x", Cond.CompSource().GetValue());
     LbxDataAt(nRow, CondSubItems::Comparison) = ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType())));
-    LbxDataAt(nRow, CondSubItems::Type_Tgt) = sMemTypStrDst;
-    LbxDataAt(nRow, CondSubItems::Size_Tgt) = sMemSizeStrDst;
+    LbxDataAt(nRow, CondSubItems::Type_Tgt) = ra::Narrow(sMemTypStrDst);
+    LbxDataAt(nRow, CondSubItems::Size_Tgt) = ra::Narrow(sMemSizeStrDst);
     LbxDataAt(nRow, CondSubItems::Value_Tgt) = ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue());
     LbxDataAt(nRow, CondSubItems::Hitcount) = ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits);
 

@@ -1,3 +1,5 @@
+#ifndef SERVERBASE_HH
+#define SERVERBASE_HH
 #pragma once
 
 #include "api/IServer.hh"
@@ -84,3 +86,5 @@ protected:
 } // namespace impl
 } // namespace api
 } // namespace ra
+
+#endif /* !SERVERBASE_HH */

@@ -33,7 +33,18 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_string(value);
+        if constexpr (std::is_same_v<T, wchar_t>)
+        {
+            int status = 0;
+            std::string mb(MB_CUR_MAX, '\0');
+            Expects(wctomb_s(&status, mb.data(), MB_CUR_MAX, value) == 0);
+            Ensures(to_unsigned(status) != to_unsigned(-1));
+            return mb;
+        }
+        else if constexpr (std::is_same_v<T, char>)
+            return value;
+        else
+            return std::to_string(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
@@ -93,11 +104,21 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_wstring(value);
+        if constexpr (std::is_same_v<T, char>)
+        {
+            std::wstring wc{value};
+            std::string mb(MB_CUR_MAX, '\0');
+            Ensures(std::mbtowc(wc.data(), mb.data(), 8) != -1);
+            return wc;
+        }
+        else if constexpr (std::is_same_v<T, wchar_t>)
+            return std::wstring(1, value);
+        else
+            return std::to_wstring(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
-        return std::to_wstring(static_cast<std::underlying_type_t<T>>(value));
+        return std::to_wstring(etoi(value));
     }
     else
     {
@@ -257,18 +278,29 @@ public:
 
         if constexpr (std::is_integral_v<T>)
         {
-            if (sFormat.front() == '0')
-                oss << std::setfill('0');
-            int nDigits = std::stoi(sFormat.c_str());
-            if (nDigits > 0)
-                oss << std::setw(nDigits);
+            if(sFormat.back() == 'c')
+                oss << arg;
+            else
+            {
+                if(std::isdigit(ra::to_unsigned(sFormat.front())))
+                {
+                    if (sFormat.front() == '0')
+                        oss << std::setfill('0');
 
-            if (sFormat.back() == 'X')
-                oss << std::uppercase << std::hex;
-            else if (sFormat.back() == 'x')
-                oss << std::hex;
+                    const int nDigits = std::stoi(sFormat);
+                    if (nDigits > 0)
+                        oss << std::setw(nDigits);
+                }
+                if (sFormat.back() == 'X')
+                    oss << std::uppercase << std::hex;
+                else if (sFormat.back() == 'x')
+                    oss << std::hex;
 
-            oss << arg;
+                if (is_char_v<T>)
+                    oss << gsl::narrow<int>(arg);
+                else
+                    oss << arg;
+            }
         }
         else if constexpr (std::is_floating_point_v<T>)
         {
@@ -590,7 +622,7 @@ public:
     }
 
     /// <summary>
-    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
+    /// Advances the cursor to the next occurrence of the specified charater, or the end of the string if no
     /// occurances are found.
     /// </summary>
     void AdvanceTo(char cStop)
@@ -676,7 +708,7 @@ _Success_(0 < return < ULONG_MAX) _NODISCARD
 
 /// <summary>
 ///   Returns the number of characters of a null-terminated byte string or wide-character string depending on
-///   the character set specified
+///   the character type specified
 /// </summary>
 /// <param name="_Str">The string.</param>
 /// <returns>Number of characters</returns>
@@ -700,26 +732,85 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringStartsWith(_In_ const std::string& sString, _In_ const std::string& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
 
-/// <summary>
-/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
-/// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringEndsWith(_In_ const std::string& sString, _In_ const std::string& sMatch) noexcept;
+    return (sString.compare(0, sMatch.length(), sMatch) == 0);
+}
 
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > sString.length())
+        return false;
+
+    return (sString.compare(0, sMatchLen, sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const CharT* restrict sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > tcslen_s(sString))
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(0, sMatchLen, sMatch) == 0);
+}
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatchLen, sMatchLen, sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    const auto sStringLen = tcslen_s(sString);
+    if (sMatchLen > sStringLen)
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(sStringLen - sMatchLen, sMatchLen, sMatch) == 0);
+}
 
 } // namespace ra
 

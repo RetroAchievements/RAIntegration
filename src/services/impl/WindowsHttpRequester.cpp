@@ -23,7 +23,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
 
     // allocate enough space in the string for the whole content
     sBuffer.resize(nContentLength + 1); // reserve space for null terminator
-    sBuffer[nContentLength] = '\0'; // set null terminator, will fill remaining portion of buffer
+    sBuffer.at(nContentLength) = '\0'; // set null terminator, will fill remaining portion of buffer
     sBuffer.resize(nContentLength);
 
     DWORD nAvailableBytes = 0U;
@@ -34,7 +34,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
     {
         DWORD nBytesFetched = 0U;
         const DWORD nBytesToRead = sBuffer.capacity() - nInsertAt;
-        if (WinHttpReadData(hRequest, &sBuffer[nInsertAt], nBytesToRead, &nBytesFetched))
+        if (WinHttpReadData(hRequest, &sBuffer.at(nInsertAt), nBytesToRead, &nBytesFetched))
         {
             nInsertAt += nBytesFetched;
         }

@@ -180,11 +180,11 @@ bool EmulatorContext::ValidateClientVersion()
 
     // remove any trailing ".0"s off the client version
     std::string sClientVersion = m_sVersion;
-    while (sClientVersion[sClientVersion.length() - 1] == '0' && sClientVersion[sClientVersion.length() - 2] == '.')
+    while (ra::StringEndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);
 
     std::string sNewVersion = m_sLatestVersion;
-    while (sNewVersion[sNewVersion.length() - 1] == '0' && sNewVersion[sNewVersion.length() - 2] == '.')
+    while (ra::StringEndsWith(sNewVersion, ".0"))
         sNewVersion.resize(sNewVersion.length() - 2);
 
     bool bUpdate = false;

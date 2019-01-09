@@ -92,7 +92,8 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
     rDocOut.Parse(GetResponse().c_str());
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()),
+               gsl::at(RequestTypeToString, m_nType));
 
     return !rDocOut.HasParseError();
 }
@@ -200,14 +201,14 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     sUrl += "/";
     sUrl += sLogPage;
     sLogPage += "?r=";
-    sLogPage += RequestTypeToPost[nType];
+    sLogPage += gsl::at(RequestTypeToPost, nType);
 
     RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
     if (!sPostData.empty())
         sPostData.push_back('&');
     sPostData += "r=";
-    sPostData += RequestTypeToPost[nType];
+    sPostData += gsl::at(RequestTypeToPost, nType);
 
     ra::services::Http::Request request(sUrl);
     request.SetPostData(sPostData);
@@ -231,10 +232,11 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 {
     ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
 
-    const std::string sRequestedPage = "doupload.php";
-    const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
+    const std::string sRequestedPage{"doupload.php"};
+    const std::string sRTarget{gsl::at(UploadTypeToPost, nType)}; //"uploadbadgeimage";
 
-    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str());
+    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(),
+           sRequestedPage.c_str());
 
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;

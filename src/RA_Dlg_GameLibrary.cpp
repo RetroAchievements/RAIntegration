@@ -445,7 +445,7 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 
 void Dlg_GameLibrary::LoadAll()
 {
-    std::wstring sMyGameLibraryFile{ra::StringPrintf(L"%s%s", g_sHomeDir, RA_MY_GAME_LIBRARY_FILENAME)};
+    const auto sMyGameLibraryFile = ra::StringPrintf(L"%s%s", g_sHomeDir, RA_MY_GAME_LIBRARY_FILENAME);
     {
         std::scoped_lock lock{mtx};
         std::ifstream ifile{sMyGameLibraryFile, std::ios::binary};

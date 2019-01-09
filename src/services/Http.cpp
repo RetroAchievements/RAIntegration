@@ -24,7 +24,7 @@ Http::Response Http::Request::Call() const
 void Http::Request::CallAsync(Callback&& fCallback) const
 {
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.RunAsync([request=*this, f = std::move(fCallback)]() {
+    pThreadPool.RunAsync([request = *this, f = std::move(fCallback)]() {
         auto response = request.Call();
         f(response);
     });
@@ -44,7 +44,7 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
 void Http::Request::DownloadAsync(const std::wstring& sFilename, Callback&& fCallback) const
 {
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.RunAsync([request=*this, sFilename, f = std::move(fCallback)]() {
+    pThreadPool.RunAsync([request = *this, sFilename, f = std::move(fCallback)]() {
         auto response = request.Download(sFilename);
         f(response);
     });
@@ -59,7 +59,7 @@ std::string Http::UrlEncode(const std::string& sInput)
 
 void Http::UrlEncodeAppend(std::string& sOutput, const std::string& sInput)
 {
-    static const char hex[] = "0123456789ABCDEF";
+    constexpr std::array<const char, 17> hex{"0123456789ABCDEF"};
 
     const auto nNeeded = sOutput.length() + sInput.length();
     if (sOutput.capacity() < nNeeded)
@@ -79,8 +79,8 @@ void Http::UrlEncodeAppend(std::string& sOutput, const std::string& sInput)
         else
         {
             sOutput.push_back('%');
-            sOutput.push_back(hex[c / 16]);
-            sOutput.push_back(hex[c % 16]);
+            sOutput.push_back(hex.at(c / 16));
+            sOutput.push_back(hex.at(c % 16));
         }
     }
 }

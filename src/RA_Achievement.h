@@ -126,6 +126,12 @@ public:
 
     void RebuildTrigger();
 
+    // range for
+    _NODISCARD inline auto begin() noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto end() noexcept { return m_vConditions.end(); }
+    _NODISCARD inline auto end() const noexcept { return m_vConditions.end(); }
+
 protected:
     void* m_pTrigger = nullptr;                                   // rc_trigger_t
     std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; // buffer for rc_trigger_t

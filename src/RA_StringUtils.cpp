@@ -91,41 +91,6 @@ std::string& TrimLineEnding(std::string& str) noexcept
 
     return str;
 }
-_Use_decl_annotations_
-bool StringStartsWith(const std::string& sString, const std::string& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringEndsWith(const std::string& sString, const std::string& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringStartsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
-}
 
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
 {

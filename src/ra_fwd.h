@@ -36,7 +36,7 @@
 #define restrict __restrict
 #else
 #define restrict
-#endif /* __STDC_VERSION__ >= 199901L*/
+#endif /* __STDC_VERSION__ >= 199901L */
 
 /* Use these for code analysis suppressions if needed */
 /* clang-format off */

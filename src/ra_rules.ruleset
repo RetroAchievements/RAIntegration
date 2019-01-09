@@ -50,6 +50,7 @@
     <Rule Id="C26441" Action="Warning" />
     <Rule Id="C26443" Action="Warning" />
     <Rule Id="C26444" Action="Warning" />
+    <Rule Id="C26446" Action="Warning" />
     <Rule Id="C26447" Action="Warning" />
     <Rule Id="C26449" Action="Warning" />
     <Rule Id="C26450" Action="Warning" />

@@ -61,10 +61,9 @@ void SessionTracker::LoadSessions()
                 continue;
             const auto nSessionLength = std::stoul(&sLine.at(nIndex2));
 
-            
-#pragma warning(suppress: 26490)
-            GSL_SUPPRESS_TYPE1 auto md5 =
-                RAGenerateMD5(gsl::make_span(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1));
+            GSL_SUPPRESS_TYPE1
+            auto md5 = RAGenerateMD5(gsl::make_span(reinterpret_cast<const BYTE*>(sLine.c_str()), nIndex + 1));
+            if (sLine.at(nIndex + 1) == md5.front() && sLine.at(nIndex + 2) == md5.back())
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
 
@@ -116,10 +115,11 @@ void SessionTracker::BeginSession(unsigned int nGameId)
     request.CallAsync([](const ra::api::StartSession::Response&) {});
 
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    pThreadPool.ScheduleAsync(std::chrono::seconds(30), [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
+    using namespace std::chrono_literals;
+    pThreadPool.ScheduleAsync(30s, [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
 
     // make sure a persisted play entry exists for the game and is first in the list
-    AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
+    AddSession(nGameId, m_tSessionStart, 0s);
     if (m_vGameStats.begin()->GameId != nGameId)
         SortSessions();
 }
@@ -174,7 +174,7 @@ std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDu
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
-    auto nSessionDuration = gsl::narrow<unsigned int>(tSessionDuration.count());
+    auto nSessionDuration = static_cast<unsigned int>(tSessionDuration.count());
     auto sLine = ra::StringPrintf("%u:%ld:%u:", m_nCurrentGameId, static_cast<long>(m_tSessionStart), nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());
@@ -188,7 +188,7 @@ std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDu
 
 std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) const
 {
-    std::chrono::seconds tPlaytime(0);
+    std::chrono::seconds tPlaytime{};
 
     // get the current session duration
     if (m_nCurrentGameId == nGameId)
@@ -266,7 +266,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
     if (HasCoreAchievements(pGameContext))
         return L"Earning Achievements";
 
-    return L"Playing " + pGameContext.GameTitle();
+    return StringPrintf(L"Playing %s", pGameContext.GameTitle());
 }
 
 } // namespace data

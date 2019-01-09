@@ -16,7 +16,7 @@ public:
     SessionTracker& operator=(const SessionTracker&) noexcept = delete;
     SessionTracker(SessionTracker&&) noexcept = delete;
     SessionTracker& operator=(SessionTracker&&) noexcept = delete;
-    
+
     /// <summary>
     /// Initializes the session data for the specified user.
     /// </summary>
@@ -26,17 +26,17 @@ public:
     /// Begins a new session for the specified game.
     /// </summary>
     void BeginSession(unsigned int nGameId);
-    
+
     /// <summary>
     /// Ends the current session.
     /// </summary>
     void EndSession();
-    
+
     /// <summary>
     /// Gets the total captured playtime for the specified game.
     /// </summary>
     std::chrono::seconds GetTotalPlaytime(unsigned int nGameId) const;
-    
+
     /// <summary>
     /// Determines whether any previous session data exists.
     /// </summary>
@@ -70,7 +70,7 @@ private:
 
     std::vector<GameStats> m_vGameStats;
 
-    std::streampos m_nFileWritePosition{};
+    std::streamoff m_nFileWritePosition{};
 };
 
 } // namespace data

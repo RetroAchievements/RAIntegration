@@ -178,8 +178,9 @@ public:
 
         tracker.Initialize("User");
         tracker.BeginSession(1234U);
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(180));
-        Assert::AreEqual(180U, static_cast<unsigned int>(tracker.GetTotalPlaytime(1234U).count()));
+        using namespace std::chrono_literals;
+        tracker.mockClock.AdvanceTime(180s);
+        Assert::AreEqual(180s, tracker.GetTotalPlaytime(1234U));
     }
 
     TEST_METHOD(TestNonEmptyFileMultipleGames)

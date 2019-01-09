@@ -150,6 +150,14 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
         default: return std::to_wstring(ra::etoi(type));
     }
 }
+
+template<> std::wstring ToString(const std::chrono::seconds& type)
+{
+    std::wostringstream oss;
+    oss << type.count();
+    return oss.str();
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

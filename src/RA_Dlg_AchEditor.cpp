@@ -711,8 +711,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
     };
 
     // hwndCtl depends on id
-    const auto _OnCommand = [this, &bHandled](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
-    {
+    const auto _OnCommand = [this, &bHandled](HWND hwnd, int id, HWND hwndCtl, UINT codeNotify) {
         switch (id)
         {
             case IDCLOSE:
@@ -897,23 +896,23 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             break;
                         }
 
-                            std::string buffer(16, '\0');
-                            if (GetDlgItemTextA(hDlg, IDC_RA_ACH_POINTS, buffer.data(), 16))
+                        std::string buffer(16, '\0');
+                        if (GetDlgItemTextA(hwnd, IDC_RA_ACH_POINTS, buffer.data(), 16))
                         {
-                                int nVal = 0;
-                                try
-                                {
-                                    nVal = std::stoi(NativeStr(buffer));
-                                } catch (const std::invalid_argument& e)
-                                {
-                                    RA_LOG_ERR("Invalid Argument: %s", e.what());
-                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                                        L"The points field may only contain digits."); // for users
+                            int nVal = 0;
+                            try
+                            {
+                                nVal = std::stoi(buffer);
+                            } catch (const std::invalid_argument& e)
+                            {
+                                RA_LOG_ERR("Invalid Argument: %s", e.what());
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    L"The points field may only contain digits."); // for users
 
-                                    // Set it back to 0 immediately, it won't change back by itself
-                                    SetWindowText(::GetDlgItem(hDlg, IDC_RA_ACH_POINTS), _T("0"));
-                                    return FALSE;
-                                }
+                                // Set it back to 0 immediately, it won't change back by itself
+                                SetWindowText(hwndCtl, _T("0"));
+                                return FALSE;
+                            }
 
                             if (nVal < 0 || nVal > 100)
                             {
@@ -1001,7 +1000,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             m_ConditionClipboard.Add(NewCondition);
                         }
 
-                            (void)m_ConditionClipboard.Count();
+                        (void)m_ConditionClipboard.Count();
                     }
                     else
                     {
@@ -1122,13 +1121,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         for (size_t i = 0; i < nInsertCount; ++i)
                         {
-                                const Condition& CondToMove = conditionsToMove.at(i);
+                            const Condition& CondToMove = conditionsToMove.at(i);
                             pActiveAch->InsertCondition(nSelectedConditionGroup, nInsertIndex + i, CondToMove);
                         }
 
                         // Set this achievement as 'modified'
                         pActiveAch->SetModified(TRUE);
-                            pActiveAch->RebuildTrigger();
+                        pActiveAch->RebuildTrigger();
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                         // Refresh:
@@ -1191,7 +1190,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         // Set this achievement as 'modified'
                         pActiveAch->SetModified(TRUE);
-                            pActiveAch->RebuildTrigger();
+                        pActiveAch->RebuildTrigger();
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
 
                         // Refresh:
@@ -1355,8 +1354,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     LV_DISPINFO lvDispinfo{};
                     lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                     lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
-#pragma warning(suppress: 26454)
-                    GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress : 26454)
+                    GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
                     lvDispinfo.item.mask = LVIF_TEXT;
                     lvDispinfo.item.iItem = nSelItem;
                     lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1622,7 +1621,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             {
                                 RA_LOG_ERR("\nFunction: %s\nLine: %d\nMessage: %s\n\n", __FUNCTION__, lineErrNumber,
                                            e.what());
-                                const auto bIsDecimal = Button_GetCheck(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS));
+                                const auto bIsDecimal = Button_GetCheck(::GetDlgItem(hwnd, IDC_RA_CHK_SHOW_DECIMALS));
                                 if (bIsDecimal)
                                 {
                                     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",

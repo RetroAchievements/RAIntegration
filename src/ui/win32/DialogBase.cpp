@@ -27,8 +27,10 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable : 26490)
     GSL_SUPPRESS_TYPE1 DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
+#pragma warning(pop)
 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);

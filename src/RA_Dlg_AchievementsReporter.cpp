@@ -57,44 +57,40 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
     // We aren't actually using the value so we're using iterators
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
-        const auto nPos{ std::distance(COL_TITLE.cbegin(), it) };
+        const auto nPos{std::distance(COL_TITLE.cbegin(), it)};
         switch (ra::itoe<Column>(nPos))
         {
-            case Column::Checked:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, "");
-                break;
-            case Column::Title:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Title().c_str());
-                break;
-            case Column::Desc:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Description().c_str());
-                break;
-            case Column::Author:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, pAch->Author().c_str());
-                break;
-            case Column::Achieved:
-                sprintf_s(ms_lbxData[ms_nNumOccupiedRows][nPos], MAX_TEXT_LEN, !pAch->Active() ? "Yes" : "No");
-                break;
-            default:
-                ASSERT(!"Unknown col!");
+        case Column::Checked:
+            sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", "");
+            break;
+        case Column::Title:
+            sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Title().c_str());
+            break;
+        case Column::Desc:
+            sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Description().c_str());
+            break;
+        case Column::Author:
+            sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN," %s", pAch->Author().c_str());
+            break;
+        case Column::Achieved:
+            sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", !pAch->Active() ? "Yes" : "No");
+            break;
+        default:
+            ASSERT(!"Unknown col!");
         }
     }
 
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
         // difference_type could be 8 bytes.
-        const auto nPos{ gsl::narrow_cast<int>(std::distance(COL_TITLE.cbegin(), it)) }; 
-        ra::tstring sStr{ NativeStr(ms_lbxData[ms_nNumOccupiedRows][nPos]) }; // Scoped cache
-        LV_ITEM item
-        {
-            item.mask       = ra::to_unsigned(LVIF_TEXT),
-            item.iItem      = ms_nNumOccupiedRows,
-            item.iSubItem   = nPos,
-            item.state      = 0U,
-            item.stateMask  = 0U,
-            item.pszText    = sStr.data(),
-            item.cchTextMax = 256
-        };
+        const auto nPos{gsl::narrow<int>(std::distance(COL_TITLE.cbegin(), it))};
+        ra::tstring sStr{NativeStr(LbxDataAt(ms_nNumOccupiedRows, nPos))}; // Scoped cache
+        LV_ITEM item{};
+        item.mask = ra::to_unsigned(LVIF_TEXT);
+        item.iItem = ms_nNumOccupiedRows;
+        item.iSubItem = nPos;
+        item.pszText = sStr.data();
+        item.cchTextMax = 256;
 
         if (nPos == 0)
             item.iItem = ListView_InsertItem(hList, &item);
@@ -103,11 +99,10 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
         Ensures(item.iItem == ms_nNumOccupiedRows);
     }
 
-    ms_nNumOccupiedRows++;	//	Last thing to do!
+    ms_nNumOccupiedRows++; // Last thing to do!
 }
 
-INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam,
-                                                                    _UNUSED LPARAM lParam)
+INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     const auto _OnCommand = [](HWND hDlg, int id, HWND, UINT)
     {

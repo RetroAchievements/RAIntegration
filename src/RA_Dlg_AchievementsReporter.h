@@ -27,7 +27,7 @@ public:
     static void DoModalDialog(HINSTANCE hInst, HWND hParent) noexcept;
 
 private:
-    static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, _UNUSED LPARAM);
+    static INT_PTR CALLBACK AchievementsReporterProc(HWND, UINT, WPARAM, LPARAM);
 
     static void SetupColumns(HWND hList);
     static void AddAchievementToListBox(_In_ HWND hList, _In_ const Achievement* restrict pAch);

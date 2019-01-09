@@ -48,6 +48,7 @@
 #define GSL_SUPPRESS_IO5 GSL_SUPPRESS(io.5)
 #define GSL_SUPPRESS_TYPE1 GSL_SUPPRESS(type.1)
 #define GSL_SUPPRESS_TYPE3 GSL_SUPPRESS(type.3)
+#define GSL_SUPPRESS_TYPE6 GSL_SUPPRESS(type.6)
 /* clang-format on */
 
 #ifndef _TCHAR_DEFINED

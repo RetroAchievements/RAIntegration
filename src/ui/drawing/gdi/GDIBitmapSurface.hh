@@ -15,12 +15,12 @@ namespace gdi {
 class GDIBitmapSurface : public GDISurface
 {
 public:
-    GSL_SUPPRESS(type.6) // m_hBitmap not initizalied, adhered to note below
+    GSL_SUPPRESS_TYPE6 // m_hBitmap not initialized, adhered to note below
     explicit GDIBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight}, pResourceRepository)
     {}
 
-    GSL_SUPPRESS(type.6) // m_hBitmap not initizalied, adhered to note below
+    GSL_SUPPRESS_TYPE6
     explicit GDIBitmapSurface(const int nWidth, const int nHeight) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight})
     {}

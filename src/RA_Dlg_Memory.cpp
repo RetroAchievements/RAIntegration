@@ -795,8 +795,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
     const auto _OnDrawItem = [this](HWND hwnd, const DRAWITEMSTRUCT* restrict lpDrawItem)
     {
         Expects((hwnd != nullptr) && (lpDrawItem != nullptr));
-#pragma warning(suppress: 26462)
+#pragma warning(push)
+#pragma warning(disable : 26462)
         GSL_SUPPRESS_CON4 const auto hListbox = GetDlgItem(hwnd, IDC_RA_MEM_LIST);
+#pragma warning(pop)
         if (lpDrawItem->hwndItem == hListbox)
         {
             if (lpDrawItem->itemID == -1)
@@ -810,7 +812,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     if (lpDrawItem->itemID == 0)
                     {
-                        const std::string& sFirstLine = m_SearchResults[m_nPage].m_results.Summary();
+                        const std::string& sFirstLine = m_SearchResults.at(m_nPage).m_results.Summary();
                         if (sFirstLine.empty())
                             _stprintf_s(buffer, sizeof(buffer), _T("%s"), _T("Invalid Range"));
                         else
@@ -819,7 +821,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     else
                     {
                         SetTextColor(lpDrawItem->hDC, RGB(0, 100, 150));
-                        const unsigned int nMatches = m_SearchResults[m_nPage].m_results.MatchingAddressCount();
+                        const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
                         if (nMatches > MIN_RESULTS_TO_DUMP)
                             _stprintf_s(buffer, sizeof(buffer),
                                 _T("Found %u matches! (Displaying first %u results)"), nMatches,
@@ -836,7 +838,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 }
                 else
                 {
-                    auto& currentSearch = m_SearchResults[m_nPage];
+                    auto& currentSearch = m_SearchResults.at(m_nPage);
                     ra::services::SearchResults::Result result;
                     if (!currentSearch.m_results.GetMatchingAddress(lpDrawItem->itemID - 2, result))
                         return FALSE;
@@ -901,9 +903,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         {
             case IDC_RA_MEM_LIST:
             {
+#pragma warning(push)
+#pragma warning(disable : 26454)
                 GSL_SUPPRESS_IO5
-#pragma warning(suppress: 26454)
                 if ((pnmhdr->code == LVN_ITEMCHANGED) || (pnmhdr->code == NM_CLICK))
+#pragma warning(pop)
                 {
                     const int nSelect = ListView_GetNextItem(GetDlgItem(hwnd, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 
@@ -912,7 +916,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     else if (nSelect >= 2)
                     {
                         ra::services::SearchResults::Result result;
-                        if (!m_SearchResults[m_nPage].m_results.GetMatchingAddress(nSelect - 2, result))
+                        if (!m_SearchResults.at(m_nPage).m_results.GetMatchingAddress(nSelect - 2, result))
                             break;
 
                         ComboBox_SetText(GetDlgItem(hwnd, IDC_RA_WATCHING),
@@ -1000,7 +1004,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         ra::tstring buffer = nativeBuffer;
                         // Read hex or dec
-                        if (buffer[0] == '0' && buffer[1] == 'x')
+                        if (ra::StringStartsWith(buffer, "0x"))
                             nValueQuery = std::stoul(buffer.substr(2), nullptr, 16);
                         else
                             nValueQuery = std::stoul(buffer);
@@ -1215,7 +1219,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 EnableWindow(hwndCtl, m_nPage > 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_RA_RESULTS_FORWARD), TRUE);
 
-                SearchResult& sr = m_SearchResults[m_nPage];
+                SearchResult& sr = m_SearchResults.at(m_nPage);
                 if (sr.m_results.Summary().empty())
                     ListView_SetItemCount(GetDlgItem(hwnd, IDC_RA_MEM_LIST), 1);
                 else
@@ -1232,7 +1236,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 EnableWindow(GetDlgItem(hwnd, IDC_RA_RESULTS_BACK), TRUE);
                 EnableWindow(hwndCtl, m_nPage + 1 < m_SearchResults.size());
 
-                SearchResult& sr = m_SearchResults[m_nPage];
+                SearchResult& sr = m_SearchResults.at(m_nPage);
                 if (sr.m_results.Summary().empty())
                     ListView_SetItemCount(GetDlgItem(hwnd, IDC_RA_MEM_LIST), 1);
                 else
@@ -1253,7 +1257,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         m_SearchResults.pop_back();
 
                     // copy the selected page, so we can return to it if we want
-                    m_SearchResults.push_back(m_SearchResults[m_nPage]);
+                    m_SearchResults.push_back(m_SearchResults.at(m_nPage));
                     SearchResult& sr = m_SearchResults.back();
                     m_nPage++;
 
@@ -1411,9 +1415,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             //	Fetch banks
             ClearBanks();
-            std::vector<size_t> bankIDs = g_MemManager.GetBankIDs();
-            for (size_t i = 0; i < bankIDs.size(); ++i)
-                AddBank(bankIDs[i]);
+            for (const auto id : g_MemManager.GetBankIDs())
+                AddBank(id);
 
             RestoreWindowPosition(hDlg, "Memory Inspector", true, false);
             return TRUE;
@@ -1898,10 +1901,10 @@ void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& r
 bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal)
 {
     const unsigned int nVal =
-        (m_SearchResults[m_nPage].m_bUseLastValue) ? nPrevVal : m_SearchResults[m_nPage].m_nLastQueryVal;
+        (m_SearchResults.at(m_nPage).m_bUseLastValue) ? nPrevVal : m_SearchResults.at(m_nPage).m_nLastQueryVal;
     bool bResult = false;
 
-    switch (m_SearchResults[m_nPage].m_nCompareType)
+    switch (m_SearchResults.at(m_nPage).m_nCompareType)
     {
         case ComparisonType::Equals:
             bResult = (nCurVal == nVal);

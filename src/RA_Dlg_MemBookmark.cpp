@@ -49,9 +49,11 @@ LRESULT CALLBACK EditProcBM(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     // hwndNewFocus -> wParam
     const auto _OnKillFocus = [](HWND hwnd, HWND /*hwndNewFocus*/)
     {
-        GSL_SUPPRESS_IO5
-#pragma warning(suppress: 26454)
-        NMHDR hdr{hwnd, ra::to_unsigned(GetDlgCtrlID(hwnd)), LVN_ENDLABELEDIT};
+        Expects(hwnd != nullptr);
+#pragma warning(push)
+#pragma warning(disable: 26454)
+        GSL_SUPPRESS_IO5 NMHDR hdr{ hwnd, ra::to_unsigned(GetDlgCtrlID(hwnd)), LVN_ENDLABELEDIT };
+#pragma warning(pop)
 
         LVITEM item{};
         item.mask = LVIF_TEXT;
@@ -301,8 +303,9 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
         {
             case IDC_RA_LBX_ADDRESSES:
             {
+#pragma warning(push)
+#pragma warning(disable: 26454)
                 GSL_SUPPRESS_IO5
-#pragma warning(suppress: 26454)
                 if (pnmhdr->code == NM_CLICK)
                 {
                     auto hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
@@ -312,11 +315,13 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     if (nSelect == -1)
                         break;
                 }
-#pragma warning(suppress: 26454) // io.5; arithmetic overflow
                 else if (pnmhdr->code == NM_DBLCLK)
+#pragma warning(pop)
                 {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
                     GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(pop)
 
                     using namespace ra::rel_ops;
                     if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Desc))
@@ -898,7 +903,7 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
     const auto nHeight = rcSubItem.bottom - rcSubItem.top;
     const auto nWidth = rcSubItem.right - rcSubItem.left;
 
-    Expects(g_hIPEEditBM == nullptr);
+    assert(g_hIPEEditBM == nullptr);
     if (g_hIPEEditBM)
         return FALSE;
 

@@ -27,37 +27,37 @@ namespace CppUnitTestFramework {
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced inline functions, they are referenced. Must be a bug.
 template<>
-std::wstring ToString<MemSize>(const MemSize& t)
+std::wstring ToString(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
 }
 
 template<>
-std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
+std::wstring ToString(const CompVariable::Type& t)
 {
     return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<>
-std::wstring ToString<ComparisonType>(const ComparisonType& t)
+std::wstring ToString(const ComparisonType& t)
 {
     return ra::Widen(COMPARISONTYPE_STR.at(ra::etoi(t)));
 }
 
 template<>
-std::wstring ToString<Condition::Type>(const Condition::Type& t)
+std::wstring ToString(const Condition::Type& t)
 {
     return (Condition::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<>
-std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::StatusCode& t)
+std::wstring ToString(const ra::services::Http::StatusCode& t)
 {
-    return std::to_wstring(ra::etoi(t));
+    return ra::ToWString(t);
 }
 
 template<>
-std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
+std::wstring ToString(const ra::ui::DialogResult& result)
 {
     switch (result)
     {
@@ -74,13 +74,12 @@ std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
         case ra::ui::DialogResult::Retry:
             return L"Retry";
         default:
-            return std::to_wstring(ra::etoi(result));
+            return ra::ToWString(result);
     }
 }
 
 template<>
-std::wstring
-    ToString<ra::ui::viewmodels::MessageBoxViewModel::Icon>(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
+std::wstring ToString(const ra::ui::viewmodels::MessageBoxViewModel::Icon& icon)
 {
     switch (icon)
     {
@@ -93,13 +92,12 @@ std::wstring
         case ra::ui::viewmodels::MessageBoxViewModel::Icon::Error:
             return L"Error";
         default:
-            return std::to_wstring(static_cast<int>(icon));
+            return ra::ToWString(icon);
     }
 }
 
 template<>
-std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(
-    const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
+std::wstring ToString(const ra::ui::viewmodels::MessageBoxViewModel::Buttons& buttons)
 {
     switch (buttons)
     {
@@ -114,12 +112,12 @@ std::wstring ToString<ra::ui::viewmodels::MessageBoxViewModel::Buttons>(
         case ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel:
             return L"RetryCancel";
         default:
-            return std::to_wstring(static_cast<int>(buttons));
+            return ra::ToWString(buttons);
     }
 }
 
 template<>
-std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
+std::wstring ToString(const ra::api::ApiResult& result)
 {
     switch (result)
     {
@@ -134,7 +132,7 @@ std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
         case ra::api::ApiResult::Unsupported:
             return L"Unsupported";
         default:
-            return std::to_wstring(ra::etoi(result));
+            return ra::ToWString(result);
     }
 }
 
@@ -147,15 +145,20 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
         case ra::ui::ImageType::UserPic: return L"UserPic";
         case ra::ui::ImageType::Local: return L"Local";
         case ra::ui::ImageType::Icon: return L"Icon";
-        default: return std::to_wstring(ra::etoi(type));
+        default: return ra::ToWString(type);
     }
 }
 
-template<> std::wstring ToString(const std::chrono::seconds& type)
+template<>
+std::wstring ToString(const std::chrono::seconds& type)
 {
-    std::wostringstream oss;
-    oss << type.count();
-    return oss.str();
+    return std::to_wstring(type.count());
+}
+
+template<>
+std::wstring ToString(const long long& type)
+{
+    return std::to_wstring(type);
 }
 
 #pragma warning(pop)

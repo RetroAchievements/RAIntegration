@@ -362,7 +362,7 @@ static void ActivateGame(unsigned int nGameId)
 struct PendingRom
 {
     std::string sMD5;
-    unsigned int nGameId;
+    unsigned int nGameId{};
 };
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
@@ -373,7 +373,7 @@ API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (nGameId != 0 && nGameId == pGameContext.GameId())
     {
-        // same as currently loaded rom. assume user is switching disks and _RA_ActivateGame won't be called.
+        // same as currently loaded ROM. assume user is switching disks and _RA_ActivateGame won't be called.
         // update the hash now
         pGameContext.SetGameHash(pPendingRom->sMD5);
     }
@@ -1151,9 +1151,11 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _UNUSED LPARAM, _In_ LPARAM l
     if (uMsg == BFFM_INITIALIZED)
     {
         // inline and function suppression not working, sometimes it does and sometimes it doesn't
-#pragma warning(suppress: 26490)
-        GSL_SUPPRESS_TYPE1 const auto path{reinterpret_cast<LPCTSTR>(lpData)};
-        GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+#pragma warning(push)
+#pragma warning(disable : 26490)
+        GSL_SUPPRESS_TYPE1 const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        GSL_SUPPRESS_TYPE1::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+#pragma warning(pop)
     }
     return 0;
 }

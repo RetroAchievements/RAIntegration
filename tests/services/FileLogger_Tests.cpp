@@ -17,8 +17,8 @@ namespace tests {
 TEST_CLASS(FileLogger_Tests)
 {
 private:
-    const std::wstring mockLogFileName = L".\\RACache\\RALog.txt";
-    const std::wstring mockOldLogFileName = L".\\RACache\\RALog-old.txt";
+    const std::wstring mockLogFileName{L".\\RACache\\RALog.txt"};
+    const std::wstring mockOldLogFileName{L".\\RACache\\RALog-old.txt"};
 
 public:
     TEST_METHOD(TestInitialization)
@@ -36,7 +36,8 @@ public:
 
         logger.LogMessage(LogLevel::Info, "This is a message.");
         logger.LogMessage(LogLevel::Warn, "This is another message.");
-        mockClock.AdvanceTime(std::chrono::milliseconds(375));
+        using namespace std::chrono_literals;
+        mockClock.AdvanceTime(375ms);
         logger.LogMessage(LogLevel::Error, "This is the third message.");
 
         Assert::AreEqual(std::string("\n"
@@ -50,15 +51,14 @@ public:
         MockClock mockClock;
         MockFileSystem mockFileSystem;
         mockFileSystem.MockFile(mockLogFileName, "Test");
-        mockFileSystem.MockFileSize(mockLogFileName, 1100000); // more than 1024*1024 bytes
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 1100000);
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), -1);
+        mockFileSystem.MockFileSize(mockLogFileName, 1100000LL); // more than 1024*1024 bytes
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockLogFileName), 1100000LL);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockOldLogFileName), -1LL);
 
         FileLogger logger(mockFileSystem);
         logger.LogMessage(LogLevel::Info, "This is a message.");
-
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 37);
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), 1100000);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockLogFileName), 37LL);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockOldLogFileName), 1100000LL);
     }
 
     TEST_METHOD(TestRotateReplace)
@@ -68,14 +68,14 @@ public:
         mockFileSystem.MockFile(mockLogFileName, "Test");
         mockFileSystem.MockFileSize(mockLogFileName, 1100000); // more than 1024*1024 bytes
         mockFileSystem.MockFile(mockOldLogFileName, std::string(80, 'A'));   // previously rotated log
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 1100000);
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), 80);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockLogFileName), 1100000LL);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockOldLogFileName), 80LL);
 
         FileLogger logger(mockFileSystem);
         logger.LogMessage(LogLevel::Info, "This is a message.");
 
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockLogFileName)), 37);
-        Assert::AreEqual(static_cast<int>(mockFileSystem.GetFileSize(mockOldLogFileName)), 1100000);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockLogFileName), 37LL);
+        Assert::AreEqual(mockFileSystem.GetFileSize(mockOldLogFileName), 1100000LL);
     }
 };
 

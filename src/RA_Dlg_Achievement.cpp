@@ -64,8 +64,10 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
 LRESULT ProcessCustomDraw(LPARAM lParam)
 {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 const auto lplvcd = reinterpret_cast<NMLVCUSTOMDRAW*>(lParam);
+#pragma warning(pop)
     switch (lplvcd->nmcd.dwDrawStage)
     {
         case CDDS_PREPAINT:
@@ -812,8 +814,10 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             {
                 iSelect = -1;
                 // MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
                 GSL_SUPPRESS_TYPE1 const auto pLVInfo = reinterpret_cast<NMLISTVIEW*>(pnmhdr);
+#pragma warning(pop)
                 if (pLVInfo->iItem != -1)
                 {
                     iSelect = pLVInfo->iItem;
@@ -834,8 +838,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             break;
 
             case NM_DBLCLK:
+#pragma warning(push)
+#pragma warning(disable: 26490)
                 GSL_SUPPRESS_TYPE1
-#pragma warning(suppress: 26490)
                 if (reinterpret_cast<LPNMITEMACTIVATE>(pnmhdr)->iItem != -1)
                 {
                     SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
@@ -843,6 +848,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         &g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(pnmhdr)->iItem),
                         FALSE);
                 }
+#pragma warning(pop)
                 return FALSE; //? TBD ##SD
 
             case NM_CUSTOMDRAW:

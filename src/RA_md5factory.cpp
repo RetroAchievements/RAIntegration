@@ -21,8 +21,9 @@ std::string RAGenerateMD5(const std::string& sStringToMD5)
     sprintf_s(buffer.data(), MD5_STRING_LEN + 1,
               "%02x%02x%02x%02x%02x%02x%02x%02x"
               "%02x%02x%02x%02x%02x%02x%02x%02x",
-              digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7], digest[8],
-              digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+              digest.at(0), digest.at(1), digest.at(2), digest.at(3), digest.at(4), digest.at(5), digest.at(6),
+              digest.at(7), digest.at(8), digest.at(9), digest.at(10), digest.at(11), digest.at(12), digest.at(13),
+              digest.at(14), digest.at(15));
 
     return buffer.data(); // Implicit promotion to std::string
 }
@@ -48,8 +49,9 @@ std::string RAGenerateMD5(gsl::span<const BYTE> pRawData)
     sprintf_s(buffer.data(), MD5_STRING_LEN + 1,
               "%02x%02x%02x%02x%02x%02x%02x%02x"
               "%02x%02x%02x%02x%02x%02x%02x%02x",
-              digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7], digest[8],
-              digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+              digest.at(0), digest.at(1), digest.at(2), digest.at(3), digest.at(4), digest.at(5), digest.at(6),
+              digest.at(7), digest.at(8), digest.at(9), digest.at(10), digest.at(11), digest.at(12), digest.at(13),
+              digest.at(14), digest.at(15));
 
     return buffer.data(); // Implicit promotion to std::string
 }

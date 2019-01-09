@@ -407,8 +407,10 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 _Use_decl_annotations_
 HBITMAP ImageRepository::GetHBitmap(ImageReference& pImage)
 {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
+#pragma warning(pop)
     if (hBitmap == nullptr)
     {
         auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());

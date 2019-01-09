@@ -19,7 +19,7 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
         if (iter != m_mIntValues.end())
             return;
 
-        m_mIntValues.insert_or_assign(pProperty.GetKey(), static_cast<int>(bValue));
+        m_mIntValues.insert_or_assign(pProperty.GetKey(), int{bValue});
     }
 
 #ifdef _DEBUG

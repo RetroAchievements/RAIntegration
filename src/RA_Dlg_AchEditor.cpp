@@ -235,8 +235,10 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
             // inline suppression not working, and by function not working, have to disable it by code
-#pragma warning(suppress: 26454)
+#pragma warning(push)
+#pragma warning(disable : 26454)
             GSL_SUPPRESS_IO5 lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
 
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
@@ -302,8 +304,10 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
                 LV_DISPINFO lvDispinfo{};
                 lvDispinfo.hdr.hwndFrom = hwnd;
                 lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-#pragma warning(suppress : 26454)
-                GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(push)
+#pragma warning(disable : 26454)
+                GSL_SUPPRESS_IO5 lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
                 lvDispinfo.item.mask = LVIF_TEXT;
                 lvDispinfo.item.iItem = nSelItem;
                 lvDispinfo.item.iSubItem = nSelSubItem;
@@ -334,8 +338,11 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             LV_DISPINFO lvDispinfo{};
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-#pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(push)
+#pragma warning(disable : 26454)
+            GSL_SUPPRESS_IO5 lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
+
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1000,7 +1007,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             m_ConditionClipboard.Add(NewCondition);
                         }
 
-                        (void)m_ConditionClipboard.Count();
+                        static_cast<void>(m_ConditionClipboard.Count());
                     }
                     else
                     {
@@ -1354,8 +1361,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     LV_DISPINFO lvDispinfo{};
                     lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                     lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
-#pragma warning(suppress : 26454)
-                    GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(push)
+#pragma warning(disable: 26454)
+                    GSL_SUPPRESS_IO5 lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(pop)
+
                     lvDispinfo.item.mask = LVIF_TEXT;
                     lvDispinfo.item.iItem = nSelItem;
                     lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1384,8 +1394,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         {
             case NM_CLICK:
             {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable : 26490)
                 GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(pop)
+
 
                 // http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
@@ -1412,8 +1425,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             break;
             case NM_RCLICK:
             {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable : 26490)
                 GSL_SUPPRESS_TYPE1 const auto pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(pnmhdr);
+#pragma warning(pop)
+
                 if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                 {
                     if (ra::to_unsigned(pOnClick->iItem) >
@@ -1465,8 +1481,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             case LVN_ENDLABELEDIT:
             {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable : 26490)
                 GSL_SUPPRESS_TYPE1 const auto pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pnmhdr);
+#pragma warning(pop)
 
                 Achievement* pActiveAch = ActiveAchievement();
                 if (pActiveAch == nullptr)
@@ -1678,8 +1696,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             case TTN_GETDISPINFO:
             {
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable : 26490)
                 GSL_SUPPRESS_TYPE1 const auto lpDispInfo = reinterpret_cast<NMTTDISPINFO*>(pnmhdr);
+#pragma warning(pop)
+
                 GetListViewTooltip();
                 if (!m_sTooltip.empty())
                 {

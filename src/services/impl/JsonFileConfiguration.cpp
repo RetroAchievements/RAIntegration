@@ -22,11 +22,11 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     m_mWindowPositions.clear();
     m_nBackgroundThreads = 8;
     m_vEnabledFeatures =
-        (1 << static_cast<int>(Feature::Hardcore)) |
-        (1 << static_cast<int>(Feature::Leaderboards)) |
-        (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
-        (1 << static_cast<int>(Feature::LeaderboardCounters)) |
-        (1 << static_cast<int>(Feature::LeaderboardScoreboards));
+        (1 << etoi(Feature::Hardcore)) |
+        (1 << etoi(Feature::Leaderboards)) |
+        (1 << etoi(Feature::LeaderboardNotifications)) |
+        (1 << etoi(Feature::LeaderboardCounters)) |
+        (1 << etoi(Feature::LeaderboardScoreboards));
 
     RA_LOG("Loading preferences...");
 

@@ -57,12 +57,12 @@ static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget.get());
-    Expects(pTarget != nullptr);
-#pragma warning(suppress: 26490)
     GSL_SUPPRESS_TYPE1 UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
-    Expects(pBlend != nullptr);
+#pragma warning(pop)
+    assert((pTarget != nullptr) && (pBlend != nullptr));
 
     *pTarget++ = gsl::narrow<UINT8>(
         (gsl::narrow<UINT32>(*pBlend++) * alpha + gsl::narrow<UINT32>(*pTarget) * (256 - alpha)) / 256);
@@ -97,9 +97,11 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     HDC hMemDC = CreateCompatibleDC(m_hDC);
 
     UINT32* pTextBits{};
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 HBITMAP hBitmap =
         CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+#pragma warning(pop)
     assert(hBitmap != nullptr);
     assert(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
@@ -136,6 +138,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
 void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
+    Expects(hTargetDC != nullptr);
     const int nWidth = gsl::narrow<int>(GetWidth());
     const int nHeight = gsl::narrow<int>(GetHeight());
 
@@ -153,9 +156,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 
     UINT32* pBits;
 
-#pragma warning(suppress: 26490)
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 HBITMAP hBitmap =
         CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
+#pragma warning(pop)
     Expects(hBitmap != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
@@ -180,22 +185,22 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 
 void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {
-    assert(fAlpha >= 0.0 && fAlpha <= 1.0);
+    Expects(fAlpha >= 0.0 && fAlpha <= 1.0);
     const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
-    Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
-
-#pragma warning(suppress: 26490)
+    assert(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
+#pragma warning(push)
+#pragma warning(disable: 26490)
     GSL_SUPPRESS_TYPE1 const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-#pragma warning(suppress: 26490)
     GSL_SUPPRESS_TYPE1 UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
-    Expects(pBits != nullptr);
+#pragma warning(pop)
+    assert(pBits != nullptr);
     do
     {
         // only update the alpha for non-transparent pixels
         if (*pBits)
             *pBits = nAlpha;
         pBits += 4;
-        Ensures(pBits != nullptr);
+        assert(pBits != nullptr);
     } while (pBits < pEnd);
 }
 

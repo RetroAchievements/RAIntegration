@@ -225,7 +225,7 @@ Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
         GetOptionalJsonField(response.NumUnreadMessages, document, "Messages");
     }
 
-    return std::move(response);
+    return response;
 }
 
 Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
@@ -280,7 +280,7 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
     if (DoRequest(m_sHost, StartSession::Name(), "postactivity", sPostData, response, document))
         response.Result = ApiResult::Success;
 
-    return std::move(response);
+    return response;
 }
 
 Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
@@ -296,7 +296,7 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
     if (DoRequest(m_sHost, Ping::Name(), "ping", sPostData, response, document))
         response.Result = ApiResult::Success;
 
-    return std::move(response);
+    return response;
 }
 
 FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept
@@ -325,7 +325,7 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request) noexcept
@@ -342,7 +342,7 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
         GetRequiredJsonField(response.GameId, document, "GameID", response);
     }
 
-    return std::move(response);
+    return response;
 }
 
 FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request) noexcept
@@ -381,7 +381,7 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
@@ -419,9 +419,9 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
 
         unsigned int time;
         GetRequiredJsonField(time, achData, "Created", response);
-        pAchievement.Created = static_cast<time_t>(time);
+        pAchievement.Created = to_signed(time);
         GetRequiredJsonField(time, achData, "Modified", response);
-        pAchievement.Updated = static_cast<time_t>(time);
+        pAchievement.Updated = to_signed(time);
     }
 
     const auto& LeaderboardsData{ PatchData["Leaderboards"] };

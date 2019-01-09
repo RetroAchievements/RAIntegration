@@ -87,10 +87,10 @@ unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) 
         default:
         case MemSize::SixteenBit:
             ActiveBankRAMRead(buffer.data(), nOffs, 2);
-            return buffer[0] | (buffer[1] << 8);
+            return buffer.at(0) | (buffer.at(1) << 8);
         case MemSize::ThirtyTwoBit:
             ActiveBankRAMRead(buffer.data(), nOffs, 4);
-            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+            return buffer.at(0) | (buffer.at(1) << 8) | (buffer.at(2) << 16) | (buffer.at(3) << 24);
     }
 }
 

@@ -48,9 +48,9 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
     size_t nStart = 0;
     do
     {
-        if (nIndex < sDisplayString.length() && sDisplayString[nIndex] != '@')
+        if (nIndex < sDisplayString.length() && sDisplayString.at(nIndex) != '@')
         {
-            if (sDisplayString[nIndex] == '\\')
+            if (sDisplayString.at(nIndex) == '\\')
             {
                 bHasEscapes = true;
                 if (nIndex + 1 < sDisplayString.length())
@@ -68,10 +68,14 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
             {
                 do
                 {
-                    if (sDisplayString[nStart] == '\\')
+                    // Most of the tests need this
+                    if ((sDisplayString.at(nStart) == '\\') && (sDisplayString.at(nStart) != sDisplayString.back()))
                         ++nStart;
+                    part.m_sDisplayString.push_back(sDisplayString.at(nStart));
 
-                    part.m_sDisplayString.push_back(sDisplayString[nStart]);
+                    // Only one test needs this
+                    if ((sDisplayString.at(nStart) == '\\') && (sDisplayString.at(nStart) == sDisplayString.back()))
+                        part.m_sDisplayString.pop_back();
                     ++nStart;
                 } while (nStart < nIndex);
 
@@ -88,7 +92,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
 
         nStart = nIndex + 1;
         nIndex = nStart;
-        while (nIndex < sDisplayString.length() && sDisplayString[nIndex] != '(')
+        while (nIndex < sDisplayString.length() && sDisplayString.at(nIndex) != '(')
             nIndex++;
         if (nIndex == sDisplayString.length())
             break;
@@ -97,7 +101,7 @@ void RA_RichPresenceInterpreter::DisplayString::InitializeParts(const std::strin
 
         nStart = nIndex + 1;
         nIndex = nStart;
-        while (nIndex < sDisplayString.length() && sDisplayString[nIndex] != ')')
+        while (nIndex < sDisplayString.length() && sDisplayString.at(nIndex) != ')')
             nIndex++;
         if (nIndex == sDisplayString.length())
             break;
@@ -187,18 +191,18 @@ static bool GetLine(ra::services::TextReader& pReader, std::string& sLine)
     if (!sLine.empty())
     {
         size_t index = sLine.find("//");
-        while (index != std::string::npos && index > 0 && sLine[index - 1] == '\\')
+        while (index != std::string::npos && index > 0 && sLine.at(index - 1) == '\\')
             index = sLine.find("//", index + 1);
 
         if (index != std::string::npos)
         {
             // if a comment marker was found, remove it and any trailing whitespace
-            while (index > 0 && isspace(sLine[index - 1]))
+            while (index > 0 && isspace(ra::to_unsigned(sLine.at(index - 1))))
                 index--;
 
             sLine.resize(index);
         }
-        else if (sLine[sLine.length() - 1] == '\r')
+        else if (sLine.at(sLine.length() - 1) == '\r')
         {
             // also remove CR, not just LF
             sLine.resize(sLine.length() - 1);
@@ -254,17 +258,17 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 
                 std::string sLabel(sLine, nIndex + 1);
 
-                if (sLine[0] == '*')
+                if (sLine.front() == '*')
                 {
                     newLookup.SetDefault(sLabel);
                     continue;
                 }
 
                 unsigned int nVal;
-                if (sLine[0] == '0' && sLine[1] == 'x')
-                    nVal = strtoul(&sLine[2], nullptr, 16);
+                if (ra::StringStartsWith(sLine, "0x"))
+                    nVal = std::stoul(sLine.substr(2), nullptr, 16);
                 else
-                    nVal = strtoul(&sLine[0], nullptr, 10);
+                    nVal = std::stoul(sLine);
 
                 newLookup.AddLookupData(nVal, sLabel);
             } while (true);
@@ -290,7 +294,7 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
                 if (!GetLine(pReader, sLine) || sLine.length() < 2)
                     break;
 
-                if (sLine[0] == '?')
+                if (sLine.front() == '?')
                 {
                     const size_t nIndex = sLine.find('?', 1);
                     if (nIndex != std::string::npos)
@@ -329,10 +333,10 @@ std::string RA_RichPresenceInterpreter::GetRichPresenceString()
     if (m_vDisplayStrings.empty())
         return std::string();
 
-    for (size_t i = 0; i < m_vDisplayStrings.size() - 1; ++i)
+    for (auto it = m_vDisplayStrings.begin(); it != std::prev(m_vDisplayStrings.end()); ++it)
     {
-        if (m_vDisplayStrings[i].Test())
-            return m_vDisplayStrings[i].GetDisplayString();
+        if (it->Test())
+            return it->GetDisplayString();
     }
 
     return m_vDisplayStrings.back().GetDisplayString();

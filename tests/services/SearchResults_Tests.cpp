@@ -25,8 +25,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryEightBit)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::EightBit);
@@ -59,8 +59,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemorySixteenBit)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::SixteenBit);
@@ -87,8 +87,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBit)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        InitializeMemory(memory, 6);
+        std::array<unsigned char, 6> memory{0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 4U, MemSize::ThirtyTwoBit);
@@ -109,8 +109,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryUpperNibble)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Upper);
@@ -159,8 +159,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryLowerNibble)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Lower); // should behave identical to Nibble_Upper
@@ -209,8 +209,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemorySixteenBitBounded)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 8U, MemSize::SixteenBit);
@@ -243,8 +243,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -270,8 +270,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -302,8 +302,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsConstantGap)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -334,8 +334,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -361,8 +361,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanOrEqualConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -393,8 +393,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitLessThanConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -420,8 +420,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitLessThanOrEqualConstant)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -452,16 +452,16 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstantModified)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
         // swap bytes 1 and 3, match should be found at address 1, not address 3
-        memory[1] = 0xAB;
-        memory[3] = 0x12;
+        memory.at(1) = 0xAB;
+        memory.at(3) = 0x12;
         SearchResults results;
         results.Initialize(results1, ComparisonType::Equals, 0xABU);
         Assert::AreEqual(std::string("Filtering for EQUAL 171..."), results.Summary());
@@ -482,15 +482,15 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsPrevious)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
-        memory[1] = 0x14;
-        memory[2] = 0x55;
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
@@ -516,14 +516,14 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsSixteenBitNotEqualPrevious)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 4U, MemSize::SixteenBit);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
-        memory[2] = 0x55;
+        memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
@@ -548,15 +548,15 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsFourBitNotEqualsPrevious)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::Nibble_Lower);
         Assert::AreEqual(6U, results1.MatchingAddressCount());
 
-        memory[1] = 0x14;
-        memory[2] = 0x55;
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
@@ -587,8 +587,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsFourBitEqualsSameByte)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Lower);
@@ -605,13 +605,13 @@ public:
         Assert::AreEqual(1U, result.nValue);
 
         // Nibble_Upper no longer matches, but Nibble_Lower does. Neither should not be returned.
-        memory[1] = 0x21;
+        memory.at(1) = 0x21;
         SearchResults filtered2;
         filtered2.Initialize(filtered1, ComparisonType::Equals, 1);
         Assert::AreEqual(0U, filtered2.MatchingAddressCount());
 
         // Both nibbles match, only previously matched one should be returned
-        memory[1] = 0x11;
+        memory.at(1) = 0x11;
         SearchResults filtered3;
         filtered3.Initialize(filtered1, ComparisonType::Equals, 1);
         Assert::AreEqual(1U, filtered3.MatchingAddressCount());
@@ -624,8 +624,8 @@ public:
 
     TEST_METHOD(TestExcludeAddressEightBit)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -635,8 +635,8 @@ public:
         results1.ExcludeAddress(1U);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
-        memory[1] = 0x14;
-        memory[2] = 0x55;
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
@@ -665,8 +665,8 @@ public:
 
     TEST_METHOD(TestExcludeMatchingAddressEightBit)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
@@ -676,8 +676,8 @@ public:
         results1.ExcludeMatchingAddress(0U);
         Assert::AreEqual(3U, results1.MatchingAddressCount());
 
-        memory[1] = 0x14;
-        memory[2] = 0x55;
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
         Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());

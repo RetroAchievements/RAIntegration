@@ -36,7 +36,7 @@
 #define restrict __restrict
 #else
 #define restrict
-#endif /* __STDC_VERSION__ >= 199901L*/
+#endif /* __STDC_VERSION__ >= 199901L */
 
 /* Use these for code analysis suppressions if needed */
 /* clang-format off */
@@ -44,6 +44,8 @@
 #define GSL_SUPPRESS_CON4 GSL_SUPPRESS(con.4)
 #define GSL_SUPPRESS_F6 GSL_SUPPRESS(f.6)
 #define GSL_SUPPRESS_F23 GSL_SUPPRESS(f.23)
+#define GSL_SUPPRESS_IO5 GSL_SUPPRESS(io.5)
+#define GSL_SUPPRESS_ES106 GSL_SUPPRESS(es.106)
 /* clang-format on */
 
 #ifndef _TCHAR_DEFINED

@@ -17,14 +17,14 @@ public:
     enum class DirtyFlags
     {
         Clean,
-        Title       = 1 << 0,
-        Desc        = 1 << 1,
-        Points      = 1 << 2,
-        Author      = 1 << 3,
-        ID          = 1 << 4,
-        Badge       = 1 << 5,
-        Conditions  = 1 << 6,
-        Votes       = 1 << 7,
+        Title = 1 << 0,
+        Desc = 1 << 1,
+        Points = 1 << 2,
+        Author = 1 << 3,
+        ID = 1 << 4,
+        Badge = 1 << 5,
+        Conditions = 1 << 6,
+        Votes = 1 << 7,
         Description = 1 << 8,
 
         All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
@@ -125,6 +125,12 @@ public:
     _CONSTANT_FN ClearDirtyFlag() noexcept { m_nDirtyFlags = DirtyFlags{}; }
 
     void RebuildTrigger();
+
+    // range for
+    _NODISCARD inline auto begin() noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto end() noexcept { return m_vConditions.end(); }
+    _NODISCARD inline auto end() const noexcept { return m_vConditions.end(); }
 
 protected:
     void* m_pTrigger = nullptr;                                   // rc_trigger_t

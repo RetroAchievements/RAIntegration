@@ -1,5 +1,6 @@
 #include "PopupMessageViewModel.hh"
 
+#include "ra_math.h"
 
 namespace ra {
 namespace ui {
@@ -21,8 +22,9 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     {
         // fading in
         const auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        const auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        SetRenderLocationY(static_cast<int>(nY));
+        Expects(m_nTargetY > m_nInitialY);
+        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        SetRenderLocationY(ftol(m_nTargetY - nY));
     }
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME - INOUT_TIME)
     {
@@ -33,8 +35,9 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     {
         // fading out
         const auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        const auto nY = m_nTargetY - (m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        SetRenderLocationY(static_cast<int>(nY));
+        Expects(m_nTargetY > m_nInitialY);
+        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
+        SetRenderLocationY(ftoi(m_nTargetY - nY));
     }
     else
     {
@@ -70,7 +73,7 @@ void PopupMessageViewModel::CreateRenderImage()
 
     // create the actual surface
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
-    const int nHeight = 64 + 2;
+    constexpr int nHeight = 64 + 2;
 
     pSurface = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
     m_pSurface = std::move(pSurface);

@@ -8,7 +8,6 @@ std::string Narrow(const std::wstring& wstr)
     return Narrow(wstr.c_str());
 }
 
-_Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
     const auto wwstr{ std::move_if_noexcept(wstr) };
@@ -37,7 +36,6 @@ std::wstring Widen(const std::string& str)
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_
 std::wstring Widen(std::string&& str) noexcept
 {
     const auto sstr{ std::move_if_noexcept(str) };
@@ -92,41 +90,6 @@ std::string& TrimLineEnding(std::string& str) noexcept
     }
 
     return str;
-}
-_Use_decl_annotations_
-bool StringStartsWith(const std::string& sString, const std::string& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringEndsWith(const std::string& sString, const std::string& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringStartsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
 }
 
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const

@@ -141,7 +141,7 @@ public:
     void SelectNextTopLevelPage(BOOL bPressedRight) noexcept;
     void InstallNewsArticlesFromFile();
 
-    [[gsl::suppress(f .6)]] void UpdateImages() noexcept;
+    GSL_SUPPRESS_F6 void UpdateImages() noexcept;
 
 public:
     struct NewsItem
@@ -149,7 +149,7 @@ public:
         unsigned int m_nID{};
         std::string m_sTitle;
         std::string m_sPayload;
-        time_t m_nPostedAt{};
+        std::time_t m_nPostedAt{};
         std::string m_sPostedAt;
         std::string m_sAuthor;
         std::string m_sLink;
@@ -192,9 +192,9 @@ extern AchievementOverlay g_AchievementOverlay;
 
 // Exposed to DLL
 extern "C" {
-[[gsl::suppress(con.3)]] API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime,
-                                                   _In_ bool Full_Screen, _In_ bool Paused);
-[[gsl::suppress(con.3)]] API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+GSL_SUPPRESS_CON3 API int _RA_UpdateOverlay(_In_ ControllerInput* pInput, _In_ float fDTime, _In_ bool Full_Screen,
+                                            _In_ bool Paused);
+GSL_SUPPRESS_CON3 API void _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
 API bool _RA_IsOverlayFullyVisible();
 }
 

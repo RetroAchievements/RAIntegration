@@ -475,7 +475,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             g_hIPEEdit =
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
-                               rcSubItem.top, nWidth, static_cast<int>(1.6f * nHeight * nNumItems),
+                               rcSubItem.top, nWidth, ra::ftoi(1.6f * nHeight * nNumItems),
                                g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
 
             if (g_hIPEEdit == nullptr)
@@ -572,7 +572,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             g_hIPEEdit =
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
-                               rcSubItem.top, nWidth, static_cast<int>(1.6F * nHeight * COMPARISONTYPE_STR.size()),
+                               rcSubItem.top, nWidth,  ra::ftoi(1.6F * nHeight * COMPARISONTYPE_STR.size()),
                                g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
 
             if (g_hIPEEdit == nullptr)
@@ -907,24 +907,35 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         if (GetDlgItemTextA(hwnd, IDC_RA_ACH_POINTS, buffer.data(), 16))
                         {
                             int nVal = 0;
+                            int lineErrNo = 0;
+                            constexpr auto formatStr = "\nFunction: %s\nLine: %d\nMessage: %s\n";
                             try
                             {
+                                lineErrNo = __LINE__ + 1;
                                 nVal = std::stoi(buffer);
+                                if (nVal < 0 || nVal > 100) // out_of_range
+                                     throw std::out_of_range{"Points must be non-negative and less than 100"};
                             } catch (const std::invalid_argument& e)
                             {
-                                RA_LOG_ERR("Invalid Argument: %s", e.what());
+                                RA_LOG_ERR(formatStr, __FUNCTION__, lineErrNo, e.what());
                                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                                     L"The points field may only contain digits."); // for users
 
                                 // Set it back to 0 immediately, it won't change back by itself
                                 SetWindowText(hwndCtl, _T("0"));
-                                return FALSE;
-                            }
-
-                            if (nVal < 0 || nVal > 100)
-                            {
                                 bHandled = FALSE;
-                                break;
+                                // No point in re-throw since the user can't do anything right now
+                                return FALSE;
+                            } catch (const std::out_of_range& e)
+                            {
+                                // message will be different depending if was greater than MAX_INT or 100
+                                RA_LOG_ERR(formatStr, __FUNCTION__, lineErrNo, e.what());
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
+                                                                                            ra::Widen(e.what()));
+
+                                SetWindowText(hwndCtl, _T("0"));
+                                bHandled = FALSE;
+                                return FALSE;
                             }
 
                             pActiveAch->SetPoints(nVal);
@@ -1670,16 +1681,25 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     case CondSubItems::Hitcount:
                     {
                         // Always decimal
-                            try
-                            {
-                                rCond.SetRequiredHits(std::stoul(sData));
-                            } catch (const std::invalid_argument& e)
-                            {
-                                RA_LOG_ERR("invalid_argument: %s", e.what());
-                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                                    L"Only digits are allowed in this field!");
-                                rCond.SetRequiredHits(0);
-                            }
+                        int lineErrNo = 0;
+                        constexpr auto errFormat = "\nFunction: %s\nLine: %d\nMessage: %s\n";
+                        try
+                        {
+                            lineErrNo = __LINE__ + 1;
+                            rCond.SetRequiredHits(std::stoul(sData));
+                        } catch (const std::invalid_argument& e)
+                        {
+                            RA_LOG_ERR(errFormat, __FUNCTION__, lineErrNo, e.what());
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                L"Only digits are allowed in this field!");
+                        } catch (const std::out_of_range& e)
+                        {
+                            RA_LOG_ERR(errFormat, __FUNCTION__, lineErrNo, e.what());
+                            // Is there a specific number of hits that are too much for achievements? This'll only get
+                            // thrown if larger than ULONG_MAX which is more of a system error
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Value too large!");
+                        }
+                        rCond.SetRequiredHits(0);
                         break;
                     }
                     default:
@@ -2201,7 +2221,7 @@ size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const noexcept
 void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcept
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
-    ListBox_SetCurSel(hList, static_cast<int>(nGrp));
+    ListBox_SetCurSel(hList, gsl::narrow_cast<int>(nGrp));
 }
 
 void BadgeNames::FetchNewBadgeNamesThreaded() { RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter); }

@@ -302,7 +302,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                                                                                                                 //sb_ascii << "\r\n";                                                                                   //  Spacing
                                                                                                                 //sb_ascii << "--" << mimeBoundary << "--\r\n";                                                     //  --Boundary--
 
-            const std::string str = sb_ascii.str();
+            std::string str = sb_ascii.str();
 
             //  Inject type of request
 
@@ -310,9 +310,9 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                 hRequest,
                 WINHTTP_NO_ADDITIONAL_HEADERS,
                 0,
-                (void*)str.c_str(),
-                static_cast<unsigned long>(str.length()),
-                static_cast<unsigned long>(str.length()),
+                str.data(),
+                gsl::narrow<DWORD>(str.length()),
+                str.length(),
                 0);
         }
 

@@ -136,16 +136,23 @@ std::wstring ToString(const ra::api::ApiResult& result)
     }
 }
 
-template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& type)
+template<>
+std::wstring ToString(const ra::ui::ImageType& type)
 {
     switch (type)
     {
-        case ra::ui::ImageType::None: return L"None";
-        case ra::ui::ImageType::Badge: return L"Badge";
-        case ra::ui::ImageType::UserPic: return L"UserPic";
-        case ra::ui::ImageType::Local: return L"Local";
-        case ra::ui::ImageType::Icon: return L"Icon";
-        default: return ra::ToWString(type);
+        case ra::ui::ImageType::None:
+            return L"None";
+        case ra::ui::ImageType::Badge:
+            return L"Badge";
+        case ra::ui::ImageType::UserPic:
+            return L"UserPic";
+        case ra::ui::ImageType::Local:
+            return L"Local";
+        case ra::ui::ImageType::Icon:
+            return L"Icon";
+        default:
+            return ra::ToWString(type);
     }
 }
 

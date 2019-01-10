@@ -15,7 +15,7 @@ std::string Narrow(std::wstring&& wstr) noexcept
 }
 
 _Use_decl_annotations_
-std::string Narrow(const wchar_t* wstr)
+std::string Narrow(const wchar_t* const restrict wstr)
 {
     const auto len{ ra::to_signed(std::wcslen(wstr)) };
 
@@ -43,7 +43,7 @@ std::wstring Widen(std::string&& str) noexcept
 }
 
 _Use_decl_annotations_
-std::wstring Widen(const char* str)
+std::wstring Widen(const char* const restrict str)
 {
     const auto len{ ra::to_signed(std::strlen(str)) };
     const auto needed{ ::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0) };
@@ -57,7 +57,7 @@ std::wstring Widen(const char* str)
 }
 
 _Use_decl_annotations_
-std::wstring Widen(const wchar_t* wstr)
+std::wstring Widen(const wchar_t* const restrict wstr)
 {
     const std::wstring _wstr{ wstr };
     return _wstr;
@@ -66,7 +66,7 @@ std::wstring Widen(const wchar_t* wstr)
 _Use_decl_annotations_ std::wstring Widen(const std::wstring& wstr) { return wstr; }
 
 _Use_decl_annotations_
-std::string Narrow(const char* str)
+std::string Narrow(const char* const restrict str)
 {
     const std::string _str{ str };
     return _str;
@@ -92,6 +92,16 @@ std::string& TrimLineEnding(std::string& str) noexcept
     return str;
 }
 
+_Use_decl_annotations_
+std::string TimeStampToString(std::time_t nTime, const char* const restrict sFormat)
+{
+    std::tm tm{};
+    Expects(localtime_s(&tm, &nTime) == 0);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, sFormat); // 12/31/18 16:54:23 format by default, might be different for another locale
+    return oss.str();
+}
+
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
 {
     size_t nNeeded = 0;
@@ -110,11 +120,11 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 break;
 
             case PendingString::Type::StringRef:
-                nNeeded += std::get<const std::string*>(pPending.Ref)->length();
+                nNeeded += std::get<const std::string>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::WStringRef:
-                pPending.String = ra::Narrow(*std::get<const std::wstring*>(pPending.Ref));
+                pPending.String = ra::Narrow(std::get<const std::wstring>(pPending.Ref));
                 pPending.DataType = PendingString::Type::String;
                 nNeeded += pPending.String.length();
                 break;
@@ -142,7 +152,7 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 break;
 
             case PendingString::Type::StringRef:
-                sResult.append(*std::get<const std::string*>(pPending.Ref));
+                sResult.append(std::get<const std::string>(pPending.Ref));
                 break;
 
             case PendingString::Type::CharRef:
@@ -170,11 +180,11 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 break;
 
             case PendingString::Type::WStringRef:
-                nNeeded += std::get<const std::wstring*>(pPending.Ref)->length();
+                nNeeded += std::get<const std::wstring>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::StringRef:
-                pPending.WString = ra::Widen(*std::get<const std::string*>(pPending.Ref));
+                pPending.WString = ra::Widen(std::get<const std::string>(pPending.Ref));
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
@@ -202,7 +212,7 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 break;
 
             case PendingString::Type::WStringRef:
-                sResult.append(*std::get<const std::wstring*>(pPending.Ref));
+                sResult.append(std::get<const std::wstring>(pPending.Ref));
                 break;
 
             case PendingString::Type::WCharRef:

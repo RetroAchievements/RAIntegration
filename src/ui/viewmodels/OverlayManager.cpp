@@ -86,7 +86,7 @@ void OverlayManager::ClearPopups()
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)
 {
-    assert(!m_vPopupMessages.empty());
+    Expects(!m_vPopupMessages.empty());
     auto* pActiveMessage = &m_vPopupMessages.front();
 
     if (!pActiveMessage->IsAnimationStarted())

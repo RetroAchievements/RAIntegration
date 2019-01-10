@@ -37,8 +37,6 @@ extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-extern std::string _TimeStampToString(time_t nTime);
-
 _NODISCARD std::string GetFolderFromDialog();
 
 BOOL CanCausePause() noexcept;

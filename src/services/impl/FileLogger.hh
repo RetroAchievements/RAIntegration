@@ -44,26 +44,23 @@ public:
 
         // write a timestamp
         time_t tTime{};
-        unsigned int tMilliseconds{};
+        using namespace std::chrono_literals;
+        auto tMilliseconds{0ms};
         if (ServiceLocator::Exists<IClock>())
         {
             const auto tNow = ServiceLocator::Get<IClock>().Now();
-            tMilliseconds = gsl::narrow<unsigned int>(
-                std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch().count() % 1000);
+            tMilliseconds = 
+                std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch() % 1000;
             tTime = std::chrono::system_clock::to_time_t(tNow);
         }
         else
         {
-            tTime = time(nullptr);
-            tMilliseconds = 0;
+            tTime = std::time(nullptr);
+            tMilliseconds = 0ms;
         }
 
-        std::tm tTimeStruct;
-        localtime_s(&tTimeStruct, &tTime);
-
-        char sBuffer[16];
-        strftime(sBuffer, sizeof(sBuffer), "%H%M%S", &tTimeStruct);
-        sprintf_s(&sBuffer[6], sizeof(sBuffer) - 6, ".%03u|", tMilliseconds);
+        auto sBuffer = TimeStampToString(tTime, "%H%M%S");
+        sBuffer.insert(6, StringPrintf(".%03l|", tMilliseconds.count()));
 
         // WinXP hangs if we try to acquire a mutex while the DLL in initializing. Since DllMain writes
         // a header block to the log file, we have to do that without using a mutex. Luckily, we're not
@@ -73,11 +70,11 @@ public:
         if (ServiceLocator::Exists<IThreadPool>())
         {
             std::scoped_lock<std::mutex> oLock(m_oMutex);
-            LogMessage(*m_pWriter, sBuffer, level, sMessage);
+            LogMessage(*m_pWriter, sBuffer.c_str(), level, sMessage);
         }
         else
         {
-            LogMessage(*m_pWriter, sBuffer, level, sMessage);
+            LogMessage(*m_pWriter, sBuffer.c_str(), level, sMessage);
         }
 
         // if writing to a file, flush immediately

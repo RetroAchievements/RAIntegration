@@ -7,17 +7,17 @@
 namespace ra {
 
 _NODISCARD std::string Narrow(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_In_z_ const wchar_t* wstr);
+_NODISCARD std::string Narrow(_In_z_ const wchar_t* const restrict wstr);
 _NODISCARD std::wstring Widen(_In_ const std::string& str);
-_NODISCARD std::wstring Widen(_In_z_ const char* str);
+_NODISCARD std::wstring Widen(_In_z_ const char* const restrict str);
 
 GSL_SUPPRESS_F6 _NODISCARD std::string Narrow(std::wstring&& wstr) noexcept;
 GSL_SUPPRESS_F6 _NODISCARD std::wstring Widen(std::string&& str) noexcept;
 
 //	No-ops to help convert:
-_NODISCARD std::wstring Widen(_In_z_ const wchar_t* wstr);
+_NODISCARD std::wstring Widen(_In_z_ const wchar_t* const restrict wstr);
 _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
-_NODISCARD std::string Narrow(_In_z_ const char* str);
+_NODISCARD std::string Narrow(_In_z_ const char* const restrict str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 
 /// <summary>
@@ -47,12 +47,12 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
             return std::to_string(value);
     }
     else if constexpr (std::is_enum_v<T>)
-    {
         return std::to_string(etoi(value));
-    }
     else
     {
-        static_assert(false, "No ToString implementation for type");
+        // it would be easier with typeid but it's not a string literal
+        static_assert(false, "No ToString implementation: " __FUNCSIG__);
+
         return std::string();
     }
 }
@@ -70,19 +70,25 @@ _NODISCARD inline const std::string ToString(_In_ const std::wstring& value)
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const wchar_t* const& value)
+_NODISCARD inline const std::string ToString(_In_z_ const wchar_t* const restrict& value)
 {
     return ra::Narrow(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const char* const& value)
+_NODISCARD inline const std::string ToString(_In_z_ const char* const restrict& value)
 {
     return std::string(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ char* const& value)
+_NODISCARD inline const std::string ToString(_In_z_ char* const& value)
+{
+    return std::string(value);
+}
+
+template<>
+_NODISCARD inline const std::string ToString(_In_z_ char* const restrict& value)
 {
     return std::string(value);
 }
@@ -94,8 +100,8 @@ _NODISCARD inline const std::string ToString(_In_ const char& value)
 }
 
 // literal strings can't be passed by reference, so won't call the templated methods
-_NODISCARD inline const std::string ToString(_In_ const char* value) { return std::string(value); }
-_NODISCARD inline const std::string ToString(_In_ const wchar_t* value) { return ra::Narrow(value); }
+_NODISCARD inline const std::string ToString(_In_z_ const char* const value) { return std::string(value); }
+_NODISCARD inline const std::string ToString(_In_z_ const wchar_t* const value) { return ra::Narrow(value); }
 
 // ----- ToWString -----
 
@@ -117,12 +123,10 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T& value)
             return std::to_wstring(value);
     }
     else if constexpr (std::is_enum_v<T>)
-    {
         return std::to_wstring(etoi(value));
-    }
     else
     {
-        static_assert(false, "No ToWString implementation for type");
+        static_assert(false, "No ToWString implementation: " __FUNCSIG__);
         return std::wstring();
     }
 }
@@ -140,13 +144,13 @@ _NODISCARD inline const std::wstring ToWString(_In_ const std::string& value)
 }
 
 template<>
-_NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* const& value)
+_NODISCARD inline const std::wstring ToWString(_In_z_ const wchar_t* const restrict& value)
 {
     return std::wstring(value);
 }
 
 template<>
-_NODISCARD inline const std::wstring ToWString(_In_ const char* const& value)
+_NODISCARD inline const std::wstring ToWString(_In_z_ const char* const restrict& value)
 {
     return ra::Widen(value);
 }
@@ -164,8 +168,8 @@ _NODISCARD inline const std::wstring ToWString(_In_ const char& value)
 }
 
 // literal strings can't be passed by reference, so won't call the templated methods
-_NODISCARD inline const std::wstring ToWString(_In_ const char* value) { return ra::Widen(value); }
-_NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* value) { return std::wstring(value); }
+_NODISCARD inline const std::wstring ToWString(_In_z_ const char* const value) { return ra::Widen(value); }
+_NODISCARD inline const std::wstring ToWString(_In_z_ const wchar_t* const value) { return std::wstring(value); }
 
 // ----- string building -----
 
@@ -177,86 +181,53 @@ public:
     template<typename T>
     void Append(const T& arg)
     {
-        PendingString pPending;
         if (m_bPrepareWide)
-        {
-            pPending.WString = ra::ToWString(arg);
-            pPending.DataType = PendingString::Type::WString;
-        }
+            m_vPending.emplace_back(ra::ToWString(arg));
         else
-        {
-            pPending.String = ra::ToString(arg);
-            pPending.DataType = PendingString::Type::String;
-        }
-        m_vPending.emplace_back(std::move(pPending));
+            m_vPending.emplace_back(ra::ToString(arg));
     }
 
     template<>
     void Append(const std::string& arg)
     {
-        PendingString pPending;
-        pPending.Ref = &arg;
-        pPending.DataType = PendingString::Type::StringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg);
     }
 
     template<>
     void Append(const std::wstring& arg)
     {
-        PendingString pPending;
-        pPending.Ref = &arg;
-        pPending.DataType = PendingString::Type::WStringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg);
     }
 
-    void Append(std::string&& arg)
-    {
-        PendingString pPending;
-        pPending.String = std::move(arg);
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
-    }
-
-    void Append(std::wstring&& arg)
-    {
-        PendingString pPending;
-        pPending.WString = std::move(arg);
-        pPending.DataType = PendingString::Type::WString;
-        m_vPending.emplace_back(std::move(pPending));
-    }
+    void Append(std::string&& arg) { m_vPending.emplace_back(arg); }
+    void Append(std::wstring&& arg) { m_vPending.emplace_back(arg); }
 
     template<>
-    void Append(const char* const& arg)
+    void Append(_In_z_ const char* const restrict& arg)
     {
         AppendSubString(arg, strlen(arg));
     }
 
     template<>
-    void Append(const wchar_t* const& arg)
+    void Append(_In_z_ const wchar_t* const restrict& arg)
     {
         AppendSubString(arg, wcslen(arg));
     }
 
-    void AppendSubString(const char* pStart, size_t nLength)
+    void AppendSubString(_In_z_ const char* pStart, size_t nLength)
     {
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref = gsl::make_span(pStart, nLength);
-        pPending.DataType = PendingString::Type::CharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(gsl::make_span(pStart, nLength));
     }
 
-    void AppendSubString(const wchar_t* pStart, size_t nLength)
+    void AppendSubString(_In_z_ const wchar_t* pStart, size_t nLength)
     {
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref = gsl::make_span(pStart, nLength);
-        pPending.DataType = PendingString::Type::WCharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(gsl::make_span(pStart, nLength));
     }
 
     void Append() noexcept
@@ -323,17 +294,14 @@ public:
             assert(!"Unsupported formatted type");
         }
 
-        PendingString pPending;
-        pPending.String = oss.str();
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(oss.str());
     }
 
-    void AppendFormat(const char* arg, const std::string& sFormat)
+    void AppendFormat(_In_z_ const char* arg, _In_ const std::string& sFormat)
     {
         if (sFormat.front() == '.')
         {
-            int nCharacters = std::stoi(&sFormat.at(1));
+            int nCharacters = std::stoi(sFormat.substr(1));
             AppendSubString(arg, nCharacters);
         }
         else
@@ -342,19 +310,14 @@ public:
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)
-            {
-                PendingString pPending;
-                pPending.String = std::string(nPadding, ' ');
-                pPending.DataType = PendingString::Type::String;
-                m_vPending.emplace_back(std::move(pPending));
-            }
+                m_vPending.emplace_back(std::string(nPadding, ' '));
 
             AppendSubString(arg, nLength);
         }
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
-    void AppendPrintf(const CharT* pFormat)
+    void AppendPrintf(_In_z_ const CharT* pFormat)
     {
         while (*pFormat)
         {
@@ -381,7 +344,9 @@ public:
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintf(const CharT* const restrict pFormat, const T& restrict value, Ts&&... args)
+    void AppendPrintf(_In_z_ const CharT* pFormat,
+                      const T& value,
+                      Ts&&... args)
     {
         auto* pScan = pFormat;
         Expects(pScan != nullptr);
@@ -483,8 +448,8 @@ public:
 
 private:
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintfParameterizedFormat(const CharT* const pFormat,
-                                         const std::string& sFormat,
+    void AppendPrintfParameterizedFormat(_In_z_ const CharT* const pFormat,
+                                         const std::string&  sFormat,
                                          const T& value,
                                          Ts&&... args)
     {
@@ -494,9 +459,10 @@ private:
 
     bool m_bPrepareWide;
 
-    struct PendingString
+    class PendingString
     {
-        std::variant<const std::string*, const std::wstring*, gsl::cstring_span<>, gsl::cwstring_span<>> Ref;
+        using RefType = std::variant<const std::string, const std::wstring, gsl::cstring_span<>, gsl::cwstring_span<>>;
+        RefType Ref;
 
         std::string String;
         std::wstring WString;
@@ -511,6 +477,27 @@ private:
             WCharRef,
         };
         Type DataType{Type::String};
+        friend class StringBuilder; // No other class needs access to PendingString's data members
+
+    public:
+        // NB: Ref only does non corruption on the spans but corrupts pointers
+        // This is needed for a speed boost by constructing in place instead of copying or moving.
+        PendingString(const std::string& arg) noexcept : Ref{arg}, DataType{Type::StringRef} {}
+        PendingString(const std::wstring& arg) noexcept : Ref{arg}, DataType{Type::WStringRef} {}
+        PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
+        PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
+        PendingString(gsl::cstring_span<> arg) noexcept : Ref{arg}, DataType{Type::CharRef} {}
+        PendingString(gsl::cwstring_span<> arg) noexcept : Ref{arg}, DataType{Type::WCharRef} {}
+        ~PendingString() noexcept = default;
+
+        // To prevent copying moving
+        PendingString& operator=(const PendingString&) = delete;
+        PendingString& operator=(PendingString&&) noexcept = delete;
+
+        // These are needed by m_vPending's allocator
+        PendingString(const PendingString&) = default;
+        PendingString(PendingString&&) noexcept = default;
+        PendingString() noexcept = default;
     };
 
     mutable std::vector<PendingString> m_vPending;
@@ -552,7 +539,7 @@ std::wstring BuildWString(Ts&&... args)
 /// Constructs a <see cref="std::basic_string" /> from a format string and parameters
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
-_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const __restrict sFormat, Ts&&... args)
+_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const restrict sFormat, Ts&&... args)
 {
     Expects(sFormat != nullptr);
 
@@ -574,6 +561,9 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
         return std::string();
     }
 }
+
+// String building for timestamps use different specifiers than printf so it can't be part of StringBuilder
+_NODISCARD std::string TimeStampToString(_In_ std::time_t nTime, _In_z_ const char* const restrict sFormat = "%c");
 
 // ----- string parsing -----
 
@@ -632,8 +622,8 @@ public:
     }
 
     /// <summary>
-    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
-    /// occurances are found and returns a string containing all of the characters advanced over.
+    /// Advances the cursor to the next occurrence of the specified character, or the end of the string if no
+    /// occurrences are found and returns a string containing all of the characters advanced over.
     /// </summary>
     std::string ReadTo(char cStop)
     {

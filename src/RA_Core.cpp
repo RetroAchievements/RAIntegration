@@ -232,7 +232,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
 {
-    g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
+    g_ConsoleID = ra::itoe<ConsoleID>(nConsoleID);
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -1101,7 +1101,7 @@ _Use_decl_annotations_ bool _ReadBufferFromFile(std::string& buffer, const wchar
         return false;
 
     file.seekg(0, std::ios::end);
-    buffer.reserve(static_cast<size_t>(file.tellg()));
+    buffer.reserve(gsl::narrow<size_t>(file.tellg()));
     file.seekg(0, std::ios::beg);
 
     buffer.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
@@ -1112,6 +1112,7 @@ _Use_decl_annotations_ bool _ReadBufferFromFile(std::string& buffer, const wchar
 _Use_decl_annotations_
 std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOut)
 {
+    Expects(sFilename != nullptr);
     nFileSizeOut = 0L;
     std::ifstream ifile{sFilename, std::ios::binary};
     if (!ifile.is_open())
@@ -1130,15 +1131,6 @@ std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, long& nF
         ifile.read(pRawFileOut.get(), nFileSizeOut);
 
     return pRawFileOut;
-}
-
-std::string _TimeStampToString(time_t nTime)
-{
-    std::tm tm{};
-    Expects(localtime_s(&tm, &nTime) == 0);
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%c"); // 12/31/18 16:54:69
-    return oss.str();
 }
 
 namespace ra {

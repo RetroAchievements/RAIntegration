@@ -17,8 +17,10 @@ namespace ra {
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
 _NODISCARD _CONSTANT_FN to_floating(_In_ Arithmetic a) noexcept
 {
-    if constexpr (is_same_size_v<Arithmetic, double>) return static_cast<double>(a);
-    if constexpr (has_smaller_size_than_v<Arithmetic, double>) return static_cast<float>(a);
+    if constexpr (is_same_size_v<Arithmetic, double>)
+        return gsl::narrow_cast<double>(a);
+    if constexpr (has_smaller_size_than_v<Arithmetic, double>)
+        return gsl::narrow_cast<float>(a);
 }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
@@ -30,7 +32,7 @@ _NODISCARD inline auto ftol(_In_ FloatingPoint fp) noexcept
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
 _NODISCARD inline auto ftoi(_In_ FloatingPoint fp) noexcept
 {
-    return gsl::narrow_cast<int>(std::lround(fp));
+    return int{std::lround(fp)};
 }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
@@ -54,7 +56,7 @@ _NODISCARD inline auto ftoull(_In_ FloatingPoint fp) noexcept
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
 _NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept
 {
-    return (a*a);
+    return (a * a);
 }
 } /* namespace ra */
 

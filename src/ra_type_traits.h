@@ -149,11 +149,27 @@ struct _NODISCARD is_literal_type
 {
 };
 
+template<typename T, typename = std::void_t<>>
+struct _NODISCARD is_duration : std::false_type
+{
+};
+
+template<typename T>
+struct _NODISCARD is_duration<
+    T,
+    std::enable_if_t<std::is_same_v<T, std::chrono::nanoseconds> || std::is_same_v<T, std::chrono::microseconds> ||
+                     std::is_same_v<T, std::chrono::milliseconds> || std::is_same_v<T, std::chrono::seconds> ||
+                     std::is_same_v<T, std::chrono::minutes> || std::is_same_v<T, std::chrono::hours>>> : std::true_type
+{
+};
+
 } /* namespace detail */
 
 template<typename LiteralType>
 _CONSTANT_VAR is_literal_type_v{detail::is_literal_type<LiteralType>::value};
 
+template<typename DurationType>
+_CONSTANT_VAR is_duration_v{detail::is_duration<DurationType>::value};
 
 } // namespace ra
 

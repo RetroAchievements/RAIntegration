@@ -668,10 +668,10 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     if (m_nAchievementsSelectedItem >= ra::to_signed(nNumAchievements))
         return;
 
-    auto buffer = ra::StringPrintf(" Created: %s ", _TimeStampToString(tCreated));
+    auto buffer = ra::StringPrintf(" Created: %s ", ra::TimeStampToString(tCreated));
     TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(buffer).c_str(), gsl::narrow<int>(buffer.length()));
 
-    buffer = ra::StringPrintf(" Modified: %s ", _TimeStampToString(tModified));
+    buffer = ra::StringPrintf(" Modified: %s ", ra::TimeStampToString(tModified));
     TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(),
             gsl::narrow<int>(buffer.length()));
 
@@ -999,9 +999,9 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
 
 _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* rcDest) const
 {
-    //	Rendering:
+    // Rendering:
     if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-        return; //	Not available!
+        return; // Not available!
 
     if (m_nTransitionState == TransitionState::Off)
         return;
@@ -1047,7 +1047,7 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
     auto hBitmap{::CreateCompatibleBitmap(hRealDC, rc.right, lHeight)};
     SelectBitmap(hDC, hBitmap);
 
-    //	Draw background:
+    // Draw background:
     SetBkMode(hDC, TRANSPARENT);
     {
         HBITMAP hBackground = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hOverlayBackground);
@@ -1081,7 +1081,7 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
         }
     }
 
-    //	Draw the bulk of the page:
+    // Draw the bulk of the page:
     {
         const auto nCurrentPage{m_Pages.at(m_nPageStackPointer)};
         switch (nCurrentPage)
@@ -1115,11 +1115,11 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
                 break;
 
             default:
-                //	Not implemented!
+                // Not implemented!
                 ASSERT(!"Attempting to render an undefined overlay page!");
         }
 
-        //	Title:
+        // Title:
         SelectFont(hDC, g_hFontTitle);
         SetTextColor(hDC, COL_TEXT);
 
@@ -1130,48 +1130,43 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
     //	Render controls:
     SelectFont(hDC, g_hFontDesc2);
     {
-        const int nControlsX1 = 80 + 80 + 4;
-        const int nControlsX2 = 80;
-        const int nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
-        const int nControlsY2 = rcTarget.bottom - 30 - 4;
+        constexpr auto nControlsX1 = 80 + 80 + 4;
+        constexpr auto nControlsX2 = 80;
+        const auto nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
+        const auto nControlsY2 = rcTarget.bottom - 30 - 4;
 
-        //	Fill again:
-        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
+        // Fill again:
+        rc = {nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight};
         FillRect(hDC, &rc, g_hBrushBG);
 
-        //	Draw control text:
+        // Draw control text:
         {
-            ra::tstring stNext{_T(" ->:")};
-            stNext += _T("Next ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), gsl::narrow_cast<int>(stNext.length()));
-        }
-        {
-            ra::tstring stPrev{_T(" <-:")};
-            stPrev += _T("Prev ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), gsl::narrow_cast<int>(stPrev.length()));
-        }
+            ra::tstring buffer;
 
-        _CONSTANT_LOC ctBackChar{_T('B')};
-        auto ctSelectChar{_T('A')};
+            buffer = _T(" ->:Next ");
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, buffer.c_str(),
+                    gsl::narrow_cast<int>(buffer.length()));
 
-        //	Genesis wouldn't use 'A' for select
-        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
-            ctSelectChar = _T('C');
+            buffer = _T(" <-:Prev ");
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, buffer.c_str(),
+                    gsl::narrow_cast<int>(buffer.length()));
 
-        {
-            ra::tstring stBack{_T(" ")};
-            stBack += ctBackChar;
-            stBack += _T(":");
-            stBack += _T("Back ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), gsl::narrow_cast<int>(stBack.length()));
-        }
-        {
-            ra::tstring stSelect{_T(" ")};
-            stSelect += ctSelectChar;
-            stSelect += _T(":");
-            stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(),
-                    gsl::narrow_cast<int>(stSelect.length()));
+
+            _CONSTANT_LOC ctBackChar{_T('B')};
+            auto ctSelectChar{_T('A')};
+
+            // Genesis wouldn't use 'A' for select
+            if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
+                ctSelectChar = _T('C');
+
+            buffer = ra::StringPrintf(_T(" %c:Back: "), ctBackChar);
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, buffer.c_str(),
+                    gsl::narrow_cast<int>(buffer.length()));
+
+            buffer = ra::StringPrintf(_T(" %c:Select: "), ctSelectChar);
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, buffer.c_str(),
+                    gsl::narrow_cast<int>(buffer.length()));
+
         }
     }
 
@@ -1198,7 +1193,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
     const auto fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);
     const auto fInnerBarOffsetY = fInnerBarSizePx * nSel;
 
-    const int nInnerBarAbsY = ra::ftoi(nY + 2.0f + fInnerBarOffsetY);
+    const auto nInnerBarAbsY = ra::ftoi(nY + 2.0f + fInnerBarOffsetY);
 
     //	Draw bar:
     SetTextColor(hDC, COL_BAR);
@@ -1223,10 +1218,10 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
 void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievement*> pAch, int nX, int nY,
                                          BOOL bSelected, BOOL bCanLock) const
 {
-    const int nAchImageOffset = 28;
-    const int nAchLeftOffset1 = 28 + 64 + 6;
-    const int nAchLeftOffset2 = 28 + 64 + 6 + 4;
-    const int nAchSpacingDesc = 24;
+    constexpr int nAchImageOffset = 28;
+    constexpr int nAchLeftOffset1 = 28 + 64 + 6;
+    constexpr int nAchLeftOffset2 = 28 + 64 + 6 + 4;
+    constexpr int nAchSpacingDesc = 24;
     BOOL bLocked = FALSE;
 
     if (bCanLock)
@@ -1406,15 +1401,7 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
                 NextNewsArticle["Image"].GetString(),
             };
 
-            {
-                std::tm destTime;
-                localtime_s(&destTime, &nNewsItem.m_nPostedAt);
-
-                char buffer[256U]{};
-                strftime(buffer, 256U, "%b %d", &destTime);
-                nNewsItem.m_sPostedAt = buffer;
-            }
-
+            nNewsItem.m_sPostedAt = ra::TimeStampToString(nNewsItem.m_nPostedAt, "%b %d");
             m_LatestNews.push_back(std::move(nNewsItem));
         }
     }
@@ -1455,8 +1442,8 @@ void AchievementExamine::Initialize(const Achievement* pAch)
     else
     {
         //	Go fetch data:
-        m_CreatedDate = _TimeStampToString(pAch->CreatedDate());
-        m_LastModifiedDate = _TimeStampToString(pAch->ModifiedDate());
+        m_CreatedDate = ra::TimeStampToString(pAch->CreatedDate());
+        m_LastModifiedDate = ra::TimeStampToString(pAch->ModifiedDate());
 
         PostArgs args;
         args['u'] = RAUsers::LocalUser().Username();
@@ -1485,10 +1472,10 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
     ASSERT(RecentWinnerData.IsArray());
     for (auto& NextWinner : RecentWinnerData.GetArray())
     {
-        const auto nDateAwarded{static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint()))};
+        const std::time_t nDateAwarded{NextWinner["DateAwarded"].GetInt64()};
         std::ostringstream oss;
         oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.emplace_back(oss.str(), _TimeStampToString(nDateAwarded));
+        RecentWinners.emplace_back(oss.str(), ra::TimeStampToString(nDateAwarded));
     }
 
     m_bHasData = true;
@@ -1544,7 +1531,7 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
         const auto nDate{NextLBData["DateSubmitted"].GetUint()};
 
         RA_LOG("LB Entry: %u: %s earned %d at %u\n", nRank, sUser.c_str(), nScore, nDate);
-        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, static_cast<time_t>(ra::to_signed(nDate)));
+        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, ra::to_signed(nDate));
     }
 
     m_bHasData = true;

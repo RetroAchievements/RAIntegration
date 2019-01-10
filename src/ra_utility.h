@@ -18,15 +18,15 @@ _NODISCARD _CONSTANT_FN to_unsigned(_In_ SignedType st) noexcept
 }
 
 template<typename UnsignedType, typename = std::enable_if_t<std::is_unsigned_v<UnsignedType>>>
-_NODISCARD _CONSTANT_FN to_signed(_In_ UnsignedType st) noexcept
+_NODISCARD _CONSTANT_FN to_signed(_In_ UnsignedType ut) noexcept
 {
-    return gsl::narrow_cast<std::make_signed_t<UnsignedType>>(st);
+    return gsl::narrow_cast<std::make_signed_t<UnsignedType>>(ut);
 }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _NODISCARD _CONSTANT_VAR etoi(_In_ Enum e) noexcept
 {
-    return static_cast<std::underlying_type_t<Enum>>(e);
+    return gsl::narrow_cast<std::underlying_type_t<Enum>>(e);
 }
 
 template<typename Enum, typename Integral = std::underlying_type_t<Enum>,
@@ -34,7 +34,7 @@ template<typename Enum, typename Integral = std::underlying_type_t<Enum>,
                                      std::is_convertible_v<Integral, std::underlying_type_t<Enum>>>>
 _NODISCARD _CONSTANT_VAR itoe(_In_ Integral i) noexcept
 {
-    return static_cast<Enum>(i);
+    return gsl::narrow_cast<Enum>(i);
 }
 
 

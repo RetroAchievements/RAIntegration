@@ -120,7 +120,7 @@ void AchievementSet::Test()
 
     for (auto pAchievement : m_Achievements)
     {
-        if (pAchievement->Active())
+        if (pAchievement && pAchievement->Active())
             pAchievement->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 
@@ -148,6 +148,8 @@ void AchievementSet::Test()
                 const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                 pGameContext.AwardAchievement(pChange.nId);
                 auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
+                if (!pAchievement)
+                    break;
 
 #ifndef RA_UTEST
                 //	Reverse find where I am in the list:

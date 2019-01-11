@@ -94,7 +94,7 @@ public:
     /// <summary>
     /// Causes the cached render image to be rebuilt.
     /// </summary>
-    void RebuildRenderImage() { m_bSurfaceStale = true; }
+    void RebuildRenderImage() noexcept { m_bSurfaceStale = true; }
 
     /// <summary>
     /// Determines whether the animation cycle has started.

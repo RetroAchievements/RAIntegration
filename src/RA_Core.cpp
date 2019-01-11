@@ -362,7 +362,7 @@ static void ActivateGame(unsigned int nGameId)
 struct PendingRom
 {
     std::string sMD5;
-    unsigned int nGameId;
+    unsigned int nGameId{};
 };
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)

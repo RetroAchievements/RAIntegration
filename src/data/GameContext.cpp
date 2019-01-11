@@ -360,7 +360,7 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
         bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
 
-    auto nPopupId = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+    const auto nPopupId = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
         sHeader, sMessage, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
 
     pAchievement->SetActive(false);

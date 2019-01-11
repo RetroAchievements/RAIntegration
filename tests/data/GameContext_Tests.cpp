@@ -96,6 +96,7 @@ public:
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"1 achievements, Total Score 5"), pPopup->GetDescription());
@@ -415,6 +416,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -445,6 +447,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -464,6 +467,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Local Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -483,6 +487,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Unofficial Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -502,6 +507,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -523,6 +529,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Local Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -544,6 +551,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -568,6 +576,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -597,6 +606,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
@@ -626,6 +636,7 @@ public:
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());

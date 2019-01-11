@@ -1115,18 +1115,6 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
     UpdateSelectedAchievementButtons(nullptr);
 }
 
-void Dlg_Achievements::OnGet_Achievement(const Achievement& ach)
-{
-    const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);
-
-    if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-        OnEditData(nIndex, Column::Achieved, "Yes");
-    else
-        OnEditData(nIndex, Column::Active, "No");
-
-    UpdateSelectedAchievementButtons(&ach);
-}
-
 void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
 {
     const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(ach);

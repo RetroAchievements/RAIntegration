@@ -511,47 +511,6 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestSubmitAwardAchievement:
-                {
-                    //	Response to an achievement being awarded:
-                    const ra::AchievementID nAchID = static_cast<ra::AchievementID>(doc["AchievementID"].GetUint());
-                    const Achievement* pAch = g_pCoreAchievements->Find(nAchID);
-                    if (pAch == nullptr)
-                        pAch = g_pUnofficialAchievements->Find(nAchID);
-                    if (pAch != nullptr)
-                    {
-                        if (!doc.HasMember("Error"))
-                        {
-                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
-                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                                L"Achievement Unlocked", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
-                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
-                            g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
-                            pUserContext.SetScore(doc["Score"].GetUint());
-                        }
-                        else
-                        {
-                            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
-                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                                L"Achievement Unlocked (Error)", ra::StringPrintf(L"%s (%u)", pAch->Title(), pAch->Points()),
-                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
-                            g_AchievementsDialog.OnGet_Achievement(*pAch);
-
-                            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                                L"Error submitting achievement", ra::Widen(doc["Error"].GetString()),
-                                ra::ui::ImageType::Badge, pAch->BadgeImageURI());
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"RequestSubmitAwardAchievement responded, but cannot find achievement ID!");
-                        RA_LOG("RequestSubmitAwardAchievement responded, but cannot find achievement with ID %u", nAchID);
-                    }
-                }
-                break;
-
                 case RequestNews:
                     _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
                     g_AchievementOverlay.InstallNewsArticlesFromFile();

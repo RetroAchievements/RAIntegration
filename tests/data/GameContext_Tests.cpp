@@ -6,10 +6,13 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -29,8 +32,22 @@ public:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockAudioSystem mockAudioSystem;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::data::mocks::MockUserContext mockUser;
 
         static const unsigned int FirstLocalId = GameContext::FirstLocalId;
+
+        Achievement& MockAchievement()
+        {
+            auto& pAch = NewAchievement(AchievementSet::Type::Core);
+            pAch.SetID(1U);
+            pAch.SetTitle("AchievementTitle");
+            pAch.SetDescription("AchievementDescription");
+            pAch.SetBadgeImage("12345");
+            pAch.SetPoints(5);
+            return pAch;
+        }
     };
 
     TEST_METHOD(TestLoadGameTitle)
@@ -48,6 +65,41 @@ public:
 
         Assert::AreEqual(1U, game.GameId());
         Assert::AreEqual(std::wstring(L"Game"), game.GameTitle());
+    }
+
+    TEST_METHOD(TestLoadGamePopup)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.Title = "Ach1";
+            ach1.Description = "Desc1";
+            ach1.Author = "Auth1";
+            ach1.BadgeName = "12345";
+            ach1.CategoryId = 3;
+            ach1.Created = 1234567890;
+            ach1.Updated = 1234599999;
+            ach1.Definition = "1=1";
+            ach1.Points = 5;
+
+            response.Title = L"GameTitle";
+            response.ImageIcon = "9743";
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"1 achievements, Total Score 5"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestLoadGameRichPresence)
@@ -326,6 +378,265 @@ public:
         Assert::IsNotNull(pAch2);
         Ensures(pAch2 != nullptr);
         Assert::IsFalse(pAch2->Active());
+    }
+
+    TEST_METHOD(TestAwardAchievementNonExistant)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.AwardAchievement(1U);
+
+        Assert::IsFalse(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        Assert::IsFalse(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        Assert::IsNull(game.mockOverlayManager.GetMessage(1));
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievement)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+        {
+            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(false, request.Hardcore);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+
+            response.NewPlayerScore = 125U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(125U, game.mockUser.GetScore());
+    }
+
+    TEST_METHOD(TestAwardAchievementHardcore)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+        {
+            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(true, request.Hardcore);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+
+            response.NewPlayerScore = 125U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(125U, game.mockUser.GetScore());
+    }
+
+    TEST_METHOD(TestAwardAchievementLocal)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Local));
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Local Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementUnofficial)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Unofficial Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementModified)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement().SetModified(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementModifiedLocal)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        auto& pAch = game.MockAchievement();
+        pAch.SetCategory(ra::etoi(AchievementSet::Type::Local));
+        pAch.SetModified(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Modified Local Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementModifiedUnofficial)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        auto& pAch = game.MockAchievement();
+        pAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        pAch.SetModified(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementDuplicate)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
+        {
+            response.ErrorMessage = "User already has this achievement awarded.";
+            response.Result = ra::api::ApiResult::Error;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        game.mockThreadPool.ExecuteNextTask();
+
+        // special error for "already unlocked" should not be reported
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestAwardAchievementDuplicateHardcore)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
+        {
+            response.ErrorMessage = "User already has hardcore and regular achievements awarded.";
+            response.Result = ra::api::ApiResult::Error;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        game.mockThreadPool.ExecuteNextTask();
+
+        // special error for "already unlocked" should not be reported
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestAwardAchievementError)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
+        {
+            response.ErrorMessage = "Achievement data cannot be found for 1";
+            response.Result = ra::api::ApiResult::Error;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        game.mockThreadPool.ExecuteNextTask();
+
+        // error message should be reported
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked (Achievement data cannot be found for 1)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
     }
 };
 

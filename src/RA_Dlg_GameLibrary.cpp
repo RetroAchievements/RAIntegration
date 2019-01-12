@@ -278,7 +278,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
             auto pBuf = std::make_unique<unsigned char[]>(6 * 1024 * 1024);
 
-            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf); // Check
+            fread(pBuf.get(), sizeof(unsigned char), nSize, pf); // Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
             pBuf.reset();
 

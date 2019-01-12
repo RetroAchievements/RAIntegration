@@ -245,8 +245,8 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     // Use WinHttpOpen to obtain a session handle.
     HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        nullptr,
+        nullptr, 0);
 
     // Specify an HTTP server.
     if (hSession != nullptr)

@@ -16,7 +16,7 @@ WindowsFileSystem::WindowsFileSystem() noexcept
 {
     // determine the home directory from the executable's path
     wchar_t sBuffer[MAX_PATH]{};
-    GetModuleFileNameW(0, sBuffer, MAX_PATH);
+    GetModuleFileNameW(nullptr, sBuffer, MAX_PATH);
     PathRemoveFileSpecW(sBuffer);
     m_sBaseDirectory = sBuffer;
     if (!m_sBaseDirectory.empty())

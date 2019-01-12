@@ -17,7 +17,8 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
 {
     DWORD dwSize = sizeof(DWORD);
     DWORD nContentLength = 0;
-    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX))
+    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, nullptr,
+                             &nContentLength, &dwSize, nullptr))
         return false;
 
     // allocate enough space in the string for the whole content
@@ -89,8 +90,8 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
     // obtain a session handle.
     HINTERNET hSession = WinHttpOpen(m_sUserAgent.c_str(),
         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+        nullptr,
+        nullptr, 0);
 
     if (hSession == nullptr)
     {
@@ -187,7 +188,8 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 {
                     // get the http status code
                     DWORD dwSize = sizeof(DWORD);
-                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
+                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, nullptr,
+                                        &nStatusCode, &dwSize, nullptr);
 
                     // read the response
                     auto* pStringWriter = dynamic_cast<StringTextWriter*>(&pContentWriter);

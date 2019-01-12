@@ -212,69 +212,250 @@ void GameContext::MergeLocalAchievements()
         if (sLine.empty() || !isdigit(sLine.front()))
             continue;
 
-        auto pAchievement = std::make_unique<Achievement>();
-        pAchievement->ParseLine(sLine.c_str());
+        // field 1: ID
+        ra::Tokenizer pTokenizer(sLine);
+        auto nId = pTokenizer.ReadNumber();
+        if (!pTokenizer.Consume(':'))
+            continue;
 
-        Achievement* pExistingAchievement = nullptr;
-        if (pAchievement->ID() != 0)
-            pExistingAchievement = FindAchievement(pAchievement->ID());
-
-        if (pExistingAchievement)
+        bool bIsNew = false;
+        Achievement* pAchievement = nullptr;
+        if (nId != 0)
+            pAchievement = FindAchievement(nId);
+        if (!pAchievement)
         {
-            // merge local data into existing achievement
-            if (pExistingAchievement->Title() != pAchievement->Title())
-            {
-                pExistingAchievement->SetTitle(pAchievement->Title());
-                pExistingAchievement->SetModified(true);
-            }
+            bIsNew = true;
 
-            if (pExistingAchievement->Description() != pAchievement->Description())
-            {
-                pExistingAchievement->SetDescription(pAchievement->Description());
-                pExistingAchievement->SetModified(true);
-            }
+            if (nId >= m_nNextLocalId)
+                m_nNextLocalId = nId + 1;
 
-            if (pExistingAchievement->Points() != pAchievement->Points())
-            {
-                pExistingAchievement->SetPoints(pAchievement->Points());
-                pExistingAchievement->SetModified(true);
-            }
+            // append new local achievement to collection
+            pAchievement = m_vAchievements.emplace_back(std::make_unique<Achievement>()).get();
+            Ensures(pAchievement != nullptr);
+            pAchievement->SetCategory(ra::etoi(AchievementSet::Type::Local));
+            pAchievement->SetID(nId);
 
-            if (pExistingAchievement->BadgeImageURI() != pAchievement->BadgeImageURI())
-            {
-                pExistingAchievement->SetBadgeImage(pAchievement->BadgeImageURI());
-                pExistingAchievement->SetModified(true);
-            }
+#ifndef RA_UTEST
+            g_pLocalAchievements->AddAchievement(pAchievement);
+#endif
+        }
 
-            pExistingAchievement->SetModifiedDate(pAchievement->ModifiedDate());
-
-            auto sExistingTrigger = pExistingAchievement->CreateMemString();
-            auto sNewTrigger = pAchievement->CreateMemString();
-            if (sExistingTrigger != sNewTrigger)
-            {
-                pExistingAchievement->ParseTrigger(sNewTrigger.c_str());
-                pExistingAchievement->SetModified(true);
-            }
+        // field 2: trigger
+        std::string sTrigger;
+        if (pTokenizer.PeekChar() == '"')
+        {
+            sTrigger = pTokenizer.ReadQuotedString();
         }
         else
         {
-#ifndef RA_UTEST
-            g_pLocalAchievements->AddAchievement(pAchievement.get());
-#endif
-            if (pAchievement->ID() >= m_nNextLocalId)
-                m_nNextLocalId = pAchievement->ID() + 1;
+            // unquoted trigger requires special parsing because flags also use colons
+            const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
+            const char* pScan = pTrigger;
+            while (*pScan && (*pScan != ':' || strchr("ABCPRabcpr", pScan[-1]) != nullptr))
+                pScan++;
 
-            // append local achievement
-            pAchievement->SetCategory(ra::etoi(AchievementSet::Type::Local));
-            m_vAchievements.emplace_back(std::move(pAchievement));
+            sTrigger.assign(pTrigger, pScan - pTrigger);
+            pTokenizer.Advance(sTrigger.length());
+        }
+
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 3: title
+        std::string sTitle;
+        if (pTokenizer.PeekChar() == '"')
+            sTitle = pTokenizer.ReadQuotedString();
+        else
+            sTitle = pTokenizer.ReadTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+        if (pAchievement->Title() != sTitle)
+        {
+            pAchievement->SetTitle(sTitle);
+            pAchievement->SetModified(true);
+        }
+
+        // field 4: description
+        std::string sDescription;
+        if (pTokenizer.PeekChar() == '"')
+            sDescription = pTokenizer.ReadQuotedString();
+        else
+            sDescription = pTokenizer.ReadTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+        if (pAchievement->Description() != sDescription)
+        {
+            pAchievement->SetDescription(sDescription);
+            pAchievement->SetModified(true);
+        }
+
+        // field 5: progress (unused)
+        pTokenizer.AdvanceTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 6: progress max (unused)
+        pTokenizer.AdvanceTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 7: progress format (unused)
+        pTokenizer.AdvanceTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 8: author
+        const std::string sAuthor = pTokenizer.ReadTo(':');
+        if (bIsNew)
+            pAchievement->SetAuthor(sAuthor);
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 9: points
+        const auto nPoints = pTokenizer.ReadNumber();
+        if (!pTokenizer.Consume(':'))
+            continue;
+        if (pAchievement->Points() != nPoints)
+        {
+            pAchievement->SetPoints(nPoints);
+            pAchievement->SetModified(true);
+        }
+
+        // field 10: created date
+        const auto nCreated = pTokenizer.ReadNumber();
+        if (bIsNew)
+            pAchievement->SetCreatedDate(nCreated);
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 11: modified date
+        const auto nModified = pTokenizer.ReadNumber();
+        pAchievement->SetModifiedDate(nModified);
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 12: up votes (unused)
+        pTokenizer.AdvanceTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 13: down votes (unused)
+        pTokenizer.AdvanceTo(':');
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // field 14: badge
+        const auto sBadge = pTokenizer.ReadTo(':');
+        if (pAchievement->BadgeImageURI() != sBadge)
+        {
+            pAchievement->SetBadgeImage(sBadge);
+            pAchievement->SetModified(true);
+        }
+
+        // line is valid, parse the trigger
+        if (bIsNew)
+        {
+            pAchievement->ParseTrigger(sTrigger.c_str());
+            pAchievement->SetModified(false);
+        }
+        else
+        {
+            auto sExistingTrigger = pAchievement->CreateMemString();
+            if (sExistingTrigger != sTrigger)
+            {
+                pAchievement->ParseTrigger(sTrigger.c_str());
+                pAchievement->SetModified(true);
+            }
         }
     }
 
+    // assign unique ids to any new achievements without one
     for (auto& pAchievement : m_vAchievements)
     {
         if (pAchievement->ID() == 0)
             pAchievement->SetID(m_nNextLocalId++);
     }
+}
+
+static void WriteEscaped(ra::services::TextWriter& pData, const std::string& sText)
+{
+    size_t nToEscape = 0;
+    for (auto c : sText)
+    {
+        if (c == ':' || c == '"' || c == '\\')
+            ++nToEscape;
+    }
+
+    if (nToEscape == 0)
+    {
+        pData.Write(sText);
+        return;
+    }
+
+    std::string sEscaped;
+    sEscaped.reserve(sText.length() + nToEscape + 2);
+    sEscaped.push_back('"');
+    for (auto c : sText)
+    {
+        if (c == '"' || c == '\\')
+            sEscaped.push_back('\\');
+        sEscaped.push_back(c);
+    }
+    sEscaped.push_back('"');
+    pData.Write(sEscaped);
+}
+
+bool GameContext::SaveLocal() const
+{
+    // Commits local achievements to the file
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(GameId())));
+    if (pData == nullptr)
+        return false;
+
+    pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
+    pData->WriteLine(GameTitle());
+
+    for (const auto& pAchievement : m_vAchievements)
+    {
+        if (!pAchievement || pAchievement->Category() != ra::etoi(AchievementSet::Type::Local))
+            continue;
+
+        // field 1: ID
+        pData->Write(std::to_string(pAchievement->ID()));
+        // field 2: trigger
+        pData->Write(":\"");
+        pData->Write(pAchievement->CreateMemString());
+        pData->Write("\":");
+        // field 3: title
+        WriteEscaped(*pData, pAchievement->Title());
+        pData->Write(":");
+        // field 4: description
+        WriteEscaped(*pData, pAchievement->Description());
+        // field 5: progress
+        // field 6: progress max
+        // field 7: progress format
+        pData->Write("::::");
+        // field 8: author
+        pData->Write(pAchievement->Author());
+        pData->Write(":");
+        // field 9: points
+        pData->Write(std::to_string(pAchievement->Points()));
+        pData->Write(":");
+        // field 10: created date
+        pData->Write(std::to_string(pAchievement->CreatedDate()));
+        pData->Write(":");
+        // field 11: modified date
+        pData->Write(std::to_string(pAchievement->ModifiedDate()));
+        // field 12: up votes
+        // field 13: down votes
+        pData->Write(":::");
+        // field 14: badge
+        pData->Write(pAchievement->BadgeImageURI());
+        pData->WriteLine();
+    }
+
+    return true;
 }
 
 Achievement& GameContext::NewAchievement(AchievementSet::Type nType)

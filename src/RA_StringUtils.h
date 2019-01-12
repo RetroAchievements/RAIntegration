@@ -602,17 +602,17 @@ public:
     /// <summary>
     /// Returns <c>true</c> if the entire string has been processed.
     /// </summary>
-    bool EndOfString() const noexcept { return m_nPosition >= m_sString.length(); }
+    _NODISCARD bool EndOfString() const noexcept { return m_nPosition >= m_sString.length(); }
 
     /// <summary>
     /// Returns the next character without advancing the position.
     /// </summary>
-    GSL_SUPPRESS_F6 char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+    GSL_SUPPRESS_F6 _NODISCARD char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
 
     /// <summary>
     /// Get the current position of the cursor within the string.
     /// </summary>
-    size_t CurrentPosition() const noexcept { return m_nPosition; }
+    _NODISCARD size_t CurrentPosition() const noexcept { return m_nPosition; }
 
     /// <summary>
     /// Sets the cursor position.
@@ -652,7 +652,7 @@ public:
     /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
     /// occurances are found and returns a string containing all of the characters advanced over.
     /// </summary>
-    std::string ReadTo(char cStop)
+    _NODISCARD std::string ReadTo(char cStop)
     {
         const size_t nStart = m_nPosition;
         AdvanceTo(cStop);
@@ -660,9 +660,14 @@ public:
     }
 
     /// <summary>
+    /// Reads from the current quote to the next unescaped quote, unescaping any other characters along the way.
+    /// </summary>
+    _NODISCARD std::string ReadQuotedString();
+
+    /// <summary>
     /// Advances the cursor over digits and returns the number they represent.
     /// </summary>
-    unsigned int ReadNumber()
+    _NODISCARD unsigned int ReadNumber()
     {
         if (EndOfString())
             return 0;
@@ -676,13 +681,27 @@ public:
     /// <summary>
     /// Returns the number represented by the next series of digits.
     /// </summary>
-    unsigned int PeekNumber()
+    _NODISCARD unsigned int PeekNumber()
     {
         if (EndOfString())
             return 0;
 
         char* pEnd;
         return strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+    }
+
+    /// <summary>
+    /// If the next character is the specified character, advance the cursor over it.
+    /// </summary>
+    /// <returns><c>true</c> if the next character matched and was skipped over, <c>false</c> if not.
+    bool Consume(char c)
+    {
+        if (EndOfString())
+            return false;
+        if (m_sString.at(m_nPosition) != c)
+            return false;
+        ++m_nPosition;
+        return true;
     }
 
     /// <summary>

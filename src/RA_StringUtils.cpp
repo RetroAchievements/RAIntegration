@@ -212,4 +212,42 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
     }
 }
 
+std::string Tokenizer::ReadQuotedString()
+{
+    std::string sString;
+    if (PeekChar() != '"')
+        return sString;
+
+    ++m_nPosition;
+    while (m_nPosition < m_sString.length())
+    {
+        const auto c = m_sString.at(m_nPosition++);
+        if (c == '"')
+            break;
+
+        if (c != '\\')
+        {
+            sString.push_back(c);
+        }
+        else
+        {
+            if (m_nPosition == m_sString.length())
+                break;
+
+            const auto c2 = m_sString.at(m_nPosition++);
+            switch (c2)
+            {
+                case 'n':
+                    sString.push_back('\n');
+                    break;
+                default:
+                    sString.push_back(c2);
+                    break;
+            }
+        }
+    }
+
+    return sString;
+}
+
 } /* namespace ra */

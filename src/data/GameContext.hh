@@ -116,6 +116,11 @@ public:
     /// <remarks>Destroys the achievement if it does not exist in local storage</remarks>
     bool ReloadAchievement(unsigned int nAchievementId);
 
+    /// <summary>
+    /// Saves local achievement data to local storage.
+    /// </summary>
+    bool SaveLocal() const;
+
 protected:
     void MergeLocalAchievements();
     bool ReloadAchievement(Achievement& pAchievement);

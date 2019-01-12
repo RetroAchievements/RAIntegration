@@ -214,7 +214,7 @@ void GameContext::MergeLocalAchievements()
 
         // field 1: ID
         ra::Tokenizer pTokenizer(sLine);
-        auto nId = pTokenizer.ReadNumber();
+        const auto nId = pTokenizer.ReadNumber();
         if (!pTokenizer.Consume(':'))
             continue;
 

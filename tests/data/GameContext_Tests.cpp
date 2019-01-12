@@ -24,7 +24,7 @@ TEST_CLASS(GameContext_Tests)
 private:
     static void RemoveFirstLine(std::string& sString)
     {
-        auto nIndex = sString.find('\n');
+        const auto nIndex = sString.find('\n');
         if (nIndex == std::string::npos)
             sString.clear();
         else

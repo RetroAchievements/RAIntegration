@@ -33,7 +33,8 @@ public:
         Ensures((iter >= 0) && (iter < Count()));
         return m_Leaderboards.at(iter);
     }
-    RA_Leaderboard* FindLB(ra::LeaderboardID nID) override;
+    RA_Leaderboard* FindLB(ra::LeaderboardID nID) noexcept override;
+    const RA_Leaderboard* FindLB(LeaderboardID nID) const noexcept override; 
     void Clear() override;
 
 private:

@@ -42,7 +42,7 @@ public:
 
     long GetPosition() const override
     {
-        return static_cast<long>(const_cast<std::ofstream&>(m_oStream).tellp());
+        return static_cast<long>(m_oStream.tellp());
     }
 
     void SetPosition(long nNewPosition) override
@@ -54,7 +54,7 @@ public:
     std::ofstream& GetFStream() noexcept { return m_oStream; }
 
 private:
-    std::ofstream m_oStream;
+    mutable std::ofstream m_oStream;
 };
 
 } // namespace impl

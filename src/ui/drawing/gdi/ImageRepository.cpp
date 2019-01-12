@@ -402,7 +402,8 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     return hBitmap;
 }
 
-HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
+_Use_decl_annotations_
+HBITMAP ImageRepository::GetHBitmap(ImageReference& pImage)
 {
     HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
     if (hBitmap == nullptr)
@@ -414,7 +415,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            auto& pMutableImage = const_cast<ImageReference&>(pImage);
+            auto& pMutableImage = pImage;
             pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
 
             // ImageReference will release the reference

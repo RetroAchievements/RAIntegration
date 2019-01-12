@@ -56,10 +56,10 @@ public:
     //	Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
 
-    void AddAchievement(const Achievement* pAchievement)
+    void AddAchievement(Achievement* const pAchievement)
     {
         Expects(pAchievement != nullptr);
-        m_Achievements.push_back(const_cast<Achievement*>(pAchievement));
+        m_Achievements.push_back(pAchievement);
     }
 
     bool RemoveAchievement(const Achievement* pAchievement);

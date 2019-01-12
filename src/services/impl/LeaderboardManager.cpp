@@ -23,15 +23,23 @@ LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConf
 {
 }
 
-RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID)
+RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID) noexcept
 {
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
+    for (auto& lb : m_Leaderboards)
     {
-        if ((*iter).ID() == nID)
-            return &(*iter);
+        if (lb.ID() == nID)
+            return &lb;
+    }
 
-        iter++;
+    return nullptr;
+}
+
+const RA_Leaderboard * LeaderboardManager::FindLB(LeaderboardID nID) const noexcept
+{
+    for (const auto& lb : m_Leaderboards)
+    {
+        if (lb.ID() == nID)
+            return &lb;
     }
 
     return nullptr;

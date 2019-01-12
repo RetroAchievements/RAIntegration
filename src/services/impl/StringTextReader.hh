@@ -40,7 +40,7 @@ public:
 
     long GetPosition() const override
     {
-        auto& iStream = const_cast<std::istringstream&>(m_iStream);
+        auto& iStream = m_iStream;
 
         if (!m_iStream.good())
         {
@@ -58,7 +58,7 @@ public:
     std::string GetString() { return m_iStream.str(); }
 
 private:
-    std::istringstream m_iStream;
+    mutable std::istringstream m_iStream;
 };
 
 } // namespace impl

@@ -39,7 +39,7 @@ public:
 
     long GetPosition() const override
     {
-        auto& iStream = const_cast<std::ifstream&>(m_iStream);
+        auto& iStream = m_iStream;
 
         if (!m_iStream.good())
         {
@@ -51,13 +51,13 @@ public:
             }
         }
 
-        return static_cast<size_t>(const_cast<std::ifstream&>(m_iStream).tellg());
+        return static_cast<size_t>(m_iStream.tellg());
     }
 
     std::ifstream& GetFStream() noexcept { return m_iStream; }
 
 private:
-    std::ifstream m_iStream;
+    mutable std::ifstream m_iStream;
 };
 
 } // namespace impl

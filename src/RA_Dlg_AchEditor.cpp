@@ -429,7 +429,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
                                rcSubItem.top, nWidth, ra::ftol(1.6F * nHeight * Condition::TYPE_STR.size()),
-                               g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
+                               g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -475,7 +475,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
                                rcSubItem.top, nWidth, static_cast<int>(1.6f * nHeight * nNumItems),
-                               g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
+                               g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -534,7 +534,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
                                rcSubItem.top, nWidth, (int)(1.6f * nHeight * MEMSIZE_STR.size()),
-                               g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
+                               g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -572,7 +572,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
                                WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST, rcSubItem.left,
                                rcSubItem.top, nWidth, static_cast<int>(1.6F * nHeight * COMPARISONTYPE_STR.size()),
-                               g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
+                               g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -614,7 +614,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             g_hIPEEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
                                         WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
                                         rcSubItem.left, rcSubItem.top, nWidth, (int)(1.5f * nHeight),
-                                        g_AchievementEditorDialog.GetHWND(), nullptr, nullptr, nullptr);
+                                        g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {

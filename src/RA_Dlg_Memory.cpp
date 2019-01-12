@@ -483,9 +483,9 @@ void MemoryViewerControl::OnClick(POINT point)
         return;
     }
 
-    m_nEditAddress = static_cast<unsigned int>(nAddressRowClicked);
+    m_nEditAddress = ra::to_unsigned(nAddressRowClicked);
 
-    if (x >= (int)m_nDataStartXOffset && x < rowLengthPx)
+    if (x >= ra::to_signed(m_nDataStartXOffset) && x < rowLengthPx)
     {
         x -= m_nDataStartXOffset;
         m_nEditNibble = 0;
@@ -1368,8 +1368,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 TCHAR sAddr[64];
                                 if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
                                 {
-                                    ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(
-                                        std::strtoul(ra::Narrow(sAddr).c_str(), nullptr, 16));
+                                    auto nAddr = ra::ByteAddress{std::stoul(ra::Narrow(sAddr), nullptr, 16)};
                                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                                     if (pSavedNote != nullptr && pSavedNote->Note().length() > 0)
                                         SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE,
@@ -1392,8 +1391,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
-                            ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(
-                                std::strtoul(ra::Narrow(sAddrBuffer).c_str(), nullptr, 16));
+                            auto nAddr = ra::ByteAddress{std::stoul(ra::Narrow(sAddrBuffer), nullptr, 16)};
                             MemoryViewerControl::setAddress(
                                 (nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                             MemoryViewerControl::setWatchedAddress(nAddr);
@@ -1415,13 +1413,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
                             const int nSelectedIdx = ComboBox_GetCurSel(hMemBanks);
 
-                            const unsigned short nBankID =
-                                static_cast<unsigned short>(ComboBox_GetItemData(hMemBanks, nSelectedIdx));
+                            const auto nBankID =
+                                gsl::narrow_cast<std::uint16_t>(ComboBox_GetItemData(hMemBanks, nSelectedIdx));
 
                             MemoryViewerControl::m_nActiveMemBank = nBankID;
                             g_MemManager.ChangeActiveMemBank(nBankID);
 
-                            MemoryViewerControl::Invalidate(); //	Force redraw on mem viewer
+                            MemoryViewerControl::Invalidate(); // Force redraw on mem viewer
                             break;
                         }
                     }
@@ -1449,7 +1447,7 @@ void Dlg_Memory::OnWatchingMemChange()
     TCHAR sAddrNative[1024];
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
-    const ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
+    const auto nAddr = ra::ByteAddress{std::stoul(sAddr.substr(2), nullptr, 16)};
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
     SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
@@ -1495,7 +1493,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
 
-            const ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(std::strtoul(sAddr.c_str() + 2, nullptr, 16));
+            const auto nAddr = ra::ByteAddress{std::stoul(sAddr.substr(2), nullptr, 16)};
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {

@@ -139,8 +139,8 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     {
         if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
-            auto nFileSize = static_cast<size_t>(ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename));
-            RA_LOG_INFO("Wrote %zu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+            auto nFileSize = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename);
+            RA_LOG_INFO("Wrote %l bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
         }
         else
         {
@@ -235,15 +235,13 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     // Create a DIB section based on Bitmap Info
     // BITMAPINFO Struct must first be setup before a DIB can be created.
     // Note that the height is negative for top-down bitmaps
-    BITMAPINFOHEADER info_header{
-        sizeof(BITMAPINFOHEADER),      // biSize
-        static_cast<LONG>(nWidth),
-        -static_cast<LONG>(nHeight),
-        WORD{ 1 },                     // biPlanes
-        WORD{ 32 },                    // biBitCount
-        static_cast<DWORD>(BI_RGB)
-    };
-    BITMAPINFO bminfo{ info_header };
+    BITMAPINFOHEADER info_header{sizeof(BITMAPINFOHEADER), // biSize
+                                 to_signed(nWidth),
+                                 -to_signed(nHeight),
+                                 WORD{1},  // biPlanes
+                                 WORD{32}, // biBitCount
+                                 DWORD{BI_RGB}};
+    BITMAPINFO bminfo{info_header};
     void *pvImageBits = nullptr;
 
     auto hWindow = GetActiveWindow();
@@ -330,7 +328,8 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
     // Scale the original IWICBitmapSource to the client rect size and convert the pixel format
     CComPtr<IWICBitmapSource> pToRenderBitmapSource;
     if (SUCCEEDED(hr))
-        hr = ConvertBitmapSource({ 0, 0, static_cast<LONG>(nWidth), static_cast<LONG>(nHeight) }, pOriginalBitmapSource, *&pToRenderBitmapSource);
+        hr = ConvertBitmapSource({0, 0, to_signed(nWidth), to_signed(nHeight)}, pOriginalBitmapSource,
+                                 *&pToRenderBitmapSource);
 
     // Create a DIB from the converted IWICBitmapSource
     HBITMAP hBitmap = nullptr;

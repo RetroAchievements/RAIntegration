@@ -18,7 +18,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
-        const UINT32* pEnd = pBits + nWidth * nHeight;
+        const std::uint32_t* pEnd = pBits + nWidth * nHeight;
         do
         {
             *pBits++ = nColor.ARGB;
@@ -29,7 +29,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
         // partial scanlines, have to fill in strips
         while (nHeight--)
         {
-            const UINT32* pEnd = pBits + nWidth;
+            const std::uint32_t* pEnd = pBits + nWidth;
             do
             {
                 *pBits++ = nColor.ARGB;
@@ -40,7 +40,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32 nBlend) noexcept
+static constexpr void BlendPixel(gsl::not_null<std::uint32_t* restrict> nTarget, std::uint32_t nBlend) noexcept
 {
     const auto alpha = nBlend >> 24;
 
@@ -57,17 +57,17 @@ static constexpr void BlendPixel(gsl::not_null<UINT32* restrict> nTarget, UINT32
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
-    UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget.get());
+    std::uint8_t* pTarget = reinterpret_cast<std::uint8_t*>(nTarget.get());
     Expects(pTarget != nullptr);
-    UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
+    std::uint8_t* pBlend = reinterpret_cast<std::uint8_t*>(&nBlend);
     Expects(pBlend != nullptr);
 
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    *pTarget++ = gsl::narrow_cast<std::uint8_t>(
+        (std::uint32_t{*pBlend++} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
+    *pTarget++ = gsl::narrow_cast<std::uint8_t>(
+        (std::uint32_t{*pBlend++} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
+    *pTarget = gsl::narrow_cast<std::uint8_t>(
+        (std::uint32_t{*pBlend} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
 }
 
 void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
@@ -94,7 +94,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
     HDC hMemDC = CreateCompatibleDC(m_hDC);
 
-    UINT32* pTextBits{};
+    std::uint32_t* pTextBits{};
     HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
     assert(hBitmap != nullptr);
     assert(pTextBits != nullptr);
@@ -114,11 +114,11 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     auto nLines = szText.cy;
     while (nLines--)
     {
-        const UINT32* pEnd = pBits + szText.cx;
+        const std::uint32_t* pEnd = pBits + szText.cx;
         do
         {
-            const UINT8 nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
-            const UINT32 pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
+            const std::uint8_t nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
+            const std::uint32_t pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
             BlendPixel(gsl::make_not_null(pBits), pColor);
             ++pBits;
         } while (pBits < pEnd);
@@ -132,8 +132,8 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
 void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
-    const int nWidth = static_cast<int>(GetWidth());
-    const int nHeight = static_cast<int>(GetHeight());
+    const auto nWidth = to_signed(GetWidth());
+    const auto nHeight = to_signed(GetHeight());
 
     // copy a portion of the target surface into a buffer
     HDC hMemDC = CreateCompatibleDC(hTargetDC);
@@ -147,7 +147,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biSizeImage = nWidth * nHeight * 4;
 
-    UINT32* pBits;
+    std::uint32_t* pBits;
     HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
     Expects(hBitmap != nullptr);
     SelectBitmap(hMemDC, hBitmap);
@@ -155,8 +155,8 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     BitBlt(hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);
 
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
-    const UINT32* pEnd = pBits + nWidth * nHeight;
-    UINT32* pSrcBits = m_pBits;
+    const std::uint32_t* pEnd = pBits + nWidth * nHeight;
+    std::uint32_t* pSrcBits = m_pBits;
     Expects(pSrcBits != nullptr);
     do
     {
@@ -174,11 +174,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
-    const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
+    const auto nAlpha = static_cast<std::uint8_t>(255 * fAlpha);
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
-    const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-    UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
+    const std::uint8_t* pEnd = reinterpret_cast<std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
+    std::uint8_t* pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;
     Expects(pBits != nullptr);
     do
     {

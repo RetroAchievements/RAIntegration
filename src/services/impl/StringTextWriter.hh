@@ -56,7 +56,7 @@ public:
     void SetPosition(long nNewPosition) noexcept override
     {
         assert(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
-        m_nWritePosition = static_cast<size_t>(nNewPosition);
+        m_nWritePosition = to_unsigned(nNewPosition);
     }
 
     std::string& GetString() noexcept { return m_sOutput; }

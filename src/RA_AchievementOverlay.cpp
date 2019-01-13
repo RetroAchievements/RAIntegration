@@ -850,8 +850,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
 
-                RECT rcSelected{nDX + nSelBoxXOffs, LONG{nYOffset}, nDX + nSelBoxXOffs + nSelBoxWidth,
-                                LONG{nYOffset + nSelBoxHeight}};
+                RECT rcSelected{nDX + nSelBoxXOffs, nYOffset, nDX + nSelBoxXOffs + nSelBoxWidth,
+                                nYOffset + nSelBoxHeight};
 
                 FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
             }

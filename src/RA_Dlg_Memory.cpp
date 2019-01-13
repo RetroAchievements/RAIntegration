@@ -1085,7 +1085,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             ra::tstring buffer{nativeBuffer.data()};
                             // Read hex or dec
                             if (ra::StringStartsWith(buffer, "0x"))
-                                nValueQuery = std::stoul(buffer.substr(2), nullptr, 16);
+                                nValueQuery = std::stoul(&buffer.at(2), nullptr, 16);
                             else
                                 nValueQuery = std::stoul(buffer);
                         }
@@ -1447,7 +1447,7 @@ void Dlg_Memory::OnWatchingMemChange()
     TCHAR sAddrNative[1024];
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
-    const auto nAddr = ra::ByteAddress{std::stoul(sAddr.substr(2), nullptr, 16)};
+    const auto nAddr = ra::ByteAddress{std::stoul(&sAddr.at(2), nullptr, 16)};
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
     SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
@@ -1493,7 +1493,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
 
-            const auto nAddr = ra::ByteAddress{std::stoul(sAddr.substr(2), nullptr, 16)};
+            const auto nAddr = ra::ByteAddress{std::stoul(&sAddr.at(2), nullptr, 16)};
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {

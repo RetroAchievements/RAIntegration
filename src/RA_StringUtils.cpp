@@ -109,16 +109,6 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 nNeeded += pPending.String.length();
                 break;
 
-            case PendingString::Type::StringRef:
-                nNeeded += std::get<const std::string>(pPending.Ref).length();
-                break;
-
-            case PendingString::Type::WStringRef:
-                pPending.String = ra::Narrow(std::get<const std::wstring>(pPending.Ref));
-                pPending.DataType = PendingString::Type::String;
-                nNeeded += pPending.String.length();
-                break;
-
             case PendingString::Type::CharRef:
                 nNeeded += std::get<std::string_view>(pPending.Ref).length();
                 break;
@@ -141,12 +131,8 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 sResult.append(pPending.String);
                 break;
 
-            case PendingString::Type::StringRef:
-                sResult.append(std::get<const std::string>(pPending.Ref));
-                break;
-
             case PendingString::Type::CharRef:
-                sResult.append(std::string{std::get<std::string_view>(pPending.Ref)});
+                sResult.append(std::get<std::string_view>(pPending.Ref));
                 break;
         }
     }
@@ -165,16 +151,6 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
 
             case PendingString::Type::String:
                 pPending.WString = ra::Widen(pPending.String);
-                pPending.DataType = PendingString::Type::WString;
-                nNeeded += pPending.WString.length();
-                break;
-
-            case PendingString::Type::WStringRef:
-                nNeeded += std::get<const std::wstring>(pPending.Ref).length();
-                break;
-
-            case PendingString::Type::StringRef:
-                pPending.WString = ra::Widen(std::get<const std::string>(pPending.Ref));
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
@@ -199,10 +175,6 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
         {
             case PendingString::Type::WString:
                 sResult.append(pPending.WString);
-                break;
-
-            case PendingString::Type::WStringRef:
-                sResult.append(std::wstring{std::get<const std::wstring>(pPending.Ref)});
                 break;
 
             case PendingString::Type::WCharRef:

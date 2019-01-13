@@ -178,22 +178,22 @@ public:
     void Append(const T& arg)
     {
         if (m_bPrepareWide)
-            m_vPending.emplace_back(ra::ToWString(arg));
+            m_vPending.emplace_back(std::wstring{ra::ToWString(arg)});
         else
-            m_vPending.emplace_back(ra::ToString(arg));
+            m_vPending.emplace_back(std::string{ra::ToString(arg)});
         
     }
 
     template<>
     void Append(const std::string& arg)
     {
-        m_vPending.emplace_back(arg);
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     template<>
     void Append(const std::wstring& arg)
     {
-        m_vPending.emplace_back(arg);
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     void Append(std::string&& arg)
@@ -223,7 +223,7 @@ public:
         if (nLength == 0)
             return;
 
-        m_vPending.emplace_back(std::string_view{pStart, nLength});
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void AppendSubString(const wchar_t* pStart, size_t nLength)
@@ -231,7 +231,7 @@ public:
         if (nLength == 0)
             return;
 
-        m_vPending.emplace_back(std::wstring_view{pStart, nLength});
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void Append() noexcept
@@ -464,27 +464,29 @@ private:
     class PendingString
     {
     public:
-        // NB: Ref only does non corruption on the spans but corrupts pointers
-        // This is needed for a speed boost by constructing in place instead of copying or moving.
-        explicit PendingString(const std::string& arg) noexcept : Ref{arg}, DataType{Type::StringRef} {}
-        explicit PendingString(const std::wstring& arg) noexcept : Ref{arg}, DataType{Type::WStringRef} {}
         explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
         explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
-        explicit PendingString(std::string_view&& arg) noexcept : Ref{std::move(arg)}, DataType{Type::CharRef} {}
-        explicit PendingString(std::wstring_view&& arg) noexcept : Ref{std::move(arg)}, DataType{Type::WCharRef} {}
+        explicit PendingString(_In_z_ const char* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::string_view{ptr, len}},
+            DataType{Type::CharRef}
+        {}
+        explicit PendingString(_In_z_ const wchar_t* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::wstring_view{ptr, len}},
+            DataType{Type::WCharRef}
+        {}
+        PendingString() noexcept = delete;
         ~PendingString() noexcept = default;
 
         // To prevent copying moving
+        PendingString(const PendingString&) = delete;
         PendingString& operator=(const PendingString&) = delete;
         PendingString& operator=(PendingString&&) noexcept = delete;
-
-        // These are needed by m_vPending's allocator
-        PendingString(const PendingString&) = default;
+        
+        // This is needed by m_vPending's allocator
         PendingString(PendingString&&) noexcept = default;
-        PendingString() noexcept = delete;
 
     private:
-        using RefType = std::variant<const std::string, const std::wstring, std::string_view, std::wstring_view>;
+        using RefType = std::variant<std::string_view, std::wstring_view>;
         RefType Ref;
 
         std::string String;
@@ -494,8 +496,6 @@ private:
         {
             String,
             WString,
-            StringRef,
-            WStringRef,
             CharRef,
             WCharRef,
         };

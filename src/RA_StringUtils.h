@@ -466,12 +466,12 @@ private:
     public:
         // NB: Ref only does non corruption on the spans but corrupts pointers
         // This is needed for a speed boost by constructing in place instead of copying or moving.
-        PendingString(const std::string& arg) noexcept : Ref{arg}, DataType{Type::StringRef} {}
-        PendingString(const std::wstring& arg) noexcept : Ref{arg}, DataType{Type::WStringRef} {}
-        PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
-        PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
-        PendingString(gsl::cstring_span<> arg) noexcept : Ref{arg}, DataType{Type::CharRef} {}
-        PendingString(gsl::cwstring_span<> arg) noexcept : Ref{arg}, DataType{Type::WCharRef} {}
+        explicit PendingString(const std::string& arg) noexcept : Ref{arg}, DataType{Type::StringRef} {}
+        explicit PendingString(const std::wstring& arg) noexcept : Ref{arg}, DataType{Type::WStringRef} {}
+        explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
+        explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
+        explicit PendingString(gsl::cstring_span<> arg) noexcept : Ref{arg}, DataType{Type::CharRef} {}
+        explicit PendingString(gsl::cwstring_span<> arg) noexcept : Ref{arg}, DataType{Type::WCharRef} {}
         ~PendingString() noexcept = default;
 
         // To prevent copying moving

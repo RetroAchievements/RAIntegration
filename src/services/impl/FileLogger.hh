@@ -29,6 +29,12 @@ public:
             pFileSystem.DeleteFile(sOldLogFilePath);
             pFileSystem.MoveFile(sLogFilePath, sOldLogFilePath);
         }
+        else if (nLogSize < 0)
+        {
+            std::wstring sCacheDirectory = pFileSystem.BaseDirectory() + L"RACache";
+            if (!pFileSystem.DirectoryExists(sCacheDirectory))
+                pFileSystem.CreateDirectory(sCacheDirectory);
+        }
 
         m_pWriter = pFileSystem.AppendTextFile(sLogFilePath);
         if (m_pWriter != nullptr)

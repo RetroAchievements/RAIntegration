@@ -167,7 +167,7 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
-long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
+std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);

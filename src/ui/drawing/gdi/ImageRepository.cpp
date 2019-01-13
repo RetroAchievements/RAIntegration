@@ -415,11 +415,10 @@ HBITMAP ImageRepository::GetHBitmap(ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            auto& pMutableImage = pImage;
-            pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
+            pImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
 
             // ImageReference will release the reference
-            pImageRepository->AddReference(pMutableImage);
+            pImageRepository->AddReference(pImage);
         }
     }
 

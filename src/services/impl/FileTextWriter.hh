@@ -40,15 +40,12 @@ public:
             m_oStream.write("\r\n", 2);
     }
 
-    long GetPosition() const override
-    {
-        return static_cast<long>(m_oStream.tellp());
-    }
+    std::streampos GetPosition() const override { return m_oStream.tellp(); }
 
-    void SetPosition(long nNewPosition) override
+    void SetPosition(std::streampos nNewPosition) override
     {
-        assert(nNewPosition >= 0);
-        m_oStream.seekp(static_cast<std::streampos>(nNewPosition));
+        Expects(nNewPosition >= 0);
+        m_oStream.seekp(nNewPosition);
     }
 
     std::ofstream& GetFStream() noexcept { return m_oStream; }

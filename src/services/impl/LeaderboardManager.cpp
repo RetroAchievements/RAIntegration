@@ -23,28 +23,6 @@ LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConf
 {
 }
 
-RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID) noexcept
-{
-    for (auto& lb : m_Leaderboards)
-    {
-        if (lb.ID() == nID)
-            return &lb;
-    }
-
-    return nullptr;
-}
-
-const RA_Leaderboard * LeaderboardManager::FindLB(LeaderboardID nID) const noexcept
-{
-    for (const auto& lb : m_Leaderboards)
-    {
-        if (lb.ID() == nID)
-            return &lb;
-    }
-
-    return nullptr;
-}
-
 void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))

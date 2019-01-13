@@ -1077,8 +1077,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 m_ConditionClipboard.Add(NewCondition);
                             }
-
-                            static_cast<void>(m_ConditionClipboard.Count());
                         }
                         else
                             return FALSE;

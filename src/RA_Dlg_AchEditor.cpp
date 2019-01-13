@@ -1292,11 +1292,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     TCHAR buffer[BUF_SIZE];
                     ZeroMemory(buffer, BUF_SIZE);
 
-                    OPENFILENAME ofn;
-                    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+                    OPENFILENAME ofn{};
                     ofn.lStructSize = sizeof(OPENFILENAME);
                     ofn.hwndOwner = hDlg;
-                    ofn.hInstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+                    ofn.hInstance = GetModuleHandle(nullptr);
                     ofn.lpstrFile = buffer;
                     ofn.nMaxFile = BUF_SIZE - 1;
 

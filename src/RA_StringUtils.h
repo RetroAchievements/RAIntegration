@@ -501,7 +501,7 @@ private:
         };
         Type DataType{Type::String};
 
-        friend class StringBuilder; // No other class needs access to PendingString's data members
+        friend class StringBuilder;
     };
 
     mutable std::vector<PendingString> m_vPending;

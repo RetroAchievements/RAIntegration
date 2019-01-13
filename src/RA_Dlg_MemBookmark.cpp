@@ -151,8 +151,8 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
             {
                 auto hList = GetDlgItem(hDlg, IDC_RA_LBX_ADDRESSES);
 
-                ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
-                ListView_GetItemRect(hList, pdis->itemID, &rcLabel, LVIR_LABEL);
+                GSL_SUPPRESS_ES47 ListView_GetItemRect(hList, pdis->itemID, &rcBounds, LVIR_BOUNDS);
+                GSL_SUPPRESS_ES47 ListView_GetItemRect(hList, pdis->itemID, &rcLabel, LVIR_LABEL);
                 RECT rcCol(rcBounds);
                 rcCol.right = rcCol.left + ListView_GetColumnWidth(hList, 0);
 
@@ -495,7 +495,7 @@ void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
             bookmark.IncreaseCount();
 
             RECT rcBounds{};
-            ListView_GetItemRect(hList, index, &rcBounds, LVIR_BOUNDS);
+            GSL_SUPPRESS_ES47 ListView_GetItemRect(hList, index, &rcBounds, LVIR_BOUNDS);
             InvalidateRect(hList, &rcBounds, FALSE);
         }
 
@@ -881,7 +881,7 @@ BOOL Dlg_MemBookmark::EditLabel(int nItem, int nSubItem)
 {
     auto hList = GetDlgItem(g_MemBookmarkDialog.GetHWND(), IDC_RA_LBX_ADDRESSES);
     RECT rcSubItem{};
-    ListView_GetSubItemRect(hList, nItem, nSubItem, LVIR_BOUNDS, &rcSubItem);
+    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(hList, nItem, nSubItem, LVIR_BOUNDS, &rcSubItem);
 
     RECT rcOffset{};
     GetWindowRect(hList, &rcOffset);

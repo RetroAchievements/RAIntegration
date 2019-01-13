@@ -541,7 +541,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     FillRect(hMemDC, &rect, hBrush);
     DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
-    const char* sHeader;
+    const char* sHeader{};
     switch (m_nDataSize)
     {
         case MemSize::ThirtyTwoBit:
@@ -569,20 +569,16 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     SetTextColor(hMemDC, RGB(0, 0, 0));
 
-    unsigned int notes;
-    unsigned int bookmarks;
-    unsigned int freeze;
+    unsigned int notes{};
+    unsigned int bookmarks{};
+    unsigned int freeze{};
 
-    RECT r;
-    r.top = 3;
-    r.left = 3;
-    r.bottom = r.top + m_szFontSize.cy;
-    r.right = rect.right - 3;
+    RECT r{3, 3, rect.right - 3, r.top + m_szFontSize.cy}; // left,top,right,bottom
 
-    //	Draw header:
+    // Draw header:
     DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
-    //	Adjust for header:
+    // Adjust for header:
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
@@ -828,10 +824,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             g_MemoryDialog.OnLoad_NewRom();
 
             // Add a single column for list view
-            RECT rc;
-            LVCOLUMN Col;
+            LVCOLUMN Col{};
             Col.mask = LVCF_FMT | LVCF_ORDER | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH;
             Col.fmt = LVCFMT_CENTER;
+            RECT rc{};
             GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEM_LIST), &rc);
             for (int i = 0; i < 1; i++)
             {
@@ -925,7 +921,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             _tcscat_s(buffer, NativeStr(oss.str()).c_str());
                         }
 
-                        COLORREF color;
+                        COLORREF color{};
 
                         if (pDIS->itemState & ODS_SELECTED)
                         {
@@ -1365,7 +1361,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             const int nSel = ComboBox_GetCurSel(hMemWatch);
                             if (nSel != CB_ERR)
                             {
-                                TCHAR sAddr[64];
+                                TCHAR sAddr[64]{};
                                 if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
                                 {
                                     ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(

@@ -989,11 +989,11 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
 
             nDotCount = nDots / 25;
 
-            char buffer[256];
-            sprintf_s(buffer, 256, " Loading.%c%c%c ", nDotCount > 1 ? '.' : ' ', nDotCount > 2 ? '.' : ' ',
-                      nDotCount > 3 ? '.' : ' ');
+            const auto buffer = ra::StringPrintf(" Loading.%c%c%c ", nDotCount > 1 ? '.' : ' ',
+                                                 nDotCount > 2 ? '.' : ' ', nDotCount > 3 ? '.' : ' ');
 
-            TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(), strlen(buffer));
+            TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(),
+                    ra::to_signed(buffer.length()));
         }
     }
 }
@@ -1230,7 +1230,6 @@ void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievemen
     const int nAchLeftOffset2 = 28 + 64 + 6 + 4;
     const int nAchSpacingDesc = 24;
     BOOL bLocked = FALSE;
-    char buffer[1024];
 
     if (bCanLock)
     {
@@ -1263,28 +1262,26 @@ void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievemen
     if (hBitmap != nullptr)
         DrawImage(hDC, hBitmap, nX + nAchImageOffset, nY, 64, 64);
 
-    sprintf_s(buffer, 1024, " %s ", pAch->Description().c_str());
+    auto buffer = ra::StringPrintf(" %s ", pAch->Description().c_str());
     SelectObject(hDC, g_hFontDesc2);
-    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
 
-    sprintf_s(buffer, 1024, " %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
+    buffer = ra::StringPrintf(" %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
-    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), strlen(buffer));
+    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
 }
 
 _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW, int nH) const
 {
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
 
-    char buffer[256];
     HBRUSH hBrush2 = CreateSolidBrush(COL_USER_FRAME_BG);
-    RECT rcUserFrame;
 
     const int nTextX = nX + 4;
     const int nTextY1 = nY + 4;
     const int nTextY2 = nTextY1 + 36;
 
-    SetRect(&rcUserFrame, nX, nY, nX + nW, nY + nH);
+    RECT rcUserFrame{nX, nY, nX + nW, nY + nH};
     FillRect(hDC, &rcUserFrame, hBrush2);
 
     HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hUserImage);
@@ -1296,19 +1293,19 @@ _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, i
     SetTextColor(hDC, COL_TEXT);
     SelectObject(hDC, g_hFontDesc);
 
-    sprintf_s(buffer, 256, " %s ", pUserContext.GetUsername().c_str());
-    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), strlen(buffer));
+    auto buffer = ra::StringPrintf(" %s ", pUserContext.GetUsername());
+    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
 
-    sprintf_s(buffer, 256, " %u Points ", pUserContext.GetScore());
-    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), strlen(buffer));
+    buffer = ra::StringPrintf(" %u Points ", pUserContext.GetScore());
+    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
 
     if (_RA_HardcoreModeIsActive())
     {
         const COLORREF nLastColor = SetTextColor(hDC, COL_WARNING);
         const COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
 
-        sprintf_s(buffer, 256, " HARDCORE ");
-        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), strlen(buffer));
+        buffer = " HARDCORE ";
+        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
 
         SetTextColor(hDC, nLastColor);
         SetBkColor(hDC, nLastColorBk);

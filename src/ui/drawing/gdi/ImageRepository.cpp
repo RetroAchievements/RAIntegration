@@ -221,7 +221,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
 {
     Expects(pToRenderBitmapSource != nullptr);
     // Get BitmapSource format and size
-    WICPixelFormatGUID pixelFormat;
+    WICPixelFormatGUID pixelFormat{};
     UINT nWidth = 0U;
     UINT nHeight = 0U;
 

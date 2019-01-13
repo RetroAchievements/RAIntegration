@@ -50,7 +50,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             pMessage = gsl::make_not_null(&sMessage);
         }
 
-        UINT uType;
+        UINT uType{};
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
@@ -74,7 +74,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
     }
     else
     {
-        PCWSTR pszIcon;
+        PCWSTR pszIcon{};
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
@@ -84,7 +84,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Icon::Error: pszIcon = TD_ERROR_ICON; break;
         }
 
-        TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons;
+        TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons{};
         switch (oMessageBoxViewModel.GetButtons())
         {
             default:

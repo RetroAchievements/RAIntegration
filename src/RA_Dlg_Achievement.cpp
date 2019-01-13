@@ -1197,7 +1197,7 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         }
         else
         {
-            RECT rcBounds;
+            RECT rcBounds{};
             ListView_GetItemRect(hList, nItem, &rcBounds, LVIR_BOUNDS);
             InvalidateRect(hList, &rcBounds, FALSE);
         }

@@ -240,7 +240,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    size_t nTemp;
+    size_t nTemp{};
 
     // Use WinHttpOpen to obtain a session handle.
     HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),

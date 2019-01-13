@@ -159,7 +159,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 sHeaders += L"Content-Type: ";
                 sHeaders += ra::Widen(pRequest.GetContentType());
 
-                BOOL bResults;
+                BOOL bResults{};
 
                 // send the request
                 if (sPostData.empty())

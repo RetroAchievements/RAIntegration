@@ -349,7 +349,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
                     if (hROMReader != INVALID_HANDLE_VALUE)
                     {
-                        BY_HANDLE_FILE_INFORMATION File_Inf;
+                        BY_HANDLE_FILE_INFORMATION File_Inf{};
                         int nSize = 0;
                         if (GetFileInformationByHandle(hROMReader, &File_Inf))
                             nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;

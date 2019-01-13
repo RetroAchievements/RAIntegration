@@ -133,11 +133,11 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             moveAddress(-0x10, 0);
             return true;
 
-        case VK_PRIOR: //	Page up (!)
-            moveAddress(-(int)(m_nDisplayedLines << 4), 0);
+        case VK_PRIOR: // Page up (!)
+            moveAddress(-ra::to_signed(m_nDisplayedLines << 4), 0);
             return true;
 
-        case VK_NEXT: //	Page down (!)
+        case VK_NEXT: // Page down (!)
             moveAddress((m_nDisplayedLines << 4), 0);
             return true;
 
@@ -170,7 +170,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
             if (m_nEditAddress == 0 && m_nEditNibble == -1)
             {
                 m_nEditNibble = 0;
-                MessageBeep((UINT)-1);
+                MessageBeep(ra::to_unsigned(-1));
                 return;
             }
             if (m_nEditNibble == -1)
@@ -193,7 +193,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
                 //	Undo this movement.
                 m_nEditAddress -= (maxNibble + 1) >> 1;
                 m_nEditNibble = maxNibble;
-                MessageBeep((UINT)-1);
+                MessageBeep(ra::to_unsigned(-1));
                 return;
             }
         }
@@ -204,10 +204,11 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
 
         if (offset < 0)
         {
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) && (signed)m_nEditAddress < (0x10))
+            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) &&
+                ra::to_signed(m_nEditAddress) < (0x10))
             {
                 m_nEditAddress -= offset;
-                MessageBeep((UINT)-1);
+                MessageBeep(ra::to_unsigned(-1));
                 return;
             }
         }
@@ -216,7 +217,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
             if (m_nEditAddress >= g_MemManager.TotalBankSize())
             {
                 m_nEditAddress -= offset;
-                MessageBeep((UINT)-1);
+                MessageBeep(ra::to_unsigned(-1));
                 return;
             }
         }
@@ -298,7 +299,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
     if (c > 255 || !RA_GameIsActive())
     {
-        MessageBeep((UINT)-1);
+        MessageBeep(ra::to_unsigned(-1));
         return false;
     }
 
@@ -361,7 +362,7 @@ void MemoryViewerControl::createEditCaret(int w, int h) noexcept
         m_bHasCaret = true;
         m_nCaretWidth = w;
         m_nCaretHeight = h;
-        ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), (HBITMAP)0, w, h);
+        ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), nullptr, w, h);
     }
 }
 
@@ -390,7 +391,7 @@ void MemoryViewerControl::SetCaretPos()
 
     const int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
 
-    if (linePosition < 0 || linePosition > (int)m_nDisplayedLines - 1)
+    if (linePosition < 0 || linePosition > ra::to_signed(m_nDisplayedLines) - 1)
 
     {
         destroyEditCaret();
@@ -446,7 +447,7 @@ void MemoryViewerControl::OnClick(POINT point)
     const int y = point.y - m_szFontSize.cy; //	Adjust for header
     const int line = ((y - 3) / m_szFontSize.cy);
 
-    if (line == -1 || line >= (int)m_nDisplayedLines)
+    if (line == -1 || line >= ra::to_signed(m_nDisplayedLines))
         return; //	clicked on header
 
     int rowLengthPx = m_nDataStartXOffset;
@@ -477,7 +478,7 @@ void MemoryViewerControl::OnClick(POINT point)
     const int nAddressRowClicked = (nTopLeft + (line << 4));
 
     // Clamp:
-    if (nAddressRowClicked < 0 || nAddressRowClicked > (int)g_MemManager.TotalBankSize())
+    if (nAddressRowClicked < 0 || nAddressRowClicked > ra::to_signed(g_MemManager.TotalBankSize()))
     {
         // ignore; clicked above limit
         return;
@@ -485,7 +486,7 @@ void MemoryViewerControl::OnClick(POINT point)
 
     m_nEditAddress = static_cast<unsigned int>(nAddressRowClicked);
 
-    if (x >= (int)m_nDataStartXOffset && x < rowLengthPx)
+    if (x >= ra::to_signed(m_nDataStartXOffset) && x < rowLengthPx)
     {
         x -= m_nDataStartXOffset;
         m_nEditNibble = 0;
@@ -527,7 +528,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
     //	Pick font
     if (m_hViewerFont == nullptr)
-        m_hViewerFont = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
+        m_hViewerFont = GetStockFont(SYSTEM_FIXED_FONT);
     HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
 
     HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
@@ -536,7 +537,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
 
     //	Fill white:
-    HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    HBRUSH hBrush = GetStockBrush(WHITE_BRUSH);
     FillRect(hMemDC, &rect, hBrush);
     DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
@@ -856,18 +857,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         }
 
         case WM_MEASUREITEM:
-            PMEASUREITEMSTRUCT pmis;
-            pmis = (PMEASUREITEMSTRUCT)lParam;
+        {
+            auto pmis = reinterpret_cast<PMEASUREITEMSTRUCT>(lParam);
             pmis->itemHeight = 16;
             return TRUE;
+        }
 
         case WM_DRAWITEM:
         {
-            LPDRAWITEMSTRUCT pDIS;
-            HWND hListbox;
-
-            pDIS = (LPDRAWITEMSTRUCT)lParam;
-            hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+            auto pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+            auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
             if (pDIS->hwndItem == hListbox)
             {
                 if (pDIS->itemID == -1)
@@ -975,7 +974,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     GSL_SUPPRESS_IO5
 #pragma warning(suppress: 26454)
-                    if (((LPNMHDR)lParam)->code == LVN_ITEMCHANGED || ((LPNMHDR)lParam)->code == NM_CLICK)
+                    if ((reinterpret_cast<LPNMHDR>(lParam))->code == LVN_ITEMCHANGED ||
+                        (reinterpret_cast<LPNMHDR>(lParam))->code == NM_CLICK)
                     {
                         const int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
 
@@ -996,9 +996,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             else
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
 
-                            MemoryViewerControl::setAddress((result.nAddress & ~(0xf)) -
-                                                            ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
-                                                            (0x50));
+                            MemoryViewerControl::setAddress(
+                                (result.nAddress & ~(0xf)) -
+                                (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                             MemoryViewerControl::setWatchedAddress(result.nAddress);
                             UpdateBits();
                         }
@@ -1012,11 +1012,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_GETMINMAXINFO:
         {
-            LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+            LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
             lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
             lpmmi->ptMinTrackSize = pDlgMemoryMin;
-        }
             return TRUE;
+        }
 
         case WM_SIZE:
         {
@@ -1376,8 +1376,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                                         ra::Widen(pSavedNote->Note()).c_str());
 
                                     MemoryViewerControl::setAddress(
-                                        (nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
-                                        (0x50));
+                                        (nAddr & ~(0xf)) -
+                                        (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                                     MemoryViewerControl::setWatchedAddress(nAddr);
                                     UpdateBits();
                                 }
@@ -1395,7 +1395,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             ra::ByteAddress nAddr = static_cast<ra::ByteAddress>(
                                 std::strtoul(ra::Narrow(sAddrBuffer).c_str(), nullptr, 16));
                             MemoryViewerControl::setAddress(
-                                (nAddr & ~(0xf)) - ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+                                (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
+                                (0x50));
                             MemoryViewerControl::setWatchedAddress(nAddr);
                             UpdateBits();
                             return TRUE;
@@ -1500,8 +1501,8 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {
                 SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen(pSavedNote->Note()).c_str());
-                MemoryViewerControl::setAddress((nAddr & ~(0xf)) -
-                                                ((int)(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+                MemoryViewerControl::setAddress(
+                    (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
                 MemoryViewerControl::setWatchedAddress(nAddr);
             }
         }

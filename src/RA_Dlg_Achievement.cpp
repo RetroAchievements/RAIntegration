@@ -840,13 +840,13 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
         case WM_NOTIFY:
         {
-            switch ((reinterpret_cast<LPNMHDR>(lParam)->code))
+            switch (reinterpret_cast<LPNMHDR>(lParam)->code)
             {
                 case LVN_ITEMCHANGED: //!?? LVN on a LPNMHDR?
                 {
                     iSelect = -1;
                     // MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
-                    LPNMLISTVIEW pLVInfo = (LPNMLISTVIEW)lParam;
+                    LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
                     if (pLVInfo->iItem != -1)
                     {
                         iSelect = pLVInfo->iItem;

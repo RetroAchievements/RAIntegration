@@ -223,7 +223,7 @@ public:
         if (nLength == 0)
             return;
 
-        m_vPending.emplace_back(gsl::make_span(pStart, nLength));
+        m_vPending.emplace_back(std::string_view{pStart, nLength});
     }
 
     void AppendSubString(const wchar_t* pStart, size_t nLength)
@@ -231,7 +231,7 @@ public:
         if (nLength == 0)
             return;
 
-        m_vPending.emplace_back(gsl::make_span(pStart, nLength));
+        m_vPending.emplace_back(std::wstring_view{pStart, nLength});
     }
 
     void Append() noexcept
@@ -470,8 +470,8 @@ private:
         explicit PendingString(const std::wstring& arg) noexcept : Ref{arg}, DataType{Type::WStringRef} {}
         explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
         explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
-        explicit PendingString(gsl::cstring_span<> arg) noexcept : Ref{arg}, DataType{Type::CharRef} {}
-        explicit PendingString(gsl::cwstring_span<> arg) noexcept : Ref{arg}, DataType{Type::WCharRef} {}
+        explicit PendingString(std::string_view&& arg) noexcept : Ref{std::move(arg)}, DataType{Type::CharRef} {}
+        explicit PendingString(std::wstring_view&& arg) noexcept : Ref{std::move(arg)}, DataType{Type::WCharRef} {}
         ~PendingString() noexcept = default;
 
         // To prevent copying moving
@@ -484,7 +484,7 @@ private:
         PendingString() noexcept = delete;
 
     private:
-        using RefType = std::variant<const std::string, const std::wstring, gsl::cstring_span<>, gsl::cwstring_span<>>;
+        using RefType = std::variant<const std::string, const std::wstring, std::string_view, std::wstring_view>;
         RefType Ref;
 
         std::string String;

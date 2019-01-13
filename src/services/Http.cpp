@@ -34,6 +34,7 @@ Http::Response Http::Request::Download(const std::wstring& sFilename) const
 {
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.CreateTextFile(sFilename);
+    Ensures(pFile != nullptr);
 
     const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
     const auto nStatusCode = ra::itoe<Http::StatusCode>(pHttpRequester.Request(*this, *pFile));

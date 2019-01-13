@@ -9,10 +9,33 @@ namespace gdi {
 
 void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
-    assert(nWidth != 0);
-    assert(nHeight != 0);
-
+    // clip to surface
     auto nStride = ra::to_signed(GetWidth());
+    if (nX >= nStride || nY >= ra::to_signed(GetHeight()))
+        return;
+
+    if (nX < 0)
+    {
+        nWidth += nX;
+        nX = 0;
+    }
+    if (nWidth > nStride - nX)
+        nWidth = nStride - nX;
+    if (nWidth <= 0)
+        return;
+
+    if (nY < 0)
+    {
+        nHeight += nY;
+        nY = 0;
+    }
+    const auto nMaxHeight = ra::to_signed(GetHeight()) - nY;
+    if (nHeight > nMaxHeight)
+        nHeight = nMaxHeight;
+    if (nHeight <= 0)
+        return;
+
+    // fill rectangle
     auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
     if (nStride == nWidth)
@@ -75,14 +98,28 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     if (sText.empty())
         return;
 
+    // clip to surface
+    auto nStride = ra::to_signed(GetWidth());
+    if (nX >= nStride || nY >= ra::to_signed(GetHeight()))
+        return;
+    assert(nX >= 0); // TODO: support negative X starting position
+
+    // measure the text to draw
     SwitchFont(nFont);
+
+    SIZE szText;
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+
+    // clip to surface
+    if (szText.cx > nStride - nX)
+        szText.cx = nStride - nX;
+    const auto nMaxHeight = ra::to_signed(GetHeight()) - nY;
+    if (szText.cy > nMaxHeight)
+        szText.cy = nMaxHeight;
 
     // writing directly to the surface results in 0 for all alpha values - i.e. transparent text.
     // instead, draw white text on black background to get grayscale anti-alias values which will
     // be used as the alpha channel for applying the text to the surface.
-    SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
-
     BITMAPINFO bmi{};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = szText.cx;
@@ -106,12 +143,16 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
-    auto nStride = GetWidth();
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
     assert(ra::to_signed(nFirstScanline) >= 0);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
 
+    // clip to surface
     auto nLines = szText.cy;
+    if (nY < 0)
+        nLines += nY;
+
+    // copy bits
     while (nLines--)
     {
         const UINT32* pEnd = pBits + szText.cx;

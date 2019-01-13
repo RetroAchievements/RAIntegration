@@ -1210,22 +1210,21 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
                     {
-                        if (pSavedNote->Note().compare(sNewNote) != 0) //	New note is different
+                        if (pSavedNote->Note() != sNewNote) // New note is different
                         {
-                            char sWarning[4096];
-                            sprintf_s(sWarning, 4096,
-                                      "Address 0x%04x already stored with note:\n\n"
-                                      "%s\n"
-                                      "by %s\n"
-                                      "\n\n"
-                                      "Would you like to overwrite with\n\n"
-                                      "%s",
-                                      nAddr, pSavedNote->Note().c_str(), pSavedNote->Author().c_str(),
-                                      sNewNote.c_str());
+                            const auto sPrompt = ra::StringPrintf(L"Overwrite note for address 0x%s?", ra::ByteAddressToString(nAddr));
+                            const auto sWarning = ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                                pSavedNote->Author(), pSavedNote->Note(), sNewNote);
 
-                            if (MessageBoxW(hDlg, ra::Widen(sWarning).c_str(), L"Warning: overwrite note?", MB_YESNO) ==
-                                IDYES)
+                            ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
+                            vmPrompt.SetHeader(sPrompt);
+                            vmPrompt.SetMessage(sWarning);
+                            vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+                            vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                            if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
+                            {
                                 m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
+                            }
                         }
                         else
                         {
@@ -1247,20 +1246,34 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
 
-                    TCHAR sAddressWide[16];
-                    ComboBox_GetText(hMemWatch, sAddressWide, 16);
-                    const std::string sAddress = ra::Narrow(sAddressWide);
-
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
-                    m_CodeNotes.Remove(nAddr);
+                    const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
+                    if (pSavedNote != nullptr)
+                    {
+                        const auto sPrompt = ra::StringPrintf(L"Delete note for address 0x%s?", ra::ByteAddressToString(nAddr));
+                        const auto sWarning = ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s",
+                            pSavedNote->Author(), pSavedNote->Note());
 
-                    SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
+                        ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
+                        vmPrompt.SetHeader(sPrompt);
+                        vmPrompt.SetMessage(sWarning);
+                        vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+                        vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                        if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
+                        {
+                            m_CodeNotes.Remove(nAddr);
 
-                    int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddress).c_str());
-                    if (nIndex != CB_ERR)
-                        ComboBox_DeleteString(hMemWatch, nIndex);
+                            SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
 
-                    ComboBox_SetText(hMemWatch, sAddressWide);
+                            TCHAR sAddressWide[16];
+                            ComboBox_GetText(hMemWatch, sAddressWide, 16);
+                            int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddressWide).c_str());
+                            if (nIndex != CB_ERR)
+                                ComboBox_DeleteString(hMemWatch, nIndex);
+
+                            ComboBox_SetText(hMemWatch, sAddressWide);
+                        }
+                    }
 
                     return FALSE;
                 }

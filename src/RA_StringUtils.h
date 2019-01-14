@@ -181,7 +181,6 @@ public:
             m_vPending.emplace_back(std::wstring{ra::ToWString(arg)});
         else
             m_vPending.emplace_back(std::string{ra::ToString(arg)});
-        
     }
 
     template<>

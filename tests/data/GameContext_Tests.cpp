@@ -2,6 +2,7 @@
 
 #include "data\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\ILeaderboardManager.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -28,6 +29,8 @@ public:
     class GameContextHarness : public GameContext
     {
     public:
+        GameContextHarness() noexcept : m_OverrideRuntime(&runtime) {}
+
         ra::api::mocks::MockServer mockServer;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
@@ -35,6 +38,7 @@ public:
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::data::mocks::MockUserContext mockUser;
+        ra::services::AchievementRuntime runtime;
 
         static const unsigned int FirstLocalId = GameContext::FirstLocalId;
 
@@ -48,6 +52,9 @@ public:
             pAch.SetPoints(5);
             return pAch;
         }
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
 
     TEST_METHOD(TestLoadGameTitle)
@@ -379,6 +386,49 @@ public:
         Assert::IsNotNull(pAch2);
         Ensures(pAch2 != nullptr);
         Assert::IsFalse(pAch2->Active());
+    }
+
+
+    TEST_METHOD(TestLoadGamePausesRuntime)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.LoadGame(1U);
+        Assert::IsTrue(game.runtime.IsPaused());
+
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        Assert::IsFalse(game.runtime.IsPaused());
+    }
+
+    TEST_METHOD(TestLoadGameWhileRuntimePaused)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.runtime.SetPaused(true);
+
+        game.LoadGame(1U);
+        Assert::IsTrue(game.runtime.IsPaused());
+
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        Assert::IsTrue(game.runtime.IsPaused());
     }
 
     TEST_METHOD(TestAwardAchievementNonExistant)

@@ -50,6 +50,7 @@
 #include <sstream> // string
 #include <stack>
 #include <unordered_map>
+#include <variant>
 
 #pragma warning(push)
 // Look at this file if you want to know what they are and what they mean

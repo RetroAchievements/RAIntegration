@@ -15,6 +15,38 @@
 namespace ra {
 namespace services {
 
+void AchievementRuntime::ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+{
+    if (m_bPaused)
+    {
+        // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
+        // is not false, the achievement will be moved to the active list. This ensures achievements don't
+        // trigger immediately upon loading the game due to uninitialized memory.
+        GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
+        RemoveEntry(m_vActiveAchievements, nId);
+    }
+    else
+    {
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievements, nId, pTrigger);
+        RemoveEntry(m_vQueuedAchievements, nId);
+    }
+
+    RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
+}
+
+void AchievementRuntime::ResetActiveAchievements()
+{
+    // Reset any active achievements and move them to the pending queue, where they'll stay as long as the
+    // trigger is active. This ensures they don't trigger while we're resetting.
+    for (const auto& pAchievement : m_vActiveAchievements)
+    {
+        rc_reset_trigger(pAchievement.pTrigger);
+        AddEntry(m_vQueuedAchievements, pAchievement.nId, pAchievement.pTrigger);
+    }
+
+    m_vActiveAchievements.clear();
+}
+
 static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
 {
     rc_condition_t* condition = pCondSet->conditions;
@@ -46,14 +78,16 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     return false;
 }
 
-_Use_decl_annotations_
-void AchievementRuntime::Process(std::vector<Change>& changes) const
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
 {
+    if (m_bPaused)
+        return;
+
     for (auto& pAchievement : m_vActiveAchievements)
     {
         const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
         if (bResult)
-            changes.emplace_back(Change{ ChangeType::AchievementTriggered, pAchievement.nId });
+            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId});
     }
 
     for (auto& pAchievement : m_vActiveAchievementsMonitorReset)
@@ -62,13 +96,33 @@ void AchievementRuntime::Process(std::vector<Change>& changes) const
 
         const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
         if (bResult)
-            changes.emplace_back(Change{ ChangeType::AchievementTriggered, pAchievement.nId });
+            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId});
         else if (bHasHits && !HasHitCounts(pAchievement.pTrigger))
-            changes.emplace_back(Change{ ChangeType::AchievementReset, pAchievement.nId });
+            changes.emplace_back(Change{ChangeType::AchievementReset, pAchievement.nId});
+    }
+
+    auto pIter = m_vQueuedAchievements.begin();
+    while (pIter != m_vQueuedAchievements.end())
+    {
+        const bool bResult = rc_test_trigger(pIter->pTrigger, rc_peek_callback, nullptr, nullptr);
+        if (bResult)
+        {
+            // trigger is active, ignore the achievement for now. reset it so it can't pause itself.
+            rc_reset_trigger(pIter->pTrigger);
+            ++pIter;
+        }
+        else
+        {
+            // trigger is not active, reset the achievement and allow it to be triggered on future frames
+            rc_reset_trigger(pIter->pTrigger);
+            AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
+            pIter = m_vQueuedAchievements.erase(pIter);
+        }
     }
 }
 
-static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt, const std::string& sMemString)
+static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
+                               const std::string& sSalt, const std::string& sMemString)
 {
     std::vector<rc_condition_t> vConditions;
     const size_t nStart = pTokenizer.CurrentPosition();
@@ -131,7 +185,8 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
         {
             // regenerate the md5 and see if it sticks
             const char* pStart = pTokenizer.GetPointer(nStart);
-            std::string sModifiedProgressString = ra::StringPrintf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
+            std::string sModifiedProgressString =
+                ra::StringPrintf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
             std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
             if (sMD5Progress != sGivenMD5Progress)
             {
@@ -197,7 +252,7 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
         const unsigned int nId = pTokenizer.PeekNumber();
         vProcessedAchievementIds.insert(nId);
 
-        rc_trigger_t *pTrigger = nullptr;
+        rc_trigger_t* pTrigger = nullptr;
         for (const auto& pActiveAchievement : m_vActiveAchievements)
         {
             if (pActiveAchievement.nId == nId)
@@ -249,7 +304,8 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
     return true;
 }
 
-static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt, const std::string& sMemString)
+static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt,
+                                     const std::string& sMemString)
 {
     // build the progress string
     std::ostringstream oss;
@@ -269,9 +325,8 @@ static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, c
         pCondition = pGroup->conditions;
         while (pCondition != nullptr)
         {
-            oss << pCondition->current_hits << ':'
-                << pCondition->operand1.value << ':' << pCondition->operand1.previous << ':'
-                << pCondition->operand2.value << ':' << pCondition->operand2.previous << ':';
+            oss << pCondition->current_hits << ':' << pCondition->operand1.value << ':' << pCondition->operand1.previous
+                << ':' << pCondition->operand2.value << ':' << pCondition->operand2.previous << ':';
 
             pCondition = pCondition->next;
         }
@@ -321,14 +376,16 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
     for (const auto& pAchievement : m_vActiveAchievements)
     {
         std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
-        std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
+        std::string sProgress =
+            CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }
 
     for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
     {
         std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
-        std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
+        std::string sProgress =
+            CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }
 }

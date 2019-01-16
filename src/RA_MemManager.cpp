@@ -59,7 +59,7 @@ std::vector<size_t> MemManager::GetBankIDs() const
 
 unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) const
 {
-    unsigned char buffer[4];
+    unsigned char buffer[4]{};
     switch (size)
     {
         case MemSize::Bit_0:

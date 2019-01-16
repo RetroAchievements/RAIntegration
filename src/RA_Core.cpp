@@ -53,9 +53,6 @@ HWND g_RAMainWnd = nullptr;
 ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 bool g_bRAMTamperedWith = false;
 
-inline static constexpr unsigned int PROCESS_WAIT_TIME{ 100U };
-inline static unsigned int g_nProcessTimer{ 0U };
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
@@ -354,8 +351,6 @@ static void ActivateGame(unsigned int nGameId)
     g_AchievementOverlay.OnLoad_NewRom();
     g_MemBookmarkDialog.OnLoad_NewRom();
 
-    g_nProcessTimer = 0;
-
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
 }
 
@@ -423,10 +418,12 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
 API void CCONV _RA_OnReset()
 {
-    g_pActiveAchievements->Reset();
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
+    // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
+    // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
+    // by resetting the emulator.
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
 
-    g_nProcessTimer = 0;
+    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -991,7 +988,6 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_MemoryDialog.Invalidate();
-        g_nProcessTimer = PROCESS_WAIT_TIME;
 
         for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
             g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
@@ -1002,13 +998,8 @@ API void CCONV _RA_DoAchievementsFrame()
 {
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn() && g_pActiveAchievements != nullptr)
     {
-        if (g_nProcessTimer >= PROCESS_WAIT_TIME)
-        {
-            g_pActiveAchievements->Test();
-            ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Test();
-        }
-        else
-            g_nProcessTimer++;
+        g_pActiveAchievements->Test();
+        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Test();
 
         g_MemoryDialog.Invalidate();
     }

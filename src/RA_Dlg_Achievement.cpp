@@ -10,6 +10,8 @@
 
 #include "data\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
+
 inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_CORE{_T("ID"),     _T("Title"),     _T("Points"),
                                                            _T("Author"), _T("Achieved?"), _T("Modified?")};
 inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_UNOFFICIAL{_T("ID"),     _T("Title"),  _T("Points"),
@@ -341,7 +343,8 @@ _Use_decl_annotations_ void Dlg_Achievements::OnClickAchievementSet(AchievementS
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                    NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
 
-    CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, !pRuntime.IsPaused());
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     OnLoad_NewRom(pGameContext.GameId()); // assert: calls UpdateSelectedAchievementButtons
@@ -381,7 +384,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             OnLoad_NewRom(pGameContext.GameId());
 
-            CheckDlgButton(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE, g_pActiveAchievements->ProcessingActive());
+            const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+            CheckDlgButton(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE, !pRuntime.IsPaused());
 
             //  Click the core
             OnClickAchievementSet(AchievementSet::Type::Core);
@@ -741,8 +745,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 break;
 
                 case IDC_RA_CHKACHPROCESSINGACTIVE:
-                    g_pActiveAchievements->SetPaused(IsDlgButtonChecked(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE) == FALSE);
+                {
+                    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                    pRuntime.SetPaused(IsDlgButtonChecked(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE) == FALSE);
                     return TRUE;
+                }
 
                 case IDC_RA_RESET_ACH:
                 {

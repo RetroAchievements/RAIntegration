@@ -1192,13 +1192,13 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
 {
     HBRUSH hBarBack = static_cast<HBRUSH>(GetStockObject(DKGRAY_BRUSH));
     HBRUSH hBarFront = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
-    float fNumMax = (float)(nMax);
-    const float fInnerBarMaxSizePx = (float)nH - 4.0f;
+    float fNumMax = ra::to_floating(nMax);
+    const float fInnerBarMaxSizePx = ra::to_floating(nH) - 4.0f;
 
     const float fInnerBarSizePx = (fInnerBarMaxSizePx / fNumMax);
     const float fInnerBarOffsetY = fInnerBarSizePx * nSel;
 
-    const int nInnerBarAbsY = (int)(nY + 2.0f + fInnerBarOffsetY);
+    const int nInnerBarAbsY = ra::ftoi(nY + 2.0f + fInnerBarOffsetY);
 
     //	Draw bar:
     SetTextColor(hDC, COL_BAR);
@@ -1213,7 +1213,7 @@ void AchievementOverlay::DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nM
         if (fNumMax <= 0.0f)
             fNumMax = 1.0f;
 
-        SetRect(&rc, nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + (int)(fInnerBarSizePx));
+        SetRect(&rc, nX + 2, nInnerBarAbsY, nX + (nW - 2), nInnerBarAbsY + ra::ftoi(fInnerBarSizePx));
         FillRect(hDC, &rc, hBarFront);
     }
 

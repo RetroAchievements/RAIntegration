@@ -570,7 +570,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             {
                 case IDC_RA_LBX_GAMELIST:
                 {
-                    switch (((LPNMHDR)lParam)->code)
+                    switch (reinterpret_cast<LPNMHDR>(lParam)->code)
                     {
                         case LVN_ITEMCHANGED:
                         {

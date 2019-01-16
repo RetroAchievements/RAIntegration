@@ -12,9 +12,8 @@ namespace win32 {
 
 using ra::ui::viewmodels::MessageBoxViewModel;
 
-using fnTaskDialog = HRESULT(WINAPI*)(HWND hwndParent, HINSTANCE hInstance, PCWSTR pszWindowTitle, PCWSTR pszMainInstruction,
-    PCWSTR pszContent, TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons, PCWSTR pszIcon, int *pnButton);
-
+using fnTaskDialog = std::add_pointer_t<HRESULT WINAPI(HWND, HINSTANCE, PCWSTR, PCWSTR, PCWSTR,
+                                                       TASKDIALOG_COMMON_BUTTON_FLAGS, PCWSTR, int*)>;
 static fnTaskDialog pTaskDialog = nullptr;
 
 MessageBoxDialog::Presenter::Presenter() noexcept
@@ -22,7 +21,7 @@ MessageBoxDialog::Presenter::Presenter() noexcept
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
     auto hDll = LoadLibraryA("comctl32");
     if (hDll)
-        pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
+        pTaskDialog = reinterpret_cast<fnTaskDialog>(GetProcAddress(hDll, "TaskDialog"));
 }
 
 bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept

@@ -30,7 +30,6 @@ enum RequestType
     RequestAllProgress,
 
     //	Submit
-    RequestSubmitAwardAchievement,
     RequestSubmitCodeNote,
     RequestSubmitLeaderboardEntry,
     RequestSubmitAchievementData,

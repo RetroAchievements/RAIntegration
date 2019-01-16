@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="api\ApiCall.hh" />
+    <ClInclude Include="api\AwardAchievement.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />

@@ -6,27 +6,33 @@
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
+#include "api\AwardAchievement.hh"
 #include "api\FetchGameData.hh"
 #include "api\FetchUserUnlocks.hh"
 
+#include "data\UserContext.hh"
+
 #include "services\AchievementRuntime.hh"
-#include "services\impl\FileTextReader.hh"
-#include "services\impl\FileTextWriter.hh"
-#include "services\impl\StringTextReader.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
+#include "services\impl\FileTextReader.hh"
+#include "services\impl\FileTextWriter.hh"
+#include "services\impl\StringTextReader.hh"
 
 #include "ui\ImageReference.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 
+extern bool g_bRAMTamperedWith;
+
 namespace ra {
 namespace data {
 
-static void CopyAchievementData(Achievement& pAchievement, const ra::api::FetchGameData::Response::Achievement& pAchievementData)
+static void CopyAchievementData(Achievement& pAchievement,
+                                const ra::api::FetchGameData::Response::Achievement& pAchievementData)
 {
     pAchievement.SetTitle(pAchievementData.Title);
     pAchievement.SetDescription(pAchievementData.Description);
@@ -76,7 +82,8 @@ void GameContext::LoadGame(unsigned int nGameId)
     const auto response = request.Call();
     if (response.Failed())
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data", ra::Widen(response.ErrorMessage));
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
+                                                                  ra::Widen(response.ErrorMessage));
         return;
     }
 
@@ -162,10 +169,10 @@ void GameContext::LoadGame(unsigned int nGameId)
         for (const auto nUnlockedAchievement : response.UnlockedAchievements)
             vLockedAchievements.erase(nUnlockedAchievement);
 
-        // activate any core achievements the player hasn't earned and pre-fetch the locked image
 #ifndef RA_UTEST
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
+        // activate any core achievements the player hasn't earned and pre-fetch the locked image
         for (auto nAchievementId : vLockedAchievements)
         {
             auto* pAchievement = FindAchievement(nAchievementId);
@@ -192,14 +199,12 @@ void GameContext::LoadGame(unsigned int nGameId)
 #endif
     });
 
-#ifndef RA_UTEST
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
         ra::StringPrintf(L"Loaded %s", response.Title),
         ra::StringPrintf(L"%u achievements, Total Score %u", nNumCoreAchievements, nTotalCoreAchievementPoints),
         ra::ui::ImageType::Icon, response.ImageIcon);
-#endif
 }
 
 void GameContext::MergeLocalAchievements()
@@ -312,6 +317,97 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
+void GameContext::AwardAchievement(unsigned int nAchievementId) const
+{
+    auto* pAchievement = FindAchievement(nAchievementId);
+    if (pAchievement == nullptr)
+        return;
+
+    bool bSubmit = false;
+    bool bIsError = false;
+    std::wstring sHeader;
+    std::wstring sMessage = ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points());
+
+    switch (ra::itoe<AchievementSet::Type>(pAchievement->Category()))
+    {
+        case AchievementSet::Type::Local:
+            sHeader = L"Local Achievement Unlocked";
+            bSubmit = false;
+            break;
+
+        case AchievementSet::Type::Unofficial:
+            sHeader = L"Unofficial Achievement Unlocked";
+            bSubmit = false;
+            break;
+
+        default:
+            sHeader = L"Achievement Unlocked";
+            bSubmit = true;
+            break;
+    }
+
+    if (pAchievement->Modified())
+    {
+        sHeader.insert(0, L"Modified ");
+        if (ActiveAchievementType() != AchievementSet::Type::Local)
+            sHeader.insert(sHeader.length() - 8, L"NOT ");
+        bIsError = true;
+        bSubmit = false;
+    }
+
+#ifndef RA_UTEST
+    if (bSubmit && g_bRAMTamperedWith)
+    {
+        sHeader = L"RAM Tampered With! Achievement NOT Unlocked";
+        bIsError = true;
+        bSubmit = false;
+    }
+#endif
+
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
+        bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
+
+    const auto nPopupId = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+        sHeader, sMessage, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+
+    pAchievement->SetActive(false);
+
+    if (!bSubmit)
+        return;
+
+    ra::api::AwardAchievement::Request request;
+    request.AchievementId = nAchievementId;
+    request.Hardcore = _RA_HardcoreModeIsActive();
+    request.GameHash = GameHash();
+    request.CallAsync([nPopupId](const ra::api::AwardAchievement::Response& response)
+    {
+        if (response.Succeeded())
+        {
+            // success! update the player's score
+            ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().SetScore(response.NewPlayerScore);
+        }
+        else if (ra::StringStartsWith(response.ErrorMessage, "User already has "))
+        {
+            // if server responds with "Error: User already has hardcore and regular achievements awarded." or
+            // "Error: User already has this achievement awarded.", just ignore the error. There's no reason to
+            // notify the user that the unlock failed because it had happened previously.
+        }
+        else
+        {
+            // an error occurred, update the popup to display the error message
+            auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopupId);
+            if (pPopup != nullptr)
+            {
+                std::wstring sNewTitle = ra::StringPrintf(L"%s (%s)", pPopup->GetTitle(),
+                    response.ErrorMessage.empty() ? "Error" : response.ErrorMessage);
+
+                pPopup->SetTitle(sNewTitle);
+                pPopup->RebuildRenderImage();
+            }
+        }
+    });
+}
+
 void GameContext::ReloadAchievements(int nCategory)
 {
     if (nCategory == ra::etoi(AchievementSet::Type::Local))
@@ -357,7 +453,7 @@ bool GameContext::ReloadAchievement(unsigned int nAchievementId)
         ++pIter;
     }
 
-    return false; 
+    return false;
 }
 
 bool GameContext::ReloadAchievement(Achievement& pAchievement)
@@ -374,7 +470,8 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
         const auto response = request.Call();
         if (response.Failed())
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data", ra::Widen(response.ErrorMessage));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
+                                                                      ra::Widen(response.ErrorMessage));
             return true; // prevent deleting achievement if server call failed
         }
 

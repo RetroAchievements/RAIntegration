@@ -47,6 +47,12 @@ public:
         return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
     }
 
+    AwardAchievement::Response AwardAchievement(_UNUSED const AwardAchievement::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<AwardAchievement::Response>(AwardAchievement::Name());
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override

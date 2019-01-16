@@ -90,6 +90,11 @@ public:
     Achievement& NewAchievement(AchievementSet::Type nType);
 
     /// <summary>
+    /// Shows the popup for earning an achievement and notifies the server if legitimate.
+    /// </summary>
+    void AwardAchievement(unsigned int nAchievementId) const;
+
+    /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
     virtual bool HasRichPresence() const noexcept;

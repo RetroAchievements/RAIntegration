@@ -45,7 +45,12 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
         SetRenderLocationY(m_nInitialY);
     }
 
-    if (m_pSurface == nullptr)
+    if (m_bSurfaceStale)
+    {
+        m_bSurfaceStale = false;
+        CreateRenderImage();
+    }
+    else if (m_pSurface == nullptr)
     {
         CreateRenderImage();
     }

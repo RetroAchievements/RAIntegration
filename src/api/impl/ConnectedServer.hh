@@ -18,6 +18,7 @@ public:
     GSL_SUPPRESS_F6 StartSession::Response StartSession(const StartSession::Request& request) noexcept override;
     GSL_SUPPRESS_F6 Ping::Response Ping(const Ping::Request& request) noexcept override;
     GSL_SUPPRESS_F6 FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept override;
+    GSL_SUPPRESS_F6 AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) noexcept override;
     GSL_SUPPRESS_F6 ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override;
     GSL_SUPPRESS_F6 FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override;
     GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;

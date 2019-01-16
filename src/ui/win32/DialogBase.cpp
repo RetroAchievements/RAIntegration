@@ -109,7 +109,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return 0;
 
         case WM_SHOWWINDOW:
-            if (static_cast<BOOL>(wParam))
+            if (wParam)
                 OnShown();
             return 0;
 
@@ -118,7 +118,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             {
                 case EN_KILLFOCUS:
                 {
-                    auto* pControlBinding = FindControlBinding((HWND)(lParam));
+                    auto* pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
                     if (pControlBinding)
                         pControlBinding->LostFocus();
                     return TRUE;
@@ -132,7 +132,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     if (pControlBinding)
                         pControlBinding->LostFocus();
 
-                    pControlBinding = FindControlBinding((HWND)(lParam));
+                    pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
                     if (pControlBinding)
                         pControlBinding->OnCommand();
                     break;

@@ -328,6 +328,26 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
     return std::move(response);
 }
 
+AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request) noexcept
+{
+    AwardAchievement::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
+    AppendUrlParam(sPostData, "h", request.Hardcore ? "1" : "0");
+    if (!request.GameHash.empty())
+        AppendUrlParam(sPostData, "m", request.GameHash);
+
+    if (DoRequest(m_sHost, AwardAchievement::Name(), "awardachievement", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+        GetRequiredJsonField(response.NewPlayerScore, document, "Score", response);
+    }
+
+    return std::move(response);
+}
+
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request) noexcept
 {
     ResolveHash::Response response;

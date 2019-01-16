@@ -590,6 +590,9 @@
     <ClInclude Include="api\FetchUserUnlocks.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="api\AwardAchievement.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

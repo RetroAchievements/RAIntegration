@@ -43,12 +43,12 @@ public:
             return;
 
         // write a timestamp
-        time_t tTime;
-        unsigned int tMilliseconds;
+        time_t tTime{};
+        unsigned int tMilliseconds{};
         if (ServiceLocator::Exists<IClock>())
         {
             const auto tNow = ServiceLocator::Get<IClock>().Now();
-            tMilliseconds = static_cast<unsigned int>(
+            tMilliseconds = gsl::narrow_cast<unsigned int>(
                 std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch().count() % 1000);
             tTime = std::chrono::system_clock::to_time_t(tNow);
         }

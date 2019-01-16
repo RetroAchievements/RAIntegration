@@ -98,7 +98,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& Response{ doc["Response"] };
     const auto& LBData{ Response["LBData"] };
 
-    const auto nLBID{ static_cast<ra::LeaderboardID>(LBData["LeaderboardID"].GetUint()) };
+    const auto nLBID{ra::LeaderboardID{LBData["LeaderboardID"].GetUint()}};
     const auto nGameID{ LBData["GameID"].GetUint() };
     const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
 

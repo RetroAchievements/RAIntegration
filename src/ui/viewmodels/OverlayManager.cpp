@@ -38,11 +38,11 @@ static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, s
         case RelativePosition::Near:
             return nValue;
         case RelativePosition::Center:
-            return static_cast<int>((nFarValue - nValue) / 2);
+            return ra::to_signed((nFarValue - nValue) / 2);
         case RelativePosition::Far:
-            return static_cast<int>(nFarValue - nValue);
+            return ra::to_signed(nFarValue - nValue);
         case RelativePosition::After:
-            return static_cast<int>(nFarValue + nValue);
+            return ra::to_signed(nFarValue + nValue);
     }
 }
 

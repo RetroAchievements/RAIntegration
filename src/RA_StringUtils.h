@@ -177,52 +177,33 @@ public:
     template<typename T>
     void Append(const T& arg)
     {
-        PendingString pPending;
         if (m_bPrepareWide)
-        {
-            pPending.WString = ra::ToWString(arg);
-            pPending.DataType = PendingString::Type::WString;
-        }
+            m_vPending.emplace_back(std::wstring{ra::ToWString(arg)});
         else
-        {
-            pPending.String = ra::ToString(arg);
-            pPending.DataType = PendingString::Type::String;
-        }
-        m_vPending.emplace_back(std::move(pPending));
+            m_vPending.emplace_back(std::string{ra::ToString(arg)});
+        
     }
 
     template<>
     void Append(const std::string& arg)
     {
-        PendingString pPending;
-        pPending.Ref.String = &arg;
-        pPending.DataType = PendingString::Type::StringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     template<>
     void Append(const std::wstring& arg)
     {
-        PendingString pPending;
-        pPending.Ref.WString = &arg;
-        pPending.DataType = PendingString::Type::WStringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     void Append(std::string&& arg)
     {
-        PendingString pPending;
-        pPending.String = std::move(arg);
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(std::move(arg));
     }
 
     void Append(std::wstring&& arg)
     {
-        PendingString pPending;
-        pPending.WString = std::move(arg);
-        pPending.DataType = PendingString::Type::WString;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(std::move(arg));
     }
 
     template<>
@@ -242,11 +223,7 @@ public:
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref.Char.Pointer = pStart;
-        pPending.Ref.Char.Length = nLength;
-        pPending.DataType = PendingString::Type::CharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void AppendSubString(const wchar_t* pStart, size_t nLength)
@@ -254,11 +231,7 @@ public:
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref.WChar.Pointer = pStart;
-        pPending.Ref.WChar.Length = nLength;
-        pPending.DataType = PendingString::Type::WCharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void Append() noexcept
@@ -325,10 +298,7 @@ public:
             assert(!"Unsupported formatted type");
         }
 
-        PendingString pPending;
-        pPending.String = oss.str();
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(oss.str());
     }
 
     void AppendFormat(const char* arg, const std::string& sFormat)
@@ -344,12 +314,7 @@ public:
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)
-            {
-                PendingString pPending;
-                pPending.String = std::string(nPadding, ' ');
-                pPending.DataType = PendingString::Type::String;
-                m_vPending.emplace_back(std::move(pPending));
-            }
+                m_vPending.emplace_back(std::string(nPadding, ' '));
 
             AppendSubString(arg, nLength);
         }
@@ -496,24 +461,33 @@ private:
 
     bool m_bPrepareWide;
 
-    struct PendingString
+    class PendingString
     {
-        union {
-            const std::string* String;
-            const std::wstring* WString;
+    public:
+        explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
+        explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
+        explicit PendingString(_In_z_ const char* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::string_view{ptr, len}},
+            DataType{Type::CharRef}
+        {}
+        explicit PendingString(_In_z_ const wchar_t* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::wstring_view{ptr, len}},
+            DataType{Type::WCharRef}
+        {}
+        PendingString() noexcept = delete;
+        ~PendingString() noexcept = default;
 
-            struct
-            {
-                const char* Pointer;
-                size_t Length;
-            } Char;
+        // To prevent copying moving
+        PendingString(const PendingString&) = delete;
+        PendingString& operator=(const PendingString&) = delete;
+        PendingString& operator=(PendingString&&) noexcept = delete;
+        
+        // This is needed by m_vPending's allocator
+        PendingString(PendingString&&) noexcept = default;
 
-            struct
-            {
-                const wchar_t* Pointer;
-                size_t Length;
-            } WChar;
-        } Ref{};
+    private:
+        using RefType = std::variant<std::string_view, std::wstring_view>;
+        RefType Ref;
 
         std::string String;
         std::wstring WString;
@@ -522,12 +496,12 @@ private:
         {
             String,
             WString,
-            StringRef,
-            WStringRef,
             CharRef,
             WCharRef,
         };
         Type DataType{Type::String};
+
+        friend class StringBuilder;
     };
 
     mutable std::vector<PendingString> m_vPending;

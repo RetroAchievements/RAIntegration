@@ -183,7 +183,7 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
                 const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(*iter);
                 if (pLB != nullptr)
                 {
-                    const auto sScoreSoFar = ra::Widen(pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())));
+                    const auto sScoreSoFar = ra::Widen(pLB->FormatScore(pLB->GetCurrentValue()));
                     const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
 
                     auto pRenderSurface =

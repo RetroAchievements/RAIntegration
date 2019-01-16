@@ -459,8 +459,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const int nHeight = rcTarget.bottom - rcTarget.top;
 
     auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto nPlayTime = static_cast<unsigned int>(
-        ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId()).count());
+    const auto nPlayTime =
+        ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId()).count();
 
     // title
     const auto& sGameTitle = pGameContext.GameTitle();
@@ -479,7 +479,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         if (!RA_GameIsActive())
             sSubtitle = "No achievements present";
         else
-            sSubtitle = ra::StringPrintf("No achievements present - %dh%02dm", nPlayTime / 3600, (nPlayTime / 60) % 60);
+            sSubtitle = ra::StringPrintf("No achievements present - %lh%02lm", nPlayTime / 3600, (nPlayTime / 60) % 60);
     }
     else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
     {
@@ -516,7 +516,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
         for (int i = 0; i < nAchievementsToDraw; ++i)
         {
             const int nAchIdx = (*pnScrollOffset) + i;
-            if (nAchIdx < static_cast<int>(nNumberOfAchievements))
+            if (nAchIdx < ra::to_signed(nNumberOfAchievements))
             {
                 const BOOL bSelected = ((*pnSelectedItem) - (*pnScrollOffset) == i);
                 if (bSelected)
@@ -537,7 +537,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
             }
         }
 
-        if (nNumberOfAchievements > static_cast<size_t>(nAchievementsToDraw - 1))
+        if (nNumberOfAchievements > ra::to_unsigned(nAchievementsToDraw - 1))
         {
             DrawBar(hDC,
                     nDX + 8,
@@ -850,8 +850,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
                 const int nSelBoxWidth = nWidth - 8;
                 const int nSelBoxHeight = nItemSpacing;
 
-                RECT rcSelected = {nDX + nSelBoxXOffs, static_cast<LONG>(nYOffset), nDX + nSelBoxXOffs + nSelBoxWidth,
-                                   static_cast<LONG>(nYOffset + nSelBoxHeight)};
+                RECT rcSelected{nDX + nSelBoxXOffs, nYOffset, nDX + nSelBoxXOffs + nSelBoxWidth,
+                                nYOffset + nSelBoxHeight};
 
                 FillRect(hDC, &rcSelected, g_hBrushSelectedBG);
             }
@@ -1125,7 +1125,7 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
         SetTextColor(hDC, COL_TEXT);
 
         const auto& sTitle{ra::PAGE_TITLES.at(ra::etoi(nCurrentPage))};
-        TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::narrow_cast<int>(ra::tcslen_s(sTitle)));
+        TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::to_signed(ra::tcslen_s(sTitle)));
     }
 
     //	Render controls:
@@ -1144,12 +1144,12 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
         {
             ra::tstring stNext{_T(" ->:")};
             stNext += _T("Next ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::narrow_cast<int>(stNext.length()));
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::to_signed(stNext.length()));
         }
         {
             ra::tstring stPrev{_T(" <-:")};
             stPrev += _T("Prev ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::narrow_cast<int>(stPrev.length()));
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::to_signed(stPrev.length()));
         }
 
         _CONSTANT_LOC ctBackChar{_T('B')};
@@ -1164,15 +1164,14 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
             stBack += ctBackChar;
             stBack += _T(":");
             stBack += _T("Back ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::narrow_cast<int>(stBack.length()));
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::to_signed(stBack.length()));
         }
         {
             ra::tstring stSelect{_T(" ")};
             stSelect += ctSelectChar;
             stSelect += _T(":");
             stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(),
-                    ra::narrow_cast<int>(stSelect.length()));
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::to_signed(stSelect.length()));
         }
     }
 

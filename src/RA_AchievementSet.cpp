@@ -237,7 +237,8 @@ bool AchievementSet::SaveToFile() const
 
     // Commits local achievements to the file
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(pGameContext.GameId())));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements,
+                                         std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
         return false;
 

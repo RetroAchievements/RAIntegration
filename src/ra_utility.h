@@ -23,34 +23,6 @@ _NODISCARD _CONSTANT_FN to_signed(_In_ UnsignedType st) noexcept
     return gsl::narrow_cast<std::make_signed_t<UnsignedType>>(st);
 }
 
-/// <summary>
-///   Converts '<paramref name="from" />' into a <typeparamref name="NarrowedType" />.
-/// </summary>
-/// <typeparam name="Narrowed">
-///   A narrower version of <typeparamref name="WideType" />. This template
-///   parameter must be specified.
-/// </typeparam>
-/// <typeparam name="WideType">
-///   The <c>value_type</c> of the input, must have a larger size than
-///   <typeparamref name="NarrowedType" />.
-/// </typeparam>
-/// <param name="from">The arithmetic value to narrowed.</param>
-/// <returns>
-///     <typeparamref name="WideType" /> as a <typeparamref name="NarrowedType" />.
-/// </returns>
-/// <remarks>
-///   This function is used for explicit narrowing conversions when a platform
-///   type is different than a function parameter's type, such as
-///   <c>std::size_t</c> and <c>unsigned int</c>.
-/// </remarks>
-template<typename NarrowedType, typename WideType,
-         typename = std::enable_if_t<std::is_arithmetic_v<NarrowedType> && std::is_arithmetic_v<WideType> &&
-                                     has_smaller_or_same_size_than_v<NarrowedType, WideType>>>
-_NODISCARD _CONSTANT_FN narrow_cast(_In_ WideType from) noexcept
-{
-    return static_cast<NarrowedType>(static_cast<WideType>(from));
-}
-
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
 _NODISCARD _CONSTANT_VAR etoi(_In_ Enum e) noexcept
 {

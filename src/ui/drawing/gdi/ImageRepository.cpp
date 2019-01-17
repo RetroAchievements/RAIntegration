@@ -199,7 +199,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
         {
             hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler), // Input bitmap to convert
                 GUID_WICPixelFormat32bppBGR,				// &GUID_WICPixelFormat32bppBGR,
-                WICBitmapDitherTypeNone,					// Specified dither patterm
+                WICBitmapDitherTypeNone,					// Specified dither pattern
                 nullptr,									// Specify a particular palette 
                 0.f,										// Alpha threshold
                 WICBitmapPaletteTypeCustom);				// Palette translation type
@@ -302,13 +302,13 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
 
     // Decode the source image to IWICBitmapSource
     CComPtr<IWICBitmapDecoder> pDecoder;
-    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(),			// Image to be decoded
-        nullptr,						// Do not prefer a particular vendor
-        GENERIC_READ,                   // Desired read access to the file
-        WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
-        &pDecoder);                     // Pointer to the decoder
+    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(), // Image to be decoded
+                                                           nullptr,      // Do not prefer a particular vendor
+                                                           GENERIC_READ, // Desired read access to the file
+                                                           WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
+                                                           &pDecoder);                     // Pointer to the decoder
 
-                                        // Retrieve the first frame of the image from the decoder
+    // Retrieve the first frame of the image from the decoder
     CComPtr<IWICBitmapFrameDecode> pFrame;
     if (SUCCEEDED(hr))
         hr = pDecoder->GetFrame(0, &pFrame);

@@ -33,7 +33,7 @@ public:
     ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void DrawImage(int nX, int nY, int nWidth, int nHeight, _In_ ImageReference& pImage) override;
+    void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
     GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }

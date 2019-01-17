@@ -35,7 +35,7 @@ public:
     /// <summary>
     /// Gets the <see cref="HBITMAP" /> from an <see cref="ImageReference" />.
     /// </summary>
-    static HBITMAP GetHBitmap(_In_ ImageReference& pImage);
+    static HBITMAP GetHBitmap(ImageReference& pImage);
 
     void FetchImage(ImageType nType, const std::string& sName) override;
 

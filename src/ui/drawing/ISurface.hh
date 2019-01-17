@@ -76,7 +76,7 @@ public:
     /// <param name="nWidth">The width to draw the image.</param>
     /// <param name="nHeight">The height to draw the image.</param>
     /// <param name="pImage">The image to draw.</param>
-    virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, _In_ ImageReference& pImage) = 0;
+    virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
 
     /// <summary>
     /// Draws a secondary surface onto the surface.

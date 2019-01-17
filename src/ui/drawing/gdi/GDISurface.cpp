@@ -66,20 +66,19 @@ void GDISurface::SwitchFont(int nFont) const
 }
 
 _Use_decl_annotations_
-void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, ImageReference& pImage)
+void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
 {
-    auto hBitmap = ImageRepository::GetHBitmap(pImage);
-    if (!hBitmap)
+    if (pImage.GetData() == 0)
         return;
 
     HDC hdcMem = CreateCompatibleDC(m_hDC);
     if (!hdcMem)
         return;
 
-    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
+    auto hOldBitmap = SelectBitmap(hdcMem, pImage.GetData());
 
     BITMAP bm;
-    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+    if (GetObject(reinterpret_cast<HANDLE>(pImage.GetData()), sizeof(bm), &bm) == sizeof(bm))
         BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
 
     SelectBitmap(hdcMem, hOldBitmap);

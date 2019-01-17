@@ -34,6 +34,11 @@ public:
         {
             ApiRequestBase::CallAsync<Request, Callback>(*this, std::move(callback));
         }
+
+        void CallAsyncWithRetry(Callback&& callback) const
+        {
+            ApiRequestBase::CallAsyncWithRetry<Request, Callback>(*this, std::move(callback));
+        }
     };
 };
 

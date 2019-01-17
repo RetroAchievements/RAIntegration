@@ -105,11 +105,16 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
         if (bBlocking)
         {
             ra::api::Login::Response response = request.Call();
+
+            // if we're blocking, we can't keep retrying on network failure, but we can retry at least once
+            if (response.Result == ra::api::ApiResult::Incomplete)
+                response = request.Call();
+
             HandleLoginResponse(response);
         }
         else
         {
-            request.CallAsync(HandleLoginResponse);
+            request.CallAsyncWithRetry(HandleLoginResponse);
         }
     }
 }

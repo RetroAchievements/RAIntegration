@@ -379,7 +379,7 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
     request.AchievementId = nAchievementId;
     request.Hardcore = _RA_HardcoreModeIsActive();
     request.GameHash = GameHash();
-    request.CallAsync([nPopupId](const ra::api::AwardAchievement::Response& response)
+    request.CallAsyncWithRetry([nPopupId](const ra::api::AwardAchievement::Response& response)
     {
         if (response.Succeeded())
         {

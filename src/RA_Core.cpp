@@ -287,7 +287,7 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
                 buffer[sizeof(buffer) - 1] = '\0'; // ensure buffer is null terminated
                 std::string sEstimatedGameTitle(buffer);
 
-                 Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
+                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
             }
             else
             {
@@ -383,19 +383,36 @@ API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
     return nGameId;
 }
 
+static void ActivateHash(const std::string& sHash, unsigned int nGameId)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.SetGameHash(sHash);
+
+    // if the hash didn't resolve, we still want to ping with "Playing GAMENAME"
+    if (nGameId == 0)
+    {
+        char buffer[64]{};
+        RA_GetEstimatedGameTitle(buffer);
+        buffer[sizeof(buffer) - 1] = '\0'; // ensure buffer is null terminated
+        std::wstring sEstimatedGameTitle = ra::ToWString(buffer);
+        if (sEstimatedGameTitle.empty())
+            sEstimatedGameTitle = L"Unknown";
+        pGameContext.SetGameTitle(sEstimatedGameTitle);
+
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
+    }
+}
+
 API void CCONV _RA_ActivateGame(unsigned int nGameId)
 {
     ActivateGame(nGameId);
 
-    // if the hash was stored, use it
+    // if the hash was captured, use it
     if (ra::services::ServiceLocator::Exists<PendingRom>())
     {
         const auto& pPendingRom = ra::services::ServiceLocator::Get<PendingRom>();
         if (nGameId == pPendingRom.nGameId)
-        {
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-            pGameContext.SetGameHash(pPendingRom.sMD5);
-        }
+            ActivateHash(pPendingRom.sMD5, nGameId);
     }
 }
 
@@ -408,10 +425,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
     // if a ROM was provided, store the hash, even if it didn't match anything
     if (pROM && nROMSize)
-    {
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-        pGameContext.SetGameHash(sCurrentROMMD5);
-    }
+        ActivateHash(sCurrentROMMD5, nGameId);
 
     return 0;
 }

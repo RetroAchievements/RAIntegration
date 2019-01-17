@@ -476,10 +476,10 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     const size_t nNumberOfAchievements = g_pActiveAchievements->NumAchievements();
     if (nNumberOfAchievements == 0)
     {
-        if (!RA_GameIsActive())
+        if (pGameContext.GameId() == 0)
             sSubtitle = "No achievements present";
         else
-            sSubtitle = ra::StringPrintf("No achievements present - %lh%02lm", nPlayTime / 3600, (nPlayTime / 60) % 60);
+            sSubtitle = ra::StringPrintf("No achievements present - %dh%02dm", nPlayTime / 3600, (nPlayTime / 60) % 60);
     }
     else if (g_nActiveAchievementSet == AchievementSet::Type::Core)
     {

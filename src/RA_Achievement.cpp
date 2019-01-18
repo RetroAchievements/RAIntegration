@@ -213,7 +213,7 @@ void Achievement::ParseTrigger(const char* sTrigger)
     {
         // allocate space and parse again
         m_pTriggerBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
-        auto* pTrigger = rc_parse_trigger(static_cast<void*>(m_pTriggerBuffer.get()->data()), sTrigger, nullptr, 0);
+        auto* pTrigger = rc_parse_trigger(m_pTriggerBuffer->data(), sTrigger, nullptr, 0);
         m_pTrigger = pTrigger;
 
         if (m_bActive)
@@ -329,7 +329,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        if (m_pTrigger && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)

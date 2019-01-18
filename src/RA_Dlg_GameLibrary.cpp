@@ -278,7 +278,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
             auto pBuf = std::make_unique<unsigned char[]>(6 * 1024 * 1024);
 
-            fread(static_cast<void*>(pBuf.get()), sizeof(unsigned char), nSize, pf); // Check
+            fread(pBuf.get(), sizeof(unsigned char), nSize, pf); // Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
             pBuf.reset();
 
@@ -349,7 +349,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 
                     if (hROMReader != INVALID_HANDLE_VALUE)
                     {
-                        BY_HANDLE_FILE_INFORMATION File_Inf;
+                        BY_HANDLE_FILE_INFORMATION File_Inf{};
                         int nSize = 0;
                         if (GetFileInformationByHandle(hROMReader, &File_Inf))
                             nSize = (File_Inf.nFileSizeHigh << 16) + File_Inf.nFileSizeLow;
@@ -570,7 +570,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             {
                 case IDC_RA_LBX_GAMELIST:
                 {
-                    switch (((LPNMHDR)lParam)->code)
+                    switch (reinterpret_cast<LPNMHDR>(lParam)->code)
                     {
                         case LVN_ITEMCHANGED:
                         {

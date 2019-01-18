@@ -20,7 +20,6 @@ public:
 
     void Clear() noexcept;
     void Test();
-    void Reset() noexcept;
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)
@@ -62,9 +61,6 @@ public:
 
     bool RemoveAchievement(const Achievement* pAchievement);
 
-    bool ProcessingActive() const noexcept { return m_bProcessingActive; }
-    void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
-
     bool HasUnsavedChanges() const noexcept;
 
     // ranged-for
@@ -76,7 +72,6 @@ public:
 private:
     // pointers to items in GameContext.m_vAchievements
     std::vector<Achievement*> m_Achievements;
-    bool m_bProcessingActive{ TRUE };
 };
 
 //	Externals:

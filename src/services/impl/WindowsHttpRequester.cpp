@@ -17,8 +17,14 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
 {
     DWORD dwSize = sizeof(DWORD);
     DWORD nContentLength = 0;
-    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX))
+
+#pragma warning(push)
+#pragma warning(disable: 26477)
+    GSL_SUPPRESS_ES47
+    if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                             WINHTTP_HEADER_NAME_BY_INDEX, &nContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX))
         return false;
+#pragma warning(pop)
 
     // allocate enough space in the string for the whole content
     sBuffer.resize(nContentLength + 1); // reserve space for null terminator
@@ -87,10 +93,11 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
     DWORD nStatusCode = 0;
 
     // obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(m_sUserAgent.c_str(),
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(push)
+#pragma warning(disable: 26477)
+    GSL_SUPPRESS_ES47 HINTERNET hSession = WinHttpOpen(m_sUserAgent.c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                                       WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(pop)
 
     if (hSession == nullptr)
     {
@@ -159,7 +166,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 sHeaders += L"Content-Type: ";
                 sHeaders += ra::Widen(pRequest.GetContentType());
 
-                BOOL bResults;
+                BOOL bResults{};
 
                 // send the request
                 if (sPostData.empty())
@@ -187,7 +194,10 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 {
                     // get the http status code
                     DWORD dwSize = sizeof(DWORD);
-                    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &nStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
+                    
+                    GSL_SUPPRESS_ES47 WinHttpQueryHeaders(
+                        hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
+                        &nStatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX);
 
                     // read the response
                     auto* pStringWriter = dynamic_cast<StringTextWriter*>(&pContentWriter);

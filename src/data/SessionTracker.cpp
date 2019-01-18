@@ -172,8 +172,8 @@ long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) co
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
-    auto nSessionDuration = static_cast<unsigned int>(tSessionDuration.count());
-    auto sLine = ra::StringPrintf("%u:%ld:%u:", m_nCurrentGameId, static_cast<long>(m_tSessionStart), nSessionDuration);
+    auto nSessionDuration = tSessionDuration.count();
+    auto sLine = ra::StringPrintf("%u:%ll:%ll:", m_nCurrentGameId, m_tSessionStart, nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());
     sLine.push_back(sMD5.back());

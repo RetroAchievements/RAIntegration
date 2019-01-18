@@ -59,16 +59,16 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
                 sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", "");
                 break;
             case Column::Title:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, pAch->Title().c_str());
+                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Title().c_str());
                 break;
             case Column::Desc:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, pAch->Description().c_str());
+                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Description().c_str());
                 break;
             case Column::Author:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, pAch->Author().c_str());
+                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Author().c_str());
                 break;
             case Column::Achieved:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, !pAch->Active() ? "Yes" : "No");
+                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", !pAch->Active() ? "Yes" : "No");
                 break;
             default:
                 ASSERT(!"Unknown col!");

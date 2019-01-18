@@ -33,7 +33,6 @@ const char* RequestTypeToString[] =
     "RequestGamesList",
     "RequestAllProgress",
 
-    "RequestSubmitAwardAchievement",
     "RequestSubmitCodeNote",
     "RequestSubmitLeaderboardEntry",
     "RequestSubmitAchievementData",
@@ -56,7 +55,6 @@ const char* RequestTypeToPost[] =
     "gameslist",
     "allprogress",
 
-    "awardachievement",
     "submitcodenote",
     "submitlbentry",
     "uploadachievement",
@@ -240,13 +238,14 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    size_t nTemp;
+    size_t nTemp{};
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(push)
+#pragma warning(disable: 26477)
+    GSL_SUPPRESS_ES47 HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                                       WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(pop)
 
     // Specify an HTTP server.
     if (hSession != nullptr)
@@ -274,7 +273,8 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
         const char* mimeBoundary = "---------------------------41184676334";
         const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
-        const int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        const int nResult =
+            WinHttpAddRequestHeaders(hRequest, contentType, ra::to_unsigned(-1), WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
         if (nResult != 0)
         {
             // Add the photo to the stream

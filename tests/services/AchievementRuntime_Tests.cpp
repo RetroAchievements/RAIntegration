@@ -104,6 +104,55 @@ public:
         Assert::AreEqual(0U, vChanges.size());
     }
 
+    TEST_METHOD(TestActivateAchievementPaused)
+    {
+        std::array<unsigned char, 1> memory{ 0x00 };
+        InitializeMemory(memory);
+
+        AchievementRuntime runtime;
+        auto* pTrigger = ParseTrigger("0xH0000=0");
+
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+        runtime.ActivateAchievement(6U, pTrigger);
+        runtime.SetPaused(false);
+        Assert::IsFalse(runtime.IsPaused());
+
+        // achievement is paused and will be ignored as long as its true
+        std::vector<AchievementRuntime::Change> vChanges;
+        for (int i = 0; i < 10; i++)
+        {
+            runtime.Process(vChanges);
+            Assert::AreEqual(0U, vChanges.size());
+        }
+
+        // achievement is no longer true, so it won't trigger
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // achievement is true again and should trigger
+        memory.at(0) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+
+        // processing is paused, achievement should not trigger
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+        vChanges.clear();
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // processing re-enabled, achievement should trigger
+        runtime.SetPaused(false);
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+    }
+
     TEST_METHOD(TestMonitorAchievementReset)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -119,7 +168,7 @@ public:
         Assert::AreEqual(0U, vChanges.size());
 
         // trigger reset, but not watching for reset, no notification
-        memory.front() = 1;
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
 
@@ -129,12 +178,12 @@ public:
         Assert::AreEqual(0U, vChanges.size());
 
         // disable reset, hitcount should increase, no notification
-        memory.front() = 0;
+        memory.at(0) = 0;
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
 
         // enable reset, expect notification
-        memory.front() = 1;
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(4U, vChanges.front().nId);
@@ -146,7 +195,7 @@ public:
         Assert::AreEqual(0U, vChanges.size());
 
         // disable reset, advance to trigger
-        memory.front() = 0;
+        memory.at(0) = 0;
         runtime.Process(vChanges);
         runtime.Process(vChanges);
         runtime.Process(vChanges);
@@ -156,7 +205,7 @@ public:
         vChanges.clear();
 
         // enable reset, reset prevents trigger, expect reset notification
-        memory.front() = 1;
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(4U, vChanges.front().nId);
@@ -164,15 +213,59 @@ public:
         vChanges.clear();
 
         // disable reset, no change expected
-        memory.front() = 0;
+        memory.at(0) = 0;
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
 
         // disable reset monitor and reset, expect no notification
         runtime.ActivateAchievement(4U, pTrigger);
-        memory.front() = 1;
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
+    }
+
+    TEST_METHOD(TestResetActiveAchievements)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+        InitializeMemory(memory);
+
+        AchievementRuntime runtime;
+        auto* pTrigger = ParseTrigger("0xH0000=0_0xH0001=1");
+
+        runtime.ActivateAchievement(6U, pTrigger);
+
+        // rack up some hits
+        std::vector<AchievementRuntime::Change> vChanges;
+        for (int i = 0; i < 10; i++)
+        {
+            runtime.Process(vChanges);
+            Assert::AreEqual(0U, vChanges.size());
+        }
+        Assert::AreEqual(10U, pTrigger->requirement->conditions->current_hits);
+
+        // set state to trigger achievement, then call reset. HitCount should go to 0 and trigger should be delayed
+        // until inactive.
+        memory.at(1) = 1;
+        runtime.ResetActiveAchievements();
+        Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // achievement is no longer true, so it won't trigger
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // achievement is true again and should trigger
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
     }
 
     TEST_METHOD(TestPersistProgress)

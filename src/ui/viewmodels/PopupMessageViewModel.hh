@@ -92,6 +92,11 @@ public:
     void UpdateRenderImage(double fElapsed) override;
     
     /// <summary>
+    /// Causes the cached render image to be rebuilt.
+    /// </summary>
+    void RebuildRenderImage() noexcept { m_bSurfaceStale = true; }
+
+    /// <summary>
     /// Determines whether the animation cycle has started.
     /// </summary>
     bool IsAnimationStarted() const noexcept
@@ -109,6 +114,7 @@ public:
 
 private:
     void CreateRenderImage();
+    bool m_bSurfaceStale = false;
 
     double m_fAnimationProgress = -1.0;
     int m_nInitialY = 0;

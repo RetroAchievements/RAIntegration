@@ -8,7 +8,6 @@ std::string Narrow(const std::wstring& wstr)
     return Narrow(wstr.c_str());
 }
 
-_Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
     const auto wwstr{ std::move_if_noexcept(wstr) };
@@ -37,7 +36,6 @@ std::wstring Widen(const std::string& str)
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_
 std::wstring Widen(std::string&& str) noexcept
 {
     const auto sstr{ std::move_if_noexcept(str) };
@@ -94,24 +92,6 @@ std::string& TrimLineEnding(std::string& str) noexcept
     return str;
 }
 
-_Use_decl_annotations_
-bool StringStartsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
-}
-
-_Use_decl_annotations_
-bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
-{
-    if (sMatch.length() > sString.length())
-        return false;
-
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
-}
-
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
 {
     size_t nNeeded = 0;
@@ -129,22 +109,12 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 nNeeded += pPending.String.length();
                 break;
 
-            case PendingString::Type::StringRef:
-                nNeeded += pPending.Ref.String->length();
-                break;
-
-            case PendingString::Type::WStringRef:
-                pPending.String = ra::Narrow(*pPending.Ref.WString);
-                pPending.DataType = PendingString::Type::String;
-                nNeeded += pPending.String.length();
-                break;
-
             case PendingString::Type::CharRef:
-                nNeeded += pPending.Ref.Char.Length;
+                nNeeded += std::get<std::string_view>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::WCharRef:
-                pPending.String = ra::Narrow(std::wstring(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length));
+                pPending.String = ra::Narrow(std::wstring{std::get<std::wstring_view>(pPending.Ref)});
                 pPending.DataType = PendingString::Type::String;
                 nNeeded += pPending.String.length();
                 break;
@@ -161,12 +131,8 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 sResult.append(pPending.String);
                 break;
 
-            case PendingString::Type::StringRef:
-                sResult.append(*pPending.Ref.String);
-                break;
-
             case PendingString::Type::CharRef:
-                sResult.append(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length);
+                sResult.append(std::get<std::string_view>(pPending.Ref));
                 break;
         }
     }
@@ -189,22 +155,12 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 nNeeded += pPending.WString.length();
                 break;
 
-            case PendingString::Type::WStringRef:
-                nNeeded += pPending.Ref.WString->length();
-                break;
-
-            case PendingString::Type::StringRef:
-                pPending.WString = ra::Widen(*pPending.Ref.String);
-                pPending.DataType = PendingString::Type::WString;
-                nNeeded += pPending.WString.length();
-                break;
-
             case PendingString::Type::WCharRef:
-                nNeeded += pPending.Ref.WChar.Length;
+                nNeeded += std::get<std::wstring_view>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::CharRef:
-                pPending.WString = ra::Widen(std::string(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length));
+                pPending.WString = ra::Widen(std::string{std::get<std::string_view>(pPending.Ref)});
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
@@ -221,15 +177,49 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 sResult.append(pPending.WString);
                 break;
 
-            case PendingString::Type::WStringRef:
-                sResult.append(*pPending.Ref.WString);
-                break;
-
             case PendingString::Type::WCharRef:
-                sResult.append(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length);
+                sResult.append(std::wstring{std::get<std::wstring_view>(pPending.Ref)});
                 break;
         }
     }
+}
+
+std::string Tokenizer::ReadQuotedString()
+{
+    std::string sString;
+    if (PeekChar() != '"')
+        return sString;
+
+    ++m_nPosition;
+    while (m_nPosition < m_sString.length())
+    {
+        const auto c = m_sString.at(m_nPosition++);
+        if (c == '"')
+            break;
+
+        if (c != '\\')
+        {
+            sString.push_back(c);
+        }
+        else
+        {
+            if (m_nPosition == m_sString.length())
+                break;
+
+            const auto c2 = m_sString.at(m_nPosition++);
+            switch (c2)
+            {
+                case 'n':
+                    sString.push_back('\n');
+                    break;
+                default:
+                    sString.push_back(c2);
+                    break;
+            }
+        }
+    }
+
+    return sString;
 }
 
 } /* namespace ra */

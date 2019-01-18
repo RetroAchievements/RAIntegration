@@ -16,7 +16,7 @@ WindowsFileSystem::WindowsFileSystem() noexcept
 {
     // determine the home directory from the executable's path
     wchar_t sBuffer[MAX_PATH]{};
-    GetModuleFileNameW(0, sBuffer, MAX_PATH);
+    GetModuleFileNameW(nullptr, sBuffer, MAX_PATH);
     PathRemoveFileSpecW(sBuffer);
     m_sBaseDirectory = sBuffer;
     if (!m_sBaseDirectory.empty())
@@ -50,7 +50,7 @@ bool WindowsFileSystem::CreateDirectory(const std::wstring& sDirectory) const no
 {
     std::wstring sBuffer;
     const auto& sAbsolutePath = MakeAbsolute(sBuffer, sDirectory);
-    return static_cast<bool>(CreateDirectoryW(sAbsolutePath.c_str(), nullptr));
+    return (CreateDirectoryW(sAbsolutePath.c_str(), nullptr) != 0);
 }
 
 size_t WindowsFileSystem::GetFilesInDirectory(const std::wstring& sDirectory, _Inout_ std::vector<std::wstring>& vResults) const
@@ -79,7 +79,7 @@ bool WindowsFileSystem::DeleteFile(const std::wstring& sPath) const noexcept
 {
     std::wstring sBuffer;
     const auto& sAbsolutePath = MakeAbsolute(sBuffer, sPath);
-    return static_cast<bool>(DeleteFileW(sAbsolutePath.c_str()));
+    return (DeleteFileW(sAbsolutePath.c_str()) != 0);
 }
 
 bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const noexcept
@@ -87,7 +87,7 @@ bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstrin
     std::wstring sBufferNew, sBufferOld;
     const auto& sAbsolutePathNew = MakeAbsolute(sBufferNew, sNewPath);
     const auto& sAbsolutePathOld = MakeAbsolute(sBufferOld, sOldPath);
-    return static_cast<bool>(MoveFileW(sAbsolutePathOld.c_str(), sAbsolutePathNew.c_str()));
+    return (MoveFileW(sAbsolutePathOld.c_str(), sAbsolutePathNew.c_str()) != 0);
 }
 
 int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
@@ -116,7 +116,7 @@ int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
         return -1;
     }
 
-    const LARGE_INTEGER nSize{ fadFile.nFileSizeLow, ra::narrow_cast<LONG>(fadFile.nFileSizeHigh) };
+    const LARGE_INTEGER nSize{fadFile.nFileSizeLow, ra::to_signed(fadFile.nFileSizeHigh)};
     return nSize.QuadPart;
 }
 
@@ -136,7 +136,7 @@ std::chrono::system_clock::time_point WindowsFileSystem::GetLastModified(const s
     // Jan 1 1970. Convert from 100-nanosecond intervals to 1-second intervals, then subtract the number of seconds
     // between the two dates. See https://www.gamedev.net/forums/topic/565693-converting-filetime-to-time_t-on-windows/
     const ULARGE_INTEGER nFileTime{ fadFile.ftLastWriteTime.dwLowDateTime, fadFile.ftLastWriteTime.dwHighDateTime };
-    const time_t tFileTime = static_cast<time_t>((nFileTime.QuadPart / 10000000ULL) - 11644473600ULL);
+    const time_t tFileTime{ra::to_signed((nFileTime.QuadPart / 10000000ULL) - 11644473600ULL)};
 
     return std::chrono::system_clock::from_time_t(tFileTime);
 }

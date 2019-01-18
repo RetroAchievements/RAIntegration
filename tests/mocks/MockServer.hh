@@ -7,6 +7,8 @@
 #include "api\IServer.hh"
 #include "services\ServiceLocator.hh"
 
+#include "CppUnitTest.h"
+
 namespace ra {
 namespace api {
 namespace mocks {
@@ -38,6 +40,18 @@ public:
         });
     }
 
+    /// <summary>
+    /// Throws an exception if the associated request type is invoked.
+    /// </summary>
+    template<typename TApi>
+    void ExpectUncalled()
+    {
+        HandleRequest<TApi>([](const typename TApi::Request&, typename TApi::Response&) -> bool
+        {
+            Assert::Fail(ra::StringPrintf(L"%s should not have been invoked", TApi::Name()).c_str());
+        });
+    }
+
     // === user functions ===
 
     Login::Response Login(const Login::Request& request) noexcept override
@@ -60,9 +74,33 @@ public:
         return HandleRequest<ra::api::Ping>(request);
     }
 
+    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::FetchUserUnlocks>(request);
+    }
+
+    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::AwardAchievement>(request);
+    }
+
+    // === game functions ===
+
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override
     {
         return HandleRequest<ra::api::ResolveHash>(request);
+    }
+
+    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::FetchGameData>(request);
+    }
+
+    // === other functions ===
+
+    LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::LatestClient>(request);
     }
 
 protected:

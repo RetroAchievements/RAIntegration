@@ -183,8 +183,18 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
+    <ClCompile Include="data\EmulatorContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\EmulatorContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\UserContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\GameContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -194,16 +204,12 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="RA_UnitTestHelpers.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\src\RA_Leaderboard.h">
       <Filter>Code</Filter>
     </ClInclude>
@@ -247,8 +253,6 @@
     <ClInclude Include="mocks\MockOverlayManager.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="mocks\MockThreadPool.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>

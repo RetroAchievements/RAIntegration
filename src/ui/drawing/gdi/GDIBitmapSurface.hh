@@ -15,10 +15,12 @@ namespace gdi {
 class GDIBitmapSurface : public GDISurface
 {
 public:
+    GSL_SUPPRESS_TYPE6 // m_hBitmap not initialized, adhered to note below
     explicit GDIBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight}, pResourceRepository)
     {}
 
+    GSL_SUPPRESS_TYPE6 // m_hBitmap not initialized, adhered to note below
     explicit GDIBitmapSurface(const int nWidth, const int nHeight) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight})
     {}
@@ -37,7 +39,7 @@ public:
     }
 
 protected:
-    UINT32* m_pBits; // see note below about initializing this
+    std::uint32_t* m_pBits; // see note below about initializing this
 
 private:
     HDC CreateBitmapHDC(const int nWidth, const int nHeight) noexcept
@@ -59,7 +61,7 @@ private:
         m_hBitmap = CreateDIBSection(m_hMemDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
         assert(m_hBitmap != nullptr);
         assert(pBits != nullptr);
-        m_pBits = reinterpret_cast<UINT32*>(pBits);
+        m_pBits = reinterpret_cast<std::uint32_t*>(pBits);
 
         SelectObject(m_hMemDC, m_hBitmap);
         return m_hMemDC;

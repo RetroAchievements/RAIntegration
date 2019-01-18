@@ -1,3 +1,5 @@
+#ifndef SERVERBASE_HH
+#define SERVERBASE_HH
 #pragma once
 
 #include "api/IServer.hh"
@@ -21,7 +23,7 @@ public:
         return UnsupportedApi<Login::Response>(Login::Name());
     }
 
-    GSL_SUPPRESS_F6 Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
+    Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override
     {
         GSL_SUPPRESS_F6
         return UnsupportedApi<Logout::Response>(Logout::Name());
@@ -39,15 +41,43 @@ public:
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }
 
+    FetchUserUnlocks::Response FetchUserUnlocks(_UNUSED const FetchUserUnlocks::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
+    }
+
+    AwardAchievement::Response AwardAchievement(_UNUSED const AwardAchievement::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<AwardAchievement::Response>(AwardAchievement::Name());
+    }
+
+    // === game functions ===
+
     ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override
     {
         GSL_SUPPRESS_F6
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
+    FetchGameData::Response FetchGameData(_UNUSED const FetchGameData::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
+    }
+
+    // === other functions ===
+
+    LatestClient::Response LatestClient(_UNUSED const LatestClient::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
+    }
+
 protected:
     template<typename TResponse>
-    inline typename TResponse UnsupportedApi(const char* const restrict apiName) const
+    inline typename TResponse UnsupportedApi(const char* const restrict apiName) const noexcept
     {
         static_assert(std::is_base_of<ApiResponseBase, TResponse>::value, "TResponse must derive from ApiResponseBase");
 
@@ -62,3 +92,5 @@ protected:
 } // namespace impl
 } // namespace api
 } // namespace ra
+
+#endif /* !SERVERBASE_HH */

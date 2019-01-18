@@ -3,6 +3,8 @@
 #include "RA_AchievementOverlay.h"
 #include "RA_ImageFactory.h"
 
+#include "ra_math.h"
+
 #include "services\IConfiguration.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
@@ -45,6 +47,7 @@ void LeaderboardPopup::Reset()
     m_nState = PopupState::ShowingProgress;
 }
 
+_Use_decl_annotations_
 void LeaderboardPopup::Update(double fDelta)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -180,7 +183,7 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
                 const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(*iter);
                 if (pLB != nullptr)
                 {
-                    const auto sScoreSoFar = ra::Widen(pLB->FormatScore(static_cast<int>(pLB->GetCurrentValue())));
+                    const auto sScoreSoFar = ra::Widen(pLB->FormatScore(pLB->GetCurrentValue()));
                     const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
 
                     auto pRenderSurface =
@@ -273,9 +276,9 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
             if (m_pScoreboardSurface != nullptr)
             {
                 const auto fOffscreenAmount = (GetOffsetPct() * 600);
-                const auto fFadeOffs = (nWidth - 300 - 10) + fOffscreenAmount;
-                const int nScoreboardX = static_cast<int>(fFadeOffs);
-                const int nScoreboardY = nHeight - 200 - 10;
+                const auto fFadeOffs = (ra::to_unsigned(nWidth) - 300 - 10 + fOffscreenAmount);
+                const auto nScoreboardX = ra::ftoi(fFadeOffs);
+                const auto nScoreboardY = nHeight - 200 - 10;
                 pSurface.DrawSurface(nScoreboardX, nScoreboardY, *m_pScoreboardSurface);
             }
         }

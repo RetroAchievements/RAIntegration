@@ -58,7 +58,7 @@ private:
     static bool ThreadProcessingActive;
 
 private:
-    HWND m_hDialogBox;
+    HWND m_hDialogBox{};
 
     std::map<std::string, unsigned int> m_GameHashLibrary;
     std::map<unsigned int, std::string> m_GameTitlesLibrary;

@@ -17,14 +17,14 @@ public:
     enum class DirtyFlags
     {
         Clean,
-        Title       = 1 << 0,
-        Desc        = 1 << 1,
-        Points      = 1 << 2,
-        Author      = 1 << 3,
-        ID          = 1 << 4,
-        Badge       = 1 << 5,
-        Conditions  = 1 << 6,
-        Votes       = 1 << 7,
+        Title = 1 << 0,
+        Desc = 1 << 1,
+        Points = 1 << 2,
+        Author = 1 << 3,
+        ID = 1 << 4,
+        Badge = 1 << 5,
+        Conditions = 1 << 6,
+        Votes = 1 << 7,
         Description = 1 << 8,
 
         All = std::numeric_limits<std::underlying_type_t<DirtyFlags>>::max()
@@ -38,14 +38,12 @@ public:
     Achievement& operator=(Achievement&&) noexcept = default;
 
 public:
-    void Clear() noexcept;
-
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
     BOOL RemoveCondition(size_t nConditionGroup, unsigned int nConditionID);
     void RemoveAllConditions(size_t nConditionGroup);
 
-    void Set(const Achievement& rRHS);
+    void CopyFrom(const Achievement& rRHS);
 
     inline BOOL Active() const noexcept { return m_bActive; }
     GSL_SUPPRESS_F6 void SetActive(BOOL bActive) noexcept;
@@ -61,6 +59,9 @@ public:
 
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
+
+    void SetCategory(int nID) noexcept { m_nCategoryID = nID; }
+    inline int Category() const noexcept { return m_nCategoryID; }
 
     inline const std::string& Title() const noexcept { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -106,13 +107,7 @@ public:
 
     void Reset() noexcept;
 
-    // Returns the new char* offset after parsing.
-    GSL_SUPPRESS_F6 const char* ParseLine(const char* restrict sBuffer);
-
-#ifndef RA_UTEST
-    //	Parse from json element
-    void Parse(const rapidjson::Value& element);
-#endif
+    void ParseTrigger(const char* pTrigger);
 
     // Used for rendering updates when editing achievements. Usually always false.
     _NODISCARD _CONSTANT_FN GetDirtyFlags() const noexcept { return m_nDirtyFlags; }
@@ -128,14 +123,19 @@ public:
 
     void RebuildTrigger();
 
-protected:
-    void ParseTrigger(const char* pTrigger);
+    // range for
+    _NODISCARD inline auto begin() noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
+    _NODISCARD inline auto end() noexcept { return m_vConditions.end(); }
+    _NODISCARD inline auto end() const noexcept { return m_vConditions.end(); }
 
+protected:
     void* m_pTrigger = nullptr;                                   // rc_trigger_t
     std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; // buffer for rc_trigger_t
 
 private:
-    ra::AchievementID m_nAchievementID;
+    ra::AchievementID m_nAchievementID{};
+    int m_nCategoryID{};
 
     ConditionSet m_vConditions; //  UI wrappers for trigger
 

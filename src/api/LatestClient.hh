@@ -1,5 +1,5 @@
-#ifndef RA_API_PING_HH
-#define RA_API_PING_HH
+#ifndef RA_API_LATESTCLIENT_HH
+#define RA_API_LATESTCLIENT_HH
 #pragma once
 
 #include "ApiCall.hh"
@@ -7,19 +7,19 @@
 namespace ra {
 namespace api {
 
-class Ping
+class LatestClient
 {
 public:
-    static constexpr const char* const Name() noexcept { return "Ping"; }
+    static constexpr const char* const Name() noexcept { return "LatestClient"; }
 
     struct Response : ApiResponseBase
     {
+        std::string LatestVersion;
     };
 
     struct Request : ApiRequestBase
     {
-        unsigned int GameId{};
-        std::wstring CurrentActivity;
+        unsigned int EmulatorId;
 
         using Callback = std::function<void(const Response& response)>;
 
@@ -35,4 +35,4 @@ public:
 } // namespace api
 } // namespace ra
 
-#endif // !RA_API_PING_HH
+#endif // !RA_API_LATESTCLIENT_HH

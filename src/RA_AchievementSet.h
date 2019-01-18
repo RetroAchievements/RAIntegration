@@ -13,69 +13,55 @@ class AchievementSet
 public:
     enum class Type
     {
-        Core,
-        Unofficial,
-        Local
+        Core = 3,
+        Unofficial = 5,
+        Local = 0
     };
 
-    explicit AchievementSet(_In_ Type eType) noexcept : m_nSetType{eType} { Clear(); }
-
-public:
-    static BOOL FetchFromWebBlocking(unsigned int nGameID);
-#ifndef RA_UTEST
-    static void OnRequestUnlocks(const rapidjson::Document& doc);
-#endif // !RA_UTEST
-
-public:
     void Clear() noexcept;
     void Test();
-    void Reset() noexcept;
-
-    _Success_(return ) bool LoadFromFile(_Inout_ unsigned int nGameID);
-    bool SaveToFile() const;
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)
     {
         Expects((nIter >= 0) && (nIter < m_Achievements.size()));
-        return m_Achievements.at(nIter);
+        return *m_Achievements.at(nIter);
     }
     const Achievement& GetAchievement(size_t nIter) const
     {
         Expects((nIter >= 0) && (nIter < m_Achievements.size()));
-        return m_Achievements.at(nIter);
+        return *m_Achievements.at(nIter);
     }
+
     inline size_t NumAchievements() const noexcept { return m_Achievements.size(); }
 
     // Get Points Total
     inline unsigned int PointTotal() noexcept
     {
         unsigned int total = 0U;
-        for (auto& ach : m_Achievements)
-            total += ach.Points();
+        for (auto pAchievement : m_Achievements)
+        {
+            if (pAchievement)
+                total += pAchievement->Points();
+        }
         return total;
     }
 
-    //	Add a new achievement to the list, and return a reference to it.
-    Achievement& AddAchievement();
-
-    //	Take a copy of the achievement at nIter, add it and return a reference to it.
-    Achievement& Clone(unsigned int nIter);
-
     //	Find achievement with ID, or nullptr if it can't be found.
-    Achievement* Find(ra::AchievementID nID);
+    Achievement* Find(unsigned int nID) const noexcept;
 
     //	Find index of the given achievement in the array list (useful for LBX lookups)
     size_t GetAchievementIndex(const Achievement& Ach);
 
-    BOOL RemoveAchievement(size_t nIter);
+    void AddAchievement(const Achievement* pAchievement)
+    {
+        Expects(pAchievement != nullptr);
+        m_Achievements.push_back(const_cast<Achievement*>(pAchievement));
+    }
 
-    unsigned int NumActive() const;
+    bool RemoveAchievement(const Achievement* pAchievement);
 
-    BOOL ProcessingActive() const noexcept { return m_bProcessingActive; }
-    void SetPaused(BOOL bIsPaused) noexcept { m_bProcessingActive = !bIsPaused; }
-
-    BOOL HasUnsavedChanges();
+    bool HasUnsavedChanges() const noexcept;
 
     // ranged-for
     inline auto begin() noexcept { return m_Achievements.begin(); }
@@ -84,9 +70,8 @@ public:
     inline auto end() const noexcept { return m_Achievements.end(); }
 
 private:
-    const Type m_nSetType{};
-    std::vector<Achievement> m_Achievements;
-    BOOL m_bProcessingActive{TRUE};
+    // pointers to items in GameContext.m_vAchievements
+    std::vector<Achievement*> m_Achievements;
 };
 
 //	Externals:

@@ -15,6 +15,38 @@
 namespace ra {
 namespace services {
 
+void AchievementRuntime::ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+{
+    if (m_bPaused)
+    {
+        // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
+        // is not false, the achievement will be moved to the active list. This ensures achievements don't
+        // trigger immediately upon loading the game due to uninitialized memory.
+        GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
+        RemoveEntry(m_vActiveAchievements, nId);
+    }
+    else
+    {
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievements, nId, pTrigger);
+        RemoveEntry(m_vQueuedAchievements, nId);
+    }
+
+    RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
+}
+
+void AchievementRuntime::ResetActiveAchievements()
+{
+    // Reset any active achievements and move them to the pending queue, where they'll stay as long as the
+    // trigger is active. This ensures they don't trigger while we're resetting.
+    for (const auto& pAchievement : m_vActiveAchievements)
+    {
+        rc_reset_trigger(pAchievement.pTrigger);
+        AddEntry(m_vQueuedAchievements, pAchievement.nId, pAchievement.pTrigger);
+    }
+
+    m_vActiveAchievements.clear();
+}
+
 static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
 {
     rc_condition_t* condition = pCondSet->conditions;
@@ -46,8 +78,11 @@ static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
     return false;
 }
 
-void AchievementRuntime::Process(std::vector<Change>& changes) const
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
 {
+    if (m_bPaused)
+        return;
+
     for (auto& pAchievement : m_vActiveAchievements)
     {
         const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
@@ -65,132 +100,128 @@ void AchievementRuntime::Process(std::vector<Change>& changes) const
         else if (bHasHits && !HasHitCounts(pAchievement.pTrigger))
             changes.emplace_back(Change{ChangeType::AchievementReset, pAchievement.nId});
     }
+
+    auto pIter = m_vQueuedAchievements.begin();
+    while (pIter != m_vQueuedAchievements.end())
+    {
+        const bool bResult = rc_test_trigger(pIter->pTrigger, rc_peek_callback, nullptr, nullptr);
+        if (bResult)
+        {
+            // trigger is active, ignore the achievement for now. reset it so it can't pause itself.
+            rc_reset_trigger(pIter->pTrigger);
+            ++pIter;
+        }
+        else
+        {
+            // trigger is not active, reset the achievement and allow it to be triggered on future frames
+            rc_reset_trigger(pIter->pTrigger);
+            AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
+            pIter = m_vQueuedAchievements.erase(pIter);
+        }
+    }
 }
 
-static const char* ProcessStateString(const char* pIter, unsigned int nId, rc_trigger_t* pTrigger,
-                                      const std::string& sSalt, const std::string& sMemString)
+static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
+                               const std::string& sSalt, const std::string& sMemString)
 {
     std::vector<rc_condition_t> vConditions;
-    if (pIter != nullptr)
+    const size_t nStart = pTokenizer.CurrentPosition();
+
+    // each group appears as an entry for the current nId
+    while (!pTokenizer.EndOfString())
     {
-        const char* pStart = pIter;
-
-        // each group appears as an entry for the current nId
-        while (*pIter)
+        const size_t nPosition = pTokenizer.CurrentPosition();
+        const unsigned int nGroupId = pTokenizer.ReadNumber();
+        if (nGroupId != nId || pTokenizer.PeekChar() != ':')
         {
-            char* pEnd{};
-            const unsigned int nGroupId = strtoul(pIter, &pEnd, 10);
-
-            if (pEnd != nullptr)
-            {
-                if (nGroupId != nId)
-                    break;
-                pIter = pEnd + 1;
-
-                const unsigned int nNumCond = strtoul(pIter, &pEnd, 10);
-                pIter = pEnd + 1;
-                vConditions.reserve(vConditions.size() + nNumCond);
-
-                for (size_t i = 0; i < nNumCond; ++i)
-                {
-                    // Parse next condition state
-                    const unsigned int nHits = strtoul(pIter, &pEnd, 10);
-                    pIter = pEnd + 1;
-                    const unsigned int nSourceVal = strtoul(pIter, &pEnd, 10);
-                    pIter = pEnd + 1;
-                    const unsigned int nSourcePrev = strtoul(pIter, &pEnd, 10);
-                    pIter = pEnd + 1;
-                    const unsigned int nTargetVal = strtoul(pIter, &pEnd, 10);
-                    pIter = pEnd + 1;
-                    const unsigned int nTargetPrev = strtoul(pIter, &pEnd, 10);
-                    pIter = pEnd + 1;
-
-                    rc_condition_t& cond = vConditions.emplace_back();
-                    cond.current_hits = nHits;
-                    cond.operand1.value = nSourceVal;
-                    cond.operand1.previous = nSourcePrev;
-                    cond.operand2.value = nTargetVal;
-                    cond.operand2.previous = nTargetPrev;
-                }
-            }
+            pTokenizer.Seek(nPosition);
+            break;
         }
+        pTokenizer.Advance();
 
-        const char* pConditionEnd = pIter;
+        const unsigned int nNumCond = pTokenizer.ReadNumber();
+        pTokenizer.Advance();
+        vConditions.reserve(vConditions.size() + nNumCond);
 
-        // read the given md5s
-        const char* pMd5End = pIter;
-        if (pMd5End != nullptr)
+        for (size_t i = 0; i < nNumCond; ++i)
         {
-            while (*pMd5End && *pMd5End != ':')
-                ++pMd5End;
-            std::string sGivenMD5Progress(pIter, pMd5End - pIter);
-            if (*pMd5End == ':')
-                pIter = ++pMd5End;
+            // Parse next condition state
+            rc_condition_t& cond = vConditions.emplace_back();
+            cond.current_hits = pTokenizer.ReadNumber();
+            pTokenizer.Advance();
+            cond.operand1.value = pTokenizer.ReadNumber();
+            pTokenizer.Advance();
+            cond.operand1.previous = pTokenizer.ReadNumber();
+            pTokenizer.Advance();
+            cond.operand2.value = pTokenizer.ReadNumber();
+            pTokenizer.Advance();
+            cond.operand2.previous = pTokenizer.ReadNumber();
+            pTokenizer.Advance();
+        }
+    }
 
-            while (*pMd5End && *pMd5End != ':')
-                ++pMd5End;
-            std::string sGivenMD5Achievement(pIter, pMd5End - pIter);
-            if (*pMd5End == ':')
-                ++pMd5End;
-            pIter = pMd5End;
+    const size_t nEnd = pTokenizer.CurrentPosition();
 
-            if (!pTrigger)
+    // read the given md5s
+    std::string sGivenMD5Progress = pTokenizer.ReadTo(':');
+    pTokenizer.Advance();
+    std::string sGivenMD5Achievement = pTokenizer.ReadTo(':');
+    pTokenizer.Advance();
+
+    if (!pTrigger)
+    {
+        // achievement wasn't found, ignore it. still had to parse to advance pIter
+    }
+    else
+    {
+        // recalculate the current achievement checksum
+        std::string sMD5Achievement = RAGenerateMD5(sMemString);
+        if (sGivenMD5Achievement != sMD5Achievement)
+        {
+            // achievement has been modified since data was captured, can't apply, just reset
+            rc_reset_trigger(pTrigger);
+        }
+        else
+        {
+            // regenerate the md5 and see if it sticks
+            const char* pStart = pTokenizer.GetPointer(nStart);
+            std::string sModifiedProgressString =
+                ra::StringPrintf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
+            std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
+            if (sMD5Progress != sGivenMD5Progress)
             {
-                // achievement wasn't found, ignore it. still had to parse to advance pIter
+                // state checksum fail - assume user tried to modify it and ignore, just reset
+                rc_reset_trigger(pTrigger);
             }
             else
             {
-                // recalculate the current achievement checksum
-                std::string sMD5Achievement = RAGenerateMD5(sMemString);
-                if (sGivenMD5Achievement != sMD5Achievement)
+                // compatible - merge
+                size_t nCondition = 0;
+
+                rc_condset_t* pGroup = pTrigger->requirement;
+                while (pGroup != nullptr)
                 {
-                    // achievement has been modified since data was captured, can't apply, just reset
-                    rc_reset_trigger(pTrigger);
-                }
-                else
-                {
-                    // regenerate the md5 and see if it sticks
-                    std::string sModifiedProgressString =
-                        ra::StringPrintf("%s%.*s%s%u", sSalt, pConditionEnd - pStart, pStart, sSalt, nId);
-                    std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
-                    if (sMD5Progress != sGivenMD5Progress)
+                    rc_condition_t* pCondition = pGroup->conditions;
+                    while (pCondition != nullptr)
                     {
-                        // state checksum fail - assume user tried to modify it and ignore, just reset
-                        rc_reset_trigger(pTrigger);
+                        const rc_condition_t& condSource = vConditions.at(nCondition++);
+                        pCondition->current_hits = condSource.current_hits;
+                        pCondition->operand1.value = condSource.operand1.value;
+                        pCondition->operand1.previous = condSource.operand1.previous;
+                        pCondition->operand2.value = condSource.operand2.value;
+                        pCondition->operand2.previous = condSource.operand2.previous;
+
+                        pCondition = pCondition->next;
                     }
+
+                    if (pGroup == pTrigger->requirement)
+                        pGroup = pTrigger->alternative;
                     else
-                    {
-                        // compatible - merge
-                        size_t nCondition = 0;
-
-                        rc_condset_t* pGroup = pTrigger->requirement;
-                        while (pGroup != nullptr)
-                        {
-                            rc_condition_t* pCondition = pGroup->conditions;
-                            while (pCondition != nullptr)
-                            {
-                                const rc_condition_t& condSource = vConditions.at(nCondition++);
-                                pCondition->current_hits = condSource.current_hits;
-                                pCondition->operand1.value = condSource.operand1.value;
-                                pCondition->operand1.previous = condSource.operand1.previous;
-                                pCondition->operand2.value = condSource.operand2.value;
-                                pCondition->operand2.previous = condSource.operand2.previous;
-
-                                pCondition = pCondition->next;
-                            }
-
-                            if (pGroup == pTrigger->requirement)
-                                pGroup = pTrigger->alternative;
-                            else
-                                pGroup = pGroup->next;
-                        }
-                    }
+                        pGroup = pGroup->next;
                 }
             }
         }
     }
-
-    return pIter;
 }
 
 bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
@@ -214,14 +245,14 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     std::set<unsigned int> vProcessedAchievementIds;
 
-    const char* pIter = sContents.c_str();
-    while (*pIter)
+    Tokenizer pTokenizer(sContents);
+
+    while (!pTokenizer.EndOfString())
     {
-        char* pUnused;
-        const unsigned int nId = strtoul(pIter, &pUnused, 10);
+        const unsigned int nId = pTokenizer.PeekNumber();
         vProcessedAchievementIds.insert(nId);
 
-        rc_trigger_t *pTrigger = nullptr;
+        rc_trigger_t* pTrigger = nullptr;
         for (const auto& pActiveAchievement : m_vActiveAchievements)
         {
             if (pActiveAchievement.nId == nId)
@@ -247,13 +278,13 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
         {
             // achievement not active, still have to process state string to skip over it
             std::string sEmpty;
-            pIter = ProcessStateString(pIter, nId, nullptr, sEmpty, sEmpty);
+            ProcessStateString(pTokenizer, nId, nullptr, sEmpty, sEmpty);
         }
         else
         {
             const auto* pAchievement = pGameContext.FindAchievement(nId);
             std::string sMemString = pAchievement ? pAchievement->CreateMemString() : "";
-            pIter = ProcessStateString(pIter, nId, pTrigger, pUserContext.GetUsername(), sMemString);
+            ProcessStateString(pTokenizer, nId, pTrigger, pUserContext.GetUsername(), sMemString);
         }
     }
 
@@ -273,7 +304,8 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
     return true;
 }
 
-static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt, const std::string& sMemString)
+static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, const std::string& sSalt,
+                                     const std::string& sMemString)
 {
     // build the progress string
     std::ostringstream oss;
@@ -293,9 +325,8 @@ static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, c
         pCondition = pGroup->conditions;
         while (pCondition != nullptr)
         {
-            oss << pCondition->current_hits << ':'
-                << pCondition->operand1.value << ':' << pCondition->operand1.previous << ':'
-                << pCondition->operand2.value << ':' << pCondition->operand2.previous << ':';
+            oss << pCondition->current_hits << ':' << pCondition->operand1.value << ':' << pCondition->operand1.previous
+                << ':' << pCondition->operand2.value << ':' << pCondition->operand2.previous << ':';
 
             pCondition = pCondition->next;
         }
@@ -345,14 +376,16 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
     for (const auto& pAchievement : m_vActiveAchievements)
     {
         std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
-        std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
+        std::string sProgress =
+            CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }
 
     for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
     {
         std::string sMemString = pGameContext.FindAchievement(pAchievement.nId)->CreateMemString();
-        std::string sProgress = CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
+        std::string sProgress =
+            CreateStateString(pAchievement.nId, pAchievement.pTrigger, pUserContext.GetUsername(), sMemString);
         pFile->Write(sProgress);
     }
 }

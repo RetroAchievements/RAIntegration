@@ -13,10 +13,7 @@ extern std::wstring g_sHomeDir;
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
-extern EmulatorID g_EmulatorID;
 extern ConsoleID g_ConsoleID;
-extern const char* g_sClientVersion;
-extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 
 // Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
@@ -44,7 +41,6 @@ extern std::string _TimeStampToString(time_t nTime);
 
 _NODISCARD std::string GetFolderFromDialog();
 
-void DownloadAndActivateAchievementData(unsigned int nGameID);
 BOOL CanCausePause() noexcept;
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);

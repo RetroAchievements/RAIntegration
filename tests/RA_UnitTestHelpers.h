@@ -41,7 +41,7 @@ std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
 template<>
 std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
-    return ra::Widen(COMPARISONTYPE_STR[(int)t]);
+    return ra::Widen(COMPARISONTYPE_STR.at(ra::etoi(t)));
 }
 
 template<>
@@ -157,7 +157,9 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
 } // namespace Microsoft
 
 // Loads memory into the MemoryManager
-void InitializeMemory(unsigned char* const pMemory, size_t szMemorySize);
+
+// Size of the arrays used are not always the same so a span is used
+void InitializeMemory(gsl::span<unsigned char> pMemory);
 void InitializeMemory(std::unique_ptr<unsigned char[]> pMemory, size_t szMemorySize);
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
 

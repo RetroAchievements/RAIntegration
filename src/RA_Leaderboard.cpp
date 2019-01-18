@@ -8,7 +8,11 @@
 
 #include <ctime>
 
+/* clang-format off */
+_Use_decl_annotations_
 RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept : m_nID(nLeaderboardID) {}
+/* clang-format on */
+
 
 //{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green
 //Hill Act 2","Description":"Complete this act in the fastest time!"},
@@ -27,7 +31,7 @@ void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
     {
         // allocate space and parse again
         m_pLeaderboardBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
-        m_pLeaderboard = rc_parse_lboard(m_pLeaderboardBuffer.get()->data(), sBuffer, nullptr, 0);
+        m_pLeaderboard = rc_parse_lboard(m_pLeaderboardBuffer->data(), sBuffer, nullptr, 0);
 
         m_nFormat = rc_parse_format(sFormat);
     }

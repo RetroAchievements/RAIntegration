@@ -24,7 +24,7 @@ enum class CondSubItems : std::size_t;
 class Dlg_AchievementEditor
 {
 public:
-    Dlg_AchievementEditor() noexcept;
+    GSL_SUPPRESS_F6 Dlg_AchievementEditor() noexcept;
 
 public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
@@ -35,7 +35,7 @@ public:
     void LoadAchievement(Achievement* pCheevo, _UNUSED BOOL);
 
     inline void SetICEControl(HWND hIce) noexcept { m_hICEControl = hIce; }
-    inline char* LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept;
+    inline std::string& LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept;
 
     HWND GetICEControl() const noexcept { return m_hICEControl; }
 
@@ -49,7 +49,7 @@ public:
 
     void UpdateBadge(const std::string& sNewName); // Call to set/update data
     void UpdateSelectedBadgeImage(
-        const std::string& sBackupBadgeToUse = ""); // Call to just update the badge image/bitmap
+        const std::string& sBackupBadgeToUse = std::string()); // Call to just update the badge image/bitmap
 
     BadgeNames& GetBadgeNames() noexcept { return m_BadgeNames; }
 
@@ -82,8 +82,11 @@ private:
     ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc = nullptr;
 
-    char m_lbxData[MAX_CONDITIONS][m_nNumCols][MEM_STRING_TEXT_LEN]{};
-    TCHAR m_lbxGroupNames[MAX_CONDITIONS][MEM_STRING_TEXT_LEN]{};
+    using LbxData = std::array<std::array<std::string, m_nNumCols>, MAX_CONDITIONS>;
+    using LbxGroupNames = std::array<ra::tstring, MAX_CONDITIONS>;
+
+    LbxData m_lbxData{};
+    LbxGroupNames m_lbxGroupNames{};
     int m_nNumOccupiedRows = 0;
 
     Achievement* m_pSelectedAchievement = nullptr;

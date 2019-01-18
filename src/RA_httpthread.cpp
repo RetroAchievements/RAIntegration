@@ -10,6 +10,7 @@
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_RichPresence.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
 #include "services\Http.hh"
@@ -22,20 +23,16 @@ const char* RequestTypeToString[] =
 {
     "RequestScore",
     "RequestNews",
-    "RequestPatch",
-    "RequestLatestClientPage",
     "RequestRichPresence",
     "RequestAchievementInfo",
     "RequestLeaderboardInfo",
     "RequestCodeNotes",
     "RequestFriendList",
     "RequestBadgeIter",
-    "RequestUnlocks",
     "RequestHashLibrary",
     "RequestGamesList",
     "RequestAllProgress",
 
-    "RequestSubmitAwardAchievement",
     "RequestSubmitCodeNote",
     "RequestSubmitLeaderboardEntry",
     "RequestSubmitAchievementData",
@@ -48,20 +45,16 @@ const char* RequestTypeToPost[] =
 {
     "score",
     "news",
-    "patch",
-    "latestclient",
     "richpresencepatch",
     "achievementwondata",
     "lbinfo",
     "codenotes2",
     "getfriendlist",
     "badgeiter",
-    "unlocks",
     "hashlibrary",
     "gameslist",
     "allprogress",
 
-    "awardachievement",
     "submitcodenote",
     "submitlbentry",
     "uploadachievement",
@@ -97,7 +90,8 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
     rDocOut.Parse(GetResponse().c_str());
 
     if (rDocOut.HasParseError())
-        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()), RequestTypeToString[m_nType]);
+        RA_LOG("Possible parse issue on response, %s (%s)\n", rapidjson::GetParseError_En(rDocOut.GetParseError()),
+               gsl::at(RequestTypeToString, m_nType));
 
     return !rDocOut.HasParseError();
 }
@@ -147,16 +141,18 @@ void RAWeb::SetUserAgentString()
     std::string sUserAgent;
     sUserAgent.reserve(128U);
 
-    if (g_sClientName != nullptr)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& sClientName = pEmulatorContext.GetClientName();
+    if (!sClientName.empty())
     {
-        sUserAgent.append(g_sClientName);
+        sUserAgent.append(sClientName);
         sUserAgent.append("/");
     }
     else
     {
         sUserAgent.append("UnknownClient/");
     }
-    sUserAgent.append(g_sClientVersion);
+    sUserAgent.append(pEmulatorContext.GetClientVersion());
     sUserAgent.append(" (");
 
     AppendNTVersion(sUserAgent);
@@ -202,14 +198,14 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     sUrl += "/";
     sUrl += sLogPage;
     sLogPage += "?r=";
-    sLogPage += RequestTypeToPost[nType];
+    sLogPage += gsl::at(RequestTypeToPost, nType);
 
     RA_LOG("POST to %s&%s", sLogPage.c_str(), sPostData.c_str());
 
     if (!sPostData.empty())
         sPostData.push_back('&');
     sPostData += "r=";
-    sPostData += RequestTypeToPost[nType];
+    sPostData += gsl::at(RequestTypeToPost, nType);
 
     ra::services::Http::Request request(sUrl);
     request.SetPostData(sPostData);
@@ -233,21 +229,23 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 {
     ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
 
-    const std::string sRequestedPage = "doupload.php";
-    const std::string sRTarget = UploadTypeToPost[nType]; //"uploadbadgeimage";
+    const std::string sRequestedPage{"doupload.php"};
+    const std::string sRTarget{gsl::at(UploadTypeToPost, nType)}; //"uploadbadgeimage";
 
-    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(), sRequestedPage.c_str());
+    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(),
+           sRequestedPage.c_str());
 
     BOOL bSuccess = FALSE;
     HINTERNET hConnect = nullptr, hRequest = nullptr;
 
-    size_t nTemp;
+    size_t nTemp{};
 
     // Use WinHttpOpen to obtain a session handle.
-    HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(),
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(push)
+#pragma warning(disable: 26477)
+    GSL_SUPPRESS_ES47 HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                                       WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+#pragma warning(pop)
 
     // Specify an HTTP server.
     if (hSession != nullptr)
@@ -275,7 +273,8 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
         const char* mimeBoundary = "---------------------------41184676334";
         const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
-        const int nResult = WinHttpAddRequestHeaders(hRequest, contentType, (unsigned long)-1, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        const int nResult =
+            WinHttpAddRequestHeaders(hRequest, contentType, ra::to_unsigned(-1), WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
         if (nResult != 0)
         {
             // Add the photo to the stream

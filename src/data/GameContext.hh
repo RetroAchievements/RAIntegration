@@ -23,7 +23,7 @@ public:
     /// <summary>
     /// Loads the data for the specified game id.
     /// </summary>
-    void LoadGame(unsigned int nGameId, const std::wstring& sGameTitle);
+    void LoadGame(unsigned int nGameId);
 
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
@@ -58,32 +58,41 @@ public:
     }
 
     /// <summary>
-    /// Determines if any achievements are currently active.
+    /// Enumerates the achievement collection.
     /// </summary>
-    virtual bool HasActiveAchievements() const noexcept
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known achievement. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateAchievements(std::function<bool(const Achievement&)> callback) const
     {
-#ifdef RA_UTEST
-        return false;
-#else
-        return g_pActiveAchievements && g_pActiveAchievements->NumAchievements() > 0;
-#endif
+        for (auto& pAchievement : m_vAchievements)
+        {
+            if (!callback(*pAchievement))
+                break;
+        }
     }
 
     /// <summary>
     /// Finds the achievement associated to the specified unique identifier.
     /// </summary>
     /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>
-#ifdef RA_UTEST
-    virtual Achievement* FindAchievement(_UNUSED unsigned int nAchievementId) const noexcept
+    virtual Achievement* FindAchievement(unsigned int nAchievementId) const noexcept
     {
+        for (auto& pAchievement : m_vAchievements)
+        {
+            if (pAchievement->ID() == nAchievementId)
+                return pAchievement.get();
+        }
+
         return nullptr;
     }
-#else
-    Achievement* FindAchievement(unsigned int nAchievementId) const
-    {
-        return g_pActiveAchievements->Find(nAchievementId);
-    }
-#endif
+
+    Achievement& NewAchievement(AchievementSet::Type nType);
+
+    /// <summary>
+    /// Shows the popup for earning an achievement and notifies the server if legitimate.
+    /// </summary>
+    void AwardAchievement(unsigned int nAchievementId) const;
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
@@ -100,12 +109,37 @@ public:
     /// </summary>
     void ReloadRichPresenceScript();
 
+    /// <summary>
+    /// Reloads all achievements of the specified category from local storage.
+    /// </summary>
+    void ReloadAchievements(int nCategory);
+
+    /// <summary>
+    /// Reloads a specific achievement from local storage.
+    /// </summary>    
+    /// <returns><c>true</c> if the achievement was reloaded, <c>false</c> if it was not found or destroyed.</returns>
+    /// <remarks>Destroys the achievement if it does not exist in local storage</remarks>
+    bool ReloadAchievement(unsigned int nAchievementId);
+
+    /// <summary>
+    /// Saves local achievement data to local storage.
+    /// </summary>
+    bool SaveLocal() const;
+
 protected:
+    void MergeLocalAchievements();
+    bool ReloadAchievement(Achievement& pAchievement);
+
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
 
+    unsigned int m_nNextLocalId = 0;
+    static const unsigned int FirstLocalId = 111000001;
+
     std::unique_ptr<RA_RichPresenceInterpreter> m_pRichPresenceInterpreter;
+
+    std::vector<std::unique_ptr<Achievement>> m_vAchievements;
 };
 
 } // namespace data

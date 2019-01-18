@@ -33,7 +33,18 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_string(value);
+        if constexpr (std::is_same_v<T, wchar_t>)
+        {
+            int status = 0;
+            std::string mb(MB_CUR_MAX, '\0');
+            Expects(wctomb_s(&status, mb.data(), MB_CUR_MAX, value) == 0);
+            Ensures(to_unsigned(status) != to_unsigned(-1));
+            return mb;
+        }
+        else if constexpr (std::is_same_v<T, char>)
+            return value;
+        else
+            return std::to_string(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
@@ -93,11 +104,21 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
-        return std::to_wstring(value);
+        if constexpr (std::is_same_v<T, char>)
+        {
+            std::wstring wc{value};
+            std::string mb(MB_CUR_MAX, '\0');
+            Ensures(std::mbtowc(wc.data(), mb.data(), 8) != -1);
+            return wc;
+        }
+        else if constexpr (std::is_same_v<T, wchar_t>)
+            return std::wstring(1, value);
+        else
+            return std::to_wstring(value);
     }
     else if constexpr (std::is_enum_v<T>)
     {
-        return std::to_wstring(static_cast<std::underlying_type_t<T>>(value));
+        return std::to_wstring(etoi(value));
     }
     else
     {
@@ -156,52 +177,33 @@ public:
     template<typename T>
     void Append(const T& arg)
     {
-        PendingString pPending;
         if (m_bPrepareWide)
-        {
-            pPending.WString = ra::ToWString(arg);
-            pPending.DataType = PendingString::Type::WString;
-        }
+            m_vPending.emplace_back(std::wstring{ra::ToWString(arg)});
         else
-        {
-            pPending.String = ra::ToString(arg);
-            pPending.DataType = PendingString::Type::String;
-        }
-        m_vPending.emplace_back(std::move(pPending));
+            m_vPending.emplace_back(std::string{ra::ToString(arg)});
+        
     }
 
     template<>
     void Append(const std::string& arg)
     {
-        PendingString pPending;
-        pPending.Ref.String = &arg;
-        pPending.DataType = PendingString::Type::StringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     template<>
     void Append(const std::wstring& arg)
     {
-        PendingString pPending;
-        pPending.Ref.WString = &arg;
-        pPending.DataType = PendingString::Type::WStringRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
     void Append(std::string&& arg)
     {
-        PendingString pPending;
-        pPending.String = std::move(arg);
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(std::move(arg));
     }
 
     void Append(std::wstring&& arg)
     {
-        PendingString pPending;
-        pPending.WString = std::move(arg);
-        pPending.DataType = PendingString::Type::WString;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(std::move(arg));
     }
 
     template<>
@@ -221,11 +223,7 @@ public:
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref.Char.Pointer = pStart;
-        pPending.Ref.Char.Length = nLength;
-        pPending.DataType = PendingString::Type::CharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void AppendSubString(const wchar_t* pStart, size_t nLength)
@@ -233,11 +231,7 @@ public:
         if (nLength == 0)
             return;
 
-        PendingString pPending;
-        pPending.Ref.WChar.Pointer = pStart;
-        pPending.Ref.WChar.Length = nLength;
-        pPending.DataType = PendingString::Type::WCharRef;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(pStart, nLength);
     }
 
     void Append() noexcept
@@ -259,18 +253,29 @@ public:
 
         if constexpr (std::is_integral_v<T>)
         {
-            if (sFormat.front() == '0')
-                oss << std::setfill('0');
-            int nDigits = std::stoi(sFormat.c_str());
-            if (nDigits > 0)
-                oss << std::setw(nDigits);
+            if(sFormat.back() == 'c')
+                oss << arg;
+            else
+            {
+                if(std::isdigit(ra::to_unsigned(sFormat.front())))
+                {
+                    if (sFormat.front() == '0')
+                        oss << std::setfill('0');
 
-            if (sFormat.back() == 'X')
-                oss << std::uppercase << std::hex;
-            else if (sFormat.back() == 'x')
-                oss << std::hex;
+                    const int nDigits = std::stoi(sFormat);
+                    if (nDigits > 0)
+                        oss << std::setw(nDigits);
+                }
+                if (sFormat.back() == 'X')
+                    oss << std::uppercase << std::hex;
+                else if (sFormat.back() == 'x')
+                    oss << std::hex;
 
-            oss << arg;
+                if (is_char_v<T>)
+                    oss << gsl::narrow<int>(arg);
+                else
+                    oss << arg;
+            }
         }
         else if constexpr (std::is_floating_point_v<T>)
         {
@@ -293,10 +298,7 @@ public:
             assert(!"Unsupported formatted type");
         }
 
-        PendingString pPending;
-        pPending.String = oss.str();
-        pPending.DataType = PendingString::Type::String;
-        m_vPending.emplace_back(std::move(pPending));
+        m_vPending.emplace_back(oss.str());
     }
 
     void AppendFormat(const char* arg, const std::string& sFormat)
@@ -312,12 +314,7 @@ public:
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)
-            {
-                PendingString pPending;
-                pPending.String = std::string(nPadding, ' ');
-                pPending.DataType = PendingString::Type::String;
-                m_vPending.emplace_back(std::move(pPending));
-            }
+                m_vPending.emplace_back(std::string(nPadding, ' '));
 
             AppendSubString(arg, nLength);
         }
@@ -394,7 +391,7 @@ public:
                 {
                     const char c = gsl::narrow<char>(*pScan);
                     sFormat.push_back(c);
-                    if (isalpha(c))
+                    if (isalpha(to_unsigned(c)))
                         break;
 
                     ++pScan;
@@ -464,24 +461,33 @@ private:
 
     bool m_bPrepareWide;
 
-    struct PendingString
+    class PendingString
     {
-        union {
-            const std::string* String;
-            const std::wstring* WString;
+    public:
+        explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
+        explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
+        explicit PendingString(_In_z_ const char* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::string_view{ptr, len}},
+            DataType{Type::CharRef}
+        {}
+        explicit PendingString(_In_z_ const wchar_t* const restrict ptr, std::size_t len) noexcept :
+            Ref{std::wstring_view{ptr, len}},
+            DataType{Type::WCharRef}
+        {}
+        PendingString() noexcept = delete;
+        ~PendingString() noexcept = default;
 
-            struct
-            {
-                const char* Pointer;
-                size_t Length;
-            } Char;
+        // To prevent copying moving
+        PendingString(const PendingString&) = delete;
+        PendingString& operator=(const PendingString&) = delete;
+        PendingString& operator=(PendingString&&) noexcept = delete;
+        
+        // This is needed by m_vPending's allocator
+        PendingString(PendingString&&) noexcept = default;
 
-            struct
-            {
-                const wchar_t* Pointer;
-                size_t Length;
-            } WChar;
-        } Ref{};
+    private:
+        using RefType = std::variant<std::string_view, std::wstring_view>;
+        RefType Ref;
 
         std::string String;
         std::wstring WString;
@@ -490,12 +496,12 @@ private:
         {
             String,
             WString,
-            StringRef,
-            WStringRef,
             CharRef,
             WCharRef,
         };
         Type DataType{Type::String};
+
+        friend class StringBuilder;
     };
 
     mutable std::vector<PendingString> m_vPending;
@@ -560,6 +566,136 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     }
 }
 
+// ----- string parsing -----
+
+class Tokenizer
+{
+public:
+    Tokenizer(const std::string& sString) noexcept : m_sString(sString) {}
+
+    /// <summary>
+    /// Returns <c>true</c> if the entire string has been processed.
+    /// </summary>
+    _NODISCARD bool EndOfString() const noexcept { return m_nPosition >= m_sString.length(); }
+
+    /// <summary>
+    /// Returns the next character without advancing the position.
+    /// </summary>
+    GSL_SUPPRESS_F6 _NODISCARD char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+
+    /// <summary>
+    /// Get the current position of the cursor within the string.
+    /// </summary>
+    _NODISCARD size_t CurrentPosition() const noexcept { return m_nPosition; }
+
+    /// <summary>
+    /// Sets the cursor position.
+    /// </summary>
+    void Seek(size_t nPosition) noexcept { m_nPosition = std::min(nPosition, m_sString.length()); }
+
+    /// <summary>
+    /// Advances the cursor one character.
+    /// </summary>
+    void Advance() noexcept
+    {
+        if (m_nPosition < m_sString.length())
+            ++m_nPosition;
+    }
+
+    /// <summary>
+    /// Advances the cursor the specified number of characters.
+    /// </summary>
+    void Advance(size_t nCount) noexcept
+    {
+        m_nPosition += nCount;
+        if (m_nPosition > m_sString.length())
+            m_nPosition = m_sString.length();
+    }
+
+    /// <summary>
+    /// Advances the cursor to the next occurrence of the specified charater, or the end of the string if no
+    /// occurances are found.
+    /// </summary>
+    void AdvanceTo(char cStop)
+    {
+        while (m_nPosition < m_sString.length() && m_sString.at(m_nPosition) != cStop)
+            ++m_nPosition;
+    }
+
+    /// <summary>
+    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
+    /// occurances are found and returns a string containing all of the characters advanced over.
+    /// </summary>
+    _NODISCARD std::string ReadTo(char cStop)
+    {
+        const size_t nStart = m_nPosition;
+        AdvanceTo(cStop);
+        return std::string(m_sString, nStart, m_nPosition - nStart);
+    }
+
+    /// <summary>
+    /// Reads from the current quote to the next unescaped quote, unescaping any other characters along the way.
+    /// </summary>
+    _NODISCARD std::string ReadQuotedString();
+
+    /// <summary>
+    /// Advances the cursor over digits and returns the number they represent.
+    /// </summary>
+    _NODISCARD unsigned int ReadNumber()
+    {
+        if (EndOfString())
+            return 0;
+
+        char* pEnd;
+        const auto nResult = strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+        m_nPosition = pEnd - m_sString.c_str();
+        return nResult;
+    }
+
+    /// <summary>
+    /// Returns the number represented by the next series of digits.
+    /// </summary>
+    _NODISCARD unsigned int PeekNumber()
+    {
+        if (EndOfString())
+            return 0;
+
+        char* pEnd;
+        return strtoul(&m_sString.at(m_nPosition), &pEnd, 10);
+    }
+
+    /// <summary>
+    /// If the next character is the specified character, advance the cursor over it.
+    /// </summary>
+    /// <returns><c>true</c> if the next character matched and was skipped over, <c>false</c> if not.
+    bool Consume(char c)
+    {
+        if (EndOfString())
+            return false;
+        if (m_sString.at(m_nPosition) != c)
+            return false;
+        ++m_nPosition;
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the raw pointer to the specified offset within the string.
+    /// </summary>
+    GSL_SUPPRESS_F6 const char* GetPointer(size_t nPosition) const noexcept
+    {
+        if (nPosition >= m_sString.length())
+            return &m_sString.back() + 1;
+
+        return &m_sString.at(nPosition);
+    }
+
+private:
+    const std::string& m_sString;
+    size_t m_nPosition = 0;
+};
+
+// ----- other -----
+
 // More functions to be Unicode compatible w/o sacrificing MBCS
 /* A wrapper for converting a string to an unsigned long depending on _String */
 /* The template parameter does not need to be specified */
@@ -582,7 +718,7 @@ _Success_(0 < return < ULONG_MAX) _NODISCARD
 
 /// <summary>
 ///   Returns the number of characters of a null-terminated byte string or wide-character string depending on
-///   the character set specified
+///   the character type specified
 /// </summary>
 /// <param name="_Str">The string.</param>
 /// <returns>Number of characters</returns>
@@ -606,14 +742,85 @@ _NODISCARD _Success_(0 < return < strsz) inline auto __cdecl tcslen_s(_In_reads_
 /// <summary>
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringStartsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(0, sMatch.length(), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > sString.length())
+        return false;
+
+    return (sString.compare(0, sMatchLen, sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const CharT* restrict sString,
+                                                 _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > tcslen_s(sString))
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(0, sMatchLen, sMatch) == 0);
+}
 
 /// <summary>
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
-GSL_SUPPRESS_F6
-_NODISCARD bool StringEndsWith(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch) noexcept;
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const std::basic_string<CharT>& sMatch) noexcept
+{
+    if (sMatch.length() > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    if (sMatchLen > sString.length())
+        return false;
+
+    return (sString.compare(sString.length() - sMatchLen, sMatchLen, sMatch) == 0);
+}
+
+/// <summary>
+/// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sString,
+                                               _In_ const CharT* restrict sMatch) noexcept
+{
+    const auto sMatchLen = tcslen_s(sMatch);
+    const auto sStringLen = tcslen_s(sString);
+    if (sMatchLen > sStringLen)
+        return false;
+
+    return (std::basic_string<CharT>{sString}.compare(sStringLen - sMatchLen, sMatchLen, sMatch) == 0);
+}
 
 } // namespace ra
 

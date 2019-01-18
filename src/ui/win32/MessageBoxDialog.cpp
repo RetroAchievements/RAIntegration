@@ -4,15 +4,16 @@
 
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 
+extern HWND g_RAMainWnd;
+
 namespace ra {
 namespace ui {
 namespace win32 {
 
 using ra::ui::viewmodels::MessageBoxViewModel;
 
-using fnTaskDialog = HRESULT(WINAPI*)(HWND hwndParent, HINSTANCE hInstance, PCWSTR pszWindowTitle, PCWSTR pszMainInstruction,
-    PCWSTR pszContent, TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons, PCWSTR pszIcon, int *pnButton);
-
+using fnTaskDialog = std::add_pointer_t<HRESULT WINAPI(HWND, HINSTANCE, PCWSTR, PCWSTR, PCWSTR,
+                                                       TASKDIALOG_COMMON_BUTTON_FLAGS, PCWSTR, int*)>;
 static fnTaskDialog pTaskDialog = nullptr;
 
 MessageBoxDialog::Presenter::Presenter() noexcept
@@ -20,7 +21,7 @@ MessageBoxDialog::Presenter::Presenter() noexcept
     // TaskDialog isn't supported on WinXP, so we have to dynamically find it.
     auto hDll = LoadLibraryA("comctl32");
     if (hDll)
-        pTaskDialog = (fnTaskDialog)GetProcAddress(hDll, "TaskDialog");
+        pTaskDialog = reinterpret_cast<fnTaskDialog>(GetProcAddress(hDll, "TaskDialog"));
 }
 
 bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& oViewModel) noexcept
@@ -49,7 +50,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             pMessage = gsl::make_not_null(&sMessage);
         }
 
-        UINT uType;
+        UINT uType{};
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
@@ -69,11 +70,11 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: uType |= MB_RETRYCANCEL; break;
         }
 
-        nButton = MessageBoxW(GetActiveWindow(), pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
+        nButton = MessageBoxW(g_RAMainWnd, pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
     }
     else
     {
-        PCWSTR pszIcon;
+        PCWSTR pszIcon{};
         switch (oMessageBoxViewModel.GetIcon())
         {
             default:
@@ -83,7 +84,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Icon::Error: pszIcon = TD_ERROR_ICON; break;
         }
 
-        TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons;
+        TASKDIALOG_COMMON_BUTTON_FLAGS dwCommonButtons{};
         switch (oMessageBoxViewModel.GetButtons())
         {
             default:
@@ -94,7 +95,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
         }
 
-        const HRESULT result = pTaskDialog(GetActiveWindow(), nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
+        const HRESULT result = pTaskDialog(g_RAMainWnd, nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
             oMessageBoxViewModel.GetHeader().c_str(), oMessageBoxViewModel.GetMessage().c_str(), dwCommonButtons, pszIcon, &nButton);
 
         if (!SUCCEEDED(result))

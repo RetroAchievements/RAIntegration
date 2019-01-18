@@ -19,21 +19,17 @@ enum RequestType
     //	Fetch
     RequestScore,
     RequestNews,
-    RequestPatch,
-    RequestLatestClientPage,
     RequestRichPresence,
     RequestAchievementInfo,
     RequestLeaderboardInfo,
     RequestCodeNotes,
     RequestFriendList,
     RequestBadgeIter,
-    RequestUnlocks,
     RequestHashLibrary,
     RequestGamesList,
     RequestAllProgress,
 
     //	Submit
-    RequestSubmitAwardAchievement,
     RequestSubmitCodeNote,
     RequestSubmitLeaderboardEntry,
     RequestSubmitAchievementData,

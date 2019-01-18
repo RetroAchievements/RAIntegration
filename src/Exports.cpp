@@ -71,6 +71,8 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
 
         // notify the overlay of the new user image
         g_AchievementOverlay.UpdateImages();
+
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]() { RAUsers::LocalUser().RequestFriendList(); });
 #endif
     }
     else if (!response.ErrorMessage.empty())

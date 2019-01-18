@@ -121,16 +121,6 @@ public:
     }
 
 private:
-    /// <summary>
-    /// Gets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
-    /// </summary>
-    const unsigned long GetData() const noexcept { return m_nData; }
-
-    /// <summary>
-    /// Sets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
-    /// </summary>
-    inline constexpr void SetData(unsigned long nValue) noexcept { m_nData = nValue; }
-
     ImageType m_nType{};
     std::string m_sName;
     mutable unsigned long m_nData{};

@@ -404,7 +404,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 _Use_decl_annotations_
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
-    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
+    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.m_nData);
     if (hBitmap == nullptr)
     {
         auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());
@@ -442,7 +442,7 @@ void ImageRepository::AddReference(const ImageReference& pImage)
 void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
 {
     // if data isn't set, we don't have a reference to release.
-    if (pImage.GetData() == 0)
+    if (pImage.m_nData == 0)
         return;
 
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
@@ -462,7 +462,7 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
         }
     }
 
-    pImage.SetData(0ULL);
+    pImage.m_nData = {};
 }
 
 bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
@@ -470,9 +470,9 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     if (pImage.Type() == ra::ui::ImageType::None)
         return false;
 
-    const auto hBitmapBefore = pImage.GetData();
+    const auto hBitmapBefore = pImage.m_nData;
     GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
-    return (pImage.GetData() != hBitmapBefore);
+    return (pImage.m_nData != hBitmapBefore);
 }
 
 } // namespace gdi

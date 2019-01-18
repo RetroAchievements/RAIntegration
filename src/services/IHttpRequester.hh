@@ -33,7 +33,7 @@ public:
     /// <summary>
     /// Determines whether or not it would be reasonable to retry the request for the provided error code.
     /// </summary>
-    virtual bool IsRetryable(unsigned int nStatusCode) const noexcept = 0;
+    _NODISCARD virtual bool IsRetryable(unsigned int nStatusCode) const noexcept = 0;
 
 protected:
     IHttpRequester() noexcept = default;

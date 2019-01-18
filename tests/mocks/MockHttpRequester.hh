@@ -26,7 +26,7 @@ public:
         return ra::etoi(response.StatusCode());
     }
 
-    bool IsRetryable(_UNUSED unsigned int nStatusCode) const noexcept
+    bool IsRetryable(unsigned int) const noexcept
     {
         return false;
     }

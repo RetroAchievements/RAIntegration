@@ -42,7 +42,7 @@ protected:
 
 private:
     template<class TRequest, class TCallback>
-    static void DoAsyncWithRetry(const TRequest&& request, TCallback&& callback, std::chrono::milliseconds delay)
+    static void DoAsyncWithRetry(const TRequest& request, TCallback&& callback, std::chrono::milliseconds delay)
     {
         auto response = request.Call();
         if (response.Result != ApiResult::Incomplete)
@@ -97,7 +97,7 @@ struct ApiResponseBase
     /// <returns><c>true</c> if the call was unsuccessful, <c>false</c> if not.</returns>
     bool Failed() const noexcept
     {
-        return (!Succeeded() && Result != ApiResult::None);
+        return !Succeeded() && (Result != ApiResult::None);
     }
 };
 

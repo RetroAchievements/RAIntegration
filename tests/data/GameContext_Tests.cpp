@@ -25,6 +25,16 @@ namespace tests {
 
 TEST_CLASS(GameContext_Tests)
 {
+private:
+    static void RemoveFirstLine(std::string& sString)
+    {
+        const auto nIndex = sString.find('\n');
+        if (nIndex == std::string::npos)
+            sString.clear();
+        else
+            sString.erase(0, nIndex + 1);
+    }
+
 public:
     class GameContextHarness : public GameContext
     {
@@ -221,8 +231,8 @@ public:
             "Version\n"
             "Game\n"
             "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
-            "0:1=1:Ach3:Desc3::::Auth3:20:1234511111:1234500000:::555\n"
-            "0:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
+            "0:\"1=1\":\"Ach3\":\"Desc3\"::::Auth3:20:1234511111:1234500000:::555\n"
+            "0:R:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
         );
 
         game.LoadGame(1U);
@@ -277,7 +287,7 @@ public:
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
-        Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
 
         // new achievement should be allocated an ID higher than the largest existing local ID
         const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
@@ -348,6 +358,88 @@ public:
         // ID, even if intermediate values are available
         const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
         Assert::AreEqual(999000004U, pAch2.ID());
+    }
+
+    TEST_METHOD(TestSaveLocalEmpty)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"GameTitle";
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+        game.LoadGame(1U);
+        Assert::IsTrue(game.SaveLocal());
+        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
+        RemoveFirstLine(sContents);
+        Assert::AreEqual(std::string("GameTitle\n"), sContents);
+    }
+
+    TEST_METHOD(TestSaveLocalOnlyLocal)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.Title = "Ach1";
+            ach1.Description = "Desc1";
+            ach1.Author = "Auth1";
+            ach1.BadgeName = "12345";
+            ach1.CategoryId = 3;
+            ach1.Created = 1234567890;
+            ach1.Updated = 1234599999;
+            ach1.Definition = "1=1";
+            ach1.Points = 5;
+
+            response.Title = L"GameTitle";
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+        game.LoadGame(1U);
+
+        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        ach2.SetTitle("Ach2");
+        ach2.SetDescription("Desc2");
+        ach2.SetAuthor("Auth2");
+        ach2.SetBadgeImage("54321");
+        ach2.SetCreatedDate(1234567891);
+        ach2.SetModifiedDate(1234599998);
+        ach2.ParseTrigger("2=2");
+        ach2.SetPoints(15);
+
+        Assert::IsTrue(game.SaveLocal());
+        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
+        RemoveFirstLine(sContents);
+        Assert::AreEqual(ra::StringPrintf("GameTitle\n%u:\"2=2\":Ach2:Desc2::::Auth2:15:1234567891:1234599998:::54321\n", game.FirstLocalId), sContents);
+    }
+
+    TEST_METHOD(TestSaveLocalEscaped)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"GameTitle";
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+        game.LoadGame(1U);
+
+        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        ach2.SetTitle("Ach:2");
+        ach2.SetDescription("Desc \"2\"");
+        ach2.SetAuthor("Auth2");
+        ach2.SetBadgeImage("54321");
+        ach2.SetCreatedDate(1234567891);
+        ach2.SetModifiedDate(1234599998);
+        ach2.ParseTrigger("2=2");
+        ach2.SetPoints(15);
+
+        Assert::IsTrue(game.SaveLocal());
+        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
+        RemoveFirstLine(sContents);
+        Assert::AreEqual(ra::StringPrintf("GameTitle\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth2:15:1234567891:1234599998:::54321\n", game.FirstLocalId), sContents);
     }
 
     TEST_METHOD(TestLoadGameUserUnlocks)

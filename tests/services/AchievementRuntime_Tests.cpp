@@ -341,7 +341,15 @@ public:
         ra::services::ServiceLocator::ServiceOverride<AchievementRuntime> svcOverride(&runtime, false);
 
         Achievement pAchievement1, pAchievement2;
-        pAchievement1.ParseLine("1:1=1:Title:Desc::::Auth:5:1234567890:1234567890:::12345");
+        pAchievement1.SetID(1U);
+        pAchievement1.ParseTrigger("1=1");
+        pAchievement1.SetTitle("Title");
+        pAchievement1.SetDescription("Desc");
+        pAchievement1.SetAuthor("Auth");
+        pAchievement1.SetPoints(5);
+        pAchievement1.SetCreatedDate(1234567890);
+        pAchievement1.SetModifiedDate(1234567890);
+        pAchievement1.SetBadgeImage("12345");
 
         pAchievement1.SetActive(true);
         pAchievement2.CopyFrom(pAchievement1);

@@ -291,6 +291,53 @@ public:
         Assert::AreEqual(12, tokenizer.GetPointer(12U) - pStart);
         Assert::AreEqual(15, tokenizer.GetPointer(16U) - pStart); // string is 15 characters
     }
+
+    TEST_METHOD(TestTokenizerReadQuotedString)
+    {
+        std::string input("\"This string is \\\"quoted\\\".\" - Author");
+        Tokenizer tokenizer(input);
+        auto sString = tokenizer.ReadQuotedString();
+        Assert::AreEqual(std::string("This string is \"quoted\"."), sString);
+        Assert::AreEqual(' ', tokenizer.PeekChar());
+        Assert::AreEqual(28U, tokenizer.CurrentPosition());
+
+        // PeekChar is not a quote, nothing should be returned
+        sString = tokenizer.ReadQuotedString();
+        Assert::AreEqual(std::string(""), sString);
+
+        // no closing quote, should return remaining portion of string
+        tokenizer.Seek(tokenizer.CurrentPosition() - 1);
+        sString = tokenizer.ReadQuotedString();
+        Assert::AreEqual(std::string(" - Author"), sString);
+        Assert::IsTrue(tokenizer.EndOfString());
+    }
+
+    TEST_METHOD(TestTokenizerReadQuotedStringEscapeSequences)
+    {
+        // \n -> newline, \(anything else) -> (anything else)
+        std::string input("\"\\\\\\8\\n\\\"\\!\"");
+        Tokenizer tokenizer(input);
+        auto sString = tokenizer.ReadQuotedString();
+        Assert::AreEqual(std::string("\\8\n\"!"), sString);
+    }
+
+    TEST_METHOD(TestTokenizerConsume)
+    {
+        std::string input("abc");
+        Tokenizer tokenizer(input);
+
+        Assert::IsFalse(tokenizer.Consume('b')); // first character is 'a'
+        Assert::IsTrue(tokenizer.Consume('a'));
+        Assert::IsTrue(tokenizer.Consume('b'));
+        Assert::AreEqual('c', tokenizer.PeekChar());
+        Assert::IsFalse(tokenizer.Consume('b'));
+        Assert::IsTrue(tokenizer.Consume('c'));
+        Assert::IsTrue(tokenizer.EndOfString());
+        Assert::IsFalse(tokenizer.Consume('b'));
+        Assert::IsFalse(tokenizer.Consume('c'));
+        Assert::IsFalse(tokenizer.Consume('d'));
+        Assert::IsFalse(tokenizer.Consume('\0'));
+    }
 };
 
 } // namespace tests

@@ -107,9 +107,6 @@ public:
 
     void Reset() noexcept;
 
-    // Returns the new char* offset after parsing.
-    GSL_SUPPRESS_F6 const char* ParseLine(const char* restrict sBuffer);
-
     void ParseTrigger(const char* pTrigger);
 
     // Used for rendering updates when editing achievements. Usually always false.

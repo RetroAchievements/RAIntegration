@@ -45,7 +45,7 @@ public:
     /// <summary>Adds a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
-    virtual void AddReference(ImageReference& pImage) = 0;
+    virtual void AddReference(const ImageReference& pImage) = 0;
 
     /// <summary>Releases a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
@@ -121,17 +121,10 @@ public:
     }
 
 private:
-    unsigned long GetData() noexcept { return GetDataImpl(*this); }
     /// <summary>
     /// Gets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
     /// </summary>
-    const unsigned long GetData() const noexcept { return GetDataImpl(*this); }
-    
-    template<typename T>
-    static auto GetDataImpl(T& ir) noexcept -> decltype(ir.GetData())
-    {
-        return ir.m_nData;
-    }
+    const unsigned long GetData() const noexcept { return m_nData; }
 
     /// <summary>
     /// Sets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.

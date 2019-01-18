@@ -21,8 +21,6 @@ public:
     void Clear() noexcept;
     void Test();
 
-    bool SaveToFile() const;
-
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)
     {

@@ -184,49 +184,6 @@ void AchievementSet::Test()
     }
 }
 
-bool AchievementSet::SaveToFile() const
-{
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-    // Commits local achievements to the file
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements,
-                                         std::to_wstring(pGameContext.GameId()));
-    if (pData == nullptr)
-        return false;
-
-    pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
-    pData->WriteLine(pGameContext.GameTitle());
-
-    for (const auto pAchievement : g_pLocalAchievements->m_Achievements)
-    {
-        if (!pAchievement)
-            continue;
-
-        pData->Write(std::to_string(pAchievement->ID()));
-        pData->Write(":");
-        pData->Write(pAchievement->CreateMemString());
-        pData->Write(":");
-        pData->Write(pAchievement->Title()); // TODO: escape colons
-        pData->Write(":");
-        pData->Write(pAchievement->Description()); // TODO: escape colons
-        pData->Write("::::");            // progress indicator/max/format
-        pData->Write(pAchievement->Author());
-        pData->Write(":");
-        pData->Write(std::to_string(pAchievement->Points()));
-        pData->Write(":");
-        pData->Write(std::to_string(pAchievement->CreatedDate()));
-        pData->Write(":");
-        pData->Write(std::to_string(pAchievement->ModifiedDate()));
-        pData->Write(":::"); // upvotes/downvotes
-        pData->Write(pAchievement->BadgeImageURI());
-
-        pData->WriteLine();
-    }
-
-    return true;
-}
-
 bool AchievementSet::HasUnsavedChanges() const noexcept
 {
     for (auto pAchievement : m_Achievements)

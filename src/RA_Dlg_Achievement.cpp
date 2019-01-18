@@ -12,6 +12,8 @@
 
 #include "services\AchievementRuntime.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_CORE{_T("ID"),     _T("Title"),     _T("Points"),
                                                            _T("Author"), _T("Achieved?"), _T("Modified?")};
 inline constexpr std::array<LPCTSTR, 6> COLUMN_TITLES_UNOFFICIAL{_T("ID"),     _T("Title"),  _T("Points"),
@@ -228,27 +230,6 @@ _Success_(return ) _NODISCARD BOOL
                       Ach.Description().c_str());
             MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
-        }
-
-        constexpr std::array<char, 2> sIllegalChars{'&', ':'};
-        for (auto& cNextChar : sIllegalChars)
-        {
-            if (Ach.Title().find_first_of(cNextChar) != std::string::npos)
-            {
-                std::string str{"Achievement title contains an illegal character: "};
-                str += cNextChar;
-                str += "\nPlease remove and try again";
-                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK | MB_ICONERROR);
-                return FALSE;
-            }
-            if (Ach.Description().find_first_of(cNextChar) != std::string::npos)
-            {
-                std::string str{"Achievement description contains an illegal character: "};
-                str += cNextChar;
-                str += "\nPlease remove and try again";
-                MessageBox(nullptr, NativeStr(str).c_str(), TEXT("Error!"), MB_OK);
-                return FALSE;
-            }
         }
     }
 
@@ -671,17 +652,20 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
                 }
                 break;
+
                 case IDC_RA_COMMIT_ACH:
                 {
                     if (!RA_GameIsActive())
                         break;
 
-                    if (g_nActiveAchievementSet == AchievementSet::Type::Local)
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                    if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
                     {
                         // Local save is to disk
-                        if (g_pActiveAchievements->SaveToFile())
+                        if (pGameContext.SaveLocal())
                         {
-                            MessageBox(hDlg, TEXT("Saved OK!"), TEXT("OK"), MB_OK);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Saved OK!");
+
                             for (unsigned int i = 0; i < g_pActiveAchievements->NumAchievements(); i++)
                                 g_pActiveAchievements->GetAchievement(i).SetModified(FALSE);
 
@@ -689,17 +673,17 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         }
                         else
                         {
-                            MessageBox(hDlg, TEXT("Error during save!"), TEXT("Error"), MB_OK | MB_ICONWARNING);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Error during save!");
                         }
-
-                        return TRUE;
                     }
                     else
                     {
                         CommitAchievements(hDlg);
                     }
+
+                    return TRUE;
                 }
-                break;
+
                 case IDC_RA_REVERTSELECTED:
                 {
                     if (!RA_GameIsActive())

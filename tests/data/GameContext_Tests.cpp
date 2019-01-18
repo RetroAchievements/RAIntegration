@@ -699,6 +699,42 @@ public:
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
     }
+
+    TEST_METHOD(TestAwardAchievementErrorAfterPopupDismissed)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
+        {
+            response.ErrorMessage = "Achievement data cannot be found for 1";
+            response.Result = ra::api::ApiResult::Error;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // if error occurs after original popup is gone, a new one should be created to display the error
+        ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> contextOverride(&game, false);
+        game.mockOverlayManager.ClearPopups();
+        game.mockThreadPool.ExecuteNextTask();
+
+        // error message should be reported
+        pPopup = game.mockOverlayManager.GetMessage(2);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Error unlocking AchievementTitle"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+    }
 };
 
 } // namespace tests

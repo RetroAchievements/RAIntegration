@@ -379,7 +379,7 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
     request.AchievementId = nAchievementId;
     request.Hardcore = _RA_HardcoreModeIsActive();
     request.GameHash = GameHash();
-    request.CallAsyncWithRetry([nPopupId](const ra::api::AwardAchievement::Response& response)
+    request.CallAsyncWithRetry([nPopupId, nAchievementId](const ra::api::AwardAchievement::Response& response)
     {
         if (response.Succeeded())
         {
@@ -403,6 +403,23 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
 
                 pPopup->SetTitle(sNewTitle);
                 pPopup->RebuildRenderImage();
+            }
+            else
+            {
+                const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
+                const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
+                if (pAchievement != nullptr)
+                {
+                    auto sHeader = ra::BuildWString("Error unlocking ", pAchievement->Title());
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                        sHeader, ra::Widen(response.ErrorMessage), ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+                }
+                else
+                {
+                    auto sHeader = ra::BuildWString("Error unlocking achievement ", nAchievementId);
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                        sHeader, ra::Widen(response.ErrorMessage));
+                }
             }
         }
     });

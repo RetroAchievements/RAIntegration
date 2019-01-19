@@ -1111,7 +1111,7 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 #pragma warning(push)
 #pragma warning(disable: 26490)
         GSL_SUPPRESS_TYPE1 const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
-        GSL_SUPPRESS_TYPE1::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+        GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
 #pragma warning(pop)
     }
     return 0;

@@ -403,7 +403,6 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     return hBitmap;
 }
 
-_Use_decl_annotations_
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
 #pragma warning(push)

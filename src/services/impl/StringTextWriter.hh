@@ -45,7 +45,7 @@ public:
     void SetPosition(std::streampos nNewPosition) noexcept override
     {
         GSL_SUPPRESS_F6 Expects(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
-        m_nWritePosition = nNewPosition;
+        GSL_SUPPRESS_F6 m_nWritePosition = nNewPosition;
     }
 
     std::string& GetString() noexcept { return m_sOutput; }

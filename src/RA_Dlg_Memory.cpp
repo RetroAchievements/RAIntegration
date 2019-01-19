@@ -863,10 +863,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         case WM_DRAWITEM:
         {
 #pragma warning(push)
-#pragma warning(disable: 26490)
+#pragma warning(disable: 26490 26462)
             GSL_SUPPRESS_TYPE1 auto pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+            GSL_SUPPRESS_CON4 const auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
 #pragma warning(pop)
-            auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
             if (pDIS->hwndItem == hListbox)
             {
                 if (pDIS->itemID == -1)
@@ -1381,7 +1381,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             const int nSel = ComboBox_GetCurSel(hMemWatch);
                             if (nSel != CB_ERR)
                             {
-                                TCHAR sAddr[64]{};
+                                const TCHAR sAddr[64]{};
                                 if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
                                 {
                                     ra::ByteAddress nAddr{std::stoul(ra::Narrow(sAddr), nullptr, 16)};

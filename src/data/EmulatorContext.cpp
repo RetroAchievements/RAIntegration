@@ -254,6 +254,8 @@ void EmulatorContext::DisableHardcoreMode()
         auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
         pLeaderboardManager.Reset();
 #endif
+
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().RefreshUnlocks();
     }
 }
 
@@ -310,6 +312,8 @@ bool EmulatorContext::EnableHardcoreMode()
     _RA_ResetEmulation();
     _RA_OnReset();
 #endif
+
+    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().RefreshUnlocks();
 
     return true;
 }

@@ -325,11 +325,25 @@ public:
     TEST_METHOD(TestDisableHardcoreMode)
     {
         EmulatorContextHarness emulator;
+        emulator.mockGameContext.SetGameId(1234U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        bool bUnlocksRequested = false;
+        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
+        {
+            bUnlocksRequested = true;
+            Assert::AreEqual(1234U, request.GameId);
+            Assert::IsFalse(request.Hardcore);
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
 
         emulator.DisableHardcoreMode();
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+
+        emulator.mockThreadPool.ExecuteNextTask();
+        Assert::IsTrue(bUnlocksRequested);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionCurrentNoGame)
@@ -368,10 +382,23 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
+        bool bUnlocksRequested = false;
+        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
+        {
+            bUnlocksRequested = true;
+            Assert::AreEqual(1U, request.GameId);
+            Assert::IsTrue(request.Hardcore);
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+
+        emulator.mockThreadPool.ExecuteNextTask();
+        Assert::IsTrue(bUnlocksRequested);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionCurrentGameLoadedCancel)

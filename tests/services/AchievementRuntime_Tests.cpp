@@ -366,6 +366,36 @@ public:
         Assert::AreEqual(pAchievement2.ID(), vChanges.at(1).nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.at(1).nType);
     }
+
+    TEST_METHOD(TestReactivateAchievement)
+    {
+        AchievementRuntime runtime;
+        auto* pTrigger = ParseTrigger("1=1_1=0");
+
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.ActivateAchievement(6U, pTrigger);
+        runtime.Process(vChanges);
+        runtime.Process(vChanges);
+        runtime.Process(vChanges);
+        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
+
+        // deactivating achievement should not reset hit count
+        runtime.DeactivateAchievement(6U);
+        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
+
+        // reactivating achievement should not reset hit count
+        // this behavior is important for GameContext.RefreshUnlocks - when switching from hardcore to non-hardcore,
+        // the achievement is deactivated and reactivated (if not unlocked). since the emulator is not reset, the
+        // hit count shouldn't be reset either.
+        runtime.ActivateAchievement(6U, pTrigger);
+        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual(4U, pTrigger->requirement->conditions->current_hits);
+    }
 };
 
 } // namespace tests

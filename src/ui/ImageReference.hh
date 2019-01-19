@@ -10,7 +10,6 @@ namespace ra {
 namespace ui {
 namespace drawing::gdi {
 
-class GDISurface;
 class ImageRepository;
 
 } // namespace drawing::gdi
@@ -114,7 +113,7 @@ public:
     {
         if (m_nType != ImageType::None)
         {
-            // Supress not working inline, but should
+            // Suppress not working inline, but should
             GSL_SUPPRESS_F6 auto& pRepository = ra::services::ServiceLocator::GetMutable<IImageRepository>();
             pRepository.ReleaseReference(*this);
         }
@@ -125,7 +124,6 @@ private:
     std::string m_sName;
     mutable unsigned long m_nData{};
     friend class drawing::gdi::ImageRepository;
-    friend class drawing::gdi::GDISurface;
 };
 
 } // namespace ui

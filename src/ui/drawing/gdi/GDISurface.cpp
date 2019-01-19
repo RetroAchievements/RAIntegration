@@ -75,10 +75,10 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     if (!hdcMem)
         return;
 
-    auto hOldBitmap = SelectBitmap(hdcMem, pImage.m_nData);
+    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
 
     BITMAP bm;
-    if (GetObject(reinterpret_cast<HANDLE>(pImage.m_nData), sizeof(bm), &bm) == sizeof(bm))
+    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
         BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
 
     SelectBitmap(hdcMem, hOldBitmap);

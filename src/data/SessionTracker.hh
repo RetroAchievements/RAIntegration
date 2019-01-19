@@ -47,7 +47,7 @@ protected:
     void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
 
     void UpdateSession(time_t tSessionStart);
-    long WriteSessionStats(std::chrono::seconds tSessionDuration) const;
+    std::streampos WriteSessionStats(std::chrono::seconds tSessionDuration) const;
     std::wstring GetCurrentActivity() const;
 
     virtual bool IsInspectingMemory() const noexcept;
@@ -70,7 +70,7 @@ private:
 
     std::vector<GameStats> m_vGameStats;
 
-    long m_nFileWritePosition{};
+    std::streamoff m_nFileWritePosition{};
 };
 
 } // namespace data

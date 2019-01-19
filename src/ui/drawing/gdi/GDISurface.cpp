@@ -65,12 +65,12 @@ void GDISurface::SwitchFont(int nFont) const
     }
 }
 
+_Use_decl_annotations_
 void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
 {
     auto hBitmap = ImageRepository::GetHBitmap(pImage);
     if (!hBitmap)
         return;
-
     HDC hdcMem = CreateCompatibleDC(m_hDC);
     if (!hdcMem)
         return;

@@ -199,7 +199,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
         {
             hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler), // Input bitmap to convert
                 GUID_WICPixelFormat32bppBGR,				// &GUID_WICPixelFormat32bppBGR,
-                WICBitmapDitherTypeNone,					// Specified dither patterm
+                WICBitmapDitherTypeNone,					// Specified dither pattern
                 nullptr,									// Specify a particular palette 
                 0.f,										// Alpha threshold
                 WICBitmapPaletteTypeCustom);				// Palette translation type
@@ -302,13 +302,13 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
 
     // Decode the source image to IWICBitmapSource
     CComPtr<IWICBitmapDecoder> pDecoder;
-    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(),			// Image to be decoded
-        nullptr,						// Do not prefer a particular vendor
-        GENERIC_READ,                   // Desired read access to the file
-        WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
-        &pDecoder);                     // Pointer to the decoder
+    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(), // Image to be decoded
+                                                           nullptr,      // Do not prefer a particular vendor
+                                                           GENERIC_READ, // Desired read access to the file
+                                                           WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
+                                                           &pDecoder);                     // Pointer to the decoder
 
-                                        // Retrieve the first frame of the image from the decoder
+    // Retrieve the first frame of the image from the decoder
     CComPtr<IWICBitmapFrameDecode> pFrame;
     if (SUCCEEDED(hr))
         hr = pDecoder->GetFrame(0, &pFrame);
@@ -401,9 +401,10 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     return hBitmap;
 }
 
+_Use_decl_annotations_
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
-    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
+    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.m_nData);
     if (hBitmap == nullptr)
     {
         auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());
@@ -413,18 +414,17 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            auto& pMutableImage = const_cast<ImageReference&>(pImage);
-            pMutableImage.SetData(reinterpret_cast<unsigned long>(hBitmap));
+            pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
 
             // ImageReference will release the reference
-            pImageRepository->AddReference(pMutableImage);
+            pImageRepository->AddReference(pImage);
         }
     }
 
     return hBitmap;
 }
 
-void ImageRepository::AddReference(ImageReference& pImage)
+void ImageRepository::AddReference(const ImageReference& pImage)
 {
     if (pImage.Name().empty())
         return;
@@ -442,7 +442,7 @@ void ImageRepository::AddReference(ImageReference& pImage)
 void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
 {
     // if data isn't set, we don't have a reference to release.
-    if (pImage.GetData() == 0)
+    if (pImage.m_nData == 0)
         return;
 
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
@@ -462,7 +462,7 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
         }
     }
 
-    pImage.SetData(0ULL);
+    pImage.m_nData = {};
 }
 
 bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
@@ -470,9 +470,9 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     if (pImage.Type() == ra::ui::ImageType::None)
         return false;
 
-    const auto hBitmapBefore = pImage.GetData();
+    const auto hBitmapBefore = pImage.m_nData;
     GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
-    return (pImage.GetData() != hBitmapBefore);
+    return (pImage.m_nData != hBitmapBefore);
 }
 
 } // namespace gdi

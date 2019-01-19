@@ -23,20 +23,6 @@ LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConf
 {
 }
 
-RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID)
-{
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        if ((*iter).ID() == nID)
-            return &(*iter);
-
-        iter++;
-    }
-
-    return nullptr;
-}
-
 void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))

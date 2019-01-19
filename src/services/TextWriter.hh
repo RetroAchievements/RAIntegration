@@ -55,13 +55,13 @@ public:
     /// <summary>
     /// Gets the current write offset within the output.
     /// </summary>
-    virtual long GetPosition() const = 0;
+    virtual std::streampos GetPosition() const = 0;
     
     /// <summary>
     /// Sets the current write offset within the output.
     /// </summary>
     /// <param name="nNewPosition">The n new position.</param>
-    virtual void SetPosition(long nNewPosition) = 0;
+    virtual void SetPosition(std::streampos nNewPosition) = 0;
 
 protected:
     TextWriter() noexcept = default;

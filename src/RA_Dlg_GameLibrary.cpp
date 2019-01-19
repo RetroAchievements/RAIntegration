@@ -570,7 +570,11 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
             {
                 case IDC_RA_LBX_GAMELIST:
                 {
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1
                     switch (reinterpret_cast<LPNMHDR>(lParam)->code)
+#pragma warning(pop)
                     {
                         case LVN_ITEMCHANGED:
                         {

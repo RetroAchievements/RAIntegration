@@ -98,9 +98,9 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& Response{ doc["Response"] };
     const auto& LBData{ Response["LBData"] };
 
-    const auto nLBID{ra::LeaderboardID{LBData["LeaderboardID"].GetUint()}};
-    const auto nGameID{ LBData["GameID"].GetUint() };
-    const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
+    const ra::LeaderboardID nLBID{LBData["LeaderboardID"].GetUint()};
+    const auto nGameID{LBData["GameID"].GetUint()};
+    const auto bLowerIsBetter{LBData["LowerIsBetter"].GetUint() == 1U};
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);

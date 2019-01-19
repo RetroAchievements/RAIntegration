@@ -767,9 +767,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
                 toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
                 toolInfo.hwnd = hDlg;
-                toolInfo.uId = reinterpret_cast<UINT_PTR>(hList);
+                GSL_SUPPRESS_TYPE1 toolInfo.uId = reinterpret_cast<UINT_PTR>(hList);
                 toolInfo.lpszText = LPSTR_TEXTCALLBACK;
-                SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
+                GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
                 SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
                 SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, 320);
                 SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000); // show for 30 seconds
@@ -784,7 +784,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
         case WM_GETMINMAXINFO:
         {
-            LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+            GSL_SUPPRESS_TYPE1 LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
+#pragma warning(pop)
             lpmmi->ptMinTrackSize = pDlgAchEditorMin;
         }
         break;
@@ -1451,12 +1454,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
         case WM_NOTIFY:
         {
+#pragma warning(push)
+#pragma warning(disable: 26490)
+            GSL_SUPPRESS_TYPE1
             switch (((reinterpret_cast<LPNMHDR>(lParam))->code))
             {
                 case NM_CLICK:
                 {
-                    const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
-
+                    GSL_SUPPRESS_TYPE1 const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+#pragma warning(pop)
                     // http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
                     ASSERT(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS) != nullptr);
@@ -1482,7 +1488,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 break;
                 case NM_RCLICK:
                 {
-                    const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1  const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+#pragma warning(pop)
                     if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                     {
                         if (ra::to_unsigned(pOnClick->iItem) >
@@ -1535,7 +1544,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case LVN_ENDLABELEDIT:
                 {
-                    NMLVDISPINFO* pDispInfo = reinterpret_cast<NMLVDISPINFO*>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1 NMLVDISPINFO* pDispInfo = reinterpret_cast<NMLVDISPINFO*>(lParam);
+#pragma warning(pop)
 
                     Achievement* pActiveAch = ActiveAchievement();
                     if (pActiveAch == nullptr)
@@ -1748,7 +1760,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case TTN_GETDISPINFO:
                 {
-                    LPNMTTDISPINFO lpDispInfo = reinterpret_cast<LPNMTTDISPINFO>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1 LPNMTTDISPINFO lpDispInfo = reinterpret_cast<LPNMTTDISPINFO>(lParam);
+#pragma warning(pop)
                     GetListViewTooltip();
                     if (!m_sTooltip.empty())
                     {
@@ -1845,6 +1860,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
     if (hBitmap != nullptr)
     {
         HWND hCheevoPic = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHEEVOPIC);
+        GSL_SUPPRESS_TYPE1
         SendMessage(hCheevoPic, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
         InvalidateRect(hCheevoPic, nullptr, TRUE);
     }

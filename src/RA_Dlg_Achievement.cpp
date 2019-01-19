@@ -68,7 +68,10 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
 LRESULT ProcessCustomDraw(LPARAM lParam)
 {
-    LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+    GSL_SUPPRESS_TYPE1 LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
+#pragma warning(pop)
     switch (lplvcd->nmcd.dwDrawStage)
     {
         case CDDS_PREPAINT:
@@ -831,13 +834,17 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
         case WM_NOTIFY:
         {
+#pragma warning(push)
+#pragma warning(disable: 26490)
+            GSL_SUPPRESS_TYPE1
             switch (reinterpret_cast<LPNMHDR>(lParam)->code)
             {
                 case LVN_ITEMCHANGED: //!?? LVN on a LPNMHDR?
                 {
                     iSelect = -1;
                     // MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
-                    LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
+                    GSL_SUPPRESS_TYPE1 LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
+#pragma warning(pop)
                     if (pLVInfo->iItem != -1)
                     {
                         iSelect = pLVInfo->iItem;
@@ -858,17 +865,21 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 break;
 
                 case NM_DBLCLK:
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1
                     if (reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem != -1)
                     {
                         SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
-                        g_AchievementEditorDialog.LoadAchievement(
+                        GSL_SUPPRESS_TYPE1 g_AchievementEditorDialog.LoadAchievement(
                             &g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem),
                             FALSE);
+#pragma warning(pop)
                     }
                     return FALSE; //? TBD ##SD
 
                 case NM_CUSTOMDRAW:
-                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, LONG_PTR{ProcessCustomDraw(lParam)});
+                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, ProcessCustomDraw(lParam));
                     return TRUE;
             }
 

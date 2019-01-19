@@ -121,9 +121,12 @@ static void AppendNTVersion(_Inout_ std::string& sUserAgent)
     {
         RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
         using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
-        const auto RtlGetVersion{
+#pragma warning(push)
+#pragma warning(disable: 26490)
+        GSL_SUPPRESS_TYPE1 const auto RtlGetVersion{
             reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
         };
+#pragma warning(pop)
         if (RtlGetVersion)
         {
             RtlGetVersion(&osVersion);

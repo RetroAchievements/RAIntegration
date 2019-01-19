@@ -562,7 +562,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
-        AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
+        GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
@@ -1080,7 +1080,7 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
 
     //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
-    char* pRawFileOut = reinterpret_cast<char*>(std::malloc((nFileSizeOut + 1) * sizeof(char)));
+    char* pRawFileOut = static_cast<char*>(std::malloc((nFileSizeOut + 1) * sizeof(char)));
     if (pRawFileOut)
     {
         ZeroMemory(pRawFileOut, nFileSizeOut + 1);
@@ -1108,8 +1108,11 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
     ASSERT(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)
     {
-        const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
-        ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+#pragma warning(push)
+#pragma warning(disable: 26490)
+        GSL_SUPPRESS_TYPE1 const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        GSL_SUPPRESS_TYPE1::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+#pragma warning(pop)
     }
     return 0;
 }
@@ -1130,7 +1133,7 @@ std::string GetFolderFromDialog()
 
     bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
     bi.lpfn    = ra::BrowseCallbackProc;
-    bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    GSL_SUPPRESS_TYPE1 bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {

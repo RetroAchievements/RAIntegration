@@ -852,21 +852,19 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_MEASUREITEM:
         {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-            GSL_SUPPRESS_TYPE1 auto pmis = reinterpret_cast<PMEASUREITEMSTRUCT>(lParam);
-#pragma warning(pop)
+            LPMEASUREITEMSTRUCT pmis{};
+            GSL_SUPPRESS_TYPE1 pmis = reinterpret_cast<LPMEASUREITEMSTRUCT>(lParam);
             pmis->itemHeight = 16;
             return TRUE;
         }
 
         case WM_DRAWITEM:
         {
-#pragma warning(push)
-#pragma warning(disable: 26490 26462)
-            GSL_SUPPRESS_TYPE1 auto pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-            GSL_SUPPRESS_CON4 const auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
-#pragma warning(pop)
+            LPDRAWITEMSTRUCT pDIS{};
+            GSL_SUPPRESS_TYPE1 pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+            HWND hListbox{};
+            hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+
             if (pDIS->hwndItem == hListbox)
             {
                 if (pDIS->itemID == -1)
@@ -1012,10 +1010,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_GETMINMAXINFO:
         {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-            GSL_SUPPRESS_TYPE1 LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
-#pragma warning(pop)
+            LPMINMAXINFO lpmmi{};
+            GSL_SUPPRESS_TYPE1 lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
             lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
             lpmmi->ptMinTrackSize = pDlgMemoryMin;
             return TRUE;

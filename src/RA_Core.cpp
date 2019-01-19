@@ -1108,11 +1108,10 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
     ASSERT(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)
     {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-        GSL_SUPPRESS_TYPE1 const auto path{ reinterpret_cast<LPCTSTR>(lpData) };
+        LPCTSTR path{};
+        GSL_SUPPRESS_TYPE1 path = reinterpret_cast<LPCTSTR>(lpData);
         GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
-#pragma warning(pop)
+
     }
     return 0;
 }
@@ -1133,7 +1132,7 @@ std::string GetFolderFromDialog()
 
     bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
     bi.lpfn    = ra::BrowseCallbackProc;
-    GSL_SUPPRESS_TYPE1 bi.lParam  = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
+    GSL_SUPPRESS_TYPE1 bi.lParam = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
     
     std::string ret;
     {

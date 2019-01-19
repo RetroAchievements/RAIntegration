@@ -784,10 +784,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
         case WM_GETMINMAXINFO:
         {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-            GSL_SUPPRESS_TYPE1 LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
-#pragma warning(pop)
+            LPMINMAXINFO lpmmi{};
+            GSL_SUPPRESS_TYPE1 lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
             lpmmi->ptMinTrackSize = pDlgAchEditorMin;
         }
         break;
@@ -1458,11 +1456,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 #pragma warning(disable: 26490)
             GSL_SUPPRESS_TYPE1
             switch (((reinterpret_cast<LPNMHDR>(lParam))->code))
+#pragma warning(pop)
             {
                 case NM_CLICK:
                 {
-                    GSL_SUPPRESS_TYPE1 const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
-#pragma warning(pop)
+                    const NMITEMACTIVATE* pOnClick{};
+                    GSL_SUPPRESS_TYPE1 pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(lParam);
                     // http://cboard.cprogramming.com/windows-programming/122733-%5Bc%5D-editing-subitems-listview-win32-api.html
 
                     ASSERT(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS) != nullptr);
@@ -1488,10 +1487,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 break;
                 case NM_RCLICK:
                 {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-                    GSL_SUPPRESS_TYPE1  const NMITEMACTIVATE* pOnClick = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
-#pragma warning(pop)
+                    const NMITEMACTIVATE* pOnClick{};
+                    GSL_SUPPRESS_TYPE1 pOnClick = reinterpret_cast<const NMITEMACTIVATE*>(lParam);
+
                     if (pOnClick->iItem != -1 && pOnClick->iSubItem != -1)
                     {
                         if (ra::to_unsigned(pOnClick->iItem) >
@@ -1544,10 +1542,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case LVN_ENDLABELEDIT:
                 {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-                    GSL_SUPPRESS_TYPE1 NMLVDISPINFO* pDispInfo = reinterpret_cast<NMLVDISPINFO*>(lParam);
-#pragma warning(pop)
+                    NMLVDISPINFO* pDispInfo{};
+                    GSL_SUPPRESS_TYPE1 pDispInfo = reinterpret_cast<NMLVDISPINFO*>(lParam);
 
                     Achievement* pActiveAch = ActiveAchievement();
                     if (pActiveAch == nullptr)
@@ -1760,10 +1756,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case TTN_GETDISPINFO:
                 {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-                    GSL_SUPPRESS_TYPE1 LPNMTTDISPINFO lpDispInfo = reinterpret_cast<LPNMTTDISPINFO>(lParam);
-#pragma warning(pop)
+                    LPNMTTDISPINFO lpDispInfo{};
+                    GSL_SUPPRESS_TYPE1 lpDispInfo = reinterpret_cast<LPNMTTDISPINFO>(lParam);
+
                     GetListViewTooltip();
                     if (!m_sTooltip.empty())
                     {

@@ -27,10 +27,8 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-    GSL_SUPPRESS_TYPE1 DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
-#pragma warning(pop)
+    DialogBase* pDialog{};
+    GSL_SUPPRESS_TYPE1 pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
@@ -121,10 +119,10 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             {
                 case EN_KILLFOCUS:
                 {
-#pragma warning(push)
-#pragma warning(disable: 26490)
-                    GSL_SUPPRESS_TYPE1 auto* pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
-#pragma warning(pop)
+                    using BindingType = decltype(FindControlBinding({}));
+                    BindingType pControlBinding{};
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+
                     if (pControlBinding)
                         pControlBinding->LostFocus();
                     return TRUE;

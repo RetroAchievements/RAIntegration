@@ -85,13 +85,8 @@ void CompVariable::SerializeAppend(std::string& buffer) const
 
         case Type::Address:
             buffer.append("0x");
-
             buffer.append(ComparisonSizeToPrefix(m_nVarSize));
-
-            if (m_nVal >= 0x10000)
-                buffer.append(ra::ByteAddressToString(m_nVal));
-            else
-                buffer.append(ra::ByteAddressToString(m_nVal, 4));
+            buffer.append(ra::StringPrintf("%04x", m_nVal));
             break;
 
         default:

@@ -182,9 +182,8 @@ public:
 #endif
 
 namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr,
-                                           _In_ std::streamsize nPrecision = 6LL,
-                                           _In_ bool bShowBase = false);
+_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
+_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
 } // namespace ra
 
 #if _MBCS

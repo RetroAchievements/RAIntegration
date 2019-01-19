@@ -128,7 +128,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     for (auto& NextEntry : TopEntries.GetArray())
     {
         const auto nRank{ NextEntry["Rank"].GetUint() };
-        const std::string& sUser{ NextEntry["User"].GetString() };
+        const std::string& sUser{ NextEntry["User"].IsString() ? NextEntry["User"].GetString() : "?????" };
         const auto nUserScore{ NextEntry["Score"].GetInt() };
         const auto nSubmitted{ static_cast<std::time_t>(ra::to_signed(NextEntry["DateSubmitted"].GetUint())) };
 

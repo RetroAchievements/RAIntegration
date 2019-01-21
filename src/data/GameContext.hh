@@ -36,6 +36,11 @@ public:
     const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
 
     /// <summary>
+    /// Sets the game title.
+    /// </summary>
+    void SetGameTitle(const std::wstring& sGameTitle) { m_sGameTitle = sGameTitle; }
+
+    /// <summary>
     /// Gets the hash of the currently loaded game.
     /// </summary>
     const std::string& GameHash() const noexcept { return m_sGameHash; }

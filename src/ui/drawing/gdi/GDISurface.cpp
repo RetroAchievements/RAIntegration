@@ -70,7 +70,6 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     auto hBitmap = ImageRepository::GetHBitmap(pImage);
     if (!hBitmap)
         return;
-
     HDC hdcMem = CreateCompatibleDC(m_hDC);
     if (!hdcMem)
         return;

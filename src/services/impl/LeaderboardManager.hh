@@ -33,10 +33,28 @@ public:
         Ensures((iter >= 0) && (iter < Count()));
         return m_Leaderboards.at(iter);
     }
-    RA_Leaderboard* FindLB(ra::LeaderboardID nID) override;
+    RA_Leaderboard* FindLB(ra::LeaderboardID nID) noexcept override { return find_lb_impl(*this, nID); }
+    const RA_Leaderboard* FindLB(LeaderboardID nID) const noexcept override { return find_lb_impl(*this, nID); } 
     void Clear() override;
 
+    inline auto begin() noexcept { return m_Leaderboards.begin(); }
+    inline auto begin() const noexcept { return m_Leaderboards.begin(); }
+    inline auto end() noexcept { return m_Leaderboards.end(); }
+    inline auto end() const noexcept { return m_Leaderboards.end(); }
+
 private:
+    template<typename T>
+    GSL_SUPPRESS_F6 static auto find_lb_impl(T& lbm, ra::LeaderboardID nID) noexcept -> decltype(lbm.FindLB(nID))
+    {
+        for (auto& lb : lbm)
+        {
+            if (lb.ID() == nID)
+                return &lb;
+        }
+
+        return nullptr;
+    }
+
     std::vector<RA_Leaderboard> m_Leaderboards;
 
     const ra::services::IConfiguration& m_pConfiguration;

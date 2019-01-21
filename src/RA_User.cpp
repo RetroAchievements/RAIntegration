@@ -77,8 +77,6 @@ void LocalRAUser::AddFriend(const std::string& sUser, unsigned int nScore)
 {
     auto& pUser{RAUsers::GetUser(sUser)};
     pUser.SetScore(nScore);
-    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, sUser);
 
     if (!FriendExists(sUser))
         m_aFriends.push_back(std::move(pUser));

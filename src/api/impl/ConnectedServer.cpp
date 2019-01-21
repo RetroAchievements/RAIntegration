@@ -6,6 +6,7 @@
 #include "RA_User.h"
 
 #include "services\Http.hh"
+#include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
@@ -22,7 +23,9 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
 {
     if (httpResponse.StatusCode() != ra::services::Http::StatusCode::OK)
     {
-        pResponse.Result = ApiResult::Error;
+        const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+        const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(httpResponse.StatusCode()));
+        pResponse.Result = bRetry ? ApiResult::Incomplete : ApiResult::Error;
         pResponse.ErrorMessage = ra::StringPrintf("HTTP error code: %d", ra::etoi(httpResponse.StatusCode()));
         return true;
     }

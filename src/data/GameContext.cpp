@@ -90,7 +90,6 @@ void GameContext::LoadGame(unsigned int nGameId)
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
     // game properties
     m_sGameTitle = response.Title;
@@ -154,10 +153,24 @@ void GameContext::LoadGame(unsigned int nGameId)
     MergeLocalAchievements();
 
     // get user unlocks asynchronously
-    ra::api::FetchUserUnlocks::Request request2;
-    request2.GameId = nGameId;
-    request2.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    request2.CallAsync([this, bWasPaused](const ra::api::FetchUserUnlocks::Response& response)
+    RefreshUnlocks(!bWasPaused);
+
+    // show "game loaded" popup
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+        ra::StringPrintf(L"Loaded %s", response.Title),
+        ra::StringPrintf(L"%u achievements, Total Score %u", nNumCoreAchievements, nTotalCoreAchievementPoints),
+        ra::ui::ImageType::Icon, response.ImageIcon);
+}
+
+void GameContext::RefreshUnlocks(bool bUnpause)
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
+    ra::api::FetchUserUnlocks::Request request;
+    request.GameId = m_nGameId;
+    request.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    request.CallAsync([this, bUnpause](const ra::api::FetchUserUnlocks::Response& response)
     {
         std::set<unsigned int> vLockedAchievements;
         for (auto& pAchievement : m_vAchievements)
@@ -187,24 +200,17 @@ void GameContext::LoadGame(unsigned int nGameId)
             }
         }
 
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(bWasPaused);
+        if (bUnpause)
+            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 
 #ifndef RA_UTEST
         for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
         {
             const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            if (Ach.Active())
-                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, "No");
+            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
         }
 #endif
     });
-
-    // show "game loaded" popup
-    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-        ra::StringPrintf(L"Loaded %s", response.Title),
-        ra::StringPrintf(L"%u achievements, Total Score %u", nNumCoreAchievements, nTotalCoreAchievementPoints),
-        ra::ui::ImageType::Icon, response.ImageIcon);
 }
 
 void GameContext::MergeLocalAchievements()
@@ -421,7 +427,7 @@ bool GameContext::SaveLocal() const
 {
     // Commits local achievements to the file
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(static_cast<unsigned int>(GameId())));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GameId()));
     if (pData == nullptr)
         return false;
 
@@ -560,7 +566,7 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
     request.AchievementId = nAchievementId;
     request.Hardcore = _RA_HardcoreModeIsActive();
     request.GameHash = GameHash();
-    request.CallAsync([nPopupId](const ra::api::AwardAchievement::Response& response)
+    request.CallAsyncWithRetry([nPopupId, nAchievementId](const ra::api::AwardAchievement::Response& response)
     {
         if (response.Succeeded())
         {
@@ -584,6 +590,23 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
 
                 pPopup->SetTitle(sNewTitle);
                 pPopup->RebuildRenderImage();
+            }
+            else
+            {
+                const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
+                const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
+                if (pAchievement != nullptr)
+                {
+                    auto sHeader = ra::BuildWString("Error unlocking ", pAchievement->Title());
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                        sHeader, ra::Widen(response.ErrorMessage), ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+                }
+                else
+                {
+                    auto sHeader = ra::BuildWString("Error unlocking achievement ", nAchievementId);
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                        sHeader, ra::Widen(response.ErrorMessage));
+                }
             }
         }
     });

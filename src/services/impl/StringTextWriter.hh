@@ -28,7 +28,7 @@ public:
     {
         if (m_nWritePosition < m_sOutput.length())
         {
-            m_sOutput.replace(m_nWritePosition, sText.length(), sText.c_str());
+            m_sOutput.replace(gsl::narrow_cast<std::size_t>(m_nWritePosition), sText.length(), sText.c_str());
             m_nWritePosition += sText.length();
         }
         else
@@ -38,25 +38,14 @@ public:
         }
     }
 
-    void Write(_In_ const std::wstring& sText) override
-    {
-        Write(ra::Narrow(sText));
-    }
+    void Write(_In_ const std::wstring& sText) override { Write(ra::Narrow(sText)); }
+    void WriteLine() override { Write(std::string("\n")); }
+    std::streampos GetPosition() const noexcept override { return m_nWritePosition; }
 
-    void WriteLine() override
+    void SetPosition(std::streampos nNewPosition) noexcept override
     {
-        Write(std::string("\n"));
-    }
-
-    long GetPosition() const noexcept override
-    {
-        return m_nWritePosition;
-    }
-
-    void SetPosition(long nNewPosition) noexcept override
-    {
-        assert(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
-        m_nWritePosition = to_unsigned(nNewPosition);
+        GSL_SUPPRESS_F6 Expects(nNewPosition >= 0 && nNewPosition <= ra::to_signed(m_sOutput.length()));
+        GSL_SUPPRESS_F6 m_nWritePosition = nNewPosition;
     }
 
     std::string& GetString() noexcept { return m_sOutput; }
@@ -64,7 +53,7 @@ public:
 private:
     std::string& m_sOutput;
     std::string m_sBuffer;
-    size_t m_nWritePosition;
+    std::streamoff m_nWritePosition;
 };
 
 } // namespace impl

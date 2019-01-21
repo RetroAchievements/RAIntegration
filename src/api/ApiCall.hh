@@ -11,21 +11,62 @@ namespace ra {
 namespace api {
 
 enum class ApiResult
-{    
+{
     None = 0,       // unspecified
     Success,        // call was successful
     Error,          // an error occurred
     Failed,         // call was unsuccessful, but didn't error
     Unsupported,    // call is not supported and was not made
+    Incomplete,     // call could not be made at this time
 };
 
 struct ApiRequestBase
 {
+protected:
     template<class TRequest, class TCallback>
     static void CallAsync(const TRequest& request, TCallback&& callback)
     {
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-            [request, callback = std::move(callback)] { callback(request.Call()); });
+            [request, callback = std::move(callback)]{ callback(request.Call()); });
+    }
+
+    template<class TRequest, class TCallback>
+    static void CallAsyncWithRetry(const TRequest& request, TCallback&& callback)
+    {
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
+            [request, callback = std::move(callback)]
+        {
+            DoAsyncWithRetry(std::move(request), std::move(callback), std::chrono::milliseconds(0));
+        });
+    }
+
+private:
+    template<class TRequest, class TCallback>
+    static void DoAsyncWithRetry(const TRequest& request, TCallback&& callback, std::chrono::milliseconds delay)
+    {
+        auto response = request.Call();
+        if (response.Result != ApiResult::Incomplete)
+        {
+            callback(response);
+            return;
+        }
+
+        if (delay < std::chrono::milliseconds(500))
+        {
+            delay = std::chrono::milliseconds(500);
+        }
+        else
+        {
+            delay += delay;
+            if (delay > std::chrono::minutes(2))
+                delay = std::chrono::minutes(2);
+        }
+
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(delay,
+            [request = std::move(request), callback = std::move(callback), delay]
+        {
+            DoAsyncWithRetry(std::move(request), std::move(callback), delay);
+        });
     }
 };
 
@@ -56,7 +97,7 @@ struct ApiResponseBase
     /// <returns><c>true</c> if the call was unsuccessful, <c>false</c> if not.</returns>
     bool Failed() const noexcept
     {
-        return (Result == ApiResult::Error || Result == ApiResult::Unsupported || Result == ApiResult::Failed);
+        return !Succeeded() && (Result != ApiResult::None);
     }
 };
 

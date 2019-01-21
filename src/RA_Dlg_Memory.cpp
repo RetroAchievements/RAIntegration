@@ -582,7 +582,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
-    if (g_MemManager.NumMemoryBanks() > 0)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() != 0 && g_MemManager.NumMemoryBanks() > 0)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
@@ -805,10 +806,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT("0x0000"));
 
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS), WM_SETFONT,
-                        reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), WM_SETFONT,
-                        reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
+            SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
+            SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
 
             //	8-bit by default:
             CheckDlgButton(hDlg, IDC_RA_CBO_4BIT, BST_UNCHECKED);
@@ -854,15 +853,19 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_MEASUREITEM:
         {
-            auto pmis = reinterpret_cast<PMEASUREITEMSTRUCT>(lParam);
+            LPMEASUREITEMSTRUCT pmis{};
+            GSL_SUPPRESS_TYPE1 pmis = reinterpret_cast<LPMEASUREITEMSTRUCT>(lParam);
             pmis->itemHeight = 16;
             return TRUE;
         }
 
         case WM_DRAWITEM:
         {
-            auto pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-            auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+            LPDRAWITEMSTRUCT pDIS{};
+            GSL_SUPPRESS_TYPE1 pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+            HWND hListbox{};
+            hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+
             if (pDIS->hwndItem == hListbox)
             {
                 if (pDIS->itemID == -1)
@@ -968,8 +971,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
-                    GSL_SUPPRESS_IO5
-#pragma warning(suppress: 26454)
+                    GSL_SUPPRESS_IO5 GSL_SUPPRESS_TYPE1
+#pragma warning(suppress: 26454 26490)
                     if ((reinterpret_cast<LPNMHDR>(lParam))->code == LVN_ITEMCHANGED ||
                         (reinterpret_cast<LPNMHDR>(lParam))->code == NM_CLICK)
                     {
@@ -1008,7 +1011,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_GETMINMAXINFO:
         {
-            LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
+            LPMINMAXINFO lpmmi{};
+            GSL_SUPPRESS_TYPE1 lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
             lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
             lpmmi->ptMinTrackSize = pDlgMemoryMin;
             return TRUE;
@@ -1161,11 +1165,21 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     ra::ByteAddress start, end;
                     if (GetSelectedMemoryRange(start, end))
                     {
-                        m_nStart = start;
-                        m_nEnd = end;
                         m_nCompareSize = nCompSize;
 
-                        sr.m_results.Initialize(start, end - start + 1, nCompSize);
+                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                        if (pGameContext.GameId() == 0)
+                        {
+                            m_nStart = 0;
+                            m_nEnd = 0;
+                            sr.m_results.Initialize(0, 0, nCompSize);
+                        }
+                        else
+                        {
+                            m_nStart = start;
+                            m_nEnd = end;
+                            sr.m_results.Initialize(start, end - start + 1, nCompSize);
+                        }
 
                         EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     }
@@ -1371,7 +1385,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             const int nSel = ComboBox_GetCurSel(hMemWatch);
                             if (nSel != CB_ERR)
                             {
-                                TCHAR sAddr[64]{};
+                                const TCHAR sAddr[64]{};
                                 if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
                                 {
                                     auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddr));
@@ -1472,6 +1486,8 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     const auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
         nSize = m_CodeNotes.Load(nGameID);
+    else
+        m_CodeNotes.Clear();
 
     HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
     if (hMemWatch != nullptr)
@@ -1567,6 +1583,8 @@ void Dlg_Memory::OnLoad_NewRom()
     RepopulateMemNotesFromFile();
 
     MemoryViewerControl::destroyEditCaret();
+    MemoryViewerControl::Invalidate();
+    m_SearchResults.clear();
 }
 
 void Dlg_Memory::Invalidate()

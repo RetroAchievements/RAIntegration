@@ -26,6 +26,11 @@ public:
         return ra::etoi(response.StatusCode());
     }
 
+    bool IsRetryable(unsigned int) const noexcept
+    {
+        return false;
+    }
+
 private:
     ServiceLocator::ServiceOverride<IHttpRequester> m_Override;
 

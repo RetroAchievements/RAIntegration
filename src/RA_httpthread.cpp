@@ -19,6 +19,8 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include <winhttp.h>
+
 const char* RequestTypeToString[] =
 {
     "RequestScore",
@@ -121,9 +123,11 @@ static void AppendNTVersion(_Inout_ std::string& sUserAgent)
     {
         RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
         using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
-        const auto RtlGetVersion{
-            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"))
-        };
+
+        fnRtlGetVersion RtlGetVersion{};
+        GSL_SUPPRESS_TYPE1 RtlGetVersion =
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"));
+
         if (RtlGetVersion)
         {
             RtlGetVersion(&osVersion);

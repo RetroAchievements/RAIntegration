@@ -28,9 +28,9 @@ _NODISCARD inline auto ftol(_In_ FloatingPoint fp) noexcept
 }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
-_NODISCARD inline auto ftoi(_In_ FloatingPoint fp) noexcept
+_NODISCARD inline int ftoi(_In_ FloatingPoint fp) noexcept
 {
-    return int{std::lround(fp)};
+    return std::lround(fp);
 }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>

@@ -37,27 +37,25 @@ public:
         return true;
     }
 
-    long GetPosition() const override
+    std::streampos GetPosition() const override
     {
-        auto& iStream = const_cast<std::ifstream&>(m_iStream);
-
         if (!m_iStream.good())
         {
             // if we've set the eof flag, tellg() will return -1 unless we reset it
             if (m_iStream.eof())
             {
-                iStream.clear();
-                iStream.seekg(0, m_iStream.end);
+                m_iStream.clear();
+                m_iStream.seekg(0, m_iStream.end);
             }
         }
 
-        return static_cast<size_t>(const_cast<std::ifstream&>(m_iStream).tellg());
+        return m_iStream.tellg();
     }
 
     std::ifstream& GetFStream() noexcept { return m_iStream; }
 
 private:
-    std::ifstream m_iStream;
+    mutable std::ifstream m_iStream;
 };
 
 } // namespace impl

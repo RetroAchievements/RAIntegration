@@ -30,6 +30,11 @@ public:
     /// <returns>The status code from the server, or an error code if the request failed before reaching the server.</returns>
     virtual unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const = 0;
 
+    /// <summary>
+    /// Determines whether or not it would be reasonable to retry the request for the provided error code.
+    /// </summary>
+    _NODISCARD virtual bool IsRetryable(unsigned int nStatusCode) const noexcept = 0;
+
 protected:
     IHttpRequester() noexcept = default;
 };

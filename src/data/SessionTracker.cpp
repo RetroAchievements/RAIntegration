@@ -61,7 +61,8 @@ void SessionTracker::LoadSessions()
                 continue;
             const auto nSessionLength = std::stoul(&sLine.at(nIndex2));
 
-            auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
+            std::string md5;
+            GSL_SUPPRESS_TYPE1 md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
             if (sLine.at(nIndex + 1) == md5.front() && sLine.at(nIndex + 2) == md5.back())
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
@@ -109,17 +110,20 @@ void SessionTracker::BeginSession(unsigned int nGameId)
     m_tpSessionStart = pClock.UpTime();
     m_tSessionStart = std::chrono::system_clock::to_time_t(pClock.Now());
 
-    ra::api::StartSession::Request request;
-    request.GameId = nGameId;
-    request.CallAsync([](const ra::api::StartSession::Response&) {});
-
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
     pThreadPool.ScheduleAsync(std::chrono::seconds(30), [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
 
-    // make sure a persisted play entry exists for the game and is first in the list
-    AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
-    if (m_vGameStats.begin()->GameId != nGameId)
-        SortSessions();
+    if (nGameId != 0)
+    {
+        ra::api::StartSession::Request request;
+        request.GameId = nGameId;
+        request.CallAsync([](const ra::api::StartSession::Response&) {});
+
+        // make sure a persisted play entry exists for the game and is first in the list
+        AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
+        if (m_vGameStats.begin()->GameId != nGameId)
+            SortSessions();
+    }
 }
 
 void SessionTracker::EndSession()
@@ -159,7 +163,7 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     const auto tSessionDuration = std::chrono::duration_cast<std::chrono::seconds>(pClock.UpTime() - m_tpSessionStart);
 
     // ignore sessions less than one minute
-    if (tSessionDuration > std::chrono::seconds(60))
+    if (m_nCurrentGameId != 0 && tSessionDuration > std::chrono::seconds(60))
         WriteSessionStats(tSessionDuration);
 
     // schedule next ping
@@ -167,7 +171,7 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
-long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
+std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);

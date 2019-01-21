@@ -23,20 +23,6 @@ LeaderboardManager::LeaderboardManager(const ra::services::IConfiguration& pConf
 {
 }
 
-RA_Leaderboard* LeaderboardManager::FindLB(ra::LeaderboardID nID)
-{
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        if ((*iter).ID() == nID)
-            return &(*iter);
-
-        iter++;
-    }
-
-    return nullptr;
-}
-
 void LeaderboardManager::ActivateLeaderboard(const RA_Leaderboard& lb) const
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
@@ -112,9 +98,9 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
     const auto& Response{ doc["Response"] };
     const auto& LBData{ Response["LBData"] };
 
-    const auto nLBID{ra::LeaderboardID{LBData["LeaderboardID"].GetUint()}};
-    const auto nGameID{ LBData["GameID"].GetUint() };
-    const auto bLowerIsBetter{ LBData["LowerIsBetter"].GetUint() == 1U };
+    const ra::LeaderboardID nLBID{LBData["LeaderboardID"].GetUint()};
+    const auto nGameID{LBData["GameID"].GetUint()};
+    const auto bLowerIsBetter{LBData["LowerIsBetter"].GetUint() == 1U};
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
     RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);

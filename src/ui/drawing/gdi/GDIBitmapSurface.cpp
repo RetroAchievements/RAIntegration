@@ -80,10 +80,15 @@ static constexpr void BlendPixel(gsl::not_null<std::uint32_t* restrict> nTarget,
 
     // blend each of the RGB values based on the blend pixel's alpha value
     // do not modify the target pixel's alpha value.
-    std::uint8_t* pTarget = reinterpret_cast<std::uint8_t*>(nTarget.get());
+
+    std::uint8_t* pTarget{};
+    GSL_SUPPRESS_TYPE1 pTarget = reinterpret_cast<std::uint8_t*>(nTarget.get());
     Expects(pTarget != nullptr);
-    std::uint8_t* pBlend = reinterpret_cast<std::uint8_t*>(&nBlend);
+
+    std::uint8_t* pBlend{};
+    GSL_SUPPRESS_TYPE1 pBlend = reinterpret_cast<std::uint8_t*>(&nBlend);
     Expects(pBlend != nullptr);
+
 
     *pTarget++ = gsl::narrow_cast<std::uint8_t>(
         (std::uint32_t{*pBlend++} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
@@ -132,7 +137,10 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     HDC hMemDC = CreateCompatibleDC(m_hDC);
 
     std::uint32_t* pTextBits{};
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+    HBITMAP hBitmap{};
+    GSL_SUPPRESS_TYPE1 hBitmap =
+        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+
     assert(hBitmap != nullptr);
     assert(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
@@ -188,8 +196,11 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biSizeImage = nWidth * nHeight * 4;
 
-    std::uint32_t* pBits;
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
+    std::uint32_t* pBits{};
+
+    HBITMAP hBitmap{};
+    GSL_SUPPRESS_TYPE1 hBitmap =
+        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
     Expects(hBitmap != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
@@ -218,8 +229,12 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
     const auto nAlpha = static_cast<std::uint8_t>(255 * fAlpha);
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
-    const std::uint8_t* pEnd = reinterpret_cast<std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
-    std::uint8_t* pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;
+    const std::uint8_t* pEnd{};
+    GSL_SUPPRESS_TYPE1 pEnd = reinterpret_cast<const std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
+
+    std::uint8_t* pBits{};
+    GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;
+
     Expects(pBits != nullptr);
     do
     {

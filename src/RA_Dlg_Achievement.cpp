@@ -68,7 +68,10 @@ void Dlg_Achievements::SetupColumns(HWND hList)
 
 LRESULT ProcessCustomDraw(LPARAM lParam)
 {
-    LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
+#pragma warning(push)
+#pragma warning(disable: 26490)
+    GSL_SUPPRESS_TYPE1 LPNMLVCUSTOMDRAW lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
+#pragma warning(pop)
     switch (lplvcd->nmcd.dwDrawStage)
     {
         case CDDS_PREPAINT:
@@ -248,9 +251,11 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const std::string sMem = Ach.CreateMemString();
 
+    const unsigned int nId = Ach.Category() == ra::etoi(AchievementSet::Type::Local) ? 0 : Ach.ID();
+
     //  Deal with secret:
     char sPostCode[2048];
-    sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u", RAUsers::LocalUser().Username().c_str(), Ach.ID(), sMem.c_str(),
+    sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u", RAUsers::LocalUser().Username().c_str(), nId, sMem.c_str(),
               Ach.Points(), Ach.Points() * 3);
 
     std::string sPostCodeHash = RAGenerateMD5(std::string(sPostCode));
@@ -258,7 +263,7 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     PostArgs args;
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    args['a'] = std::to_string(Ach.ID());
+    args['a'] = std::to_string(nId);
     args['g'] = std::to_string(pGameContext.GameId());
     args['n'] = Ach.Title();
     args['d'] = Ach.Description();
@@ -831,13 +836,17 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
         case WM_NOTIFY:
         {
+#pragma warning(push)
+#pragma warning(disable: 26490)
+            GSL_SUPPRESS_TYPE1
             switch (reinterpret_cast<LPNMHDR>(lParam)->code)
             {
                 case LVN_ITEMCHANGED: //!?? LVN on a LPNMHDR?
                 {
                     iSelect = -1;
                     // MessageBox( nullptr, "Item changed!", "TEST", MB_OK );
-                    LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
+                    GSL_SUPPRESS_TYPE1 LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
+#pragma warning(pop)
                     if (pLVInfo->iItem != -1)
                     {
                         iSelect = pLVInfo->iItem;
@@ -858,17 +867,21 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 break;
 
                 case NM_DBLCLK:
+#pragma warning(push)
+#pragma warning(disable: 26490)
+                    GSL_SUPPRESS_TYPE1
                     if (reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem != -1)
                     {
                         SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
-                        g_AchievementEditorDialog.LoadAchievement(
+                        GSL_SUPPRESS_TYPE1 g_AchievementEditorDialog.LoadAchievement(
                             &g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem),
                             FALSE);
+#pragma warning(pop)
                     }
                     return FALSE; //? TBD ##SD
 
                 case NM_CUSTOMDRAW:
-                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, LONG_PTR{ProcessCustomDraw(lParam)});
+                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, ProcessCustomDraw(lParam));
                     return TRUE;
             }
 

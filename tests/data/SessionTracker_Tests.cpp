@@ -292,6 +292,47 @@ public:
         Assert::AreEqual(3, nPings);
     }
 
+    TEST_METHOD(TestPingUnknownGame)
+    {
+        SessionTrackerHarness tracker;
+
+        tracker.Initialize("User");
+        tracker.mockGameContext.SetGameId(0U);
+        tracker.mockGameContext.SetGameTitle(L"FileUnknown");
+
+        int nPings = 0;
+        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, _UNUSED ra::api::Ping::Response& /*response*/)
+        {
+            Assert::AreEqual(0U, request.GameId);
+            Assert::AreEqual(std::wstring(L"Playing FileUnknown"), request.CurrentActivity);
+            ++nPings;
+            return false;
+        });
+        tracker.mockServer.ExpectUncalled<ra::api::StartSession>();
+
+        // BeginSession should begin the session, but not send a start session
+        tracker.BeginSession(0U);
+        tracker.mockThreadPool.ExecuteNextTask(); // StartSession should not be queued
+        Assert::AreEqual(0, nPings);
+
+        // after 30 seconds, the callback will be called, and the first ping should occur
+        tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
+        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
+        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
+        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual(1, nPings);
+
+        // after two minutes, the callback will be called again, and the second ping should occur
+        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
+        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
+        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
+        Assert::AreEqual(2, nPings);
+
+        // total playtime should still be tallied, but not written to the file
+        Assert::AreEqual(150, gsl::narrow<int>(tracker.GetTotalPlaytime(0U).count()));
+        Assert::AreEqual(std::string(""), tracker.GetStoredData());
+    }
+
     TEST_METHOD(TestCurrentActivityNoAchievements)
     {
         SessionTrackerHarness tracker;

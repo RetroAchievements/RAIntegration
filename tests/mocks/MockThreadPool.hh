@@ -53,6 +53,20 @@ public:
     }
 
     /// <summary>
+    /// Gets the delay until the next task would be executed.
+    /// </summary>
+    std::chrono::milliseconds NextTaskDelay() const
+    {
+        if (!m_vTasks.empty())
+            return std::chrono::milliseconds(0);
+
+        if (!m_vDelayedTasks.empty())
+            return m_vDelayedTasks.front().nDelay;
+
+        return std::chrono::hours(10000);
+    }
+
+    /// <summary>
     /// Gets the number of outstanding asynchronous tasks are queued
     /// </summary>
     size_t PendingTasks() const { return m_vTasks.size() + m_vDelayedTasks.size(); }

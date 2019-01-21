@@ -8,6 +8,11 @@
 
 namespace ra {
 namespace ui {
+namespace drawing::gdi {
+
+class ImageRepository;
+
+} // namespace drawing::gdi
 
 enum class ImageType
 {
@@ -39,17 +44,17 @@ public:
     /// <summary>Adds a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
-    virtual void AddReference(ImageReference& pImage) = 0;
+    virtual void AddReference(const ImageReference& pImage) = 0;
 
     /// <summary>Releases a reference to an image.</summary>
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     virtual void ReleaseReference(ImageReference& pImage) noexcept = 0;
-    
+
     /// <summary>
     /// Determines whether the referenced image has changed.
     /// </summary>
-    /// <remarks>    
+    /// <remarks>
     /// Updates the internal state of the <see cref="ImageReference" /> if <c>true</c>.
     /// </remarks>
     virtual bool HasReferencedImageChanged(ImageReference& pImage) const = 0;
@@ -68,21 +73,18 @@ public:
             Release();
     }
 
-    explicit ImageReference(ImageType nType, const std::string& sName)
-        : m_nType(nType), m_sName(sName)
-    {
-    }
+    explicit ImageReference(ImageType nType, const std::string& sName) : m_nType(nType), m_sName(sName) {}
 
     ImageReference(const ImageReference& source) = default;
     ImageReference& operator=(const ImageReference&) noexcept = delete;
     ImageReference(ImageReference&& source) noexcept = default;
     ImageReference& operator=(ImageReference&& source) noexcept = delete;
-    
+
     /// <summary>
     /// Get the image type.
     /// </summary>
-    ImageType Type() const noexcept { return m_nType; }
-    
+    inline constexpr ImageType Type() const noexcept { return m_nType; }
+
     /// <summary>
     /// Get the image name.
     /// </summary>
@@ -111,26 +113,17 @@ public:
     {
         if (m_nType != ImageType::None)
         {
-            // Supress not working inline, but should
+            // Suppress not working inline, but should
             GSL_SUPPRESS_F6 auto& pRepository = ra::services::ServiceLocator::GetMutable<IImageRepository>();
             pRepository.ReleaseReference(*this);
         }
     }
-    
-    /// <summary>
-    /// Gets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
-    /// </summary>
-    unsigned long GetData() const noexcept { return m_nData; }
-
-    /// <summary>
-    /// Sets custom data associated to the reference - used to cache data by <see cref="ISurface::DrawImage" />.
-    /// </summary>
-    void SetData(unsigned long nValue) noexcept { m_nData = nValue; }
 
 private:
-    ImageType m_nType = ImageType::None;
+    ImageType m_nType{};
     std::string m_sName;
-    unsigned long m_nData{};
+    mutable unsigned long m_nData{};
+    friend class drawing::gdi::ImageRepository;
 };
 
 } // namespace ui

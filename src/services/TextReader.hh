@@ -31,7 +31,7 @@ public:
     /// <summary>
     /// Gets the current read offset within the input.
     /// </summary>
-    virtual long GetPosition() const = 0;
+    virtual std::streampos GetPosition() const = 0;
 
 protected:
     TextReader() noexcept = default;

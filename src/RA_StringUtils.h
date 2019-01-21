@@ -449,10 +449,7 @@ public:
 
 private:
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintfParameterizedFormat(const CharT* const pFormat,
-                                         const std::string& sFormat,
-                                         const T& value,
-                                         Ts&&... args)
+    void AppendPrintfParameterizedFormat(const CharT* const pFormat, const std::string& sFormat, const T& value, Ts&&... args)
     {
         AppendFormat(value, sFormat);
         AppendPrintf(pFormat, std::forward<Ts>(args)...);

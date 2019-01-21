@@ -805,10 +805,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT("0x0000"));
 
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS), WM_SETFONT,
-                        reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
-            SendMessage(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), WM_SETFONT,
-                        reinterpret_cast<WPARAM>(GetStockObject(SYSTEM_FIXED_FONT)), TRUE);
+            SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
+            SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
 
             //	8-bit by default:
             CheckDlgButton(hDlg, IDC_RA_CBO_4BIT, BST_UNCHECKED);
@@ -854,15 +852,19 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_MEASUREITEM:
         {
-            auto pmis = reinterpret_cast<PMEASUREITEMSTRUCT>(lParam);
+            LPMEASUREITEMSTRUCT pmis{};
+            GSL_SUPPRESS_TYPE1 pmis = reinterpret_cast<LPMEASUREITEMSTRUCT>(lParam);
             pmis->itemHeight = 16;
             return TRUE;
         }
 
         case WM_DRAWITEM:
         {
-            auto pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-            auto hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+            LPDRAWITEMSTRUCT pDIS{};
+            GSL_SUPPRESS_TYPE1 pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+            HWND hListbox{};
+            hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+
             if (pDIS->hwndItem == hListbox)
             {
                 if (pDIS->itemID == -1)
@@ -968,8 +970,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
-                    GSL_SUPPRESS_IO5
-#pragma warning(suppress: 26454)
+                    GSL_SUPPRESS_IO5 GSL_SUPPRESS_TYPE1
+#pragma warning(suppress: 26454 26490)
                     if ((reinterpret_cast<LPNMHDR>(lParam))->code == LVN_ITEMCHANGED ||
                         (reinterpret_cast<LPNMHDR>(lParam))->code == NM_CLICK)
                     {
@@ -1008,7 +1010,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
         case WM_GETMINMAXINFO:
         {
-            LPMINMAXINFO lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
+            LPMINMAXINFO lpmmi{};
+            GSL_SUPPRESS_TYPE1 lpmmi = reinterpret_cast<LPMINMAXINFO>(lParam);
             lpmmi->ptMaxTrackSize.x = pDlgMemoryMin.x;
             lpmmi->ptMinTrackSize = pDlgMemoryMin;
             return TRUE;
@@ -1374,10 +1377,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             const int nSel = ComboBox_GetCurSel(hMemWatch);
                             if (nSel != CB_ERR)
                             {
-                                TCHAR sAddr[64]{};
+                                const TCHAR sAddr[64]{};
                                 if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
                                 {
-                                    auto nAddr = ra::ByteAddress{std::stoul(ra::Narrow(sAddr), nullptr, 16)};
+                                    ra::ByteAddress nAddr{std::stoul(ra::Narrow(sAddr), nullptr, 16)};
                                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                                     if (pSavedNote != nullptr && pSavedNote->Note().length() > 0)
                                         SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE,
@@ -1400,7 +1403,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
-                            auto nAddr = ra::ByteAddress{std::stoul(ra::Narrow(sAddrBuffer), nullptr, 16)};
+                            ra::ByteAddress nAddr{std::stoul(ra::Narrow(sAddrBuffer), nullptr, 16)};
                             MemoryViewerControl::setAddress(
                                 (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
                                 (0x50));
@@ -1457,7 +1460,7 @@ void Dlg_Memory::OnWatchingMemChange()
     TCHAR sAddrNative[1024];
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
-    const auto nAddr = ra::ByteAddress{std::stoul(&sAddr.at(2), nullptr, 16)};
+    const ra::ByteAddress nAddr{std::stoul(&sAddr.at(2), nullptr, 16)};
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
     SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
@@ -1503,7 +1506,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
             ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
             const std::string sAddr = ra::Narrow(sAddrBuffer);
 
-            const auto nAddr = ra::ByteAddress{std::stoul(&sAddr.at(2), nullptr, 16)};
+            const ra::ByteAddress nAddr{std::stoul(&sAddr.at(2), nullptr, 16)};
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {

@@ -44,7 +44,7 @@ public:
 
 private:
     template<typename T>
-    static auto find_lb_impl(T& lbm, ra::LeaderboardID nID) noexcept -> decltype(lbm.FindLB(nID))
+    GSL_SUPPRESS_F6 static auto find_lb_impl(T& lbm, ra::LeaderboardID nID) noexcept -> decltype(lbm.FindLB(nID))
     {
         for (auto& lb : lbm)
         {

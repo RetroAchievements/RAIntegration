@@ -198,14 +198,15 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
         if (SUCCEEDED(hr))
         {
             hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler), // Input bitmap to convert
-                GUID_WICPixelFormat32bppBGR,				// &GUID_WICPixelFormat32bppBGR,
-                WICBitmapDitherTypeNone,					// Specified dither pattern
-                nullptr,									// Specify a particular palette 
-                0.f,										// Alpha threshold
-                WICBitmapPaletteTypeCustom);				// Palette translation type
+                GUID_WICPixelFormat32bppBGR,                // &GUID_WICPixelFormat32bppBGR,
+                WICBitmapDitherTypeNone,                    // Specified dither pattern
+                nullptr,                                    // Specify a particular palette 
+                0.f,                                        // Alpha threshold
+                WICBitmapPaletteTypeCustom);                // Palette translation type
 
-                                                            // Store the converted bitmap as ppToRenderBitmapSource 
+            // Store the converted bitmap as ppToRenderBitmapSource 
             if (SUCCEEDED(hr))
+                GSL_SUPPRESS_TYPE1
                 pConverter->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pToRenderBitmapSource));
         }
 
@@ -317,6 +318,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
     CComPtr<IWICBitmapSource> pOriginalBitmapSource;
     if (SUCCEEDED(hr))
     {
+        GSL_SUPPRESS_TYPE1
         hr = pFrame->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pOriginalBitmapSource));
         if (SUCCEEDED(hr))
         {
@@ -401,10 +403,11 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     return hBitmap;
 }
 
-_Use_decl_annotations_
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
-    HBITMAP hBitmap = reinterpret_cast<HBITMAP>(pImage.m_nData);
+    HBITMAP hBitmap{};
+    GSL_SUPPRESS_TYPE1 hBitmap = reinterpret_cast<HBITMAP>(pImage.m_nData);
+
     if (hBitmap == nullptr)
     {
         auto pImageRepository = dynamic_cast<ImageRepository*>(&ra::services::ServiceLocator::GetMutable<IImageRepository>());
@@ -414,7 +417,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
+            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);

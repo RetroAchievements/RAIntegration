@@ -48,6 +48,10 @@ static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, s
 
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
 {
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Render(pSurface);
+#endif
+
     if (!m_vPopupMessages.empty())
     {
         const auto& pActiveMessage = m_vPopupMessages.front();
@@ -55,10 +59,6 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
         const int nY = GetAbsolutePosition(pActiveMessage.GetRenderLocationY(), pActiveMessage.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
         pSurface.DrawSurface(nX, nY, pActiveMessage.GetRenderImage());
     }
-
-#ifndef RA_UTEST
-    g_LeaderboardPopups.Render(pSurface);
-#endif
 }
 
 int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)

@@ -27,6 +27,12 @@ namespace CppUnitTestFramework {
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced inline functions, they are referenced. Must be a bug.
 template<>
+std::wstring ToString<std::chrono::milliseconds>(const std::chrono::milliseconds& t)
+{
+    return std::to_wstring(t.count()) + L"ms";
+}
+
+template<>
 std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));
@@ -133,6 +139,8 @@ std::wstring ToString<ra::api::ApiResult>(const ra::api::ApiResult& result)
             return L"Failed";
         case ra::api::ApiResult::Unsupported:
             return L"Unsupported";
+        case ra::api::ApiResult::Incomplete:
+            return L"Incomplete";
         default:
             return std::to_wstring(ra::etoi(result));
     }

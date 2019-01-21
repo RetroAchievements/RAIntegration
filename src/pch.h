@@ -18,7 +18,6 @@
 #include <direct.h>
 #include <io.h>
 #include <wincodec.h>
-#include <winhttp.h>
 
 #if WIN32_LEAN_AND_MEAN
 #include <CommDlg.h>

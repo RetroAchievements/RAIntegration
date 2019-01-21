@@ -19,6 +19,8 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include <winhttp.h>
+
 const char* RequestTypeToString[] =
 {
     "RequestScore",

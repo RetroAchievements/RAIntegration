@@ -19,6 +19,8 @@ public:
 
     unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override;
 
+    bool IsRetryable(unsigned int nStatusCode) const noexcept override;
+
 private:
     std::wstring m_sUserAgent;
 };

@@ -582,7 +582,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
-    if (g_MemManager.NumMemoryBanks() > 0)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() != 0 && g_MemManager.NumMemoryBanks() > 0)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
@@ -1167,11 +1168,21 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     ra::ByteAddress start, end;
                     if (GetSelectedMemoryRange(start, end))
                     {
-                        m_nStart = start;
-                        m_nEnd = end;
                         m_nCompareSize = nCompSize;
 
-                        sr.m_results.Initialize(start, end - start + 1, nCompSize);
+                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                        if (pGameContext.GameId() == 0)
+                        {
+                            m_nStart = 0;
+                            m_nEnd = 0;
+                            sr.m_results.Initialize(0, 0, nCompSize);
+                        }
+                        else
+                        {
+                            m_nStart = start;
+                            m_nEnd = end;
+                            sr.m_results.Initialize(start, end - start + 1, nCompSize);
+                        }
 
                         EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     }
@@ -1478,6 +1489,8 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     const auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
         nSize = m_CodeNotes.Load(nGameID);
+    else
+        m_CodeNotes.Clear();
 
     HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
     if (hMemWatch != nullptr)
@@ -1573,6 +1586,8 @@ void Dlg_Memory::OnLoad_NewRom()
     RepopulateMemNotesFromFile();
 
     MemoryViewerControl::destroyEditCaret();
+    MemoryViewerControl::Invalidate();
+    m_SearchResults.clear();
 }
 
 void Dlg_Memory::Invalidate()

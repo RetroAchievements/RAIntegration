@@ -251,9 +251,11 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const std::string sMem = Ach.CreateMemString();
 
+    const unsigned int nId = Ach.Category() == ra::etoi(AchievementSet::Type::Local) ? 0 : Ach.ID();
+
     //  Deal with secret:
     char sPostCode[2048];
-    sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u", RAUsers::LocalUser().Username().c_str(), Ach.ID(), sMem.c_str(),
+    sprintf_s(sPostCode, "%sSECRET%uSEC%s%uRE2%u", RAUsers::LocalUser().Username().c_str(), nId, sMem.c_str(),
               Ach.Points(), Ach.Points() * 3);
 
     std::string sPostCodeHash = RAGenerateMD5(std::string(sPostCode));
@@ -261,7 +263,7 @@ BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlag
     PostArgs args;
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
-    args['a'] = std::to_string(Ach.ID());
+    args['a'] = std::to_string(nId);
     args['g'] = std::to_string(pGameContext.GameId());
     args['n'] = Ach.Title();
     args['d'] = Ach.Description();

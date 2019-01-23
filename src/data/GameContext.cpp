@@ -204,10 +204,21 @@ void GameContext::RefreshUnlocks(bool bUnpause)
             ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 
 #ifndef RA_UTEST
-        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+        if (ActiveAchievementType() == AchievementSet::Type::Core)
         {
-            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
+            for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+            {
+                const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
+                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
+            }
+        }
+        else
+        {
+            for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+            {
+                const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
+                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Active, Ach.Active() ? "Yes" : "No");
+            }
         }
 #endif
     });

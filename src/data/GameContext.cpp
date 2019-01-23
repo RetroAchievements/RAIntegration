@@ -504,6 +504,39 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
+bool GameContext::RemoveAchievement(unsigned int nAchievementId) noexcept
+{
+    for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
+    {
+        if (*pIter && (*pIter)->ID() == nAchievementId)
+        {
+#ifndef RA_UTEST
+            // temporary code for compatibility until global collections are eliminated
+            switch (ra::itoe<AchievementSet::Type>((*pIter)->Category()))
+            {
+                case AchievementSet::Type::Core:
+                    g_pCoreAchievements->RemoveAchievement(pIter->get());
+                    break;
+
+                default:
+                case AchievementSet::Type::Unofficial:
+                    g_pUnofficialAchievements->RemoveAchievement(pIter->get());
+                    break;
+
+                case AchievementSet::Type::Local:
+                    g_pLocalAchievements->RemoveAchievement(pIter->get());
+                    break;
+            }
+#endif
+
+            m_vAchievements.erase(pIter);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void GameContext::AwardAchievement(unsigned int nAchievementId) const
 {
     auto* pAchievement = FindAchievement(nAchievementId);

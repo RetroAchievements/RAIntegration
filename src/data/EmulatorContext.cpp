@@ -76,6 +76,11 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             m_sClientName = "RAQUASI88";
             _RA_SetConsoleID(ConsoleID::PC8800);
             break;
+
+        case RA_AppleWin:
+            m_sClientName = "RAppleWin";
+            _RA_SetConsoleID(ConsoleID::AppleII);
+            break;
     }
 }
 

@@ -64,6 +64,8 @@ ImageRepository::~ImageRepository() noexcept
     for (auto& userPic : m_mUserPics)
         DeleteBitmap(userPic.second.m_hBitmap);
     m_mUserPics.clear();
+
+    g_pIWICFactory.Release();
 }
 
 std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sName)

@@ -19,6 +19,10 @@ DialogBase::~DialogBase() noexcept
 {
     if (m_hWnd)
     {
+        // remove the pointer to the instance from the HWND so the StaticDialogProc doesn't try to redirect
+        // the WM_DESTROY message through the instance we're trying to destroy.
+        ::SetWindowLongPtr(m_hWnd, DWLP_USER, 0L);
+
         DestroyWindow(m_hWnd);
         m_hWnd = nullptr;
     }
@@ -170,10 +174,12 @@ void DialogBase::OnDestroy()
     m_hWnd = nullptr;
 
     auto* pClosableDialog = dynamic_cast<IClosableDialogPresenter*>(m_pDialogPresenter);
+    m_pDialogPresenter = nullptr;
+
+    // WARNING: the main reason a presenter wants to be notified of a dialog closing is to destroy the dialog
+    // "this" may no longer be valid after this call, so don't use it!
     if (pClosableDialog)
         pClosableDialog->OnClosed();
-
-    m_pDialogPresenter = nullptr;
 }
 
 _Use_decl_annotations_

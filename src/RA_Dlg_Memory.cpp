@@ -478,7 +478,7 @@ void MemoryViewerControl::OnClick(POINT point)
     const int nAddressRowClicked = (nTopLeft + (line << 4));
 
     // Clamp:
-    if (nAddressRowClicked < 0 || nAddressRowClicked > ra::to_signed(g_MemManager.TotalBankSize()))
+    if (nAddressRowClicked < 0 || nAddressRowClicked >= ra::to_signed(g_MemManager.TotalBankSize()))
     {
         // ignore; clicked above limit
         return;

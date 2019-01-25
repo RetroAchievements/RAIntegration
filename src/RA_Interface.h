@@ -73,7 +73,7 @@ enum ConsoleID
     MSX = 29,
     C64 = 30,
     ZX81 = 31,
-    // unused32 = 32,
+    Oric = 32,
     SG1000 = 33,
     VIC20 = 34,
     Amiga = 35,

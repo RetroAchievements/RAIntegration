@@ -81,6 +81,11 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             m_sClientName = "RAppleWin";
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
+
+        case RA_Oricutron:
+            m_sClientName = "RAOricutron";
+            _RA_SetConsoleID(ConsoleID::Oric);
+            break;
     }
 }
 

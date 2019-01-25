@@ -33,6 +33,7 @@ enum EmulatorID
     RA_Meka = 8,
     RA_QUASI88 = 9,
     RA_AppleWin = 10,
+    RA_Oricutron = 11,
 
     NumEmulatorIDs,
     UnknownEmulator = NumEmulatorIDs

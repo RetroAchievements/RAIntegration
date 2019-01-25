@@ -619,7 +619,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 break;
                 case IDC_RA_DEL_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    if (pGameContext.GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                         break;
@@ -632,27 +633,27 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     if (nSel != -1)
                     {
                         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
+                        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+                        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
 
                         if (Ach.Category() == ra::etoi(AchievementSet::Type::Local))
                         {
-                            //  Local achievement
-                            if (MessageBox(hDlg, TEXT("Are you sure that you want to remove this achievement?"),
-                                           TEXT("Remove Achievement"), MB_YESNO | MB_ICONWARNING) == IDYES)
-                            {
-                                g_pActiveAchievements->RemoveAchievement(&Ach);
-                                RemoveAchievement(hList, nSel);
-                            }
+                            vmMessageBox.SetMessage(L"Are you sure that you want to delete this achievement?");
                         }
                         else
                         {
-                            //  This achievement exists on the server: must call SQL to remove!
-                            //  Note: this is probably going to affect other users: frown on this D:
-                            std::ostringstream oss;
-                            oss << "This achievement exists on " << _RA_HostName() << ".\n\n"
-                                << "*Removing it will affect other games*\n\n"
-                                << "Are you absolutely sure you want to delete this?";
-                            MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Confirm Delete"),
-                                       MB_YESNO | MB_ICONWARNING);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Deleting achievements from the server is not supported.");
+                            break;
+
+                            //vmMessageBox.SetHeader(L"Are you sure that you want to delete this achievement?");
+                            //vmMessageBox.SetMessage(ra::StringPrintf(L"This achievement exists on %s. Removing it will affect other players.", _RA_HostName()));
+                        }
+                        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+                        if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes)
+                        {
+                            pGameContext.RemoveAchievement(Ach.ID());
+                            RemoveAchievement(hList, nSel);
                         }
                     }
                 }

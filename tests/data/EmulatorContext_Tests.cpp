@@ -386,7 +386,7 @@ public:
         emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
         {
             bUnlocksRequested = true;
-            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual({1U}, request.GameId);
             Assert::IsTrue(request.Hardcore);
             response.Result = ra::api::ApiResult::Success;
             return true;

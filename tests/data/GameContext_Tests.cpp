@@ -72,7 +72,7 @@ public:
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
         {
-            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual({1U}, request.GameId);
 
             response.Title = L"Game";
             return true;
@@ -80,7 +80,7 @@ public:
 
         game.LoadGame(1U);
 
-        Assert::AreEqual(1U, game.GameId());
+        Assert::AreEqual({1U}, game.GameId());
         Assert::AreEqual(std::wstring(L"Game"), game.GameTitle());
     }
 
@@ -89,7 +89,7 @@ public:
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
         {
-            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual({1U}, request.GameId);
 
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
@@ -179,7 +179,7 @@ public:
         Assert::AreEqual(3, pAch1->Category());
         Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
-        Assert::AreEqual(5U, pAch1->Points());
+        Assert::AreEqual({5U}, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->CreateMemString());
 
         const auto* pAch2 = game.FindAchievement(7U);
@@ -192,7 +192,7 @@ public:
         Assert::AreEqual(5, pAch2->Category());
         Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
-        Assert::AreEqual(15U, pAch2->Points());
+        Assert::AreEqual({15U}, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->CreateMemString());
     }
 
@@ -247,7 +247,7 @@ public:
         Assert::AreEqual(3, pAch->Category());
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch->ModifiedDate());
-        Assert::AreEqual(5U, pAch->Points());
+        Assert::AreEqual({5U}, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
 
         // local achievement data for 7 should be merged with server achievement data
@@ -286,12 +286,12 @@ public:
         Assert::AreEqual(0, pAch->Category());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
-        Assert::AreEqual(10U, pAch->Points());
+        Assert::AreEqual({10U}, pAch->Points());
         Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
 
         // new achievement should be allocated an ID higher than the largest existing local ID
         const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
-        Assert::AreEqual(GameContextHarness::FirstLocalId + 2, pAch2.ID());
+        Assert::AreEqual({GameContextHarness::FirstLocalId + 2U}, pAch2.ID());
     }
 
     TEST_METHOD(TestLoadGameMergeLocalAchievementsWithIds)
@@ -351,13 +351,13 @@ public:
         Assert::AreEqual(0, pAch->Category());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
-        Assert::AreEqual(10U, pAch->Points());
+        Assert::AreEqual({10U}, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
 
         // new achievement should be allocated an ID higher than the largest existing local
         // ID, even if intermediate values are available
         const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
-        Assert::AreEqual(999000004U, pAch2.ID());
+        Assert::AreEqual({999000004U}, pAch2.ID());
     }
 
     TEST_METHOD(TestSaveLocalEmpty)
@@ -459,7 +459,7 @@ public:
 
         game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
         {
-            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual({1U}, request.GameId);
             Assert::IsFalse(request.Hardcore);
 
             response.UnlockedAchievements.insert(7U);
@@ -544,7 +544,7 @@ public:
         game.SetGameHash("hash");
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
         {
-            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual({1U}, request.AchievementId);
             Assert::AreEqual(false, request.Hardcore);
             Assert::AreEqual(std::string("hash"), request.GameHash);
 
@@ -575,7 +575,7 @@ public:
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
         {
-            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual({1U}, request.AchievementId);
             Assert::AreEqual(true, request.Hardcore);
             Assert::AreEqual(std::string("hash"), request.GameHash);
 

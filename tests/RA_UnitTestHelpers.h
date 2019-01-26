@@ -62,6 +62,8 @@ std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::
     return std::to_wstring(ra::etoi(t));
 }
 
+
+
 template<>
 std::wstring ToString<ra::ui::DialogResult>(const ra::ui::DialogResult& result)
 {

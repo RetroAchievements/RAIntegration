@@ -325,14 +325,18 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
         if (SUCCEEDED(hr))
         {
             if (nWidth == 0 || nHeight == 0)
-                hr = pOriginalBitmapSource->GetSize(&nWidth, &nHeight);
+            {
+                auto nWidth32 = gsl::narrow_cast<std::uint32_t>(nWidth);
+                auto nHeight32 = gsl::narrow_cast<std::uint32_t>(nHeight);
+                hr = pOriginalBitmapSource->GetSize(&nWidth32, &nHeight32);
+            }
         }
     }
 
     // Scale the original IWICBitmapSource to the client rect size and convert the pixel format
     CComPtr<IWICBitmapSource> pToRenderBitmapSource;
     if (SUCCEEDED(hr))
-        hr = ConvertBitmapSource({0, 0, to_signed(nWidth), to_signed(nHeight)}, pOriginalBitmapSource,
+        hr = ConvertBitmapSource({0, 0, gsl::narrow<LONG>(nWidth), gsl::narrow<LONG>(nHeight)}, pOriginalBitmapSource,
                                  *&pToRenderBitmapSource);
 
     // Create a DIB from the converted IWICBitmapSource

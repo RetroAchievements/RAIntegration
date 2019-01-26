@@ -57,13 +57,13 @@ public:
         // call should be async
         Assert::IsFalse(bCallbackCalled);
         Assert::IsFalse(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({1U}, mockThreadPool.PendingTasks());
 
         // async call should be incomplete and requeued
         mockThreadPool.ExecuteNextTask();
         Assert::IsFalse(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({1U}, mockThreadPool.PendingTasks());
         Assert::AreEqual(std::chrono::milliseconds(500), mockThreadPool.NextTaskDelay());
 
         // callback called again, still incomplete, requeue with longer delay
@@ -71,7 +71,7 @@ public:
         mockThreadPool.AdvanceTime(std::chrono::milliseconds(500));
         Assert::IsFalse(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({1U}, mockThreadPool.PendingTasks());
         Assert::AreEqual(std::chrono::milliseconds(1000), mockThreadPool.NextTaskDelay());
 
         // response succeeded, should complete transaction
@@ -90,7 +90,7 @@ public:
         mockThreadPool.AdvanceTime(std::chrono::milliseconds(1000));
         Assert::IsTrue(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(0U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({0U}, mockThreadPool.PendingTasks());
     }
 
     TEST_METHOD(TestCallAsyncWithRetryMaxDelay)
@@ -140,8 +140,8 @@ public:
         Assert::AreEqual(std::string("Invalid User/Password combination. Please try again"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginFailed)
@@ -164,8 +164,8 @@ public:
         Assert::AreEqual(std::string(""), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginUnknownServer)
@@ -187,8 +187,8 @@ public:
         Assert::AreEqual(std::string("HTTP error code: 404"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginEmptyResponse)
@@ -210,8 +210,8 @@ public:
         Assert::AreEqual(std::string("Empty JSON response"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginInvalidJson)
@@ -233,8 +233,8 @@ public:
         Assert::AreEqual(std::string("Invalid value. (0)"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginNoRequiredFields)
@@ -257,8 +257,8 @@ public:
         Assert::AreEqual(std::string("User not found in response"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     // End of generic validation tests
@@ -289,7 +289,7 @@ public:
         Assert::AreEqual(std::string("User"), response.Username);
         Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
         Assert::AreEqual(1234U, response.Score);
-        Assert::AreEqual(2U, response.NumUnreadMessages);
+        Assert::AreEqual({2U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginTokenSuccess)
@@ -314,7 +314,7 @@ public:
         Assert::AreEqual(std::string("User"), response.Username);
         Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
         Assert::AreEqual(1234U, response.Score);
-        Assert::AreEqual(2U, response.NumUnreadMessages);
+        Assert::AreEqual({2U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginNoOptionalFields)
@@ -336,8 +336,8 @@ public:
         Assert::AreEqual(std::string(), response.ErrorMessage);
         Assert::AreEqual(std::string("User"), response.Username);
         Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     TEST_METHOD(TestLoginNullOptionalFields)
@@ -359,8 +359,8 @@ public:
         Assert::AreEqual(std::string(), response.ErrorMessage);
         Assert::AreEqual(std::string("User"), response.Username);
         Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual({0U}, response.Score);
+        Assert::AreEqual({0U}, response.NumUnreadMessages);
     }
 
     // ====================================================

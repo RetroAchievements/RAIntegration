@@ -197,33 +197,33 @@ public:
         std::string input("This is a test.");
         Tokenizer tokenizer(input);
         Assert::AreEqual('T', tokenizer.PeekChar());
-        Assert::AreEqual(0U, tokenizer.CurrentPosition());
+        Assert::AreEqual({0U}, tokenizer.CurrentPosition());
 
         Assert::AreEqual(std::string("This"), tokenizer.ReadTo(' '));
         Assert::AreEqual(' ', tokenizer.PeekChar());
-        Assert::AreEqual(4U, tokenizer.CurrentPosition());
+        Assert::AreEqual({4U}, tokenizer.CurrentPosition());
 
         tokenizer.Advance();
 
         Assert::AreEqual(std::string("is"), tokenizer.ReadTo(' '));
-        Assert::AreEqual(7U, tokenizer.CurrentPosition());
+        Assert::AreEqual({7U}, tokenizer.CurrentPosition());
 
         tokenizer.Advance(3); // skip over " a "
-        Assert::AreEqual(10U, tokenizer.CurrentPosition());
+        Assert::AreEqual({10U}, tokenizer.CurrentPosition());
         Assert::IsFalse(tokenizer.EndOfString());
 
         Assert::AreEqual(std::string("test."), tokenizer.ReadTo(' '));
-        Assert::AreEqual(15U, tokenizer.CurrentPosition());
+        Assert::AreEqual({15U}, tokenizer.CurrentPosition());
         Assert::IsTrue(tokenizer.EndOfString());
         Assert::AreEqual('\0', tokenizer.PeekChar());
         Assert::AreEqual(std::string(""), tokenizer.ReadTo(' '));
-        Assert::AreEqual(15U, tokenizer.CurrentPosition());
+        Assert::AreEqual({15U}, tokenizer.CurrentPosition());
 
         tokenizer.Seek(2U);
-        Assert::AreEqual(2U, tokenizer.CurrentPosition());
+        Assert::AreEqual({2U}, tokenizer.CurrentPosition());
         Assert::AreEqual(std::string("is is a t"), tokenizer.ReadTo('e'));
         Assert::AreEqual('e', tokenizer.PeekChar());
-        Assert::AreEqual(11U, tokenizer.CurrentPosition());
+        Assert::AreEqual({11U}, tokenizer.CurrentPosition());
     }
 
     TEST_METHOD(TestTokenizerAdvancePastEndOfString)
@@ -231,19 +231,19 @@ public:
         std::string input("This is a test.");
         Tokenizer tokenizer(input);
         tokenizer.Seek(12U);
-        Assert::AreEqual(12U, tokenizer.CurrentPosition());
+        Assert::AreEqual({12U}, tokenizer.CurrentPosition());
         Assert::IsFalse(tokenizer.EndOfString());
 
         tokenizer.Advance(6U);
-        Assert::AreEqual(15U, tokenizer.CurrentPosition());
+        Assert::AreEqual({15U}, tokenizer.CurrentPosition());
         Assert::IsTrue(tokenizer.EndOfString());
 
         tokenizer.Advance();
-        Assert::AreEqual(15U, tokenizer.CurrentPosition());
+        Assert::AreEqual({15U}, tokenizer.CurrentPosition());
         Assert::IsTrue(tokenizer.EndOfString());
 
         tokenizer.AdvanceTo(' ');
-        Assert::AreEqual(15U, tokenizer.CurrentPosition());
+        Assert::AreEqual({15U}, tokenizer.CurrentPosition());
         Assert::IsTrue(tokenizer.EndOfString());
     }
 
@@ -252,31 +252,31 @@ public:
         std::string input("11:2.3:0:123456789");
         Tokenizer tokenizer(input);
         Assert::AreEqual(11U, tokenizer.PeekNumber());
-        Assert::AreEqual(0U, tokenizer.CurrentPosition());
+        Assert::AreEqual({0U}, tokenizer.CurrentPosition());
         Assert::AreEqual('1', tokenizer.PeekChar());
 
         Assert::AreEqual(11U, tokenizer.ReadNumber());
-        Assert::AreEqual(2U, tokenizer.CurrentPosition());
+        Assert::AreEqual({2U}, tokenizer.CurrentPosition());
         Assert::AreEqual(':', tokenizer.PeekChar());
 
         tokenizer.Advance();
-        Assert::AreEqual(2U, tokenizer.ReadNumber());
-        Assert::AreEqual(4U, tokenizer.CurrentPosition());
+        Assert::AreEqual({2U}, tokenizer.ReadNumber());
+        Assert::AreEqual({4U}, tokenizer.CurrentPosition());
         Assert::AreEqual('.', tokenizer.PeekChar());
 
         tokenizer.Advance();
         Assert::AreEqual(3U, tokenizer.ReadNumber());
-        Assert::AreEqual(6U, tokenizer.CurrentPosition());
+        Assert::AreEqual({6U}, tokenizer.CurrentPosition());
         Assert::AreEqual(':', tokenizer.PeekChar());
 
         tokenizer.Advance();
-        Assert::AreEqual(0U, tokenizer.ReadNumber());
-        Assert::AreEqual(8U, tokenizer.CurrentPosition());
+        Assert::AreEqual({0U}, tokenizer.ReadNumber());
+        Assert::AreEqual({8U}, tokenizer.CurrentPosition());
         Assert::AreEqual(':', tokenizer.PeekChar());
 
         tokenizer.Advance();
         Assert::AreEqual(123456789U, tokenizer.ReadNumber());
-        Assert::AreEqual(18U, tokenizer.CurrentPosition());
+        Assert::AreEqual({18U}, tokenizer.CurrentPosition());
         Assert::IsTrue(tokenizer.EndOfString());
     }
 
@@ -285,11 +285,15 @@ public:
         std::string input("This is a test.");
         const Tokenizer tokenizer(input);
         const auto* pStart = input.c_str();
-        Assert::AreEqual(0, tokenizer.GetPointer(0U) - pStart);
-        Assert::AreEqual(4, tokenizer.GetPointer(4U) - pStart);
-        Assert::AreEqual(8, tokenizer.GetPointer(8U) - pStart);
-        Assert::AreEqual(12, tokenizer.GetPointer(12U) - pStart);
-        Assert::AreEqual(15, tokenizer.GetPointer(16U) - pStart); // string is 15 characters
+
+        // ptrdiff_t is 8 bytes but a ToString overload isn't working
+        Assert::AreEqual(0, gsl::narrow_cast<int>(tokenizer.GetPointer(0U) - pStart));
+        Assert::AreEqual(4, gsl::narrow_cast<int>(tokenizer.GetPointer(4U) - pStart));
+        Assert::AreEqual(8, gsl::narrow_cast<int>(tokenizer.GetPointer(8U) - pStart));
+        Assert::AreEqual(12, gsl::narrow_cast<int>(tokenizer.GetPointer(12U) - pStart));
+
+        // TODO: This is an error in logic and should not be considered success
+        Assert::AreEqual(15, gsl::narrow_cast<int>(tokenizer.GetPointer(16U) - pStart)); // string is 15 characters
     }
 
     TEST_METHOD(TestTokenizerReadQuotedString)
@@ -299,7 +303,7 @@ public:
         auto sString = tokenizer.ReadQuotedString();
         Assert::AreEqual(std::string("This string is \"quoted\"."), sString);
         Assert::AreEqual(' ', tokenizer.PeekChar());
-        Assert::AreEqual(28U, tokenizer.CurrentPosition());
+        Assert::AreEqual({28U}, tokenizer.CurrentPosition());
 
         // PeekChar is not a quote, nothing should be returned
         sString = tokenizer.ReadQuotedString();

@@ -24,7 +24,7 @@ using ColumnWidths = std::array<int, 5>;
 
 inline constexpr ColumnTitles COLUMN_TITLE{_T("Description"), _T("Address"), _T("Value"), _T("Prev."), _T("Changes")};
 inline constexpr ColumnWidths COLUMN_WIDTH{112, 64, 64, 64, 54};
-static_assert(is_same_size_v<ColumnTitles, ColumnWidths>);
+static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
 } // namespace ra
 

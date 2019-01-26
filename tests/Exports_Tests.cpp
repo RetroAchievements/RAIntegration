@@ -244,7 +244,7 @@ public:
         Assert::IsFalse(mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::AreEqual({0U}, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
     }
@@ -267,7 +267,7 @@ public:
         Assert::IsFalse(mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::AreEqual({0U}, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
     }
@@ -293,7 +293,7 @@ public:
         Assert::IsFalse(mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::AreEqual({0U}, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
     }

@@ -362,17 +362,17 @@ public:
         lb.SubmitRankInfo(2U, "Jane", 80, 1234567891U);
         lb.SubmitRankInfo(3U, "Paul", 70, 1234567892U);
 
-        Assert::AreEqual(3U, lb.GetRankInfoCount());
+        Assert::AreEqual({3U}, lb.GetRankInfoCount());
         Assert::AreEqual("George", lb.GetRankInfo(0).m_sUsername.c_str());
         Assert::AreEqual("Jane", lb.GetRankInfo(1).m_sUsername.c_str());
         Assert::AreEqual("Paul", lb.GetRankInfo(2).m_sUsername.c_str());
 
         Assert::AreEqual(1234567890, static_cast<int>(lb.GetRankInfo(0).m_TimeAchieved));
-        Assert::AreEqual(2U, lb.GetRankInfo(1).m_nRank);
+        Assert::AreEqual({2U}, lb.GetRankInfo(1).m_nRank);
         Assert::AreEqual(70, lb.GetRankInfo(2).m_nScore);
 
         lb.ClearRankInfo();
-        Assert::AreEqual(0U, lb.GetRankInfoCount());
+        Assert::AreEqual({0U}, lb.GetRankInfoCount());
     }
 
     TEST_METHOD(TestSortRankInfo)
@@ -384,7 +384,7 @@ public:
         lb.SubmitRankInfo(1U, "George", 100, 1234567890U);
         lb.SubmitRankInfo(3U, "Paul", 70, 1234567892U);
 
-        Assert::AreEqual(5U, lb.GetRankInfoCount());
+        Assert::AreEqual({5U}, lb.GetRankInfoCount());
         lb.SortRankInfo();
 
         Assert::AreEqual("George", lb.GetRankInfo(0).m_sUsername.c_str());
@@ -394,9 +394,9 @@ public:
         Assert::AreEqual("Roger", lb.GetRankInfo(4).m_sUsername.c_str());
 
         Assert::AreEqual(1234567890, static_cast<int>(lb.GetRankInfo(0).m_TimeAchieved));
-        Assert::AreEqual(2U, lb.GetRankInfo(1).m_nRank);
+        Assert::AreEqual({2U}, lb.GetRankInfo(1).m_nRank);
         Assert::AreEqual(70, lb.GetRankInfo(2).m_nScore);
-        Assert::AreEqual(4U, lb.GetRankInfo(3).m_nRank);
+        Assert::AreEqual({4U}, lb.GetRankInfo(3).m_nRank);
         Assert::AreEqual(50, lb.GetRankInfo(4).m_nScore);
     }
 

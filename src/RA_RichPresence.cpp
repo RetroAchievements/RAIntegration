@@ -266,9 +266,9 @@ bool RA_RichPresenceInterpreter::Load(ra::services::TextReader& pReader)
 
                 unsigned int nVal{};
                 if (ra::StringStartsWith(sLine, "0x"))
-                    nVal = std::stoul(sLine.substr(2), nullptr, 16);
+                    nVal = std::strtoul(&sLine.at(2), nullptr, 16);
                 else
-                    nVal = std::stoul(sLine);
+                    nVal = std::strtoul(sLine.c_str(), nullptr, 10);
 
                 newLookup.AddLookupData(nVal, sLabel);
             } while (true);

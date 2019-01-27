@@ -94,7 +94,7 @@ public:
 
     Achievement& NewAchievement(AchievementSet::Type nType);
 
-    bool RemoveAchievement(unsigned int nAchievementId) noexcept;
+    bool RemoveAchievement(unsigned int nAchievementId);
 
     /// <summary>
     /// Shows the popup for earning an achievement and notifies the server if legitimate.

@@ -515,7 +515,7 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(unsigned int nAchievementId) noexcept
+bool GameContext::RemoveAchievement(unsigned int nAchievementId)
 {
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {

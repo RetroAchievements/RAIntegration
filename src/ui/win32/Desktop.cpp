@@ -89,7 +89,7 @@ IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewMo
 
 void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
-    ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    GSL_SUPPRESS_F6 ShellExecute(nullptr, TEXT("open"), NativeStr(sUrl).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void Desktop::Shutdown() noexcept

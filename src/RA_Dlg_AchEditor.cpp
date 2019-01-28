@@ -242,10 +242,10 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             lvDispinfo.item.iSubItem = nSelSubItem;
             lvDispinfo.item.pszText = nullptr;
 
-            std::array<char, 12> sEditText{};
-            GetWindowTextA(hwnd, sEditText.data(), 12);
+            std::array<TCHAR, 12> sEditText{};
+            GetWindowText(hwnd, sEditText.data(), 12);
             lvDispinfo.item.pszText = sEditText.data();
-            lvDispinfo.item.cchTextMax = gsl::narrow_cast<int>(std::strlen(sEditText.data()));
+            lvDispinfo.item.cchTextMax = gsl::narrow_cast<int>(ra::tcslen_s(sEditText.data()));
 
             HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 

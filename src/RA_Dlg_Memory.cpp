@@ -925,7 +925,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
                         if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                            buffer.append(ra::StringPrintf("   (%s)", pSavedNote->Note()));
+                            buffer.append(ra::StringPrintf(_T("   (%s)"), NativeStr(pSavedNote->Note())));
 
                         COLORREF color{};
 

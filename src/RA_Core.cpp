@@ -1125,9 +1125,16 @@ std::string GetFolderFromDialog()
 {
     BROWSEINFO bi{};
     bi.hwndOwner = ::GetActiveWindow();
-
+#if _MBCS
     std::array<TCHAR, RA_MAX_PATH> pDisplayName{};
     bi.pszDisplayName = pDisplayName.data();
+#elif _UNICODE
+    auto pDisplayName = std::make_unique<TCHAR[]>(RA_MAX_PATH);
+    bi.pszDisplayName = pDisplayName.get();
+#else
+#error Unknown Character Set!
+#endif /* _MBCS */
+    
     bi.lpszTitle = _T("Select ROM folder...");
 
     if (::OleInitialize(nullptr) != S_OK)
@@ -1145,7 +1152,13 @@ std::string GetFolderFromDialog()
             lpItemIdList = nullptr;
         };
 
+#if (_ARCH == 32)
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+#elif (_ARCH == 64)
         using ItemListOwner = std::unique_ptr<ITEMIDLIST __unaligned, decltype(idlist_deleter)>;
+#else
+#error Unsupported hardware architecture!
+#endif
         ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
         if (!owner)
         {
@@ -1161,6 +1174,9 @@ std::string GetFolderFromDialog()
         ret = ra::Narrow(bi.pszDisplayName);
     }
     ::OleUninitialize();
+#ifdef _UNICODE
+    pDisplayName.reset();
+#endif // _UNICODE
     return ret;
 }
 

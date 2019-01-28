@@ -38,7 +38,6 @@ const char* RequestTypeToString[] =
     "RequestSubmitLeaderboardEntry",
     "RequestSubmitAchievementData",
     "RequestSubmitTicket",
-    "RequestSubmitNewTitleEntry",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
@@ -59,7 +58,6 @@ const char* RequestTypeToPost[] =
     "submitlbentry",
     "uploadachievement",
     "submitticket",
-    "submitgametitle",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 

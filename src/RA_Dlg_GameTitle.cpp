@@ -7,6 +7,7 @@
 #include "RA_httpthread.h"
 
 #include "api\FetchGamesList.hh"
+#include "api\SubmitNewTitle.hh"
 
 #include "data\UserContext.hh"
 
@@ -88,22 +89,15 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                         nGameID = m_aGameTitles[std::string(ra::Narrow(sSelectedTitle))];
                     }
 
-                    PostArgs args;
-                    args['u'] = RAUsers::LocalUser().Username();
-                    args['t'] = RAUsers::LocalUser().Token();
-                    args['m'] = m_sMD5;
-                    args['i'] = ra::Narrow(sSelectedTitle);
-                    args['c'] = std::to_string(g_ConsoleID);
+                    ra::api::SubmitNewTitle::Request request;
+                    request.ConsoleId = g_ConsoleID;
+                    request.Hash = m_sMD5;
+                    request.GameName = ra::Widen(sSelectedTitle);
 
-                    rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && 
-                        doc.HasMember("Success") && doc["Success"].GetBool())
+                    auto response = request.Call();
+                    if (response.Succeeded())
                     {
-                        const rapidjson::Value& Response = doc["Response"];
-
-                        nGameID = Response["GameID"].GetUint();
-
-                        g_GameTitleDialog.m_nReturnedGameID = nGameID;
+                        g_GameTitleDialog.m_nReturnedGameID = response.GameId;
 
                         //	Close this dialog
                         EndDialog(hDlg, TRUE);
@@ -111,20 +105,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     }
                     else
                     {
-                        if (!doc.HasParseError() && doc.HasMember("Error"))
-                        {
-                            // Error given
-                            MessageBox(hDlg,
-                                       NativeStr(std::string("Could not add new title: ") +
-                                                 std::string(doc["Error"].GetString())).c_str(),
-                                       TEXT("Errors encountered"),
-                                       MB_OK);
-                        }
-                        else
-                        {
-                            MessageBox(hDlg, TEXT("Cannot contact server!"), TEXT("Error in connection"), MB_OK);
-                        }
-
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not add new title", ra::Widen(response.ErrorMessage));
                         return TRUE;
                     }
                 }

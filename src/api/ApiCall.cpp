@@ -25,6 +25,7 @@ ResolveHash::Response ResolveHash::Request::Call() const noexcept { return Serve
 FetchGameData::Response FetchGameData::Request::Call() const noexcept { return Server().FetchGameData(*this); }
 LatestClient::Response LatestClient::Request::Call() const noexcept { return Server().LatestClient(*this); }
 FetchGamesList::Response FetchGamesList::Request::Call() const noexcept { return Server().FetchGamesList(*this); }
+SubmitNewTitle::Response SubmitNewTitle::Request::Call() const noexcept { return Server().SubmitNewTitle(*this); }
 
 } // namespace api
 } // namespace ra

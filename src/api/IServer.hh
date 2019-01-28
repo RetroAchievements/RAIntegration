@@ -12,6 +12,7 @@
 #include "api/Ping.hh"
 #include "api/ResolveHash.hh"
 #include "api/StartSession.hh"
+#include "api/SubmitNewTitle.hh"
 
 namespace ra {
 namespace api {
@@ -36,6 +37,7 @@ public:
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept = 0;
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) noexcept = 0;
+    virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

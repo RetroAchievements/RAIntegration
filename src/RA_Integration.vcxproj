@@ -126,6 +126,7 @@
     <ClInclude Include="api\Ping.hh" />
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />
+    <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="data\SessionTracker.hh" />

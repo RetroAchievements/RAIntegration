@@ -110,6 +110,11 @@ public:
         return HandleRequest<ra::api::FetchGamesList>(request);
     }
 
+    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::SubmitNewTitle>(request);
+    }
+
 protected:
     template<typename TApi>
     GSL_SUPPRESS_F6

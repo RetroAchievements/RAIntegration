@@ -33,7 +33,6 @@ enum RequestType
     RequestSubmitLeaderboardEntry,
     RequestSubmitAchievementData,
     RequestSubmitTicket,
-    RequestSubmitNewTitle,
 
     NumRequestTypes
 };

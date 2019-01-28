@@ -526,7 +526,7 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
 
                 char* pEnd;
                 const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
-                if (nGameId == 0 || *pEnd)
+                if (nGameId == 0 || (pEnd && *pEnd))
                 {
                     response.Result = ApiResult::Error;
                     if (response.ErrorMessage.empty())
@@ -537,6 +537,34 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
 
                 response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
             }
+        }
+    }
+
+    return response;
+}
+
+SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept
+{
+    SubmitNewTitle::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
+    AppendUrlParam(sPostData, "m", request.Hash);
+    AppendUrlParam(sPostData, "i", ra::Narrow(request.GameName));
+
+    if (DoRequest(m_sHost, SubmitNewTitle::Name(), "submitgametitle", sPostData, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            if (response.ErrorMessage.empty())
+                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+            GetRequiredJsonField(response.GameId, document["Response"], "GameID", response);
         }
     }
 

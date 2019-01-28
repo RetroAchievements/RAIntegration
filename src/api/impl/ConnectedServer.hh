@@ -23,6 +23,7 @@ public:
     GSL_SUPPRESS_F6 FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override;
     GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;
     GSL_SUPPRESS_F6 FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) noexcept override;
+    GSL_SUPPRESS_F6 SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
 

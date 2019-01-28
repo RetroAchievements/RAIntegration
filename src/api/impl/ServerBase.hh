@@ -75,6 +75,12 @@ public:
         return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
     }
 
+    FetchGamesList::Response FetchGamesList(_UNUSED const FetchGamesList::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<FetchGamesList::Response>(FetchGamesList::Name());
+    }
+
 protected:
     template<typename TResponse>
     inline typename TResponse UnsupportedApi(const char* const restrict apiName) const noexcept

@@ -6,7 +6,11 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "api\FetchGamesList.hh"
+
 #include "data\UserContext.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 Dlg_GameTitle g_GameTitleDialog;
 
@@ -31,54 +35,28 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
             SetDlgItemText(hDlg, IDC_RA_CHECKSUM, NativeStr(g_GameTitleDialog.m_sMD5).c_str());
 
             //	Populate the dropdown
-            //	***Do blocking fetch of all game titles.***
             int nSel = ComboBox_AddString(hKnownGamesCbo, NativeStr("<New Title>").c_str());
             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
 
-            PostArgs args;
-            args['c'] = std::to_string(g_ConsoleID);
+            //	***Do blocking fetch of all game titles.***
+            ra::api::FetchGamesList::Request request;
+            request.ConsoleId = g_ConsoleID;
 
-            rapidjson::Document doc;
-            if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
+            auto response = request.Call();
+            if (response.Failed())
             {
-                const rapidjson::Value& Data = doc["Response"];
-
-                //	For all data responses to this request, populate our m_aGameTitles map
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::Widen(response.ErrorMessage));
+            }
+            else
+            {
+                for (const auto& pGame : response.Games)
                 {
-                    rapidjson::Value::ConstMemberIterator iter = Data.MemberBegin();
-                    while (iter != Data.MemberEnd())
-                    {
-                        if (iter->name.IsNull() || iter->value.IsNull())
-                        {
-                            iter++;
-                            continue;
-                        }
+                    auto sTitle = NativeStr(pGame.Name);
+                    nSel = ComboBox_AddString(hKnownGamesCbo, sTitle.c_str());
 
-                        // Keys cannot be anything but strings
-                        const auto nGameID = std::strtoul(iter->name.GetString(), nullptr, 10); 
-                        const std::string& sTitle = iter->value.GetString();
-                        m_aGameTitles[sTitle] = nGameID;
-
-                        iter++;
-                    }
-                }
-
-                {
-                    std::map<std::string, unsigned int>::const_iterator iter = m_aGameTitles.begin();
-                    while (iter != m_aGameTitles.end())
-                    {
-                        const std::string& sTitle = iter->first;
-
-                        nSel = ComboBox_AddString(hKnownGamesCbo, NativeStr(sTitle).c_str());
-
-                        //	Attempt to find this game and select it by default: case insensitive comparison
-                        if (sGameTitleTidy.compare(sTitle) == 0)
-                        {
-                            ComboBox_SetCurSel(hKnownGamesCbo, nSel);
-                        }
-
-                        iter++;
-                    }
+                    //	Attempt to find this game and select it by default: case insensitive comparison
+                    if (sGameTitleTidy == sTitle)
+                        ComboBox_SetCurSel(hKnownGamesCbo, nSel);
                 }
             }
 

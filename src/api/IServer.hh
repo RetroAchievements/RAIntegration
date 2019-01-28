@@ -4,6 +4,7 @@
 
 #include "api/AwardAchievement.hh"
 #include "api/FetchGameData.hh"
+#include "api/FetchGamesList.hh"
 #include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
 #include "api/Login.hh"
@@ -34,6 +35,7 @@ public:
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept = 0;
+    virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) noexcept = 0;
 
 protected:
     IServer() noexcept = default;

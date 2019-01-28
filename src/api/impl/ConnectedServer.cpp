@@ -26,7 +26,7 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
         const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
         const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(httpResponse.StatusCode()));
         pResponse.Result = bRetry ? ApiResult::Incomplete : ApiResult::Error;
-        pResponse.ErrorMessage = ra::StringPrintf("HTTP error code: %d", ra::etoi(httpResponse.StatusCode()));
+        pResponse.ErrorMessage = ra::BuildString("HTTP error code: ", ra::etoi(httpResponse.StatusCode()));
         return true;
     }
 
@@ -478,6 +478,66 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     {
         response.Result = ApiResult::Success;
         GetRequiredJsonField(response.LatestVersion, document, "LatestVersion", response);
+    }
+
+    return response;
+}
+
+FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request) noexcept
+{
+    FetchGamesList::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
+
+    if (DoRequest(m_sHost, FetchGamesList::Name(), "gameslist", sPostData, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            if (response.ErrorMessage.empty())
+                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            auto& Data = document["Response"];
+            for (auto iter = Data.MemberBegin(); iter != Data.MemberEnd(); ++iter)
+            {
+                if (!iter->name.IsString())
+                {
+                    response.Result = ApiResult::Error;
+                    if (response.ErrorMessage.empty())
+                        response.ErrorMessage = "Non-string key found in response";
+
+                    break;
+                }
+
+                if (!iter->value.IsString())
+                {
+                    response.Result = ApiResult::Error;
+                    if (response.ErrorMessage.empty())
+                        response.ErrorMessage = ra::BuildString("Non-string value found in response for key ", iter->name.GetString());
+
+                    break;
+                }
+
+                char* pEnd;
+                const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
+                if (nGameId == 0 || *pEnd)
+                {
+                    response.Result = ApiResult::Error;
+                    if (response.ErrorMessage.empty())
+                        response.ErrorMessage = ra::BuildString("Invalid game ID: ", iter->name.GetString());
+
+                    break;
+                }
+
+                response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
+            }
+        }
     }
 
     return response;

@@ -32,7 +32,6 @@ const char* RequestTypeToString[] =
     "RequestFriendList",
     "RequestBadgeIter",
     "RequestHashLibrary",
-    "RequestGamesList",
     "RequestAllProgress",
 
     "RequestSubmitCodeNote",
@@ -54,7 +53,6 @@ const char* RequestTypeToPost[] =
     "getfriendlist",
     "badgeiter",
     "hashlibrary",
-    "gameslist",
     "allprogress",
 
     "submitcodenote",

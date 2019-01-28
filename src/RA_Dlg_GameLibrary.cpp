@@ -216,16 +216,14 @@ void Dlg_GameLibrary::SetupColumns(HWND hList)
 // static
 void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFilename, unsigned int nGameID)
 {
-    LV_ITEM item;
-    ZeroMemory(&item, sizeof(item));
+    LV_ITEM item{};
     item.mask = LVIF_TEXT;
     item.cchTextMax = 255;
-    item.iItem = m_vGameEntries.size();
+    item.iItem = gsl::narrow_cast<int>(m_vGameEntries.size());
 
     HWND hList = GetDlgItem(m_hDialogBox, IDC_RA_LBX_GAMELIST);
 
     //	id:
-    item.iSubItem = 0;
     auto sID = NativeStr(ra::ToString(nGameID)); // scoped cache!
     item.pszText = sID.data();
     item.iItem = ListView_InsertItem(hList, &item);

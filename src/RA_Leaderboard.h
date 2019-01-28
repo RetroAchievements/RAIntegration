@@ -55,9 +55,14 @@ public:
     void SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved);
     bool EntryExists(unsigned int nRank);
     void ClearRankInfo() noexcept { m_RankInfo.clear(); }
-    const Entry& GetRankInfo(unsigned int nAt) const { return m_RankInfo.at(nAt); }
+    const Entry& GetRankInfo(gsl::index nAt) const { return m_RankInfo.at(nAt); }
     size_t GetRankInfoCount() const noexcept { return m_RankInfo.size(); }
     void SortRankInfo();
+
+    inline auto begin() noexcept { return std::begin(m_RankInfo); }
+    inline auto begin() const noexcept { return std::begin(m_RankInfo); }
+    inline auto end() noexcept { return std::end(m_RankInfo); }
+    inline auto end() const noexcept { return std::end(m_RankInfo); }
 
 protected:
     virtual void Start();

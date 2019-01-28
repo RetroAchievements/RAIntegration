@@ -30,7 +30,7 @@ public:
 public:
     int GetSelectedAchievementIndex() noexcept;
     void OnLoad_NewRom(unsigned int nGameID);
-    void ReloadLBXData(int nOffset);
+    void ReloadLBXData(gsl::index nOffset);
     void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
     void OnEditAchievement(const Achievement& ach);
     void OnClickAchievementSet(_In_ AchievementSet::Type nAchievementSet);
@@ -53,7 +53,7 @@ private:
     void SetupColumns(HWND hList);
     void LoadAchievements(HWND hList);
 
-    void RemoveAchievement(HWND hList, int nIter);
+    void RemoveAchievement(HWND hList, gsl::index nIter);
     size_t AddAchievement(HWND hList, const Achievement& Ach);
     void AddAchievementRow(const Achievement& Ach);
 

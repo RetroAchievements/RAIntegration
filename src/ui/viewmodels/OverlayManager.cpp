@@ -28,7 +28,7 @@ void OverlayManager::Update(double fElapsed)
 #endif
 }
 
-static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, size_t nFarValue) noexcept
+static std::ptrdiff_t GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, size_t nFarValue) noexcept
 {
     switch (nRelativePosition)
     {
@@ -55,8 +55,10 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
     if (!m_vPopupMessages.empty())
     {
         const auto& pActiveMessage = m_vPopupMessages.front();
-        const int nX = GetAbsolutePosition(pActiveMessage.GetRenderLocationX(), pActiveMessage.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
-        const int nY = GetAbsolutePosition(pActiveMessage.GetRenderLocationY(), pActiveMessage.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
+        const auto nX = GetAbsolutePosition(pActiveMessage.GetRenderLocationX(),
+                                            pActiveMessage.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
+        const auto nY = GetAbsolutePosition(pActiveMessage.GetRenderLocationY(),
+                                            pActiveMessage.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
         pSurface.DrawSurface(nX, nY, pActiveMessage.GetRenderImage());
     }
 }

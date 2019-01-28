@@ -122,7 +122,7 @@ public:
 private:
     ImageType m_nType{};
     std::string m_sName;
-    mutable unsigned long m_nData{};
+    mutable std::uintptr_t m_nData{};
     friend class drawing::gdi::ImageRepository;
 };
 

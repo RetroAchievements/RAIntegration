@@ -23,12 +23,12 @@ public:
     /// <summary>
     /// Gets the width of the surface.
     /// </summary>
-    virtual size_t GetWidth() const = 0;
+    virtual std::ptrdiff_t GetWidth() const = 0;
 
     /// <summary>
     /// Gets the height of the surface.
     /// </summary>
-    virtual size_t GetHeight() const = 0;
+    virtual std::ptrdiff_t GetHeight() const = 0;
 
     /// <summary>
     /// Draws a solid rectangle.
@@ -48,7 +48,7 @@ public:
     /// <param name="nStyle">The style of the font.</param>
     /// <returns>Unique identifier for the font resource to pass to <see cref="WriteText" />, 
     /// <c>0</c> if loading the font failed.</returns>
-    virtual int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) = 0;
+    virtual gsl::index LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) = 0;
 
     /// <summary>
     /// Determines how much space would be required to display <paramref name="sText" /> using 
@@ -56,7 +56,7 @@ public:
     /// </summary>
     /// <param name="nFont">The unique identifier of the font to use. see <see cref="LoadFont" />.</param>
     /// <param name="sText">The text to measure.</param>
-    virtual ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const = 0;
+    virtual ra::ui::Size MeasureText(gsl::index nFont, const std::wstring& sText) const = 0;
 
     /// <summary>
     /// Writes the specified text to the surface.
@@ -66,7 +66,7 @@ public:
     /// <param name="nFont">The unique identifier of the font to use. see <see cref="LoadFont" />.</param>
     /// <param name="nColor">The color to use.</param>
     /// <param name="sText">The text to write.</param>
-    virtual void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) = 0;
+    virtual void WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText) = 0;
 
     /// <summary>
     /// Draws an image on the surface.
@@ -84,7 +84,7 @@ public:
     /// <param name="nX">The x coordinate to draw at.</param>
     /// <param name="nY">The y coordinate to draw at.</param>
     /// <param name="pImage">The surface to draw.</param>
-    virtual void DrawSurface(int nX, int nY, const ISurface& pSurface) = 0;
+    virtual void DrawSurface(std::ptrdiff_t nX, std::ptrdiff_t nY, const ISurface& pSurface) = 0;
 
     /// <summary>
     /// Sets the alpha value of anything that's not currently transparent to the specified value.

@@ -190,7 +190,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     rcLabel.left += (offset / 2);
                     rcLabel.right -= offset;
 
-                    DrawTextW(pdis->hDC, buffer.c_str(), buffer.length(), &rcLabel,
+                    DrawTextW(pdis->hDC, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()), &rcLabel,
                               DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                 }
 
@@ -275,7 +275,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     rcLabel.left += offset;
                     rcLabel.right -= offset;
 
-                    DrawTextW(pdis->hDC, buffer.c_str(), buffer.length(), &rcLabel,
+                    DrawTextW(pdis->hDC, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()), &rcLabel,
                               nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS);
                 }
 
@@ -543,22 +543,22 @@ void Dlg_MemBookmark::SetupColumns(HWND hList)
 
     //	Remove all data.
     ListView_DeleteAllItems(hList);
-    gsl::index idx{0};
+    gsl::index idx{-1};
     for (auto& sColTitle : ra::COLUMN_TITLE)
     {
+        idx++;
         ra::tstring tszText{sColTitle};
         LV_COLUMN col{col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT,
                       col.fmt = LVCFMT_CENTER | LVCFMT_FIXED_WIDTH,
                       col.cx = ra::COLUMN_WIDTH.at(idx),
                       col.pszText = tszText.data(),
                       col.cchTextMax = 255,
-                      col.iSubItem = idx};
+                      col.iSubItem = gsl::narrow_cast<int>(idx)};
 
         if (idx == (ra::to_signed(ra::COLUMN_TITLE.size()) - 1))
             col.fmt |= LVCFMT_FILL;
 
         ListView_InsertColumn(hList, idx, &col);
-        idx++;
     }
     m_nNumOccupiedRows = 0;
 

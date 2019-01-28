@@ -8,17 +8,20 @@
 
 #include "ui\ImageReference.hh"
 
+// TBD: LeaderboardExamine and AchievementExamine seem like they could be data members of Achievement Overlay
 class LeaderboardExamine
 {
 public:
-    void Initialize(const unsigned int nLBIDIn);
+    void Initialize(_In_ const ra::LeaderboardID nLBID);
     // static void CB_OnReceiveData( void* pRequestObject );
     void OnReceiveData(const rapidjson::Document& doc);
 
-public:
-    unsigned int m_nLBID;
-    //	Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
-    bool m_bHasData;
+private:
+    ra::LeaderboardID m_nLBID{};
+    // Refer to RA_Leaderboard entry rank info via g_LeaderboardManager.FindLB(m_nLBID)
+    bool m_bHasData{};
+
+    friend class AchievementOverlay;
 };
 extern LeaderboardExamine g_LBExamine;
 
@@ -123,7 +126,7 @@ public:
     void DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
     void DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
     void DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, const RECT& rcTarget) const;
-    void DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
+    void DrawLeaderboardExaminePage(HDC hDC, int nDX, int, const RECT&) const;
 
     void DrawBar(HDC hDC, int nX, int nY, int nW, int nH, int nMax, int nSel) const noexcept;
     void DrawUserFrame(_In_ HDC hDC, _In_ int nX, _In_ int nY, _In_ int nW, _In_ int nH) const;

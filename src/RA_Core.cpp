@@ -1156,7 +1156,7 @@ std::string GetFolderFromDialog()
             lpItemIdList = nullptr;
         };
 
-        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST __unaligned, decltype(idlist_deleter)>;
         ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
         if (!owner)
         {

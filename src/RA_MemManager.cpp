@@ -104,7 +104,7 @@ unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 
         if (nOffs < bank.BankSize)
             return bank.Reader(nOffs);
-        nOffs -= bank.BankSize;
+        nOffs -= gsl::narrow_cast<ra::ByteAddress>(bank.BankSize);
         bankID++;
     }
 
@@ -130,7 +130,7 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
         if (nOffs < bank->BankSize)
             break;
 
-        nOffs -= bank->BankSize;
+        nOffs -= gsl::narrow_cast<ra::ByteAddress>(bank->BankSize);
         bankID++;
     } while (true);
 
@@ -138,13 +138,13 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
 
     while (nOffs + count >= bank->BankSize)
     {
-        size_t firstBankCount = bank->BankSize - nOffs;
+        auto firstBankCount = bank->BankSize - nOffs;
         count -= firstBankCount;
 
         while (firstBankCount-- > 0)
             *buffer++ = reader(nOffs++);
 
-        nOffs -= bank->BankSize;
+        nOffs -= gsl::narrow_cast<ra::ByteAddress>(bank->BankSize);
         bankID++;
         if (bankID >= numBanks)
         {
@@ -163,11 +163,12 @@ void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddre
 
 void MemManager::ActiveBankRAMByteWrite(ra::ByteAddress nOffs, unsigned int nVal)
 {
-    int bankID = 0;
-    const int numBanks = m_Banks.size();
+    using size_type = decltype(m_Banks)::size_type;
+    size_type bankID{};
+    const auto numBanks{m_Banks.size()};
     while (bankID < numBanks && nOffs >= m_Banks.at(bankID).BankSize)
     {
-        nOffs -= m_Banks.at(bankID).BankSize;
+        nOffs -= gsl::narrow_cast<ra::ByteAddress>(m_Banks.at(bankID).BankSize);
         bankID++;
     }
 

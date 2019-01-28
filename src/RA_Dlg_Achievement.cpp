@@ -131,14 +131,13 @@ LRESULT ProcessCustomDraw(LPARAM lParam)
     return CDRF_DODEFAULT;
 }
 
-void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
+void Dlg_Achievements::RemoveAchievement(HWND hList, gsl::index nIter)
 {
-    ASSERT(nIter < ListView_GetItemCount(hList));
-    ListView_DeleteItem(hList, nIter);
-    m_lbxData.erase(m_lbxData.begin() + nIter);
+    Expects(nIter < ListView_GetItemCount(hList));
+    ListView_DeleteItem(hList, gsl::narrow_cast<int>(nIter));
+    m_lbxData.erase(std::next(m_lbxData.begin(), nIter));
 
-    char buffer[16];
-    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
+    const auto buffer = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                    NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
@@ -154,7 +153,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 
     LV_ITEM item{};
     item.mask = ra::to_unsigned(LVIF_TEXT);
-    item.iItem = ra::to_signed(m_lbxData.size());
+    item.iItem = gsl::narrow_cast<int>(m_lbxData.size());
     item.cchTextMax = 256;
 
     for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
@@ -170,7 +169,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
             ListView_SetItem(hList, &item);
     }
 
-    ASSERT(item.iItem == (ra::to_signed(m_lbxData.size()) - 1));
+    Ensures(item.iItem == (ra::to_signed(m_lbxData.size()) - 1));
     return ra::to_unsigned(item.iItem);
 }
 
@@ -198,8 +197,7 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
     m_lbxData.emplace_back(std::move_if_noexcept(newRow));
 }
 
-_Success_(return ) _NODISCARD BOOL
-    LocalValidateAchievementsBeforeCommit(_In_reads_(1) const std::array<int, 1> nLbxItems)
+_NODISCARD BOOL LocalValidateAchievementsBeforeCommit(_In_reads_(1) const std::array<gsl::index, 1> nLbxItems)
 {
     char buffer[2048];
     for (auto& nIter : nLbxItems)
@@ -563,12 +561,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         OnEditData(nOffset, Column::Author, Cheevo.Author());
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                    const int nNewID = AddAchievement(hList, Cheevo);
+                    const auto nNewID = AddAchievement(hList, Cheevo);
                     ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
-                    char buffer[16];
-                    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
+                    const auto buffer = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
                     Cheevo.SetModified(TRUE);
@@ -606,8 +603,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                           LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, g_pLocalAchievements->NumAchievements() - 1, FALSE);
 
-                    char buffer2[16];
-                    sprintf_s(buffer2, 16, " %u", g_pActiveAchievements->NumAchievements());
+                    const auto buffer2 = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer2).c_str());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                                    NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
@@ -717,9 +713,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             if (pGameContext.ReloadAchievement(nID))
                             {
                                 // Reverse find where I am in the list:
-                                const size_t nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
+                                const gsl::index nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
                                 assert(nIndex < g_pActiveAchievements->NumAchievements());
-                                if (nIndex < g_pActiveAchievements->NumAchievements())
+                                if (nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()))
                                     ReloadLBXData(nIndex);
 
                                 // Finally, reselect to update AchEditor
@@ -909,12 +905,12 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 {
     constexpr int nMaxUploadLimit = 1;
 
-    size_t nNumChecked = 0;
-    std::array<int, nMaxUploadLimit> nIDsChecked{};
-    std::array<int, nMaxUploadLimit> nLbxItemsChecked{};
+    gsl::index nNumChecked = 0;
+    std::array<gsl::index, nMaxUploadLimit> nIDsChecked{};
+    std::array<gsl::index, nMaxUploadLimit> nLbxItemsChecked{};
 
     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-    const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+    const auto nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
     if (nSel != -1)
     {
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
@@ -941,8 +937,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     //  title = std::string("Upload ") + std::to_string( nNumChecked ) + std::string(" Achievements");
     //}
 
-    char message[1024];
-    sprintf_s(message, 1024,
+    const auto message = ra::StringPrintf(
               "Uploading the selected %u achievement(s).\n"
               "Are you sure? This will update the server with your new achievements\n"
               "and players will be able to download them into their games immediately.",
@@ -1029,8 +1024,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
         }
         else
         {
-            char buffer[512];
-            sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);
+            const auto buffer = ra::StringPrintf("Successfully uploaded data for %u achievements!", nNumChecked);
             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
             RECT rcBounds;
@@ -1098,8 +1092,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
         // SetupColumns( hList );
         LoadAchievements(hList);
 
-        TCHAR buffer[256];
-        _stprintf_s(buffer, 256, _T(" %u"), nGameID);
+        auto buffer = ra::StringPrintf(_T(" %u"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)
@@ -1111,7 +1104,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
             EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
         }
 
-        _stprintf_s(buffer, _T(" %u"), g_pActiveAchievements->NumAchievements());
+        buffer = ra::StringPrintf(_T(" %u"), g_pActiveAchievements->NumAchievements());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                        NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
@@ -1142,7 +1135,7 @@ void Dlg_Achievements::OnEditAchievement(const Achievement& ach)
     UpdateSelectedAchievementButtons(&ach);
 }
 
-void Dlg_Achievements::ReloadLBXData(int nOffset)
+void Dlg_Achievements::ReloadLBXData(gsl::index nOffset)
 {
     // const char* g_sColTitles[]            = { "Id", "Title", "Author", "Achieved?", "Modified?" };
     // const char* g_sColTitlesUnofficial[]  = { "Id", "Title", "Author", "Active", "Votes" };
@@ -1179,8 +1172,8 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         ra::tstring sStr{NativeStr(LbxDataAt(nItem, nColumn))}; // scoped cache
         LV_ITEM item{};
         item.mask = UINT{LVIF_TEXT};
-        item.iItem = nItem;
-        item.iSubItem = ra::to_signed(ra::etoi(nColumn));
+        item.iItem = gsl::narrow_cast<int>(nItem);
+        item.iSubItem = gsl::narrow_cast<int>(ra::etoi(nColumn));
         item.pszText = sStr.data();
         item.cchTextMax = 256;
 

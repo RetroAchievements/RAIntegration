@@ -16,7 +16,7 @@ public:
     /// <param name="nAddress">The address to start reading from.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <param name="nSize">Size of the entries.</param>
-    void Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize);
+    void Initialize(ra::ByteAddress nAddress, unsigned int nBytes, MemSize nSize);
 
     /// <summary>
     /// Initializes a result set by comparing against the previous result set.
@@ -36,7 +36,7 @@ public:
     /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
-    unsigned int MatchingAddressCount() noexcept;
+    size_t MatchingAddressCount() noexcept;
 
     /// <summary>
     /// Gets a summary of the results
@@ -130,12 +130,12 @@ protected:
             unsigned char* m_pBytes;
         };
 
-        unsigned int nAddress; // 4 bytes
-        unsigned int nSize;    // 4 bytes
+        ra::ByteAddress nAddress; // 4 bytes
+        unsigned int    nSize;    // 4 bytes
     };
     static_assert(sizeof(MemBlock) == 16, "sizeof(MemBlock) is incorrect");
 
-    MemBlock& AddBlock(unsigned int nAddress, unsigned int nSize);
+    MemBlock& AddBlock(ra::ByteAddress nAddress, unsigned int nSize);
 
 private:
     void ProcessBlocks(

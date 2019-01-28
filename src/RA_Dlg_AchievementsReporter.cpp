@@ -82,7 +82,7 @@ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achieve
         ra::tstring sStr{NativeStr(LbxDataAt(ms_nNumOccupiedRows, nPos))}; // Scoped cache
         LV_ITEM item{};
         item.mask = ra::to_unsigned(LVIF_TEXT);
-        item.iItem = ms_nNumOccupiedRows;
+        item.iItem = gsl::narrow<int>(ms_nNumOccupiedRows);
         item.iSubItem = nPos;
         item.pszText = sStr.data();
         item.cchTextMax = 256;

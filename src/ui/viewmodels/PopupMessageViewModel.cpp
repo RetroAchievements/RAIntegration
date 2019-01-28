@@ -91,7 +91,9 @@ void PopupMessageViewModel::CreateRenderImage()
     constexpr int nShadowOffset = 2;
 
     // background
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);
+    const auto iWidth = gsl::narrow_cast<int>(m_pSurface->GetWidth());
+    const auto iHeight = gsl::narrow_cast<int>(m_pSurface->GetHeight());
+    m_pSurface->FillRectangle(0, 0, iWidth, iHeight, nColorBackground);
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)

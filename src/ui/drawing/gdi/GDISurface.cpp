@@ -23,22 +23,22 @@ void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nC
     Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
 }
 
-int GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
+gsl::index GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
 {
     return m_pResourceRepository.LoadFont(sFont, nFontSize, nStyle);
 }
 
-ra::ui::Size GDISurface::MeasureText(int nFont, const std::wstring& sText) const
+ra::ui::Size GDISurface::MeasureText(gsl::index nFont, const std::wstring& sText) const
 {
     SwitchFont(nFont);
 
-    SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+    SIZE szText{};
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
 
-    return ra::ui::Size{ szText.cx, szText.cy };
+    return {szText.cx, szText.cy};
 }
 
-void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
+void GDISurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText)
 {
     SwitchFont(nFont);
 
@@ -49,10 +49,10 @@ void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::w
     }
 
     SetBkMode(m_hDC, TRANSPARENT);
-    TextOutW(m_hDC, nX, nY, sText.c_str(), sText.length());
+    TextOutW(m_hDC, nX, nY, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 }
 
-void GDISurface::SwitchFont(int nFont) const
+void GDISurface::SwitchFont(gsl::index nFont) const
 {
     if (nFont != m_nCurrentFont)
     {
@@ -85,7 +85,7 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     DeleteDC(hdcMem);
 }
 
-void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
+void GDISurface::DrawSurface(std::ptrdiff_t nX, std::ptrdiff_t nY, const ISurface& pSurface)
 {
     auto* pAlphaSurface = dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface);
     if (pAlphaSurface != nullptr)
@@ -97,9 +97,10 @@ void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
     auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
     assert(pGDISurface != nullptr);
 
-    ::BitBlt(m_hDC, nX, nY,
-        static_cast<int>(pSurface.GetWidth()), static_cast<int>(pSurface.GetHeight()),
-        pGDISurface->m_hDC, 0, 0, SRCCOPY);        
+    const auto iX = gsl::narrow_cast<int>(nX);
+    const auto iY = gsl::narrow_cast<int>(nY);
+    ::BitBlt(m_hDC, iX, iY, gsl::narrow_cast<int>(pSurface.GetWidth()), gsl::narrow_cast<int>(pSurface.GetHeight()),
+             pGDISurface->m_hDC, 0, 0, SRCCOPY);
 }
 
 } // namespace gdi

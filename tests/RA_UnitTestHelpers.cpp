@@ -48,7 +48,7 @@ void InitializeMemory(gsl::span<unsigned char> pMemory)
 void InitializeMemory(std::unique_ptr<unsigned char[]> pMemory, size_t nMemorySize)
 {
     g_pDynMemoryBuffer = std::move(pMemory);
-    g_nMemorySize = nMemorySize;
+    g_nMemorySize = gsl::narrow_cast<std::uint32_t>(nMemorySize);
 
     g_MemManager.ClearMemoryBanks();
     g_MemManager.AddMemoryBank(0, ReadDynMemory, SetDynMemory, nMemorySize);

@@ -17,8 +17,8 @@
 #define ID_CANCEL 1025
 #endif
 
-_CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
-_CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
+inline constexpr std::size_t MIN_RESULTS_TO_DUMP{500000U};
+inline constexpr std::size_t MIN_SEARCH_PAGE_SIZE{50U};
 
 Dlg_Memory g_MemoryDialog;
 
@@ -29,10 +29,10 @@ HWND Dlg_Memory::m_hWnd = nullptr;
 HFONT MemoryViewerControl::m_hViewerFont = nullptr;
 SIZE MemoryViewerControl::m_szFontSize;
 unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
-unsigned int MemoryViewerControl::m_nAddressOffset = 0;
+ra::ByteAddress MemoryViewerControl::m_nAddressOffset = 0;
 unsigned int MemoryViewerControl::m_nWatchedAddress = 0;
 MemSize MemoryViewerControl::m_nDataSize = MemSize::EightBit;
-unsigned int MemoryViewerControl::m_nEditAddress = 0;
+ra::ByteAddress MemoryViewerControl::m_nEditAddress = 0;
 unsigned int MemoryViewerControl::m_nEditNibble = 0;
 bool MemoryViewerControl::m_bHasCaret = 0;
 unsigned int MemoryViewerControl::m_nCaretWidth = 0;
@@ -148,7 +148,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             return true;
 
         case VK_END:
-            m_nEditAddress = g_MemManager.TotalBankSize() - 0x10;
+            m_nEditAddress = gsl::narrow_cast<ra::ByteAddress>(g_MemManager.TotalBankSize()) - 0x10;
             m_nEditNibble = 0;
             setAddress(m_nEditAddress);
             return true;
@@ -231,7 +231,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
     SetCaretPos();
 }
 
-void MemoryViewerControl::setAddress(unsigned int address)
+void MemoryViewerControl::setAddress(ra::ByteAddress address)
 {
     m_nAddressOffset = address;
     // g_MemoryDialog.SetWatchingAddress( address );
@@ -541,7 +541,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     FillRect(hMemDC, &rect, hBrush);
     DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
 
-    const char* sHeader{};
+    std::string sHeader;
     switch (m_nDataSize)
     {
         case MemSize::ThirtyTwoBit:
@@ -576,7 +576,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     RECT r{3, 3, rect.right - 3, r.top + m_szFontSize.cy}; // left,top,right,bottom
 
     // Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+    DrawText(hMemDC, NativeStr(sHeader).c_str(), gsl::narrow_cast<int>(sHeader.length()), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
     // Adjust for header:
     r.top += m_szFontSize.cy;
@@ -634,14 +634,14 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                 }
 
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r,
+                DrawText(hMemDC, NativeStr(bufferNative).c_str(), gsl::narrow_cast<int>(ptr - bufferNative), &r,
                          DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                 if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
                 {
                     SetTextColor(hMemDC, RGB(255, 0, 0));
 
-                    size_t stride{};
+                    int stride{};
                     switch (m_nDataSize)
                     {
                         case MemSize::EightBit:
@@ -658,7 +658,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             break;
                     }
 
-                    r.left = 3 + (ptr - bufferNative) * m_szFontSize.cx;
+                    // ptrdiff_t/difference_type is long-long in a 64-bit build
+                    r.left = 3 + gsl::narrow_cast<LONG>(ptr - bufferNative) * m_szFontSize.cx;
                     DrawText(hMemDC, ptr, stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                     SetTextColor(hMemDC, RGB(0, 0, 0));
@@ -692,7 +693,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 
                         if (bDraw)
                         {
-                            size_t stride{};
+                            int stride{};
                             switch (m_nDataSize)
                             {
                                 case MemSize::EightBit:
@@ -709,7 +710,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                                     break;
                             }
 
-                            r.left = 3 + (ptr - bufferNative) * m_szFontSize.cx;
+                            r.left = 3 + gsl::narrow_cast<LONG>(ptr - bufferNative) * m_szFontSize.cx;
                             DrawText(hMemDC, NativeStr(ptr).c_str(), stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
                         }
 
@@ -873,7 +874,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 if (m_SearchResults.size() > 0)
                 {
-                    TCHAR buffer[1024]{};
+                    ra::tstring buffer;
 
                     if (pDIS->itemID < 2)
                     {
@@ -882,27 +883,27 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             try
                             {
                                 const std::string& sFirstLine = m_SearchResults.at(m_nPage).m_results.Summary();
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(sFirstLine).c_str());
+                                buffer = NativeStr(sFirstLine);
                             } catch (const std::out_of_range& e)
                             {
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(e.what()).c_str());
+                                buffer = NativeStr(e.what());
                             }
                         }
                         else
                         {
                             SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
+                            const auto nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
                             if (nMatches > MIN_RESULTS_TO_DUMP)
-                                _stprintf_s(buffer, sizeof(buffer),
-                                            _T("Found %u matches! (Displaying first %u results)"), nMatches,
-                                            MIN_RESULTS_TO_DUMP);
+                                buffer = ra::StringPrintf(_T("Found %u matches! (Displaying first %u results)"),
+                                                          nMatches, MIN_RESULTS_TO_DUMP);
                             else if (nMatches == 0)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found *ZERO* matches!"));
+                                buffer = _T("Found *ZERO* matches!");
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches!"), nMatches);
+                                buffer = ra::StringPrintf(_T("Found %u matches!"), nMatches);
                         }
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
+                        DrawText(pDIS->hDC, buffer.data(), gsl::narrow_cast<int>(buffer.length()),
+                                 &pDIS->rcItem,
                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                         SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
                     }
@@ -914,15 +915,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             break;
 
                         unsigned int nVal = 0;
-                        UpdateSearchResult(result, nVal, buffer);
+                        buffer = UpdateSearchResult(result, nVal);
 
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
                         if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                        {
-                            std::ostringstream oss;
-                            oss << "   (" << pSavedNote->Note() << ")";
-                            _tcscat_s(buffer, NativeStr(oss.str()).c_str());
-                        }
+                            buffer.append(ra::StringPrintf("   (%s)", pSavedNote->Note()));
 
                         COLORREF color{};
 
@@ -956,8 +953,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
                         DeleteObject(hBrush);
 
-                        std::wstring sBufferWide = ra::Widen(buffer);
-                        DrawTextW(pDIS->hDC, sBufferWide.c_str(), sBufferWide.length(), &pDIS->rcItem,
+                        const std::wstring sBufferWide = ra::Widen(buffer.data());
+                        DrawTextW(pDIS->hDC, sBufferWide.c_str(), gsl::narrow_cast<int>(sBufferWide.length()),
+                                  &pDIS->rcItem,
                                   DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
                 }
@@ -1077,7 +1075,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     }
                     else
                     {
-                        unsigned int nValueQuery = 0;
+                        ra::ByteAddress nValueQuery{};
 
                         std::array<TCHAR, 1024> nativeBuffer{};
                         if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), 1024))
@@ -1092,7 +1090,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         sr.m_bUseLastValue = false;
                     }
 
-                    const unsigned int nMatches = sr.m_results.MatchingAddressCount();
+                    const auto nMatches = sr.m_results.MatchingAddressCount();
                     if (nMatches == srPrevious.m_results.MatchingAddressCount())
                     {
                         // same number of matches, if the same query was used, don't double up on the search results
@@ -1145,7 +1143,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_CBO_16BIT:
                 case IDC_RA_CBO_32BIT:
                 {
-                    MemSize nCompSize = MemSize::Nibble_Lower; //	or upper, doesn't really matter
+                    MemSize nCompSize = MemSize::Nibble_Lower; // or upper, doesn't really matter
                     if (SendDlgItemMessage(hDlg, IDC_RA_CBO_8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
                         nCompSize = MemSize::EightBit;
                     else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -1162,7 +1160,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     m_SearchResults.emplace_back();
                     SearchResult& sr = m_SearchResults.back();
 
-                    ra::ByteAddress start, end;
+                    ra::ByteAddress start{}, end{};
                     if (GetSelectedMemoryRange(start, end))
                     {
                         m_nCompareSize = nCompSize;
@@ -1850,7 +1848,7 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     {
         // all items are in "All" range
         start = 0;
-        end = g_MemManager.TotalBankSize() - 1;
+        end = gsl::narrow_cast<ra::ByteAddress>(g_MemManager.TotalBankSize()) - 1;
         return true;
     }
 
@@ -1883,29 +1881,23 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     return false;
 }
 
-void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,
-                                    TCHAR (&buffer)[1024])
+ra::tstring Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal)
 {
     nMemVal = g_MemManager.ActiveBankRAMRead(result.nAddress, result.nSize);
 
     switch (result.nSize)
     {
         case MemSize::ThirtyTwoBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
         case MemSize::SixteenBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
         default:
         case MemSize::EightBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
         case MemSize::Nibble_Lower:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
         case MemSize::Nibble_Upper:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
     }
 }
 

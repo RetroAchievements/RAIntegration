@@ -468,7 +468,8 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
     {
         SelectObject(hDC, g_hFontTitle);
         SetTextColor(hDC, COL_TEXT);
-        TextOutW(hDC, nGameTitleX + nDX + 8, nGameTitleY + nDY, sGameTitle.c_str(), sGameTitle.length());
+        TextOutW(hDC, nGameTitleX + nDX + 8, nGameTitleY + nDY, sGameTitle.c_str(),
+                 gsl::narrow_cast<int>(sGameTitle.length()));
     }
 
     // subtitle
@@ -508,7 +509,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
 
     SelectFont(hDC, g_hFontDesc);
     SetTextColor(hDC, COL_TEXT_LOCKED);
-    TextOutA(hDC, nDX + nGameTitleX + 8, nGameSubTitleY, sSubtitle.c_str(), sSubtitle.length());
+    TextOutA(hDC, nDX + nGameTitleX + 8, nGameSubTitleY, sSubtitle.c_str(), gsl::narrow_cast<int>(sSubtitle.length()));
 
     const int nAchievementsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nAchSpacing;
     if (nAchievementsToDraw > 0 && nNumberOfAchievements > 0)
@@ -544,7 +545,7 @@ void AchievementOverlay::DrawAchievementsPage(HDC hDC, int nDX, int nDY, const R
                     nAchTopEdge,
                     12,
                     nAchSpacing * nAchievementsToDraw,
-                    nNumberOfAchievements - (nAchievementsToDraw - 1),
+                    gsl::narrow_cast<int>(nNumberOfAchievements) - (nAchievementsToDraw - 1),
                     (*pnScrollOffset));
         }
     }
@@ -601,7 +602,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
             auto buffer = ra::StringPrintf(" %s (%u) ", pFriend.Username(), pFriend.GetScore());
             TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(),
-                    buffer.length());
+                    gsl::narrow_cast<int>(buffer.length()));
 
             SelectObject(hDC, g_hFontTiny);
             buffer = ra::StringPrintf(" %s ", pFriend.Activity());
@@ -629,7 +630,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
                 nFriendTopEdge,
                 12,
                 nFriendSpacing * nFriendsToDraw,
-                nNumFriends - (nFriendsToDraw - 1),
+                gsl::narrow_cast<int>(nNumFriends) - (nFriendsToDraw - 1),
                 (*pnScrollOffset));
     }
 
@@ -638,25 +639,25 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
 
 void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
 {
-    const unsigned int nNumAchievements = g_pActiveAchievements->NumAchievements();
+    const auto nNumAchievements = g_pActiveAchievements->NumAchievements();
 
-    const int nAchievementStartX = 0;
-    const int nAchievementStartY = 80;
+    constexpr auto nAchievementStartX = 0;
+    constexpr auto nAchievementStartY = 80;
 
-    const int nLoadingMessageX = 120;
-    const int nLoadingMessageY = 300;
+    constexpr auto nLoadingMessageX = 120;
+    constexpr auto nLoadingMessageY = 300;
 
-    const int nCoreDetailsY = 150;
-    const int nCoreDetailsSpacing = 32;
+    constexpr auto nCoreDetailsY = 150;
+    constexpr auto nCoreDetailsSpacing = 32;
 
-    const int nWonByPlayerYOffs = 300;
-    const int nWonByPlayerYSpacing = 28;
+    constexpr auto nWonByPlayerYOffs = 300;
+    constexpr auto nWonByPlayerYSpacing = 28;
 
-    const int nRecentWinnersSubtitleX = 20;
-    const int nRecentWinnersSubtitleY = 250;
+    constexpr auto nRecentWinnersSubtitleX = 20;
+    constexpr auto nRecentWinnersSubtitleY = 250;
 
-    const int nWonByPlayerNameX = 20;
-    const int nWonByPlayerDateX = 220;
+    constexpr auto nWonByPlayerNameX = 20;
+    constexpr auto nWonByPlayerDateX = 220;
 
     const auto pAch =
         gsl::make_not_null<const Achievement*>(&g_pActiveAchievements->GetAchievement(m_nAchievementsSelectedItem));
@@ -824,11 +825,12 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
     m_nNumLeaderboardsBeingRendered = 0;
 
     auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    unsigned int nNumLBsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nItemSpacing;
-    const unsigned int nNumLBs = pLeaderboardManager.Count();
 
-    if (nNumLBsToDraw > nNumLBs)
-        nNumLBsToDraw = nNumLBs;
+    std::ptrdiff_t nNumLBsToDraw{((rcTarget.bottom - rcTarget.top) - 160) / nItemSpacing};
+    const auto nNumLBs = pLeaderboardManager.Count();
+
+    if (nNumLBsToDraw > ra::to_signed(nNumLBs))
+        nNumLBsToDraw = ra::to_signed(nNumLBs);
 
     if (nNumLBs > 0 && nNumLBsToDraw > 0)
     {
@@ -862,7 +864,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             RECT rcNews;
             SetRect(&rcNews, nLeftAlign, nYOffset, nRightAlign, nYOffset);
             //	Calculate height of rect, fetch bottom for next rect:
-            DrawText(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow_cast<int>(sTitle.length()), &rcNews,
+                     DT_CALCRECT | DT_WORDBREAK);
             nYOffset = rcNews.bottom;
 
             if (rcNews.bottom > nHeight)
@@ -871,7 +874,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             SetTextColor(hDC, bSelected ? COL_SELECTED : COL_TEXT);
 
             //	Draw title:
-            DrawText(hDC, NativeStr(sTitle).c_str(), sTitle.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(sTitle).c_str(), gsl::narrow_cast<int>(sTitle.length()), &rcNews,
+                     DT_TOP | DT_LEFT | DT_WORDBREAK);
 
             //	Offset header
             nYOffset += nHeaderGap;
@@ -881,7 +885,8 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             //	Setup initial variables for the rect
             SetRect(&rcNews, nLeftAlign + nArticleIndent, nYOffset, nRightAlign - nArticleIndent, nYOffset);
             //	Calculate height of rect, fetch and inset bottom:
-            DrawText(hDC, NativeStr(sPayload).c_str(), sPayload.length(), &rcNews, DT_CALCRECT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow_cast<int>(sPayload.length()), &rcNews,
+                     DT_CALCRECT | DT_WORDBREAK);
             nYOffset = rcNews.bottom;
 
             if (rcNews.bottom > nHeight)
@@ -890,21 +895,22 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
             SetTextColor(hDC, COL_SELECTED_LOCKED);
 
             //	Draw payload:
-            DrawText(hDC, NativeStr(sPayload).c_str(), sPayload.length(), &rcNews, DT_TOP | DT_LEFT | DT_WORDBREAK);
+            DrawText(hDC, NativeStr(sPayload).c_str(), gsl::narrow_cast<int>(sPayload.length()), &rcNews,
+                     DT_TOP | DT_LEFT | DT_WORDBREAK);
 
             nYOffset += nArticleGap;
 
             m_nNumLeaderboardsBeingRendered++;
         }
 
-        if (nNumLBs > (nNumLBsToDraw - 1))
+        if (ra::to_signed(nNumLBs) > (nNumLBsToDraw - 1))
         {
             DrawBar(hDC,
                     nDX + 8,
                     nYOffsetTop,
                     12,
                     nLBSpacing * m_nNumLeaderboardsBeingRendered,
-                    nNumLBs - (nNumLBsToDraw - 1),
+                    gsl::narrow_cast<int>(nNumLBs - (nNumLBsToDraw - 1)),
                     (*pnScrollOffset));
         }
     }
@@ -913,7 +919,7 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
     SelectObject(hDC, hOldObject);
 }
 
-void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const
+void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, int, const RECT&) const
 {
     const int nLBStartX = 0;
     const int nLBStartY = 80;
@@ -939,44 +945,39 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
     if (pLB == nullptr)
     {
         const std::string sMsg(" No leaderboard found ");
-        TextOut(hDC, 120, 120, NativeStr(sMsg).c_str(), sMsg.length());
+        TextOut(hDC, 120, 120, NativeStr(sMsg).c_str(), gsl::narrow_cast<int>(sMsg.length()));
     }
     else
     {
-        const std::string sTitle(" " + pLB->Title() + " ");
-        TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(sTitle).c_str(), sTitle.length());
+        const auto sTitle = ra::StringPrintf(" %s ", pLB->Title());
+        TextOut(hDC, nDX + 20, nCoreDetailsY, NativeStr(sTitle).c_str(), gsl::narrow_cast<int>(sTitle.length()));
 
         SetTextColor(hDC, COL_SELECTED_LOCKED);
-        const std::string sDesc(" " + pLB->Description() + " ");
-        TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(sDesc).c_str(), sDesc.length());
+        const auto sDesc = ra::StringPrintf(" %s ", pLB->Description());
+        TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(sDesc).c_str(),
+                gsl::narrow_cast<int>(sDesc.length()));
 
         SetTextColor(hDC, COL_TEXT);
 
         if (g_LBExamine.m_bHasData)
         {
-            for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
+            int i = -1;
+            for (const auto& rEntry : *pLB)
             {
-                const RA_Leaderboard::Entry& rEntry = pLB->GetRankInfo(i);
-                std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
-
-                char sRankText[256];
-                sprintf_s(sRankText, 256, " %u ", rEntry.m_nRank);
-
-                char sNameText[256];
-                sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername.c_str());
-
-                char sScoreText[256];
-                sprintf_s(sScoreText, 256, " %s ", sScoreFormatted.c_str());
+                i++;
+                const auto sRankText = ra::StringPrintf(" %u ", rEntry.m_nRank);
+                const auto sNameText = ra::StringPrintf(" %s ", rEntry.m_sUsername);
+                const auto sScoreText = ra::StringPrintf(" %s ", pLB->FormatScore(rEntry.m_nScore));
 
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC, nDX + nWonByPlayerRankX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sRankText).c_str(), strlen(sRankText));
+                        NativeStr(sRankText).c_str(), gsl::narrow_cast<int>(sRankText.length()));
 
                 TextOut(hDC, nDX + nWonByPlayerUserX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sNameText).c_str(), strlen(sNameText));
+                        NativeStr(sNameText).c_str(), gsl::narrow_cast<int>(sNameText.length()));
 
                 TextOut(hDC, nDX + nWonByPlayerScoreX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sScoreText).c_str(), strlen(sScoreText));
+                        NativeStr(sScoreText).c_str(), gsl::narrow_cast<int>(sScoreText.length()));
             }
         }
         else
@@ -993,7 +994,7 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
                                                  nDotCount > 2 ? '.' : ' ', nDotCount > 3 ? '.' : ' ');
 
             TextOut(hDC, nDX + nLoadingMessageX, nLoadingMessageY, NativeStr(buffer).c_str(),
-                    ra::to_signed(buffer.length()));
+                    gsl::narrow_cast<int>(buffer.length()));
         }
     }
 }
@@ -1125,53 +1126,43 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
         SetTextColor(hDC, COL_TEXT);
 
         const auto& sTitle{ra::PAGE_TITLES.at(ra::etoi(nCurrentPage))};
-        TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, ra::to_signed(ra::tcslen_s(sTitle)));
+        TextOut(hDC, nDX + nBorder, 4 + nBorder, sTitle, gsl::narrow_cast<int>(ra::tcslen_s(sTitle)));
     }
 
     //	Render controls:
     SelectFont(hDC, g_hFontDesc2);
     {
-        const int nControlsX1 = 80 + 80 + 4;
-        const int nControlsX2 = 80;
-        const int nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
-        const int nControlsY2 = rcTarget.bottom - 30 - 4;
+        constexpr auto nControlsX1 = 80 + 80 + 4;
+        constexpr auto nControlsX2 = 80;
+        const auto nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
+        const auto nControlsY2 = rcTarget.bottom - 30 - 4;
 
-        //	Fill again:
-        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
+        // Fill again:
+        rc = {nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight};
         FillRect(hDC, &rc, g_hBrushBG);
 
-        //	Draw control text:
+        // Draw control text:
         {
-            ra::tstring stNext{_T(" ->:")};
-            stNext += _T("Next ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::to_signed(stNext.length()));
-        }
-        {
-            ra::tstring stPrev{_T(" <-:")};
-            stPrev += _T("Prev ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::to_signed(stPrev.length()));
+            ra::tstring buffer{_T(" ->:Next ")};
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()));
+
+            buffer = _T(" <-:Prev ");
+            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()));
         }
 
         _CONSTANT_LOC ctBackChar{_T('B')};
         auto ctSelectChar{_T('A')};
 
-        //	Genesis wouldn't use 'A' for select
+        // Genesis wouldn't use 'A' for select
         if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
             ctSelectChar = _T('C');
 
         {
-            ra::tstring stBack{_T(" ")};
-            stBack += ctBackChar;
-            stBack += _T(":");
-            stBack += _T("Back ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::to_signed(stBack.length()));
-        }
-        {
-            ra::tstring stSelect{_T(" ")};
-            stSelect += ctSelectChar;
-            stSelect += _T(":");
-            stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::to_signed(stSelect.length()));
+            auto buffer = ra::StringPrintf(_T(" %c:Back "), ctBackChar);
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()));
+
+            buffer = ra::StringPrintf(_T(" %c:Select "), ctSelectChar);
+            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()));
         }
     }
 
@@ -1263,11 +1254,12 @@ void AchievementOverlay::DrawAchievement(HDC hDC, gsl::not_null<const Achievemen
 
     auto buffer = ra::StringPrintf(" %s ", pAch->Description().c_str());
     SelectObject(hDC, g_hFontDesc2);
-    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
+    TextOut(hDC, nX + nAchLeftOffset2, nY + nAchSpacingDesc, NativeStr(buffer).c_str(),
+            gsl::narrow_cast<int>(buffer.length()));
 
     buffer = ra::StringPrintf(" %s (%u Points) ", pAch->Title().c_str(), pAch->Points());
     SelectObject(hDC, g_hFontDesc);
-    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
+    TextOut(hDC, nX + nAchLeftOffset1, nY, NativeStr(buffer).c_str(), gsl::narrow_cast<int>(buffer.length()));
 }
 
 _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, int nY, int nW, int nH) const
@@ -1293,10 +1285,10 @@ _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, i
     SelectObject(hDC, g_hFontDesc);
 
     auto buffer = ra::StringPrintf(" %s ", pUserContext.GetUsername());
-    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
+    TextOut(hDC, nTextX, nTextY1, NativeStr(buffer).c_str(), gsl::narrow_cast<int>(buffer.length()));
 
     buffer = ra::StringPrintf(" %u Points ", pUserContext.GetScore());
-    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
+    TextOut(hDC, nTextX, nTextY2, NativeStr(buffer).c_str(), gsl::narrow_cast<int>(buffer.length()));
 
     if (_RA_HardcoreModeIsActive())
     {
@@ -1304,7 +1296,7 @@ _Use_decl_annotations_ void AchievementOverlay::DrawUserFrame(HDC hDC, int nX, i
         const COLORREF nLastColorBk = SetBkColor(hDC, COL_WARNING_BG);
 
         buffer = " HARDCORE ";
-        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), ra::to_signed(buffer.length()));
+        TextOut(hDC, nX + 180, nY + 70, NativeStr(buffer).c_str(), gsl::narrow_cast<int>(buffer.length()));
 
         SetTextColor(hDC, nLastColor);
         SetBkColor(hDC, nLastColorBk);
@@ -1494,18 +1486,19 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
     m_bHasData = true;
 }
 
-void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
+_Use_decl_annotations_
+void LeaderboardExamine::Initialize(const ra::LeaderboardID nLBID)
 {
     m_bHasData = false;
 
-    if (m_nLBID == nLBIDIn)
+    if (m_nLBID == nLBID)
     {
         //	Same ID again: keep existing data
         m_bHasData = true;
         return;
     }
 
-    m_nLBID = nLBIDIn;
+    m_nLBID = nLBID;
 
     const unsigned int nOffset = 0; //	TBD
     const unsigned int nCount = 10;

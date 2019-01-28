@@ -38,7 +38,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
     while (nAvailableBytes > 0)
     {
         DWORD nBytesFetched = 0U;
-        const DWORD nBytesToRead = sBuffer.capacity() - nInsertAt;
+        const auto nBytesToRead = gsl::narrow_cast<DWORD>(sBuffer.capacity()) - nInsertAt;
         if (WinHttpReadData(hRequest, &sBuffer.at(nInsertAt), nBytesToRead, &nBytesFetched))
         {
             nInsertAt += nBytesFetched;
@@ -171,19 +171,16 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 // send the request
                 if (sPostData.empty())
                 {
-                    bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), sHeaders.length(),
-                        WINHTTP_NO_REQUEST_DATA,
-                        0, 0,
-                        0);
+                    bResults =
+                        WinHttpSendRequest(hRequest, sHeaders.c_str(), gsl::narrow_cast<DWORD>(sHeaders.length()),
+                                           WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
                 }
                 else
                 {
-                    bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), sHeaders.length(),
-                        static_cast<LPVOID>(sPostData.data()),
-                        sPostData.length(), sPostData.length(),
-                        0);
+                    const auto dwPostLength = gsl::narrow_cast<DWORD>(sPostData.length());
+                    bResults =
+                        WinHttpSendRequest(hRequest, sHeaders.c_str(), gsl::narrow_cast<DWORD>(sHeaders.length()),
+                                           sPostData.data(), dwPostLength, dwPostLength, 0);
                 }
 
                 if (!bResults || !WinHttpReceiveResponse(hRequest, nullptr))

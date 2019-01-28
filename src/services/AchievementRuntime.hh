@@ -39,7 +39,7 @@ public:
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void DeactivateAchievement(unsigned int nId) noexcept
+    void DeactivateAchievement(ra::AchievementID nId) noexcept
     {
         RemoveEntry(m_vQueuedAchievements, nId);
         RemoveEntry(m_vActiveAchievements, nId);
@@ -115,7 +115,7 @@ protected:
     }
 
     GSL_SUPPRESS_F6
-    static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
+    static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, ra::AchievementID nId) noexcept
     {
         for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {

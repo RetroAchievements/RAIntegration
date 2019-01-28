@@ -131,7 +131,7 @@ void ConditionSet::Serialize(std::string& buffer) const
     if (m_vConditionGroups.empty())
         return;
 
-    int conditions = 0;
+    std::size_t conditions{};
     for (const ConditionGroup& group : m_vConditionGroups)
         conditions += group.Count();
 

@@ -25,7 +25,7 @@ _NODISCARD inline static constexpr auto Padding(_In_ MemSize size) noexcept
     }
 }
 
-void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize)
+void SearchResults::Initialize(ra::ByteAddress nAddress, unsigned int nBytes, MemSize nSize)
 {
     if (nSize == MemSize::Nibble_Upper)
         nSize = MemSize::Nibble_Lower;
@@ -34,7 +34,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     m_bUnfiltered = true;
 
     if (nBytes + nAddress > g_MemManager.TotalBankSize())
-        nBytes = g_MemManager.TotalBankSize() - nAddress;
+        nBytes = gsl::narrow_cast<unsigned int>(g_MemManager.TotalBankSize()) - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
     nBytes -= nPadding;
@@ -60,7 +60,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     }
 }
 
-SearchResults::MemBlock& SearchResults::AddBlock(unsigned int nAddress, unsigned int nSize)
+SearchResults::MemBlock& SearchResults::AddBlock(ra::ByteAddress nAddress, unsigned int nSize)
 {
     m_vBlocks.emplace_back(nAddress, nSize);
     return m_vBlocks.back();
@@ -402,20 +402,20 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_sSummary.append(" last known value...");
 }
 
-unsigned int SearchResults::MatchingAddressCount() noexcept
+std::size_t SearchResults::MatchingAddressCount() noexcept
 {
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();
 
-    const unsigned int nPadding = Padding(m_nSize);
-    unsigned int nCount = 0;
+    const auto nPadding = Padding(m_nSize);
+    unsigned int nCount{};
     for (auto& block : m_vBlocks)
         nCount += block.GetSize() - nPadding;
 
     if (m_nSize == MemSize::Nibble_Lower)
         nCount *= 2;
 
-    return nCount;
+    return {nCount}; // NB: The braces are required
 }
 
 void SearchResults::ExcludeAddress(unsigned int nAddress)

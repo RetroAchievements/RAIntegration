@@ -34,8 +34,8 @@ private:
 private:
     PopupState m_nState{};
     double m_fScoreboardShowTimer{};
-    std::vector<unsigned int> m_vActiveLBIDs;
-    std::queue<unsigned int> m_vScoreboardQueue;
+    std::vector<ra::LeaderboardID> m_vActiveLBIDs;
+    std::queue<ra::LeaderboardID> m_vScoreboardQueue;
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pScoreboardSurface;
 };

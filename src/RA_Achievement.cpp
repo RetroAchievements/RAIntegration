@@ -413,7 +413,7 @@ size_t Achievement::InsertCondition(size_t nConditionGroup, size_t nIndex, const
     return group.Count();
 }
 
-BOOL Achievement::RemoveCondition(size_t nConditionGroup, unsigned int nID)
+BOOL Achievement::RemoveCondition(size_t nConditionGroup, gsl::index nID)
 {
     if (nConditionGroup < m_vConditions.GroupCount())
     {

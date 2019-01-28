@@ -280,10 +280,10 @@ public:
         {
             if (sFormat.back() == 'f' || sFormat.back() == 'F')
             {
-                const int nIndex = sFormat.find('.');
+                const auto nIndex = sFormat.find('.');
                 if (nIndex != std::string::npos)
                 {
-                    int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
+                    const auto nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
                     oss.precision(nPrecision);
                     oss << std::fixed;
                 }
@@ -309,8 +309,8 @@ public:
         }
         else
         {
-            const int nLength = strlen(arg);
-            int nPadding = std::stoi(sFormat.c_str());
+            const auto nLength = std::strlen(arg);
+            std::ptrdiff_t nPadding{std::stoi(sFormat)};
             nPadding -= nLength;
             if (nPadding > 0)
                 m_vPending.emplace_back(std::string(nPadding, ' '));

@@ -22,7 +22,7 @@ public:
     static bool OnKeyDown(UINT nChar);
     static bool OnEditInput(UINT c);
 
-    static void setAddress(unsigned int nAddr);
+    static void setAddress(ra::ByteAddress nAddr);
     static void setWatchedAddress(unsigned int nAddr);
     static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
     static void moveAddress(int offset, int nibbleOff);
@@ -44,10 +44,10 @@ private:
     static HFONT m_hViewerFont;
     static SIZE m_szFontSize;
     static unsigned int m_nDataStartXOffset;
-    static unsigned int m_nAddressOffset;
+    static ra::ByteAddress m_nAddressOffset;
     static unsigned int m_nWatchedAddress;
     static MemSize m_nDataSize;
-    static unsigned int m_nEditAddress;
+    static ra::ByteAddress m_nEditAddress;
     static unsigned int m_nEditNibble;
 
     static bool m_bHasCaret;
@@ -59,12 +59,12 @@ struct SearchResult
 {
     ra::services::SearchResults m_results;
 
-    std::vector<unsigned int> m_modifiedAddresses;
-    bool m_bUseLastValue = false;
-    unsigned int m_nLastQueryVal = 0;
-    ComparisonType m_nCompareType = ComparisonType::Equals;
+    std::vector<ra::ByteAddress> m_modifiedAddresses;
+    bool m_bUseLastValue{};
+    ra::ByteAddress m_nLastQueryVal{};
+    ComparisonType m_nCompareType{};
 
-    bool WasModified(unsigned int nAddress)
+    bool WasModified(ra::ByteAddress nAddress)
     {
         return std::find(m_modifiedAddresses.begin(), m_modifiedAddresses.end(), nAddress) != m_modifiedAddresses.end();
     }
@@ -106,15 +106,15 @@ private:
 
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
-    void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, TCHAR(&buffer)[1024]);
+    ra::tstring UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
     static CodeNotes m_CodeNotes;
     static HWND m_hWnd;
 
-    unsigned int m_nStart = 0;
-    unsigned int m_nEnd = 0;
-    MemSize m_nCompareSize = MemSize{};
+    ra::ByteAddress m_nStart{};
+    ra::ByteAddress m_nEnd{};
+    MemSize m_nCompareSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

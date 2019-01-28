@@ -51,7 +51,7 @@ private:
 
         std::wstring sBuffer;
         sBuffer.resize(nLength + 1);
-        GetWindowTextW(m_hWnd, sBuffer.data(), sBuffer.capacity());
+        GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
         sBuffer.resize(nLength);
 
         SetValue(*m_pTextBoundProperty, sBuffer);

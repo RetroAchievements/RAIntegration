@@ -93,6 +93,7 @@ using WORD = unsigned short;
 
 #ifndef _WINNT_
 using HANDLE = void*;
+using LONG = long;
 using LPCTSTR = const TCHAR*;
 using LPTSTR = TCHAR*;
 #endif // !_WINNT_
@@ -102,9 +103,11 @@ namespace ra {
 using tstring = std::basic_string<TCHAR>;
 
 using ARGB = DWORD;
-using ByteAddress = std::size_t;
-using AchievementID = std::size_t;
-using LeaderboardID = std::size_t;
+// TBD: These are explicitly made 32-bit to address narrowing conversions, should we make them 32/64-bit (i.e.,
+// size_t/ptrdiff_t) and narrow as needed?
+using ByteAddress = std::uint32_t;
+using AchievementID = std::uint32_t;
+using LeaderboardID = std::uint32_t;
 
 } /* namespace ra */
 

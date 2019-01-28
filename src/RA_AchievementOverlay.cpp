@@ -584,9 +584,9 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
         if (i > ra::to_signed(nNumFriends))
             break;
 
-        if ((i + nOffset) < ra::to_signed(nNumFriends))
+        if ((i + nOffset) < gsl::narrow_cast<int>(nNumFriends))
         {
-            const auto& pFriend = RAUsers::LocalUser().GetFriendByIter((i + nOffset));
+            const auto& pFriend = RAUsers::LocalUser().GetFriendByIter(ra::to_unsigned(i + nOffset));
 
             ra::ui::ImageReference friendImage(ra::ui::ImageType::UserPic, pFriend.Username());
             HBITMAP hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(friendImage);

@@ -33,7 +33,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, unsigned int nBytes, Me
     m_nSize = nSize;
     m_bUnfiltered = true;
 
-    if (nBytes + nAddress > g_MemManager.TotalBankSize())
+    if (std::size_t{nBytes + nAddress} > g_MemManager.TotalBankSize())
         nBytes = gsl::narrow_cast<unsigned int>(g_MemManager.TotalBankSize()) - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
@@ -53,7 +53,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, unsigned int nBytes, Me
     {
         const auto nBlockSize = (nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes;
         auto& block = AddBlock(nAddress, nBlockSize + nPadding);
-        g_MemManager.ActiveBankRAMRead(block.GetBytes(), block.GetAddress(), nBlockSize + nPadding);
+        g_MemManager.ActiveBankRAMRead(block.GetBytes(), block.GetAddress(), {nBlockSize + nPadding});
 
         nAddress += nBlockSize;
         nBytes -= nBlockSize;

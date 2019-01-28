@@ -251,7 +251,8 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
                     // scoreboard
                     auto nY = 4 + FONT_SIZE_TITLE + 4;
                     gsl::index i = 0;
-                    while (i < ra::to_signed(pLB->GetRankInfoCount()) && nY + FONT_SIZE_TEXT < m_pScoreboardSurface->GetHeight())
+                    while (i < ra::to_signed(pLB->GetRankInfoCount()) &&
+                           gsl::narrow_cast<std::ptrdiff_t>(nY + FONT_SIZE_TEXT) < m_pScoreboardSurface->GetHeight())
                     {
                         const RA_Leaderboard::Entry& lbInfo = pLB->GetRankInfo(i++);
                         // Suppress isn't working, suppress this by function

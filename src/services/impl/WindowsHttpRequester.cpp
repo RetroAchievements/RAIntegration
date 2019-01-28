@@ -27,7 +27,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
 #pragma warning(pop)
 
     // allocate enough space in the string for the whole content
-    sBuffer.resize(nContentLength + 1); // reserve space for null terminator
+    sBuffer.resize(nContentLength + 1U); // reserve space for null terminator
     sBuffer.at(nContentLength) = '\0'; // set null terminator, will fill remaining portion of buffer
     sBuffer.resize(nContentLength);
 

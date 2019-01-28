@@ -40,7 +40,7 @@ unsigned int MemoryViewerControl::m_nCaretHeight = 0;
 unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
 unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
-unsigned int m_nPage = 0;
+std::size_t m_nPage = 0;
 
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
@@ -65,6 +65,14 @@ _NODISCARD _CONSTANT_FN GetMaxNibble(_In_ MemSize size) noexcept
 
 LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    const auto OnMouseWheel = [](HWND /*hwnd*/, int /*xPos*/, int /*yPos*/, int zDelta, UINT /*fwKeys*/) noexcept
+    {
+        if (zDelta > 0 && m_nAddressOffset > (0x40))
+            setAddress(m_nAddressOffset - 32);
+        else if (zDelta < 0 && m_nAddressOffset + (0x40U) < g_MemManager.TotalBankSize())
+            setAddress(m_nAddressOffset + 32);
+        return FALSE;
+    };
     switch (uMsg)
     {
         case WM_NCCREATE:
@@ -81,12 +89,7 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
         case WM_ERASEBKGND:
             return TRUE;
 
-        case WM_MOUSEWHEEL:
-            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
-                setAddress(m_nAddressOffset - 32);
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && m_nAddressOffset + (0x40) < g_MemManager.TotalBankSize())
-                setAddress(m_nAddressOffset + 32);
-            return FALSE;
+        HANDLE_MSG(hDlg, WM_MOUSEWHEEL, OnMouseWheel);
 
         case WM_LBUTTONUP:
             OnClick({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
@@ -623,13 +626,16 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                     case MemSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
-                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(j + 1), data.at(j));
+                            // TBD: should be to_unsigned but it could cause errors if the return is negative
+                            ptr += gsl::narrow_cast<std::ptrdiff_t>(
+                                _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(j + 1), data.at(j)));
                         break;
                     case MemSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
                         {
-                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(j + 3), data.at(j + 2),
-                                               data.at(j + 1), data.at(j));
+                            ptr += gsl::narrow_cast<std::ptrdiff_t>(_stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "),
+                                                                                data.at(j + 3), data.at(j + 2),
+                                                                                data.at(j + 1), data.at(j)));
                         }
                         break;
                 }
@@ -645,15 +651,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     switch (m_nDataSize)
                     {
                         case MemSize::EightBit:
-                            ptr = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
+                            ptr = bufferNative + std::ptrdiff_t{10 + 3 * (m_nWatchedAddress & 0x0F)};
                             stride = 2;
                             break;
                         case MemSize::SixteenBit:
-                            ptr = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
+                            ptr = bufferNative + std::ptrdiff_t{10 + 5 * ((m_nWatchedAddress & 0x0F) / 2)};
                             stride = 4;
                             break;
                         case MemSize::ThirtyTwoBit:
-                            ptr = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
+                            ptr = bufferNative + std::ptrdiff_t{10 + 9 * ((m_nWatchedAddress & 0x0F) / 4)};
                             stride = 8;
                             break;
                     }
@@ -697,15 +703,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             switch (m_nDataSize)
                             {
                                 case MemSize::EightBit:
-                                    ptr = bufferNative + 10 + 3 * j;
+                                    ptr = bufferNative + std::ptrdiff_t{10 + 3 * j};
                                     stride = 2;
                                     break;
                                 case MemSize::SixteenBit:
-                                    ptr = bufferNative + 10 + 5 * (j / 2);
+                                    ptr = bufferNative + std::ptrdiff_t{10 + 5 * (j / 2)};
                                     stride = 4;
                                     break;
                                 case MemSize::ThirtyTwoBit:
-                                    ptr = bufferNative + 10 + 9 * (j / 4);
+                                    ptr = bufferNative + std::ptrdiff_t{10 + 9 * (j / 4)};
                                     stride = 8;
                                     break;
                             }
@@ -1334,7 +1340,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     m_nPage++;
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), m_nPage + 1 < m_SearchResults.size());
+                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), m_nPage + 1U < m_SearchResults.size());
 
                     SearchResult& sr = m_SearchResults.at(m_nPage);
                     if (sr.m_results.Summary().empty())
@@ -1354,7 +1360,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     if (nSel != -1)
                     {
-                        while (m_SearchResults.size() > m_nPage + 1)
+                        while (m_SearchResults.size() > m_nPage + 1U)
                             m_SearchResults.pop_back();
 
                         // copy the selected page, so we can return to it if we want

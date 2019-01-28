@@ -152,7 +152,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, gsl::index nFont, Color nC
 
     // copy the greyscale text to the foreground using the grey value as the alpha for anti-aliasing
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
-    assert(ra::to_signed(nFirstScanline) >= 0);
+    assert(nFirstScanline >= 0);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
 
     // clip to surface

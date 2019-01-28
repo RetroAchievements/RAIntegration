@@ -714,7 +714,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             {
                                 // Reverse find where I am in the list:
                                 const gsl::index nIndex = g_pActiveAchievements->GetAchievementIndex(Cheevo);
-                                assert(nIndex < g_pActiveAchievements->NumAchievements());
+                                Ensures(nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()));
                                 if (nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()))
                                     ReloadLBXData(nIndex);
 

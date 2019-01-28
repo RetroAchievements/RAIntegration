@@ -171,7 +171,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 // send the request
                 if (sPostData.empty())
                 {
-                    bResults =
+                    GSL_SUPPRESS_ES47 bResults =
                         WinHttpSendRequest(hRequest, sHeaders.c_str(), gsl::narrow_cast<DWORD>(sHeaders.length()),
                                            WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
                 }

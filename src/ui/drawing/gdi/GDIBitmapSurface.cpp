@@ -41,7 +41,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
-        const std::uint32_t* pEnd = pBits + std::ptrdiff_t{nWidth * nHeight};
+        const std::uint32_t* pEnd = pBits + gsl::narrow_cast<std::ptrdiff_t>(nWidth * nHeight);
         do
         {
             *pBits++ = nColor.ARGB;
@@ -209,7 +209,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, std::ptrdiff_t nX, std::ptrdiff
     BitBlt(hMemDC, 0, 0, nWidth, nHeight, hTargetDC, iX, iY, SRCCOPY);
 
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
-    const std::uint32_t* pEnd = pBits + std::ptrdiff_t{nWidth * nHeight};
+    const std::uint32_t* pEnd = pBits + gsl::narrow_cast<std::ptrdiff_t>(nWidth * nHeight);
     std::uint32_t* pSrcBits = m_pBits;
     Expects(pSrcBits != nullptr);
     do

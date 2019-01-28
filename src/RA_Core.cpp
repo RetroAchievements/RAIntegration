@@ -1080,7 +1080,7 @@ std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, std::str
         return nullptr;
 
     // Calculate filesize
-    nFileSizeOut = ra::to_signed(std::filesystem::file_size(sFilename));
+    GSL_SUPPRESS_F6 nFileSizeOut = ra::to_signed(std::filesystem::file_size(sFilename));
 
     // No good content in this file.
     if (nFileSizeOut <= 0)
@@ -1091,7 +1091,7 @@ std::unique_ptr<char[]> _BulkReadFileToBuffer(const wchar_t* sFilename, std::str
     if (!pRawFileOut)
         return nullptr;
 
-    ifile.read(pRawFileOut.get(), nFileSizeOut);
+    GSL_SUPPRESS_F6 ifile.read(pRawFileOut.get(), nFileSizeOut);
     return pRawFileOut;
 }
 

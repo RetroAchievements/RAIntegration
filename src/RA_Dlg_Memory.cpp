@@ -69,7 +69,7 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
     {
         if (zDelta > 0 && m_nAddressOffset > (0x40))
             setAddress(m_nAddressOffset - 32);
-        else if (zDelta < 0 && m_nAddressOffset + (0x40U) < g_MemManager.TotalBankSize())
+        else if (zDelta < 0 && gsl::narrow_cast<std::size_t>(m_nAddressOffset + (0x40U)) < g_MemManager.TotalBankSize())
             setAddress(m_nAddressOffset + 32);
         return FALSE;
     };
@@ -626,16 +626,14 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                     case MemSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
-                            // TBD: should be to_unsigned but it could cause errors if the return is negative
-                            ptr += gsl::narrow_cast<std::ptrdiff_t>(
-                                _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(j + 1), data.at(j)));
+                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(ra::to_unsigned(j + 1)), data.at(j));
                         break;
                     case MemSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
                         {
-                            ptr += gsl::narrow_cast<std::ptrdiff_t>(_stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "),
-                                                                                data.at(j + 3), data.at(j + 2),
-                                                                                data.at(j + 1), data.at(j)));
+                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(ra::to_unsigned(j + 3)),
+                                               data.at(ra::to_unsigned(j + 2)), data.at(ra::to_unsigned(j + 1)),
+                                               data.at(j));
                         }
                         break;
                 }
@@ -651,15 +649,17 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     switch (m_nDataSize)
                     {
                         case MemSize::EightBit:
-                            ptr = bufferNative + std::ptrdiff_t{10 + 3 * (m_nWatchedAddress & 0x0F)};
+                            ptr = bufferNative + gsl::narrow_cast<std::ptrdiff_t>(10 + 3 * (m_nWatchedAddress & 0x0F));
                             stride = 2;
                             break;
                         case MemSize::SixteenBit:
-                            ptr = bufferNative + std::ptrdiff_t{10 + 5 * ((m_nWatchedAddress & 0x0F) / 2)};
+                            ptr = bufferNative +
+                                  gsl::narrow_cast<std::ptrdiff_t>((10 + 5 * ((m_nWatchedAddress & 0x0F) / 2)));
                             stride = 4;
                             break;
                         case MemSize::ThirtyTwoBit:
-                            ptr = bufferNative + std::ptrdiff_t{10 + 9 * ((m_nWatchedAddress & 0x0F) / 4)};
+                            ptr = bufferNative +
+                                  gsl::narrow_cast<std::ptrdiff_t>(10 + 9 * ((m_nWatchedAddress & 0x0F) / 4));
                             stride = 8;
                             break;
                     }
@@ -703,15 +703,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             switch (m_nDataSize)
                             {
                                 case MemSize::EightBit:
-                                    ptr = bufferNative + std::ptrdiff_t{10 + 3 * j};
+                                    ptr = bufferNative + gsl::narrow_cast<std::ptrdiff_t>(10 + 3 * j);
                                     stride = 2;
                                     break;
                                 case MemSize::SixteenBit:
-                                    ptr = bufferNative + std::ptrdiff_t{10 + 5 * (j / 2)};
+                                    ptr = bufferNative + gsl::narrow_cast<std::ptrdiff_t>(10 + 5 * (j / 2));
                                     stride = 4;
                                     break;
                                 case MemSize::ThirtyTwoBit:
-                                    ptr = bufferNative + std::ptrdiff_t{10 + 9 * (j / 4)};
+                                    ptr = bufferNative + gsl::narrow_cast<std::ptrdiff_t>(10 + 9 * (j / 4));
                                     stride = 8;
                                     break;
                             }

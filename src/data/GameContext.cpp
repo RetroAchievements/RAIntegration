@@ -515,12 +515,11 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(unsigned int nAchievementId) noexcept
+GSL_SUPPRESS_F6 bool GameContext::RemoveAchievement(unsigned int nAchievementId) noexcept
 {
-    GSL_SUPPRESS_F6
+    // Basically almost every line in this function could throw an exception
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {
-        GSL_SUPPRESS_F6
         if (*pIter && (*pIter)->ID() == nAchievementId)
         {
 #ifndef RA_UTEST

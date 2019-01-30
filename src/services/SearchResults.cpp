@@ -37,7 +37,10 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
         nBytes = g_MemManager.TotalBankSize() - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
-    nBytes -= nPadding;
+    if (nPadding >= nBytes)
+        nBytes = 0;
+    else
+        nBytes -= nPadding;
 
     m_sSummary.reserve(64);
     m_sSummary.append("Cleared: (");

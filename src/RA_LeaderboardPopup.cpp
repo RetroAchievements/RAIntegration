@@ -169,9 +169,7 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
             if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
                 break;
 
-            using default_isurfacefactory_t = ra::ui::drawing::ISurfaceFactory;
-
-            const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<default_isurfacefactory_t>();
+            const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
             auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
             auto nFontText = pTempSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
 

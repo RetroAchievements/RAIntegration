@@ -48,18 +48,18 @@ void SessionTracker::LoadSessions()
             if (nIndex == std::string::npos)
                 continue;
 
-            const auto nGameId = std::stoul(sLine);
+            const auto nGameId = std::strtoul(sLine.c_str(), nullptr, 10);
 
             auto nIndex2 = sLine.find(':', ++nIndex);
             if (nIndex2 == std::string::npos)
                 continue;
 
-            const auto nSessionStart = std::stoul(&sLine.at(nIndex));
+            const auto nSessionStart = std::strtoul(&sLine.at(nIndex), nullptr, 10);
 
             nIndex = sLine.find(':', ++nIndex2);
             if (nIndex == std::string::npos)
                 continue;
-            const auto nSessionLength = std::stoul(&sLine.at(nIndex2));
+            const auto nSessionLength = std::strtoul(&sLine.at(nIndex2), nullptr, 10);
 
             std::string md5;
             GSL_SUPPRESS_TYPE1 md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);

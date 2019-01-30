@@ -57,7 +57,7 @@ void LocalRAUser::OnFriendListResponse(const rapidjson::Document& doc)
     for (auto& NextFriend : FriendData.GetArray())
     {
         auto& pUser{RAUsers::GetUser(NextFriend["Friend"].GetString())};
-        pUser.SetScore(std::stoul(NextFriend["RAPoints"].GetString()));
+        pUser.SetScore(std::strtoul(NextFriend["RAPoints"].GetString(), nullptr, 10));
         pUser.UpdateActivity(NextFriend["LastSeen"].GetString());
 
         AddFriend(pUser.Username(), pUser.GetScore());

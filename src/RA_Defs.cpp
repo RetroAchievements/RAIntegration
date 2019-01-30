@@ -16,43 +16,29 @@ std::string ByteAddressToString(ByteAddress nAddr)
 }
 
 _Use_decl_annotations_
-ByteAddress ByteAddressFromString(const std::string& sByteAddress)
+ByteAddress ByteAddressFromString(const std::string& sByteAddress) noexcept
 {
-    try
+    ra::ByteAddress address{};
+
+    if (!ra::StringStartsWith(sByteAddress, "-")) // negative addresses not supported
     {
-        if (ra::StringStartsWith(sByteAddress, "0x") || ra::StringStartsWith(sByteAddress, "0X"))
+        char* pEnd;
+        address = std::strtoul(sByteAddress.c_str(), &pEnd, 10);
+        assert(pEnd != nullptr);
+        if (*pEnd)
         {
-            if (sByteAddress.length() > 2)
-                return ra::ByteAddress{ std::stoul(&sByteAddress.at(2), nullptr, 16) };
-        }
-        else if (ra::StringStartsWith(sByteAddress, "-"))
-        {
-            // negative addresses not supported
-            return ra::ByteAddress{};
-        }
-        else if (!sByteAddress.empty())
-        {
-            try
+            // decimal parse failed, try hex
+            address = std::strtoul(sByteAddress.c_str(), &pEnd, 16);
+            assert(pEnd != nullptr);
+            if (*pEnd)
             {
-                return ra::ByteAddress{ std::stoul(sByteAddress.c_str()) };
-            }
-            catch (const std::invalid_argument&)
-            {
-                // try hex conversion
-                return ra::ByteAddress{ std::stoul(sByteAddress.c_str(), nullptr, 16) };
+                // hex parse failed
+                address = {};
             }
         }
-    }
-    catch (const std::invalid_argument&)
-    {
-        // ignore and return default
-    }
-    catch (const std::out_of_range&)
-    {
-        // ignore and return default
     }
 
-    return ra::ByteAddress{};
+    return address;
 }
 
 } /* namespace ra */

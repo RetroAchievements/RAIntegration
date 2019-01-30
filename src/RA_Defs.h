@@ -183,7 +183,7 @@ public:
 
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
+_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress) noexcept;
 } // namespace ra
 
 #if _MBCS

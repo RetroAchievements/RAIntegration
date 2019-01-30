@@ -771,6 +771,18 @@ public:
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
         Assert::AreEqual(0xFFFEU, result.nValue);
     }
+
+    TEST_METHOD(TestInitializeFromMemorySixteenBitZeroBytes)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, 0U, MemSize::SixteenBit);
+
+        Assert::AreEqual(0U, results.MatchingAddressCount());
+        Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 0 RAM locations."), results.Summary());
+    }
 };
 
 } // namespace tests

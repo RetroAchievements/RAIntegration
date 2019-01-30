@@ -515,9 +515,8 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
-GSL_SUPPRESS_F6 bool GameContext::RemoveAchievement(unsigned int nAchievementId) noexcept
+bool GameContext::RemoveAchievement(unsigned int nAchievementId)
 {
-    // Basically almost every line in this function could throw an exception
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {
         if (*pIter && (*pIter)->ID() == nAchievementId)
@@ -527,21 +526,21 @@ GSL_SUPPRESS_F6 bool GameContext::RemoveAchievement(unsigned int nAchievementId)
             switch (ra::itoe<AchievementSet::Type>((*pIter)->Category()))
             {
                 case AchievementSet::Type::Core:
-                    GSL_SUPPRESS_F6 g_pCoreAchievements->RemoveAchievement(pIter->get());
+                    g_pCoreAchievements->RemoveAchievement(pIter->get());
                     break;
 
                 default:
                 case AchievementSet::Type::Unofficial:
-                    GSL_SUPPRESS_F6 g_pUnofficialAchievements->RemoveAchievement(pIter->get());
+                    g_pUnofficialAchievements->RemoveAchievement(pIter->get());
                     break;
 
                 case AchievementSet::Type::Local:
-                    GSL_SUPPRESS_F6 g_pLocalAchievements->RemoveAchievement(pIter->get());
+                    g_pLocalAchievements->RemoveAchievement(pIter->get());
                     break;
             }
 #endif
 
-            GSL_SUPPRESS_F6 m_vAchievements.erase(pIter);
+            m_vAchievements.erase(pIter);
             return true;
         }
     }

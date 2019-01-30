@@ -132,6 +132,9 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
 static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet)
 {
     vConditions.AddGroup();
+    if (!pCondSet)
+        return;
+
     ConditionGroup& group = vConditions.GetGroup(vConditions.GroupCount() - 1);
 
     rc_condition_t* pCondition = pCondSet->conditions;

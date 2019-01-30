@@ -40,7 +40,7 @@ unsigned int MemoryViewerControl::m_nCaretHeight = 0;
 unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
 unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
-std::size_t m_nPage = 0;
+gsl::index m_nPage = 0;
 
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
@@ -1046,7 +1046,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const ComparisonType nCmpType =
                         static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
 
-                    while (m_SearchResults.size() > m_nPage + 1)
+                    while (m_SearchResults.size() > ra::to_unsigned(m_nPage + 1))
                         m_SearchResults.pop_back();
 
                     ClearLogOutput();
@@ -1334,7 +1334,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     m_nPage++;
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), m_nPage + 1U < m_SearchResults.size());
+                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD),
+                                 ra::to_unsigned(m_nPage + 1) < m_SearchResults.size());
 
                     SearchResult& sr = m_SearchResults.at(m_nPage);
                     if (sr.m_results.Summary().empty())
@@ -1354,7 +1355,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     if (nSel != -1)
                     {
-                        while (m_SearchResults.size() > m_nPage + 1U)
+                        while (m_SearchResults.size() > ra::to_unsigned(m_nPage + 1))
                             m_SearchResults.pop_back();
 
                         // copy the selected page, so we can return to it if we want

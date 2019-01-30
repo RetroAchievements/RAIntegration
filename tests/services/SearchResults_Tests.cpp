@@ -780,7 +780,7 @@ public:
         SearchResults results;
         results.Initialize(0U, 0U, MemSize::SixteenBit);
 
-        Assert::AreEqual(0U, results.MatchingAddressCount());
+        Assert::AreEqual({0U}, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 0 RAM locations."), results.Summary());
     }
 };

@@ -66,7 +66,7 @@ void PopupMessageViewModel::CreateRenderImage()
 {
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
-    auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
+    auto pSurface = pSurfaceFactory.CreateSurface({1, 1});
 
     auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     const auto sTitle = GetTitle();
@@ -80,7 +80,7 @@ void PopupMessageViewModel::CreateRenderImage()
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
     constexpr int nHeight = 64 + 2;
 
-    pSurface = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
+    pSurface = pSurfaceFactory.CreateTransparentSurface({nWidth, nHeight});
     m_pSurface = std::move(pSurface);
 
     int nX = 0;
@@ -91,30 +91,30 @@ void PopupMessageViewModel::CreateRenderImage()
     constexpr int nShadowOffset = 2;
 
     // background
-    const auto iWidth = gsl::narrow_cast<int>(m_pSurface->GetWidth());
-    const auto iHeight = gsl::narrow_cast<int>(m_pSurface->GetHeight());
-    m_pSurface->FillRectangle(0, 0, iWidth, iHeight, nColorBackground);
+    m_pSurface->FillRectangle({0, 0}, {m_pSurface->GetWidth(), m_pSurface->GetHeight()}, nColorBackground);
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)
     {
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
-        m_pSurface->DrawImage(nX, nY, 64, 64, m_hImage);
+        m_pSurface->FillRectangle({nX + nShadowOffset, nY + nShadowOffset}, {64, 64}, nColorBlack);
+        m_pSurface->DrawImage({nX, nY}, {64, 64}, m_hImage);
         nX += 64 + 6;
     }
 
     // title
-    m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
-    m_pSurface->FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
-    m_pSurface->WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
+    m_pSurface->FillRectangle({nX + nShadowOffset, nY + nShadowOffset}, {szTitle.Width + 8, szTitle.Height},
+                              nColorBlack);
+    m_pSurface->FillRectangle({nX, nY}, {szTitle.Width + 8, szTitle.Height}, nColorPopup);
+    m_pSurface->WriteText({nX + 4, nY - 1}, nFontTitle, nColorBlack, sTitle);
 
     // subtitle
     if (!sSubTitle.empty())
     {
         nY += 32 + 2;
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
-        m_pSurface->FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
-        m_pSurface->WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
+        m_pSurface->FillRectangle({nX + nShadowOffset, nY + nShadowOffset}, {szSubTitle.Width + 8, szSubTitle.Height},
+                                  nColorBlack);
+        m_pSurface->FillRectangle({nX, nY}, {szSubTitle.Width + 8, szSubTitle.Height}, nColorPopup);
+        m_pSurface->WriteText({nX + 4, nY - 1}, nFontSubtitle, nColorBlack, sSubTitle);
     }
 
     m_pSurface->SetOpacity(0.85);

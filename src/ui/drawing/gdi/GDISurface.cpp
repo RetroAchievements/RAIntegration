@@ -15,12 +15,12 @@ GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourc
     SelectObject(hDC, GetStockObject(DC_BRUSH));
 }
 
-void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
+void GDISurface::FillRectangle(const Point& nXY, const Size& nWH, Color nColor) noexcept
 {
     assert(nColor.Channel.A == 0xFF);
     SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     SetDCPenColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
-    Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
+    Rectangle(m_hDC, nXY.X, nXY.Y, nXY.X + nWH.Width, nXY.Y + nWH.Height);
 }
 
 gsl::index GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
@@ -38,7 +38,7 @@ ra::ui::Size GDISurface::MeasureText(gsl::index nFont, const std::wstring& sText
     return {szText.cx, szText.cy};
 }
 
-void GDISurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText)
+void GDISurface::WriteText(const Point& nXY, gsl::index nFont, Color nColor, const std::wstring& sText)
 {
     SwitchFont(nFont);
 
@@ -49,7 +49,7 @@ void GDISurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const
     }
 
     SetBkMode(m_hDC, TRANSPARENT);
-    TextOutW(m_hDC, nX, nY, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
+    TextOutW(m_hDC, nXY.X, nXY.Y, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 }
 
 void GDISurface::SwitchFont(gsl::index nFont) const
@@ -65,7 +65,7 @@ void GDISurface::SwitchFont(gsl::index nFont) const
     }
 }
 
-void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
+void GDISurface::DrawImage(const Point& nXY, const Size& nWH, const ImageReference& pImage)
 {
     auto hBitmap = ImageRepository::GetHBitmap(pImage);
     if (!hBitmap)
@@ -78,29 +78,27 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
 
     BITMAP bm;
     if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
-        BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+        BitBlt(m_hDC, nXY.X, nXY.Y, nWH.Width, nWH.Height, hdcMem, 0, 0, SRCCOPY);
 
     SelectBitmap(hdcMem, hOldBitmap);
 
     DeleteDC(hdcMem);
 }
 
-void GDISurface::DrawSurface(std::ptrdiff_t nX, std::ptrdiff_t nY, const ISurface& pSurface)
+void GDISurface::DrawSurface(const Point& nXY, const ISurface& pSurface)
 {
     auto* pAlphaSurface = dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface);
+
     if (pAlphaSurface != nullptr)
     {
-        pAlphaSurface->Blend(m_hDC, nX, nY);
+        pAlphaSurface->Blend(m_hDC, nXY);
         return;
     }
 
     auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
     assert(pGDISurface != nullptr);
 
-    const auto iX = gsl::narrow_cast<int>(nX);
-    const auto iY = gsl::narrow_cast<int>(nY);
-    ::BitBlt(m_hDC, iX, iY, gsl::narrow_cast<int>(pSurface.GetWidth()), gsl::narrow_cast<int>(pSurface.GetHeight()),
-             pGDISurface->m_hDC, 0, 0, SRCCOPY);
+    ::BitBlt(m_hDC, nXY.X, nXY.Y, pSurface.GetWidth(), pSurface.GetHeight(), pGDISurface->m_hDC, 0, 0, SRCCOPY);
 }
 
 } // namespace gdi

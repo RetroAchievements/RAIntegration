@@ -23,22 +23,20 @@ public:
     /// <summary>
     /// Gets the width of the surface.
     /// </summary>
-    virtual std::ptrdiff_t GetWidth() const = 0;
+    virtual int GetWidth() const = 0;
 
     /// <summary>
     /// Gets the height of the surface.
     /// </summary>
-    virtual std::ptrdiff_t GetHeight() const = 0;
+    virtual int GetHeight() const = 0;
 
     /// <summary>
     /// Draws a solid rectangle.
     /// </summary>
-    /// <param name="nX">The x coordinate of the left side of the rectangle.</param>
-    /// <param name="nY">The y coordinate of the top of the rectangle.</param>
-    /// <param name="nWidth">The width of the rectangle.</param>
-    /// <param name="nHeight">The height of the rectangle.</param>
+    /// <param name="nX">The x,y coordinate to draw at. x is on left side and y is on the top right.</param>
+    /// <param name="nWH">The dimensions of the rectangle.</param>
     /// <param name="nColor">The color of the rectangle.</param>
-    virtual void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) = 0;
+    virtual void FillRectangle(const Point& nXY, const Size& nWH, Color nColor) = 0;
 
     /// <summary>
     /// Loads a font resource.
@@ -61,30 +59,26 @@ public:
     /// <summary>
     /// Writes the specified text to the surface.
     /// </summary>
-    /// <param name="nX">The x coordinate to write at.</param>
-    /// <param name="nY">The y coordinate to write at.</param>
+    /// <param name="nXY">The x,y coordinate to draw at.</param>
     /// <param name="nFont">The unique identifier of the font to use. see <see cref="LoadFont" />.</param>
     /// <param name="nColor">The color to use.</param>
     /// <param name="sText">The text to write.</param>
-    virtual void WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText) = 0;
+    virtual void WriteText(const Point& nXY, gsl::index nFont, Color nColor, const std::wstring& sText) = 0;
 
     /// <summary>
     /// Draws an image on the surface.
     /// </summary>
-    /// <param name="nX">The x coordinate to draw at.</param>
-    /// <param name="nY">The y coordinate to draw at.</param>
-    /// <param name="nWidth">The width to draw the image.</param>
-    /// <param name="nHeight">The height to draw the image.</param>
+    /// <param name="nXY">The x,y coordinate to draw at.</param>
+    /// <param name="nWH">The dimensions needed to draw the image.</param>
     /// <param name="pImage">The image to draw.</param>
-    virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
+    virtual void DrawImage(const Point& nXY, const Size& nWH, const ImageReference& pImage) = 0;
 
     /// <summary>
     /// Draws a secondary surface onto the surface.
     /// </summary>
-    /// <param name="nX">The x coordinate to draw at.</param>
-    /// <param name="nY">The y coordinate to draw at.</param>
+    /// <param name="nX">The point to draw at.</param>
     /// <param name="pImage">The surface to draw.</param>
-    virtual void DrawSurface(std::ptrdiff_t nX, std::ptrdiff_t nY, const ISurface& pSurface) = 0;
+    virtual void DrawSurface(const Point& nXY, const ISurface& pSurface) = 0;
 
     /// <summary>
     /// Sets the alpha value of anything that's not currently transparent to the specified value.
@@ -108,12 +102,12 @@ public:
     /// <summary>
     /// Creates a new offscren surface.
     /// </summary>
-    virtual std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const = 0;
+    virtual std::unique_ptr<ISurface> CreateSurface(const Size& nWH) const = 0;
 
     /// <summary>
     /// Creates a new offscren surface with an alpha channel.
     /// </summary>
-    virtual std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const = 0;
+    virtual std::unique_ptr<ISurface> CreateTransparentSurface(const Size& nWH) const = 0;
 
 protected:
     ISurfaceFactory() noexcept = default;

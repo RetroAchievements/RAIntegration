@@ -7,12 +7,27 @@ namespace ui {
 
 struct Position
 {
+#ifdef _WIN32_WINNT
+    [[nodiscard]] inline constexpr operator POINT() const noexcept { return {X, Y}; }
+#endif // _WIN32_WINNT
+
     int X{};
     int Y{};
 };
 
+using Point = Position;
+
 struct Size
 {
+#ifdef _WIN32_WINNT
+    [[nodiscard]] inline constexpr operator SIZE() const noexcept { return {Width, Height}; }
+    [[nodiscard]] inline constexpr operator LPSIZE() const noexcept 
+    {
+        SIZE sz{Width, Height};
+        return &sz; 
+    }
+#endif // _WIN32_WINNT
+
     int Width{};
     int Height{};
 };

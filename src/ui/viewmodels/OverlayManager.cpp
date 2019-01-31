@@ -55,11 +55,13 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
     if (!m_vPopupMessages.empty())
     {
         const auto& pActiveMessage = m_vPopupMessages.front();
-        const auto nX = GetAbsolutePosition(pActiveMessage.GetRenderLocationX(),
-                                            pActiveMessage.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
-        const auto nY = GetAbsolutePosition(pActiveMessage.GetRenderLocationY(),
-                                            pActiveMessage.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
-        pSurface.DrawSurface(nX, nY, pActiveMessage.GetRenderImage());
+        const auto nX = gsl::narrow_cast<int>(GetAbsolutePosition(pActiveMessage.GetRenderLocationX(),
+                                                                  pActiveMessage.GetRenderLocationXRelativePosition(),
+                                                                  pSurface.GetWidth()));
+        const auto nY = gsl::narrow_cast<int>(GetAbsolutePosition(pActiveMessage.GetRenderLocationY(),
+                                                                  pActiveMessage.GetRenderLocationYRelativePosition(),
+                                                                  pSurface.GetHeight()));
+        pSurface.DrawSurface({nX, nY}, pActiveMessage.GetRenderImage());
     }
 }
 

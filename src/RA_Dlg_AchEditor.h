@@ -69,6 +69,8 @@ private:
     const int AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits);
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits);
 
+    unsigned int ParseValue(const std::string& sData, CompVariable::Type nType) const;
+
 private:
     static constexpr std::size_t m_nNumCols = 10U;
     static constexpr std::size_t MAX_CONDITIONS = 200U;

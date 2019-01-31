@@ -3,6 +3,7 @@
 #pragma once
 
 #include "RA_Interface.h"
+#include "ra_fwd.h"
 
 #include <string>
 
@@ -29,6 +30,52 @@ public:
     /// </summary>
     const std::wstring& Name() const noexcept { return m_sName; }
 
+    enum class AddressType
+    {        
+        /// <summary>
+        /// Address use is unknown.
+        /// </summary>
+        Unknown,
+
+        /// <summary>
+        /// RAM that persists between sessions. Typically found on a cratridge backed up by a battery.
+        /// </summary>
+        SaveRAM,
+
+        /// <summary>
+        /// Generic RAM available for temporary storage.
+        /// </summary>
+        SystemRAM,
+
+        /// <summary>
+        /// Secondary address space that maps to real memory in SystemRAM. Also known as Echo RAM or Mirror RAM.
+        /// </summary>
+        VirtualRAM,
+
+        /// <summary>
+        /// RAM reserved for graphical processing.
+        /// </summary>
+        VideoRAM,
+
+        /// <summary>
+        /// Address reserved for interacting with system components.
+        /// </summary>
+        HardwareController,
+    };
+
+    struct MemoryRegion
+    {
+        ra::ByteAddress StartAddress;
+        ra::ByteAddress EndAddress;
+        AddressType Type;
+        std::string Description;
+    };
+
+    /// <summary>
+    /// Gets the list of memory regions mapped for the system.
+    /// </summary>
+    virtual const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vEmptyRegions; }
+
     /// <summary>
     /// Gets a context object for the specified console.
     /// </summary>
@@ -37,6 +84,8 @@ public:
 protected:
     ConsoleID m_nId{};
     std::wstring m_sName;
+
+    static const std::vector<MemoryRegion> m_vEmptyRegions;
 };
 
 } // namespace data

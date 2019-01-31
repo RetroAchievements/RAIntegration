@@ -125,6 +125,7 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
     auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
+    RA_LOG("Console set to %u (%s)", pContext->Id(), pContext->Name());
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
 }
 

@@ -10,7 +10,7 @@ namespace gdi {
 void GDIAlphaBitmapSurface::FillRectangle(const Point& nXY, const Size& nWH, Color nColor) noexcept
 {
     // clip to surface
-    auto nStride = GetWidth();
+    const auto nStride = GetWidth();
     auto nX = nXY.X;
     auto nY = nXY.Y;
     if (nX >= nStride || nY >= GetHeight())
@@ -40,8 +40,8 @@ void GDIAlphaBitmapSurface::FillRectangle(const Point& nXY, const Size& nWH, Col
         return;
 
     // fill rectangle
-    auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
-    auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    const auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
+    auto pBits = m_pBits + gsl::narrow_cast<std::ptrdiff_t>(nStride * nFirstScanline + nX);
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
@@ -108,7 +108,7 @@ void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color 
         return;
 
     // clip to surface
-    auto nStride = GetWidth();
+    const auto nStride = GetWidth();
     if (nXY.X >= nStride || nXY.Y >= GetHeight())
         return;
     assert(nXY.X >= 0); // TODO: support negative X starting position
@@ -155,9 +155,9 @@ void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color 
     TextOutW(hMemDC, 0, 0, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 
     // copy the greyscale text to the foreground using the grey value as the alpha for anti-aliasing
-    auto nFirstScanline = (GetHeight() - nXY.Y - szText.Height); // bitmap memory starts with the bottom scanline
+    const auto nFirstScanline = (GetHeight() - nXY.Y - szText.Height); // bitmap memory starts with the bottom scanline
     assert(nFirstScanline >= 0);
-    auto pBits = m_pBits + nStride * nFirstScanline + nXY.X;
+    auto pBits = m_pBits + gsl::narrow_cast<std::ptrdiff_t>(nStride * nFirstScanline + nXY.X);
 
     // clip to surface
     auto nLines = szText.Width;
@@ -176,7 +176,7 @@ void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color 
             ++pBits;
         } while (pBits < pEnd);
 
-        pBits += (nStride - szText.Height);
+        pBits += to_unsigned(nStride - szText.Height);
     }
 
     DeleteBitmap(hBitmap);
@@ -234,7 +234,8 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
     const std::uint8_t* pEnd{};
-    GSL_SUPPRESS_TYPE1 pEnd = reinterpret_cast<const std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
+    GSL_SUPPRESS_TYPE1 pEnd =
+        reinterpret_cast<const std::uint8_t*>(m_pBits + gsl::narrow_cast<std::ptrdiff_t>(GetWidth() * GetHeight()));
 
     std::uint8_t* pBits{};
     GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;

@@ -21,9 +21,10 @@ struct Size
 {
 #ifdef _WIN32_WINNT
     [[nodiscard]] inline constexpr operator SIZE() const noexcept { return {Width, Height}; }
-    [[nodiscard]] inline constexpr operator LPSIZE() const noexcept 
+    // can't constexpr as it needs automatic storage duration (stack storage)
+    [[nodiscard]] inline operator LPSIZE() const noexcept 
     {
-        SIZE sz{Width, Height};
+        static SIZE sz{Width, Height};
         return &sz; 
     }
 #endif // _WIN32_WINNT

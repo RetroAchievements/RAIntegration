@@ -7,6 +7,7 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
@@ -1675,7 +1676,7 @@ void Dlg_Memory::AddBank(size_t nBankID)
 
 bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end) noexcept
 {
-    switch (g_ConsoleID)
+    switch (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id())
     {
         case ConsoleID::NES:
             // $0000-$07FF are the 2KB internal RAM for the NES. It's mirrored every 2KB until $1FFF.
@@ -1739,7 +1740,7 @@ bool Dlg_Memory::GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& e
 
 bool Dlg_Memory::GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end) noexcept
 {
-    switch (g_ConsoleID)
+    switch (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id())
     {
         case ConsoleID::NES:
             // $4020-$FFFF is cartridge memory and subranges will vary by mapper. The most common mappers reference

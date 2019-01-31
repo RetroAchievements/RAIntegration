@@ -284,7 +284,7 @@ public:
     {
         std::string input("This is a test.");
         const Tokenizer tokenizer(input);
-        const auto* pStart = input.c_str();
+        const auto pStart = input.c_str();
 
         // ptrdiff_t is 8 bytes but a ToString overload isn't working
         Assert::AreEqual(0, gsl::narrow_cast<int>(tokenizer.GetPointer(0U) - pStart));
@@ -292,7 +292,6 @@ public:
         Assert::AreEqual(8, gsl::narrow_cast<int>(tokenizer.GetPointer(8U) - pStart));
         Assert::AreEqual(12, gsl::narrow_cast<int>(tokenizer.GetPointer(12U) - pStart));
 
-        // TODO: This is an error in logic and should not be considered success
         Assert::AreEqual(15, gsl::narrow_cast<int>(tokenizer.GetPointer(16U) - pStart)); // string is 15 characters
     }
 

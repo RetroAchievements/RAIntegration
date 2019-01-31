@@ -47,7 +47,7 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemory
 class GameBoyAdvanceConsoleContext : public ConsoleContext
 {
 public:
-    GameBoyAdvanceConsoleContext() noexcept : ConsoleContext(ConsoleID::GBA, L"GameBoy Advance") {}
+    GSL_SUPPRESS_F6 GameBoyAdvanceConsoleContext() noexcept : ConsoleContext(ConsoleID::GBA, L"GameBoy Advance") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 
@@ -87,7 +87,7 @@ const std::vector<ConsoleContext::MemoryRegion> MegaDriveConsoleContext::m_vMemo
 class Nintendo64ConsoleContext : public ConsoleContext
 {
 public:
-    Nintendo64ConsoleContext() noexcept : ConsoleContext(ConsoleID::N64, L"Nintendo 64") {}
+    GSL_SUPPRESS_F6 Nintendo64ConsoleContext() noexcept : ConsoleContext(ConsoleID::N64, L"Nintendo 64") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 
@@ -109,7 +109,7 @@ const std::vector<ConsoleContext::MemoryRegion> Nintendo64ConsoleContext::m_vMem
 class NintendoEntertainmentSystemConsoleContext : public ConsoleContext
 {
 public:
-    NintendoEntertainmentSystemConsoleContext() noexcept : ConsoleContext(ConsoleID::NES, L"Nintendo Entertainment System") {}
+    GSL_SUPPRESS_F6 NintendoEntertainmentSystemConsoleContext() noexcept : ConsoleContext(ConsoleID::NES, L"Nintendo Entertainment System") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 
@@ -138,7 +138,7 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
 class SuperNESConsoleContext : public ConsoleContext
 {
 public:
-    SuperNESConsoleContext() noexcept : ConsoleContext(ConsoleID::SNES, L"Super NES") {}
+    GSL_SUPPRESS_F6 SuperNESConsoleContext() noexcept : ConsoleContext(ConsoleID::SNES, L"Super NES") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 

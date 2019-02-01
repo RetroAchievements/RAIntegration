@@ -1764,12 +1764,11 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
         else
             return nVal;
     }
-    catch (const std::invalid_argument& e)
+    catch (const std::invalid_argument&)
     {
         bInvalid = true;
-
     }
-    catch (const std::out_of_range& e)
+    catch (const std::out_of_range&)
     {
         bTooLarge = true;
     }

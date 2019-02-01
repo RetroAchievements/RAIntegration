@@ -8,6 +8,25 @@ namespace data {
 
 const std::vector<ConsoleContext::MemoryRegion> ConsoleContext::m_vEmptyRegions;
 
+// ===== ColecoVision =====
+
+class ColecoVisionConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 ColecoVisionConsoleContext() noexcept : ConsoleContext(ConsoleID::Colecovision, L"ColecoVision") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// ColecoVision memory is exposed as a single chunk
+const std::vector<ConsoleContext::MemoryRegion> ColecoVisionConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x0003FFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // RAM (normally $6000-$63FF)
+};
+
 // ===== GameBoy | GameBoy Color =====
 
 class GameBoyConsoleContext : public ConsoleContext
@@ -60,6 +79,48 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyAdvanceConsoleContext::m_
 {
     { 0x000000U, 0x007FFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" }, // internal RAM (normally $03000000-$03007FFF)
     { 0x008000U, 0x047FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // work RAM (normally $02000000-$0203FFFF)
+};
+
+// ===== Game Gear =====
+
+class GameGearConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 GameGearConsoleContext() noexcept : ConsoleContext(ConsoleID::GameGear, L"Game Gear") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// Game Gear memory is exposed as a single chunk
+// http://www.smspower.org/Development/MemoryMap
+const std::vector<ConsoleContext::MemoryRegion> GameGearConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // RAM (normally $C000-$DFFF)
+    // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
+};
+
+// ===== Master System =====
+
+class MasterSystemConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 MasterSystemConsoleContext() noexcept : ConsoleContext(ConsoleID::MasterSystem, L"Master System") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// Master System memory is exposed as a single chunk
+// http://www.smspower.org/Development/MemoryMap
+const std::vector<ConsoleContext::MemoryRegion> MasterSystemConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // RAM (normally $C000-$DFFF)
+    // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
 };
 
 // ===== MegaDrive / Genesis | Sega 32X | Sega CD =====
@@ -133,6 +194,29 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
     { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM"},
 };
 
+// ===== SG-1000 =====
+
+class SG1000ConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 SG1000ConsoleContext() noexcept : ConsoleContext(ConsoleID::MasterSystem, L"SG-1000") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// SG-1000 memory is exposed as a single chunk
+// http://www.smspower.org/Development/MemoryMap
+const std::vector<ConsoleContext::MemoryRegion> SG1000ConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x0003FFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // RAM (normally $C000-$C3FF)
+    // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
+    // This not is also concerning: http://www.smspower.org/Development/MemoryMap
+    //   Cartridges may disable the system RAM and thus take over the full 64KB address space.
+};
+
 // ===== SNES =====
 
 class SuperNESConsoleContext : public ConsoleContext
@@ -190,7 +274,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"CD-I");
 
         case ConsoleID::Colecovision:
-            return std::make_unique<ConsoleContext>(nId, L"Colecovision");
+            return std::make_unique<ColecoVisionConsoleContext>();
 
         case ConsoleID::Dreamcast:
             return std::make_unique<ConsoleContext>(nId, L"Dreamcast");
@@ -205,7 +289,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"GameCube");
 
         case ConsoleID::GameGear:
-            return std::make_unique<ConsoleContext>(nId, L"GameGear");
+            return std::make_unique<GameGearConsoleContext>();
 
         case ConsoleID::GB:
             return std::make_unique<GameBoyConsoleContext>(ConsoleID::GB, L"GameBoy");
@@ -226,7 +310,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Lynx");
 
         case ConsoleID::MasterSystem:
-            return std::make_unique<MegaDriveConsoleContext>(ConsoleID::MasterSystem, L"Master System");
+            return std::make_unique<MasterSystemConsoleContext>();
 
         case ConsoleID::MegaDrive:
             return std::make_unique<MegaDriveConsoleContext>(ConsoleID::MegaDrive, L"MegaDrive / Genesis");
@@ -277,7 +361,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"SEGA CD");
 
         case ConsoleID::SG1000:
-            return std::make_unique<ConsoleContext>(nId, L"SG-1000");
+            return std::make_unique<SG1000ConsoleContext>();
 
         case ConsoleID::SNES:
             return std::make_unique<SuperNESConsoleContext>();

@@ -1569,7 +1569,7 @@ void Dlg_Memory::OnLoad_NewRom()
             }
         }
 
-        if (m_nSystemRamEnd != 0U)
+        if (m_nSystemRamEnd != 0U && (m_nSystemRamEnd - m_nSystemRamStart) != g_MemManager.TotalBankSize())
         {
             const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());

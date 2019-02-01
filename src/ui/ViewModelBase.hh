@@ -111,6 +111,9 @@ protected:
     // allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
     friend class BindingBase;
 
+    // allow ViewModelCollectionBase to call GetValue(Property) directly.
+    friend class ViewModelCollectionBase;
+
 private:
     StringModelProperty::ValueMap m_mStringValues;
     IntModelProperty::ValueMap m_mIntValues;

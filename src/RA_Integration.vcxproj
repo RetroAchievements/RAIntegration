@@ -94,8 +94,10 @@
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
+    <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
@@ -206,8 +208,10 @@
     <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
+    <ClInclude Include="ui\ViewModelCollection.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />

@@ -11,7 +11,6 @@ namespace ui {
 
 class ViewModelCollectionBase
 {
-protected:
     ViewModelCollectionBase() noexcept {};
 
 public:
@@ -53,8 +52,8 @@ public:
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
-    {
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept 
+    { 
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
@@ -80,7 +79,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
     /// </summary>
-    void Freeze() noexcept
+    void Freeze()
     {
         if (!m_bFrozen)
         {

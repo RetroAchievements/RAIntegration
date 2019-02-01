@@ -98,7 +98,12 @@ void GDISurface::DrawSurface(const Point& nXY, const ISurface& pSurface)
     auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
     assert(pGDISurface != nullptr);
 
-    ::BitBlt(m_hDC, nXY.X, nXY.Y, pSurface.GetWidth(), pSurface.GetHeight(), pGDISurface->m_hDC, 0, 0, SRCCOPY);
+    if (pGDISurface != nullptr)
+    {
+        ::BitBlt(m_hDC, nXY.X, nXY.Y,
+            gsl::narrow_cast<int>(pSurface.GetWidth()), gsl::narrow_cast<int>(pSurface.GetHeight()),
+            pGDISurface->m_hDC, 0, 0, SRCCOPY);
+    }
 }
 
 } // namespace gdi

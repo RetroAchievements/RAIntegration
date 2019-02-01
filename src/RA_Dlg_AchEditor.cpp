@@ -1666,66 +1666,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         case CondSubItems::Value_Src:
                         {
-                            int nBase = 16;
-                            if (rCond.CompSource().GetType() == CompVariable::Type::ValueComparison)
-                            {
-                                auto& pConfiguration =
-                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                                    nBase = 10;
-                            }
-
-                            const auto nVal = std::stoul(sData, nullptr, nBase);
+                            const auto nVal = ParseValue(sData, rCond.CompSource().GetType());
                             rCond.CompSource().SetValue(nVal);
                             break;
                         }
                         case CondSubItems::Value_Tgt:
                         {
-                            int nBase = 16;
-                            if (rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
-                            {
-                                auto& pConfiguration =
-                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                                    nBase = 10;
-                            }
-                            
-                            auto lVal = 0UL;
-                            auto lineErrNumber = 0;
-                            try
-                            {
-                                lineErrNumber = __LINE__ + 1;
-                                lVal = std::stoul(sData.c_str(), nullptr, nBase);
-                            } catch (const std::invalid_argument& e)
-                            {
-                                RA_LOG_ERR("\nFunction: %s\nLine: %d\nMessage: %s\n\n", __FUNCTION__, lineErrNumber,
-                                           e.what());
-                                const auto bIsDecimal = Button_GetCheck(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS));
-                                if (bIsDecimal)
-                                {
-                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
-                                        L"Only values that can be represented as decimal are allowed while the 'show "
-                                        L"decimal values' checkbox is "
-                                        L"checked.\n\nPlease try again!");
-                                }
-                                else
-                                {
-                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
-                                        L"Only values that can be represented as hexadecimal are allowed while the "
-                                        L"'show decimal values' checkbox is unchecked.\n\nPlease try again!");
-                                }
-                            } catch (const std::out_of_range& e)
-                            {
-                                RA_LOG_ERR("Function: %s\nLine: %d\nMessage: %s", __FUNCTION__, lineErrNumber,
-                                           e.what());
-                                constexpr auto maxUlong = std::numeric_limits<unsigned long>::max();
-                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                                    L"Too Large",
-                                    ra::StringPrintf(L"Value supplied is negative or too large!\nIt must be "
-                                                     L"non-negative and less than %lu (decimal) or 0x%X (hexadecimal)",
-                                                     maxUlong, maxUlong));
-                            }
-                            rCond.CompTarget().SetValue(lVal);
+                            const auto nVal = ParseValue(sData, rCond.CompTarget().GetType());
+                            rCond.CompTarget().SetValue(nVal);
                             break;
                         }
                         case CondSubItems::Hitcount:
@@ -1782,6 +1730,79 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
     }
 
     return !bHandled;
+}
+
+unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVariable::Type nType) const
+{
+    unsigned int nMax = 0xFFFFFFFF;
+
+    int nBase = 16;
+    if (nType == CompVariable::Type::ValueComparison)
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+            nBase = 10;
+
+        // TODO: limit nMax to size of memory being read
+    }
+    else
+    {
+        nMax = g_MemManager.TotalBankSize() - 1;
+    }
+
+    bool bTooLarge = false;
+    bool bInvalid = false;
+    try
+    {
+        size_t nRead;
+        auto nVal = std::stoul(sData, &nRead, nBase);
+        if (nRead < sData.length())
+            bInvalid = true;
+        else if (nRead > 0 && sData.at(0) == '-')
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", L"Value must be non-negative.");
+        else if (nVal > nMax)
+            bTooLarge = true;
+        else
+            return nVal;
+    }
+    catch (const std::invalid_argument&)
+    {
+        bInvalid = true;
+    }
+    catch (const std::out_of_range&)
+    {
+        bTooLarge = true;
+    }
+
+    if (bInvalid)
+    {
+        if (nBase == 10)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                L"Only values that can be represented as decimal are allowed while the "
+                L"'show decimal values' checkbox is checked.");
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                L"Only values that can be represented as hexadecimal are allowed.");
+        }
+    }
+    else if (bTooLarge)
+    {
+        if (nBase == 10)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
+                ra::StringPrintf(L"Value cannot exceed %lu", nMax));
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
+                ra::StringPrintf(L"Value cannot exceed 0x%x", nMax));
+        }
+    }
+
+    return 0;
 }
 
 void Dlg_AchievementEditor::GetListViewTooltip()

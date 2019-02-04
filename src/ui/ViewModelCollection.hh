@@ -11,6 +11,7 @@ namespace ui {
 
 class ViewModelCollectionBase
 {
+protected:
     ViewModelCollectionBase() noexcept {};
 
 public:
@@ -37,23 +38,26 @@ public:
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
                                                  [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept
-        {}
+        {
+        }
 
         virtual void
             OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
                                           [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
-        {}
+        {
+        }
 
         virtual void OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
                                                 [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept
-        {}
+        {
+        }
 
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept 
-    { 
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
+    {
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
@@ -166,7 +170,7 @@ private:
             m_pOwner(&pOwner)
         {}
 
-        ~Item() noexcept
+        virtual ~Item() noexcept
         {
             if (m_vmViewModel) // std::move may empty out our pointer
                 StopWatching();

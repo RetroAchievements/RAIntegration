@@ -205,6 +205,7 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
@@ -239,6 +240,7 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="..\src\RA_MemManager.cpp" />
+    <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />

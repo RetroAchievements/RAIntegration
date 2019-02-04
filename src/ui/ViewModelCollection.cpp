@@ -3,7 +3,7 @@
 namespace ra {
 namespace ui {
 
-void ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmViewModel)
+ViewModelBase& ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmViewModel)
 {
     assert(!IsFrozen());
 
@@ -21,12 +21,16 @@ void ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmViewModel)
             target->OnViewModelAdded(pItem.Index());
         }
     }
+
+    return pItem.ViewModel();
 }
 
 void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
 {
     if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_vItems.size())
     {
+        assert(!IsFrozen());
+
         auto pIter = m_vItems.begin() + nIndex;
         if (IsWatching())
             pIter->StopWatching();
@@ -61,7 +65,8 @@ void ViewModelCollectionBase::StopWatching()
         pItem.StopWatching();
 }
 
-void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) noexcept
+void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex,
+                                                          const BoolModelProperty::ChangeArgs& args) noexcept
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -72,7 +77,8 @@ void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex, con
     }
 }
 
-void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) noexcept
+void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex,
+                                                            const StringModelProperty::ChangeArgs& args) noexcept
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -83,7 +89,8 @@ void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex, c
     }
 }
 
-void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept
+void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex,
+                                                         const IntModelProperty::ChangeArgs& args) noexcept
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -93,7 +100,6 @@ void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex, cons
         target->OnViewModelIntValueChanged(nIndex, args);
     }
 }
-
 
 } // namespace ui
 } // namespace ra

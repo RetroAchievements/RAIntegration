@@ -12,7 +12,7 @@ namespace ui {
 class ViewModelCollectionBase
 {
 protected:
-    ViewModelCollectionBase() noexcept = default;
+    ViewModelCollectionBase() noexcept {};
 
 public:
     virtual ~ViewModelCollectionBase() noexcept
@@ -37,17 +37,27 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
-            [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept {}
-        virtual void OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
-            [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept {}
+                                                 [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept
+        {
+        }
+
+        virtual void
+            OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
+                                          [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
+        {
+        }
+
         virtual void OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
-            [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
+                                                [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept
+        {
+        }
+
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept 
-    { 
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
+    {
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
@@ -57,7 +67,13 @@ public:
         }
     }
 
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
+    {
+        GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+
+        if (m_vNotifyTargets.empty())
+            StopWatching();
+    }
 
     /// <summary>
     /// Gets whether or not the collection has been frozen.
@@ -120,7 +136,7 @@ public:
     }
 
 protected:
-    void Add(std::unique_ptr<ViewModelBase> vmViewModel);
+    ViewModelBase& Add(std::unique_ptr<ViewModelBase> vmViewModel);
 
     bool IsWatching() const { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
@@ -130,7 +146,7 @@ protected:
 
     ViewModelBase* GetViewModelAt(gsl::index nIndex)
     {
-        if (nIndex >= 0 && ra::to_unsigned(nIndex) <= m_vItems.size())
+        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_vItems.size())
             return &m_vItems.at(nIndex).ViewModel();
 
         return nullptr;
@@ -138,7 +154,7 @@ protected:
 
     const ViewModelBase* GetViewModelAt(gsl::index nIndex) const
     {
-        if (nIndex >= 0 && ra::to_unsigned(nIndex) <= m_vItems.size())
+        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_vItems.size())
             return &m_vItems.at(nIndex).ViewModel();
 
         return nullptr;
@@ -148,17 +164,50 @@ private:
     class Item : private ViewModelBase::NotifyTarget
     {
     public:
-        Item(ViewModelCollectionBase& pOwner, gsl::index nIndex, std::unique_ptr<ViewModelBase> vmViewModel)
-            : m_vmViewModel(std::move(vmViewModel)), m_nIndex(nIndex), m_pOwner(&pOwner)
-        {
-        }
+        Item(ViewModelCollectionBase& pOwner, gsl::index nIndex, std::unique_ptr<ViewModelBase> vmViewModel) :
+            m_vmViewModel(std::move(vmViewModel)),
+            m_nIndex(nIndex),
+            m_pOwner(&pOwner)
+        {}
 
-        virtual ~Item() noexcept { StopWatching(); }
+        virtual ~Item() noexcept
+        {
+            if (m_vmViewModel) // std::move may empty out our pointer
+                StopWatching();
+        }
 
         Item(const Item&) noexcept = delete;
         Item& operator=(const Item&) noexcept = delete;
-        Item(Item&&) noexcept = default;
-        Item& operator=(Item&& pSource) noexcept = default;
+
+        Item(Item&& pSource) noexcept :
+            m_vmViewModel(std::move(pSource.m_vmViewModel)),
+            m_nIndex(pSource.m_nIndex),
+            m_pOwner(pSource.m_pOwner)
+        {
+            if (m_pOwner->IsWatching())
+            {
+                m_vmViewModel->RemoveNotifyTarget(pSource);
+                m_vmViewModel->AddNotifyTarget(*this);
+            }
+        }
+
+        Item& operator=(Item&& pSource) noexcept
+        {
+            if (&pSource != this)
+            {
+                m_vmViewModel = std::move(pSource.m_vmViewModel);
+                m_nIndex = pSource.m_nIndex;
+                m_pOwner = pSource.m_pOwner;
+
+                if (m_pOwner->IsWatching())
+                {
+                    m_vmViewModel->RemoveNotifyTarget(pSource);
+                    m_vmViewModel->AddNotifyTarget(*this);
+                }
+            }
+
+            return *this;
+        }
 
         void StartWatching() { m_vmViewModel->AddNotifyTarget(*this); }
         void StopWatching() { m_vmViewModel->RemoveNotifyTarget(*this); }
@@ -174,7 +223,7 @@ private:
         {
             m_pOwner->OnViewModelBoolValueChanged(m_nIndex, args);
         }
-        
+
         void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
         {
             m_pOwner->OnViewModelStringValueChanged(m_nIndex, args);
@@ -210,34 +259,30 @@ private:
 template<class T>
 class ViewModelCollection : public ViewModelCollectionBase
 {
-    static_assert(std::is_base_of<T, ViewModelBase>{}, "T must be a subclass of ViewModelBase");
+    static_assert(std::is_base_of<ViewModelBase, T>{}, "T must be a subclass of ViewModelBase");
 
 public:
+    ViewModelCollection() noexcept = default;
+
     /// <summary>
     /// Adds an item to the end of the collection.
     /// </summary>
-    template<typename... Ts>
-    void Add(typename Ts... args)
+    template<class... Args>
+    T& Add(Args&&... args)
     {
-        auto pItem = std::make_unique<T>(std::forward<Ts>(args...));
-        ViewModelCollectionBase::Add(std::move(pItem));
+        auto pItem = std::make_unique<T>(std::forward<Args>(args)...);
+        return dynamic_cast<T&>(ViewModelCollectionBase::Add(std::move(pItem)));
     }
 
     /// <summary>
     /// Gets the item at the specified index.
     /// </summary>
-    T* GetItemAt(gsl::index nIndex)
-    {
-        return dynamic_cast<T*>(GetViewModelAt(nIndex));
-    }
+    T* GetItemAt(gsl::index nIndex) { return dynamic_cast<T*>(GetViewModelAt(nIndex)); }
 
     /// <summary>
     /// Gets the item at the specified index.
     /// </summary>
-    const T* GetItemAt(gsl::index nIndex) const
-    {
-        return dynamic_cast<const T*>(GetViewModelAt(nIndex));
-    }
+    const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetViewModelAt(nIndex)); }
 };
 
 } // namespace ui

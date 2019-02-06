@@ -8,6 +8,12 @@
 
     We don't care about warnings for library files.
 */
+
+#ifdef _PREFAST_ // code analysis on
+#define _CA_SHOULD_CHECK_RETURN // always check, functions with these that fail can be catastrophic
+#define _CA_SHOULD_CHECK_RETURN_WER
+#endif // _PREFAST_
+
 #pragma warning(push)
 #pragma warning(disable : 4091 4191 4365 4464 4571 4619 4623 4625 4626 4768 4774 5026 5027 5039 5045)
 /* Windows Stuff */

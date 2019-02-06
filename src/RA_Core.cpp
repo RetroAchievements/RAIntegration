@@ -1117,7 +1117,7 @@ namespace ra {
 
 _Success_(return == 0)
 _NODISCARD static auto CALLBACK
-BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ LPARAM /*lParam*/, _In_ LPARAM lpData) noexcept // it might
 {
     ASSERT(uMsg != BFFM_VALIDATEFAILED);
     if (uMsg == BFFM_INITIALIZED)

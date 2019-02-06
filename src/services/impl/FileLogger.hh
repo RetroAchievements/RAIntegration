@@ -25,7 +25,8 @@ public:
         const int64_t nLogSize = pFileSystem.GetFileSize(sLogFilePath);
         if (nLogSize > 1024 * 1024)
         {
-            const std::wstring sOldLogFilePath = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog-old.txt");
+            const std::wstring sOldLogFilePath =
+                ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog-old.txt");
             pFileSystem.DeleteFile(sOldLogFilePath);
             pFileSystem.MoveFile(sLogFilePath, sOldLogFilePath);
         }
@@ -64,12 +65,13 @@ public:
             tMilliseconds = 0;
         }
 
-        std::tm tTimeStruct;
-        localtime_s(&tTimeStruct, &tTime);
+        std::tm tTimeStruct{};
+        Expects(localtime_s(&tTimeStruct, &tTime) == 0);
 
-        char sBuffer[16];
-        strftime(sBuffer, sizeof(sBuffer), "%H%M%S", &tTimeStruct);
-        sprintf_s(&sBuffer[6], sizeof(sBuffer) - 6, ".%03u|", tMilliseconds);
+        std::ostringstream oss;
+        oss << std::put_time(&tTimeStruct, "%H%M%S");
+        auto sBuffer{oss.str()}; // moved to prevent dangling
+        sBuffer.insert(6, StringPrintf(".%03u|", tMilliseconds));
 
         // WinXP hangs if we try to acquire a mutex while the DLL in initializing. Since DllMain writes
         // a header block to the log file, we have to do that without using a mutex. Luckily, we're not
@@ -79,11 +81,11 @@ public:
         if (ServiceLocator::Exists<IThreadPool>())
         {
             std::scoped_lock<std::mutex> oLock(m_oMutex);
-            LogMessage(*m_pWriter, sBuffer, level, sMessage);
+            LogMessage(*m_pWriter, sBuffer.c_str(), level, sMessage);
         }
         else
         {
-            LogMessage(*m_pWriter, sBuffer, level, sMessage);
+            LogMessage(*m_pWriter, sBuffer.c_str(), level, sMessage);
         }
 
         // if writing to a file, flush immediately

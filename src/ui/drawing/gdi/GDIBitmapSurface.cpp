@@ -63,39 +63,9 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static constexpr void BlendPixel(gsl::not_null<std::uint32_t* restrict> nTarget, std::uint32_t nBlend) noexcept
+static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, std::uint8_t nAlpha)
 {
-    const auto alpha = nBlend >> 24;
-
-    // fully transparent - do nothing
-    if (alpha == 0)
-        return;
-
-    // fully opaque, use the blend value
-    if (alpha == 255)
-    {
-        *nTarget = nBlend;
-        return;
-    }
-
-    // blend each of the RGB values based on the blend pixel's alpha value
-    // do not modify the target pixel's alpha value.
-
-    std::uint8_t* pTarget{};
-    GSL_SUPPRESS_TYPE1 pTarget = reinterpret_cast<std::uint8_t*>(nTarget.get());
-    Expects(pTarget != nullptr);
-
-    std::uint8_t* pBlend{};
-    GSL_SUPPRESS_TYPE1 pBlend = reinterpret_cast<std::uint8_t*>(&nBlend);
-    Expects(pBlend != nullptr);
-
-
-    *pTarget++ = gsl::narrow_cast<std::uint8_t>(
-        (std::uint32_t{*pBlend++} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
-    *pTarget++ = gsl::narrow_cast<std::uint8_t>(
-        (std::uint32_t{*pBlend++} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
-    *pTarget = gsl::narrow_cast<std::uint8_t>(
-        (std::uint32_t{*pBlend} * alpha + std::uint32_t{*pTarget} * (256 - alpha)) / 256);
+    return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
 void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
@@ -153,6 +123,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
     assert(ra::to_signed(nFirstScanline) >= 0);
+    assert(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
 
     // clip to surface
@@ -166,9 +137,21 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
         const std::uint32_t* pEnd = pBits + szText.cx;
         do
         {
-            const std::uint8_t nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
-            const std::uint32_t pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
-            BlendPixel(gsl::make_not_null(pBits), pColor);
+            const ra::ui::Color nTextColor(*pTextBits++);
+            if (nTextColor.Channel.R == 0)
+            {
+                *pBits = nColor.ARGB;
+            }
+            else if (nTextColor.Channel.R != 255)
+            {
+                const uint8_t nAlpha = ~nTextColor.Channel.R; // 255-R = ~R
+                ra::ui::Color nImageColor(*pBits);
+                nImageColor.Channel.R = BlendPixel(nImageColor.Channel.R, nColor.Channel.R, nAlpha);
+                nImageColor.Channel.G = BlendPixel(nImageColor.Channel.G, nColor.Channel.G, nAlpha);
+                nImageColor.Channel.B = BlendPixel(nImageColor.Channel.B, nColor.Channel.B, nAlpha);
+                *pBits = nImageColor.ARGB;
+            }
+
             ++pBits;
         } while (pBits < pEnd);
 
@@ -179,48 +162,51 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 {
     const auto nWidth = to_signed(GetWidth());
     const auto nHeight = to_signed(GetHeight());
 
     // copy a portion of the target surface into a buffer
-    HDC hMemDC = CreateCompatibleDC(hTargetDC);
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = nWidth;
-    bmi.bmiHeader.biHeight = nHeight;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage = nWidth * nHeight * 4;
-
-    std::uint32_t* pBits{};
-
-    HBITMAP hBitmap{};
-    GSL_SUPPRESS_TYPE1 hBitmap =
-        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
-    Expects(hBitmap != nullptr);
-    SelectBitmap(hMemDC, hBitmap);
-
-    BitBlt(hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);
+    ::BitBlt(m_pBlendBuffer.m_hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);
 
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
-    const std::uint32_t* pEnd = pBits + nWidth * nHeight;
-    std::uint32_t* pSrcBits = m_pBits;
-    Expects(pSrcBits != nullptr);
-    do
+    std::uint8_t* pBits;
+    GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBlendBuffer.m_pBits);
+    assert(pBits != nullptr);
+    std::uint8_t* pSrcBits;
+    GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
+    assert(pSrcBits != nullptr);
+
+    const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
+    while (pSrcBits < pEnd)
     {
-        BlendPixel(gsl::make_not_null(pBits), *pSrcBits++);
-    } while (++pBits < pEnd);
-    Ensures(pSrcBits != nullptr);
+        const auto nAlpha = pSrcBits[3];
+        if (nAlpha == 0)
+        {
+            // ignore fully transparent pixels
+        }
+        else if (nAlpha == 0xFF)
+        {
+            // copy fully opaque pixels
+            pBits[0] = pSrcBits[0];
+            pBits[1] = pSrcBits[1];
+            pBits[2] = pSrcBits[2];
+        }
+        else
+        {
+            // merge partially transparent pixels
+            pBits[0] = BlendPixel(pBits[0], pSrcBits[0], nAlpha);
+            pBits[1] = BlendPixel(pBits[1], pSrcBits[1], nAlpha);
+            pBits[2] = BlendPixel(pBits[2], pSrcBits[2], nAlpha);
+        }
+
+        pBits += 4;
+        pSrcBits += 4;
+    }
 
     // copy the buffer back onto the target surface
-    ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, hMemDC, 0, 0, SRCCOPY);
-
-    DeleteBitmap(hBitmap);
-    DeleteDC(hMemDC);
+    ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, m_pBlendBuffer.m_hMemDC, 0, 0, SRCCOPY);
 }
 
 void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)

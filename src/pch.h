@@ -9,7 +9,7 @@
     We don't care about warnings for library files.
 */
 
-#ifdef _PREFAST_ // code analysis on
+#ifdef _PREFAST_                // code analysis on
 #define _CA_SHOULD_CHECK_RETURN // always check, functions with these that fail can be catastrophic
 #define _CA_SHOULD_CHECK_RETURN_WER
 #endif // _PREFAST_
@@ -45,6 +45,7 @@
 /* STL Stuff */
 #include <array> // algorithm, iterator, tuple
 #include <atomic>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <map>

@@ -202,7 +202,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                                 "The development team will investigate this bug as soon as possible\n"
                                 "and we will send you a message on RetroAchievements.org\n"
                                 "as soon as we have a solution.\n\n"
-                                "Thanks again!\0"
+                                "Thanks again!"
                             };
 
                             MessageBox(hDlg, NativeStr(buffer.data()).c_str(), TEXT("Success!"), MB_OK);

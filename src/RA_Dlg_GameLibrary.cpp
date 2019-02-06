@@ -76,8 +76,7 @@ namespace ra {
 inline static void LogErrno() noexcept
 {
     std::array<char, 2048> buf{};
-    strerror_s(buf.data(), sizeof(buf), errno);
-    // TODO: Make StringPrintf support std::array
+    GSL_SUPPRESS_F6 Ensures(strerror_s(buf.data(), sizeof(buf), errno) == 0);
     GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf.data());
 }
 
@@ -260,36 +259,30 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
     while (FilesToScan.size() > 0)
     {
-        mtx.lock();
-        if (!Dlg_GameLibrary::ThreadProcessingAllowed)
         {
-            mtx.unlock();
-            break;
+            std::scoped_lock lock{mtx};
+            if (!Dlg_GameLibrary::ThreadProcessingAllowed)
+                break;
         }
-        mtx.unlock();
 
-        FILE* pf = nullptr;
-        if ((fopen_s(&pf, FilesToScan.front().c_str(), "rb") == 0) && pf)
+        if (std::basic_ifstream<unsigned char> ifile{FilesToScan.front(), std::ios::binary}; ifile.is_open())
         {
             // obtain file size:
-            fseek(pf, 0, SEEK_END);
-            const DWORD nSize = ftell(pf);
-            rewind(pf);
+            const auto nSize = ra::to_signed(std::filesystem::file_size(FilesToScan.front()));
 
             auto pBuf = std::make_unique<unsigned char[]>(6 * 1024 * 1024);
 
-            fread(pBuf.get(), sizeof(unsigned char), nSize, pf); // Check
+            ifile.read(pBuf.get(), nSize); // Check
             Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
             pBuf.reset();
 
             SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);
-
-            fclose(pf);
         }
 
-        mtx.lock();
-        FilesToScan.pop_front();
-        mtx.unlock();
+        {
+            std::scoped_lock lock{mtx};
+            FilesToScan.pop_front();
+        }
     }
 
     Dlg_GameLibrary::ThreadProcessingActive = false;
@@ -298,8 +291,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
 
 void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
 {
-    char sSearchDir[2048];
-    sprintf_s(sSearchDir, 2048, "%s\\*.*", sBaseDir.c_str());
+    const auto sSearchDir = ra::StringPrintf("%s\\*.*", sBaseDir);
 
     WIN32_FIND_DATA ffd;
     HANDLE hFind = FindFirstFile(NativeStr(sSearchDir).c_str(), &ffd);
@@ -341,8 +333,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                     //	Parse as ROM!
                     RA_LOG("%s looks good: parsing!\n", sFilename.c_str());
 
-                    char sAbsFileDir[2048];
-                    sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
+                    const auto sAbsFileDir = ra::StringPrintf("%s\\%s", sBaseDir, sFilename);
 
                     HANDLE hROMReader = CreateFile(NativeStr(sAbsFileDir).c_str(), GENERIC_READ, FILE_SHARE_READ,
                                                    nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -498,30 +489,21 @@ void Dlg_GameLibrary::LoadAll()
 
 void Dlg_GameLibrary::SaveAll()
 {
-    std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+    const auto sMyGameLibraryFile = ra::StringPrintf(L"%s%s", g_sHomeDir, RA_MY_GAME_LIBRARY_FILENAME);
 
-    mtx.lock();
-    FILE* pf = nullptr;
-    _wfopen_s(&pf, sMyGameLibraryFile.c_str(), L"wb");
-    if (pf != nullptr)
+    std::scoped_lock lock{mtx};
+    std::ofstream ofile{sMyGameLibraryFile, std::ios::binary};
+
+    for (const auto& result : Results)
     {
-        std::map<std::string, std::string>::iterator iter = Results.begin();
-        while (iter != Results.end())
-        {
-            const std::string& sFilepath = iter->first;
-            const std::string& sMD5 = iter->second;
+        const std::string& sFilepath = result.first;
+        const std::string& sMD5 = result.second;
 
-            fwrite(sFilepath.c_str(), sizeof(char), strlen(sFilepath.c_str()), pf);
-            fwrite("\n", sizeof(char), 1, pf);
-            fwrite(sMD5.c_str(), sizeof(char), strlen(sMD5.c_str()), pf);
-            fwrite("\n", sizeof(char), 1, pf);
-
-            iter++;
-        }
-
-        fclose(pf);
+        ofile.write(sFilepath.c_str(), ra::to_signed(sFilepath.length()));
+        ofile.write("\n", 1);
+        ofile.write(sMD5.c_str(), ra::to_signed(sMD5.length()));
+        ofile.write("\n", 1);
     }
-    mtx.unlock();
 }
 
 // static
@@ -571,7 +553,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 case IDC_RA_LBX_GAMELIST:
                 {
 #pragma warning(push)
-#pragma warning(disable: 26490)
+#pragma warning(disable : 26490)
                     GSL_SUPPRESS_TYPE1
                     switch (reinterpret_cast<LPNMHDR>(lParam)->code)
 #pragma warning(pop)

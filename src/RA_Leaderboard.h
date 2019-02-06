@@ -59,6 +59,11 @@ public:
     size_t GetRankInfoCount() const noexcept { return m_RankInfo.size(); }
     void SortRankInfo();
 
+    inline auto begin() noexcept { return m_RankInfo.begin(); }
+    inline auto begin() const noexcept { return m_RankInfo.begin(); }
+    inline auto end() noexcept { return m_RankInfo.end(); }
+    inline auto end() const noexcept { return m_RankInfo.end(); }
+
 protected:
     virtual void Start();
     virtual void Cancel();

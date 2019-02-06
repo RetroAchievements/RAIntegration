@@ -600,8 +600,7 @@ void AchievementOverlay::DrawFriendsPage(HDC hDC, int nDX, _UNUSED int, const RE
             HANDLE hOldObj = SelectObject(hDC, g_hFontDesc);
 
             auto buffer = ra::StringPrintf(" %s (%u) ", pFriend.Username(), pFriend.GetScore());
-            TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(),
-                    buffer.length());
+            TextOut(hDC, nXOffs + nFriendLeftOffsetText, nYOffs, NativeStr(buffer).c_str(), buffer.length());
 
             SelectObject(hDC, g_hFontTiny);
             buffer = ra::StringPrintf(" %s ", pFriend.Activity());
@@ -675,8 +674,6 @@ void AchievementOverlay::DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED in
     buffer = ra::StringPrintf(" Modified: %s ", _TimeStampToString(tModified));
     TextOut(hDC, nDX + 20, nCoreDetailsY + nCoreDetailsSpacing, NativeStr(buffer).c_str(),
             gsl::narrow<int>(buffer.length()));
-
-            
 
     if (g_AchExamine.HasData())
     {
@@ -754,7 +751,7 @@ void AchievementOverlay::DrawNewsPage(HDC hDC, int nDX, _UNUSED int, const RECT&
 
         SelectObject(hDC, g_hFontDesc2);
 
-        //vSetup initial variables for the rect
+        // vSetup initial variables for the rect
         RECT rcNews{nLeftAlign, nYOffset, nRightAlign, nYOffset};
 
         // Calculate height of rect, fetch bottom for next rect:
@@ -954,29 +951,23 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
 
         if (g_LBExamine.m_bHasData)
         {
-            for (size_t i = 0; i < pLB->GetRankInfoCount(); ++i)
+            gsl::index i{-1};
+            for (const auto& rEntry : *pLB)
             {
-                const RA_Leaderboard::Entry& rEntry = pLB->GetRankInfo(i);
-                std::string sScoreFormatted = pLB->FormatScore(rEntry.m_nScore);
-
-                char sRankText[256];
-                sprintf_s(sRankText, 256, " %u ", rEntry.m_nRank);
-
-                char sNameText[256];
-                sprintf_s(sNameText, 256, " %s ", rEntry.m_sUsername.c_str());
-
-                char sScoreText[256];
-                sprintf_s(sScoreText, 256, " %s ", sScoreFormatted.c_str());
+                i++;
+                const auto sRankText = ra::StringPrintf(" %u ", rEntry.m_nRank);
+                const auto sNameText = ra::StringPrintf(" %s ", rEntry.m_sUsername);
+                const auto sScoreText = ra::StringPrintf(" %s ", pLB->FormatScore(rEntry.m_nScore));
 
                 //	Draw/Fetch user image? //TBD
                 TextOut(hDC, nDX + nWonByPlayerRankX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sRankText).c_str(), strlen(sRankText));
+                        NativeStr(sRankText).c_str(), gsl::narrow_cast<int>(sRankText.length()));
 
                 TextOut(hDC, nDX + nWonByPlayerUserX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sNameText).c_str(), strlen(sNameText));
+                        NativeStr(sNameText).c_str(), gsl::narrow_cast<int>(sNameText.length()));
 
                 TextOut(hDC, nDX + nWonByPlayerScoreX, nLeaderboardYOffs + (i * nLeaderboardYSpacing),
-                        NativeStr(sScoreText).c_str(), strlen(sScoreText));
+                        NativeStr(sScoreText).c_str(), gsl::narrow_cast<int>(sScoreText.length()));
             }
         }
         else
@@ -1407,12 +1398,12 @@ void AchievementOverlay::InstallNewsArticlesFromFile()
             };
 
             {
-                std::tm destTime;
-                localtime_s(&destTime, &nNewsItem.m_nPostedAt);
+                std::tm destTime{};
+                Expects(localtime_s(&destTime, &nNewsItem.m_nPostedAt) == 0);
 
-                char buffer[256U]{};
-                strftime(buffer, 256U, "%b %d", &destTime);
-                nNewsItem.m_sPostedAt = buffer;
+                std::ostringstream oss;
+                oss << std::put_time(&destTime, "%b %d");
+                nNewsItem.m_sPostedAt = oss.str();
             }
 
             m_LatestNews.push_back(std::move(nNewsItem));

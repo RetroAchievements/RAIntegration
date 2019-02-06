@@ -45,34 +45,39 @@ void Dlg_AchievementsReporter::SetupColumns(HWND hList)
     ms_nNumOccupiedRows = 0;
 }
 
-_Use_decl_annotations_
-void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList, const Achievement* restrict pAch)
+_Use_decl_annotations_ void Dlg_AchievementsReporter::AddAchievementToListBox(HWND hList,
+                                                                              const Achievement* restrict pAch)
 {
     Expects(pAch != nullptr);
+    int check = 0;
     // We aren't actually using the value so we're using iterators
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
     {
         const auto nPos{std::distance(COL_TITLE.cbegin(), it)};
+
         switch (ra::itoe<Column>(nPos))
         {
             case Column::Checked:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", "");
+                check = sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", "");
                 break;
             case Column::Title:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Title().c_str());
+                check = sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Title().c_str());
                 break;
             case Column::Desc:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Description().c_str());
+                check =
+                    sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Description().c_str());
                 break;
             case Column::Author:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Author().c_str());
+                check = sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", pAch->Author().c_str());
                 break;
             case Column::Achieved:
-                sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", !pAch->Active() ? "Yes" : "No");
+                check =
+                    sprintf_s(LbxDataAt(ms_nNumOccupiedRows, nPos), MAX_TEXT_LEN, "%s", !pAch->Active() ? "Yes" : "No");
                 break;
             default:
                 ASSERT(!"Unknown col!");
         }
+        Ensures(check >= 0);
     }
 
     for (auto it = COL_TITLE.cbegin(); it != COL_TITLE.cend(); ++it)
@@ -189,32 +194,28 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     {
                         if (doc["Success"].GetBool())
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
-                                      "Submitted OK!\n"
-                                      "\n"
-                                      "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-                                      "\n"
-                                      "The development team will investigate this bug as soon as possible\n"
-                                      "and we will send you a message on RetroAchievements.org\n"
-                                      "as soon as we have a solution.\n"
-                                      "\n"
-                                      "Thanks again!");
+                            // get this big string at compile-time?
+                            constexpr std::string_view buffer
+                            {
+                                "Submitted OK!\n\n"
+                                "Thank you for reporting that bug(s), and sorry it hasn't worked correctly.\n\n"
+                                "The development team will investigate this bug as soon as possible\n"
+                                "and we will send you a message on RetroAchievements.org\n"
+                                "as soon as we have a solution.\n\n"
+                                "Thanks again!\0"
+                            };
 
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
+                            MessageBox(hDlg, NativeStr(buffer.data()).c_str(), TEXT("Success!"), MB_OK);
                             EndDialog(hDlg, TRUE);
                             return TRUE;
                         }
                         else
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
-                                      "Failed!\n"
-                                      "\n"
-                                      "Response From Server:\n"
-                                      "\n"
-                                      "Error code: %d",
-                                      doc.GetParseError());
+                            const auto buffer = ra::StringPrintf(
+                                "Failed!\n\n"
+                                "Response From Server:\n\n"
+                                "Error code: %d",
+                                doc.GetParseError());
                             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
                             return FALSE;
                         }

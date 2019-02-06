@@ -135,10 +135,9 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 {
     ASSERT(nIter < ListView_GetItemCount(hList));
     ListView_DeleteItem(hList, nIter);
-    m_lbxData.erase(m_lbxData.begin() + nIter);
+    m_lbxData.erase(std::next(m_lbxData.begin(), nIter));
 
-    char buffer[16];
-    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
+    const auto buffer = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                    NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
@@ -201,36 +200,36 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
 _Success_(return ) _NODISCARD BOOL
     LocalValidateAchievementsBeforeCommit(_In_reads_(1) const std::array<int, 1> nLbxItems)
 {
-    char buffer[2048];
     for (auto& nIter : nLbxItems)
     {
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
         if (Ach.Title().length() < 2)
         {
-            sprintf_s(buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.",
-                      Ach.Title().c_str());
+            const auto buffer =
+                ra::StringPrintf("Achievement title too short:\n%s\nMust be greater than 2 characters.", Ach.Title());
             MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Title().length() > 63)
         {
-            sprintf_s(buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.",
-                      Ach.Title().c_str());
+            const auto buffer =
+                ra::StringPrintf("Achievement title too long:\n%s\nMust be fewer than 80 characters.",
+                      Ach.Title());
             MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
 
         if (Ach.Description().length() < 2)
         {
-            sprintf_s(buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.",
-                      Ach.Description().c_str());
+            const auto buffer = ra::StringPrintf(
+                "Achievement description too short:\n%s\nMust be greater than 2 characters.", Ach.Description());
             MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Description().length() > 255)
         {
-            sprintf_s(buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.",
-                      Ach.Description().c_str());
+            const auto buffer = ra::StringPrintf(
+                "Achievement description too long:\n%s\nMust be fewer than 255 characters.", Ach.Description());
             MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
@@ -567,8 +566,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     ListView_SetItemState(hList, nNewID, LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
-                    char buffer[16];
-                    sprintf_s(buffer, 16, " %u", g_pActiveAchievements->NumAchievements());
+                    const auto buffer = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
                     Cheevo.SetModified(TRUE);
@@ -606,8 +604,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                           LVIS_FOCUSED | LVIS_SELECTED, ra::to_unsigned(-1));
                     ListView_EnsureVisible(hList, g_pLocalAchievements->NumAchievements() - 1, FALSE);
 
-                    char buffer2[16];
-                    sprintf_s(buffer2, 16, " %u", g_pActiveAchievements->NumAchievements());
+                    const auto buffer2 = ra::StringPrintf(" %u", g_pActiveAchievements->NumAchievements());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer2).c_str());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                                    NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());
@@ -941,12 +938,11 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     //  title = std::string("Upload ") + std::to_string( nNumChecked ) + std::string(" Achievements");
     //}
 
-    char message[1024];
-    sprintf_s(message, 1024,
-              "Uploading the selected %u achievement(s).\n"
-              "Are you sure? This will update the server with your new achievements\n"
-              "and players will be able to download them into their games immediately.",
-              nNumChecked);
+    const auto message = ra::StringPrintf(
+        "Uploading the selected %u achievement(s).\n"
+        "Are you sure? This will update the server with your new achievements\n"
+        "and players will be able to download them into their games immediately.",
+        nNumChecked);
 
     BOOL bErrorsEncountered = FALSE;
 
@@ -1014,8 +1010,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                 }
                 else
                 {
-                    char buffer[1024];
-                    sprintf_s(buffer, 1024, "Error!!\n%s", std::string(response["Error"].GetString()).c_str());
+                    const auto buffer = ra::StringPrintf("Error!!\n%s", response["Error"].GetString());
                     MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
                     bErrorsEncountered = TRUE;
                 }
@@ -1029,8 +1024,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
         }
         else
         {
-            char buffer[512];
-            sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);
+            const auto buffer = ra::StringPrintf("Successfully uploaded data for %u achievements!", nNumChecked);
             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
             RECT rcBounds;
@@ -1098,8 +1092,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
         // SetupColumns( hList );
         LoadAchievements(hList);
 
-        TCHAR buffer[256];
-        _stprintf_s(buffer, 256, _T(" %u"), nGameID);
+        const auto buffer = ra::StringPrintf(_T(" %u"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)

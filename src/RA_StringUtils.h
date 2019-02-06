@@ -195,15 +195,9 @@ public:
         m_vPending.emplace_back(arg.c_str(), arg.length());
     }
 
-    void Append(std::string&& arg)
-    {
-        m_vPending.emplace_back(std::move(arg));
-    }
+    void Append(std::string&& arg) { m_vPending.emplace_back(std::move(arg)); }
 
-    void Append(std::wstring&& arg)
-    {
-        m_vPending.emplace_back(std::move(arg));
-    }
+    void Append(std::wstring&& arg) { m_vPending.emplace_back(std::move(arg)); }
 
     template<>
     void Append(const char* const& arg)
@@ -252,11 +246,22 @@ public:
 
         if constexpr (std::is_integral_v<T>)
         {
-            if(sFormat.back() == 'c')
+            // boolalpha will print true/false instead of 1/0, no boolalpha is the opposite
+            if constexpr (std::is_same_v<T, bool>)
+            {
+                if (sFormat.back() == 'd')
+                    oss << std::noboolalpha << arg; // 0/1
+                else if (sFormat.back() == 's')
+                    oss << std::boolalpha << arg; // true/false
+                else
+                    oss << arg; // w/e the default is the current enviornment
+            }
+
+            if (sFormat.back() == 'c')
                 oss << arg;
             else
             {
-                if(std::isdigit(ra::to_unsigned(sFormat.front())))
+                if (std::isdigit(ra::to_unsigned(sFormat.front())))
                 {
                     if (sFormat.front() == '0')
                         oss << std::setfill('0');
@@ -449,7 +454,10 @@ public:
 
 private:
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintfParameterizedFormat(const CharT* const pFormat, const std::string& sFormat, const T& value, Ts&&... args)
+    void AppendPrintfParameterizedFormat(const CharT* const pFormat,
+                                         const std::string& sFormat,
+                                         const T& value,
+                                         Ts&&... args)
     {
         AppendFormat(value, sFormat);
         AppendPrintf(pFormat, std::forward<Ts>(args)...);
@@ -477,7 +485,7 @@ private:
         PendingString(const PendingString&) = delete;
         PendingString& operator=(const PendingString&) = delete;
         PendingString& operator=(PendingString&&) noexcept = delete;
-        
+
         // This is needed by m_vPending's allocator
         PendingString(PendingString&&) noexcept = default;
 
@@ -577,7 +585,10 @@ public:
     /// <summary>
     /// Returns the next character without advancing the position.
     /// </summary>
-    GSL_SUPPRESS_F6 _NODISCARD char PeekChar() const noexcept { return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0'; }
+    GSL_SUPPRESS_F6 _NODISCARD char PeekChar() const noexcept
+    {
+        return m_nPosition < m_sString.length() ? m_sString.at(m_nPosition) : '\0';
+    }
 
     /// <summary>
     /// Get the current position of the cursor within the string.

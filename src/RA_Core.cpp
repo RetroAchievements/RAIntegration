@@ -1104,10 +1104,10 @@ _Use_decl_annotations_ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFile
 
     // malloc() must be managed!
     // NB. By adding +1, we allow for a single \0 character :)
-    auto pRawFileOut = static_cast<char*>(std::malloc((nFileSize + 1) * sizeof(char)));
+    auto pRawFileOut = static_cast<char*>(std::malloc((gsl::narrow_cast<std::size_t>(nFileSize) + 1) * sizeof(char)));
     if (pRawFileOut)
     {
-        ZeroMemory(pRawFileOut, nFileSize + 1);
+        ZeroMemory(pRawFileOut, gsl::narrow_cast<std::size_t>(nFileSize) + 1);
         ifile.read(pRawFileOut, nFileSize);
     }
 

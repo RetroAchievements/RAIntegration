@@ -866,7 +866,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 if (m_SearchResults.size() > 0)
                 {
-                    TCHAR buffer[1024]{};
+                    ra::tstring buffer;
 
                     if (pDIS->itemID < 2)
                     {
@@ -875,10 +875,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             try
                             {
                                 const std::string& sFirstLine = m_SearchResults.at(m_nPage).m_results.Summary();
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(sFirstLine).c_str());
+                                buffer = NativeStr(sFirstLine);
                             } catch (const std::out_of_range& e)
                             {
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(e.what()).c_str());
+                                buffer = NativeStr(e.what());
                             }
                         }
                         else
@@ -886,16 +886,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             SetTextColor(pDIS->hDC, RGB(0, 100, 150));
                             const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
                             if (nMatches > MIN_RESULTS_TO_DUMP)
-                                _stprintf_s(buffer, sizeof(buffer),
-                                            _T("Found %u matches! (Displaying first %u results)"), nMatches,
-                                            MIN_RESULTS_TO_DUMP);
+                            {
+                                buffer = ra::StringPrintf(_T("Found %u matches! (Displaying first %u results)"),
+                                                          nMatches, MIN_RESULTS_TO_DUMP);
+                            }
                             else if (nMatches == 0)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found *ZERO* matches!"));
+                                buffer = _T("Found *ZERO* matches!");
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches!"), nMatches);
+                                buffer = ra::StringPrintf(_T("Found %u matches!"), nMatches);
                         }
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
+                        DrawText(pDIS->hDC, buffer.c_str(), gsl::narrow_cast<int>(buffer.length()), &pDIS->rcItem,
                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                         SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
                     }
@@ -907,15 +908,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             break;
 
                         unsigned int nVal = 0;
-                        UpdateSearchResult(result, nVal, buffer);
+                        buffer = UpdateSearchResult(result, nVal);
 
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
                         if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                        {
-                            std::ostringstream oss;
-                            oss << "   (" << pSavedNote->Note() << ")";
-                            _tcscat_s(buffer, NativeStr(oss.str()).c_str());
-                        }
+                            buffer.append(ra::StringPrintf("   (%s)", pSavedNote->Note()));
 
                         COLORREF color{};
 
@@ -1541,13 +1538,13 @@ void Dlg_Memory::OnLoad_NewRom()
         ra::ByteAddress start, end;
         if (GetSystemMemoryRange(start, end))
         {
-            TCHAR label[64]{};
+            ra::tstring label;
             if (g_MemManager.TotalBankSize() > 0x10000)
-                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
+                label = ra::StringPrintf(TEXT("System Memory (0x%06X-0x%06X)"), start, end);
             else
-                _stprintf_s(label, 64, TEXT("System Memory (0x%04X-0x%04X)"), start, end);
+                label = ra::StringPrintf(TEXT("System Memory (0x%04X-0x%04X)"), start, end);
 
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label);
+            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, label.c_str());
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), TRUE);
         }
         else
@@ -1558,13 +1555,13 @@ void Dlg_Memory::OnLoad_NewRom()
 
         if (GetGameMemoryRange(start, end))
         {
-            TCHAR label[64]{};
+            ra::tstring label;
             if (g_MemManager.TotalBankSize() > 0x10000)
-                _stprintf_s(label, 64, TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
+                label = ra::StringPrintf(TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
             else
-                _stprintf_s(label, 64, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
+                label = ra::StringPrintf(TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
 
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label);
+            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label.c_str());
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);
         }
         else
@@ -1609,32 +1606,29 @@ void Dlg_Memory::Invalidate()
 
 void Dlg_Memory::UpdateBits() const
 {
-    TCHAR sNewValue[64] = _T("");
+    ra::tstring sNewValue;
 
     if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
     {
         const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
         const unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
 
-        _stprintf_s(sNewValue, 64, _T("      %d %d %d %d %d %d %d %d"), static_cast<int>((nVal & (1 << 7)) != 0),
-                    static_cast<int>((nVal & (1 << 6)) != 0), static_cast<int>((nVal & (1 << 5)) != 0),
-                    static_cast<int>((nVal & (1 << 4)) != 0), static_cast<int>((nVal & (1 << 3)) != 0),
-                    static_cast<int>((nVal & (1 << 2)) != 0), static_cast<int>((nVal & (1 << 1)) != 0),
-                    static_cast<int>((nVal & (1 << 0)) != 0));
+        sNewValue = ra::StringPrintf(_T("      %d %d %d %d %d %d %d %d"), ((nVal & (1 << 6)) != 0),
+                                     ((nVal & (1 << 5)) != 0), ((nVal & (1 << 4)) != 0), ((nVal & (1 << 3)) != 0),
+                                     ((nVal & (1 << 2)) != 0), ((nVal & (1 << 1)) != 0), ((nVal & (1 << 0)) != 0));
     }
 
-    TCHAR sOldValue[64];
-    GetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sOldValue, 64);
-    if (_tcscmp(sNewValue, sOldValue) != 0)
-        SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sNewValue);
+    std::array<TCHAR, 64> sOldValue{};
+    GetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sOldValue.data(), 64);
+    if (sNewValue != sOldValue.data())
+        SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sNewValue.c_str());
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
     MemoryViewerControl::setWatchedAddress(nAddr);
 
-    char buffer[32];
-    sprintf_s(buffer, 32, "0x%06x", nAddr);
+    const auto buffer = ra::StringPrintf("0x%06x", nAddr);
     SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
     UpdateBits();
 
@@ -1880,29 +1874,23 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     return false;
 }
 
-void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,
-                                    TCHAR (&buffer)[1024])
+ra::tstring Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal)
 {
     nMemVal = g_MemManager.ActiveBankRAMRead(result.nAddress, result.nSize);
 
     switch (result.nSize)
     {
         case MemSize::ThirtyTwoBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
         case MemSize::SixteenBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
         default:
         case MemSize::EightBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
         case MemSize::Nibble_Lower:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
         case MemSize::Nibble_Upper:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
-            break;
+            return ra::StringPrintf(_T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
     }
 }
 

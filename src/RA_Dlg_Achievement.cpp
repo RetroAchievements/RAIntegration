@@ -1092,7 +1092,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
         // SetupColumns( hList );
         LoadAchievements(hList);
 
-        const auto buffer = ra::StringPrintf(_T(" %u"), nGameID);
+        auto buffer = ra::StringPrintf(_T(" %u"), nGameID);
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_GAMEHASH, NativeStr(buffer).c_str());
 
         if (nGameID != 0)
@@ -1104,7 +1104,7 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
             EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
         }
 
-        _stprintf_s(buffer, _T(" %u"), g_pActiveAchievements->NumAchievements());
+        buffer = ra::StringPrintf(_T(" %u"), g_pActiveAchievements->NumAchievements());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
         SetDlgItemText(m_hAchievementsDlg, IDC_RA_POINT_TOTAL,
                        NativeStr(std::to_string(g_pActiveAchievements->PointTotal())).c_str());

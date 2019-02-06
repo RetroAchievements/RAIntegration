@@ -3,11 +3,11 @@
 #include "RA_Core.h"
 #include "RA_User.h"
 
-#include "RA_BuildVer.h"
 #include "RA_AchievementSet.h"
+#include "RA_BuildVer.h"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
+#include "RA_Dlg_Memory.h"
 #include "RA_RichPresence.h"
 
 #include "data\EmulatorContext.hh"
@@ -21,8 +21,7 @@
 
 #include <winhttp.h>
 
-const char* RequestTypeToString[] =
-{
+const char* RequestTypeToString[] = {
     "RequestScore",
     "RequestNews",
     "RequestRichPresence",
@@ -43,36 +42,20 @@ const char* RequestTypeToString[] =
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
-const char* RequestTypeToPost[] =
-{
-    "score",
-    "news",
-    "richpresencepatch",
-    "achievementwondata",
-    "lbinfo",
-    "codenotes2",
-    "getfriendlist",
-    "badgeiter",
-    "hashlibrary",
-    "gameslist",
-    "allprogress",
+const char* RequestTypeToPost[] = {
+    "score",          "news",          "richpresencepatch", "achievementwondata", "lbinfo",          "codenotes2",
+    "getfriendlist",  "badgeiter",     "hashlibrary",       "gameslist",          "allprogress",
 
-    "submitcodenote",
-    "submitlbentry",
-    "uploadachievement",
-    "submitticket",
-    "submitgametitle",
+    "submitcodenote", "submitlbentry", "uploadachievement", "submitticket",       "submitgametitle",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 
-const char* UploadTypeToString[] =
-{
+const char* UploadTypeToString[] = {
     "RequestUploadBadgeImage",
 };
 static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
 
-const char* UploadTypeToPost[] =
-{
+const char* UploadTypeToPost[] = {
     "uploadbadgeimage",
 };
 static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
@@ -100,13 +83,13 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 
 static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
 {
-    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
-                                       RA_INTEGRATION_VERSION_MODIFIED));
-    
-    if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
+    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR,
+                                       RA_INTEGRATION_VERSION_REVISION, RA_INTEGRATION_VERSION_MODIFIED));
+
+    if constexpr (_CONSTANT_LOC pos{std::string_view{RA_INTEGRATION_VERSION_PRODUCT}.find('-')};
+                  pos != std::string_view::npos)
     {
-        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+        constexpr std::string_view sAppend{RA_INTEGRATION_VERSION_PRODUCT};
         sUserAgent.append(sAppend, pos);
     }
 }
@@ -119,9 +102,9 @@ static void AppendNTVersion(_Inout_ std::string& sUserAgent)
 #ifndef NTSTATUS
     using NTSTATUS = __success(return >= 0) LONG;
 #endif
-    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    if (const auto ntModule{::GetModuleHandleW(L"ntdll.dll")}; ntModule)
     {
-        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        RTL_OSVERSIONINFOEXW osVersion{sizeof(RTL_OSVERSIONINFOEXW)};
         using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
 
         fnRtlGetVersion RtlGetVersion{};
@@ -133,8 +116,8 @@ static void AppendNTVersion(_Inout_ std::string& sUserAgent)
             RtlGetVersion(&osVersion);
             if (osVersion.dwMajorVersion > 0UL)
             {
-                sUserAgent.append(ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
-                                                   osVersion.dwMinorVersion));
+                sUserAgent.append(
+                    ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion, osVersion.dwMinorVersion));
             }
         }
     }
@@ -178,14 +161,14 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapid
         if (response.size() > 0)
         {
             JSONResponseOut.Parse(response.c_str());
-            //LogJSON( JSONResponseOut );   //  Already logged during DoBlockingRequest()?
+            // LogJSON( JSONResponseOut );   //  Already logged during DoBlockingRequest()?
 
             if (JSONResponseOut.HasParseError())
             {
                 RA_LOG("JSON Parse Error encountered!\n");
             }
 
-            return(!JSONResponseOut.HasParseError());
+            return (!JSONResponseOut.HasParseError());
         }
     }
 
@@ -246,7 +229,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
     // Use WinHttpOpen to obtain a session handle.
 #pragma warning(push)
-#pragma warning(disable: 26477)
+#pragma warning(disable : 26477)
     GSL_SUPPRESS_ES47 HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                                        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 #pragma warning(pop)
@@ -259,23 +242,23 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
 
     if (hConnect != nullptr)
     {
-        WCHAR wBuffer[1024];
-        mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
+        std::array<wchar_t, 1024> wBuffer{};
+        // TBD: This seems like ra::Widen, the CRT on Windows can only do ASCII (native) or UTF-16 (Managed), UTF-8
+        // doesn't seem to work
+        Expects(mbstowcs_s(&nTemp, wBuffer.data(), 1024, sRequestedPage.c_str(), sRequestedPage.length() + 1) == 0);
+        constexpr auto rsize_max = ra::to_unsigned(-1) >> 1; // RSIZE_MAX == PTRDIFF_MAX (indexing limits)
+        Ensures((nTemp > 0) && (nTemp < rsize_max));
 
-        hRequest = WinHttpOpenRequest(hConnect,
-            L"POST",
-            wBuffer,
-            nullptr,
-            WINHTTP_NO_REFERER,
-            WINHTTP_DEFAULT_ACCEPT_TYPES,
-            0);
+        GSL_SUPPRESS_ES47 hRequest = WinHttpOpenRequest(hConnect, L"POST", wBuffer.data(), nullptr, WINHTTP_NO_REFERER,
+                                                        WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
     }
 
     if (hRequest != nullptr)
     {
         //---------------------------41184676334
         const char* mimeBoundary = "---------------------------41184676334";
-        const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
+        const wchar_t* contentType =
+            L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
 
         const int nResult =
             WinHttpAddRequestHeaders(hRequest, contentType, ra::to_unsigned(-1), WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
@@ -287,38 +270,38 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
             std::string sRTargetAndExtension = sRTarget + sFilename.substr(sFilename.length() - 4);
 
             std::ostringstream sb_ascii;
-            //sb_ascii << str;                                  
-            sb_ascii << "--" << mimeBoundary << "\r\n";                                                         //  --Boundary
-            sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sRTargetAndExtension << "\"\r\n";   //  Item header    'file' - Hijacking to determine request type!
-            sb_ascii << "\r\n";                                                                                 //  Spacing
-            sb_ascii << f.rdbuf();                                                                              //  Binary content
-            sb_ascii << "\r\n";                                                                                 //  Spacing
-            sb_ascii << "--" << mimeBoundary << "--\r\n";                                                       //  --Boundary--
+            // sb_ascii << str;
+            sb_ascii << "--" << mimeBoundary << "\r\n"; //  --Boundary
+            sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sRTargetAndExtension
+                     << "\"\r\n";  //  Item header    'file' - Hijacking to determine request type!
+            sb_ascii << "\r\n";    //  Spacing
+            sb_ascii << f.rdbuf(); //  Binary content
+            sb_ascii << "\r\n";    //  Spacing
+            sb_ascii << "--" << mimeBoundary << "--\r\n"; //  --Boundary--
 
-                                                                                                                //  ## EXPERIMENTAL ##
-                                                                                                                //sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";                                     //  Item header    'r'
-                                                                                                                //sb_ascii << "\r\n";                                                                                   //  Spacing
-                                                                                                                //sb_ascii << sRTarget << "\r\n";                                                                       //  Binary content
-                                                                                                                //sb_ascii << "\r\n";                                                                                   //  Spacing
-                                                                                                                //sb_ascii << "--" << mimeBoundary << "--\r\n";                                                     //  --Boundary--
+            //  ## EXPERIMENTAL ##
+            // sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";                                     // Item
+            // header    'r' sb_ascii << "\r\n"; //  Spacing sb_ascii << sRTarget << "\r\n"; //  Binary content sb_ascii
+            // << "\r\n";                                                                                   //  Spacing
+            // sb_ascii << "--" << mimeBoundary << "--\r\n";                                                     //
+            // --Boundary--
 
-            const std::string str = sb_ascii.str();
+            std::string str = sb_ascii.str();
 
             //  Inject type of request
 
-            bSuccess = WinHttpSendRequest(
-                hRequest,
-                WINHTTP_NO_ADDITIONAL_HEADERS,
-                0,
-                (void*)str.c_str(),
-                static_cast<unsigned long>(str.length()),
-                static_cast<unsigned long>(str.length()),
-                0);
+            GSL_SUPPRESS_ES47 bSuccess = WinHttpSendRequest(hRequest,
+                                                            WINHTTP_NO_ADDITIONAL_HEADERS,
+                                                            0,
+                                                            str.data(),
+                                                            gsl::narrow_cast<unsigned long>(str.length()),
+                                                            gsl::narrow_cast<unsigned long>(str.length()),
+                                                            0);
         }
 
         if (WinHttpReceiveResponse(hRequest, nullptr))
         {
-            //BYTE* sDataDestOffset = &pBufferOut[0];
+            // BYTE* sDataDestOffset = &pBufferOut[0];
 
             DWORD nBytesToRead = 0;
             WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
@@ -334,7 +317,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
                 {
                     DWORD nBytesFetched = 0;
 
-                    auto pData{ std::make_unique<char[]>(nBytesToRead) };
+                    auto pData{std::make_unique<char[]>(nBytesToRead)};
                     if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
                     {
                         ASSERT(nBytesToRead == nBytesFetched);
@@ -346,7 +329,7 @@ BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::
             }
 
             if (ResponseOut.size() > 0)
-                ResponseOut.push_back('\0');    //  EOS for parsing
+                ResponseOut.push_back('\0'); //  EOS for parsing
 
             RA_LOG(__FUNCTION__ ": success! Returned %u bytes.", ResponseOut.size());
         }
@@ -367,7 +350,8 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
         }
         else
         {
-            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
+            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(),
+                   GetParseError_En(ResponseOut.GetParseError()));
             return FALSE;
         }
     }
@@ -381,8 +365,7 @@ BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename
 //  Adds items to the httprequest queue
 void RAWeb::CreateThreadedHTTPRequest(RequestType nType, const PostArgs& PostData, const std::string& sData)
 {
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([nType, PostData, sData]() mutable
-    {
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([nType, PostData, sData]() mutable {
         auto pObj = std::make_unique<RequestObject>(nType, PostData, sData);
         std::string sResponse;
         DoBlockingRequest(pObj->GetRequestType(), pObj->GetPostArgs(), sResponse);

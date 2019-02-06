@@ -273,7 +273,7 @@ void Dlg_GameLibrary::ThreadedScanProc()
             auto pBuf = std::make_unique<unsigned char[]>(6 * 1024 * 1024);
 
             ifile.read(pBuf.get(), nSize); // Check
-            Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), nSize));
+            Results.insert_or_assign(FilesToScan.front(), RAGenerateMD5(pBuf.get(), gsl::narrow_cast<std::size_t>(nSize)));
             pBuf.reset();
 
             SendMessage(g_GameLibrary.GetHWND(), WM_TIMER, 0U, 0L);

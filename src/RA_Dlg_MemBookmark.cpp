@@ -761,7 +761,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring&& sFilename)
     if (!ifile.is_open())
     {
         std::array<char, 2048> buf{};
-        strerror_s(buf.data(), sizeof(buf), errno);
+        Ensures(strerror_s(buf.data(), sizeof(buf), errno) == 0);
         RA_LOG("%s: %s", ra::Narrow(sFilename).c_str(), buf.data());
         return;
     }

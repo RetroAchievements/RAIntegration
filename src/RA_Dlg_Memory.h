@@ -106,7 +106,7 @@ private:
 
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
 
-    void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, TCHAR(&buffer)[1024]);
+    ra::tstring UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
     static CodeNotes m_CodeNotes;

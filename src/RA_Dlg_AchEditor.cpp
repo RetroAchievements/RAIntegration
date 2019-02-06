@@ -83,10 +83,15 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
 Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
 {
     m_lbxGroupNames.front() = _T("Core");
-    for (auto it = std::next(m_lbxGroupNames.begin()); it != m_lbxGroupNames.end(); ++it)
+
+    gsl::index i = -1;
+    for (auto& name : m_lbxGroupNames)
     {
-        const auto i = std::distance(std::next(m_lbxGroupNames.begin()), it);
-        *it = ra::StringPrintf(_T("Alt %02t"), i);
+        i++;
+        if (i == 0)
+            continue;
+        else
+            name = ra::StringPrintf(_T("Alt %02t"), i);
     }
 }
 
@@ -177,7 +182,8 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
         sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
     }
 
-    LbxDataAt(nRow, CondSubItems::Id) = std::to_string(nRow + 1);;
+    LbxDataAt(nRow, CondSubItems::Id) = std::to_string(nRow + 1);
+    ;
     LbxDataAt(nRow, CondSubItems::Group) = ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType())));
     LbxDataAt(nRow, CondSubItems::Type_Src) = ra::Narrow(sMemTypStrSrc);
     LbxDataAt(nRow, CondSubItems::Size_Src) = ra::Narrow(sMemSizeStrSrc);
@@ -235,8 +241,8 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
             // inline suppression not working, and by function not working, have to disable it by code
 
-#pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress : 26454)
+            GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
 
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
@@ -253,7 +259,8 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) no
             // the LV ID and the LVs Parent window's HWND
             FORWARD_WM_NOTIFY(GetParent(hList), IDC_RA_LBX_CONDITIONS, &lvDispinfo, SendMessage); // ##reinterpret? ##SD
 
-            if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt).compare("Value") == 0)
+            if (g_AchievementEditorDialog.LbxDataAt(lvDispinfo.item.iItem, CondSubItems::Type_Tgt).compare("Value") ==
+                0)
             {
                 // Remove the associated 'size' entry
                 if ((lvDispinfo.item.iItem >= 0) && (lvDispinfo.item.iSubItem >= 1))
@@ -297,8 +304,8 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-#pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress : 26454)
+            GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -328,8 +335,8 @@ LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam
             ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
             lvDispinfo.hdr.hwndFrom = hwnd;
             lvDispinfo.hdr.idFrom = GetDlgCtrlID(hwnd);
-#pragma warning(suppress: 26454)
-            GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress : 26454)
+            GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
             lvDispinfo.item.mask = LVIF_TEXT;
             lvDispinfo.item.iItem = nSelItem;
             lvDispinfo.item.iSubItem = nSelSubItem;
@@ -608,10 +615,11 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                     break;
             }
 
-            g_hIPEEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
-                                        WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
-                                        rcSubItem.left, rcSubItem.top, nWidth, ra::ftoi(1.5f * nHeight),
-                                        g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
+            g_hIPEEdit =
+                CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
+                               WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN, rcSubItem.left,
+                               rcSubItem.top, nWidth, ra::ftoi(1.5f * nHeight), g_AchievementEditorDialog.GetHWND(),
+                               nullptr, GetModuleHandle(nullptr), nullptr);
 
             if (g_hIPEEdit == nullptr)
             {
@@ -632,7 +640,6 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 {
                     const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                     const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-
 
                     const auto buffer = std::to_string(Cond.RequiredHits());
                     SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
@@ -1126,7 +1133,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
-                            const auto buffer = ra::StringPrintf("Are you sure you wish to delete %u condition(s)?", uSelectedCount);
+                            const auto buffer =
+                                ra::StringPrintf("Are you sure you wish to delete %u condition(s)?", uSelectedCount);
                             if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
@@ -1425,8 +1433,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         ZeroMemory(&lvDispinfo, sizeof(LV_DISPINFO));
                         lvDispinfo.hdr.hwndFrom = g_hIPEEdit;
                         lvDispinfo.hdr.idFrom = GetDlgCtrlID(g_hIPEEdit);
-#pragma warning(suppress: 26454)
-                        GSL_SUPPRESS(io.5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
+#pragma warning(suppress : 26454)
+                        GSL_SUPPRESS(io .5) lvDispinfo.hdr.code = LVN_ENDLABELEDIT;
                         lvDispinfo.item.mask = LVIF_TEXT;
                         lvDispinfo.item.iItem = nSelItem;
                         lvDispinfo.item.iSubItem = nSelSubItem;
@@ -1452,7 +1460,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         case WM_NOTIFY:
         {
 #pragma warning(push)
-#pragma warning(disable: 26490)
+#pragma warning(disable : 26490)
             GSL_SUPPRESS_TYPE1
             switch (((reinterpret_cast<LPNMHDR>(lParam))->code))
 #pragma warning(pop)
@@ -1576,7 +1584,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         g_AchievementsDialog.OnEditAchievement(*pActiveAch);
                     }
 
-                    // Inject the new text into the lbx 
+                    // Inject the new text into the lbx
                     ListView_SetItemText(::GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), lvItem.iItem, lvItem.iSubItem,
                                          lvItem.pszText); // put new text
 
@@ -1751,21 +1759,20 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     try
     {
         size_t nRead{};
-        const auto nVal = std::stoul(sData, &nRead, nBase); 
+        const auto nVal = std::stoul(sData, &nRead, nBase);
         if (nRead < sData.length())
             bInvalid = true;
         else if (nRead > 0 && sData.at(0) == '-')
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", L"Value must be non-negative.");
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                                                                        L"Value must be non-negative.");
         else if (nVal > nMax)
             bTooLarge = true;
         else
             return nVal;
-    }
-    catch (const std::invalid_argument&)
+    } catch (const std::invalid_argument&)
     {
         bInvalid = true;
-    }
-    catch (const std::out_of_range&)
+    } catch (const std::out_of_range&)
     {
         bTooLarge = true;
     }
@@ -1774,27 +1781,28 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     {
         if (nBase == 10)
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                L"Invalid Input",
                 L"Only values that can be represented as decimal are allowed while the "
                 L"'show decimal values' checkbox is checked.");
         }
         else
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
-                L"Only values that can be represented as hexadecimal are allowed.");
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                L"Invalid Input", L"Only values that can be represented as hexadecimal are allowed.");
         }
     }
     else if (bTooLarge)
     {
         if (nBase == 10)
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
-                ra::StringPrintf(L"Value cannot exceed %lu", nMax));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                L"Too Large", ra::StringPrintf(L"Value cannot exceed %lu", nMax));
         }
         else
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
-                ra::StringPrintf(L"Value cannot exceed 0x%x", nMax));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                L"Too Large", ra::StringPrintf(L"Value cannot exceed 0x%x", nMax));
         }
     }
 
@@ -1868,7 +1876,7 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
 
     m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
     GSL_SUPPRESS_CON4 // inline suppression for this currently not working
-    const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
+        const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
 
     if (hBitmap != nullptr)
     {
@@ -2011,7 +2019,8 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
         else
-            SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
+            SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID,
+                            std::to_string(m_pSelectedAchievement->ID()).c_str());
 
         const auto buffer = std::to_string(m_pSelectedAchievement->Points());
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS, NativeStr(buffer).c_str());
@@ -2061,7 +2070,8 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
             if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
                 SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
             else
-                SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
+                SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID,
+                                std::to_string(m_pSelectedAchievement->ID()).c_str());
         }
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Points) && !bPointsSelected)
             SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS,

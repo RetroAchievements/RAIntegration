@@ -633,8 +633,8 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                     const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                     const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                    char buffer[256];
-                    sprintf_s(buffer, 256, "%u", Cond.RequiredHits());
+
+                    const auto buffer = std::to_string(Cond.RequiredHits());
                     SetWindowText(g_hIPEEdit, NativeStr(buffer).c_str());
                 }
             }
@@ -1126,8 +1126,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             const unsigned int uSelectedCount = ListView_GetSelectedCount(hList);
 
-                            char buffer[256];
-                            sprintf_s(buffer, 256, "Are you sure you wish to delete %u condition(s)?", uSelectedCount);
+                            const auto buffer = ra::StringPrintf("Are you sure you wish to delete %u condition(s)?", uSelectedCount);
                             if (MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Warning"), MB_YESNO) == IDYES)
                             {
                                 nSel = -1;
@@ -1509,8 +1508,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 // Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().GetValue());
+                                const auto buffer = ra::StringPrintf("0x%06x", rCond.CompSource().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 // Nudge the ComboBox to update the mem note
@@ -1526,8 +1524,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
                                 // Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().GetValue());
+                                const auto buffer = ra::StringPrintf("0x%06x", rCond.CompTarget().GetValue());
                                 SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
 
                                 // Nudge the ComboBox to update the mem note
@@ -1753,8 +1750,8 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     bool bInvalid = false;
     try
     {
-        size_t nRead;
-        auto nVal = std::stoul(sData, &nRead, nBase);
+        size_t nRead{};
+        const auto nVal = std::stoul(sData, &nRead, nBase); 
         if (nRead < sData.length())
             bInvalid = true;
         else if (nRead > 0 && sData.at(0) == '-')

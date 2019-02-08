@@ -101,8 +101,8 @@ BOOL RequestObject::ParseResponseToJSON(rapidjson::Document& rDocOut)
 static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
 {
     sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_REVISION,
-                                       RA_INTEGRATION_VERSION_MODIFIED));
+                                       RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH,
+                                       RA_INTEGRATION_VERSION_REVISION));
     
     if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
     {

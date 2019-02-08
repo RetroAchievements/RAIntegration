@@ -3,7 +3,7 @@
 #pragma once
 
 //	NB. Shared between RA_Integration and emulator
-using BOOL = int;
+typedef int BOOL;
 
 #ifndef CCONV
 #define CCONV __cdecl
@@ -153,7 +153,7 @@ extern void RA_Shutdown();
 extern void RA_DoAchievementsFrame();
 
 //	Updates and renders all on-screen overlays.
-extern void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen,
+extern void RA_UpdateRenderOverlay(HDC hDC, struct ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen,
                                    bool Paused);
 
 //  Determines if the overlay is completely covering the screen.

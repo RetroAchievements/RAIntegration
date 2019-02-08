@@ -130,14 +130,18 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
-    // notify the background threads as soon as possible so they start to wind down
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
+    // if _RA_Init wasn't called, the services won't have been registered, so there's nothing to shut down
+    if (ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+    {
+        // notify the background threads as soon as possible so they start to wind down
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
 
-    ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
-    ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
 
-    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+    }
 
     g_pActiveAchievements = nullptr;
     SAFE_DELETE(g_pCoreAchievements);

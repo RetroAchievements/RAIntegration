@@ -667,7 +667,13 @@ void RA_Shutdown()
 {
     //	Call shutdown on toolchain
     if (_RA_Shutdown != nullptr)
-        _RA_Shutdown();
+    {
+        try {
+            _RA_Shutdown();
+        }
+        catch (std::runtime_error&) {
+        }
+    }
 
     //	Clear func ptrs
     _RA_IntegrationVersion = nullptr;

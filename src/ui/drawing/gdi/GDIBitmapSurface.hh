@@ -71,6 +71,9 @@ private:
     // explicitly setting an initial value causes the constructor calculated values to be overridden.
     HBITMAP m_hBitmap;
     HDC m_hMemDC;
+
+    // allow GDIAlphaBitmapSurface direct access to m_hMemDC for Blending
+    friend class GDIAlphaBitmapSurface;
 };
 
 class GDIAlphaBitmapSurface : public GDIBitmapSurface
@@ -78,10 +81,12 @@ class GDIAlphaBitmapSurface : public GDIBitmapSurface
 public:
     explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight,
                                    ResourceRepository& pResourceRepository) noexcept :
-        GDIBitmapSurface(nWidth, nHeight, pResourceRepository)
+        GDIBitmapSurface(nWidth, nHeight, pResourceRepository), m_pBlendBuffer(nWidth, nHeight, pResourceRepository)
     {}
 
-    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept : GDIBitmapSurface(nWidth, nHeight) {}
+    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept
+        : GDIBitmapSurface(nWidth, nHeight), m_pBlendBuffer(nWidth, nHeight)
+    {}
 
     GDIAlphaBitmapSurface(const GDIAlphaBitmapSurface&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(const GDIAlphaBitmapSurface&) noexcept = delete;
@@ -91,9 +96,12 @@ public:
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const;
+    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
 
     void SetOpacity(double fAlpha) override;
+
+private:
+    GDIBitmapSurface m_pBlendBuffer;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory

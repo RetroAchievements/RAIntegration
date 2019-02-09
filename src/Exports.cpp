@@ -7,18 +7,27 @@
 #include "api\Login.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
+#include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+
+#ifndef RA_UTEST
+#include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_Memory.h"
+#endif
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
@@ -152,3 +161,129 @@ API int _RA_RenderPopups(HDC hDC, const RECT* rcSize)
     return 0;
 }
 #endif
+
+API void CCONV _RA_DoAchievementsFrame()
+{
+#ifndef RA_UTEST
+    g_MemoryDialog.Invalidate();
+#endif
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    if (pRuntime.IsPaused())
+        return;
+
+#ifndef RA_UTEST
+    {
+        auto* pEditingAchievement = g_AchievementEditorDialog.ActiveAchievement();
+        if (pEditingAchievement && pEditingAchievement->Active())
+            pEditingAchievement->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+    }
+#endif
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+    std::vector<ra::services::AchievementRuntime::Change> vChanges;
+    pRuntime.Process(vChanges);
+
+    for (const auto& pChange : vChanges)
+    {
+        switch (pChange.nType)
+        {
+            case ra::services::AchievementRuntime::ChangeType::AchievementReset:
+            {
+                // we only watch for AchievementReset if PauseOnReset is set, so handle that now.
+#ifndef RA_UTEST
+                RA_CausePause();
+#endif
+                auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
+                if (pAchievement)
+                {
+                    std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", pAchievement->Title());
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                }
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
+            {
+                pGameContext.AwardAchievement(pChange.nId);
+                auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
+                if (!pAchievement)
+                    break;
+
+#ifndef RA_UTEST
+                //	Reverse find where I am in the list:
+                unsigned int nOffset = 0;
+                for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
+                {
+                    if (pAchievement == &g_pActiveAchievements->GetAchievement(nOffset))
+                        break;
+                }
+
+                ASSERT(nOffset < g_pActiveAchievements->NumAchievements());
+                if (nOffset < g_pActiveAchievements->NumAchievements())
+                {
+                    g_AchievementsDialog.ReloadLBXData(nOffset);
+
+                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
+                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
+                }
+#endif
+
+                if (pAchievement->GetPauseOnTrigger())
+                {
+#ifndef RA_UTEST
+                    RA_CausePause();
+#endif
+                    std::wstring sMessage = ra::StringPrintf(L"Pause on Trigger: %s", pAchievement->Title());
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
+            {
+                auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+                auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                if (pLeaderboard)
+                {
+                    pLeaderboard->SetCurrentValue(pChange.nValue);
+                    pLeaderboardManager.ActivateLeaderboard(*pLeaderboard);
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
+            {
+                auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
+                auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                if (pLeaderboard)
+                    pLeaderboard->SetCurrentValue(pChange.nValue);
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
+            {
+                const auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+                const auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                if (pLeaderboard)
+                    pLeaderboardManager.DeactivateLeaderboard(*pLeaderboard);
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
+            {
+                const auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+                const auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                if (pLeaderboard)
+                    pLeaderboardManager.SubmitLeaderboardEntry(*pLeaderboard, pChange.nValue);
+
+                break;
+            }
+        }
+    }
+}

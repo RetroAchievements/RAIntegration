@@ -257,7 +257,7 @@ void EmulatorContext::DisableHardcoreMode()
         _RA_RebuildMenu();
 
         auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-        pLeaderboardManager.Reset();
+        pLeaderboardManager.DeactivateLeaderboards();
 #endif
 
         ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().RefreshUnlocks();

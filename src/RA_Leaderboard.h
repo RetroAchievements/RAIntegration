@@ -7,7 +7,7 @@
 class RA_Leaderboard
 {
 public:
-    explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept;
+    explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept : m_nID(nLBID) {};
     virtual ~RA_Leaderboard() noexcept = default;
     RA_Leaderboard(const RA_Leaderboard&) noexcept = delete;
     RA_Leaderboard& operator=(const RA_Leaderboard&) noexcept = delete;
@@ -16,10 +16,8 @@ public:
 
     void ParseFromString(const char* sBuffer, const char* sFormat);
 
-    void Test();
-    virtual void Reset() noexcept;
-
     unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
+    void SetCurrentValue(unsigned int nValue) noexcept { m_nCurrentValue = nValue; }
 
     ra::LeaderboardID ID() const noexcept { return m_nID; }
 
@@ -59,16 +57,16 @@ public:
     size_t GetRankInfoCount() const noexcept { return m_RankInfo.size(); }
     void SortRankInfo();
 
+    void SetActive(bool bActive) noexcept;
+
 protected:
-    virtual void Start();
-    virtual void Cancel();
-    virtual void Submit(unsigned int nScore);
+    void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t
+    std::shared_ptr<std::vector<unsigned char>> m_pLeaderboardBuffer; //  buffer for rc_lboard_t
 
 private:
     const ra::LeaderboardID m_nID = ra::LeaderboardID(); //  DB ID for this LB
+    bool m_bActive = false;
 
-    void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t
-    std::shared_ptr<std::vector<unsigned char>> m_pLeaderboardBuffer; //  buffer for rc_lboard_t
     unsigned int m_nCurrentValue = 0U;
 
     int m_nFormat = 0; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time

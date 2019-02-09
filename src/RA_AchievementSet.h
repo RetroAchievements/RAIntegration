@@ -19,7 +19,6 @@ public:
     };
 
     void Clear() noexcept;
-    void Test();
 
     //	Get Achievement at offset
     Achievement& GetAchievement(size_t nIter)

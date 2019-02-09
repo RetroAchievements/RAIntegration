@@ -52,6 +52,13 @@ void LeaderboardManager::DeactivateLeaderboard(const RA_Leaderboard& lb) const
     }
 }
 
+void LeaderboardManager::DeactivateLeaderboards() const
+{
+#ifndef RA_UTEST
+    g_LeaderboardPopups.Reset();
+#endif
+}
+
 void LeaderboardManager::SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const
 {
 #ifndef RA_UTEST
@@ -138,34 +145,7 @@ void LeaderboardManager::OnSubmitEntry(const rapidjson::Document& doc)
 void LeaderboardManager::AddLeaderboard(RA_Leaderboard&& lb)
 {
     if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))	//	If not, simply ignore them.
-        m_Leaderboards.emplace_back(std::move(lb));
-}
-
-void LeaderboardManager::Test()
-{
-    if (m_pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
-    {
-        std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-        while (iter != m_Leaderboards.end())
-        {
-            (*iter).Test();
-            iter++;
-        }
-    }
-}
-
-void LeaderboardManager::Reset()
-{
-    std::vector<RA_Leaderboard>::iterator iter = m_Leaderboards.begin();
-    while (iter != m_Leaderboards.end())
-    {
-        (*iter).Reset();
-        iter++;
-    }
-
-#ifndef RA_UTEST
-    g_LeaderboardPopups.Reset();
-#endif
+        m_Leaderboards.emplace_back(std::move(lb)).SetActive(true);
 }
 
 void LeaderboardManager::Clear()

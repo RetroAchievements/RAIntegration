@@ -440,8 +440,6 @@ API void CCONV _RA_OnReset()
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
     ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
-
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -881,7 +879,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().DeactivateLeaderboards();
             }
             else
             {
@@ -963,22 +961,10 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
-        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_MemoryDialog.Invalidate();
 
         for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
             g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
-    }
-}
-
-API void CCONV _RA_DoAchievementsFrame()
-{
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn() && g_pActiveAchievements != nullptr)
-    {
-        g_pActiveAchievements->Test();
-        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Test();
-
-        g_MemoryDialog.Invalidate();
     }
 }
 

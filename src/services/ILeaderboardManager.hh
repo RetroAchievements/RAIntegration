@@ -16,12 +16,11 @@ public:
     ILeaderboardManager(ILeaderboardManager&&) noexcept = delete;
     ILeaderboardManager& operator=(ILeaderboardManager&&) noexcept = delete;
 
-    virtual void Test() = 0;
-    virtual void Reset() = 0;
-
     virtual void ActivateLeaderboard(const RA_Leaderboard& lb) const = 0;
     virtual void DeactivateLeaderboard(const RA_Leaderboard& lb) const = 0;
     virtual void SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const = 0;
+
+    virtual void DeactivateLeaderboards() const = 0;
 
     virtual void AddLeaderboard(RA_Leaderboard&& lb) = 0;
     virtual size_t Count() const = 0;

@@ -8,6 +8,50 @@ namespace data {
 
 const std::vector<ConsoleContext::MemoryRegion> ConsoleContext::m_vEmptyRegions;
 
+// ===== Atari 2600 =====
+
+class Atari2600ConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 Atari2600ConsoleContext() noexcept : ConsoleContext(ConsoleID::Atari2600, L"Atari2600") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> Atari2600ConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00007FU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // normally $80-$FF
+};
+
+// ===== Atari 7800 =====
+
+class Atari7800ConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 Atari7800ConsoleContext() noexcept : ConsoleContext(ConsoleID::Atari7800, L"Atari7800") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// http://www.atarihq.com/danb/files/78map.txt
+// http://pdf.textfiles.com/technical/7800_devkit.pdf
+const std::vector<ConsoleContext::MemoryRegion> Atari7800ConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x0017FFU, ConsoleContext::AddressType::HardwareController, "Hardware Interface" },
+    { 0x001800U, 0x0027FFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+    { 0x002800U, 0x002FFFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored RAM" },
+    { 0x003000U, 0x0037FFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored RAM" },
+    { 0x003800U, 0x003FFFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored RAM" },
+    { 0x004000U, 0x007FFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" },
+    { 0x008000U, 0x00FFFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM" },
+};
+
 // ===== ColecoVision =====
 
 class ColecoVisionConsoleContext : public ConsoleContext
@@ -102,6 +146,31 @@ const std::vector<ConsoleContext::MemoryRegion> GameGearConsoleContext::m_vMemor
     // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
 };
 
+// ===== Lynx =====
+
+class LynxConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 LynxConsoleContext() noexcept : ConsoleContext(ConsoleID::Lynx, L"Lynx") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// http://www.retroisle.com/atari/lynx/Technical/Programming/lynxprgdumm.php
+const std::vector<ConsoleContext::MemoryRegion> LynxConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x0000FFU, ConsoleContext::AddressType::VirtualRAM, "Zero Page" },
+    { 0x000100U, 0x0001FFU, ConsoleContext::AddressType::SystemRAM, "Stack" },
+    { 0x000200U, 0x00FBFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+    { 0x00FC00U, 0x00FCFFU, ConsoleContext::AddressType::HardwareController, "SUZY hardware access" },
+    { 0x00FD00U, 0x00FDFFU, ConsoleContext::AddressType::HardwareController, "MIKEY hardware access" },
+    { 0x00FE00U, 0x00FFF7U, ConsoleContext::AddressType::HardwareController, "Boot ROM" },
+    { 0x00FFF8U, 0x00FFFFU, ConsoleContext::AddressType::HardwareController, "Hardware vectors" },
+};
+
 // ===== Master System =====
 
 class MasterSystemConsoleContext : public ConsoleContext
@@ -165,6 +234,26 @@ const std::vector<ConsoleContext::MemoryRegion> Nintendo64ConsoleContext::m_vMem
     { 0x400000U, 0x7FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // Expansion PAK memory (4MB)
 };
 
+// ===== NeoGeo Pocket =====
+
+class NeoGeoPocketConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 NeoGeoPocketConsoleContext() noexcept : ConsoleContext(ConsoleID::NeoGeoPocket, L"NeoGeo Pocket") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// MednafenNGP only exposes 16KB of memory. This document suggest there should be 32KB:
+// http://neopocott.emuunlim.com/docs/tech-11.txt
+const std::vector<ConsoleContext::MemoryRegion> NeoGeoPocketConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x003FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
 // ===== NES =====
 
 class NintendoEntertainmentSystemConsoleContext : public ConsoleContext
@@ -192,6 +281,25 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
     { 0x4020U, 0x5FFFU, ConsoleContext::AddressType::Unknown, "Cartridge data"}, // varies by mapper
     { 0x6000U, 0x7FFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM"},
     { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM"},
+};
+
+// ===== PCEngine =====
+
+class PCEngineConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 PCEngineConsoleContext() noexcept : ConsoleContext(ConsoleID::PCEngine, L"PCEngine / TurboGrafx 16") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// https://cc65.github.io/doc/pce.html
+const std::vector<ConsoleContext::MemoryRegion> PCEngineConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // normally $2000-$3FFF
 };
 
 // ===== SG-1000 =====
@@ -237,6 +345,26 @@ const std::vector<ConsoleContext::MemoryRegion> SuperNESConsoleContext::m_vMemor
     { 0x020000U, 0x03FFFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" }, // cartridge RAM (normally $FE0000-$FF0000; up to 1MB, typically 32KB or less)
 };
 
+// ===== VirtualBoy =====
+
+class VirtualBoyConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 VirtualBoyConsoleContext() noexcept : ConsoleContext(ConsoleID::VirtualBoy, L"VirtualBoy") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// VirtualBoy memory is exposed as two chunks
+const std::vector<ConsoleContext::MemoryRegion> VirtualBoyConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // work RAM (normally $05000000-$0500FFFF)
+    { 0x010000U, 0x01FFFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" }, // cartridge RAM (normally $06000000-$06FFFFFF); up to 16MB, typically 64KB
+};
+
 // ===== ConsoleContext =====
 
 std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
@@ -259,13 +387,13 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Arcade");
 
         case ConsoleID::Atari2600:
-            return std::make_unique<ConsoleContext>(nId, L"Atari 2600");
+            return std::make_unique<Atari2600ConsoleContext>();
 
         case ConsoleID::Atari5200:
             return std::make_unique<ConsoleContext>(nId, L"Atari 5200");
 
         case ConsoleID::Atari7800:
-            return std::make_unique<ConsoleContext>(nId, L"Atari 7800");
+            return std::make_unique<Atari7800ConsoleContext>();
 
         case ConsoleID::C64:
             return std::make_unique<ConsoleContext>(nId, L"Commodore 64");
@@ -307,7 +435,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Jaguar");
 
         case ConsoleID::Lynx:
-            return std::make_unique<ConsoleContext>(nId, L"Lynx");
+            return std::make_unique<LynxConsoleContext>();
 
         case ConsoleID::MasterSystem:
             return std::make_unique<MasterSystemConsoleContext>();
@@ -376,7 +504,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"VIC-20");
 
         case ConsoleID::VirtualBoy:
-            return std::make_unique<ConsoleContext>(nId, L"Virtual Boy");
+            return std::make_unique<VirtualBoyConsoleContext>();
 
         case ConsoleID::WII:
             return std::make_unique<ConsoleContext>(nId, L"Wii");

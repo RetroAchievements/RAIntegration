@@ -51,7 +51,7 @@ public:
     /// </summary>
     void ActivateLeaderboard(unsigned int nId, rc_lboard_t* pLeaderboard) noexcept
     {
-        AddEntry(m_vActiveLeaderboards, nId, pLeaderboard);
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveLeaderboards, nId, pLeaderboard);
     }
 
     /// <summary>

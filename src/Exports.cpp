@@ -195,7 +195,7 @@ API void CCONV _RA_DoAchievementsFrame()
 #ifndef RA_UTEST
                 RA_CausePause();
 #endif
-                auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
+                const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
                 if (pAchievement)
                 {
                     std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", pAchievement->Title());

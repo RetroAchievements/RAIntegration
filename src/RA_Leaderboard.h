@@ -57,7 +57,7 @@ public:
     size_t GetRankInfoCount() const noexcept { return m_RankInfo.size(); }
     void SortRankInfo();
 
-    void SetActive(bool bActive) noexcept;
+    GSL_SUPPRESS_F6 void SetActive(bool bActive) noexcept;
 
 protected:
     void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t

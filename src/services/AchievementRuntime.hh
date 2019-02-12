@@ -83,7 +83,7 @@ public:
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    void Process(_Inout_ std::vector<Change>& changes);
+    virtual void Process(_Inout_ std::vector<Change>& changes);
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.

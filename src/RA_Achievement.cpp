@@ -49,12 +49,82 @@ Achievement::~Achievement() noexcept
     }
 }
 
+static void MergeHits(rc_condset_t& pGroup, rc_condset_t& pOldGroup) noexcept
+{
+    // for each condition in pGroup, attempt to find the matching condition in pOldGroup
+    // if found, merge the hits, delta, and prior values into the new condition to maintain state
+    auto* pFirstOldCondition = pOldGroup.conditions;
+    for (auto* pCondition = pGroup.conditions; pCondition; pCondition = pCondition->next)
+    {
+        for (auto* pOldCondition = pFirstOldCondition; pOldCondition; pOldCondition = pOldCondition->next)
+        {
+            if (pOldCondition->operand1.value == pCondition->operand1.value &&
+                pOldCondition->operand1.size == pCondition->operand1.size &&
+                pOldCondition->operand1.type == pCondition->operand1.type &&
+                pOldCondition->operand2.value == pCondition->operand2.value &&
+                pOldCondition->operand2.size == pCondition->operand2.size &&
+                pOldCondition->operand2.type == pCondition->operand2.type &&
+                pOldCondition->oper == pCondition->oper &&
+                pOldCondition->type == pCondition->type &&
+                pOldCondition->required_hits == pCondition->required_hits)
+            {
+                pCondition->current_hits = pOldCondition->current_hits;
+
+                if (pCondition->operand1.type == RC_OPERAND_DELTA ||
+                    pCondition->operand1.type == RC_OPERAND_PRIOR)
+                {
+                    pCondition->operand1.previous = pOldCondition->operand1.previous;
+                    pCondition->operand1.prior = pOldCondition->operand1.prior;
+                }
+
+                if (pCondition->operand2.type == RC_OPERAND_DELTA ||
+                    pCondition->operand2.type == RC_OPERAND_PRIOR)
+                {
+                    pCondition->operand2.previous = pOldCondition->operand2.previous;
+                    pCondition->operand2.prior = pOldCondition->operand2.prior;
+                }
+
+                // if we matched the first condition, ignore it on future scans
+                if (pOldCondition == pFirstOldCondition)
+                    pFirstOldCondition = pOldCondition->next;
+
+                break;
+            }
+        }
+    }
+}
+
 void Achievement::RebuildTrigger()
 {
+    // store the original trigger for later
+    std::shared_ptr<std::vector<unsigned char>> pOldTriggerBuffer = m_pTriggerBuffer;
+    auto* pOldTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+
+    // convert the UI definition into a string
     std::string sTrigger;
     m_vConditions.Serialize(sTrigger);
 
+    // parse the string into a trigger and rebuild the UI elements
     ParseTrigger(sTrigger.c_str());
+
+    // attempt to copy over the hit counts
+    if (pOldTrigger != nullptr && m_pTrigger != nullptr)
+    {
+        auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+        if (pTrigger->requirement && pOldTrigger->requirement)
+            MergeHits(*pTrigger->requirement, *pOldTrigger->requirement);
+
+        auto* pAltGroup = pTrigger->alternative;
+        auto* pOldAltGroup = pOldTrigger->alternative;
+        while (pAltGroup && pOldAltGroup)
+        {
+            MergeHits(*pAltGroup, *pOldAltGroup);
+            pAltGroup = pAltGroup->next;
+            pOldAltGroup = pOldAltGroup->next;
+        }
+    }
+
+    // mark the conditions as dirty so they will get repainted
     SetDirtyFlag(DirtyFlags::Conditions);
 
     if (m_bActive)

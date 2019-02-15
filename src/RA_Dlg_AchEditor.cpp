@@ -85,7 +85,7 @@ Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
     m_lbxGroupNames.front() = _T("Core");
     for (auto it = std::next(m_lbxGroupNames.begin()); it != m_lbxGroupNames.end(); ++it)
     {
-        const auto i = std::distance(std::next(m_lbxGroupNames.begin()), it);
+        const auto i = std::distance(m_lbxGroupNames.begin(), it);
         *it = ra::StringPrintf(_T("Alt %02t"), i);
     }
 }
@@ -1432,6 +1432,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         MessageBox(m_hAchievementEditorDlg, TEXT("Cannot remove Core Condition Group!"),
                                    TEXT("Warning"), MB_OK);
+                        break;
                     }
 
                     RepopulateGroupList(ActiveAchievement());

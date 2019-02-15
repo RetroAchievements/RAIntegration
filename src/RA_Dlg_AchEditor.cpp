@@ -185,7 +185,7 @@ void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondS
     }
 }
 
-void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, const std::string&& sNewValue)
+void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue)
 {
     std::string& sCell = LbxDataAt(nRow, nColumn);
     if (sCell != sNewValue)
@@ -1794,7 +1794,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     try
     {
         size_t nRead;
-        auto nVal = std::stoul(sData, &nRead, nBase);
+        const auto nVal = std::stoul(sData, &nRead, nBase);
         if (nRead < sData.length())
             bInvalid = true;
         else if (nRead > 0 && sData.at(0) == '-')

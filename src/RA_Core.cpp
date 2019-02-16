@@ -839,7 +839,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (g_GameLibrary.GetHWND() == nullptr)
                 {
                     _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
-                    //_FetchGameTitlesFromWeb();			//	##BLOCKING##
                     _FetchMyProgressFromWeb();			//	##BLOCKING##
 
                     g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));

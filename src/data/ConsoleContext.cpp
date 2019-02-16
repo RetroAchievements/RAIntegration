@@ -49,7 +49,7 @@ const std::vector<ConsoleContext::MemoryRegion> Atari7800ConsoleContext::m_vMemo
     { 0x003000U, 0x0037FFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored RAM" },
     { 0x003800U, 0x003FFFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored RAM" },
     { 0x004000U, 0x007FFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" },
-    { 0x008000U, 0x00FFFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM" },
+    { 0x008000U, 0x00FFFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM" },
 };
 
 // ===== ColecoVision =====
@@ -88,9 +88,9 @@ private:
 const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemoryRegions =
 {
     { 0x0000U, 0x00FFU, ConsoleContext::AddressType::HardwareController, "Interrupt vector" },
-    { 0x0100U, 0x014FU, ConsoleContext::AddressType::VirtualRAM, "Cartridge header" },
-    { 0x0150U, 0x3FFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM (fixed)" }, // bank 0
-    { 0x4000U, 0x7FFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM (paged)" }, // bank 1-XX (switchable)
+    { 0x0100U, 0x014FU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge header" },
+    { 0x0150U, 0x3FFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (fixed)" }, // bank 0
+    { 0x4000U, 0x7FFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (paged)" }, // bank 1-XX (switchable)
     { 0x8000U, 0x97FFU, ConsoleContext::AddressType::VideoRAM, "Tile RAM" },
     { 0x9800U, 0x9BFFU, ConsoleContext::AddressType::VideoRAM, "BG1 map data" },
     { 0x9C00U, 0x9FFFU, ConsoleContext::AddressType::VideoRAM, "BG2 map data" },
@@ -99,7 +99,7 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemory
     { 0xD000U, 0xDFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (paged)" },
     { 0xE000U, 0xFDFFU, ConsoleContext::AddressType::VirtualRAM, "Echo RAM" },
     { 0xFE00U, 0xFE9FU, ConsoleContext::AddressType::VideoRAM, "Sprite RAM"},
-    { 0xFEA0U, 0xFEFFU, ConsoleContext::AddressType::VirtualRAM, "Unusable"},
+    { 0xFEA0U, 0xFEFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Unusable"},
     { 0xFF00U, 0xFF7FU, ConsoleContext::AddressType::HardwareController, "Hardware I/O"},
     { 0xFF80U, 0xFFFEU, ConsoleContext::AddressType::SystemRAM, "Quick RAM"},
     { 0xFFFFU, 0xFFFFU, ConsoleContext::AddressType::HardwareController, "Interrupt enable"},
@@ -162,7 +162,7 @@ private:
 // http://www.retroisle.com/atari/lynx/Technical/Programming/lynxprgdumm.php
 const std::vector<ConsoleContext::MemoryRegion> LynxConsoleContext::m_vMemoryRegions =
 {
-    { 0x000000U, 0x0000FFU, ConsoleContext::AddressType::VirtualRAM, "Zero Page" },
+    { 0x000000U, 0x0000FFU, ConsoleContext::AddressType::SystemRAM, "Zero Page" },
     { 0x000100U, 0x0001FFU, ConsoleContext::AddressType::SystemRAM, "Stack" },
     { 0x000200U, 0x00FBFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
     { 0x00FC00U, 0x00FCFFU, ConsoleContext::AddressType::HardwareController, "SUZY hardware access" },
@@ -268,6 +268,7 @@ private:
 };
 
 // NES memory is directly exposed to the toolkit
+// https://wiki.nesdev.com/w/index.php/CPU_memory_map
 const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConsoleContext::m_vMemoryRegions =
 {
     { 0x0000U, 0x07FFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
@@ -278,9 +279,9 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
     { 0x2008U, 0x3FFFU, ConsoleContext::AddressType::VirtualRAM, "Mirrored PPU Register" }, // repeats every 8 bytes
     { 0x4000U, 0x4017U, ConsoleContext::AddressType::HardwareController, "APU and I/O register" },
     { 0x4018U, 0x401FU, ConsoleContext::AddressType::HardwareController, "APU and I/O test register" },
-    { 0x4020U, 0x5FFFU, ConsoleContext::AddressType::Unknown, "Cartridge data"}, // varies by mapper
+    { 0x4020U, 0x5FFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge data"}, // varies by mapper
     { 0x6000U, 0x7FFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM"},
-    { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::VirtualRAM, "Cartridge ROM"},
+    { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM"},
 };
 
 // ===== PCEngine =====

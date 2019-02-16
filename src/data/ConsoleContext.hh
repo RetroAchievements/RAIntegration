@@ -61,6 +61,11 @@ public:
         /// Address reserved for interacting with system components.
         /// </summary>
         HardwareController,
+
+        /// <summary>
+        /// Address space that maps to some segment of read only memory (typically ROM chips on the loaded cartridge)
+        /// </summary>
+        ReadOnlyMemory,
     };
 
     struct MemoryRegion

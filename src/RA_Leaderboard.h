@@ -8,7 +8,7 @@ class RA_Leaderboard
 {
 public:
     explicit RA_Leaderboard(_In_ const ra::LeaderboardID nLBID) noexcept : m_nID(nLBID) {};
-    virtual ~RA_Leaderboard() noexcept = default;
+    virtual ~RA_Leaderboard() noexcept;
     RA_Leaderboard(const RA_Leaderboard&) noexcept = delete;
     RA_Leaderboard& operator=(const RA_Leaderboard&) noexcept = delete;
     RA_Leaderboard(RA_Leaderboard&&) noexcept = default;

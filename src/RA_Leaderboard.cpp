@@ -9,6 +9,18 @@
 
 #include <ctime>
 
+RA_Leaderboard::~RA_Leaderboard() noexcept
+{
+    if (m_bActive)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.DeactivateLeaderboard(ID());
+        }
+    }
+}
+
 void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
 {
     // call with nullptr to determine space required

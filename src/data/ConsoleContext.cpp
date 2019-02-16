@@ -284,6 +284,25 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
     { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM"},
 };
 
+// ===== PC-8800 =====
+
+class PC8800ConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 PC8800ConsoleContext() noexcept : ConsoleContext(ConsoleID::PC8800, L"PC-8000/8800") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> PC8800ConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "Main RAM" },
+    { 0x010000U, 0x010FFFU, ConsoleContext::AddressType::VideoRAM, "Text VRAM" }, // technically VRAM, but often used as system RAM
+};
+
 // ===== PCEngine =====
 
 class PCEngineConsoleContext : public ConsoleContext
@@ -460,7 +479,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<NintendoEntertainmentSystemConsoleContext>();
 
         case ConsoleID::PC8800:
-            return std::make_unique<ConsoleContext>(nId, L"PC-8800");
+            return std::make_unique<PC8800ConsoleContext>();
 
         case ConsoleID::PC9800:
             return std::make_unique<ConsoleContext>(nId, L"PC-9800");

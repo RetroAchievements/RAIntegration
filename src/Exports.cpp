@@ -207,7 +207,10 @@ API void CCONV _RA_DoAchievementsFrame()
             case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
             {
                 pGameContext.AwardAchievement(pChange.nId);
+#pragma warning(push)
+#pragma warning(disable : 26462)
                 auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
+#pragma warning(pop)
                 if (!pAchievement)
                     break;
 

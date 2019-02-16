@@ -28,7 +28,7 @@ public:
         m_nSubmittedScore = 0;
     }
 
-    void Test()
+    void Test() noexcept
     {
         if (!m_pLeaderboard)
             return;

@@ -328,7 +328,7 @@ private:
     class MockLeaderboardManager : public ra::services::ILeaderboardManager
     {
     public:
-        MockLeaderboardManager() : m_Override(this) {}
+        MockLeaderboardManager() noexcept : m_Override(this) {}
 
         void ActivateLeaderboard(const RA_Leaderboard& lb) const override
         {
@@ -356,14 +356,14 @@ private:
             return (pIter != m_mSubmittedScores.end()) ? pIter->second : 0U;
         }
 
-        void DeactivateLeaderboards() const override {}
+        void DeactivateLeaderboards() const noexcept override {}
 
         void AddLeaderboard(RA_Leaderboard&& lb) override
         {
             m_vLeaderboards.emplace_back(std::move(lb));
         }
 
-        size_t Count() const override { return m_vLeaderboards.size(); }
+        size_t Count() const noexcept override { return m_vLeaderboards.size(); }
 
         const RA_Leaderboard& GetLB(size_t index) const override
         {
@@ -392,7 +392,7 @@ private:
             return nullptr;
         }
 
-        void Clear() { m_vLeaderboards.clear(); }
+        void Clear() noexcept override { m_vLeaderboards.clear(); }
 
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::ILeaderboardManager> m_Override;
@@ -409,9 +409,9 @@ private:
         MockDesktop mockDesktop;
         MockLeaderboardManager mockLeaderboardManager;
 
-        DoAchievementsFrameHarness()
+        DoAchievementsFrameHarness() noexcept
         {
-            mockServer.HandleRequest<ra::api::AwardAchievement>([this](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::AwardAchievement>([this](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
             {
                 m_vUnlockedAchievements.insert(request.AchievementId);
                 response.Result = ra::api::ApiResult::Success;

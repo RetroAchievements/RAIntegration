@@ -21,6 +21,10 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 
+#ifndef RA_UTEST
+#include "RA_Dlg_Memory.h"
+#endif
+
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
 API const char* CCONV _RA_HostName()
@@ -127,6 +131,10 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
     auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG("Console set to %u (%s)", pContext->Id(), pContext->Name());
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
+
+#ifndef RA_UTEST
+    g_MemoryDialog.UpdateMemoryRegions();
+#endif
 }
 
 #ifndef RA_UTEST

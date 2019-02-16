@@ -1537,62 +1537,7 @@ void Dlg_Memory::OnLoad_NewRom()
     else
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT("Loading..."));
 
-    m_nGameRamStart = m_nGameRamEnd = m_nSystemRamStart = m_nSystemRamEnd = 0U;
-
-    if (g_MemManager.TotalBankSize() > 0)
-    {
-        for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().MemoryRegions())
-        {
-            if (pRegion.Type == ra::data::ConsoleContext::AddressType::SystemRAM)
-            {
-                if (m_nSystemRamEnd == 0U)
-                {
-                    m_nSystemRamStart = pRegion.StartAddress;
-                    m_nSystemRamEnd = pRegion.EndAddress;
-                }
-                else if (pRegion.StartAddress == m_nSystemRamEnd + 1)
-                {
-                    m_nSystemRamEnd = pRegion.EndAddress;
-                }
-            }
-            else if (pRegion.Type == ra::data::ConsoleContext::AddressType::SaveRAM)
-            {
-                if (m_nGameRamEnd == 0U)
-                {
-                    m_nGameRamStart = pRegion.StartAddress;
-                    m_nGameRamEnd = pRegion.EndAddress;
-                }
-                else if (pRegion.StartAddress == m_nGameRamEnd + 1)
-                {
-                    m_nGameRamEnd = pRegion.EndAddress;
-                }
-            }
-        }
-
-        if (m_nSystemRamEnd != 0U && (m_nSystemRamEnd - m_nSystemRamStart) != g_MemManager.TotalBankSize())
-        {
-            const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), TRUE);
-        }
-        else
-        {
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, TEXT("System Memory (unspecified)"));
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
-        }
-
-        if (m_nGameRamEnd != 0U)
-        {
-            const auto sLabel = ra::StringPrintf("Game Memory (%s-%s)", ra::ByteAddressToString(m_nGameRamStart), ra::ByteAddressToString(m_nGameRamEnd));
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, NativeStr(sLabel).c_str());
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);
-        }
-        else
-        {
-            SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, TEXT("Game Memory (unspecified)"));
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
-        }
-    }
+    UpdateMemoryRegions();
 
     RepopulateMemNotesFromFile();
 
@@ -1602,6 +1547,86 @@ void Dlg_Memory::OnLoad_NewRom()
     m_SearchResults.clear();
     ClearLogOutput();
     EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), FALSE);
+}
+
+void Dlg_Memory::UpdateMemoryRegions()
+{
+    m_nGameRamStart = m_nGameRamEnd = m_nSystemRamStart = m_nSystemRamEnd = 0U;
+
+    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().MemoryRegions())
+    {
+        if (pRegion.Type == ra::data::ConsoleContext::AddressType::SystemRAM)
+        {
+            if (m_nSystemRamEnd == 0U)
+            {
+                m_nSystemRamStart = pRegion.StartAddress;
+                m_nSystemRamEnd = pRegion.EndAddress;
+            }
+            else if (pRegion.StartAddress == m_nSystemRamEnd + 1)
+            {
+                m_nSystemRamEnd = pRegion.EndAddress;
+            }
+        }
+        else if (pRegion.Type == ra::data::ConsoleContext::AddressType::SaveRAM)
+        {
+            if (m_nGameRamEnd == 0U)
+            {
+                m_nGameRamStart = pRegion.StartAddress;
+                m_nGameRamEnd = pRegion.EndAddress;
+            }
+            else if (pRegion.StartAddress == m_nGameRamEnd + 1)
+            {
+                m_nGameRamEnd = pRegion.EndAddress;
+            }
+        }
+    }
+
+    const auto nTotalBankSize = g_MemManager.TotalBankSize();
+    if (m_nSystemRamEnd >= nTotalBankSize)
+    {
+        if (nTotalBankSize == 0U)
+            m_nSystemRamEnd = 0U;
+        else
+            m_nSystemRamEnd = nTotalBankSize - 1;
+    }
+
+    if (m_nSystemRamEnd != 0U)
+    {
+        const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
+        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), (m_nSystemRamEnd - m_nSystemRamStart + 1) < g_MemManager.TotalBankSize());
+    }
+    else
+    {
+        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, TEXT("System Memory (unspecified)"));
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
+    }
+
+    if (m_nGameRamEnd >= nTotalBankSize)
+    {
+        if (nTotalBankSize == 0U)
+        {
+            m_nGameRamEnd = 0U;
+        }
+        else
+        {
+            m_nGameRamEnd = nTotalBankSize - 1;
+            if (m_nGameRamEnd < m_nGameRamStart)
+                m_nGameRamStart = m_nGameRamEnd = 0;
+        }
+    }
+
+    if (m_nGameRamEnd != 0U)
+    {
+        const auto sLabel = ra::StringPrintf("Game Memory (%s-%s)", ra::ByteAddressToString(m_nGameRamStart), ra::ByteAddressToString(m_nGameRamEnd));
+        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, NativeStr(sLabel).c_str());
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);
+    }
+    else
+    {
+        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, TEXT("Game Memory (unspecified)"));
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
+    }
 }
 
 void Dlg_Memory::Invalidate()
@@ -1666,7 +1691,7 @@ BOOL Dlg_Memory::IsActive() const noexcept
     return (g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
 }
 
-void Dlg_Memory::ClearBanks() noexcept
+void Dlg_Memory::ClearBanks()
 {
     if (m_hWnd == nullptr)
         return;
@@ -1675,6 +1700,8 @@ void Dlg_Memory::ClearBanks() noexcept
     while (ComboBox_DeleteString(hMemBanks, 0) != CB_ERR)
     {
     }
+
+    UpdateMemoryRegions();
 }
 
 void Dlg_Memory::AddBank(size_t nBankID)
@@ -1691,6 +1718,8 @@ void Dlg_Memory::AddBank(size_t nBankID)
 
     //	Select first element by default ('0')
     ComboBox_SetCurSel(hMemBanks, 0);
+
+    UpdateMemoryRegions();
 }
 
 inline static constexpr auto ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept

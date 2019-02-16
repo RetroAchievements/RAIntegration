@@ -90,13 +90,15 @@ public:
     void RepopulateMemNotesFromFile();
     void Invalidate();
 
+    void UpdateMemoryRegions();
+
     void SetWatchingAddress(unsigned int nAddr);
     void UpdateBits() const;
     BOOL IsActive() const noexcept;
 
     const CodeNotes& Notes() const noexcept { return m_CodeNotes; }
 
-    void ClearBanks() noexcept;
+    void ClearBanks();
     void AddBank(size_t nBankID);
     void GenerateResizes(HWND hDlg);
 

@@ -36,7 +36,7 @@ public:
     /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
-    size_t MatchingAddressCount() noexcept;
+    unsigned int MatchingAddressCount() noexcept;
 
     /// <summary>
     /// Gets a summary of the results

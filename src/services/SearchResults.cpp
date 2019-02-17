@@ -406,7 +406,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_sSummary.append(" last known value...");
 }
 
-std::size_t SearchResults::MatchingAddressCount() noexcept
+unsigned int SearchResults::MatchingAddressCount() noexcept
 {
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();
@@ -419,7 +419,7 @@ std::size_t SearchResults::MatchingAddressCount() noexcept
     if (m_nSize == MemSize::Nibble_Lower)
         nCount *= 2;
 
-    return {nCount}; // NB: The braces are required
+    return nCount;
 }
 
 void SearchResults::ExcludeAddress(unsigned int nAddress)

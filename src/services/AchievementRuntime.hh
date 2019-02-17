@@ -55,8 +55,8 @@ public:
 
     struct Change
     {
-        ChangeType nType;
-        unsigned int nId;
+        ChangeType nType{};
+        ra::AchievementID nId{};
     };
 
     /// <summary>

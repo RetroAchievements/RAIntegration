@@ -7,16 +7,14 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-void GDIAlphaBitmapSurface::FillRectangle(const Point& nXY, const Size& nWH, Color nColor) noexcept
+void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     // clip to surface
     const auto nStride = GetWidth();
-    auto nX = nXY.X;
-    auto nY = nXY.Y;
     if (nX >= nStride || nY >= GetHeight())
         return;
 
-    auto nWidth = nWH.Width;
+    auto nWidth = nHeight;
     if (nX < 0)
     {
         nWidth += nX;
@@ -27,7 +25,7 @@ void GDIAlphaBitmapSurface::FillRectangle(const Point& nXY, const Size& nWH, Col
     if (nWidth <= 0)
         return;
 
-    auto nHeight = nWH.Height;
+    auto nHeight = nHeight;
     if (nY < 0)
     {
         nHeight += nY;
@@ -72,37 +70,37 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
     return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
-void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color nColor, const std::wstring& sText)
+void GDIAlphaBitmapSurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText)
 {
     if (sText.empty())
         return;
 
     // clip to surface
     const auto nStride = GetWidth();
-    if (nXY.X >= nStride || nXY.Y >= GetHeight())
+    if (nX >= nStride || nY >= GetHeight())
         return;
-    assert(nXY.X >= 0); // TODO: support negative X starting position
+    assert(nX >= 0); // TODO: support negative X starting position
 
     // measure the text to draw
     SwitchFont(nFont);
 
-    Size szText{};
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), static_cast<LPSIZE>(szText));
+    SIZE szText{};
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
 
     // clip to surface
-    if (szText.Width > nStride - nXY.X)
-        szText.Width = nStride - nXY.X;
-    const auto nMaxHeight = GetHeight() - nXY.Y;
-    if (szText.Height > nMaxHeight)
-        szText.Height = nMaxHeight;
+    if (szText.cx > nStride - nX)
+        szText.cx = nStride - nX;
+    const auto nMaxHeight = GetHeight() - nY;
+    if (szText.cy > nMaxHeight)
+        szText.cy = nMaxHeight;
 
     // writing directly to the surface results in 0 for all alpha values - i.e. transparent text.
     // instead, draw white text on black background to get grayscale anti-alias values which will
     // be used as the alpha channel for applying the text to the surface.
     BITMAPINFO bmi{};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = szText.Width;
-    bmi.bmiHeader.biHeight = szText.Height;
+    bmi.bmiHeader.biWidth = szText.cx;
+    bmi.bmiHeader.biHeight = szText.cy;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
@@ -121,23 +119,23 @@ void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color 
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
     SetTextColor(hMemDC, 0xFFFFFFFF);
-    RECT rcRect{0, 0, szText.Width, szText.Width};
+    RECT rcRect{0, 0, szText.cx, szText.cx};
     TextOutW(hMemDC, 0, 0, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 
     // copy the greyscale text to the foreground using the grey value as the alpha for anti-aliasing
-    const auto nFirstScanline = (GetHeight() - nXY.Y - szText.Height); // bitmap memory starts with the bottom scanline
+    const auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
     assert(nFirstScanline >= 0);
-    auto pBits = m_pBits + gsl::narrow_cast<std::ptrdiff_t>(nStride * nFirstScanline + nXY.X);
+    auto pBits = m_pBits + to_unsigned(nStride * nFirstScanline + nX);
 
     // clip to surface
-    auto nLines = szText.Width;
-    if (nXY.Y < 0)
-        nLines += nXY.Y;
+    auto nLines = szText.cx;
+    if (nY < 0)
+        nLines += nY;
 
     // copy bits
     while (nLines--)
     {
-        const std::uint32_t* pEnd = pBits + szText.Height;
+        const std::uint32_t* pEnd = pBits + szText.cy;
         do
         {
             const ra::ui::Color nTextColor(*pTextBits++);
@@ -158,7 +156,7 @@ void GDIAlphaBitmapSurface::WriteText(const Point& nXY, gsl::index nFont, Color 
             ++pBits;
         } while (pBits < pEnd);
 
-        pBits += to_unsigned(nStride - szText.Height);
+        pBits += to_unsigned(nStride - szText.cx);
     }
 
     DeleteBitmap(hBitmap);

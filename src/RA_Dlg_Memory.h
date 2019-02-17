@@ -61,7 +61,7 @@ struct SearchResult
 
     std::vector<ra::ByteAddress> m_modifiedAddresses;
     bool m_bUseLastValue{};
-    ra::ByteAddress m_nLastQueryVal{};
+    std::uint32_t m_nLastQueryVal{};
     ComparisonType m_nCompareType{};
 
     bool WasModified(ra::ByteAddress nAddress)

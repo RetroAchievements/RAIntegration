@@ -298,7 +298,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     return hr;
 }
 
-HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight)
+HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, std::uint32_t nWidth, std::uint32_t nHeight)
 {
     if (g_pIWICFactory == nullptr)
         return nullptr;
@@ -325,11 +325,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWid
         if (SUCCEEDED(hr))
         {
             if (nWidth == 0 || nHeight == 0)
-            {
-                auto nWidth32 = gsl::narrow_cast<std::uint32_t>(nWidth);
-                auto nHeight32 = gsl::narrow_cast<std::uint32_t>(nHeight);
-                hr = pOriginalBitmapSource->GetSize(&nWidth32, &nHeight32);
-            }
+                hr = pOriginalBitmapSource->GetSize(&nWidth, &nHeight);
         }
     }
 

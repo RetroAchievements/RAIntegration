@@ -77,8 +77,8 @@ public:
         Assert::AreEqual(std::string("Invalid User/Password combination. Please try again"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual({0U}, response.Score);
-        Assert::AreEqual({0U}, response.NumUnreadMessages);
+        Assert::AreEqual(0U, response.Score);
+        Assert::AreEqual(0U, response.NumUnreadMessages);
 
         // ensure registered instance is still the DisconnectedServer
         const auto* pServer = &ra::services::ServiceLocator::Get<ra::api::IServer>();

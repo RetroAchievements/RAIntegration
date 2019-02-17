@@ -8,7 +8,7 @@ namespace ui {
 struct Position
 {
 #ifdef _WIN32_WINNT
-    [[nodiscard]] inline constexpr operator POINT() const noexcept { return {X, Y}; }
+    [[nodiscard]] explicit inline constexpr operator POINT() const noexcept { return {X, Y}; }
 #endif // _WIN32_WINNT
 
     int X{};
@@ -20,13 +20,7 @@ using Point = Position;
 struct Size
 {
 #ifdef _WIN32_WINNT
-    [[nodiscard]] inline constexpr operator SIZE() const noexcept { return {Width, Height}; }
-    // can't constexpr as it needs automatic storage duration (stack storage)
-    [[nodiscard]] inline operator LPSIZE() const noexcept 
-    {
-        static SIZE sz{Width, Height};
-        return &sz; 
-    }
+    [[nodiscard]] explicit inline constexpr operator SIZE() const noexcept { return {Width, Height}; }
 #endif // _WIN32_WINNT
 
     int Width{};

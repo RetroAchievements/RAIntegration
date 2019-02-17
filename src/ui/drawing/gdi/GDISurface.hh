@@ -27,16 +27,16 @@ public:
     int GetWidth() const noexcept override { return m_nWidth; }
     int GetHeight() const noexcept override { return m_nHeight; }
 
-    void FillRectangle(const Point& nXY, const Size& nWH, Color nColor) noexcept override;
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
     gsl::index LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) override;
     ra::ui::Size MeasureText(gsl::index nFont, const std::wstring& sText) const override;
-    void WriteText(const Point& nXY, gsl::index nFont, Color nColor, const std::wstring& sText) override;
+    void WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText) override;
 
-    void DrawImage(const Point& nXY, const Size& nWH, const ImageReference& pImage) override;
-    void DrawSurface(const Point& nXY, const ISurface& pSurface) override;
+    void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
+    void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-    GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+    GSL_SUPPRESS_F6 void SetOpacity(double) override { assert("This surface does not support opacity"); }
 
     HDC GetHDC() const noexcept { return m_hDC; }
 

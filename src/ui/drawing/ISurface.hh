@@ -48,7 +48,7 @@ public:
     /// <param name="nStyle">The style of the font.</param>
     /// <returns>Unique identifier for the font resource to pass to <see cref="WriteText" />, 
     /// <c>0</c> if loading the font failed.</returns>
-    virtual gsl::index LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) = 0;
+    virtual int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) = 0;
 
     /// <summary>
     /// Determines how much space would be required to display <paramref name="sText" /> using 
@@ -56,7 +56,7 @@ public:
     /// </summary>
     /// <param name="nFont">The unique identifier of the font to use. see <see cref="LoadFont" />.</param>
     /// <param name="sText">The text to measure.</param>
-    virtual ra::ui::Size MeasureText(gsl::index nFont, const std::wstring& sText) const = 0;
+    virtual ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const = 0;
 
     /// <summary>
     /// Writes the specified text to the surface.

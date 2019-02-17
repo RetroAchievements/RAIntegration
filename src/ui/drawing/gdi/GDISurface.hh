@@ -29,9 +29,9 @@ public:
 
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
-    gsl::index LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) override;
-    ra::ui::Size MeasureText(gsl::index nFont, const std::wstring& sText) const override;
-    void WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText) override;
+    int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) override;
+    ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const override;
+    void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
@@ -41,7 +41,7 @@ public:
     HDC GetHDC() const noexcept { return m_hDC; }
 
 protected:
-    void SwitchFont(gsl::index nFont) const;
+    void SwitchFont(int nFont) const;
 
     HDC m_hDC{};
 
@@ -53,7 +53,7 @@ private:
 
     ResourceRepository m_oResourceRepository;
 
-    mutable gsl::index m_nCurrentFont{};
+    mutable int m_nCurrentFont{};
     Color m_nCurrentTextColor{0U};
 };
 

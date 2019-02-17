@@ -6,6 +6,8 @@
 
 #include "services\IFileSystem.hh"
 
+#include <filesystem>
+
 namespace ra {
 namespace services {
 namespace impl {

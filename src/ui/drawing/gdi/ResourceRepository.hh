@@ -28,9 +28,9 @@ public:
     ResourceRepository(ResourceRepository&&) = delete;
     ResourceRepository& operator=(ResourceRepository&&) = delete;
 
-    gsl::index LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
+    int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
     {
-        gsl::index i = 1;
+        int i = 1;
         for (const auto& pFont : m_vFonts)
         {
             if (pFont.nFontSize == nFontSize && pFont.nStyle == nStyle && pFont.sFontName == sFont)
@@ -50,7 +50,7 @@ public:
         if (hFont)
         {
             m_vFonts.emplace_back(sFont, nFontSize, nStyle, hFont);
-            return to_signed(m_vFonts.size());
+            return gsl::narrow_cast<int>(m_vFonts.size());
         }
 
         return {};

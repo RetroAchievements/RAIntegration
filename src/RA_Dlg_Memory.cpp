@@ -1111,7 +1111,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (nMatches > MIN_RESULTS_TO_DUMP)
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), MIN_RESULTS_TO_DUMP + 2);
                     else
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), nMatches + 2);
+                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
+                                              gsl::narrow_cast<std::uintptr_t>(nMatches) + 2U);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), nMatches > 0);
                     return TRUE;
@@ -1324,7 +1325,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
                     else
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                                              sr.m_results.MatchingAddressCount() + 2);
+                            gsl::narrow_cast<std::uintptr_t>(sr.m_results.MatchingAddressCount()) + 2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     return FALSE;
@@ -1342,7 +1343,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
                     else
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                                              sr.m_results.MatchingAddressCount() + 2);
+                                              gsl::narrow_cast<std::uintptr_t>(sr.m_results.MatchingAddressCount()) +
+                                                  2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     return FALSE;

@@ -23,12 +23,12 @@ void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nC
     Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
 }
 
-gsl::index GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
+int GDISurface::LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle)
 {
     return m_pResourceRepository.LoadFont(sFont, nFontSize, nStyle);
 }
 
-ra::ui::Size GDISurface::MeasureText(gsl::index nFont, const std::wstring& sText) const
+ra::ui::Size GDISurface::MeasureText(int nFont, const std::wstring& sText) const
 {
     SwitchFont(nFont);
 
@@ -38,7 +38,7 @@ ra::ui::Size GDISurface::MeasureText(gsl::index nFont, const std::wstring& sText
     return {szText.cx, szText.cy};
 }
 
-void GDISurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText)
+void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
 {
     SwitchFont(nFont);
 
@@ -52,7 +52,7 @@ void GDISurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const
     TextOutW(m_hDC, nX, nY, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 }
 
-void GDISurface::SwitchFont(gsl::index nFont) const
+void GDISurface::SwitchFont(int nFont) const
 {
     if (nFont != m_nCurrentFont)
     {

@@ -14,7 +14,6 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     if (nX >= nStride || nY >= GetHeight())
         return;
 
-    auto nWidth = nHeight;
     if (nX < 0)
     {
         nWidth += nX;
@@ -25,7 +24,6 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     if (nWidth <= 0)
         return;
 
-    auto nHeight = nHeight;
     if (nY < 0)
     {
         nHeight += nY;
@@ -70,7 +68,7 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
     return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
-void GDIAlphaBitmapSurface::WriteText(int nX, int nY, gsl::index nFont, Color nColor, const std::wstring& sText)
+void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
 {
     if (sText.empty())
         return;
@@ -179,7 +177,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
     assert(pSrcBits != nullptr);
 
-    const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
+    const std::uint8_t* pEnd = pSrcBits + to_unsigned(nWidth * nHeight * 4);
     while (pSrcBits < pEnd)
     {
         const auto nAlpha = pSrcBits[3];

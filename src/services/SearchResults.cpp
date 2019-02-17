@@ -409,7 +409,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 unsigned int SearchResults::MatchingAddressCount() noexcept
 {
     if (!m_bUnfiltered)
-        return m_vMatchingAddresses.size();
+        return gsl::narrow_cast<unsigned int>(m_vMatchingAddresses.size());
 
     const auto nPadding = Padding(m_nSize);
     unsigned int nCount{};

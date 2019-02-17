@@ -39,7 +39,6 @@
 /* STL Stuff */
 #include <array> // algorithm, iterator, tuple
 #include <atomic>
-#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <map>

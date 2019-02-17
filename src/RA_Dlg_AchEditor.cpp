@@ -24,7 +24,7 @@ inline constexpr std::array<const char*, 10> COLUMN_TITLE{"ID",  "Flag", "Type",
 inline constexpr std::array<int, 10> COLUMN_WIDTH{30, 75, 42, 50, 72, 35, 42, 50, 72, 72};
 static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
-enum class CondSubItems : std::size_t
+enum class CondSubItems : std::uint32_t
 {
     Id,
     Group,
@@ -1788,7 +1788,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     }
     else
     {
-        nMax = g_MemManager.TotalBankSize() - 1;
+        nMax = gsl::narrow_cast<unsigned int>(g_MemManager.TotalBankSize()) - 1;
     }
 
     bool bTooLarge = false;
@@ -2000,7 +2000,7 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achi
     }
 }
 
-void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
+void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, BOOL)
 {
     if (pCheevo == nullptr)
     {

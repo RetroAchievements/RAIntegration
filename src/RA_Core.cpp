@@ -44,6 +44,8 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include <filesystem>
+
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 

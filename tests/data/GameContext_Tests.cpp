@@ -177,8 +177,8 @@ public:
         Assert::AreEqual(std::string("Auth1"), pAch1->Author());
         Assert::AreEqual(std::string("12345"), pAch1->BadgeImageURI());
         Assert::AreEqual(3, pAch1->Category());
-        Assert::AreEqual(1234567890LL, pAch1->CreatedDate());
-        Assert::AreEqual(1234599999LL, pAch1->ModifiedDate());
+        Assert::AreEqual(1234567890, gsl::narrow_cast<int>(pAch1->CreatedDate()));
+        Assert::AreEqual(1234599999, gsl::narrow_cast<int>(pAch1->ModifiedDate()));
         Assert::AreEqual(5U, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->CreateMemString());
 
@@ -190,8 +190,8 @@ public:
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
         Assert::AreEqual(5, pAch2->Category());
-        Assert::AreEqual(1234567890LL, pAch2->CreatedDate());
-        Assert::AreEqual(1234599999LL, pAch2->ModifiedDate());
+        Assert::AreEqual(1234567890, gsl::narrow_cast<int>(pAch2->CreatedDate()));
+        Assert::AreEqual(1234599999, gsl::narrow_cast<int>(pAch2->ModifiedDate()));
         Assert::AreEqual(15U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->CreateMemString());
     }
@@ -245,8 +245,8 @@ public:
         Assert::AreEqual(std::string("Auth1"), pAch->Author());
         Assert::AreEqual(std::string("12345"), pAch->BadgeImageURI());
         Assert::AreEqual(3, pAch->Category());
-        Assert::AreEqual(1234567890LL, pAch->CreatedDate());
-        Assert::AreEqual(1234599999LL, pAch->ModifiedDate());
+        Assert::AreEqual(1234567890, gsl::narrow_cast<int>(pAch->CreatedDate()));
+        Assert::AreEqual(1234599999, gsl::narrow_cast<int>(pAch->ModifiedDate()));
         Assert::AreEqual(5U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
 
@@ -258,8 +258,8 @@ public:
         Assert::AreEqual(std::string("Auth2"), pAch->Author()); // author not merged
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
         Assert::AreEqual(5, pAch->Category()); // category not merged
-        Assert::AreEqual(1234567890, (int)pAch->CreatedDate()); // created date not merged
-        Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
+        Assert::AreEqual(1234567890, gsl::narrow_cast<int>(pAch->CreatedDate())); // created date not merged
+        Assert::AreEqual(1234555555, gsl::narrow_cast<int>(pAch->ModifiedDate()));
         Assert::AreEqual(25U, pAch->Points());
         Assert::AreEqual(std::string("1=2"), pAch->CreateMemString());
 
@@ -271,8 +271,8 @@ public:
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
         Assert::AreEqual(0, pAch->Category());
-        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
+        Assert::AreEqual(1234511111, gsl::narrow_cast<int>(pAch->CreatedDate()));
+        Assert::AreEqual(1234500000, gsl::narrow_cast<int>(pAch->ModifiedDate()));
         Assert::AreEqual(20U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
 
@@ -284,8 +284,8 @@ public:
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
         Assert::AreEqual(0, pAch->Category());
-        Assert::AreEqual(1234511111LL, pAch->CreatedDate());
-        Assert::AreEqual(1234500000LL, pAch->ModifiedDate());
+        Assert::AreEqual(1234511111, gsl::narrow_cast<int>(pAch->CreatedDate()));
+        Assert::AreEqual(1234500000, gsl::narrow_cast<int>(pAch->ModifiedDate()));
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
 
@@ -349,8 +349,8 @@ public:
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
         Assert::AreEqual(0, pAch->Category());
-        Assert::AreEqual(1234511111LL, pAch->CreatedDate());
-        Assert::AreEqual(1234500000LL, pAch->ModifiedDate());
+        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
+        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
 

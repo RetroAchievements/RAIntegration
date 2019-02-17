@@ -20,7 +20,7 @@ private:
     HWND m_hDestComboBox = nullptr;
 };
 
-enum class CondSubItems : std::size_t;
+enum class CondSubItems : std::uint32_t;
 class Dlg_AchievementEditor
 {
 public:
@@ -32,7 +32,7 @@ public:
 
 public:
     void OnLoad_NewRom();
-    void LoadAchievement(Achievement* pCheevo, _UNUSED BOOL);
+    void LoadAchievement(Achievement* pCheevo, BOOL);
 
     inline void SetICEControl(HWND hIce) noexcept { m_hICEControl = hIce; }
     inline std::string& LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept;

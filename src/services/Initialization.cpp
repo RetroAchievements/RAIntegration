@@ -141,6 +141,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
 void Initialization::Shutdown()
 {
+    // if RegisterServices was not called, there's nothing to Shutdown
+    if (!ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+        return;
+
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
 
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);

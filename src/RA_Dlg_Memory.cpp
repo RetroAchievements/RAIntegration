@@ -1565,9 +1565,9 @@ void Dlg_Memory::OnLoad_NewRom()
         {
             TCHAR label[64]{};
             if (g_MemManager.TotalBankSize() > 0x10000)
-                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, 64, TEXT("Game Memory (0x%06X-0x%06X)"), start, end);
             else
-                _stprintf_s(label, 64, TEXT("System Memory (0x%06X-0x%06X)"), start, end);
+                _stprintf_s(label, 64, TEXT("Game Memory (0x%04X-0x%04X)"), start, end);
 
             SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, label);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);

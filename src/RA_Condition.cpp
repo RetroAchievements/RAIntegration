@@ -141,10 +141,6 @@ void ConditionSet::Serialize(std::string& buffer) const
     m_vConditionGroups.front().SerializeAppend(buffer);
     for (auto it = std::next(m_vConditionGroups.begin()); it != m_vConditionGroups.end(); ++it)
     {
-        // ignore empty groups when serializing
-        if (it->Count() == 0)
-            continue;
-
         buffer.append(1, 'S');
         it->SerializeAppend(buffer);
     }

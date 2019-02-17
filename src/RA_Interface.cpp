@@ -368,6 +368,39 @@ static BOOL DoBlockingHttpGet(const char* sHostName, const char* sRequestedPage,
     return bSuccess;
 }
 
+static BOOL DoBlockingHttpGetWithRetry(const char* sHostName, const char* sRequestedPage, char* pBufferOut, unsigned int nBufferOutSize, DWORD* pBytesRead, DWORD* pStatusCode)
+{
+    int nRetries = 4;
+    do
+    {
+        if (DoBlockingHttpGet(sHostName, sRequestedPage, pBufferOut, nBufferOutSize, pBytesRead, pStatusCode) != FALSE)
+            return TRUE;
+
+        switch (*pStatusCode)
+        {
+            case 12002: // timeout
+            case 12007: // dns lookup failed
+            case 12017: // handle closed before request completed
+            case 12019: // handle not initialized
+            case 12028: // data not available at this time
+            case 12029: // handshake failed
+            case 12030: // connection aborted
+            case 12031: // connection reset
+            case 12032: // explicit request to retry
+            case 12152: // response could not be parsed, corrupt?
+            case 12163: // lost connection during request
+                --nRetries;
+                break;
+
+            default:
+                return FALSE;
+        }
+
+    } while (nRetries);
+
+    return FALSE;
+}
+
 static std::wstring GetIntegrationPath()
 {
     wchar_t sBuffer[2048];
@@ -409,7 +442,7 @@ static void FetchIntegrationFromWeb(const char* sHostName, DWORD* pStatusCode)
     else
     {
         DWORD nBytesRead = 0;
-        if (DoBlockingHttpGet(sHostName, "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead, pStatusCode))
+        if (DoBlockingHttpGetWithRetry(sHostName, "bin/RA_Integration.dll", buffer, MAX_SIZE, &nBytesRead, pStatusCode))
             WriteBufferToFile(GetIntegrationPath(), buffer, nBytesRead);
 
         delete[](buffer);
@@ -523,13 +556,13 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 {
     const char* sVerInstalled = _RA_InstallIntegration();
 
-    const char* sHostName = nullptr;
+    char sHostName[256] = "";
     if (_RA_HostName != nullptr)
-        sHostName = _RA_HostName();
+        strcpy(sHostName, _RA_HostName());
 
-    if (sHostName == nullptr)
+    if (!sHostName[0])
     {
-        sHostName = "www.retroachievements.org";
+        strcpy(sHostName, "www.retroachievements.org");
     }
     else if (_RA_InitOffline != nullptr && strcmp(sHostName, "OFFLINE") == 0)
     {
@@ -541,7 +574,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
     DWORD nStatusCode = 0;
     char buffer[1024];
     ZeroMemory(buffer, 1024);
-    if (DoBlockingHttpGet(sHostName, "LatestIntegration.html", buffer, 1024, &nBytesRead, &nStatusCode) == FALSE)
+    if (DoBlockingHttpGetWithRetry(sHostName, "LatestIntegration.html", buffer, 1024, &nBytesRead, &nStatusCode) == FALSE)
     {
         if (_RA_InitOffline != nullptr)
         {
@@ -634,7 +667,13 @@ void RA_Shutdown()
 {
     //	Call shutdown on toolchain
     if (_RA_Shutdown != nullptr)
-        _RA_Shutdown();
+    {
+        try {
+            _RA_Shutdown();
+        }
+        catch (std::runtime_error&) {
+        }
+    }
 
     //	Clear func ptrs
     _RA_IntegrationVersion = nullptr;

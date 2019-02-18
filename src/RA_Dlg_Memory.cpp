@@ -765,6 +765,11 @@ void Dlg_Memory::Init() noexcept
     ASSERT(checkAtom != 0);
 }
 
+void Dlg_Memory::Shutdown() noexcept
+{
+    ::UnregisterClass(TEXT("MemoryViewerControl"), g_hThisDLLInst);
+}
+
 // static
 INT_PTR CALLBACK Dlg_Memory::s_MemoryProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

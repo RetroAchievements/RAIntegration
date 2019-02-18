@@ -74,6 +74,7 @@ class Dlg_Memory
 {
 public:
     void Init() noexcept;
+    void Shutdown() noexcept;
 
     void ClearLogOutput() noexcept;
 

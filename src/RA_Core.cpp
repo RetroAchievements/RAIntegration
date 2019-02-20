@@ -56,9 +56,11 @@ bool g_bRAMTamperedWith = false;
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
+    {
         g_hThisDLLInst = hModule;
 
-    ra::services::Initialization::RegisterCoreServices();
+        ra::services::Initialization::RegisterCoreServices();
+    }
 
     return TRUE;
 }
@@ -165,6 +167,7 @@ API int CCONV _RA_Shutdown()
         DestroyWindow(g_MemoryDialog.GetHWND());
         g_MemoryDialog.InstallHWND(nullptr);
     }
+    g_MemoryDialog.Shutdown();
 
     if (g_GameLibrary.GetHWND() != nullptr)
     {

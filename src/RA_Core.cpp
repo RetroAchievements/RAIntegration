@@ -185,8 +185,6 @@ API int CCONV _RA_Shutdown()
 
     ra::services::Initialization::Shutdown();
 
-    CoUninitialize();
-
     RA_LOG_INFO("Shutdown complete");
 
     return 0;

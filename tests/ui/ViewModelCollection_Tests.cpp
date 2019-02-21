@@ -14,8 +14,8 @@ public:
     TestViewModel() noexcept {}
     TestViewModel(int nInt, const std::wstring& sString) noexcept
     {
-        SetInt(nInt);
-        SetString(sString);
+        GSL_SUPPRESS_F6 SetInt(nInt);
+        GSL_SUPPRESS_F6 SetString(sString);
     }
 
     TestViewModel(const TestViewModel&) = delete;
@@ -115,7 +115,7 @@ TEST_CLASS(ViewModelCollection_Tests)
         void OnViewModelAdded(gsl::index nIndex) noexcept override
         {
             m_nChangeIndex = nIndex;
-            m_sLastPropertyChanged = "~ADDED~";
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = "~ADDED~";
         }
 
         void AssertItemAdded(gsl::index nIndex)
@@ -129,7 +129,7 @@ TEST_CLASS(ViewModelCollection_Tests)
         void OnViewModelRemoved(gsl::index nIndex) noexcept override
         {
             m_nChangeIndex = nIndex;
-            m_sLastPropertyChanged = "~REMOVED~";
+            GSL_SUPPRESS_F6 m_sLastPropertyChanged = "~REMOVED~";
         }
 
         void AssertItemRemoved(gsl::index nIndex)

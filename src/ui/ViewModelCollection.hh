@@ -38,19 +38,16 @@ public:
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
                                                  [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void
             OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
                                           [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
                                                 [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
@@ -83,7 +80,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
     /// </summary>
-    void Freeze()
+    void Freeze() noexcept
     {
         if (!m_bFrozen)
         {
@@ -138,11 +135,11 @@ public:
 protected:
     ViewModelBase& Add(std::unique_ptr<ViewModelBase> vmViewModel);
 
-    bool IsWatching() const { return !IsFrozen() && !m_vNotifyTargets.empty(); }
+    bool IsWatching() const noexcept { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
-    void StartWatching();
+    void StartWatching() noexcept;
 
-    void StopWatching();
+    void StopWatching() noexcept;
 
     ViewModelBase* GetViewModelAt(gsl::index nIndex)
     {
@@ -164,13 +161,13 @@ private:
     class Item : private ViewModelBase::NotifyTarget
     {
     public:
-        Item(ViewModelCollectionBase& pOwner, gsl::index nIndex, std::unique_ptr<ViewModelBase> vmViewModel) :
+        Item(ViewModelCollectionBase& pOwner, gsl::index nIndex, std::unique_ptr<ViewModelBase> vmViewModel) noexcept :
             m_vmViewModel(std::move(vmViewModel)),
             m_nIndex(nIndex),
             m_pOwner(&pOwner)
         {}
 
-        virtual ~Item() noexcept
+        ~Item() noexcept
         {
             if (m_vmViewModel) // std::move may empty out our pointer
                 StopWatching();
@@ -191,7 +188,7 @@ private:
             }
         }
 
-        Item& operator=(Item&& pSource) noexcept
+        GSL_SUPPRESS_C128 Item& operator=(Item&& pSource) noexcept
         {
             if (&pSource != this)
             {
@@ -206,11 +203,12 @@ private:
                 }
             }
 
+            ViewModelBase::NotifyTarget::operator=(std::move(pSource));
             return *this;
         }
 
-        void StartWatching() { m_vmViewModel->AddNotifyTarget(*this); }
-        void StopWatching() { m_vmViewModel->RemoveNotifyTarget(*this); }
+        void StartWatching() noexcept { m_vmViewModel->AddNotifyTarget(*this); }
+        void StopWatching() noexcept { m_vmViewModel->RemoveNotifyTarget(*this); }
 
         ViewModelBase& ViewModel() { return *m_vmViewModel; }
         const ViewModelBase& ViewModel() const { return *m_vmViewModel; }
@@ -219,17 +217,17 @@ private:
         void DecrementIndex() noexcept { --m_nIndex; }
 
     private:
-        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
         {
             m_pOwner->OnViewModelBoolValueChanged(m_nIndex, args);
         }
 
-        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
         {
             m_pOwner->OnViewModelStringValueChanged(m_nIndex, args);
         }
 
-        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override
         {
             m_pOwner->OnViewModelIntValueChanged(m_nIndex, args);
         }
@@ -239,9 +237,9 @@ private:
         gsl::not_null<ViewModelCollectionBase*> m_pOwner;
     };
 
-    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) noexcept;
-    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) noexcept;
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept;
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args);
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args);
 
     bool m_bFrozen = false;
 

@@ -14,14 +14,14 @@ public:
     LookupItemViewModel() noexcept = default;
     LookupItemViewModel(int nId, const std::wstring& sLabel) noexcept
     {
-        SetId(nId);
-        SetLabel(sLabel);
+        GSL_SUPPRESS_F6 SetId(nId);
+        GSL_SUPPRESS_F6 SetLabel(sLabel);
     }
 
     LookupItemViewModel(int nId, const std::wstring&& sLabel) noexcept
     {
-        SetId(nId);
-        SetValue(LabelProperty, sLabel); // TODO: support std::move for setting strings in ViewModel
+        GSL_SUPPRESS_F6 SetId(nId);
+        GSL_SUPPRESS_F6 SetValue(LabelProperty, sLabel); // TODO: support std::move for setting strings in ViewModel
     }
 
     /// <summary>

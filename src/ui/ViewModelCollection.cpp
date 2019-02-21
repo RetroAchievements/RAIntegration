@@ -53,20 +53,20 @@ void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
     }
 }
 
-void ViewModelCollectionBase::StartWatching()
+void ViewModelCollectionBase::StartWatching() noexcept
 {
     for (auto& pItem : m_vItems)
         pItem.StartWatching();
 }
 
-void ViewModelCollectionBase::StopWatching()
+void ViewModelCollectionBase::StopWatching() noexcept
 {
     for (auto& pItem : m_vItems)
         pItem.StopWatching();
 }
 
 void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex,
-                                                          const BoolModelProperty::ChangeArgs& args) noexcept
+                                                          const BoolModelProperty::ChangeArgs& args)
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -78,7 +78,7 @@ void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex,
 }
 
 void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex,
-                                                            const StringModelProperty::ChangeArgs& args) noexcept
+                                                            const StringModelProperty::ChangeArgs& args)
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -90,7 +90,7 @@ void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex,
 }
 
 void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex,
-                                                         const IntModelProperty::ChangeArgs& args) noexcept
+                                                         const IntModelProperty::ChangeArgs& args)
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);

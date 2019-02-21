@@ -26,11 +26,9 @@ public:
         NotifyTarget(NotifyTarget&&) noexcept = default;
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
-        virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept {}
-        virtual void OnViewModelStringValueChanged([
-            [maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
-        {}
-        virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept {}
+        virtual void OnViewModelBoolValueChanged([[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept(false) {}
+        virtual void OnViewModelStringValueChanged([[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept(false) {}
+        virtual void OnViewModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }

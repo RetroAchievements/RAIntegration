@@ -1647,7 +1647,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         case CondSubItems::Type_Src:
                         {
-                            bool bWasValue = rCond.CompSource().GetType() == CompVariable::Type::ValueComparison;
+                            const bool bWasValue = rCond.CompSource().GetType() == CompVariable::Type::ValueComparison;
 
                             if (sData == "Mem")
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
@@ -1667,7 +1667,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         case CondSubItems::Type_Tgt:
                         {
-                            bool bWasValue = rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison;
+                            const bool bWasValue = rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison;
 
                             if (sData == "Mem")
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);

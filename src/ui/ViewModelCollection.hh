@@ -38,19 +38,16 @@ public:
 
         virtual void OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
                                                  [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void
             OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
                                           [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
                                                 [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept
-        {
-        }
+        {}
 
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
@@ -83,7 +80,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
     /// </summary>
-    void Freeze()
+    void Freeze() noexcept
     {
         if (!m_bFrozen)
         {
@@ -170,7 +167,7 @@ private:
             m_pOwner(&pOwner)
         {}
 
-        virtual ~Item() noexcept
+        ~Item() noexcept
         {
             if (m_vmViewModel) // std::move may empty out our pointer
                 StopWatching();

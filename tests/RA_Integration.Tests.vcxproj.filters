@@ -269,4 +269,9 @@
   <ItemGroup>
     <None Include="base.props" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockEmulatorContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

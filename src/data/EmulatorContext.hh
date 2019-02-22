@@ -74,6 +74,68 @@ public:
     /// </summary>
     /// <param name="sMessage">A custom message provided by the emulator to also display in the title bar.</param>
     std::string GetAppTitle(const std::string& sMessage) const;
+    
+    /// <summary>
+    /// Gets the game title from the emulator.
+    /// </summary>
+    std::string GetGameTitle() const;
+    
+    /// <summary>
+    /// Notifies the emulator that the RetroAchievements menu has changed.
+    /// </summary>
+    void RebuildMenu() const
+    {
+        if (m_fRebuildMenu)
+            m_fRebuildMenu();
+    }
+
+    /// <summary>
+    /// Gets whether or not the emulator can be paused.
+    /// </summary>
+    bool CanPause() const { return m_fPauseEmulator != nullptr; }
+
+    /// <summary>
+    /// Pauses the emulator.
+    /// </summary>
+    void Pause() const
+    {
+        if (m_fPauseEmulator)
+            m_fPauseEmulator();
+    }
+
+    /// <summary>
+    /// Unpauses the emulator.
+    /// </summary>
+    void Unpause() const
+    {
+        if (m_fUnpauseEmulator)
+            m_fUnpauseEmulator();
+    }
+
+    /// <summary>
+    /// Sets a function to call to reset the emulator.
+    /// </summary>
+    void SetResetFunction(std::function<void()>&& fResetEmulator) { m_fResetEmulator = fResetEmulator; }
+
+    /// <summary>
+    /// Sets a function to call to pause the emulator.
+    /// </summary>
+    void SetPauseFunction(std::function<void()>&& fPauseEmulator) { m_fPauseEmulator = fPauseEmulator; }
+
+    /// <summary>
+    /// Sets a function to call to unpause the emulator.
+    /// </summary>
+    void SetUnpauseFunction(std::function<void()>&& fUnpauseEmulator) { m_fUnpauseEmulator = fUnpauseEmulator; }
+
+    /// <summary>
+    /// Sets a function to call to get the game title from the emulator.
+    /// </summary>
+    void SetGetGameTitleFunction(std::function<void(char*)> fGetGameTitle) { m_fGetGameTitle = fGetGameTitle; }
+
+    /// <summary>
+    /// Sets a function to call to notify the emulator that the RetroAchievements menu has changed.
+    /// </summary>
+    void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) { m_fRebuildMenu = fRebuildMenu; }
 
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
@@ -81,6 +143,12 @@ protected:
     std::string m_sLatestVersion;
     std::string m_sLatestVersionError;
     std::string m_sClientName;
+
+    std::function<void()> m_fResetEmulator;
+    std::function<void()> m_fPauseEmulator;
+    std::function<void()> m_fUnpauseEmulator;
+    std::function<void(char*)> m_fGetGameTitle;
+    std::function<void()> m_fRebuildMenu;
 };
 
 } // namespace data

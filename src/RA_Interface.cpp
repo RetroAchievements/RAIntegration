@@ -1,59 +1,5 @@
 #include "RA_Interface.h"
 
-// Exposed, shared
-// App-level:
-bool (CCONV *_RA_GameIsActive) (void) = nullptr;
-void (CCONV *_RA_CauseUnpause) (void) = nullptr;
-void (CCONV *_RA_CausePause) (void) = nullptr;
-void (CCONV *_RA_RebuildMenu) (void) = nullptr;
-void (CCONV *_RA_ResetEmulation) (void) = nullptr;
-void (CCONV *_RA_GetEstimatedGameTitle) (char* sNameOut) = nullptr;
-void (CCONV *_RA_LoadROM) (const char* sNameOut) = nullptr;
-
-bool RA_GameIsActive()
-{
-    if (_RA_GameIsActive != nullptr)
-        return _RA_GameIsActive();
-    return false;
-}
-
-void RA_CauseUnpause()
-{
-    if (_RA_CauseUnpause != nullptr)
-        _RA_CauseUnpause();
-}
-
-void RA_CausePause()
-{
-    if (_RA_CausePause != nullptr)
-        _RA_CausePause();
-}
-
-void RA_RebuildMenu()
-{
-    if (_RA_RebuildMenu != nullptr)
-        _RA_RebuildMenu();
-}
-
-void RA_ResetEmulation()
-{
-    if (_RA_ResetEmulation != nullptr)
-        _RA_ResetEmulation();
-}
-
-void RA_LoadROM(const char* sFullPath)
-{
-    if (_RA_LoadROM != nullptr)
-        _RA_LoadROM(sFullPath);
-}
-
-void RA_GetEstimatedGameTitle(char* sNameOut)
-{
-    if (_RA_GetEstimatedGameTitle != nullptr)
-        _RA_GetEstimatedGameTitle(sNameOut);
-}
-
-
 #ifndef RA_EXPORTS
 
 #include <winhttp.h>
@@ -648,19 +594,10 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
     }
 }
 
-void RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
+void RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
 {
-    _RA_GameIsActive = fpIsActive;
-    _RA_CauseUnpause = fpCauseUnpause;
-    _RA_CausePause = fpCausePause;
-    _RA_RebuildMenu = fpRebuildMenu;
-    _RA_GetEstimatedGameTitle = fpEstimateTitle;
-    _RA_ResetEmulation = fpResetEmulation;
-    _RA_LoadROM = fpLoadROM;
-
-    //	Also install *within* DLL! FFS
     if (_RA_InstallSharedFunctions != nullptr)
-        _RA_InstallSharedFunctions(fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
+        _RA_InstallSharedFunctions(nullptr, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
 }
 
 void RA_Shutdown()

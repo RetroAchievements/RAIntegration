@@ -6,6 +6,7 @@
 
 #include "api\Login.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -70,8 +71,8 @@ bool LoginViewModel::Login() const
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
         std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
 
+    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
 #ifndef RA_UTEST
-    RA_RebuildMenu();
     _RA_UpdateAppTitle();
 #endif
 

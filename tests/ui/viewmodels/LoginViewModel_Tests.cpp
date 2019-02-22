@@ -5,11 +5,13 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::api::mocks::MockServer;
+using ra::data::mocks::MockEmulatorContext;
 using ra::data::mocks::MockUserContext;
 using ra::services::mocks::MockConfiguration;
 using ra::ui::mocks::MockDesktop;
@@ -31,6 +33,7 @@ private:
         MockDesktop mockDesktop;
         MockServer mockServer;
         MockUserContext mockUserContext;
+        MockEmulatorContext mockEmulatorContext;
     };
 
 public:
@@ -103,6 +106,8 @@ public:
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
+        bool bWasMenuRebuilt = false;
+        vmLogin.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt] { bWasMenuRebuilt = true; });
 
         vmLogin.SetUsername(L"user");
         vmLogin.SetPassword(L"Pa$$w0rd");
@@ -118,6 +123,9 @@ public:
         // values should also be updated in UserContext, including API token
         Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
         Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
+
+        // emulator should have been notified to rebuild the RetroAchievements menu
+        Assert::IsTrue(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestLoginInvalidPassword)

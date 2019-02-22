@@ -28,6 +28,8 @@ public:
     static INT_PTR CALLBACK s_GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR CALLBACK GameLibraryProc(HWND, UINT, WPARAM, LPARAM);
 
+    void(*m_fpLoadROM)(const char*);
+
 public:
     void InstallHWND(HWND hWnd) noexcept { m_hDialogBox = hWnd; }
     HWND GetHWND() const noexcept { return m_hDialogBox; }

@@ -446,7 +446,7 @@ BOOL Dlg_GameLibrary::LaunchSelected()
         SetWindowText(GetDlgItem(m_hDialogBox, IDC_RA_GLIB_NAME), buffer);
 
         ListView_GetItemText(hList, nSel, 3, buffer, 1024);
-        _RA_LoadROM(ra::Narrow(buffer).c_str());
+        m_fpLoadROM(ra::Narrow(buffer).c_str());
 
         return TRUE;
     }

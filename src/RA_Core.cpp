@@ -612,17 +612,6 @@ void _FetchGameHashLibraryFromWeb()
         _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
 }
 
-void _FetchGameTitlesFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestGamesList, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_GAME_LIST_FILENAME, Response);
-}
-
 void _FetchMyProgressFromWeb()
 {
     PostArgs args;
@@ -846,7 +835,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (g_GameLibrary.GetHWND() == nullptr)
                 {
                     _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
-                    _FetchGameTitlesFromWeb();			//	##BLOCKING##
                     _FetchMyProgressFromWeb();			//	##BLOCKING##
 
                     g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));

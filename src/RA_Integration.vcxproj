@@ -114,6 +114,7 @@
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
+    <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
@@ -126,6 +127,7 @@
     <ClInclude Include="api\Ping.hh" />
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />
+    <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />

@@ -46,7 +46,6 @@ _CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
 #define RA_DIR_BOOKMARKS                RA_DIR_BASE L"Bookmarks\\"
 
 #define RA_GAME_HASH_FILENAME           RA_DIR_DATA L"gamehashlibrary.txt"
-#define RA_GAME_LIST_FILENAME           RA_DIR_DATA L"gametitles.txt"
 #define RA_MY_PROGRESS_FILENAME         RA_DIR_DATA L"myprogress.txt"
 #define RA_MY_GAME_LIBRARY_FILENAME     RA_DIR_DATA L"mygamelibrary.txt"
 

@@ -596,6 +596,12 @@
     <ClInclude Include="api\AwardAchievement.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchGamesList.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\SubmitNewTitle.hh">
+      <Filter>API</Filter>
+    </ClInclude>
     <ClInclude Include="data\ConsoleContext.hh">
       <Filter>Data</Filter>
     </ClInclude>

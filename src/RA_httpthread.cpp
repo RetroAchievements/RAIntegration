@@ -32,14 +32,12 @@ const char* RequestTypeToString[] =
     "RequestFriendList",
     "RequestBadgeIter",
     "RequestHashLibrary",
-    "RequestGamesList",
     "RequestAllProgress",
 
     "RequestSubmitCodeNote",
     "RequestSubmitLeaderboardEntry",
     "RequestSubmitAchievementData",
     "RequestSubmitTicket",
-    "RequestSubmitNewTitleEntry",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
 
@@ -54,14 +52,12 @@ const char* RequestTypeToPost[] =
     "getfriendlist",
     "badgeiter",
     "hashlibrary",
-    "gameslist",
     "allprogress",
 
     "submitcodenote",
     "submitlbentry",
     "uploadachievement",
     "submitticket",
-    "submitgametitle",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
 

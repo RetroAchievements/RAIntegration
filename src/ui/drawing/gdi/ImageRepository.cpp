@@ -28,7 +28,10 @@ bool ImageRepository::Initialize()
     // NOTE: RPC_E_CHANGED_MODE error indicates something has already initialized COM
     // with different settings, assume they're acceptable settings and proceed anyway
     HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, SIZE_T{});
+
     auto hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
+    m_bShutdownCOM = SUCCEEDED(hr);
+
     if (SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE)
     {
         hr = CoCreateInstance(
@@ -66,6 +69,9 @@ ImageRepository::~ImageRepository() noexcept
     m_mUserPics.clear();
 
     g_pIWICFactory.Release();
+
+    if (m_bShutdownCOM)
+        CoUninitialize();
 }
 
 std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sName)

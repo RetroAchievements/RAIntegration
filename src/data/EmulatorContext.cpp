@@ -16,12 +16,6 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#ifdef RA_UTEST
-API void CCONV _RA_SetConsoleID(unsigned int)
-{
-}
-#endif
-
 namespace ra {
 namespace data {
 
@@ -187,10 +181,14 @@ bool EmulatorContext::ValidateClientVersion()
     std::string sClientVersion = m_sVersion;
     while (ra::StringEndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);
+    if (sClientVersion.find('.') == std::string::npos)
+        sClientVersion.append(".0");
 
     std::string sNewVersion = m_sLatestVersion;
     while (ra::StringEndsWith(sNewVersion, ".0"))
         sNewVersion.resize(sNewVersion.length() - 2);
+    if (sNewVersion.find('.') == std::string::npos)
+        sNewVersion.append(".0");
 
     bool bUpdate = false;
     bool bResult = true;

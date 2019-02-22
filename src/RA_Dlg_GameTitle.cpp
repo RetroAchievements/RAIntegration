@@ -9,6 +9,7 @@
 #include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\UserContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -41,7 +42,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
 
             //	***Do blocking fetch of all game titles.***
             ra::api::FetchGamesList::Request request;
-            request.ConsoleId = g_ConsoleID;
+            request.ConsoleId = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id();
 
             auto response = request.Call();
             if (response.Failed())
@@ -90,7 +91,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     }
 
                     ra::api::SubmitNewTitle::Request request;
-                    request.ConsoleId = g_ConsoleID;
+                    request.ConsoleId = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id();
                     request.Hash = m_sMD5;
                     request.GameName = ra::Widen(sSelectedTitle);
 

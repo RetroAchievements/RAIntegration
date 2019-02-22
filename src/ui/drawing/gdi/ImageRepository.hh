@@ -60,6 +60,7 @@ private:
 
     std::mutex m_oMutex;
     std::set<std::wstring> m_vRequestedImages;
+    bool m_bShutdownCOM = false;
 };
 
 } // namespace gdi

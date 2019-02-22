@@ -39,6 +39,7 @@
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
+    <ClCompile Include="data\ConsoleContext.cpp" />
     <ClCompile Include="data\EmulatorContext.cpp" />
     <ClCompile Include="data\SessionTracker.cpp" />
     <ClCompile Include="data\UserContext.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
+    <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="data\SessionTracker.hh" />

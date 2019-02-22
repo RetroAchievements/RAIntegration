@@ -240,6 +240,9 @@
     <ClCompile Include="data\UserContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="data\ConsoleContext.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -598,6 +601,9 @@
     </ClInclude>
     <ClInclude Include="api\SubmitNewTitle.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ConsoleContext.hh">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

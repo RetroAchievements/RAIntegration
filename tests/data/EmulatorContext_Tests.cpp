@@ -300,6 +300,44 @@ public:
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 
+    TEST_METHOD(TestValidateClientVersionTo1_0)
+    {
+        // ensures "1.0" doesn't get trimmed to "1"
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("0.57.0.0", "1.0.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 1.0\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Cancel;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+    }
+
+    TEST_METHOD(TestValidateClientVersionFrom1_0)
+    {
+        // ensures "1.0" doesn't get trimmed to "1"
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("1.0.0.0", "1.0.1.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 1.0\n- New version: 1.0.1\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Cancel;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+    }
+
     TEST_METHOD(TestValidateClientVersionUnknownClient)
     {
         EmulatorContextHarness emulator;

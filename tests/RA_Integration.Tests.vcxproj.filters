@@ -262,6 +262,9 @@
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClCompile Include="..\src\data\ConsoleContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

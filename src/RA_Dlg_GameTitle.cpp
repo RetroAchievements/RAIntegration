@@ -6,6 +6,7 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "data\ConsoleContext.hh"
 #include "data\UserContext.hh"
 
 Dlg_GameTitle g_GameTitleDialog;
@@ -36,7 +37,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
             ComboBox_SetCurSel(hKnownGamesCbo, nSel);
 
             PostArgs args;
-            args['c'] = std::to_string(g_ConsoleID);
+            args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
 
             rapidjson::Document doc;
             if (RAWeb::DoBlockingRequest(RequestGamesList, args, doc))
@@ -115,7 +116,7 @@ INT_PTR Dlg_GameTitle::GameTitleProc(HWND hDlg, UINT uMsg, WPARAM wParam, _UNUSE
                     args['t'] = RAUsers::LocalUser().Token();
                     args['m'] = m_sMD5;
                     args['i'] = ra::Narrow(sSelectedTitle);
-                    args['c'] = std::to_string(g_ConsoleID);
+                    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
 
                     rapidjson::Document doc;
                     if (RAWeb::DoBlockingRequest(RequestSubmitNewTitle, args, doc) && 

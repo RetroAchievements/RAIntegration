@@ -2,6 +2,7 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -81,6 +82,13 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     pEmulatorContext->Initialize(nEmulatorId);
     auto& sClientName = pEmulatorContext->GetClientName();
     ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
+
+    // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
+    if (!ra::services::ServiceLocator::Exists<ra::data::ConsoleContext>())
+    {
+        auto pConsoleContext = ra::data::ConsoleContext::GetContext(ConsoleID::UnknownConsoleID);
+        ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pConsoleContext));
+    }
 
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());

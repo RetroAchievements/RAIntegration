@@ -16,12 +16,6 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#ifdef RA_UTEST
-API void CCONV _RA_SetConsoleID(unsigned int)
-{
-}
-#endif
-
 namespace ra {
 namespace data {
 

@@ -20,6 +20,7 @@
 #include "api\Logout.hh"
 #include "api\ResolveHash.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -50,15 +51,16 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
+    {
         g_hThisDLLInst = hModule;
 
-    ra::services::Initialization::RegisterCoreServices();
+        ra::services::Initialization::RegisterCoreServices();
+    }
 
     return TRUE;
 }
@@ -165,6 +167,7 @@ API int CCONV _RA_Shutdown()
         DestroyWindow(g_MemoryDialog.GetHWND());
         g_MemoryDialog.InstallHWND(nullptr);
     }
+    g_MemoryDialog.Shutdown();
 
     if (g_GameLibrary.GetHWND() != nullptr)
     {
@@ -181,8 +184,6 @@ API int CCONV _RA_Shutdown()
     }
 
     ra::services::Initialization::Shutdown();
-
-    CoUninitialize();
 
     RA_LOG_INFO("Shutdown complete");
 
@@ -229,11 +230,6 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     }
 
     return(nResult == IDYES);
-}
-
-API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
-{
-    g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -606,7 +602,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -617,7 +613,7 @@ void _FetchGameHashLibraryFromWeb()
 void _FetchGameTitlesFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -628,7 +624,7 @@ void _FetchGameTitlesFromWeb()
 void _FetchMyProgressFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;

@@ -6,6 +6,7 @@
 
 #include "api\Login.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -128,6 +129,17 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
             request.CallAsyncWithRetry(HandleLoginResponse);
         }
     }
+}
+
+API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
+{
+    auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
+    RA_LOG("Console set to %u (%s)", pContext->Id(), pContext->Name());
+    ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
+
+#ifndef RA_UTEST
+    g_MemoryDialog.UpdateMemoryRegions();
+#endif
 }
 
 #ifndef RA_UTEST

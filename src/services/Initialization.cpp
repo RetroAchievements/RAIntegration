@@ -2,6 +2,7 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -82,6 +83,13 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     auto& sClientName = pEmulatorContext->GetClientName();
     ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
 
+    // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
+    if (!ra::services::ServiceLocator::Exists<ra::data::ConsoleContext>())
+    {
+        auto pConsoleContext = ra::data::ConsoleContext::GetContext(ConsoleID::UnknownConsoleID);
+        ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pConsoleContext));
+    }
+
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
     const auto sFilename = ra::StringPrintf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
@@ -141,6 +149,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
 void Initialization::Shutdown()
 {
+    // if RegisterServices was not called, there's nothing to Shutdown
+    if (!ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+        return;
+
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
 
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);

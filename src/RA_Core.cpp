@@ -20,6 +20,7 @@
 #include "api\Logout.hh"
 #include "api\ResolveHash.hh"
 
+#include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -50,15 +51,16 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-ConsoleID g_ConsoleID = ConsoleID::UnknownConsoleID;	//	Currently active Console ID
 bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
+    {
         g_hThisDLLInst = hModule;
 
-    ra::services::Initialization::RegisterCoreServices();
+        ra::services::Initialization::RegisterCoreServices();
+    }
 
     return TRUE;
 }
@@ -130,14 +132,18 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
 API int CCONV _RA_Shutdown()
 {
-    // notify the background threads as soon as possible so they start to wind down
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
+    // if _RA_Init wasn't called, the services won't have been registered, so there's nothing to shut down
+    if (ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+    {
+        // notify the background threads as soon as possible so they start to wind down
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
 
-    ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
-    ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
 
-    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+    }
 
     g_pActiveAchievements = nullptr;
     SAFE_DELETE(g_pCoreAchievements);
@@ -161,6 +167,7 @@ API int CCONV _RA_Shutdown()
         DestroyWindow(g_MemoryDialog.GetHWND());
         g_MemoryDialog.InstallHWND(nullptr);
     }
+    g_MemoryDialog.Shutdown();
 
     if (g_GameLibrary.GetHWND() != nullptr)
     {
@@ -177,8 +184,6 @@ API int CCONV _RA_Shutdown()
     }
 
     ra::services::Initialization::Shutdown();
-
-    CoUninitialize();
 
     RA_LOG_INFO("Shutdown complete");
 
@@ -225,11 +230,6 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     }
 
     return(nResult == IDYES);
-}
-
-API void CCONV _RA_SetConsoleID(unsigned int nConsoleID)
-{
-    g_ConsoleID = static_cast<ConsoleID>(nConsoleID);
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -436,8 +436,6 @@ API void CCONV _RA_OnReset()
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
     ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
-
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -604,7 +602,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -612,21 +610,10 @@ void _FetchGameHashLibraryFromWeb()
         _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
 }
 
-void _FetchGameTitlesFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestGamesList, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_GAME_LIST_FILENAME, Response);
-}
-
 void _FetchMyProgressFromWeb()
 {
     PostArgs args;
-    args['c'] = std::to_string(g_ConsoleID);
+    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
     args['u'] = RAUsers::LocalUser().Username();
     args['t'] = RAUsers::LocalUser().Token();
     std::string Response;
@@ -846,7 +833,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (g_GameLibrary.GetHWND() == nullptr)
                 {
                     _FetchGameHashLibraryFromWeb();		//	##BLOCKING##
-                    _FetchGameTitlesFromWeb();			//	##BLOCKING##
                     _FetchMyProgressFromWeb();			//	##BLOCKING##
 
                     g_GameLibrary.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_GAMELIBRARY), g_RAMainWnd, &Dlg_GameLibrary::s_GameLibraryProc));
@@ -877,7 +863,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().DeactivateLeaderboards();
             }
             else
             {
@@ -959,22 +945,10 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
-        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Reset();
         g_MemoryDialog.Invalidate();
 
         for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
             g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
-    }
-}
-
-API void CCONV _RA_DoAchievementsFrame()
-{
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn() && g_pActiveAchievements != nullptr)
-    {
-        g_pActiveAchievements->Test();
-        ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Test();
-
-        g_MemoryDialog.Invalidate();
     }
 }
 

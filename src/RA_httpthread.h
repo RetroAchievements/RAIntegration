@@ -26,7 +26,6 @@ enum RequestType
     RequestFriendList,
     RequestBadgeIter,
     RequestHashLibrary,
-    RequestGamesList,
     RequestAllProgress,
 
     //	Submit
@@ -34,7 +33,6 @@ enum RequestType
     RequestSubmitLeaderboardEntry,
     RequestSubmitAchievementData,
     RequestSubmitTicket,
-    RequestSubmitNewTitle,
 
     NumRequestTypes
 };

@@ -1,6 +1,8 @@
 #include "RA_Leaderboard.h"
 #include "RA_UnitTestHelpers.h"
 
+#include "RA_MemManager.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -17,30 +19,39 @@ public:
     unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
 
 public:
-    void Reset() noexcept override
+    void Reset() noexcept
     {
-        RA_Leaderboard::Reset();
+        rc_reset_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard));
 
         m_bActive = false;
         m_bScoreSubmitted = false;
         m_nSubmittedScore = 0;
     }
 
-    void Start() noexcept override
+    void Test() noexcept
     {
-        m_bActive = true;
-    }
+        if (!m_pLeaderboard)
+            return;
 
-    void Cancel() noexcept override
-    {
-        m_bActive = false;
-    }
+        unsigned int nValue;
+        const int nResult = rc_evaluate_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard), &nValue, rc_peek_callback, nullptr, nullptr);
+        switch (nResult)
+        {
+            case RC_LBOARD_STARTED:
+                m_bActive = true;
+                SetCurrentValue(nValue);
+                break;
 
-    void Submit(unsigned int nScore) noexcept override
-    {
-        m_bActive = false;
-        m_bScoreSubmitted = true;
-        m_nSubmittedScore = nScore;
+            case RC_LBOARD_CANCELED:
+                m_bActive = false;
+                break;
+
+            case RC_LBOARD_TRIGGERED:
+                m_bActive = false;
+                m_bScoreSubmitted = true;
+                m_nSubmittedScore = nValue;
+                break;
+        }
     }
 
 private:

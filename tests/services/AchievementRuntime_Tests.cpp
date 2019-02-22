@@ -67,9 +67,24 @@ private:
         }
 
         const auto nSize = rc_trigger_size(sTrigger);
-        Ensures(to_unsigned(nSize) < nBufferSize);
+        Expects(to_unsigned(nSize) < nBufferSize);
 
         return rc_parse_trigger(sBuffer, sTrigger, nullptr, 0);
+    }
+
+    rc_lboard_t* ParseLeaderboard(const char* sTrigger, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
+    {
+        Expects(sTrigger != nullptr);
+        if (sBuffer == nullptr)
+        {
+            sBuffer = sTriggerBuffer.data();
+            nBufferSize = sizeof(sTriggerBuffer);
+        }
+
+        const auto nSize = rc_lboard_size(sTrigger);
+        Expects(to_unsigned(nSize) < nBufferSize);
+
+        return rc_parse_lboard(sBuffer, sTrigger, nullptr, 0);
     }
 
 public:
@@ -395,6 +410,108 @@ public:
 
         runtime.Process(vChanges);
         Assert::AreEqual(4U, pTrigger->requirement->conditions->current_hits);
+    }
+
+    TEST_METHOD(TestActivateLeaderboard)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory);
+
+        AchievementRuntime runtime;
+        auto* pLeaderboard = ParseLeaderboard("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
+
+        // leaderboard not active, should not trigger
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // leaderboard active, but not started
+        runtime.ActivateLeaderboard(6U, pLeaderboard);
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // leaderboard cancel condition should not be captured until it's been started
+        memory.at(0) = 2;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // leaderboard start condition should notify the start with initial value
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        Assert::AreEqual(52U, vChanges.front().nValue);
+
+        // still active leaderboard should not notify unless the value changes
+        vChanges.clear();
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        memory.at(2) = 33;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardUpdated, vChanges.front().nType);
+        Assert::AreEqual(33U, vChanges.front().nValue);
+        vChanges.clear();
+
+        // leaderboard cancel condition should notify
+        memory.at(0) = 2;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardCanceled, vChanges.front().nType);
+        vChanges.clear();
+
+        // leaderboard submit condition should not trigger if leaderboard not started
+        memory.at(0) = 3;
+        vChanges.clear();
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // restart the leaderboard
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        Assert::AreEqual(33U, vChanges.front().nValue);
+        vChanges.clear();
+
+        // leaderboard submit should trigger if leaderboard started
+        memory.at(0) = 3;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardTriggered, vChanges.front().nType);
+        Assert::AreEqual(33U, vChanges.front().nValue);
+        vChanges.clear();
+
+        // leaderboard cancel condition should not trigger after submission
+        memory.at(0) = 2;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // restart the leaderboard
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        Assert::AreEqual(33U, vChanges.front().nValue);
+        vChanges.clear();
+
+        // deactivated leaderboard should not trigger
+        runtime.DeactivateLeaderboard(6U);
+        vChanges.clear();
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        memory.at(0) = 2;
+        vChanges.clear();
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
     }
 };
 

@@ -85,7 +85,7 @@ Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
     m_lbxGroupNames.front() = _T("Core");
     for (auto it = std::next(m_lbxGroupNames.begin()); it != m_lbxGroupNames.end(); ++it)
     {
-        const auto i = std::distance(std::next(m_lbxGroupNames.begin()), it);
+        const auto i = std::distance(m_lbxGroupNames.begin(), it);
         *it = ra::StringPrintf(_T("Alt %02t"), i);
     }
 }
@@ -148,12 +148,53 @@ const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond,
     item.pszText = sData.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
+    auto& pRow = m_lbxData.at(m_nNumOccupiedRows);
+    if (pRow.at(0).capacity() == 0)
+    {
+        // not sure exactly why, but the std::string objects in the LbxData nested array
+        // aren't constructed properly (they're just zeroed out memory). a std::string
+        // should never have 0 capacity - if it does, call reserve to initialize it 
+        // properly before trying to assign anything to it.
+        for (auto& pCell : pRow)
+            pCell.reserve(8);
+    }
+    else
+    {
+        // reconstructing the row - clear out any stored strings so the subitems get repopulated
+        for (auto& pCell : pRow)
+            pCell.clear();
+    }
+
     UpdateCondition(hList, item, Cond, nCurrentHits);
 
     Ensures(item.iItem == m_nNumOccupiedRows);
 
     m_nNumOccupiedRows++;
     return item.iItem;
+}
+
+void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, const std::string& sNewValue)
+{
+    std::string& sCell = LbxDataAt(nRow, nColumn);
+    if (sCell != sNewValue)
+    {
+        sCell.assign(sNewValue);
+        lvItem.iSubItem = ra::etoi(nColumn);
+        lvItem.pszText = sCell.data();
+        ListView_SetItem(hList, &lvItem);
+    }
+}
+
+void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue)
+{
+    std::string& sCell = LbxDataAt(nRow, nColumn);
+    if (sCell != sNewValue)
+    {
+        sCell = std::move(sNewValue);
+        lvItem.iSubItem = ra::etoi(nColumn);
+        lvItem.pszText = sCell.data();
+        ListView_SetItem(hList, &lvItem);
+    }
 }
 
 void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits)
@@ -169,48 +210,47 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
         sMemSizeStrSrc = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize())));
     }
 
-    const char* sMemTypStrDst = "Value";
-    std::string sMemSizeStrDst;
-    if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
-    {
-        sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
-    }
-
-    LbxDataAt(nRow, CondSubItems::Id) = std::to_string(nRow + 1);;
-    LbxDataAt(nRow, CondSubItems::Group) = ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType())));
-    LbxDataAt(nRow, CondSubItems::Type_Src) = ra::Narrow(sMemTypStrSrc);
-    LbxDataAt(nRow, CondSubItems::Size_Src) = ra::Narrow(sMemSizeStrSrc);
-    LbxDataAt(nRow, CondSubItems::Value_Src) = ra::StringPrintf("0x%06x", Cond.CompSource().GetValue());
-    LbxDataAt(nRow, CondSubItems::Comparison) = ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType())));
-    LbxDataAt(nRow, CondSubItems::Type_Tgt) = ra::Narrow(sMemTypStrDst);
-    LbxDataAt(nRow, CondSubItems::Size_Tgt) = ra::Narrow(sMemSizeStrDst);
-    LbxDataAt(nRow, CondSubItems::Value_Tgt) = ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue());
-    LbxDataAt(nRow, CondSubItems::Hitcount) = ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits);
-
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-    {
-        if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
-            LbxDataAt(nRow, CondSubItems::Value_Tgt) = std::to_string(Cond.CompTarget().GetValue());
-    }
+    SetCell(hList, item, nRow, CondSubItems::Id, std::to_string(nRow + 1));
+    SetCell(hList, item, nRow, CondSubItems::Group, ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))));
+    SetCell(hList, item, nRow, CondSubItems::Type_Src, ra::Narrow(sMemTypStrSrc));
+    SetCell(hList, item, nRow, CondSubItems::Size_Src, ra::Narrow(sMemSizeStrSrc));
+    SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%06x", Cond.CompSource().GetValue()));
 
     if (Cond.IsAddCondition() || Cond.IsSubCondition())
     {
-        LbxDataAt(nRow, CondSubItems::Comparison).clear();
-        LbxDataAt(nRow, CondSubItems::Type_Tgt).clear();
-        LbxDataAt(nRow, CondSubItems::Size_Tgt).clear();
-        LbxDataAt(nRow, CondSubItems::Value_Tgt).clear();
-        LbxDataAt(nRow, CondSubItems::Hitcount).clear();
+        SetCell(hList, item, nRow, CondSubItems::Comparison, "");
+        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, "");
+        SetCell(hList, item, nRow, CondSubItems::Size_Tgt, "");
+        SetCell(hList, item, nRow, CondSubItems::Value_Tgt, "");
+        SetCell(hList, item, nRow, CondSubItems::Hitcount, "");
     }
-
-    for (auto it = COLUMN_TITLE.cbegin(); it != COLUMN_TITLE.cend(); ++it)
+    else
     {
-        const auto i = gsl::narrow<int>(std::distance(COLUMN_TITLE.cbegin(), it));
-        item.iSubItem = i;
-        ra::tstring sData{NativeStr(LbxDataAt(nRow, ra::itoe<CondSubItems>(i)))};
-        item.pszText = sData.data();
-        ListView_SetItem(hList, &item);
+        const char* sMemTypStrDst = "Value";
+        std::string sMemSizeStrDst;
+        if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
+        {
+            sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
+            sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
+        }
+
+        SetCell(hList, item, nRow, CondSubItems::Comparison, ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))));
+        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, ra::Narrow(sMemTypStrDst));
+        SetCell(hList, item, nRow, CondSubItems::Size_Tgt, ra::Narrow(sMemSizeStrDst));
+        SetCell(hList, item, nRow, CondSubItems::Hitcount, ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits));
+
+        bool bValueInDecimal = false;
+        if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
+        {
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                bValueInDecimal = true;
+        }
+
+        if (bValueInDecimal)
+            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, std::to_string(Cond.CompTarget().GetValue()));
+        else
+            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue()));
     }
 }
 
@@ -1392,6 +1432,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     {
                         MessageBox(m_hAchievementEditorDlg, TEXT("Cannot remove Core Condition Group!"),
                                    TEXT("Warning"), MB_OK);
+                        break;
                     }
 
                     RepopulateGroupList(ActiveAchievement());
@@ -1665,66 +1706,14 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                         case CondSubItems::Value_Src:
                         {
-                            int nBase = 16;
-                            if (rCond.CompSource().GetType() == CompVariable::Type::ValueComparison)
-                            {
-                                auto& pConfiguration =
-                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                                    nBase = 10;
-                            }
-
-                            const auto nVal = std::stoul(sData, nullptr, nBase);
+                            const auto nVal = ParseValue(sData, rCond.CompSource().GetType());
                             rCond.CompSource().SetValue(nVal);
                             break;
                         }
                         case CondSubItems::Value_Tgt:
                         {
-                            int nBase = 16;
-                            if (rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
-                            {
-                                auto& pConfiguration =
-                                    ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                                    nBase = 10;
-                            }
-                            
-                            auto lVal = 0UL;
-                            auto lineErrNumber = 0;
-                            try
-                            {
-                                lineErrNumber = __LINE__ + 1;
-                                lVal = std::stoul(sData.c_str(), nullptr, nBase);
-                            } catch (const std::invalid_argument& e)
-                            {
-                                RA_LOG_ERR("\nFunction: %s\nLine: %d\nMessage: %s\n\n", __FUNCTION__, lineErrNumber,
-                                           e.what());
-                                const auto bIsDecimal = Button_GetCheck(::GetDlgItem(hDlg, IDC_RA_CHK_SHOW_DECIMALS));
-                                if (bIsDecimal)
-                                {
-                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
-                                        L"Only values that can be represented as decimal are allowed while the 'show "
-                                        L"decimal values' checkbox is "
-                                        L"checked.\n\nPlease try again!");
-                                }
-                                else
-                                {
-                                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
-                                        L"Only values that can be represented as hexadecimal are allowed while the "
-                                        L"'show decimal values' checkbox is unchecked.\n\nPlease try again!");
-                                }
-                            } catch (const std::out_of_range& e)
-                            {
-                                RA_LOG_ERR("Function: %s\nLine: %d\nMessage: %s", __FUNCTION__, lineErrNumber,
-                                           e.what());
-                                constexpr auto maxUlong = std::numeric_limits<unsigned long>::max();
-                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                                    L"Too Large",
-                                    ra::StringPrintf(L"Value supplied is negative or too large!\nIt must be "
-                                                     L"non-negative and less than %lu (decimal) or 0x%X (hexadecimal)",
-                                                     maxUlong, maxUlong));
-                            }
-                            rCond.CompTarget().SetValue(lVal);
+                            const auto nVal = ParseValue(sData, rCond.CompTarget().GetType());
+                            rCond.CompTarget().SetValue(nVal);
                             break;
                         }
                         case CondSubItems::Hitcount:
@@ -1781,6 +1770,79 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
     }
 
     return !bHandled;
+}
+
+unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVariable::Type nType) const
+{
+    unsigned int nMax = 0xFFFFFFFF;
+
+    int nBase = 16;
+    if (nType == CompVariable::Type::ValueComparison)
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+            nBase = 10;
+
+        // TODO: limit nMax to size of memory being read
+    }
+    else
+    {
+        nMax = g_MemManager.TotalBankSize() - 1;
+    }
+
+    bool bTooLarge = false;
+    bool bInvalid = false;
+    try
+    {
+        size_t nRead;
+        const auto nVal = std::stoul(sData, &nRead, nBase);
+        if (nRead < sData.length())
+            bInvalid = true;
+        else if (nRead > 0 && sData.at(0) == '-')
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", L"Value must be non-negative.");
+        else if (nVal > nMax)
+            bTooLarge = true;
+        else
+            return nVal;
+    }
+    catch (const std::invalid_argument&)
+    {
+        bInvalid = true;
+    }
+    catch (const std::out_of_range&)
+    {
+        bTooLarge = true;
+    }
+
+    if (bInvalid)
+    {
+        if (nBase == 10)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                L"Only values that can be represented as decimal are allowed while the "
+                L"'show decimal values' checkbox is checked.");
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input",
+                L"Only values that can be represented as hexadecimal are allowed.");
+        }
+    }
+    else if (bTooLarge)
+    {
+        if (nBase == 10)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
+                ra::StringPrintf(L"Value cannot exceed %lu", nMax));
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Too Large",
+                ra::StringPrintf(L"Value cannot exceed 0x%x", nMax));
+        }
+    }
+
+    return 0;
 }
 
 void Dlg_AchievementEditor::GetListViewTooltip()

@@ -3,19 +3,23 @@
 #include "RA_Defs.h"
 #include "RA_MemManager.h"
 
+#include "services\AchievementRuntime.hh"
 #include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
 #include <ctime>
 
-/* clang-format off */
-_Use_decl_annotations_
-RA_Leaderboard::RA_Leaderboard(const ra::LeaderboardID nLeaderboardID) noexcept : m_nID(nLeaderboardID) {}
-/* clang-format on */
-
-
-//{"ID":"3","Mem":"STA:0xfe10=h0001_0xhf601=h0c_d0xhf601!=h0c_0xhfffb=0::CAN:0xhfe13<d0xhfe13::SUB:0xf7cc!=0_d0xf7cc=0::VAL:0xhfe24*1_0xhfe25*60_0xhfe22*3600","Format":"TIME","Title":"Green
-//Hill Act 2","Description":"Complete this act in the fastest time!"},
+RA_Leaderboard::~RA_Leaderboard() noexcept
+{
+    if (m_bActive)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.DeactivateLeaderboard(ID());
+        }
+    }
+}
 
 void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
 {
@@ -37,58 +41,28 @@ void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
     }
 }
 
+void RA_Leaderboard::SetActive(bool bActive) noexcept
+{
+    if (m_bActive != bActive)
+    {
+        m_bActive = bActive;
+
+        if (m_pLeaderboard && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            if (!m_bActive)
+                pRuntime.DeactivateLeaderboard(ID());
+            else
+                pRuntime.ActivateLeaderboard(ID(), static_cast<rc_lboard_t*>(m_pLeaderboard));
+        }
+    }
+}
+
 std::string RA_Leaderboard::FormatScore(unsigned int nValue) const
 {
     char buffer[32];
     rc_format_value(buffer, sizeof(buffer), nValue, m_nFormat);
     return std::string(buffer);
-}
-
-void RA_Leaderboard::Reset() noexcept
-{
-    if (m_pLeaderboard != nullptr)
-    {
-        rc_lboard_t* pLboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
-        rc_reset_lboard(pLboard);
-    }
-}
-
-void RA_Leaderboard::Test()
-{
-    if (m_pLeaderboard != nullptr)
-    {
-        rc_lboard_t* pLboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
-        const int nResult    = rc_evaluate_lboard(pLboard, &m_nCurrentValue, rc_peek_callback, nullptr, nullptr);
-        switch (nResult)
-        {
-            default:
-            case RC_LBOARD_INACTIVE:
-            case RC_LBOARD_ACTIVE:
-                // no change, do nothing
-                break;
-
-            case RC_LBOARD_STARTED: Start(); break;
-
-            case RC_LBOARD_CANCELED: Cancel(); break;
-
-            case RC_LBOARD_TRIGGERED: Submit(m_nCurrentValue); break;
-        }
-    }
-}
-
-void RA_Leaderboard::Start()
-{
-    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().ActivateLeaderboard(*this);
-}
-
-void RA_Leaderboard::Cancel()
-{
-    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().DeactivateLeaderboard(*this);
-}
-
-void RA_Leaderboard::Submit(unsigned int nScore)
-{
-    ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>().SubmitLeaderboardEntry(*this, nScore);
 }
 
 void RA_Leaderboard::SubmitRankInfo(unsigned int nRank, const std::string& sUsername, int nScore, time_t nAchieved)

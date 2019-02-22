@@ -45,6 +45,9 @@ void AchievementRuntime::ResetActiveAchievements()
     }
 
     m_vActiveAchievements.clear();
+
+    for (const auto& pLeaderboard : m_vActiveLeaderboards)
+        rc_reset_lboard(pLeaderboard.pLeaderboard);
 }
 
 static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
@@ -87,7 +90,7 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
     {
         const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
         if (bResult)
-            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId});
+            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId, 0U});
     }
 
     for (auto& pAchievement : m_vActiveAchievementsMonitorReset)
@@ -96,9 +99,9 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
 
         const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
         if (bResult)
-            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId});
+            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId, 0U});
         else if (bHasHits && !HasHitCounts(pAchievement.pTrigger))
-            changes.emplace_back(Change{ChangeType::AchievementReset, pAchievement.nId});
+            changes.emplace_back(Change{ChangeType::AchievementReset, pAchievement.nId, 0U});
     }
 
     auto pIter = m_vQueuedAchievements.begin();
@@ -117,6 +120,40 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
             rc_reset_trigger(pIter->pTrigger);
             AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
             pIter = m_vQueuedAchievements.erase(pIter);
+        }
+    }
+
+    for (auto& pLeaderboard : m_vActiveLeaderboards)
+    {
+        unsigned int nValue;
+        const int nResult = rc_evaluate_lboard(pLeaderboard.pLeaderboard, &nValue, rc_peek_callback, nullptr, nullptr);
+        switch (nResult)
+        {
+            default:
+            case RC_LBOARD_INACTIVE:
+                break;
+
+            case RC_LBOARD_ACTIVE:
+                if (pLeaderboard.nValue != nValue)
+                {
+                    pLeaderboard.nValue = nValue;
+                    changes.emplace_back(Change{ChangeType::LeaderboardUpdated, pLeaderboard.nId, nValue});
+                }
+                break;
+
+            case RC_LBOARD_STARTED:
+                pLeaderboard.nValue = nValue;
+                changes.emplace_back(Change{ChangeType::LeaderboardStarted, pLeaderboard.nId, nValue});
+                break;
+
+            case RC_LBOARD_CANCELED:
+                changes.emplace_back(Change{ChangeType::LeaderboardCanceled, pLeaderboard.nId, 0U});
+                break;
+
+            case RC_LBOARD_TRIGGERED:
+                pLeaderboard.nValue = nValue;
+                changes.emplace_back(Change{ChangeType::LeaderboardTriggered, pLeaderboard.nId, nValue});
+                break;
         }
     }
 }
@@ -226,6 +263,10 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
 
 bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
 {
+    // leaderboards aren't currently managed by the save/load progress functions, just reset them all
+    for (const auto& pLeaderboard : m_vActiveLeaderboards)
+        rc_reset_lboard(pLeaderboard.pLeaderboard);
+
     if (sLoadStateFilename == nullptr)
         return false;
 

@@ -46,23 +46,44 @@ public:
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
     }
 
+    /// <summary>
+    /// Adds a leaderboard to the processing queue.
+    /// </summary>
+    void ActivateLeaderboard(unsigned int nId, rc_lboard_t* pLeaderboard) noexcept
+    {
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveLeaderboards, nId, pLeaderboard);
+    }
+
+    /// <summary>
+    /// Removes a leaderboard from the processing queue.
+    /// </summary>
+    void DeactivateLeaderboard(unsigned int nId) noexcept
+    {
+        RemoveEntry(m_vActiveLeaderboards, nId);
+    }
+
     enum class ChangeType
     {
         None = 0,
         AchievementTriggered,
         AchievementReset,
+        LeaderboardStarted,
+        LeaderboardCanceled,
+        LeaderboardUpdated,
+        LeaderboardTriggered,
     };
 
     struct Change
     {
         ChangeType nType;
         unsigned int nId;
+        unsigned int nValue;
     };
 
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    void Process(_Inout_ std::vector<Change>& changes);
+    virtual void Process(_Inout_ std::vector<Change>& changes);
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -101,9 +122,19 @@ protected:
         unsigned int nId;
     };
 
-    static void AddEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId, rc_trigger_t* pTrigger)
+    struct ActiveLeaderboard
     {
-        Expects(pTrigger != nullptr);
+        ActiveLeaderboard(rc_lboard_t* pLeaderboard, unsigned int nId) noexcept : pLeaderboard(pLeaderboard), nId(nId) {}
+
+        rc_lboard_t* pLeaderboard;
+        unsigned int nId;
+        unsigned int nValue = 0;
+    };
+
+    template<class TCollection, class TData>
+    static void AddEntry(std::vector<TCollection>& vEntries, unsigned int nId, TData* pData)
+    {
+        Expects(pData != nullptr);
 
         for (const auto& pAchievement : vEntries)
         {
@@ -111,11 +142,12 @@ protected:
                 return;
         }
 
-        vEntries.emplace_back(pTrigger, nId);
+        vEntries.emplace_back(pData, nId);
     }
 
+    template<class T>
     GSL_SUPPRESS_F6
-    static void RemoveEntry(std::vector<ActiveAchievement>& vEntries, unsigned int nId) noexcept
+    static void RemoveEntry(std::vector<T>& vEntries, unsigned int nId) noexcept
     {
         for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
         {
@@ -130,6 +162,9 @@ protected:
     std::vector<ActiveAchievement> m_vQueuedAchievements;
     std::vector<ActiveAchievement> m_vActiveAchievements;
     std::vector<ActiveAchievement> m_vActiveAchievementsMonitorReset;
+
+    std::vector<ActiveLeaderboard> m_vActiveLeaderboards;
+
     bool m_bPaused = false;
 };
 

@@ -19,12 +19,11 @@ public:
     static void OnSubmitEntry(const rapidjson::Document& doc);
 
 public:
-    void Test() override;
-    void Reset() override;
-
     void ActivateLeaderboard(const RA_Leaderboard& lb) const override;
     void DeactivateLeaderboard(const RA_Leaderboard& lb) const override;
     void SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const override;
+
+    void DeactivateLeaderboards() const override;
 
     void AddLeaderboard(RA_Leaderboard&& lb) override;
     size_t Count() const noexcept override { return m_Leaderboards.size(); }

@@ -141,7 +141,7 @@ public:
 protected:
     void MergeLocalAchievements();
     bool ReloadAchievement(Achievement& pAchievement);
-    void RefreshUnlocks(bool bWasPaused);
+    void RefreshUnlocks(bool bUnpause);
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;

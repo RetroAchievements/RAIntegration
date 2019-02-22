@@ -121,17 +121,6 @@ BOOL AchievementOverlay::GoBack() noexcept
 _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const ControllerInput*> pInput, float fDelta,
                                                        BOOL bFullScreen, BOOL bPaused)
 {
-    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-
-    const auto nAchCount = gsl::narrow<int>(g_pActiveAchievements->NumAchievements());
-    const int nNumFriends = gsl::narrow<int>(RAUsers::LocalUser().NumFriends());
-    const int nNumLBs = gsl::narrow<int>(pLeaderboardManager.Count());
-    // const int nMsgCount = (const int)( RAUsers::LocalUser().MessageCount() );
-    constexpr auto nMsgCount = 0;
-
-    const auto& input = *pInput;
-
-    BOOL bCloseOverlay = FALSE; // False==close overlay
 
     // FS fix: this thrashes horribly when both are running :S
     if (bFullScreen)
@@ -179,6 +168,17 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
 
     if (m_nTransitionState == TransitionState::Off)
         return FALSE;
+
+    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+
+    const auto nAchCount = g_pActiveAchievements ? gsl::narrow<int>(g_pActiveAchievements->NumAchievements()) : 0;
+    const int nNumFriends = gsl::narrow<int>(RAUsers::LocalUser().NumFriends());
+    const int nNumLBs = gsl::narrow<int>(pLeaderboardManager.Count());
+    constexpr auto nMsgCount = 0;
+
+    const auto& input = *pInput;
+
+    BOOL bCloseOverlay = FALSE; // False==close overlay
 
     //	Inputs! Restrict to ABCULDR+Start
     if (!m_bInputLock)

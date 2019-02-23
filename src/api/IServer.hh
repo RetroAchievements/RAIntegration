@@ -12,6 +12,7 @@
 #include "api/Ping.hh"
 #include "api/ResolveHash.hh"
 #include "api/StartSession.hh"
+#include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
 
 namespace ra {
@@ -29,6 +30,7 @@ public:
     virtual Ping::Response Ping(const Ping::Request& request) noexcept = 0;
     virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept = 0;
     virtual AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) noexcept = 0;
+    virtual SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept = 0;
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept = 0;

@@ -16,7 +16,6 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "services\AchievementRuntime.hh"
-#include "services\ILeaderboardManager.hh"
 
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -325,95 +324,31 @@ private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
     };
 
-    class MockLeaderboardManager : public ra::services::ILeaderboardManager
-    {
-    public:
-        MockLeaderboardManager() noexcept : m_Override(this) {}
-
-        void ActivateLeaderboard(const RA_Leaderboard& lb) const override
-        {
-            m_vActiveLeaderboards.insert(lb.ID());
-        }
-
-        void DeactivateLeaderboard(const RA_Leaderboard& lb) const override
-        {
-            m_vActiveLeaderboards.erase(lb.ID());
-        }
-
-        bool IsLeaderboardActive(ra::LeaderboardID nId) const
-        {
-            return m_vActiveLeaderboards.find(nId) != m_vActiveLeaderboards.end();
-        }
-
-        void SubmitLeaderboardEntry(const RA_Leaderboard& lb, unsigned int nValue) const override
-        {
-            m_mSubmittedScores.insert_or_assign(lb.ID(), nValue);
-        }
-
-        unsigned int GetSubmittedValue(ra::LeaderboardID nId) const
-        {
-            const auto pIter = m_mSubmittedScores.find(nId);
-            return (pIter != m_mSubmittedScores.end()) ? pIter->second : 0U;
-        }
-
-        void DeactivateLeaderboards() const noexcept override {}
-
-        void AddLeaderboard(RA_Leaderboard&& lb) override
-        {
-            m_vLeaderboards.emplace_back(std::move(lb));
-        }
-
-        size_t Count() const noexcept override { return m_vLeaderboards.size(); }
-
-        const RA_Leaderboard& GetLB(size_t index) const override
-        {
-            return m_vLeaderboards.at(index);
-        }
-
-        RA_Leaderboard* FindLB(LeaderboardID nID) noexcept override
-        {
-            for (auto& pLeaderboard : m_vLeaderboards)
-            {
-                if (pLeaderboard.ID() == nID)
-                    return &pLeaderboard;
-            }
-
-            return nullptr;
-        }
-
-        const RA_Leaderboard* FindLB(LeaderboardID nID) const noexcept override
-        {
-            for (auto& pLeaderboard : m_vLeaderboards)
-            {
-                if (pLeaderboard.ID() == nID)
-                    return &pLeaderboard;
-            }
-
-            return nullptr;
-        }
-
-        void Clear() noexcept override { m_vLeaderboards.clear(); }
-
-    private:
-        ra::services::ServiceLocator::ServiceOverride<ra::services::ILeaderboardManager> m_Override;
-        std::vector<RA_Leaderboard> m_vLeaderboards;
-        mutable std::set<ra::LeaderboardID> m_vActiveLeaderboards;
-        mutable std::map<ra::LeaderboardID, unsigned int> m_mSubmittedScores;
-    };
-
     class DoAchievementsFrameHarness
     {
     public:
         MockAchievementRuntime mockRuntime;
         MockGameContext mockGameContext;
         MockDesktop mockDesktop;
-        MockLeaderboardManager mockLeaderboardManager;
+        MockOverlayManager mockOverlayManager;
+        MockAudioSystem mockAudioSystem;
+        MockConfiguration mockConfiguration;
 
         DoAchievementsFrameHarness() noexcept
         {
-            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::AwardAchievement>([this](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::AwardAchievement>([this]
+                (const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
             {
                 m_vUnlockedAchievements.insert(request.AchievementId);
+                response.Result = ra::api::ApiResult::Success;
+
+                return true;
+            });
+
+            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([this]
+                (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
+            {
+                m_vSubmittedLeaderboardEntries.insert_or_assign(request.LeaderboardId, request.Score);
                 response.Result = ra::api::ApiResult::Success;
 
                 return true;
@@ -432,15 +367,20 @@ private:
             return m_vUnlockedAchievements.find(nId) != m_vUnlockedAchievements.end();
         }
 
+        unsigned int GetSubmittedScore(ra::LeaderboardID nId)
+        {
+            mockThreadPool.ExecuteNextTask();
+            const auto pIter = m_vSubmittedLeaderboardEntries.find(nId);
+            return (pIter != m_vSubmittedLeaderboardEntries.end()) ? pIter->second : 0U;
+        }
+
     private:
         MockThreadPool mockThreadPool;
         MockServer mockServer;
-        MockAudioSystem mockAudioSystem;
         MockUserContext mockUserContext;
-        MockOverlayManager mockOverlayManager;
-        MockConfiguration mockConfiguration;
 
         std::set<unsigned int> m_vUnlockedAchievements;
+        std::map<ra::LeaderboardID, unsigned int> m_vSubmittedLeaderboardEntries;
     };
 
 public:
@@ -517,48 +457,90 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStart)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(1U));
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, true);
+        auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
+        pLeaderboard.SetTitle("Title");
+        pLeaderboard.SetDescription("Description");
 
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1234U, harness.mockLeaderboardManager.FindLB(1U)->GetCurrentValue());
-        Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(1U));
+        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
+        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
+        Assert::AreEqual(std::wstring(L"Challenge Available: Title"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPopupDisabled)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, false);
+        harness.mockGameContext.NewLeaderboard(1U);
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
+        _RA_DoAchievementsFrame();
+
+        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
+        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCanceled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(1U));
-        harness.mockLeaderboardManager.ActivateLeaderboard(*harness.mockLeaderboardManager.FindLB(1U));
-        Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(1U));
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, true);
+        auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
+        pLeaderboard.SetTitle("Title");
+        pLeaderboard.SetDescription("Description");
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled, 1U);
         _RA_DoAchievementsFrame();
 
-        Assert::IsFalse(harness.mockLeaderboardManager.IsLeaderboardActive(1U));
+        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
+        Assert::AreEqual(std::wstring(L"Leaderboard attempt canceled!"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardPopupDisabled)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, false);
+        auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
+        pLeaderboard.SetTitle("Title");
+        pLeaderboard.SetDescription("Description");
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled, 1U);
+        _RA_DoAchievementsFrame();
+
+        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardUpdated)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated, 1U, 1235U);
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(1U));
+        harness.mockGameContext.NewLeaderboard(1U);
 
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated, 1U, 1235U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1235U, harness.mockLeaderboardManager.FindLB(1U)->GetCurrentValue());
+        Assert::AreEqual(1235U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardTriggered)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered, 1U, 1236U);
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(1U));
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        harness.mockGameContext.NewLeaderboard(1U);
 
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered, 1U, 1236U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1236U, harness.mockLeaderboardManager.GetSubmittedValue(1U));
+        Assert::AreEqual(1236U, harness.GetSubmittedScore(1U));
     }
 
     TEST_METHOD(TestDoAchievementsFrameMultiple)
@@ -566,21 +548,22 @@ public:
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U);
         harness.MockAchievement(2U);
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(3U));
-        harness.mockLeaderboardManager.AddLeaderboard(RA_Leaderboard(4U));
+        harness.mockGameContext.NewLeaderboard(3U);
+        harness.mockGameContext.NewLeaderboard(4U);
+
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 3U, 1234U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 2U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 4U, 5678U);
-
         _RA_DoAchievementsFrame();
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsTrue(harness.WasUnlocked(2U));
-        Assert::AreEqual(1234U, harness.mockLeaderboardManager.FindLB(3U)->GetCurrentValue());
-        Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(3U));
-        Assert::AreEqual(5678U, harness.mockLeaderboardManager.FindLB(4U)->GetCurrentValue());
-        Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(4U));
+        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(3U)->GetCurrentValue());
+        // TODO: restore these once the score trackers are monitored by the OverlayManager
+        //Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(3U));
+        Assert::AreEqual(5678U, harness.mockGameContext.FindLeaderboard(4U)->GetCurrentValue());
+        //Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(4U));
     }
 };
 

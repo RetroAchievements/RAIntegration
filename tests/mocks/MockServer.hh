@@ -86,6 +86,11 @@ public:
         return HandleRequest<ra::api::AwardAchievement>(request);
     }
 
+    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::SubmitLeaderboardEntry>(request);
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override

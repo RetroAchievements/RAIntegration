@@ -30,13 +30,9 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
-#include "services\ILeaderboardManager.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
-
-// for SubmitEntry callback
-#include "services\impl\LeaderboardManager.hh" // services/IConfiguration.hh, services/ILeaderboardManager.hh
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
@@ -317,8 +313,6 @@ static void ActivateGame(unsigned int nGameId)
 
     g_bRAMTamperedWith = false;
 
-    ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().Clear();
-
     if (nGameId != 0)
     {
         RA_LOG("Loading game %u", nGameId);
@@ -531,10 +525,6 @@ API int CCONV _RA_HandleHTTPResults()
 
                 case RequestCodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
-                    break;
-
-                case RequestSubmitLeaderboardEntry:
-                    ra::services::impl::LeaderboardManager::OnSubmitEntry(doc);
                     break;
 
                 case RequestLeaderboardInfo:
@@ -863,7 +853,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>().DeactivateLeaderboards();
+                ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().DeactivateLeaderboards();
             }
             else
             {

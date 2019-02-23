@@ -10,7 +10,6 @@
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
-#include "services\ILeaderboardManager.hh"
 
 #include "ui\IDesktop.hh"
 
@@ -253,12 +252,11 @@ void EmulatorContext::DisableHardcoreMode()
 
 #ifndef RA_UTEST
         _RA_RebuildMenu();
-
-        auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-        pLeaderboardManager.DeactivateLeaderboards();
 #endif
 
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().RefreshUnlocks();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        pGameContext.DeactivateLeaderboards();
+        pGameContext.RefreshUnlocks();
     }
 }
 

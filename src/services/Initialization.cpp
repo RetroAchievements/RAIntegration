@@ -13,7 +13,6 @@
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
-#include "services\impl\LeaderboardManager.hh"
 #include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
@@ -116,9 +115,6 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));
-
-    auto pLeaderboardManager = std::make_unique<ra::services::impl::LeaderboardManager>(*pConfiguration);
-    ra::services::ServiceLocator::Provide<ra::services::ILeaderboardManager>(std::move(pLeaderboardManager));
 
     auto pAudioSystem = std::make_unique<ra::services::impl::WindowsAudioSystem>();
     ra::services::ServiceLocator::Provide<ra::services::IAudioSystem>(std::move(pAudioSystem));

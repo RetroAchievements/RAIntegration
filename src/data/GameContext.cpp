@@ -9,13 +9,13 @@
 #include "api\AwardAchievement.hh"
 #include "api\FetchGameData.hh"
 #include "api\FetchUserUnlocks.hh"
+#include "api\SubmitLeaderboardEntry.hh"
 
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
-#include "services\ILeaderboardManager.hh"
 #include "services\ILocalStorage.hh"
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
@@ -27,6 +27,11 @@
 #include "ui\viewmodels\OverlayManager.hh"
 
 extern bool g_bRAMTamperedWith;
+
+#ifndef RA_UTEST
+#include "RA_LeaderboardPopup.h"
+extern LeaderboardPopup g_LeaderboardPopups;
+#endif
 
 namespace ra {
 namespace data {
@@ -65,10 +70,12 @@ void GameContext::LoadGame(unsigned int nGameId)
 #endif
     }
 
-#ifndef RA_UTEST
-    auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-    pLeaderboardManager.Clear();
-#endif
+    if (!m_vLeaderboards.empty())
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+            pLeaderboard->SetActive(false);
+        m_vLeaderboards.clear();
+    }
 
     if (nGameId == 0)
     {
@@ -136,17 +143,20 @@ void GameContext::LoadGame(unsigned int nGameId)
     }
 
     // leaderboards
-#ifndef RA_UTEST
     for (const auto& pLeaderboardData : response.Leaderboards)
     {
-        RA_Leaderboard leaderboard(pLeaderboardData.Id);
-        leaderboard.SetTitle(pLeaderboardData.Title);
-        leaderboard.SetDescription(pLeaderboardData.Description);
-        leaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
-
-        pLeaderboardManager.AddLeaderboard(std::move(leaderboard));
+        RA_Leaderboard& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(pLeaderboardData.Id));
+        pLeaderboard.SetTitle(pLeaderboardData.Title);
+        pLeaderboard.SetDescription(pLeaderboardData.Description);
+        pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
     }
-#endif
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+            pLeaderboard->SetActive(true);
+    }
 
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;
@@ -736,6 +746,70 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
     }
 
     return false;
+}
+
+void GameContext::DeactivateLeaderboards()
+{
+    for (auto& pLeaderboard : m_vLeaderboards)
+        pLeaderboard->SetActive(false);
+}
+
+void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const
+{
+    auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+    if (pLeaderboard == nullptr)
+        return;
+
+#ifndef RA_UTEST
+    if (g_bRAMTamperedWith)
+    {
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Not posting to leaderboard: memory tamper detected!", L"Reset game to re-enable posting.");
+        return;
+    }
+#endif
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Leaderboard submission post canceled.", L"Enable Hardcore Mode to enable posting.");
+        return;
+    }
+
+    ra::api::SubmitLeaderboardEntry::Request request;
+    request.LeaderboardId = pLeaderboard->ID();
+    request.Score = nScore;
+    request.GameHash = GameHash();
+    request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->ID()](const ra::api::SubmitLeaderboardEntry::Response& response)
+    {
+        auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+
+        if (!response.Succeeded())
+        {
+            std::wstring sHeader;
+            if (pLeaderboard)
+                sHeader = ra::BuildWString("Error submitting entry for ", pLeaderboard->Title());
+            else
+                sHeader = ra::BuildWString("Error submitting entry for leaderboard ", nLeaderboardId);
+
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                sHeader, ra::Widen(response.ErrorMessage));
+        }
+        else if (pLeaderboard)
+        {
+            pLeaderboard->ClearRankInfo();
+            for (const auto& pEntry : response.TopEntries)
+                pLeaderboard->SubmitRankInfo(pEntry.Rank, pEntry.User, pEntry.Score, {});
+            pLeaderboard->SortRankInfo();
+
+#ifndef RA_UTEST
+            g_LeaderboardPopups.ShowScoreboard(pLeaderboard->ID());
+#endif
+        }
+    });
 }
 
 bool GameContext::HasRichPresence() const noexcept

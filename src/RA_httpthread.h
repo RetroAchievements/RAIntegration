@@ -30,7 +30,6 @@ enum RequestType
 
     //	Submit
     RequestSubmitCodeNote,
-    RequestSubmitLeaderboardEntry,
     RequestSubmitAchievementData,
     RequestSubmitTicket,
 

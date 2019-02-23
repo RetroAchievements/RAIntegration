@@ -39,6 +39,11 @@ public:
     /// </summary>
     void SetActiveAchievementType(AchievementSet::Type bValue) noexcept { m_nActiveAchievementType = bValue; }
 
+    RA_Leaderboard& NewLeaderboard(ra::LeaderboardID nLeaderboardId)
+    {
+        return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;
 

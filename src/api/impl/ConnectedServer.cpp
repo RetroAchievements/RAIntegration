@@ -3,6 +3,7 @@
 #include "DisconnectedServer.hh"
 #include "RA_Defs.h"
 
+#include "RA_md5factory.h"
 #include "RA_User.h"
 
 #include "services\Http.hh"
@@ -346,6 +347,70 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
     {
         response.Result = ApiResult::Success;
         GetRequiredJsonField(response.NewPlayerScore, document, "Score", response);
+    }
+
+    return std::move(response);
+}
+
+SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept
+{
+    SubmitLeaderboardEntry::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
+    AppendUrlParam(sPostData, "s", std::to_string(request.Score));
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    std::string sValidationSignature = ra::StringPrintf("%u%s%u", request.LeaderboardId, pUserContext.GetUsername(), request.LeaderboardId);
+    AppendUrlParam(sPostData, "v", RAGenerateMD5(sValidationSignature));
+
+    if (!request.GameHash.empty())
+        AppendUrlParam(sPostData, "m", request.GameHash);
+
+    if (DoRequest(m_sHost, SubmitLeaderboardEntry::Name(), "submitlbentry", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
+        }
+        else
+        {
+            const auto& submitResponse = document["Response"];
+            GetRequiredJsonField(response.Score, submitResponse, "Score", response);
+            GetRequiredJsonField(response.BestScore, submitResponse, "BestScore", response);
+
+            if (!submitResponse.HasMember("RankInfo"))
+            {
+                response.Result = ApiResult::Error;
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "RankInfo");
+            }
+            else
+            {
+                const auto& pRankInfo = submitResponse["RankInfo"];
+                GetRequiredJsonField(response.NewRank, pRankInfo, "Rank", response);
+                std::string sNumEntries;
+                GetRequiredJsonField(sNumEntries, pRankInfo, "NumEntries", response);
+                response.NumEntries = std::stoi(sNumEntries);
+            }
+
+            if (submitResponse.HasMember("TopEntries"))
+            {
+                const auto& pTopEntries = submitResponse["TopEntries"].GetArray();
+                response.TopEntries.reserve(pTopEntries.Size());
+                for (const auto& pEntry : pTopEntries)
+                {
+                    SubmitLeaderboardEntry::Response::Entry entry;
+                    GetRequiredJsonField(entry.Rank, pEntry, "Rank", response);
+                    GetRequiredJsonField(entry.User, pEntry, "User", response);
+                    GetRequiredJsonField(entry.Score, pEntry, "Score", response);
+                    response.TopEntries.emplace_back(entry);
+                }
+            }
+        }
     }
 
     return std::move(response);

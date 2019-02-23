@@ -53,6 +53,12 @@ public:
         return UnsupportedApi<AwardAchievement::Response>(AwardAchievement::Name());
     }
 
+    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(_UNUSED const SubmitLeaderboardEntry::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<SubmitLeaderboardEntry::Response>(SubmitLeaderboardEntry::Name());
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(_UNUSED const ResolveHash::Request& /*request*/) noexcept override

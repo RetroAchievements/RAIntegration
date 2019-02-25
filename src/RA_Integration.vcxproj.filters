@@ -72,9 +72,6 @@
     <ClCompile Include="RA_Dlg_GameLibrary.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_GameTitle.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_MemBookmark.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -246,6 +243,12 @@
     <ClCompile Include="data\ConsoleContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\UnknownGameDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -270,9 +273,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameLibrary.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_GameTitle.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_MemBookmark.h">
@@ -610,6 +610,15 @@
     </ClInclude>
     <ClInclude Include="api\SubmitLeaderboardEntry.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\UnknownGameDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

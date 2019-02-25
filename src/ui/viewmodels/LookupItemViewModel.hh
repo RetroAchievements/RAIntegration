@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui/ViewModelBase.hh"
+#include "ui/ViewModelCollection.hh"
 
 namespace ra {
 namespace ui {
@@ -53,6 +54,29 @@ public:
     /// Sets the label to display.
     /// </summary>
     void SetLabel(const std::wstring& sValue) { SetValue(LabelProperty, sValue); }
+};
+
+class LookupItemViewModelCollection : public ViewModelCollectionBase
+{
+public:
+    /// <summary>
+    /// Adds an item to the end of the collection.
+    /// </summary>
+    LookupItemViewModel& Add(int nId, const std::wstring& sLabel)
+    {
+        auto pItem = std::make_unique<LookupItemViewModel>(nId, sLabel);
+        return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::Add(std::move(pItem)));
+    }
+
+    /// <summary>
+    /// Gets the label for item specified by the provided ID.
+    /// </summary>
+    /// <returns>Requested label, empty string if no match was found.</returns>
+    const std::wstring& GetLabelForId(int nId) const
+    {
+        const auto nIndex = FindItemIndex(LookupItemViewModel::IdProperty, nId);
+        return GetItemValue(nIndex, LookupItemViewModel::LabelProperty);
+    }
 };
 
 } // namespace viewmodels

@@ -66,10 +66,13 @@ public:
 
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
-        GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+        if (!m_vNotifyTargets.empty())
+        {
+            GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
 
-        if (m_vNotifyTargets.empty())
-            StopWatching();
+            if (m_vNotifyTargets.empty())
+                StopWatching();
+        }
     }
 
     /// <summary>
@@ -86,6 +89,8 @@ public:
         {
             m_bFrozen = true;
             StopWatching();
+
+            m_vNotifyTargets.clear();
         }
     }
 
@@ -130,6 +135,23 @@ public:
     {
         const auto* pViewModel = GetViewModelAt(nIndex);
         return (pViewModel != nullptr) ? pViewModel->GetValue(pProperty) : pProperty.GetDefaultValue();
+    }
+    
+    /// <summary>
+    /// Finds the index of the first item where the specified property has the specified value.
+    /// </summary>
+    /// <param name="pProperty">The property to query.</param>
+    /// <param name="nValue">The value to find.</param>
+    /// <returns>Index of the first matching item, <c>-1</c> if not found.</returns>
+    gsl::index FindItemIndex(const IntModelProperty& pProperty, int nValue) const
+    {
+        for (const auto& pItem : m_vItems)
+        {
+            if (pItem.ViewModel().GetValue(pProperty) == nValue)
+                return pItem.Index();
+        }
+
+        return -1;
     }
 
 protected:

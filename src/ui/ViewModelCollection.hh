@@ -36,21 +36,23 @@ public:
         NotifyTarget(NotifyTarget&&) noexcept = default;
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
-        virtual void OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
-                                                 [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept
+        virtual void 
+            OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
+                                        [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept(false)
         {}
 
         virtual void
             OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
-                                          [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept
+                                          [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept(false)
         {}
 
-        virtual void OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
-                                                [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept
+        virtual void 
+            OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
+                                       [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept(false)
         {}
 
-        virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept {}
-        virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept {}
+        virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+        virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept

@@ -21,17 +21,17 @@ UnknownGameViewModel::UnknownGameViewModel() noexcept
 {
     SetWindowTitle(L"Unknown Title");
 
-    AddNotifyTarget(*this);
+    AddNotifyTarget(*this); // so we can synchronize NewGameName and SelectedGameId in one direction only
 }
 
 void UnknownGameViewModel::InitializeGameTitles()
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
 
+    m_vGameTitles.Add(0U, L"<New Title>");
+
     ra::api::FetchGamesList::Request request;
     request.ConsoleId = pConsoleContext.Id();
-
-    m_vGameTitles.Add(0U, L"<New Title>");
 
     request.CallAsync([this](const ra::api::FetchGamesList::Response& response)
     {

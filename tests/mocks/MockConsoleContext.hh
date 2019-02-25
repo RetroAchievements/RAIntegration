@@ -13,7 +13,7 @@ namespace mocks {
 class MockConsoleContext : public ConsoleContext
 {
 public:
-    MockConsoleContext() noexcept
+    GSL_SUPPRESS_F6 MockConsoleContext() noexcept
         : MockConsoleContext(ConsoleID::UnknownConsoleID, L"")
     {
     }

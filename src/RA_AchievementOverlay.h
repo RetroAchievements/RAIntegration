@@ -103,7 +103,7 @@ class AchievementOverlay
 
 public:
     void Activate() noexcept;
-    void Deactivate() noexcept;
+    void Deactivate();
 
     void Render(_In_ HDC hDC, _In_ const RECT* rcDest) const;
     _NODISCARD BOOL Update(_In_ gsl::not_null<const ControllerInput*> input, _In_ float fDelta, _In_ BOOL bFullScreen,
@@ -115,7 +115,7 @@ public:
     int* GetActiveScrollOffset() const noexcept;
     int* GetActiveSelectedItem() const noexcept;
 
-    void OnLoad_NewRom() noexcept;
+    void OnLoad_NewRom();
 
     void DrawAchievementsPage(HDC hDC, int nDX, int nDY, const RECT& rcTarget) const;
     void DrawAchievementExaminePage(HDC hDC, int nDX, _UNUSED int, _UNUSED const RECT&) const;
@@ -137,7 +137,7 @@ public:
         m_Pages.at(m_nPageStackPointer) = NewPage;
     }
 
-    BOOL GoBack() noexcept;
+    BOOL GoBack();
     void SelectNextTopLevelPage(BOOL bPressedRight) noexcept;
     void InstallNewsArticlesFromFile();
 

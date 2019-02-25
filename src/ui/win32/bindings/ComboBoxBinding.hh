@@ -25,6 +25,11 @@ public:
             m_pViewModelCollection->RemoveNotifyTarget(*this);
     }
 
+    ComboBoxBinding(const ComboBoxBinding&) noexcept = delete;
+    ComboBoxBinding& operator=(const ComboBoxBinding&) noexcept = delete;
+    ComboBoxBinding(ComboBoxBinding&&) noexcept = delete;
+    ComboBoxBinding& operator=(ComboBoxBinding&&) noexcept = delete;
+
     void SetHWND(DialogBase& pDialog, HWND hControl) override
     {
         ControlBinding::SetHWND(pDialog, hControl);
@@ -87,7 +92,7 @@ protected:
             UpdateSelectedItem();
     }
 
-    void OnViewModelAdded(gsl::index nIndex) noexcept override
+    void OnViewModelAdded(gsl::index nIndex) override
     {
         const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
         ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());

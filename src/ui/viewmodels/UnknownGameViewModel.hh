@@ -33,7 +33,7 @@ public:
     /// <summary>
     /// Gets the list of known game titles and their IDs
     /// </summary>
-    LookupItemViewModelCollection& GameTitles()
+    LookupItemViewModelCollection& GameTitles() noexcept
     {
         return m_vGameTitles;
     }

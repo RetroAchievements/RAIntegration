@@ -313,7 +313,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

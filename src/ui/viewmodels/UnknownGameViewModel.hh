@@ -86,9 +86,7 @@ protected:
     void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-private:
     LookupItemViewModelCollection m_vGameTitles;
-
 };
 
 } // namespace viewmodels

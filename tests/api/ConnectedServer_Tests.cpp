@@ -230,7 +230,30 @@ public:
         auto response = server.Login(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("Invalid value. (0)"), response.ErrorMessage);
+        Assert::AreEqual(std::string("You do not have access to that resource"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.Username);
+        Assert::AreEqual(std::string(""), response.ApiToken);
+        Assert::AreEqual(0U, response.Score);
+        Assert::AreEqual(0U, response.NumUnreadMessages);
+    }
+
+    TEST_METHOD(TestLoginHtmlResponse)
+    {
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::OK, "<b>You do not have access to that resource</b>");
+        });
+
+        ConnectedServer server("host.com");
+
+        Login::Request request;
+        request.Username = "User";
+        request.Password = "pa$$w0rd";
+
+        auto response = server.Login(request);
+
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("JSON Parse Error: Invalid value. (at 0)"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);

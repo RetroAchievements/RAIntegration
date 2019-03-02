@@ -7,6 +7,7 @@
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -24,6 +25,7 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::mocks::MockServer;
+using ra::data::mocks::MockEmulatorContext;
 using ra::data::mocks::MockGameContext;
 using ra::data::mocks::MockSessionTracker;
 using ra::data::mocks::MockUserContext;
@@ -107,6 +109,9 @@ public:
         MockAudioSystem mockAudioSystem;
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
+        MockEmulatorContext mockEmulatorContext;
+        bool bWasMenuRebuilt = false;
+        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
         bool bLoggedIn = false;
         mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
@@ -147,6 +152,9 @@ public:
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+
+        // menu
+        Assert::IsTrue(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
@@ -157,6 +165,7 @@ public:
         MockAudioSystem mockAudioSystem;
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
+        MockEmulatorContext mockEmulatorContext;
 
         mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
@@ -190,6 +199,9 @@ public:
         MockAudioSystem mockAudioSystem;
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
+        MockEmulatorContext mockEmulatorContext;
+        bool bWasMenuRebuilt = false;
+        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
         mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
@@ -214,6 +226,7 @@ public:
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+        Assert::IsTrue(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginInvalid)
@@ -223,6 +236,9 @@ public:
         MockConfiguration mockConfiguration;
         MockServer mockServer;
         MockDesktop mockDesktop;
+        MockEmulatorContext mockEmulatorContext;
+        bool bWasMenuRebuilt = false;
+        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
         mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
@@ -252,6 +268,7 @@ public:
         Assert::AreEqual(0U, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::IsFalse(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginDisabled)
@@ -261,6 +278,9 @@ public:
         MockConfiguration mockConfiguration;
         MockServer mockServer;
         MockDesktop mockDesktop;
+        MockEmulatorContext mockEmulatorContext;
+        bool bWasMenuRebuilt = false;
+        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
         mockConfiguration.SetUsername("User");
         mockConfiguration.SetApiToken("ApiToken");
@@ -275,6 +295,7 @@ public:
         Assert::AreEqual(0U, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::IsFalse(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginDisabledDuringRequest)
@@ -285,6 +306,9 @@ public:
         MockServer mockServer;
         MockDesktop mockDesktop;
         MockThreadPool mockThreadPool;
+        MockEmulatorContext mockEmulatorContext;
+        bool bWasMenuRebuilt = false;
+        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
         mockConfiguration.SetUsername("User");
         mockConfiguration.SetApiToken("ApiToken");
@@ -301,6 +325,7 @@ public:
         Assert::AreEqual(0U, mockUserContext.GetScore());
 
         Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::IsFalse(bWasMenuRebuilt);
     }
 
 private:
@@ -408,6 +433,7 @@ private:
         MockGameContext mockGameContext;
         MockDesktop mockDesktop;
         MockLeaderboardManager mockLeaderboardManager;
+        MockEmulatorContext mockEmulatorContext;
 
         DoAchievementsFrameHarness() noexcept
         {
@@ -478,6 +504,8 @@ public:
         harness.mockGameContext.FindAchievement(1U)->SetPauseOnTrigger(true);
         harness.mockGameContext.FindAchievement(1U)->SetTitle("AchievementTitle");
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
 
         bool bMessageSeen = false;
         harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -491,6 +519,7 @@ public:
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
     }
 
     TEST_METHOD(TestDoAchievementsFramePauseOnReset)
@@ -500,6 +529,8 @@ public:
         harness.mockGameContext.FindAchievement(1U)->SetPauseOnReset(true);
         harness.mockGameContext.FindAchievement(1U)->SetTitle("AchievementTitle");
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementReset, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
 
         bool bMessageSeen = false;
         harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -512,6 +543,7 @@ public:
         _RA_DoAchievementsFrame();
 
         Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStart)

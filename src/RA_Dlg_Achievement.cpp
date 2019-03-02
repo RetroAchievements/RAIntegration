@@ -400,7 +400,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_PROMOTE_ACH:
                     //  Replace with background upload?
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                     }
@@ -484,7 +484,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     break;
                 case IDC_RA_DOWNLOAD_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                         break;
 
                     if (g_nActiveAchievementSet == AchievementSet::Type::Local)
@@ -538,7 +538,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_ADD_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                         break;
@@ -577,7 +577,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_CLONE_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                         break;
@@ -660,7 +660,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_COMMIT_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                         break;
 
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
@@ -691,7 +691,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_REVERTSELECTED:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                         break;
 
                     //  Attempt to remove from list, but if it has an Id > 0,
@@ -742,7 +742,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_RESET_ACH:
                 {
-                    if (!RA_GameIsActive())
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
                         break;
 
                     // this could fuck up in so, so many ways. But fuck it, just reset achieved status.
@@ -801,7 +801,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_ACTIVATE_ALL_ACH:
                 {
-                    if (!RA_GameIsActive() || g_pActiveAchievements->NumAchievements() == 0)
+                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U || g_pActiveAchievements->NumAchievements() == 0)
                         break;
 
                     if (MessageBox(hDlg, TEXT("Activate all achievements?"), TEXT("Activate Achievements"), MB_YESNO) ==

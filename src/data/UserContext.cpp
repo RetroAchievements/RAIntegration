@@ -4,6 +4,8 @@
 
 #include "api\Logout.hh"
 
+#include "data\EmulatorContext.hh"
+
 #include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -29,8 +31,8 @@ void UserContext::Logout()
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 #ifndef RA_UTEST
         _RA_UpdateAppTitle();
-        RA_RebuildMenu();
 #endif
+        ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
     }

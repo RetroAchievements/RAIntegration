@@ -298,7 +298,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
     if (g_MemManager.NumMemoryBanks() == 0)
         return false;
 
-    if (c > 255 || !RA_GameIsActive())
+    if (c > 255 || ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
     {
         MessageBeep(ra::to_unsigned(-1));
         return false;

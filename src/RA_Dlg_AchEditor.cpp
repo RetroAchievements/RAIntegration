@@ -10,6 +10,8 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "data\EmulatorContext.hh"
+
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
@@ -790,7 +792,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 LoadAchievement(pAchievement, false);
             }
 
-            if (!CanCausePause())
+            if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().CanPause())
             {
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);

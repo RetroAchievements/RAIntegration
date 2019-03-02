@@ -252,6 +252,7 @@
     <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockConfiguration.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
+    <ClInclude Include="mocks\MockEmulatorContext.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />

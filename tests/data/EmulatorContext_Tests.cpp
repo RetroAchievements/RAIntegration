@@ -365,6 +365,8 @@ public:
         EmulatorContextHarness emulator;
         emulator.mockGameContext.SetGameId(1234U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         bool bUnlocksRequested = false;
         emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
@@ -382,17 +384,22 @@ public:
 
         emulator.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(bUnlocksRequested);
+
+        Assert::IsFalse(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionCurrentNoGame)
     {
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.57", "0.57");
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+        Assert::IsTrue(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeAlreadyEnabled)
@@ -401,11 +408,14 @@ public:
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U); // would normally show a dialog
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+        Assert::IsFalse(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionCurrentGameLoadedAccept)
@@ -430,6 +440,9 @@ public:
             return true;
         });
 
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
@@ -437,6 +450,7 @@ public:
 
         emulator.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(bUnlocksRequested);
+        Assert::IsTrue(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionCurrentGameLoadedCancel)
@@ -451,10 +465,14 @@ public:
             return ra::ui::DialogResult::No;
         });
 
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
         Assert::IsFalse(emulator.EnableHardcoreMode());
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::IsFalse(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionNewerGameLoadedAccept)
@@ -468,11 +486,14 @@ public:
             Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Yes;
         });
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::IsTrue(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedAccept)
@@ -490,6 +511,8 @@ public:
             return ra::ui::DialogResult::OK;
         });
         Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
@@ -499,6 +522,7 @@ public:
 
         // user should be logged out if hardcore was enabled on an older version
         Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(bWasReset);
     }
 
     TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedCancel)
@@ -516,6 +540,8 @@ public:
             return ra::ui::DialogResult::Cancel;
         });
         Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsFalse(emulator.EnableHardcoreMode());
 
@@ -523,6 +549,7 @@ public:
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string(""), emulator.mockDesktop.LastOpenedUrl());
         Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(bWasReset);
     }
 
     TEST_METHOD(TestGetAppTitleDefault)

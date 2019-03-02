@@ -17,6 +17,7 @@ public:
     bool IsActive() const noexcept { return m_bActive; }
     bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
     unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
+    unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
 
 public:
     void Reset() noexcept
@@ -39,7 +40,7 @@ public:
         {
             case RC_LBOARD_STARTED:
                 m_bActive = true;
-                SetCurrentValue(nValue);
+                m_nCurrentValue = nValue;
                 break;
 
             case RC_LBOARD_CANCELED:
@@ -56,6 +57,7 @@ public:
 
 private:
     unsigned int m_nSubmittedScore = 0;
+    unsigned int m_nCurrentValue = 0;
     bool m_bScoreSubmitted = false;
     bool m_bActive = false;
 };

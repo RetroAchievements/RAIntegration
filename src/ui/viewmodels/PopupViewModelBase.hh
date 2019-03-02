@@ -85,6 +85,21 @@ public:
     }
 
     /// <summary>
+    /// Begins the animation cycle.
+    /// </summary>
+    virtual void BeginAnimation() = 0;
+
+    /// <summary>
+    /// Determines whether the animation cycle has started.
+    /// </summary>
+    virtual bool IsAnimationStarted() const noexcept = 0;
+
+    /// <summary>
+    /// Determines whether the animation cycle has completed.
+    /// </summary>
+    virtual bool IsAnimationComplete() const noexcept = 0;
+
+    /// <summary>
     /// Gets the image to render.
     /// </summary>
     const ra::ui::drawing::ISurface& GetRenderImage() const { return *m_pSurface; }
@@ -92,8 +107,10 @@ public:
     /// <summary>
     /// Updates the image to render.
     /// </summary>
-    virtual void UpdateRenderImage(double fElapsed) = 0;
-    
+    /// <param name="fElapsed">The fractional of seconds that have passed.</param>
+    /// <returns><c>true</c> if the image or location was updatedm <c>false</c> if not.</returns>
+    virtual bool UpdateRenderImage(double fElapsed) = 0;
+
     /// <summary>
     /// Gets the unique identifier of the popup.
     /// </summary>

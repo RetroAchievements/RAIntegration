@@ -497,12 +497,16 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
         auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
         Assert::AreEqual(std::wstring(L"Challenge Available: Title"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDescription());
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNotNull(pScore);
+        Ensures(pScore != nullptr);
+        Assert::AreEqual(std::wstring(L"1234"), pScore->GetDisplayText());
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPopupDisabled)
@@ -514,9 +518,13 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
         auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNull(pPopup);
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNotNull(pScore);
+        Ensures(pScore != nullptr);
+        Assert::AreEqual(std::wstring(L"1234"), pScore->GetDisplayText());
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCanceled)
@@ -535,6 +543,9 @@ public:
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
         Assert::AreEqual(std::wstring(L"Leaderboard attempt canceled!"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNull(pScore);
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardPopupDisabled)
@@ -550,17 +561,24 @@ public:
 
         auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNull(pPopup);
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNull(pScore);
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardUpdated)
     {
         DoAchievementsFrameHarness harness;
         harness.mockGameContext.NewLeaderboard(1U);
+        harness.mockOverlayManager.AddScoreTracker(1U);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated, 1U, 1235U);
         _RA_DoAchievementsFrame();
 
-        Assert::AreEqual(1235U, harness.mockGameContext.FindLeaderboard(1U)->GetCurrentValue());
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNotNull(pScore);
+        Ensures(pScore != nullptr);
+        Assert::AreEqual(std::wstring(L"1235"), pScore->GetDisplayText());
     }
 
     TEST_METHOD(TestDoAchievementsFrameLeaderboardTriggered)
@@ -573,6 +591,9 @@ public:
         _RA_DoAchievementsFrame();
 
         Assert::AreEqual(1236U, harness.GetSubmittedScore(1U));
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNull(pScore);
     }
 
     TEST_METHOD(TestDoAchievementsFrameMultiple)
@@ -591,11 +612,16 @@ public:
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsTrue(harness.WasUnlocked(2U));
-        Assert::AreEqual(1234U, harness.mockGameContext.FindLeaderboard(3U)->GetCurrentValue());
-        // TODO: restore these once the score trackers are monitored by the OverlayManager
-        //Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(3U));
-        Assert::AreEqual(5678U, harness.mockGameContext.FindLeaderboard(4U)->GetCurrentValue());
-        //Assert::IsTrue(harness.mockLeaderboardManager.IsLeaderboardActive(4U));
+
+        const auto* pScore3 = harness.mockOverlayManager.GetScoreTracker(3U);
+        Assert::IsNotNull(pScore3);
+        Ensures(pScore3 != nullptr);
+        Assert::AreEqual(std::wstring(L"1234"), pScore3->GetDisplayText());
+
+        const auto* pScore4 = harness.mockOverlayManager.GetScoreTracker(4U);
+        Assert::IsNotNull(pScore4);
+        Ensures(pScore4 != nullptr);
+        Assert::AreEqual(std::wstring(L"5678"), pScore4->GetDisplayText());
     }
 };
 

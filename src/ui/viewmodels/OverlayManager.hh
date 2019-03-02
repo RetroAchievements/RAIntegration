@@ -2,6 +2,7 @@
 #define RA_UI_OVERLAY_MANAGER
 
 #include "PopupMessageViewModel.hh"
+#include "ScoreTrackerViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -65,6 +66,48 @@ public:
     }
 
     /// <summary>
+    /// Adds a score tracker for a leaderboard.
+    /// </summary>
+    ScoreTrackerViewModel& AddScoreTracker(int nLeaderboardId)
+    {
+        auto& pScoreTracker = m_vScoreTrackers.emplace_back(std::make_unique<ScoreTrackerViewModel>());
+        pScoreTracker->SetPopupId(nLeaderboardId);
+        return *pScoreTracker;
+    }
+
+    /// <summary>
+    /// Removes the score traacker associated to the specified leaderboard.
+    /// </summary>
+    /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
+    void RemoveScoreTracker(int nLeaderboardId)
+    {
+        for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
+        {
+            if ((*pIter)->GetPopupId() == nLeaderboardId)
+            {
+                m_vScoreTrackers.erase(pIter);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the score traacker associated to the specified leaderboard.
+    /// </summary>
+    /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
+    /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
+    ScoreTrackerViewModel* GetScoreTracker(int nLeaderboardId) noexcept
+    {
+        for (auto& pTracker : m_vScoreTrackers)
+        {
+            if (pTracker->GetPopupId() == nLeaderboardId)
+                return pTracker.get();
+        }
+
+        return nullptr;
+    }
+
+    /// <summary>
     /// Clears all popups.
     /// </summary>
     void ClearPopups();
@@ -73,6 +116,7 @@ private:
     void UpdateActiveMessage(double fElapsed);
 
     std::deque<PopupMessageViewModel> m_vPopupMessages;
+    std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::atomic<int> m_nPopupId{ 0 };
 };
 

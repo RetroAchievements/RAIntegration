@@ -11,6 +11,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\ISurface.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 //	No emulator-specific code here please!
 
@@ -87,38 +88,6 @@ void LeaderboardPopup::Update(double fDelta)
     }
 }
 
-_Use_decl_annotations_ BOOL LeaderboardPopup::Activate(ra::LeaderboardID nLBID)
-{
-    std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
-    while (iter != m_vActiveLBIDs.end())
-    {
-        if ((*iter) == nLBID)
-            return FALSE;
-        iter++;
-    }
-
-    m_vActiveLBIDs.push_back(nLBID);
-    return TRUE;
-}
-
-_Use_decl_annotations_ BOOL LeaderboardPopup::Deactivate(ra::LeaderboardID nLBID)
-{
-    std::vector<unsigned int>::iterator iter = m_vActiveLBIDs.begin();
-    while (iter != m_vActiveLBIDs.end())
-    {
-        if ((*iter) == nLBID)
-        {
-            m_vActiveLBIDs.erase(iter);
-            return TRUE;
-        }
-        iter++;
-    }
-
-    RA_LOG("Could not deactivate leaderboard %u", nLBID);
-
-    return FALSE;
-}
-
 double LeaderboardPopup::GetOffsetPct() const noexcept
 {
     double fVal = 0.0f;
@@ -151,11 +120,11 @@ double LeaderboardPopup::GetOffsetPct() const noexcept
     return fVal;
 }
 
-_Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
+_Use_decl_annotations_ bool LeaderboardPopup::Render(ra::ui::drawing::ISurface& pSurface)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) //	If not, simply ignore them.
-        return;
+        return false;
 
     const int nWidth = pSurface.GetWidth();
     const int nHeight = pSurface.GetHeight();
@@ -167,51 +136,6 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
 
     switch (m_nState)
     {
-        case PopupState::ShowingProgress:
-        {
-            if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
-                break;
-
-            const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
-            auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
-            auto nFontText = pTempSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
-
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-            int nY = pSurface.GetHeight() - 10;
-            std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
-            while (iter != m_vActiveLBIDs.end())
-            {
-                const RA_Leaderboard* pLB = pGameContext.FindLeaderboard(*iter);
-                if (pLB != nullptr)
-                {
-                    const auto sScoreSoFar = ra::Widen(pLB->FormatScore(pLB->GetCurrentValue()));
-                    const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
-
-                    auto pRenderSurface =
-                        pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
-
-                    // background
-                    pRenderSurface->FillRectangle(0, 0, pRenderSurface->GetWidth(), pRenderSurface->GetHeight(),
-                                                  nColorBackground);
-
-                    // text
-                    pRenderSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8,
-                                                  szScoreSoFar.Height, nColorBlack);
-                    pRenderSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, nColorPopup);
-                    pRenderSurface->WriteText(4, 0, nFontText, nColorBlack, sScoreSoFar);
-
-                    pRenderSurface->SetOpacity(0.85);
-
-                    nY -= pRenderSurface->GetHeight();
-                    pSurface.DrawSurface(nWidth - pRenderSurface->GetWidth() - 10, nY, *pRenderSurface);
-                    nY -= 2;
-                }
-
-                iter++;
-            }
-        }
-        break;
-
         case PopupState::ShowingScoreboard:
         {
             if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
@@ -281,6 +205,8 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
                 const auto nScoreboardX = ra::ftoi(fFadeOffs);
                 const auto nScoreboardY = nHeight - 200 - 10;
                 pSurface.DrawSurface(nScoreboardX, nScoreboardY, *m_pScoreboardSurface);
+
+                return true;
             }
         }
         break;
@@ -288,4 +214,6 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
         default:
             break;
     }
+
+    return false;
 }

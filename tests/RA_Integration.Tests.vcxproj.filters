@@ -271,6 +271,9 @@
     <ClCompile Include="..\src\data\ConsoleContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

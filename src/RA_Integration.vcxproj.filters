@@ -246,6 +246,9 @@
     <ClCompile Include="data\ConsoleContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -610,6 +613,9 @@
     </ClInclude>
     <ClInclude Include="api\SubmitLeaderboardEntry.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\ScoreTrackerViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

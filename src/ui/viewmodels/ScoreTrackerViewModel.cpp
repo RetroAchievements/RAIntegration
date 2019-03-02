@@ -13,7 +13,7 @@ const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrack
 
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
-    if (m_pSurface)
+    if (m_pSurface && !m_bSurfaceStale)
         return false;
 
     // create a temporary surface so we can determine the size required for the actual surface
@@ -44,6 +44,7 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 
     m_pSurface->SetOpacity(0.85);
 
+    m_bSurfaceStale = false;
     return true;
 }
 

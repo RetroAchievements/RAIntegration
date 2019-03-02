@@ -72,6 +72,7 @@ public:
     {
         auto& pScoreTracker = m_vScoreTrackers.emplace_back(std::make_unique<ScoreTrackerViewModel>());
         pScoreTracker->SetPopupId(nLeaderboardId);
+        pScoreTracker->UpdateRenderImage(0.0);
         return *pScoreTracker;
     }
 

@@ -102,7 +102,11 @@ public:
     /// <summary>
     /// Gets the image to render.
     /// </summary>
-    const ra::ui::drawing::ISurface& GetRenderImage() const { return *m_pSurface; }
+    const ra::ui::drawing::ISurface& GetRenderImage() const
+    {
+        assert(m_pSurface != nullptr);
+        return *m_pSurface;
+    }
 
     /// <summary>
     /// Updates the image to render.

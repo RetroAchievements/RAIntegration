@@ -29,7 +29,7 @@ public:
         if (sValue != GetDisplayText())
         {
             SetValue(DisplayTextProperty, sValue);
-            m_pSurface.reset(); // destroy the image so we can recreate it with the new text
+            m_bSurfaceStale = true;
         }
     }
 
@@ -41,6 +41,9 @@ public:
     void BeginAnimation() noexcept override {}
     bool IsAnimationStarted() const noexcept override { return true; }
     bool IsAnimationComplete() const noexcept override { return false; }
+
+private:
+    bool m_bSurfaceStale = false;
 };
 
 } // namespace viewmodels

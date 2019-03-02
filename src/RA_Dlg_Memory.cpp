@@ -583,8 +583,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    if (pGameContext.GameId() != 0 && g_MemManager.NumMemoryBanks() > 0)
+    if (g_MemManager.NumMemoryBanks() > 0)
     {
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
@@ -1166,20 +1165,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (GetSelectedMemoryRange(start, end))
                     {
                         m_nCompareSize = nCompSize;
-
-                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                        if (pGameContext.GameId() == 0)
-                        {
-                            m_nStart = 0;
-                            m_nEnd = 0;
-                            sr.m_results.Initialize(0, 0, nCompSize);
-                        }
-                        else
-                        {
-                            m_nStart = start;
-                            m_nEnd = end;
-                            sr.m_results.Initialize(start, end - start + 1, nCompSize);
-                        }
+                        m_nStart = start;
+                        m_nEnd = end;
+                        sr.m_results.Initialize(start, end - start + 1, nCompSize);
 
                         EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     }
@@ -1492,6 +1480,23 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
     if (hMemWatch != nullptr)
     {
+        auto nAddr = MemoryViewerControl::getWatchedAddress();
+        gsl::index nIndex = -1;
+        if (nSize > 0)
+        {
+            size_t nScan = 0;
+            for (auto& note_entry : m_CodeNotes)
+            {
+                if (note_entry.first == nAddr)
+                    break;
+
+                ++nScan;
+            }
+
+            if (nScan < nSize)
+                nIndex = nScan;
+        }
+
         SetDlgItemText(hMemWatch, IDC_RA_WATCHING, TEXT(""));
         SetDlgItemText(hMemWatch, IDC_RA_MEMSAVENOTE, TEXT(""));
 
@@ -1499,7 +1504,6 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
         {
         }
 
-        // Issue a fetch instead!
         for (auto& note_entry : m_CodeNotes)
         {
             const std::string sAddr = ra::ByteAddressToString(note_entry.first);
@@ -1508,15 +1512,15 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 
         if (nSize > 0)
         {
+            if (nIndex == -1)
+            {
+                nIndex = 0;
+                nAddr = m_CodeNotes.begin()->first;
+            }
+
             //	Select the first one.
-            ComboBox_SetCurSel(hMemWatch, 0);
+            ComboBox_SetCurSel(hMemWatch, nIndex);
 
-            //	Note: as this is sorted, we should grab the desc again
-            const TCHAR sAddrBuffer[64]{}; // param below expects LPCTSTR
-            ComboBox_GetLBText(hMemWatch, 0, sAddrBuffer);
-            const std::string sAddr = ra::Narrow(sAddrBuffer);
-
-            const auto nAddr = ra::ByteAddressFromString(sAddr);
             const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
             if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
             {
@@ -1534,24 +1538,30 @@ void Dlg_Memory::OnLoad_NewRom()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     m_CodeNotes.ReloadFromWeb(pGameContext.GameId());
 
-    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_MEM_LIST, TEXT(""));
-    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE, TEXT(""));
+    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), g_MemManager.NumMemoryBanks() != 0);
 
     if (pGameContext.GameId() == 0)
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT(""));
+    {
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_OPENPAGE), FALSE);
+    }
     else
+    {
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT("Loading..."));
+        RepopulateMemNotesFromFile();
+
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), TRUE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), TRUE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), TRUE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_OPENPAGE), TRUE);
+    }
 
     UpdateMemoryRegions();
 
-    RepopulateMemNotesFromFile();
-
     MemoryViewerControl::destroyEditCaret();
     MemoryViewerControl::Invalidate();
-
-    m_SearchResults.clear();
-    ClearLogOutput();
-    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), FALSE);
 }
 
 void Dlg_Memory::UpdateMemoryRegions()

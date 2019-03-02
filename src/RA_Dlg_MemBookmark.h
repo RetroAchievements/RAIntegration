@@ -170,6 +170,7 @@ public:
 private:
     int m_nNumOccupiedRows{};
     HWND m_hMemBookmarkDialog{};
+    unsigned int m_nGameId{};
     std::vector<MemBookmark> m_vBookmarks;
 };
 

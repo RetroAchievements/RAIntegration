@@ -40,6 +40,7 @@
 
 /* Use these for code analysis suppressions if needed */
 /* clang-format off */
+#define GSL_SUPPRESS_C128 GSL_SUPPRESS(c.128)
 #define GSL_SUPPRESS_CON3 GSL_SUPPRESS(con.3)
 #define GSL_SUPPRESS_CON4 GSL_SUPPRESS(con.4)
 #define GSL_SUPPRESS_ES47 GSL_SUPPRESS(es.47)

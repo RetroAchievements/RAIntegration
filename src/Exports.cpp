@@ -280,7 +280,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -303,7 +303,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -320,7 +320,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

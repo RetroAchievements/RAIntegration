@@ -13,7 +13,6 @@
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
-#include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\ImageRepository.hh"
@@ -118,6 +117,22 @@ BOOL AchievementOverlay::GoBack() noexcept
     }
 }
 
+static void ExamineLeaderboard(gsl::index nIndex)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    pGameContext.EnumerateLeaderboards([&nIndex](const RA_Leaderboard& pLeaderboard)
+    {
+        if (nIndex == 0)
+        {
+            g_LBExamine.Initialize(pLeaderboard.ID());
+            return false;
+        }
+
+        nIndex--;
+        return true;
+    });
+}
+
 _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const ControllerInput*> pInput, float fDelta,
                                                        BOOL bFullScreen, BOOL bPaused)
 {
@@ -169,11 +184,9 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
     if (m_nTransitionState == TransitionState::Off)
         return FALSE;
 
-    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-
     const auto nAchCount = g_pActiveAchievements ? gsl::narrow<int>(g_pActiveAchievements->NumAchievements()) : 0;
     const int nNumFriends = gsl::narrow<int>(RAUsers::LocalUser().NumFriends());
-    const int nNumLBs = gsl::narrow<int>(pLeaderboardManager.Count());
+    const int nNumLBs = gsl::narrow<int>(ra::services::ServiceLocator::Get<ra::data::GameContext>().LeaderboardCount());
     constexpr auto nMsgCount = 0;
 
     const auto& input = *pInput;
@@ -359,7 +372,7 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
                     if ((*pnSelectedItem) < nNumLBs)
                     {
                         AddPage(Page::Leaderboard_Examine);
-                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
+                        ExamineLeaderboard((*pnSelectedItem));
                     }
                 }
                 //	Move page to match selection
@@ -381,8 +394,7 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
                     if ((*pnSelectedItem) < (nNumLBs - 1))
                     {
                         (*pnSelectedItem)++;
-                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
-                        m_bInputLock = TRUE;
+                        ExamineLeaderboard((*pnSelectedItem));
                     }
                 }
                 else if (input.m_bUpPressed)
@@ -390,8 +402,7 @@ _Use_decl_annotations_ BOOL AchievementOverlay::Update(gsl::not_null<const Contr
                     if ((*pnSelectedItem) > 0)
                     {
                         (*pnSelectedItem)--;
-                        g_LBExamine.Initialize(pLeaderboardManager.GetLB((*pnSelectedItem)).ID());
-                        m_bInputLock = TRUE;
+                        ExamineLeaderboard((*pnSelectedItem));
                     }
                 }
 
@@ -823,24 +834,32 @@ void AchievementOverlay::DrawLeaderboardPage(HDC hDC, int nDX, _UNUSED int, cons
 
     m_nNumLeaderboardsBeingRendered = 0;
 
-    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     unsigned int nNumLBsToDraw = ((rcTarget.bottom - rcTarget.top) - 160) / nItemSpacing;
-    const unsigned int nNumLBs = pLeaderboardManager.Count();
+    const unsigned int nNumLBs = pGameContext.LeaderboardCount();
 
     if (nNumLBsToDraw > nNumLBs)
         nNumLBsToDraw = nNumLBs;
 
     if (nNumLBs > 0 && nNumLBsToDraw > 0)
     {
+        std::vector<ra::LeaderboardID> vLeaderboardKeys;
+        pGameContext.EnumerateLeaderboards([&vLeaderboardKeys](const RA_Leaderboard& pLeaderboard)
+        {
+            vLeaderboardKeys.push_back(pLeaderboard.ID());
+            return true;
+        });
+
         for (unsigned int i = m_nLeaderboardScrollOffset; i < m_nLeaderboardScrollOffset + nNumLBsToDraw; ++i)
         {
             if (i >= nNumLBs)
                 continue;
 
-            const RA_Leaderboard& nextLB = pLeaderboardManager.GetLB(i);
+            const RA_Leaderboard* nextLB = pGameContext.FindLeaderboard(vLeaderboardKeys.at(i));
+            Expects(nextLB != nullptr);
 
-            std::string sTitle(" " + nextLB.Title() + " ");
-            const std::string& sPayload = nextLB.Description();
+            std::string sTitle(" " + nextLB->Title() + " ");
+            const std::string& sPayload = nextLB->Description();
 
             const BOOL bSelected = ((*pnSelectedItem) == ra::to_signed(i));
             if (bSelected)
@@ -934,8 +953,8 @@ void AchievementOverlay::DrawLeaderboardExaminePage(HDC hDC, int nDX, _UNUSED in
     const int nWonByPlayerUserX = 100;
     const int nWonByPlayerScoreX = 320;
 
-    auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-    const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(g_LBExamine.m_nLBID);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const RA_Leaderboard* pLB = pGameContext.FindLeaderboard(g_LBExamine.m_nLBID);
     if (pLB == nullptr)
     {
         const std::string sMsg(" No leaderboard found ");
@@ -1529,8 +1548,8 @@ void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
     const auto sConsoleID{LBData["ConsoleID"].GetUint()};
     const auto nLowerIsBetter{LBData["LowerIsBetter"].GetUint()};
 
-    auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-    RA_Leaderboard* pLB = pLeaderboardManager.FindLB(nLBID);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    RA_Leaderboard* pLB = pGameContext.FindLeaderboard(nLBID);
     if (!pLB)
         return;
 

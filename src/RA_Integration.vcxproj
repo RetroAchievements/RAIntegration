@@ -84,7 +84,6 @@
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
-    <ClCompile Include="services\impl\LeaderboardManager.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
@@ -129,6 +128,7 @@
     <ClInclude Include="api\Ping.hh" />
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />
+    <ClInclude Include="api\SubmitLeaderboardEntry.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
@@ -177,7 +177,6 @@
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
     <ClInclude Include="services\IHttpRequester.hh" />
-    <ClInclude Include="services\ILeaderboardManager.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
     <ClInclude Include="services\impl\FileLocalStorage.hh" />
@@ -185,7 +184,6 @@
     <ClInclude Include="services\impl\FileTextReader.hh" />
     <ClInclude Include="services\impl\FileTextWriter.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
-    <ClInclude Include="services\impl\LeaderboardManager.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />
     <ClInclude Include="services\impl\StringTextWriter.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />

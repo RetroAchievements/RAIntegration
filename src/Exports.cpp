@@ -16,7 +16,6 @@
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
-#include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -29,6 +28,9 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_Memory.h"
+
+#include "RA_LeaderboardPopup.h"
+extern LeaderboardPopup g_LeaderboardPopups;
 #endif
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
@@ -278,12 +280,23 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
             {
-                auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-                auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     pLeaderboard->SetCurrentValue(pChange.nValue);
-                    pLeaderboardManager.ActivateLeaderboard(*pLeaderboard);
+
+                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+                    {
+                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
+                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                            ra::StringPrintf(L"Challenge Available: %s", pLeaderboard->Title()),
+                            ra::Widen(pLeaderboard->Description()));
+                    }
+
+#ifndef RA_UTEST
+                    g_LeaderboardPopups.Activate(pLeaderboard->ID());
+#endif
                 }
 
                 break;
@@ -291,8 +304,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
             {
-                auto& pLeaderboardManager = ra::services::ServiceLocator::GetMutable<ra::services::ILeaderboardManager>();
-                auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                     pLeaderboard->SetCurrentValue(pChange.nValue);
 
@@ -301,23 +313,36 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
             {
-                const auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                const auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
+                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
-                    pLeaderboardManager.DeactivateLeaderboard(*pLeaderboard);
+                {
+                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+                    {
+                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
+                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                            L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()));
+                    }
+
+#ifndef RA_UTEST
+                    g_LeaderboardPopups.Deactivate(pLeaderboard->ID());
+#endif
+                }
 
                 break;
             }
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
             {
-                const auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                const auto* pLeaderboard = pLeaderboardManager.FindLB(pChange.nId);
-                if (pLeaderboard)
-                    pLeaderboardManager.SubmitLeaderboardEntry(*pLeaderboard, pChange.nValue);
+                pGameContext.SubmitLeaderboardEntry(pChange.nId, pChange.nValue);
+
+#ifndef RA_UTEST
+                g_LeaderboardPopups.Deactivate(pChange.nId);
+#endif
 
                 break;
             }
         }
     }
 }
+

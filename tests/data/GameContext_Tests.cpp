@@ -3,7 +3,6 @@
 #include "data\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
-#include "services\ILeaderboardManager.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -61,6 +60,14 @@ public:
             pAch.SetBadgeImage("12345");
             pAch.SetPoints(5);
             return pAch;
+        }
+
+        RA_Leaderboard& MockLeaderboard()
+        {
+            auto& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(1U));
+            pLeaderboard.SetTitle("LeaderboardTitle");
+            pLeaderboard.SetDescription("LeaderboardDescription");
+            return pLeaderboard;
         }
 
     private:
@@ -358,6 +365,43 @@ public:
         // ID, even if intermediate values are available
         const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
         Assert::AreEqual(999000004U, pAch2.ID());
+    }
+
+    TEST_METHOD(TestLoadGameLeaderboards)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            auto& lb1 = response.Leaderboards.emplace_back();
+            lb1.Id = 7U;
+            lb1.Title = "LB1";
+            lb1.Description = "Desc1";
+            lb1.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb1.Format = "SECS";
+
+            auto& lb2 = response.Leaderboards.emplace_back();
+            lb2.Id = 8U;
+            lb2.Title = "LB2";
+            lb2.Description = "Desc2";
+            lb2.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb2.Format = "FRAMES";
+
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        const auto* pLb1 = game.FindLeaderboard(7U);
+        Assert::IsNotNull(pLb1);
+        Ensures(pLb1 != nullptr);
+        Assert::AreEqual(std::string("LB1"), pLb1->Title());
+        Assert::AreEqual(std::string("Desc1"), pLb1->Description());
+
+        const auto* pLb2 = game.FindLeaderboard(8U);
+        Assert::IsNotNull(pLb2);
+        Ensures(pLb2 != nullptr);
+        Assert::AreEqual(std::string("LB2"), pLb2->Title());
+        Assert::AreEqual(std::string("Desc2"), pLb2->Description());
     }
 
     TEST_METHOD(TestSaveLocalEmpty)
@@ -826,6 +870,70 @@ public:
         Assert::AreEqual(std::wstring(L"Error unlocking AchievementTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDescription());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryNonExistant)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        Assert::IsFalse(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+        Assert::IsNull(game.mockOverlayManager.GetMessage(1));
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntry)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.SetGameHash("hash");
+
+        unsigned int nNewScore = 0U;
+        game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([&nNewScore]
+            (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
+        {
+            Assert::AreEqual(1U, request.LeaderboardId);
+            Assert::AreEqual(1234U, request.Score);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+            nNewScore = request.Score;
+
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(1234U, nNewScore);
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryNonHardcore)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.SetGameHash("hash");
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard submission post canceled."), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Enable Hardcore Mode to enable posting."), pPopup->GetDescription());
     }
 };
 

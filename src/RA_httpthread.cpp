@@ -35,7 +35,6 @@ const char* RequestTypeToString[] =
     "RequestAllProgress",
 
     "RequestSubmitCodeNote",
-    "RequestSubmitLeaderboardEntry",
     "RequestSubmitAchievementData",
     "RequestSubmitTicket",
 };
@@ -55,7 +54,6 @@ const char* RequestTypeToPost[] =
     "allprogress",
 
     "submitcodenote",
-    "submitlbentry",
     "uploadachievement",
     "submitticket",
 };

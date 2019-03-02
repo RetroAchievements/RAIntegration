@@ -21,6 +21,7 @@ StartSession::Response StartSession::Request::Call() const noexcept { return Ser
 Ping::Response Ping::Request::Call() const noexcept { return Server().Ping(*this); }
 FetchUserUnlocks::Response FetchUserUnlocks::Request::Call() const noexcept { return Server().FetchUserUnlocks(*this); }
 AwardAchievement::Response AwardAchievement::Request::Call() const noexcept { return Server().AwardAchievement(*this); }
+SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const noexcept { return Server().SubmitLeaderboardEntry(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const noexcept { return Server().ResolveHash(*this); }
 FetchGameData::Response FetchGameData::Request::Call() const noexcept { return Server().FetchGameData(*this); }
 LatestClient::Response LatestClient::Request::Call() const noexcept { return Server().LatestClient(*this); }

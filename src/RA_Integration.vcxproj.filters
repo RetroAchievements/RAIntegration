@@ -123,9 +123,6 @@
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="services\impl\LeaderboardManager.cpp">
-      <Filter>Services\Impl</Filter>
-    </ClCompile>
     <ClCompile Include="services\Initialization.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -331,12 +328,6 @@
     </ClInclude>
     <ClInclude Include="ui\WindowViewModelBase.hh">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\LeaderboardManager.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ILeaderboardManager.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\Initialization.hh">
       <Filter>Services</Filter>
@@ -616,6 +607,9 @@
     </ClInclude>
     <ClInclude Include="data\ConsoleContext.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="api\SubmitLeaderboardEntry.hh">
+      <Filter>API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

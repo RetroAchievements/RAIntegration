@@ -2,8 +2,9 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
-#include "RA_RichPresence.h"
 #include "RA_AchievementSet.h"
+#include "RA_Leaderboard.h"
+#include "RA_RichPresence.h"
 
 #include <string>
 
@@ -81,7 +82,7 @@ public:
     /// Finds the achievement associated to the specified unique identifier.
     /// </summary>
     /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>
-    virtual Achievement* FindAchievement(unsigned int nAchievementId) const noexcept
+    Achievement* FindAchievement(unsigned int nAchievementId) const noexcept
     {
         for (auto& pAchievement : m_vAchievements)
         {
@@ -100,6 +101,45 @@ public:
     /// Shows the popup for earning an achievement and notifies the server if legitimate.
     /// </summary>
     void AwardAchievement(unsigned int nAchievementId) const;
+
+    /// <summary>
+    /// Finds the leaderboard associated to the specified unique identifier.
+    /// </summary>
+    /// <returns>Pointer to leaderboard, <c>nullptr</c> if not found.</returns>
+    RA_Leaderboard* FindLeaderboard(ra::LeaderboardID nLeaderboardId) const noexcept
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+        {
+            if (pLeaderboard->ID() == nLeaderboardId)
+                return pLeaderboard.get();
+        }
+
+        return nullptr;
+    }
+
+    void DeactivateLeaderboards();
+
+    size_t LeaderboardCount() const { return m_vLeaderboards.size(); }
+
+    /// <summary>
+    /// Enumerates the leaderboard collection.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known leaderboard. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateLeaderboards(std::function<bool(const RA_Leaderboard&)> callback) const
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+        {
+            if (!callback(*pLeaderboard))
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Submit a new score for the specified leaderboard.
+    /// </summary>
+    void SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const;
 
     /// <summary>
     /// Updates the set of unlocked achievements from the server.
@@ -153,6 +193,7 @@ protected:
     std::unique_ptr<RA_RichPresenceInterpreter> m_pRichPresenceInterpreter;
 
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;
+    std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
 };
 
 } // namespace data

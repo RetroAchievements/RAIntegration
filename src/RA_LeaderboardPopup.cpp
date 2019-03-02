@@ -5,8 +5,9 @@
 
 #include "ra_math.h"
 
+#include "data\GameContext.hh"
+
 #include "services\IConfiguration.hh"
-#include "services\ILeaderboardManager.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\ISurface.hh"
@@ -175,12 +176,12 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
             auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
             auto nFontText = pTempSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
 
-            auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             int nY = pSurface.GetHeight() - 10;
             std::vector<unsigned int>::const_iterator iter = m_vActiveLBIDs.begin();
             while (iter != m_vActiveLBIDs.end())
             {
-                const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(*iter);
+                const RA_Leaderboard* pLB = pGameContext.FindLeaderboard(*iter);
                 if (pLB != nullptr)
                 {
                     const auto sScoreSoFar = ra::Widen(pLB->FormatScore(pLB->GetCurrentValue()));
@@ -218,8 +219,8 @@ _Use_decl_annotations_ void LeaderboardPopup::Render(ra::ui::drawing::ISurface& 
 
             if (m_pScoreboardSurface == nullptr)
             {
-                auto& pLeaderboardManager = ra::services::ServiceLocator::Get<ra::services::ILeaderboardManager>();
-                const RA_Leaderboard* pLB = pLeaderboardManager.FindLB(m_vScoreboardQueue.front());
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                const RA_Leaderboard* pLB = pGameContext.FindLeaderboard(m_vScoreboardQueue.front());
                 if (pLB != nullptr)
                 {
                     const ra::ui::Color nColorBackgroundFill(32, 32, 32);

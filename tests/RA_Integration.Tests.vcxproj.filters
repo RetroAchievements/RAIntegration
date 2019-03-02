@@ -262,11 +262,22 @@
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClCompile Include="ui\ViewModelCollection_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\ViewModelCollection.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\data\ConsoleContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockEmulatorContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

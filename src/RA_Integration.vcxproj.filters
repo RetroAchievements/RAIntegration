@@ -237,6 +237,12 @@
     <ClCompile Include="data\UserContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ViewModelCollection.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="data\ConsoleContext.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -586,6 +592,12 @@
     </ClInclude>
     <ClInclude Include="api\AwardAchievement.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ViewModelCollection.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="api\FetchGamesList.hh">
       <Filter>API</Filter>

@@ -276,13 +276,7 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
             if (nGameId == 0) // Unknown
             {
                 RA_LOG("Could not identify game with MD5 %s\n", sCurrentROMMD5.c_str());
-
-                char buffer[64];
-                ZeroMemory(buffer, 64);
-                RA_GetEstimatedGameTitle(buffer);
-                buffer[sizeof(buffer) - 1] = '\0'; // ensure buffer is null terminated
-                std::string sEstimatedGameTitle(buffer);
-
+                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
                 Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
             }
             else
@@ -385,10 +379,7 @@ static void ActivateHash(const std::string& sHash, unsigned int nGameId)
     // if the hash didn't resolve, we still want to ping with "Playing GAMENAME"
     if (nGameId == 0)
     {
-        char buffer[64]{};
-        RA_GetEstimatedGameTitle(buffer);
-        buffer[sizeof(buffer) - 1] = '\0'; // ensure buffer is null terminated
-        std::wstring sEstimatedGameTitle = ra::ToWString(buffer);
+        auto sEstimatedGameTitle = ra::Widen(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle());
         if (sEstimatedGameTitle.empty())
             sEstimatedGameTitle = L"Unknown";
         pGameContext.SetGameTitle(sEstimatedGameTitle);
@@ -864,7 +855,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
             }
 
-            _RA_RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }
         break;
 
@@ -874,7 +865,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
 
-            _RA_RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }
         break;
 
@@ -884,7 +875,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
 
-            _RA_RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }
         break;
 
@@ -894,7 +885,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
 
-            _RA_RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }
         break;
 
@@ -941,25 +932,6 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
             g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 }
-
-void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
-{
-    void(*fpCausePause)(void) = nullptr;
-    _RA_InstallSharedFunctionsExt(fpIsActive, fpCauseUnpause, fpCausePause, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
-}
-
-void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
-{
-    //	NB. Must be called from within DLL
-    _RA_GameIsActive = fpIsActive;
-    _RA_CauseUnpause = fpCauseUnpause;
-    _RA_CausePause = fpCausePause;
-    _RA_RebuildMenu = fpRebuildMenu;
-    _RA_GetEstimatedGameTitle = fpEstimateTitle;
-    _RA_ResetEmulation = fpResetEmulation;
-    _RA_LoadROM = fpLoadROM;
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1137,9 +1109,4 @@ std::string GetFolderFromDialog()
     }
     ::OleUninitialize();
     return ret;
-}
-
-BOOL CanCausePause() noexcept
-{
-    return (_RA_CausePause != nullptr);
 }

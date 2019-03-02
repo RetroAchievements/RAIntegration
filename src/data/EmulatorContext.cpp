@@ -250,9 +250,7 @@ void EmulatorContext::DisableHardcoreMode()
     {
         pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
 
-#ifndef RA_UTEST
-        _RA_RebuildMenu();
-#endif
+        RebuildMenu();
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         pGameContext.DeactivateLeaderboards();
@@ -305,12 +303,13 @@ bool EmulatorContext::EnableHardcoreMode()
         }
     }
 
-#ifndef RA_UTEST
-    // TODO: move these into EmulatorContext
-    _RA_RebuildMenu();
+    RebuildMenu();
 
     // when enabling hardcore mode, force a system reset
-    _RA_ResetEmulation();
+    if (m_fResetEmulator)
+        m_fResetEmulator();
+
+#ifndef RA_UTEST
     _RA_OnReset();
 #endif
 
@@ -358,6 +357,16 @@ std::string EmulatorContext::GetAppTitle(const std::string& sMessage) const
     }
 
     return builder.ToString();
+}
+
+std::string EmulatorContext::GetGameTitle() const
+{
+    if (!m_fGetGameTitle)
+        return std::string();
+
+    std::array<char, 256> buffer{};
+    m_fGetGameTitle(buffer.data());
+    return std::string(buffer.data());
 }
 
 } // namespace data

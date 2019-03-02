@@ -98,7 +98,7 @@ void AchievementOverlay::Deactivate() noexcept
         m_nTransitionState = TransitionState::Out;
         m_fTransitionTimer = 0.0F;
 
-        RA_CauseUnpause();
+        ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
     }
 }
 

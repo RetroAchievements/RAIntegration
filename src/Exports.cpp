@@ -26,6 +26,7 @@
 #ifndef RA_UTEST
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
+#include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_Memory.h"
 
 #include "RA_LeaderboardPopup.h"
@@ -44,6 +45,28 @@ API int CCONV _RA_HardcoreModeIsActive()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+}
+
+
+API void CCONV _RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void),
+                                          void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
+{
+    _RA_InstallSharedFunctionsExt(nullptr, fpCauseUnpause, nullptr, fpRebuildMenu, fpEstimateTitle, fpResetEmulation, fpLoadROM);
+}
+
+API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void),
+                                             void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), [[maybe_unused]] void(*fpLoadROM)(const char*))
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.SetResetFunction(fpResetEmulation);
+    pEmulatorContext.SetPauseFunction(fpCausePause);
+    pEmulatorContext.SetUnpauseFunction(fpCauseUnpause);
+    pEmulatorContext.SetGetGameTitleFunction(fpEstimateTitle);
+    pEmulatorContext.SetRebuildMenuFunction(fpRebuildMenu);
+
+#ifndef RA_UTEST
+    g_GameLibrary.m_fpLoadROM = fpLoadROM;
+#endif
 }
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)
@@ -74,11 +97,11 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         message.SetImage(ra::ui::ImageType::UserPic, response.Username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(message));
 
-#ifndef RA_UTEST
         // notify the client to update the RetroAchievements menu
-        RA_RebuildMenu();
+        ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
 
         // update the client title-bar to include the user name
+#ifndef RA_UTEST
         _RA_UpdateAppTitle();
 
         // notify the overlay of the new user image
@@ -206,9 +229,7 @@ API void CCONV _RA_DoAchievementsFrame()
             case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
                 // we only watch for AchievementReset if PauseOnReset is set, so handle that now.
-#ifndef RA_UTEST
-                RA_CausePause();
-#endif
+                ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
                 const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
                 if (pAchievement)
                 {
@@ -249,9 +270,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
                 if (pAchievement->GetPauseOnTrigger())
                 {
-#ifndef RA_UTEST
-                    RA_CausePause();
-#endif
+                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
                     std::wstring sMessage = ra::StringPrintf(L"Pause on Trigger: %s", pAchievement->Title());
                     ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
                 }

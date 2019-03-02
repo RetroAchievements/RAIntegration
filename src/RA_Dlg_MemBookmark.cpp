@@ -674,8 +674,7 @@ unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
 
 void Dlg_MemBookmark::ExportJSON()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    if (pGameContext.GameId() == 0)
+    if (m_nGameId == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"ROM not loaded: please load a ROM first!");
         return;
@@ -708,7 +707,7 @@ void Dlg_MemBookmark::ExportJSON()
     // TODO: With all known options, only a raw array works. We'll have suppress bounds.1 when running that ruleset
     wchar_t buf[BUF_SIZE + 16UL]{}; // Extra capacity to prevent buffer overrun
     {
-        const auto sDefaultFilename{ra::StringPrintf(L"%u-Bookmarks.txt", pGameContext.GameId())};
+        const auto sDefaultFilename{ra::StringPrintf(L"%u-Bookmarks.txt", m_nGameId)};
         Expects(swprintf_s(buf, BUF_SIZE, L"%s", sDefaultFilename.c_str()) >= 0);
 
         if (std::wcslen(buf) > ofn.nMaxFile)
@@ -804,8 +803,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring&& sFilename)
 
 std::wstring Dlg_MemBookmark::ImportDialog()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    if (pGameContext.GameId() == 0)
+    if (m_nGameId == 0)
     {
         MessageBox(nullptr, _T("ROM not loaded: please load a ROM first!"), _T("Error!"), MB_OK);
         return std::wstring();
@@ -832,7 +830,7 @@ std::wstring Dlg_MemBookmark::ImportDialog()
 
     wchar_t buf[BUF_SIZE + 16UL]{};
     {
-        const auto sDefaultFilename{ra::StringPrintf(L"%u-Bookmarks.txt", pGameContext.GameId())};
+        const auto sDefaultFilename{ra::StringPrintf(L"%u-Bookmarks.txt", m_nGameId)};
         Expects(swprintf_s(buf, BUF_SIZE, L"%s", sDefaultFilename.c_str()) >= 0);
         if (std::wcslen(buf) > ofn.nMaxFile)
             return PathTooLong();
@@ -852,11 +850,16 @@ std::wstring Dlg_MemBookmark::ImportDialog()
 
 void Dlg_MemBookmark::OnLoad_NewRom()
 {
-    if (::GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES) != nullptr)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (m_nGameId == 0 || (pGameContext.GameId() != 0 && pGameContext.GameId() != m_nGameId))
     {
-        ClearAllBookmarks();
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-        ImportFromFile(ra::StringPrintf(L"%s%s%u-Bookmarks.txt", g_sHomeDir, RA_DIR_BOOKMARKS, pGameContext.GameId()));
+        m_nGameId = pGameContext.GameId();
+
+        if (::GetDlgItem(m_hMemBookmarkDialog, IDC_RA_LBX_ADDRESSES) != nullptr)
+        {
+            ClearAllBookmarks();
+            ImportFromFile(ra::StringPrintf(L"%s%s%u-Bookmarks.txt", g_sHomeDir, RA_DIR_BOOKMARKS, pGameContext.GameId()));
+        }
     }
 }
 

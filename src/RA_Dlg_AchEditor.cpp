@@ -10,6 +10,8 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "data\EmulatorContext.hh"
+
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
@@ -790,7 +792,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 LoadAchievement(pAchievement, false);
             }
 
-            if (!CanCausePause())
+            if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().CanPause())
             {
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);
@@ -1647,6 +1649,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         case CondSubItems::Type_Src:
                         {
+                            const bool bWasValue = rCond.CompSource().GetType() == CompVariable::Type::ValueComparison;
+
                             if (sData == "Mem")
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
@@ -1654,16 +1658,32 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             else
                                 rCond.CompSource().SetType(CompVariable::Type::ValueComparison);
 
+                            if (bWasValue &&
+                                rCond.CompSource().GetType() != CompVariable::Type::ValueComparison &&
+                                rCond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
+                            {
+                                rCond.CompSource().SetSize(rCond.CompTarget().GetSize());
+                            }
+
                             break;
                         }
                         case CondSubItems::Type_Tgt:
                         {
+                            const bool bWasValue = rCond.CompTarget().GetType() == CompVariable::Type::ValueComparison;
+
                             if (sData == "Mem")
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
                                 rCond.CompTarget().SetType(CompVariable::Type::DeltaMem);
                             else
                                 rCond.CompTarget().SetType(CompVariable::Type::ValueComparison);
+
+                            if (bWasValue &&
+                                rCond.CompTarget().GetType() != CompVariable::Type::ValueComparison &&
+                                rCond.CompSource().GetType() != CompVariable::Type::ValueComparison)
+                            {
+                                rCond.CompTarget().SetSize(rCond.CompSource().GetSize());
+                            }
 
                             break;
                         }

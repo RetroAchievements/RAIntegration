@@ -88,7 +88,7 @@ protected:
 
 protected:
     template <class T>
-    T& GetViewModel() const { return dynamic_cast<T&>(m_vmViewModel); }
+    T& GetViewModel() const noexcept { return dynamic_cast<T&>(m_vmViewModel); }
 
 private:
     ra::ui::ViewModelBase& m_vmViewModel;

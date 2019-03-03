@@ -82,6 +82,12 @@ public:
     virtual const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vEmptyRegions; }
 
     /// <summary>
+    /// Gets the memory region containing the specified address.
+    /// </summary>
+    /// <returns>Matching <see cref="MemoryRegion"/>, <c>nullptr</c> if not found.
+    const MemoryRegion* GetMemoryRegion(ra::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Gets a context object for the specified console.
     /// </summary>
     static std::unique_ptr<ConsoleContext> GetContext(ConsoleID nId);

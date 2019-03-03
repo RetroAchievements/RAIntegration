@@ -211,6 +211,7 @@
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
+    <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />

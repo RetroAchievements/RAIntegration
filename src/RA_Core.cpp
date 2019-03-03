@@ -40,6 +40,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\win32\Desktop.hh"
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -66,6 +67,8 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
 
     // initialize global state
+    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+    pDesktop.SetMainHWnd(hMainHWND);
     g_RAMainWnd = hMainHWND;
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
@@ -189,43 +192,24 @@ API int CCONV _RA_Shutdown()
 API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 {
     //	Returns true if we can go ahead and load the new rom.
-    int nResult = IDYES;
-
-    const char* sCurrentAction = bQuittingApp ? "quit now" : "load a new ROM";
-    const char* sNextAction = bQuittingApp ? "Are you sure?" : "Continue load?";
+    std::wstring sModifiedSet;
 
     if (g_pCoreAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Core Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+        sModifiedSet = L"Core";
+    else if (g_pUnofficialAchievements->HasUnsavedChanges())
+        sModifiedSet = L"Unofficial";
+    else if (g_pLocalAchievements->HasUnsavedChanges())
+        sModifiedSet = L"Local";
+    else
+        return true;
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-    if (g_pUnofficialAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Unofficial Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
-
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-    if (g_pLocalAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Local Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
-
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-
-    return(nResult == IDYES);
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(bQuittingApp ? L"Are you sure that you want to exit?" : L"Continue load?");
+    vmMessageBox.SetMessage(ra::StringPrintf(L"You have unsaved changes in the %s achievements set. If you %s, you will lose these changes.",
+        sModifiedSet, bQuittingApp ? L"quit now" : L"load a new ROM"));
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    return (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes);
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)

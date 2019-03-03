@@ -16,6 +16,35 @@ public:
     explicit WindowBinding(WindowViewModelBase& vmWindowViewModel) noexcept
         : BindingBase(vmWindowViewModel)
     {
+        s_vKnownBindings.push_back(this);
+    }
+
+    ~WindowBinding() noexcept
+    {
+        for (auto iter = s_vKnownBindings.begin(); iter != s_vKnownBindings.end(); ++iter)
+        {
+            if (*iter == this)
+            {
+                s_vKnownBindings.erase(iter);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the binding for the provided <see cref="WindowViewModelBase" />.
+    /// </summary>
+    /// <param name="vmWindowViewModel">The window view model.</param>
+    /// <returns>Associated binding, <c>nullptr</c> if not found.</returns>
+    static WindowBinding* GetBindingFor(const WindowViewModelBase& vmWindowViewModel)
+    {
+        for (auto* pBinding : s_vKnownBindings)
+        {
+            if (&pBinding->GetViewModel<WindowViewModelBase>() == &vmWindowViewModel)
+                return pBinding;
+        }
+
+        return nullptr;
     }
     
     /// <summary>
@@ -32,6 +61,12 @@ public:
     /// <param name="hWnd">The window handle.</param>
     void SetHWND(HWND hWnd);
     
+    /// <summary>
+    /// Gets the HWND bound to the window.
+    /// </summary>
+    /// <returns>The window handle.</returns>
+    HWND GetHWnd() const { return m_hWnd; }
+
     /// <summary>
     /// Binds the a label to a property of the viewmodel.
     /// </summary>
@@ -65,6 +100,8 @@ private:
     RelativePosition m_nDefaultVerticalLocation{ RelativePosition::None };
     
     HWND m_hWnd{};
+
+    static std::vector<WindowBinding*> s_vKnownBindings;
 };
 
 } // namespace bindings

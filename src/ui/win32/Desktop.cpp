@@ -2,6 +2,8 @@
 
 // Win32 specific implementation of Desktop.hh
 
+#include "ui/viewmodels/WindowManager.hh"
+
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
@@ -37,10 +39,19 @@ void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
 
 ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel) const
 {
+    const auto& vmEmulator = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
+    return ShowModal(vmViewModel, vmEmulator);
+}
+
+ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentViewModel) const
+{
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
     {
-        pPresenter->ShowModal(vmViewModel);
+        const auto* pBinding = ui::win32::bindings::WindowBinding::GetBindingFor(vmParentViewModel);
+        const HWND hParentWnd = pBinding ? pBinding->GetHWnd() : nullptr;
+
+        pPresenter->ShowModal(vmViewModel, hParentWnd);
     }
     else
     {
@@ -87,6 +98,17 @@ IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewMo
     return nullptr;
 }
 
+void Desktop::SetMainHWnd(HWND hWnd)
+{
+    if (m_pWindowBinding == nullptr)
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        m_pWindowBinding = std::make_unique<ra::ui::win32::bindings::WindowBinding>(pWindowManager.Emulator);
+    }
+
+    m_pWindowBinding->SetHWND(hWnd);
+}
+
 void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
     ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -94,6 +116,8 @@ void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 
 void Desktop::Shutdown() noexcept
 {
+    // must detroy binding before viewmodel
+    m_pWindowBinding.reset();
 }
 
 } // namespace win32

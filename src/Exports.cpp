@@ -22,6 +22,7 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #ifndef RA_UTEST
 #include "RA_Dlg_Achievement.h"
@@ -170,8 +171,9 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 #ifndef RA_UTEST
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
-    std::string sTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
-    SetWindowText(g_RAMainWnd, NativeStr(sTitle).c_str());
+    auto sTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
+    auto& vmEmulator = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator;
+    vmEmulator.SetWindowTitle(sTitle);
 }
 #endif
 

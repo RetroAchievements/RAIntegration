@@ -13,7 +13,7 @@ bool RichPresenceDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBas
     return (dynamic_cast<const ra::ui::viewmodels::RichPresenceMonitorViewModel*>(&oViewModel) != nullptr);
 }
 
-void RichPresenceDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
+void RichPresenceDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
     ShowWindow(vmViewModel);
 }

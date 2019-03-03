@@ -12,6 +12,8 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
+std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
+
 void WindowBinding::SetHWND(HWND hWnd)
 {
     m_hWnd = hWnd;
@@ -46,6 +48,9 @@ void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocati
 
 void WindowBinding::RestoreSizeAndPosition()
 {
+    if (m_sSizeAndPositionKey.empty())
+        return;
+
     ra::ui::Position oWorkAreaPosition;
     ra::ui::Size oWorkAreaSize;
     const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();

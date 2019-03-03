@@ -13,15 +13,15 @@ bool LoginDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmVi
     return (dynamic_cast<const ra::ui::viewmodels::LoginViewModel*>(&vmViewModel) != nullptr);
 }
 
-void LoginDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
+void LoginDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
     auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(vmViewModel);
 
     LoginDialog oDialog(vmLogin);
-    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_LOGIN), this);
+    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_LOGIN), this, hParentWnd);
 }
 
-void LoginDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel) { ShowModal(oViewModel); }
+void LoginDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel) { ShowModal(oViewModel, nullptr); }
 
 // ------------------------------------
 

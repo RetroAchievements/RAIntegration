@@ -113,6 +113,8 @@ void OverlayManager::ClearPopups()
 {
     while (!m_vPopupMessages.empty())
         m_vPopupMessages.pop_front();
+
+    m_vScoreTrackers.clear();
 }
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)

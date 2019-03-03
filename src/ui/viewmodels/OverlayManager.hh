@@ -70,10 +70,10 @@ public:
     /// </summary>
     ScoreTrackerViewModel& AddScoreTracker(int nLeaderboardId)
     {
-        auto& pScoreTracker = m_vScoreTrackers.emplace_back(std::make_unique<ScoreTrackerViewModel>());
+        auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
         pScoreTracker->SetPopupId(nLeaderboardId);
         pScoreTracker->UpdateRenderImage(0.0);
-        return *pScoreTracker;
+        return *m_vScoreTrackers.emplace_back(std::move(pScoreTracker));
     }
 
     /// <summary>

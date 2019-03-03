@@ -750,8 +750,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (!pEmulatorContext.EnableHardcoreMode())
                     break;
             }
-
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
         }
         break;
 

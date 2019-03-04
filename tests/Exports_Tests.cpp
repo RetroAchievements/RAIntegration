@@ -20,6 +20,7 @@
 
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -68,40 +69,12 @@ public:
         Assert::AreEqual(0, _RA_HardcoreModeIsActive());
     }
 
-    TEST_METHOD(TestAttemptLoginNewUser)
+private:
+    class AttemptLoginHarness
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockServer mockServer;
+    public:
+        AttemptLoginHarness() noexcept : m_WindowManagerService(&windowManager) {}
 
-        MockDesktop mockDesktop;
-
-        bool bLoginDialogShown = false;
-        mockDesktop.ExpectWindow<ra::ui::viewmodels::LoginViewModel>([&bLoginDialogShown](_UNUSED ra::ui::viewmodels::LoginViewModel&)
-        {
-            bLoginDialogShown = true;
-            return ra::ui::DialogResult::OK;
-        });
-
-        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
-        {
-            Assert::IsFalse(true, L"API called without user info");
-            return false;
-        });
-
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
-
-        _RA_AttemptLogin(true);
-
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
-        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
-        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
-        Assert::IsTrue(bLoginDialogShown);
-    }
-
-    TEST_METHOD(TestAttemptLoginSuccess)
-    {
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
@@ -109,11 +82,54 @@ public:
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
         MockEmulatorContext mockEmulatorContext;
+        MockDesktop mockDesktop;
+        MockThreadPool mockThreadPool;
+
+        ra::ui::viewmodels::WindowManager windowManager;
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::WindowManager> m_WindowManagerService;
+    };
+
+public:
+
+    TEST_METHOD(TestAttemptLoginNewUser)
+    {
+        AttemptLoginHarness harness;
+
+        bool bLoginDialogShown = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::LoginViewModel>([&bLoginDialogShown](_UNUSED ra::ui::viewmodels::LoginViewModel&)
+        {
+            bLoginDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        harness.mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
+        {
+            Assert::IsFalse(true, L"API called without user info");
+            return false;
+        });
+
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+
+        _RA_AttemptLogin(true);
+
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
+        Assert::IsTrue(bLoginDialogShown);
+    }
+
+    TEST_METHOD(TestAttemptLoginSuccess)
+    {
+        AttemptLoginHarness harness;
+
         bool bWasMenuRebuilt = false;
-        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
 
         bool bLoggedIn = false;
-        mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
+        harness.mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
         {
             Assert::AreEqual(std::string("User"), request.Username);
             Assert::AreEqual(std::string("ApiToken"), request.ApiToken);
@@ -126,25 +142,25 @@ public:
             return true;
         });
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
 
         _RA_AttemptLogin(true);
 
         // user context
-        Assert::IsTrue(mockUserContext.IsLoggedIn());
-        Assert::AreEqual(std::string("User"), mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("ApiToken"), mockUserContext.GetApiToken());
-        Assert::AreEqual(12345U, mockUserContext.GetScore());
+        Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
+        Assert::AreEqual(12345U, harness.mockUserContext.GetScore());
 
         // session context
-        Assert::AreEqual(std::wstring(L"User"), mockSessionTracker.GetUsername());
+        Assert::AreEqual(std::wstring(L"User"), harness.mockSessionTracker.GetUsername());
 
         // popup notification and sound
-        Assert::IsTrue(mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
-        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome User (12345)"), pPopup->GetTitle());
@@ -154,19 +170,16 @@ public:
 
         // menu
         Assert::IsTrue(bWasMenuRebuilt);
+
+        // titlebar
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.windowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockAudioSystem mockAudioSystem;
-        MockServer mockServer;
-        MockOverlayManager mockOverlayManager;
-        MockEmulatorContext mockEmulatorContext;
+        AttemptLoginHarness harness;
 
-        mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
+        harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.Username = "User";
             response.ApiToken = "ApiToken";
@@ -176,12 +189,12 @@ public:
             return true;
         });
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
         _RA_AttemptLogin(true);
 
-        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome User (0)"), pPopup->GetTitle());
@@ -192,17 +205,12 @@ public:
 
     TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionData)
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockAudioSystem mockAudioSystem;
-        MockServer mockServer;
-        MockOverlayManager mockOverlayManager;
-        MockEmulatorContext mockEmulatorContext;
-        bool bWasMenuRebuilt = false;
-        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        AttemptLoginHarness harness;
 
-        mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
+        bool bWasMenuRebuilt = false;
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+
+        harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.Username = "User";
             response.ApiToken = "ApiToken";
@@ -211,14 +219,14 @@ public:
             return true;
         });
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
-        mockSessionTracker.MockSession(6U, 123456789, std::chrono::hours(2));
+        harness.mockSessionTracker.MockSession(6U, 123456789, std::chrono::hours(2));
 
         _RA_AttemptLogin(true);
 
-        const auto* pPopup = mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome back User (12345)"), pPopup->GetTitle());
@@ -230,16 +238,12 @@ public:
 
     TEST_METHOD(TestAttemptLoginInvalid)
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockServer mockServer;
-        MockDesktop mockDesktop;
-        MockEmulatorContext mockEmulatorContext;
-        bool bWasMenuRebuilt = false;
-        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        AttemptLoginHarness harness;
 
-        mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
+        bool bWasMenuRebuilt = false;
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+
+        harness.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Login Failed"), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Invalid user/password combination. Please try again."), vmMessageBox.GetMessage());
@@ -248,82 +252,73 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
+        harness.mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.ErrorMessage = "Invalid user/password combination. Please try again.";
             response.Result = ra::api::ApiResult::Error;
             return true;
         });
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
         _RA_AttemptLogin(true);
 
-        Assert::IsTrue(mockDesktop.WasDialogShown());
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
-        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
-        Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::IsTrue(harness.mockDesktop.WasDialogShown());
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
+        Assert::AreEqual(0U, harness.mockUserContext.GetScore());
 
-        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsFalse(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginDisabled)
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockServer mockServer;
-        MockDesktop mockDesktop;
-        MockEmulatorContext mockEmulatorContext;
+        AttemptLoginHarness harness;
+
         bool bWasMenuRebuilt = false;
-        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
-        mockUserContext.DisableLogin();
+        harness.mockUserContext.DisableLogin();
         _RA_AttemptLogin(true);
 
-        Assert::IsFalse(mockDesktop.WasDialogShown());
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
-        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
-        Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
+        Assert::AreEqual(0U, harness.mockUserContext.GetScore());
 
-        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsFalse(bWasMenuRebuilt);
     }
 
     TEST_METHOD(TestAttemptLoginDisabledDuringRequest)
     {
-        MockUserContext mockUserContext;
-        MockSessionTracker mockSessionTracker;
-        MockConfiguration mockConfiguration;
-        MockServer mockServer;
-        MockDesktop mockDesktop;
-        MockThreadPool mockThreadPool;
-        MockEmulatorContext mockEmulatorContext;
-        bool bWasMenuRebuilt = false;
-        mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        AttemptLoginHarness harness;
 
-        mockConfiguration.SetUsername("User");
-        mockConfiguration.SetApiToken("ApiToken");
+        bool bWasMenuRebuilt = false;
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
 
         _RA_AttemptLogin(false);
 
-        mockUserContext.DisableLogin();
-        mockThreadPool.ExecuteNextTask();
+        harness.mockUserContext.DisableLogin();
+        harness.mockThreadPool.ExecuteNextTask();
 
-        Assert::IsFalse(mockDesktop.WasDialogShown());
-        Assert::IsFalse(mockUserContext.IsLoggedIn());
-        Assert::AreEqual(std::string(""), mockUserContext.GetUsername());
-        Assert::AreEqual(std::string(""), mockUserContext.GetApiToken());
-        Assert::AreEqual(0U, mockUserContext.GetScore());
+        Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
+        Assert::AreEqual(0U, harness.mockUserContext.GetScore());
 
-        Assert::AreEqual(std::wstring(L""), mockSessionTracker.GetUsername());
+        Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsFalse(bWasMenuRebuilt);
     }
 

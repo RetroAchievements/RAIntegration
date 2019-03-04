@@ -18,6 +18,12 @@ public:
     {
     }
 
+    void MockClient(const std::string& sClientName, const std::string& sClientVersion)
+    {
+        m_sClientName = sClientName;
+        m_sVersion = sClientVersion;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
 };

@@ -116,7 +116,7 @@ void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 
 void Desktop::Shutdown() noexcept
 {
-    // must detroy binding before viewmodel
+    // must destroy binding before viewmodel
     m_pWindowBinding.reset();
 }
 

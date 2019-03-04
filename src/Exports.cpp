@@ -102,9 +102,9 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
 
         // update the client title-bar to include the user name
-#ifndef RA_UTEST
         _RA_UpdateAppTitle();
 
+#ifndef RA_UTEST
         // notify the overlay of the new user image
         g_AchievementOverlay.UpdateImages();
 
@@ -168,14 +168,12 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 #endif
 }
 
-#ifndef RA_UTEST
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
     auto sTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
     auto& vmEmulator = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator;
     vmEmulator.SetWindowTitle(sTitle);
 }
-#endif
 
 _Use_decl_annotations_
 API int _RA_UpdatePopups(ControllerInput*, float fElapsedSeconds, bool, bool bPaused)

@@ -101,6 +101,7 @@
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
@@ -219,6 +220,7 @@
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\ScoreTrackerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />

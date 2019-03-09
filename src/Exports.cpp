@@ -280,11 +280,9 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
-                    pLeaderboard->SetCurrentValue(pChange.nValue);
-
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
                     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
                     {
@@ -294,9 +292,10 @@ API void CCONV _RA_DoAchievementsFrame()
                             ra::Widen(pLeaderboard->Description()));
                     }
 
-#ifndef RA_UTEST
-                    g_LeaderboardPopups.Activate(pLeaderboard->ID());
-#endif
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->ID());
+                    const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
+                    pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
                 }
 
                 break;
@@ -304,9 +303,17 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
             {
-                auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
-                    pLeaderboard->SetCurrentValue(pChange.nValue);
+                {
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    auto* pScoreTracker = pOverlayManager.GetScoreTracker(pChange.nId);
+                    if (pScoreTracker != nullptr)
+                    {
+                        const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
+                        pScoreTracker->SetDisplayText(ra::Widen(sDisplayText));
+                    }
+                }
 
                 break;
             }
@@ -324,9 +331,8 @@ API void CCONV _RA_DoAchievementsFrame()
                             L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()));
                     }
 
-#ifndef RA_UTEST
-                    g_LeaderboardPopups.Deactivate(pLeaderboard->ID());
-#endif
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    pOverlayManager.RemoveScoreTracker(pLeaderboard->ID());
                 }
 
                 break;
@@ -334,12 +340,10 @@ API void CCONV _RA_DoAchievementsFrame()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
             {
-                pGameContext.SubmitLeaderboardEntry(pChange.nId, pChange.nValue);
+                pGameContext.SubmitLeaderboardEntry(pChange.nId, pChange.nValue); // will show the scoreboard when submission completes
 
-#ifndef RA_UTEST
-                g_LeaderboardPopups.Deactivate(pChange.nId);
-#endif
-
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveScoreTracker(pChange.nId);
                 break;
             }
         }

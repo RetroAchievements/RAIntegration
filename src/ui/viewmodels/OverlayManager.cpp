@@ -3,6 +3,7 @@
 #include "RA_LeaderboardPopup.h"
 
 #include "services\IClock.hh"
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #ifndef RA_UTEST
@@ -22,6 +23,9 @@ void OverlayManager::Update(double fElapsed)
 {
     if (!m_vPopupMessages.empty())
         UpdateActiveMessage(fElapsed);
+
+    for (auto& pScoreTracker : m_vScoreTrackers)
+        pScoreTracker->UpdateRenderImage(fElapsed);
 
 #ifndef RA_UTEST
     g_LeaderboardPopups.Update(fElapsed);
@@ -49,8 +53,30 @@ static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, s
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
 {
 #ifndef RA_UTEST
-    g_LeaderboardPopups.Render(pSurface);
+    const auto bScoreboardShown = g_LeaderboardPopups.Render(pSurface);
 #endif
+
+    if (!m_vScoreTrackers.empty())
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
+        {
+            const auto nX = pSurface.GetWidth() - 10;
+            int nY = pSurface.GetHeight() - 10;
+#ifndef RA_UTEST
+            if (bScoreboardShown)
+                nY -= 210;
+#endif
+
+            for (auto& pTracker : m_vScoreTrackers)
+            {
+                const auto& pRenderImage = pTracker->GetRenderImage();
+                nY -= pRenderImage.GetHeight();
+                pSurface.DrawSurface(nX - pRenderImage.GetWidth(), nY, pRenderImage);
+                nY -= 10;
+            }
+        }
+    }
 
     if (!m_vPopupMessages.empty())
     {
@@ -87,6 +113,8 @@ void OverlayManager::ClearPopups()
 {
     while (!m_vPopupMessages.empty())
         m_vPopupMessages.pop_front();
+
+    m_vScoreTrackers.clear();
 }
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)

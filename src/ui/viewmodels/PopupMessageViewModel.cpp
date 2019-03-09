@@ -14,8 +14,11 @@ const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageView
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 
-void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
+bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 {
+    const int nOldY = GetRenderLocationY();
+    int nNewY = nOldY;
+
     m_fAnimationProgress += fElapsed;
 
     if (m_fAnimationProgress < INOUT_TIME)
@@ -24,12 +27,12 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
         const auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
         Expects(m_nTargetY > m_nInitialY);
         const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        SetRenderLocationY(ftol(m_nTargetY - nY));
+        nNewY = ftol(m_nTargetY - nY);
     }
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME - INOUT_TIME)
     {
         // faded in - hold position
-        SetRenderLocationY(m_nTargetY);
+        nNewY = m_nTargetY;
     }
     else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME)
     {
@@ -37,29 +40,43 @@ void PopupMessageViewModel::UpdateRenderImage(double fElapsed)
         const auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
         Expects(m_nTargetY > m_nInitialY);
         const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        SetRenderLocationY(ftoi(m_nTargetY - nY));
+        nNewY = ftoi(m_nTargetY - nY);
     }
     else
     {
         // faded out
-        SetRenderLocationY(m_nInitialY);
+        nNewY = m_nInitialY;
+    }
+
+    bool bUpdated = false;
+    if (nNewY != nOldY)
+    {
+        SetRenderLocationY(nNewY);
+        bUpdated = true;
     }
 
     if (m_bSurfaceStale)
     {
         m_bSurfaceStale = false;
         CreateRenderImage();
+        bUpdated = true;
     }
     else if (m_pSurface == nullptr)
     {
         CreateRenderImage();
+        bUpdated = true;
     }
     else
     {
         const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
         if (pImageRepository.HasReferencedImageChanged(m_hImage))
+        {
             CreateRenderImage();
+            bUpdated = true;
+        }
     }
+
+    return bUpdated;
 }
 
 void PopupMessageViewModel::CreateRenderImage()

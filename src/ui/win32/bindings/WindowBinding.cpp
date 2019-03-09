@@ -6,6 +6,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -48,7 +49,9 @@ void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocati
 
 void WindowBinding::RestoreSizeAndPosition()
 {
-    if (m_sSizeAndPositionKey.empty())
+    const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
+    const auto* pMainWindowBinding = GetBindingFor(pEmulatorViewModel);
+    if (pMainWindowBinding == this)
         return;
 
     ra::ui::Position oWorkAreaPosition;
@@ -79,7 +82,7 @@ void WindowBinding::RestoreSizeAndPosition()
     }
 
     RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
+    GetWindowRect(pMainWindowBinding->GetHWnd(), &rcMainWindow);
 
     if (oPosition.X != INT32_MIN)
     {

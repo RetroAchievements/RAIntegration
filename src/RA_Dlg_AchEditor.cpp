@@ -1979,27 +1979,33 @@ _Use_decl_annotations_ void
     if (hGroupList == nullptr)
         return;
 
-    int nSel = ListBox_GetCurSel(hGroupList);
+    const int nSel = ListBox_GetCurSel(hGroupList);
 
-    while (ListBox_DeleteString(hGroupList, 0) >= 0)
+    int nItems = ListBox_GetCount(hGroupList);
+    const int nGroups = pCheevo ? pCheevo->NumConditionGroups() : 0;
+
+    while (nItems > nGroups)
+        ListBox_DeleteString(hGroupList, --nItems);
+
+    if (nItems < nGroups)
     {
-    }
-
-    if (pCheevo != nullptr)
-    {
-        ListBox_AddString(hGroupList, _T("Core"));
-
-        for (size_t i = 1; i < pCheevo->NumConditionGroups(); ++i)
+        if (nItems == 0)
         {
-            const auto sAltGroup = ra::StringPrintf("Alt %02d", i);
-            ListBox_AddString(hGroupList, NativeStr(sAltGroup).c_str());
+            ListBox_AddString(hGroupList, _T("Core"));
+            ++nItems;
         }
 
-        // Try and restore selection
-        if (nSel < 0 || nSel >= gsl::narrow_cast<int>(pCheevo->NumConditionGroups()))
-            nSel = 0; // Reset to core if unsure
-        ListBox_SetCurSel(hGroupList, nSel);
+        while (nItems < nGroups)
+        {
+            const auto sAltGroup = ra::StringPrintf("Alt %02d", nItems++);
+            ListBox_AddString(hGroupList, NativeStr(sAltGroup).c_str());
+        }
     }
+
+    if (nSel < 0)
+        ListBox_SetCurSel(hGroupList, 0);
+    else if (nSel >= nGroups)
+        ListBox_SetCurSel(hGroupList, nGroups - 1);
 }
 
 _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const restrict pCheevo)

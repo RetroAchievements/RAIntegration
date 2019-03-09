@@ -16,6 +16,40 @@ public:
     explicit WindowBinding(WindowViewModelBase& vmWindowViewModel) noexcept
         : BindingBase(vmWindowViewModel)
     {
+        GSL_SUPPRESS_F6 s_vKnownBindings.push_back(this);
+    }
+
+    GSL_SUPPRESS_F6 ~WindowBinding() noexcept
+    {
+        for (auto iter = s_vKnownBindings.begin(); iter != s_vKnownBindings.end(); ++iter)
+        {
+            if (*iter == this)
+            {
+                s_vKnownBindings.erase(iter);
+                break;
+            }
+        }
+    }
+
+    WindowBinding(const WindowBinding&) noexcept = delete;
+    WindowBinding& operator=(const WindowBinding&) noexcept = delete;
+    WindowBinding(WindowBinding&&) noexcept = delete;
+    WindowBinding& operator=(WindowBinding&&) noexcept = delete;
+
+    /// <summary>
+    /// Gets the binding for the provided <see cref="WindowViewModelBase" />.
+    /// </summary>
+    /// <param name="vmWindowViewModel">The window view model.</param>
+    /// <returns>Associated binding, <c>nullptr</c> if not found.</returns>
+    static WindowBinding* GetBindingFor(const WindowViewModelBase& vmWindowViewModel) noexcept
+    {
+        for (auto* pBinding : s_vKnownBindings)
+        {
+            if (pBinding && &pBinding->GetViewModel<WindowViewModelBase>() == &vmWindowViewModel)
+                return pBinding;
+        }
+
+        return nullptr;
     }
     
     /// <summary>
@@ -32,6 +66,12 @@ public:
     /// <param name="hWnd">The window handle.</param>
     void SetHWND(HWND hWnd);
     
+    /// <summary>
+    /// Gets the HWND bound to the window.
+    /// </summary>
+    /// <returns>The window handle.</returns>
+    HWND GetHWnd() const noexcept { return m_hWnd; }
+
     /// <summary>
     /// Binds the a label to a property of the viewmodel.
     /// </summary>
@@ -65,6 +105,8 @@ private:
     RelativePosition m_nDefaultVerticalLocation{ RelativePosition::None };
     
     HWND m_hWnd{};
+
+    static std::vector<WindowBinding*> s_vKnownBindings;
 };
 
 } // namespace bindings

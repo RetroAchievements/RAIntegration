@@ -555,12 +555,12 @@ public:
     TEST_METHOD(TestGetAppTitleDefault)
     {
         EmulatorContextHarness emulator;
-        Assert::AreEqual(std::string(" -  []"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L" -  []"), emulator.GetAppTitle(""));
 
         emulator.Initialize(EmulatorID::RA_Snes9x);
         emulator.SetClientVersion("0.57.0.0");
         emulator.mockConfiguration.SetHostName("retroachievements.org");
-        Assert::AreEqual(std::string("RASnes9X - 0.57"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
     }
 
     TEST_METHOD(TestGetAppTitleVersion)
@@ -570,13 +570,13 @@ public:
         emulator.mockConfiguration.SetHostName("retroachievements.org");
 
         emulator.SetClientVersion("0.57.1.1");
-        Assert::AreEqual(std::string("RASnes9X - 0.57"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
 
         emulator.SetClientVersion("0.99");
-        Assert::AreEqual(std::string("RASnes9X - 0.99"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.99"), emulator.GetAppTitle(""));
 
         emulator.SetClientVersion("1.0.12.0");
-        Assert::AreEqual(std::string("RASnes9X - 1.0"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 1.0"), emulator.GetAppTitle(""));
     }
 
     TEST_METHOD(TestGetAppTitleUserName)
@@ -586,13 +586,13 @@ public:
         emulator.mockConfiguration.SetHostName("retroachievements.org");
         emulator.SetClientVersion("0.57");
 
-        Assert::AreEqual(std::string("RASnes9X - 0.57"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
 
         emulator.mockUserContext.Initialize("User", "Token");
-        Assert::AreEqual(std::string("RASnes9X - 0.57 - User"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - User"), emulator.GetAppTitle(""));
 
         emulator.mockUserContext.Logout();
-        Assert::AreEqual(std::string("RASnes9X - 0.57"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
     }
 
     TEST_METHOD(TestGetAppTitleCustomMessage)
@@ -601,7 +601,7 @@ public:
         emulator.Initialize(EmulatorID::RA_Snes9x);
         emulator.mockConfiguration.SetHostName("retroachievements.org");
         emulator.SetClientVersion("0.57");
-        Assert::AreEqual(std::string("RASnes9X - 0.57 - Test"), emulator.GetAppTitle("Test"));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test"), emulator.GetAppTitle("Test"));
     }
 
     TEST_METHOD(TestGetAppTitleCustomHost)
@@ -610,7 +610,7 @@ public:
         emulator.Initialize(EmulatorID::RA_Snes9x);
         emulator.mockConfiguration.SetHostName("localhost");
         emulator.SetClientVersion("0.57");
-        Assert::AreEqual(std::string("RASnes9X - 0.57 [localhost]"), emulator.GetAppTitle(""));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 [localhost]"), emulator.GetAppTitle(""));
     }
 
     TEST_METHOD(TestGetAppTitleEverything)
@@ -620,7 +620,7 @@ public:
         emulator.mockConfiguration.SetHostName("localhost");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.SetClientVersion("0.57");
-        Assert::AreEqual(std::string("RASnes9X - 0.57 - Test - User [localhost]"), emulator.GetAppTitle("Test"));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test - User [localhost]"), emulator.GetAppTitle("Test"));
     }
 };
 

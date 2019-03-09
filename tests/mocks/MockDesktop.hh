@@ -32,6 +32,11 @@ public:
         return Handle(vmViewModel);
     }
 
+    ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase&) const override
+    {
+        return ShowModal(vmViewModel);
+    }
+
     bool WasDialogShown() noexcept { return m_bDialogShown; }
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const noexcept override

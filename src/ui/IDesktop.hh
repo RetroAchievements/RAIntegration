@@ -21,10 +21,15 @@ public:
     virtual void ShowWindow(WindowViewModelBase& vmViewModel) const = 0;
 
     /// <summary>
-    /// Shows a model window for the provided view model. Method will not return until the window is closed.
+    /// Shows a modal window for the provided view model. Method will not return until the window is closed.
     /// </summary>
     virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const = 0;
-    
+
+    /// <summary>
+    /// Shows a modal window for the provided view model. Method will not return until the window is closed.
+    /// </summary>
+    virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentWindow) const = 0;
+
     /// <summary>
     /// Gets the bounds of the available work area of the desktop.
     /// </summary>

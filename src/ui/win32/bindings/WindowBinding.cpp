@@ -6,11 +6,14 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
 namespace win32 {
 namespace bindings {
+
+std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
 
 void WindowBinding::SetHWND(HWND hWnd)
 {
@@ -46,6 +49,11 @@ void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocati
 
 void WindowBinding::RestoreSizeAndPosition()
 {
+    const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
+    const auto* pMainWindowBinding = GetBindingFor(pEmulatorViewModel);
+    if (!pMainWindowBinding || pMainWindowBinding == this)
+        return;
+
     ra::ui::Position oWorkAreaPosition;
     ra::ui::Size oWorkAreaSize;
     const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
@@ -74,7 +82,7 @@ void WindowBinding::RestoreSizeAndPosition()
     }
 
     RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
+    GetWindowRect(pMainWindowBinding->GetHWnd(), &rcMainWindow);
 
     if (oPosition.X != INT32_MIN)
     {

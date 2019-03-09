@@ -13,15 +13,15 @@ bool UnknownGameDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase
     return (dynamic_cast<const ra::ui::viewmodels::UnknownGameViewModel*>(&vmViewModel) != nullptr);
 }
 
-void UnknownGameDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
+void UnknownGameDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
     auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(vmViewModel);
 
     UnknownGameDialog oDialog(vmLogin);
-    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_GAMETITLESEL), this);
+    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_GAMETITLESEL), this, hParentWnd);
 }
 
-void UnknownGameDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel) { ShowModal(oViewModel); }
+void UnknownGameDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel) { ShowModal(oViewModel, nullptr); }
 
 // ------------------------------------
 

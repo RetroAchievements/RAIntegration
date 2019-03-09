@@ -162,6 +162,9 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     DeleteDC(hMemDC);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 5045)
+
 void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 {
     const auto nWidth = to_signed(GetWidth());
@@ -208,6 +211,8 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     // copy the buffer back onto the target surface
     ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, m_pBlendBuffer.m_hMemDC, 0, 0, SRCCOPY);
 }
+
+#pragma warning(pop)
 
 void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {

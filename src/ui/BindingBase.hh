@@ -92,6 +92,10 @@ protected:
         m_vmViewModel.AddNotifyTarget(*this);
     }
 
+protected:
+    template <class T>
+    T& GetViewModel() const noexcept { return dynamic_cast<T&>(m_vmViewModel); }
+
 private:
     ra::ui::ViewModelBase& m_vmViewModel;
 };

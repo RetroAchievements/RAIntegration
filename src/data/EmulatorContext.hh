@@ -73,7 +73,7 @@ public:
     /// Builds a string for displaying in the title bar of the emulator.
     /// </summary>
     /// <param name="sMessage">A custom message provided by the emulator to also display in the title bar.</param>
-    std::string GetAppTitle(const std::string& sMessage) const;
+    std::wstring GetAppTitle(const std::string& sMessage) const;
     
     /// <summary>
     /// Gets the game title from the emulator.

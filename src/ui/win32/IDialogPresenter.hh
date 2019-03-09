@@ -29,7 +29,7 @@ public:
     /// <summary>
     /// Shows a modal window for the provided view model.
     /// </summary>
-    virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel) = 0;
+    virtual void ShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd) = 0;
 
 protected:
     IDialogPresenter() noexcept = default;

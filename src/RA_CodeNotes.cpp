@@ -11,6 +11,8 @@
 
 #include "services\ILocalStorage.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
 
 size_t CodeNotes::Load(unsigned int nID)
@@ -100,7 +102,7 @@ void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         }
         else
         {
-            MessageBox(g_RAMainWnd, _T("Could not save note! Please check you are online and retry."), _T("Error!"), MB_OK | MB_ICONWARNING);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not save note!", L"Please check that you are online and retry.");
         }
     }
 }

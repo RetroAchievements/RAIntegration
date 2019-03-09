@@ -614,6 +614,9 @@
     <ClInclude Include="api\SubmitLeaderboardEntry.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\ScoreTrackerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

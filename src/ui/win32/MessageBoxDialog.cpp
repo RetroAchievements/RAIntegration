@@ -36,6 +36,11 @@ void MessageBoxDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewM
 
 void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel)
 {
+    ShowModal(oViewModel, g_RAMainWnd);
+}
+
+void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
+{
     auto& oMessageBoxViewModel = reinterpret_cast<MessageBoxViewModel&>(oViewModel);
     int nButton = 0;
 
@@ -70,7 +75,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: uType |= MB_RETRYCANCEL; break;
         }
 
-        nButton = MessageBoxW(g_RAMainWnd, pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
+        nButton = MessageBoxW(hParentWnd, pMessage->c_str(), oMessageBoxViewModel.GetWindowTitle().c_str(), uType);
     }
     else
     {
@@ -95,7 +100,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
             case MessageBoxViewModel::Buttons::RetryCancel: dwCommonButtons = TDCBF_RETRY_BUTTON | TDCBF_CANCEL_BUTTON; break;
         }
 
-        const HRESULT result = pTaskDialog(g_RAMainWnd, nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
+        const HRESULT result = pTaskDialog(hParentWnd, nullptr, oMessageBoxViewModel.GetWindowTitle().c_str(),
             oMessageBoxViewModel.GetHeader().c_str(), oMessageBoxViewModel.GetMessage().c_str(), dwCommonButtons, pszIcon, &nButton);
 
         if (!SUCCEEDED(result))
@@ -116,3 +121,9 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
 } // namespace win32
 } // namespace ui
 } // namespace ra
+
+ra::ui::DialogResult ShowMessageBox(ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox, HWND hParentWnd)
+{
+    ra::ui::win32::MessageBoxDialog::Presenter::ShowModal(vmMessageBox, hParentWnd);
+    return vmMessageBox.GetDialogResult();
+}

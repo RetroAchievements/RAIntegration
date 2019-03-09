@@ -87,8 +87,8 @@ public:
     inline const std::string& ProgressFmt() const noexcept { return m_sProgressFmt; }
     void SetProgressIndicatorFormat(const std::string& sProgressFmt) { m_sProgressFmt = sProgressFmt; }
 
-    void AddConditionGroup() noexcept;
-    void RemoveConditionGroup();
+    void AddAltGroup() noexcept;
+    void RemoveAltGroup(gsl::index nIndex);
 
     inline size_t NumConditionGroups() const noexcept { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const

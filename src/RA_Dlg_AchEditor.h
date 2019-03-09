@@ -24,9 +24,6 @@ enum class CondSubItems : std::size_t;
 class Dlg_AchievementEditor
 {
 public:
-    GSL_SUPPRESS_F6 Dlg_AchievementEditor() noexcept;
-
-public:
     static INT_PTR CALLBACK s_AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR AchievementEditorProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -59,7 +56,7 @@ public:
     ConditionGroup m_ConditionClipboard;
 
 private:
-    void RepopulateGroupList(_In_ const Achievement* const restrict pCheevo) noexcept;
+    void RepopulateGroupList(_In_ const Achievement* const restrict pCheevo);
     void PopulateConditions(_In_ const Achievement* const restrict pCheevo);
     void SetupColumns(HWND hList);
 
@@ -87,10 +84,8 @@ private:
     WNDPROC m_pListViewWndProc = nullptr;
 
     using LbxData = std::array<std::array<std::string, m_nNumCols>, MAX_CONDITIONS>;
-    using LbxGroupNames = std::array<ra::tstring, MAX_CONDITIONS>;
 
     LbxData m_lbxData{};
-    LbxGroupNames m_lbxGroupNames{};
     int m_nNumOccupiedRows = 0;
 
     Achievement* m_pSelectedAchievement = nullptr;

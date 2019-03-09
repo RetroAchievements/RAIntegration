@@ -13,7 +13,6 @@
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
@@ -39,6 +38,7 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\UnknownGameViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
@@ -260,8 +260,19 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
             if (nGameId == 0) // Unknown
             {
                 RA_LOG("Could not identify game with MD5 %s\n", sCurrentROMMD5.c_str());
-                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
-                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
+
+                if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+                {
+                    auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+
+                    ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+                    vmUnknownGame.InitializeGameTitles();
+                    vmUnknownGame.SetChecksum(ra::Widen(sCurrentROMMD5));
+                    vmUnknownGame.SetNewGameName(ra::Widen(sEstimatedGameTitle));
+
+                    if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+                        nGameId = vmUnknownGame.GetSelectedGameId();
+                }
             }
             else
             {
@@ -405,6 +416,8 @@ API void CCONV _RA_OnReset()
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
     ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -732,8 +745,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (!pEmulatorContext.EnableHardcoreMode())
                     break;
             }
-
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
         }
         break;
 

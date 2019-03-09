@@ -20,11 +20,9 @@ public:
     void Update(_In_ double fDelta);
 
     GSL_SUPPRESS_CON4 // Mark nTextColorr as const. false alarm.
-    void Render(_In_ ra::ui::drawing::ISurface& pSurface);
+    bool Render(_In_ ra::ui::drawing::ISurface& pSurface);
 
     void Reset();
-    BOOL Activate(_In_ ra::LeaderboardID nLBID);
-    BOOL Deactivate(_In_ ra::LeaderboardID nLBID);
 
     void ShowScoreboard(ra::LeaderboardID nLBID);
 

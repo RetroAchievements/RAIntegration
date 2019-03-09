@@ -47,7 +47,12 @@ void AchievementRuntime::ResetActiveAchievements()
     m_vActiveAchievements.clear();
 
     for (const auto& pLeaderboard : m_vActiveLeaderboards)
+    {
         rc_reset_lboard(pLeaderboard.pLeaderboard);
+
+        // this ensures the leaderboard won't restart until the start trigger is false for at least one frame
+        pLeaderboard.pLeaderboard->submitted = 1;
+    }
 }
 
 static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept

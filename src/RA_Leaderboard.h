@@ -16,9 +16,6 @@ public:
 
     void ParseFromString(const char* sBuffer, const char* sFormat);
 
-    unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
-    void SetCurrentValue(unsigned int nValue) noexcept { m_nCurrentValue = nValue; }
-
     ra::LeaderboardID ID() const noexcept { return m_nID; }
 
     const std::string& Title() const noexcept { return m_sTitle; }
@@ -67,9 +64,8 @@ private:
     const ra::LeaderboardID m_nID = ra::LeaderboardID(); //  DB ID for this LB
     bool m_bActive = false;
 
-    unsigned int m_nCurrentValue = 0U;
-
-    int m_nFormat = 0; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
+    // default to RC_FORMAT_VALUE (4) - use constant as we don't want to expose rcheevos.h to things using this header
+    int m_nFormat = 4; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time
 
     std::string m_sTitle;       //  The title of the leaderboard
     std::string m_sDescription; //  A brief description of the leaderboard

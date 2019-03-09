@@ -92,7 +92,7 @@ public:
     /// <summary>
     /// Gets whether or not the emulator can be paused.
     /// </summary>
-    bool CanPause() const { return m_fPauseEmulator != nullptr; }
+    bool CanPause() const noexcept { return m_fPauseEmulator != nullptr; }
 
     /// <summary>
     /// Pauses the emulator.
@@ -115,27 +115,27 @@ public:
     /// <summary>
     /// Sets a function to call to reset the emulator.
     /// </summary>
-    void SetResetFunction(std::function<void()>&& fResetEmulator) { m_fResetEmulator = fResetEmulator; }
+    void SetResetFunction(std::function<void()>&& fResetEmulator) { m_fResetEmulator = std::move(fResetEmulator); }
 
     /// <summary>
     /// Sets a function to call to pause the emulator.
     /// </summary>
-    void SetPauseFunction(std::function<void()>&& fPauseEmulator) { m_fPauseEmulator = fPauseEmulator; }
+    void SetPauseFunction(std::function<void()>&& fPauseEmulator) { m_fPauseEmulator = std::move(fPauseEmulator); }
 
     /// <summary>
     /// Sets a function to call to unpause the emulator.
     /// </summary>
-    void SetUnpauseFunction(std::function<void()>&& fUnpauseEmulator) { m_fUnpauseEmulator = fUnpauseEmulator; }
+    void SetUnpauseFunction(std::function<void()>&& fUnpauseEmulator) { m_fUnpauseEmulator = std::move(fUnpauseEmulator); }
 
     /// <summary>
     /// Sets a function to call to get the game title from the emulator.
     /// </summary>
-    void SetGetGameTitleFunction(std::function<void(char*)> fGetGameTitle) { m_fGetGameTitle = fGetGameTitle; }
+    void SetGetGameTitleFunction(std::function<void(char*)>&& fGetGameTitle) { m_fGetGameTitle = std::move(fGetGameTitle); }
 
     /// <summary>
     /// Sets a function to call to notify the emulator that the RetroAchievements menu has changed.
     /// </summary>
-    void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) { m_fRebuildMenu = fRebuildMenu; }
+    void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) { m_fRebuildMenu = std::move(fRebuildMenu); }
 
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;

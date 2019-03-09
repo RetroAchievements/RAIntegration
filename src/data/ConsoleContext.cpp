@@ -387,6 +387,27 @@ const std::vector<ConsoleContext::MemoryRegion> VirtualBoyConsoleContext::m_vMem
 
 // ===== ConsoleContext =====
 
+const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddress nAddress) const
+{
+    const auto& vRegions = MemoryRegions();
+    gsl::index nStart = 0;
+    gsl::index nEnd = vRegions.size() - 1;
+    while (nStart <= nEnd)
+    {
+        const gsl::index nMid = (nStart + nEnd) / 2;
+        const auto& pRegion = vRegions.at(nMid);
+        if (pRegion.StartAddress > nAddress)
+            nEnd = nMid - 1;
+        else if (pRegion.EndAddress < nAddress)
+            nStart = nMid + 1;
+        else
+            return &pRegion;
+    }
+
+    return nullptr;
+}
+
+
 std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
 {
     switch (nId)

@@ -9,13 +9,14 @@ namespace viewmodels {
 static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
 static _CONSTANT_VAR FONT_SIZE_TEXT = 22;
 
-const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"000000");
+const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"0");
 
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)
         return false;
 
+#ifndef RA_UTEST
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
@@ -43,6 +44,7 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     m_pSurface->WriteText(4, 0, nFontText, nColorBlack, sScoreSoFar);
 
     m_pSurface->SetOpacity(0.85);
+#endif
 
     m_bSurfaceStale = false;
     return true;

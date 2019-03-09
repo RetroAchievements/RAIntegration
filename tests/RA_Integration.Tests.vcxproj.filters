@@ -262,6 +262,12 @@
     <ClInclude Include="mocks\MockConfiguration.hh">
       <Filter>Tests\Mocks</Filter>
     </ClInclude>
+    <ClInclude Include="mocks\MockEmulatorContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockConsoleContext.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp">
       <Filter>Tests\UI</Filter>
     </ClCompile>
@@ -274,13 +280,17 @@
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="mocks\MockEmulatorContext.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

@@ -497,8 +497,9 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
         _RA_DoAchievementsFrame();
 
-        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
         Assert::AreEqual(std::wstring(L"Challenge Available: Title"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDescription());
@@ -518,7 +519,7 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
         _RA_DoAchievementsFrame();
 
-        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNull(pPopup);
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
@@ -538,8 +539,9 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled, 1U);
         _RA_DoAchievementsFrame();
 
-        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
         Assert::AreEqual(std::wstring(L"Leaderboard attempt canceled!"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
@@ -559,7 +561,7 @@ public:
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled, 1U);
         _RA_DoAchievementsFrame();
 
-        auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNull(pPopup);
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);

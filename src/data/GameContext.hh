@@ -117,9 +117,9 @@ public:
         return nullptr;
     }
 
-    void DeactivateLeaderboards();
+    void DeactivateLeaderboards() noexcept;
 
-    size_t LeaderboardCount() const { return m_vLeaderboards.size(); }
+    size_t LeaderboardCount() const noexcept { return m_vLeaderboards.size(); }
 
     /// <summary>
     /// Enumerates the leaderboard collection.

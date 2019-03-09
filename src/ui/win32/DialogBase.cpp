@@ -123,12 +123,22 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             {
                 case EN_KILLFOCUS:
                 {
-                    using BindingType = decltype(FindControlBinding({}));
-                    BindingType pControlBinding{};
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
                     GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
 
                     if (pControlBinding)
-                        pControlBinding->LostFocus();
+                        pControlBinding->OnLostFocus();
+                    return TRUE;
+                }
+
+                case CBN_SELCHANGE:
+                case EN_CHANGE:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+
+                    if (pControlBinding)
+                        pControlBinding->OnValueChanged();
                     return TRUE;
                 }
 
@@ -138,7 +148,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     // lostfocus logic is applied for the currently focused control before executing the command.
                     auto* pControlBinding = FindControlBinding(GetFocus());
                     if (pControlBinding)
-                        pControlBinding->LostFocus();
+                        pControlBinding->OnLostFocus();
 
                     GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
                     if (pControlBinding)

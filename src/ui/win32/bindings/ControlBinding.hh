@@ -17,7 +17,7 @@ public:
 
     ~ControlBinding() noexcept
     {
-        if (m_hWnd)
+        if (m_hWnd && m_pDialog)
             m_pDialog->RemoveControlBinding(m_hWnd);
     }
 
@@ -51,18 +51,23 @@ public:
     /// <summary>
     /// Called when the bound control loses keyboard focus.
     /// </summary>
-    GSL_SUPPRESS_F6 virtual void LostFocus() {}
+    GSL_SUPPRESS_F6 virtual void OnLostFocus() {}
     
     /// <summary>
     /// Called when the bound control's command is activated.
     /// </summary>
     GSL_SUPPRESS_F6 virtual void OnCommand() {}
 
+    /// <summary>
+    /// Called when the bound control's value changed.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnValueChanged() {}
+
 protected:
     HWND m_hWnd{};
 
 private:
-    DialogBase* m_pDialog{};
+    DialogBase* m_pDialog = nullptr;
 };
 
 } // namespace bindings

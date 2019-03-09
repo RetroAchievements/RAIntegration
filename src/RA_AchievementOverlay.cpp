@@ -91,7 +91,7 @@ void AchievementOverlay::Activate() noexcept
     }
 }
 
-void AchievementOverlay::Deactivate() noexcept
+void AchievementOverlay::Deactivate()
 {
     if (m_nTransitionState != TransitionState::Off && m_nTransitionState != TransitionState::Out)
     {
@@ -103,7 +103,7 @@ void AchievementOverlay::Deactivate() noexcept
 }
 
 //	Returns TRUE if we are ready to exit the overlay.
-BOOL AchievementOverlay::GoBack() noexcept
+BOOL AchievementOverlay::GoBack()
 {
     if (m_nPageStackPointer == 0)
     {
@@ -1384,7 +1384,7 @@ int* AchievementOverlay::GetActiveSelectedItem() const noexcept
     }
 }
 
-void AchievementOverlay::OnLoad_NewRom() noexcept
+void AchievementOverlay::OnLoad_NewRom()
 {
     m_nAchievementsSelectedItem = 0;
     m_nAchievementsScrollOffset = 0;

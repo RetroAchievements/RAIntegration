@@ -51,7 +51,7 @@ void WindowBinding::RestoreSizeAndPosition()
 {
     const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
     const auto* pMainWindowBinding = GetBindingFor(pEmulatorViewModel);
-    if (pMainWindowBinding == this)
+    if (!pMainWindowBinding || pMainWindowBinding == this)
         return;
 
     ra::ui::Position oWorkAreaPosition;

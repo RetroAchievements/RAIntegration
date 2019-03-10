@@ -253,7 +253,6 @@ void EmulatorContext::DisableHardcoreMode()
         RebuildMenu();
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-        pGameContext.DeactivateLeaderboards();
         pGameContext.RefreshUnlocks();
     }
 }
@@ -318,7 +317,7 @@ bool EmulatorContext::EnableHardcoreMode()
     return true;
 }
 
-std::string EmulatorContext::GetAppTitle(const std::string& sMessage) const
+std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
 {
     ra::StringBuilder builder;
     builder.Append(m_sClientName);
@@ -356,7 +355,7 @@ std::string EmulatorContext::GetAppTitle(const std::string& sMessage) const
         builder.Append("]");
     }
 
-    return builder.ToString();
+    return builder.ToWString();
 }
 
 std::string EmulatorContext::GetGameTitle() const

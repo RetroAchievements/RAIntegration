@@ -65,8 +65,32 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         RA_LOG_ERR("-- %s: JSON Parse Error encountered!", sApiName);
 
         pResponse.Result = ApiResult::Error;
-        pResponse.ErrorMessage =
-            ra::StringPrintf("%s (%zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
+
+        if (pDocument.GetParseError() == rapidjson::kParseErrorValueInvalid && pDocument.GetErrorOffset() == 0)
+        {
+            // server did not return JSON, check for HTML
+            if (!ra::StringStartsWith(httpResponse.Content(), "<"))
+            {
+                // not HTML, return first line of response as the error message
+                std::string sContent = httpResponse.Content();
+                const auto nIndex = sContent.find('\n');
+                if (nIndex != std::string::npos)
+                {
+                    sContent.resize(nIndex);
+                    ra::TrimLineEnding(sContent);
+                }
+
+                if (!sContent.empty())
+                    pResponse.ErrorMessage = sContent;
+            }
+        }
+
+        if (pResponse.ErrorMessage.empty())
+        {
+            pResponse.ErrorMessage =
+                ra::StringPrintf("JSON Parse Error: %s (at %zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
+        }
+
         return false;
     }
 

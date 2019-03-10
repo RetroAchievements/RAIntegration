@@ -748,7 +748,7 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
     return false;
 }
 
-void GameContext::DeactivateLeaderboards()
+void GameContext::DeactivateLeaderboards() noexcept
 {
     for (auto& pLeaderboard : m_vLeaderboards)
         pLeaderboard->SetActive(false);
@@ -756,7 +756,7 @@ void GameContext::DeactivateLeaderboards()
 
 void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const
 {
-    auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+    const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
     if (pLeaderboard == nullptr)
         return;
 

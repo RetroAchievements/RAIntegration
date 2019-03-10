@@ -869,21 +869,20 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 if (pDIS->itemID == -1)
                     break;
 
-                if (m_SearchResults.size() > 0)
+                if (!m_SearchResults.empty())
                 {
-                    TCHAR buffer[1024]{};
-
                     if (pDIS->itemID < 2)
                     {
+                        std::wstring sBuffer;
                         if (pDIS->itemID == 0)
                         {
                             try
                             {
                                 const std::string& sFirstLine = m_SearchResults.at(m_nPage).m_results.Summary();
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(sFirstLine).c_str());
+                                sBuffer = ra::Widen(sFirstLine);
                             } catch (const std::out_of_range& e)
                             {
-                                _stprintf_s(buffer, sizeof(buffer), _T("%s"), NativeStr(e.what()).c_str());
+                                sBuffer = ra::Widen(e.what());
                             }
                         }
                         else
@@ -891,18 +890,16 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             SetTextColor(pDIS->hDC, RGB(0, 100, 150));
                             const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
                             if (nMatches > MIN_RESULTS_TO_DUMP)
-                                _stprintf_s(buffer, sizeof(buffer),
-                                            _T("Found %u matches! (Displaying first %u results)"), nMatches,
-                                            MIN_RESULTS_TO_DUMP);
+                                sBuffer = ra::StringPrintf(L"Found %u matches! (Displaying first %u results)",
+                                                           nMatches, MIN_RESULTS_TO_DUMP);
                             else if (nMatches == 0)
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found *ZERO* matches!"));
+                                sBuffer = L"Found *ZERO* matches!";
                             else
-                                _stprintf_s(buffer, sizeof(buffer), _T("Found %u matches!"), nMatches);
+                                sBuffer = ra::StringPrintf(L"Found %u matches!", nMatches);
                         }
 
-                        DrawText(pDIS->hDC, buffer, _tcslen(buffer), &pDIS->rcItem,
-                                 DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-                        SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                        DrawTextW(pDIS->hDC, sBuffer.c_str(), sBuffer.length(), &pDIS->rcItem,
+                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
                     else
                     {
@@ -911,23 +908,18 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if (!currentSearch.m_results.GetMatchingAddress(pDIS->itemID - 2, result))
                             break;
 
+                        std::wstring sValue;
                         unsigned int nVal = 0;
-                        UpdateSearchResult(result, nVal, buffer);
-
+                        UpdateSearchResult(result, nVal, sValue);
                         const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(result.nAddress);
-                        if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-                        {
-                            std::ostringstream oss;
-                            oss << "   (" << pSavedNote->Note() << ")";
-                            _tcscat_s(buffer, NativeStr(oss.str()).c_str());
-                        }
 
+                        HBRUSH hBrush{};
                         COLORREF color{};
 
                         if (pDIS->itemState & ODS_SELECTED)
                         {
                             SetTextColor(pDIS->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-                            color = GetSysColor(COLOR_HIGHLIGHT);
+                            hBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
                         }
                         else if (SendMessage(GetDlgItem(hDlg, IDC_RA_RESULTS_HIGHLIGHT), BM_GETCHECK, 0, 0))
                         {
@@ -940,23 +932,85 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             }
                             else if (g_MemBookmarkDialog.BookmarkExists(result.nAddress))
                                 color = RGB(220, 255, 220); // Green if Bookmark is found.
-                            else if (g_MemoryDialog.Notes().FindCodeNote(result.nAddress) != nullptr)
+                            else if (pSavedNote != nullptr)
                                 color = RGB(220, 240, 255); // Blue if Code Note is found.
                             else if (currentSearch.WasModified(result.nAddress))
                                 color = RGB(240, 240, 240); // Grey if still valid, but has changed
                             else
-                                color = GetSysColor(COLOR_WINDOW);
+                                hBrush = GetSysColorBrush(COLOR_WINDOW);
                         }
                         else
-                            color = GetSysColor(COLOR_WINDOW);
+                        {
+                            SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
+                            hBrush = GetSysColorBrush(COLOR_WINDOW);
+                        }
 
-                        HBRUSH hBrush = CreateSolidBrush(color);
-                        FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
-                        DeleteObject(hBrush);
+                        if (hBrush)
+                        {
+                            FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
+                        }
+                        else
+                        {
+                            hBrush = CreateSolidBrush(color);
+                            FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
+                            DeleteObject(hBrush);
+                        }
 
-                        std::wstring sBufferWide = ra::Widen(buffer);
-                        DrawTextW(pDIS->hDC, sBufferWide.c_str(), sBufferWide.length(), &pDIS->rcItem,
-                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        RECT rcValue = pDIS->rcItem;
+                        std::wstring sAddress;
+                        if (g_MemManager.TotalBankSize() > 0x10000)
+                        {
+                            sAddress = ra::StringPrintf(L"0x%06x", result.nAddress);
+                            rcValue.left += 54;
+                        }
+                        else
+                        {
+                            sAddress = ra::StringPrintf(L"0x%04x", result.nAddress);
+                            rcValue.left += 44;
+                        }
+
+                        if (result.nSize == MemSize::Nibble_Lower)
+                        {
+                            sAddress.push_back('L');
+                            rcValue.left += 6;
+                        }
+                        else if (result.nSize == MemSize::Nibble_Upper)
+                        {
+                            sAddress.push_back('U');
+                            rcValue.left += 6;
+                        }
+
+                        DrawTextW(pDIS->hDC, sAddress.c_str(), sAddress.length(), &pDIS->rcItem,
+                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
+
+                        rcValue.right = rcValue.left + sValue.length() * 6;
+                        DrawTextW(pDIS->hDC, sValue.c_str(), sValue.length(), &rcValue,
+                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
+
+                        std::wstring sNote;
+                        if (pSavedNote && !pSavedNote->Note().empty())
+                        {
+                            sNote = ra::Widen(pSavedNote->Note());
+                        }
+                        else
+                        {
+                            const auto* pRegion = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().GetMemoryRegion(result.nAddress);
+                            if (pRegion)
+                            {
+                                sNote = ra::Widen(pRegion->Description);
+
+                                if (!(pDIS->itemState & ODS_SELECTED))
+                                    SetTextColor(pDIS->hDC, RGB(160, 160, 160));
+                            }
+                        }
+
+                        if (!sNote.empty())
+                        {
+                            RECT rcNote = pDIS->rcItem;
+                            rcNote.left = rcValue.right + 6;
+                            DrawTextW(pDIS->hDC, sNote.c_str(), sNote.length(), &rcNote,
+                                DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
+                        }
                     }
                 }
             }
@@ -1538,7 +1592,7 @@ void Dlg_Memory::OnLoad_NewRom()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     m_CodeNotes.ReloadFromWeb(pGameContext.GameId());
 
-    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), g_MemManager.NumMemoryBanks() != 0);
+    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), m_SearchResults.size() >= 2);
 
     if (pGameContext.GameId() == 0)
     {
@@ -1826,27 +1880,25 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
 }
 
 void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,
-                                    TCHAR (&buffer)[1024])
+                                    std::wstring& sBuffer)
 {
     nMemVal = g_MemManager.ActiveBankRAMRead(result.nAddress, result.nSize);
 
     switch (result.nSize)
     {
         case MemSize::ThirtyTwoBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%08x"), result.nAddress, nMemVal);
+            sBuffer = ra::StringPrintf(L"0x%08x", nMemVal);
             break;
         case MemSize::SixteenBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%04x"), result.nAddress, nMemVal);
+            sBuffer = ra::StringPrintf(L"0x%04x", nMemVal);
             break;
         default:
         case MemSize::EightBit:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06x: 0x%02x"), result.nAddress, nMemVal);
+            sBuffer = ra::StringPrintf(L"0x%02x", nMemVal);
             break;
         case MemSize::Nibble_Lower:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xL: 0x%01x"), result.nAddress, nMemVal);
-            break;
         case MemSize::Nibble_Upper:
-            _stprintf_s(buffer, sizeof(buffer), _T("0x%06xU: 0x%01x"), result.nAddress, nMemVal);
+            sBuffer = ra::StringPrintf(L"0x%01x", nMemVal);
             break;
     }
 }

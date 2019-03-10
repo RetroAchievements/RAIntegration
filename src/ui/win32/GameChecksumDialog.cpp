@@ -13,17 +13,17 @@ bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBas
     return (dynamic_cast<const ra::ui::viewmodels::GameChecksumViewModel*>(&vmViewModel) != nullptr);
 }
 
-void GameChecksumDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
+void GameChecksumDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
     auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(vmViewModel);
 
     GameChecksumDialog oDialog(vmGameChecksum);
-    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), this);
+    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), this, hParentWnd);
 }
 
 void GameChecksumDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
 {
-    ShowModal(oViewModel);
+    ShowModal(oViewModel, nullptr);
 }
 
 // ------------------------------------

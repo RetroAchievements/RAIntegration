@@ -55,7 +55,7 @@ public:
     /// Sets the detail message to display.
     /// </summary>
     void SetDetail(const std::wstring& sValue) { SetValue(DetailProperty, sValue); }
-    
+
     /// <summary>
     /// Sets the image to display.
     /// </summary>
@@ -68,11 +68,11 @@ public:
     /// Gets the image to display.
     /// </summary>
     const ra::ui::ImageReference& GetImage() const noexcept { return m_hImage; }
-    
+
     /// <summary>
     /// Begins the animation cycle.
     /// </summary>
-    void BeginAnimation()
+    void BeginAnimation() override
     {
         m_fAnimationProgress = 0.0;
 
@@ -85,11 +85,11 @@ public:
         SetRenderLocationY(m_nInitialY);
         SetRenderLocationYRelativePosition(RelativePosition::Far);
     }
-    
+
     /// <summary>
     /// Updates the image to render.
     /// </summary>
-    void UpdateRenderImage(double fElapsed) override;
+    bool UpdateRenderImage(double fElapsed) override;
     
     /// <summary>
     /// Causes the cached render image to be rebuilt.
@@ -99,7 +99,7 @@ public:
     /// <summary>
     /// Determines whether the animation cycle has started.
     /// </summary>
-    bool IsAnimationStarted() const noexcept
+    bool IsAnimationStarted() const noexcept override
     {
         return (m_fAnimationProgress >= 0.0);
     }
@@ -107,7 +107,7 @@ public:
     /// <summary>
     /// Determines whether the animation cycle has completed.
     /// </summary>
-    bool IsAnimationComplete() const noexcept
+    bool IsAnimationComplete() const noexcept override
     {
         return (m_fAnimationProgress >= TOTAL_ANIMATION_TIME);
     }

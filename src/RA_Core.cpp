@@ -13,7 +13,6 @@
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_GameTitle.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
@@ -39,7 +38,9 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\UnknownGameViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\win32\Desktop.hh"
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -66,6 +67,8 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
 
     // initialize global state
+    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+    pDesktop.SetMainHWnd(hMainHWND);
     g_RAMainWnd = hMainHWND;
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
@@ -189,43 +192,24 @@ API int CCONV _RA_Shutdown()
 API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
 {
     //	Returns true if we can go ahead and load the new rom.
-    int nResult = IDYES;
-
-    const char* sCurrentAction = bQuittingApp ? "quit now" : "load a new ROM";
-    const char* sNextAction = bQuittingApp ? "Are you sure?" : "Continue load?";
+    std::wstring sModifiedSet;
 
     if (g_pCoreAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Core Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
+        sModifiedSet = L"Core";
+    else if (g_pUnofficialAchievements->HasUnsavedChanges())
+        sModifiedSet = L"Unofficial";
+    else if (g_pLocalAchievements->HasUnsavedChanges())
+        sModifiedSet = L"Local";
+    else
+        return true;
 
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-    if (g_pUnofficialAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Unofficial Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
-
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-    if (g_pLocalAchievements->HasUnsavedChanges())
-    {
-        char buffer[1024];
-        sprintf_s(buffer, 1024,
-            "You have unsaved changes in the Local Achievements set.\n"
-            "If you %s you will lose these changes.\n"
-            "%s", sCurrentAction, sNextAction);
-
-        nResult = MessageBox(g_RAMainWnd, NativeStr(buffer).c_str(), TEXT("Warning"), MB_ICONWARNING | MB_YESNO);
-    }
-
-    return(nResult == IDYES);
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(bQuittingApp ? L"Are you sure that you want to exit?" : L"Continue load?");
+    vmMessageBox.SetMessage(ra::StringPrintf(L"You have unsaved changes in the %s achievements set. If you %s, you will lose these changes.",
+        sModifiedSet, bQuittingApp ? L"quit now" : L"load a new ROM"));
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    return (vmMessageBox.ShowModal() == ra::ui::DialogResult::Yes);
 }
 
 API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
@@ -276,8 +260,19 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
             if (nGameId == 0) // Unknown
             {
                 RA_LOG("Could not identify game with MD5 %s\n", sCurrentROMMD5.c_str());
-                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
-                Dlg_GameTitle::DoModalDialog(g_hThisDLLInst, g_RAMainWnd, sCurrentROMMD5, sEstimatedGameTitle, nGameId);
+
+                if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+                {
+                    auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+
+                    ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+                    vmUnknownGame.InitializeGameTitles();
+                    vmUnknownGame.SetChecksum(ra::Widen(sCurrentROMMD5));
+                    vmUnknownGame.SetNewGameName(ra::Widen(sEstimatedGameTitle));
+
+                    if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+                        nGameId = vmUnknownGame.GetSelectedGameId();
+                }
             }
             else
             {
@@ -421,6 +416,8 @@ API void CCONV _RA_OnReset()
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
     ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
@@ -748,8 +745,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (!pEmulatorContext.EnableHardcoreMode())
                     break;
             }
-
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
         }
         break;
 

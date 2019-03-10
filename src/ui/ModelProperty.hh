@@ -87,7 +87,7 @@ public:
     /// <remarks>Affects all existing instances where a value has not been set, not just new instances.</remarks>
     void SetDefaultValue(const T& tValue) noexcept(std::is_nothrow_copy_assignable_v<T>) { m_tDefaultValue = tValue; }
 
-    using ValueMap = std::unordered_map<int, T>;
+    using ValueMap = std::map<int, T>;
 
     struct ChangeArgs
     {

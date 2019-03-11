@@ -12,7 +12,7 @@ namespace ui {
 class ViewModelCollectionBase
 {
 protected:
-    ViewModelCollectionBase() noexcept {};
+    GSL_SUPPRESS_F6 ViewModelCollectionBase() = default;
 
 public:
     virtual ~ViewModelCollectionBase() noexcept
@@ -23,8 +23,8 @@ public:
 
     ViewModelCollectionBase(const ViewModelCollectionBase&) noexcept = delete;
     ViewModelCollectionBase& operator=(const ViewModelCollectionBase&) noexcept = delete;
-    ViewModelCollectionBase(const ViewModelCollectionBase&&) noexcept = delete;
-    ViewModelCollectionBase& operator=(const ViewModelCollectionBase&&) noexcept = delete;
+    GSL_SUPPRESS_F6 ViewModelCollectionBase(ViewModelCollectionBase&&) = default;
+    GSL_SUPPRESS_F6 ViewModelCollectionBase& operator=(ViewModelCollectionBase&&) = default;
 
     class NotifyTarget
     {
@@ -284,8 +284,6 @@ class ViewModelCollection : public ViewModelCollectionBase
     static_assert(std::is_base_of<ViewModelBase, T>{}, "T must be a subclass of ViewModelBase");
 
 public:
-    ViewModelCollection() noexcept = default;
-
     /// <summary>
     /// Adds an item to the end of the collection.
     /// </summary>

@@ -93,9 +93,6 @@
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_LeaderboardPopup.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Interface.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
@@ -252,6 +249,12 @@
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -301,9 +304,6 @@
     </ClInclude>
     <ClInclude Include="RA_md5factory.h">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_LeaderboardPopup.h">
-      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Interface.h">
       <Filter>Interface</Filter>
@@ -628,6 +628,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\UnknownGameDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\ScoreboardViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

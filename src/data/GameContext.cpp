@@ -25,13 +25,9 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\ScoreboardViewModel.hh"
 
 extern bool g_bRAMTamperedWith;
-
-#ifndef RA_UTEST
-#include "RA_LeaderboardPopup.h"
-extern LeaderboardPopup g_LeaderboardPopups;
-#endif
 
 namespace ra {
 namespace data {
@@ -785,7 +781,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     request.GameHash = GameHash();
     request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->ID()](const ra::api::SubmitLeaderboardEntry::Response& response)
     {
-        auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+        const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
 
         if (!response.Succeeded())
         {
@@ -800,14 +796,23 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         }
         else if (pLeaderboard)
         {
-            pLeaderboard->ClearRankInfo();
-            for (const auto& pEntry : response.TopEntries)
-                pLeaderboard->SubmitRankInfo(pEntry.Rank, pEntry.User, pEntry.Score, {});
-            pLeaderboard->SortRankInfo();
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
+            {
+                ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
+                vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
-#ifndef RA_UTEST
-            g_LeaderboardPopups.ShowScoreboard(pLeaderboard->ID());
-#endif
+                for (const auto& pEntry : response.TopEntries)
+                {
+                    auto& pEntryViewModel = vmScoreboard.Entries().Add();
+                    pEntryViewModel.SetRank(pEntry.Rank);
+                    pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
+                    pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(pEntry.Score)));
+                }
+
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
+                    pLeaderboard->ID(), std::move(vmScoreboard));
+            }
         }
     });
 }

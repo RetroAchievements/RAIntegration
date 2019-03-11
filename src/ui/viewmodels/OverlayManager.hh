@@ -2,6 +2,7 @@
 #define RA_UI_OVERLAY_MANAGER
 
 #include "PopupMessageViewModel.hh"
+#include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
 namespace ra {
@@ -77,7 +78,7 @@ public:
     }
 
     /// <summary>
-    /// Removes the score traacker associated to the specified leaderboard.
+    /// Removes the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
     void RemoveScoreTracker(int nLeaderboardId)
@@ -93,7 +94,7 @@ public:
     }
 
     /// <summary>
-    /// Gets the score traacker associated to the specified leaderboard.
+    /// Gets the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
     /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
@@ -109,15 +110,38 @@ public:
     }
 
     /// <summary>
+    /// Adds a scoreboard for a leaderboard.
+    /// </summary>
+    void QueueScoreboard(int nLeaderboardId, ScoreboardViewModel&& vmScoreboard);
+
+    /// <summary>
+    /// Gets the scoreboard associated to the specified leaderboard.
+    /// </summary>
+    /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the scoreboard.</param>
+    /// <returns>Requested scoreboard view model, <c>nullptr</c> if not found.</returns>
+    ScoreboardViewModel* GetScoreboard(int nLeaderboardId)
+    {
+        for (auto& pScoreboard : m_vScoreboards)
+        {
+            if (pScoreboard.GetPopupId() == nLeaderboardId)
+                return &pScoreboard;
+        }
+
+        return nullptr;
+    }
+
+    /// <summary>
     /// Clears all popups.
     /// </summary>
     void ClearPopups();
 
 private:
     void UpdateActiveMessage(double fElapsed);
+    void UpdateActiveScoreboard(double fElapsed);
 
     std::deque<PopupMessageViewModel> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
+    std::deque<ScoreboardViewModel> m_vScoreboards;
     std::atomic<int> m_nPopupId{ 0 };
 };
 

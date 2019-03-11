@@ -72,7 +72,6 @@
     <ClCompile Include="RA_Interface.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
-    <ClCompile Include="RA_LeaderboardPopup.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
     <ClCompile Include="RA_RichPresence.cpp" />
@@ -100,7 +99,9 @@
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
@@ -161,7 +162,6 @@
     <ClInclude Include="RA_Interface.h" />
     <ClInclude Include="RA_Json.h" />
     <ClInclude Include="RA_Leaderboard.h" />
-    <ClInclude Include="RA_LeaderboardPopup.h" />
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />
@@ -221,6 +221,7 @@
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\ScoreboardViewModel.hh" />
     <ClInclude Include="ui\viewmodels\ScoreTrackerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />

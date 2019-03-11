@@ -103,6 +103,11 @@ public:
         return HandleRequest<ra::api::FetchGameData>(request);
     }
 
+    FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept override
+    {
+        return HandleRequest<ra::api::FetchLeaderboardInfo>(request);
+    }
+
     // === other functions ===
 
     LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override

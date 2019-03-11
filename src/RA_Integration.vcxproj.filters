@@ -629,6 +629,9 @@
     <ClInclude Include="ui\win32\UnknownGameDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchLeaderboardInfo.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

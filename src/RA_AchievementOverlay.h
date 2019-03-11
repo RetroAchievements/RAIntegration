@@ -12,8 +12,6 @@ class LeaderboardExamine
 {
 public:
     void Initialize(const unsigned int nLBIDIn);
-    // static void CB_OnReceiveData( void* pRequestObject );
-    void OnReceiveData(const rapidjson::Document& doc);
 
 public:
     unsigned int m_nLBID;

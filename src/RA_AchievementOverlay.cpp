@@ -8,6 +8,8 @@
 
 #include "ra_math.h"
 
+#include "api\FetchLeaderboardInfo.hh"
+
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
@@ -1515,58 +1517,34 @@ void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
 
 void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
 {
-    m_bHasData = false;
-
     if (m_nLBID == nLBIDIn)
     {
-        //	Same ID again: keep existing data
-        m_bHasData = true;
+        // ID unchanged, do nothing
         return;
     }
 
     m_nLBID = nLBIDIn;
+    m_bHasData = false;
 
-    const unsigned int nOffset = 0; //	TBD
-    const unsigned int nCount = 10;
-
-    PostArgs args;
-    args['i'] = std::to_string(m_nLBID);
-    args['o'] = std::to_string(nOffset);
-    args['c'] = std::to_string(nCount);
-
-    RAWeb::CreateThreadedHTTPRequest(RequestLeaderboardInfo, args);
-}
-
-// static
-void LeaderboardExamine::OnReceiveData(const rapidjson::Document& doc)
-{
-    ASSERT(doc.HasMember("LeaderboardData"));
-    const auto& LBData{doc["LeaderboardData"]};
-
-    const auto nLBID{LBData["LBID"].GetUint()};
-    const auto nGameID{LBData["GameID"].GetUint()};
-    const auto sConsoleID{LBData["ConsoleID"].GetUint()};
-    const auto nLowerIsBetter{LBData["LowerIsBetter"].GetUint()};
-
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    RA_Leaderboard* pLB = pGameContext.FindLeaderboard(nLBID);
-    if (!pLB)
-        return;
-
-    const auto& Entries{LBData["Entries"]};
-    ASSERT(Entries.IsArray());
-    for (auto& NextLBData : Entries.GetArray())
+    ra::api::FetchLeaderboardInfo::Request request;
+    request.LeaderboardId = nLBIDIn;
+    request.FirstEntry = 1;
+    request.NumEntries = 10;
+    request.CallAsync([this, nLBIDIn](const ra::api::FetchLeaderboardInfo::Response& response)
     {
-        const auto nRank{NextLBData["Rank"].GetUint()};
-        const std::string& sUser{NextLBData["User"].GetString()};
-        const auto nScore{NextLBData["Score"].GetInt()};
-        const auto nDate{NextLBData["DateSubmitted"].GetUint()};
+        if (m_nLBID != nLBIDIn)
+            return;
 
-        RA_LOG("LB Entry: %u: %s earned %d at %u\n", nRank, sUser.c_str(), nScore, nDate);
-        pLB->SubmitRankInfo(nRank, sUser.c_str(), nScore, static_cast<time_t>(ra::to_signed(nDate)));
-    }
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nLBIDIn);
+        if (!pLeaderboard)
+            return;
 
-    m_bHasData = true;
+        for (const auto& pEntry : response.Entries)
+            pLeaderboard->SubmitRankInfo(pEntry.Rank, pEntry.User, pEntry.Score, pEntry.DateSubmitted);
+
+        m_bHasData = true;
+    });
 }
 
 //	Stubs for non-class based, indirect calling of these functions.

@@ -24,6 +24,7 @@ AwardAchievement::Response AwardAchievement::Request::Call() const noexcept { re
 SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const noexcept { return Server().SubmitLeaderboardEntry(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const noexcept { return Server().ResolveHash(*this); }
 FetchGameData::Response FetchGameData::Request::Call() const noexcept { return Server().FetchGameData(*this); }
+FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const noexcept { return Server().FetchLeaderboardInfo(*this); }
 LatestClient::Response LatestClient::Request::Call() const noexcept { return Server().LatestClient(*this); }
 FetchGamesList::Response FetchGamesList::Request::Call() const noexcept { return Server().FetchGamesList(*this); }
 SubmitNewTitle::Response SubmitNewTitle::Request::Call() const noexcept { return Server().SubmitNewTitle(*this); }

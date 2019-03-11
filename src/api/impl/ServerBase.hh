@@ -73,6 +73,12 @@ public:
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
+    FetchLeaderboardInfo::Response FetchLeaderboardInfo(_UNUSED const FetchLeaderboardInfo::Request& /*request*/) noexcept override
+    {
+        GSL_SUPPRESS_F6
+        return UnsupportedApi<FetchLeaderboardInfo::Response>(FetchLeaderboardInfo::Name());
+    }
+
     // === other functions ===
 
     LatestClient::Response LatestClient(_UNUSED const LatestClient::Request& /*request*/) noexcept override

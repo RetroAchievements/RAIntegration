@@ -74,6 +74,11 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             m_sClientName = "RAppleWin";
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
+
+        case RA_SCV:
+            m_sClientName = "RASCV";
+            _RA_SetConsoleID(ConsoleID::SuperCassetteVision);
+            break;
     }
 }
 

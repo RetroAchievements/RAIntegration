@@ -56,79 +56,78 @@ public:
 
     // === user functions ===
 
-    Login::Response Login(const Login::Request& request) noexcept override
+    Login::Response Login(const Login::Request& request) override
     {
         return HandleRequest<ra::api::Login>(request);
     }
 
-    Logout::Response Logout(const Logout::Request& request) noexcept override
+    Logout::Response Logout(const Logout::Request& request) override
     {
         return HandleRequest<ra::api::Logout>(request);
     }
 
-    StartSession::Response StartSession(const StartSession::Request& request) noexcept override
+    StartSession::Response StartSession(const StartSession::Request& request) override
     {
         return HandleRequest<ra::api::StartSession>(request);
     }
 
-    Ping::Response Ping(const Ping::Request& request) noexcept override
+    Ping::Response Ping(const Ping::Request& request) override
     {
         return HandleRequest<ra::api::Ping>(request);
     }
 
-    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept override
+    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override
     {
         return HandleRequest<ra::api::FetchUserUnlocks>(request);
     }
 
-    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) noexcept override
+    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override
     {
         return HandleRequest<ra::api::AwardAchievement>(request);
     }
 
-    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept override
+    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override
     {
         return HandleRequest<ra::api::SubmitLeaderboardEntry>(request);
     }
 
     // === game functions ===
 
-    ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override
+    ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override
     {
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
-    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override
+    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override
     {
         return HandleRequest<ra::api::FetchGameData>(request);
     }
 
-    FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept override
+    FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchLeaderboardInfo>(request);
     }
 
     // === other functions ===
 
-    LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override
+    LatestClient::Response LatestClient(const LatestClient::Request& request) override
     {
         return HandleRequest<ra::api::LatestClient>(request);
     }
 
-    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) noexcept override
+    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override
     {
         return HandleRequest<ra::api::FetchGamesList>(request);
     }
 
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept override
+    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override
     {
         return HandleRequest<ra::api::SubmitNewTitle>(request);
     }
 
 protected:
     template<typename TApi>
-    GSL_SUPPRESS_F6
-    inline auto HandleRequest(const ApiRequestBase& pRequest) const noexcept
+    inline auto HandleRequest(const ApiRequestBase& pRequest) const
     {
         typename TApi::Response response;
         std::string sApiName(TApi::Name());

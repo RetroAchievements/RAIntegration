@@ -11,9 +11,8 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response OfflineServer::Login(const Login::Request& request) noexcept
+Login::Response OfflineServer::Login(const Login::Request& request)
 {
-    
     Login::Response response;
     response.Result = ApiResult::Success;
     response.Username = request.Username;
@@ -21,14 +20,14 @@ Login::Response OfflineServer::Login(const Login::Request& request) noexcept
     return std::move(response);
 }
 
-Logout::Response OfflineServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
+Logout::Response OfflineServer::Logout(const Logout::Request&)
 {
     Logout::Response response;
     response.Result = ApiResult::Success;
     return std::move(response);
 }
 
-FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request) noexcept
+FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request)
 {
     FetchGameData::Response response;
     rapidjson::Document document;

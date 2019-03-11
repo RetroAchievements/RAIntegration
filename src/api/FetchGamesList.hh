@@ -31,7 +31,7 @@ public:
 
         using Callback = std::function<void(const Response& response)>;
 
-        Response Call() const noexcept;
+        Response Call() const;
 
         void CallAsync(Callback&& callback) const
         {

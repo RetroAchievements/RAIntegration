@@ -8,7 +8,7 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response DisconnectedServer::Login(const Login::Request& request) noexcept
+Login::Response DisconnectedServer::Login(const Login::Request& request)
 {
     // use the normal ServerApi to attempt to connect
     auto serverApi = std::make_unique<ConnectedServer>(m_sHost);
@@ -22,7 +22,7 @@ Login::Response DisconnectedServer::Login(const Login::Request& request) noexcep
     return response;
 }
 
-LatestClient::Response DisconnectedServer::LatestClient(const LatestClient::Request& request) noexcept
+LatestClient::Response DisconnectedServer::LatestClient(const LatestClient::Request& request)
 {
     // LatestClient call doesn't require being logged in. Dispatch to the ConnectedServer::LatestClient method.
     ConnectedServer serverApi(m_sHost);

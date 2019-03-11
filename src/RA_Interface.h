@@ -95,6 +95,8 @@ enum ConsoleID
     Atari7800 = 51,
     X68K = 52,
     WonderSwan = 53,
+    CassetteVision = 54,
+    SuperCassetteVision = 55,
 
     NumConsoleIDs
 };

@@ -69,7 +69,7 @@ public:
     /// <summary>
     /// Adds a score tracker for a leaderboard.
     /// </summary>
-    ScoreTrackerViewModel& AddScoreTracker(int nLeaderboardId)
+    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId)
     {
         auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
         pScoreTracker->SetPopupId(nLeaderboardId);
@@ -81,11 +81,11 @@ public:
     /// Removes the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
-    void RemoveScoreTracker(int nLeaderboardId)
+    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
     {
         for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
         {
-            if ((*pIter)->GetPopupId() == nLeaderboardId)
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId)
             {
                 m_vScoreTrackers.erase(pIter);
                 break;
@@ -98,11 +98,11 @@ public:
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
     /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
-    ScoreTrackerViewModel* GetScoreTracker(int nLeaderboardId) noexcept
+    ScoreTrackerViewModel* GetScoreTracker(ra::LeaderboardID nLeaderboardId) noexcept
     {
         for (auto& pTracker : m_vScoreTrackers)
         {
-            if (pTracker->GetPopupId() == nLeaderboardId)
+            if (ra::to_unsigned(pTracker->GetPopupId()) == nLeaderboardId)
                 return pTracker.get();
         }
 
@@ -112,18 +112,18 @@ public:
     /// <summary>
     /// Adds a scoreboard for a leaderboard.
     /// </summary>
-    void QueueScoreboard(int nLeaderboardId, ScoreboardViewModel&& vmScoreboard);
+    void QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard);
 
     /// <summary>
     /// Gets the scoreboard associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the scoreboard.</param>
     /// <returns>Requested scoreboard view model, <c>nullptr</c> if not found.</returns>
-    ScoreboardViewModel* GetScoreboard(int nLeaderboardId)
+    ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId)
     {
         for (auto& pScoreboard : m_vScoreboards)
         {
-            if (pScoreboard.GetPopupId() == nLeaderboardId)
+            if (ra::to_unsigned(pScoreboard.GetPopupId()) == nLeaderboardId)
                 return &pScoreboard;
         }
 

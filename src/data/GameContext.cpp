@@ -802,12 +802,17 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
                 ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
+                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+
                 for (const auto& pEntry : response.TopEntries)
                 {
                     auto& pEntryViewModel = vmScoreboard.Entries().Add();
                     pEntryViewModel.SetRank(pEntry.Rank);
-                    pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
                     pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(pEntry.Score)));
+                    pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
+
+                    if (pEntry.User == pUserName)
+                        pEntryViewModel.SetHighlighted(true);
                 }
 
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(

@@ -6,6 +6,11 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
+const IntModelProperty PopupViewModelBase::RenderLocationXProperty("PopupViewModelBase", "RenderLocationX", 0);
+const IntModelProperty PopupViewModelBase::RenderLocationYProperty("PopupViewModelBase", "RenderLocationY", 0);
+const IntModelProperty PopupViewModelBase::RenderLocationXRelativePositionProperty("PopupViewModelBase", "RenderLocationXRelativePosition", ra::etoi(RelativePosition::Near));
+const IntModelProperty PopupViewModelBase::RenderLocationYRelativePositionProperty("PopupViewModelBase", "RenderLocationYRelativePosition", ra::etoi(RelativePosition::Near));
+
 int PopupViewModelBase::GetFadeOffset(double fAnimationProgress, double fTotalAnimationTime, double fInOutTime, int nInitialOffset, int nTargetOffset)
 {
     int nNewOffset = 0;

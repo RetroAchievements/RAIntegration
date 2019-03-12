@@ -1,5 +1,7 @@
 #include "ScoreboardViewModel.hh"
 
+#include "RA_StringUtils.h"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {

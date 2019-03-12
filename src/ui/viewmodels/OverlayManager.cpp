@@ -8,11 +8,6 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const IntModelProperty PopupViewModelBase::RenderLocationXProperty("PopupViewModelBase", "RenderLocationX", 0);
-const IntModelProperty PopupViewModelBase::RenderLocationYProperty("PopupViewModelBase", "RenderLocationY", 0);
-const IntModelProperty PopupViewModelBase::RenderLocationXRelativePositionProperty("PopupViewModelBase", "RenderLocationXRelativePosition", ra::etoi(RelativePosition::Near));
-const IntModelProperty PopupViewModelBase::RenderLocationYRelativePositionProperty("PopupViewModelBase", "RenderLocationYRelativePosition", ra::etoi(RelativePosition::Near));
-
 void OverlayManager::Update(double fElapsed)
 {
     if (!m_vPopupMessages.empty())
@@ -92,7 +87,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
     }
 }
 
-void OverlayManager::QueueScoreboard(int nLeaderboardId, ScoreboardViewModel&& vmScoreboard)
+void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard)
 {
     vmScoreboard.SetPopupId(nLeaderboardId);
     m_vScoreboards.push_back(std::move(vmScoreboard));

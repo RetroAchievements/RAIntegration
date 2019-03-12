@@ -119,10 +119,8 @@ public:
         void SetHighlighted(bool bValue) { SetValue(IsHighlightedProperty, bValue); }
     };
 
-    ViewModelCollection<EntryViewModel>& Entries() noexcept
-    {
-        return m_vEntries;
-    }
+    ViewModelCollection<EntryViewModel>& Entries() noexcept { return m_vEntries; }
+    const ViewModelCollection<EntryViewModel>& Entries() const noexcept { return m_vEntries; }
 
 private:
     ViewModelCollection<EntryViewModel> m_vEntries;

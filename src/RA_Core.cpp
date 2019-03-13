@@ -267,8 +267,10 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
 
                     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
                     vmUnknownGame.InitializeGameTitles();
+                    vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
                     vmUnknownGame.SetChecksum(ra::Widen(sCurrentROMMD5));
-                    vmUnknownGame.SetNewGameName(ra::Widen(sEstimatedGameTitle));
+                    vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+                    vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
 
                     if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
                         nGameId = vmUnknownGame.GetSelectedGameId();

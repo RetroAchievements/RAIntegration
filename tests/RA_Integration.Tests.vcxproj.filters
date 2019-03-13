@@ -293,4 +293,9 @@
   <ItemGroup>
     <None Include="base.props" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockClipboard.hh">
+      <Filter>Tests\Mocks</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

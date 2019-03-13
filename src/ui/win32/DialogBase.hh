@@ -106,6 +106,11 @@ protected:
     /// <param name="oNewPosition">The new size of the client area.</param>
     virtual void OnSize(_In_ const ra::ui::Size& oNewSize);
 
+    /// <summary>
+    /// Sets the specified <see cref="DialogResult"/> for the view model and closes the window.
+    /// </summary>
+    void SetDialogResult(DialogResult nResult);
+
     ra::ui::win32::bindings::WindowBinding m_bindWindow;
 
     ra::ui::WindowViewModelBase& m_vmWindow;

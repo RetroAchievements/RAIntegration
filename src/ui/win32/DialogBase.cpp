@@ -217,7 +217,7 @@ void DialogBase::SetDialogResult(DialogResult nResult)
     m_vmWindow.SetDialogResult(nResult);
 
     if (m_bModal)
-        EndDialog(m_hWnd, IDOK);
+        EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
     else
         DestroyWindow(m_hWnd);
 }

@@ -79,7 +79,7 @@ public:
     void CopyChecksumToClipboard() const;
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the new game name.
+    /// The <see cref="ModelProperty" /> for the game name provided by the emulator.
     /// </summary>
     static const StringModelProperty EstimatedGameNameProperty;
 
@@ -94,7 +94,7 @@ public:
     void SetEstimatedGameName(const std::wstring& sValue) { SetValue(EstimatedGameNameProperty, sValue); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the new game name.
+    /// The <see cref="ModelProperty" /> for the system name.
     /// </summary>
     static const StringModelProperty SystemNameProperty;
 

@@ -79,6 +79,7 @@ bool UnknownGameViewModel::Associate()
     }
     else
     {
+        request.GameId = nGameId;
         request.GameName = m_vGameTitles.GetLabelForId(nGameId);
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -92,6 +93,7 @@ bool UnknownGameViewModel::Associate()
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
     request.ConsoleId = pConsoleContext.Id();
     request.Hash = ra::Narrow(GetChecksum());
+    request.Description = GetEstimatedGameName();
 
     auto response = request.Call();
     if (response.Succeeded())

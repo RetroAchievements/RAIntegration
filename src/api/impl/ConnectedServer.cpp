@@ -642,6 +642,12 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
     AppendUrlParam(sPostData, "m", request.Hash);
     AppendUrlParam(sPostData, "i", ra::Narrow(request.GameName));
 
+    if (request.GameId)
+        AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+
+    if (!request.Description.empty())
+        AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
+
     if (DoRequest(m_sHost, SubmitNewTitle::Name(), "submitgametitle", sPostData, response, document))
     {
         if (!document.HasMember("Response"))

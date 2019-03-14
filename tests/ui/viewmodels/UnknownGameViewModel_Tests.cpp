@@ -146,6 +146,7 @@ public:
         vmUnknownGame.MockGameTitles();
         vmUnknownGame.SetSelectedGameId(40);
         vmUnknownGame.SetChecksum(L"CHECKSUM");
+        vmUnknownGame.SetEstimatedGameName(L"GAME40");
 
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
@@ -159,6 +160,8 @@ public:
             Assert::AreEqual(41U, request.ConsoleId);
             Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
             Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
+            Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
+            Assert::AreEqual(40U, request.GameId);
 
             response.Result = ra::api::ApiResult::Success;
             response.GameId = 40U;
@@ -195,6 +198,7 @@ public:
         vmUnknownGame.MockGameTitles();
         vmUnknownGame.SetNewGameName(L"Game 96");
         vmUnknownGame.SetChecksum(L"CHECKSUM");
+        vmUnknownGame.SetEstimatedGameName(L"GAME96");
 
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
@@ -208,6 +212,43 @@ public:
             Assert::AreEqual(34U, request.ConsoleId);
             Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
             Assert::AreEqual(std::wstring(L"Game 96"), request.GameName);
+            Assert::AreEqual(std::wstring(L"GAME96"), request.Description);
+            Assert::AreEqual(0U, request.GameId);
+
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 102U;
+
+            return true;
+        });
+
+        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::AreEqual(102, vmUnknownGame.GetSelectedGameId());
+    }
+
+    TEST_METHOD(TestAssociateNewTrimmed)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::VIC20);
+        vmUnknownGame.MockGameTitles();
+        vmUnknownGame.SetNewGameName(L"  Game 96  ");
+        vmUnknownGame.SetChecksum(L"CHECKSUM");
+        vmUnknownGame.SetEstimatedGameName(L"GAME96");
+
+        // name should be trimmed in both the dialog and the request
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Are you sure you want to create a new entry for 'Game 96'?"), vmMessageBox.GetHeader());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
+        (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
+        {
+            Assert::AreEqual(34U, request.ConsoleId);
+            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
+            Assert::AreEqual(std::wstring(L"Game 96"), request.GameName);
+            Assert::AreEqual(std::wstring(L"GAME96"), request.Description);
+            Assert::AreEqual(0U, request.GameId);
 
             response.Result = ra::api::ApiResult::Success;
             response.GameId = 102U;

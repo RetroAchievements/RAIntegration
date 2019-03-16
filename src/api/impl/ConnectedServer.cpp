@@ -496,6 +496,71 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
     return std::move(response);
 }
 
+FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept
+{
+    FetchLeaderboardInfo::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
+    AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
+    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+
+    if (DoRequest(m_sHost, FetchGameData::Name(), "lbinfo", sPostData, response, document))
+    {
+        if (!document.HasMember("LeaderboardData"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "LeaderboardData");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& LeaderboardData = document["LeaderboardData"];
+
+            GetRequiredJsonField(response.GameId, LeaderboardData, "GameID", response);
+            GetRequiredJsonField(response.ConsoleId, LeaderboardData, "ConsoleID", response);
+            unsigned int nLowerIsBetter;
+            GetRequiredJsonField(nLowerIsBetter, LeaderboardData, "LowerIsBetter", response);
+            response.LowerIsBetter = (nLowerIsBetter != 0);
+
+            if (!LeaderboardData.HasMember("Entries"))
+            {
+                response.Result = ApiResult::Error;
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Entries");
+            }
+            else
+            {
+                const auto& pEntries = LeaderboardData["Entries"];
+                if (!pEntries.IsArray())
+                {
+                    response.Result = ApiResult::Error;
+                    response.ErrorMessage = ra::StringPrintf("%s not an array", "Entries");
+                }
+                else
+                {
+                    const auto& pEntriesArray = pEntries.GetArray();
+                    response.Entries.reserve(pEntriesArray.Size());
+                    for (const auto& pEntry : pEntriesArray)
+                    {
+                        FetchLeaderboardInfo::Response::Entry entry;
+                        GetRequiredJsonField(entry.Rank, pEntry, "Rank", response);
+                        GetRequiredJsonField(entry.User, pEntry, "User", response);
+                        GetRequiredJsonField(entry.Score, pEntry, "Score", response);
+                        unsigned int nTime;
+                        GetRequiredJsonField(nTime, pEntry, "DateSubmitted", response);
+                        entry.DateSubmitted = nTime;
+                        response.Entries.emplace_back(entry);
+                    }
+                }
+            }
+        }
+    }
+
+    return std::move(response);
+}
+
 void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
 {
     GetRequiredJsonField(response.Title, PatchData, "Title", response);

@@ -21,7 +21,6 @@ enum RequestType
     RequestNews,
     RequestRichPresence,
     RequestAchievementInfo,
-    RequestLeaderboardInfo,
     RequestCodeNotes,
     RequestFriendList,
     RequestBadgeIter,

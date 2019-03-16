@@ -637,13 +637,6 @@ void RA_Shutdown()
     _RA_DoAchievementsFrame = nullptr;
     _RA_InstallSharedFunctions = nullptr;
 
-    _RA_GameIsActive = nullptr;
-    _RA_CauseUnpause = nullptr;
-    _RA_CausePause = nullptr;
-    _RA_RebuildMenu = nullptr;
-    _RA_GetEstimatedGameTitle = nullptr;
-    _RA_ResetEmulation = nullptr;
-    _RA_LoadROM = nullptr;
     _RA_SetConsoleID = nullptr;
     _RA_HardcoreModeIsActive = nullptr;
     _RA_WarnDisableHardcore = nullptr;

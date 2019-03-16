@@ -368,6 +368,10 @@ public:
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
+        auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        pLeaderboard.SetActive(true);
+        Assert::IsTrue(pLeaderboard.IsActive());
+
         bool bUnlocksRequested = false;
         emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
         {
@@ -380,11 +384,17 @@ public:
 
         emulator.DisableHardcoreMode();
 
+        // ensure mode was deactivated
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
 
+        // deactivating hardcore mode should disable leaderboards
+        Assert::IsFalse(pLeaderboard.IsActive());
+
+        // deactivating hardcore mode should request non-hardcore unlocks
         emulator.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(bUnlocksRequested);
 
+        // deactivating hardcore mode should not reset the emulator
         Assert::IsFalse(bWasReset);
     }
 
@@ -423,6 +433,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
@@ -440,16 +451,28 @@ public:
             return true;
         });
 
+        auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        Assert::IsFalse(pLeaderboard.IsActive());
+
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
+        // ensure hardcore mode was enabled
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+
+        // ensure prompt was shown
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
 
+        // enabling hardcore mode should enable leaderboards
+        Assert::IsTrue(pLeaderboard.IsActive());
+
+        // enabling hardcore mode should request hardcore unlocks
         emulator.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(bUnlocksRequested);
+
+        // enabling hardcore mode should reset the emulator
         Assert::IsTrue(bWasReset);
     }
 

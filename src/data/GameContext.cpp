@@ -147,12 +147,7 @@ void GameContext::LoadGame(unsigned int nGameId)
         pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
     }
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
-    {
-        for (auto& pLeaderboard : m_vLeaderboards)
-            pLeaderboard->SetActive(true);
-    }
+    ActivateLeaderboards();
 
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;
@@ -748,6 +743,16 @@ void GameContext::DeactivateLeaderboards() noexcept
 {
     for (auto& pLeaderboard : m_vLeaderboards)
         pLeaderboard->SetActive(false);
+}
+
+void GameContext::ActivateLeaderboards() noexcept
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+            pLeaderboard->SetActive(true);
+    }
 }
 
 void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const

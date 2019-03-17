@@ -19,7 +19,7 @@ class ComboBoxBinding : public ControlBinding, protected ViewModelCollectionBase
 public:
     explicit ComboBoxBinding(ViewModelBase& vmViewModel) noexcept : ControlBinding(vmViewModel) {}
 
-    ~ComboBoxBinding() noexcept
+    GSL_SUPPRESS_F6 ~ComboBoxBinding() noexcept
     {
         if (m_pViewModelCollection)
             m_pViewModelCollection->RemoveNotifyTarget(*this);

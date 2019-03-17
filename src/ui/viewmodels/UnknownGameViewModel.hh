@@ -21,6 +21,11 @@ public:
         ra::data::AsyncObject::BeginDestruction();
     }
 
+    UnknownGameViewModel(const UnknownGameViewModel&) noexcept = delete;
+    UnknownGameViewModel& operator=(const UnknownGameViewModel&) noexcept = delete;
+    UnknownGameViewModel(UnknownGameViewModel&&) noexcept = delete;
+    UnknownGameViewModel& operator=(UnknownGameViewModel&&) noexcept = delete;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected game.
     /// </summary>

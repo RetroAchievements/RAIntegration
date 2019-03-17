@@ -2,6 +2,8 @@
 #define RA_DATA_ASYNCOBJECT_HH
 #pragma once
 
+#include "ra_fwd.h"
+
 namespace ra {
 namespace data {
 
@@ -33,7 +35,7 @@ private:
     friend class AsyncObject;
     std::mutex m_pMutex;
 
-    void SetDestroyed() noexcept
+    GSL_SUPPRESS_F6 void SetDestroyed() noexcept
     {
         // immediately mark as destroying
         m_bDestroying = true;
@@ -52,7 +54,7 @@ private:
 class AsyncKeepAlive
 {
 public:
-    AsyncKeepAlive(const std::shared_ptr<AsyncHandle>& pAsyncHandle) noexcept : m_pLock(pAsyncHandle->m_pMutex) {}
+    AsyncKeepAlive(AsyncHandle& pAsyncHandle) : m_pLock(pAsyncHandle.m_pMutex) {}
 
 private:
     std::lock_guard<std::mutex> m_pLock;
@@ -63,7 +65,7 @@ private:
 /// </summary>
 /// <example>
 ///     run_async([this, asyncHandle = CreateAsyncHandle()]{
-///         AsyncKeepAlive keepAlive(asyncHandle); // prevents destroying the object while we're in the callback
+///         AsyncKeepAlive keepAlive(*asyncHandle); // prevents destroying the object while we're in the callback
 ///         if (asyncHandle->IsDestroyed())
 ///             return;
 ///
@@ -73,11 +75,18 @@ private:
 class AsyncObject
 {
 public:
+    AsyncObject() noexcept = default;
+
     virtual ~AsyncObject() noexcept
     {
         // subclass destructor should have called BeginDestruction, which ensures this is set to nullptr.
-        Expects(m_pAsyncHandle == nullptr);
+        assert(m_pAsyncHandle == nullptr);
     }
+
+    AsyncObject(const AsyncObject&) noexcept = default;
+    AsyncObject& operator=(const AsyncObject&) noexcept = default;
+    AsyncObject(AsyncObject&&) noexcept = default;
+    AsyncObject& operator=(AsyncObject&&) noexcept = default;
 
 protected:    
     /// <summary>
@@ -93,7 +102,7 @@ protected:
             m_pAsyncHandle.reset();
         }
 
-        Ensures(m_pAsyncHandle == nullptr);
+        assert(m_pAsyncHandle == nullptr);
     }
         
     /// <summary>
@@ -116,7 +125,7 @@ protected:
     class LockGuard
     {
     public:
-        LockGuard(AsyncObject& pAsyncObject) noexcept : m_pLock(pAsyncObject.CreateAsyncHandle()->m_pMutex) {}
+        LockGuard(AsyncObject& pAsyncObject) : m_pLock(pAsyncObject.CreateAsyncHandle()->m_pMutex) {}
 
     private:
         std::lock_guard<std::mutex> m_pLock;

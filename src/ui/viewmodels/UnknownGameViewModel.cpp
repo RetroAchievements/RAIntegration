@@ -35,7 +35,7 @@ void UnknownGameViewModel::InitializeGameTitles()
 
     request.CallAsync([this, pAsyncHandle = CreateAsyncHandle()](const ra::api::FetchGamesList::Response& response)
     {
-        ra::data::AsyncKeepAlive pKeepAlive(pAsyncHandle);
+        ra::data::AsyncKeepAlive pKeepAlive(*pAsyncHandle);
         if (pAsyncHandle->IsDestroyed())
             return;
 

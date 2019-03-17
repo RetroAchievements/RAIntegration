@@ -17,7 +17,7 @@ protected:
     ViewModelCollectionBase() noexcept {};
 
 public:
-    virtual ~ViewModelCollectionBase() noexcept
+    GSL_SUPPRESS_F6 ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();
@@ -27,8 +27,8 @@ public:
 
     ViewModelCollectionBase(const ViewModelCollectionBase&) noexcept = delete;
     ViewModelCollectionBase& operator=(const ViewModelCollectionBase&) noexcept = delete;
-    ViewModelCollectionBase(const ViewModelCollectionBase&&) noexcept = delete;
-    ViewModelCollectionBase& operator=(const ViewModelCollectionBase&&) noexcept = delete;
+    ViewModelCollectionBase(ViewModelCollectionBase&&) noexcept = delete;
+    ViewModelCollectionBase& operator=(ViewModelCollectionBase&&) noexcept = delete;
 
     class NotifyTarget
     {
@@ -59,22 +59,22 @@ public:
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
+    void AddNotifyTarget(NotifyTarget& pTarget)
     {
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
                 StartWatching();
 
-            GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget);
+            m_vNotifyTargets.insert(&pTarget);
         }
     }
 
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
+    void RemoveNotifyTarget(NotifyTarget& pTarget)
     {
         if (!m_vNotifyTargets.empty())
         {
-            GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+            m_vNotifyTargets.erase(&pTarget);
 
             if (m_vNotifyTargets.empty())
                 StopWatching();
@@ -89,7 +89,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
     /// </summary>
-    void Freeze() noexcept
+    void Freeze()
     {
         if (!m_bFrozen)
         {
@@ -165,9 +165,9 @@ protected:
 
     bool IsWatching() const noexcept { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
-    void StartWatching() noexcept;
+    void StartWatching();
 
-    void StopWatching() noexcept;
+    void StopWatching();
 
     ViewModelBase* GetViewModelAt(gsl::index nIndex)
     {

@@ -7,7 +7,7 @@ ViewModelBase& ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmVie
 {
     assert(!IsFrozen());
 
-    ViewModelBase* pViewModel;
+    ViewModelBase* pViewModel = nullptr;
     gsl::index nIndex = -1;
     {
         LockGuard guard(*this);
@@ -69,14 +69,14 @@ void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
     }
 }
 
-void ViewModelCollectionBase::StartWatching() noexcept
+void ViewModelCollectionBase::StartWatching()
 {
     LockGuard guard(*this);
     for (auto& pItem : m_vItems)
         pItem.StartWatching();
 }
 
-void ViewModelCollectionBase::StopWatching() noexcept
+void ViewModelCollectionBase::StopWatching()
 {
     LockGuard guard(*this);
     for (auto& pItem : m_vItems)

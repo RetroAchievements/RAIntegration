@@ -322,6 +322,25 @@ const std::vector<ConsoleContext::MemoryRegion> PCEngineConsoleContext::m_vMemor
     { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // normally $2000-$3FFF
 };
 
+// ===== Super Cassette Vision =====
+
+class SuperCassetteVisionConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 SuperCassetteVisionConsoleContext() noexcept : ConsoleContext(ConsoleID::SuperCassetteVision, L"Super Cassette Vision") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> SuperCassetteVisionConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::VideoRAM, "Video RAM" }, // normally $2000-$3FFF
+    { 0x002000U, 0x00207FU, ConsoleContext::AddressType::SystemRAM, "CPU RAM" }, // normally $FF80-$FFFF
+};
+
 // ===== SG-1000 =====
 
 class SG1000ConsoleContext : public ConsoleContext
@@ -539,7 +558,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<SuperNESConsoleContext>();
 
         case ConsoleID::SuperCassetteVision:
-            return std::make_unique<ConsoleContext>(ConsoleID::SuperCassetteVision, L"Super Cassette Vision");
+            return std::make_unique<SuperCassetteVisionConsoleContext>();
 
         case ConsoleID::ThreeDO:
             return std::make_unique<ConsoleContext>(nId, L"3D0");

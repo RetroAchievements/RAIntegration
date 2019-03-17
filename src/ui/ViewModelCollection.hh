@@ -4,25 +4,21 @@
 
 #include "ViewModelBase.hh"
 
-#include "data\AsyncObject.hh"
-
 #include "ra_utility.h"
 
 namespace ra {
 namespace ui {
 
-class ViewModelCollectionBase : protected ra::data::AsyncObject
+class ViewModelCollectionBase
 {
 protected:
     ViewModelCollectionBase() noexcept {};
 
 public:
-    GSL_SUPPRESS_F6 ~ViewModelCollectionBase() noexcept
+    ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();
-
-        BeginDestruction();
     }
 
     ViewModelCollectionBase(const ViewModelCollectionBase&) noexcept = delete;
@@ -89,7 +85,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
     /// </summary>
-    void Freeze()
+    void Freeze() noexcept
     {
         if (!m_bFrozen)
         {
@@ -165,9 +161,9 @@ protected:
 
     bool IsWatching() const noexcept { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
-    void StartWatching();
+    void StartWatching() noexcept;
 
-    void StopWatching();
+    void StopWatching() noexcept;
 
     ViewModelBase* GetViewModelAt(gsl::index nIndex)
     {

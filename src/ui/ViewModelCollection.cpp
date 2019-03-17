@@ -7,32 +7,22 @@ ViewModelBase& ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmVie
 {
     assert(!IsFrozen());
 
-    ViewModelBase* pViewModel = nullptr;
-    gsl::index nIndex = -1;
-    {
-        LockGuard guard(*this);
-        auto& pItem = m_vItems.emplace_back(*this, m_vItems.size(), std::move(vmViewModel));
-        pViewModel = &pItem.ViewModel();
+    auto& pItem = m_vItems.emplace_back(*this, m_vItems.size(), std::move(vmViewModel));
 
-        if (IsWatching())
-        {
-            pItem.StartWatching();
-            nIndex = pItem.Index();
-        }
-    }
-
-    if (nIndex != -1)
+    if (IsWatching())
     {
+        pItem.StartWatching();
+
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
         {
             Expects(target != nullptr);
-            target->OnViewModelAdded(nIndex);
+            target->OnViewModelAdded(pItem.Index());
         }
     }
 
-    return *pViewModel;
+    return pItem.ViewModel();
 }
 
 void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
@@ -41,20 +31,14 @@ void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
     {
         assert(!IsFrozen());
 
-        {
-            LockGuard guard(*this);
-            if (ra::to_unsigned(nIndex) >= m_vItems.size())
-                return;
+        auto pIter = m_vItems.begin() + nIndex;
+        if (IsWatching())
+            pIter->StopWatching();
 
-            auto pIter = m_vItems.begin() + nIndex;
-            if (IsWatching())
-                pIter->StopWatching();
+        pIter = m_vItems.erase(pIter);
 
-            pIter = m_vItems.erase(pIter);
-
-            for (; pIter != m_vItems.end(); ++pIter)
-                pIter->DecrementIndex();
-        }
+        for (; pIter != m_vItems.end(); ++pIter)
+            pIter->DecrementIndex();
 
         if (IsWatching())
         {
@@ -69,16 +53,14 @@ void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
     }
 }
 
-void ViewModelCollectionBase::StartWatching()
+void ViewModelCollectionBase::StartWatching() noexcept
 {
-    LockGuard guard(*this);
     for (auto& pItem : m_vItems)
         pItem.StartWatching();
 }
 
-void ViewModelCollectionBase::StopWatching()
+void ViewModelCollectionBase::StopWatching() noexcept
 {
-    LockGuard guard(*this);
     for (auto& pItem : m_vItems)
         pItem.StopWatching();
 }

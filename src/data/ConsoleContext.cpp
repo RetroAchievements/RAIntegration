@@ -439,6 +439,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
         case ConsoleID::C64:
             return std::make_unique<ConsoleContext>(nId, L"Commodore 64");
 
+        case ConsoleID::CassetteVision:
+            return std::make_unique<ConsoleContext>(nId, L"Cassette Vision");
+
         case ConsoleID::CDi:
             return std::make_unique<ConsoleContext>(nId, L"CD-I");
 
@@ -534,6 +537,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
 
         case ConsoleID::SNES:
             return std::make_unique<SuperNESConsoleContext>();
+
+        case ConsoleID::SuperCassetteVision:
+            return std::make_unique<ConsoleContext>(ConsoleID::SuperCassetteVision, L"Super Cassette Vision");
 
         case ConsoleID::ThreeDO:
             return std::make_unique<ConsoleContext>(nId, L"3D0");

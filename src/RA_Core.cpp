@@ -237,6 +237,12 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
 
 static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5)
 {
+    if (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id() == 0U)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
+        return 0U;
+    }
+
     unsigned int nGameId = 0U;
 
     if (pROM == nullptr || nROMSize == 0)

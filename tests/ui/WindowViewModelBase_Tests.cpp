@@ -3,6 +3,7 @@
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockThreadPool.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 

@@ -35,6 +35,14 @@ private:
             m_vGameTitles.Add(60, L"Game 60");
             m_vGameTitles.Freeze();
         }
+
+        void TestAsyncHandle(ra::services::mocks::MockThreadPool& threadPool, std::function<void()>&& fCallback)
+        {
+            threadPool.RunAsync([pAsyncHandle = CreateAsyncHandle(), fCallback = std::move(fCallback)](){
+                if (!pAsyncHandle->IsDestroyed())
+                    fCallback();
+            });
+        }
     };
 
 public:
@@ -161,7 +169,30 @@ public:
         Assert::IsTrue(vmUnknownGame.Associate());
         Assert::AreEqual(102, vmUnknownGame.GetSelectedGameId());
     }
-};
+
+    TEST_METHOD(TestAsyncHandle)
+    {
+        ra::services::mocks::MockThreadPool mockThreadPool;
+
+        bool bCallbackCalled = false;
+        {
+            UnknownGameViewModelHarness vmViewModel;
+            vmViewModel.TestAsyncHandle(mockThreadPool, [&bCallbackCalled] { bCallbackCalled = true; });
+
+            Assert::IsFalse(bCallbackCalled);
+            mockThreadPool.ExecuteNextTask();
+            Assert::IsTrue(bCallbackCalled);
+
+            bCallbackCalled = false;
+            vmViewModel.TestAsyncHandle(mockThreadPool, [&bCallbackCalled] { bCallbackCalled = true; });
+            // vmViewModel will be destroyed here, so when the next task is executed, the AsyncHandle will
+            // prevent the callback and bCallbackCalled should remain false
+        }
+
+        Assert::IsFalse(bCallbackCalled);
+        mockThreadPool.ExecuteNextTask();
+        Assert::IsFalse(bCallbackCalled);
+    }};
 
 } // namespace tests
 } // namespace viewmodels

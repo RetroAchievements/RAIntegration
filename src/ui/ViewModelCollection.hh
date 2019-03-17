@@ -4,12 +4,14 @@
 
 #include "ViewModelBase.hh"
 
+#include "data\AsyncObject.hh"
+
 #include "ra_utility.h"
 
 namespace ra {
 namespace ui {
 
-class ViewModelCollectionBase
+class ViewModelCollectionBase : protected ra::data::AsyncObject
 {
 protected:
     ViewModelCollectionBase() noexcept {};
@@ -19,6 +21,8 @@ public:
     {
         if (!m_bFrozen)
             StopWatching();
+
+        BeginDestruction();
     }
 
     ViewModelCollectionBase(const ViewModelCollectionBase&) noexcept = delete;

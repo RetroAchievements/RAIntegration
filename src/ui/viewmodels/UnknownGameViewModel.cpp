@@ -33,8 +33,12 @@ void UnknownGameViewModel::InitializeGameTitles()
     ra::api::FetchGamesList::Request request;
     request.ConsoleId = pConsoleContext.Id();
 
-    request.CallAsync([this](const ra::api::FetchGamesList::Response& response)
+    request.CallAsync([this, pAsyncHandle = CreateAsyncHandle()](const ra::api::FetchGamesList::Response& response)
     {
+        ra::data::AsyncKeepAlive pKeepAlive(pAsyncHandle);
+        if (pAsyncHandle->IsDestroyed())
+            return;
+
         if (response.Failed())
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not retrieve list of existing games",

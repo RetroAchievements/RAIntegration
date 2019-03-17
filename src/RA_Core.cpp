@@ -5,7 +5,6 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_RichPresence.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 

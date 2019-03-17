@@ -75,7 +75,6 @@
     <ClCompile Include="RA_LeaderboardPopup.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
-    <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
@@ -168,7 +167,6 @@
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_Resource.h" />
-    <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />

@@ -199,7 +199,6 @@
     <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
-    <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
     <ClCompile Include="..\src\services\Http.cpp" />

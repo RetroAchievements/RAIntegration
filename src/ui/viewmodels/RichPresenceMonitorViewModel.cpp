@@ -1,6 +1,5 @@
 #include "RichPresenceMonitorViewModel.hh"
 
-#include "RA_RichPresence.h"
 #include "RA_StringUtils.h"
 
 #include "data\GameContext.hh"

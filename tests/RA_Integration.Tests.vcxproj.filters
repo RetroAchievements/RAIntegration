@@ -51,9 +51,6 @@
     <ClCompile Include="RA_RichPresence_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_RichPresence.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
     </ClCompile>

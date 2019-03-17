@@ -4,6 +4,7 @@
 
 #include "RA_Dlg_Achievement.h"
 #include "RA_Log.h"
+#include "RA_MemManager.h"
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"
@@ -53,7 +54,7 @@ void GameContext::LoadGame(unsigned int nGameId)
 {
     m_nGameId = nGameId;
     m_sGameTitle.clear();
-    m_pRichPresenceInterpreter.reset();
+    m_pRichPresence = nullptr;
     m_nNextLocalId = GameContext::FirstLocalId;
 
     if (!m_vAchievements.empty())
@@ -104,11 +105,7 @@ void GameContext::LoadGame(unsigned int nGameId)
     // rich presence
     if (!response.RichPresence.empty())
     {
-        ra::services::impl::StringTextReader pRichPresenceTextReader(response.RichPresence);
-
-        m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
-        if (!m_pRichPresenceInterpreter->Load(pRichPresenceTextReader))
-            m_pRichPresenceInterpreter.reset();
+        LoadRichPresenceScript(response.RichPresence);
 
         // TODO: this file is written so devs can modify the rich presence without having to restart
         // the game. if the user doesn't have dev permission, there's no reason to write it.
@@ -812,24 +809,65 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     });
 }
 
+void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
+{
+    if (sRichPresenceScript.empty())
+    {
+        m_pRichPresence = nullptr;
+        return;
+    }
+
+    const int nSize = rc_richpresence_size(sRichPresenceScript.c_str());
+    if (nSize < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_richpresence_size returned %d", nSize);
+        m_pRichPresence = nullptr;
+    }
+    else
+    {
+        // allocate space and parse again
+        m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
+        auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sRichPresenceScript.c_str(), nullptr, 0);
+        m_pRichPresence = pRichPresence;
+    }
+}
+
 bool GameContext::HasRichPresence() const noexcept
 {
-    return (m_pRichPresenceInterpreter != nullptr && m_pRichPresenceInterpreter->Enabled());
+    return (m_pRichPresence != nullptr);
 }
 
 std::wstring GameContext::GetRichPresenceDisplayString() const
 {
-    if (m_pRichPresenceInterpreter == nullptr)
+    if (m_pRichPresence == nullptr)
         return std::wstring(L"No Rich Presence defined.");
 
-    return ra::Widen(m_pRichPresenceInterpreter->GetRichPresenceString());
+    auto pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
+    std::string sRichPresence;
+    sRichPresence.resize(512);
+    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(), sRichPresence.capacity(), rc_peek_callback, nullptr, nullptr);
+    sRichPresence.resize(nLength);
+
+    return ra::Widen(sRichPresence);
 }
 
 void GameContext::ReloadRichPresenceScript()
 {
-    m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
-    if (!m_pRichPresenceInterpreter->Load())
-        m_pRichPresenceInterpreter.reset();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    if (pRich == nullptr)
+        return;
+
+    std::string sRichPresence, sLine;
+    while (pRich->GetLine(sLine))
+    {
+        sRichPresence.append(sLine);
+        sRichPresence.append("\n");
+    }
+
+    LoadRichPresenceScript(sRichPresence);
 }
 
 } // namespace data

@@ -8,7 +8,6 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Dlg_MemBookmark.h"
-#include "RA_RichPresence.h"
 
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"

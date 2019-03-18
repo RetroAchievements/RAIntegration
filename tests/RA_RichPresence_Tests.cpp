@@ -268,7 +268,7 @@ public:
         RichPresenceInterpreterHarness rp;
         rp.LoadTest("Display:\n?0xH0000=0?Zero");
 
-        Assert::IsFalse(rp.HasRichPresence());
+        Assert::AreEqual("Parse Error -18", rp.GetRichPresenceString().c_str()); // RC_MISSING_DISPLAY_STRING
     }
 
     TEST_METHOD(TestConditionalDisplaySharedLookup)
@@ -345,9 +345,9 @@ public:
         InitializeMemory(memory);
 
         RichPresenceInterpreterHarness rp;
-        Assert::IsFalse(rp.LoadTest(
-            "Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)"));
-        Assert::IsFalse(rp.HasRichPresence());
+        rp.LoadTest("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)");
+
+        Assert::AreEqual("Parse Error -2", rp.GetRichPresenceString().c_str()); // RC_INVALID_MEMORY_OPERAND
     }
 
     TEST_METHOD(TestUndefinedTag)
@@ -360,6 +360,18 @@ public:
         rp.LoadTest("Display:\n@Points(0x 0001) Points");
 
         Assert::AreEqual("[Unknown macro]Points(0x 0001) Points", rp.GetRichPresenceString().c_str());
+    }
+
+    TEST_METHOD(TestTagWithNoParameter)
+    {
+        // Parse error reported
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        InitializeMemory(memory);
+
+        RichPresenceInterpreterHarness rp;
+        rp.LoadTest("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points Points");
+
+        Assert::AreEqual("Parse Error -16", rp.GetRichPresenceString().c_str()); // RC_MISSING_VALUE
     }
 
     TEST_METHOD(TestEscapedComment)

@@ -823,6 +823,15 @@ void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
         // parse error occurred
         RA_LOG("rc_richpresence_size returned %d", nSize);
         m_pRichPresence = nullptr;
+
+        const std::string sErrorRP = ra::StringPrintf("Display:\nParse Error %d\n", nSize);
+        const int nSize2 = rc_richpresence_size(sErrorRP.c_str());
+        if (nSize2 > 0)
+        {
+            m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize2);
+            auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sErrorRP.c_str(), nullptr, 0);
+            m_pRichPresence = pRichPresence;
+        }
     }
     else
     {

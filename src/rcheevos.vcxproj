@@ -101,7 +101,7 @@
     <ClInclude Include="..\src\md5.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\rcheevos\src\rcheevos\richpresence.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
     <ClCompile Include="..\lua\lapi.c" />
     <ClCompile Include="..\lua\lauxlib.c" />
     <ClCompile Include="..\lua\lcode.c" />

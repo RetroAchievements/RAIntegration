@@ -97,7 +97,7 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\rcheevos\src\rcheevos\richpresence.c">
+    <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
   </ItemGroup>

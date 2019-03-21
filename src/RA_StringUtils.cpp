@@ -79,7 +79,7 @@ std::string Narrow(const std::string& str)
 }
 
 _Use_decl_annotations_
-std::string& TrimLineEnding(std::string& str) noexcept
+std::string& TrimLineEnding(std::string& str)
 {
     if (!str.empty())
     {
@@ -88,6 +88,22 @@ std::string& TrimLineEnding(std::string& str) noexcept
         if (str.back() == '\r')
             str.pop_back();
     }
+
+    return str;
+}
+
+_Use_decl_annotations_
+std::wstring& Trim(std::wstring& str)
+{
+    while (!str.empty() && iswspace(str.back()))
+        str.pop_back();
+
+    size_t nIndex = 0;
+    while (nIndex < str.length() && iswspace(str.at(nIndex)))
+        ++nIndex;
+
+    if (nIndex > 0)
+        str.erase(0, nIndex);
 
     return str;
 }

@@ -199,29 +199,27 @@ BOOL DialogBase::OnCommand(WORD nCommand)
     switch (nCommand)
     {
         case IDOK:
-            m_vmWindow.SetDialogResult(DialogResult::OK);
-
-            if (m_bModal)
-                EndDialog(m_hWnd, IDOK);
-            else
-                DestroyWindow(m_hWnd);
-
+            SetDialogResult(DialogResult::OK);
             return TRUE;
 
         case IDCLOSE:
         case IDCANCEL:
-            m_vmWindow.SetDialogResult(DialogResult::Cancel);
-
-            if (m_bModal)
-                EndDialog(m_hWnd, nCommand);
-            else
-                DestroyWindow(m_hWnd);
-
+            SetDialogResult(DialogResult::Cancel);
             return TRUE;
 
         default:
             return FALSE;
     }
+}
+
+void DialogBase::SetDialogResult(DialogResult nResult)
+{
+    m_vmWindow.SetDialogResult(nResult);
+
+    if (m_bModal)
+        EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
+    else
+        DestroyWindow(m_hWnd);
 }
 
 _Use_decl_annotations_

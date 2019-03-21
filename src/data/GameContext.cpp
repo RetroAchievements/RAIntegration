@@ -745,7 +745,7 @@ void GameContext::DeactivateLeaderboards() noexcept
         pLeaderboard->SetActive(false);
 }
 
-void GameContext::ActivateLeaderboards() noexcept
+void GameContext::ActivateLeaderboards()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.

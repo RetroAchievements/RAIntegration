@@ -632,6 +632,9 @@
     <ClInclude Include="ui\viewmodels\ScoreboardViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchLeaderboardInfo.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

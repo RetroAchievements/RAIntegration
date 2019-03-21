@@ -196,4 +196,9 @@ public:
 } // namespace ui
 } // namespace ra
 
+#ifndef RA_UTEST
+// temporary helper function for showing MessageBox parented to a non-viewmodel window
+ra::ui::DialogResult ShowMessageBox(ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox, HWND hParentWnd);
+#endif
+
 #endif !RA_UI_MESSAGEBOX_VIEW_MODEL_H

@@ -33,10 +33,15 @@ bool MessageBoxDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase&
 
 void MessageBoxDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
 {
-    ShowModal(oViewModel, nullptr);
+    DoShowModal(oViewModel, nullptr);
 }
 
 void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
+{
+    DoShowModal(oViewModel, hParentWnd);
+}
+
+void MessageBoxDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
 {
     auto& oMessageBoxViewModel = reinterpret_cast<MessageBoxViewModel&>(oViewModel);
     int nButton = 0;
@@ -118,3 +123,9 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
 } // namespace win32
 } // namespace ui
 } // namespace ra
+
+ra::ui::DialogResult ShowMessageBox(ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox, HWND hParentWnd)
+{
+    ra::ui::win32::MessageBoxDialog::Presenter::DoShowModal(vmMessageBox, hParentWnd);
+    return vmMessageBox.GetDialogResult();
+}

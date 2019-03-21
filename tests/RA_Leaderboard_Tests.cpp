@@ -14,7 +14,6 @@ class LeaderboardHarness : public RA_Leaderboard
 public:
     LeaderboardHarness() noexcept : RA_Leaderboard(1) {}
 
-    bool IsActive() const noexcept { return m_bActive; }
     bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
     unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
     unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }

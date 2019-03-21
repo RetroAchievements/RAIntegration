@@ -82,16 +82,6 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
     return FALSE;
 }
 
-Dlg_AchievementEditor::Dlg_AchievementEditor() noexcept
-{
-    m_lbxGroupNames.front() = _T("Core");
-    for (auto it = std::next(m_lbxGroupNames.begin()); it != m_lbxGroupNames.end(); ++it)
-    {
-        const auto i = std::distance(m_lbxGroupNames.begin(), it);
-        *it = ra::StringPrintf(_T("Alt %02t"), i);
-    }
-}
-
 void Dlg_AchievementEditor::SetupColumns(HWND hList)
 {
     // Remove all columns,
@@ -1395,50 +1385,59 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_ACH_ADDGROUP:
                 {
-                    if (ActiveAchievement() == nullptr)
+                    auto* pActiveAchievement = ActiveAchievement();
+                    if (pActiveAchievement == nullptr)
                         break;
 
-                    if (ActiveAchievement()->NumConditionGroups() == 1)
+                    if (pActiveAchievement->NumConditionGroups() == 1)
                     {
-                        ActiveAchievement()->AddConditionGroup();
-                        ActiveAchievement()->AddConditionGroup();
+                        pActiveAchievement->AddAltGroup();
+                        pActiveAchievement->AddAltGroup();
                     }
-                    else if (ActiveAchievement()->NumConditionGroups() > 1)
+                    else if (pActiveAchievement->NumConditionGroups() > 1)
                     {
-                        ActiveAchievement()->AddConditionGroup();
-                    }
-                    else
-                    {
-                        //?
+                        pActiveAchievement->AddAltGroup();
                     }
 
-                    RepopulateGroupList(ActiveAchievement());
-                    ActiveAchievement()->RebuildTrigger();
+                    RepopulateGroupList(pActiveAchievement);
+                    pActiveAchievement->RebuildTrigger();
+                    pActiveAchievement->SetModified(true);
+                    g_AchievementsDialog.OnEditAchievement(*pActiveAchievement);
                 }
                 break;
                 case IDC_RA_ACH_DELGROUP:
                 {
-                    if (ActiveAchievement() == nullptr)
+                    auto* pActiveAchievement = ActiveAchievement();
+                    if (pActiveAchievement == nullptr)
                         break;
 
-                    if (ActiveAchievement()->NumConditionGroups() == 3)
+                    const HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
+                    const auto nSel = ListBox_GetCurSel(hGroupList);
+
+                    if (nSel == 0)
                     {
-                        ActiveAchievement()->RemoveConditionGroup();
-                        ActiveAchievement()->RemoveConditionGroup(); // ##SD this intentional?
-                    }
-                    else if (ActiveAchievement()->NumConditionGroups() > 3)
-                    {
-                        ActiveAchievement()->RemoveConditionGroup();
-                    }
-                    else
-                    {
-                        MessageBox(m_hAchievementEditorDlg, TEXT("Cannot remove Core Condition Group!"),
-                                   TEXT("Warning"), MB_OK);
+                        ra::ui::viewmodels::MessageBoxViewModel vmWarning(L"Cannot remove core group.");
+                        vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                        ShowMessageBox(vmWarning, GetHWND());
                         break;
                     }
 
-                    RepopulateGroupList(ActiveAchievement());
-                    ActiveAchievement()->RebuildTrigger();
+                    if (pActiveAchievement->NumConditions(nSel) > 0)
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel vmWarning(ra::StringPrintf(L"Alt %02d is not empty. Are you sure that you want to delete it?", nSel));
+                        vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                        vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+                        if (ShowMessageBox(vmWarning, GetHWND()) != ra::ui::DialogResult::Yes)
+                            break;
+                    }
+
+                    pActiveAchievement->RemoveAltGroup(nSel - 1);
+                    ListBox_SetCurSel(hGroupList, nSel == ra::to_signed(pActiveAchievement->NumConditionGroups()) ? nSel - 1 : nSel);
+
+                    RepopulateGroupList(pActiveAchievement);
+                    pActiveAchievement->RebuildTrigger();
+                    pActiveAchievement->SetModified(true);
+                    g_AchievementsDialog.OnEditAchievement(*pActiveAchievement);
                 }
                 break;
                 case IDC_RA_ACH_GROUP:
@@ -1974,28 +1973,39 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
 }
 
 _Use_decl_annotations_ void
-    Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const restrict pCheevo) noexcept
+    Dlg_AchievementEditor::RepopulateGroupList(const Achievement* const restrict pCheevo)
 {
     HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
     if (hGroupList == nullptr)
         return;
 
-    int nSel = ListBox_GetCurSel(hGroupList);
+    const int nSel = ListBox_GetCurSel(hGroupList);
 
-    while (ListBox_DeleteString(hGroupList, 0) >= 0)
+    int nItems = ListBox_GetCount(hGroupList);
+    const int nGroups = pCheevo ? pCheevo->NumConditionGroups() : 0;
+
+    while (nItems > nGroups)
+        ListBox_DeleteString(hGroupList, --nItems);
+
+    if (nItems < nGroups)
     {
+        if (nItems == 0)
+        {
+            ListBox_AddString(hGroupList, _T("Core"));
+            ++nItems;
+        }
+
+        while (nItems < nGroups)
+        {
+            const auto sAltGroup = ra::StringPrintf("Alt %02d", nItems++);
+            ListBox_AddString(hGroupList, NativeStr(sAltGroup).c_str());
+        }
     }
 
-    if (pCheevo != nullptr)
-    {
-        for (size_t i = 0; i < pCheevo->NumConditionGroups(); ++i)
-            ListBox_AddString(hGroupList, m_lbxGroupNames.at(i).c_str());
-
-        // Try and restore selection
-        if (nSel < 0 || nSel >= gsl::narrow_cast<int>(pCheevo->NumConditionGroups()))
-            nSel = 0; // Reset to core if unsure
-        ListBox_SetCurSel(hGroupList, nSel);
-    }
+    if (nSel < 0)
+        ListBox_SetCurSel(hGroupList, 0);
+    else if (nSel >= nGroups)
+        ListBox_SetCurSel(hGroupList, nGroups - 1);
 }
 
 _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const restrict pCheevo)

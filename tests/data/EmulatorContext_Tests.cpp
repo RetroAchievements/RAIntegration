@@ -451,7 +451,7 @@ public:
             return true;
         });
 
-        auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        const auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
         Assert::IsFalse(pLeaderboard.IsActive());
 
         bool bWasReset = false;

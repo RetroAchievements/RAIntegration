@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ra_fwd.h"
+#include "ra_utility.h"
 
 enum class MemSize : std::size_t
 {
@@ -153,7 +154,13 @@ public:
     _NODISCARD auto EmptyGroup() const noexcept { return m_vConditionGroups.empty(); }
     // TODO: Put in a type_trait for nothrow EmplaceConstructible to give a nothrow guarantee
     void AddGroup() noexcept { GSL_SUPPRESS_F6 m_vConditionGroups.emplace_back(); }
-    auto RemoveLastGroup() { m_vConditionGroups.pop_back(); }
+    void RemoveAltGroup(gsl::index nIndex)
+    {
+        ++nIndex;
+        if (nIndex < ra::to_signed(m_vConditionGroups.size()))
+            m_vConditionGroups.erase(m_vConditionGroups.begin() + nIndex);
+    }
+
     _NODISCARD auto& GetGroup(size_t nPos) { return m_vConditionGroups.at(nPos); }
     _NODISCARD auto& GetGroup(size_t nPos) const { return m_vConditionGroups.at(nPos); }
 

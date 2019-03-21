@@ -514,10 +514,6 @@ API int CCONV _RA_HandleHTTPResults()
                 case RequestCodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
                     break;
-
-                case RequestLeaderboardInfo:
-                    g_LBExamine.OnReceiveData(doc);
-                    break;
             }
         }
 

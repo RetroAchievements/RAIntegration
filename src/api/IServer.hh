@@ -5,6 +5,7 @@
 #include "api/AwardAchievement.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
+#include "api/FetchLeaderboardInfo.hh"
 #include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
 #include "api/Login.hh"
@@ -35,6 +36,7 @@ public:
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept = 0;
+    virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept = 0;
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept = 0;

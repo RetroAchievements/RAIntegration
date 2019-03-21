@@ -15,6 +15,8 @@ public:
     virtual ~ViewModelBase() noexcept = default;
     ViewModelBase(const ViewModelBase&) = delete;
     ViewModelBase& operator=(const ViewModelBase&) = delete;
+    GSL_SUPPRESS_F6 ViewModelBase(ViewModelBase&&) = default;
+    GSL_SUPPRESS_F6 ViewModelBase& operator=(ViewModelBase&&) = default;
 
     class NotifyTarget
     {
@@ -37,20 +39,8 @@ public:
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
 
-public:
-    // Class is nothrow move assignable but not nothrow move constructible.
-    ViewModelBase(ViewModelBase&&) noexcept(
-        std::is_nothrow_move_constructible_v<NotifyTargetSet>&& std::is_nothrow_move_constructible_v<
-            StringModelProperty::ValueMap>&& std::is_nothrow_move_constructible_v<IntModelProperty::ValueMap>&&
-            std::is_nothrow_move_constructible_v<std::map<std::string, std::wstring>>) = default;
-
-    ViewModelBase& operator=(ViewModelBase&&) noexcept = default;
-
 protected:
-    ViewModelBase() noexcept(
-        std::is_nothrow_default_constructible_v<NotifyTargetSet>&& std::is_nothrow_default_constructible_v<
-            StringModelProperty::ValueMap>&& std::is_nothrow_default_constructible_v<IntModelProperty::ValueMap>&&
-            std::is_nothrow_default_constructible_v<std::map<std::string, std::wstring>>) = default;
+    GSL_SUPPRESS_F6 ViewModelBase() = default;
 
     /// <summary>
     /// Gets the value associated to the requested boolean property.

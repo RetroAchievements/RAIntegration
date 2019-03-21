@@ -126,6 +126,8 @@ public:
     void SetPopupId(int nPopupId) noexcept { m_nPopupId = nPopupId; }
 
 protected:
+    static int GetFadeOffset(double fAnimationProgress, double fTotalAnimationTime, double fInOutTime, int nInitialOffset, int nTargetOffset);
+
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     int m_nPopupId{ 0 };
 };

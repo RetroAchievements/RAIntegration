@@ -25,13 +25,9 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\ScoreboardViewModel.hh"
 
 extern bool g_bRAMTamperedWith;
-
-#ifndef RA_UTEST
-#include "RA_LeaderboardPopup.h"
-extern LeaderboardPopup g_LeaderboardPopups;
-#endif
 
 namespace ra {
 namespace data {
@@ -151,12 +147,7 @@ void GameContext::LoadGame(unsigned int nGameId)
         pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
     }
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
-    {
-        for (auto& pLeaderboard : m_vLeaderboards)
-            pLeaderboard->SetActive(true);
-    }
+    ActivateLeaderboards();
 
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;
@@ -754,6 +745,16 @@ void GameContext::DeactivateLeaderboards() noexcept
         pLeaderboard->SetActive(false);
 }
 
+void GameContext::ActivateLeaderboards()
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
+    {
+        for (auto& pLeaderboard : m_vLeaderboards)
+            pLeaderboard->SetActive(true);
+    }
+}
+
 void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const
 {
     const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
@@ -785,7 +786,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     request.GameHash = GameHash();
     request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->ID()](const ra::api::SubmitLeaderboardEntry::Response& response)
     {
-        auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+        const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
 
         if (!response.Succeeded())
         {
@@ -800,14 +801,28 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         }
         else if (pLeaderboard)
         {
-            pLeaderboard->ClearRankInfo();
-            for (const auto& pEntry : response.TopEntries)
-                pLeaderboard->SubmitRankInfo(pEntry.Rank, pEntry.User, pEntry.Score, {});
-            pLeaderboard->SortRankInfo();
+            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
+            {
+                ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
+                vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
-#ifndef RA_UTEST
-            g_LeaderboardPopups.ShowScoreboard(pLeaderboard->ID());
-#endif
+                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+
+                for (const auto& pEntry : response.TopEntries)
+                {
+                    auto& pEntryViewModel = vmScoreboard.Entries().Add();
+                    pEntryViewModel.SetRank(pEntry.Rank);
+                    pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(pEntry.Score)));
+                    pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
+
+                    if (pEntry.User == pUserName)
+                        pEntryViewModel.SetHighlighted(true);
+                }
+
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
+                    pLeaderboard->ID(), std::move(vmScoreboard));
+            }
         }
     });
 }

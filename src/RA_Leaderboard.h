@@ -55,6 +55,7 @@ public:
     void SortRankInfo();
 
     GSL_SUPPRESS_F6 void SetActive(bool bActive) noexcept;
+    bool IsActive() const noexcept { return m_bActive; }
 
 protected:
     void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t

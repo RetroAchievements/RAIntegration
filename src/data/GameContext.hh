@@ -21,10 +21,16 @@ public:
     GameContext(GameContext&&) noexcept = delete;
     GameContext& operator=(GameContext&&) noexcept = delete;
 
+    enum class Mode
+    {
+        Normal,
+        CompatibilityTest,
+    };
+
     /// <summary>
     /// Loads the data for the specified game id.
     /// </summary>
-    void LoadGame(unsigned int nGameId);
+    void LoadGame(unsigned int nGameId, Mode nMode = Mode::Normal);
 
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
@@ -50,6 +56,11 @@ public:
     /// Sets the game hash.
     /// </summary>
     void SetGameHash(const std::string& sGameHash) { m_sGameHash = sGameHash; }
+
+    /// <summary>
+    /// Gets the current game play mode.
+    /// </summary>
+    Mode GetMode() const noexcept { return m_nMode; }
 
     /// <summary>
     /// Gets which achievements are active.
@@ -183,10 +194,12 @@ protected:
     void MergeLocalAchievements();
     bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause);
+    void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause);
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
+    Mode m_nMode{};
 
     unsigned int m_nNextLocalId = 0;
     static const unsigned int FirstLocalId = 111000001;

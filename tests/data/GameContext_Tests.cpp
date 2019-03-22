@@ -18,6 +18,28 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::services::StorageItemType;
 
+namespace Microsoft {
+namespace VisualStudio {
+namespace CppUnitTestFramework {
+
+template<>
+std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::Mode& nMode)
+{
+    switch (nMode)
+    {
+        case ra::data::GameContext::Mode::Normal:
+            return L"Normal";
+        case ra::data::GameContext::Mode::CompatibilityTest:
+            return L"CompatibilityTest";
+        default:
+            return std::to_wstring(static_cast<int>(nMode));
+    }
+}
+
+} // namespace CppUnitTestFramework
+} // namespace VisualStudio
+} // namespace Microsoft
+
 namespace ra {
 namespace data {
 namespace tests {
@@ -70,6 +92,8 @@ public:
             return pLeaderboard;
         }
 
+        void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
@@ -88,6 +112,7 @@ public:
         game.LoadGame(1U);
 
         Assert::AreEqual(1U, game.GameId());
+        Assert::AreEqual(ra::data::GameContext::Mode::Normal, game.GetMode());
         Assert::AreEqual(std::wstring(L"Game"), game.GameTitle());
     }
 
@@ -497,7 +522,7 @@ public:
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
-            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
             return true;
         });
 
@@ -524,6 +549,36 @@ public:
         Assert::IsFalse(pAch2->Active());
     }
 
+    TEST_METHOD(TestLoadGameUserUnlocksCompatibilityMode)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+
+            auto& ach2 = response.Achievements.emplace_back();
+            ach2.Id = 7;
+            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            return true;
+        });
+
+        game.mockServer.ExpectUncalled<ra::api::FetchUserUnlocks>();
+
+        game.LoadGame(1U, ra::data::GameContext::Mode::CompatibilityTest);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+
+        const auto* pAch1 = game.FindAchievement(5U);
+        Assert::IsNotNull(pAch1);
+        Ensures(pAch1 != nullptr);
+        Assert::IsTrue(pAch1->Active());
+
+        const auto* pAch2 = game.FindAchievement(7U);
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::IsTrue(pAch2->Active());
+    }
 
     TEST_METHOD(TestLoadGamePausesRuntime)
     {
@@ -872,6 +927,27 @@ public:
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
     }
 
+    TEST_METHOD(TestAwardAchievementCompatibilityMode)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+        game.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Test Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
     TEST_METHOD(TestSubmitLeaderboardEntryNonExistant)
     {
         GameContextHarness game;
@@ -1010,6 +1086,31 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Leaderboard submission post canceled."), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Enable Hardcore Mode to enable posting."), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryCompatibilityMode)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        game.SetGameHash("hash");
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard submission post canceled."), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDescription());
     }
 };
 

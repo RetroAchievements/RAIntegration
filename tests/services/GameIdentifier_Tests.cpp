@@ -29,7 +29,7 @@ std::string ROM_HASH = "190c4c105786a2121d85018939108a6c";
 class GameIdentifierHarness : public GameIdentifier
 {
 public:
-    GameIdentifierHarness()
+    GSL_SUPPRESS_F6 GameIdentifierHarness() noexcept
         : mockConsoleContext(ConsoleID::NES, L"NES")
     {
     }
@@ -93,7 +93,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
-        identifier.mockEmulatorContext.SetGetGameTitleFunction([](char* sBuffer) { strcpy_s(sBuffer, 16, "TestGame"); });
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         bool bDialogShown = false;
@@ -116,7 +116,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
-        identifier.mockEmulatorContext.SetGetGameTitleFunction([](char* sBuffer) { strcpy_s(sBuffer, 16, "TestGame"); });
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         bool bDialogShown = false;
@@ -140,7 +140,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
-        identifier.mockEmulatorContext.SetGetGameTitleFunction([](char* sBuffer) { strcpy_s(sBuffer, 16, "TestGame"); });
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
@@ -255,6 +255,7 @@ public:
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
         Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
         const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
+        Expects(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Leaderboard submissions will be canceled."), pPopup->GetDescription());
     }
@@ -274,6 +275,7 @@ public:
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
         Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
         const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
+        Expects(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
     }
@@ -311,7 +313,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        identifier.mockEmulatorContext.SetGetGameTitleFunction([](char* sBuffer) { strcpy_s(sBuffer, 16, "TestGame"); });
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         bool bDialogShown = false;
@@ -338,7 +340,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        identifier.mockEmulatorContext.SetGetGameTitleFunction([](char* sBuffer) { strcpy_s(sBuffer, 16, "TestGame"); });
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         bool bDialogShown = false;

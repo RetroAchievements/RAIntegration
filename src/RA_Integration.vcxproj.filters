@@ -255,6 +255,9 @@
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\OverlayTheme.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -637,6 +640,9 @@
     </ClInclude>
     <ClInclude Include="data\AsyncObject.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\OverlayTheme.hh">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

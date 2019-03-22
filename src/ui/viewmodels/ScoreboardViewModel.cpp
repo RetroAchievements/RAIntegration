@@ -2,6 +2,8 @@
 
 #include "RA_StringUtils.h"
 
+#include "ui\OverlayTheme.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -50,12 +52,8 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
 
     if (m_pSurface == nullptr)
     {
-        const ra::ui::Color nColorBackgroundFill(32, 32, 32);
-        const ra::ui::Color nColorBackground(0, 255, 0, 255);
-        const ra::ui::Color nColorBlack(0, 0, 0);
-        const ra::ui::Color nColorPopup(251, 102, 0);
-        const ra::ui::Color nColorPopupHighlight(255, 192, 128);
-        constexpr int nShadowOffset = 2;
+        const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+        const auto nShadowOffset = pTheme.ShadowOffset();
 
         const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
         m_pSurface = pSurfaceFactory.CreateTransparentSurface(SCOREBOARD_WIDTH, SCOREBOARD_HEIGHT);
@@ -63,16 +61,16 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         auto nFontText = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
 
         // background
-        m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);
-        m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
-                                  nColorBlack);
+        m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
+        m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
+                                  pTheme.ColorShadow());
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
-                                  nColorBackgroundFill);
+                                  pTheme.ColorBackground());
 
         // title
         const auto sResultsTitle = GetHeaderText();
-        m_pSurface->FillRectangle(4, 4, m_pSurface->GetWidth() - nShadowOffset - 8, FONT_SIZE_TITLE, nColorPopup);
-        m_pSurface->WriteText(8, 3, nFontTitle, nColorBlack, sResultsTitle);
+        m_pSurface->FillRectangle(4, 4, m_pSurface->GetWidth() - nShadowOffset - 8, FONT_SIZE_TITLE, pTheme.ColorBorder());
+        m_pSurface->WriteText(8, 3, nFontTitle, pTheme.ColorTitle(), sResultsTitle);
 
         // scoreboard
         size_t nY = 4 + FONT_SIZE_TITLE + 4;
@@ -83,7 +81,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
             if (!pEntry)
                 continue;
 
-            const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? nColorPopupHighlight : nColorPopup;
+            const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? pTheme.ColorLeaderboardPlayer() : pTheme.ColorLeaderboardEntry();
             m_pSurface->WriteText(8, nY, nFontText, nTextColor, ra::ToWString(i));
             m_pSurface->WriteText(24, nY, nFontText, nTextColor, pEntry->GetUserName());
 

@@ -20,6 +20,7 @@
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\OverlayTheme.hh"
 #include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
@@ -135,6 +136,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pSurfaceFactory = std::make_unique<ra::ui::drawing::gdi::GDISurfaceFactory>();
     ra::services::ServiceLocator::Provide<ra::ui::drawing::ISurfaceFactory>(std::move(pSurfaceFactory));
+
+    auto pOverlayTheme = std::make_unique<ra::ui::OverlayTheme>();
+    pOverlayTheme->LoadFromFile();
+    ra::services::ServiceLocator::Provide<ra::ui::OverlayTheme>(std::move(pOverlayTheme));
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));

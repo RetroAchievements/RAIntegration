@@ -1,5 +1,7 @@
 #include "PopupMessageViewModel.hh"
 
+#include "ui\OverlayTheme.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -87,34 +89,32 @@ void PopupMessageViewModel::CreateRenderImage()
 
     int nX = 0;
     int nY = 0;
-    const ra::ui::Color nColorBlack(0, 0, 0);
-    const ra::ui::Color nColorPopup(251, 102, 0);
-    const ra::ui::Color nColorBackground(0, 255, 0, 255);
-    constexpr int nShadowOffset = 2;
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nShadowOffset = pTheme.ShadowOffset();
 
     // background
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);
+    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)
     {
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, nColorBlack);
+        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, pTheme.ColorShadow());
         m_pSurface->DrawImage(nX, nY, 64, 64, m_hImage);
         nX += 64 + 6;
     }
 
     // title
-    m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, nColorBlack);
-    m_pSurface->FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, nColorPopup);
-    m_pSurface->WriteText(nX + 4, nY - 1, nFontTitle, nColorBlack, sTitle);
+    m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, pTheme.ColorShadow());
+    m_pSurface->FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, pTheme.ColorBackground());
+    m_pSurface->WriteText(nX + 4, nY - 1, nFontTitle, pTheme.ColorTitle(), sTitle);
 
     // subtitle
     if (!sSubTitle.empty())
     {
         nY += 32 + 2;
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, nColorBlack);
-        m_pSurface->FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, nColorPopup);
-        m_pSurface->WriteText(nX + 4, nY - 1, nFontSubtitle, nColorBlack, sSubTitle);
+        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, pTheme.ColorShadow());
+        m_pSurface->FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, pTheme.ColorBackground());
+        m_pSurface->WriteText(nX + 4, nY - 1, nFontSubtitle, pTheme.ColorDescription(), sSubTitle);
     }
 
     m_pSurface->SetOpacity(0.85);

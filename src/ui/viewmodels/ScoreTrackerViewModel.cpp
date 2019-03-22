@@ -2,6 +2,8 @@
 
 #include "ra_math.h"
 
+#include "ui\OverlayTheme.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -32,19 +34,18 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     m_pSurface = pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
 
     // background
-    const ra::ui::Color nColorBackground(0, 255, 0, 255);
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nShadowOffset = pTheme.ShadowOffset();
+
+    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
 
     // frame
-    const ra::ui::Color nColorBlack(0, 0, 0);
-    const ra::ui::Color nColorPopup(251, 102, 0);
-    constexpr int nShadowOffset = 2;
     m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8,
-        szScoreSoFar.Height, nColorBlack);
-    m_pSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, nColorPopup);
+        szScoreSoFar.Height, pTheme.ColorShadow());
+    m_pSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, pTheme.ColorBackground());
 
     // text
-    m_pSurface->WriteText(4, 0, nFontText, nColorBlack, sScoreSoFar);
+    m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);
 
     m_pSurface->SetOpacity(0.85);
 #endif

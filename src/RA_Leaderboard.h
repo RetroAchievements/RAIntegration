@@ -61,9 +61,10 @@ protected:
     void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t
     std::shared_ptr<std::vector<unsigned char>> m_pLeaderboardBuffer; //  buffer for rc_lboard_t
 
+    bool m_bActive = false;
+
 private:
     const ra::LeaderboardID m_nID = ra::LeaderboardID(); //  DB ID for this LB
-    bool m_bActive = false;
 
     // default to RC_FORMAT_VALUE (4) - use constant as we don't want to expose rcheevos.h to things using this header
     int m_nFormat = 4; // A format to output. Typically "%d" for score or "%02d:%02d.%02d" for time

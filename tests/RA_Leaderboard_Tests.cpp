@@ -58,7 +58,6 @@ private:
     unsigned int m_nSubmittedScore = 0;
     unsigned int m_nCurrentValue = 0;
     bool m_bScoreSubmitted = false;
-    bool m_bActive = false;
 };
 
 TEST_CLASS(RA_Leaderboard_Tests)

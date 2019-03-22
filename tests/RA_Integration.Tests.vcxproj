@@ -202,6 +202,7 @@
     <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
+    <ClCompile Include="..\src\services\GameIdentifier.cpp" />
     <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
@@ -234,6 +235,7 @@
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
+    <ClCompile Include="services\GameIdentifier_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\ModelProperty_Tests.cpp" />
     <ClCompile Include="ui\OverlayTheme_Tests.cpp" />

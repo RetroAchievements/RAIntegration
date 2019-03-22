@@ -258,6 +258,12 @@
     <ClCompile Include="..\src\ui\OverlayTheme.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\GameIdentifier_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\GameIdentifier.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

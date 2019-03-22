@@ -53,11 +53,11 @@ protected:
     virtual bool IsInspectingMemory() const noexcept;
 
     std::wstring m_sUsername;
+    unsigned int m_nCurrentGameId = 0;
 
 private:
     void SortSessions();
 
-    unsigned int m_nCurrentGameId = 0;
     std::chrono::steady_clock::time_point m_tpSessionStart{};
     time_t m_tSessionStart{};
 

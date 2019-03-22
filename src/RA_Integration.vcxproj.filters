@@ -258,6 +258,9 @@
     <ClCompile Include="ui\OverlayTheme.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="services\GameIdentifier.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -646,6 +649,9 @@
     </ClInclude>
     <ClInclude Include="api\FetchAchievementInfo.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="services\GameIdentifier.hh">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

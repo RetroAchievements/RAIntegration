@@ -13,6 +13,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\GameIdentifier.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
@@ -163,6 +164,22 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 #ifndef RA_UTEST
     g_MemoryDialog.UpdateMemoryRegions();
 #endif
+}
+
+API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
+{
+    return ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyGame(pROM, nROMSize);
+}
+
+API void CCONV _RA_ActivateGame(unsigned int nGameId)
+{
+    ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().ActivateGame(nGameId);
+}
+
+API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
+{
+    ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyAndActivateGame(pROM, nROMSize);
+    return 0;
 }
 
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)

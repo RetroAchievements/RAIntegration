@@ -9,6 +9,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\GameIdentifier.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -123,6 +124,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));
+
+    auto pGameIdentifier = std::make_unique<ra::services::GameIdentifier>();
+    ra::services::ServiceLocator::Provide<ra::services::GameIdentifier>(std::move(pGameIdentifier));
 
     auto pAudioSystem = std::make_unique<ra::services::impl::WindowsAudioSystem>();
     ra::services::ServiceLocator::Provide<ra::services::IAudioSystem>(std::move(pAudioSystem));

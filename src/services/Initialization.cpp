@@ -27,6 +27,13 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
+// this, in combination with the "#define ISOLATION_AWARE_ENABLED 1" in pch.h, allows our
+// UI to use visual styles introduced in ComCtl32 v6, even if the emulator does not enable them.
+// see https://docs.microsoft.com/en-us/windows/desktop/controls/cookbook-overview
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 namespace ra {
 namespace services {
 

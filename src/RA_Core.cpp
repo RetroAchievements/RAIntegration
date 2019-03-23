@@ -52,11 +52,16 @@ bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
-    if (dwReason == DLL_PROCESS_ATTACH)
+    switch (dwReason)
     {
-        g_hThisDLLInst = hModule;
+        case DLL_PROCESS_ATTACH:
+            g_hThisDLLInst = hModule;
+            ra::services::Initialization::RegisterCoreServices();
+            break;
 
-        ra::services::Initialization::RegisterCoreServices();
+        case DLL_PROCESS_DETACH:
+            IsolationAwareCleanup();
+            break;
     }
 
     return TRUE;

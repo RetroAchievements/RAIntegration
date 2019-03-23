@@ -11,10 +11,10 @@ class OfflineServer : public ServerBase
 public:
     const char* Name() const noexcept override { return "offline client"; }
 
-    GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
-    Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
+    Login::Response Login(const Login::Request& request) override;
+    Logout::Response Logout(const Logout::Request&) override;
 
-    GSL_SUPPRESS_F6 FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override;
+    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
 };
 
 } // namespace impl

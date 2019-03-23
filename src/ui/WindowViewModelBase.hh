@@ -26,8 +26,7 @@ public:
     WindowViewModelBase(const WindowViewModelBase&) = delete;
     WindowViewModelBase& operator=(const WindowViewModelBase&) = delete;
 
-    WindowViewModelBase(WindowViewModelBase&&) 
-        noexcept(std::is_nothrow_move_constructible_v<ViewModelBase>) = default;
+    WindowViewModelBase(WindowViewModelBase&&) noexcept = default;
 
     WindowViewModelBase& operator=(WindowViewModelBase&&) noexcept = default;
 

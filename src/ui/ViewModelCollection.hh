@@ -15,7 +15,7 @@ protected:
     GSL_SUPPRESS_F6 ViewModelCollectionBase() = default;
 
 public:
-    virtual ~ViewModelCollectionBase() noexcept
+    ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();
@@ -55,22 +55,22 @@ public:
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
+    void AddNotifyTarget(NotifyTarget& pTarget)
     {
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
                 StartWatching();
 
-            GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget);
+            m_vNotifyTargets.insert(&pTarget);
         }
     }
 
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
+    void RemoveNotifyTarget(NotifyTarget& pTarget)
     {
         if (!m_vNotifyTargets.empty())
         {
-            GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+            m_vNotifyTargets.erase(&pTarget);
 
             if (m_vNotifyTargets.empty())
                 StopWatching();

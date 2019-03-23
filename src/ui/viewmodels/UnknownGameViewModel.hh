@@ -2,6 +2,8 @@
 #define RA_UI_UNKNOWNGAMEVIEWMODEL_H
 #pragma once
 
+#include "data\AsyncObject.hh"
+
 #include "ui\WindowViewModelBase.hh"
 
 #include "ui\viewmodels\LookupItemViewModel.hh"
@@ -10,10 +12,19 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class UnknownGameViewModel : public WindowViewModelBase, protected ViewModelBase::NotifyTarget
+class UnknownGameViewModel : public WindowViewModelBase, protected ViewModelBase::NotifyTarget, protected ra::data::AsyncObject
 {
 public:
     GSL_SUPPRESS_F6 UnknownGameViewModel() noexcept;
+    ~UnknownGameViewModel()
+    {
+        ra::data::AsyncObject::BeginDestruction();
+    }
+
+    UnknownGameViewModel(const UnknownGameViewModel&) noexcept = delete;
+    UnknownGameViewModel& operator=(const UnknownGameViewModel&) noexcept = delete;
+    UnknownGameViewModel(UnknownGameViewModel&&) noexcept = delete;
+    UnknownGameViewModel& operator=(UnknownGameViewModel&&) noexcept = delete;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected game.

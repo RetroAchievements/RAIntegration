@@ -17,15 +17,15 @@ TEST_CLASS(OverlayTheme_Tests)
     };
 
     std::map<const char*, std::function<ra::ui::Color(const OverlayTheme&)>> ColorProperties = {
-        {"Background", [](const OverlayTheme& pTheme) { return pTheme.ColorBackground(); } },
-        {"Border", [](const OverlayTheme& pTheme) { return pTheme.ColorBorder(); } },
-        {"TextShadow", [](const OverlayTheme& pTheme) { return pTheme.ColorTextShadow(); } },
-        {"Title", [](const OverlayTheme& pTheme) { return pTheme.ColorTitle(); } },
-        {"Description", [](const OverlayTheme& pTheme) { return pTheme.ColorDescription(); } },
-        {"Detail", [](const OverlayTheme& pTheme) { return pTheme.ColorDetail(); } },
-        {"Error", [](const OverlayTheme& pTheme) { return pTheme.ColorError(); } },
-        {"LeaderboardEntry", [](const OverlayTheme& pTheme) { return pTheme.ColorLeaderboardEntry(); } },
-        {"LeaderboardPlayer", [](const OverlayTheme& pTheme) { return pTheme.ColorLeaderboardPlayer(); } },
+        {"Background", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorBackground(); } },
+        {"Border", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorBorder(); } },
+        {"TextShadow", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorTextShadow(); } },
+        {"Title", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorTitle(); } },
+        {"Description", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorDescription(); } },
+        {"Detail", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorDetail(); } },
+        {"Error", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorError(); } },
+        {"LeaderboardEntry", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorLeaderboardEntry(); } },
+        {"LeaderboardPlayer", [](const OverlayTheme& pTheme) noexcept { return pTheme.ColorLeaderboardPlayer(); } },
     };
 
 public:

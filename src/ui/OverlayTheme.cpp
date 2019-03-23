@@ -22,8 +22,8 @@ static void ReadColor(Color& nColor, const rapidjson::Value& pColors, const char
             if (sValue.length() == 6)
             {
                 char* pEnd;
-                auto nValue = strtoul(sValue.c_str(), &pEnd, 16);
-                if (*pEnd == '\0')
+                const auto nValue = strtoul(sValue.c_str(), &pEnd, 16);
+                if (pEnd && *pEnd == '\0')
                     nColor = Color(nValue | 0xFF000000);
             }
         }

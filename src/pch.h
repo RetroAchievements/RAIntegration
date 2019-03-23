@@ -1,6 +1,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#define ISOLATION_AWARE_ENABLED 1
+
 /*
     Only put files that never change or are rarely changed in this file.
     An include graph will be provided for some headers that were not explicit

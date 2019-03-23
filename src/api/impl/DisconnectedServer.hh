@@ -13,10 +13,10 @@ public:
 
     const char* Name() const noexcept override { return "disconnected client"; }
 
-    GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
+    Login::Response Login(const Login::Request& request) override;
     const std::string& Host() const noexcept { return m_sHost; }
 
-    GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;
+    LatestClient::Response LatestClient(const LatestClient::Request& request) override;
 
 private:
     const std::string m_sHost;

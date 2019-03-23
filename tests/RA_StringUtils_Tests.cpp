@@ -4,11 +4,18 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 
-[[gsl::suppress(f.6), nodiscard]]
+GSL_SUPPRESS_F6 _NODISCARD
 static std::string TrimLineEnding(std::string&& str) noexcept
 {
     auto sRet{ std::move_if_noexcept(str) };
     return TrimLineEnding(sRet);
+}
+
+GSL_SUPPRESS_F6 _NODISCARD
+static std::wstring Trim(std::wstring&& str) noexcept
+{
+    auto sRet{ std::move_if_noexcept(str) };
+    return Trim(sRet);
 }
 
 namespace services {
@@ -49,6 +56,7 @@ public:
         // invalid UTF-8 replaced with placeholder U+FFFD
         Assert::AreEqual(std::wstring(L"T\xFFFDst"), Widen("T\xA9st")); // should be \xC3\xA9
     }
+
     TEST_METHOD(TestTrimLineEnding)
     {
         Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test")));
@@ -57,6 +65,16 @@ public:
         Assert::AreEqual(std::string("test"), TrimLineEnding(std::string("test\r\n")));
         Assert::AreEqual(std::string("test\n"), TrimLineEnding(std::string("test\n\n")));
         Assert::AreEqual(std::string("test\r\n"), TrimLineEnding(std::string("test\r\n\r\n")));
+    }
+
+    TEST_METHOD(TestTrim)
+    {
+        Assert::AreEqual(std::wstring(L"test"), Trim(std::wstring(L"test")));
+        Assert::AreEqual(std::wstring(L"test"), Trim(std::wstring(L"test \t\r\n")));
+        Assert::AreEqual(std::wstring(L"test"), Trim(std::wstring(L" \t\r\ntest")));
+        Assert::AreEqual(std::wstring(L"test"), Trim(std::wstring(L" \t\r\ntest \t\r\n")));
+        Assert::AreEqual(std::wstring(L"test"), Trim(std::wstring(L"      test     ")));
+        Assert::AreEqual(std::wstring(L"test test\r\ntest"), Trim(std::wstring(L"\ttest test\r\ntest\r\n\r\n")));
     }
 
     TEST_METHOD(TestToString)

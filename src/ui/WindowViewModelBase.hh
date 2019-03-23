@@ -71,6 +71,11 @@ public:
     /// </summary>
     DialogResult ShowModal();
 
+    /// <summary>
+    /// Shows a modal window for this view model. Method will not return until the window is closed.
+    /// </summary>
+    DialogResult ShowModal(const ra::ui::WindowViewModelBase& vmParentWindow);
+
 protected:
     WindowViewModelBase() noexcept(std::is_nothrow_default_constructible_v<ViewModelBase>) = default;
 };

@@ -71,8 +71,10 @@ protected:
     /// <summary>
     /// Called when the window is created, but before it is shown.
     /// </summary>
-    /// <returns>Return <c>TRUE</c> if passing the keyboard focus to a default control, otherwise return
-    /// <c>FALSE</c>.</returns>
+    /// <returns>
+    /// <c>TRUE</c> to focus the first control in tab order,
+    /// <c>FALSE</c> if the method explicitly focused a control.
+    /// </returns>
     GSL_SUPPRESS_F6 virtual BOOL OnInitDialog() { return TRUE; }
 
     /// <summary>
@@ -89,6 +91,7 @@ protected:
     /// Called when a button is clicked.
     /// </summary>
     /// <param name="nCommand">The unique identifier of the button.</param>
+    /// <return></c>TRUE</c> if the command was handled, <c>FALSE</c> if not.
     virtual BOOL OnCommand(_In_ WORD nCommand);
 
     /// <summary>
@@ -102,6 +105,11 @@ protected:
     /// </summary>
     /// <param name="oNewPosition">The new size of the client area.</param>
     virtual void OnSize(_In_ const ra::ui::Size& oNewSize);
+
+    /// <summary>
+    /// Sets the specified <see cref="DialogResult"/> for the view model and closes the window.
+    /// </summary>
+    void SetDialogResult(DialogResult nResult);
 
     ra::ui::win32::bindings::WindowBinding m_bindWindow;
 

@@ -118,6 +118,7 @@ public:
     }
 
     void DeactivateLeaderboards() noexcept;
+    void ActivateLeaderboards();
 
     size_t LeaderboardCount() const noexcept { return m_vLeaderboards.size(); }
 

@@ -254,6 +254,7 @@ void EmulatorContext::DisableHardcoreMode()
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         pGameContext.RefreshUnlocks();
+        pGameContext.DeactivateLeaderboards();
     }
 }
 
@@ -284,7 +285,7 @@ bool EmulatorContext::EnableHardcoreMode()
     }
 
     // The user is on the latest verion
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (pGameContext.GameId() != 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -309,10 +310,12 @@ bool EmulatorContext::EnableHardcoreMode()
         m_fResetEmulator();
 
 #ifndef RA_UTEST
+    // emulator reset code will normally call back into _RA_OnReset, but call it explicitly just in case.
     _RA_OnReset();
 #endif
 
-    ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().RefreshUnlocks();
+    pGameContext.ActivateLeaderboards();
+    pGameContext.RefreshUnlocks();
 
     return true;
 }

@@ -13,19 +13,19 @@ public:
 
     const char* Name() const noexcept override { return m_sHost.c_str(); }
 
-    GSL_SUPPRESS_F6 Login::Response Login(const Login::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 Logout::Response Logout(_UNUSED const Logout::Request& /*request*/) noexcept override;
-    GSL_SUPPRESS_F6 StartSession::Response StartSession(const StartSession::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 Ping::Response Ping(const Ping::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 ResolveHash::Response ResolveHash(const ResolveHash::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 FetchGameData::Response FetchGameData(const FetchGameData::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 LatestClient::Response LatestClient(const LatestClient::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) noexcept override;
-    GSL_SUPPRESS_F6 SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept override;
+    Login::Response Login(const Login::Request& request) override;
+    Logout::Response Logout(const Logout::Request&) override;
+    StartSession::Response StartSession(const StartSession::Request& request) override;
+    Ping::Response Ping(const Ping::Request& request) override;
+    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override;
+    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override;
+    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override;
+    ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
+    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
+    FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
+    LatestClient::Response LatestClient(const LatestClient::Request& request) override;
+    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override;
+    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
 

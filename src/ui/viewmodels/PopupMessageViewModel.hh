@@ -72,19 +72,7 @@ public:
     /// <summary>
     /// Begins the animation cycle.
     /// </summary>
-    void BeginAnimation() override
-    {
-        m_fAnimationProgress = 0.0;
-
-        // left margin 10px
-        SetRenderLocationX(10);
-
-        // animate to bottom margin 10px. assume height = 64+2
-        m_nInitialY = 0;
-        m_nTargetY = 10 + 64 + 2;
-        SetRenderLocationY(m_nInitialY);
-        SetRenderLocationYRelativePosition(RelativePosition::Far);
-    }
+    void BeginAnimation() override;
 
     /// <summary>
     /// Updates the image to render.

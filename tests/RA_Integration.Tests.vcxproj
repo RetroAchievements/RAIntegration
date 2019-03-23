@@ -210,6 +210,8 @@
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
@@ -252,6 +254,7 @@
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="mocks\MockAudioSystem.hh" />
+    <ClInclude Include="mocks\MockClipboard.hh" />
     <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockConfiguration.hh" />
     <ClInclude Include="mocks\MockConsoleContext.hh" />

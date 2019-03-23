@@ -37,6 +37,8 @@ UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& v
     m_bindNewTitle.BindText(ra::ui::viewmodels::UnknownGameViewModel::NewGameNameProperty,
         ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);
 
+    m_bindWindow.BindLabel(IDC_RA_GAMENAME, ra::ui::viewmodels::UnknownGameViewModel::EstimatedGameNameProperty);
+    m_bindWindow.BindLabel(IDC_RA_SYSTEMNAME, ra::ui::viewmodels::UnknownGameViewModel::SystemNameProperty);
     m_bindWindow.BindLabel(IDC_RA_CHECKSUM, ra::ui::viewmodels::UnknownGameViewModel::ChecksumProperty);
 }
 
@@ -50,11 +52,30 @@ BOOL UnknownGameDialog::OnInitDialog()
 
 BOOL UnknownGameDialog::OnCommand(WORD nCommand)
 {
-    if (nCommand == IDOK)
+    switch (nCommand)
     {
-        auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
-        if (!vmUnknownGame.Associate())
+        case IDOK:
+        {
+            auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
+            if (vmUnknownGame.BeginTest())
+                SetDialogResult(ra::ui::DialogResult::OK);
             return TRUE;
+        }
+
+        case IDC_RA_LINK:
+        {
+            auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
+            if (vmUnknownGame.Associate())
+                SetDialogResult(ra::ui::DialogResult::OK);
+            return TRUE;
+        }
+
+        case IDC_RA_COPYCHECKSUMCLIPBOARD:
+        {
+            const auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
+            vmUnknownGame.CopyChecksumToClipboard();
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

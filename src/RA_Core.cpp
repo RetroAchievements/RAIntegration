@@ -51,11 +51,16 @@ bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
-    if (dwReason == DLL_PROCESS_ATTACH)
+    switch (dwReason)
     {
-        g_hThisDLLInst = hModule;
+        case DLL_PROCESS_ATTACH:
+            g_hThisDLLInst = hModule;
+            ra::services::Initialization::RegisterCoreServices();
+            break;
 
-        ra::services::Initialization::RegisterCoreServices();
+        case DLL_PROCESS_DETACH:
+            IsolationAwareCleanup();
+            break;
     }
 
     return TRUE;
@@ -236,6 +241,12 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
 
 static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5)
 {
+    if (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id() == 0U)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
+        return 0U;
+    }
+
     unsigned int nGameId = 0U;
 
     if (pROM == nullptr || nROMSize == 0)
@@ -266,8 +277,10 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
 
                     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
                     vmUnknownGame.InitializeGameTitles();
+                    vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
                     vmUnknownGame.SetChecksum(ra::Widen(sCurrentROMMD5));
-                    vmUnknownGame.SetNewGameName(ra::Widen(sEstimatedGameTitle));
+                    vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+                    vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
 
                     if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
                         nGameId = vmUnknownGame.GetSelectedGameId();

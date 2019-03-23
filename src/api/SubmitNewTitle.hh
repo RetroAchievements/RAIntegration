@@ -22,10 +22,12 @@ public:
         unsigned int ConsoleId{0U};
         std::string Hash;
         std::wstring GameName;
+        unsigned int GameId{0U};
+        std::wstring Description;
 
         using Callback = std::function<void(const Response& response)>;
 
-        Response Call() const noexcept;
+        Response Call() const;
 
         void CallAsync(Callback&& callback) const
         {

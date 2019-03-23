@@ -12,10 +12,10 @@ namespace ui {
 class ViewModelCollectionBase
 {
 protected:
-    ViewModelCollectionBase() noexcept {};
+    GSL_SUPPRESS_F6 ViewModelCollectionBase() = default;
 
 public:
-    virtual ~ViewModelCollectionBase() noexcept
+    ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();
@@ -23,8 +23,8 @@ public:
 
     ViewModelCollectionBase(const ViewModelCollectionBase&) noexcept = delete;
     ViewModelCollectionBase& operator=(const ViewModelCollectionBase&) noexcept = delete;
-    ViewModelCollectionBase(const ViewModelCollectionBase&&) noexcept = delete;
-    ViewModelCollectionBase& operator=(const ViewModelCollectionBase&&) noexcept = delete;
+    GSL_SUPPRESS_F6 ViewModelCollectionBase(ViewModelCollectionBase&&) = default;
+    GSL_SUPPRESS_F6 ViewModelCollectionBase& operator=(ViewModelCollectionBase&&) = default;
 
     class NotifyTarget
     {
@@ -55,22 +55,22 @@ public:
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
+    void AddNotifyTarget(NotifyTarget& pTarget)
     {
         if (!IsFrozen())
         {
             if (m_vNotifyTargets.empty())
                 StartWatching();
 
-            GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget);
+            m_vNotifyTargets.insert(&pTarget);
         }
     }
 
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
+    void RemoveNotifyTarget(NotifyTarget& pTarget)
     {
         if (!m_vNotifyTargets.empty())
         {
-            GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+            m_vNotifyTargets.erase(&pTarget);
 
             if (m_vNotifyTargets.empty())
                 StopWatching();
@@ -284,8 +284,6 @@ class ViewModelCollection : public ViewModelCollectionBase
     static_assert(std::is_base_of<ViewModelBase, T>{}, "T must be a subclass of ViewModelBase");
 
 public:
-    ViewModelCollection() noexcept = default;
-
     /// <summary>
     /// Adds an item to the end of the collection.
     /// </summary>

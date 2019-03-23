@@ -190,6 +190,27 @@ public:
         viewModel.SetIcon(Icon::Error);
         viewModel.ShowModal();
     }
+
+    /// <summary>
+    /// Shows an error message.
+    /// </summary>
+    static void ShowErrorMessage(const ra::ui::WindowViewModelBase& vmParentWindow, const std::wstring& sMessage)
+    {
+        MessageBoxViewModel viewModel(sMessage);
+        viewModel.SetIcon(Icon::Error);
+        viewModel.ShowModal(vmParentWindow);
+    }
+
+    /// <summary>
+    /// Shows an error message with a header message.
+    /// </summary>
+    static void ShowErrorMessage(const ra::ui::WindowViewModelBase& vmParentWindow, const std::wstring& sHeader, const std::wstring& sMessage)
+    {
+        MessageBoxViewModel viewModel(sMessage);
+        viewModel.SetHeader(sHeader);
+        viewModel.SetIcon(Icon::Error);
+        viewModel.ShowModal(vmParentWindow);
+    }
 };
 
 } // namespace viewmodels

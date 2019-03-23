@@ -1,35 +1,23 @@
 #include "OverlayManager.hh"
 
-#include "RA_LeaderboardPopup.h"
-
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
-#ifndef RA_UTEST
-LeaderboardPopup g_LeaderboardPopups;
-#endif
-
 namespace ra {
 namespace ui {
 namespace viewmodels {
-
-const IntModelProperty PopupViewModelBase::RenderLocationXProperty("PopupViewModelBase", "RenderLocationX", 0);
-const IntModelProperty PopupViewModelBase::RenderLocationYProperty("PopupViewModelBase", "RenderLocationY", 0);
-const IntModelProperty PopupViewModelBase::RenderLocationXRelativePositionProperty("PopupViewModelBase", "RenderLocationXRelativePosition", ra::etoi(RelativePosition::Near));
-const IntModelProperty PopupViewModelBase::RenderLocationYRelativePositionProperty("PopupViewModelBase", "RenderLocationYRelativePosition", ra::etoi(RelativePosition::Near));
 
 void OverlayManager::Update(double fElapsed)
 {
     if (!m_vPopupMessages.empty())
         UpdateActiveMessage(fElapsed);
 
+    if (!m_vScoreboards.empty())
+        UpdateActiveScoreboard(fElapsed);
+
     for (auto& pScoreTracker : m_vScoreTrackers)
         pScoreTracker->UpdateRenderImage(fElapsed);
-
-#ifndef RA_UTEST
-    g_LeaderboardPopups.Update(fElapsed);
-#endif
 }
 
 static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, size_t nFarValue) noexcept
@@ -52,9 +40,20 @@ static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, s
 
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
 {
-#ifndef RA_UTEST
-    const auto bScoreboardShown = g_LeaderboardPopups.Render(pSurface);
-#endif
+    int nScoreboardHeight = 0;
+    if (!m_vScoreboards.empty())
+    {
+        // if the animation hasn't started, it was queued after the last update was called.
+        // ignore it for now as the location won't be correct, and the render image won't be ready.
+        const auto& pActiveScoreboard = m_vScoreboards.front();
+        if (pActiveScoreboard.IsAnimationStarted())
+        {
+            const int nX = GetAbsolutePosition(pActiveScoreboard.GetRenderLocationX(), pActiveScoreboard.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
+            const int nY = GetAbsolutePosition(pActiveScoreboard.GetRenderLocationY(), pActiveScoreboard.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
+            pSurface.DrawSurface(nX, nY, pActiveScoreboard.GetRenderImage());
+            nScoreboardHeight = pActiveScoreboard.GetRenderImage().GetHeight() + 10;
+        }
+    }
 
     if (!m_vScoreTrackers.empty())
     {
@@ -62,11 +61,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
         {
             const auto nX = pSurface.GetWidth() - 10;
-            int nY = pSurface.GetHeight() - 10;
-#ifndef RA_UTEST
-            if (bScoreboardShown)
-                nY -= 210;
-#endif
+            int nY = pSurface.GetHeight() - 10 - nScoreboardHeight;
 
             for (auto& pTracker : m_vScoreTrackers)
             {
@@ -92,6 +87,12 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
     }
 }
 
+void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard)
+{
+    vmScoreboard.SetPopupId(nLeaderboardId);
+    m_vScoreboards.push_back(std::move(vmScoreboard));
+}
+
 int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
 {
 #ifndef RA_UTEST
@@ -113,6 +114,9 @@ void OverlayManager::ClearPopups()
 {
     while (!m_vPopupMessages.empty())
         m_vPopupMessages.pop_front();
+
+    while (!m_vScoreboards.empty())
+        m_vScoreboards.pop_front();
 
     m_vScoreTrackers.clear();
 }
@@ -139,6 +143,31 @@ void OverlayManager::UpdateActiveMessage(double fElapsed)
         pActiveMessage = &m_vPopupMessages.front();
         pActiveMessage->BeginAnimation();
         pActiveMessage->UpdateRenderImage(0.0);
+    }
+}
+
+void OverlayManager::UpdateActiveScoreboard(double fElapsed)
+{
+    assert(!m_vScoreboards.empty());
+    auto* pActiveScoreboard = &m_vScoreboards.front();
+
+    if (!pActiveScoreboard->IsAnimationStarted())
+    {
+        pActiveScoreboard->BeginAnimation();
+        fElapsed = 0.0;
+    }
+
+    pActiveScoreboard->UpdateRenderImage(fElapsed);
+
+    while (pActiveScoreboard->IsAnimationComplete())
+    {
+        m_vScoreboards.pop_front();
+        if (m_vScoreboards.empty())
+            break;
+
+        pActiveScoreboard = &m_vScoreboards.front();
+        pActiveScoreboard->BeginAnimation();
+        pActiveScoreboard->UpdateRenderImage(0.0);
     }
 }
 

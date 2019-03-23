@@ -11,6 +11,9 @@ static _CONSTANT_VAR FONT_SIZE_TEXT = 22;
 
 const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"0");
 
+#ifdef RA_UTEST
+GSL_SUPPRESS_F6
+#endif
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)

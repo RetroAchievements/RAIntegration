@@ -29,9 +29,6 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_Memory.h"
-
-#include "RA_LeaderboardPopup.h"
-extern LeaderboardPopup g_LeaderboardPopups;
 #endif
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }

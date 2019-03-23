@@ -1,7 +1,5 @@
 #include "PopupMessageViewModel.hh"
 
-#include "ra_math.h"
-
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -14,39 +12,26 @@ const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageView
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 
+void PopupMessageViewModel::BeginAnimation()
+{
+    m_fAnimationProgress = 0.0;
+
+    // left margin 10px
+    SetRenderLocationX(10);
+
+    // animate to bottom margin 10px. assume height = 64+2
+    m_nInitialY = 0;
+    m_nTargetY = 10 + 64 + 2;
+    SetRenderLocationY(m_nInitialY);
+    SetRenderLocationYRelativePosition(RelativePosition::Far);
+}
+
 bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 {
     const int nOldY = GetRenderLocationY();
-    int nNewY = nOldY;
 
     m_fAnimationProgress += fElapsed;
-
-    if (m_fAnimationProgress < INOUT_TIME)
-    {
-        // fading in
-        const auto fPercentage = (INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        Expects(m_nTargetY > m_nInitialY);
-        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        nNewY = ftol(m_nTargetY - nY);
-    }
-    else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME - INOUT_TIME)
-    {
-        // faded in - hold position
-        nNewY = m_nTargetY;
-    }
-    else if (m_fAnimationProgress < TOTAL_ANIMATION_TIME)
-    {
-        // fading out
-        const auto fPercentage = (TOTAL_ANIMATION_TIME - INOUT_TIME - m_fAnimationProgress) / INOUT_TIME;
-        Expects(m_nTargetY > m_nInitialY);
-        const auto nY = to_unsigned(m_nTargetY - m_nInitialY) * (fPercentage * fPercentage);
-        nNewY = ftoi(m_nTargetY - nY);
-    }
-    else
-    {
-        // faded out
-        nNewY = m_nInitialY;
-    }
+    const int nNewY = GetFadeOffset(m_fAnimationProgress, TOTAL_ANIMATION_TIME, INOUT_TIME, m_nInitialY, m_nTargetY);
 
     bool bUpdated = false;
     if (nNewY != nOldY)

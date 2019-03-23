@@ -8,6 +8,8 @@
 
 #include "data\GameContext.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 inline constexpr std::array<const char*, 3> PROBLEM_STR{"Unknown", "Triggers at wrong time", "Didn't trigger at all"};
 gsl::index Dlg_AchievementsReporter::ms_nNumOccupiedRows = 0;
 char Dlg_AchievementsReporter::ms_lbxData[MAX_ACHIEVEMENTS][Dlg_AchievementsReporter::COL_SIZE.size()][MAX_TEXT_LEN]{};
@@ -246,10 +248,15 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
 }
 
 // static
-void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent) noexcept
+void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent)
 {
-    if (g_pActiveAchievements->NumAchievements() == 0)
-        MessageBox(hParent, TEXT("No ROM loaded!"), TEXT("Error"), MB_OK);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (pGameContext.GameId() == 0)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report broken achievements.");
+    else if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken local achievements.");
+    else if (g_pActiveAchievements->NumAchievements() == 0)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"There are no active achievements to report.");
     else
         DialogBox(hInst, MAKEINTRESOURCE(IDD_RA_REPORTBROKENACHIEVEMENTS), hParent, AchievementsReporterProc);
 }

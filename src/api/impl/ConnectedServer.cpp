@@ -221,7 +221,7 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
 
 // === APIs ===
 
-Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
+Login::Response ConnectedServer::Login(const Login::Request& request)
 {
     ra::services::Http::Request httpRequest(ra::StringPrintf("%s/login_app.php", m_sHost));
 
@@ -256,7 +256,7 @@ Login::Response ConnectedServer::Login(const Login::Request& request) noexcept
     return std::move(response);
 }
 
-Logout::Response ConnectedServer::Logout(_UNUSED const Logout::Request& /*request*/) noexcept
+Logout::Response ConnectedServer::Logout(const Logout::Request&)
 {
     // update the global API pointer to a disconnected API
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<DisconnectedServer>(m_sHost));
@@ -289,7 +289,7 @@ static bool DoRequest(const std::string& sHost, const char* restrict sApiName, c
     return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
-StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request) noexcept
+StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
 {
     StartSession::Response response;
     rapidjson::Document document;
@@ -311,7 +311,7 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
     return std::move(response);
 }
 
-Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
+Ping::Response ConnectedServer::Ping(const Ping::Request& request)
 {
     Ping::Response response;
     rapidjson::Document document;
@@ -327,7 +327,7 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request) noexcept
     return std::move(response);
 }
 
-FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request) noexcept
+FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request)
 {
     FetchUserUnlocks::Response response;
     rapidjson::Document document;
@@ -356,7 +356,7 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
     return std::move(response);
 }
 
-AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request) noexcept
+AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request)
 {
     AwardAchievement::Response response;
     rapidjson::Document document;
@@ -376,7 +376,7 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
     return std::move(response);
 }
 
-SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) noexcept
+SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request)
 {
     SubmitLeaderboardEntry::Response response;
     rapidjson::Document document;
@@ -440,7 +440,7 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     return std::move(response);
 }
 
-ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request) noexcept
+ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
 {
     ResolveHash::Response response;
     rapidjson::Document document;
@@ -457,7 +457,7 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     return std::move(response);
 }
 
-FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request) noexcept
+FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request)
 {
     FetchGameData::Response response;
     rapidjson::Document document;
@@ -496,7 +496,7 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
     return std::move(response);
 }
 
-FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) noexcept
+FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;
     rapidjson::Document document;
@@ -613,7 +613,7 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
     }
 }
 
-LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request) noexcept
+LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)
 {
     LatestClient::Response response;
     rapidjson::Document document;
@@ -637,7 +637,7 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     return response;
 }
 
-FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request) noexcept
+FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request)
 {
     FetchGamesList::Response response;
     rapidjson::Document document;
@@ -697,7 +697,7 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
     return response;
 }
 
-SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request) noexcept
+SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request)
 {
     SubmitNewTitle::Response response;
     rapidjson::Document document;
@@ -706,6 +706,12 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
     AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
     AppendUrlParam(sPostData, "m", request.Hash);
     AppendUrlParam(sPostData, "i", ra::Narrow(request.GameName));
+
+    if (request.GameId)
+        AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+
+    if (!request.Description.empty())
+        AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
 
     if (DoRequest(m_sHost, SubmitNewTitle::Name(), "submitgametitle", sPostData, response, document))
     {

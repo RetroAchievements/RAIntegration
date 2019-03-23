@@ -2,14 +2,13 @@
 
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 
-#include "services\ServiceLocator.hh"
-#include "services\IClipboard.hh"
-
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::data::mocks::MockGameContext;
+using ra::services::mocks::MockClipboard;
 
 namespace ra {
 namespace ui {
@@ -18,23 +17,6 @@ namespace tests {
 
 TEST_CLASS(GameChecksumViewModel_Tests)
 {
-private:
-    class MockClipboard : public ra::services::IClipboard
-    {
-    public:
-        MockClipboard() noexcept
-            : m_Override(this)
-        {
-        }
-
-        void SetText(const std::wstring& sValue) const override { m_sText = sValue; }
-        const std::wstring& GetText() const noexcept { return m_sText; }
-
-    private:
-        ra::services::ServiceLocator::ServiceOverride<ra::services::IClipboard> m_Override;
-        mutable std::wstring m_sText;
-    };
-
 public:
     TEST_METHOD(TestInitialValueFromGameContext)
     {

@@ -6,6 +6,8 @@
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\OverlayManager.hh"
+
 #include <ctime>
 
 RA_Leaderboard::~RA_Leaderboard() noexcept
@@ -50,9 +52,17 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)
+            {
                 pRuntime.DeactivateLeaderboard(ID());
+
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RemoveScoreTracker(ID());
+            }
             else
-                pRuntime.ActivateLeaderboard(ID(), static_cast<rc_lboard_t*>(m_pLeaderboard));
+            {
+                auto pLeaderboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
+                rc_reset_lboard(pLeaderboard);
+                pRuntime.ActivateLeaderboard(ID(), pLeaderboard);
+            }
         }
     }
 }

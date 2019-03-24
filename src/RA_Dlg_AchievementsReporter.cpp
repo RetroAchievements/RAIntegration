@@ -255,6 +255,8 @@ void Dlg_AchievementsReporter::DoModalDialog(HINSTANCE hInst, HWND hParent)
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report broken achievements.");
     else if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken local achievements.");
+    else if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken achievements in compatibility test mode.");
     else if (g_pActiveAchievements->NumAchievements() == 0)
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"There are no active achievements to report.");
     else

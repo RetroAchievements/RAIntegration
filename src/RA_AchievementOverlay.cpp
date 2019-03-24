@@ -8,6 +8,7 @@
 
 #include "ra_math.h"
 
+#include "api\FetchAchievementInfo.hh"
 #include "api\FetchLeaderboardInfo.hh"
 
 #include "data\EmulatorContext.hh"
@@ -1479,40 +1480,24 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         m_CreatedDate = _TimeStampToString(pAch->CreatedDate());
         m_LastModifiedDate = _TimeStampToString(pAch->ModifiedDate());
 
-        PostArgs args;
-        args['u'] = RAUsers::LocalUser().Username();
-        args['t'] = RAUsers::LocalUser().Token();
-        args['a'] = std::to_string(m_pSelectedAchievement->ID());
-        args['f'] = true; // Friends only?
-        RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
+        ra::api::FetchAchievementInfo::Request request;
+        request.AchievementId = m_pSelectedAchievement->ID();
+        request.FirstEntry = 1;
+        request.NumEntries = 10;
+        request.CallAsync([this](const ra::api::FetchAchievementInfo::Response& response)
+        {
+            m_nTotalWinners = response.EarnedBy;
+            m_nPossibleWinners = response.NumPlayers;
+
+            for (const auto& pWinner : response.Entries)
+            {
+                RecentWinners.emplace_back(ra::StringPrintf("%s (%u)", pWinner.User, pWinner.Points),
+                    _TimeStampToString(pWinner.DateAwarded));
+            }
+
+            m_bHasData = true;
+        });
     }
-}
-
-void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
-{
-    ASSERT(doc["Success"].GetBool());
-    const auto nOffset{doc["Offset"].GetUint()};
-    const auto nCount{doc["Count"].GetUint()};
-    const auto nFriendsOnly{doc["FriendsOnly"].GetUint()};
-    const auto nAchievementID{doc["AchievementID"].GetUint()};
-    const auto& ResponseData{doc["Response"]};
-
-    const auto nGameID{ResponseData["GameID"].GetUint()};
-
-    m_nTotalWinners = ResponseData["NumEarned"].GetUint();
-    m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
-
-    const auto& RecentWinnerData{ResponseData["RecentWinner"]};
-    ASSERT(RecentWinnerData.IsArray());
-    for (auto& NextWinner : RecentWinnerData.GetArray())
-    {
-        const auto nDateAwarded{static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint()))};
-        std::ostringstream oss;
-        oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.emplace_back(oss.str(), _TimeStampToString(nDateAwarded));
-    }
-
-    m_bHasData = true;
 }
 
 void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)

@@ -1,5 +1,5 @@
-#ifndef RA_API_FETCH_LEADERBOARD_INFO_HH
-#define RA_API_FETCH_LEADERBOARD_INFO_HH
+#ifndef RA_API_FETCH_ACHIEVEMENT_INFO_HH
+#define RA_API_FETCH_ACHIEVEMENT_INFO_HH
 #pragma once
 
 #include "ApiCall.hh"
@@ -7,23 +7,22 @@
 namespace ra {
 namespace api {
 
-class FetchLeaderboardInfo
+class FetchAchievementInfo
 {
 public:
-    static constexpr const char* const Name() noexcept { return "FetchLeaderboardInfo"; }
+    static constexpr const char* const Name() noexcept { return "FetchAchievementInfo"; }
 
     struct Response : ApiResponseBase
     {
         unsigned int GameId{ 0U };
-        unsigned int ConsoleId{ 0U };
-        bool LowerIsBetter{ false };
+        unsigned int EarnedBy{ 0U };
+        unsigned int NumPlayers{ 0U };
 
         struct Entry
         {
-            unsigned int Rank{ 0U };
             std::string User;
-            unsigned int Score{ 0U };
-            time_t DateSubmitted{};
+            unsigned int Points{ 0U };
+            time_t DateAwarded{};
         };
 
         std::vector<Entry> Entries;
@@ -31,9 +30,10 @@ public:
 
     struct Request : ApiRequestBase
     {
-        unsigned int LeaderboardId{ 0U };
+        unsigned int AchievementId{ 0U };
         unsigned int FirstEntry{ 1U };
         unsigned int NumEntries{ 10U };
+        bool FriendsOnly{ false };
 
         using Callback = std::function<void(const Response& response)>;
 
@@ -49,4 +49,4 @@ public:
 } // namespace api
 } // namespace ra
 
-#endif // !RA_API_FETCH_LEADERBOARD_INFO_HH
+#endif // !RA_API_FETCH_ACHIEVEMENT_INFO_HH

@@ -42,7 +42,6 @@ public:
 public:
     void Initialize(const Achievement* pAchIn);
     void Clear() noexcept;
-    void OnReceiveData(rapidjson::Document& doc);
 
     bool HasData() const noexcept { return m_bHasData; }
     const std::string& CreatedDate() const noexcept { return m_CreatedDate; }

@@ -26,6 +26,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
     {
         case RA_Gens:
             m_sClientName = "RAGens_REWiND";
+            m_sAcceptButtonText = L"\u24B8"; // encircled C
             _RA_SetConsoleID(ConsoleID::MegaDrive);
             break;
 
@@ -67,11 +68,15 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
 
         case RA_QUASI88:
             m_sClientName = "RAQUASI88";
+            m_sAcceptButtonText = L"Enter";
+            m_sCancelButtonText = L"Backspace";
             _RA_SetConsoleID(ConsoleID::PC8800);
             break;
 
         case RA_AppleWin:
             m_sClientName = "RAppleWin";
+            m_sAcceptButtonText = L"Enter";
+            m_sCancelButtonText = L"Backspace";
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
     }

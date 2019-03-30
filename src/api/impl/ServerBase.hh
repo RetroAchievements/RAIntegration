@@ -64,6 +64,11 @@ public:
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
+    FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request&) override
+    {
+        return UnsupportedApi<FetchAchievementInfo::Response>(FetchAchievementInfo::Name());
+    }
+
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request&) override
     {
         return UnsupportedApi<FetchLeaderboardInfo::Response>(FetchLeaderboardInfo::Name());

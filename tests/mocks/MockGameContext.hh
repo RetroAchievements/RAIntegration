@@ -23,6 +23,11 @@ public:
     /// </summary>
     void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
+    /// <summary>
+    /// Sets the play mode for the currently loaded game.
+    /// </summary>
+    void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
+
     bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
 
     std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }

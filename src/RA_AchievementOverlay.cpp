@@ -8,6 +8,7 @@
 
 #include "ra_math.h"
 
+#include "api\FetchAchievementInfo.hh"
 #include "api\FetchLeaderboardInfo.hh"
 
 #include "data\EmulatorContext.hh"
@@ -1152,48 +1153,31 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
     //	Render controls:
     SelectFont(hDC, g_hFontDesc2);
     {
-        const int nControlsX1 = 80 + 80 + 4;
-        const int nControlsX2 = 80;
-        const int nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
-        const int nControlsY2 = rcTarget.bottom - 30 - 4;
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+
+        const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
+        const auto sSelect = ra::StringPrintf(L"%s: Select", pEmulatorContext.GetAcceptButtonText());
+        const auto sNext = std::wstring(L"\u2BC8: Next");
+        const auto sPrev = std::wstring(L"\u2BC7: Prev");
+
+        SIZE szBack, szSelect;
+        GetTextExtentPoint32W(hDC, sBack.c_str(), sBack.length(), &szBack);
+        GetTextExtentPoint32W(hDC, sSelect.c_str(), sSelect.length(), &szSelect);
+
+        const int nControlsX2 = std::max(szBack.cx, szSelect.cx) + 10;
+        const int nControlsX1 = nControlsX2 + 80;
+        const int nControlsY2 = rcTarget.bottom - szSelect.cy - 6;
+        const int nControlsY1 = nControlsY2 - szBack.cy - 6;
 
         //	Fill again:
-        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
+        SetRect(&rc, nRightPx - nControlsX1 - 8, nControlsY1 - 4, nRightPx, lHeight);
         FillRect(hDC, &rc, g_hBrushBG);
 
         //	Draw control text:
-        {
-            ra::tstring stNext{_T(" ->:")};
-            stNext += _T("Next ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::to_signed(stNext.length()));
-        }
-        {
-            ra::tstring stPrev{_T(" <-:")};
-            stPrev += _T("Prev ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::to_signed(stPrev.length()));
-        }
-
-        _CONSTANT_LOC ctBackChar{_T('B')};
-        auto ctSelectChar{_T('A')};
-
-        //	Genesis wouldn't use 'A' for select
-        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
-            ctSelectChar = _T('C');
-
-        {
-            ra::tstring stBack{_T(" ")};
-            stBack += ctBackChar;
-            stBack += _T(":");
-            stBack += _T("Back ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::to_signed(stBack.length()));
-        }
-        {
-            ra::tstring stSelect{_T(" ")};
-            stSelect += ctSelectChar;
-            stSelect += _T(":");
-            stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::to_signed(stSelect.length()));
-        }
+        TextOutW(hDC, nRightPx - nControlsX1, nControlsY1, sNext.c_str(), ra::to_signed(sNext.length()));
+        TextOutW(hDC, nRightPx - nControlsX1, nControlsY2, sPrev.c_str(), ra::to_signed(sPrev.length()));
+        TextOutW(hDC, nRightPx - nControlsX2, nControlsY1, sBack.c_str(), ra::to_signed(sBack.length()));
+        TextOutW(hDC, nRightPx - nControlsX2, nControlsY2, sSelect.c_str(), ra::to_signed(sSelect.length()));
     }
 
     DeleteBrush(g_hBrushBG);
@@ -1479,40 +1463,24 @@ void AchievementExamine::Initialize(const Achievement* pAch)
         m_CreatedDate = _TimeStampToString(pAch->CreatedDate());
         m_LastModifiedDate = _TimeStampToString(pAch->ModifiedDate());
 
-        PostArgs args;
-        args['u'] = RAUsers::LocalUser().Username();
-        args['t'] = RAUsers::LocalUser().Token();
-        args['a'] = std::to_string(m_pSelectedAchievement->ID());
-        args['f'] = true; // Friends only?
-        RAWeb::CreateThreadedHTTPRequest(RequestAchievementInfo, args);
+        ra::api::FetchAchievementInfo::Request request;
+        request.AchievementId = m_pSelectedAchievement->ID();
+        request.FirstEntry = 1;
+        request.NumEntries = 10;
+        request.CallAsync([this](const ra::api::FetchAchievementInfo::Response& response)
+        {
+            m_nTotalWinners = response.EarnedBy;
+            m_nPossibleWinners = response.NumPlayers;
+
+            for (const auto& pWinner : response.Entries)
+            {
+                RecentWinners.emplace_back(ra::StringPrintf("%s (%u)", pWinner.User, pWinner.Points),
+                    _TimeStampToString(pWinner.DateAwarded));
+            }
+
+            m_bHasData = true;
+        });
     }
-}
-
-void AchievementExamine::OnReceiveData(rapidjson::Document& doc)
-{
-    ASSERT(doc["Success"].GetBool());
-    const auto nOffset{doc["Offset"].GetUint()};
-    const auto nCount{doc["Count"].GetUint()};
-    const auto nFriendsOnly{doc["FriendsOnly"].GetUint()};
-    const auto nAchievementID{doc["AchievementID"].GetUint()};
-    const auto& ResponseData{doc["Response"]};
-
-    const auto nGameID{ResponseData["GameID"].GetUint()};
-
-    m_nTotalWinners = ResponseData["NumEarned"].GetUint();
-    m_nPossibleWinners = ResponseData["TotalPlayers"].GetUint();
-
-    const auto& RecentWinnerData{ResponseData["RecentWinner"]};
-    ASSERT(RecentWinnerData.IsArray());
-    for (auto& NextWinner : RecentWinnerData.GetArray())
-    {
-        const auto nDateAwarded{static_cast<time_t>(ra::to_signed(NextWinner["DateAwarded"].GetUint()))};
-        std::ostringstream oss;
-        oss << NextWinner["User"].GetString() << " (" << NextWinner["RAPoints"].GetUint() << ")";
-        RecentWinners.emplace_back(oss.str(), _TimeStampToString(nDateAwarded));
-    }
-
-    m_bHasData = true;
 }
 
 void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)

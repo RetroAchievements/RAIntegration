@@ -644,6 +644,9 @@
     <ClInclude Include="ui\OverlayTheme.hh">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchAchievementInfo.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

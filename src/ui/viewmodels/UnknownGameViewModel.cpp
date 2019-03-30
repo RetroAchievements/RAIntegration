@@ -20,6 +20,7 @@ const StringModelProperty UnknownGameViewModel::NewGameNameProperty("UnknownGame
 const StringModelProperty UnknownGameViewModel::ChecksumProperty("UnknownGameViewModel", "Checksum", L"");
 const StringModelProperty UnknownGameViewModel::EstimatedGameNameProperty("UnknownGameViewModel", "EstimatedGameName", L"");
 const StringModelProperty UnknownGameViewModel::SystemNameProperty("UnknownGameViewModel", "SystemName", L"");
+const BoolModelProperty UnknownGameViewModel::TestModeProperty("UnknownGameViewModel", "TestMode", false);
 
 UnknownGameViewModel::UnknownGameViewModel() noexcept
 {
@@ -113,8 +114,22 @@ bool UnknownGameViewModel::Associate()
 
 bool UnknownGameViewModel::BeginTest()
 {
-    ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"This feature is not yet supported.");
-    return false;
+    const auto nGameId = GetSelectedGameId();
+    if (nGameId == 0U)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"You must select an existing game to test compatibility.");
+        return false;
+    }
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(ra::StringPrintf(L"Play '%s' in compatability test mode?", m_vGameTitles.GetLabelForId(nGameId)));
+    vmMessageBox.SetMessage(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game.");
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    if (vmMessageBox.ShowModal(*this) == DialogResult::No)
+        return false;
+
+    SetTestMode(true);
+    return true;
 }
 
 void UnknownGameViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)

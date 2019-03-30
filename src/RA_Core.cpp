@@ -240,8 +240,10 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5)
+static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5, _Out_ ra::data::GameContext::Mode& nMode)
 {
+    nMode = ra::data::GameContext::Mode::Normal;
+
     if (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id() == 0U)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
@@ -284,7 +286,12 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
                     vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
 
                     if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+                    {
                         nGameId = vmUnknownGame.GetSelectedGameId();
+
+                        if (vmUnknownGame.GetTestMode())
+                            nMode = ra::data::GameContext::Mode::CompatibilityTest;
+                    }
                 }
             }
             else
@@ -304,7 +311,7 @@ static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::st
     return nGameId;
 }
 
-static void ActivateGame(unsigned int nGameId)
+static void ActivateGame(unsigned int nGameId, ra::data::GameContext::Mode nMode)
 {
     if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
@@ -319,7 +326,7 @@ static void ActivateGame(unsigned int nGameId)
     {
         RA_LOG("Loading game %u", nGameId);
 
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(nGameId);
+        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(nGameId, nMode);
         ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -354,12 +361,13 @@ struct PendingRom
 {
     std::string sMD5;
     unsigned int nGameId{};
+    ra::data::GameContext::Mode nMode{};
 };
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
 {
     auto pPendingRom = std::make_unique<PendingRom>();
-    const auto nGameId = IdentifyRom(pROM, nROMSize, pPendingRom->sMD5);
+    const auto nGameId = IdentifyRom(pROM, nROMSize, pPendingRom->sMD5, pPendingRom->nMode);
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (nGameId != 0 && nGameId == pGameContext.GameId())
@@ -398,23 +406,28 @@ static void ActivateHash(const std::string& sHash, unsigned int nGameId)
 
 API void CCONV _RA_ActivateGame(unsigned int nGameId)
 {
-    ActivateGame(nGameId);
-
     // if the hash was captured, use it
     if (ra::services::ServiceLocator::Exists<PendingRom>())
     {
         const auto& pPendingRom = ra::services::ServiceLocator::Get<PendingRom>();
+        ActivateGame(nGameId, pPendingRom.nMode);
+
         if (nGameId == pPendingRom.nGameId)
             ActivateHash(pPendingRom.sMD5, nGameId);
+    }
+    else
+    {
+        ActivateGame(nGameId, ra::data::GameContext::Mode::Normal);
     }
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 {
     std::string sCurrentROMMD5;
-    const auto nGameId = IdentifyRom(pROM, nROMSize, sCurrentROMMD5);
+    ra::data::GameContext::Mode nMode;
+    const auto nGameId = IdentifyRom(pROM, nROMSize, sCurrentROMMD5, nMode);
 
-    ActivateGame(nGameId);
+    ActivateGame(nGameId, nMode);
 
     // if a ROM was provided, store the hash, even if it didn't match anything
     if (pROM && nROMSize)

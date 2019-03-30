@@ -45,9 +45,10 @@ static void CopyAchievementData(Achievement& pAchievement,
     pAchievement.ParseTrigger(pAchievementData.Definition.c_str());
 }
 
-void GameContext::LoadGame(unsigned int nGameId)
+void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
     m_nGameId = nGameId;
+    m_nMode = nMode;
     m_sGameTitle.clear();
     m_pRichPresenceInterpreter.reset();
     m_nNextLocalId = GameContext::FirstLocalId;
@@ -166,6 +167,13 @@ void GameContext::LoadGame(unsigned int nGameId)
 
 void GameContext::RefreshUnlocks(bool bUnpause)
 {
+    if (m_nMode == Mode::CompatibilityTest)
+    {
+        std::set<unsigned int> vUnlockedAchievements;
+        UpdateUnlocks(vUnlockedAchievements, bUnpause);
+        return;
+    }
+
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
     ra::api::FetchUserUnlocks::Request request;
@@ -173,56 +181,61 @@ void GameContext::RefreshUnlocks(bool bUnpause)
     request.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     request.CallAsync([this, bUnpause](const ra::api::FetchUserUnlocks::Response& response)
     {
-        std::set<unsigned int> vLockedAchievements;
-        for (auto& pAchievement : m_vAchievements)
-        {
-            vLockedAchievements.insert(pAchievement->ID());
-            pAchievement->SetActive(false);
-        }
-
-        for (const auto nUnlockedAchievement : response.UnlockedAchievements)
-            vLockedAchievements.erase(nUnlockedAchievement);
-
-#ifndef RA_UTEST
-        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-#endif
-        // activate any core achievements the player hasn't earned and pre-fetch the locked image
-        for (auto nAchievementId : vLockedAchievements)
-        {
-            auto* pAchievement = FindAchievement(nAchievementId);
-            if (pAchievement && pAchievement->Category() == ra::etoi(AchievementSet::Type::Core))
-            {
-                pAchievement->SetActive(true);
-
-#ifndef RA_UTEST
-                if (!pAchievement->BadgeImageURI().empty())
-                    pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
-#endif
-            }
-        }
-
-        if (bUnpause)
-            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
-
-#ifndef RA_UTEST
-        if (ActiveAchievementType() == AchievementSet::Type::Core)
-        {
-            for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-            {
-                const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
-            }
-        }
-        else
-        {
-            for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-            {
-                const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-                g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Active, Ach.Active() ? "Yes" : "No");
-            }
-        }
-#endif
+        UpdateUnlocks(response.UnlockedAchievements, bUnpause);
     });
+}
+
+void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause)
+{
+    std::set<unsigned int> vLockedAchievements;
+    for (auto& pAchievement : m_vAchievements)
+    {
+        vLockedAchievements.insert(pAchievement->ID());
+        pAchievement->SetActive(false);
+    }
+
+    for (const auto nUnlockedAchievement : vUnlockedAchievements)
+        vLockedAchievements.erase(nUnlockedAchievement);
+
+#ifndef RA_UTEST
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+#endif
+    // activate any core achievements the player hasn't earned and pre-fetch the locked image
+    for (auto nAchievementId : vLockedAchievements)
+    {
+        auto* pAchievement = FindAchievement(nAchievementId);
+        if (pAchievement && pAchievement->Category() == ra::etoi(AchievementSet::Type::Core))
+        {
+            pAchievement->SetActive(true);
+
+#ifndef RA_UTEST
+            if (!pAchievement->BadgeImageURI().empty())
+                pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
+#endif
+        }
+    }
+
+    if (bUnpause)
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
+
+#ifndef RA_UTEST
+    if (ActiveAchievementType() == AchievementSet::Type::Core)
+    {
+        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+        {
+            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
+            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
+        }
+    }
+    else
+    {
+        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
+        {
+            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
+            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Active, Ach.Active() ? "Yes" : "No");
+        }
+    }
+#endif
 }
 
 void GameContext::MergeLocalAchievements()
@@ -578,6 +591,12 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
             break;
     }
 
+    if (m_nMode == Mode::CompatibilityTest)
+    {
+        sHeader.insert(0, L"Test ");
+        bSubmit = false;
+    }
+
     if (pAchievement->Modified())
     {
         sHeader.insert(0, L"Modified ");
@@ -777,6 +796,14 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
             L"Leaderboard submission post canceled.", L"Enable Hardcore Mode to enable posting.");
+        return;
+    }
+
+    if (m_nMode == Mode::CompatibilityTest)
+    {
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+            L"Leaderboard submission post canceled.", L"Leaderboards are not submitted in test mode.");
         return;
     }
 

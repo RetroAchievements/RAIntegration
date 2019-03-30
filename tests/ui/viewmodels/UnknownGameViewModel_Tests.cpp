@@ -179,6 +179,7 @@ public:
 
         Assert::IsTrue(vmUnknownGame.Associate());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsFalse(vmUnknownGame.GetTestMode());
     }
 
     TEST_METHOD(TestAssociateExistingDecline)
@@ -231,6 +232,7 @@ public:
 
         Assert::IsTrue(vmUnknownGame.Associate());
         Assert::AreEqual(102, vmUnknownGame.GetSelectedGameId());
+        Assert::IsFalse(vmUnknownGame.GetTestMode());
     }
 
     TEST_METHOD(TestAssociateNewTrimmed)
@@ -327,6 +329,63 @@ public:
         Assert::IsFalse(bCallbackCalled);
         mockThreadPool.ExecuteNextTask();
         Assert::IsFalse(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestBeginTestNewGame)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::VIC20);
+        vmUnknownGame.MockGameTitles();
+        vmUnknownGame.SetNewGameName(L"TestGame");
+        vmUnknownGame.SetChecksum(L"CHECKSUM");
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"You must select an existing game to test compatibility."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::IsFalse(vmUnknownGame.BeginTest());
+    }
+
+    TEST_METHOD(TestBeginTestExistingGame)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::VIC20);
+        vmUnknownGame.MockGameTitles();
+        vmUnknownGame.SetNewGameName(L"TestGame");
+        vmUnknownGame.SetSelectedGameId(40U);
+        vmUnknownGame.SetChecksum(L"CHECKSUM");
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        Assert::IsTrue(vmUnknownGame.BeginTest());
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsTrue(vmUnknownGame.GetTestMode());
+    }
+
+    TEST_METHOD(TestBeginTestExistingGameCancel)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::VIC20);
+        vmUnknownGame.MockGameTitles();
+        vmUnknownGame.SetNewGameName(L"TestGame");
+        vmUnknownGame.SetSelectedGameId(40U);
+        vmUnknownGame.SetChecksum(L"CHECKSUM");
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        Assert::IsFalse(vmUnknownGame.BeginTest());
     }
 };
 

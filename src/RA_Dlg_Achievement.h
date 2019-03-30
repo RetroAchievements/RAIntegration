@@ -59,7 +59,7 @@ private:
 
     INT_PTR CommitAchievements(HWND hDlg);
 
-    void UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo) noexcept;
+    void UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo);
 
 private:
     HWND m_hAchievementsDlg = nullptr;

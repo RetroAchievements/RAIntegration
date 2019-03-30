@@ -533,10 +533,6 @@ API int CCONV _RA_HandleHTTPResults()
                     g_AchievementOverlay.InstallNewsArticlesFromFile();
                     break;
 
-                case RequestAchievementInfo:
-                    g_AchExamine.OnReceiveData(doc);
-                    break;
-
                 case RequestCodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
                     break;

@@ -103,6 +103,11 @@ public:
         return HandleRequest<ra::api::FetchGameData>(request);
     }
 
+    FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchAchievementInfo>(request);
+    }
+
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchLeaderboardInfo>(request);

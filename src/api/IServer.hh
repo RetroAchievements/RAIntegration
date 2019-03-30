@@ -3,6 +3,7 @@
 #pragma once
 
 #include "api/AwardAchievement.hh"
+#include "api/FetchAchievementInfo.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
@@ -36,6 +37,7 @@ public:
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
+    virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 
     // === other functions ===

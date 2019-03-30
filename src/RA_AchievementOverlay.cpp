@@ -1153,48 +1153,31 @@ _Use_decl_annotations_ void AchievementOverlay::Render(HDC hRealDC, const RECT* 
     //	Render controls:
     SelectFont(hDC, g_hFontDesc2);
     {
-        const int nControlsX1 = 80 + 80 + 4;
-        const int nControlsX2 = 80;
-        const int nControlsY1 = rcTarget.bottom - 30 - 30 - 4;
-        const int nControlsY2 = rcTarget.bottom - 30 - 4;
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+
+        const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
+        const auto sSelect = ra::StringPrintf(L"%s: Select", pEmulatorContext.GetAcceptButtonText());
+        const auto sNext = std::wstring(L"\u2BC8: Next");
+        const auto sPrev = std::wstring(L"\u2BC7: Prev");
+
+        SIZE szBack, szSelect;
+        GetTextExtentPoint32W(hDC, sBack.c_str(), sBack.length(), &szBack);
+        GetTextExtentPoint32W(hDC, sSelect.c_str(), sSelect.length(), &szSelect);
+
+        const int nControlsX2 = std::max(szBack.cx, szSelect.cx) + 10;
+        const int nControlsX1 = nControlsX2 + 80;
+        const int nControlsY2 = rcTarget.bottom - szSelect.cy - 6;
+        const int nControlsY1 = nControlsY2 - szBack.cy - 6;
 
         //	Fill again:
-        SetRect(&rc, nRightPx - nControlsX1 - 4, nControlsY1 - 4, nRightPx, lHeight);
+        SetRect(&rc, nRightPx - nControlsX1 - 8, nControlsY1 - 4, nRightPx, lHeight);
         FillRect(hDC, &rc, g_hBrushBG);
 
         //	Draw control text:
-        {
-            ra::tstring stNext{_T(" ->:")};
-            stNext += _T("Next ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY1, stNext.c_str(), ra::to_signed(stNext.length()));
-        }
-        {
-            ra::tstring stPrev{_T(" <-:")};
-            stPrev += _T("Prev ");
-            TextOut(hDC, nRightPx - nControlsX1, nControlsY2, stPrev.c_str(), ra::to_signed(stPrev.length()));
-        }
-
-        _CONSTANT_LOC ctBackChar{_T('B')};
-        auto ctSelectChar{_T('A')};
-
-        //	Genesis wouldn't use 'A' for select
-        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Gens)
-            ctSelectChar = _T('C');
-
-        {
-            ra::tstring stBack{_T(" ")};
-            stBack += ctBackChar;
-            stBack += _T(":");
-            stBack += _T("Back ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY1, stBack.c_str(), ra::to_signed(stBack.length()));
-        }
-        {
-            ra::tstring stSelect{_T(" ")};
-            stSelect += ctSelectChar;
-            stSelect += _T(":");
-            stSelect += _T("Select ");
-            TextOut(hDC, nRightPx - nControlsX2, nControlsY2, stSelect.c_str(), ra::to_signed(stSelect.length()));
-        }
+        TextOutW(hDC, nRightPx - nControlsX1, nControlsY1, sNext.c_str(), ra::to_signed(sNext.length()));
+        TextOutW(hDC, nRightPx - nControlsX1, nControlsY2, sPrev.c_str(), ra::to_signed(sPrev.length()));
+        TextOutW(hDC, nRightPx - nControlsX2, nControlsY1, sBack.c_str(), ra::to_signed(sBack.length()));
+        TextOutW(hDC, nRightPx - nControlsX2, nControlsY2, sSelect.c_str(), ra::to_signed(sSelect.length()));
     }
 
     DeleteBrush(g_hBrushBG);

@@ -137,12 +137,24 @@ public:
     /// </summary>
     void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) { m_fRebuildMenu = std::move(fRebuildMenu); }
 
+    /// <summary>
+    /// Gets the text to display for the Accept button in the overlay navigation panel.
+    /// </summary>
+    const wchar_t* GetAcceptButtonText() const noexcept { return m_sAcceptButtonText; }
+
+    /// <summary>
+    /// Gets the text to display for the Cancel button in the overlay navigation panel.
+    /// </summary>
+    const wchar_t* GetCancelButtonText() const noexcept { return m_sCancelButtonText; }
+
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;
     std::string m_sLatestVersion;
     std::string m_sLatestVersionError;
     std::string m_sClientName;
+    const wchar_t* m_sAcceptButtonText = L"\u24B6"; // encircled A
+    const wchar_t* m_sCancelButtonText = L"\u24B7"; // encircled B
 
     std::function<void()> m_fResetEmulator;
     std::function<void()> m_fPauseEmulator;

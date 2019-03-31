@@ -525,14 +525,14 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         if (_RA_InitOffline != nullptr)
         {
             sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nWorking offline.", sHostName, nStatusCode);
-            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+            MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
 
             _RA_InitOffline(hMainHWND, nConsoleID, sClientVersion);
         }
         else
         {
             sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nPlease try again later.", sHostName, nStatusCode);
-            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+            MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
 
             RA_Shutdown();
         }
@@ -561,7 +561,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             buffer,
             "Automatically update your RetroAchievements Toolset file?");
 
-        int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
+        int nMBReply = MessageBoxA(hMainHWND, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
         if (nMBReply == IDYES)
         {
             FetchIntegrationFromWeb(sHostName, &nStatusCode);
@@ -575,7 +575,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             if (nVerInstalled < nLatestDLLVer)
             {
                 sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Failed to update Toolset (status code %u).", nStatusCode);
-                MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
+                MessageBoxA(hMainHWND, buffer, "Error", MB_OK | MB_ICONERROR);
             }
         }
     }
@@ -585,7 +585,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         RA_Shutdown();
 
         sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.");
-        MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+        MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
     }
     else
     {

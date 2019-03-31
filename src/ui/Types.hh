@@ -69,6 +69,8 @@ union Color {
         /// </summary>
         unsigned char A{};
     } Channel;
+
+    static const Color Transparent;
 };
 static_assert(sizeof(Color) == sizeof(unsigned int));
 

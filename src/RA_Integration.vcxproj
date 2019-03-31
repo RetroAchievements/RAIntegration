@@ -91,6 +91,7 @@
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
+    <ClCompile Include="ui\OverlayTheme.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
@@ -212,6 +213,7 @@
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ImageReference.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
+    <ClInclude Include="ui\OverlayTheme.hh" />
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />

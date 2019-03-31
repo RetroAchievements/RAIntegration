@@ -1,0 +1,13 @@
+{
+  "Colors": {
+    "Background": "#FB6600",
+    "Border": "#A04020",
+    "TextShadow": "#B45000",
+    "Title": "#000000",
+    "Description": "#000000",
+    "Detail": "#000000",
+    "Error": "#E0B080",
+    "LeaderboardEntry": "#000000",
+    "LeaderboardPlayer": "#E0B080"
+  }
+}

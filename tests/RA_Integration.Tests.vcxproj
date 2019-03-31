@@ -206,6 +206,7 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
@@ -235,6 +236,7 @@
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\ModelProperty_Tests.cpp" />
+    <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />

@@ -173,26 +173,22 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 }
 
 _Use_decl_annotations_
-API int _RA_UpdatePopups(ControllerInput*, float fElapsedSeconds, bool, bool bPaused)
+API int _RA_UpdateOverlay(const ControllerInput* pInput, float fElapsedSeconds, bool, bool)
 {
-    if (bPaused)
-        fElapsedSeconds = 0.0;
+    static const ControllerInput pNoInput{};
+    if (pInput == nullptr)
+        pInput = &pNoInput;
 
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(fElapsedSeconds);
-    return 0;
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput, fElapsedSeconds);
+    return true; // was return state = closing - does anything check this?
 }
 
 #ifndef RA_UTEST
 _Use_decl_annotations_
-API int _RA_RenderPopups(HDC hDC, const RECT* rcSize)
+API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
 {
-    if (!g_AchievementOverlay.IsFullyVisible())
-    {
-        ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
-        ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
-    }
-
-    return 0;
+    ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
+    ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
 }
 #endif
 

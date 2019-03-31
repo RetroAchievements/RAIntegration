@@ -38,6 +38,11 @@ public:
     virtual void GetWorkArea(_Out_ ra::ui::Position& oUpperLeftCorner, _Out_ ra::ui::Size& oSize) const = 0;
 
     /// <summary>
+    /// Gets the size of the client area of a window.
+    /// </summary>
+    virtual ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const = 0;
+
+    /// <summary>
     /// Opens the specified URL using the default browser.
     /// </summary>
     /// <param name="sUrl">The URL to open.</param>

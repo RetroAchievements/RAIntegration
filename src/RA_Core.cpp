@@ -910,11 +910,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
 API void CCONV _RA_SetPaused(bool bIsPaused)
 {
-    //	TBD: store this state?? (Rendering?)
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     if (bIsPaused)
-        g_AchievementOverlay.Activate();
+        pOverlayManager.ShowOverlay();
     else
-        g_AchievementOverlay.Deactivate();
+        pOverlayManager.HideOverlay();
 }
 
 API void CCONV _RA_OnSaveState(const char* sFilename)

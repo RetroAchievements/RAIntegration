@@ -19,6 +19,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\ImageRepository.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
 
@@ -1515,12 +1516,7 @@ void LeaderboardExamine::Initialize(const unsigned int nLBIDIn)
     });
 }
 
-//	Stubs for non-class based, indirect calling of these functions.
-_Use_decl_annotations_ API int _RA_UpdateOverlay(ControllerInput* pInput, float fDTime, bool Full_Screen, bool Paused)
+API bool _RA_IsOverlayFullyVisible()
 {
-    return g_AchievementOverlay.Update(gsl::make_not_null(pInput), fDTime, Full_Screen, Paused);
+    return ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
 }
-
-_Use_decl_annotations_ API void _RA_RenderOverlay(HDC hDC, RECT* rcSize) { g_AchievementOverlay.Render(hDC, rcSize); }
-
-API bool _RA_IsOverlayFullyVisible() { return g_AchievementOverlay.IsFullyVisible(); }

@@ -210,6 +210,7 @@
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />

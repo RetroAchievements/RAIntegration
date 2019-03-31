@@ -99,6 +99,7 @@
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
@@ -223,6 +224,7 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />

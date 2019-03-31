@@ -33,6 +33,18 @@ public:
 
     unsigned int ShadowOffset() const noexcept { return 2; }
 
+    // ===== overlay style =====
+
+    Color ColorOverlayPanel() const noexcept { return m_colorOverlayPanel; }
+    Color ColorOverlayText() const noexcept { return m_colorOverlayText; }
+    Color ColorOverlaySubText() const noexcept { return m_colorOverlaySubText; }
+    Color ColorOverlayDisabledText() const noexcept { return m_colorOverlayDisabledText; }
+    Color ColorOverlaySelectionBackground() const noexcept { return m_colorOverlaySelectionBackground; }
+    Color ColorOverlaySelectionText() const noexcept { return m_colorOverlaySelectionText; }
+    Color ColorOverlaySelectionDisabledText() const noexcept { return m_colorOverlaySelectionDisabledText; }
+    Color ColorOverlayScrollBar() const noexcept { return m_colorOverlayScrollBar; }
+    Color ColorOverlayScrollBarGripper() const noexcept { return m_colorOverlayScrollBarGripper; }
+
     // ===== methods =====
 
     void LoadFromFile();
@@ -47,6 +59,16 @@ private:
     Color m_colorError{ 255, 128, 0, 0 };
     Color m_colorLeaderboardEntry{ 255, 0, 0, 0 };
     Color m_colorLeaderboardPlayer{ 255, 96, 40, 0 };
+
+    Color m_colorOverlayPanel{ 255, 32, 32, 32 };
+    Color m_colorOverlayText{ 255, 17, 102, 221 };
+    Color m_colorOverlaySubText{ 255, 140, 140, 140 };
+    Color m_colorOverlayDisabledText{ 255, 137, 137, 137 };
+    Color m_colorOverlaySelectionBackground{ 255, 22, 22, 60 };
+    Color m_colorOverlaySelectionText{ 255, 255, 255, 255 };
+    Color m_colorOverlaySelectionDisabledText{ 255, 200, 200, 200 };
+    Color m_colorOverlayScrollBar{ 255, 64, 64, 64 };
+    Color m_colorOverlayScrollBarGripper{ 255, 192, 192, 192 };
 };
 
 } // namespace ui

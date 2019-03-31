@@ -57,14 +57,57 @@ public:
     void Activate();
     void Deactivate();
 
-private:
+    class PageViewModel : public ViewModelBase
+    {
+    public:
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the page title.
+        /// </summary>
+        static const StringModelProperty TitleProperty;
 
+        /// <summary>
+        /// Gets the page title to display.
+        /// </summary>
+        const std::wstring& GetTitle() const { return GetValue(TitleProperty); }
+
+        /// <summary>
+        /// Sets the page title to display.
+        /// </summary>
+        void SetTitle(const std::wstring& sValue) { SetValue(TitleProperty, sValue); }
+
+        virtual void Refresh() = 0;
+
+        virtual bool Update(_UNUSED double fElapsed)
+        {
+            return false;
+        }
+
+        virtual bool ProcessInput(const ControllerInput& pInput) = 0;
+
+        virtual void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const = 0;
+
+    protected:
+        void RenderScrollBar(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nHeight, int nTotalItems, int nVisibleItems, int nFirstVisibleItem) const;
+    };
+
+    PageViewModel& CurrentPage() const { return *m_vPages.at(m_nSelectedPage); }
+    
+    static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
+    static _CONSTANT_VAR FONT_SIZE_TITLE = 32;
+    static _CONSTANT_VAR FONT_SIZE_HEADER = 26;
+    static _CONSTANT_VAR FONT_SIZE_SUMMARY = 22;
+
+private:
+    void PopulatePages();
     void CreateRenderImage();
 
     State m_nState = State::Hidden;
     bool m_bSurfaceStale = false;
 
     bool m_bInputLock = false;
+
+    std::vector<std::unique_ptr<PageViewModel>> m_vPages;
+    gsl::index m_nSelectedPage = 0;
 
     double m_fAnimationProgress = -1.0;
     static _CONSTANT_VAR INOUT_TIME = 0.8;

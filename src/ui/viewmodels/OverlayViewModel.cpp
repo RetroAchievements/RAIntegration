@@ -1,11 +1,15 @@
 #include "OverlayViewModel.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\GameContext.hh"
+#include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 
 #include "ui\IDesktop.hh"
+#include "ui\OverlayTheme.hh"
+#include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "ra_math.h"
@@ -13,6 +17,8 @@
 namespace ra {
 namespace ui {
 namespace viewmodels {
+
+const StringModelProperty OverlayViewModel::PageViewModel::TitleProperty("PageViewModel", "Title", L"");
 
 void OverlayViewModel::BeginAnimation()
 {
@@ -32,6 +38,9 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
 {
     if (m_nState == State::Hidden)
         return false;
+
+    if (CurrentPage().Update(fElapsed))
+        m_bSurfaceStale = true;
 
     bool bUpdated = false;
     if (m_nState != State::Visible)
@@ -96,15 +105,6 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
         CreateRenderImage();
         bUpdated = true;
     }
-    else
-    {
-        //const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-        //if (pImageRepository.HasReferencedImageChanged(m_hImage))
-        //{
-        //    CreateRenderImage();
-        //    bUpdated = true;
-        //}
-    }
 
     return bUpdated;
 }
@@ -113,14 +113,16 @@ void OverlayViewModel::CreateRenderImage()
 {
     Expects(m_pSurface != nullptr);
 
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const int nWidth = m_pSurface->GetWidth();
+    const int nHeight = m_pSurface->GetHeight();
 
     // background image
     const ImageReference pOverlayBackground(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
-    m_pSurface->DrawImageStretched(0, 0, nWidth, m_pSurface->GetHeight(), pOverlayBackground);
+    m_pSurface->DrawImageStretched(0, 0, nWidth, nHeight, pOverlayBackground);
 
     // user frame
-    const auto nFont = m_pSurface->LoadFont("Tahoma", 26, ra::ui::FontStyles::Normal);
+    const auto nFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetUsername());
@@ -140,25 +142,67 @@ void OverlayViewModel::CreateRenderImage()
     {
         int nY = nMargin;
 
-        m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, ra::ui::Color(32, 32, 32));
+        m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, pTheme.ColorOverlayPanel());
 
         const ImageReference pUserImage(ra::ui::ImageType::UserPic, pUserContext.GetUsername());
         m_pSurface->DrawImage(nWidth - nMargin - nPadding - nImageSize, nY + nPadding, nImageSize, nImageSize, pUserImage);
 
-        const auto nTextColor = ra::ui::Color(17, 102, 221);
-        m_pSurface->WriteText(nX + nPadding, nY + nPadding, nFont, nTextColor, sUserName);
-        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont, nTextColor, sPoints);
+        m_pSurface->WriteText(nX + nPadding, nY + nPadding, nFont, pTheme.ColorOverlayText(), sUserName);
+        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont, pTheme.ColorOverlayText(), sPoints);
     }
 
     // hardcore indicator
     if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        const auto nHardcoreFont = m_pSurface->LoadFont("Tahoma", 22, ra::ui::FontStyles::Normal);
+        const auto nHardcoreFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
         const std::wstring sHardcore = L"HARDCORE";
         const auto szHardcore = m_pSurface->MeasureText(nHardcoreFont, sHardcore);
         m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight,
-            nHardcoreFont, ra::ui::Color(255, 0, 0), sHardcore);
+            nHardcoreFont, pTheme.ColorError(), sHardcore);
     }
+
+    // page header
+    const auto& pCurrentPage = CurrentPage();
+    const auto nPageHeaderFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    m_pSurface->WriteText(nMargin, nMargin, nPageHeaderFont, pTheme.ColorOverlayText(), pCurrentPage.GetTitle());
+
+    // page content
+    pCurrentPage.Render(*m_pSurface, nMargin, nMargin + nUserFrameHeight, nWidth - nMargin * 2, nHeight - nMargin * 2 - nUserFrameHeight);
+
+    // navigation controls
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
+    const auto sSelect = ra::StringPrintf(L"%s: Select", pEmulatorContext.GetAcceptButtonText());
+    const auto sNext = std::wstring(L"\u2BC8: Next");
+    const auto sPrev = std::wstring(L"\u2BC7: Prev");
+
+    const auto nNavFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto szBack = m_pSurface->MeasureText(nNavFont, sBack);
+    const auto szSelect = m_pSurface->MeasureText(nNavFont, sSelect);
+
+    const int nControlsX2 = std::max(szBack.Width, szSelect.Width) + nMargin + nPadding + 2;
+    const int nControlsX1 = nControlsX2 + 72;
+    const int nControlsY2 = nHeight - nMargin - nPadding - szSelect.Height;
+    const int nControlsY1 = nControlsY2 - szBack.Height - nPadding;
+
+    m_pSurface->FillRectangle(nWidth - nControlsX1 - nPadding, nControlsY1 - nPadding,
+        nControlsX1 - nPadding, nHeight - nControlsY1 - nPadding, pTheme.ColorOverlayPanel());
+    m_pSurface->WriteText(nWidth - nControlsX1, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sNext);
+    m_pSurface->WriteText(nWidth - nControlsX1, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sPrev);
+    m_pSurface->WriteText(nWidth - nControlsX2, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sSelect);
+    m_pSurface->WriteText(nWidth - nControlsX2, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sBack);
+}
+
+void OverlayViewModel::PageViewModel::RenderScrollBar(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nHeight, int nTotalItems, int nVisibleItems, int nFirstVisibleItem) const
+{
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+
+    pSurface.FillRectangle(nX, nY, 12, nHeight, pTheme.ColorOverlayScrollBar());
+
+    const auto nItemHeight = static_cast<double>(nHeight - 4) / nTotalItems;
+    const auto nGripperTop = ra::ftoi(nItemHeight * nFirstVisibleItem);
+    const auto nGripperBottom = ra::ftoi(nItemHeight * (nFirstVisibleItem + nVisibleItems));
+    pSurface.FillRectangle(nX + 2, nY + 2 + nGripperTop, 8, nGripperBottom - nGripperTop, pTheme.ColorOverlayScrollBarGripper());
 }
 
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
@@ -184,8 +228,12 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
     }
     else
     {
-        // TODO: let current page handle keypress.
-        const bool bHandled = false;
+        const bool bHandled = CurrentPage().ProcessInput(pInput);
+        if (bHandled)
+        {
+            m_bSurfaceStale = true;
+            m_bInputLock = true;
+        }
 
         // if the current page didn't handle the keypress and cancel is pressed, close the overlay
         if (!bHandled && pInput.m_bCancelPressed)
@@ -200,6 +248,11 @@ void OverlayViewModel::Activate()
         case State::Hidden:
             m_nState = State::FadeIn;
             BeginAnimation();
+
+            if (m_vPages.empty())
+                PopulatePages();
+
+            CurrentPage().Refresh();
             break;
 
         case State::FadeOut:
@@ -225,6 +278,14 @@ void OverlayViewModel::Deactivate()
             ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
             break;
     }
+}
+
+void OverlayViewModel::PopulatePages()
+{
+    m_vPages.resize(1);
+
+    auto pAchievementsPage = std::make_unique<OverlayAchievementsPageViewModel>();
+    m_vPages.at(0) = std::move(pAchievementsPage);
 }
 
 } // namespace viewmodels

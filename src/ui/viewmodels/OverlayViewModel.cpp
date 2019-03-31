@@ -1,6 +1,9 @@
 #include "OverlayViewModel.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\UserContext.hh"
+
+#include "services\IConfiguration.hh"
 
 #include "ui\IDesktop.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -110,8 +113,52 @@ void OverlayViewModel::CreateRenderImage()
 {
     Expects(m_pSurface != nullptr);
 
+    const int nWidth = m_pSurface->GetWidth();
+
+    // background image
     const ImageReference pOverlayBackground(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
-    m_pSurface->DrawImageStretched(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), pOverlayBackground);
+    m_pSurface->DrawImageStretched(0, 0, nWidth, m_pSurface->GetHeight(), pOverlayBackground);
+
+    // user frame
+    const auto nFont = m_pSurface->LoadFont("Tahoma", 26, ra::ui::FontStyles::Normal);
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto sUserName = ra::Widen(pUserContext.GetUsername());
+    const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
+
+    const auto sPoints = ra::StringPrintf(L"%u Points", pUserContext.GetScore());
+    const auto szPoints = m_pSurface->MeasureText(nFont, sPoints);
+
+    const auto nImageSize = 64;
+    const auto nMargin = 8;
+    const auto nPadding = 4;
+    const auto nUserFrameHeight = nImageSize + nPadding * 2;
+    const auto nUserFrameWidth = nImageSize + nPadding * 4 + std::max(szUsername.Width, szPoints.Width);
+
+    int nX = nWidth - nUserFrameWidth - nMargin;
+    if (nX > 200)
+    {
+        int nY = nMargin;
+
+        m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, ra::ui::Color(32, 32, 32));
+
+        const ImageReference pUserImage(ra::ui::ImageType::UserPic, pUserContext.GetUsername());
+        m_pSurface->DrawImage(nWidth - nMargin - nPadding - nImageSize, nY + nPadding, nImageSize, nImageSize, pUserImage);
+
+        const auto nTextColor = ra::ui::Color(17, 102, 221);
+        m_pSurface->WriteText(nX + nPadding, nY + nPadding, nFont, nTextColor, sUserName);
+        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont, nTextColor, sPoints);
+    }
+
+    // hardcore indicator
+    if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        const auto nHardcoreFont = m_pSurface->LoadFont("Tahoma", 22, ra::ui::FontStyles::Normal);
+        const std::wstring sHardcore = L"HARDCORE";
+        const auto szHardcore = m_pSurface->MeasureText(nHardcoreFont, sHardcore);
+        m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight,
+            nHardcoreFont, ra::ui::Color(255, 0, 0), sHardcore);
+    }
 }
 
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)

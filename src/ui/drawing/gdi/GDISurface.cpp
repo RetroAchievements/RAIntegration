@@ -45,7 +45,7 @@ void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::w
     if (nColor != m_nCurrentTextColor)
     {
         m_nCurrentTextColor = nColor;
-        SetTextColor(m_hDC, nColor.ARGB);
+        SetTextColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     }
 
     SetBkMode(m_hDC, TRANSPARENT);

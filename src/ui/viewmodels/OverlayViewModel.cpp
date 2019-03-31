@@ -110,7 +110,8 @@ void OverlayViewModel::CreateRenderImage()
 {
     Expects(m_pSurface != nullptr);
 
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color(0x60, 0x80, 0xA0));
+    const ImageReference pOverlayBackground(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
+    m_pSurface->DrawImageStretched(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), pOverlayBackground);
 }
 
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)

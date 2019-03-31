@@ -85,6 +85,26 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     DeleteDC(hdcMem);
 }
 
+void GDISurface::DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
+{
+    auto hBitmap = ImageRepository::GetHBitmap(pImage);
+    if (!hBitmap)
+        return;
+    HDC hdcMem = CreateCompatibleDC(m_hDC);
+    if (!hdcMem)
+        return;
+
+    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
+
+    BITMAP bm;
+    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+        StretchBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+
+    SelectBitmap(hdcMem, hOldBitmap);
+
+    DeleteDC(hdcMem);
+}
+
 void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
 {
     auto* pAlphaSurface = dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface);

@@ -1,7 +1,8 @@
 #include "Exports.hh"
 
-#include "RA_AchievementOverlay.h"
 #include "RA_BuildVer.h"
+#include "RA_Defs.h"
+#include "RA_Log.h"
 #include "RA_Resource.h"
 
 #include "api\Login.hh"
@@ -100,13 +101,6 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
 
         // update the client title-bar to include the user name
         _RA_UpdateAppTitle();
-
-#ifndef RA_UTEST
-        // notify the overlay of the new user image
-        g_AchievementOverlay.UpdateImages();
-
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]() { RAUsers::LocalUser().RequestFriendList(); });
-#endif
     }
     else if (!response.ErrorMessage.empty())
     {

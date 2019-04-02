@@ -1,6 +1,5 @@
 #include "RA_Core.h"
 
-#include "RA_AchievementOverlay.h" // RA_User
 #include "RA_CodeNotes.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
@@ -8,6 +7,7 @@
 #include "RA_RichPresence.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
+#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
@@ -89,10 +89,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     g_pUnofficialAchievements = new AchievementSet();
     g_pLocalAchievements = new AchievementSet();
     g_pActiveAchievements = g_pCoreAchievements;
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Image rendering: Setup overlay
-    g_AchievementOverlay.UpdateImages();
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
@@ -108,12 +104,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     // Set the client version and User-Agent string
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
     RAWeb::SetUserAgentString();
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Update news:
-    PostArgs args;
-    args['c'] = std::to_string(6);
-    RAWeb::CreateThreadedHTTPRequest(RequestNews, args);
 
     // validate version (async call)
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
@@ -355,7 +345,6 @@ static void ActivateGame(unsigned int nGameId, ra::data::GameContext::Mode nMode
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_MemoryDialog.OnLoad_NewRom();
-    g_AchievementOverlay.OnLoad_NewRom();
     g_MemBookmarkDialog.OnLoad_NewRom();
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
@@ -532,10 +521,10 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestNews:
-                    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
-                    g_AchievementOverlay.InstallNewsArticlesFromFile();
-                    break;
+                //case RequestNews:
+                //    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
+                //    g_AchievementOverlay.InstallNewsArticlesFromFile();
+                //    break;
 
                 case RequestCodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
@@ -1057,13 +1046,6 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     fclose(pf);
 
     return pRawFileOut;
-}
-
-std::string _TimeStampToString(time_t nTime)
-{
-    char buffer[64];
-    ctime_s(buffer, 64, &nTime);
-    return std::string(buffer);
 }
 
 namespace ra {

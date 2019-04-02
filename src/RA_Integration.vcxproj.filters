@@ -264,6 +264,12 @@
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -657,6 +663,12 @@
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,7 @@
 #include "ui\IDesktop.hh"
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
+#include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "ra_math.h"
@@ -228,16 +229,38 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
     }
     else
     {
-        const bool bHandled = CurrentPage().ProcessInput(pInput);
+        bool bHandled = CurrentPage().ProcessInput(pInput);
+        if (!bHandled)
+        {
+            if (pInput.m_bLeftPressed)
+            {
+                if (m_nSelectedPage-- == 0)
+                    m_nSelectedPage = m_vPages.size() - 1;
+
+                CurrentPage().Refresh();
+                bHandled = true;
+            }
+            else if (pInput.m_bRightPressed)
+            {
+                if (++m_nSelectedPage == ra::to_signed(m_vPages.size()))
+                    m_nSelectedPage = 0;
+
+                CurrentPage().Refresh();
+                bHandled = true;
+            }
+            else if (pInput.m_bCancelPressed)
+            {
+                // if the current page didn't handle the keypress and cancel is pressed, close the overlay
+                Deactivate();
+                m_bInputLock = true;
+            }
+        }
+
         if (bHandled)
         {
             m_bSurfaceStale = true;
             m_bInputLock = true;
         }
-
-        // if the current page didn't handle the keypress and cancel is pressed, close the overlay
-        if (!bHandled && pInput.m_bCancelPressed)
-            Deactivate();
     }
 }
 
@@ -282,10 +305,13 @@ void OverlayViewModel::Deactivate()
 
 void OverlayViewModel::PopulatePages()
 {
-    m_vPages.resize(1);
+    m_vPages.resize(2);
 
     auto pAchievementsPage = std::make_unique<OverlayAchievementsPageViewModel>();
     m_vPages.at(0) = std::move(pAchievementsPage);
+
+    auto pLeaderboardsPage = std::make_unique<OverlayLeaderboardsPageViewModel>();
+    m_vPages.at(1) = std::move(pLeaderboardsPage);
 }
 
 } // namespace viewmodels

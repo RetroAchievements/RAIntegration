@@ -37,8 +37,9 @@ public:
 
     Color ColorOverlayPanel() const noexcept { return m_colorOverlayPanel; }
     Color ColorOverlayText() const noexcept { return m_colorOverlayText; }
-    Color ColorOverlaySubText() const noexcept { return m_colorOverlaySubText; }
     Color ColorOverlayDisabledText() const noexcept { return m_colorOverlayDisabledText; }
+    Color ColorOverlaySubText() const noexcept { return m_colorOverlaySubText; }
+    Color ColorOverlayDisabledSubText() const noexcept { return m_colorOverlayDisabledSubText; }
     Color ColorOverlaySelectionBackground() const noexcept { return m_colorOverlaySelectionBackground; }
     Color ColorOverlaySelectionText() const noexcept { return m_colorOverlaySelectionText; }
     Color ColorOverlaySelectionDisabledText() const noexcept { return m_colorOverlaySelectionDisabledText; }
@@ -62,8 +63,9 @@ private:
 
     Color m_colorOverlayPanel{ 255, 32, 32, 32 };
     Color m_colorOverlayText{ 255, 17, 102, 221 };
+    Color m_colorOverlayDisabledText{ 255, 116, 122, 144 };
     Color m_colorOverlaySubText{ 255, 140, 140, 140 };
-    Color m_colorOverlayDisabledText{ 255, 137, 137, 137 };
+    Color m_colorOverlayDisabledSubText{ 255, 96, 96, 96 };
     Color m_colorOverlaySelectionBackground{ 255, 22, 22, 60 };
     Color m_colorOverlaySelectionText{ 255, 255, 255, 255 };
     Color m_colorOverlaySelectionDisabledText{ 255, 200, 200, 200 };

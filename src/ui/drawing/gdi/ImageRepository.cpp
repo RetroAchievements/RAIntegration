@@ -100,6 +100,16 @@ std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sN
     return sFilename;
 }
 
+bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName) const
+{
+    if (sName.empty())
+        return false;
+
+    std::wstring sFilename = GetFilename(nType, sName);
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    return (pFileSystem.GetFileSize(sFilename) > 0);
+}
+
 void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
 {
     if (sName.empty())

@@ -140,6 +140,8 @@ void OverlayManager::ClearPopups()
         m_vScoreboards.pop_front();
 
     m_vScoreTrackers.clear();
+
+    m_vmOverlay.Deactivate();
 }
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)

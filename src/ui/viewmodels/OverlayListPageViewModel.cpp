@@ -17,6 +17,7 @@ void OverlayListPageViewModel::Refresh()
 {
     m_bDetail = false;
     SetTitle(m_sTitle);
+    m_nImagesPending = 99;
 }
 
 bool OverlayListPageViewModel::Update(double fElapsed)
@@ -26,9 +27,23 @@ bool OverlayListPageViewModel::Update(double fElapsed)
     bool bUpdated = m_bRedraw;
     m_bRedraw = false;
 
-    if (m_bImagesPending)
+    if (m_nImagesPending)
     {
+        const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
 
+        unsigned int nImagesPending = 0;
+        for (gsl::index nIndex = m_vItems.Count() - 1; nIndex >= 0; --nIndex)
+        {
+            const auto* pItem = m_vItems.GetItemAt(nIndex);
+            if (pItem && !pImageRepository.IsImageAvailable(pItem->Image.Type(), pItem->Image.Name()))
+                ++nImagesPending;
+        }
+
+        if (m_nImagesPending != nImagesPending)
+        {
+            m_nImagesPending = nImagesPending;
+            bUpdated = true;
+        }
     }
 
     return bUpdated;

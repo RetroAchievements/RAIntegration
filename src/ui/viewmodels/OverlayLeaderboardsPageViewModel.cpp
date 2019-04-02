@@ -93,7 +93,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (pLeaderboard == nullptr)
         return;
 
-    auto& vmLeaderboard = m_vLeaderboardRanks.emplace(vmItem.GetId(), ViewModelCollection<ItemViewModel>()).first->second;
+    m_vLeaderboardRanks.emplace(vmItem.GetId(), ViewModelCollection<ItemViewModel>());
 
     ra::api::FetchLeaderboardInfo::Request request;
     request.LeaderboardId = vmItem.GetId();
@@ -105,7 +105,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vLeaderboardRanks.end())
             return;
 
-        if (static_cast<ra::LeaderboardID>(m_vItems.GetItemAt(GetSelectedItemIndex())->GetId()) != nId)
+        if (m_vItems.GetItemAt(GetSelectedItemIndex())->GetId() != nId)
             return;
 
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();

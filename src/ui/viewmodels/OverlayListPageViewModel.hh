@@ -117,7 +117,7 @@ private:
         _UNUSED int nX, _UNUSED int nY, _UNUSED int nWidth, _UNUSED int nHeight) const {};
     virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) {};
 
-    bool m_bImagesPending = false;
+    unsigned int m_nImagesPending = 0;
     bool m_bDetail = false;
     bool m_bRedraw = false;
 };

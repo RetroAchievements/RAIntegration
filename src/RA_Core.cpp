@@ -322,11 +322,15 @@ static void ActivateGame(unsigned int nGameId, ra::data::GameContext::Mode nMode
 
     g_bRAMTamperedWith = false;
 
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    if (pGameContext.GameId() != 0)
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+
     if (nGameId != 0)
     {
         RA_LOG("Loading game %u", nGameId);
 
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(nGameId, nMode);
+        pGameContext.LoadGame(nGameId, nMode);
         ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -345,7 +349,7 @@ static void ActivateGame(unsigned int nGameId, ra::data::GameContext::Mode nMode
         RA_LOG("Unloading current game");
 
         ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+        pGameContext.LoadGame(0U);
     }
 
     g_AchievementsDialog.OnLoad_NewRom(nGameId);

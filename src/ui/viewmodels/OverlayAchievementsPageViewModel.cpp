@@ -1,7 +1,10 @@
 #include "OverlayAchievementsPageViewModel.hh"
 
+#include "api\FetchAchievementInfo.hh"
+
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "ui\OverlayTheme.hh"
 
@@ -14,9 +17,17 @@ const StringModelProperty OverlayAchievementsPageViewModel::SummaryProperty("Ove
 const StringModelProperty OverlayAchievementsPageViewModel::PlayTimeProperty("OverlayAchievementsPageViewModel", "PlayTime", L"");
 const IntModelProperty OverlayAchievementsPageViewModel::SelectedAchievementIndexProperty("OverlayAchievementsPageViewModel", "SelectedAchievementIndex", 0);
 
+const StringModelProperty OverlayAchievementsPageViewModel::WinnerViewModel::UsernameProperty("WinnerViewModel", "UserName", L"");
+const StringModelProperty OverlayAchievementsPageViewModel::WinnerViewModel::UnlockDateProperty("WinnerViewModel", "UnlockDate", L"");
+const BoolModelProperty OverlayAchievementsPageViewModel::WinnerViewModel::IsUserProperty("WinnerViewModel", "IsUser", false);
+
+const IntModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::AchievementIdProperty("AchievementViewModel", "AchievementId", 0);
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::TitleProperty("AchievementViewModel", "Title", L"");
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::DescriptionProperty("AchievementViewModel", "Description", L"");
 const BoolModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::IsLockedProperty("AchievementViewModel", "IsLocked", false);
+const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::CreatedDateProperty("AchievementViewModel", "CreatedDate", L"");
+const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::ModifiedDateProperty("AchievementViewModel", "ModifiedDate", L"");
+const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::WonByProperty("AchievementViewModel", "WonBy", L"");
 
 void OverlayAchievementsPageViewModel::Refresh()
 {
@@ -43,10 +54,13 @@ void OverlayAchievementsPageViewModel::Refresh()
             if (pvmAchievement == nullptr)
                 pvmAchievement = &m_vAchievements.Add();
 
+            pvmAchievement->SetAchievementId(pAchievement.ID());
             pvmAchievement->SetTitle(ra::StringPrintf(L"%s (%s points)", pAchievement.Title(), pAchievement.Points()));
             pvmAchievement->SetDescription(ra::Widen(pAchievement.Description()));
             pvmAchievement->SetLocked(false);
             pvmAchievement->Image.ChangeReference(ra::ui::ImageType::Badge, pAchievement.BadgeImageURI());
+            pvmAchievement->SetCreatedDate(ra::Widen(ra::FormatDate(pAchievement.CreatedDate())));
+            pvmAchievement->SetModifiedDate(ra::Widen(ra::FormatDate(pAchievement.ModifiedDate())));
             ++nNumberOfAchievements;
 
             if (pActiveAchievementType == AchievementSet::Type::Core)
@@ -97,13 +111,16 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
 {
     m_fElapsed += fElapsed;
 
+    bool bUpdated = m_bRedraw;
+    m_bRedraw = false;
+
     if (m_bImagesPending)
     {
 
     }
 
     if (m_fElapsed < 60.0)
-        return false;
+        return bUpdated;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
@@ -119,6 +136,14 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
 }
 
 void OverlayAchievementsPageViewModel::Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
+{
+    if (m_bAchievementDetail)
+        RenderDetail(pSurface, nX, nY, nWidth, nHeight);
+    else
+        RenderList(pSurface, nX, nY, nWidth, nHeight);
+}
+
+void OverlayAchievementsPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
 {
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
 
@@ -143,17 +168,14 @@ void OverlayAchievementsPageViewModel::Render(ra::ui::drawing::ISurface& pSurfac
 
     // scrollbar
     const auto nSelectedAchievementIndex = ra::to_unsigned(GetSelectedAchievementIndex());
-    gsl::index nAchievementIndex = 0;
+    gsl::index nAchievementIndex = m_nScrollOffset;
     const auto nAchievementSize = 64;
     const auto nAchievementSpacing = 8;
-    const unsigned int nVisibleAchievements = (nHeight + nAchievementSpacing) / (nAchievementSize + nAchievementSpacing);
+    m_nVisibleAchievements = (nHeight + nAchievementSpacing) / (nAchievementSize + nAchievementSpacing);
 
-    if (nSelectedAchievementIndex >= nVisibleAchievements)
-        nAchievementIndex = nSelectedAchievementIndex - nVisibleAchievements + 1;
-
-    if (nVisibleAchievements < m_vAchievements.Count())
+    if (m_nVisibleAchievements < m_vAchievements.Count())
     {
-        RenderScrollBar(pSurface, nX, nY, nHeight, m_vAchievements.Count(), nVisibleAchievements, nAchievementIndex);
+        RenderScrollBar(pSurface, nX, nY, nHeight, m_vAchievements.Count(), m_nVisibleAchievements, nAchievementIndex);
         nX += 20;
     }
 
@@ -168,7 +190,7 @@ void OverlayAchievementsPageViewModel::Render(ra::ui::drawing::ISurface& pSurfac
 
         ra::ui::Color nTextColor = pTheme.ColorOverlayText();
 
-        bool bSelected = (nAchievementIndex == nSelectedAchievementIndex);
+        bool bSelected = (nAchievementIndex == ra::to_signed(nSelectedAchievementIndex));
         if (bSelected)
         {
             pSurface.FillRectangle(nX + nAchievementSize, nY, nWidth - nX - nAchievementSize, nAchievementSize, pTheme.ColorOverlaySelectionBackground());
@@ -189,6 +211,101 @@ void OverlayAchievementsPageViewModel::Render(ra::ui::drawing::ISurface& pSurfac
     }
 }
 
+void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
+{
+    const auto* pAchievement = m_vAchievements.GetItemAt(GetSelectedAchievementIndex());
+    if (pAchievement == nullptr)
+        return;
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
+    const auto nSubFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nAchievementSize = 64;
+
+    pSurface.DrawImage(nX, nY, nAchievementSize, nAchievementSize, pAchievement->Image);
+
+    pSurface.WriteText(nX + nAchievementSize + 12, nY + 4, nFont, pTheme.ColorOverlayText(), pAchievement->GetTitle());
+    pSurface.WriteText(nX + nAchievementSize + 12, nY + 4 + 26, nSubFont, pTheme.ColorOverlaySubText(), pAchievement->GetDescription());
+    nY += nAchievementSize + 8;
+
+    pSurface.WriteText(nX, nY, nSubFont, pTheme.ColorOverlaySubText(), L"Created: " + pAchievement->GetCreatedDate());
+    pSurface.WriteText(nX, nY + 26, nSubFont, pTheme.ColorOverlaySubText(), L"Modified: " + pAchievement->GetModifiedDate());
+    nY += 60;
+
+    const auto sWonBy = pAchievement->GetWonBy();
+    if (sWonBy.empty())
+        return;
+
+    pSurface.WriteText(nX, nY, nSubFont, pTheme.ColorOverlaySubText(), sWonBy);
+    pSurface.WriteText(nX, nY + 30, nFont, pTheme.ColorOverlayText(), L"Recent Winners:");
+    nY += 60;
+
+    gsl::index nIndex = 0;
+    while (nY + 20 < nHeight)
+    {
+        const auto* pWinner = pAchievement->RecentWinners.GetItemAt(nIndex);
+        if (pWinner == nullptr)
+            break;
+
+        const auto nColor = pWinner->IsUser() ? pTheme.ColorOverlaySelectionText() : pTheme.ColorOverlaySubText();
+        pSurface.WriteText(nX, nY, nSubFont, nColor, pWinner->GetUsername());
+        pSurface.WriteText(nX + 200, nY, nSubFont, nColor, pWinner->GetUnlockDate());
+
+        ++nIndex;
+        nY += 20;
+    }
+}
+
+void OverlayAchievementsPageViewModel::FetchAchievementDetail(AchievementViewModel& vmAchievement)
+{
+    if (!vmAchievement.GetWonBy().empty()) // already populated
+        return;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto* pAchievement = pGameContext.FindAchievement(vmAchievement.GetAchievementId());
+    if (pAchievement == nullptr)
+        return;
+
+    if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+    {
+        vmAchievement.SetWonBy(L"Local Achievement");
+        return;
+    }
+
+    ra::api::FetchAchievementInfo::Request request;
+    request.AchievementId = pAchievement->ID();
+    request.FirstEntry = 1;
+    request.NumEntries = 10;
+    request.CallAsync([this, nId = pAchievement->ID()](const ra::api::FetchAchievementInfo::Response& response)
+    {
+        auto* vmAchievement = m_vAchievements.GetItemAt(GetSelectedAchievementIndex());
+        if (vmAchievement == nullptr || static_cast<ra::AchievementID>(vmAchievement->GetAchievementId()) != nId)
+            return;
+
+        if (!response.Succeeded())
+        {
+            vmAchievement->SetWonBy(ra::Widen(response.ErrorMessage));
+            return;
+        }
+
+        vmAchievement->SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
+            static_cast<double>(response.EarnedBy * 100) / response.NumPlayers));
+
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+        for (const auto& pWinner : response.Entries)
+        {
+            auto& vmWinner = vmAchievement->RecentWinners.Add();
+            vmWinner.SetUsername(ra::Widen(pWinner.User));
+            vmWinner.SetUnlockDate(ra::StringPrintf(L"%s (%s)", ra::FormatDate(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
+
+            if (pWinner.User == sUsername)
+                vmWinner.SetUser(true);
+        }
+
+        m_bRedraw = true;
+    });
+}
+
 bool OverlayAchievementsPageViewModel::ProcessInput(const ControllerInput& pInput)
 {
     if (pInput.m_bDownPressed)
@@ -197,6 +314,17 @@ bool OverlayAchievementsPageViewModel::ProcessInput(const ControllerInput& pInpu
         if (nSelectedAchievementIndex < ra::to_signed(m_vAchievements.Count()) - 1)
         {
             SetSelectedAchievementIndex(nSelectedAchievementIndex + 1);
+
+            if (nSelectedAchievementIndex + 1 - m_nScrollOffset == ra::to_signed(m_nVisibleAchievements))
+                ++m_nScrollOffset;
+
+            if (m_bAchievementDetail)
+            {
+                auto* vmAchievement = m_vAchievements.GetItemAt(GetSelectedAchievementIndex());
+                if (vmAchievement != nullptr)
+                    FetchAchievementDetail(*vmAchievement);
+            }
+
             return true;
         }
     }
@@ -206,6 +334,38 @@ bool OverlayAchievementsPageViewModel::ProcessInput(const ControllerInput& pInpu
         if (nSelectedAchievementIndex > 0)
         {
             SetSelectedAchievementIndex(nSelectedAchievementIndex - 1);
+
+            if (nSelectedAchievementIndex == m_nScrollOffset)
+                --m_nScrollOffset;
+
+            if (m_bAchievementDetail)
+            {
+                auto* vmAchievement = m_vAchievements.GetItemAt(GetSelectedAchievementIndex());
+                if (vmAchievement != nullptr)
+                    FetchAchievementDetail(*vmAchievement);
+            }
+
+            return true;
+        }
+    }
+    else if (pInput.m_bConfirmPressed)
+    {
+        if (!m_bAchievementDetail)
+        {
+            m_bAchievementDetail = true;
+            SetTitle(L"Achievement Info");
+            auto* vmAchievement = m_vAchievements.GetItemAt(GetSelectedAchievementIndex());
+            if (vmAchievement != nullptr)
+                FetchAchievementDetail(*vmAchievement);
+            return true;
+        }
+    }
+    else if (pInput.m_bCancelPressed)
+    {
+        if (m_bAchievementDetail)
+        {
+            m_bAchievementDetail = false;
+            SetTitle(L"Achievements");
             return true;
         }
     }

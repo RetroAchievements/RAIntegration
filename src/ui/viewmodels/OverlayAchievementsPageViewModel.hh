@@ -77,9 +77,73 @@ public:
     void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const override;
     bool ProcessInput(const ControllerInput& pInput) override;
 
+    class WinnerViewModel : public ViewModelBase
+    {
+    public:
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the user name.
+        /// </summary>
+        static const StringModelProperty UsernameProperty;
+
+        /// <summary>
+        /// Gets the user name.
+        /// </summary>
+        const std::wstring& GetUsername() const { return GetValue(UsernameProperty); }
+
+        /// <summary>
+        /// Sets the user name.
+        /// </summary>
+        void SetUsername(const std::wstring& sValue) { SetValue(UsernameProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the unlock date.
+        /// </summary>
+        static const StringModelProperty UnlockDateProperty;
+
+        /// <summary>
+        /// Gets the unlock date.
+        /// </summary>
+        const std::wstring& GetUnlockDate() const { return GetValue(UnlockDateProperty); }
+
+        /// <summary>
+        /// Sets the unlock date.
+        /// </summary>
+        void SetUnlockDate(const std::wstring& sValue) { SetValue(UnlockDateProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for whether or not the winner is the user.
+        /// </summary>
+        static const BoolModelProperty IsUserProperty;
+
+        /// <summary>
+        /// Gets whether or not the winner is the user.
+        /// </summary>
+        bool IsUser() const { return GetValue(IsUserProperty); }
+
+        /// <summary>
+        /// Sets whether the winner is the user.
+        /// </summary>
+        void SetUser(bool bValue) { SetValue(IsUserProperty, bValue); }
+    };
+
     class AchievementViewModel : public ViewModelBase
     {
     public:
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the achievement ID.
+        /// </summary>
+        static const IntModelProperty AchievementIdProperty;
+
+        /// <summary>
+        /// Gets the unique identifier of the achievement.
+        /// </summary>
+        int GetAchievementId() const { return GetValue(AchievementIdProperty); }
+
+        /// <summary>
+        /// Sets the unique identifier of the achievement.
+        /// </summary>
+        void SetAchievementId(int nValue) { SetValue(AchievementIdProperty, nValue); }
+
         /// <summary>
         /// The <see cref="ModelProperty" /> for the achievement title.
         /// </summary>
@@ -125,12 +189,69 @@ public:
         /// </summary>
         void SetLocked(bool bValue) { SetValue(IsLockedProperty, bValue); }
 
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the achievement creation date.
+        /// </summary>
+        static const StringModelProperty CreatedDateProperty;
+
+        /// <summary>
+        /// Gets the achievement creation date.
+        /// </summary>
+        const std::wstring& GetCreatedDate() const { return GetValue(CreatedDateProperty); }
+
+        /// <summary>
+        /// Sets the achievement creation date.
+        /// </summary>
+        void SetCreatedDate(const std::wstring& sValue) { SetValue(CreatedDateProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the achievement last modified date.
+        /// </summary>
+        static const StringModelProperty ModifiedDateProperty;
+
+        /// <summary>
+        /// Gets the achievement last modified date.
+        /// </summary>
+        const std::wstring& GetModifiedDate() const { return GetValue(ModifiedDateProperty); }
+
+        /// <summary>
+        /// Sets the achievement last modified date.
+        /// </summary>
+        void SetModifiedDate(const std::wstring& sValue) { SetValue(ModifiedDateProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the won by ration.
+        /// </summary>
+        static const StringModelProperty WonByProperty;
+
+        /// <summary>
+        /// Gets the won by ratio.
+        /// </summary>
+        const std::wstring& GetWonBy() const { return GetValue(WonByProperty); }
+
+        /// <summary>
+        /// Sets the won by ratio.
+        /// </summary>
+        void SetWonBy(const std::wstring& sValue) { SetValue(WonByProperty, sValue); }
+
         ImageReference Image{};
+
+        ViewModelCollection<WinnerViewModel> RecentWinners;
     };
 
+protected:
+    gsl::index m_nScrollOffset = 0;
+    mutable unsigned int m_nVisibleAchievements = 0;
+
 private:
+    void RenderList(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const;
+    void RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const;
+    void FetchAchievementDetail(AchievementViewModel& vmAchievement);
+
     double m_fElapsed = 0.0;
     bool m_bImagesPending = false;
+    bool m_bAchievementDetail = false;
+    bool m_bRedraw = false;
 
     ra::ui::ViewModelCollection<AchievementViewModel> m_vAchievements;
 };

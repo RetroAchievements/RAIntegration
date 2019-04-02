@@ -173,6 +173,9 @@ _NODISCARD inline const std::wstring ToWString(_In_ const char& value)
 _NODISCARD inline const std::wstring ToWString(_In_ const char* value) { return ra::Widen(value); }
 _NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* value) { return std::wstring(value); }
 
+_NODISCARD const std::string FormatDate(_In_ time_t when);
+_NODISCARD const std::string FormatDateRecent(_In_ time_t when);
+
 // ----- string building -----
 
 class StringBuilder

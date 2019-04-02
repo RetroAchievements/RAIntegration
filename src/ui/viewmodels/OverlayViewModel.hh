@@ -77,7 +77,7 @@ public:
 
         virtual void Refresh() = 0;
 
-        virtual bool Update(_UNUSED double fElapsed)
+        virtual bool Update(_UNUSED double fElapsed) noexcept(false)
         {
             return false;
         }

@@ -27,13 +27,16 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
     pGameContext.EnumerateLeaderboards([this, &nNumberOfLeaderboards](const RA_Leaderboard& pLeaderboard)
     {
-        ItemViewModel* pvmAchievement = m_vItems.GetItemAt(nNumberOfLeaderboards);
-        if (pvmAchievement == nullptr)
-            pvmAchievement = &m_vItems.Add();
+        ItemViewModel* pvmLeaderboard = m_vItems.GetItemAt(nNumberOfLeaderboards);
+        if (pvmLeaderboard == nullptr)
+        {
+            pvmLeaderboard = &m_vItems.Add();
+            Ensures(pvmLeaderboard != nullptr);
+        }
 
-        pvmAchievement->SetId(pLeaderboard.ID());
-        pvmAchievement->SetLabel(ra::Widen(pLeaderboard.Title()));
-        pvmAchievement->SetDetail(ra::Widen(pLeaderboard.Description()));
+        pvmLeaderboard->SetId(pLeaderboard.ID());
+        pvmLeaderboard->SetLabel(ra::Widen(pLeaderboard.Title()));
+        pvmLeaderboard->SetDetail(ra::Widen(pLeaderboard.Description()));
         ++nNumberOfLeaderboards;
         return true;
     });
@@ -109,7 +112,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
             return;
 
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-        RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nId);
+        const RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nId);
         if (!pLeaderboard)
             return;
 

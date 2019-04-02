@@ -109,7 +109,7 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
         const ra::ui::Color nSubTextColor = pItem->IsDisabled() ? pTheme.ColorOverlayDisabledSubText() : pTheme.ColorOverlaySubText();
         ra::ui::Color nTextColor = pTheme.ColorOverlayText();
 
-        bool bSelected = (nIndex == ra::to_signed(nSelectedIndex));
+        const bool bSelected = (nIndex == ra::to_signed(nSelectedIndex));
         if (bSelected)
         {
             pSurface.FillRectangle(nTextX, nY, nWidth - nTextX, nItemSize, pTheme.ColorOverlaySelectionBackground());

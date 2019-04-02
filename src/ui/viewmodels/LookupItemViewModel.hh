@@ -12,7 +12,7 @@ namespace viewmodels {
 class LookupItemViewModel : public ViewModelBase
 {
 public:
-    LookupItemViewModel() = default;
+    GSL_SUPPRESS_F6 LookupItemViewModel() = default;
     LookupItemViewModel(int nId, const std::wstring& sLabel) noexcept
     {
         GSL_SUPPRESS_F6 SetId(nId);

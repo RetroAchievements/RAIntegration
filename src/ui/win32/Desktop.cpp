@@ -88,9 +88,9 @@ void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSiz
     oSize = m_oWorkAreaSize;
 }
 
-ra::ui::Size Desktop::GetClientSize(const WindowViewModelBase& vmViewModel) const
+ra::ui::Size Desktop::GetClientSize(const WindowViewModelBase& vmViewModel) const noexcept
 {
-    const auto pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding == nullptr)
         return {};
 

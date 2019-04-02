@@ -42,7 +42,10 @@ void OverlayAchievementsPageViewModel::Refresh()
         {
             ItemViewModel* pvmAchievement = m_vItems.GetItemAt(nNumberOfAchievements);
             if (pvmAchievement == nullptr)
+            {
                 pvmAchievement = &m_vItems.Add();
+                Ensures(pvmAchievement != nullptr);
+            }
 
             pvmAchievement->SetId(pAchievement.ID());
             pvmAchievement->SetLabel(ra::StringPrintf(L"%s (%s points)", pAchievement.Title(), pAchievement.Points()));
@@ -97,7 +100,7 @@ void OverlayAchievementsPageViewModel::Refresh()
 
 bool OverlayAchievementsPageViewModel::Update(double fElapsed)
 {
-    bool bUpdated = OverlayListPageViewModel::Update(fElapsed);
+    const bool bUpdated = OverlayListPageViewModel::Update(fElapsed);
 
     if (m_fElapsed < 60.0)
         return bUpdated;
@@ -194,7 +197,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vAchievementDetails.end())
             return;
 
-        if (static_cast<ra::AchievementID>(m_vItems.GetItemAt(GetSelectedItemIndex())->GetId()) != nId)
+        if (ra::to_unsigned(m_vItems.GetItemAt(GetSelectedItemIndex())->GetId()) != nId)
             return;
 
         auto& vmAchievement = pIter->second;
@@ -205,7 +208,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         }
 
         vmAchievement.SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
-            static_cast<double>(response.EarnedBy * 100) / response.NumPlayers));
+            (static_cast<double>(response.EarnedBy) * 100) / response.NumPlayers));
 
         const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
         for (const auto& pWinner : response.Entries)

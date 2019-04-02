@@ -114,8 +114,8 @@ protected:
 private:
     void RenderList(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const;
     virtual void RenderDetail(_UNUSED ra::ui::drawing::ISurface& pSurface, 
-        _UNUSED int nX, _UNUSED int nY, _UNUSED int nWidth, _UNUSED int nHeight) const {};
-    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) {};
+        _UNUSED int nX, _UNUSED int nY, _UNUSED int nWidth, _UNUSED int nHeight) const noexcept(false) {};
+    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};
 
     unsigned int m_nImagesPending = 0;
     bool m_bDetail = false;

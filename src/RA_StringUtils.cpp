@@ -108,6 +108,7 @@ std::wstring& Trim(std::wstring& str)
     return str;
 }
 
+_Use_decl_annotations_
 const std::string FormatDate(time_t when)
 {
     struct tm tm;
@@ -121,13 +122,14 @@ const std::string FormatDate(time_t when)
     return std::to_string(when);
 }
 
+_Use_decl_annotations_
 const std::string FormatDateRecent(time_t when)
 {
     auto now = std::time(nullptr);
 
     struct tm tm;
     if (localtime_s(&tm, &now) == 0)
-        now = now - (tm.tm_hour * 60 * 60) - (tm.tm_min * 60) - tm.tm_sec; // round to midnight
+        now = now - (static_cast<time_t>(tm.tm_hour) * 60 * 60) - (static_cast<time_t>(tm.tm_min) * 60) - tm.tm_sec; // round to midnight
 
     const auto days = (now + (60 * 60 * 24) - when) / (60 * 60 * 24);
 

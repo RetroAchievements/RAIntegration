@@ -95,7 +95,7 @@ extern "C" {
     struct ControllerInput;
     API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float fDTime,
         _In_ bool /*Full_Screen*/, _In_ bool /*Paused*/);
-    API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ RECT* rcSize);
+    API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* rcSize);
     API bool CCONV _RA_IsOverlayFullyVisible();
 
 #ifdef __cplusplus

@@ -138,10 +138,10 @@ void OverlayViewModel::CreateRenderImage()
     const auto nUserFrameHeight = nImageSize + nPadding * 2;
     const auto nUserFrameWidth = nImageSize + nPadding * 4 + std::max(szUsername.Width, szPoints.Width);
 
-    int nX = nWidth - nUserFrameWidth - nMargin;
+    const int nX = nWidth - nUserFrameWidth - nMargin;
     if (nX > 200)
     {
-        int nY = nMargin;
+        const int nY = nMargin;
 
         m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, pTheme.ColorOverlayPanel());
 
@@ -200,9 +200,9 @@ void OverlayViewModel::PageViewModel::RenderScrollBar(ra::ui::drawing::ISurface&
 
     pSurface.FillRectangle(nX, nY, 12, nHeight, pTheme.ColorOverlayScrollBar());
 
-    const auto nItemHeight = static_cast<double>(nHeight - 4) / nTotalItems;
+    const auto nItemHeight = (static_cast<double>(nHeight) - 4) / nTotalItems;
     const auto nGripperTop = ra::ftoi(nItemHeight * nFirstVisibleItem);
-    const auto nGripperBottom = ra::ftoi(nItemHeight * (nFirstVisibleItem + nVisibleItems));
+    const auto nGripperBottom = ra::ftoi(nItemHeight * (static_cast<double>(nFirstVisibleItem) + nVisibleItems));
     pSurface.FillRectangle(nX + 2, nY + 2 + nGripperTop, 8, nGripperBottom - nGripperTop, pTheme.ColorOverlayScrollBarGripper());
 }
 

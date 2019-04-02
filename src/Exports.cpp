@@ -185,7 +185,7 @@ API int _RA_UpdateOverlay(const ControllerInput* pInput, float fElapsedSeconds, 
 
 #ifndef RA_UTEST
 _Use_decl_annotations_
-API void _RA_RenderOverlay(HDC hDC, RECT* rcSize)
+API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
 {
     ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
     ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);

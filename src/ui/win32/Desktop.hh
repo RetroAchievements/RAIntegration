@@ -19,7 +19,7 @@ public:
     ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentViewModel) const override;
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override;
-    ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const override;
+    ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const noexcept override;
 
     void OpenUrl(const std::string& sUrl) const noexcept override;
 

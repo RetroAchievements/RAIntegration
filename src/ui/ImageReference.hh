@@ -53,7 +53,7 @@ public:
     virtual void AddReference(const ImageReference& pImage) = 0;
 
     /// <summary>Releases a reference to an image.</summary>
-    virtual void ReleaseReference(ImageReference& pImage) noexcept = 0;
+    virtual void ReleaseReference(ImageReference& pImage) noexcept(false) = 0;
 
     /// <summary>
     /// Determines whether the referenced image has changed.

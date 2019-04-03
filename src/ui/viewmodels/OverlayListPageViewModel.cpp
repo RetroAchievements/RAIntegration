@@ -1,5 +1,7 @@
 #include "OverlayListPageViewModel.hh"
 
+#include "ra_math.h"
+
 #include "ui\OverlayTheme.hh"
 
 namespace ra {
@@ -35,8 +37,11 @@ bool OverlayListPageViewModel::Update(double fElapsed)
         for (gsl::index nIndex = m_vItems.Count() - 1; nIndex >= 0; --nIndex)
         {
             const auto* pItem = m_vItems.GetItemAt(nIndex);
-            if (pItem && !pImageRepository.IsImageAvailable(pItem->Image.Type(), pItem->Image.Name()))
+            if (pItem && pItem->Image.Type() != ra::ui::ImageType::None &&
+                !pImageRepository.IsImageAvailable(pItem->Image.Type(), pItem->Image.Name()))
+            {
                 ++nImagesPending;
+            }
         }
 
         if (m_nImagesPending != nImagesPending)
@@ -88,7 +93,13 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
 
     if (m_nVisibleItems < m_vItems.Count())
     {
-        RenderScrollBar(pSurface, nX, nY, nHeight, m_vItems.Count(), m_nVisibleItems, nIndex);
+        pSurface.FillRectangle(nX, nY, 12, nHeight, pTheme.ColorOverlayScrollBar());
+
+        const auto nItemHeight = (static_cast<double>(nHeight) - 4) / m_nVisibleItems;
+        const auto nGripperTop = ra::ftoi(nItemHeight * nIndex);
+        const auto nGripperBottom = ra::ftoi(nItemHeight * (static_cast<double>(nIndex) + m_nVisibleItems));
+        pSurface.FillRectangle(nX + 2, nY + 2 + nGripperTop, 8, nGripperBottom - nGripperTop, pTheme.ColorOverlayScrollBarGripper());
+
         nX += 20;
     }
 
@@ -190,13 +201,14 @@ bool OverlayListPageViewModel::SetDetail(bool bDetail)
     {
         if (!m_bDetail && !m_sDetailTitle.empty())
         {
-            m_bDetail = true;
-            SetTitle(m_sDetailTitle);
-
             auto* vmItem = m_vItems.GetItemAt(GetSelectedItemIndex());
             if (vmItem != nullptr)
+            {
                 FetchItemDetail(*vmItem);
-            return true;
+                m_bDetail = true;
+                SetTitle(m_sDetailTitle);
+                return true;
+            }
         }
     }
     else

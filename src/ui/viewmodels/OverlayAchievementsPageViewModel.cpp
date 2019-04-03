@@ -197,9 +197,6 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vAchievementDetails.end())
             return;
 
-        if (ra::to_unsigned(m_vItems.GetItemAt(GetSelectedItemIndex())->GetId()) != nId)
-            return;
-
         auto& vmAchievement = pIter->second;
         if (!response.Succeeded())
         {

@@ -108,9 +108,6 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vLeaderboardRanks.end())
             return;
 
-        if (m_vItems.GetItemAt(GetSelectedItemIndex())->GetId() != nId)
-            return;
-
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
         const RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nId);
         if (!pLeaderboard)

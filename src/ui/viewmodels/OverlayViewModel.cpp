@@ -1,8 +1,8 @@
 #include "OverlayViewModel.hh"
 
+#include "ra_math.h"
+
 #include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -12,8 +12,6 @@
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
-
-#include "ra_math.h"
 
 namespace ra {
 namespace ui {
@@ -192,18 +190,6 @@ void OverlayViewModel::CreateRenderImage()
     m_pSurface->WriteText(nWidth - nControlsX1, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sPrev);
     m_pSurface->WriteText(nWidth - nControlsX2, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sSelect);
     m_pSurface->WriteText(nWidth - nControlsX2, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sBack);
-}
-
-void OverlayViewModel::PageViewModel::RenderScrollBar(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nHeight, int nTotalItems, int nVisibleItems, int nFirstVisibleItem) const
-{
-    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-
-    pSurface.FillRectangle(nX, nY, 12, nHeight, pTheme.ColorOverlayScrollBar());
-
-    const auto nItemHeight = (static_cast<double>(nHeight) - 4) / nTotalItems;
-    const auto nGripperTop = ra::ftoi(nItemHeight * nFirstVisibleItem);
-    const auto nGripperBottom = ra::ftoi(nItemHeight * (static_cast<double>(nFirstVisibleItem) + nVisibleItems));
-    pSurface.FillRectangle(nX + 2, nY + 2 + nGripperTop, 8, nGripperBottom - nGripperTop, pTheme.ColorOverlayScrollBarGripper());
 }
 
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)

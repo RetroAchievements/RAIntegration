@@ -85,9 +85,6 @@ public:
         virtual bool ProcessInput(const ControllerInput& pInput) = 0;
 
         virtual void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const = 0;
-
-    protected:
-        void RenderScrollBar(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nHeight, int nTotalItems, int nVisibleItems, int nFirstVisibleItem) const;
     };
 
     PageViewModel& CurrentPage() const { return *m_vPages.at(m_nSelectedPage); }

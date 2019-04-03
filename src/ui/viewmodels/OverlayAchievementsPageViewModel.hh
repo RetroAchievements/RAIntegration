@@ -79,11 +79,13 @@ public:
         ViewModelCollection<ItemViewModel> RecentWinners;
     };
 
+protected:
+    void FetchItemDetail(ItemViewModel& vmItem) override;
+    std::map<ra::AchievementID, AchievementViewModel> m_vAchievementDetails;
+
 private:
     void RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const override;
-    void FetchItemDetail(ItemViewModel& vmItem) override;
 
-    std::map<ra::AchievementID, AchievementViewModel> m_vAchievementDetails;
     std::wstring m_sSummary;
 };
 

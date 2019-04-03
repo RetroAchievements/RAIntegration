@@ -102,10 +102,12 @@ public:
 protected:
     bool SetDetail(bool bDetail);
     void ForceRedraw() noexcept { m_bRedraw = true; }
+    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};
 
     gsl::index m_nScrollOffset = 0;
     mutable unsigned int m_nVisibleItems = 0;
     double m_fElapsed = 0.0;
+    bool m_bDetail = false;
     std::wstring m_sTitle;
     std::wstring m_sDetailTitle;
 
@@ -115,10 +117,8 @@ private:
     void RenderList(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const;
     virtual void RenderDetail(_UNUSED ra::ui::drawing::ISurface& pSurface, 
         _UNUSED int nX, _UNUSED int nY, _UNUSED int nWidth, _UNUSED int nHeight) const noexcept(false) {};
-    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};
 
     unsigned int m_nImagesPending = 0;
-    bool m_bDetail = false;
     bool m_bRedraw = false;
 };
 

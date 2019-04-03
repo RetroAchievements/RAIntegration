@@ -54,7 +54,7 @@ private:
             m_vItems.GetItemAt(nIndex)->Image.ChangeReference(ra::ui::ImageType::Badge, sName);
         }
 
-        void FetchItemDetail(ItemViewModel& vmItem) override
+        void FetchItemDetail(ItemViewModel& vmItem) noexcept override
         {
             vmDetail = &vmItem;
         }

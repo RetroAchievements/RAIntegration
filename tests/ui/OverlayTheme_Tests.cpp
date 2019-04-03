@@ -67,7 +67,7 @@ public:
         {
             OverlayThemeHarness theme;
             theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json",
-                ra::StringPrintf("{\"Colors\":{\"%s\":\"#123456\"}}", pair.first));
+                ra::StringPrintf("{\"PopupColors\":{\"%s\":\"#123456\"}}", pair.first));
             theme.LoadFromFile();
 
             for (const auto& pair2 : ColorProperties)

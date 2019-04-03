@@ -37,22 +37,22 @@ public:
         pIter->second.insert(sName);
     }
 
-    void FetchImage(_UNUSED ImageType nType, _UNUSED const std::string& sName) override
+    void FetchImage(_UNUSED ImageType nType, _UNUSED const std::string& sName) noexcept override
     {
 
     }
 
-    void AddReference(_UNUSED const ImageReference& pImage) override
+    void AddReference(_UNUSED const ImageReference& pImage) noexcept override
     {
 
     }
 
-    void ReleaseReference(_UNUSED ImageReference& pImage) override
+    void ReleaseReference(_UNUSED ImageReference& pImage) noexcept override
     {
 
     }
 
-    bool HasReferencedImageChanged(_UNUSED ImageReference& pImage) const override
+    bool HasReferencedImageChanged(_UNUSED ImageReference& pImage) const noexcept override
     {
         return false;
     }

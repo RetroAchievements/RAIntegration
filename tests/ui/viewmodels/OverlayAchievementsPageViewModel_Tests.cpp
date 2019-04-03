@@ -73,7 +73,7 @@ public:
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"1 of 1 won (5/5)"), achievementsPage.GetSummary());
 
-        auto* pItem = achievementsPage.GetItem(0);
+        auto const* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(1, pItem->GetId());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
@@ -97,7 +97,7 @@ public:
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"0 of 1 won (0/5)"), achievementsPage.GetSummary());
 
-        auto* pItem = achievementsPage.GetItem(0);
+        auto const* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(1, pItem->GetId());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
@@ -130,7 +130,7 @@ public:
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
 
-        auto* pItem = achievementsPage.GetItem(0);
+        auto const* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(1, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
@@ -204,7 +204,7 @@ public:
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"1 achievements present"), achievementsPage.GetSummary());
 
-        auto* pItem = achievementsPage.GetItem(0);
+        auto const* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(1, pItem->GetId());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
@@ -271,7 +271,7 @@ public:
         achievementsPage.Refresh();
         achievementsPage.TestFetchItemDetail(0);
 
-        auto* pDetail = achievementsPage.GetItemDetail(1);
+        auto const* pDetail = achievementsPage.GetItemDetail(1);
         Expects(pDetail != nullptr);
 
         Assert::AreEqual(std::wstring(L"Local Achievement"), pDetail->GetWonBy());

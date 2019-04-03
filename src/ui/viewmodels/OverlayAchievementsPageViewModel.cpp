@@ -1,5 +1,7 @@
 #include "OverlayAchievementsPageViewModel.hh"
 
+#include "RA_StringUtils.h"
+
 #include "api\FetchAchievementInfo.hh"
 
 #include "data\GameContext.hh"

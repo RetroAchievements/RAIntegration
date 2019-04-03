@@ -1,5 +1,7 @@
 #include "OverlayLeaderboardsPageViewModel.hh"
 
+#include "RA_StringUtils.h"
+
 #include "api\FetchLeaderboardInfo.hh"
 
 #include "data\GameContext.hh"

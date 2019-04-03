@@ -1,6 +1,7 @@
 #include "OverlayViewModel.hh"
 
 #include "ra_math.h"
+#include "RA_StringUtils.h"
 
 #include "data\EmulatorContext.hh"
 #include "data\UserContext.hh"

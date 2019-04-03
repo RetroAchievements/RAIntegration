@@ -95,7 +95,7 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
     {
         pSurface.FillRectangle(nX, nY, 12, nHeight, pTheme.ColorOverlayScrollBar());
 
-        const auto nItemHeight = (static_cast<double>(nHeight) - 4) / m_nVisibleItems;
+        const auto nItemHeight = (static_cast<double>(nHeight) - 4) / m_vItems.Count();
         const auto nGripperTop = ra::ftoi(nItemHeight * nIndex);
         const auto nGripperBottom = ra::ftoi(nItemHeight * (static_cast<double>(nIndex) + m_nVisibleItems));
         pSurface.FillRectangle(nX + 2, nY + 2 + nGripperTop, 8, nGripperBottom - nGripperTop, pTheme.ColorOverlayScrollBarGripper());

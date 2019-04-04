@@ -4,6 +4,7 @@
 
 #include <winhttp.h>
 #include <cassert>
+#include <stdexcept>
 #include <string>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit

@@ -590,6 +590,7 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
 
     ra::ui::viewmodels::PopupMessageViewModel vmPopup;
     vmPopup.SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
+    vmPopup.SetDetail(ra::Widen(pAchievement->Description()));
     vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
 
     switch (ra::itoe<AchievementSet::Type>(pAchievement->Category()))

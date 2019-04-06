@@ -122,6 +122,7 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemory
     { 0xFF00U, 0xFF7FU, ConsoleContext::AddressType::HardwareController, "Hardware I/O"},
     { 0xFF80U, 0xFFFEU, ConsoleContext::AddressType::SystemRAM, "Quick RAM"},
     { 0xFFFFU, 0xFFFFU, ConsoleContext::AddressType::HardwareController, "Interrupt enable"},
+    { 0x10000U, 0x16FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (static pages)" }, // 7 banks, GBC only
 };
 
 // ===== GameBoy Advance =====

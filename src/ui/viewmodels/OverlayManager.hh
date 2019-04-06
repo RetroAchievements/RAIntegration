@@ -39,6 +39,18 @@ public:
     }
 
     /// <summary>
+    /// Queues a popup message.
+    /// </summary>
+    int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail)
+    {
+        PopupMessageViewModel vmMessage;
+        vmMessage.SetTitle(sTitle);
+        vmMessage.SetDescription(sDescription);
+        vmMessage.SetDetail(sDetail);
+        return QueueMessage(std::move(vmMessage));
+    }
+
+    /// <summary>
     /// Queues a popup message with an image.
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, ra::ui::ImageType nImageType, const std::string& sImageName)
@@ -49,7 +61,20 @@ public:
         vmMessage.SetImage(nImageType, sImageName);
         return QueueMessage(std::move(vmMessage));
     }
-    
+
+    /// <summary>
+    /// Queues a popup message with an image.
+    /// </summary>
+    int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail, ra::ui::ImageType nImageType, const std::string& sImageName)
+    {
+        PopupMessageViewModel vmMessage;
+        vmMessage.SetTitle(sTitle);
+        vmMessage.SetDescription(sDescription);
+        vmMessage.SetDetail(sDetail);
+        vmMessage.SetImage(nImageType, sImageName);
+        return QueueMessage(std::move(vmMessage));
+    }
+
     /// <summary>
     /// Gets the message associated to the specified unique identifier.
     /// </summary>

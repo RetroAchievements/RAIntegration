@@ -2,6 +2,7 @@
 
 #include "RA_Log.h"
 #include "RA_md5factory.h"
+#include "RA_StringUtils.h"
 
 #include "api\ResolveHash.hh"
 

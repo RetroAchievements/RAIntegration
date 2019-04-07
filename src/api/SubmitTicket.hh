@@ -16,7 +16,7 @@ public:
 
     struct Response : ApiResponseBase
     {
-        unsigned int TicketsCreated;
+        unsigned int TicketsCreated{};
     };
 
     enum class ProblemType
@@ -29,7 +29,7 @@ public:
     {
         std::string GameHash;
         std::set<ra::AchievementID> AchievementIds;
-        ProblemType Problem;
+        ProblemType Problem = ProblemType::WrongTime;
         std::string Comment;
 
         using Callback = std::function<void(const Response& response)>;

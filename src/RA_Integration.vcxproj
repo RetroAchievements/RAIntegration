@@ -136,6 +136,7 @@
     <ClInclude Include="api\StartSession.hh" />
     <ClInclude Include="api\SubmitLeaderboardEntry.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
+    <ClInclude Include="api\SubmitTicket.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />

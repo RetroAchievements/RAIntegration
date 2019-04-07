@@ -6,6 +6,8 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "api\SubmitTicket.hh"
+
 #include "data\GameContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -134,6 +136,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                         return FALSE;
                     }
 
+                    ra::api::SubmitTicket::Request request;
                     std::string sBuggedIDs;
 
                     int nReportCount = 0;
@@ -142,7 +145,9 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     {
                         if (ListView_GetCheckState(hList, i) != 0)
                         {
-                            sBuggedIDs.append(ra::StringPrintf("%zu,", g_pActiveAchievements->GetAchievement(i).ID()));
+                            const auto nId = g_pActiveAchievements->GetAchievement(i).ID();
+                            request.AchievementIds.insert(nId);
+                            sBuggedIDs.append(ra::StringPrintf("%zu,", nId));
                             nReportCount++;
                         }
                     }
@@ -161,73 +166,54 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
                     const auto nProblemType = bProblem1Sel ? 1 : bProblem2Sel ? 2U : 0u; // 0==?
                     const auto sProblemTypeNice = PROBLEM_STR.at(nProblemType);
 
-                    //	Intentionally MBCS
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                    const auto sBugReportInFull = ra::StringPrintf(
-                        "--New Bug Report--\n\nGame: %s\n"
+                    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+
+                    ra::ui::viewmodels::MessageBoxViewModel vmConfirm;
+                    vmConfirm.SetHeader(ra::StringPrintf(L"Are you sure that you want to create %u tickets for %s?",
+                        request.AchievementIds.size(), pGameContext.GameTitle()));
+                    vmConfirm.SetMessage(ra::StringPrintf(L""
                         "Achievement IDs: %s\n"
                         "Problem: %s\n"
                         "Reporter: %s\n"
-                        "ROM Checksum: %s\n\n"
-                        "Comment: %s\n\n"
-                        "Is this OK?",
-                        ra::Narrow(pGameContext.GameTitle()).c_str(), sBuggedIDs.c_str(), sProblemTypeNice,
-                        RAUsers::LocalUser().Username().c_str(), pGameContext.GameHash().c_str(),
-                        sBugReportComment.c_str());
+                        "Game Checksum: %s\n"
+                        "Comment: %s",
+                        sBuggedIDs, sProblemTypeNice, pUserContext.GetUsername(), pGameContext.GameHash(),
+                        sBugReportComment
+                    ));
+                    vmConfirm.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
-                    if (MessageBox(nullptr, NativeStr(sBugReportInFull).c_str(), TEXT("Summary"), MB_YESNO) == IDNO)
+                    if (vmConfirm.ShowModal() != ra::ui::DialogResult::Yes)
                         return FALSE;
 
-                    PostArgs args;
-                    args['u'] = RAUsers::LocalUser().Username();
-                    args['t'] = RAUsers::LocalUser().Token();
-                    args['i'] = sBuggedIDs;
-                    args['p'] = std::to_string(nProblemType);
-                    args['n'] = sBugReportComment.c_str();
-                    args['m'] = pGameContext.GameHash();
+                    request.Problem = ra::itoe<ra::api::SubmitTicket::ProblemType>(nProblemType);
+                    request.GameHash = pGameContext.GameHash();
+                    request.Comment = sBugReportComment;
 
-                    rapidjson::Document doc;
-                    if (RAWeb::DoBlockingRequest(RequestSubmitTicket, args, doc))
+                    const auto response = request.Call();
+                    if (response.Succeeded())
                     {
-                        if (doc["Success"].GetBool())
+                        if (response.TicketsCreated == 1)
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
-                                      "Submitted OK!\n"
-                                      "\n"
-                                      "Thankyou for reporting that bug(s), and sorry it hasn't worked correctly.\n"
-                                      "\n"
-                                      "The development team will investigate this bug as soon as possible\n"
-                                      "and we will send you a message on RetroAchievements.org\n"
-                                      "as soon as we have a solution.\n"
-                                      "\n"
-                                      "Thanks again!");
-
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
-                            EndDialog(hDlg, TRUE);
-                            return TRUE;
+                            ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+                            vmMessageBox.SetHeader(L"1 ticket created");
+                            vmMessageBox.SetMessage(L"Thank you for reporting the issue. The development team will investigate and you will be notified when the ticket is updated or resolved.");
+                            vmMessageBox.ShowModal();
                         }
                         else
                         {
-                            char buffer[2048];
-                            sprintf_s(buffer, 2048,
-                                      "Failed!\n"
-                                      "\n"
-                                      "Response From Server:\n"
-                                      "\n"
-                                      "Error code: %d",
-                                      doc.GetParseError());
-                            MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error from server!"), MB_OK);
-                            return FALSE;
+                            ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+                            vmMessageBox.SetHeader(ra::StringPrintf(L"%u tickets created", response.TicketsCreated));
+                            vmMessageBox.SetMessage(L"Thank you for reporting the issues. The development team will investigate and you will be notified when the tickets are updated or resolved.");
+                            vmMessageBox.ShowModal();
                         }
+
+                        EndDialog(hDlg, TRUE);
                     }
                     else
                     {
-                        MessageBox(hDlg,
-                                   TEXT("Failed!\n") TEXT("\n") TEXT("Cannot reach server... are you online?\n")
-                                       TEXT("\n"),
-                                   TEXT("Error!"), MB_OK);
-                        return FALSE;
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to submit tickets",
+                            !response.ErrorMessage.empty() ? ra::Widen(response.ErrorMessage) : L"Unknown error");
                     }
                 }
                 break;

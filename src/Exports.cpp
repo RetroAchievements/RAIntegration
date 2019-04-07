@@ -79,7 +79,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         pUserContext.Initialize(response.Username, response.ApiToken);
         pUserContext.SetScore(response.Score);
 
-        // start a new session
+        // load the session information
         auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
         pSessionTracker.Initialize(response.Username);
 

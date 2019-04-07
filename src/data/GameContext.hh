@@ -30,7 +30,7 @@ public:
     /// <summary>
     /// Loads the data for the specified game id.
     /// </summary>
-    void LoadGame(unsigned int nGameId, ra::data::GameContext::Mode nMode = ra::data::GameContext::Mode::Normal);
+    virtual void LoadGame(unsigned int nGameId, Mode nMode = Mode::Normal);
 
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
@@ -65,7 +65,7 @@ public:
     /// <summary>
     /// Sets the game play mode.
     /// </summary>
-    void SetMode(ra::data::GameContext::Mode nMode) { m_nMode = nMode; }
+    void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
 
     /// <summary>
     /// Gets which achievements are active.

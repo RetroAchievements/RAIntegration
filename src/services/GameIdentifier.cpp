@@ -99,20 +99,17 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSiz
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
     }
 
+    // store the hash and game id - will be used by _RA_ActivateGame (if called)
+    m_sPendingMD5 = sMD5;
+    m_nPendingGameId = nGameId;
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (nGameId != 0 && nGameId == pGameContext.GameId())
     {
         // same as currently loaded rom. assume user is switching disks and _RA_ActivateGame won't be called.
-        // update the hash now
+        // update the hash now. if it does get called, this is redundant.
         pGameContext.SetGameHash(sMD5);
         pGameContext.SetMode(m_nPendingMode);
-    }
-    else
-    {
-        // different game. assume user is loading a new game and _RA_ActivateGame will be called.
-        // store the hash so when _RA_ActivateGame is called, we can load it then.
-        m_sPendingMD5 = sMD5;
-        m_nPendingGameId = nGameId;
     }
 
     return nGameId;

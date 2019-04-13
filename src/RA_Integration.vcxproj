@@ -55,7 +55,6 @@
     </ClCompile>
     <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
-    <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementSet.cpp" />
     <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
@@ -98,7 +97,11 @@
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
@@ -147,7 +150,6 @@
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
     <ClInclude Include="pch_microsoft_suppressions.h" />
     <ClInclude Include="RA_Achievement.h" />
-    <ClInclude Include="RA_AchievementOverlay.h" />
     <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_BuildVer.h" />
     <ClInclude Include="RA_CodeNotes.h" />
@@ -222,7 +224,11 @@
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />

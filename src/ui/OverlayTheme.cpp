@@ -40,9 +40,9 @@ void OverlayTheme::LoadFromFile()
         rapidjson::Document document;
         if (LoadDocument(document, *pFile))
         {
-            if (document.HasMember("Colors"))
+            if (document.HasMember("PopupColors"))
             {
-                const rapidjson::Value& colors = document["Colors"];
+                const rapidjson::Value& colors = document["PopupColors"];
 
                 ReadColor(m_colorBackground, colors, "Background");
                 ReadColor(m_colorBorder, colors, "Border");
@@ -53,6 +53,22 @@ void OverlayTheme::LoadFromFile()
                 ReadColor(m_colorError, colors, "Error");
                 ReadColor(m_colorLeaderboardEntry, colors, "LeaderboardEntry");
                 ReadColor(m_colorLeaderboardPlayer, colors, "LeaderboardPlayer");
+            }
+
+            if (document.HasMember("OverlayColors"))
+            {
+                const rapidjson::Value& colors = document["OverlayColors"];
+
+                ReadColor(m_colorOverlayPanel, colors, "Panel");
+                ReadColor(m_colorOverlayText, colors, "Text");
+                ReadColor(m_colorOverlayDisabledText, colors, "DisabledText");
+                ReadColor(m_colorOverlaySubText, colors, "SubText");
+                ReadColor(m_colorOverlayDisabledSubText, colors, "DisabledSubText");
+                ReadColor(m_colorOverlaySelectionBackground, colors, "SelectionBackground");
+                ReadColor(m_colorOverlaySelectionText, colors, "SelectionText");
+                ReadColor(m_colorOverlaySelectionDisabledText, colors, "SelectionDisabledText");
+                ReadColor(m_colorOverlayScrollBar, colors, "ScrollBar");
+                ReadColor(m_colorOverlayScrollBarGripper, colors, "ScrollBarGripper");
             }
         }
     }

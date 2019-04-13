@@ -209,7 +209,11 @@
     <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
@@ -252,6 +256,9 @@
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
@@ -266,6 +273,7 @@
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />
+    <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
     <ClInclude Include="mocks\MockServer.hh" />

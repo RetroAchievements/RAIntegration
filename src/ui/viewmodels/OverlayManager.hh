@@ -1,6 +1,9 @@
-#ifndef RA_UI_OVERLAY_MANAGER
-#define RA_UI_OVERLAY_MANAGER
+#ifndef RA_UI_OVERLAY_MANAGER_H
+#define RA_UI_OVERLAY_MANAGER_H
 
+#include "RA_Interface.h"
+
+#include "OverlayViewModel.hh"
 #include "PopupMessageViewModel.hh"
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
@@ -14,14 +17,39 @@ public:
     /// <summary>
     /// Updates the overlay.
     /// </summary>
+    /// <param name="pInput">The emulator input state.</param>
     /// <param name="fElapsed">The amount of seconds that have passed.</param>
-    void Update(double fElapsed);
+    void Update(const ControllerInput& pInput, double fElapsed);
 
     /// <summary>
     /// Renders the overlay.
     /// </summary>
     void Render(ra::ui::drawing::ISurface& pSurface) const;
     
+    /// <summary>
+    /// Starts the animation to show the overlay.
+    /// </summary>
+    void ShowOverlay()
+    {
+        m_vmOverlay.Activate();
+    }
+
+    /// <summary>
+    /// Starts the animation to hide the overlay.
+    /// </summary>
+    void HideOverlay()
+    {
+        m_vmOverlay.Deactivate();
+    }
+
+    /// <summary>
+    /// Determines if the overlay is completely covering the emulator screen.
+    /// </summary>
+    bool IsOverlayFullyVisible() const noexcept
+    {
+        return m_vmOverlay.CurrentState() == OverlayViewModel::State::Visible;
+    }
+
     /// <summary>
     /// Queues a popup message.
     /// </summary>
@@ -138,6 +166,9 @@ public:
 private:
     void UpdateActiveMessage(double fElapsed);
     void UpdateActiveScoreboard(double fElapsed);
+    void RenderPopups(ra::ui::drawing::ISurface& pSurface) const;
+
+    ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
 
     std::deque<PopupMessageViewModel> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
@@ -149,4 +180,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif // !RA_UI_OVERLAY_MANAGER
+#endif // !RA_UI_OVERLAY_MANAGER_H

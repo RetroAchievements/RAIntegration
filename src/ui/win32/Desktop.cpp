@@ -88,6 +88,17 @@ void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSiz
     oSize = m_oWorkAreaSize;
 }
 
+ra::ui::Size Desktop::GetClientSize(const WindowViewModelBase& vmViewModel) const noexcept
+{
+    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    if (pBinding == nullptr)
+        return {};
+
+    RECT rcClientArea;
+    ::GetClientRect(pBinding->GetHWnd(), &rcClientArea);
+    return { rcClientArea.right - rcClientArea.left, rcClientArea.bottom - rcClientArea.top };
+}
+
 _Use_decl_annotations_
 IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewModel) const
 {

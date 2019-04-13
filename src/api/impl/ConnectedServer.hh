@@ -27,6 +27,7 @@ public:
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;
     FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override;
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override;
+    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
 

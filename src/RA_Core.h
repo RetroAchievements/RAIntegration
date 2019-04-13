@@ -33,14 +33,9 @@ extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string&
 
 // Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();
-extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-extern std::string _TimeStampToString(time_t nTime);
-
 _NODISCARD std::string GetFolderFromDialog();
-
-BOOL CanCausePause() noexcept;
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);

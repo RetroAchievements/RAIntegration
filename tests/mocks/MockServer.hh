@@ -130,6 +130,11 @@ public:
         return HandleRequest<ra::api::SubmitNewTitle>(request);
     }
 
+    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) override
+    {
+        return HandleRequest<ra::api::SubmitTicket>(request);
+    }
+
 protected:
     template<typename TApi>
     inline auto HandleRequest(const ApiRequestBase& pRequest) const

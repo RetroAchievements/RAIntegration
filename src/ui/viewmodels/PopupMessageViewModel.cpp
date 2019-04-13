@@ -7,12 +7,14 @@ namespace ui {
 namespace viewmodels {
 
 static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TITLE = 32;
-static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 28;
+static _CONSTANT_VAR FONT_SIZE_TITLE = 24;
+static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 20;
+static _CONSTANT_VAR FONT_SIZE_DETAIL = 18;
 
 const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageViewModel", "Title", L"");
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
+const BoolModelProperty PopupMessageViewModel::IsDetailErrorProperty("PopupMessageViewModel", "IsDetailError", false);
 
 void PopupMessageViewModel::BeginAnimation()
 {
@@ -80,41 +82,63 @@ void PopupMessageViewModel::CreateRenderImage()
     const auto sSubTitle = GetDescription();
     const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
+    auto nFontDetail = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_DETAIL, ra::ui::FontStyles::Normal);
+    const auto sDetail = GetDetail();
+    const auto szDetail = pSurface->MeasureText(nFontDetail, sDetail);
+
+    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nShadowOffset = pOverlayTheme.ShadowOffset();
+
     // create the actual surface
-    const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
-    constexpr int nHeight = 64 + 2;
+    constexpr int nImageSize = 64;
+    constexpr int nSubTitleIndent = 4;
+    const int nWidth = 4 + ((m_hImage.Type() != ra::ui::ImageType::None) ? nImageSize : 0) + 6 +
+        std::max(szTitle.Width, std::max(szSubTitle.Width, szDetail.Width) + nSubTitleIndent) + 6 + 4 + nShadowOffset;
+    const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
 
     pSurface = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
     m_pSurface = std::move(pSurface);
 
-    int nX = 0;
-    int nY = 0;
-    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-    const auto nShadowOffset = pTheme.ShadowOffset();
+    int nX = 4;
+    int nY = 4;
 
     // background
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
+    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color::Transparent);
+    m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorShadow());
+
+    // frame
+    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorBackground());
+    m_pSurface->FillRectangle(1, 1, m_pSurface->GetWidth() - nShadowOffset - 2, m_pSurface->GetHeight() - nShadowOffset - 2, pOverlayTheme.ColorBorder());
+    m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset - 4, m_pSurface->GetHeight() - nShadowOffset - 4, pOverlayTheme.ColorBackground());
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)
     {
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, 64, 64, pTheme.ColorShadow());
-        m_pSurface->DrawImage(nX, nY, 64, 64, m_hImage);
-        nX += 64 + 6;
+        m_pSurface->DrawImage(nX, nY, nImageSize, nImageSize, m_hImage);
+        nX += nImageSize;
     }
+    nX += 6;
 
     // title
-    m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szTitle.Width + 8, szTitle.Height, pTheme.ColorShadow());
-    m_pSurface->FillRectangle(nX, nY, szTitle.Width + 8, szTitle.Height, pTheme.ColorBackground());
-    m_pSurface->WriteText(nX + 4, nY - 1, nFontTitle, pTheme.ColorTitle(), sTitle);
+    nY -= 1;
+    m_pSurface->WriteText(nX + 1, nY + 1, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
+    m_pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
+    nX += nSubTitleIndent;
 
     // subtitle
+    nY += FONT_SIZE_TITLE - 1;
     if (!sSubTitle.empty())
     {
-        nY += 32 + 2;
-        m_pSurface->FillRectangle(nX + nShadowOffset, nY + nShadowOffset, szSubTitle.Width + 8, szSubTitle.Height, pTheme.ColorShadow());
-        m_pSurface->FillRectangle(nX, nY, szSubTitle.Width + 8, szSubTitle.Height, pTheme.ColorBackground());
-        m_pSurface->WriteText(nX + 4, nY - 1, nFontSubtitle, pTheme.ColorDescription(), sSubTitle);
+        m_pSurface->WriteText(nX + 1, nY + 1, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
+        m_pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
+    }
+
+    // detail
+    nY += FONT_SIZE_SUBTITLE;
+    if (!sDetail.empty())
+    {
+        m_pSurface->WriteText(nX + 1, nY + 1, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
+        m_pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
     }
 
     m_pSurface->SetOpacity(0.85);

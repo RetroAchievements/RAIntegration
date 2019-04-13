@@ -264,6 +264,27 @@
     <ClCompile Include="..\src\services\GameIdentifier.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -319,6 +340,9 @@
     </ClInclude>
     <ClInclude Include="..\src\pch.h">
       <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockImageRepository.hh">
+      <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

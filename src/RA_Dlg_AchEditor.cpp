@@ -1062,6 +1062,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
                         unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValue(nVal);
+
+                        NewCondition.CompTarget().SetValue(g_MemManager.ActiveBankRAMRead(nVal, NewCondition.CompTarget().GetSize()));
                     }
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;

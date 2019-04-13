@@ -64,16 +64,22 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
         m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
                                   pTheme.ColorShadow());
+
+        // frame
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
                                   pTheme.ColorBackground());
+        m_pSurface->FillRectangle(1, 1, m_pSurface->GetWidth() - nShadowOffset - 2, m_pSurface->GetHeight() - nShadowOffset - 2,
+            pTheme.ColorBorder());
+        m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset - 4, m_pSurface->GetHeight() - nShadowOffset - 4,
+            pTheme.ColorBackground());
+        m_pSurface->FillRectangle(2, 25, m_pSurface->GetWidth() - nShadowOffset - 4, 1, pTheme.ColorBorder());
 
         // title
         const auto sResultsTitle = GetHeaderText();
-        m_pSurface->FillRectangle(4, 4, m_pSurface->GetWidth() - nShadowOffset - 8, FONT_SIZE_TITLE, pTheme.ColorBorder());
-        m_pSurface->WriteText(8, 3, nFontTitle, pTheme.ColorTitle(), sResultsTitle);
+        m_pSurface->WriteText(8, 1, nFontTitle, pTheme.ColorTitle(), sResultsTitle);
 
         // scoreboard
-        size_t nY = 4 + FONT_SIZE_TITLE + 4;
+        size_t nY = 4 + FONT_SIZE_TITLE + 2;
         size_t i = 0;
         while (i < m_vEntries.Count() && nY + FONT_SIZE_TEXT < m_pSurface->GetHeight())
         {

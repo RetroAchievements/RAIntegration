@@ -57,6 +57,25 @@ public:
     void SetDetail(const std::wstring& sValue) { SetValue(DetailProperty, sValue); }
 
     /// <summary>
+    /// Sets the detail message to display as an error.
+    /// </summary>
+    void SetErrorDetail(const std::wstring& sValue)
+    {
+        SetValue(DetailProperty, sValue);
+        SetValue(IsDetailErrorProperty, true);
+    }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the detail message is an error.
+    /// </summary>
+    static const BoolModelProperty IsDetailErrorProperty;
+
+    /// <summary>
+    /// Gets whether the detail message is an error.
+    /// </summary>
+    bool IsDetailError() const { return GetValue(IsDetailErrorProperty); }
+
+    /// <summary>
     /// Sets the image to display.
     /// </summary>
     void SetImage(ra::ui::ImageType nImageType, const std::string& sImageName)

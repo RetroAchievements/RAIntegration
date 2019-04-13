@@ -116,7 +116,8 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     SelectBitmap(hMemDC, hBitmap);
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
-    SetTextColor(hMemDC, 0xFFFFFFFF);
+    SetTextColor(hMemDC, RGB(255, 255, 255));
+    SetBkMode(hMemDC, TRANSPARENT);
     RECT rcRect{0, 0, szText.cx, szText.cy};
     TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
 
@@ -138,13 +139,13 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
         do
         {
             const ra::ui::Color nTextColor(*pTextBits++);
-            if (nTextColor.Channel.R == 0)
+            if (nTextColor.Channel.R == 255)
             {
                 *pBits = nColor.ARGB;
             }
-            else if (nTextColor.Channel.R != 255)
+            else if (nTextColor.Channel.R != 0)
             {
-                const uint8_t nAlpha = ~nTextColor.Channel.R; // 255-R = ~R
+                const uint8_t nAlpha = nTextColor.Channel.R;
                 ra::ui::Color nImageColor(*pBits);
                 nImageColor.Channel.R = BlendPixel(nImageColor.Channel.R, nColor.Channel.R, nAlpha);
                 nImageColor.Channel.G = BlendPixel(nImageColor.Channel.G, nColor.Channel.G, nAlpha);

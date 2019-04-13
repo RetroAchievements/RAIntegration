@@ -8,16 +8,24 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-void OverlayManager::Update(double fElapsed)
+void OverlayManager::Update(const ControllerInput& pInput, double fElapsed)
 {
-    if (!m_vPopupMessages.empty())
-        UpdateActiveMessage(fElapsed);
+    if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
+    {
+        if (!m_vPopupMessages.empty())
+            UpdateActiveMessage(fElapsed);
 
-    if (!m_vScoreboards.empty())
-        UpdateActiveScoreboard(fElapsed);
+        if (!m_vScoreboards.empty())
+            UpdateActiveScoreboard(fElapsed);
 
-    for (auto& pScoreTracker : m_vScoreTrackers)
-        pScoreTracker->UpdateRenderImage(fElapsed);
+        for (auto& pScoreTracker : m_vScoreTrackers)
+            pScoreTracker->UpdateRenderImage(fElapsed);
+    }
+    else
+    {
+        m_vmOverlay.ProcessInput(pInput);
+        m_vmOverlay.UpdateRenderImage(fElapsed);
+    }
 }
 
 static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, size_t nFarValue) noexcept
@@ -39,6 +47,19 @@ static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, s
 }
 
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface) const
+{
+    if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Visible)
+        RenderPopups(pSurface);
+
+    if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
+    {
+        const int nX = GetAbsolutePosition(m_vmOverlay.GetRenderLocationX(), m_vmOverlay.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
+        const int nY = GetAbsolutePosition(m_vmOverlay.GetRenderLocationY(), m_vmOverlay.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
+        pSurface.DrawSurface(nX, nY, m_vmOverlay.GetRenderImage());
+    }
+}
+
+void OverlayManager::RenderPopups(ra::ui::drawing::ISurface& pSurface) const
 {
     int nScoreboardHeight = 0;
     if (!m_vScoreboards.empty())
@@ -119,6 +140,8 @@ void OverlayManager::ClearPopups()
         m_vScoreboards.pop_front();
 
     m_vScoreTrackers.clear();
+
+    m_vmOverlay.Deactivate();
 }
 
 void OverlayManager::UpdateActiveMessage(double fElapsed)

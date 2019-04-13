@@ -1,7 +1,6 @@
 #include "RA_User.h"
 
 #include "RA_Achievement.h"
-#include "RA_AchievementOverlay.h"
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Defs.h"

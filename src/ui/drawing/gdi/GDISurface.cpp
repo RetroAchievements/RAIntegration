@@ -45,7 +45,7 @@ void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::w
     if (nColor != m_nCurrentTextColor)
     {
         m_nCurrentTextColor = nColor;
-        SetTextColor(m_hDC, nColor.ARGB);
+        SetTextColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     }
 
     SetBkMode(m_hDC, TRANSPARENT);
@@ -79,6 +79,26 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     BITMAP bm;
     if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
         BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+
+    SelectBitmap(hdcMem, hOldBitmap);
+
+    DeleteDC(hdcMem);
+}
+
+void GDISurface::DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
+{
+    auto hBitmap = ImageRepository::GetHBitmap(pImage);
+    if (!hBitmap)
+        return;
+    HDC hdcMem = CreateCompatibleDC(m_hDC);
+    if (!hdcMem)
+        return;
+
+    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
+
+    BITMAP bm;
+    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+        StretchBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
 
     SelectBitmap(hdcMem, hOldBitmap);
 

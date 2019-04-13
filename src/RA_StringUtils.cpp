@@ -108,6 +108,57 @@ std::wstring& Trim(std::wstring& str)
     return str;
 }
 
+_Use_decl_annotations_
+const std::string FormatDate(time_t when)
+{
+    struct tm tm;
+    if (localtime_s(&tm, &when) == 0)
+    {
+        char buffer[64];
+        if (std::strftime(buffer, sizeof(buffer), "%a %e %b %Y %H:%M:%S", &tm) > 0)
+            return std::string(buffer);
+    }
+
+    return std::to_string(when);
+}
+
+_Use_decl_annotations_
+const std::string FormatDateRecent(time_t when)
+{
+    auto now = std::time(nullptr);
+
+    struct tm tm;
+    if (localtime_s(&tm, &now) == 0)
+        now = now - (static_cast<time_t>(tm.tm_hour) * 60 * 60) - (static_cast<time_t>(tm.tm_min) * 60) - tm.tm_sec; // round to midnight
+
+    const auto days = (now + (60 * 60 * 24) - when) / (60 * 60 * 24);
+
+    if (days < 1)
+        return "Today";
+    if (days < 2)
+        return "Yesterday";
+    if (days <= 30)
+        return ra::StringPrintf("%u days ago", days);
+
+    struct tm tm_when;
+    if (localtime_s(&tm_when, &when) != 0)
+        return ra::StringPrintf("%u days ago", days);
+
+    const auto months = (tm.tm_mon + 1200 - tm_when.tm_mon) % 12;
+    if (months < 1)
+        return "This month";
+    if (months < 2)
+        return "Last month";
+    if (months < 12)
+        return ra::StringPrintf("%u months ago", months);
+
+    const auto years = tm.tm_year - tm_when.tm_year;
+    if (years < 2)
+        return "Last year";
+
+    return ra::StringPrintf("%u years ago", years);
+}
+
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
 {
     size_t nNeeded = 0;

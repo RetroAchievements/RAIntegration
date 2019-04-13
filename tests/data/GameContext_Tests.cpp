@@ -148,7 +148,7 @@ public:
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"1 achievements, Total Score 5"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"1 achievements, 5 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
@@ -661,6 +661,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         game.mockThreadPool.ExecuteNextTask();
@@ -692,6 +693,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         game.mockThreadPool.ExecuteNextTask();
@@ -712,6 +714,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Local Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -732,6 +735,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Unofficial Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -752,6 +756,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -774,6 +779,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Local Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -796,6 +802,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -821,6 +828,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         game.mockThreadPool.ExecuteNextTask();
@@ -851,6 +859,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         game.mockThreadPool.ExecuteNextTask();
@@ -881,13 +890,16 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         game.mockThreadPool.ExecuteNextTask();
 
         // error message should be reported
-        Assert::AreEqual(std::wstring(L"Achievement Unlocked (Achievement data cannot be found for 1)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
     }
 
@@ -911,6 +923,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // if error occurs after original popup is gone, a new one should be created to display the error
@@ -922,8 +935,9 @@ public:
         pPopup = game.mockOverlayManager.GetMessage(2);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Error unlocking AchievementTitle"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
     }
 
@@ -942,6 +956,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Test Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -1084,8 +1099,10 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Leaderboard submission post canceled."), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Enable Hardcore Mode to enable posting."), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Submission requires Hardcore mode"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
     }
 
     TEST_METHOD(TestSubmitLeaderboardEntryCompatibilityMode)
@@ -1109,8 +1126,10 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Leaderboard submission post canceled."), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDetail());
+        Assert::IsFalse(pPopup->IsDetailError());
     }
 };
 

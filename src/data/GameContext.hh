@@ -156,7 +156,7 @@ public:
     /// <summary>
     /// Updates the set of unlocked achievements from the server.
     /// </summary>
-    void RefreshUnlocks() { RefreshUnlocks(false); }
+    void RefreshUnlocks() { RefreshUnlocks(false, 0); }
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
@@ -193,8 +193,8 @@ public:
 protected:
     void MergeLocalAchievements();
     bool ReloadAchievement(Achievement& pAchievement);
-    void RefreshUnlocks(bool bUnpause);
-    void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause);
+    void RefreshUnlocks(bool bUnpause, int nPopup);
+    void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;

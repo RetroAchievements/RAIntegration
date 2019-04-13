@@ -88,11 +88,12 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
         ra::ui::viewmodels::PopupMessageViewModel message;
-        message.SetTitle(ra::StringPrintf(L"Welcome %s%s (%u)", pSessionTracker.HasSessionData() ? L"back " : L"",
-            response.Username.c_str(), response.Score));
+        message.SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
+            response.Username.c_str()));
         message.SetDescription((response.NumUnreadMessages == 1)
             ? L"You have 1 new message"
             : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
+        message.SetDetail(ra::StringPrintf(L"%u points", response.Score));
         message.SetImage(ra::ui::ImageType::UserPic, response.Username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(message));
 
@@ -275,8 +276,7 @@ API void CCONV _RA_DoAchievementsFrame()
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            ra::StringPrintf(L"Challenge Available: %s", pLeaderboard->Title()),
-                            ra::Widen(pLeaderboard->Description()));
+                            L"Challenge Available", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -315,7 +315,7 @@ API void CCONV _RA_DoAchievementsFrame()
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()));
+                            L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();

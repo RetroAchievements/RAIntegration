@@ -163,8 +163,9 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome User (12345)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
 
@@ -197,8 +198,9 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome User (0)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"0 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
     }
@@ -229,8 +231,9 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome back User (12345)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome back User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
         Assert::IsTrue(bWasMenuRebuilt);
@@ -496,8 +499,9 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
-        Assert::AreEqual(std::wstring(L"Challenge Available: Title"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Challenge Available"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDetail());
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
         Assert::IsNotNull(pScore);

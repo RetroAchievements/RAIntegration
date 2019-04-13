@@ -154,23 +154,23 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_nNextLocalId = GameContext::FirstLocalId;
     MergeLocalAchievements();
 
-    // get user unlocks asynchronously
-    RefreshUnlocks(!bWasPaused);
-
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+    const auto nPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
         ra::StringPrintf(L"Loaded %s", response.Title),
-        ra::StringPrintf(L"%u achievements, Total Score %u", nNumCoreAchievements, nTotalCoreAchievementPoints),
+        ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
         ra::ui::ImageType::Icon, response.ImageIcon);
+
+    // get user unlocks asynchronously
+    RefreshUnlocks(!bWasPaused, nPopup);
 }
 
-void GameContext::RefreshUnlocks(bool bUnpause)
+void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
 {
     if (m_nMode == Mode::CompatibilityTest)
     {
         std::set<unsigned int> vUnlockedAchievements;
-        UpdateUnlocks(vUnlockedAchievements, bUnpause);
+        UpdateUnlocks(vUnlockedAchievements, bUnpause, nPopup);
         return;
     }
 
@@ -179,13 +179,13 @@ void GameContext::RefreshUnlocks(bool bUnpause)
     ra::api::FetchUserUnlocks::Request request;
     request.GameId = m_nGameId;
     request.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    request.CallAsync([this, bUnpause](const ra::api::FetchUserUnlocks::Response& response)
+    request.CallAsync([this, bUnpause, nPopup](const ra::api::FetchUserUnlocks::Response& response)
     {
-        UpdateUnlocks(response.UnlockedAchievements, bUnpause);
+        UpdateUnlocks(response.UnlockedAchievements, bUnpause, nPopup);
     });
 }
 
-void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause)
+void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup)
 {
     std::set<unsigned int> vLockedAchievements;
     for (auto& pAchievement : m_vAchievements)
@@ -236,6 +236,23 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         }
     }
 #endif
+
+    if (nPopup)
+    {
+        auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopup);
+        if (pPopup != nullptr)
+        {
+            size_t nUnlockedCoreAchievements = 0U;
+            for (auto& pAchievement : m_vAchievements)
+            {
+                if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Core) && !pAchievement->Active())
+                    ++nUnlockedCoreAchievements;
+            }
+
+            pPopup->SetDetail(ra::StringPrintf(L"You have earned %u achievements", nUnlockedCoreAchievements));
+            pPopup->RebuildRenderImage();
+        }
+    }
 }
 
 void GameContext::MergeLocalAchievements()
@@ -570,38 +587,47 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
 
     bool bSubmit = false;
     bool bIsError = false;
-    std::wstring sHeader;
-    std::wstring sMessage = ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points());
+
+    ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+    vmPopup.SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
+    vmPopup.SetDetail(ra::Widen(pAchievement->Description()));
+    vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
 
     switch (ra::itoe<AchievementSet::Type>(pAchievement->Category()))
     {
         case AchievementSet::Type::Local:
-            sHeader = L"Local Achievement Unlocked";
+            vmPopup.SetTitle(L"Local Achievement Unlocked");
             bSubmit = false;
             break;
 
         case AchievementSet::Type::Unofficial:
-            sHeader = L"Unofficial Achievement Unlocked";
+            vmPopup.SetTitle(L"Unofficial Achievement Unlocked");
             bSubmit = false;
             break;
 
         default:
-            sHeader = L"Achievement Unlocked";
+            vmPopup.SetTitle(L"Achievement Unlocked");
             bSubmit = true;
             break;
     }
 
     if (m_nMode == Mode::CompatibilityTest)
     {
+        auto sHeader = vmPopup.GetTitle();
         sHeader.insert(0, L"Test ");
+        vmPopup.SetTitle(sHeader);
+
         bSubmit = false;
     }
 
     if (pAchievement->Modified())
     {
+        auto sHeader = vmPopup.GetTitle();
         sHeader.insert(0, L"Modified ");
         if (ActiveAchievementType() != AchievementSet::Type::Local)
             sHeader.insert(sHeader.length() - 8, L"NOT ");
+        vmPopup.SetTitle(sHeader);
+
         bIsError = true;
         bSubmit = false;
     }
@@ -609,7 +635,9 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
 #ifndef RA_UTEST
     if (bSubmit && g_bRAMTamperedWith)
     {
-        sHeader = L"RAM Tampered With! Achievement NOT Unlocked";
+        vmPopup.SetTitle(L"Achievement NOT Unlocked");
+        vmPopup.SetErrorDetail(L"Error: RAM tampered with");
+
         bIsError = true;
         bSubmit = false;
     }
@@ -618,8 +646,8 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
         bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
 
-    const auto nPopupId = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-        sHeader, sMessage, ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+    const auto nPopupId =
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
 
     pAchievement->SetActive(false);
 
@@ -646,31 +674,36 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
         else
         {
             // an error occurred, update the popup to display the error message
-            auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopupId);
+            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+            auto pPopup = pOverlayManager.GetMessage(nPopupId);
             if (pPopup != nullptr)
             {
-                std::wstring sNewTitle = ra::StringPrintf(L"%s (%s)", pPopup->GetTitle(),
-                    response.ErrorMessage.empty() ? "Error" : response.ErrorMessage);
-
-                pPopup->SetTitle(sNewTitle);
+                pPopup->SetTitle(L"Achievement NOT Unlocked");
+                pPopup->SetErrorDetail(response.ErrorMessage.empty() ?
+                    L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
                 pPopup->RebuildRenderImage();
             }
             else
             {
+                ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+                vmPopup.SetTitle(L"Achievement NOT Unlocked");
+                vmPopup.SetErrorDetail(response.ErrorMessage.empty() ?
+                    L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
+
                 const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
                 const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
                 if (pAchievement != nullptr)
                 {
-                    auto sHeader = ra::BuildWString("Error unlocking ", pAchievement->Title());
-                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                        sHeader, ra::Widen(response.ErrorMessage), ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+                    vmPopup.SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
+                    vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                 }
                 else
                 {
-                    auto sHeader = ra::BuildWString("Error unlocking achievement ", nAchievementId);
-                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                        sHeader, ra::Widen(response.ErrorMessage));
+                    vmPopup.SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
                 }
+
+                ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+                pOverlayManager.QueueMessage(std::move(vmPopup));
             }
         }
     });
@@ -783,9 +816,13 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 #ifndef RA_UTEST
     if (g_bRAMTamperedWith)
     {
+        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup.SetErrorDetail(L"Error: RAM tampered with");
+
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-            L"Not posting to leaderboard: memory tamper detected!", L"Reset game to re-enable posting.");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
         return;
     }
 #endif
@@ -793,17 +830,25 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
+        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup.SetErrorDetail(L"Submission requires Hardcore mode");
+
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-            L"Leaderboard submission post canceled.", L"Enable Hardcore Mode to enable posting.");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
         return;
     }
 
     if (m_nMode == Mode::CompatibilityTest)
     {
+        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup.SetDetail(L"Leaderboards are not submitted in test mode.");
+
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-            L"Leaderboard submission post canceled.", L"Leaderboards are not submitted in test mode.");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
         return;
     }
 
@@ -817,14 +862,12 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 
         if (!response.Succeeded())
         {
-            std::wstring sHeader;
-            if (pLeaderboard)
-                sHeader = ra::BuildWString("Error submitting entry for ", pLeaderboard->Title());
-            else
-                sHeader = ra::BuildWString("Error submitting entry for leaderboard ", nLeaderboardId);
+            ra::ui::viewmodels::PopupMessageViewModel vmPopup;
+            vmPopup.SetTitle(L"Leaderboard NOT Submitted");
+            vmPopup.SetDescription(pLeaderboard ? ra::Widen(pLeaderboard->Title()) : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
+            vmPopup.SetDetail(!response.ErrorMessage.empty() ? ra::StringPrintf(L"Error: %s", response.ErrorMessage) : L"Error submitting entry");
 
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                sHeader, ra::Widen(response.ErrorMessage));
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
         }
         else if (pLeaderboard)
         {

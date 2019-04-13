@@ -255,6 +255,9 @@
     <ClCompile Include="ui\OverlayTheme.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="services\GameIdentifier.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -652,6 +655,9 @@
     </ClInclude>
     <ClInclude Include="api\FetchAchievementInfo.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="services\GameIdentifier.hh">
+      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="api\SubmitTicket.hh">
       <Filter>API</Filter>

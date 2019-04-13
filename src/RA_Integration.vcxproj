@@ -78,6 +78,7 @@
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
+    <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
+    <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />

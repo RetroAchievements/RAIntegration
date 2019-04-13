@@ -24,6 +24,11 @@ public:
         m_sVersion = sClientVersion;
     }
 
+    void MockGameTitle(const char* sTitle)
+    {
+        SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
 };

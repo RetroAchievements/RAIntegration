@@ -18,28 +18,6 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::services::StorageItemType;
 
-namespace Microsoft {
-namespace VisualStudio {
-namespace CppUnitTestFramework {
-
-template<>
-std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::Mode& nMode)
-{
-    switch (nMode)
-    {
-        case ra::data::GameContext::Mode::Normal:
-            return L"Normal";
-        case ra::data::GameContext::Mode::CompatibilityTest:
-            return L"CompatibilityTest";
-        default:
-            return std::to_wstring(static_cast<int>(nMode));
-    }
-}
-
-} // namespace CppUnitTestFramework
-} // namespace VisualStudio
-} // namespace Microsoft
-
 namespace ra {
 namespace data {
 namespace tests {
@@ -91,8 +69,6 @@ public:
             pLeaderboard.SetDescription("LeaderboardDescription");
             return pLeaderboard;
         }
-
-        void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
 
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;

@@ -18,15 +18,20 @@ public:
     {
     }
 
+    void LoadGame(unsigned int nGameId, ra::data::GameContext::Mode nMode) noexcept override
+    {
+        m_nGameId = nGameId;
+        m_nMode = nMode;
+        m_bWasLoaded = true;
+    }
+
+    bool WasLoaded() const noexcept { return m_bWasLoaded; }
+    void ResetWasLoaded() noexcept { m_bWasLoaded = false; }
+
     /// <summary>
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
     void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
-
-    /// <summary>
-    /// Sets the play mode for the currently loaded game.
-    /// </summary>
-    void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
 
     bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
 
@@ -54,6 +59,7 @@ private:
 
     std::wstring m_sRichPresenceDisplayString;
     bool m_bHasActiveAchievements{ false };
+    bool m_bWasLoaded{ false };
     AchievementSet::Type m_nActiveAchievementType{ AchievementSet::Type::Core };
 };
 

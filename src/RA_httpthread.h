@@ -29,7 +29,6 @@ enum RequestType
     //	Submit
     RequestSubmitCodeNote,
     RequestSubmitAchievementData,
-    RequestSubmitTicket,
 
     NumRequestTypes
 };

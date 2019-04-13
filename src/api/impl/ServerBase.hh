@@ -91,6 +91,11 @@ public:
         return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());
     }
 
+    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request&) override
+    {
+        return UnsupportedApi<SubmitTicket::Response>(SubmitTicket::Name());
+    }
+
 protected:
     template<typename TResponse>
     inline typename TResponse UnsupportedApi(const char* const restrict apiName) const

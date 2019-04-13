@@ -57,6 +57,9 @@ void OverlayManager::Update(const ControllerInput& pInput)
 
 void OverlayManager::RequestRender()
 {
+    if (!m_fHandleRenderRequest)
+        return;
+
     const bool bNeedsRender = (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden ||
         !m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty());
 
@@ -68,16 +71,14 @@ void OverlayManager::RequestRender()
             m_tLastRender = pClock.UpTime();
 
             m_bIsRendering = true;
-
-            if (m_fHandleRenderRequest)
-                m_fHandleRenderRequest();
+            m_fHandleRenderRequest();
         }
         else
         {
             m_bIsRendering = false;
         }
     }
-    else if (m_bIsRendering && m_fHandleRenderRequest)
+    else if (m_bIsRendering)
     {
         auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
         const auto tNow = pClock.UpTime();

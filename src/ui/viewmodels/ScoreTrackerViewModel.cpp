@@ -54,13 +54,14 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 
     // text
     m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);
-#endif
 
+    // set location
     SetRenderLocationX(10 + m_pSurface->GetWidth());
     SetRenderLocationXRelativePosition(RelativePosition::Far);
 
     SetRenderLocationY(m_nOffset + m_pSurface->GetHeight());
     SetRenderLocationYRelativePosition(RelativePosition::Far);
+#endif
 
     m_bSurfaceStale = false;
     return true;

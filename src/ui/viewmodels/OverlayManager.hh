@@ -32,6 +32,7 @@ public:
     void ShowOverlay()
     {
         m_vmOverlay.Activate();
+        RequestRender();
     }
 
     /// <summary>
@@ -170,7 +171,7 @@ public:
     /// <summary>
     /// Clears all popups.
     /// </summary>
-    void ClearPopups();
+    virtual void ClearPopups();
 
     /// <summary>
     /// Sets the function to call when there's something to be rendered.
@@ -179,6 +180,12 @@ public:
     {
         m_fHandleRenderRequest = std::move(fHandleRenderRequest);
     }
+
+protected:
+    ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
+    std::deque<PopupMessageViewModel> m_vPopupMessages;
+    std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
+    std::deque<ScoreboardViewModel> m_vScoreboards;
 
 private:
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);
@@ -190,15 +197,11 @@ private:
 
     void RequestRender();
 
-    ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     bool m_bIsRendering = false;
     bool m_bRenderRequestPending = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;
 
-    std::deque<PopupMessageViewModel> m_vPopupMessages;
-    std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
-    std::deque<ScoreboardViewModel> m_vScoreboards;
     std::atomic<int> m_nPopupId{ 0 };
 };
 

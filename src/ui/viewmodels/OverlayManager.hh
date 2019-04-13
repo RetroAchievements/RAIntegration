@@ -18,14 +18,14 @@ public:
     /// Updates the overlay.
     /// </summary>
     /// <param name="pInput">The emulator input state.</param>
-    /// <param name="fElapsed">The amount of seconds that have passed.</param>
-    void Update(const ControllerInput& pInput, double fElapsed);
+    void Update(const ControllerInput& pInput);
 
     /// <summary>
     /// Renders the overlay.
     /// </summary>
-    void Render(ra::ui::drawing::ISurface& pSurface) const;
-    
+    /// <param name="pSurface">The surface to render to.</param>
+    void Render(ra::ui::drawing::ISurface& pSurface);
+
     /// <summary>
     /// Starts the animation to show the overlay.
     /// </summary>
@@ -122,29 +122,13 @@ public:
     /// <summary>
     /// Adds a score tracker for a leaderboard.
     /// </summary>
-    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId)
-    {
-        auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
-        pScoreTracker->SetPopupId(nLeaderboardId);
-        pScoreTracker->UpdateRenderImage(0.0);
-        return *m_vScoreTrackers.emplace_back(std::move(pScoreTracker));
-    }
+    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId);
 
     /// <summary>
     /// Removes the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
-    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
-    {
-        for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
-        {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId)
-            {
-                m_vScoreTrackers.erase(pIter);
-                break;
-            }
-        }
-    }
+    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId);
 
     /// <summary>
     /// Gets the score tracker associated to the specified leaderboard.
@@ -188,12 +172,29 @@ public:
     /// </summary>
     void ClearPopups();
 
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest)
+    {
+        m_fHandleRenderRequest = std::move(fHandleRenderRequest);
+    }
+
 private:
-    void UpdateActiveMessage(double fElapsed);
-    void UpdateActiveScoreboard(double fElapsed);
-    void RenderPopups(ra::ui::drawing::ISurface& pSurface) const;
+    void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
+
+    void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+
+    void RequestRender();
 
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
+    bool m_bIsRendering = false;
+    bool m_bRenderRequestPending = false;
+    std::chrono::steady_clock::time_point m_tLastRender{};
+    std::function<void()> m_fHandleRenderRequest;
 
     std::deque<PopupMessageViewModel> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;

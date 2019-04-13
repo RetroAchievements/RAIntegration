@@ -28,6 +28,7 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
+#include "ui\win32\OverlayWindow.hh"
 
 // this, in combination with the "#define ISOLATION_AWARE_ENABLED 1" in pch.h, allows our
 // UI to use visual styles introduced in ComCtl32 v6, even if the emulator does not enable them.
@@ -148,6 +149,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));
 
+    auto pOverlayWindow = std::make_unique<ra::ui::win32::OverlayWindow>();
+    ra::services::ServiceLocator::Provide<ra::ui::win32::OverlayWindow>(std::move(pOverlayWindow));
+
     auto pOverlayManager = std::make_unique<ra::ui::viewmodels::OverlayManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::OverlayManager>(std::move(pOverlayManager));
 
@@ -166,6 +170,8 @@ void Initialization::Shutdown()
         return;
 
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>().DestroyOverlayWindow();
 
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(true);
 

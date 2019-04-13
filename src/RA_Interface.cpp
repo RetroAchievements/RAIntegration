@@ -43,7 +43,6 @@ int     (CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
 bool    (CCONV *_RA_WarnDisableHardcore)(const char* sActivity) = nullptr;
 //  Overlay:
 int     (CCONV *_RA_UpdateOverlay)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
-void    (CCONV *_RA_RenderOverlay)(HDC hDC, RECT* prcSize) = nullptr;
 bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
 
 
@@ -60,9 +59,6 @@ void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDeltaTime, 
 {
     if (_RA_UpdateOverlay != nullptr)
         _RA_UpdateOverlay(pInput, fDeltaTime, Full_Screen, Paused);
-
-    if (_RA_RenderOverlay != nullptr)
-        _RA_RenderOverlay(hDC, prcSize);
 }
 
 bool RA_IsOverlayFullyVisible()
@@ -437,7 +433,6 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_Shutdown = (int(CCONV *)())                                                   GetProcAddress(g_hRADLL, "_RA_Shutdown");
     _RA_AttemptLogin = (void(CCONV *)(bool))                                          GetProcAddress(g_hRADLL, "_RA_AttemptLogin");
     _RA_UpdateOverlay = (int(CCONV *)(ControllerInput*, float, bool, bool))           GetProcAddress(g_hRADLL, "_RA_UpdateOverlay");
-    _RA_RenderOverlay = (void(CCONV *)(HDC, RECT*))                                   GetProcAddress(g_hRADLL, "_RA_RenderOverlay");
     _RA_IsOverlayFullyVisible = (bool(CCONV *)())                                     GetProcAddress(g_hRADLL, "_RA_IsOverlayFullyVisible");
     _RA_OnLoadNewRom = (int(CCONV *)(const BYTE*, unsigned int))                      GetProcAddress(g_hRADLL, "_RA_OnLoadNewRom");
     _RA_IdentifyRom = (unsigned int(CCONV *)(const BYTE*, unsigned int))              GetProcAddress(g_hRADLL, "_RA_IdentifyRom");
@@ -607,7 +602,6 @@ void RA_Shutdown()
     _RA_InitI = nullptr;
     _RA_Shutdown = nullptr;
     _RA_UpdateOverlay = nullptr;
-    _RA_RenderOverlay = nullptr;
     _RA_OnLoadNewRom = nullptr;
     _RA_IdentifyRom = nullptr;
     _RA_ActivateGame = nullptr;

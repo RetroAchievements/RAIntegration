@@ -56,7 +56,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         const auto nShadowOffset = pTheme.ShadowOffset();
 
         const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
-        m_pSurface = pSurfaceFactory.CreateTransparentSurface(SCOREBOARD_WIDTH, SCOREBOARD_HEIGHT);
+        m_pSurface = pSurfaceFactory.CreateSurface(SCOREBOARD_WIDTH, SCOREBOARD_HEIGHT);
         auto nFontTitle = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
         auto nFontText = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
 
@@ -97,8 +97,6 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
 
             nY += FONT_SIZE_TEXT + 2;
         }
-
-        m_pSurface->SetOpacity(0.85);
 
         bUpdated = true;
     }

@@ -27,11 +27,16 @@ void OverlayViewModel::BeginAnimation()
     const auto& vmEmulator = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
     const auto szEmulator = ra::services::ServiceLocator::Get<ra::ui::IDesktop>().GetClientSize(vmEmulator);
 
-    m_pSurface = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(szEmulator.Width, szEmulator.Height);
-    m_bSurfaceStale = true;
+    Resize(szEmulator.Width, szEmulator.Height);
 
     SetRenderLocationX(-szEmulator.Width);
     SetRenderLocationY(0);
+}
+
+void OverlayViewModel::Resize(int nWidth, int nHeight)
+{
+    m_pSurface = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
+    m_bSurfaceStale = true;
 }
 
 bool OverlayViewModel::UpdateRenderImage(double fElapsed)
@@ -66,10 +71,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 bUpdated = true;
 
                 if (nNewX == 0)
-                {
                     m_nState = State::Visible;
-                    m_fAnimationProgress = -1.0;
-                }
             }
         }
         else if (m_nState == State::FadeOut)
@@ -91,8 +93,6 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 {
                     m_nState = State::Hidden;
                     m_fAnimationProgress = -1.0;
-                    m_bSurfaceStale = false;
-                    m_pSurface.reset();
                     return true;
                 }
             }
@@ -285,6 +285,7 @@ void OverlayViewModel::Deactivate()
         case State::FadeIn:
             m_nState = State::FadeOut;
             m_fAnimationProgress = INOUT_TIME - m_fAnimationProgress;
+            SetRenderLocationX(GetRenderImage().GetWidth() - GetRenderLocationX());
             ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
             break;
     }

@@ -185,24 +185,15 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 }
 
 _Use_decl_annotations_
-API int _RA_UpdateOverlay(const ControllerInput* pInput, float fElapsedSeconds, bool, bool)
+API int _RA_UpdateOverlay(const ControllerInput* pInput, float, bool, bool)
 {
     static const ControllerInput pNoInput{};
     if (pInput == nullptr)
         pInput = &pNoInput;
 
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput, fElapsedSeconds);
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput);
     return true; // was return state = closing - does anything check this?
 }
-
-#ifndef RA_UTEST
-_Use_decl_annotations_
-API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
-{
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
-    ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
-}
-#endif
 
 API void CCONV _RA_DoAchievementsFrame()
 {

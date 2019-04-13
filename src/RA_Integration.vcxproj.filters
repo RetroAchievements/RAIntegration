@@ -270,6 +270,9 @@
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\OverlayWindow.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -673,6 +676,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\OverlayWindow.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

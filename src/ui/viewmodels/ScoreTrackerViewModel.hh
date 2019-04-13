@@ -42,8 +42,19 @@ public:
     bool IsAnimationStarted() const noexcept override { return true; }
     bool IsAnimationComplete() const noexcept override { return false; }
 
+    bool SetOffset(int nValue) noexcept
+    {
+        if (m_nOffset == nValue)
+            return false;
+
+        m_nOffset = nValue;
+        return true;
+    }
+
 private:
     bool m_bSurfaceStale = false;
+
+    int m_nOffset = 10;
 };
 
 } // namespace viewmodels

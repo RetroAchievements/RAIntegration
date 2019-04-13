@@ -10,10 +10,13 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "services\AchievementRuntime.hh"
@@ -33,8 +36,11 @@ using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
+using ra::ui::mocks::MockOverlayTheme;
+using ra::ui::drawing::mocks::MockSurfaceFactory;
 using ra::ui::viewmodels::MessageBoxViewModel;
 using ra::ui::viewmodels::mocks::MockOverlayManager;
+using ra::ui::viewmodels::mocks::MockWindowManager;
 
 namespace ra {
 namespace tests {
@@ -73,8 +79,6 @@ private:
     class AttemptLoginHarness
     {
     public:
-        AttemptLoginHarness() noexcept : m_WindowManagerService(&windowManager) {}
-
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
@@ -84,11 +88,7 @@ private:
         MockEmulatorContext mockEmulatorContext;
         MockDesktop mockDesktop;
         MockThreadPool mockThreadPool;
-
-        ra::ui::viewmodels::WindowManager windowManager;
-
-    private:
-        ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::WindowManager> m_WindowManagerService;
+        MockWindowManager mockWindowManager;
     };
 
 public:
@@ -173,7 +173,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
 
         // titlebar
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.windowManager.Emulator.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
@@ -357,6 +357,8 @@ private:
         MockAudioSystem mockAudioSystem;
         MockConfiguration mockConfiguration;
         MockEmulatorContext mockEmulatorContext;
+        MockSurfaceFactory mockSurfaceFactory;
+        MockOverlayTheme mockTheme;
 
         DoAchievementsFrameHarness() noexcept
         {

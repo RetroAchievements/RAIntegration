@@ -27,12 +27,16 @@ public:
     void Render(ra::ui::drawing::ISurface& pSurface);
 
     /// <summary>
+    /// Requests the overlay be redrawn.
+    /// </summary>
+    void RequestRender();
+
+    /// <summary>
     /// Starts the animation to show the overlay.
     /// </summary>
     void ShowOverlay()
     {
         m_vmOverlay.Activate();
-        RequestRender();
     }
 
     /// <summary>
@@ -187,6 +191,8 @@ protected:
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::deque<ScoreboardViewModel> m_vScoreboards;
 
+    bool m_bRenderRequestPending = false;
+
 private:
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, double fElapsed);
@@ -195,10 +201,7 @@ private:
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 
-    void RequestRender();
-
     bool m_bIsRendering = false;
-    bool m_bRenderRequestPending = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;
 

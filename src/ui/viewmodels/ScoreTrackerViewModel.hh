@@ -24,14 +24,7 @@ public:
     /// <summary>
     /// Sets the title message to display, empty string for no title message.
     /// </summary>
-    void SetDisplayText(const std::wstring& sValue)
-    {
-        if (sValue != GetDisplayText())
-        {
-            SetValue(DisplayTextProperty, sValue);
-            m_bSurfaceStale = true;
-        }
-    }
+    void SetDisplayText(const std::wstring& sValue);
 
     /// <summary>
     /// Updates the image to render.

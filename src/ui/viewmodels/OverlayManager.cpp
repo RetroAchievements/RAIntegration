@@ -78,26 +78,23 @@ void OverlayManager::RequestRender()
             m_bIsRendering = false;
         }
     }
-    else if (m_bIsRendering)
+    else if (m_bIsRendering && !m_bRenderRequestPending)
     {
+        m_bRenderRequestPending = true;
+
         auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
         const auto tNow = pClock.UpTime();
         const auto tPacing = std::chrono::milliseconds(10);
         if (tNow - m_tLastRender < tPacing)
         {
-            if (!m_bRenderRequestPending)
+            const auto nDelay = tPacing - (tNow - m_tLastRender);
+            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
+                std::chrono::duration_cast<std::chrono::milliseconds>(nDelay), [this]()
             {
-                m_bRenderRequestPending = true;
-                const auto nDelay = tPacing - (tNow - m_tLastRender);
-                ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(nDelay), [this]()
-                {
-                    m_bRenderRequestPending = false;
-                    m_fHandleRenderRequest();
-                });
-            }
+                m_fHandleRenderRequest();
+            });
         }
-        else if (!m_bRenderRequestPending)
+        else
         {
             m_fHandleRenderRequest();
         }
@@ -106,29 +103,46 @@ void OverlayManager::RequestRender()
 
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface)
 {
+    m_bRenderRequestPending = false;
+
     auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
     const auto tNow = pClock.UpTime();
-    const auto tElapsed = tNow - m_tLastRender;
-    const double fElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tElapsed).count() / 1000000.0;
-    m_tLastRender = tNow;
+    const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
+    const double fElapsed = tElapsed.count() / 1000000.0;
+
+    bool bRequestRender = false;
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {
         if (!m_vScoreboards.empty())
+        {
             UpdateActiveScoreboard(pSurface, fElapsed);
+            bRequestRender = true;
+        }
 
         if (!m_vScoreTrackers.empty())
             UpdateScoreTrackers(pSurface, fElapsed);
 
         if (!m_vPopupMessages.empty())
+        {
             UpdateActiveMessage(pSurface, fElapsed);
+            bRequestRender = true;
+        }
     }
     else
     {
         UpdateOverlay(pSurface, fElapsed);
+
+        if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Visible)
+            bRequestRender = true;
     }
 
-    RequestRender();
+    if (bRequestRender)
+        RequestRender();
+    else
+        m_bIsRendering = false;
+
+    m_tLastRender = tNow;
 }
 
 ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeaderboardId)
@@ -166,13 +180,11 @@ void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, Scoreboar
 
 int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
 {
-#ifndef RA_UTEST
     if (pMessage.GetImage().Type() != ra::ui::ImageType::None)
     {
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.FetchImage(pMessage.GetImage().Type(), pMessage.GetImage().Name());
     }
-#endif
 
     pMessage.SetPopupId(++m_nPopupId);
 

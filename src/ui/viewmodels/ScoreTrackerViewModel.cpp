@@ -3,6 +3,7 @@
 #include "ra_math.h"
 
 #include "ui\OverlayTheme.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
 namespace ui {
@@ -12,9 +13,18 @@ static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
 static _CONSTANT_VAR FONT_SIZE_TEXT = 22;
 
 const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"0");
-#ifdef RA_UTEST
-GSL_SUPPRESS_F6
-#endif
+
+void ScoreTrackerViewModel::SetDisplayText(const std::wstring& sValue)
+{
+    if (sValue != GetDisplayText())
+    {
+        SetValue(DisplayTextProperty, sValue);
+
+        m_bSurfaceStale = true;
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RequestRender();
+    }
+}
+
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)
@@ -29,7 +39,6 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
         return false;
     }
 
-#ifndef RA_UTEST
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
@@ -61,7 +70,6 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 
     SetRenderLocationY(m_nOffset + m_pSurface->GetHeight());
     SetRenderLocationYRelativePosition(RelativePosition::Far);
-#endif
 
     m_bSurfaceStale = false;
     return true;

@@ -3,6 +3,7 @@
 #include "ra_math.h"
 
 #include "ui\OverlayTheme.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
 namespace ui {
@@ -222,6 +223,12 @@ bool OverlayListPageViewModel::SetDetail(bool bDetail)
     }
 
     return false;
+}
+
+void OverlayListPageViewModel::ForceRedraw()
+{
+    m_bRedraw = true;
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RequestRender();
 }
 
 } // namespace viewmodels

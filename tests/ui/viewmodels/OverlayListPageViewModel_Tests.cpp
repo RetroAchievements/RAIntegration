@@ -3,6 +3,7 @@
 #include "ui\viewmodels\OverlayListPageViewModel.hh"
 
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -19,6 +20,7 @@ private:
     {
     public:
         ra::ui::mocks::MockImageRepository mockImageRepository;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
         void Refresh() override
         {

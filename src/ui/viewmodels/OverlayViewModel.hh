@@ -109,6 +109,8 @@ private:
     void PopulatePages();
     void CreateRenderImage();
 
+    void RefreshOverlay();
+
     State m_nState = State::Hidden;
     bool m_bSurfaceStale = false;
 

@@ -57,7 +57,7 @@ void OverlayManager::Update(const ControllerInput& pInput)
 
 void OverlayManager::RequestRender()
 {
-    bool bNeedsRender = (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden ||
+    const bool bNeedsRender = (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden ||
         !m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty());
 
     if (m_bIsRendering != bNeedsRender)
@@ -87,7 +87,7 @@ void OverlayManager::RequestRender()
             if (!m_bRenderRequestPending)
             {
                 m_bRenderRequestPending = true;
-                auto nDelay = tPacing - (tNow - m_tLastRender);
+                const auto nDelay = tPacing - (tNow - m_tLastRender);
                 ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
                     std::chrono::duration_cast<std::chrono::milliseconds>(nDelay), [this]()
                 {
@@ -106,9 +106,9 @@ void OverlayManager::RequestRender()
 void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface)
 {
     auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-    auto tNow = pClock.UpTime();
-    auto tElapsed = tNow - m_tLastRender;
-    double fElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tElapsed).count() / 1000000.0;
+    const auto tNow = pClock.UpTime();
+    const auto tElapsed = tNow - m_tLastRender;
+    const double fElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tElapsed).count() / 1000000.0;
     m_tLastRender = tNow;
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
@@ -216,7 +216,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
         return;
     }
 
-    bool bUpdated = vmPopup.UpdateRenderImage(fElapsed);
+    const bool bUpdated = vmPopup.UpdateRenderImage(fElapsed);
 
     const int nNewX = GetAbsolutePosition(vmPopup.GetRenderLocationX(), vmPopup.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
     const int nNewY = GetAbsolutePosition(vmPopup.GetRenderLocationY(), vmPopup.GetRenderLocationYRelativePosition(), pSurface.GetHeight());

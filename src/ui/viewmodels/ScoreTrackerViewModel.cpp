@@ -21,7 +21,10 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     {
         const auto nOffset = GetRenderLocationY() + ra::to_signed(GetRenderImage().GetHeight());
         if (m_nOffset != nOffset)
+        {
             SetRenderLocationY(m_nOffset + GetRenderImage().GetHeight());
+            return true;
+        }
 
         return false;
     }

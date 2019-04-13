@@ -55,7 +55,7 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     wndEx.lpszClassName = "RA_WND_CLASS";
     wndEx.lpfnWndProc = OverlayWndProc;
     wndEx.hbrBackground = CreateSolidBrush(nTransparentColor);
-    wndEx.hInstance = (HINSTANCE)GetWindowLongPtr(m_hWnd, GWLP_HINSTANCE);
+    GSL_SUPPRESS_TYPE1 wndEx.hInstance = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(m_hWnd, GWLP_HINSTANCE));
     RegisterClass(&wndEx);
 
     m_hOverlayWnd = CreateWindowEx(
@@ -64,7 +64,7 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
         "TransparentOverlayWindow",
         (WS_POPUP),
         CW_USEDEFAULT, CW_USEDEFAULT, rcMainWindowClientArea.right, rcMainWindowClientArea.bottom,
-        m_hWnd, NULL, wndEx.hInstance, NULL);
+        m_hWnd, nullptr, wndEx.hInstance, nullptr);
 
     SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
 
@@ -73,16 +73,16 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
 
     // watch for location/size changes in the parent window
-    m_hEventHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, NULL, HandleWinEvent, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    m_hEventHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, nullptr, HandleWinEvent, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
     UpdateOverlayPosition();
 
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.SetRenderRequestHandler([this]() {
-        InvalidateRect(m_hOverlayWnd, NULL, FALSE);
+    pOverlayManager.SetRenderRequestHandler([this]() noexcept {
+        InvalidateRect(m_hOverlayWnd, nullptr, FALSE);
     });
 }
 
-void OverlayWindow::DestroyOverlayWindow()
+void OverlayWindow::DestroyOverlayWindow() noexcept
 {
     if (m_hEventHook)
     {
@@ -99,7 +99,7 @@ void OverlayWindow::DestroyOverlayWindow()
     m_hWnd = nullptr;
 }
 
-void OverlayWindow::UpdateOverlayPosition()
+void OverlayWindow::UpdateOverlayPosition() noexcept
 {
     RECT rcWindowClientArea, rcOverlay;
     GetClientRect(m_hOverlayWnd, &rcOverlay);
@@ -109,7 +109,7 @@ void OverlayWindow::UpdateOverlayPosition()
     const int nHeight = rcWindowClientArea.bottom - rcWindowClientArea.top;
 
     // get the screen position of the client rect
-    ClientToScreen(m_hWnd, reinterpret_cast<POINT*>(&rcWindowClientArea.left));
+    GSL_SUPPRESS_TYPE1 ClientToScreen(m_hWnd, reinterpret_cast<POINT*>(&rcWindowClientArea.left));
     rcWindowClientArea.right = rcWindowClientArea.left + nWidth;
     rcWindowClientArea.bottom = rcWindowClientArea.top + nHeight;
 

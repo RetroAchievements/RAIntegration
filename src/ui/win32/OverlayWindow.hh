@@ -13,9 +13,9 @@ class OverlayWindow
 {
 public:
     void CreateOverlayWindow(HWND hWnd);
-    void DestroyOverlayWindow();
+    void DestroyOverlayWindow() noexcept;
 
-    void UpdateOverlayPosition();
+    void UpdateOverlayPosition() noexcept;
 
     void Render();
 

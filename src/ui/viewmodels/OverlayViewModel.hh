@@ -39,7 +39,7 @@ public:
     /// <summary>
     /// Releases the memory used to cache the render image.
     /// </summary>
-    void DestroyRenderImage()
+    void DestroyRenderImage() noexcept
     {
         m_bSurfaceStale = false;
         m_pSurface.reset();

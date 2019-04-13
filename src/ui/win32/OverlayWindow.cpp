@@ -132,16 +132,20 @@ void OverlayWindow::Render()
     HDC hDC = BeginPaint(m_hOverlayWnd, &ps);
     ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClientArea);
 
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+
     if (m_bErase)
     {
         m_bErase = false;
 
         pSurface.FillRectangle(ps.rcPaint.left, ps.rcPaint.top,
             ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top, ra::ui::Color::Transparent);
+        pOverlayManager.Render(pSurface, true);
     }
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.Render(pSurface);
+    else
+    {
+        pOverlayManager.Render(pSurface, false);
+    }
 
     EndPaint(m_hOverlayWnd, &ps);
 }

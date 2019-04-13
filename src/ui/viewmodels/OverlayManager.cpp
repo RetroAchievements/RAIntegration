@@ -101,9 +101,10 @@ void OverlayManager::RequestRender()
     }
 }
 
-void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface)
+void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll)
 {
     m_bRenderRequestPending = false;
+    m_bRedrawAll = bRedrawAll;
 
     auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
     const auto tNow = pClock.UpTime();
@@ -143,6 +144,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface)
         m_bIsRendering = false;
 
     m_tLastRender = tNow;
+    m_bRedrawAll = false;
 }
 
 ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeaderboardId)
@@ -182,8 +184,11 @@ int OverlayManager::QueueMessage(PopupMessageViewModel&& pMessage)
 {
     if (pMessage.GetImage().Type() != ra::ui::ImageType::None)
     {
-        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-        pImageRepository.FetchImage(pMessage.GetImage().Type(), pMessage.GetImage().Name());
+        if (ra::services::ServiceLocator::Exists<ra::ui::IImageRepository>())
+        {
+            auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+            pImageRepository.FetchImage(pMessage.GetImage().Type(), pMessage.GetImage().Name());
+        }
     }
 
     pMessage.SetPopupId(++m_nPopupId);
@@ -234,7 +239,12 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
     const int nNewX = GetAbsolutePosition(vmPopup.GetRenderLocationX(), vmPopup.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
     const int nNewY = GetAbsolutePosition(vmPopup.GetRenderLocationY(), vmPopup.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
 
-    if (bUpdated)
+    if (m_bRedrawAll)
+    {
+        if (!vmPopup.IsAnimationComplete())
+            pSurface.DrawSurface(nNewX, nNewY, vmPopup.GetRenderImage());
+    }
+    else if (bUpdated)
     {
         const auto& pImage = vmPopup.GetRenderImage();
 

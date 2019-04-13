@@ -24,7 +24,8 @@ public:
     /// Renders the overlay.
     /// </summary>
     /// <param name="pSurface">The surface to render to.</param>
-    void Render(ra::ui::drawing::ISurface& pSurface);
+    /// <param name="bRedrawAll">True to redraw everything even if it hasn't changed or moved.</param>
+    void Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll);
 
     /// <summary>
     /// Requests the overlay be redrawn.
@@ -201,6 +202,7 @@ private:
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 
+    bool m_bRedrawAll = false;
     bool m_bIsRendering = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;

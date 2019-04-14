@@ -229,6 +229,11 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
 
 API void CCONV _RA_OnReset()
 {
+    // if there's no game loaded, there shouldn't be any active achievements or popups to clear - except maybe the
+    // logging in messages, which we don't want to clear.
+    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+        return;
+
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.

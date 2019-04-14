@@ -1,5 +1,7 @@
 #include "OverlayWindow.hh"
 
+#include "data\EmulatorContext.hh"
+
 #include "services\IClock.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -39,6 +41,13 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 {
     if (m_hOverlayWnd)
         return;
+
+    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+    {
+        case EmulatorID::RA_Gens:
+        case EmulatorID::RA_Meka:
+            return;
+    }
 
     m_hWnd = hWnd;
 

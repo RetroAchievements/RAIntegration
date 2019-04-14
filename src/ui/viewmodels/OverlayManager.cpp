@@ -221,6 +221,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
     if (!vmPopup.IsAnimationStarted())
     {
         vmPopup.BeginAnimation();
+        vmPopup.UpdateRenderImage(0.0);
         fElapsed = 0.0;
     }
 
@@ -239,12 +240,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
     const int nNewX = GetAbsolutePosition(vmPopup.GetRenderLocationX(), vmPopup.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
     const int nNewY = GetAbsolutePosition(vmPopup.GetRenderLocationY(), vmPopup.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
 
-    if (m_bRedrawAll)
-    {
-        if (!vmPopup.IsAnimationComplete())
-            pSurface.DrawSurface(nNewX, nNewY, vmPopup.GetRenderImage());
-    }
-    else if (bUpdated)
+    if (bUpdated)
     {
         const auto& pImage = vmPopup.GetRenderImage();
 
@@ -267,6 +263,11 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
 
         if (!vmPopup.IsAnimationComplete())
             pSurface.DrawSurface(nNewX, nNewY, pImage);
+    }
+    else if (m_bRedrawAll)
+    {
+        if (!vmPopup.IsAnimationComplete())
+            pSurface.DrawSurface(nNewX, nNewY, vmPopup.GetRenderImage());
     }
 }
 

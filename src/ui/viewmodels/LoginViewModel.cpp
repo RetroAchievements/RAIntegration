@@ -7,6 +7,7 @@
 #include "api\Login.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -65,8 +66,14 @@ bool LoginViewModel::Login() const
     pConfiguration.SetApiToken(bRememberLogin ? response.ApiToken : "");
     pConfiguration.Save();
 
+    // initialize the user context
     auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
     pUserContext.Initialize(response.Username, response.ApiToken);
+    pUserContext.SetScore(response.Score);
+
+    // load the session information
+    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
+    pSessionTracker.Initialize(response.Username);
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
         std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));

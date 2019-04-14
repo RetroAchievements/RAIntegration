@@ -39,7 +39,7 @@ public:
     /// <summary>
     /// Sets the selected game ID.
     /// </summary>
-    void SetSelectedGameId(int sValue) { SetValue(SelectedGameIdProperty, sValue); }
+    void SetSelectedGameId(int nValue) { SetValue(SelectedGameIdProperty, nValue); }
     
     /// <summary>
     /// Gets the list of known game titles and their IDs
@@ -118,6 +118,21 @@ public:
     /// Sets the system name.
     /// </summary>
     void SetSystemName(const std::wstring& sValue) { SetValue(SystemNameProperty, sValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the whether test mode is selected.
+    /// </summary>
+    static const BoolModelProperty TestModeProperty;
+
+    /// <summary>
+    /// Gets whether test mode is selected.
+    /// </summary>
+    bool GetTestMode() const { return GetValue(TestModeProperty); }
+
+    /// <summary>
+    /// Sets whether test mode is selected.
+    /// </summary>
+    void SetTestMode(bool bValue) { SetValue(TestModeProperty, bValue); }
 
     /// <summary>
     /// Command handler for Associate button.

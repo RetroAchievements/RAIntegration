@@ -20,7 +20,6 @@ enum RequestType
     RequestScore,
     RequestNews,
     RequestRichPresence,
-    RequestAchievementInfo,
     RequestCodeNotes,
     RequestFriendList,
     RequestBadgeIter,
@@ -30,7 +29,6 @@ enum RequestType
     //	Submit
     RequestSubmitCodeNote,
     RequestSubmitAchievementData,
-    RequestSubmitTicket,
 
     NumRequestTypes
 };

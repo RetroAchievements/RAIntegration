@@ -1,12 +1,12 @@
 #include "RA_Core.h"
 
-#include "RA_AchievementOverlay.h" // RA_User
 #include "RA_CodeNotes.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
+#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
@@ -15,17 +15,12 @@
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
-#include "api\Logout.hh"
-#include "api\ResolveHash.hh"
-
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
-#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IThreadPool.hh"
@@ -37,7 +32,6 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
-#include "ui\viewmodels\UnknownGameViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 
@@ -88,10 +82,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     g_pUnofficialAchievements = new AchievementSet();
     g_pLocalAchievements = new AchievementSet();
     g_pActiveAchievements = g_pCoreAchievements;
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Image rendering: Setup overlay
-    g_AchievementOverlay.UpdateImages();
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
@@ -107,12 +97,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
     // Set the client version and User-Agent string
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
     RAWeb::SetUserAgentString();
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Update news:
-    PostArgs args;
-    args['c'] = std::to_string(6);
-    RAWeb::CreateThreadedHTTPRequest(RequestNews, args);
 
     // validate version (async call)
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
@@ -239,189 +223,6 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     return true;
 }
 
-static unsigned int IdentifyRom(const BYTE* pROM, unsigned int nROMSize, std::string& sCurrentROMMD5)
-{
-    if (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id() == 0U)
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
-        return 0U;
-    }
-
-    unsigned int nGameId = 0U;
-
-    if (pROM == nullptr || nROMSize == 0)
-    {
-        sCurrentROMMD5 = RAGenerateMD5(nullptr, 0);
-    }
-    else
-    {
-        sCurrentROMMD5 = RAGenerateMD5(pROM, nROMSize);
-
-        // TBD: local DB of MD5 to ra::GameIDs here
-
-        // Fetch the gameID from the DB
-        ra::api::ResolveHash::Request request;
-        request.Hash = sCurrentROMMD5;
-
-        const auto response = request.Call();
-        if (response.Succeeded())
-        {
-            nGameId = response.GameId;
-            if (nGameId == 0) // Unknown
-            {
-                RA_LOG("Could not identify game with MD5 %s\n", sCurrentROMMD5.c_str());
-
-                if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-                {
-                    auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
-
-                    ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
-                    vmUnknownGame.InitializeGameTitles();
-                    vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
-                    vmUnknownGame.SetChecksum(ra::Widen(sCurrentROMMD5));
-                    vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
-                    vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
-
-                    if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
-                        nGameId = vmUnknownGame.GetSelectedGameId();
-                }
-            }
-            else
-            {
-                RA_LOG("Successfully looked up game with ID %u\n", nGameId);
-            }
-        }
-        else
-        {
-            std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
-            if (sErrorMessage.empty())
-                sErrorMessage = ra::StringPrintf(L"Error from %s", _RA_HostName());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
-        }
-    }
-
-    return nGameId;
-}
-
-static void ActivateGame(unsigned int nGameId)
-{
-    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
-            L"You must be logged in to load achievements. Please reload the game after logging in.");
-        return;
-    }
-
-    g_bRAMTamperedWith = false;
-
-    if (nGameId != 0)
-    {
-        RA_LOG("Loading game %u", nGameId);
-
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(nGameId);
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
-
-        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-        {
-            const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
-
-            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                L"Playing in Softcore Mode",
-                bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
-        }
-    }
-    else
-    {
-        RA_LOG("Unloading current game");
-
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
-    }
-
-    g_AchievementsDialog.OnLoad_NewRom(nGameId);
-    g_AchievementEditorDialog.OnLoad_NewRom();
-    g_MemoryDialog.OnLoad_NewRom();
-    g_AchievementOverlay.OnLoad_NewRom();
-    g_MemBookmarkDialog.OnLoad_NewRom();
-
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.UpdateDisplayString();
-}
-
-struct PendingRom
-{
-    std::string sMD5;
-    unsigned int nGameId{};
-};
-
-API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
-{
-    auto pPendingRom = std::make_unique<PendingRom>();
-    const auto nGameId = IdentifyRom(pROM, nROMSize, pPendingRom->sMD5);
-
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    if (nGameId != 0 && nGameId == pGameContext.GameId())
-    {
-        // same as currently loaded rom. assume user is switching disks and _RA_ActivateGame won't be called.
-        // update the hash now
-        pGameContext.SetGameHash(pPendingRom->sMD5);
-    }
-    else
-    {
-        // different game. assume user is loading a new game and _RA_ActivateGame will be called.
-        // store the hash so when _RA_ActivateGame is called, we can load it then.
-        pPendingRom->nGameId = nGameId;
-        ra::services::ServiceLocator::Provide<PendingRom>(std::move(pPendingRom));
-    }
-
-    return nGameId;
-}
-
-static void ActivateHash(const std::string& sHash, unsigned int nGameId)
-{
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    pGameContext.SetGameHash(sHash);
-
-    // if the hash didn't resolve, we still want to ping with "Playing GAMENAME"
-    if (nGameId == 0)
-    {
-        auto sEstimatedGameTitle = ra::Widen(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle());
-        if (sEstimatedGameTitle.empty())
-            sEstimatedGameTitle = L"Unknown";
-        pGameContext.SetGameTitle(sEstimatedGameTitle);
-
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
-    }
-}
-
-API void CCONV _RA_ActivateGame(unsigned int nGameId)
-{
-    ActivateGame(nGameId);
-
-    // if the hash was captured, use it
-    if (ra::services::ServiceLocator::Exists<PendingRom>())
-    {
-        const auto& pPendingRom = ra::services::ServiceLocator::Get<PendingRom>();
-        if (nGameId == pPendingRom.nGameId)
-            ActivateHash(pPendingRom.sMD5, nGameId);
-    }
-}
-
-API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
-{
-    std::string sCurrentROMMD5;
-    const auto nGameId = IdentifyRom(pROM, nROMSize, sCurrentROMMD5);
-
-    ActivateGame(nGameId);
-
-    // if a ROM was provided, store the hash, even if it didn't match anything
-    if (pROM && nROMSize)
-        ActivateHash(sCurrentROMMD5, nGameId);
-
-    return 0;
-}
-
 API void CCONV _RA_OnReset()
 {
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
@@ -514,14 +315,10 @@ API int CCONV _RA_HandleHTTPResults()
                 }
                 break;
 
-                case RequestNews:
-                    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
-                    g_AchievementOverlay.InstallNewsArticlesFromFile();
-                    break;
-
-                case RequestAchievementInfo:
-                    g_AchExamine.OnReceiveData(doc);
-                    break;
+                //case RequestNews:
+                //    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
+                //    g_AchievementOverlay.InstallNewsArticlesFromFile();
+                //    break;
 
                 case RequestCodeNotes:
                     CodeNotes::OnCodeNotesResponse(doc);
@@ -900,11 +697,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
 API void CCONV _RA_SetPaused(bool bIsPaused)
 {
-    //	TBD: store this state?? (Rendering?)
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     if (bIsPaused)
-        g_AchievementOverlay.Activate();
+        pOverlayManager.ShowOverlay();
     else
-        g_AchievementOverlay.Deactivate();
+        pOverlayManager.HideOverlay();
 }
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
@@ -1043,13 +840,6 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     fclose(pf);
 
     return pRawFileOut;
-}
-
-std::string _TimeStampToString(time_t nTime)
-{
-    char buffer[64];
-    ctime_s(buffer, 64, &nTime);
-    return std::string(buffer);
 }
 
 namespace ra {

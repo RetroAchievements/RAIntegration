@@ -34,6 +34,14 @@ public:
     IImageRepository& operator=(const IImageRepository&) noexcept = delete;
     IImageRepository(IImageRepository&&) noexcept = delete;
     IImageRepository& operator=(IImageRepository&&) noexcept = delete;
+
+    /// <summary>
+    /// Determines if an image is available locally.
+    /// </summary>
+    /// <param name="nType">Type of the image.</param>
+    /// <param name="sName">Name of the image.</param>
+    virtual bool IsImageAvailable(ImageType nType, const std::string& sName) const = 0;
+
     /// <summary>
     /// Ensures an image is available locally.
     /// </summary>
@@ -42,14 +50,10 @@ public:
     virtual void FetchImage(ImageType nType, const std::string& sName) = 0;
 
     /// <summary>Adds a reference to an image.</summary>
-    /// <param name="nType">Type of the image.</param>
-    /// <param name="sName">Name of the image.</param>
     virtual void AddReference(const ImageReference& pImage) = 0;
 
     /// <summary>Releases a reference to an image.</summary>
-    /// <param name="nType">Type of the image.</param>
-    /// <param name="sName">Name of the image.</param>
-    virtual void ReleaseReference(ImageReference& pImage) noexcept = 0;
+    virtual void ReleaseReference(ImageReference& pImage) noexcept(false) = 0;
 
     /// <summary>
     /// Determines whether the referenced image has changed.

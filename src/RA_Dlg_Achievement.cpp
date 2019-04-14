@@ -1039,7 +1039,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     return TRUE;
 }
 
-void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo) noexcept
+void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo)
 {
     if (Cheevo == nullptr)
     {
@@ -1054,12 +1054,22 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restr
     else
     {
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_REVERTSELECTED), Cheevo->Modified());
-        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
-                     g_nActiveAchievementSet == AchievementSet::Type::Local ? TRUE : Cheevo->Modified());
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_CLONE_ACH), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DEL_ACH),
                      g_nActiveAchievementSet == AchievementSet::Type::Local);
-        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
+
+        if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+        {
+            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
+                g_nActiveAchievementSet == AchievementSet::Type::Local);
+            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), FALSE);
+        }
+        else
+        {
+            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
+                g_nActiveAchievementSet == AchievementSet::Type::Local ? TRUE : Cheevo->Modified());
+            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
+        }
 
         if (g_nActiveAchievementSet != AchievementSet::Type::Core)
         {

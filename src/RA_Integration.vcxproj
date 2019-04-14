@@ -55,7 +55,6 @@
     </ClCompile>
     <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
-    <ClCompile Include="RA_AchievementOverlay.cpp" />
     <ClCompile Include="RA_AchievementSet.cpp" />
     <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
@@ -78,6 +77,7 @@
     <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
+    <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
@@ -90,13 +90,18 @@
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
+    <ClCompile Include="ui\OverlayTheme.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
@@ -116,6 +121,7 @@
   <ItemGroup>
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
+    <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
@@ -133,6 +139,7 @@
     <ClInclude Include="api\StartSession.hh" />
     <ClInclude Include="api\SubmitLeaderboardEntry.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
+    <ClInclude Include="api\SubmitTicket.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
@@ -144,7 +151,6 @@
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
     <ClInclude Include="pch_microsoft_suppressions.h" />
     <ClInclude Include="RA_Achievement.h" />
-    <ClInclude Include="RA_AchievementOverlay.h" />
     <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_BuildVer.h" />
     <ClInclude Include="RA_CodeNotes.h" />
@@ -171,6 +177,7 @@
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
+    <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
@@ -209,6 +216,7 @@
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ImageReference.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
+    <ClInclude Include="ui\OverlayTheme.hh" />
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
@@ -217,7 +225,11 @@
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />

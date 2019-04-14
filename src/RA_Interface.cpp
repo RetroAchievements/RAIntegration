@@ -4,6 +4,7 @@
 
 #include <winhttp.h>
 #include <cassert>
+#include <stdexcept>
 #include <string>
 
 //Note: this is ALL public facing! :S tbd tidy up this bit
@@ -42,9 +43,7 @@ int     (CCONV *_RA_HardcoreModeIsActive)(void) = nullptr;
 bool    (CCONV *_RA_WarnDisableHardcore)(const char* sActivity) = nullptr;
 //  Overlay:
 int     (CCONV *_RA_UpdateOverlay)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
-int     (CCONV *_RA_UpdatePopups)(ControllerInput* pInput, float fDeltaTime, bool Full_Screen, bool Paused) = nullptr;
 void    (CCONV *_RA_RenderOverlay)(HDC hDC, RECT* prcSize) = nullptr;
-void    (CCONV *_RA_RenderPopups)(HDC hDC, RECT* prcSize) = nullptr;
 bool    (CCONV *_RA_IsOverlayFullyVisible) () = nullptr;
 
 
@@ -59,13 +58,6 @@ void RA_AttemptLogin(bool bBlocking)
 
 void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen, bool Paused)
 {
-    if (_RA_UpdatePopups != nullptr)
-        _RA_UpdatePopups(pInput, fDeltaTime, Full_Screen, Paused);
-
-    if (_RA_RenderPopups != nullptr)
-        _RA_RenderPopups(hDC, prcSize);
-
-    //	NB. Render overlay second, on top of popups!
     if (_RA_UpdateOverlay != nullptr)
         _RA_UpdateOverlay(pInput, fDeltaTime, Full_Screen, Paused);
 
@@ -445,10 +437,8 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_Shutdown = (int(CCONV *)())                                                   GetProcAddress(g_hRADLL, "_RA_Shutdown");
     _RA_AttemptLogin = (void(CCONV *)(bool))                                          GetProcAddress(g_hRADLL, "_RA_AttemptLogin");
     _RA_UpdateOverlay = (int(CCONV *)(ControllerInput*, float, bool, bool))           GetProcAddress(g_hRADLL, "_RA_UpdateOverlay");
-    _RA_UpdatePopups = (int(CCONV *)(ControllerInput*, float, bool, bool))            GetProcAddress(g_hRADLL, "_RA_UpdatePopups");
     _RA_RenderOverlay = (void(CCONV *)(HDC, RECT*))                                   GetProcAddress(g_hRADLL, "_RA_RenderOverlay");
     _RA_IsOverlayFullyVisible = (bool(CCONV *)())                                     GetProcAddress(g_hRADLL, "_RA_IsOverlayFullyVisible");
-    _RA_RenderPopups = (void(CCONV *)(HDC, RECT*))                                    GetProcAddress(g_hRADLL, "_RA_RenderPopups");
     _RA_OnLoadNewRom = (int(CCONV *)(const BYTE*, unsigned int))                      GetProcAddress(g_hRADLL, "_RA_OnLoadNewRom");
     _RA_IdentifyRom = (unsigned int(CCONV *)(const BYTE*, unsigned int))              GetProcAddress(g_hRADLL, "_RA_IdentifyRom");
     _RA_ActivateGame = (void(CCONV *)(unsigned int))                                  GetProcAddress(g_hRADLL, "_RA_ActivateGame");
@@ -525,14 +515,14 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         if (_RA_InitOffline != nullptr)
         {
             sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nWorking offline.", sHostName, nStatusCode);
-            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+            MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
 
             _RA_InitOffline(hMainHWND, nConsoleID, sClientVersion);
         }
         else
         {
             sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Cannot access %s (status code %u)\nPlease try again later.", sHostName, nStatusCode);
-            MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+            MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
 
             RA_Shutdown();
         }
@@ -561,7 +551,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             buffer,
             "Automatically update your RetroAchievements Toolset file?");
 
-        int nMBReply = MessageBoxA(nullptr, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
+        int nMBReply = MessageBoxA(hMainHWND, sErrorMsg, "Warning", MB_YESNO | MB_ICONWARNING);
         if (nMBReply == IDYES)
         {
             FetchIntegrationFromWeb(sHostName, &nStatusCode);
@@ -575,7 +565,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
             if (nVerInstalled < nLatestDLLVer)
             {
                 sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "Failed to update Toolset (status code %u).", nStatusCode);
-                MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
+                MessageBoxA(hMainHWND, buffer, "Error", MB_OK | MB_ICONERROR);
             }
         }
     }
@@ -585,7 +575,7 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
         RA_Shutdown();
 
         sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), "The latest Toolset is required to earn achievements.");
-        MessageBoxA(nullptr, buffer, "Warning", MB_OK | MB_ICONWARNING);
+        MessageBoxA(hMainHWND, buffer, "Warning", MB_OK | MB_ICONWARNING);
     }
     else
     {
@@ -617,9 +607,7 @@ void RA_Shutdown()
     _RA_InitI = nullptr;
     _RA_Shutdown = nullptr;
     _RA_UpdateOverlay = nullptr;
-    _RA_UpdatePopups = nullptr;
     _RA_RenderOverlay = nullptr;
-    _RA_RenderPopups = nullptr;
     _RA_OnLoadNewRom = nullptr;
     _RA_IdentifyRom = nullptr;
     _RA_ActivateGame = nullptr;

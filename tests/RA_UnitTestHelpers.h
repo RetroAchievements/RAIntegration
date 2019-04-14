@@ -9,6 +9,8 @@
 
 #include "api\ApiCall.hh"
 
+#include "data\GameContext.hh"
+
 #include "services\Http.hh"
 
 #include "ui\ImageReference.hh"
@@ -158,6 +160,21 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
         default: return std::to_wstring(ra::etoi(type));
     }
 }
+
+template<>
+std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::Mode& nMode)
+{
+    switch (nMode)
+    {
+        case ra::data::GameContext::Mode::Normal:
+            return L"Normal";
+        case ra::data::GameContext::Mode::CompatibilityTest:
+            return L"CompatibilityTest";
+        default:
+            return std::to_wstring(static_cast<int>(nMode));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

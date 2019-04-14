@@ -32,8 +32,8 @@ public:
     struct Request : ApiRequestBase
     {
         unsigned int LeaderboardId{ 0U };
-        unsigned int FirstEntry{ 0U };
-        unsigned int NumEntries{ 0U };
+        unsigned int FirstEntry{ 1U };
+        unsigned int NumEntries{ 10U };
 
         using Callback = std::function<void(const Response& response)>;
 

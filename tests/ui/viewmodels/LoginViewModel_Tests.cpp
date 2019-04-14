@@ -7,11 +7,13 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::api::mocks::MockServer;
 using ra::data::mocks::MockEmulatorContext;
+using ra::data::mocks::MockSessionTracker;
 using ra::data::mocks::MockUserContext;
 using ra::services::mocks::MockConfiguration;
 using ra::ui::mocks::MockDesktop;
@@ -34,6 +36,7 @@ private:
         MockServer mockServer;
         MockUserContext mockUserContext;
         MockEmulatorContext mockEmulatorContext;
+        MockSessionTracker mockSessionTracker;
     };
 
 public:
@@ -120,9 +123,13 @@ public:
         // API token should not be set unless "remember me" is checked
         Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
 
-        // values should also be updated in UserContext, including API token
+        // values should also be updated in UserContext, including API token and score
         Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
         Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
+        Assert::AreEqual(12345U, vmLogin.mockUserContext.GetScore());
+
+        // session tracker should know user name
+        Assert::AreEqual(std::wstring(L"User"), vmLogin.mockSessionTracker.GetUsername());
 
         // emulator should have been notified to rebuild the RetroAchievements menu
         Assert::IsTrue(bWasMenuRebuilt);

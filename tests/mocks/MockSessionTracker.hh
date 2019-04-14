@@ -29,6 +29,8 @@ public:
         SessionTracker::AddSession(nGameId, tSessionStart, tSessionDuration);
     }
 
+    unsigned int CurrentSessionGameId() const noexcept { return m_nCurrentGameId; }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::SessionTracker> m_Override;
 };

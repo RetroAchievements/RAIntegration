@@ -22,10 +22,12 @@ public:
     SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override;
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
+    FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override;
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;
     FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override;
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override;
+    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
 

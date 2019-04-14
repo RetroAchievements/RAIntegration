@@ -9,6 +9,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\GameIdentifier.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -20,6 +21,7 @@
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\OverlayTheme.hh"
 #include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
@@ -123,6 +125,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));
 
+    auto pGameIdentifier = std::make_unique<ra::services::GameIdentifier>();
+    ra::services::ServiceLocator::Provide<ra::services::GameIdentifier>(std::move(pGameIdentifier));
+
     auto pAudioSystem = std::make_unique<ra::services::impl::WindowsAudioSystem>();
     ra::services::ServiceLocator::Provide<ra::services::IAudioSystem>(std::move(pAudioSystem));
 
@@ -135,6 +140,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pSurfaceFactory = std::make_unique<ra::ui::drawing::gdi::GDISurfaceFactory>();
     ra::services::ServiceLocator::Provide<ra::ui::drawing::ISurfaceFactory>(std::move(pSurfaceFactory));
+
+    auto pOverlayTheme = std::make_unique<ra::ui::OverlayTheme>();
+    pOverlayTheme->LoadFromFile();
+    ra::services::ServiceLocator::Provide<ra::ui::OverlayTheme>(std::move(pOverlayTheme));
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));

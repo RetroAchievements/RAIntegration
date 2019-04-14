@@ -99,9 +99,6 @@
     <ClCompile Include="RA_Defs.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
-    <ClCompile Include="RA_AchievementOverlay.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -252,6 +249,24 @@
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\OverlayTheme.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="services\GameIdentifier.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -310,9 +325,6 @@
     </ClInclude>
     <ClInclude Include="RA_BuildVer.h">
       <Filter>Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_AchievementOverlay.h">
-      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
@@ -631,6 +643,30 @@
     </ClInclude>
     <ClInclude Include="data\AsyncObject.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\OverlayTheme.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchAchievementInfo.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="services\GameIdentifier.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="api\SubmitTicket.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

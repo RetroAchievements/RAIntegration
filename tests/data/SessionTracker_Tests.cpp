@@ -354,6 +354,14 @@ public:
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
 
+    TEST_METHOD(TestCurrentActivityRichPresenceCompatibilityMode)
+    {
+        SessionTrackerHarness tracker;
+        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
+    }
+
     TEST_METHOD(TestCurrentActivityInspectingMemoryNoAchievements)
     {
         SessionTrackerHarness tracker;
@@ -376,6 +384,15 @@ public:
         tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
+    }
+
+    TEST_METHOD(TestCurrentActivityInspectingMemoryCompatibilityMode)
+    {
+        SessionTrackerHarness tracker;
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        tracker.MockInspectingMemory(true);
+        Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
     }
 
     TEST_METHOD(TestCurrentActivityInspectingMemoryCoreAchievements)

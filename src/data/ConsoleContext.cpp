@@ -8,6 +8,25 @@ namespace data {
 
 const std::vector<ConsoleContext::MemoryRegion> ConsoleContext::m_vEmptyRegions;
 
+// ===== Apple II =====
+
+class AppleIIConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 AppleIIConsoleContext() noexcept : ConsoleContext(ConsoleID::AppleII, L"Apple II") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> AppleIIConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "Main RAM" },
+    { 0x010000U, 0x01FFFFU, ConsoleContext::AddressType::SystemRAM, "Auxiliary RAM" },
+};
+
 // ===== Atari 2600 =====
 
 class Atari2600ConsoleContext : public ConsoleContext
@@ -103,6 +122,7 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemory
     { 0xFF00U, 0xFF7FU, ConsoleContext::AddressType::HardwareController, "Hardware I/O"},
     { 0xFF80U, 0xFFFEU, ConsoleContext::AddressType::SystemRAM, "Quick RAM"},
     { 0xFFFFU, 0xFFFFU, ConsoleContext::AddressType::HardwareController, "Interrupt enable"},
+    { 0x10000U, 0x16FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (static pages)" }, // 7 banks, GBC only
 };
 
 // ===== GameBoy Advance =====
@@ -422,7 +442,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Amstrad CPC");
 
         case ConsoleID::AppleII:
-            return std::make_unique<ConsoleContext>(nId, L"Apple II");
+            return std::make_unique<AppleIIConsoleContext>();
 
         case ConsoleID::Arcade:
             return std::make_unique<ConsoleContext>(nId, L"Arcade");

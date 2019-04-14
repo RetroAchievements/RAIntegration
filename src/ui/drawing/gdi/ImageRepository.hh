@@ -37,6 +37,8 @@ public:
     /// </summary>
     static HBITMAP GetHBitmap(const ImageReference& pImage);
 
+    bool IsImageAvailable(ImageType nType, const std::string& sName) const override;
+
     void FetchImage(ImageType nType, const std::string& sName) override;
 
     void AddReference(const ImageReference& pImage) override;

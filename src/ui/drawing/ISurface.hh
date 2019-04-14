@@ -79,6 +79,16 @@ public:
     virtual void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
 
     /// <summary>
+    /// Draws an image on the surface.
+    /// </summary>
+    /// <param name="nX">The x coordinate to draw at.</param>
+    /// <param name="nY">The y coordinate to draw at.</param>
+    /// <param name="nWidth">The width to draw the image.</param>
+    /// <param name="nHeight">The height to draw the image.</param>
+    /// <param name="pImage">The image to draw.</param>
+    virtual void DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) = 0;
+
+    /// <summary>
     /// Draws a secondary surface onto the surface.
     /// </summary>
     /// <param name="nX">The x coordinate to draw at.</param>

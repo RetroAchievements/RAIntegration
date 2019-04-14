@@ -64,6 +64,11 @@ public:
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
+    FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request&) override
+    {
+        return UnsupportedApi<FetchAchievementInfo::Response>(FetchAchievementInfo::Name());
+    }
+
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request&) override
     {
         return UnsupportedApi<FetchLeaderboardInfo::Response>(FetchLeaderboardInfo::Name());
@@ -84,6 +89,11 @@ public:
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request&) override
     {
         return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());
+    }
+
+    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request&) override
+    {
+        return UnsupportedApi<SubmitTicket::Response>(SubmitTicket::Name());
     }
 
 protected:

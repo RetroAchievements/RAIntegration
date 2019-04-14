@@ -45,6 +45,11 @@ public:
         oSize = { 1920, 1080 };
     }
 
+    ra::ui::Size GetClientSize(const WindowViewModelBase&) const noexcept override
+    {
+        return { 800, 600 };
+    }
+
     void OpenUrl(const std::string& sUrl) const override
     {
         m_sLastOpenedUrl = sUrl;

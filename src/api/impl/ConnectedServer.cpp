@@ -496,6 +496,67 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
     return std::move(response);
 }
 
+FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
+{
+    FetchAchievementInfo::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
+    if (request.FirstEntry > 1)
+        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
+    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+
+    if (request.FriendsOnly)
+        AppendUrlParam(sPostData, "f", "1");
+
+    if (DoRequest(m_sHost, FetchAchievementInfo::Name(), "achievementwondata", sPostData, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& AchievmentInfo = document["Response"];
+
+            GetRequiredJsonField(response.GameId, AchievmentInfo, "GameID", response);
+            GetRequiredJsonField(response.EarnedBy, AchievmentInfo, "NumEarned", response);
+            GetRequiredJsonField(response.NumPlayers, AchievmentInfo, "TotalPlayers", response);
+
+            if (AchievmentInfo.HasMember("RecentWinner")) // RecentWinner will not be returned if there are no winners
+            {
+                const auto& pEntries = AchievmentInfo["RecentWinner"];
+                if (!pEntries.IsArray())
+                {
+                    response.Result = ApiResult::Error;
+                    response.ErrorMessage = ra::StringPrintf("%s not an array", "RecentWinner");
+                }
+                else
+                {
+                    const auto& pEntriesArray = pEntries.GetArray();
+                    response.Entries.reserve(pEntriesArray.Size());
+                    for (const auto& pEntry : pEntriesArray)
+                    {
+                        FetchAchievementInfo::Response::Entry entry;
+                        GetRequiredJsonField(entry.User, pEntry, "User", response);
+                        GetRequiredJsonField(entry.Points, pEntry, "RAPoints", response);
+                        unsigned int nTime;
+                        GetRequiredJsonField(nTime, pEntry, "DateAwarded", response);
+                        entry.DateAwarded = nTime;
+                        response.Entries.emplace_back(entry);
+                    }
+                }
+            }
+        }
+    }
+
+    return std::move(response);
+}
+
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;
@@ -503,10 +564,11 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     std::string sPostData;
 
     AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
-    AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
+    if (request.FirstEntry > 1)
+        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
     AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
 
-    if (DoRequest(m_sHost, FetchGameData::Name(), "lbinfo", sPostData, response, document))
+    if (DoRequest(m_sHost, FetchLeaderboardInfo::Name(), "lbinfo", sPostData, response, document))
     {
         if (!document.HasMember("LeaderboardData"))
         {
@@ -525,12 +587,7 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
             GetRequiredJsonField(nLowerIsBetter, LeaderboardData, "LowerIsBetter", response);
             response.LowerIsBetter = (nLowerIsBetter != 0);
 
-            if (!LeaderboardData.HasMember("Entries"))
-            {
-                response.Result = ApiResult::Error;
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Entries");
-            }
-            else
+            if (LeaderboardData.HasMember("Entries"))
             {
                 const auto& pEntries = LeaderboardData["Entries"];
                 if (!pEntries.IsArray())
@@ -725,6 +782,43 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
         {
             response.Result = ApiResult::Success;
             GetRequiredJsonField(response.GameId, document["Response"], "GameID", response);
+        }
+    }
+
+    return response;
+}
+
+SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request& request)
+{
+    SubmitTicket::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    std::string sAchievementIds;
+    for (auto nAchievementId : request.AchievementIds)
+    {
+        sAchievementIds.append(std::to_string(nAchievementId));
+        sAchievementIds.push_back(',');
+    }
+    sAchievementIds.pop_back();
+
+    AppendUrlParam(sPostData, "i", sAchievementIds);
+    AppendUrlParam(sPostData, "m", request.GameHash);
+    AppendUrlParam(sPostData, "p", std::to_string(ra::etoi(request.Problem)));
+    AppendUrlParam(sPostData, "n", request.Comment);
+
+    if (DoRequest(m_sHost, SubmitTicket::Name(), "submitticket", sPostData, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            if (response.ErrorMessage.empty())
+                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+            GetRequiredJsonField(response.TicketsCreated, document["Response"], "Added", response);
         }
     }
 

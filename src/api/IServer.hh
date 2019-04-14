@@ -3,6 +3,7 @@
 #pragma once
 
 #include "api/AwardAchievement.hh"
+#include "api/FetchAchievementInfo.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
@@ -15,6 +16,7 @@
 #include "api/StartSession.hh"
 #include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
+#include "api/SubmitTicket.hh"
 
 namespace ra {
 namespace api {
@@ -36,12 +38,14 @@ public:
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
+    virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
+    virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
 
 protected:
     IServer() noexcept = default;

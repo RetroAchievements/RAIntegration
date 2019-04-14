@@ -202,7 +202,6 @@ API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
     switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
     {
         case EmulatorID::RA_Gens:
-        case EmulatorID::RA_Meka:
             ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Render(pSurface, true);
             break;

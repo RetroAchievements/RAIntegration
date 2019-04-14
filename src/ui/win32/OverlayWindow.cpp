@@ -37,6 +37,11 @@ static void CALLBACK HandleWinEvent(HWINEVENTHOOK, DWORD nEvent, HWND, LONG nObj
         ra::services::ServiceLocator::GetMutable<OverlayWindow>().UpdateOverlayPosition();
 }
 
+static DWORD WINAPI OverlayWindowThreadStart(LPVOID)
+{
+    return ra::services::ServiceLocator::GetMutable<OverlayWindow>().OverlayWindowThread();
+}
+
 void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 {
     if (m_hOverlayWnd)
@@ -45,12 +50,45 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
     {
         case EmulatorID::RA_Gens:
-        case EmulatorID::RA_Meka:
             return;
     }
 
     m_hWnd = hWnd;
 
+    auto hParentThread = GetWindowThreadProcessId(m_hWnd, nullptr);
+    auto hCurrentThread = GetCurrentThreadId();
+    if (hParentThread == hCurrentThread)
+    {
+        // we're on the thread that owns the parent window, it's message pump will serve us
+        CreateOverlayWindow();
+    }
+    else
+    {
+        // we're not on the thread that owns the parent window, so there may not even be a message pump.
+        // create our own message pump thread and create/manage the overlay window there.
+        CreateThread(nullptr, 0, OverlayWindowThreadStart, nullptr, 0, nullptr);
+    }
+}
+
+DWORD OverlayWindow::OverlayWindowThread()
+{
+    CreateOverlayWindow();
+
+    MSG msg;
+    while (GetMessageA(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_DESTROY)
+            break;
+    }
+
+    return msg.wParam;
+}
+
+void OverlayWindow::CreateOverlayWindow()
+{
     RECT rcMainWindowClientArea;
     GetClientRect(m_hWnd, &rcMainWindowClientArea);
 
@@ -58,14 +96,15 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     constexpr int nAlpha = (255 * 90 / 100); // 90% transparency
 
     // Create the overlay window
-    WNDCLASSA wndEx;
+    WNDCLASSEX wndEx;
     memset(&wndEx, 0, sizeof(wndEx));
-    wndEx.cbWndExtra = sizeof(wndEx);
-    wndEx.lpszClassName = "RA_WND_CLASS";
+    wndEx.cbSize = sizeof(wndEx);
+    wndEx.lpszClassName = "RA_OVERLAY_WND_CLASS";
     wndEx.lpfnWndProc = OverlayWndProc;
     wndEx.hbrBackground = CreateSolidBrush(nTransparentColor);
-    GSL_SUPPRESS_TYPE1 wndEx.hInstance = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(m_hWnd, GWLP_HINSTANCE));
-    RegisterClass(&wndEx);
+    extern HMODULE g_hThisDLLInst;
+    wndEx.hInstance = g_hThisDLLInst;
+    RegisterClassEx(&wndEx);
 
     m_hOverlayWnd = CreateWindowEx(
         (WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED),
@@ -76,8 +115,6 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
         m_hWnd, nullptr, wndEx.hInstance, nullptr);
 
     SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
-
-    SetParent(m_hWnd, m_hOverlayWnd);
 
     ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
 
@@ -101,7 +138,10 @@ void OverlayWindow::DestroyOverlayWindow() noexcept
 
     if (m_hOverlayWnd)
     {
-        DestroyWindow(m_hOverlayWnd);
+        // use PostMessage instead of calling DestroyWindow directly to ensure we kick out of the
+        // OverlayWindowThread (if we created one)
+        PostMessage(m_hOverlayWnd, WM_DESTROY, 0, 0);
+
         m_hOverlayWnd = nullptr;
     }
 

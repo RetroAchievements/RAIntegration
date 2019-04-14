@@ -19,7 +19,10 @@ public:
 
     void Render();
 
+    DWORD OverlayWindowThread();
 private:
+    void CreateOverlayWindow();
+
     bool m_bErase = false;
 
     HWND m_hWnd{};

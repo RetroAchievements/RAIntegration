@@ -28,6 +28,7 @@ private:
     HWND m_hWnd{};
     HWND m_hOverlayWnd{};
     HWINEVENTHOOK m_hEventHook{};
+    HANDLE m_hOverlayWndThread{};
 };
 
 } // namespace win32

@@ -66,7 +66,7 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     {
         // we're not on the thread that owns the parent window, so there may not even be a message pump.
         // create our own message pump thread and create/manage the overlay window there.
-        CreateThread(nullptr, 0, OverlayWindowThreadStart, nullptr, 0, nullptr);
+        m_hOverlayWndThread = CreateThread(nullptr, 0, OverlayWindowThreadStart, nullptr, 0, nullptr);
     }
 }
 
@@ -99,12 +99,15 @@ void OverlayWindow::CreateOverlayWindow()
     WNDCLASSEX wndEx;
     memset(&wndEx, 0, sizeof(wndEx));
     wndEx.cbSize = sizeof(wndEx);
-    wndEx.lpszClassName = "RA_OVERLAY_WND_CLASS";
+    wndEx.lpszClassName = TEXT("RA_OVERLAY_WND_CLASS");
     wndEx.lpfnWndProc = OverlayWndProc;
     wndEx.hbrBackground = CreateSolidBrush(nTransparentColor);
-    extern HMODULE g_hThisDLLInst;
-    wndEx.hInstance = g_hThisDLLInst;
-    RegisterClassEx(&wndEx);
+    wndEx.hInstance = GetModuleHandle(nullptr);
+    if (!RegisterClassEx(&wndEx))
+    {
+        MessageBox(m_hWnd, TEXT("Failed to register overlay window class"), TEXT("Error"), MB_OK);
+        return;
+    }
 
     m_hOverlayWnd = CreateWindowEx(
         (WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED),
@@ -113,6 +116,12 @@ void OverlayWindow::CreateOverlayWindow()
         (WS_POPUP),
         CW_USEDEFAULT, CW_USEDEFAULT, rcMainWindowClientArea.right, rcMainWindowClientArea.bottom,
         m_hWnd, nullptr, wndEx.hInstance, nullptr);
+
+    if (m_hOverlayWnd == nullptr)
+    {
+        MessageBox(m_hWnd, TEXT("Failed to create overlay window"), TEXT("Error"), MB_OK);
+        return;
+    }
 
     SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
 
@@ -138,9 +147,21 @@ void OverlayWindow::DestroyOverlayWindow() noexcept
 
     if (m_hOverlayWnd)
     {
-        // use PostMessage instead of calling DestroyWindow directly to ensure we kick out of the
-        // OverlayWindowThread (if we created one)
-        PostMessage(m_hOverlayWnd, WM_DESTROY, 0, 0);
+        if (m_hOverlayWndThread)
+        {
+            // use PostMessage instead of calling DestroyWindow directly to ensure we kick out of the loop -
+            // GetMessage does not get involved when using DestroyWindow directly.
+            PostMessage(m_hOverlayWnd, WM_DESTROY, 0, 0);
+
+            // Wait for the thread to finish
+            WaitForSingleObject(m_hOverlayWndThread, 1000);
+            m_hOverlayWndThread = nullptr;
+        }
+        else
+        {
+            // we didn't create a message pump, so we don't have to clean it up. just destroy the window.
+            DestroyWindow(m_hOverlayWnd);
+        }
 
         m_hOverlayWnd = nullptr;
     }

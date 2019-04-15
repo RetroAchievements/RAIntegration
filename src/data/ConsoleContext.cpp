@@ -115,14 +115,14 @@ const std::vector<ConsoleContext::MemoryRegion> GameBoyConsoleContext::m_vMemory
     { 0x9C00U, 0x9FFFU, ConsoleContext::AddressType::VideoRAM, "BG2 map data" },
     { 0xA000U, 0xBFFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM"},
     { 0xC000U, 0xCFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (fixed)" },
-    { 0xD000U, 0xDFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (paged)" },
+    { 0xD000U, 0xDFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (bank 1)" },
     { 0xE000U, 0xFDFFU, ConsoleContext::AddressType::VirtualRAM, "Echo RAM" },
     { 0xFE00U, 0xFE9FU, ConsoleContext::AddressType::VideoRAM, "Sprite RAM"},
     { 0xFEA0U, 0xFEFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Unusable"},
     { 0xFF00U, 0xFF7FU, ConsoleContext::AddressType::HardwareController, "Hardware I/O"},
     { 0xFF80U, 0xFFFEU, ConsoleContext::AddressType::SystemRAM, "Quick RAM"},
     { 0xFFFFU, 0xFFFFU, ConsoleContext::AddressType::HardwareController, "Interrupt enable"},
-    { 0x10000U, 0x16FFFU, ConsoleContext::AddressType::SystemRAM, "Static RAM banks (GBC only)" }, // 7 banks, GBC only
+    { 0x10000U, 0x15FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM (banks 2-7, GBC only)" },
 };
 
 // ===== GameBoy Advance =====

@@ -186,7 +186,7 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 
 API bool _RA_IsOverlayFullyVisible()
 {
-    return ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
+    return ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
 }
 
 _Use_decl_annotations_

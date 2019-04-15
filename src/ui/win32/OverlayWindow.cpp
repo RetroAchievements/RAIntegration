@@ -186,6 +186,7 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
     // move the layered window over the client window
     MoveWindow(m_hOverlayWnd, rcWindowClientArea.left, rcWindowClientArea.top, nWidth, nHeight, FALSE);
 
+    // if the size changed, we want to redraw everything on the next repaint
     if (rcOverlay.right - rcOverlay.left != nWidth || rcOverlay.bottom - rcOverlay.top != nHeight)
     {
         m_bErase = true;
@@ -206,6 +207,7 @@ void OverlayWindow::Render()
 
     if (m_bErase)
     {
+        // redraw everything
         m_bErase = false;
 
         pSurface.FillRectangle(ps.rcPaint.left, ps.rcPaint.top,
@@ -214,6 +216,7 @@ void OverlayWindow::Render()
     }
     else
     {
+        // only redraw the stuff that changes
         pOverlayManager.Render(pSurface, false);
     }
 

@@ -14,6 +14,13 @@ namespace viewmodels {
 
 class OverlayManager {
 public:    
+    GSL_SUPPRESS_F6 OverlayManager() = default;
+    virtual ~OverlayManager() noexcept = default;
+    OverlayManager(const OverlayManager&) noexcept = delete;
+    OverlayManager& operator=(const OverlayManager&) noexcept = delete;
+    OverlayManager(OverlayManager&&) noexcept = delete;
+    OverlayManager& operator=(OverlayManager&&) noexcept = delete;
+
     /// <summary>
     /// Updates the overlay.
     /// </summary>

@@ -55,8 +55,8 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 
     m_hWnd = hWnd;
 
-    auto hParentThread = GetWindowThreadProcessId(m_hWnd, nullptr);
-    auto hCurrentThread = GetCurrentThreadId();
+    const auto hParentThread = GetWindowThreadProcessId(m_hWnd, nullptr);
+    const auto hCurrentThread = GetCurrentThreadId();
     if (hParentThread == hCurrentThread)
     {
         // we're on the thread that owns the parent window, it's message pump will serve us
@@ -75,7 +75,7 @@ DWORD OverlayWindow::OverlayWindowThread()
     CreateOverlayWindow();
 
     MSG msg;
-    while (GetMessageA(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, nullptr, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessageA(&msg);

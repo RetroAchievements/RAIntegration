@@ -132,6 +132,7 @@ extern void RA_DoAchievementsFrame();
 //	Updates and renders all on-screen overlays.
 extern void RA_UpdateRenderOverlay(HDC hDC, struct ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen,
                                    bool Paused);
+extern void RA_NavigateOverlay(struct ControllerInput* pInput);
 
 //  Determines if the overlay is completely covering the screen.
 extern bool RA_IsOverlayFullyVisible();

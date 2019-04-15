@@ -184,14 +184,25 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     vmEmulator.SetWindowTitle(sTitle);
 }
 
+API bool _RA_IsOverlayFullyVisible()
+{
+    return ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
+}
+
 _Use_decl_annotations_
-API int _RA_UpdateOverlay(const ControllerInput* pInput, float, bool, bool)
+API void _RA_NavigateOverlay(const ControllerInput* pInput)
 {
     static const ControllerInput pNoInput{};
     if (pInput == nullptr)
         pInput = &pNoInput;
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput);
+}
+
+_Use_decl_annotations_
+API int _RA_UpdateOverlay(const ControllerInput* pInput, float, bool, bool)
+{
+    _RA_NavigateOverlay(pInput);
     return true; // was return state = closing - does anything check this?
 }
 
@@ -209,12 +220,8 @@ API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
 }
 #endif
 
-API void CCONV _RA_DoAchievementsFrame()
+static void ProcessAchievements()
 {
-#ifndef RA_UTEST
-    g_MemoryDialog.Invalidate();
-#endif
-
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     if (pRuntime.IsPaused())
         return;
@@ -359,3 +366,12 @@ API void CCONV _RA_DoAchievementsFrame()
     }
 }
 
+API void CCONV _RA_DoAchievementsFrame()
+{
+    ProcessAchievements();
+
+#ifndef RA_UTEST
+    // make sure we process the achievements _before_ the frozen bookmarks modify the memory
+    g_MemoryDialog.Invalidate();
+#endif
+}

@@ -93,6 +93,7 @@ extern "C" {
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
 
     struct ControllerInput;
+    API void CCONV _RA_NavigateOverlay(_In_ const ControllerInput* pInput);
     API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float /*fDTime*/,
         _In_ bool /*Full_Screen*/, _In_ bool /*Paused*/);
     API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* rcSize);

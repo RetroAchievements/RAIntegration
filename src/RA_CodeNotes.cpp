@@ -7,10 +7,12 @@
 #include "RA_httpthread.h"
 
 #include "api\FetchCodeNotes.hh"
+#include "api\UpdateCodeNote.hh"
 
 #include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
+#include "services\IAudioSystem.hh"
 #include "services\ILocalStorage.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -49,38 +51,42 @@ BOOL CodeNotes::ReloadFromWeb(unsigned int nID)
     return TRUE;
 }
 
-void CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote)
+bool CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote)
 {
-    if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
-        m_CodeNotes.try_emplace(nAddr, CodeNoteObj(sAuthor, sNote));
-    else
-        m_CodeNotes.at(nAddr).SetNote(sNote);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    ra::api::UpdateCodeNote::Request request;
+    request.GameId = pGameContext.GameId();
+    request.Address = nAddr;
+    request.Note = sNote;
+
+    do
     {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-        PostArgs args;
-        args['u'] = RAUsers::LocalUser().Username();
-        args['t'] = RAUsers::LocalUser().Token();
-        args['g'] = std::to_string(pGameContext.GameId());
-        args['m'] = std::to_string(nAddr);
-        args['n'] = ra::Narrow(sNote);
-
-        rapidjson::Document doc;
-        if (RAWeb::DoBlockingRequest(RequestSubmitCodeNote, args, doc))
+        auto response = request.Call();
+        if (response.Succeeded())
         {
-            //	OK!
-            MessageBeep(0xFFFFFFFF);
+            if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
+                m_CodeNotes.try_emplace(nAddr, CodeNoteObj(sAuthor, sNote));
+            else
+                m_CodeNotes.at(nAddr).SetNote(sNote);
+
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
+            return true;
         }
-        else
-        {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not save note!", L"Please check that you are online and retry.");
-        }
-    }
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error saving note for address %s", ra::ByteAddressToString(nAddr)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
+
+    } while (true);
+
+    return false;
 }
 
-BOOL CodeNotes::Remove(const ra::ByteAddress& nAddr)
+bool CodeNotes::Remove(const ra::ByteAddress& nAddr)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
     {

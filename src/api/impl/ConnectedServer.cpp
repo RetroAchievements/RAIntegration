@@ -606,6 +606,24 @@ void ConnectedServer::ProcessCodeNotes(ra::api::FetchCodeNotes::Response &respon
     }
 }
 
+UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::Request& request)
+{
+    UpdateCodeNote::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
+    AppendUrlParam(sPostData, "n", ra::Narrow(request.Note));
+
+    if (DoRequest(m_sHost, UpdateCodeNote::Name(), "submitcodenote", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+    }
+
+    return std::move(response);
+}
+
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;

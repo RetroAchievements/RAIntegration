@@ -677,6 +677,9 @@
     <ClInclude Include="api\FetchCodeNotes.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="api\UpdateCodeNote.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

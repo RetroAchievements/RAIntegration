@@ -1,5 +1,5 @@
-#ifndef RA_API_FETCH_CODE_NOTES_HH
-#define RA_API_FETCH_CODE_NOTES_HH
+#ifndef RA_API_UPDATE_CODE_NOTE_HH
+#define RA_API_UPDATE_CODE_NOTE_HH
 #pragma once
 
 #include "ApiCall.hh"
@@ -7,25 +7,21 @@
 namespace ra {
 namespace api {
 
-class FetchCodeNotes
+class UpdateCodeNote
 {
 public:
-    static constexpr const char* const Name() noexcept { return "FetchCodeNotes"; }
+    static constexpr const char* const Name() noexcept { return "UpdateCodeNote"; }
 
     struct Response : ApiResponseBase
     {
-        struct CodeNote
-        {
-            ra::ByteAddress Address{ 0U };
-            std::wstring Note;
-            std::string Author;
-        };
-        std::vector<CodeNote> Notes;
+
     };
 
     struct Request : ApiRequestBase
     {
         unsigned int GameId{ 0U };
+        ra::ByteAddress Address{ 0U };
+        std::wstring Note;
 
         using Callback = std::function<void(const Response& response)>;
 
@@ -41,4 +37,4 @@ public:
 } // namespace api
 } // namespace ra
 
-#endif // !RA_API_FETCH_CODE_NOTES_HH
+#endif // !RA_API_UPDATE_CODE_NOTE_HH

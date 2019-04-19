@@ -24,6 +24,7 @@ SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const {
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
 FetchGameData::Response FetchGameData::Request::Call() const { return Server().FetchGameData(*this); }
 FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }
+UpdateCodeNote::Response UpdateCodeNote::Request::Call() const { return Server().UpdateCodeNote(*this); }
 FetchAchievementInfo::Response FetchAchievementInfo::Request::Call() const { return Server().FetchAchievementInfo(*this); }
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }

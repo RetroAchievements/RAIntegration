@@ -30,8 +30,8 @@ public:
 
     BOOL ReloadFromWeb(unsigned int nID);
 
-    void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote);
-    BOOL Remove(const ra::ByteAddress& nAddr);
+    bool Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote);
+    bool Remove(const ra::ByteAddress& nAddr);
 
     const CodeNoteObj* FindCodeNote(const ra::ByteAddress& nAddr) const
     {

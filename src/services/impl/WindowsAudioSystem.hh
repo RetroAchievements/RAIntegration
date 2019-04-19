@@ -20,6 +20,11 @@ public:
 
         PlaySoundW(sFullPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
     }
+
+    void Beep() const override
+    {
+        MessageBeep(0xFFFFFFFF);
+    }
 };
 
 } // namespace impl

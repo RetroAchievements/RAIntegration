@@ -18,6 +18,7 @@
 #include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
+#include "api/UpdateCodeNote.hh"
 
 namespace ra {
 namespace api {
@@ -40,6 +41,7 @@ public:
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
     virtual FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) = 0;
+    virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
     virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 

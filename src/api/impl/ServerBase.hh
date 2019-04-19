@@ -64,6 +64,16 @@ public:
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
+    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override
+    {
+        return UnsupportedApi<FetchCodeNotes::Response>(FetchCodeNotes::Name());
+    }
+
+    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request&) override
+    {
+        return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());
+    }
+
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request&) override
     {
         return UnsupportedApi<FetchAchievementInfo::Response>(FetchAchievementInfo::Name());

@@ -11,6 +11,7 @@
 #include "RA_httpthread.h"
 
 #include "data\EmulatorContext.hh"
+#include "data\GameContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -1909,8 +1910,9 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             return;
     }
 
-    const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
-    m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddr), pNote ? pNote->Note() : L""));
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto* pNote = pGameContext.FindCodeNote(nAddr);
+    m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddr), pNote ? *pNote : L""));
 }
 
 GSL_SUPPRESS_CON4

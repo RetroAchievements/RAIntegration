@@ -2,15 +2,20 @@
 
 #include "Exports.hh"
 
+#include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
 #include "RA_MemManager.h"
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"
+#include "api\DeleteCodeNote.hh"
+#include "api\FetchCodeNotes.hh"
 #include "api\FetchGameData.hh"
 #include "api\FetchUserUnlocks.hh"
 #include "api\SubmitLeaderboardEntry.hh"
+#include "api\UpdateCodeNote.hh"
 
 #include "data\UserContext.hh"
 
@@ -91,6 +96,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
                                                                   ra::Widen(response.ErrorMessage));
         return;
     }
+
+    RefreshCodeNotes();
 
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
@@ -543,7 +550,7 @@ Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(unsigned int nAchievementId)
+bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
 {
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {
@@ -576,7 +583,7 @@ bool GameContext::RemoveAchievement(unsigned int nAchievementId)
     return false;
 }
 
-void GameContext::AwardAchievement(unsigned int nAchievementId) const
+void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 {
     auto* pAchievement = FindAchievement(nAchievementId);
     if (pAchievement == nullptr)
@@ -734,7 +741,7 @@ void GameContext::ReloadAchievements(int nCategory)
     }
 }
 
-bool GameContext::ReloadAchievement(unsigned int nAchievementId)
+bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
 {
     auto pIter = m_vAchievements.begin();
     while (pIter != m_vAchievements.end())
@@ -962,6 +969,92 @@ void GameContext::ReloadRichPresenceScript()
     }
 
     LoadRichPresenceScript(sRichPresence);
+}
+
+void GameContext::RefreshCodeNotes()
+{
+    m_mCodeNotes.clear();
+
+    if (m_nGameId == 0)
+        return;
+
+    ra::api::FetchCodeNotes::Request request;
+    request.GameId = m_nGameId;
+    request.CallAsync([this](const ra::api::FetchCodeNotes::Response& response)
+    {
+        if (response.Failed())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download code notes",
+                ra::Widen(response.ErrorMessage));
+            return;
+        }
+
+        for (const auto& pNote : response.Notes)
+            m_mCodeNotes.insert_or_assign(pNote.Address, CodeNote{ pNote.Author, pNote.Note });
+
+#ifndef RA_UTEST
+        g_MemoryDialog.RepopulateCodeNotes();
+#endif
+    });
+}
+
+bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+{
+    ra::api::UpdateCodeNote::Request request;
+    request.GameId = m_nGameId;
+    request.Address = nAddress;
+    request.Note = sNote;
+
+    do
+    {
+        auto response = request.Call();
+        if (response.Succeeded())
+        {
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+            m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ pUserContext.GetUsername(), sNote });
+            return true;
+        }
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error saving note for address %s", ra::ByteAddressToString(nAddress)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
+
+    } while (true);
+
+    return false;
+}
+
+bool GameContext::DeleteCodeNote(ra::ByteAddress nAddress)
+{
+    if (m_mCodeNotes.find(nAddress) == m_mCodeNotes.end())
+        return true;
+
+    ra::api::DeleteCodeNote::Request request;
+    request.GameId = m_nGameId;
+    request.Address = nAddress;
+
+    do
+    {
+        auto response = request.Call();
+        if (response.Succeeded())
+        {
+            m_mCodeNotes.erase(nAddress);
+            return true;
+        }
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error deleting note for address %s", ra::ByteAddressToString(nAddress)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
+
+    } while (true);
+
+    return false;
 }
 
 } // namespace data

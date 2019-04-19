@@ -2,7 +2,6 @@
 #define RA_DLG_MEMORY_H
 #pragma once
 
-#include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 #include "services/SearchResults.h"
 
@@ -88,7 +87,7 @@ public:
 
     void OnWatchingMemChange();
 
-    void RepopulateMemNotesFromFile();
+    void RepopulateCodeNotes();
     void Invalidate();
 
     void UpdateMemoryRegions();
@@ -96,8 +95,6 @@ public:
     void SetWatchingAddress(unsigned int nAddr);
     void UpdateBits() const;
     BOOL IsActive() const noexcept;
-
-    const CodeNotes& Notes() const noexcept { return m_CodeNotes; }
 
     void ClearBanks();
     void AddBank(size_t nBankID);
@@ -110,8 +107,9 @@ private:
     static void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, std::wstring& sBuffer);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
-    static CodeNotes m_CodeNotes;
     static HWND m_hWnd;
+
+    unsigned int m_nCodeNotesGameId = 0;
 
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;

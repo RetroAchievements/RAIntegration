@@ -1,10 +1,7 @@
 #include "RA_CodeNotes.h"
 
-#include "RA_AchievementSet.h" // RA_Achievement
-#include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Dlg_Memory.h"
-#include "RA_User.h"
-#include "RA_httpthread.h"
 
 #include "api\DeleteCodeNote.hh"
 #include "api\FetchCodeNotes.hh"
@@ -14,23 +11,15 @@
 #include "data\UserContext.hh"
 
 #include "services\IAudioSystem.hh"
-#include "services\ILocalStorage.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-void CodeNotes::Clear() noexcept { m_CodeNotes.clear(); }
-
-size_t CodeNotes::Load(unsigned int nID)
-{
-    return m_CodeNotes.size();
-}
-
-BOOL CodeNotes::ReloadFromWeb(unsigned int nID)
+void CodeNotes::ReloadFromWeb(unsigned int nID)
 {
     m_CodeNotes.clear();
 
     if (nID == 0)
-        return FALSE;
+        return;
 
     ra::api::FetchCodeNotes::Request request;
     request.GameId = nID;
@@ -48,11 +37,9 @@ BOOL CodeNotes::ReloadFromWeb(unsigned int nID)
 
         g_MemoryDialog.RepopulateMemNotesFromFile();
     });
-
-    return TRUE;
 }
 
-bool CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote)
+bool CodeNotes::Update(const ra::ByteAddress& nAddr, const std::wstring& sNote)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
@@ -66,10 +53,18 @@ bool CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
         auto response = request.Call();
         if (response.Succeeded())
         {
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+
             if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
-                m_CodeNotes.try_emplace(nAddr, CodeNoteObj(sAuthor, sNote));
+            {
+                m_CodeNotes.try_emplace(nAddr, CodeNoteObj(pUserContext.GetUsername(), sNote));
+            }
             else
-                m_CodeNotes.at(nAddr).SetNote(sNote);
+            {
+                auto& pNote = m_CodeNotes.at(nAddr);
+                pNote.SetNote(sNote);
+                pNote.SetAuthor(pUserContext.GetUsername());
+            }
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
             return true;

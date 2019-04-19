@@ -1254,6 +1254,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     WCHAR sNewNote[512];
                     GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNote, 512);
 
+                    bool bUpdated = false;
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
                     if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
@@ -1271,22 +1272,34 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
                             if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
                             {
-                                m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
+                                bUpdated = m_CodeNotes.Update(nAddr, sNewNote);
                             }
                         }
                         else
                         {
                             //	Already exists and is added exactly as described. Ignore.
+                            bUpdated = true;
                         }
                     }
                     else
                     {
                         //	Doesn't yet exist: add it newly!
-                        m_CodeNotes.Add(nAddr, RAUsers::LocalUser().Username(), sNewNote);
-                        const std::string sAddress = ra::ByteAddressToString(nAddr);
-                        ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
+                        bUpdated = m_CodeNotes.Update(nAddr, sNewNote);
+                        if (bUpdated)
+                        {
+                            const std::string sAddress = ra::ByteAddressToString(nAddr);
+                            ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
+                        }
                     }
 
+                    if (!bUpdated)
+                    {
+                        // update failed, revert to previous text
+                        if (pSavedNote)
+                            SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, pSavedNote->Note().c_str());
+                        else
+                            SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, L"");
+                    }
                     return FALSE;
                 }
 
@@ -1309,17 +1322,18 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
                         if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
                         {
-                            m_CodeNotes.Remove(nAddr);
+                            if (m_CodeNotes.Remove(nAddr))
+                            {
+                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
 
-                            SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
+                                TCHAR sAddressWide[16];
+                                ComboBox_GetText(hMemWatch, sAddressWide, 16);
+                                int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddressWide).c_str());
+                                if (nIndex != CB_ERR)
+                                    ComboBox_DeleteString(hMemWatch, nIndex);
 
-                            TCHAR sAddressWide[16];
-                            ComboBox_GetText(hMemWatch, sAddressWide, 16);
-                            int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddressWide).c_str());
-                            if (nIndex != CB_ERR)
-                                ComboBox_DeleteString(hMemWatch, nIndex);
-
-                            ComboBox_SetText(hMemWatch, sAddressWide);
+                                ComboBox_SetText(hMemWatch, sAddressWide);
+                            }
                         }
                     }
 
@@ -1526,7 +1540,7 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto nGameID = pGameContext.GameId();
     if (nGameID != 0)
-        nSize = m_CodeNotes.Load(nGameID);
+        nSize = m_CodeNotes.Count();
     else
         m_CodeNotes.Clear();
 

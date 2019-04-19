@@ -10,17 +10,17 @@ public:
     class CodeNoteObj
     {
     public:
-        explicit CodeNoteObj(const std::string& sAuthor, const std::string& sNote) : m_sAuthor{sAuthor}, m_sNote{sNote}
+        explicit CodeNoteObj(const std::string& sAuthor, const std::wstring& sNote) : m_sAuthor{sAuthor}, m_sNote{sNote}
         {}
 
         const std::string& Author() const noexcept { return m_sAuthor; }
-        const std::string& Note() const noexcept { return m_sNote; }
+        const std::wstring& Note() const noexcept { return m_sNote; }
 
-        void SetNote(const std::string& sNote) { m_sNote = sNote; }
+        void SetNote(const std::wstring& sNote) { m_sNote = sNote; }
 
     private:
         const std::string m_sAuthor;
-        std::string m_sNote;
+        std::wstring m_sNote;
     };
 
 public:
@@ -29,9 +29,8 @@ public:
     size_t Load(unsigned int nID);
 
     BOOL ReloadFromWeb(unsigned int nID);
-    static void OnCodeNotesResponse(rapidjson::Document& doc);
 
-    void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::string& sNote);
+    void Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, const std::wstring& sNote);
     BOOL Remove(const ra::ByteAddress& nAddr);
 
     const CodeNoteObj* FindCodeNote(const ra::ByteAddress& nAddr) const

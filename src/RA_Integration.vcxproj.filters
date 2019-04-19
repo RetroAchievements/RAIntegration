@@ -674,6 +674,9 @@
     <ClInclude Include="ui\win32\OverlayWindow.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchCodeNotes.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

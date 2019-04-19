@@ -20,7 +20,6 @@ enum RequestType
     RequestScore,
     RequestNews,
     RequestRichPresence,
-    RequestCodeNotes,
     RequestFriendList,
     RequestBadgeIter,
     RequestHashLibrary,

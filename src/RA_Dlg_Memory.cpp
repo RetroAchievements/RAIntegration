@@ -1251,9 +1251,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
 
-                    WCHAR sNewNoteWide[512];
-                    GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNoteWide, 512);
-                    const std::string sNewNote = ra::Narrow(sNewNoteWide);
+                    WCHAR sNewNote[512];
+                    GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNote, 512);
 
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
@@ -1513,7 +1512,7 @@ void Dlg_Memory::OnWatchingMemChange()
     const auto nAddr = ra::ByteAddressFromString(sAddr);
 
     const CodeNotes::CodeNoteObj* pSavedNote = m_CodeNotes.FindCodeNote(nAddr);
-    SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, ra::Widen((pSavedNote != nullptr) ? pSavedNote->Note() : "").c_str());
+    SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, (pSavedNote != nullptr) ? pSavedNote->Note().c_str() : L"");
 
     MemoryViewerControl::destroyEditCaret();
 
@@ -1590,12 +1589,13 @@ void Dlg_Memory::RepopulateMemNotesFromFile()
 void Dlg_Memory::OnLoad_NewRom()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    m_CodeNotes.ReloadFromWeb(pGameContext.GameId());
 
     EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), m_SearchResults.size() >= 2);
 
     if (pGameContext.GameId() == 0)
     {
+        m_CodeNotes.Clear();
+
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
@@ -1604,7 +1604,7 @@ void Dlg_Memory::OnLoad_NewRom()
     else
     {
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT("Loading..."));
-        RepopulateMemNotesFromFile();
+        m_CodeNotes.ReloadFromWeb(pGameContext.GameId());
 
         if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
         {

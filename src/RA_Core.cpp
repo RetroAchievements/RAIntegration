@@ -328,10 +328,6 @@ API int CCONV _RA_HandleHTTPResults()
                 //    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
                 //    g_AchievementOverlay.InstallNewsArticlesFromFile();
                 //    break;
-
-                case RequestCodeNotes:
-                    CodeNotes::OnCodeNotesResponse(doc);
-                    break;
             }
         }
 

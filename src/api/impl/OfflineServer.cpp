@@ -55,6 +55,34 @@ FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Reques
     return std::move(response);
 }
 
+FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
+{
+    FetchCodeNotes::Response response;
+    rapidjson::Document document;
+
+    // see if the data is available in the cache
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, std::to_wstring(request.GameId));
+    if (pData == nullptr)
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = ra::StringPrintf("Code notes for game %u not found in cache", request.GameId);
+    }
+    else if (!LoadDocument(document, *pData.get()))
+    {
+        response.Result = ApiResult::Error;
+        response.ErrorMessage =
+            ra::StringPrintf("%s (%zu)", GetParseError_En(document.GetParseError()), document.GetErrorOffset());
+    }
+    else
+    {
+        response.Result = ApiResult::Success;
+        ConnectedServer::ProcessCodeNotes(response, document);
+    }
+
+    return std::move(response);
+}
+
 } // namespace impl
 } // namespace api
 } // namespace ra

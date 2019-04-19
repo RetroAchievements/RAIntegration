@@ -496,6 +496,116 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
     return std::move(response);
 }
 
+void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
+{
+    GetRequiredJsonField(response.Title, PatchData, "Title", response);
+    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
+    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
+    GetOptionalJsonField(response.Flags, PatchData, "Flags");
+    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
+    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
+
+    if (!response.ImageIcon.empty())
+    {
+        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
+        auto nIndex = response.ImageIcon.find_last_of('/');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(0, nIndex + 1);
+        nIndex = response.ImageIcon.find_last_of('.');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(nIndex);
+    }
+
+    const auto& AchievementsData{ PatchData["Achievements"] };
+    for (const auto& achData : AchievementsData.GetArray())
+    {
+        auto& pAchievement = response.Achievements.emplace_back();
+        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
+        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
+        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
+        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
+        GetOptionalJsonField(pAchievement.Points, achData, "Points");
+        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
+        GetOptionalJsonField(pAchievement.Author, achData, "Author");
+        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
+
+        unsigned int time;
+        GetRequiredJsonField(time, achData, "Created", response);
+        pAchievement.Created = static_cast<time_t>(time);
+        GetRequiredJsonField(time, achData, "Modified", response);
+        pAchievement.Updated = static_cast<time_t>(time);
+    }
+
+    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
+    for (const auto& lbData : LeaderboardsData.GetArray())
+    {
+        auto& pLeaderboard = response.Leaderboards.emplace_back();
+        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
+        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
+        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
+        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
+        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
+    }
+}
+
+FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
+{
+    FetchCodeNotes::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+
+    if (DoRequest(m_sHost, FetchCodeNotes::Name(), "codenotes2", sPostData, response, document))
+    {
+        if (!document.HasMember("CodeNotes"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "CodeNotes");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& CodeNotes = document["CodeNotes"];
+
+            // store a copy in the cache for offline mode
+            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+            auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(request.GameId));
+            if (pData != nullptr)
+            {
+                rapidjson::Document codeNotes;
+                codeNotes.CopyFrom(CodeNotes, document.GetAllocator());
+                SaveDocument(codeNotes, *pData.get());
+            }
+
+            // process it
+            ProcessCodeNotes(response, CodeNotes);
+        }
+    }
+
+    return std::move(response);
+}
+
+void ConnectedServer::ProcessCodeNotes(ra::api::FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes)
+{
+    for (const auto& codeNote : CodeNotes.GetArray())
+    {
+        auto& pNote = response.Notes.emplace_back();
+        GetRequiredJsonField(pNote.Author, codeNote, "User", response);
+
+        std::string sAddress;
+        GetRequiredJsonField(sAddress, codeNote, "Address", response);
+        pNote.Address = ra::ByteAddressFromString(sAddress);
+
+        GetRequiredJsonField(pNote.Note, codeNote, "Note", response);
+
+        // empty notes were deleted on the server - don't bother including them in the response
+        if (pNote.Note.empty())
+            response.Notes.pop_back();
+    }
+}
+
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;
@@ -616,58 +726,6 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     }
 
     return std::move(response);
-}
-
-void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
-{
-    GetRequiredJsonField(response.Title, PatchData, "Title", response);
-    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
-    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
-    GetOptionalJsonField(response.Flags, PatchData, "Flags");
-    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
-    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
-
-    if (!response.ImageIcon.empty())
-    {
-        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
-        auto nIndex = response.ImageIcon.find_last_of('/');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(0, nIndex + 1);
-        nIndex = response.ImageIcon.find_last_of('.');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(nIndex);
-    }
-
-    const auto& AchievementsData{ PatchData["Achievements"] };
-    for (const auto& achData : AchievementsData.GetArray())
-    {
-        auto& pAchievement = response.Achievements.emplace_back();
-        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
-        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
-        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
-        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
-        GetOptionalJsonField(pAchievement.Points, achData, "Points");
-        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
-        GetOptionalJsonField(pAchievement.Author, achData, "Author");
-        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
-
-        unsigned int time;
-        GetRequiredJsonField(time, achData, "Created", response);
-        pAchievement.Created = static_cast<time_t>(time);
-        GetRequiredJsonField(time, achData, "Modified", response);
-        pAchievement.Updated = static_cast<time_t>(time);
-    }
-
-    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
-    for (const auto& lbData : LeaderboardsData.GetArray())
-    {
-        auto& pLeaderboard = response.Leaderboards.emplace_back();
-        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
-        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
-        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
-        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
-        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
-    }
 }
 
 LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)

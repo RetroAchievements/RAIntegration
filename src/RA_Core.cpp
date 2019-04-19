@@ -1,6 +1,5 @@
 #include "RA_Core.h"
 
-#include "RA_CodeNotes.h"
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"

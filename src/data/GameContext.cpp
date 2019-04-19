@@ -57,6 +57,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_nMode = nMode;
     m_sGameTitle.clear();
     m_pRichPresence = nullptr;
+    m_mCodeNotes.clear();
     m_nNextLocalId = GameContext::FirstLocalId;
 
     if (!m_vAchievements.empty())
@@ -1000,6 +1001,9 @@ void GameContext::RefreshCodeNotes()
 
 bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
+    if (m_nGameId == 0)
+        return false;
+
     ra::api::UpdateCodeNote::Request request;
     request.GameId = m_nGameId;
     request.Address = nAddress;
@@ -1031,6 +1035,9 @@ bool GameContext::DeleteCodeNote(ra::ByteAddress nAddress)
 {
     if (m_mCodeNotes.find(nAddress) == m_mCodeNotes.end())
         return true;
+
+    if (m_nGameId == 0)
+        return false;
 
     ra::api::DeleteCodeNote::Request request;
     request.GameId = m_nGameId;

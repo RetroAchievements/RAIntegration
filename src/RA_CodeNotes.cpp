@@ -6,6 +6,7 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "api\DeleteCodeNote.hh"
 #include "api\FetchCodeNotes.hh"
 #include "api\UpdateCodeNote.hh"
 
@@ -89,27 +90,33 @@ bool CodeNotes::Add(const ra::ByteAddress& nAddr, const std::string& sAuthor, co
 bool CodeNotes::Remove(const ra::ByteAddress& nAddr)
 {
     if (m_CodeNotes.find(nAddr) == m_CodeNotes.end())
+        return true;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+    ra::api::DeleteCodeNote::Request request;
+    request.GameId = pGameContext.GameId();
+    request.Address = nAddr;
+
+    do
     {
-        RA_LOG("Already deleted this code note? (%u)", nAddr);
-        return FALSE;
-    }
+        auto response = request.Call();
+        if (response.Succeeded())
+        {
+            m_CodeNotes.erase(nAddr);
 
-    m_CodeNotes.erase(nAddr);
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
+            return true;
+        }
 
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-    {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error deleting note for address %s", ra::ByteAddressToString(nAddr)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
 
-        PostArgs args;
-        args['u'] = RAUsers::LocalUser().Username();
-        args['t'] = RAUsers::LocalUser().Token();
-        args['g'] = std::to_string(pGameContext.GameId());
-        args['m'] = std::to_string(nAddr);
-        args['n'] = "";
+    } while (true);
 
-        //	faf
-        RAWeb::CreateThreadedHTTPRequest(RequestSubmitCodeNote, args);
-    }
-
-    return TRUE;
+    return false;
 }

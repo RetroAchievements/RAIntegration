@@ -74,6 +74,11 @@ public:
         return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());
     }
 
+    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request&) override
+    {
+        return UnsupportedApi<DeleteCodeNote::Response>(DeleteCodeNote::Name());
+    }
+
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request&) override
     {
         return UnsupportedApi<FetchAchievementInfo::Response>(FetchAchievementInfo::Name());

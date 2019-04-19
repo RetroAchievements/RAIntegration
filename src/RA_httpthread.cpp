@@ -30,7 +30,6 @@ const char* RequestTypeToString[] =
     "RequestHashLibrary",
     "RequestAllProgress",
 
-    "RequestSubmitCodeNote",
     "RequestSubmitAchievementData",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToString) == NumRequestTypes, "Must match up!");
@@ -45,7 +44,6 @@ const char* RequestTypeToPost[] =
     "hashlibrary",
     "allprogress",
 
-    "submitcodenote",
     "uploadachievement",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");

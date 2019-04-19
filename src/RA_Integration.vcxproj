@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
+    <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchCodeNotes.hh" />
     <ClInclude Include="api\FetchGameData.hh" />

@@ -624,6 +624,23 @@ UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::R
     return std::move(response);
 }
 
+DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::Request& request)
+{
+    DeleteCodeNote::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
+
+    if (DoRequest(m_sHost, DeleteCodeNote::Name(), "submitcodenote", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+    }
+
+    return std::move(response);
+}
+
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;

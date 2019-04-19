@@ -26,7 +26,6 @@ enum RequestType
     RequestAllProgress,
 
     //	Submit
-    RequestSubmitCodeNote,
     RequestSubmitAchievementData,
 
     NumRequestTypes

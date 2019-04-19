@@ -113,6 +113,11 @@ public:
         return HandleRequest<ra::api::UpdateCodeNote>(request);
     }
 
+    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override
+    {
+        return HandleRequest<ra::api::DeleteCodeNote>(request);
+    }
+
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchAchievementInfo>(request);

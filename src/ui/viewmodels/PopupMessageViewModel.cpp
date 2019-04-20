@@ -6,11 +6,6 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TITLE = 26;
-static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 18;
-static _CONSTANT_VAR FONT_SIZE_DETAIL = 16;
-
 const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageViewModel", "Title", L"");
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
@@ -70,23 +65,24 @@ bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 
 void PopupMessageViewModel::CreateRenderImage()
 {
+    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
 
-    auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    auto nFontTitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupTitle(), ra::ui::FontStyles::Normal);
     const auto sTitle = GetTitle();
     const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
-    auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
+    auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupSubtitle(), ra::ui::FontStyles::Normal);
     const auto sSubTitle = GetDescription();
     const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
-    auto nFontDetail = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_DETAIL, ra::ui::FontStyles::Normal);
+    auto nFontDetail = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
     const auto sDetail = GetDetail();
     const auto szDetail = pSurface->MeasureText(nFontDetail, sDetail);
 
-    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const auto nShadowOffset = pOverlayTheme.ShadowOffset();
 
     // create the actual surface
@@ -126,7 +122,7 @@ void PopupMessageViewModel::CreateRenderImage()
     nX += nSubTitleIndent;
 
     // subtitle
-    nY += FONT_SIZE_TITLE - 1;
+    nY += pOverlayTheme.FontSizePopupTitle() - 1;
     if (!sSubTitle.empty())
     {
         m_pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
@@ -134,7 +130,7 @@ void PopupMessageViewModel::CreateRenderImage()
     }
 
     // detail
-    nY += FONT_SIZE_SUBTITLE;
+    nY += pOverlayTheme.FontSizePopupSubtitle();
     if (!sDetail.empty())
     {
         m_pSurface->WriteText(nX + 2, nY + 2, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);

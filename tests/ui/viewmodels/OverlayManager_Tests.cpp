@@ -281,6 +281,8 @@ public:
         const auto* pScoreboard = overlay.GetScoreboard(3);
         Expects(pScoreboard != nullptr);
 
+        const auto nExpectedX = 288;
+
         ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
@@ -293,49 +295,49 @@ public:
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
         Assert::IsTrue(pScoreboard->GetRenderLocationX() > 0);
-        Assert::IsTrue(pScoreboard->GetRenderLocationX() < 310);
+        Assert::IsTrue(pScoreboard->GetRenderLocationX() < nExpectedX);
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 1 second, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::milliseconds(500));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 2 seconds, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::seconds(1));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 3 seconds, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::seconds(1));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 4 seconds, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::seconds(1));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 5 seconds, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::seconds(1));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 6 seconds, it should be fully on screen
         overlay.mockClock.AdvanceTime(std::chrono::seconds(1));
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
-        Assert::AreEqual(pScoreboard->GetRenderLocationX(), 310);
+        Assert::AreEqual(nExpectedX, pScoreboard->GetRenderLocationX());
         Assert::IsTrue(overlay.WasRenderRequested());
 
         // after 6.5 seconds, it should be starting to scroll offscreen
@@ -343,7 +345,7 @@ public:
         overlay.ResetRenderRequested();
         overlay.Render(mockSurface, false);
         Assert::IsTrue(pScoreboard->GetRenderLocationX() > 0);
-        Assert::IsTrue(pScoreboard->GetRenderLocationX() < 310);
+        Assert::IsTrue(pScoreboard->GetRenderLocationX() < nExpectedX);
         Assert::IsTrue(overlay.WasRenderRequested());
         Assert::IsNotNull(overlay.GetScoreboard(3));
 
